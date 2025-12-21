@@ -1,0 +1,62 @@
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button } from './Button';
+import { colors, spacing, fontSize } from '../theme';
+
+interface EmptyStateProps {
+  icon?: keyof typeof Ionicons.glyphMap;
+  title: string;
+  message?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+export function EmptyState({
+  icon = 'document-text-outline',
+  title,
+  message,
+  actionLabel,
+  onAction,
+}: EmptyStateProps) {
+  return (
+    <View style={styles.container}>
+      <Ionicons name={icon} size={64} color={colors.textMuted} />
+      <Text style={styles.title}>{title}</Text>
+      {message && <Text style={styles.message}>{message}</Text>}
+      {actionLabel && onAction && (
+        <Button
+          title={actionLabel}
+          onPress={onAction}
+          variant="primary"
+          style={styles.button}
+        />
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xxl,
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: spacing.lg,
+    textAlign: 'center',
+  },
+  message: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    textAlign: 'center',
+  },
+  button: {
+    marginTop: spacing.xl,
+  },
+});
