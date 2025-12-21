@@ -365,26 +365,40 @@ For React Native, focus on the mobile layout with bottom tab navigation.
 
 ## Network Configuration
 
+The API runs via **Laravel Sail (Docker)** on port **8080**.
+
+### API Base URLs by Platform
+
+| Platform | API Base URL |
+|----------|--------------|
+| Android Emulator | `http://10.0.2.2:8080/api` |
+| iOS Simulator | `http://localhost:8080/api` |
+| Physical Device / Expo Go | `http://YOUR_LOCAL_IP:8080/api` |
+
 ### Connecting to Local API from React Native
 
 ```typescript
 // config/api.ts
 
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+// Your computer's local IP address (find with: ip addr show | grep "inet ")
+const LOCAL_IP = '10.27.198.154';
 
 // API Base URL configuration
 const getBaseUrl = (): string => {
   if (__DEV__) {
-    // Development
+    // Development - API runs on port 8080 via Laravel Sail/Docker
     if (Platform.OS === 'android') {
       // Android Emulator uses 10.0.2.2 to access host machine's localhost
-      return 'http://10.0.2.2/api';
+      return 'http://10.0.2.2:8080/api';
     } else if (Platform.OS === 'ios') {
       // iOS Simulator can use localhost directly
-      return 'http://localhost/api';
+      return 'http://localhost:8080/api';
     }
-    // Physical device - use your computer's local IP (run: hostname -I)
-    return 'http://192.168.x.x/api';
+    // Physical device / Expo Go - use your computer's local IP
+    return `http://${LOCAL_IP}:8080/api`;
   }
   // Production
   return 'https://api.racefy.app/api';
@@ -393,11 +407,46 @@ const getBaseUrl = (): string => {
 export const API_BASE_URL = getBaseUrl();
 ```
 
-### For Physical Device Testing
+### For Physical Device / Expo Go Testing
 
-1. Find your computer's IP: `hostname -I` (Linux) or `ipconfig` (Windows)
-2. Update `.env` in Laravel: `APP_URL=http://YOUR_IP`
-3. Use that IP in React Native config
+1. Ensure your phone is on the **same WiFi network** as your computer
+2. Find your computer's local IP:
+   ```bash
+   # Linux
+   ip addr show | grep "inet " | grep -v 127.0.0.1
+
+   # macOS
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+
+   # Windows
+   ipconfig
+   ```
+3. Update the `LOCAL_IP` constant in `config/api.ts`
+4. The API should be accessible at `http://YOUR_IP:8080/api`
+
+### Docker/Sail Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Laravel API | 8080 | Main API (mapped from container port 80) |
+| MySQL | 3306 | Database |
+| Redis | 6379 | Cache/Queue |
+
+### Starting the API
+
+```bash
+# Start all services
+./vendor/bin/sail up -d
+
+# Check status
+./vendor/bin/sail ps
+
+# View logs
+./vendor/bin/sail logs -f
+
+# Reset database with test data
+./vendor/bin/sail artisan migrate:fresh --seed
+```
 
 ---
 
@@ -796,7 +845,8 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -1192,6 +1242,24 @@ class ApiService {
     });
   }
 
+  async uploadAvatar(formData: FormData): Promise<{ avatar: string }> {
+    const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Accept': 'application/json',
+      },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data;
+  }
+
+  async deleteAvatar(): Promise<void> {
+    await this.request('/profile/avatar', { method: 'DELETE' });
+  }
+
   async deleteAccount(password: string): Promise<void> {
     await this.request('/profile', {
       method: 'DELETE',
@@ -1291,73 +1359,73 @@ import { api } from '../services/api';
 import type { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  logout: () => Promise<void>;
+    user: User | null;
+    isLoading: boolean;
+    isAuthenticated: boolean;
+    login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    initAuth();
-  }, []);
+    useEffect(() => {
+        initAuth();
+    }, []);
 
-  async function initAuth() {
-    try {
-      await api.init();
-      if (api.isAuthenticated()) {
-        const userData = await api.getUser();
-        setUser(userData);
-      }
-    } catch (error) {
-      await api.clearToken();
-    } finally {
-      setIsLoading(false);
+    async function initAuth() {
+        try {
+            await api.init();
+            if (api.isAuthenticated()) {
+                const userData = await api.getUser();
+                setUser(userData);
+            }
+        } catch (error) {
+            await api.clearToken();
+        } finally {
+            setIsLoading(false);
+        }
     }
-  }
 
-  async function login(data: LoginRequest) {
-    const response = await api.login(data);
-    setUser(response.user);
-  }
+    async function login(data: LoginRequest) {
+        const response = await api.login(data);
+        setUser(response.user);
+    }
 
-  async function register(data: RegisterRequest) {
-    const response = await api.register(data);
-    setUser(response.user);
-  }
+    async function register(data: RegisterRequest) {
+        const response = await api.register(data);
+        setUser(response.user);
+    }
 
-  async function logout() {
-    await api.logout();
-    setUser(null);
-  }
+    async function logout() {
+        await api.logout();
+        setUser(null);
+    }
 
-  return (
-    <AuthContext.Provider
-      value={{
+    return (
+        <AuthContext.Provider
+            value={{
         user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
+            isLoading,
+            isAuthenticated: !!user,
+            login,
+            register,
+            logout,
+    }}
+>
+    {children}
     </AuthContext.Provider>
-  );
+);
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error('useAuth must be used within AuthProvider');
+    return context;
 };
 ```
 
@@ -1368,61 +1436,61 @@ import { api } from '../services/api';
 import type { Post } from '../types/api';
 
 export function useFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
-  const fetchFeed = useCallback(async (reset = false) => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      const currentPage = reset ? 1 : page;
-      const response = await api.getFeed(currentPage);
-      
-      setPosts(prev => reset ? response.data : [...prev, ...response.data]);
-      setHasMore(response.meta.current_page < response.meta.last_page);
-      setPage(currentPage + 1);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, isLoading]);
+    const fetchFeed = useCallback(async (reset = false) => {
+        if (isLoading) return;
 
-  const refresh = () => fetchFeed(true);
-  const loadMore = () => hasMore && fetchFeed(false);
+        setIsLoading(true);
+        try {
+            const currentPage = reset ? 1 : page;
+            const response = await api.getFeed(currentPage);
 
-  const likePost = async (postId: number) => {
-    await api.likePost(postId);
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
-          : p
-      )
-    );
-  };
+            setPosts(prev => reset ? response.data : [...prev, ...response.data]);
+            setHasMore(response.meta.current_page < response.meta.last_page);
+            setPage(currentPage + 1);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [page, isLoading]);
 
-  const unlikePost = async (postId: number) => {
-    await api.unlikePost(postId);
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
-          : p
-      )
-    );
-  };
+    const refresh = () => fetchFeed(true);
+    const loadMore = () => hasMore && fetchFeed(false);
 
-  return {
-    posts,
-    isLoading,
-    hasMore,
-    refresh,
-    loadMore,
-    likePost,
-    unlikePost,
-  };
+    const likePost = async (postId: number) => {
+        await api.likePost(postId);
+        setPosts(prev =>
+            prev.map(p =>
+                p.id === postId
+                    ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
+                    : p
+            )
+        );
+    };
+
+    const unlikePost = async (postId: number) => {
+        await api.unlikePost(postId);
+        setPosts(prev =>
+            prev.map(p =>
+                p.id === postId
+                    ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
+                    : p
+            )
+        );
+    };
+
+    return {
+        posts,
+        isLoading,
+        hasMore,
+        refresh,
+        loadMore,
+        likePost,
+        unlikePost,
+    };
 }
 ```
 
@@ -1436,89 +1504,89 @@ import Geolocation from 'react-native-geolocation-service';
 import type { GeoJSONLineString } from '../types/api';
 
 interface TrackPoint {
-  latitude: number;
-  longitude: number;
-  timestamp: number;
-  speed?: number;
+    latitude: number;
+    longitude: number;
+    timestamp: number;
+    speed?: number;
 }
 
 class TrackingService {
-  private watchId: number | null = null;
-  private points: TrackPoint[] = [];
-  private startTime: number = 0;
+    private watchId: number | null = null;
+    private points: TrackPoint[] = [];
+    private startTime: number = 0;
 
-  start(onPoint: (point: TrackPoint) => void): void {
-    this.points = [];
-    this.startTime = Date.now();
+    start(onPoint: (point: TrackPoint) => void): void {
+        this.points = [];
+        this.startTime = Date.now();
 
-    this.watchId = Geolocation.watchPosition(
-      (position) => {
-        const point: TrackPoint = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          timestamp: position.timestamp,
-          speed: position.coords.speed ?? undefined,
+        this.watchId = Geolocation.watchPosition(
+            (position) => {
+                const point: TrackPoint = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    timestamp: position.timestamp,
+                    speed: position.coords.speed ?? undefined,
+                };
+                this.points.push(point);
+                onPoint(point);
+            },
+            (error) => console.error('GPS Error:', error),
+            {
+                enableHighAccuracy: true,
+                distanceFilter: 10, // meters
+                interval: 5000, // ms
+                fastestInterval: 2000,
+            }
+        );
+    }
+
+    stop(): { trackData: GeoJSONLineString; duration: number; distance: number } {
+        if (this.watchId !== null) {
+            Geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+
+        const trackData: GeoJSONLineString = {
+            type: 'LineString',
+            coordinates: this.points.map(p => [p.longitude, p.latitude]),
         };
-        this.points.push(point);
-        onPoint(point);
-      },
-      (error) => console.error('GPS Error:', error),
-      {
-        enableHighAccuracy: true,
-        distanceFilter: 10, // meters
-        interval: 5000, // ms
-        fastestInterval: 2000,
-      }
-    );
-  }
 
-  stop(): { trackData: GeoJSONLineString; duration: number; distance: number } {
-    if (this.watchId !== null) {
-      Geolocation.clearWatch(this.watchId);
-      this.watchId = null;
+        const duration = Math.round((Date.now() - this.startTime) / 1000);
+        const distance = this.calculateDistance();
+
+        return { trackData, duration, distance };
     }
 
-    const trackData: GeoJSONLineString = {
-      type: 'LineString',
-      coordinates: this.points.map(p => [p.longitude, p.latitude]),
-    };
-
-    const duration = Math.round((Date.now() - this.startTime) / 1000);
-    const distance = this.calculateDistance();
-
-    return { trackData, duration, distance };
-  }
-
-  private calculateDistance(): number {
-    let total = 0;
-    for (let i = 1; i < this.points.length; i++) {
-      total += this.haversine(
-        this.points[i - 1].latitude,
-        this.points[i - 1].longitude,
-        this.points[i].latitude,
-        this.points[i].longitude
-      );
+    private calculateDistance(): number {
+        let total = 0;
+        for (let i = 1; i < this.points.length; i++) {
+            total += this.haversine(
+                this.points[i - 1].latitude,
+                this.points[i - 1].longitude,
+                this.points[i].latitude,
+                this.points[i].longitude
+            );
+        }
+        return Math.round(total);
     }
-    return Math.round(total);
-  }
 
-  private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371000; // Earth radius in meters
-    const dLat = this.toRad(lat2 - lat1);
-    const dLon = this.toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRad(lat1)) *
-        Math.cos(this.toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
+    private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371000; // Earth radius in meters
+        const dLat = this.toRad(lat2 - lat1);
+        const dLon = this.toRad(lon2 - lon1);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.toRad(lat1)) *
+            Math.cos(this.toRad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 
-  private toRad(deg: number): number {
-    return deg * (Math.PI / 180);
-  }
+    private toRad(deg: number): number {
+        return deg * (Math.PI / 180);
+    }
 }
 
 export const tracking = new TrackingService();
