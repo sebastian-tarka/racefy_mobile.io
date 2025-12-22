@@ -12,6 +12,7 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreen } from '../screens/main/HomeScreen';
 import { FeedScreen } from '../screens/main/FeedScreen';
+import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 
@@ -56,6 +57,9 @@ function MainNavigator() {
             case 'Feed':
               iconName = focused ? 'newspaper' : 'newspaper-outline';
               break;
+            case 'Record':
+              iconName = focused ? 'add-circle' : 'add-circle-outline';
+              break;
             case 'Events':
               iconName = focused ? 'calendar' : 'calendar-outline';
               break;
@@ -95,6 +99,11 @@ function MainNavigator() {
           tabBarLabel: 'Feed',
           tabBarBadge: isAuthenticated ? undefined : undefined,
         }}
+      />
+      <MainTab.Screen
+        name="Record"
+        component={ActivityRecordingScreen}
+        options={{ tabBarLabel: 'Record' }}
       />
       <MainTab.Screen
         name="Events"
