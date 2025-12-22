@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Vibration,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
 import { Card, Button, Badge } from '../../components';
-import { usePermissions } from '../../hooks/usePermissions';
+import { useLiveActivity, usePermissions } from '../../hooks';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 
 // Mock data for milestones based on previous activities
@@ -33,110 +33,79 @@ const sportTypes = [
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
-interface LocationPoint {
-  latitude: number;
-  longitude: number;
-  timestamp: number;
-  speed: number | null;
-}
-
 export function ActivityRecordingScreen() {
-  const { permissions, requestActivityTrackingPermissions } = usePermissions();
-  const [status, setStatus] = useState<RecordingStatus>('idle');
+  const { requestActivityTrackingPermissions } = usePermissions();
+  const {
+    activity,
+    isTracking,
+    isPaused,
+    isLoading,
+    error,
+    currentStats,
+    startTracking,
+    pauseTracking,
+    resumeTracking,
+    finishTracking,
+    discardTracking,
+    clearError,
+  } = useLiveActivity();
+
   const [selectedSport, setSelectedSport] = useState(sportTypes[0]);
-  const [duration, setDuration] = useState(0);
-  const [distance, setDistance] = useState(0);
+  const [localDuration, setLocalDuration] = useState(0);
   const [passedMilestones, setPassedMilestones] = useState<number[]>([]);
-  const [currentSpeed, setCurrentSpeed] = useState<number | null>(null);
-  const [locationPoints, setLocationPoints] = useState<LocationPoint[]>([]);
-  const [useRealGPS, setUseRealGPS] = useState(true);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedDurationRef = useRef<number>(0);
-  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
-  const lastLocationRef = useRef<LocationPoint | null>(null);
 
-  // Calculate distance between two coordinates (Haversine formula)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371000; // Earth's radius in meters
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+  // Derive status from live activity state
+  const getStatus = (): RecordingStatus => {
+    if (!activity) return 'idle';
+    if (activity.status === 'completed') return 'finished';
+    if (isPaused) return 'paused';
+    if (isTracking) return 'recording';
+    return 'idle';
   };
 
-  // Start GPS tracking
-  const startLocationTracking = async () => {
-    try {
-      locationSubscriptionRef.current = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 1000,
-          distanceInterval: 5, // Update every 5 meters
-        },
-        (location) => {
-          const newPoint: LocationPoint = {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            timestamp: location.timestamp,
-            speed: location.coords.speed,
-          };
+  const status = getStatus();
+  const distance = currentStats.distance;
 
-          setCurrentSpeed(location.coords.speed);
-          setLocationPoints((prev) => [...prev, newPoint]);
-
-          // Calculate distance from last point
-          if (lastLocationRef.current) {
-            const dist = calculateDistance(
-              lastLocationRef.current.latitude,
-              lastLocationRef.current.longitude,
-              newPoint.latitude,
-              newPoint.longitude
-            );
-            // Only add if movement is reasonable (filter GPS noise)
-            if (dist > 2 && dist < 100) {
-              setDistance((prev) => prev + dist);
-            }
-          }
-          lastLocationRef.current = newPoint;
-        }
-      );
-    } catch (error) {
-      console.error('Error starting location tracking:', error);
-      Alert.alert('GPS Error', 'Could not start location tracking. Using simulated data.');
-      setUseRealGPS(false);
-    }
-  };
-
-  // Stop GPS tracking
-  const stopLocationTracking = () => {
-    if (locationSubscriptionRef.current) {
-      locationSubscriptionRef.current.remove();
-      locationSubscriptionRef.current = null;
-    }
-  };
-
-  // Simulate distance tracking when GPS not available
+  // Sync local timer with activity state
   useEffect(() => {
-    if (status === 'recording' && !useRealGPS) {
-      const distanceInterval = setInterval(() => {
-        setDistance((prev) => {
-          const speedFactor = selectedSport.name === 'Cycling' ? 4 : 1;
-          const newDistance = prev + (10 + Math.random() * 5) * speedFactor;
-          return Math.round(newDistance);
-        });
-      }, 1000);
+    if (activity && isTracking && !isPaused) {
+      // Start local timer
+      const activityStart = new Date(activity.started_at).getTime();
+      const pausedMs = (activity.total_paused_duration || 0) * 1000;
+      startTimeRef.current = activityStart + pausedMs;
 
-      return () => clearInterval(distanceInterval);
+      intervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setLocalDuration(Math.max(0, elapsed));
+      }, 100);
+    } else if (isPaused && activity) {
+      // When paused, use the activity's duration
+      setLocalDuration(activity.duration);
+      pausedDurationRef.current = activity.duration;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    } else if (!activity) {
+      // Reset when no activity
+      setLocalDuration(0);
+      pausedDurationRef.current = 0;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
-  }, [status, selectedSport, useRealGPS]);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [activity, isTracking, isPaused]);
 
   // Check milestones
   useEffect(() => {
@@ -151,33 +120,12 @@ export function ActivityRecordingScreen() {
     });
   }, [distance, passedMilestones]);
 
-  // Timer
+  // Show error alerts
   useEffect(() => {
-    if (status === 'recording') {
-      startTimeRef.current = Date.now() - pausedDurationRef.current * 1000;
-      intervalRef.current = setInterval(() => {
-        const elapsed = Math.floor(
-          (Date.now() - startTimeRef.current) / 1000
-        );
-        setDuration(elapsed);
-      }, 100);
-    } else if (status === 'paused') {
-      pausedDurationRef.current = duration;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    } else if (status === 'idle') {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+    if (error) {
+      Alert.alert('Error', error, [{ text: 'OK', onPress: clearError }]);
     }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [status]);
+  }, [error, clearError]);
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -198,7 +146,7 @@ export function ActivityRecordingScreen() {
     if (meters >= 1000) {
       return `${(meters / 1000).toFixed(2)} km`;
     }
-    return `${meters} m`;
+    return `${Math.round(meters)} m`;
   };
 
   const formatPace = (seconds: number, meters: number): string => {
@@ -212,96 +160,97 @@ export function ActivityRecordingScreen() {
   const handleStart = async () => {
     console.log('Start button pressed');
 
-    // Try to get permissions, but don't block if it fails
+    // Request permissions first
     try {
-      const hasPermission = await requestActivityTrackingPermissions();
-      console.log('Permission result:', hasPermission);
+      await requestActivityTrackingPermissions();
+    } catch (err) {
+      console.log('Permission error:', err);
+    }
 
-      if (hasPermission) {
-        // Start with real GPS
-        setUseRealGPS(true);
-        startLocationTracking();
-        setStatus('recording');
-        console.log('Started with real GPS');
-      } else {
-        // Start with simulated data
-        Alert.alert(
-          'Using Simulated Data',
-          'Location permission not granted. Activity will use simulated distance data.',
-          [{ text: 'OK' }]
-        );
-        setUseRealGPS(false);
-        setStatus('recording');
-        console.log('Started with simulated data');
-      }
-    } catch (error) {
-      console.log('Permission error, using simulated:', error);
-      // Fallback to simulated on any error
-      setUseRealGPS(false);
-      setStatus('recording');
+    // Start live activity with API
+    try {
+      await startTracking(selectedSport.id, `${selectedSport.name} Activity`);
+      setPassedMilestones([]);
+      console.log('Activity started successfully');
+    } catch (err) {
+      console.error('Failed to start activity:', err);
     }
   };
 
-  const handlePause = () => {
-    stopLocationTracking();
-    setStatus('paused');
+  const handlePause = async () => {
+    try {
+      await pauseTracking();
+      console.log('Activity paused');
+    } catch (err) {
+      console.error('Failed to pause:', err);
+    }
   };
 
   const handleResume = async () => {
-    if (useRealGPS) {
-      await startLocationTracking();
+    try {
+      await resumeTracking();
+      console.log('Activity resumed');
+    } catch (err) {
+      console.error('Failed to resume:', err);
     }
-    setStatus('recording');
   };
 
-  const handleStop = () => {
-    stopLocationTracking();
-    setStatus('finished');
+  const handleStop = async () => {
+    // First pause, then user can save or discard
+    if (isTracking) {
+      await handlePause();
+    }
+    // Keep activity in paused state so user can see final stats
+    // They'll use Save or Discard buttons to finish
   };
 
-  const handleReset = () => {
-    stopLocationTracking();
-    setStatus('idle');
-    setDuration(0);
-    setDistance(0);
-    setPassedMilestones([]);
-    setLocationPoints([]);
-    setCurrentSpeed(null);
-    pausedDurationRef.current = 0;
-    lastLocationRef.current = null;
-    setUseRealGPS(true);
+  const handleSave = async () => {
+    if (!activity) return;
+
+    try {
+      const finishedActivity = await finishTracking({
+        title: `${selectedSport.name} Activity`,
+        calories: Math.floor(localDuration * 0.15),
+      });
+      console.log('Activity saved:', finishedActivity);
+      setPassedMilestones([]);
+      Alert.alert('Success', 'Activity saved successfully!');
+    } catch (err) {
+      console.error('Failed to save:', err);
+    }
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopLocationTracking();
-    };
-  }, []);
-
-  const handleSave = () => {
-    // TODO: Save activity to API
-    console.log('Saving activity:', {
-      sport: selectedSport,
-      duration,
-      distance,
-    });
-    handleReset();
+  const handleDiscard = async () => {
+    Alert.alert(
+      'Discard Activity',
+      'Are you sure you want to discard this activity? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await discardTracking();
+              setPassedMilestones([]);
+              console.log('Activity discarded');
+            } catch (err) {
+              console.error('Failed to discard:', err);
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const getMilestoneStatus = (milestone: typeof mockMilestones[0]) => {
+  const getMilestoneStatus = (milestone: (typeof mockMilestones)[0]) => {
     if (!passedMilestones.includes(milestone.distance)) {
       return { status: 'upcoming', color: colors.textMuted };
     }
 
-    const milestoneIndex = mockMilestones.findIndex(
-      (m) => m.distance === milestone.distance
-    );
-    const prevMilestone = milestoneIndex > 0 ? mockMilestones[milestoneIndex - 1] : null;
-
     // Calculate time at this milestone (simplified)
     const timeAtMilestone = Math.floor(
-      (duration * milestone.distance) / Math.max(distance, 1)
+      (localDuration * milestone.distance) / Math.max(distance, 1)
     );
 
     if (timeAtMilestone < milestone.bestTime) {
@@ -312,10 +261,24 @@ export function ActivityRecordingScreen() {
     return { status: 'normal', color: colors.textSecondary, label: 'Completed' };
   };
 
+  // Show loading overlay
+  const renderLoadingOverlay = () => {
+    if (!isLoading) return null;
+    return (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Please wait...</Text>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>Record Activity</Text>
+        {activity && (
+          <Text style={styles.activityId}>ID: {activity.id}</Text>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -332,6 +295,7 @@ export function ActivityRecordingScreen() {
                     selectedSport.id === sport.id && styles.sportButtonActive,
                   ]}
                   onPress={() => setSelectedSport(sport)}
+                  disabled={isLoading}
                 >
                   <Ionicons
                     name={sport.icon}
@@ -366,8 +330,20 @@ export function ActivityRecordingScreen() {
             />
             <Text style={styles.currentSportText}>{selectedSport.name}</Text>
             <Badge
-              label={status === 'recording' ? 'Recording' : status === 'paused' ? 'Paused' : 'Finished'}
-              variant={status === 'recording' ? 'ongoing' : status === 'paused' ? 'upcoming' : 'completed'}
+              label={
+                status === 'recording'
+                  ? 'Recording'
+                  : status === 'paused'
+                    ? 'Paused'
+                    : 'Finished'
+              }
+              variant={
+                status === 'recording'
+                  ? 'ongoing'
+                  : status === 'paused'
+                    ? 'upcoming'
+                    : 'completed'
+              }
             />
           </View>
         )}
@@ -375,51 +351,87 @@ export function ActivityRecordingScreen() {
         {/* Timer Display */}
         <Card style={styles.timerCard}>
           <Text style={styles.timerLabel}>Duration</Text>
-          <Text style={styles.timer}>{formatTime(duration)}</Text>
+          <Text style={styles.timer}>{formatTime(localDuration)}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Ionicons name="navigate-outline" size={20} color={colors.primary} />
+              <Ionicons
+                name="navigate-outline"
+                size={20}
+                color={colors.primary}
+              />
               <Text style={styles.statValue}>{formatDistance(distance)}</Text>
               <Text style={styles.statLabel}>Distance</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
-              <Text style={styles.statValue}>{formatPace(duration, distance)}</Text>
+              <Ionicons
+                name="speedometer-outline"
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={styles.statValue}>
+                {formatPace(localDuration, distance)}
+              </Text>
               <Text style={styles.statLabel}>Pace</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="flame-outline" size={20} color={colors.primary} />
               <Text style={styles.statValue}>
-                {Math.floor(duration * 0.15)}
+                {Math.floor(localDuration * 0.15)}
               </Text>
               <Text style={styles.statLabel}>Calories</Text>
             </View>
           </View>
+
+          {/* Elevation gain */}
+          {currentStats.elevation_gain > 0 && (
+            <View style={styles.elevationRow}>
+              <Ionicons name="trending-up" size={16} color={colors.primary} />
+              <Text style={styles.elevationText}>
+                {Math.round(currentStats.elevation_gain)} m elevation gain
+              </Text>
+            </View>
+          )}
         </Card>
 
         {/* Control Buttons */}
         <View style={styles.controls}>
           {status === 'idle' && (
-            <TouchableOpacity style={styles.startButton} onPress={handleStart}>
-              <Ionicons name="play" size={40} color={colors.white} />
-              <Text style={styles.startButtonText}>START</Text>
+            <TouchableOpacity
+              style={[styles.startButton, isLoading && styles.buttonDisabled]}
+              onPress={handleStart}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.white} size="large" />
+              ) : (
+                <>
+                  <Ionicons name="play" size={40} color={colors.white} />
+                  <Text style={styles.startButtonText}>START</Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
 
           {status === 'recording' && (
             <View style={styles.recordingControls}>
               <TouchableOpacity
-                style={styles.controlButton}
+                style={[styles.controlButton, isLoading && styles.buttonDisabled]}
                 onPress={handlePause}
+                disabled={isLoading}
               >
                 <Ionicons name="pause" size={32} color={colors.white} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.controlButton, styles.stopButton]}
+                style={[
+                  styles.controlButton,
+                  styles.stopButton,
+                  isLoading && styles.buttonDisabled,
+                ]}
                 onPress={handleStop}
+                disabled={isLoading}
               >
                 <Ionicons name="stop" size={32} color={colors.white} />
               </TouchableOpacity>
@@ -427,35 +439,31 @@ export function ActivityRecordingScreen() {
           )}
 
           {status === 'paused' && (
-            <View style={styles.recordingControls}>
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={handleResume}
-              >
-                <Ionicons name="play" size={32} color={colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.controlButton, styles.stopButton]}
-                onPress={handleStop}
-              >
-                <Ionicons name="stop" size={32} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {status === 'finished' && (
-            <View style={styles.finishedControls}>
-              <Button
-                title="Save Activity"
-                onPress={handleSave}
-                variant="primary"
-                style={styles.saveButton}
-              />
-              <Button
-                title="Discard"
-                onPress={handleReset}
-                variant="ghost"
-              />
+            <View style={styles.pausedControls}>
+              <View style={styles.recordingControls}>
+                <TouchableOpacity
+                  style={[styles.controlButton, isLoading && styles.buttonDisabled]}
+                  onPress={handleResume}
+                  disabled={isLoading}
+                >
+                  <Ionicons name="play" size={32} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.finishedControls}>
+                <Button
+                  title={isLoading ? 'Saving...' : 'Save Activity'}
+                  onPress={handleSave}
+                  variant="primary"
+                  style={styles.saveButton}
+                  disabled={isLoading}
+                />
+                <Button
+                  title="Discard"
+                  onPress={handleDiscard}
+                  variant="ghost"
+                  disabled={isLoading}
+                />
+              </View>
             </View>
           )}
         </View>
@@ -464,7 +472,8 @@ export function ActivityRecordingScreen() {
         <Card style={styles.milestonesCard}>
           <Text style={styles.sectionTitle}>Milestones</Text>
           <Text style={styles.sectionSubtitle}>
-            Compare with your previous {selectedSport.name.toLowerCase()} activities
+            Compare with your previous {selectedSport.name.toLowerCase()}{' '}
+            activities
           </Text>
 
           {mockMilestones.map((milestone) => {
@@ -529,7 +538,9 @@ export function ActivityRecordingScreen() {
 
         {/* Previous Activities Summary */}
         <Card style={styles.previousCard}>
-          <Text style={styles.sectionTitle}>Your {selectedSport.name} Stats</Text>
+          <Text style={styles.sectionTitle}>
+            Your {selectedSport.name} Stats
+          </Text>
           <View style={styles.prevStatsGrid}>
             <View style={styles.prevStatItem}>
               <Text style={styles.prevStatValue}>23</Text>
@@ -550,6 +561,8 @@ export function ActivityRecordingScreen() {
           </View>
         </Card>
       </ScrollView>
+
+      {renderLoadingOverlay()}
     </SafeAreaView>
   );
 }
@@ -565,11 +578,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  activityId: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
   },
   content: {
     padding: spacing.md,
@@ -668,6 +688,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  elevationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  elevationText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
   controls: {
     alignItems: 'center',
     marginBottom: spacing.xl,
@@ -694,6 +724,12 @@ const styles = StyleSheet.create({
   recordingControls: {
     flexDirection: 'row',
     gap: spacing.xl,
+    justifyContent: 'center',
+  },
+  pausedControls: {
+    width: '100%',
+    alignItems: 'center',
+    gap: spacing.lg,
   },
   controlButton: {
     width: 80,
@@ -710,6 +746,9 @@ const styles = StyleSheet.create({
   },
   stopButton: {
     backgroundColor: colors.error,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   finishedControls: {
     width: '100%',
@@ -797,5 +836,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
   },
 });

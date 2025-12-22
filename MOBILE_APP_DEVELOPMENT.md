@@ -40,7 +40,9 @@ RacefyApp/
     │   ├── index.ts
     │   ├── useAuth.tsx        # Authentication context
     │   ├── useFeed.ts         # Feed data hook
-    │   └── useEvents.ts       # Events data hook
+    │   ├── useEvents.ts       # Events data hook
+    │   ├── usePermissions.ts  # Device permissions (location, camera)
+    │   └── useLiveActivity.ts # Live activity tracking with API sync
     ├── theme/
     │   ├── index.ts
     │   ├── colors.ts          # Color palette
@@ -64,7 +66,8 @@ RacefyApp/
     │   │   ├── HomeScreen.tsx
     │   │   ├── FeedScreen.tsx
     │   │   ├── EventsScreen.tsx
-    │   │   └── ProfileScreen.tsx
+    │   │   ├── ProfileScreen.tsx
+    │   │   └── ActivityRecordingScreen.tsx  # Live activity tracking
     │   └── details/           # (TODO)
     │       ├── PostDetailScreen.tsx
     │       ├── EventDetailScreen.tsx
@@ -377,6 +380,42 @@ const {
 } = useEvents();
 ```
 
+### usePermissions
+
+```tsx
+const {
+  permissions,       // { location, locationBackground, camera, mediaLibrary }
+  isChecking,        // Initial check loading
+  checkPermissions,  // () => Promise<void>
+  requestLocationPermission,     // () => Promise<boolean>
+  requestBackgroundLocationPermission, // () => Promise<boolean>
+  requestCameraPermission,       // () => Promise<boolean>
+  requestMediaLibraryPermission, // () => Promise<boolean>
+  requestActivityTrackingPermissions, // () => Promise<boolean>
+  checkLocationServices,         // () => Promise<boolean>
+} = usePermissions();
+```
+
+### useLiveActivity
+
+```tsx
+const {
+  activity,          // Activity | null - Server activity record
+  isTracking,        // Boolean - GPS is actively recording
+  isPaused,          // Boolean - Activity is paused
+  isLoading,         // Boolean - API operation in progress
+  error,             // string | null - Error message
+  currentStats,      // { distance, duration, elevation_gain }
+  startTracking,     // (sportTypeId: number, title?: string) => Promise<Activity>
+  pauseTracking,     // () => Promise<void>
+  resumeTracking,    // () => Promise<void>
+  finishTracking,    // (data?: { title?, description?, calories? }) => Promise<Activity>
+  discardTracking,   // () => Promise<void>
+  clearError,        // () => void
+  checkExistingActivity, // () => Promise<void>
+} = useLiveActivity();
+```
+
 ---
 
 ## API Service
@@ -427,6 +466,17 @@ api.getFollowers(userId)    // Get user's followers
 api.getFollowing(userId)    // Get user's following
 ```
 
+### Live Activity Tracking
+```typescript
+api.getCurrentActivity()           // Get current active activity (if any)
+api.startLiveActivity(data)        // Start new live activity
+api.addActivityPoints(id, points)  // Send GPS points batch
+api.pauseActivity(id)              // Pause activity
+api.resumeActivity(id)             // Resume paused activity
+api.finishActivity(id, data)       // Complete and save activity
+api.discardActivity(id)            // Delete/cancel activity
+```
+
 ---
 
 ## Screens
@@ -457,6 +507,77 @@ api.getFollowing(userId)    // Get user's following
 - Password visibility toggle
 - Navigation between auth screens
 
+### ActivityRecordingScreen
+- Sport type selector (Running, Cycling, Swimming, Gym)
+- Start/Pause/Resume/Stop controls
+- Live timer and stats (distance, pace, calories, elevation)
+- GPS tracking with expo-location
+- Milestones with best/average time comparisons
+- Server sync every 30 seconds
+- Save or discard activity options
+
+---
+
+## Live Activity Tracking
+
+The app supports real-time GPS activity tracking with server synchronization.
+
+### Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LIVE TRACKING FLOW                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. START                                                   │
+│     POST /api/activities/start                              │
+│     └── Creates activity with status='in_progress'          │
+│                                                             │
+│  2. TRACK (Loop every 30 seconds)                           │
+│     POST /api/activities/{id}/points                        │
+│     └── Sends batched GPS points, returns updated stats     │
+│                                                             │
+│  3. PAUSE (Optional)                                        │
+│     POST /api/activities/{id}/pause                         │
+│     └── Sets status='paused', records pause time            │
+│                                                             │
+│  4. RESUME (After pause)                                    │
+│     POST /api/activities/{id}/resume                        │
+│     └── Sets status='in_progress', tracks paused duration   │
+│                                                             │
+│  5. FINISH                                                  │
+│     POST /api/activities/{id}/finish                        │
+│     └── Sets status='completed', calculates final stats     │
+│                                                             │
+│  6. DISCARD (Alternative to finish)                         │
+│     DELETE /api/activities/{id}/discard                     │
+│     └── Deletes the activity entirely                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### GPS Point Structure
+
+```typescript
+interface GpsPoint {
+  lat: number;        // Latitude (-90 to 90)
+  lng: number;        // Longitude (-180 to 180)
+  ele?: number;       // Elevation in meters
+  time?: string;      // ISO 8601 timestamp
+  hr?: number;        // Heart rate (0-300)
+  speed?: number;     // Speed in m/s
+  cadence?: number;   // Steps/min or rpm
+}
+```
+
+### Key Features
+
+- **Local distance calculation** using Haversine formula for immediate UI feedback
+- **Server-side stats** for accurate totals (synced every 30 seconds)
+- **Auto-recovery** of existing active activity on app restart
+- **Background location** support (requires additional permissions)
+- **Offline buffering** - GPS points saved locally until sync succeeds
+
 ---
 
 ## TODO / Future Features
@@ -464,7 +585,7 @@ api.getFollowing(userId)    // Get user's following
 - [ ] Post detail screen with comments
 - [ ] Event detail screen with registration
 - [ ] Activity detail screen with map
-- [ ] Activity tracking (GPS)
+- [x] Activity tracking (GPS) - Implemented with live server sync
 - [ ] Photo upload for posts
 - [ ] Push notifications
 - [ ] Settings screen
@@ -472,6 +593,8 @@ api.getFollowing(userId)    // Get user's following
 - [ ] Followers/Following lists
 - [ ] Search functionality
 - [ ] Dark mode support
+- [ ] Heart rate monitor integration
+- [ ] Activity map preview
 
 ---
 
@@ -508,6 +631,18 @@ npx tsc --noEmit
 npx expo start --clear
 rm -rf node_modules && npm install
 ```
+
+**Location permissions not working:**
+1. On iOS: Check Settings > Privacy > Location Services
+2. On Android: Check Settings > Apps > Racefy > Permissions
+3. For background location on Android 10+: Select "Allow all the time"
+4. Ensure location services are enabled on the device
+
+**Activity tracking not syncing:**
+1. Check API connection (verify network)
+2. Look for errors in console logs
+3. Ensure user is authenticated
+4. Check if server is running: `./vendor/bin/sail ps`
 
 ---
 

@@ -321,6 +321,111 @@ class ApiService {
     return response.data;
   }
 
+  // ============ LIVE ACTIVITY TRACKING ============
+
+  /**
+   * Get current active activity (if any)
+   */
+  async getCurrentActivity(): Promise<Types.Activity | null> {
+    const response = await this.request<{ data: Types.Activity | null }>(
+      '/activities/current'
+    );
+    return response.data;
+  }
+
+  /**
+   * Start a new live activity
+   */
+  async startLiveActivity(data: {
+    sport_type_id: number;
+    title?: string;
+    started_at?: string;
+  }): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      '/activities/start',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Add GPS points to an active activity
+   */
+  async addActivityPoints(
+    activityId: number,
+    points: Types.GpsPoint[]
+  ): Promise<{
+    points_count: number;
+    total_points: number;
+    stats: { distance: number; duration: number; elevation_gain: number };
+  }> {
+    const response = await this.request<{
+      points_count: number;
+      total_points: number;
+      stats: { distance: number; duration: number; elevation_gain: number };
+    }>(`/activities/${activityId}/points`, {
+      method: 'POST',
+      body: JSON.stringify({ points }),
+    });
+    return response;
+  }
+
+  /**
+   * Pause an active activity
+   */
+  async pauseActivity(activityId: number): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/pause`,
+      { method: 'POST' }
+    );
+    return response.data;
+  }
+
+  /**
+   * Resume a paused activity
+   */
+  async resumeActivity(activityId: number): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/resume`,
+      { method: 'POST' }
+    );
+    return response.data;
+  }
+
+  /**
+   * Finish an active activity
+   */
+  async finishActivity(
+    activityId: number,
+    data?: {
+      title?: string;
+      description?: string;
+      ended_at?: string;
+      calories?: number;
+      avg_heart_rate?: number;
+      max_heart_rate?: number;
+    }
+  ): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/finish`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Discard/cancel an active activity
+   */
+  async discardActivity(activityId: number): Promise<void> {
+    await this.request(`/activities/${activityId}/discard`, { method: 'DELETE' });
+  }
+
   async importGpx(file: FormData): Promise<Types.Activity> {
     const response = await fetch(`${API_BASE_URL}/activities/import`, {
       method: 'POST',

@@ -140,7 +140,7 @@ export interface Activity {
   title: string;
   description: string | null;
   started_at: string;
-  ended_at: string;
+  ended_at: string | null;
   duration: number;
   distance: number;
   elevation_gain: number | null;
@@ -151,6 +151,11 @@ export interface Activity {
   max_heart_rate: number | null;
   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
   is_private: boolean;
+  // Live tracking fields
+  status: 'in_progress' | 'paused' | 'completed';
+  is_active: boolean;
+  total_paused_duration: number;
+  last_point_at: string | null;
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
@@ -158,6 +163,17 @@ export interface Activity {
   formatted_duration?: string;
   formatted_distance?: string;
   pace?: number;
+}
+
+// GPS Point for live tracking
+export interface GpsPoint {
+  lat: number;
+  lng: number;
+  ele?: number;
+  time?: string;
+  hr?: number;
+  speed?: number;
+  cadence?: number;
 }
 
 export interface CreateActivityRequest {

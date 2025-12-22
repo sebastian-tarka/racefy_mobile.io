@@ -388,20 +388,20 @@ const LOCAL_IP = '10.27.198.154';
 
 // API Base URL configuration
 const getBaseUrl = (): string => {
-  if (__DEV__) {
-    // Development - API runs on port 8080 via Laravel Sail/Docker
-    if (Platform.OS === 'android') {
-      // Android Emulator uses 10.0.2.2 to access host machine's localhost
-      return 'http://10.0.2.2:8080/api';
-    } else if (Platform.OS === 'ios') {
-      // iOS Simulator can use localhost directly
-      return 'http://localhost:8080/api';
-    }
-    // Physical device / Expo Go - use your computer's local IP
-    return `http://${LOCAL_IP}:8080/api`;
-  }
-  // Production
-  return 'https://api.racefy.app/api';
+   if (__DEV__) {
+      // Development - API runs on port 8080 via Laravel Sail/Docker
+      if (Platform.OS === 'android') {
+         // Android Emulator uses 10.0.2.2 to access host machine's localhost
+         return 'http://10.0.2.2:8080/api';
+      } else if (Platform.OS === 'ios') {
+         // iOS Simulator can use localhost directly
+         return 'http://localhost:8080/api';
+      }
+      // Physical device / Expo Go - use your computer's local IP
+      return `http://${LOCAL_IP}:8080/api`;
+   }
+   // Production
+   return 'https://api.racefy.app/api';
 };
 
 export const API_BASE_URL = getBaseUrl();
@@ -458,355 +458,371 @@ export const API_BASE_URL = getBaseUrl();
 // ============ USER & AUTH ============
 
 export interface User {
-  id: number;
-  name: string;
-  username: string;  // URL-safe handle (e.g., "john_doe")
-  email: string;
-  email_verified_at: string | null;
-  avatar: string | null;
-  bio: string | null;
-  created_at: string;
-  updated_at: string;
+   id: number;
+   name: string;
+   username: string;  // URL-safe handle (e.g., "john_doe")
+   email: string;
+   email_verified_at: string | null;
+   avatar: string | null;
+   bio: string | null;
+   created_at: string;
+   updated_at: string;
 }
 
 export interface UserProfile extends User {
-  followers_count: number;
-  following_count: number;
-  posts_count: number;
-  is_following?: boolean;  // Only when viewing other users
+   followers_count: number;
+   following_count: number;
+   posts_count: number;
+   is_following?: boolean;  // Only when viewing other users
 }
 
 export interface AuthResponse {
-  user: User;
-  access_token: string;
-  token_type: 'Bearer';
+   user: User;
+   access_token: string;
+   token_type: 'Bearer';
 }
 
 export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  password_confirmation: string;
+   name: string;
+   email: string;
+   password: string;
+   password_confirmation: string;
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+   email: string;
+   password: string;
 }
 
 // ============ SPORT TYPES ============
 
 export interface SportType {
-  id: number;
-  name: string;
-  slug: string;
-  icon: string | null;
-  is_active: boolean;
+   id: number;
+   name: string;
+   slug: string;
+   icon: string | null;
+   is_active: boolean;
 }
 
 // ============ POSTS ============
 
 export interface Post {
-  id: number;
-  user_id: number;
-  type: 'general' | 'event' | 'activity';
-  title: string | null;
-  content: string;
-  visibility: 'public' | 'followers' | 'private';
-  status: 'draft' | 'published';
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  updated_at: string;
-  user?: User;
-  photos?: Photo[];
-  event?: Event;
-  activity?: Activity;
-  is_liked?: boolean;
+   id: number;
+   user_id: number;
+   type: 'general' | 'event' | 'activity';
+   title: string | null;
+   content: string;
+   visibility: 'public' | 'followers' | 'private';
+   status: 'draft' | 'published';
+   likes_count: number;
+   comments_count: number;
+   created_at: string;
+   updated_at: string;
+   user?: User;
+   photos?: Photo[];
+   event?: Event;
+   activity?: Activity;
+   is_liked?: boolean;
 }
 
 export interface CreatePostRequest {
-  title?: string;
-  content: string;
-  visibility?: 'public' | 'followers' | 'private';
-  status?: 'draft' | 'published';
+   title?: string;
+   content: string;
+   visibility?: 'public' | 'followers' | 'private';
+   status?: 'draft' | 'published';
 }
 
 // ============ EVENTS ============
 
 export interface Event {
-  id: number;
-  post_id: number;
-  sport_type_id: number;
-  location_name: string;
-  latitude: number;
-  longitude: number;
-  starts_at: string;
-  ends_at: string;
-  registration_opens_at: string | null;
-  registration_closes_at: string | null;
-  max_participants: number | null;
-  participants_count: number;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
-  distance: number | null; // meters
-  entry_fee: number | null;
-  sport_type?: SportType;
-  post?: Post;
-  is_registered?: boolean;
-  available_spots?: number | null;
+   id: number;
+   post_id: number;
+   sport_type_id: number;
+   location_name: string;
+   latitude: number;
+   longitude: number;
+   starts_at: string;
+   ends_at: string;
+   registration_opens_at: string | null;
+   registration_closes_at: string | null;
+   max_participants: number | null;
+   participants_count: number;
+   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+   distance: number | null; // meters
+   entry_fee: number | null;
+   sport_type?: SportType;
+   post?: Post;
+   is_registered?: boolean;
+   available_spots?: number | null;
 }
 
 export interface CreateEventRequest {
-  title: string;
-  content: string;
-  sport_type_id: number;
-  location_name: string;
-  latitude: number;
-  longitude: number;
-  starts_at: string; // ISO 8601
-  ends_at: string;
-  registration_opens_at?: string;
-  registration_closes_at?: string;
-  max_participants?: number;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
-  distance?: number;
-  entry_fee?: number;
+   title: string;
+   content: string;
+   sport_type_id: number;
+   location_name: string;
+   latitude: number;
+   longitude: number;
+   starts_at: string; // ISO 8601
+   ends_at: string;
+   registration_opens_at?: string;
+   registration_closes_at?: string;
+   max_participants?: number;
+   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+   distance?: number;
+   entry_fee?: number;
 }
 
 export interface EventRegistration {
-  id: number;
-  event_id: number;
-  user_id: number;
-  status: 'registered' | 'waitlisted' | 'cancelled' | 'attended';
-  registration_number: number;
-  notes: string | null;
-  registered_at: string;
-  event?: Event;
-  user?: User;
+   id: number;
+   event_id: number;
+   user_id: number;
+   status: 'registered' | 'waitlisted' | 'cancelled' | 'attended';
+   registration_number: number;
+   notes: string | null;
+   registered_at: string;
+   event?: Event;
+   user?: User;
 }
 
 // ============ ACTIVITIES ============
 
 export interface Activity {
-  id: number;
-  user_id: number;
-  post_id: number | null;
-  sport_type_id: number;
-  event_id: number | null;
-  title: string;
-  description: string | null;
-  started_at: string;
-  ended_at: string;
-  duration: number; // seconds
-  distance: number; // meters
-  elevation_gain: number | null;
-  calories: number | null;
-  avg_speed: number | null; // m/s
-  max_speed: number | null;
-  avg_heart_rate: number | null;
-  max_heart_rate: number | null;
-  source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
-  is_private: boolean;
-  sport_type?: SportType;
-  gps_track?: GpsTrack;
-  photos?: Photo[];
-  // Computed
-  formatted_duration?: string;
-  formatted_distance?: string;
-  pace?: number;
+   id: number;
+   user_id: number;
+   post_id: number | null;
+   sport_type_id: number;
+   event_id: number | null;
+   title: string;
+   description: string | null;
+   started_at: string;
+   ended_at: string | null;
+   duration: number; // seconds
+   distance: number; // meters
+   elevation_gain: number | null;
+   calories: number | null;
+   avg_speed: number | null; // m/s
+   max_speed: number | null;
+   avg_heart_rate: number | null;
+   max_heart_rate: number | null;
+   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
+   is_private: boolean;
+   // Live tracking fields
+   status: 'in_progress' | 'paused' | 'completed';
+   is_active: boolean;
+   total_paused_duration: number; // seconds
+   last_point_at: string | null;
+   sport_type?: SportType;
+   gps_track?: GpsTrack;
+   photos?: Photo[];
+   // Computed
+   formatted_duration?: string;
+   formatted_distance?: string;
+   pace?: number;
 }
 
 export interface CreateActivityRequest {
-  sport_type_id: number;
-  title: string;
-  description?: string;
-  started_at: string;
-  ended_at: string;
-  duration: number;
-  distance: number;
-  elevation_gain?: number;
-  calories?: number;
-  avg_speed?: number;
-  max_speed?: number;
-  avg_heart_rate?: number;
-  max_heart_rate?: number;
-  source: 'app' | 'manual';
-  is_private?: boolean;
-  // GPS track data (GeoJSON)
-  track_data?: GeoJSONLineString;
+   sport_type_id: number;
+   title: string;
+   description?: string;
+   started_at: string;
+   ended_at: string;
+   duration: number;
+   distance: number;
+   elevation_gain?: number;
+   calories?: number;
+   avg_speed?: number;
+   max_speed?: number;
+   avg_heart_rate?: number;
+   max_heart_rate?: number;
+   source: 'app' | 'manual';
+   is_private?: boolean;
+   // GPS track data (GeoJSON)
+   track_data?: GeoJSONLineString;
 }
 
 export interface GpsTrack {
-  id: number;
-  activity_id: number;
-  track_data: GeoJSONLineString;
-  points_count: number;
-  bounds: {
-    min_lat: number;
-    max_lat: number;
-    min_lng: number;
-    max_lng: number;
-  };
-  simplified_track: GeoJSONLineString;
+   id: number;
+   activity_id: number;
+   track_data: GeoJSONLineString;
+   points_count: number;
+   bounds: {
+      min_lat: number;
+      max_lat: number;
+      min_lng: number;
+      max_lng: number;
+   };
+   simplified_track: GeoJSONLineString;
 }
 
 export interface GeoJSONLineString {
-  type: 'LineString';
-  coordinates: [number, number][]; // [longitude, latitude][]
+   type: 'LineString';
+   coordinates: [number, number][]; // [longitude, latitude][]
+}
+
+// GPS Point for live tracking
+export interface GpsPoint {
+   lat: number;           // Required: latitude (-90 to 90)
+   lng: number;           // Required: longitude (-180 to 180)
+   ele?: number;          // Optional: elevation in meters
+   time?: string;         // Optional: ISO 8601 timestamp
+   hr?: number;           // Optional: heart rate (0-300)
+   speed?: number;        // Optional: speed in m/s
+   cadence?: number;      // Optional: cadence (steps/min or rpm)
 }
 
 // ============ COMMENTS ============
 
 export interface Comment {
-  id: number;
-  user_id: number;
-  post_id: number;
-  parent_id: number | null;
-  content: string;
-  likes_count: number;
-  created_at: string;
-  user?: User;
-  replies?: Comment[];
-  is_liked?: boolean;
+   id: number;
+   user_id: number;
+   post_id: number;
+   parent_id: number | null;
+   content: string;
+   likes_count: number;
+   created_at: string;
+   user?: User;
+   replies?: Comment[];
+   is_liked?: boolean;
 }
 
 export interface CreateCommentRequest {
-  content: string;
-  parent_id?: number;
+   content: string;
+   parent_id?: number;
 }
 
 // ============ PHOTOS ============
 
 export interface Photo {
-  id: number;
-  user_id: number;
-  path: string;
-  filename: string;
-  mime_type: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  caption: string | null;
-  url: string; // Full URL to image
+   id: number;
+   user_id: number;
+   path: string;
+   filename: string;
+   mime_type: string;
+   size: number;
+   width: number | null;
+   height: number | null;
+   caption: string | null;
+   url: string; // Full URL to image
 }
 
 // ============ FOLLOWS ============
 
 export interface FollowStatus {
-  is_following: boolean;
-  is_followed_by: boolean;
+   is_following: boolean;
+   is_followed_by: boolean;
 }
 
 export interface UserWithFollowCounts extends User {
-  followers_count: number;
-  following_count: number;
+   followers_count: number;
+   following_count: number;
 }
 
 // ============ STATISTICS ============
 
 export interface UserStats {
-  activities: {
-    total: number;
-    this_month: number;
-    total_distance: number;
-    total_duration: number;
-  };
-  posts: {
-    total: number;
-    total_likes: number;
-  };
-  events: {
-    registered: number;
-    attended: number;
-  };
-  social: {
-    followers: number;
-    following: number;
-  };
+   activities: {
+      total: number;
+      this_month: number;
+      total_distance: number;
+      total_duration: number;
+   };
+   posts: {
+      total: number;
+      total_likes: number;
+   };
+   events: {
+      registered: number;
+      attended: number;
+   };
+   social: {
+      followers: number;
+      following: number;
+   };
 }
 
 export interface ActivityStats {
-  count: number;
-  totals: {
-    distance: number;
-    duration: number;
-    elevation_gain: number;
-    calories: number;
-  };
-  averages: {
-    distance: number;
-    duration: number;
-    speed: number;
-    heart_rate: number;
-  };
-  bests: {
-    longest_distance: ActivityBest | null;
-    longest_duration: ActivityBest | null;
-    fastest_speed: ActivityBest | null;
-  };
-  by_sport_type: Record<number, {
-    count: number;
-    distance: number;
-    duration: number;
-  }>;
+   count: number;
+   totals: {
+      distance: number;
+      duration: number;
+      elevation_gain: number;
+      calories: number;
+   };
+   averages: {
+      distance: number;
+      duration: number;
+      speed: number;
+      heart_rate: number;
+   };
+   bests: {
+      longest_distance: ActivityBest | null;
+      longest_duration: ActivityBest | null;
+      fastest_speed: ActivityBest | null;
+   };
+   by_sport_type: Record<number, {
+      count: number;
+      distance: number;
+      duration: number;
+   }>;
 }
 
 export interface ActivityBest {
-  id: number;
-  title: string;
-  distance?: number;
-  duration?: number;
-  max_speed?: number;
-  date: string;
+   id: number;
+   title: string;
+   distance?: number;
+   duration?: number;
+   max_speed?: number;
+   date: string;
 }
 
 export interface WeeklyStats {
-  week_start: string;
-  week_end: string;
-  totals: {
-    count: number;
-    distance: number;
-    duration: number;
-  };
-  daily: Record<string, {
-    count: number;
-    distance: number;
-    duration: number;
-  }>;
+   week_start: string;
+   week_end: string;
+   totals: {
+      count: number;
+      distance: number;
+      duration: number;
+   };
+   daily: Record<string, {
+      count: number;
+      distance: number;
+      duration: number;
+   }>;
 }
 
 // ============ PAGINATION ============
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  links: {
-    first: string;
-    last: string;
-    prev: string | null;
-    next: string | null;
-  };
-  meta: {
-    current_page: number;
-    from: number;
-    last_page: number;
-    path: string;
-    per_page: number;
-    to: number;
-    total: number;
-  };
+   data: T[];
+   links: {
+      first: string;
+      last: string;
+      prev: string | null;
+      next: string | null;
+   };
+   meta: {
+      current_page: number;
+      from: number;
+      last_page: number;
+      path: string;
+      per_page: number;
+      to: number;
+      total: number;
+   };
 }
 
 // ============ API RESPONSE ============
 
 export interface ApiResponse<T> {
-  data: T;
-  message?: string;
+   data: T;
+   message?: string;
 }
 
 export interface ApiError {
-  message: string;
-  errors?: Record<string, string[]>;
+   message: string;
+   errors?: Record<string, string[]>;
 }
 ```
 
@@ -1106,6 +1122,96 @@ class ApiService {
     return data.data;
   }
 
+  // ============ LIVE ACTIVITY TRACKING ============
+
+  /**
+   * Get current active activity (if any)
+   */
+  async getCurrentActivity(): Promise<Types.Activity | null> {
+    const response = await this.request<{ data: Types.Activity | null }>('/activities/current');
+    return response.data;
+  }
+
+  /**
+   * Start a new live activity
+   */
+  async startActivity(data: {
+    sport_type_id: number;
+    title?: string;
+    started_at?: string;
+  }): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>('/activities/start', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  /**
+   * Add GPS points to an active activity
+   */
+  async addActivityPoints(activityId: number, points: Types.GpsPoint[]): Promise<{
+    points_count: number;
+    total_points: number;
+    stats: { distance: number; duration: number; elevation_gain: number };
+  }> {
+    const response = await this.request<any>(`/activities/${activityId}/points`, {
+      method: 'POST',
+      body: JSON.stringify({ points }),
+    });
+    return response;
+  }
+
+  /**
+   * Pause an active activity
+   */
+  async pauseActivity(activityId: number): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/pause`,
+      { method: 'POST' }
+    );
+    return response.data;
+  }
+
+  /**
+   * Resume a paused activity
+   */
+  async resumeActivity(activityId: number): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/resume`,
+      { method: 'POST' }
+    );
+    return response.data;
+  }
+
+  /**
+   * Finish an active activity
+   */
+  async finishActivity(activityId: number, data?: {
+    title?: string;
+    description?: string;
+    ended_at?: string;
+    calories?: number;
+    avg_heart_rate?: number;
+    max_heart_rate?: number;
+  }): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${activityId}/finish`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data || {}),
+      }
+    );
+    return response.data;
+  }
+
+  /**
+   * Discard/cancel an active activity
+   */
+  async discardActivity(activityId: number): Promise<void> {
+    await this.request(`/activities/${activityId}/discard`, { method: 'DELETE' });
+  }
+
   // ============ PHOTOS ============
 
   async uploadPostPhoto(postId: number, formData: FormData): Promise<Types.Photo> {
@@ -1359,73 +1465,73 @@ import { api } from '../services/api';
 import type { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthContextType {
-    user: User | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    login: (data: LoginRequest) => Promise<void>;
-    register: (data: RegisterRequest) => Promise<void>;
-    logout: () => Promise<void>;
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        initAuth();
-    }, []);
+  useEffect(() => {
+    initAuth();
+  }, []);
 
-    async function initAuth() {
-        try {
-            await api.init();
-            if (api.isAuthenticated()) {
-                const userData = await api.getUser();
-                setUser(userData);
-            }
-        } catch (error) {
-            await api.clearToken();
-        } finally {
-            setIsLoading(false);
-        }
+  async function initAuth() {
+    try {
+      await api.init();
+      if (api.isAuthenticated()) {
+        const userData = await api.getUser();
+        setUser(userData);
+      }
+    } catch (error) {
+      await api.clearToken();
+    } finally {
+      setIsLoading(false);
     }
+  }
 
-    async function login(data: LoginRequest) {
-        const response = await api.login(data);
-        setUser(response.user);
-    }
+  async function login(data: LoginRequest) {
+    const response = await api.login(data);
+    setUser(response.user);
+  }
 
-    async function register(data: RegisterRequest) {
-        const response = await api.register(data);
-        setUser(response.user);
-    }
+  async function register(data: RegisterRequest) {
+    const response = await api.register(data);
+    setUser(response.user);
+  }
 
-    async function logout() {
-        await api.logout();
-        setUser(null);
-    }
+  async function logout() {
+    await api.logout();
+    setUser(null);
+  }
 
-    return (
-        <AuthContext.Provider
-            value={{
+  return (
+    <AuthContext.Provider
+      value={{
         user,
-            isLoading,
-            isAuthenticated: !!user,
-            login,
-            register,
-            logout,
-    }}
->
-    {children}
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
     </AuthContext.Provider>
-);
+  );
 }
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) throw new Error('useAuth must be used within AuthProvider');
-    return context;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
 };
 ```
 
@@ -1436,61 +1542,61 @@ import { api } from '../services/api';
 import type { Post } from '../types/api';
 
 export function useFeed() {
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-    const fetchFeed = useCallback(async (reset = false) => {
-        if (isLoading) return;
+  const fetchFeed = useCallback(async (reset = false) => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const currentPage = reset ? 1 : page;
+      const response = await api.getFeed(currentPage);
+      
+      setPosts(prev => reset ? response.data : [...prev, ...response.data]);
+      setHasMore(response.meta.current_page < response.meta.last_page);
+      setPage(currentPage + 1);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, isLoading]);
 
-        setIsLoading(true);
-        try {
-            const currentPage = reset ? 1 : page;
-            const response = await api.getFeed(currentPage);
+  const refresh = () => fetchFeed(true);
+  const loadMore = () => hasMore && fetchFeed(false);
 
-            setPosts(prev => reset ? response.data : [...prev, ...response.data]);
-            setHasMore(response.meta.current_page < response.meta.last_page);
-            setPage(currentPage + 1);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [page, isLoading]);
+  const likePost = async (postId: number) => {
+    await api.likePost(postId);
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId
+          ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
+          : p
+      )
+    );
+  };
 
-    const refresh = () => fetchFeed(true);
-    const loadMore = () => hasMore && fetchFeed(false);
+  const unlikePost = async (postId: number) => {
+    await api.unlikePost(postId);
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId
+          ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
+          : p
+      )
+    );
+  };
 
-    const likePost = async (postId: number) => {
-        await api.likePost(postId);
-        setPosts(prev =>
-            prev.map(p =>
-                p.id === postId
-                    ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
-                    : p
-            )
-        );
-    };
-
-    const unlikePost = async (postId: number) => {
-        await api.unlikePost(postId);
-        setPosts(prev =>
-            prev.map(p =>
-                p.id === postId
-                    ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
-                    : p
-            )
-        );
-    };
-
-    return {
-        posts,
-        isLoading,
-        hasMore,
-        refresh,
-        loadMore,
-        likePost,
-        unlikePost,
-    };
+  return {
+    posts,
+    isLoading,
+    hasMore,
+    refresh,
+    loadMore,
+    likePost,
+    unlikePost,
+  };
 }
 ```
 
@@ -1504,93 +1610,530 @@ import Geolocation from 'react-native-geolocation-service';
 import type { GeoJSONLineString } from '../types/api';
 
 interface TrackPoint {
-    latitude: number;
-    longitude: number;
-    timestamp: number;
-    speed?: number;
+  latitude: number;
+  longitude: number;
+  timestamp: number;
+  speed?: number;
 }
 
 class TrackingService {
-    private watchId: number | null = null;
-    private points: TrackPoint[] = [];
-    private startTime: number = 0;
+  private watchId: number | null = null;
+  private points: TrackPoint[] = [];
+  private startTime: number = 0;
 
-    start(onPoint: (point: TrackPoint) => void): void {
-        this.points = [];
-        this.startTime = Date.now();
+  start(onPoint: (point: TrackPoint) => void): void {
+    this.points = [];
+    this.startTime = Date.now();
 
-        this.watchId = Geolocation.watchPosition(
-            (position) => {
-                const point: TrackPoint = {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    timestamp: position.timestamp,
-                    speed: position.coords.speed ?? undefined,
-                };
-                this.points.push(point);
-                onPoint(point);
-            },
-            (error) => console.error('GPS Error:', error),
-            {
-                enableHighAccuracy: true,
-                distanceFilter: 10, // meters
-                interval: 5000, // ms
-                fastestInterval: 2000,
-            }
-        );
-    }
-
-    stop(): { trackData: GeoJSONLineString; duration: number; distance: number } {
-        if (this.watchId !== null) {
-            Geolocation.clearWatch(this.watchId);
-            this.watchId = null;
-        }
-
-        const trackData: GeoJSONLineString = {
-            type: 'LineString',
-            coordinates: this.points.map(p => [p.longitude, p.latitude]),
+    this.watchId = Geolocation.watchPosition(
+      (position) => {
+        const point: TrackPoint = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          timestamp: position.timestamp,
+          speed: position.coords.speed ?? undefined,
         };
+        this.points.push(point);
+        onPoint(point);
+      },
+      (error) => console.error('GPS Error:', error),
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 10, // meters
+        interval: 5000, // ms
+        fastestInterval: 2000,
+      }
+    );
+  }
 
-        const duration = Math.round((Date.now() - this.startTime) / 1000);
-        const distance = this.calculateDistance();
-
-        return { trackData, duration, distance };
+  stop(): { trackData: GeoJSONLineString; duration: number; distance: number } {
+    if (this.watchId !== null) {
+      Geolocation.clearWatch(this.watchId);
+      this.watchId = null;
     }
 
-    private calculateDistance(): number {
-        let total = 0;
-        for (let i = 1; i < this.points.length; i++) {
-            total += this.haversine(
-                this.points[i - 1].latitude,
-                this.points[i - 1].longitude,
-                this.points[i].latitude,
-                this.points[i].longitude
-            );
-        }
-        return Math.round(total);
-    }
+    const trackData: GeoJSONLineString = {
+      type: 'LineString',
+      coordinates: this.points.map(p => [p.longitude, p.latitude]),
+    };
 
-    private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371000; // Earth radius in meters
-        const dLat = this.toRad(lat2 - lat1);
-        const dLon = this.toRad(lon2 - lon1);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(this.toRad(lat1)) *
-            Math.cos(this.toRad(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
+    const duration = Math.round((Date.now() - this.startTime) / 1000);
+    const distance = this.calculateDistance();
 
-    private toRad(deg: number): number {
-        return deg * (Math.PI / 180);
+    return { trackData, duration, distance };
+  }
+
+  private calculateDistance(): number {
+    let total = 0;
+    for (let i = 1; i < this.points.length; i++) {
+      total += this.haversine(
+        this.points[i - 1].latitude,
+        this.points[i - 1].longitude,
+        this.points[i].latitude,
+        this.points[i].longitude
+      );
     }
+    return Math.round(total);
+  }
+
+  private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371000; // Earth radius in meters
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
+        Math.cos(this.toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRad(deg: number): number {
+    return deg * (Math.PI / 180);
+  }
 }
 
 export const tracking = new TrackingService();
 ```
+
+---
+
+## Live Activity Tracking Hook
+
+This hook integrates with the API for real-time activity tracking with server sync:
+
+```typescript
+// hooks/useLiveActivity.ts
+import { useState, useCallback, useRef, useEffect } from 'react';
+import Geolocation from 'react-native-geolocation-service';
+import { api } from '../services/api';
+import type { Activity, GpsPoint } from '../types/api';
+
+interface LiveActivityState {
+  activity: Activity | null;
+  isTracking: boolean;
+  isPaused: boolean;
+  currentStats: {
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+  };
+}
+
+export function useLiveActivity() {
+  const [state, setState] = useState<LiveActivityState>({
+    activity: null,
+    isTracking: false,
+    isPaused: false,
+    currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+  });
+
+  const watchId = useRef<number | null>(null);
+  const pointsBuffer = useRef<GpsPoint[]>([]);
+  const syncInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Check for existing active activity on mount
+  useEffect(() => {
+    checkExistingActivity();
+  }, []);
+
+  const checkExistingActivity = async () => {
+    try {
+      const activity = await api.getCurrentActivity();
+      if (activity) {
+        setState(prev => ({
+          ...prev,
+          activity,
+          isTracking: activity.status === 'in_progress',
+          isPaused: activity.status === 'paused',
+          currentStats: {
+            distance: activity.distance,
+            duration: activity.duration,
+            elevation_gain: activity.elevation_gain || 0,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to check existing activity:', error);
+    }
+  };
+
+  const startTracking = useCallback(async (sportTypeId: number, title?: string) => {
+    try {
+      // Start activity on server
+      const activity = await api.startActivity({
+        sport_type_id: sportTypeId,
+        title,
+        started_at: new Date().toISOString(),
+      });
+
+      setState(prev => ({
+        ...prev,
+        activity,
+        isTracking: true,
+        isPaused: false,
+      }));
+
+      // Start GPS tracking
+      watchId.current = Geolocation.watchPosition(
+        (position) => {
+          const point: GpsPoint = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            ele: position.coords.altitude ?? undefined,
+            time: new Date(position.timestamp).toISOString(),
+            speed: position.coords.speed ?? undefined,
+          };
+          pointsBuffer.current.push(point);
+        },
+        (error) => console.error('GPS Error:', error),
+        {
+          enableHighAccuracy: true,
+          distanceFilter: 10,
+          interval: 5000,
+          fastestInterval: 2000,
+        }
+      );
+
+      // Sync points to server every 30 seconds
+      syncInterval.current = setInterval(() => syncPoints(activity.id), 30000);
+
+      return activity;
+    } catch (error) {
+      console.error('Failed to start activity:', error);
+      throw error;
+    }
+  }, []);
+
+  const syncPoints = async (activityId: number) => {
+    if (pointsBuffer.current.length === 0) return;
+
+    const pointsToSync = [...pointsBuffer.current];
+    pointsBuffer.current = [];
+
+    try {
+      const result = await api.addActivityPoints(activityId, pointsToSync);
+      setState(prev => ({
+        ...prev,
+        currentStats: result.stats,
+      }));
+    } catch (error) {
+      // Re-add points on failure
+      pointsBuffer.current = [...pointsToSync, ...pointsBuffer.current];
+      console.error('Failed to sync points:', error);
+    }
+  };
+
+  const pauseTracking = useCallback(async () => {
+    if (!state.activity) return;
+
+    try {
+      // Stop GPS
+      if (watchId.current !== null) {
+        Geolocation.clearWatch(watchId.current);
+        watchId.current = null;
+      }
+
+      // Sync remaining points
+      await syncPoints(state.activity.id);
+
+      // Pause on server
+      const activity = await api.pauseActivity(state.activity.id);
+
+      setState(prev => ({
+        ...prev,
+        activity,
+        isTracking: false,
+        isPaused: true,
+      }));
+    } catch (error) {
+      console.error('Failed to pause activity:', error);
+      throw error;
+    }
+  }, [state.activity]);
+
+  const resumeTracking = useCallback(async () => {
+    if (!state.activity) return;
+
+    try {
+      const activity = await api.resumeActivity(state.activity.id);
+
+      // Restart GPS
+      watchId.current = Geolocation.watchPosition(
+        (position) => {
+          const point: GpsPoint = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            ele: position.coords.altitude ?? undefined,
+            time: new Date(position.timestamp).toISOString(),
+            speed: position.coords.speed ?? undefined,
+          };
+          pointsBuffer.current.push(point);
+        },
+        (error) => console.error('GPS Error:', error),
+        {
+          enableHighAccuracy: true,
+          distanceFilter: 10,
+          interval: 5000,
+          fastestInterval: 2000,
+        }
+      );
+
+      // Restart sync interval
+      syncInterval.current = setInterval(() => syncPoints(activity.id), 30000);
+
+      setState(prev => ({
+        ...prev,
+        activity,
+        isTracking: true,
+        isPaused: false,
+      }));
+    } catch (error) {
+      console.error('Failed to resume activity:', error);
+      throw error;
+    }
+  }, [state.activity]);
+
+  const finishTracking = useCallback(async (data?: {
+    title?: string;
+    description?: string;
+    calories?: number;
+  }) => {
+    if (!state.activity) return;
+
+    try {
+      // Stop GPS
+      if (watchId.current !== null) {
+        Geolocation.clearWatch(watchId.current);
+        watchId.current = null;
+      }
+
+      // Clear sync interval
+      if (syncInterval.current) {
+        clearInterval(syncInterval.current);
+        syncInterval.current = null;
+      }
+
+      // Sync remaining points
+      await syncPoints(state.activity.id);
+
+      // Finish on server
+      const activity = await api.finishActivity(state.activity.id, {
+        ...data,
+        ended_at: new Date().toISOString(),
+      });
+
+      setState({
+        activity: null,
+        isTracking: false,
+        isPaused: false,
+        currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+      });
+
+      return activity;
+    } catch (error) {
+      console.error('Failed to finish activity:', error);
+      throw error;
+    }
+  }, [state.activity]);
+
+  const discardTracking = useCallback(async () => {
+    if (!state.activity) return;
+
+    try {
+      // Stop everything
+      if (watchId.current !== null) {
+        Geolocation.clearWatch(watchId.current);
+        watchId.current = null;
+      }
+      if (syncInterval.current) {
+        clearInterval(syncInterval.current);
+        syncInterval.current = null;
+      }
+
+      await api.discardActivity(state.activity.id);
+
+      setState({
+        activity: null,
+        isTracking: false,
+        isPaused: false,
+        currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+      });
+    } catch (error) {
+      console.error('Failed to discard activity:', error);
+      throw error;
+    }
+  }, [state.activity]);
+
+  return {
+    ...state,
+    startTracking,
+    pauseTracking,
+    resumeTracking,
+    finishTracking,
+    discardTracking,
+  };
+}
+```
+
+### Live Tracking Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    LIVE TRACKING FLOW                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. START                                                   │
+│     POST /api/activities/start                              │
+│     └── Creates activity with status='in_progress'          │
+│                                                             │
+│  2. TRACK (Loop every 30 seconds)                           │
+│     POST /api/activities/{id}/points                        │
+│     └── Sends batched GPS points, returns updated stats     │
+│                                                             │
+│  3. PAUSE (Optional)                                        │
+│     POST /api/activities/{id}/pause                         │
+│     └── Sets status='paused', records pause time            │
+│                                                             │
+│  4. RESUME (After pause)                                    │
+│     POST /api/activities/{id}/resume                        │
+│     └── Sets status='in_progress', tracks paused duration   │
+│                                                             │
+│  5. FINISH                                                  │
+│     POST /api/activities/{id}/finish                        │
+│     └── Calculates final stats, sets status='completed'     │
+│                                                             │
+│  DISCARD (Cancel without saving)                            │
+│     DELETE /api/activities/{id}/discard                     │
+│     └── Deletes the activity entirely                       │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Social Sharing
+
+Share posts and activities to social media using React Native's built-in Share API:
+
+```typescript
+// utils/share.ts
+import { Share, Platform } from 'react-native';
+
+const APP_URL = 'https://racefy.app'; // Your production URL
+
+interface ShareContent {
+  title?: string;
+  message: string;
+  url: string;
+}
+
+export async function sharePost(postId: number, content: string, title?: string) {
+  const url = `${APP_URL}/posts/${postId}`;
+  const message = title || content.substring(0, 100);
+
+  return shareContent({
+    title: title || 'Racefy Post',
+    message,
+    url,
+  });
+}
+
+export async function shareActivity(activityId: number, title: string, stats: {
+  distance: number;
+  duration: number;
+}) {
+  const url = `${APP_URL}/activities/${activityId}`;
+  const distanceKm = (stats.distance / 1000).toFixed(2);
+  const durationMins = Math.floor(stats.duration / 60);
+
+  const message = `${title} - ${distanceKm} km in ${durationMins} min`;
+
+  return shareContent({
+    title,
+    message,
+    url,
+  });
+}
+
+export async function shareEvent(eventId: number, title: string, date: string) {
+  const url = `${APP_URL}/events/${eventId}`;
+  const formattedDate = new Date(date).toLocaleDateString();
+
+  return shareContent({
+    title,
+    message: `${title} - ${formattedDate}`,
+    url,
+  });
+}
+
+export async function shareProfile(username: string, name: string) {
+  const url = `${APP_URL}/@${username}`;
+
+  return shareContent({
+    title: name,
+    message: `Check out ${name}'s profile on Racefy`,
+    url,
+  });
+}
+
+async function shareContent({ title, message, url }: ShareContent) {
+  try {
+    const result = await Share.share(
+      Platform.OS === 'ios'
+        ? { message: `${message}\n${url}` }
+        : { title, message: `${message}\n${url}` },
+      { dialogTitle: 'Share' }
+    );
+
+    if (result.action === Share.sharedAction) {
+      return { shared: true, activityType: result.activityType };
+    }
+    return { shared: false };
+  } catch (error) {
+    console.error('Share failed:', error);
+    throw error;
+  }
+}
+```
+
+### Usage Example
+
+```typescript
+// In a PostCard component
+import { sharePost } from '../utils/share';
+
+function PostCard({ post }: { post: Post }) {
+  const handleShare = async () => {
+    try {
+      const result = await sharePost(post.id, post.content, post.title);
+      if (result.shared) {
+        // Optionally track share analytics
+        console.log('Shared via:', result.activityType);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not share post');
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={handleShare}>
+      <ShareIcon />
+    </TouchableOpacity>
+  );
+}
+```
+
+### Supported Platforms
+
+The React Native Share API opens the native share sheet which supports:
+
+| Platform | Supported Apps |
+|----------|---------------|
+| **iOS** | Twitter, Facebook, Instagram Stories, WhatsApp, Telegram, Messages, Mail, Copy Link, etc. |
+| **Android** | Twitter, Facebook, WhatsApp, Telegram, Gmail, Copy to Clipboard, etc. |
 
 ---
 
