@@ -71,12 +71,22 @@ class ApiService {
   }
 
   async login(data: Types.LoginRequest): Promise<Types.AuthResponse> {
-    const response = await this.request<Types.AuthResponse>('/login', {
+    const response = await this.request<any>('/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    await this.setToken(response.access_token);
-    return response;
+    console.log('Login response:', JSON.stringify(response, null, 2));
+
+    // Handle both { user, access_token } and { data: { user, access_token } }
+    const authData = response.data || response;
+    const token = authData.access_token || authData.token;
+
+    if (!token) {
+      throw new Error('No access token in response');
+    }
+
+    await this.setToken(token);
+    return { user: authData.user, access_token: token, token_type: 'Bearer' };
   }
 
   async logout(): Promise<void> {

@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (data: LoginRequest) => {
     const response = await api.login(data);
+    console.log('Auth hook received user:', response.user);
     setUser(response.user);
   }, []);
 

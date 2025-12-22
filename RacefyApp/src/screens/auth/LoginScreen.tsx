@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,15 @@ import type { AuthStackParamList } from '../../navigation/types';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
+  // Auto-close modal when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('User authenticated, closing auth modal');
+      navigation.getParent()?.goBack();
+    }
+  }, [isAuthenticated, navigation]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -48,8 +56,14 @@ export function LoginScreen({ navigation }: Props) {
 
     setIsLoading(true);
     try {
+      console.log('Attempting login with:', email);
       await login({ email, password });
+      console.log('Login successful, navigating...');
+      // Navigation should happen automatically when user state changes
+      // But let's also try explicit navigation
+      navigation.getParent()?.goBack();
     } catch (error: any) {
+      console.log('Login error:', error);
       const message =
         error?.message || 'Login failed. Please check your credentials.';
       Alert.alert('Login Failed', message);
