@@ -33,9 +33,13 @@ export function useEvents() {
           page: currentPage,
         });
 
-        setEvents((prev) =>
-          reset ? response.data : [...prev, ...response.data]
-        );
+        setEvents((prev) => {
+          if (reset) return response.data;
+          // Deduplicate by event ID when loading more
+          const existingIds = new Set(prev.map((e) => e.id));
+          const newEvents = response.data.filter((e) => !existingIds.has(e.id));
+          return [...prev, ...newEvents];
+        });
         setHasMore(response.meta.current_page < response.meta.last_page);
         setPage(currentPage + 1);
       } catch (err) {

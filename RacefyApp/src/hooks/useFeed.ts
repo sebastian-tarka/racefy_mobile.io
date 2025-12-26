@@ -25,9 +25,13 @@ export function useFeed() {
         const currentPage = reset ? 1 : page;
         const response = await api.getFeed(currentPage);
 
-        setPosts((prev) =>
-          reset ? response.data : [...prev, ...response.data]
-        );
+        setPosts((prev) => {
+          if (reset) return response.data;
+          // Deduplicate by post ID when loading more
+          const existingIds = new Set(prev.map((p) => p.id));
+          const newPosts = response.data.filter((p) => !existingIds.has(p.id));
+          return [...prev, ...newPosts];
+        });
         setHasMore(response.meta.current_page < response.meta.last_page);
         setPage(currentPage + 1);
       } catch (err) {
