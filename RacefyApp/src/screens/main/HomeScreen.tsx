@@ -1,23 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { api } from '../../services/api';
 import { colors, spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
+type ConnectionStatus = {
+  checked: boolean;
+  connected: boolean;
+  latency?: number;
+  error?: string;
+};
+
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    checked: false,
+    connected: true,
+  });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const checkConnection = useCallback(async () => {
+    const result = await api.checkHealth();
+    setConnectionStatus({
+      checked: true,
+      connected: result.connected,
+      latency: result.latency,
+      error: result.error,
+    });
+    return result.connected;
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await checkConnection();
+    setRefreshing(false);
+  }, [checkConnection]);
+
+  useEffect(() => {
+    checkConnection();
+  }, [checkConnection]);
 
   const features = [
     {
@@ -45,7 +80,34 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {connectionStatus.checked && !connectionStatus.connected && (
+          <TouchableOpacity
+            style={styles.connectionError}
+            onPress={checkConnection}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="cloud-offline" size={20} color={colors.white} />
+            <View style={styles.connectionErrorContent}>
+              <Text style={styles.connectionErrorTitle}>
+                Unable to connect to server
+              </Text>
+              <Text style={styles.connectionErrorMessage}>
+                {connectionStatus.error || 'Check your internet connection'}
+              </Text>
+              <Text style={styles.connectionErrorHint}>
+                API: {api.getBaseUrl()}
+              </Text>
+            </View>
+            <Ionicons name="refresh" size={20} color={colors.white} />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Ionicons name="walk" size={32} color={colors.primary} />
@@ -158,6 +220,35 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
+  },
+  connectionError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.error,
+    padding: spacing.md,
+    borderRadius: 12,
+    marginBottom: spacing.lg,
+  },
+  connectionErrorContent: {
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
+  connectionErrorTitle: {
+    color: colors.white,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  connectionErrorMessage: {
+    color: colors.white,
+    fontSize: fontSize.sm,
+    opacity: 0.9,
+    marginTop: 2,
+  },
+  connectionErrorHint: {
+    color: colors.white,
+    fontSize: fontSize.xs,
+    opacity: 0.7,
+    marginTop: 4,
   },
   header: {
     marginBottom: spacing.xl,

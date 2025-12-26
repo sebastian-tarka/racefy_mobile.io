@@ -59,6 +59,58 @@ class ApiService {
     return this.token;
   }
 
+  getBaseUrl(): string {
+    return API_BASE_URL;
+  }
+
+  // ============ HEALTH CHECK ============
+
+  /**
+   * Check if API is reachable
+   * Returns { connected: true, latency: number } on success
+   * Returns { connected: false, error: string } on failure
+   */
+  async checkHealth(): Promise<{
+    connected: boolean;
+    latency?: number;
+    error?: string;
+    service?: string;
+  }> {
+    const startTime = Date.now();
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(`${API_BASE_URL}/health`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      const latency = Date.now() - startTime;
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          connected: data.status === 'ok',
+          latency,
+          service: data.service,
+        };
+      }
+      return { connected: false, error: `Server returned ${response.status}` };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('aborted')) {
+        return { connected: false, error: 'Connection timeout' };
+      }
+      return { connected: false, error: errorMessage };
+    }
+  }
+
   // ============ AUTH ============
 
   async register(data: Types.RegisterRequest): Promise<Types.AuthResponse> {
