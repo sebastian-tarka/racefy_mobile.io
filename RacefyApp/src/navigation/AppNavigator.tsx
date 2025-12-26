@@ -1,6 +1,6 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
@@ -42,6 +42,17 @@ function AuthNavigator() {
 
 function MainNavigator() {
   const { isAuthenticated } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // Auth guard listener - redirects to Auth screen if not authenticated
+  const authGuardListener = {
+    tabPress: (e: { preventDefault: () => void }) => {
+      if (!isAuthenticated) {
+        e.preventDefault();
+        navigation.navigate('Auth');
+      }
+    },
+  };
 
   return (
     <MainTab.Navigator
@@ -97,23 +108,26 @@ function MainNavigator() {
         component={FeedScreen}
         options={{
           tabBarLabel: 'Feed',
-          tabBarBadge: isAuthenticated ? undefined : undefined,
         }}
+        listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Record"
         component={ActivityRecordingScreen}
         options={{ tabBarLabel: 'Record' }}
+        listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Events"
         component={EventsScreen}
         options={{ tabBarLabel: 'Events' }}
+        listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ tabBarLabel: 'Profile' }}
+        listeners={authGuardListener}
       />
     </MainTab.Navigator>
   );
