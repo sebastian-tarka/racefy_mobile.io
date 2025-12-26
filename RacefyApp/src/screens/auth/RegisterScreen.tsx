@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, fontSize } from '../../theme';
@@ -20,6 +21,7 @@ import type { AuthStackParamList } from '../../navigation/types';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,27 +34,27 @@ export function RegisterScreen({ navigation }: Props) {
     const newErrors: Record<string, string> = {};
 
     if (!name) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('auth.validation.nameRequired');
     } else if (name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = t('auth.validation.nameMinLength');
     }
 
     if (!email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('auth.validation.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = t('auth.validation.emailInvalid');
     }
 
     if (!password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('auth.validation.passwordRequired');
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = t('auth.validation.passwordMinLength');
     }
 
     if (!passwordConfirmation) {
-      newErrors.passwordConfirmation = 'Please confirm your password';
+      newErrors.passwordConfirmation = t('auth.validation.confirmPasswordRequired');
     } else if (password !== passwordConfirmation) {
-      newErrors.passwordConfirmation = 'Passwords do not match';
+      newErrors.passwordConfirmation = t('auth.validation.passwordsNotMatch');
     }
 
     setErrors(newErrors);
@@ -71,8 +73,8 @@ export function RegisterScreen({ navigation }: Props) {
         password_confirmation: passwordConfirmation,
       });
     } catch (error: any) {
-      const message = error?.message || 'Registration failed. Please try again.';
-      Alert.alert('Registration Failed', message);
+      const message = error?.message || t('auth.registerFailedMessage');
+      Alert.alert(t('auth.registerFailed'), message);
     } finally {
       setIsLoading(false);
     }
@@ -90,16 +92,16 @@ export function RegisterScreen({ navigation }: Props) {
         >
           <View style={styles.header}>
             <Ionicons name="walk" size={48} color={colors.primary} />
-            <Text style={styles.logo}>Racefy</Text>
-            <Text style={styles.tagline}>Sports & Fitness Community</Text>
+            <Text style={styles.logo}>{t('app.name')}</Text>
+            <Text style={styles.tagline}>{t('app.tagline')}</Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.title}>{t('auth.createAccount')}</Text>
 
             <Input
-              label="Name"
-              placeholder="Your full name"
+              label={t('auth.name')}
+              placeholder={t('auth.namePlaceholder')}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
@@ -109,8 +111,8 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <Input
-              label="Email"
-              placeholder="you@example.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -121,8 +123,8 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <Input
-              label="Password"
-              placeholder="Create a password"
+              label={t('auth.password')}
+              placeholder={t('auth.createPasswordPlaceholder')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -132,8 +134,8 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <Input
-              label="Confirm Password"
-              placeholder="Confirm your password"
+              label={t('auth.confirmPassword')}
+              placeholder={t('auth.confirmPasswordPlaceholder')}
               value={passwordConfirmation}
               onChangeText={setPasswordConfirmation}
               secureTextEntry
@@ -143,7 +145,7 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <Button
-              title="Create Account"
+              title={t('auth.createAccount')}
               onPress={handleRegister}
               loading={isLoading}
               fullWidth
@@ -151,9 +153,9 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={styles.footerText}>{t('auth.haveAccount')} </Text>
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={styles.footerLink}>Sign In</Text>
+                <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -9,25 +9,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { EventCard, Loading, EmptyState, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { MainTabParamList } from '../../navigation/types';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'Events'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Events'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 type FilterOption = 'all' | 'upcoming' | 'ongoing' | 'completed';
 
-const filters: { label: string; value: FilterOption }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Ongoing', value: 'ongoing' },
-  { label: 'Completed', value: 'completed' },
-];
-
 export function EventsScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const {
     events,
@@ -40,6 +40,13 @@ export function EventsScreen({ navigation }: Props) {
     loadMore,
     changeFilter,
   } = useEvents();
+
+  const filters: { label: string; value: FilterOption }[] = [
+    { label: t('events.filters.all'), value: 'all' },
+    { label: t('events.filters.upcoming'), value: 'upcoming' },
+    { label: t('events.filters.ongoing'), value: 'ongoing' },
+    { label: t('events.filters.completed'), value: 'completed' },
+  ];
 
   const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
 
@@ -58,20 +65,19 @@ export function EventsScreen({ navigation }: Props) {
   }, [statusFilter]);
 
   const handleEventPress = (eventId: number) => {
-    // Navigate to event detail
-    // navigation.navigate('EventDetail', { eventId });
+    navigation.navigate('EventDetail', { eventId });
   };
 
   if (isLoading && events.length === 0) {
-    return <Loading fullScreen message="Loading events..." />;
+    return <Loading fullScreen message={t('events.loadingEvents')} />;
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Events</Text>
-          <Text style={styles.subtitle}>Discover and join local sports events</Text>
+          <Text style={styles.title}>{t('events.title')}</Text>
+          <Text style={styles.subtitle}>{t('events.subtitle')}</Text>
         </View>
         {isAuthenticated && (
           <TouchableOpacity style={styles.createButton}>
@@ -112,21 +118,21 @@ export function EventsScreen({ navigation }: Props) {
           error ? (
             <EmptyState
               icon="alert-circle-outline"
-              title="Failed to load events"
+              title={t('events.failedToLoad')}
               message={error}
-              actionLabel="Try Again"
+              actionLabel={t('common.tryAgain')}
               onAction={refresh}
             />
           ) : (
             <EmptyState
               icon="calendar-outline"
-              title="No events found"
+              title={t('events.noEvents')}
               message={
                 activeFilter === 'all'
-                  ? 'There are no events at the moment'
-                  : `No ${activeFilter} events found`
+                  ? t('events.noEventsMessage')
+                  : t('events.noEventsFiltered', { filter: filters.find(f => f.value === activeFilter)?.label })
               }
-              actionLabel={isAuthenticated ? 'Create Event' : undefined}
+              actionLabel={isAuthenticated ? t('events.createEvent') : undefined}
               onAction={
                 isAuthenticated
                   ? () => {
@@ -139,7 +145,7 @@ export function EventsScreen({ navigation }: Props) {
         }
         ListFooterComponent={
           isLoading && events.length > 0 ? (
-            <Loading message="Loading more..." />
+            <Loading message={t('common.loadingMore')} />
           ) : null
         }
         refreshControl={

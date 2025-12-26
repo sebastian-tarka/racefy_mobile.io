@@ -363,6 +363,219 @@ For React Native, focus on the mobile layout with bottom tab navigation.
 
 ---
 
+## API Endpoints Reference
+
+Complete list of all available API endpoints.
+
+### Public Endpoints (No Authentication Required)
+
+#### Health & System
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | API health check status |
+
+#### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/register` | Register new user |
+| POST | `/login` | Login and get access token |
+| POST | `/forgot-password` | Request password reset email |
+| POST | `/reset-password` | Reset password with token |
+| GET | `/email/verify/{id}/{hash}` | Verify email (signed URL) |
+
+#### Sport Types
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/sport-types` | List all active sport types |
+| GET | `/sport-types/{id}` | Get sport type details |
+
+#### Posts
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/posts` | List public posts (paginated) |
+| GET | `/posts/{id}` | Get post details |
+| GET | `/posts/{id}/comments` | Get post comments |
+
+#### Events
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/events` | List events (filterable by status, sport_type_id) |
+| GET | `/events/{id}` | Get event details by ID |
+| GET | `/events/slug/{slug}` | Get event by friendly URL slug |
+| GET | `/events/{id}/participants` | List event participants |
+| GET | `/events/{id}/point-rewards` | Get event point reward configuration |
+
+#### Users & Profiles
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/users/username/{username}` | Get user profile by username |
+| GET | `/users/{id}/activities` | List user's public activities |
+| GET | `/users/{id}/followers` | List user's followers |
+| GET | `/users/{id}/following` | List who user follows |
+
+#### Leaderboard (Public)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/leaderboard/global` | Global points leaderboard |
+| GET | `/leaderboard/event/{id}` | Event-specific leaderboard |
+| GET | `/leaderboard/user/{username}` | User's point stats by username |
+
+---
+
+### Protected Endpoints (Authentication Required)
+
+Include header: `Authorization: Bearer YOUR_TOKEN`
+
+#### Current User
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/user` | Get authenticated user info |
+| POST | `/logout` | Logout and revoke token |
+
+#### Email Verification
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/email/resend` | Resend verification email |
+| GET | `/email/check` | Check email verification status |
+
+#### Profile Management
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/profile` | Get full profile details |
+| PUT | `/profile` | Update profile (name, username, bio) |
+| PUT | `/profile/password` | Change password |
+| POST | `/profile/avatar` | Upload avatar image |
+| DELETE | `/profile/avatar` | Remove avatar |
+| DELETE | `/profile` | Delete account (requires password) |
+
+#### Feed
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/feed` | Get personalized feed from followed users |
+
+#### Posts (Authenticated)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/posts` | Create new post |
+| PUT | `/posts/{id}` | Update own post |
+| DELETE | `/posts/{id}` | Delete own post |
+| POST | `/posts/{id}/like` | Like a post |
+| DELETE | `/posts/{id}/like` | Unlike a post |
+
+#### Comments
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/posts/{id}/comments` | Add comment to post |
+| PUT | `/comments/{id}` | Update own comment |
+| DELETE | `/comments/{id}` | Delete own comment |
+| POST | `/comments/{id}/like` | Like a comment |
+| DELETE | `/comments/{id}/like` | Unlike a comment |
+
+#### Events (Authenticated)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/events` | Create new event |
+| PUT | `/events/{id}` | Update own event |
+| DELETE | `/events/{id}` | Delete/cancel own event |
+| GET | `/my-events` | List events I created |
+| GET | `/my-registrations` | List events I registered for |
+| POST | `/events/{id}/register` | Register for an event |
+| DELETE | `/events/{id}/register` | Cancel event registration |
+| POST | `/events/{id}/results` | Set event results (organizer only) |
+
+#### Activities
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/activities` | List my activities |
+| POST | `/activities` | Create completed activity |
+| GET | `/activities/{id}` | Get activity details |
+| PUT | `/activities/{id}` | Update activity |
+| DELETE | `/activities/{id}` | Delete activity |
+| GET | `/activities/{id}/track` | Get GPS track data |
+| POST | `/activities/{id}/share` | Share activity as post |
+| POST | `/activities/import` | Import GPX file |
+
+#### Activity Social
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/activities/{id}/like` | Like an activity |
+| DELETE | `/activities/{id}/like` | Unlike an activity |
+| GET | `/activities/{id}/comments` | Get activity comments |
+| POST | `/activities/{id}/comments` | Add comment to activity |
+
+#### Live Activity Tracking
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/activities/current` | Get current active activity (if any) |
+| POST | `/activities/start` | Start new live activity |
+| POST | `/activities/{id}/points` | Add GPS points batch |
+| POST | `/activities/{id}/pause` | Pause active activity |
+| POST | `/activities/{id}/resume` | Resume paused activity |
+| POST | `/activities/{id}/finish` | Finish and save activity |
+| DELETE | `/activities/{id}/discard` | Discard/cancel activity |
+
+#### Photos
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/posts/{id}/photos` | Upload photo to post |
+| POST | `/activities/{id}/photos` | Upload photo to activity |
+| DELETE | `/photos/{id}` | Delete photo |
+
+#### Social (Follows)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/users/{id}/follow` | Follow a user |
+| DELETE | `/users/{id}/follow` | Unfollow a user |
+| GET | `/users/{id}/follow-status` | Check follow relationship |
+
+#### Statistics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/stats` | Get user summary stats |
+| GET | `/stats/activities` | Get detailed activity statistics |
+| GET | `/stats/weekly` | Get current week statistics |
+
+#### Leaderboard (Authenticated)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/leaderboard/following` | Leaderboard for users you follow |
+| GET | `/leaderboard/me` | Your point statistics |
+| GET | `/leaderboard/history` | Your point transaction history |
+
+#### Sport Types (Admin Only)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/sport-types` | Create sport type |
+| PUT | `/sport-types/{id}` | Update sport type |
+| DELETE | `/sport-types/{id}` | Delete sport type |
+
+---
+
+### Admin Endpoints
+
+Require authentication + admin role. Prefix: `/admin`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/stats` | Dashboard statistics |
+| GET | `/admin/users` | List all users |
+| GET | `/admin/users/{id}` | Get user details |
+| POST | `/admin/users/{id}/ban` | Ban user |
+| POST | `/admin/users/{id}/unban` | Unban user |
+| PATCH | `/admin/users/{id}/role` | Change user role |
+| DELETE | `/admin/users/{id}` | Delete user |
+| GET | `/admin/posts` | List all posts |
+| GET | `/admin/posts/{id}` | Get post details |
+| DELETE | `/admin/posts/{id}` | Delete post |
+| GET | `/admin/events` | List all events |
+| GET | `/admin/events/{id}` | Get event details |
+| PATCH | `/admin/events/{id}/status` | Update event status |
+| PATCH | `/admin/events/{id}/slug` | Update event friendly URL |
+| GET | `/admin/events/check-slug` | Check slug availability |
+| DELETE | `/admin/events/{id}` | Delete event |
+
+---
+
 ## Network Configuration
 
 The API runs via **Laravel Sail (Docker)** on port **8080**.
@@ -388,20 +601,20 @@ const LOCAL_IP = '10.27.198.154';
 
 // API Base URL configuration
 const getBaseUrl = (): string => {
-   if (__DEV__) {
-      // Development - API runs on port 8080 via Laravel Sail/Docker
-      if (Platform.OS === 'android') {
-         // Android Emulator uses 10.0.2.2 to access host machine's localhost
-         return 'http://10.0.2.2:8080/api';
-      } else if (Platform.OS === 'ios') {
-         // iOS Simulator can use localhost directly
-         return 'http://localhost:8080/api';
-      }
-      // Physical device / Expo Go - use your computer's local IP
-      return `http://${LOCAL_IP}:8080/api`;
-   }
-   // Production
-   return 'https://api.racefy.app/api';
+  if (__DEV__) {
+    // Development - API runs on port 8080 via Laravel Sail/Docker
+    if (Platform.OS === 'android') {
+      // Android Emulator uses 10.0.2.2 to access host machine's localhost
+      return 'http://10.0.2.2:8080/api';
+    } else if (Platform.OS === 'ios') {
+      // iOS Simulator can use localhost directly
+      return 'http://localhost:8080/api';
+    }
+    // Physical device / Expo Go - use your computer's local IP
+    return `http://${LOCAL_IP}:8080/api`;
+  }
+  // Production
+  return 'https://api.racefy.app/api';
 };
 
 export const API_BASE_URL = getBaseUrl();
@@ -458,371 +671,447 @@ export const API_BASE_URL = getBaseUrl();
 // ============ USER & AUTH ============
 
 export interface User {
-   id: number;
-   name: string;
-   username: string;  // URL-safe handle (e.g., "john_doe")
-   email: string;
-   email_verified_at: string | null;
-   avatar: string | null;
-   bio: string | null;
-   created_at: string;
-   updated_at: string;
+  id: number;
+  name: string;
+  username: string;  // URL-safe handle (e.g., "john_doe")
+  email: string;
+  email_verified_at: string | null;
+  avatar: string | null;
+  bio: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserProfile extends User {
-   followers_count: number;
-   following_count: number;
-   posts_count: number;
-   is_following?: boolean;  // Only when viewing other users
+  followers_count: number;
+  following_count: number;
+  posts_count: number;
+  is_following?: boolean;  // Only when viewing other users
 }
 
 export interface AuthResponse {
-   user: User;
-   access_token: string;
-   token_type: 'Bearer';
+  user: User;
+  access_token: string;
+  token_type: 'Bearer';
 }
 
 export interface RegisterRequest {
-   name: string;
-   email: string;
-   password: string;
-   password_confirmation: string;
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
 }
 
 export interface LoginRequest {
-   email: string;
-   password: string;
+  email: string;
+  password: string;
 }
 
 // ============ SPORT TYPES ============
 
 export interface SportType {
-   id: number;
-   name: string;
-   slug: string;
-   icon: string | null;
-   is_active: boolean;
+  id: number;
+  name: string;
+  slug: string;
+  icon: string | null;
+  is_active: boolean;
 }
 
 // ============ POSTS ============
 
 export interface Post {
-   id: number;
-   user_id: number;
-   type: 'general' | 'event' | 'activity';
-   title: string | null;
-   content: string;
-   visibility: 'public' | 'followers' | 'private';
-   status: 'draft' | 'published';
-   likes_count: number;
-   comments_count: number;
-   created_at: string;
-   updated_at: string;
-   user?: User;
-   photos?: Photo[];
-   event?: Event;
-   activity?: Activity;
-   is_liked?: boolean;
+  id: number;
+  user_id: number;
+  type: 'general' | 'event' | 'activity';
+  title: string | null;
+  content: string;
+  visibility: 'public' | 'followers' | 'private';
+  status: 'draft' | 'published';
+  likes_count: number;
+  comments_count: number;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+  photos?: Photo[];
+  event?: Event;
+  activity?: Activity;
+  is_liked?: boolean;
 }
 
 export interface CreatePostRequest {
-   title?: string;
-   content: string;
-   visibility?: 'public' | 'followers' | 'private';
-   status?: 'draft' | 'published';
+  title?: string;
+  content: string;
+  visibility?: 'public' | 'followers' | 'private';
+  status?: 'draft' | 'published';
 }
 
 // ============ EVENTS ============
 
 export interface Event {
-   id: number;
-   post_id: number;
-   sport_type_id: number;
-   location_name: string;
-   latitude: number;
-   longitude: number;
-   starts_at: string;
-   ends_at: string;
-   registration_opens_at: string | null;
-   registration_closes_at: string | null;
-   max_participants: number | null;
-   participants_count: number;
-   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
-   distance: number | null; // meters
-   entry_fee: number | null;
-   sport_type?: SportType;
-   post?: Post;
-   is_registered?: boolean;
-   available_spots?: number | null;
+  id: number;
+  post_id: number;
+  sport_type_id: number;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  starts_at: string;
+  ends_at: string;
+  registration_opens_at: string | null;
+  registration_closes_at: string | null;
+  max_participants: number | null;
+  participants_count: number;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+  distance: number | null; // meters
+  entry_fee: number | null;
+  slug: string | null; // Friendly URL slug (e.g., "city-marathon-2025")
+  slug_expires_at: string | null; // When the slug becomes available for other events
+  friendly_url: string | null; // Full friendly URL path (e.g., "/events/@city-marathon-2025")
+  sport_type?: SportType;
+  post?: Post;
+  is_registered?: boolean;
+  available_spots?: number | null;
 }
 
 export interface CreateEventRequest {
-   title: string;
-   content: string;
-   sport_type_id: number;
-   location_name: string;
-   latitude: number;
-   longitude: number;
-   starts_at: string; // ISO 8601
-   ends_at: string;
-   registration_opens_at?: string;
-   registration_closes_at?: string;
-   max_participants?: number;
-   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
-   distance?: number;
-   entry_fee?: number;
+  title: string;
+  content: string;
+  sport_type_id: number;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  starts_at: string; // ISO 8601
+  ends_at: string;
+  registration_opens_at?: string;
+  registration_closes_at?: string;
+  max_participants?: number;
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+  distance?: number;
+  entry_fee?: number;
 }
 
 export interface EventRegistration {
-   id: number;
-   event_id: number;
-   user_id: number;
-   status: 'registered' | 'waitlisted' | 'cancelled' | 'attended';
-   registration_number: number;
-   notes: string | null;
-   registered_at: string;
-   event?: Event;
-   user?: User;
+  id: number;
+  event_id: number;
+  user_id: number;
+  status: 'registered' | 'waitlisted' | 'cancelled' | 'attended';
+  registration_number: number;
+  notes: string | null;
+  registered_at: string;
+  event?: Event;
+  user?: User;
 }
 
 // ============ ACTIVITIES ============
 
 export interface Activity {
-   id: number;
-   user_id: number;
-   post_id: number | null;
-   sport_type_id: number;
-   event_id: number | null;
-   title: string;
-   description: string | null;
-   started_at: string;
-   ended_at: string | null;
-   duration: number; // seconds
-   distance: number; // meters
-   elevation_gain: number | null;
-   calories: number | null;
-   avg_speed: number | null; // m/s
-   max_speed: number | null;
-   avg_heart_rate: number | null;
-   max_heart_rate: number | null;
-   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
-   is_private: boolean;
-   // Live tracking fields
-   status: 'in_progress' | 'paused' | 'completed';
-   is_active: boolean;
-   total_paused_duration: number; // seconds
-   last_point_at: string | null;
-   sport_type?: SportType;
-   gps_track?: GpsTrack;
-   photos?: Photo[];
-   // Computed
-   formatted_duration?: string;
-   formatted_distance?: string;
-   pace?: number;
+  id: number;
+  user_id: number;
+  post_id: number | null;
+  sport_type_id: number;
+  event_id: number | null;
+  title: string;
+  description: string | null;
+  started_at: string;
+  ended_at: string | null;
+  duration: number; // seconds
+  distance: number; // meters
+  elevation_gain: number | null;
+  calories: number | null;
+  avg_speed: number | null; // m/s
+  max_speed: number | null;
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
+  source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
+  is_private: boolean;
+  // Live tracking fields
+  status: 'in_progress' | 'paused' | 'completed';
+  is_active: boolean;
+  total_paused_duration: number; // seconds
+  last_point_at: string | null;
+  // Social fields
+  likes_count: number;
+  comments_count: number;
+  is_liked?: boolean; // Present when authenticated
+  sport_type?: SportType;
+  gps_track?: GpsTrack;
+  photos?: Photo[];
+  user?: User;
+  // Computed
+  formatted_duration?: string;
+  formatted_distance?: string;
+  pace?: number;
 }
 
 export interface CreateActivityRequest {
-   sport_type_id: number;
-   title: string;
-   description?: string;
-   started_at: string;
-   ended_at: string;
-   duration: number;
-   distance: number;
-   elevation_gain?: number;
-   calories?: number;
-   avg_speed?: number;
-   max_speed?: number;
-   avg_heart_rate?: number;
-   max_heart_rate?: number;
-   source: 'app' | 'manual';
-   is_private?: boolean;
-   // GPS track data (GeoJSON)
-   track_data?: GeoJSONLineString;
+  sport_type_id: number;
+  title: string;
+  description?: string;
+  started_at: string;
+  ended_at: string;
+  duration: number;
+  distance: number;
+  elevation_gain?: number;
+  calories?: number;
+  avg_speed?: number;
+  max_speed?: number;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
+  source: 'app' | 'manual';
+  is_private?: boolean;
+  // GPS track data (GeoJSON)
+  track_data?: GeoJSONLineString;
 }
 
 export interface GpsTrack {
-   id: number;
-   activity_id: number;
-   track_data: GeoJSONLineString;
-   points_count: number;
-   bounds: {
-      min_lat: number;
-      max_lat: number;
-      min_lng: number;
-      max_lng: number;
-   };
-   simplified_track: GeoJSONLineString;
+  id: number;
+  activity_id: number;
+  track_data: GeoJSONLineString;
+  points_count: number;
+  bounds: {
+    min_lat: number;
+    max_lat: number;
+    min_lng: number;
+    max_lng: number;
+  };
+  simplified_track: GeoJSONLineString;
 }
 
 export interface GeoJSONLineString {
-   type: 'LineString';
-   coordinates: [number, number][]; // [longitude, latitude][]
+  type: 'LineString';
+  coordinates: [number, number][]; // [longitude, latitude][]
 }
 
 // GPS Point for live tracking
 export interface GpsPoint {
-   lat: number;           // Required: latitude (-90 to 90)
-   lng: number;           // Required: longitude (-180 to 180)
-   ele?: number;          // Optional: elevation in meters
-   time?: string;         // Optional: ISO 8601 timestamp
-   hr?: number;           // Optional: heart rate (0-300)
-   speed?: number;        // Optional: speed in m/s
-   cadence?: number;      // Optional: cadence (steps/min or rpm)
+  lat: number;           // Required: latitude (-90 to 90)
+  lng: number;           // Required: longitude (-180 to 180)
+  ele?: number;          // Optional: elevation in meters
+  time?: string;         // Optional: ISO 8601 timestamp
+  hr?: number;           // Optional: heart rate (0-300)
+  speed?: number;        // Optional: speed in m/s
+  cadence?: number;      // Optional: cadence (steps/min or rpm)
 }
 
 // ============ COMMENTS ============
 
 export interface Comment {
-   id: number;
-   user_id: number;
-   post_id: number;
-   parent_id: number | null;
-   content: string;
-   likes_count: number;
-   created_at: string;
-   user?: User;
-   replies?: Comment[];
-   is_liked?: boolean;
+  id: number;
+  user_id: number;
+  commentable_type: 'post' | 'activity'; // Polymorphic type
+  commentable_id: number;
+  parent_id: number | null;
+  content: string;
+  likes_count: number;
+  created_at: string;
+  user?: User;
+  replies?: Comment[];
+  is_liked?: boolean;
 }
 
 export interface CreateCommentRequest {
-   content: string;
-   parent_id?: number;
+  content: string;
+  parent_id?: number;
 }
 
 // ============ PHOTOS ============
 
 export interface Photo {
-   id: number;
-   user_id: number;
-   path: string;
-   filename: string;
-   mime_type: string;
-   size: number;
-   width: number | null;
-   height: number | null;
-   caption: string | null;
-   url: string; // Full URL to image
+  id: number;
+  user_id: number;
+  path: string;
+  filename: string;
+  mime_type: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  caption: string | null;
+  url: string; // Full URL to image
 }
 
 // ============ FOLLOWS ============
 
 export interface FollowStatus {
-   is_following: boolean;
-   is_followed_by: boolean;
+  is_following: boolean;
+  is_followed_by: boolean;
 }
 
 export interface UserWithFollowCounts extends User {
-   followers_count: number;
-   following_count: number;
+  followers_count: number;
+  following_count: number;
 }
 
 // ============ STATISTICS ============
 
 export interface UserStats {
-   activities: {
-      total: number;
-      this_month: number;
-      total_distance: number;
-      total_duration: number;
-   };
-   posts: {
-      total: number;
-      total_likes: number;
-   };
-   events: {
-      registered: number;
-      attended: number;
-   };
-   social: {
-      followers: number;
-      following: number;
-   };
+  activities: {
+    total: number;
+    this_month: number;
+    total_distance: number;
+    total_duration: number;
+  };
+  posts: {
+    total: number;
+    total_likes: number;
+  };
+  events: {
+    registered: number;
+    attended: number;
+  };
+  social: {
+    followers: number;
+    following: number;
+  };
 }
 
 export interface ActivityStats {
-   count: number;
-   totals: {
-      distance: number;
-      duration: number;
-      elevation_gain: number;
-      calories: number;
-   };
-   averages: {
-      distance: number;
-      duration: number;
-      speed: number;
-      heart_rate: number;
-   };
-   bests: {
-      longest_distance: ActivityBest | null;
-      longest_duration: ActivityBest | null;
-      fastest_speed: ActivityBest | null;
-   };
-   by_sport_type: Record<number, {
-      count: number;
-      distance: number;
-      duration: number;
-   }>;
+  count: number;
+  totals: {
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+    calories: number;
+  };
+  averages: {
+    distance: number;
+    duration: number;
+    speed: number;
+    heart_rate: number;
+  };
+  bests: {
+    longest_distance: ActivityBest | null;
+    longest_duration: ActivityBest | null;
+    fastest_speed: ActivityBest | null;
+  };
+  by_sport_type: Record<number, {
+    count: number;
+    distance: number;
+    duration: number;
+  }>;
 }
 
 export interface ActivityBest {
-   id: number;
-   title: string;
-   distance?: number;
-   duration?: number;
-   max_speed?: number;
-   date: string;
+  id: number;
+  title: string;
+  distance?: number;
+  duration?: number;
+  max_speed?: number;
+  date: string;
 }
 
 export interface WeeklyStats {
-   week_start: string;
-   week_end: string;
-   totals: {
-      count: number;
-      distance: number;
-      duration: number;
-   };
-   daily: Record<string, {
-      count: number;
-      distance: number;
-      duration: number;
-   }>;
+  week_start: string;
+  week_end: string;
+  totals: {
+    count: number;
+    distance: number;
+    duration: number;
+  };
+  daily: Record<string, {
+    count: number;
+    distance: number;
+    duration: number;
+  }>;
+}
+
+// ============ POINTS & LEADERBOARD ============
+
+export interface LeaderboardEntry {
+  rank: number;
+  points: number;
+  user: {
+    id: number;
+    name: string;
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
+export interface LeaderboardResponse {
+  period: 'weekly' | 'monthly' | 'all_time';
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface EventLeaderboardResponse {
+  event_id: number;
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface UserPointStats {
+  total_points: number;
+  weekly_points: number;
+  monthly_points: number;
+  global_rank: number;
+  weekly_rank: number;
+  monthly_rank: number;
+  total_transactions: number;
+  activity_points: number;
+  event_points: number;
+}
+
+export interface PointTransaction {
+  id: number;
+  points: number;
+  type: 'activity' | 'event_place' | 'event_finish' | 'bonus' | 'adjustment';
+  description: string;
+  created_at: string;
+}
+
+export interface PointHistoryResponse {
+  transactions: PointTransaction[];
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export interface EventPointRewards {
+  first_place: number | null;
+  second_place: number | null;
+  third_place: number | null;
+  finisher: number | null;
+}
+
+export interface SetEventResultsRequest {
+  results: Array<{
+    user_id: number;
+    place: number;  // 1, 2, 3 for podium, 0 for finisher
+  }>;
 }
 
 // ============ PAGINATION ============
 
 export interface PaginatedResponse<T> {
-   data: T[];
-   links: {
-      first: string;
-      last: string;
-      prev: string | null;
-      next: string | null;
-   };
-   meta: {
-      current_page: number;
-      from: number;
-      last_page: number;
-      path: string;
-      per_page: number;
-      to: number;
-      total: number;
-   };
+  data: T[];
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number;
+    total: number;
+  };
 }
 
 // ============ API RESPONSE ============
 
 export interface ApiResponse<T> {
-   data: T;
-   message?: string;
+  data: T;
+  message?: string;
 }
 
 export interface ApiError {
-   message: string;
-   errors?: Record<string, string[]>;
+  message: string;
+  errors?: Record<string, string[]>;
 }
 ```
 
@@ -844,6 +1133,12 @@ class ApiService {
 
   async init() {
     this.token = await AsyncStorage.getItem(TOKEN_KEY);
+  }
+
+  // ============ HEALTH CHECK ============
+
+  async healthCheck(): Promise<{ status: string; timestamp: string; service: string }> {
+    return this.request('/health');
   }
 
   private async request<T>(
@@ -1021,6 +1316,11 @@ class ApiService {
     return response.data;
   }
 
+  async getEventBySlug(slug: string): Promise<Types.Event> {
+    const response = await this.request<Types.ApiResponse<Types.Event>>(`/events/slug/${slug}`);
+    return response.data;
+  }
+
   async createEvent(data: Types.CreateEventRequest): Promise<Types.Event> {
     const response = await this.request<Types.ApiResponse<Types.Event>>('/events', {
       method: 'POST',
@@ -1091,6 +1391,34 @@ class ApiService {
 
   async deleteActivity(id: number): Promise<void> {
     await this.request(`/activities/${id}`, { method: 'DELETE' });
+  }
+
+  // ============ ACTIVITY SOCIAL ============
+
+  async likeActivity(id: number): Promise<void> {
+    await this.request(`/activities/${id}/like`, { method: 'POST' });
+  }
+
+  async unlikeActivity(id: number): Promise<void> {
+    await this.request(`/activities/${id}/like`, { method: 'DELETE' });
+  }
+
+  async getActivityComments(activityId: number): Promise<Types.Comment[]> {
+    const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
+      `/activities/${activityId}/comments`
+    );
+    return response.data;
+  }
+
+  async createActivityComment(activityId: number, data: Types.CreateCommentRequest): Promise<Types.Comment> {
+    const response = await this.request<Types.ApiResponse<Types.Comment>>(
+      `/activities/${activityId}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
   }
 
   async getActivityTrack(id: number): Promise<Types.GpsTrack> {
@@ -1316,6 +1644,59 @@ class ApiService {
       `/stats/weekly${query}`
     );
     return response.data;
+  }
+
+  // ============ POINTS & LEADERBOARD ============
+
+  async getGlobalLeaderboard(period: 'weekly' | 'monthly' | 'all_time' = 'all_time', limit = 50, offset = 0): Promise<Types.LeaderboardResponse> {
+    return this.request(`/leaderboard/global?period=${period}&limit=${limit}&offset=${offset}`);
+  }
+
+  async getFollowingLeaderboard(period: 'weekly' | 'monthly' | 'all_time' = 'all_time', limit = 50): Promise<Types.LeaderboardResponse> {
+    return this.request(`/leaderboard/following?period=${period}&limit=${limit}`);
+  }
+
+  async getEventLeaderboard(eventId: number, limit = 50): Promise<Types.EventLeaderboardResponse> {
+    return this.request(`/leaderboard/event/${eventId}?limit=${limit}`);
+  }
+
+  async getMyPointStats(): Promise<Types.UserPointStats> {
+    return this.request('/leaderboard/me');
+  }
+
+  async getUserPointStats(username: string): Promise<{ user: Types.User; stats: Types.UserPointStats }> {
+    return this.request(`/leaderboard/user/${username}`);
+  }
+
+  async getPointHistory(params?: {
+    type?: 'activity' | 'event_place' | 'event_finish' | 'bonus' | 'adjustment';
+    limit?: number;
+    page?: number;
+  }): Promise<Types.PointHistoryResponse> {
+    const query = new URLSearchParams();
+    if (params?.type) query.append('type', params.type);
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.page) query.append('page', String(params.page));
+    return this.request(`/leaderboard/history?${query}`);
+  }
+
+  async getEventPointRewards(eventId: number): Promise<Types.EventPointRewards> {
+    return this.request(`/events/${eventId}/point-rewards`);
+  }
+
+  async setEventResults(eventId: number, results: Types.SetEventResultsRequest): Promise<{
+    message: string;
+    awarded: Array<{
+      user_id: number;
+      username: string;
+      place: number;
+      points: number;
+    }>;
+  }> {
+    return this.request(`/events/${eventId}/results`, {
+      method: 'POST',
+      body: JSON.stringify(results),
+    });
   }
 
   // ============ PROFILE ============
@@ -2134,6 +2515,184 @@ The React Native Share API opens the native share sheet which supports:
 |----------|---------------|
 | **iOS** | Twitter, Facebook, Instagram Stories, WhatsApp, Telegram, Messages, Mail, Copy Link, etc. |
 | **Android** | Twitter, Facebook, WhatsApp, Telegram, Gmail, Copy to Clipboard, etc. |
+
+---
+
+## Points & Leaderboard System
+
+Users earn points for completing activities and placing in events. Points are tracked across three time periods:
+- **All Time** - Total accumulated points
+- **Monthly** - Points earned this calendar month (resets on 1st)
+- **Weekly** - Points earned this week (resets on Monday)
+
+### How Points Are Earned
+
+#### Activity Points
+Points are calculated based on distance and sport type configuration:
+
+```
+points = (distance_km * points_per_km) + (elevation_gain_100m * points_per_100m_elevation)
+```
+
+Default sport type configurations:
+| Sport | Points/km | Points/100m elevation |
+|-------|-----------|----------------------|
+| Running | 10 | 5 |
+| Cycling | 5 | 5 |
+| Swimming | 20 | 0 |
+
+#### Event Points
+Event organizers can configure custom point rewards:
+- **1st Place** - Custom points for winner
+- **2nd Place** - Custom points for runner-up
+- **3rd Place** - Custom points for third place
+- **Finisher** - Points for all who complete the event
+
+### API Endpoints
+
+#### Public Endpoints (No Auth Required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/leaderboard/global` | Global leaderboard |
+| GET | `/leaderboard/event/{eventId}` | Event-specific leaderboard |
+| GET | `/leaderboard/user/{username}` | User's point stats by username |
+| GET | `/events/{eventId}/point-rewards` | Event's point reward configuration |
+
+#### Protected Endpoints (Auth Required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/leaderboard/following` | Leaderboard for users you follow |
+| GET | `/leaderboard/me` | Your point statistics |
+| GET | `/leaderboard/history` | Your point transaction history |
+| POST | `/events/{eventId}/results` | Set event results & award points (organizer only) |
+
+### Query Parameters
+
+**Leaderboard endpoints:**
+- `period`: `weekly`, `monthly`, or `all_time` (default: `all_time`)
+- `limit`: Number of results (default: 50, max: 100)
+- `offset`: Skip first N results (for pagination)
+
+**History endpoint:**
+- `type`: Filter by transaction type (`activity`, `event_place`, `event_finish`, `bonus`, `adjustment`)
+- `limit`: Number of results per page (default: 20, max: 100)
+- `page`: Page number
+
+### Leaderboard Hook
+
+```typescript
+// hooks/useLeaderboard.ts
+import { useState, useCallback } from 'react';
+import { api } from '../services/api';
+import type { LeaderboardEntry, UserPointStats } from '../types/api';
+
+type Period = 'weekly' | 'monthly' | 'all_time';
+type Tab = 'global' | 'following';
+
+export function useLeaderboard() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [myStats, setMyStats] = useState<UserPointStats | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [period, setPeriod] = useState<Period>('all_time');
+  const [tab, setTab] = useState<Tab>('global');
+
+  const fetchLeaderboard = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = tab === 'global'
+        ? await api.getGlobalLeaderboard(period)
+        : await api.getFollowingLeaderboard(period);
+
+      setLeaderboard(response.leaderboard);
+
+      // Also fetch user's own stats
+      const stats = await api.getMyPointStats();
+      setMyStats(stats);
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tab, period]);
+
+  return {
+    leaderboard,
+    myStats,
+    isLoading,
+    period,
+    setPeriod,
+    tab,
+    setTab,
+    refresh: fetchLeaderboard,
+  };
+}
+```
+
+### Creating Events with Point Rewards
+
+When creating or updating events, include `point_rewards`:
+
+```typescript
+const event = await api.createEvent({
+  title: 'City Marathon 2025',
+  content: 'Annual city marathon event',
+  sport_type_id: 1,
+  location_name: 'City Center',
+  latitude: 52.2297,
+  longitude: 21.0122,
+  starts_at: '2025-06-15T08:00:00Z',
+  ends_at: '2025-06-15T16:00:00Z',
+  difficulty: 'intermediate',
+  // Point rewards configuration
+  point_rewards: {
+    first_place: 500,
+    second_place: 300,
+    third_place: 150,
+    finisher: 50,
+  },
+});
+```
+
+### Setting Event Results (Organizer)
+
+After an event ends, the organizer can set results to award points:
+
+```typescript
+const result = await api.setEventResults(eventId, {
+  results: [
+    { user_id: 123, place: 1 },  // 1st place
+    { user_id: 456, place: 2 },  // 2nd place
+    { user_id: 789, place: 3 },  // 3rd place
+    { user_id: 101, place: 0 },  // Finisher
+    { user_id: 102, place: 0 },  // Finisher
+  ],
+});
+
+// Response:
+// {
+//   message: 'Results set successfully',
+//   awarded: [
+//     { user_id: 123, username: 'winner', place: 1, points: 500 },
+//     { user_id: 456, username: 'second', place: 2, points: 300 },
+//     ...
+//   ]
+// }
+```
+
+### User Profile Points
+
+User profiles now include point totals:
+
+```typescript
+interface UserProfile {
+  // ... existing fields
+  total_points: number;
+  weekly_points: number;
+  monthly_points: number;
+}
+```
 
 ---
 

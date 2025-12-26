@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Avatar, Card, Button, EmptyState } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
@@ -20,22 +21,23 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 type TabType = 'posts' | 'activities' | 'events';
 
 export function ProfileScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Logout',
+        text: t('common.logout'),
         style: 'destructive',
         onPress: async () => {
           setIsLoggingOut(true);
           try {
             await logout();
           } catch (error) {
-            Alert.alert('Error', 'Failed to logout');
+            Alert.alert(t('common.error'), t('profile.failedToLogout'));
           } finally {
             setIsLoggingOut(false);
           }
@@ -48,13 +50,13 @@ export function ProfileScreen({ navigation }: Props) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
+          <Text style={styles.title}>{t('profile.title')}</Text>
         </View>
         <EmptyState
           icon="person-outline"
-          title="Sign in to view profile"
-          message="Track your activities and manage your account"
-          actionLabel="Sign In"
+          title={t('profile.signInRequired')}
+          message={t('profile.signInDescription')}
+          actionLabel={t('common.signIn')}
           onAction={() =>
             navigation.getParent()?.navigate('Auth', { screen: 'Login' })
           }
@@ -64,9 +66,9 @@ export function ProfileScreen({ navigation }: Props) {
   }
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { label: 'Posts', value: 'posts', icon: 'newspaper-outline' },
-    { label: 'Activities', value: 'activities', icon: 'fitness-outline' },
-    { label: 'Events', value: 'events', icon: 'calendar-outline' },
+    { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
+    { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
+    { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 
   return (
@@ -91,21 +93,21 @@ export function ProfileScreen({ navigation }: Props) {
           <View style={styles.stats}>
             <TouchableOpacity style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Posts</Text>
+              <Text style={styles.statLabel}>{t('profile.stats.posts')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Followers</Text>
+              <Text style={styles.statLabel}>{t('profile.stats.followers')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Following</Text>
+              <Text style={styles.statLabel}>{t('profile.stats.following')}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.actions}>
             <Button
-              title="Edit Profile"
+              title={t('profile.editProfile')}
               onPress={() => {
                 // Navigate to edit profile
               }}
@@ -113,7 +115,7 @@ export function ProfileScreen({ navigation }: Props) {
               style={styles.actionButton}
             />
             <Button
-              title="Logout"
+              title={t('common.logout')}
               onPress={handleLogout}
               variant="ghost"
               loading={isLoggingOut}
@@ -157,22 +159,22 @@ export function ProfileScreen({ navigation }: Props) {
           {activeTab === 'posts' && (
             <EmptyState
               icon="newspaper-outline"
-              title="No posts yet"
-              message="Share your first activity or thought"
+              title={t('profile.empty.noPosts')}
+              message={t('profile.empty.noPostsMessage')}
             />
           )}
           {activeTab === 'activities' && (
             <EmptyState
               icon="fitness-outline"
-              title="No activities yet"
-              message="Start tracking your workouts"
+              title={t('profile.empty.noActivities')}
+              message={t('profile.empty.noActivitiesMessage')}
             />
           )}
           {activeTab === 'events' && (
             <EmptyState
               icon="calendar-outline"
-              title="No events yet"
-              message="Join events to see them here"
+              title={t('profile.empty.noEvents')}
+              message={t('profile.empty.noEventsMessage')}
             />
           )}
         </View>

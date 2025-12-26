@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import {
   PostCard,
   Card,
@@ -28,6 +29,7 @@ import type { MainTabParamList } from '../../navigation/types';
 type Props = BottomTabScreenProps<MainTabParamList, 'Feed'>;
 
 export function FeedScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const {
     posts,
@@ -59,7 +61,7 @@ export function FeedScreen({ navigation }: Props) {
       await createPost(newPostContent.trim());
       setNewPostContent('');
     } catch (error) {
-      Alert.alert('Error', 'Failed to create post');
+      Alert.alert(t('common.error'), t('feed.failedToCreate'));
     } finally {
       setIsPosting(false);
     }
@@ -67,18 +69,18 @@ export function FeedScreen({ navigation }: Props) {
 
   const handleDeletePost = (postId: number) => {
     Alert.alert(
-      'Delete Post',
-      'Are you sure you want to delete this post?',
+      t('feed.deletePost'),
+      t('feed.deleteConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deletePost(postId);
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete post');
+              Alert.alert(t('common.error'), t('feed.failedToDelete'));
             }
           },
         },
@@ -90,13 +92,13 @@ export function FeedScreen({ navigation }: Props) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Feed</Text>
+          <Text style={styles.title}>{t('feed.title')}</Text>
         </View>
         <EmptyState
           icon="lock-closed-outline"
-          title="Sign in to view feed"
-          message="Connect with other athletes and share your activities"
-          actionLabel="Sign In"
+          title={t('feed.signInRequired')}
+          message={t('feed.signInDescription')}
+          actionLabel={t('common.signIn')}
           onAction={() =>
             navigation.getParent()?.navigate('Auth', { screen: 'Login' })
           }
@@ -106,13 +108,13 @@ export function FeedScreen({ navigation }: Props) {
   }
 
   if (isLoading && posts.length === 0) {
-    return <Loading fullScreen message="Loading feed..." />;
+    return <Loading fullScreen message={t('feed.loadingFeed')} />;
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Feed</Text>
+        <Text style={styles.title}>{t('feed.title')}</Text>
       </View>
 
       <FlatList
@@ -138,7 +140,7 @@ export function FeedScreen({ navigation }: Props) {
               <Avatar uri={user?.avatar} name={user?.name} size="md" />
               <TextInput
                 style={styles.createPostInput}
-                placeholder="What's on your mind?"
+                placeholder={t('feed.placeholder')}
                 placeholderTextColor={colors.textMuted}
                 value={newPostContent}
                 onChangeText={setNewPostContent}
@@ -152,10 +154,10 @@ export function FeedScreen({ navigation }: Props) {
                   size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.photoButtonText}>Photo</Text>
+                <Text style={styles.photoButtonText}>{t('feed.photo')}</Text>
               </TouchableOpacity>
               <Button
-                title="Post"
+                title={t('feed.post')}
                 onPress={handleCreatePost}
                 loading={isPosting}
                 disabled={!newPostContent.trim()}
@@ -168,22 +170,22 @@ export function FeedScreen({ navigation }: Props) {
           error ? (
             <EmptyState
               icon="alert-circle-outline"
-              title="Failed to load feed"
+              title={t('feed.failedToLoad')}
               message={error}
-              actionLabel="Try Again"
+              actionLabel={t('common.tryAgain')}
               onAction={refresh}
             />
           ) : (
             <EmptyState
               icon="newspaper-outline"
-              title="No posts yet"
-              message="Be the first to share something!"
+              title={t('feed.noPosts')}
+              message={t('feed.beFirst')}
             />
           )
         }
         ListFooterComponent={
           isLoading && posts.length > 0 ? (
-            <Loading message="Loading more..." />
+            <Loading message={t('feed.loadingMore')} />
           ) : null
         }
         refreshControl={

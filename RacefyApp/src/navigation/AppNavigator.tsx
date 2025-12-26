@@ -15,6 +15,7 @@ import { FeedScreen } from '../screens/main/FeedScreen';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 
 // Types
 import type {
@@ -154,6 +155,10 @@ export function AppNavigator() {
           options={{
             presentation: 'modal',
           }}
+        />
+        <RootStack.Screen
+          name="EventDetail"
+          component={EventDetailScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

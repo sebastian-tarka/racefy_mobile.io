@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Badge } from '../../components';
 import { useLiveActivity, usePermissions } from '../../hooks';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
@@ -34,6 +35,7 @@ const sportTypes = [
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
+  const { t } = useTranslation();
   const { requestActivityTrackingPermissions } = usePermissions();
   const {
     activity,
@@ -123,9 +125,9 @@ export function ActivityRecordingScreen() {
   // Show error alerts
   useEffect(() => {
     if (error) {
-      Alert.alert('Error', error, [{ text: 'OK', onPress: clearError }]);
+      Alert.alert(t('common.error'), error, [{ text: t('common.ok'), onPress: clearError }]);
     }
-  }, [error, clearError]);
+  }, [error, clearError, t]);
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -214,7 +216,7 @@ export function ActivityRecordingScreen() {
       });
       console.log('Activity saved:', finishedActivity);
       setPassedMilestones([]);
-      Alert.alert('Success', 'Activity saved successfully!');
+      Alert.alert(t('common.success'), t('recording.activitySaved'));
     } catch (err) {
       console.error('Failed to save:', err);
     }
@@ -222,12 +224,12 @@ export function ActivityRecordingScreen() {
 
   const handleDiscard = async () => {
     Alert.alert(
-      'Discard Activity',
-      'Are you sure you want to discard this activity? This cannot be undone.',
+      t('recording.discardActivity'),
+      t('recording.discardConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Discard',
+          text: t('recording.discard'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -254,11 +256,11 @@ export function ActivityRecordingScreen() {
     );
 
     if (timeAtMilestone < milestone.bestTime) {
-      return { status: 'record', color: colors.primary, label: 'NEW RECORD!' };
+      return { status: 'record', color: colors.primary, label: t('recording.newRecord') };
     } else if (timeAtMilestone < milestone.avgTime) {
-      return { status: 'good', color: colors.success, label: 'Above Average' };
+      return { status: 'good', color: colors.success, label: t('recording.aboveAverage') };
     }
-    return { status: 'normal', color: colors.textSecondary, label: 'Completed' };
+    return { status: 'normal', color: colors.textSecondary, label: t('recording.completed') };
   };
 
   // Show loading overlay
@@ -267,7 +269,7 @@ export function ActivityRecordingScreen() {
     return (
       <View style={styles.loadingOverlay}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Please wait...</Text>
+        <Text style={styles.loadingText}>{t('common.pleaseWait')}</Text>
       </View>
     );
   };
@@ -275,7 +277,7 @@ export function ActivityRecordingScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Record Activity</Text>
+        <Text style={styles.title}>{t('recording.title')}</Text>
         {activity && (
           <Text style={styles.activityId}>ID: {activity.id}</Text>
         )}
@@ -285,7 +287,7 @@ export function ActivityRecordingScreen() {
         {/* Sport Type Selector */}
         {status === 'idle' && (
           <Card style={styles.sportSelector}>
-            <Text style={styles.sectionTitle}>Select Sport</Text>
+            <Text style={styles.sectionTitle}>{t('recording.selectSport')}</Text>
             <View style={styles.sportGrid}>
               {sportTypes.map((sport) => (
                 <TouchableOpacity
@@ -332,10 +334,10 @@ export function ActivityRecordingScreen() {
             <Badge
               label={
                 status === 'recording'
-                  ? 'Recording'
+                  ? t('recording.status.recording')
                   : status === 'paused'
-                    ? 'Paused'
-                    : 'Finished'
+                    ? t('recording.status.paused')
+                    : t('recording.status.finished')
               }
               variant={
                 status === 'recording'
@@ -350,7 +352,7 @@ export function ActivityRecordingScreen() {
 
         {/* Timer Display */}
         <Card style={styles.timerCard}>
-          <Text style={styles.timerLabel}>Duration</Text>
+          <Text style={styles.timerLabel}>{t('recording.duration')}</Text>
           <Text style={styles.timer}>{formatTime(localDuration)}</Text>
 
           <View style={styles.statsRow}>
@@ -361,7 +363,7 @@ export function ActivityRecordingScreen() {
                 color={colors.primary}
               />
               <Text style={styles.statValue}>{formatDistance(distance)}</Text>
-              <Text style={styles.statLabel}>Distance</Text>
+              <Text style={styles.statLabel}>{t('recording.distance')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -373,7 +375,7 @@ export function ActivityRecordingScreen() {
               <Text style={styles.statValue}>
                 {formatPace(localDuration, distance)}
               </Text>
-              <Text style={styles.statLabel}>Pace</Text>
+              <Text style={styles.statLabel}>{t('recording.pace')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -381,7 +383,7 @@ export function ActivityRecordingScreen() {
               <Text style={styles.statValue}>
                 {Math.floor(localDuration * 0.15)}
               </Text>
-              <Text style={styles.statLabel}>Calories</Text>
+              <Text style={styles.statLabel}>{t('recording.calories')}</Text>
             </View>
           </View>
 
@@ -390,7 +392,7 @@ export function ActivityRecordingScreen() {
             <View style={styles.elevationRow}>
               <Ionicons name="trending-up" size={16} color={colors.primary} />
               <Text style={styles.elevationText}>
-                {Math.round(currentStats.elevation_gain)} m elevation gain
+                {Math.round(currentStats.elevation_gain)} {t('recording.elevationGain')}
               </Text>
             </View>
           )}
@@ -409,7 +411,7 @@ export function ActivityRecordingScreen() {
               ) : (
                 <>
                   <Ionicons name="play" size={40} color={colors.white} />
-                  <Text style={styles.startButtonText}>START</Text>
+                  <Text style={styles.startButtonText}>{t('recording.start')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -451,14 +453,14 @@ export function ActivityRecordingScreen() {
               </View>
               <View style={styles.finishedControls}>
                 <Button
-                  title={isLoading ? 'Saving...' : 'Save Activity'}
+                  title={isLoading ? t('recording.saving') : t('recording.saveActivity')}
                   onPress={handleSave}
                   variant="primary"
                   style={styles.saveButton}
                   disabled={isLoading}
                 />
                 <Button
-                  title="Discard"
+                  title={t('recording.discard')}
                   onPress={handleDiscard}
                   variant="ghost"
                   disabled={isLoading}
@@ -470,10 +472,9 @@ export function ActivityRecordingScreen() {
 
         {/* Milestones */}
         <Card style={styles.milestonesCard}>
-          <Text style={styles.sectionTitle}>Milestones</Text>
+          <Text style={styles.sectionTitle}>{t('recording.milestones')}</Text>
           <Text style={styles.sectionSubtitle}>
-            Compare with your previous {selectedSport.name.toLowerCase()}{' '}
-            activities
+            {t('recording.compareWith', { sport: selectedSport.name.toLowerCase() })}
           </Text>
 
           {mockMilestones.map((milestone) => {
@@ -525,10 +526,10 @@ export function ActivityRecordingScreen() {
 
                 <View style={styles.milestoneRight}>
                   <Text style={styles.milestoneTime}>
-                    Best: {formatTime(milestone.bestTime)}
+                    {t('recording.best')}: {formatTime(milestone.bestTime)}
                   </Text>
                   <Text style={styles.milestoneTimeAvg}>
-                    Avg: {formatTime(milestone.avgTime)}
+                    {t('recording.avg')}: {formatTime(milestone.avgTime)}
                   </Text>
                 </View>
               </View>
@@ -539,24 +540,24 @@ export function ActivityRecordingScreen() {
         {/* Previous Activities Summary */}
         <Card style={styles.previousCard}>
           <Text style={styles.sectionTitle}>
-            Your {selectedSport.name} Stats
+            {t('recording.yourStats', { sport: selectedSport.name })}
           </Text>
           <View style={styles.prevStatsGrid}>
             <View style={styles.prevStatItem}>
               <Text style={styles.prevStatValue}>23</Text>
-              <Text style={styles.prevStatLabel}>Activities</Text>
+              <Text style={styles.prevStatLabel}>{t('recording.activities')}</Text>
             </View>
             <View style={styles.prevStatItem}>
               <Text style={styles.prevStatValue}>156 km</Text>
-              <Text style={styles.prevStatLabel}>Total Distance</Text>
+              <Text style={styles.prevStatLabel}>{t('recording.totalDistance')}</Text>
             </View>
             <View style={styles.prevStatItem}>
               <Text style={styles.prevStatValue}>12:45h</Text>
-              <Text style={styles.prevStatLabel}>Total Time</Text>
+              <Text style={styles.prevStatLabel}>{t('recording.totalTime')}</Text>
             </View>
             <View style={styles.prevStatItem}>
               <Text style={styles.prevStatValue}>5:28</Text>
-              <Text style={styles.prevStatLabel}>Avg Pace /km</Text>
+              <Text style={styles.prevStatLabel}>{t('recording.avgPace')}</Text>
             </View>
           </View>
         </Card>

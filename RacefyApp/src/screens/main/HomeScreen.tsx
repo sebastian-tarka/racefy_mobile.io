@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Card, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
@@ -26,6 +27,7 @@ type ConnectionStatus = {
 };
 
 export function HomeScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,
@@ -57,22 +59,22 @@ export function HomeScreen({ navigation }: Props) {
   const features = [
     {
       icon: 'newspaper-outline' as const,
-      title: 'Social Feed',
-      description: 'Share your activities and connect with others',
+      title: t('home.socialFeed'),
+      description: t('home.socialFeedDesc'),
       screen: 'Feed' as const,
       requiresAuth: true,
     },
     {
       icon: 'calendar-outline' as const,
-      title: 'Events',
-      description: 'Find and join local sports events',
+      title: t('home.events'),
+      description: t('home.eventsDesc'),
       screen: 'Events' as const,
       requiresAuth: false,
     },
     {
       icon: 'fitness-outline' as const,
-      title: 'Activities',
-      description: 'Track and record your workouts',
+      title: t('home.activities'),
+      description: t('home.activitiesDesc'),
       screen: 'Profile' as const,
       requiresAuth: true,
     },
@@ -95,10 +97,10 @@ export function HomeScreen({ navigation }: Props) {
             <Ionicons name="cloud-offline" size={20} color={colors.white} />
             <View style={styles.connectionErrorContent}>
               <Text style={styles.connectionErrorTitle}>
-                Unable to connect to server
+                {t('home.connectionError')}
               </Text>
               <Text style={styles.connectionErrorMessage}>
-                {connectionStatus.error || 'Check your internet connection'}
+                {connectionStatus.error || t('home.checkConnection')}
               </Text>
               <Text style={styles.connectionErrorHint}>
                 API: {api.getBaseUrl()}
@@ -111,29 +113,29 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Ionicons name="walk" size={32} color={colors.primary} />
-            <Text style={styles.logo}>Racefy</Text>
+            <Text style={styles.logo}>{t('app.name')}</Text>
           </View>
           {isAuthenticated && (
-            <Text style={styles.greeting}>Hello, {user?.name}!</Text>
+            <Text style={styles.greeting}>{t('home.greeting', { name: user?.name })}</Text>
           )}
         </View>
 
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Sports & Fitness Community</Text>
+          <Text style={styles.heroTitle}>{t('home.heroTitle')}</Text>
           <Text style={styles.heroSubtitle}>
-            Track activities, join events, and connect with fitness enthusiasts
+            {t('home.heroSubtitle')}
           </Text>
         </View>
 
         {!isAuthenticated && (
           <Card style={styles.authCard}>
-            <Text style={styles.authTitle}>Get Started</Text>
+            <Text style={styles.authTitle}>{t('home.getStarted')}</Text>
             <Text style={styles.authSubtitle}>
-              Join Racefy to track your activities and connect with others
+              {t('home.getStartedMessage')}
             </Text>
             <View style={styles.authButtons}>
               <Button
-                title="Sign In"
+                title={t('common.signIn')}
                 onPress={() =>
                   navigation.getParent()?.navigate('Auth', { screen: 'Login' })
                 }
@@ -141,7 +143,7 @@ export function HomeScreen({ navigation }: Props) {
                 style={styles.authButton}
               />
               <Button
-                title="Sign Up"
+                title={t('common.signUp')}
                 onPress={() =>
                   navigation
                     .getParent()
@@ -154,7 +156,7 @@ export function HomeScreen({ navigation }: Props) {
           </Card>
         )}
 
-        <Text style={styles.sectionTitle}>Features</Text>
+        <Text style={styles.sectionTitle}>{t('home.features')}</Text>
 
         {features.map((feature, index) => (
           <TouchableOpacity
@@ -195,17 +197,17 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.statItem}>
             <Ionicons name="people" size={24} color={colors.primary} />
             <Text style={styles.statValue}>10K+</Text>
-            <Text style={styles.statLabel}>Users</Text>
+            <Text style={styles.statLabel}>{t('home.stats.users')}</Text>
           </View>
           <View style={styles.statItem}>
             <Ionicons name="calendar" size={24} color={colors.primary} />
             <Text style={styles.statValue}>500+</Text>
-            <Text style={styles.statLabel}>Events</Text>
+            <Text style={styles.statLabel}>{t('home.stats.events')}</Text>
           </View>
           <View style={styles.statItem}>
             <Ionicons name="trophy" size={24} color={colors.primary} />
             <Text style={styles.statValue}>50K+</Text>
-            <Text style={styles.statLabel}>Activities</Text>
+            <Text style={styles.statLabel}>{t('home.stats.activities')}</Text>
           </View>
         </View>
       </ScrollView>

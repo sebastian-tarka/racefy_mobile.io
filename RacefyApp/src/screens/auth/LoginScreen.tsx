@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, fontSize } from '../../theme';
@@ -20,6 +21,7 @@ import type { AuthStackParamList } from '../../navigation/types';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
+  const { t } = useTranslation();
   const { login, isAuthenticated } = useAuth();
 
   // Auto-close modal when authenticated
@@ -38,13 +40,13 @@ export function LoginScreen({ navigation }: Props) {
     const newErrors: Record<string, string> = {};
 
     if (!email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('auth.validation.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = t('auth.validation.emailInvalid');
     }
 
     if (!password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('auth.validation.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -65,8 +67,8 @@ export function LoginScreen({ navigation }: Props) {
     } catch (error: any) {
       console.log('Login error:', error);
       const message =
-        error?.message || 'Login failed. Please check your credentials.';
-      Alert.alert('Login Failed', message);
+        error?.message || t('auth.loginFailedMessage');
+      Alert.alert(t('auth.loginFailed'), message);
     } finally {
       setIsLoading(false);
     }
@@ -84,16 +86,16 @@ export function LoginScreen({ navigation }: Props) {
         >
           <View style={styles.header}>
             <Ionicons name="walk" size={48} color={colors.primary} />
-            <Text style={styles.logo}>Racefy</Text>
-            <Text style={styles.tagline}>Sports & Fitness Community</Text>
+            <Text style={styles.logo}>{t('app.name')}</Text>
+            <Text style={styles.tagline}>{t('app.tagline')}</Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.title}>Sign In</Text>
+            <Text style={styles.title}>{t('auth.signIn')}</Text>
 
             <Input
-              label="Email"
-              placeholder="you@example.com"
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -104,8 +106,8 @@ export function LoginScreen({ navigation }: Props) {
             />
 
             <Input
-              label="Password"
-              placeholder="Enter your password"
+              label={t('auth.password')}
+              placeholder={t('auth.passwordPlaceholder')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -115,7 +117,7 @@ export function LoginScreen({ navigation }: Props) {
             />
 
             <Button
-              title="Sign In"
+              title={t('auth.signIn')}
               onPress={handleLogin}
               loading={isLoading}
               fullWidth
@@ -123,9 +125,9 @@ export function LoginScreen({ navigation }: Props) {
             />
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerLink}>Sign Up</Text>
+                <Text style={styles.footerLink}>{t('auth.signUp')}</Text>
               </TouchableOpacity>
             </View>
           </View>
