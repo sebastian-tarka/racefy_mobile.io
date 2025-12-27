@@ -28,3 +28,34 @@ const getBaseUrl = (): string => {
 };
 
 export const API_BASE_URL = getBaseUrl();
+
+// Get the base host for storage URLs (without /api)
+const getStorageBaseUrl = (): string => {
+  if (__DEV__) {
+    if (Device.isDevice) {
+      return `http://${LOCAL_IP}:${LOCAL_PORT}`;
+    }
+    if (Platform.OS === 'android') {
+      return `http://10.0.2.2:${LOCAL_PORT}`;
+    }
+    return `http://localhost:${LOCAL_PORT}`;
+  }
+  // Production - strip /api from the URL
+  return PRODUCTION_URL.replace('/api', '');
+};
+
+/**
+ * Fix storage URLs returned from API
+ * Replaces localhost with the correct host for the current platform
+ */
+export const fixStorageUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+
+  // Replace localhost:8080 with the correct host
+  if (url.includes('localhost:')) {
+    const storageBase = getStorageBaseUrl();
+    return url.replace(/http:\/\/localhost:\d+/, storageBase);
+  }
+
+  return url;
+};

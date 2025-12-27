@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Loading, Avatar, RoutePreview } from '../../components';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -41,8 +42,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           console.log('GPS Track loaded:', {
             hasTrack: !!track,
             pointsCount: track?.points_count,
+            hasRouteMapUrl: !!track?.route_map_url,
+            routeMapUrl: track?.route_map_url,
             hasRouteSvg: !!track?.route_svg,
-            svgLength: track?.route_svg?.length,
           });
           setGpsTrack(track);
         } catch (trackError) {
@@ -150,7 +152,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {/* Map Section */}
         {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg) && (
           <RoutePreview
-            routeMapUrl={gpsTrack.route_map_url}
+            routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
             routeSvg={gpsTrack.route_svg}
             height={250}
           />
