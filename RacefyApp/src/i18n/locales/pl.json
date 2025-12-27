@@ -217,7 +217,14 @@
     "activities": "Aktywności",
     "totalDistance": "Całkowity dystans",
     "totalTime": "Całkowity czas",
-    "avgPace": "Śr. tempo /km"
+    "avgPace": "Śr. tempo /km",
+    "existingActivity": {
+      "title": "Niedokończona aktywność",
+      "message": "Masz niedokończoną aktywność ({{duration}}, {{distance}}). Co chcesz zrobić?",
+      "resume": "Wznów",
+      "finish": "Zakończ i zapisz",
+      "discard": "Odrzuć"
+    }
   },
   "difficulty": {
     "beginner": "Początkujący",

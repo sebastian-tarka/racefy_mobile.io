@@ -156,13 +156,14 @@ export interface Activity {
   is_active: boolean;
   total_paused_duration: number;
   last_point_at: string | null;
+  has_gps_track: boolean;
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
   user?: User;
-  formatted_duration?: string;
-  formatted_distance?: string;
-  pace?: number;
+  duration_formatted?: string;
+  distance_formatted?: string;
+  pace?: string | null;
 }
 
 // GPS Point for live tracking
@@ -174,6 +175,22 @@ export interface GpsPoint {
   hr?: number;
   speed?: number;
   cadence?: number;
+}
+
+// Response from adding GPS points to live activity
+export interface AddActivityPointsResponse {
+  message: string;
+  data: Activity;
+  stats: {
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+    points_count: number;
+    avg_speed: number;
+    max_speed: number;
+    avg_heart_rate?: number;
+    max_heart_rate?: number;
+  };
 }
 
 export interface CreateActivityRequest {

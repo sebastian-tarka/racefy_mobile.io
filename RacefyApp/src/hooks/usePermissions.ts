@@ -94,26 +94,36 @@ export function usePermissions() {
         if (!foregroundGranted) return false;
       }
 
-      // On iOS 13+, show explanation before requesting
+      // On iOS, show explanation before requesting
       if (Platform.OS === 'ios') {
-        Alert.alert(
-          'Background Location',
-          'Racefy needs background location access to continue tracking your activity when the app is in the background. This helps ensure accurate distance and route tracking.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Continue',
-              onPress: async () => {
-                const { status } = await Location.requestBackgroundPermissionsAsync();
-                setPermissions((prev) => ({
-                  ...prev,
-                  locationBackground: status as PermissionStatus,
-                }));
+        return new Promise((resolve) => {
+          Alert.alert(
+            'Background Location',
+            'Racefy needs background location access to continue tracking your activity when the app is in the background. This helps ensure accurate distance and route tracking.',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+                onPress: () => {
+                  setPermissions((prev) => ({ ...prev, locationBackground: 'denied' }));
+                  resolve(false);
+                },
               },
-            },
-          ]
-        );
-        return true; // Return true since we showed the dialog
+              {
+                text: 'Continue',
+                onPress: async () => {
+                  const { status } = await Location.requestBackgroundPermissionsAsync();
+                  setPermissions((prev) => ({
+                    ...prev,
+                    locationBackground: status as PermissionStatus,
+                  }));
+                  resolve(status === 'granted');
+                },
+              },
+            ],
+            { cancelable: false }
+          );
+        });
       }
 
       // Android
@@ -256,12 +266,32 @@ export function usePermissions() {
       const locationGranted = await requestLocationPermission();
       if (!locationGranted) return false;
 
-      // Optionally request background location (for continuous tracking)
-      // This is optional - activity can still work with foreground only
-      // Don't await this - let it run in background
-      requestBackgroundLocationPermission().catch(() => {});
+      // Request background location - REQUIRED for activity tracking
+      // We need to await this to ensure background tracking works
+      const backgroundGranted = await requestBackgroundLocationPermission();
 
-      return true;
+      if (!backgroundGranted) {
+        // Show warning but allow to continue with foreground only
+        Alert.alert(
+          'Background Location',
+          'Without background location permission, tracking may stop when you switch apps. For best results, please allow "Always" location access in Settings.',
+          [
+            { text: 'Continue Anyway', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              },
+            },
+          ]
+        );
+      }
+
+      return true; // Allow starting even without background permission
     } catch (error) {
       console.error('Error requesting activity permissions:', error);
       return false;

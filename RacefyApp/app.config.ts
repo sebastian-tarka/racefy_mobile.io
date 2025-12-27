@@ -30,6 +30,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Racefy needs camera access to take photos for your activities and posts.',
       NSPhotoLibraryUsageDescription:
         'Racefy needs photo library access to add photos to your activities and posts.',
+      // Required for background location tracking
+      UIBackgroundModes: ['location', 'fetch'],
     },
     config: {
       usesNonExemptEncryption: false,
@@ -68,6 +70,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Racefy needs background location access to track activities even when the app is in the background.',
         locationWhenInUsePermission:
           'Racefy needs location access to track your activities and show your route.',
+        // Enable background location for Android
+        isAndroidBackgroundLocationEnabled: true,
+        // Enable background location for iOS
+        isIosBackgroundLocationEnabled: true,
       },
     ],
     [

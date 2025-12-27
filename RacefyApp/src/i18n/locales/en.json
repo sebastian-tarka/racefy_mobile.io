@@ -217,7 +217,14 @@
     "activities": "Activities",
     "totalDistance": "Total Distance",
     "totalTime": "Total Time",
-    "avgPace": "Avg Pace /km"
+    "avgPace": "Avg Pace /km",
+    "existingActivity": {
+      "title": "Unfinished Activity",
+      "message": "You have an unfinished activity ({{duration}}, {{distance}}). What would you like to do?",
+      "resume": "Resume",
+      "finish": "Finish & Save",
+      "discard": "Discard"
+    }
   },
   "difficulty": {
     "beginner": "Beginner",

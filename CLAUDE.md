@@ -87,3 +87,13 @@ The Laravel API backend runs via Sail on port 8080.
 Email: test@racefy.test / Password: password
 Email: demo@racefy.test / Password: password
 ```
+
+## API Documentation
+
+For API endpoint details, request/response formats, and implementation examples, refer to the `docs/api/` directory:
+
+- `docs/api/API_SPEC.md` - Full API specification with endpoints, types, and examples
+- `docs/api/README.md` - API overview and quick reference
+- `docs/api/CHANGELOG.md` - API version changes and updates
+
+Use these docs when implementing new features that interact with the Laravel backend.

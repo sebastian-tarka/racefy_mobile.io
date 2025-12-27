@@ -1,0 +1,3 @@
+[submodule "docs/api"]
+	path = docs/api
+	url = git@github.com:sebastian-tarka/racefy-api-docs.git

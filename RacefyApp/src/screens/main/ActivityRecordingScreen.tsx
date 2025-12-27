@@ -44,6 +44,7 @@ export function ActivityRecordingScreen() {
     isLoading,
     error,
     currentStats,
+    hasExistingActivity,
     startTracking,
     pauseTracking,
     resumeTracking,
@@ -128,6 +129,55 @@ export function ActivityRecordingScreen() {
       Alert.alert(t('common.error'), error, [{ text: t('common.ok'), onPress: clearError }]);
     }
   }, [error, clearError, t]);
+
+  // Show dialog when there's an existing unfinished activity
+  useEffect(() => {
+    if (hasExistingActivity && activity) {
+      Alert.alert(
+        t('recording.existingActivity.title'),
+        t('recording.existingActivity.message', {
+          duration: formatTime(activity.duration),
+          distance: formatDistance(activity.distance),
+        }),
+        [
+          {
+            text: t('recording.existingActivity.resume'),
+            onPress: async () => {
+              try {
+                await requestActivityTrackingPermissions();
+                await resumeTracking();
+              } catch (err) {
+                console.error('Failed to resume:', err);
+              }
+            },
+          },
+          {
+            text: t('recording.existingActivity.finish'),
+            onPress: async () => {
+              try {
+                await finishTracking();
+                Alert.alert(t('common.success'), t('recording.activitySaved'));
+              } catch (err) {
+                console.error('Failed to finish:', err);
+              }
+            },
+          },
+          {
+            text: t('recording.existingActivity.discard'),
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await discardTracking();
+              } catch (err) {
+                console.error('Failed to discard:', err);
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [hasExistingActivity, activity]);
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);

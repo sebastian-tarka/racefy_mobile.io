@@ -6,18 +6,37 @@ import type { Activity, GpsPoint } from '../types/api';
 
 const isWeb = Platform.OS === 'web';
 
+interface LiveActivityStats {
+  distance: number;
+  duration: number;
+  elevation_gain: number;
+  points_count: number;
+  avg_speed: number;
+  max_speed: number;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
+}
+
 interface LiveActivityState {
   activity: Activity | null;
   isTracking: boolean;
   isPaused: boolean;
   isLoading: boolean;
   error: string | null;
-  currentStats: {
-    distance: number;
-    duration: number;
-    elevation_gain: number;
-  };
+  currentStats: LiveActivityStats;
+  // Flag to indicate there's an existing activity that needs user attention
+  // (e.g., from app crash, phone died, etc.)
+  hasExistingActivity: boolean;
 }
+
+const initialStats: LiveActivityStats = {
+  distance: 0,
+  duration: 0,
+  elevation_gain: 0,
+  points_count: 0,
+  avg_speed: 0,
+  max_speed: 0,
+};
 
 export function useLiveActivity() {
   const [state, setState] = useState<LiveActivityState>({
@@ -26,14 +45,18 @@ export function useLiveActivity() {
     isPaused: false,
     isLoading: false,
     error: null,
-    currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+    currentStats: { ...initialStats },
+    hasExistingActivity: false,
   });
 
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const pointsBuffer = useRef<GpsPoint[]>([]);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
-  const localStatsRef = useRef({ distance: 0, duration: 0, elevation_gain: 0 });
+  const durationInterval = useRef<NodeJS.Timeout | null>(null);
+  const localStatsRef = useRef<LiveActivityStats>({ ...initialStats });
   const lastPosition = useRef<{ lat: number; lng: number; ele?: number } | null>(null);
+  const trackingStartTime = useRef<number | null>(null);
+  const pausedDuration = useRef<number>(0);
 
   // Haversine formula for distance calculation (fallback when offline)
   const calculateDistance = (
@@ -70,6 +93,9 @@ export function useLiveActivity() {
       if (syncInterval.current) {
         clearInterval(syncInterval.current);
       }
+      if (durationInterval.current) {
+        clearInterval(durationInterval.current);
+      }
     };
   }, []);
 
@@ -78,34 +104,66 @@ export function useLiveActivity() {
       setState((prev) => ({ ...prev, isLoading: true }));
       const activity = await api.getCurrentActivity();
       if (activity) {
-        setState((prev) => ({
-          ...prev,
-          activity,
-          isTracking: activity.status === 'in_progress',
-          isPaused: activity.status === 'paused',
-          currentStats: {
-            distance: activity.distance,
-            duration: activity.duration,
-            elevation_gain: activity.elevation_gain || 0,
-          },
-          isLoading: false,
-        }));
-        localStatsRef.current = {
+        const stats: LiveActivityStats = {
           distance: activity.distance,
           duration: activity.duration,
           elevation_gain: activity.elevation_gain || 0,
+          points_count: 0,
+          avg_speed: activity.avg_speed || 0,
+          max_speed: activity.max_speed || 0,
+          avg_heart_rate: activity.avg_heart_rate || undefined,
+          max_heart_rate: activity.max_heart_rate || undefined,
         };
 
-        // If activity is in progress, resume tracking
-        if (activity.status === 'in_progress') {
-          await startGpsTracking(activity.id);
-        }
+        // Set hasExistingActivity flag to true - UI should show dialog
+        // asking user to Resume/Finish/Discard
+        setState((prev) => ({
+          ...prev,
+          activity,
+          isTracking: false, // Don't auto-resume, let user decide
+          isPaused: activity.status === 'paused',
+          currentStats: stats,
+          isLoading: false,
+          hasExistingActivity: true,
+        }));
+        localStatsRef.current = stats;
+        pausedDuration.current = activity.total_paused_duration || 0;
+
+        // NOTE: We do NOT auto-resume GPS tracking here.
+        // The UI should show a dialog and let user choose:
+        // - Resume: call resumeTracking()
+        // - Finish: call finishTracking()
+        // - Discard: call discardTracking()
       } else {
-        setState((prev) => ({ ...prev, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoading: false, hasExistingActivity: false }));
       }
     } catch (error) {
       console.error('Failed to check existing activity:', error);
       setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Start local duration timer for real-time UI updates
+  const startDurationTimer = (initialDuration: number = 0) => {
+    trackingStartTime.current = Date.now() - (initialDuration * 1000);
+
+    durationInterval.current = setInterval(() => {
+      if (trackingStartTime.current) {
+        const elapsed = Math.floor((Date.now() - trackingStartTime.current) / 1000);
+        localStatsRef.current.duration = elapsed;
+        setState((prev) => ({
+          ...prev,
+          currentStats: { ...prev.currentStats, duration: elapsed },
+        }));
+      }
+    }, 1000);
+  };
+
+  // Stop duration timer
+  const stopDurationTimer = () => {
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current);
+      durationInterval.current = null;
     }
   };
 
@@ -165,6 +223,9 @@ export function useLiveActivity() {
 
       // Sync points to server every 30 seconds
       syncInterval.current = setInterval(() => syncPoints(activityId), 30000);
+
+      // Start duration timer
+      startDurationTimer(localStatsRef.current.duration);
     } catch (error) {
       console.error('Failed to start GPS tracking:', error);
     }
@@ -179,6 +240,7 @@ export function useLiveActivity() {
       clearInterval(syncInterval.current);
       syncInterval.current = null;
     }
+    stopDurationTimer();
   };
 
   const syncPoints = async (activityId: number) => {
@@ -190,10 +252,21 @@ export function useLiveActivity() {
     try {
       const result = await api.addActivityPoints(activityId, pointsToSync);
       // Update with server-calculated stats (more accurate)
-      localStatsRef.current = result.stats;
+      const newStats: LiveActivityStats = {
+        distance: result.stats.distance,
+        duration: result.stats.duration,
+        elevation_gain: result.stats.elevation_gain,
+        points_count: result.stats.points_count,
+        avg_speed: result.stats.avg_speed,
+        max_speed: result.stats.max_speed,
+        avg_heart_rate: result.stats.avg_heart_rate,
+        max_heart_rate: result.stats.max_heart_rate,
+      };
+      localStatsRef.current = newStats;
       setState((prev) => ({
         ...prev,
-        currentStats: result.stats,
+        activity: result.data,
+        currentStats: newStats,
       }));
     } catch (error) {
       // Re-add points on failure
@@ -207,6 +280,31 @@ export function useLiveActivity() {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
+        // IMPORTANT: Check for existing activity first!
+        // Never call start blindly - the API will reject if one exists
+        const existingActivity = await api.getCurrentActivity();
+        if (existingActivity) {
+          const stats: LiveActivityStats = {
+            distance: existingActivity.distance,
+            duration: existingActivity.duration,
+            elevation_gain: existingActivity.elevation_gain || 0,
+            points_count: 0,
+            avg_speed: existingActivity.avg_speed || 0,
+            max_speed: existingActivity.max_speed || 0,
+            avg_heart_rate: existingActivity.avg_heart_rate || undefined,
+            max_heart_rate: existingActivity.max_heart_rate || undefined,
+          };
+          setState((prev) => ({
+            ...prev,
+            activity: existingActivity,
+            isLoading: false,
+            hasExistingActivity: true,
+            currentStats: stats,
+          }));
+          localStatsRef.current = stats;
+          throw new Error('An activity is already in progress. Please finish or discard it first.');
+        }
+
         // Start activity on server
         const activity = await api.startLiveActivity({
           sport_type_id: sportTypeId,
@@ -215,9 +313,11 @@ export function useLiveActivity() {
         });
 
         // Reset local stats
-        localStatsRef.current = { distance: 0, duration: 0, elevation_gain: 0 };
+        localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
+        pausedDuration.current = 0;
+        trackingStartTime.current = null;
 
         setState((prev) => ({
           ...prev,
@@ -225,7 +325,8 @@ export function useLiveActivity() {
           isTracking: true,
           isPaused: false,
           isLoading: false,
-          currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+          currentStats: { ...initialStats },
+          hasExistingActivity: false,
         }));
 
         // Start GPS tracking
@@ -286,15 +387,19 @@ export function useLiveActivity() {
 
       const activity = await api.resumeActivity(state.activity.id);
 
+      // Update paused duration from server
+      pausedDuration.current = activity.total_paused_duration || 0;
+
       setState((prev) => ({
         ...prev,
         activity,
         isTracking: true,
         isPaused: false,
         isLoading: false,
+        hasExistingActivity: false, // Clear the flag - user chose to resume
       }));
 
-      // Restart GPS tracking
+      // Restart GPS tracking (this also starts the duration timer)
       await startGpsTracking(activity.id);
     } catch (error: any) {
       console.error('Failed to resume activity:', error);
@@ -327,9 +432,11 @@ export function useLiveActivity() {
         });
 
         // Reset state
-        localStatsRef.current = { distance: 0, duration: 0, elevation_gain: 0 };
+        localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
+        pausedDuration.current = 0;
+        trackingStartTime.current = null;
 
         setState({
           activity: null,
@@ -337,7 +444,8 @@ export function useLiveActivity() {
           isPaused: false,
           isLoading: false,
           error: null,
-          currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+          currentStats: { ...initialStats },
+          hasExistingActivity: false,
         });
 
         return activity;
@@ -367,9 +475,11 @@ export function useLiveActivity() {
       await api.discardActivity(state.activity.id);
 
       // Reset state
-      localStatsRef.current = { distance: 0, duration: 0, elevation_gain: 0 };
+      localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
+      pausedDuration.current = 0;
+      trackingStartTime.current = null;
 
       setState({
         activity: null,
@@ -377,7 +487,8 @@ export function useLiveActivity() {
         isPaused: false,
         isLoading: false,
         error: null,
-        currentStats: { distance: 0, duration: 0, elevation_gain: 0 },
+        currentStats: { ...initialStats },
+        hasExistingActivity: false,
       });
     } catch (error: any) {
       console.error('Failed to discard activity:', error);

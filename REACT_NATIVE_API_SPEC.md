@@ -491,7 +491,8 @@ Include header: `Authorization: Bearer YOUR_TOKEN`
 | GET | `/activities/{id}` | Get activity details |
 | PUT | `/activities/{id}` | Update activity |
 | DELETE | `/activities/{id}` | Delete activity |
-| GET | `/activities/{id}/track` | Get GPS track data |
+| GET | `/activities/{id}/track` | Get GPS track data (GeoJSON) |
+| GET | `/activities/{id}/track-points` | Get detailed track points for charts |
 | POST | `/activities/{id}/share` | Share activity as post |
 | POST | `/activities/import` | Import GPX file |
 
@@ -513,6 +514,188 @@ Include header: `Authorization: Bearer YOUR_TOKEN`
 | POST | `/activities/{id}/resume` | Resume paused activity |
 | POST | `/activities/{id}/finish` | Finish and save activity |
 | DELETE | `/activities/{id}/discard` | Discard/cancel activity |
+
+##### Live Tracking Request/Response Formats
+
+**1. Start Activity**
+```typescript
+// POST /api/activities/start
+// Request:
+{
+  sport_type_id: number;    // Required - ID from /api/sport-types
+  title?: string;           // Optional - defaults to "Activity"
+  started_at?: string;      // Optional - ISO 8601, defaults to now
+}
+
+// Response (201):
+{
+  message: "Activity started",
+  data: Activity  // See Activity interface below
+}
+```
+
+**2. Send GPS Points (call every 5-30 seconds)**
+```typescript
+// POST /api/activities/{id}/points
+// Request:
+{
+  points: GpsPoint[];  // Array of GPS points (batch)
+}
+
+interface GpsPoint {
+  lat: number;         // Required: -90 to 90
+  lng: number;         // Required: -180 to 180
+  ele?: number;        // Optional: elevation in meters
+  time?: string;       // Optional: ISO 8601 timestamp
+  hr?: number;         // Optional: heart rate (0-300 BPM)
+  speed?: number;      // Optional: speed in m/s
+  cadence?: number;    // Optional: steps per minute
+}
+
+// Response (200):
+{
+  message: "Points added",
+  data: Activity,      // Updated activity with new stats
+  stats: {
+    distance: number;       // Total meters
+    duration: number;       // Total seconds (excludes paused time)
+    elevation_gain: number; // Total meters climbed
+    points_count: number;   // Total GPS points
+    avg_speed: number;      // m/s
+    max_speed: number;      // m/s
+    avg_heart_rate?: number;
+    max_heart_rate?: number;
+  }
+}
+```
+
+**3. Pause Activity**
+```typescript
+// POST /api/activities/{id}/pause
+// Request: (empty body)
+
+// Response (200):
+{
+  message: "Activity paused",
+  data: Activity  // status = "paused"
+}
+```
+
+**4. Resume Activity**
+```typescript
+// POST /api/activities/{id}/resume
+// Request: (empty body)
+
+// Response (200):
+{
+  message: "Activity resumed",
+  data: Activity  // status = "in_progress"
+}
+```
+
+**5. Finish Activity**
+```typescript
+// POST /api/activities/{id}/finish
+// Request:
+{
+  title?: string;           // Optional: update title
+  description?: string;     // Optional: add description (max 5000 chars)
+  ended_at?: string;        // Optional: ISO 8601, defaults to now
+  calories?: number;        // Optional: override calculated
+  avg_heart_rate?: number;  // Optional: override
+  max_heart_rate?: number;  // Optional: override
+}
+
+// Response (200):
+{
+  message: "Activity finished",
+  data: Activity  // status = "completed", final stats calculated
+}
+```
+
+**6. Discard Activity**
+```typescript
+// DELETE /api/activities/{id}/discard
+// Request: (empty body)
+
+// Response (200):
+{
+  message: "Activity discarded"
+}
+```
+
+**7. Get Current Active Activity**
+```typescript
+// GET /api/activities/current
+
+// Response (200):
+{
+  data: Activity | null  // null if no active activity
+}
+```
+
+##### Activity Interface
+```typescript
+interface Activity {
+  id: number;
+  title: string;
+  description: string | null;
+  sport_type: SportType;
+  user: User;
+  status: 'in_progress' | 'paused' | 'completed';
+  started_at: string;
+  ended_at: string | null;
+  duration: number;              // seconds (excludes paused time)
+  duration_formatted: string;    // "32:15" or "1:05:30"
+  distance: number;              // meters
+  distance_formatted: string;    // "5.2 km"
+  elevation_gain: number;        // meters
+  calories: number | null;
+  avg_speed: number | null;      // m/s
+  max_speed: number | null;      // m/s
+  avg_heart_rate: number | null; // BPM
+  max_heart_rate: number | null; // BPM
+  pace: string | null;           // "6:12/km"
+  source: 'app' | 'gpx_import' | 'manual';
+  is_private: boolean;
+  has_gps_track: boolean;
+  gps_track: GpsTrack | null;
+  total_paused_duration: number; // seconds spent paused
+  last_point_at: string | null;  // last GPS point timestamp
+  created_at: string;
+  updated_at: string;
+}
+```
+
+##### Recommended Implementation Flow
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. User taps "Start"                                       │
+│     → POST /activities/start                                │
+│     → Start GPS watching (react-native-geolocation-service) │
+│     → Start timer for sync interval                         │
+├─────────────────────────────────────────────────────────────┤
+│  2. Every 5-30 seconds (while tracking)                     │
+│     → Batch collected GPS points                            │
+│     → POST /activities/{id}/points                          │
+│     → Update UI with returned stats                         │
+├─────────────────────────────────────────────────────────────┤
+│  3. User taps "Pause"                                       │
+│     → Sync remaining points first                           │
+│     → POST /activities/{id}/pause                           │
+│     → Stop GPS watching                                     │
+├─────────────────────────────────────────────────────────────┤
+│  4. User taps "Resume"                                      │
+│     → POST /activities/{id}/resume                          │
+│     → Restart GPS watching                                  │
+├─────────────────────────────────────────────────────────────┤
+│  5. User taps "Finish"                                      │
+│     → Sync remaining points first                           │
+│     → POST /activities/{id}/finish                          │
+│     → Stop GPS watching                                     │
+│     → Navigate to activity detail screen                    │
+└─────────────────────────────────────────────────────────────┘
+```
 
 #### Photos
 | Method | Endpoint | Description |
@@ -573,6 +756,729 @@ Require authentication + admin role. Prefix: `/admin`
 | PATCH | `/admin/events/{id}/slug` | Update event friendly URL |
 | GET | `/admin/events/check-slug` | Check slug availability |
 | DELETE | `/admin/events/{id}` | Delete event |
+
+---
+
+## Image Storage & URLs
+
+The API stores images on the server and returns full URLs in responses.
+
+### Image URL Base
+
+All images are served from:
+```
+{API_BASE_URL without /api}/storage/{path}
+```
+
+For local development:
+```
+http://localhost:8080/storage/{path}
+```
+
+### Image Types
+
+| Type | URL Pattern | Example |
+|------|-------------|---------|
+| Post Photos | `/storage/photos/Post/{Year}/{Month}/{id}/{uuid}.{ext}` | `/storage/photos/Post/2025/12/144/abc123.jpg` |
+| Activity Photos | `/storage/photos/Activity/{Year}/{Month}/{id}/{uuid}.{ext}` | `/storage/photos/Activity/2025/12/55/def456.jpg` |
+| User Avatars | `/storage/avatars/{user_id}/{uuid}.{ext}` | `/storage/avatars/5/ghi789.png` |
+
+### Supported Formats
+
+| Type | Formats | Max Size |
+|------|---------|----------|
+| Photos | jpeg, png, jpg, gif, webp | 5MB |
+| Avatars | jpeg, png, jpg, gif, webp | 5MB |
+
+### TypeScript Interfaces for Images
+
+```typescript
+// Photo object returned by API
+export interface Photo {
+  id: number;
+  url: string;           // Full URL to image
+  filename: string;      // Original filename
+  mime_type: string;     // e.g., "image/jpeg"
+  size: number;          // Size in bytes
+  width: number | null;  // Image width in pixels
+  height: number | null; // Image height in pixels
+  caption: string | null;
+  order: number;         // Display order (0-based)
+  created_at: string;
+}
+
+// User object includes avatar fields
+export interface User {
+  id: number;
+  name: string;
+  username: string;
+  avatar: string | null;      // Relative path: "avatars/5/uuid.jpg"
+  avatar_url: string | null;  // Full URL: "http://localhost:8080/storage/avatars/5/uuid.jpg"
+  // ... other fields
+}
+```
+
+### Uploading Images in React Native
+
+```typescript
+// utils/imageUpload.ts
+import { Platform } from 'react-native';
+import { API_BASE_URL } from '../config/api';
+
+interface ImageFile {
+  uri: string;
+  type: string;
+  name: string;
+}
+
+export async function uploadPostPhoto(
+  token: string,
+  postId: number,
+  image: ImageFile,
+  caption?: string
+): Promise<Photo> {
+  const formData = new FormData();
+
+  // React Native requires this specific format for file uploads
+  formData.append('photo', {
+    uri: Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri,
+    type: image.type || 'image/jpeg',
+    name: image.name || 'photo.jpg',
+  } as any);
+
+  if (caption) {
+    formData.append('caption', caption);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/posts/${postId}/photos`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      // Don't set Content-Type - let fetch set it with boundary
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data.data;
+}
+
+export async function uploadActivityPhoto(
+  token: string,
+  activityId: number,
+  image: ImageFile,
+  caption?: string
+): Promise<Photo> {
+  const formData = new FormData();
+
+  formData.append('photo', {
+    uri: Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri,
+    type: image.type || 'image/jpeg',
+    name: image.name || 'photo.jpg',
+  } as any);
+
+  if (caption) {
+    formData.append('caption', caption);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/activities/${activityId}/photos`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data.data;
+}
+
+export async function uploadAvatar(
+  token: string,
+  image: ImageFile
+): Promise<{ avatar: string }> {
+  const formData = new FormData();
+
+  formData.append('avatar', {
+    uri: Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri,
+    type: image.type || 'image/jpeg',
+    name: image.name || 'avatar.jpg',
+  } as any);
+
+  const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data;
+}
+```
+
+### Using with Image Picker
+
+```typescript
+// Example with react-native-image-picker
+import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { uploadPostPhoto } from '../utils/imageUpload';
+
+async function selectAndUploadPhoto(postId: number, token: string) {
+  const result: ImagePickerResponse = await launchImageLibrary({
+    mediaType: 'photo',
+    quality: 0.8,
+    maxWidth: 1920,
+    maxHeight: 1920,
+  });
+
+  if (result.didCancel || !result.assets?.[0]) return null;
+
+  const asset = result.assets[0];
+
+  const photo = await uploadPostPhoto(token, postId, {
+    uri: asset.uri!,
+    type: asset.type || 'image/jpeg',
+    name: asset.fileName || 'photo.jpg',
+  });
+
+  return photo;
+}
+```
+
+### Displaying Images
+
+```typescript
+// components/Avatar.tsx
+import { Image, View, Text, StyleSheet } from 'react-native';
+
+interface AvatarProps {
+  avatarUrl: string | null;
+  name: string;
+  size?: number;
+}
+
+export function Avatar({ avatarUrl, name, size = 40 }: AvatarProps) {
+  const initial = name.charAt(0).toUpperCase();
+
+  if (avatarUrl) {
+    return (
+      <Image
+        source={{ uri: avatarUrl }}
+        style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
+      />
+    );
+  }
+
+  // Fallback to initial
+  return (
+    <View style={[styles.fallback, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={[styles.initial, { fontSize: size * 0.4 }]}>{initial}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  avatar: {
+    backgroundColor: '#e5e7eb',
+  },
+  fallback: {
+    backgroundColor: '#10b981',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initial: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+});
+```
+
+### Image Caching
+
+For better performance, consider using a caching library:
+
+```bash
+npm install react-native-fast-image
+```
+
+```typescript
+import FastImage from 'react-native-fast-image';
+
+<FastImage
+  source={{
+    uri: photo.url,
+    priority: FastImage.priority.normal,
+    cache: FastImage.cacheControl.immutable,
+  }}
+  style={{ width: 200, height: 200 }}
+  resizeMode={FastImage.resizeMode.cover}
+/>
+```
+
+---
+
+## GPX File Import
+
+Import activities from GPX files exported from fitness devices.
+
+### Supported Devices
+
+- Garmin (Connect, Edge, Forerunner)
+- Amazfit/Zepp watches
+- Strava exports
+- Polar devices
+- Coros watches
+- Any GPX 1.1 format
+
+### Import GPX File
+
+```typescript
+// services/activities.ts
+export async function importGpxFile(
+  token: string,
+  file: { uri: string; name: string; type: string },
+  sportTypeId: number
+): Promise<Activity> {
+  const formData = new FormData();
+
+  formData.append('file', {
+    uri: Platform.OS === 'ios' ? file.uri.replace('file://', '') : file.uri,
+    type: file.type || 'application/gpx+xml',
+    name: file.name || 'activity.gpx',
+  } as any);
+
+  formData.append('sport_type_id', String(sportTypeId));
+
+  const response = await fetch(`${API_BASE_URL}/activities/import`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data.data;
+}
+```
+
+### Using with Document Picker
+
+```typescript
+import * as DocumentPicker from 'expo-document-picker';
+import { importGpxFile } from '../services/activities';
+
+async function selectAndImportGpx(sportTypeId: number, token: string) {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/gpx+xml', 'text/xml', 'application/xml'],
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) return null;
+
+    const file = result.assets[0];
+
+    const activity = await importGpxFile(token, {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType || 'application/gpx+xml',
+    }, sportTypeId);
+
+    return activity;
+  } catch (error) {
+    console.error('GPX import failed:', error);
+    throw error;
+  }
+}
+```
+
+### Parsed GPX Data
+
+The API extracts from GPX files:
+
+| Data | Description |
+|------|-------------|
+| GPS coordinates | Latitude, longitude from `<trkpt>` |
+| Elevation | Altitude from `<ele>` |
+| Timestamps | Time from `<time>` |
+| Heart Rate | From Garmin extensions `<hr>` |
+| Speed | From Garmin extensions `<speed>` |
+| Cadence | From Garmin extensions `<cad>` |
+
+### Get Track Points for Charts
+
+```typescript
+// Get detailed track points for visualization
+export async function getTrackPoints(
+  token: string,
+  activityId: number,
+  maxPoints: number = 500
+): Promise<TrackPointsResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/activities/${activityId}/track-points?max_points=${maxPoints}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    }
+  );
+
+  const data = await response.json();
+  if (!response.ok) throw data;
+  return data;
+}
+
+// TypeScript interface
+interface TrackPoint {
+  index: number;
+  lat: number;
+  lng: number;
+  distance: number;      // Cumulative distance in meters
+  timestamp: string | null;
+  elevation?: number;    // Meters
+  heart_rate?: number;   // BPM
+  speed?: number;        // m/s
+  cadence?: number;      // Steps/min or RPM
+}
+
+interface TrackPointsResponse {
+  data: TrackPoint[];
+  total_points: number;
+  sampled_points: number;
+  bounds: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+}
+```
+
+### Activity Statistics from Import
+
+After import, the activity includes calculated stats:
+
+```typescript
+interface Activity {
+  // ... other fields
+  distance: number;        // Total meters
+  duration: number;        // Total seconds
+  elevation_gain: number;  // Meters climbed
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
+  avg_speed: number | null; // m/s
+  max_speed: number | null; // m/s
+  source: 'gpx_import';    // Import source indicator
+  has_gps_track: boolean;  // true after import
+}
+```
+
+---
+
+## Route Maps & GPS Visualization
+
+The API provides GPS track data in multiple formats for displaying activity routes.
+
+### GPS Track Data Structure
+
+Activities with GPS data include a `gps_track` relation:
+
+```typescript
+interface GpsTrack {
+  id: number;
+  activity_id: number;
+  track_data: GeoJSONLineString;      // Full route (all points)
+  simplified_track: GeoJSONLineString; // Simplified (max 100 points)
+  bounds: MapBounds;                   // Pre-calculated boundaries
+  points_count: number;                // Total GPS points
+  route_svg: string | null;            // Pre-generated SVG preview
+  svg_generated_at: string | null;
+}
+
+interface GeoJSONLineString {
+  type: 'LineString';
+  coordinates: [number, number, number?][]; // [lng, lat, elevation?]
+}
+
+interface MapBounds {
+  north: number;  // Max latitude
+  south: number;  // Min latitude
+  east: number;   // Max longitude
+  west: number;   // Min longitude
+}
+```
+
+### Activity Response with GPS Track
+
+```json
+{
+  "id": 1,
+  "title": "Morning Run",
+  "has_gps_track": true,
+  "route_svg": "<svg viewBox=\"0 0 400 300\">...</svg>",
+  "gps_track": {
+    "id": 1,
+    "track_data": {
+      "type": "LineString",
+      "coordinates": [
+        [18.87354, 50.15386, 359.67],
+        [18.87361, 50.15392, 360.12]
+      ]
+    },
+    "simplified_track": {
+      "type": "LineString",
+      "coordinates": [[18.87354, 50.15386], [18.89123, 50.16234]]
+    },
+    "bounds": {
+      "north": 50.16234,
+      "south": 50.15386,
+      "east": 18.89123,
+      "west": 18.87354
+    },
+    "points_count": 3600,
+    "route_svg": "<svg>...</svg>"
+  }
+}
+```
+
+### Displaying Maps in React Native
+
+#### Option 1: Static SVG Preview (Lightweight)
+
+Use the pre-generated `route_svg` for feed cards and previews:
+
+```tsx
+import { SvgXml } from 'react-native-svg';
+
+interface RoutePreviewProps {
+  routeSvg: string | null;
+  onPress?: () => void;
+}
+
+const RoutePreview: React.FC<RoutePreviewProps> = ({ routeSvg, onPress }) => {
+  if (!routeSvg) return null;
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.container}>
+      <SvgXml xml={routeSvg} width="100%" height={150} />
+    </TouchableOpacity>
+  );
+};
+```
+
+**Required package:**
+```bash
+npm install react-native-svg
+```
+
+#### Option 2: Interactive Map (react-native-maps)
+
+For full interactive maps with pan/zoom:
+
+```tsx
+import MapView, { Polyline, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+
+interface RouteMapProps {
+  gpsTrack: GpsTrack;
+  height?: number;
+}
+
+const RouteMap: React.FC<RouteMapProps> = ({ gpsTrack, height = 300 }) => {
+  // Convert GeoJSON [lng, lat] to react-native-maps {latitude, longitude}
+  const coordinates = gpsTrack.simplified_track.coordinates.map(
+    ([lng, lat]) => ({ latitude: lat, longitude: lng })
+  );
+
+  const startPoint = coordinates[0];
+  const endPoint = coordinates[coordinates.length - 1];
+
+  // Calculate initial region from bounds
+  const initialRegion = {
+    latitude: (gpsTrack.bounds.north + gpsTrack.bounds.south) / 2,
+    longitude: (gpsTrack.bounds.east + gpsTrack.bounds.west) / 2,
+    latitudeDelta: (gpsTrack.bounds.north - gpsTrack.bounds.south) * 1.2,
+    longitudeDelta: (gpsTrack.bounds.east - gpsTrack.bounds.west) * 1.2,
+  };
+
+  return (
+    <MapView
+      provider={PROVIDER_GOOGLE}
+      style={{ height }}
+      initialRegion={initialRegion}
+    >
+      {/* Route line */}
+      <Polyline
+        coordinates={coordinates}
+        strokeColor="#10b981"
+        strokeWidth={4}
+      />
+
+      {/* Start marker (green) */}
+      <Marker
+        coordinate={startPoint}
+        pinColor="#22c55e"
+        title="Start"
+      />
+
+      {/* End marker (red) */}
+      <Marker
+        coordinate={endPoint}
+        pinColor="#ef4444"
+        title="Finish"
+      />
+    </MapView>
+  );
+};
+```
+
+**Required package:**
+```bash
+npm install react-native-maps
+```
+
+### Full-Screen Map Modal
+
+```tsx
+import React from 'react';
+import { Modal, View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+
+interface RouteMapModalProps {
+  visible: boolean;
+  onClose: () => void;
+  gpsTrack: GpsTrack;
+  title?: string;
+}
+
+const RouteMapModal: React.FC<RouteMapModalProps> = ({
+  visible,
+  onClose,
+  gpsTrack,
+  title = 'Route Map',
+}) => {
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>{title}</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Map */}
+        <RouteMap gpsTrack={gpsTrack} height="100%" />
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  title: { fontSize: 18, fontWeight: '600' },
+  closeButton: { padding: 8 },
+  closeText: { fontSize: 20, color: '#6b7280' },
+});
+```
+
+### Using Track Points for Charts
+
+For elevation profiles and performance charts, fetch detailed track points:
+
+```typescript
+// GET /api/activities/{id}/track-points?max_points=500
+
+interface TrackPoint {
+  index: number;
+  lat: number;
+  lng: number;
+  distance: number;      // Cumulative distance in meters
+  timestamp: string;
+  elevation?: number;    // Meters
+  heart_rate?: number;   // BPM
+  speed?: number;        // m/s
+  cadence?: number;      // Steps/min
+}
+
+// Fetch track points for charts
+const fetchTrackPoints = async (activityId: number): Promise<TrackPoint[]> => {
+  const response = await api.get(`/activities/${activityId}/track-points`, {
+    params: { max_points: 500 },
+  });
+  return response.data.data;
+};
+```
+
+### Map Design Guidelines
+
+| Element | Color | Description |
+|---------|-------|-------------|
+| Route line | `#10b981` | Emerald-500, main route path |
+| Start marker | `#22c55e` | Green-500, activity start |
+| End marker | `#ef4444` | Red-500, activity finish |
+| Route stroke width | 3-4px | Visible but not overwhelming |
+
+### TypeScript Interfaces
+
+```typescript
+// Add to your types file
+interface ActivityWithGps extends Activity {
+  has_gps_track: boolean;
+  route_svg: string | null;
+  gps_track: GpsTrack | null;
+}
+
+interface GpsTrack {
+  id: number;
+  activity_id: number;
+  track_data: GeoJSONLineString;
+  simplified_track: GeoJSONLineString;
+  bounds: MapBounds;
+  points_count: number;
+  route_svg: string | null;
+  svg_generated_at: string | null;
+  created_at: string;
+}
+
+interface GeoJSONLineString {
+  type: 'LineString';
+  coordinates: [number, number, number?][];
+}
+
+interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+interface TrackPointsResponse {
+  data: TrackPoint[];
+  total_points: number;
+  sampled_points: number;
+  bounds: MapBounds;
+}
+```
 
 ---
 
@@ -1846,73 +2752,73 @@ import { api } from '../services/api';
 import type { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  logout: () => Promise<void>;
+   user: User | null;
+   isLoading: boolean;
+   isAuthenticated: boolean;
+   login: (data: LoginRequest) => Promise<void>;
+   register: (data: RegisterRequest) => Promise<void>;
+   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+   const [user, setUser] = useState<User | null>(null);
+   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    initAuth();
-  }, []);
+   useEffect(() => {
+      initAuth();
+   }, []);
 
-  async function initAuth() {
-    try {
-      await api.init();
-      if (api.isAuthenticated()) {
-        const userData = await api.getUser();
-        setUser(userData);
+   async function initAuth() {
+      try {
+         await api.init();
+         if (api.isAuthenticated()) {
+            const userData = await api.getUser();
+            setUser(userData);
+         }
+      } catch (error) {
+         await api.clearToken();
+      } finally {
+         setIsLoading(false);
       }
-    } catch (error) {
-      await api.clearToken();
-    } finally {
-      setIsLoading(false);
-    }
-  }
+   }
 
-  async function login(data: LoginRequest) {
-    const response = await api.login(data);
-    setUser(response.user);
-  }
+   async function login(data: LoginRequest) {
+      const response = await api.login(data);
+      setUser(response.user);
+   }
 
-  async function register(data: RegisterRequest) {
-    const response = await api.register(data);
-    setUser(response.user);
-  }
+   async function register(data: RegisterRequest) {
+      const response = await api.register(data);
+      setUser(response.user);
+   }
 
-  async function logout() {
-    await api.logout();
-    setUser(null);
-  }
+   async function logout() {
+      await api.logout();
+      setUser(null);
+   }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+   return (
+           <AuthContext.Provider
+                   value={{
+      user,
+              isLoading,
+              isAuthenticated: !!user,
+              login,
+              register,
+              logout,
+   }}
+>
+   {children}
+   </AuthContext.Provider>
+);
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+   const context = useContext(AuthContext);
+   if (!context) throw new Error('useAuth must be used within AuthProvider');
+   return context;
 };
 ```
 
@@ -1923,61 +2829,61 @@ import { api } from '../services/api';
 import type { Post } from '../types/api';
 
 export function useFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+   const [posts, setPosts] = useState<Post[]>([]);
+   const [isLoading, setIsLoading] = useState(false);
+   const [page, setPage] = useState(1);
+   const [hasMore, setHasMore] = useState(true);
 
-  const fetchFeed = useCallback(async (reset = false) => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    try {
-      const currentPage = reset ? 1 : page;
-      const response = await api.getFeed(currentPage);
-      
-      setPosts(prev => reset ? response.data : [...prev, ...response.data]);
-      setHasMore(response.meta.current_page < response.meta.last_page);
-      setPage(currentPage + 1);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, isLoading]);
+   const fetchFeed = useCallback(async (reset = false) => {
+      if (isLoading) return;
 
-  const refresh = () => fetchFeed(true);
-  const loadMore = () => hasMore && fetchFeed(false);
+      setIsLoading(true);
+      try {
+         const currentPage = reset ? 1 : page;
+         const response = await api.getFeed(currentPage);
 
-  const likePost = async (postId: number) => {
-    await api.likePost(postId);
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
-          : p
-      )
-    );
-  };
+         setPosts(prev => reset ? response.data : [...prev, ...response.data]);
+         setHasMore(response.meta.current_page < response.meta.last_page);
+         setPage(currentPage + 1);
+      } finally {
+         setIsLoading(false);
+      }
+   }, [page, isLoading]);
 
-  const unlikePost = async (postId: number) => {
-    await api.unlikePost(postId);
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
-          : p
-      )
-    );
-  };
+   const refresh = () => fetchFeed(true);
+   const loadMore = () => hasMore && fetchFeed(false);
 
-  return {
-    posts,
-    isLoading,
-    hasMore,
-    refresh,
-    loadMore,
-    likePost,
-    unlikePost,
-  };
+   const likePost = async (postId: number) => {
+      await api.likePost(postId);
+      setPosts(prev =>
+              prev.map(p =>
+                      p.id === postId
+                              ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
+                              : p
+              )
+      );
+   };
+
+   const unlikePost = async (postId: number) => {
+      await api.unlikePost(postId);
+      setPosts(prev =>
+              prev.map(p =>
+                      p.id === postId
+                              ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
+                              : p
+              )
+      );
+   };
+
+   return {
+      posts,
+      isLoading,
+      hasMore,
+      refresh,
+      loadMore,
+      likePost,
+      unlikePost,
+   };
 }
 ```
 
@@ -2636,22 +3542,22 @@ When creating or updating events, include `point_rewards`:
 
 ```typescript
 const event = await api.createEvent({
-  title: 'City Marathon 2025',
-  content: 'Annual city marathon event',
-  sport_type_id: 1,
-  location_name: 'City Center',
-  latitude: 52.2297,
-  longitude: 21.0122,
-  starts_at: '2025-06-15T08:00:00Z',
-  ends_at: '2025-06-15T16:00:00Z',
-  difficulty: 'intermediate',
-  // Point rewards configuration
-  point_rewards: {
-    first_place: 500,
-    second_place: 300,
-    third_place: 150,
-    finisher: 50,
-  },
+   title: 'City Marathon 2025',
+   content: 'Annual city marathon event',
+   sport_type_id: 1,
+   location_name: 'City Center',
+   latitude: 52.2297,
+   longitude: 21.0122,
+   starts_at: '2025-06-15T08:00:00Z',
+   ends_at: '2025-06-15T16:00:00Z',
+   difficulty: 'intermediate',
+   // Point rewards configuration
+   point_rewards: {
+      first_place: 500,
+      second_place: 300,
+      third_place: 150,
+      finisher: 50,
+   },
 });
 ```
 

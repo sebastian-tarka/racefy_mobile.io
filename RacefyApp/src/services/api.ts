@@ -419,19 +419,14 @@ class ApiService {
   async addActivityPoints(
     activityId: number,
     points: Types.GpsPoint[]
-  ): Promise<{
-    points_count: number;
-    total_points: number;
-    stats: { distance: number; duration: number; elevation_gain: number };
-  }> {
-    const response = await this.request<{
-      points_count: number;
-      total_points: number;
-      stats: { distance: number; duration: number; elevation_gain: number };
-    }>(`/activities/${activityId}/points`, {
-      method: 'POST',
-      body: JSON.stringify({ points }),
-    });
+  ): Promise<Types.AddActivityPointsResponse> {
+    const response = await this.request<Types.AddActivityPointsResponse>(
+      `/activities/${activityId}/points`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ points }),
+      }
+    );
     return response;
   }
 
