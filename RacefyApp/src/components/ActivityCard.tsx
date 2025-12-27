@@ -54,7 +54,7 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
-      <Card style={styles.card}>
+      <Card>
         {showUser && activity.user && (
           <View style={styles.userHeader}>
             <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
@@ -74,7 +74,7 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
               {activity.title}
             </Text>
             <Text style={styles.sportName}>
-              {activity.sport_type?.name || 'Activity'} {!showUser && `· ${formattedDate}`}
+              {activity.sport_type?.name || 'Activity'}{!showUser ? ` · ${formattedDate}` : ''}
             </Text>
           </View>
         </View>
@@ -105,31 +105,29 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
           </View>
         </View>
 
-        {(activity.elevation_gain || activity.calories) && (
+        {(activity.elevation_gain != null && activity.elevation_gain > 0) ||
+        (activity.calories != null && activity.calories > 0) ? (
           <View style={styles.secondaryStats}>
-            {activity.elevation_gain ? (
+            {activity.elevation_gain != null && activity.elevation_gain > 0 ? (
               <View style={styles.secondaryStatItem}>
                 <Ionicons name="trending-up" size={14} color={colors.textMuted} />
                 <Text style={styles.secondaryStatText}>{activity.elevation_gain}m</Text>
               </View>
             ) : null}
-            {activity.calories ? (
+            {activity.calories != null && activity.calories > 0 ? (
               <View style={styles.secondaryStatItem}>
                 <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
                 <Text style={styles.secondaryStatText}>{activity.calories} kcal</Text>
               </View>
             ) : null}
           </View>
-        )}
+        ) : null}
       </Card>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing.md,
-  },
   userHeader: {
     flexDirection: 'row',
     alignItems: 'center',

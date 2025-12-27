@@ -2,6 +2,13 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
+import {
+  startBackgroundLocationTracking,
+  stopBackgroundLocationTracking,
+  getAndClearLocationBuffer,
+  setActiveActivityId,
+  clearLocationBuffer,
+} from '../services/backgroundLocation';
 import type { Activity, GpsPoint } from '../types/api';
 
 const isWeb = Platform.OS === 'web';
@@ -15,6 +22,7 @@ interface LiveActivityStats {
   max_speed: number;
   avg_heart_rate?: number;
   max_heart_rate?: number;
+  calories: number;
 }
 
 interface LiveActivityState {
@@ -36,7 +44,12 @@ const initialStats: LiveActivityStats = {
   points_count: 0,
   avg_speed: 0,
   max_speed: 0,
+  calories: 0,
 };
+
+// Simple calorie estimation based on activity type and duration
+// MET values: Running ~10, Cycling ~8, Swimming ~8, Gym ~5
+const CALORIES_PER_SECOND = 0.15; // Rough average for moderate activity
 
 export function useLiveActivity() {
   const [state, setState] = useState<LiveActivityState>({
@@ -53,10 +66,12 @@ export function useLiveActivity() {
   const pointsBuffer = useRef<GpsPoint[]>([]);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
+  const backgroundSyncInterval = useRef<NodeJS.Timeout | null>(null);
   const localStatsRef = useRef<LiveActivityStats>({ ...initialStats });
-  const lastPosition = useRef<{ lat: number; lng: number; ele?: number } | null>(null);
+  const lastPosition = useRef<{ lat: number; lng: number; ele?: number; timestamp?: number } | null>(null);
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
+  const currentActivityId = useRef<number | null>(null);
 
   // Haversine formula for distance calculation (fallback when offline)
   const calculateDistance = (
@@ -96,6 +111,9 @@ export function useLiveActivity() {
       if (durationInterval.current) {
         clearInterval(durationInterval.current);
       }
+      if (backgroundSyncInterval.current) {
+        clearInterval(backgroundSyncInterval.current);
+      }
     };
   }, []);
 
@@ -113,6 +131,7 @@ export function useLiveActivity() {
           max_speed: activity.max_speed || 0,
           avg_heart_rate: activity.avg_heart_rate || undefined,
           max_heart_rate: activity.max_heart_rate || undefined,
+          calories: activity.calories || 0,
         };
 
         // Set hasExistingActivity flag to true - UI should show dialog
@@ -144,16 +163,26 @@ export function useLiveActivity() {
   };
 
   // Start local duration timer for real-time UI updates
-  const startDurationTimer = (initialDuration: number = 0) => {
+  const startDurationTimer = (initialDuration: number = 0, initialCalories: number = 0) => {
     trackingStartTime.current = Date.now() - (initialDuration * 1000);
+    const baseCalories = initialCalories;
 
     durationInterval.current = setInterval(() => {
       if (trackingStartTime.current) {
         const elapsed = Math.floor((Date.now() - trackingStartTime.current) / 1000);
+        // Calculate calories based on duration
+        const calories = Math.floor(baseCalories + (elapsed - (localStatsRef.current.duration || 0)) * CALORIES_PER_SECOND);
+
         localStatsRef.current.duration = elapsed;
+        localStatsRef.current.calories = Math.max(localStatsRef.current.calories, calories);
+
         setState((prev) => ({
           ...prev,
-          currentStats: { ...prev.currentStats, duration: elapsed },
+          currentStats: {
+            ...prev.currentStats,
+            duration: elapsed,
+            calories: localStatsRef.current.calories,
+          },
         }));
       }
     }, 1000);
@@ -167,13 +196,46 @@ export function useLiveActivity() {
     }
   };
 
+  // Sync points collected by background task
+  const syncBackgroundPoints = async (activityId: number) => {
+    try {
+      const backgroundPoints = await getAndClearLocationBuffer();
+      if (backgroundPoints.length > 0) {
+        console.log(`Syncing ${backgroundPoints.length} background points`);
+        // Convert to GpsPoint format and add to buffer
+        const points: GpsPoint[] = backgroundPoints.map((p) => ({
+          lat: p.lat,
+          lng: p.lng,
+          ele: p.ele,
+          time: p.time,
+          speed: p.speed,
+        }));
+        pointsBuffer.current.push(...points);
+      }
+    } catch (error) {
+      console.error('Failed to sync background points:', error);
+    }
+  };
+
   const startGpsTracking = async (activityId: number) => {
     if (isWeb) {
       console.log('GPS tracking not available on web');
       return;
     }
 
+    currentActivityId.current = activityId;
+
     try {
+      // Clear any leftover background points
+      await clearLocationBuffer();
+
+      // Store activity ID for background task
+      await setActiveActivityId(activityId);
+
+      // Start background location tracking (works when app is backgrounded)
+      await startBackgroundLocationTracking();
+
+      // Also start foreground tracking for immediate UI updates
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
@@ -181,6 +243,13 @@ export function useLiveActivity() {
           timeInterval: 5000, // ms
         },
         (location) => {
+          // Filter out inaccurate GPS readings (accuracy > 30 meters is unreliable)
+          const accuracy = location.coords.accuracy;
+          if (accuracy && accuracy > 30) {
+            console.log(`GPS reading filtered: accuracy ${accuracy.toFixed(1)}m > 30m threshold`);
+            return;
+          }
+
           const point: GpsPoint = {
             lat: location.coords.latitude,
             lng: location.coords.longitude,
@@ -197,8 +266,20 @@ export function useLiveActivity() {
               point.lat,
               point.lng
             );
-            if (dist > 2) {
-              // Only count if moved more than 2 meters
+
+            // Calculate actual time difference between GPS readings
+            const timeSinceLastPoint = lastPosition.current.timestamp
+              ? (location.timestamp - lastPosition.current.timestamp) / 1000
+              : 5; // fallback to 5 seconds if no timestamp
+
+            // Calculate speed in m/s based on actual time difference
+            // Max realistic speed: running ~12 m/s (43 km/h), cycling ~25 m/s (90 km/h)
+            // Use 15 m/s (~54 km/h) as filter - allows fast cycling but blocks GPS glitches
+            const maxRealisticSpeed = 15; // m/s (~54 km/h)
+            const impliedSpeed = timeSinceLastPoint > 0 ? dist / timeSinceLastPoint : 999;
+
+            if (dist > 2 && impliedSpeed < maxRealisticSpeed) {
+              // Only count if moved more than 2 meters AND speed is realistic
               localStatsRef.current.distance += dist;
 
               // Calculate elevation gain
@@ -213,10 +294,12 @@ export function useLiveActivity() {
                 ...prev,
                 currentStats: { ...localStatsRef.current },
               }));
+            } else if (impliedSpeed >= maxRealisticSpeed) {
+              console.log(`GPS glitch filtered: ${dist.toFixed(1)}m in ${timeSinceLastPoint.toFixed(1)}s = ${(impliedSpeed * 3.6).toFixed(1)} km/h`);
             }
           }
 
-          lastPosition.current = { lat: point.lat, lng: point.lng, ele: point.ele };
+          lastPosition.current = { lat: point.lat, lng: point.lng, ele: point.ele, timestamp: location.timestamp };
           pointsBuffer.current.push(point);
         }
       );
@@ -224,14 +307,23 @@ export function useLiveActivity() {
       // Sync points to server every 30 seconds
       syncInterval.current = setInterval(() => syncPoints(activityId), 30000);
 
-      // Start duration timer
-      startDurationTimer(localStatsRef.current.duration);
+      // Sync background points every 15 seconds (background task buffers while app is inactive)
+      backgroundSyncInterval.current = setInterval(
+        () => syncBackgroundPoints(activityId),
+        15000
+      );
+
+      // Start duration timer with current stats (important for crash recovery)
+      startDurationTimer(localStatsRef.current.duration, localStatsRef.current.calories);
+
+      console.log('GPS tracking started (foreground + background)');
     } catch (error) {
       console.error('Failed to start GPS tracking:', error);
     }
   };
 
-  const stopGpsTracking = () => {
+  const stopGpsTracking = async () => {
+    // Stop foreground tracking
     if (locationSubscription.current) {
       locationSubscription.current.remove();
       locationSubscription.current = null;
@@ -240,7 +332,20 @@ export function useLiveActivity() {
       clearInterval(syncInterval.current);
       syncInterval.current = null;
     }
+    if (backgroundSyncInterval.current) {
+      clearInterval(backgroundSyncInterval.current);
+      backgroundSyncInterval.current = null;
+    }
+
+    // Stop background tracking
+    await stopBackgroundLocationTracking();
+    await setActiveActivityId(null);
+    await clearLocationBuffer();
+
+    currentActivityId.current = null;
     stopDurationTimer();
+
+    console.log('GPS tracking stopped (foreground + background)');
   };
 
   const syncPoints = async (activityId: number) => {
@@ -250,24 +355,32 @@ export function useLiveActivity() {
     pointsBuffer.current = [];
 
     try {
-      const result = await api.addActivityPoints(activityId, pointsToSync);
+      // Send points with current calories for crash recovery
+      const result = await api.addActivityPoints(activityId, pointsToSync, {
+        calories: localStatsRef.current.calories,
+      });
+
       // Update with server-calculated stats (more accurate)
       const newStats: LiveActivityStats = {
         distance: result.stats.distance,
         duration: result.stats.duration,
         elevation_gain: result.stats.elevation_gain,
-        points_count: result.stats.points_count,
-        avg_speed: result.stats.avg_speed,
-        max_speed: result.stats.max_speed,
-        avg_heart_rate: result.stats.avg_heart_rate,
-        max_heart_rate: result.stats.max_heart_rate,
+        points_count: result.total_points,
+        // Keep local values for these as they're calculated locally
+        avg_speed: localStatsRef.current.avg_speed,
+        max_speed: localStatsRef.current.max_speed,
+        avg_heart_rate: localStatsRef.current.avg_heart_rate,
+        max_heart_rate: localStatsRef.current.max_heart_rate,
+        // Use server calories if available, otherwise keep local
+        calories: result.stats.calories ?? localStatsRef.current.calories,
       };
       localStatsRef.current = newStats;
       setState((prev) => ({
         ...prev,
-        activity: result.data,
         currentStats: newStats,
       }));
+
+      console.log(`Synced ${result.points_count} points, total: ${result.total_points}`);
     } catch (error) {
       // Re-add points on failure
       pointsBuffer.current = [...pointsToSync, ...pointsBuffer.current];
@@ -293,6 +406,7 @@ export function useLiveActivity() {
             max_speed: existingActivity.max_speed || 0,
             avg_heart_rate: existingActivity.avg_heart_rate || undefined,
             max_heart_rate: existingActivity.max_heart_rate || undefined,
+            calories: existingActivity.calories || 0,
           };
           setState((prev) => ({
             ...prev,
@@ -353,7 +467,7 @@ export function useLiveActivity() {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS
-      stopGpsTracking();
+      await stopGpsTracking();
 
       // Sync remaining points
       await syncPoints(state.activity.id);
@@ -385,10 +499,19 @@ export function useLiveActivity() {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      const activity = await api.resumeActivity(state.activity.id);
+      let activity = state.activity;
 
-      // Update paused duration from server
-      pausedDuration.current = activity.total_paused_duration || 0;
+      // Only call API resume if activity is paused
+      // If activity is already in_progress (e.g., app crashed), just restart GPS tracking
+      if (state.activity.status === 'paused') {
+        activity = await api.resumeActivity(state.activity.id);
+        // Update paused duration from server
+        pausedDuration.current = activity.total_paused_duration || 0;
+      } else if (state.activity.status === 'in_progress') {
+        // Activity is already in progress, just need to restart local GPS tracking
+        // No API call needed
+        console.log('Activity already in progress, restarting GPS tracking');
+      }
 
       setState((prev) => ({
         ...prev,
@@ -420,7 +543,7 @@ export function useLiveActivity() {
         setState((prev) => ({ ...prev, isLoading: true }));
 
         // Stop GPS
-        stopGpsTracking();
+        await stopGpsTracking();
 
         // Sync remaining points
         await syncPoints(state.activity.id);
@@ -469,7 +592,7 @@ export function useLiveActivity() {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS
-      stopGpsTracking();
+      await stopGpsTracking();
 
       // Discard on server
       await api.discardActivity(state.activity.id);

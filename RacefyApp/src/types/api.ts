@@ -157,6 +157,7 @@ export interface Activity {
   total_paused_duration: number;
   last_point_at: string | null;
   has_gps_track: boolean;
+  route_svg?: string | null;
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
@@ -177,19 +178,25 @@ export interface GpsPoint {
   cadence?: number;
 }
 
+// Request for adding GPS points to live activity
+export interface AddActivityPointsRequest {
+  points: GpsPoint[];
+  // Optional stats sync (for crash recovery - sync periodically)
+  calories?: number;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
+}
+
 // Response from adding GPS points to live activity
 export interface AddActivityPointsResponse {
   message: string;
-  data: Activity;
+  points_count: number;    // Points added in this batch
+  total_points: number;    // Total GPS points
   stats: {
-    distance: number;
-    duration: number;
-    elevation_gain: number;
-    points_count: number;
-    avg_speed: number;
-    max_speed: number;
-    avg_heart_rate?: number;
-    max_heart_rate?: number;
+    distance: number;      // Total meters
+    duration: number;      // Total seconds (excludes paused time)
+    elevation_gain: number; // Total meters climbed
+    calories?: number;     // Current calories (if synced)
   };
 }
 
@@ -224,6 +231,8 @@ export interface GpsTrack {
     max_lng: number;
   };
   simplified_track: GeoJSONLineString;
+  route_svg: string | null;
+  svg_generated_at: string | null;
 }
 
 export interface GeoJSONLineString {

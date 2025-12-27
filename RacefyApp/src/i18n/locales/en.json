@@ -180,6 +180,38 @@
     "cancelSuccess": "Your registration has been cancelled.",
     "cancelFailed": "Failed to cancel registration"
   },
+  "activityDetail": {
+    "title": "Activity Details",
+    "activity": "Activity",
+    "loading": "Loading activity...",
+    "notFound": "Activity not found",
+    "failedToLoad": "Failed to load activity details",
+    "duration": "Duration",
+    "distance": "Distance",
+    "pace": "Pace",
+    "stats": "Statistics",
+    "calories": "Calories",
+    "elevationGain": "Elevation Gain",
+    "avgSpeed": "Avg Speed",
+    "maxSpeed": "Max Speed",
+    "avgHeartRate": "Avg Heart Rate",
+    "maxHeartRate": "Max Heart Rate",
+    "description": "Description",
+    "info": "Activity Info",
+    "date": "Date",
+    "source": "Source",
+    "gpsPoints": "GPS Points",
+    "gpsTrackRecorded": "GPS Track Recorded",
+    "points": "points",
+    "sources": {
+      "app": "Racefy App",
+      "manual": "Manual Entry",
+      "gpxImport": "GPX Import",
+      "garmin": "Garmin",
+      "strava": "Strava",
+      "amazfit": "Amazfit"
+    }
+  },
   "recording": {
     "title": "Record Activity",
     "selectSport": "Select Sport",
@@ -220,8 +252,10 @@
     "avgPace": "Avg Pace /km",
     "existingActivity": {
       "title": "Unfinished Activity",
-      "message": "You have an unfinished activity ({{duration}}, {{distance}}). What would you like to do?",
+      "message": "You have a paused activity ({{duration}}, {{distance}}). What would you like to do?",
+      "messageInProgress": "You have an active activity that was interrupted ({{duration}}, {{distance}}). What would you like to do?",
       "resume": "Resume",
+      "continue": "Continue",
       "finish": "Finish & Save",
       "discard": "Discard"
     }

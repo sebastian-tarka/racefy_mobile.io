@@ -133,15 +133,23 @@ export function ActivityRecordingScreen() {
   // Show dialog when there's an existing unfinished activity
   useEffect(() => {
     if (hasExistingActivity && activity) {
+      const isInProgress = activity.status === 'in_progress';
+      const messageKey = isInProgress
+        ? 'recording.existingActivity.messageInProgress'
+        : 'recording.existingActivity.message';
+      const resumeButtonKey = isInProgress
+        ? 'recording.existingActivity.continue'
+        : 'recording.existingActivity.resume';
+
       Alert.alert(
         t('recording.existingActivity.title'),
-        t('recording.existingActivity.message', {
+        t(messageKey, {
           duration: formatTime(activity.duration),
           distance: formatDistance(activity.distance),
         }),
         [
           {
-            text: t('recording.existingActivity.resume'),
+            text: t(resumeButtonKey),
             onPress: async () => {
               try {
                 await requestActivityTrackingPermissions();

@@ -180,6 +180,38 @@
     "cancelSuccess": "Twoja rejestracja została anulowana.",
     "cancelFailed": "Nie udało się anulować rejestracji"
   },
+  "activityDetail": {
+    "title": "Szczegóły aktywności",
+    "activity": "Aktywność",
+    "loading": "Ładowanie aktywności...",
+    "notFound": "Nie znaleziono aktywności",
+    "failedToLoad": "Nie udało się załadować szczegółów aktywności",
+    "duration": "Czas",
+    "distance": "Dystans",
+    "pace": "Tempo",
+    "stats": "Statystyki",
+    "calories": "Kalorie",
+    "elevationGain": "Przewyższenie",
+    "avgSpeed": "Śr. prędkość",
+    "maxSpeed": "Maks. prędkość",
+    "avgHeartRate": "Śr. tętno",
+    "maxHeartRate": "Maks. tętno",
+    "description": "Opis",
+    "info": "Informacje o aktywności",
+    "date": "Data",
+    "source": "Źródło",
+    "gpsPoints": "Punkty GPS",
+    "gpsTrackRecorded": "Trasa GPS nagrana",
+    "points": "punktów",
+    "sources": {
+      "app": "Aplikacja Racefy",
+      "manual": "Wpis ręczny",
+      "gpxImport": "Import GPX",
+      "garmin": "Garmin",
+      "strava": "Strava",
+      "amazfit": "Amazfit"
+    }
+  },
   "recording": {
     "title": "Zapisz aktywność",
     "selectSport": "Wybierz sport",
@@ -220,8 +252,10 @@
     "avgPace": "Śr. tempo /km",
     "existingActivity": {
       "title": "Niedokończona aktywność",
-      "message": "Masz niedokończoną aktywność ({{duration}}, {{distance}}). Co chcesz zrobić?",
+      "message": "Masz wstrzymaną aktywność ({{duration}}, {{distance}}). Co chcesz zrobić?",
+      "messageInProgress": "Masz aktywną aktywność, która została przerwana ({{duration}}, {{distance}}). Co chcesz zrobić?",
       "resume": "Wznów",
+      "continue": "Kontynuuj",
       "finish": "Zakończ i zapisz",
       "discard": "Odrzuć"
     }

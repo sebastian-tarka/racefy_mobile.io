@@ -10,6 +10,9 @@ import { colors } from './src/theme';
 import './src/i18n';
 import { loadSavedLanguage } from './src/i18n';
 
+// Register background location task (must be at top level)
+import './src/services/backgroundLocation';
+
 export default function App() {
   useEffect(() => {
     loadSavedLanguage();

@@ -17,6 +17,7 @@ import { EventsScreen } from '../screens/main/EventsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 import { UserProfileScreen } from '../screens/details/UserProfileScreen';
+import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 
 // Types
 import type {
@@ -164,6 +165,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="UserProfile"
           component={UserProfileScreen}
+        />
+        <RootStack.Screen
+          name="ActivityDetail"
+          component={ActivityDetailScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

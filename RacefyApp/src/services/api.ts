@@ -415,16 +415,27 @@ class ApiService {
 
   /**
    * Add GPS points to an active activity
+   * Optionally sync calories and heart rate for crash recovery
    */
   async addActivityPoints(
     activityId: number,
-    points: Types.GpsPoint[]
+    points: Types.GpsPoint[],
+    options?: {
+      calories?: number;
+      avg_heart_rate?: number;
+      max_heart_rate?: number;
+    }
   ): Promise<Types.AddActivityPointsResponse> {
+    const body: Types.AddActivityPointsRequest = {
+      points,
+      ...options,
+    };
+
     const response = await this.request<Types.AddActivityPointsResponse>(
       `/activities/${activityId}/points`,
       {
         method: 'POST',
-        body: JSON.stringify({ points }),
+        body: JSON.stringify(body),
       }
     );
     return response;

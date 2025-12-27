@@ -6,5 +6,6 @@ export * from './Card';
 export * from './EmptyState';
 export * from './EventCard';
 export * from './Input';
+export * from './LeafletMap';
 export * from './Loading';
 export * from './PostCard';
