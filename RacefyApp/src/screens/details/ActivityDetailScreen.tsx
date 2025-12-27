@@ -148,8 +148,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
         {/* Map Section */}
-        {activity.has_gps_track && gpsTrack?.route_svg && (
-          <RoutePreview routeSvg={gpsTrack.route_svg} height={250} />
+        {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg) && (
+          <RoutePreview
+            routeMapUrl={gpsTrack.route_map_url}
+            routeSvg={gpsTrack.route_svg}
+            height={250}
+          />
         )}
 
         {/* Title Section */}

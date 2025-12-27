@@ -158,6 +158,7 @@ export interface Activity {
   last_point_at: string | null;
   has_gps_track: boolean;
   route_svg?: string | null;
+  route_map_url?: string | null;
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
@@ -232,7 +233,9 @@ export interface GpsTrack {
   };
   simplified_track: GeoJSONLineString;
   route_svg: string | null;
+  route_map_url: string | null;
   svg_generated_at: string | null;
+  map_generated_at: string | null;
 }
 
 export interface GeoJSONLineString {
