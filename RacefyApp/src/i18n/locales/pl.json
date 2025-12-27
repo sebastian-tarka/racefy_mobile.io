@@ -22,7 +22,8 @@
     "share": "Udostępnij",
     "settings": "Ustawienia",
     "discard": "Odrzuć",
-    "pleaseWait": "Proszę czekać..."
+    "pleaseWait": "Proszę czekać...",
+    "goBack": "Wróć"
   },
   "app": {
     "name": "Racefy",
@@ -103,6 +104,11 @@
     "editProfile": "Edytuj profil",
     "logoutConfirm": "Czy na pewno chcesz się wylogować?",
     "failedToLogout": "Nie udało się wylogować",
+    "failedToLoad": "Nie udało się załadować profilu",
+    "userNotFound": "Nie znaleziono użytkownika",
+    "userNotFoundMessage": "Użytkownik, którego szukasz, nie istnieje",
+    "follow": "Obserwuj",
+    "unfollow": "Przestań obserwować",
     "tabs": {
       "posts": "Posty",
       "activities": "Aktywności",

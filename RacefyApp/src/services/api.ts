@@ -169,8 +169,14 @@ class ApiService {
     return this.request(`/feed?page=${page}`);
   }
 
-  async getPosts(page = 1): Promise<Types.PaginatedResponse<Types.Post>> {
-    return this.request(`/posts?page=${page}`);
+  async getPosts(params?: {
+    user_id?: number;
+    page?: number;
+  }): Promise<Types.PaginatedResponse<Types.Post>> {
+    const query = new URLSearchParams();
+    if (params?.user_id) query.append('user_id', String(params.user_id));
+    if (params?.page) query.append('page', String(params.page));
+    return this.request(`/posts?${query}`);
   }
 
   async getPost(id: number): Promise<Types.Post> {
@@ -254,11 +260,13 @@ class ApiService {
   // ============ EVENTS ============
 
   async getEvents(params?: {
+    user_id?: number;
     status?: 'upcoming' | 'ongoing' | 'completed';
     sport_type_id?: number;
     page?: number;
   }): Promise<Types.PaginatedResponse<Types.Event>> {
     const query = new URLSearchParams();
+    if (params?.user_id) query.append('user_id', String(params.user_id));
     if (params?.status) query.append('status', params.status);
     if (params?.sport_type_id)
       query.append('sport_type_id', String(params.sport_type_id));
@@ -310,10 +318,12 @@ class ApiService {
   // ============ ACTIVITIES ============
 
   async getActivities(params?: {
+    user_id?: number;
     sport_type_id?: number;
     page?: number;
   }): Promise<Types.PaginatedResponse<Types.Activity>> {
     const query = new URLSearchParams();
+    if (params?.user_id) query.append('user_id', String(params.user_id));
     if (params?.sport_type_id)
       query.append('sport_type_id', String(params.sport_type_id));
     if (params?.page) query.append('page', String(params.page));

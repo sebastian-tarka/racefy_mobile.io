@@ -5,14 +5,12 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
 import {
   Avatar,
   Button,
@@ -24,28 +22,25 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { colors, spacing, fontSize } from '../../theme';
-import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { UserStats, Post, Activity, Event } from '../../types/api';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import type { UserProfile, Post, Activity, Event } from '../../types/api';
 
-type ProfileScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<MainTabParamList, 'Profile'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
-
-type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
 type TabType = 'posts' | 'activities' | 'events';
 
-export function ProfileScreen({ navigation }: Props & { navigation: ProfileScreenNavigationProp }) {
+export function UserProfileScreen({ navigation, route }: Props) {
+  const { username } = route.params;
   const { t } = useTranslation();
-  const { user, isAuthenticated, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('posts');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [stats, setStats] = useState<UserStats | null>(null);
+  const { user: currentUser, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('posts');
+  const [error, setError] = useState<string | null>(null);
 
   // Posts state
   const [posts, setPosts] = useState<Post[]>([]);
@@ -65,22 +60,28 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   const [hasMoreEvents, setHasMoreEvents] = useState(true);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
 
-  const fetchStats = useCallback(async () => {
-    if (!isAuthenticated) return;
-    try {
-      const data = await api.getStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  }, [isAuthenticated]);
+  const isOwnProfile = currentUser?.username === username;
 
-  const fetchPosts = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingPosts) return;
+  const fetchProfile = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await api.getUserByUsername(username);
+      setProfile(data);
+      setIsFollowing(data.is_following ?? false);
+      return data;
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
+      setError(t('profile.failedToLoad'));
+      return null;
+    }
+  }, [username, t]);
+
+  const fetchPosts = useCallback(async (userId: number, page: number, refresh = false) => {
+    if (isLoadingPosts) return;
 
     setIsLoadingPosts(true);
     try {
-      const response = await api.getPosts({ user_id: user.id, page });
+      const response = await api.getPosts({ user_id: userId, page });
       if (refresh) {
         setPosts(response.data);
       } else {
@@ -88,19 +89,19 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       }
       setHasMorePosts(response.meta.current_page < response.meta.last_page);
       setPostsPage(page);
-    } catch (error) {
-      console.error('Failed to fetch posts:', error);
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
     } finally {
       setIsLoadingPosts(false);
     }
-  }, [user, isLoadingPosts]);
+  }, [isLoadingPosts]);
 
-  const fetchActivities = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingActivities) return;
+  const fetchActivities = useCallback(async (userId: number, page: number, refresh = false) => {
+    if (isLoadingActivities) return;
 
     setIsLoadingActivities(true);
     try {
-      const response = await api.getActivities({ user_id: user.id, page });
+      const response = await api.getActivities({ user_id: userId, page });
       if (refresh) {
         setActivities(response.data);
       } else {
@@ -108,19 +109,19 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       }
       setHasMoreActivities(response.meta.current_page < response.meta.last_page);
       setActivitiesPage(page);
-    } catch (error) {
-      console.error('Failed to fetch activities:', error);
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
     } finally {
       setIsLoadingActivities(false);
     }
-  }, [user, isLoadingActivities]);
+  }, [isLoadingActivities]);
 
-  const fetchEvents = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingEvents) return;
+  const fetchEvents = useCallback(async (userId: number, page: number, refresh = false) => {
+    if (isLoadingEvents) return;
 
     setIsLoadingEvents(true);
     try {
-      const response = await api.getEvents({ user_id: user.id, page });
+      const response = await api.getEvents({ user_id: userId, page });
       if (refresh) {
         setEvents(response.data);
       } else {
@@ -128,128 +129,104 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       }
       setHasMoreEvents(response.meta.current_page < response.meta.last_page);
       setEventsPage(page);
-    } catch (error) {
-      console.error('Failed to fetch events:', error);
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
     } finally {
       setIsLoadingEvents(false);
     }
-  }, [user, isLoadingEvents]);
+  }, [isLoadingEvents]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setStats(null);
-      setPosts([]);
-      setActivities([]);
-      setEvents([]);
-    }
-  }, [isAuthenticated]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (isAuthenticated) {
-        fetchStats();
-        // Load initial data for current tab
-        if (activeTab === 'posts' && posts.length === 0) {
-          fetchPosts(1, true);
-        } else if (activeTab === 'activities' && activities.length === 0) {
-          fetchActivities(1, true);
-        } else if (activeTab === 'events' && events.length === 0) {
-          fetchEvents(1, true);
-        }
+    const loadProfile = async () => {
+      setIsLoading(true);
+      const profileData = await fetchProfile();
+      if (profileData) {
+        // Load initial posts
+        await fetchPosts(profileData.id, 1, true);
       }
-    }, [isAuthenticated, activeTab])
-  );
+      setIsLoading(false);
+    };
+    loadProfile();
+  }, [username]);
 
   // Load data when tab changes
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!profile) return;
 
     if (activeTab === 'posts' && posts.length === 0) {
-      fetchPosts(1, true);
+      fetchPosts(profile.id, 1, true);
     } else if (activeTab === 'activities' && activities.length === 0) {
-      fetchActivities(1, true);
+      fetchActivities(profile.id, 1, true);
     } else if (activeTab === 'events' && events.length === 0) {
-      fetchEvents(1, true);
+      fetchEvents(profile.id, 1, true);
     }
-  }, [activeTab, isAuthenticated]);
+  }, [activeTab, profile]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchStats();
+    const profileData = await fetchProfile();
 
-    if (activeTab === 'posts') {
-      setPostsPage(1);
-      setHasMorePosts(true);
-      await fetchPosts(1, true);
-    } else if (activeTab === 'activities') {
-      setActivitiesPage(1);
-      setHasMoreActivities(true);
-      await fetchActivities(1, true);
-    } else if (activeTab === 'events') {
-      setEventsPage(1);
-      setHasMoreEvents(true);
-      await fetchEvents(1, true);
+    if (profileData) {
+      if (activeTab === 'posts') {
+        setPostsPage(1);
+        setHasMorePosts(true);
+        await fetchPosts(profileData.id, 1, true);
+      } else if (activeTab === 'activities') {
+        setActivitiesPage(1);
+        setHasMoreActivities(true);
+        await fetchActivities(profileData.id, 1, true);
+      } else if (activeTab === 'events') {
+        setEventsPage(1);
+        setHasMoreEvents(true);
+        await fetchEvents(profileData.id, 1, true);
+      }
     }
 
     setIsRefreshing(false);
   };
 
   const handleLoadMorePosts = () => {
-    if (hasMorePosts && !isLoadingPosts) {
-      fetchPosts(postsPage + 1);
+    if (hasMorePosts && !isLoadingPosts && profile) {
+      fetchPosts(profile.id, postsPage + 1);
     }
   };
 
   const handleLoadMoreActivities = () => {
-    if (hasMoreActivities && !isLoadingActivities) {
-      fetchActivities(activitiesPage + 1);
+    if (hasMoreActivities && !isLoadingActivities && profile) {
+      fetchActivities(profile.id, activitiesPage + 1);
     }
   };
 
   const handleLoadMoreEvents = () => {
-    if (hasMoreEvents && !isLoadingEvents) {
-      fetchEvents(eventsPage + 1);
+    if (hasMoreEvents && !isLoadingEvents && profile) {
+      fetchEvents(profile.id, eventsPage + 1);
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.logout'),
-        style: 'destructive',
-        onPress: async () => {
-          setIsLoggingOut(true);
-          try {
-            await logout();
-          } catch (error) {
-            Alert.alert(t('common.error'), t('profile.failedToLogout'));
-          } finally {
-            setIsLoggingOut(false);
-          }
-        },
-      },
-    ]);
-  };
+  const handleFollowToggle = async () => {
+    if (!profile || !isAuthenticated) return;
 
-  if (!isAuthenticated) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('profile.title')}</Text>
-        </View>
-        <EmptyState
-          icon="person-outline"
-          title={t('profile.signInRequired')}
-          message={t('profile.signInDescription')}
-          actionLabel={t('common.signIn')}
-          onAction={() =>
-            navigation.getParent()?.navigate('Auth', { screen: 'Login' })
-          }
-        />
-      </SafeAreaView>
-    );
-  }
+    setIsFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await api.unfollowUser(profile.id);
+        setIsFollowing(false);
+        setProfile((prev) =>
+          prev ? { ...prev, followers_count: prev.followers_count - 1 } : prev
+        );
+      } else {
+        await api.followUser(profile.id);
+        setIsFollowing(true);
+        setProfile((prev) =>
+          prev ? { ...prev, followers_count: prev.followers_count + 1 } : prev
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle follow:', err);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
@@ -257,56 +234,92 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
+          <View style={styles.headerRight} />
+        </View>
+        <EmptyState
+          icon="alert-circle-outline"
+          title={t('profile.userNotFound')}
+          message={error || t('profile.userNotFoundMessage')}
+          actionLabel={t('common.goBack')}
+          onAction={() => navigation.goBack()}
+        />
+      </SafeAreaView>
+    );
+  }
+
   const renderProfileHeader = () => (
     <>
-      <View style={styles.coverImage}>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Ionicons name="settings-outline" size={24} color={colors.white} />
+      <View style={styles.navHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>@{profile.username}</Text>
+        <View style={styles.headerRight} />
       </View>
+
+      <View style={styles.coverImage} />
 
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
-          <Avatar uri={user?.avatar} name={user?.name} size="xxl" />
+          <Avatar uri={profile.avatar} name={profile.name} size="xxl" />
         </View>
 
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.username}>@{user?.username}</Text>
+        <Text style={styles.name}>{profile.name}</Text>
+        <Text style={styles.username}>@{profile.username}</Text>
 
-        {user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
+        {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
 
         <View style={styles.statsRow}>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.posts.total ?? 0}</Text>
+            <Text style={styles.statValue}>{profile.posts_count}</Text>
             <Text style={styles.statLabel}>{t('profile.stats.posts')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.social.followers ?? 0}</Text>
+            <Text style={styles.statValue}>{profile.followers_count}</Text>
             <Text style={styles.statLabel}>{t('profile.stats.followers')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.social.following ?? 0}</Text>
+            <Text style={styles.statValue}>{profile.following_count}</Text>
             <Text style={styles.statLabel}>{t('profile.stats.following')}</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.actions}>
-          <Button
-            title={t('profile.editProfile')}
-            onPress={() => {
-              // Navigate to edit profile
-            }}
-            variant="outline"
-            style={styles.actionButton}
-          />
-          <Button
-            title={t('common.logout')}
-            onPress={handleLogout}
-            variant="ghost"
-            loading={isLoggingOut}
-            style={styles.actionButton}
-          />
-        </View>
+        {!isOwnProfile && isAuthenticated && (
+          <View style={styles.actions}>
+            <Button
+              title={isFollowing ? t('profile.unfollow') : t('profile.follow')}
+              onPress={handleFollowToggle}
+              variant={isFollowing ? 'outline' : 'primary'}
+              loading={isFollowLoading}
+              style={styles.followButton}
+            />
+          </View>
+        )}
       </View>
 
       <View style={styles.tabContainer}>
@@ -333,12 +346,12 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   );
 
   const renderFooter = () => {
-    const isLoading =
+    const isLoadingData =
       (activeTab === 'posts' && isLoadingPosts) ||
       (activeTab === 'activities' && isLoadingActivities) ||
       (activeTab === 'events' && isLoadingEvents);
 
-    if (!isLoading) return null;
+    if (!isLoadingData) return null;
 
     return (
       <View style={styles.footer}>
@@ -348,12 +361,12 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   };
 
   const renderEmpty = () => {
-    const isLoading =
+    const isLoadingData =
       (activeTab === 'posts' && isLoadingPosts && posts.length === 0) ||
       (activeTab === 'activities' && isLoadingActivities && activities.length === 0) ||
       (activeTab === 'events' && isLoadingEvents && events.length === 0);
 
-    if (isLoading) return null;
+    if (isLoadingData) return null;
 
     if (activeTab === 'posts') {
       return (
@@ -465,16 +478,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  title: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+  navHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backButton: {
+    padding: spacing.xs,
+  },
+  headerTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
     color: colors.textPrimary,
+  },
+  headerRight: {
+    width: 32,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
     flexGrow: 1,
@@ -482,18 +516,6 @@ const styles = StyleSheet.create({
   coverImage: {
     height: 120,
     backgroundColor: colors.primary,
-    position: 'relative',
-  },
-  settingsButton: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   profileHeader: {
     alignItems: 'center',
@@ -546,12 +568,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actions: {
-    flexDirection: 'row',
     marginTop: spacing.xl,
-    gap: spacing.md,
   },
-  actionButton: {
-    minWidth: 120,
+  followButton: {
+    minWidth: 140,
   },
   tabContainer: {
     flexDirection: 'row',

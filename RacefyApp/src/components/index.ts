@@ -1,3 +1,4 @@
+export * from './ActivityCard';
 export * from './Avatar';
 export * from './Badge';
 export * from './Button';

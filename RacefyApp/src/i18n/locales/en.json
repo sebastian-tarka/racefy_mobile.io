@@ -22,7 +22,8 @@
     "share": "Share",
     "settings": "Settings",
     "discard": "Discard",
-    "pleaseWait": "Please wait..."
+    "pleaseWait": "Please wait...",
+    "goBack": "Go Back"
   },
   "app": {
     "name": "Racefy",
@@ -103,6 +104,11 @@
     "editProfile": "Edit Profile",
     "logoutConfirm": "Are you sure you want to logout?",
     "failedToLogout": "Failed to logout",
+    "failedToLoad": "Failed to load profile",
+    "userNotFound": "User not found",
+    "userNotFoundMessage": "The user you are looking for does not exist",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
     "tabs": {
       "posts": "Posts",
       "activities": "Activities",

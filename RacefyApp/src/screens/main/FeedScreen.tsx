@@ -23,12 +23,19 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { MainTabParamList } from '../../navigation/types';
+import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+
+type FeedScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Feed'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Feed'>;
 
-export function FeedScreen({ navigation }: Props) {
+export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const {
@@ -128,7 +135,9 @@ export function FeedScreen({ navigation }: Props) {
               // Navigate to post detail
             }}
             onUserPress={() => {
-              // Navigate to user profile
+              if (item.user?.username) {
+                navigation.navigate('UserProfile', { username: item.user.username });
+              }
             }}
             onMenuPress={() => handleDeletePost(item.id)}
             isOwner={item.user_id === user?.id}
