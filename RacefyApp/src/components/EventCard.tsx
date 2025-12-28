@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { Card } from './Card';
 import { Badge } from './Badge';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { fixStorageUrl } from '../config/api';
 import type { Event } from '../types/api';
 
 interface EventCardProps {
@@ -22,8 +23,8 @@ const difficultyLabels: Record<string, string> = {
 export function EventCard({ event, onPress }: EventCardProps) {
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
 
-  // Use cover_image as primary, fallback to first photo
-  const imageUrl = event.cover_image || event.post?.photos?.[0]?.url;
+  // Use cover_image_url as primary, fallback to first photo
+  const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
 
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = event.sport_type?.name?.toLowerCase() || '';

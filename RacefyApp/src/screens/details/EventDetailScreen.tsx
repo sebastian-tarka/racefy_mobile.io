@@ -17,6 +17,7 @@ import { Card, Button, Loading, Badge } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Event } from '../../types/api';
@@ -217,9 +218,9 @@ export function EventDetailScreen({ route, navigation }: Props) {
       >
         {/* Event Image/Header */}
         <View style={styles.imageContainer}>
-          {(event.cover_image || event.post?.photos?.[0]?.url) ? (
+          {(event.cover_image_url || event.post?.photos?.[0]?.url) ? (
             <Image
-              source={{ uri: event.cover_image || event.post?.photos?.[0]?.url }}
+              source={{ uri: fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined }}
               style={styles.image}
               resizeMode="cover"
             />

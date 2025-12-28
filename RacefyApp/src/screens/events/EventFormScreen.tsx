@@ -24,6 +24,7 @@ import {
   ImagePickerButton,
 } from '../../components';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -126,7 +127,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       distance: event.distance?.toString() || '',
       entry_fee: event.entry_fee?.toString() || '',
     });
-    setCoverImage(event.cover_image || null);
+    setCoverImage(fixStorageUrl(event.cover_image_url) || null);
 
     // Show optional fields if any have values
     if (

@@ -97,6 +97,7 @@ export interface Event {
   distance: number | null;
   entry_fee: number | null;
   cover_image: string | null;
+  cover_image_url: string | null;
   sport_type?: SportType;
   post?: Post;
   is_registered?: boolean;
