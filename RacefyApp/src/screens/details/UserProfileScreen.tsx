@@ -39,6 +39,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [error, setError] = useState<string | null>(null);
 
@@ -228,6 +229,28 @@ export function UserProfileScreen({ navigation, route }: Props) {
     }
   };
 
+  const handleMessagePress = async () => {
+    if (!profile || !isAuthenticated) return;
+
+    setIsMessageLoading(true);
+    try {
+      const response = await api.startConversation(profile.id);
+      navigation.navigate('Chat', {
+        conversationId: response.data.id,
+        participant: {
+          id: profile.id,
+          name: profile.name,
+          username: profile.username,
+          avatar: profile.avatar,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to start conversation:', err);
+    } finally {
+      setIsMessageLoading(false);
+    }
+  };
+
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
@@ -317,6 +340,13 @@ export function UserProfileScreen({ navigation, route }: Props) {
               variant={isFollowing ? 'outline' : 'primary'}
               loading={isFollowLoading}
               style={styles.followButton}
+            />
+            <Button
+              title={t('messaging.message')}
+              onPress={handleMessagePress}
+              variant="outline"
+              loading={isMessageLoading}
+              style={styles.messageButton}
             />
           </View>
         )}
@@ -568,10 +598,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actions: {
+    flexDirection: 'row',
     marginTop: spacing.xl,
+    gap: spacing.md,
   },
   followButton: {
-    minWidth: 140,
+    minWidth: 120,
+  },
+  messageButton: {
+    minWidth: 120,
   },
   tabContainer: {
     flexDirection: 'row',

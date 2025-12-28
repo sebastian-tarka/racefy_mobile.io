@@ -676,6 +676,64 @@ class ApiService {
     });
     await this.clearToken();
   }
+
+  // ============ MESSAGING ============
+
+  async getConversations(
+    page = 1
+  ): Promise<Types.PaginatedResponse<Types.Conversation>> {
+    return this.request(`/conversations?page=${page}`);
+  }
+
+  async startConversation(
+    userId: number
+  ): Promise<Types.ApiResponse<Types.Conversation>> {
+    return this.request('/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
+  async getConversation(id: number): Promise<Types.Conversation> {
+    const response = await this.request<Types.ApiResponse<Types.Conversation>>(
+      `/conversations/${id}`
+    );
+    return response.data;
+  }
+
+  async deleteConversation(id: number): Promise<void> {
+    await this.request(`/conversations/${id}`, { method: 'DELETE' });
+  }
+
+  async getMessages(
+    conversationId: number,
+    page = 1
+  ): Promise<Types.PaginatedResponse<Types.Message>> {
+    return this.request(`/conversations/${conversationId}/messages?page=${page}`);
+  }
+
+  async sendMessage(
+    conversationId: number,
+    content: string
+  ): Promise<Types.ApiResponse<Types.Message>> {
+    return this.request(`/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content, type: 'text' }),
+    });
+  }
+
+  async markConversationAsRead(conversationId: number): Promise<void> {
+    await this.request(`/conversations/${conversationId}/read`, {
+      method: 'POST',
+    });
+  }
+
+  async getUnreadCount(): Promise<number> {
+    const response = await this.request<{ unread_count: number }>(
+      '/conversations/unread-count'
+    );
+    return response.unread_count;
+  }
 }
 
 export const api = new ApiService();

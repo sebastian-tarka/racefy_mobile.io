@@ -390,6 +390,51 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// ============ MESSAGING ============
+
+export interface ConversationParticipant {
+  id: number;
+  name: string;
+  username: string;
+  avatar: string | null;
+}
+
+export interface LastMessage {
+  id: number;
+  content: string | null;
+  type: 'text' | 'activity';
+  sender_id: number;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: number;
+  participant: ConversationParticipant;
+  last_message: LastMessage | null;
+  unread_count: number;
+  last_message_at: string | null;
+  created_at: string;
+}
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  sender: ConversationParticipant;
+  content: string | null;
+  type: 'text' | 'activity';
+  is_own: boolean;
+  created_at: string;
+}
+
+export interface StartConversationRequest {
+  user_id: number;
+}
+
+export interface SendMessageRequest {
+  content: string;
+  type?: 'text';
+}
+
 // ============ API RESPONSE ============
 
 export interface ApiResponse<T> {

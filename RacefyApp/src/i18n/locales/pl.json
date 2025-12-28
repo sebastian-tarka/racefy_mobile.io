@@ -277,5 +277,18 @@
     "ongoing": "Trwające",
     "completed": "Zakończone",
     "cancelled": "Anulowane"
+  },
+  "messaging": {
+    "title": "Wiadomości",
+    "noConversations": "Brak konwersacji",
+    "noConversationsMessage": "Rozpocznij rozmowę z profilu użytkownika",
+    "message": "Wiadomość",
+    "placeholder": "Napisz wiadomość...",
+    "send": "Wyślij",
+    "sharedActivity": "Udostępniono aktywność",
+    "failedToLoad": "Nie udało się załadować wiadomości",
+    "failedToSend": "Nie udało się wysłać wiadomości",
+    "deleteConversation": "Usuń konwersację",
+    "deleteConfirm": "Czy na pewno chcesz usunąć tę konwersację?"
   }
 }

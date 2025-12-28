@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { ConversationParticipant } from '../types/api';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -21,6 +22,8 @@ export type RootStackParamList = {
   ActivityDetail: { activityId: number };
   UserProfile: { username: string };
   Settings: undefined;
+  ConversationsList: undefined;
+  Chat: { conversationId: number; participant: ConversationParticipant };
 };
 
 declare global {

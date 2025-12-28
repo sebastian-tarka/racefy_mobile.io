@@ -277,5 +277,18 @@
     "ongoing": "Ongoing",
     "completed": "Completed",
     "cancelled": "Cancelled"
+  },
+  "messaging": {
+    "title": "Messages",
+    "noConversations": "No conversations yet",
+    "noConversationsMessage": "Start a conversation from a user's profile",
+    "message": "Message",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "sharedActivity": "Shared an activity",
+    "failedToLoad": "Failed to load messages",
+    "failedToSend": "Failed to send message",
+    "deleteConversation": "Delete conversation",
+    "deleteConfirm": "Are you sure you want to delete this conversation?"
   }
 }

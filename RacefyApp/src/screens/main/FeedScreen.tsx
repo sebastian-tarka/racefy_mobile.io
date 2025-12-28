@@ -22,6 +22,7 @@ import {
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
+import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -38,6 +39,7 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Feed'>;
 export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
+  const { count: unreadCount } = useUnreadCount();
   const {
     posts,
     isLoading,
@@ -122,6 +124,19 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('feed.title')}</Text>
+        <TouchableOpacity
+          style={styles.messagesButton}
+          onPress={() => navigation.navigate('ConversationsList')}
+        >
+          <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -232,6 +247,27 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
+  },
+  messagesButton: {
+    padding: spacing.xs,
+    position: 'relative',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: colors.error,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  unreadBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   listContent: {
     padding: spacing.md,
