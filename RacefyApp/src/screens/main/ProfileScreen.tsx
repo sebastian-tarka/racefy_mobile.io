@@ -25,6 +25,7 @@ import {
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { colors, spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -261,19 +262,29 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   const renderProfileHeader = () => (
     <>
-      {user?.background_image ? (
+      {user?.background_image_url ? (
         <ImageBackground
-          source={{ uri: user.background_image }}
+          source={{ uri: fixStorageUrl(user.background_image_url) || undefined }}
           style={styles.coverImage}
           resizeMode="cover"
         >
-          <TouchableOpacity style={styles.settingsButton}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings')}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="settings-outline" size={24} color={colors.white} />
           </TouchableOpacity>
         </ImageBackground>
       ) : (
         <View style={styles.coverImage}>
-          <TouchableOpacity style={styles.settingsButton}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings')}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="settings-outline" size={24} color={colors.white} />
           </TouchableOpacity>
         </View>
@@ -506,6 +517,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   profileHeader: {
     alignItems: 'center',

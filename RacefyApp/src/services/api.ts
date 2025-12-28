@@ -783,6 +783,26 @@ class ApiService {
     await this.clearToken();
   }
 
+  // ============ PREFERENCES ============
+
+  async getPreferences(): Promise<{ units: 'metric' | 'imperial' }> {
+    const response = await this.request<{ preferences: { units: 'metric' | 'imperial' } }>(
+      '/profile/preferences'
+    );
+    return response.preferences;
+  }
+
+  async updatePreferences(data: { units: 'metric' | 'imperial' }): Promise<{ units: 'metric' | 'imperial' }> {
+    const response = await this.request<{ preferences: { units: 'metric' | 'imperial' } }>(
+      '/profile/preferences',
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.preferences;
+  }
+
   // ============ MESSAGING ============
 
   async getConversations(

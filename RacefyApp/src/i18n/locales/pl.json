@@ -367,5 +367,37 @@
       "endDateRequired": "Data zakończenia jest wymagana",
       "endDateBeforeStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia"
     }
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "account": "Konto",
+    "editProfile": "Edytuj profil",
+    "changePassword": "Zmień hasło",
+    "currentPassword": "Aktualne hasło",
+    "currentPasswordPlaceholder": "Wprowadź aktualne hasło",
+    "newPassword": "Nowe hasło",
+    "newPasswordPlaceholder": "Wprowadź nowe hasło",
+    "updatePassword": "Zaktualizuj hasło",
+    "currentPasswordRequired": "Aktualne hasło jest wymagane",
+    "newPasswordRequired": "Nowe hasło jest wymagane",
+    "passwordChanged": "Hasło zostało zmienione",
+    "passwordChangeFailed": "Nie udało się zmienić hasła",
+    "incorrectPassword": "Nieprawidłowe hasło",
+    "preferences": "Preferencje",
+    "units": "Jednostki",
+    "metric": "Metryczne (km)",
+    "imperial": "Imperialne (mi)",
+    "updateFailed": "Nie udało się zaktualizować ustawień",
+    "app": "Aplikacja",
+    "version": "Wersja",
+    "dangerZone": "Strefa zagrożenia",
+    "deleteAccount": "Usuń konto",
+    "deleteAccountConfirm": "Ta operacja jest nieodwracalna. Wszystkie Twoje dane zostaną trwale usunięte.",
+    "deleteAccountWarning": "Uwaga: Spowoduje to trwałe usunięcie Twojego konta i wszystkich powiązanych danych, w tym aktywności, postów i wydarzeń.",
+    "deleteAccountButton": "Usuń moje konto",
+    "deleteAccountFailed": "Nie udało się usunąć konta",
+    "passwordRequiredForDelete": "Hasło jest wymagane do usunięcia konta",
+    "confirmPassword": "Hasło",
+    "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić"
   }
 }

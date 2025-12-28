@@ -22,6 +22,7 @@ import {
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { colors, spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -306,9 +307,9 @@ export function UserProfileScreen({ navigation, route }: Props) {
         <View style={styles.headerRight} />
       </View>
 
-      {profile.background_image ? (
+      {profile.background_image_url ? (
         <ImageBackground
-          source={{ uri: profile.background_image }}
+          source={{ uri: fixStorageUrl(profile.background_image_url) || undefined }}
           style={styles.coverImage}
           resizeMode="cover"
         />

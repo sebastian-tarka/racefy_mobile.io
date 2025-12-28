@@ -21,6 +21,7 @@ import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen } from '../screens/events';
 import { EditProfileScreen } from '../screens/profile';
+import { SettingsScreen } from '../screens/settings';
 
 // Types
 import type {
@@ -188,6 +189,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="EditProfile"
           component={EditProfileScreen}
+        />
+        <RootStack.Screen
+          name="Settings"
+          component={SettingsScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

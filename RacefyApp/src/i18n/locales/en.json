@@ -367,5 +367,37 @@
       "endDateRequired": "End date is required",
       "endDateBeforeStart": "End date must be after start date"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "updatePassword": "Update Password",
+    "currentPasswordRequired": "Current password is required",
+    "newPasswordRequired": "New password is required",
+    "passwordChanged": "Password changed successfully",
+    "passwordChangeFailed": "Failed to change password",
+    "incorrectPassword": "Incorrect password",
+    "preferences": "Preferences",
+    "units": "Units",
+    "metric": "Metric (km)",
+    "imperial": "Imperial (mi)",
+    "updateFailed": "Failed to update settings",
+    "app": "App",
+    "version": "Version",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountConfirm": "This action cannot be undone. All your data will be permanently deleted.",
+    "deleteAccountWarning": "Warning: This will permanently delete your account and all associated data including activities, posts, and events.",
+    "deleteAccountButton": "Delete My Account",
+    "deleteAccountFailed": "Failed to delete account",
+    "passwordRequiredForDelete": "Password is required to delete your account",
+    "confirmPassword": "Password",
+    "enterPasswordToDelete": "Enter your password to confirm"
   }
 }

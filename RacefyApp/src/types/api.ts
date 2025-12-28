@@ -7,7 +7,9 @@ export interface User {
   email: string;
   email_verified_at: string | null;
   avatar: string | null;
+  avatar_url: string | null;
   background_image: string | null;
+  background_image_url: string | null;
   bio: string | null;
   created_at: string;
   updated_at: string;

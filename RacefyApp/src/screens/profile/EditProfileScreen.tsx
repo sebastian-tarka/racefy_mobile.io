@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { Input, Button, Avatar } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -41,8 +42,8 @@ export function EditProfileScreen({ navigation }: Props) {
     email: user?.email || '',
     bio: user?.bio || '',
   });
-  const [avatarUri, setAvatarUri] = useState<string | null>(user?.avatar || null);
-  const [backgroundUri, setBackgroundUri] = useState<string | null>(user?.background_image || null);
+  const [avatarUri, setAvatarUri] = useState<string | null>(user?.avatar_url || user?.avatar || null);
+  const [backgroundUri, setBackgroundUri] = useState<string | null>(user?.background_image_url || null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,8 +55,8 @@ export function EditProfileScreen({ navigation }: Props) {
         email: user.email || '',
         bio: user.bio || '',
       });
-      setAvatarUri(user.avatar || null);
-      setBackgroundUri(user.background_image || null);
+      setAvatarUri(user.avatar_url || user.avatar || null);
+      setBackgroundUri(user.background_image_url || null);
     }
   }, [user]);
 
@@ -287,7 +288,6 @@ export function EditProfileScreen({ navigation }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('editProfile.title')}</Text>
-          <View style={styles.headerRight} />
         </View>
 
         <ScrollView
@@ -298,7 +298,7 @@ export function EditProfileScreen({ navigation }: Props) {
           {/* Background Image Section */}
           <TouchableOpacity onPress={pickBackground} style={styles.backgroundSection}>
             {backgroundUri ? (
-              <Image source={{ uri: backgroundUri }} style={styles.backgroundImage} />
+              <Image source={{ uri: isLocalImage(backgroundUri) ? backgroundUri : (fixStorageUrl(backgroundUri) || backgroundUri) }} style={styles.backgroundImage} />
             ) : (
               <View style={styles.backgroundPlaceholder}>
                 <Ionicons name="image-outline" size={32} color={colors.white} />
@@ -316,7 +316,7 @@ export function EditProfileScreen({ navigation }: Props) {
           <View style={styles.avatarSection}>
             <TouchableOpacity onPress={pickAvatar} style={styles.avatarContainer}>
               {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                <Image source={{ uri: isLocalImage(avatarUri) ? avatarUri : (fixStorageUrl(avatarUri) || avatarUri) }} style={styles.avatarImage} />
               ) : (
                 <Avatar name={formData.name} size="xxl" />
               )}
@@ -398,7 +398,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.cardBackground,
@@ -407,14 +406,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.textPrimary,
-  },
-  headerRight: {
-    width: 32,
   },
   scrollView: {
     flex: 1,
