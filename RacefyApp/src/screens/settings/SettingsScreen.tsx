@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,13 +16,12 @@ import * as Application from 'expo-application';
 import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { colors, spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import type { UserPreferences } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
-
-type Units = 'metric' | 'imperial';
 
 interface SettingsRowProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -67,12 +65,36 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
   );
 }
 
+const DEFAULT_PREFERENCES: UserPreferences = {
+  units: 'metric',
+  language: 'en',
+  theme: 'system',
+  notifications: {
+    email_weekly_summary: true,
+    email_event_reminders: true,
+    push_likes: true,
+    push_comments: true,
+    push_follows: true,
+    push_messages: true,
+  },
+  privacy: {
+    profile_visibility: 'public',
+    show_activities: true,
+    show_stats: true,
+    allow_messages: 'everyone',
+  },
+  activity_defaults: {
+    visibility: 'public',
+    auto_share: true,
+  },
+};
+
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
-  const [units, setUnits] = useState<Units>('metric');
-  const [isLoadingUnits, setIsLoadingUnits] = useState(true);
+  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -96,24 +118,49 @@ export function SettingsScreen({ navigation }: Props) {
   const loadPreferences = async () => {
     try {
       const prefs = await api.getPreferences();
-      setUnits(prefs.units);
+      setPreferences(prefs);
     } catch (error) {
       console.error('Failed to load preferences:', error);
     } finally {
-      setIsLoadingUnits(false);
+      setIsLoading(false);
     }
   };
 
-  const handleUnitsChange = async (value: boolean) => {
-    const newUnits: Units = value ? 'imperial' : 'metric';
+  const updatePreference = async <K extends keyof UserPreferences>(
+    key: K,
+    value: UserPreferences[K]
+  ) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setUnits(newUnits);
+    const oldPreferences = { ...preferences };
+    setPreferences(prev => ({ ...prev, [key]: value }));
 
     try {
-      await api.updatePreferences({ units: newUnits });
+      await api.updatePreferences({ [key]: value });
     } catch (error) {
       console.error('Failed to update preferences:', error);
-      setUnits(units); // Revert on error
+      setPreferences(oldPreferences);
+      Alert.alert(t('common.error'), t('settings.updateFailed'));
+    }
+  };
+
+  const updateNestedPreference = async <
+    K extends 'notifications' | 'privacy' | 'activity_defaults',
+    NK extends keyof UserPreferences[K]
+  >(
+    category: K,
+    key: NK,
+    value: UserPreferences[K][NK]
+  ) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const oldPreferences = { ...preferences };
+    const updatedCategory = { ...preferences[category], [key]: value };
+    setPreferences(prev => ({ ...prev, [category]: updatedCategory }));
+
+    try {
+      await api.updatePreferences({ [category]: updatedCategory });
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
   };
@@ -216,6 +263,36 @@ export function SettingsScreen({ navigation }: Props) {
     ]);
   };
 
+  const getVisibilityLabel = (value: 'public' | 'followers' | 'private') => {
+    const labels = {
+      public: t('settings.public'),
+      followers: t('settings.followersOnly'),
+      private: t('settings.private'),
+    };
+    return labels[value];
+  };
+
+  const getMessagesLabel = (value: 'everyone' | 'followers' | 'none') => {
+    const labels = {
+      everyone: t('settings.everyone'),
+      followers: t('settings.followersOnly'),
+      none: t('settings.noOne'),
+    };
+    return labels[value];
+  };
+
+  const cycleVisibility = (current: 'public' | 'followers' | 'private') => {
+    const order: ('public' | 'followers' | 'private')[] = ['public', 'followers', 'private'];
+    const currentIndex = order.indexOf(current);
+    return order[(currentIndex + 1) % order.length];
+  };
+
+  const cycleMessages = (current: 'everyone' | 'followers' | 'none') => {
+    const order: ('everyone' | 'followers' | 'none')[] = ['everyone', 'followers', 'none'];
+    const currentIndex = order.indexOf(current);
+    return order[(currentIndex + 1) % order.length];
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -280,20 +357,177 @@ export function SettingsScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* Preferences Section */}
+        {/* General Preferences */}
         <Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
         <View style={styles.section}>
           <SettingsRow
             icon="speedometer-outline"
             label={t('settings.units')}
-            value={units === 'metric' ? t('settings.metric') : t('settings.imperial')}
+            value={preferences.units === 'metric' ? t('settings.metric') : t('settings.imperial')}
             rightElement={
               <Switch
-                value={units === 'imperial'}
-                onValueChange={handleUnitsChange}
+                value={preferences.units === 'imperial'}
+                onValueChange={(value) => updatePreference('units', value ? 'imperial' : 'metric')}
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={units === 'imperial' ? colors.primary : colors.white}
-                disabled={isLoadingUnits}
+                thumbColor={preferences.units === 'imperial' ? colors.primary : colors.white}
+                disabled={isLoading}
+              />
+            }
+          />
+          <SettingsRow
+            icon="language-outline"
+            label={t('settings.language')}
+            value={preferences.language === 'en' ? 'English' : 'Polski'}
+            onPress={() => updatePreference('language', preferences.language === 'en' ? 'pl' : 'en')}
+          />
+          <SettingsRow
+            icon="color-palette-outline"
+            label={t('settings.theme')}
+            value={t(`settings.theme_${preferences.theme}`)}
+            onPress={() => {
+              const themes: ('light' | 'dark' | 'system')[] = ['system', 'light', 'dark'];
+              const currentIndex = themes.indexOf(preferences.theme);
+              updatePreference('theme', themes[(currentIndex + 1) % themes.length]);
+            }}
+          />
+        </View>
+
+        {/* Notifications */}
+        <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
+        <View style={styles.section}>
+          <SettingsRow
+            icon="mail-outline"
+            label={t('settings.emailWeeklySummary')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.email_weekly_summary}
+                onValueChange={(value) => updateNestedPreference('notifications', 'email_weekly_summary', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.email_weekly_summary ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="calendar-outline"
+            label={t('settings.emailEventReminders')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.email_event_reminders}
+                onValueChange={(value) => updateNestedPreference('notifications', 'email_event_reminders', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.email_event_reminders ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="heart-outline"
+            label={t('settings.pushLikes')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.push_likes}
+                onValueChange={(value) => updateNestedPreference('notifications', 'push_likes', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.push_likes ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="chatbubble-outline"
+            label={t('settings.pushComments')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.push_comments}
+                onValueChange={(value) => updateNestedPreference('notifications', 'push_comments', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.push_comments ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="person-add-outline"
+            label={t('settings.pushFollows')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.push_follows}
+                onValueChange={(value) => updateNestedPreference('notifications', 'push_follows', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.push_follows ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="chatbubbles-outline"
+            label={t('settings.pushMessages')}
+            rightElement={
+              <Switch
+                value={preferences.notifications.push_messages}
+                onValueChange={(value) => updateNestedPreference('notifications', 'push_messages', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.notifications.push_messages ? colors.primary : colors.white}
+              />
+            }
+          />
+        </View>
+
+        {/* Privacy */}
+        <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
+        <View style={styles.section}>
+          <SettingsRow
+            icon="eye-outline"
+            label={t('settings.profileVisibility')}
+            value={getVisibilityLabel(preferences.privacy.profile_visibility)}
+            onPress={() => updateNestedPreference('privacy', 'profile_visibility', cycleVisibility(preferences.privacy.profile_visibility))}
+          />
+          <SettingsRow
+            icon="fitness-outline"
+            label={t('settings.showActivities')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.show_activities}
+                onValueChange={(value) => updateNestedPreference('privacy', 'show_activities', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.privacy.show_activities ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="stats-chart-outline"
+            label={t('settings.showStats')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.show_stats}
+                onValueChange={(value) => updateNestedPreference('privacy', 'show_stats', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.privacy.show_stats ? colors.primary : colors.white}
+              />
+            }
+          />
+          <SettingsRow
+            icon="mail-open-outline"
+            label={t('settings.allowMessages')}
+            value={getMessagesLabel(preferences.privacy.allow_messages)}
+            onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
+          />
+        </View>
+
+        {/* Activity Defaults */}
+        <Text style={styles.sectionTitle}>{t('settings.activityDefaults')}</Text>
+        <View style={styles.section}>
+          <SettingsRow
+            icon="globe-outline"
+            label={t('settings.defaultVisibility')}
+            value={getVisibilityLabel(preferences.activity_defaults.visibility)}
+            onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
+          />
+          <SettingsRow
+            icon="share-outline"
+            label={t('settings.autoShare')}
+            rightElement={
+              <Switch
+                value={preferences.activity_defaults.auto_share}
+                onValueChange={(value) => updateNestedPreference('activity_defaults', 'auto_share', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.activity_defaults.auto_share ? colors.primary : colors.white}
               />
             }
           />

@@ -40,6 +40,32 @@ export interface LoginRequest {
   password: string;
 }
 
+// ============ USER PREFERENCES ============
+
+export interface UserPreferences {
+  units: 'metric' | 'imperial';
+  language: 'en' | 'pl';
+  theme: 'light' | 'dark' | 'system';
+  notifications: {
+    email_weekly_summary: boolean;
+    email_event_reminders: boolean;
+    push_likes: boolean;
+    push_comments: boolean;
+    push_follows: boolean;
+    push_messages: boolean;
+  };
+  privacy: {
+    profile_visibility: 'public' | 'followers' | 'private';
+    show_activities: boolean;
+    show_stats: boolean;
+    allow_messages: 'everyone' | 'followers' | 'none';
+  };
+  activity_defaults: {
+    visibility: 'public' | 'followers' | 'private';
+    auto_share: boolean;
+  };
+}
+
 // ============ SPORT TYPES ============
 
 export interface SportType {

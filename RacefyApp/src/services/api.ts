@@ -785,15 +785,15 @@ class ApiService {
 
   // ============ PREFERENCES ============
 
-  async getPreferences(): Promise<{ units: 'metric' | 'imperial' }> {
-    const response = await this.request<{ preferences: { units: 'metric' | 'imperial' } }>(
+  async getPreferences(): Promise<Types.UserPreferences> {
+    const response = await this.request<{ preferences: Types.UserPreferences }>(
       '/profile/preferences'
     );
     return response.preferences;
   }
 
-  async updatePreferences(data: { units: 'metric' | 'imperial' }): Promise<{ units: 'metric' | 'imperial' }> {
-    const response = await this.request<{ preferences: { units: 'metric' | 'imperial' } }>(
+  async updatePreferences(data: Partial<Types.UserPreferences>): Promise<Types.UserPreferences> {
+    const response = await this.request<{ preferences: Types.UserPreferences }>(
       '/profile/preferences',
       {
         method: 'PUT',
