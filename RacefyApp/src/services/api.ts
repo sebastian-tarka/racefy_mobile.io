@@ -264,6 +264,7 @@ class ApiService {
     status?: 'upcoming' | 'ongoing' | 'completed';
     sport_type_id?: number;
     page?: number;
+    per_page?: number;
   }): Promise<Types.PaginatedResponse<Types.Event>> {
     const query = new URLSearchParams();
     if (params?.user_id) query.append('user_id', String(params.user_id));
@@ -271,6 +272,7 @@ class ApiService {
     if (params?.sport_type_id)
       query.append('sport_type_id', String(params.sport_type_id));
     if (params?.page) query.append('page', String(params.page));
+    if (params?.per_page) query.append('per_page', String(params.per_page));
     return this.request(`/events?${query}`);
   }
 

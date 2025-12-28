@@ -23,7 +23,8 @@
     "settings": "Settings",
     "discard": "Discard",
     "pleaseWait": "Please wait...",
-    "goBack": "Go Back"
+    "goBack": "Go Back",
+    "viewAll": "View All"
   },
   "app": {
     "name": "Racefy",
@@ -78,6 +79,7 @@
       "activities": "Activities"
     },
     "connectionError": "Unable to connect to server",
+    "upcomingEvents": "Upcoming Events",
     "checkConnection": "Check your internet connection"
   },
   "feed": {
@@ -95,7 +97,11 @@
     "failedToCreate": "Failed to create post",
     "failedToDelete": "Failed to delete post",
     "deletePost": "Delete Post",
-    "deleteConfirm": "Are you sure you want to delete this post?"
+    "deleteConfirm": "Are you sure you want to delete this post?",
+    "postTypes": {
+      "activity": "Activity",
+      "event": "Event"
+    }
   },
   "profile": {
     "title": "Profile",

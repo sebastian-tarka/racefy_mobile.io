@@ -23,7 +23,8 @@
     "settings": "Ustawienia",
     "discard": "Odrzuć",
     "pleaseWait": "Proszę czekać...",
-    "goBack": "Wróć"
+    "goBack": "Wróć",
+    "viewAll": "Zobacz wszystkie"
   },
   "app": {
     "name": "Racefy",
@@ -78,7 +79,8 @@
       "activities": "Aktywności"
     },
     "connectionError": "Nie można połączyć z serwerem",
-    "checkConnection": "Sprawdź połączenie internetowe"
+    "checkConnection": "Sprawdź połączenie internetowe",
+    "upcomingEvents": "Nadchodzące wydarzenia"
   },
   "feed": {
     "title": "Aktualności",
@@ -95,7 +97,11 @@
     "failedToCreate": "Nie udało się utworzyć postu",
     "failedToDelete": "Nie udało się usunąć postu",
     "deletePost": "Usuń post",
-    "deleteConfirm": "Czy na pewno chcesz usunąć ten post?"
+    "deleteConfirm": "Czy na pewno chcesz usunąć ten post?",
+    "postTypes": {
+      "activity": "Aktywność",
+      "event": "Wydarzenie"
+    }
   },
   "profile": {
     "title": "Profil",
