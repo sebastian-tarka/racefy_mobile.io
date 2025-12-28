@@ -80,7 +80,10 @@ export function EventsScreen({ navigation }: Props) {
           <Text style={styles.subtitle}>{t('events.subtitle')}</Text>
         </View>
         {isAuthenticated && (
-          <TouchableOpacity style={styles.createButton}>
+          <TouchableOpacity
+            style={styles.createButton}
+            onPress={() => navigation.navigate('EventForm', {})}
+          >
             <Ionicons name="add" size={24} color={colors.white} />
           </TouchableOpacity>
         )}
@@ -135,9 +138,7 @@ export function EventsScreen({ navigation }: Props) {
               actionLabel={isAuthenticated ? t('events.createEvent') : undefined}
               onAction={
                 isAuthenticated
-                  ? () => {
-                      // Navigate to create event
-                    }
+                  ? () => navigation.navigate('EventForm', {})
                   : undefined
               }
             />

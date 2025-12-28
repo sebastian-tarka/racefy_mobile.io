@@ -24,6 +24,7 @@ export type RootStackParamList = {
   Settings: undefined;
   ConversationsList: undefined;
   Chat: { conversationId: number; participant: ConversationParticipant };
+  EventForm: { eventId?: number };
 };
 
 declare global {

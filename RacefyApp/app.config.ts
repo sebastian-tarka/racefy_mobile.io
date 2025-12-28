@@ -85,6 +85,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Racefy needs camera access to take photos for your activities.',
       },
     ],
+    '@react-native-community/datetimepicker',
   ],
   extra: {
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',

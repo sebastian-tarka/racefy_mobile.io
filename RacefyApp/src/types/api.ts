@@ -79,6 +79,7 @@ export interface CreatePostRequest {
 
 export interface Event {
   id: number;
+  created_by: number;
   post_id: number;
   sport_type_id: number;
   location_name: string;
@@ -94,6 +95,7 @@ export interface Event {
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   distance: number | null;
   entry_fee: number | null;
+  cover_image: string | null;
   sport_type?: SportType;
   post?: Post;
   is_registered?: boolean;
@@ -115,6 +117,24 @@ export interface CreateEventRequest {
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   distance?: number;
   entry_fee?: number;
+}
+
+export interface UpdateEventRequest {
+  title?: string;
+  content?: string;
+  sport_type_id?: number;
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
+  starts_at?: string;
+  ends_at?: string;
+  registration_opens_at?: string | null;
+  registration_closes_at?: string | null;
+  max_participants?: number | null;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+  distance?: number | null;
+  entry_fee?: number | null;
+  cover_image?: string;
 }
 
 export interface EventRegistration {

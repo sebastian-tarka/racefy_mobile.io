@@ -22,6 +22,9 @@ const difficultyLabels: Record<string, string> = {
 export function EventCard({ event, onPress }: EventCardProps) {
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
 
+  // Use cover_image as primary, fallback to first photo
+  const imageUrl = event.cover_image || event.post?.photos?.[0]?.url;
+
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = event.sport_type?.name?.toLowerCase() || '';
     if (sportName.includes('run')) return 'walk-outline';
@@ -48,9 +51,9 @@ export function EventCard({ event, onPress }: EventCardProps) {
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={styles.imageContainer}>
-            {event.post?.photos?.[0]?.url ? (
+            {imageUrl ? (
               <Image
-                source={{ uri: event.post.photos[0].url }}
+                source={{ uri: imageUrl }}
                 style={styles.image}
                 resizeMode="cover"
               />

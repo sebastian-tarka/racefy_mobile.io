@@ -33,7 +33,7 @@ const difficultyColors: Record<string, string> = {
 export function EventDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { eventId } = route.params;
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -184,6 +184,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const isFull = availableSpots !== null && availableSpots <= 0;
   const canRegister =
     event.status === 'upcoming' && !event.is_registered && !isFull;
+  const isOwnEvent = user && event.created_by === user.id;
+  const canEdit = isOwnEvent && event.status === 'upcoming';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -195,7 +197,16 @@ export function EventDetailScreen({ route, navigation }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('eventDetail.title')}</Text>
-        <View style={styles.placeholder} />
+        {canEdit ? (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
+            style={styles.editButton}
+          >
+            <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.placeholder} />
+        )}
       </View>
 
       <ScrollView
@@ -206,9 +217,9 @@ export function EventDetailScreen({ route, navigation }: Props) {
       >
         {/* Event Image/Header */}
         <View style={styles.imageContainer}>
-          {event.post?.photos?.[0]?.url ? (
+          {(event.cover_image || event.post?.photos?.[0]?.url) ? (
             <Image
-              source={{ uri: event.post.photos[0].url }}
+              source={{ uri: event.cover_image || event.post?.photos?.[0]?.url }}
               style={styles.image}
               resizeMode="cover"
             />
@@ -462,6 +473,9 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 32,
+  },
+  editButton: {
+    padding: spacing.xs,
   },
   scrollContent: {
     paddingBottom: spacing.lg,

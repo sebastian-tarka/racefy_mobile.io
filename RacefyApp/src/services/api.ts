@@ -293,6 +293,17 @@ class ApiService {
     return response.data;
   }
 
+  async updateEvent(id: number, data: Types.UpdateEventRequest): Promise<Types.Event> {
+    const response = await this.request<Types.ApiResponse<Types.Event>>(
+      `/events/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
+  }
+
   async registerForEvent(eventId: number): Promise<Types.EventRegistration> {
     const response = await this.request<
       Types.ApiResponse<Types.EventRegistration>
@@ -315,6 +326,46 @@ class ApiService {
       Types.ApiResponse<Types.EventRegistration[]>
     >('/my-registrations');
     return response.data;
+  }
+
+  async uploadEventCoverImage(
+    eventId: number,
+    imageUri: string
+  ): Promise<Types.Event> {
+    const formData = new FormData();
+
+    // Get file extension from URI
+    const uriParts = imageUri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+
+    formData.append('cover_image', {
+      uri: imageUri,
+      type: mimeType,
+      name: `cover.${fileExtension}`,
+    } as any);
+
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/cover-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+        // Don't set Content-Type - let fetch set it with boundary for multipart
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw data as Types.ApiError;
+    }
+
+    return data.data;
+  }
+
+  async deleteEventCoverImage(eventId: number): Promise<void> {
+    await this.request(`/events/${eventId}/cover-image`, { method: 'DELETE' });
   }
 
   // ============ ACTIVITIES ============

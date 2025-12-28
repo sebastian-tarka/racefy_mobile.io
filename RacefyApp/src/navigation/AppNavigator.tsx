@@ -19,6 +19,7 @@ import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
+import { EventFormScreen } from '../screens/events';
 
 // Types
 import type {
@@ -178,6 +179,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="Chat"
           component={ChatScreen}
+        />
+        <RootStack.Screen
+          name="EventForm"
+          component={EventFormScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>
