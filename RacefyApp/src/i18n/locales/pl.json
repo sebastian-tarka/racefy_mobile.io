@@ -43,6 +43,8 @@
     "confirmPasswordPlaceholder": "Potwierdź swoje hasło",
     "name": "Imię",
     "namePlaceholder": "Twoje imię i nazwisko",
+    "username": "Nazwa użytkownika",
+    "usernamePlaceholder": "Twoja nazwa użytkownika",
     "noAccount": "Nie masz konta?",
     "haveAccount": "Masz już konto?",
     "loginFailed": "Logowanie nie powiodło się",
@@ -132,6 +134,30 @@
       "noActivitiesMessage": "Zacznij śledzić swoje treningi",
       "noEvents": "Brak wydarzeń",
       "noEventsMessage": "Dołącz do wydarzeń, aby je tutaj zobaczyć"
+    }
+  },
+  "editProfile": {
+    "title": "Edytuj profil",
+    "bio": "Bio",
+    "bioPlaceholder": "Powiedz nam coś o sobie...",
+    "changePhoto": "Zmień zdjęcie",
+    "changeAvatar": "Zmień zdjęcie profilowe",
+    "changeBackground": "Zmień zdjęcie w tle",
+    "takePhoto": "Zrób zdjęcie",
+    "chooseFromGallery": "Wybierz z galerii",
+    "saveButton": "Zapisz zmiany",
+    "updateSuccess": "Profil został zaktualizowany!",
+    "updateFailed": "Nie udało się zaktualizować profilu. Spróbuj ponownie.",
+    "avatarUploadFailed": "Nie udało się przesłać zdjęcia profilowego. Spróbuj ponownie.",
+    "backgroundUploadFailed": "Nie udało się przesłać zdjęcia w tle. Spróbuj ponownie.",
+    "permissionDenied": "Wymagane jest pozwolenie na dostęp do zdjęć.",
+    "cameraPermissionDenied": "Wymagane jest pozwolenie na dostęp do aparatu.",
+    "validation": {
+      "nameRequired": "Imię jest wymagane",
+      "usernameRequired": "Nazwa użytkownika jest wymagana",
+      "usernameTooShort": "Nazwa użytkownika musi mieć co najmniej 3 znaki",
+      "emailRequired": "Email jest wymagany",
+      "emailInvalid": "Wprowadź poprawny adres email"
     }
   },
   "events": {

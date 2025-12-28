@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -305,7 +306,15 @@ export function UserProfileScreen({ navigation, route }: Props) {
         <View style={styles.headerRight} />
       </View>
 
-      <View style={styles.coverImage} />
+      {profile.background_image ? (
+        <ImageBackground
+          source={{ uri: profile.background_image }}
+          style={styles.coverImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={styles.coverImage} />
+      )}
 
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>

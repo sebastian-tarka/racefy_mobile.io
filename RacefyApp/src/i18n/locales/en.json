@@ -43,6 +43,8 @@
     "confirmPasswordPlaceholder": "Confirm your password",
     "name": "Name",
     "namePlaceholder": "Your full name",
+    "username": "Username",
+    "usernamePlaceholder": "Your username",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "loginFailed": "Login Failed",
@@ -132,6 +134,30 @@
       "noActivitiesMessage": "Start tracking your workouts",
       "noEvents": "No events yet",
       "noEventsMessage": "Join events to see them here"
+    }
+  },
+  "editProfile": {
+    "title": "Edit Profile",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself...",
+    "changePhoto": "Change Photo",
+    "changeAvatar": "Change Profile Photo",
+    "changeBackground": "Change Cover Photo",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "saveButton": "Save Changes",
+    "updateSuccess": "Profile updated successfully!",
+    "updateFailed": "Failed to update profile. Please try again.",
+    "avatarUploadFailed": "Failed to upload profile photo. Please try again.",
+    "backgroundUploadFailed": "Failed to upload cover photo. Please try again.",
+    "permissionDenied": "Permission to access photos is required to select an image.",
+    "cameraPermissionDenied": "Permission to access camera is required to take a photo.",
+    "validation": {
+      "nameRequired": "Name is required",
+      "usernameRequired": "Username is required",
+      "usernameTooShort": "Username must be at least 3 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address"
     }
   },
   "events": {

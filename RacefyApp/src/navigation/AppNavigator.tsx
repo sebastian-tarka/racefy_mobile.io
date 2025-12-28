@@ -20,6 +20,7 @@ import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen } from '../screens/events';
+import { EditProfileScreen } from '../screens/profile';
 
 // Types
 import type {
@@ -183,6 +184,10 @@ export function AppNavigator() {
         <RootStack.Screen
           name="EventForm"
           component={EventFormScreen}
+        />
+        <RootStack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
         />
       </RootStack.Navigator>
     </NavigationContainer>

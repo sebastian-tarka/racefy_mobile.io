@@ -8,6 +8,8 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -259,11 +261,23 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   const renderProfileHeader = () => (
     <>
-      <View style={styles.coverImage}>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Ionicons name="settings-outline" size={24} color={colors.white} />
-        </TouchableOpacity>
-      </View>
+      {user?.background_image ? (
+        <ImageBackground
+          source={{ uri: user.background_image }}
+          style={styles.coverImage}
+          resizeMode="cover"
+        >
+          <TouchableOpacity style={styles.settingsButton}>
+            <Ionicons name="settings-outline" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </ImageBackground>
+      ) : (
+        <View style={styles.coverImage}>
+          <TouchableOpacity style={styles.settingsButton}>
+            <Ionicons name="settings-outline" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
@@ -293,9 +307,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
         <View style={styles.actions}>
           <Button
             title={t('profile.editProfile')}
-            onPress={() => {
-              // Navigate to edit profile
-            }}
+            onPress={() => navigation.navigate('EditProfile')}
             variant="outline"
             style={styles.actionButton}
           />

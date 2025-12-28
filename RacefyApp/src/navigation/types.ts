@@ -22,6 +22,7 @@ export type RootStackParamList = {
   ActivityDetail: { activityId: number };
   UserProfile: { username: string };
   Settings: undefined;
+  EditProfile: undefined;
   ConversationsList: undefined;
   Chat: { conversationId: number; participant: ConversationParticipant };
   EventForm: { eventId?: number };

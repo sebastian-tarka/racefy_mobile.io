@@ -709,6 +709,61 @@ class ApiService {
     return response.data;
   }
 
+  async uploadAvatar(imageUri: string): Promise<Types.User> {
+    const formData = new FormData();
+
+    // Get file extension from URI
+    const uriParts = imageUri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+
+    formData.append('avatar', {
+      uri: imageUri,
+      type: mimeType,
+      name: `avatar.${fileExtension}`,
+    } as any);
+
+    const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data.data;
+  }
+
+  async uploadBackgroundImage(imageUri: string): Promise<Types.User> {
+    const formData = new FormData();
+
+    const uriParts = imageUri.split('.');
+    const fileExtension = uriParts[uriParts.length - 1];
+    const mimeType = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
+
+    formData.append('background_image', {
+      uri: imageUri,
+      type: mimeType,
+      name: `background.${fileExtension}`,
+    } as any);
+
+    const response = await fetch(`${API_BASE_URL}/profile/background-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data.data;
+  }
+
   async updatePassword(data: {
     current_password: string;
     password: string;
