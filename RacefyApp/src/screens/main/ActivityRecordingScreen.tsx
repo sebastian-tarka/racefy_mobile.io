@@ -8,12 +8,15 @@ import {
   Vibration,
   Alert,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Badge } from '../../components';
 import { useLiveActivity, usePermissions } from '../../hooks';
+import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { colors, spacing, fontSize, borderRadius } from '../../theme';
 
 // Mock data for milestones based on previous activities
@@ -25,18 +28,15 @@ const mockMilestones = [
   { distance: 10000, label: '10 km', bestTime: 3250, avgTime: 3540 },
 ];
 
-const sportTypes = [
-  { id: 1, name: 'Running', icon: 'walk-outline' as const },
-  { id: 2, name: 'Cycling', icon: 'bicycle-outline' as const },
-  { id: 3, name: 'Swimming', icon: 'water-outline' as const },
-  { id: 4, name: 'Gym', icon: 'barbell-outline' as const },
-];
+// Number of sports to show initially before "Show more"
+const INITIAL_SPORTS_COUNT = 4;
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { requestActivityTrackingPermissions } = usePermissions();
+  const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const {
     activity,
     isTracking,
@@ -53,7 +53,22 @@ export function ActivityRecordingScreen() {
     clearError,
   } = useLiveActivity();
 
-  const [selectedSport, setSelectedSport] = useState(sportTypes[0]);
+  const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
+  const [showAllSports, setShowAllSports] = useState(false);
+  const [sportModalVisible, setSportModalVisible] = useState(false);
+
+  // Set default sport when sports are loaded
+  useEffect(() => {
+    if (sportTypes.length > 0 && !selectedSport) {
+      setSelectedSport(sportTypes[0]);
+    }
+  }, [sportTypes, selectedSport]);
+
+  // Sports to display (first N or all)
+  const displayedSports = showAllSports
+    ? sportTypes
+    : sportTypes.slice(0, INITIAL_SPORTS_COUNT);
+  const hasMoreSports = sportTypes.length > INITIAL_SPORTS_COUNT;
   const [localDuration, setLocalDuration] = useState(0);
   const [passedMilestones, setPassedMilestones] = useState<number[]>([]);
 
@@ -220,6 +235,11 @@ export function ActivityRecordingScreen() {
   const handleStart = async () => {
     console.log('Start button pressed');
 
+    if (!selectedSport) {
+      Alert.alert(t('recording.error'), t('recording.selectSportFirst'));
+      return;
+    }
+
     // Request permissions first
     try {
       await requestActivityTrackingPermissions();
@@ -265,7 +285,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handleSave = async () => {
-    if (!activity) return;
+    if (!activity || !selectedSport) return;
 
     try {
       const finishedActivity = await finishTracking({
@@ -346,42 +366,61 @@ export function ActivityRecordingScreen() {
         {status === 'idle' && (
           <Card style={styles.sportSelector}>
             <Text style={styles.sectionTitle}>{t('recording.selectSport')}</Text>
-            <View style={styles.sportGrid}>
-              {sportTypes.map((sport) => (
-                <TouchableOpacity
-                  key={sport.id}
-                  style={[
-                    styles.sportButton,
-                    selectedSport.id === sport.id && styles.sportButtonActive,
-                  ]}
-                  onPress={() => setSelectedSport(sport)}
-                  disabled={isLoading}
-                >
-                  <Ionicons
-                    name={sport.icon}
-                    size={28}
-                    color={
-                      selectedSport.id === sport.id
-                        ? colors.white
-                        : colors.primary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.sportLabel,
-                      selectedSport.id === sport.id && styles.sportLabelActive,
-                    ]}
+            {sportsLoading ? (
+              <View style={styles.sportsLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : (
+              <>
+                <View style={styles.sportGrid}>
+                  {displayedSports.map((sport) => (
+                    <TouchableOpacity
+                      key={sport.id}
+                      style={[
+                        styles.sportButton,
+                        selectedSport?.id === sport.id && styles.sportButtonActive,
+                      ]}
+                      onPress={() => setSelectedSport(sport)}
+                      disabled={isLoading}
+                    >
+                      <Ionicons
+                        name={sport.icon}
+                        size={28}
+                        color={
+                          selectedSport?.id === sport.id
+                            ? colors.white
+                            : colors.primary
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.sportLabel,
+                          selectedSport?.id === sport.id && styles.sportLabelActive,
+                        ]}
+                      >
+                        {sport.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {hasMoreSports && (
+                  <TouchableOpacity
+                    style={styles.showMoreButton}
+                    onPress={() => setSportModalVisible(true)}
                   >
-                    {sport.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    <Text style={styles.showMoreText}>
+                      {t('recording.showMoreSports', { count: sportTypes.length - INITIAL_SPORTS_COUNT })}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
           </Card>
         )}
 
         {/* Current Activity Display */}
-        {status !== 'idle' && (
+        {status !== 'idle' && selectedSport && (
           <View style={styles.currentSport}>
             <Ionicons
               name={selectedSport.icon}
@@ -532,7 +571,7 @@ export function ActivityRecordingScreen() {
         <Card style={styles.milestonesCard}>
           <Text style={styles.sectionTitle}>{t('recording.milestones')}</Text>
           <Text style={styles.sectionSubtitle}>
-            {t('recording.compareWith', { sport: selectedSport.name.toLowerCase() })}
+            {t('recording.compareWith', { sport: selectedSport?.name?.toLowerCase() || '' })}
           </Text>
 
           {mockMilestones.map((milestone) => {
@@ -598,7 +637,7 @@ export function ActivityRecordingScreen() {
         {/* Previous Activities Summary */}
         <Card style={styles.previousCard}>
           <Text style={styles.sectionTitle}>
-            {t('recording.yourStats', { sport: selectedSport.name })}
+            {t('recording.yourStats', { sport: selectedSport?.name || '' })}
           </Text>
           <View style={styles.prevStatsGrid}>
             <View style={styles.prevStatItem}>
@@ -622,6 +661,57 @@ export function ActivityRecordingScreen() {
       </ScrollView>
 
       {renderLoadingOverlay()}
+
+      {/* Sport Selection Modal */}
+      <Modal
+        visible={sportModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSportModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('recording.selectSport')}</Text>
+            <TouchableOpacity
+              onPress={() => setSportModalVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={sportTypes}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.modalList}
+            renderItem={({ item: sport }) => {
+              const isSelected = selectedSport?.id === sport.id;
+              return (
+                <TouchableOpacity
+                  style={[styles.modalSportItem, isSelected && styles.modalSportItemSelected]}
+                  onPress={() => {
+                    setSelectedSport(sport);
+                    setSportModalVisible(false);
+                  }}
+                >
+                  <View style={[styles.modalSportIcon, isSelected && styles.modalSportIconSelected]}>
+                    <Ionicons
+                      name={sport.icon}
+                      size={24}
+                      color={isSelected ? colors.primary : colors.textSecondary}
+                    />
+                  </View>
+                  <Text style={[styles.modalSportName, isSelected && styles.modalSportNameSelected]}>
+                    {sport.name}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -907,5 +997,81 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
     color: colors.textSecondary,
+  },
+  sportsLoading: {
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  showMoreText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.cardBackground,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  modalCloseButton: {
+    padding: spacing.xs,
+  },
+  modalList: {
+    padding: spacing.md,
+  },
+  modalSportItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+  },
+  modalSportItemSelected: {
+    backgroundColor: colors.primaryLight + '15',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  modalSportIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  modalSportIconSelected: {
+    backgroundColor: colors.primaryLight + '30',
+  },
+  modalSportName: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  modalSportNameSelected: {
+    fontWeight: '600',
+    color: colors.primary,
   },
 });

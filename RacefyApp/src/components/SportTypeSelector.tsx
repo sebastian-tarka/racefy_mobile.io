@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useSportTypes, type SportTypeWithIcon, FALLBACK_SPORTS } from '../hooks/useSportTypes';
 
 export interface SportTypeOption {
   id: number;
@@ -18,19 +20,8 @@ export interface SportTypeOption {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-// Hardcoded sport types - can be replaced with API call later
-export const SPORT_TYPES: SportTypeOption[] = [
-  { id: 1, name: 'Running', slug: 'running', icon: 'walk-outline' },
-  { id: 2, name: 'Cycling', slug: 'cycling', icon: 'bicycle-outline' },
-  { id: 3, name: 'Swimming', slug: 'swimming', icon: 'water-outline' },
-  { id: 4, name: 'Gym', slug: 'gym', icon: 'barbell-outline' },
-  { id: 5, name: 'Yoga', slug: 'yoga', icon: 'body-outline' },
-  { id: 6, name: 'Hiking', slug: 'hiking', icon: 'trail-sign-outline' },
-  { id: 7, name: 'Tennis', slug: 'tennis', icon: 'tennisball-outline' },
-  { id: 8, name: 'Football', slug: 'football', icon: 'football-outline' },
-  { id: 9, name: 'Basketball', slug: 'basketball', icon: 'basketball-outline' },
-  { id: 10, name: 'Other', slug: 'other', icon: 'fitness-outline' },
-];
+// Export for backward compatibility - prefer using useSportTypes hook
+export const SPORT_TYPES: SportTypeOption[] = FALLBACK_SPORTS;
 
 interface SportTypeSelectorProps {
   value: number | null;
@@ -40,11 +31,12 @@ interface SportTypeSelectorProps {
 
 export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorProps) {
   const { t } = useTranslation();
+  const { sportTypes, isLoading, getSportById } = useSportTypes();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const selectedSport = SPORT_TYPES.find(s => s.id === value);
+  const selectedSport = getSportById(value || 0);
 
-  const renderItem = ({ item }: { item: SportTypeOption }) => {
+  const renderItem = ({ item }: { item: SportTypeWithIcon }) => {
     const isSelected = item.id === value;
     return (
       <TouchableOpacity
@@ -110,12 +102,18 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
               <Ionicons name="close" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={SPORT_TYPES}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-          />
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
+            <FlatList
+              data={sportTypes}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderItem}
+              contentContainerStyle={styles.listContent}
+            />
+          )}
         </View>
       </Modal>
     </View>
@@ -186,6 +184,11 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: spacing.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
     padding: spacing.md,

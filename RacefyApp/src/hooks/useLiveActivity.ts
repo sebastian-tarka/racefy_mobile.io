@@ -10,6 +10,12 @@ import {
   clearLocationBuffer,
 } from '../services/backgroundLocation';
 import type { Activity, GpsPoint } from '../types/api';
+import {
+  getGpsProfile,
+  isGpsEnabledForSport,
+  DEFAULT_GPS_PROFILE,
+  type GpsProfile,
+} from '../config/gpsProfiles';
 
 const isWeb = Platform.OS === 'web';
 
@@ -72,6 +78,39 @@ export function useLiveActivity() {
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
   const currentActivityId = useRef<number | null>(null);
+
+  // GPS smoothing buffer - stores last N positions for averaging
+  const gpsBuffer = useRef<Array<{ lat: number; lng: number; ele?: number; timestamp: number }>>([]);
+
+  // Current GPS profile based on activity type
+  const currentGpsProfile = useRef<GpsProfile>(DEFAULT_GPS_PROFILE);
+
+  // Calculate smoothed position from GPS buffer
+  const getSmoothedPosition = (newPoint: { lat: number; lng: number; ele?: number; timestamp: number }) => {
+    const bufferSize = currentGpsProfile.current.smoothingBufferSize;
+    gpsBuffer.current.push(newPoint);
+    if (gpsBuffer.current.length > bufferSize) {
+      gpsBuffer.current.shift();
+    }
+
+    // Calculate average of buffered points
+    const buffer = gpsBuffer.current;
+    const avgLat = buffer.reduce((sum, p) => sum + p.lat, 0) / buffer.length;
+    const avgLng = buffer.reduce((sum, p) => sum + p.lng, 0) / buffer.length;
+
+    // For elevation, use median to reduce outlier impact
+    const elevations = buffer.filter(p => p.ele !== undefined).map(p => p.ele!);
+    let avgEle: number | undefined;
+    if (elevations.length > 0) {
+      elevations.sort((a, b) => a - b);
+      const mid = Math.floor(elevations.length / 2);
+      avgEle = elevations.length % 2 === 0
+        ? (elevations[mid - 1] + elevations[mid]) / 2
+        : elevations[mid];
+    }
+
+    return { lat: avgLat, lng: avgLng, ele: avgEle, timestamp: newPoint.timestamp };
+  };
 
   // Haversine formula for distance calculation (fallback when offline)
   const calculateDistance = (
@@ -217,11 +256,28 @@ export function useLiveActivity() {
     }
   };
 
-  const startGpsTracking = async (activityId: number) => {
+  const startGpsTracking = async (activityId: number, sportTypeId: number) => {
     if (isWeb) {
       console.log('GPS tracking not available on web');
       return;
     }
+
+    // Load GPS profile for this activity type
+    const profile = getGpsProfile(sportTypeId);
+    currentGpsProfile.current = profile;
+
+    // Check if GPS is enabled for this activity type
+    if (!profile.enabled) {
+      console.log(`GPS tracking disabled for sport type ${sportTypeId}`);
+      return;
+    }
+
+    console.log(`Using GPS profile for sport type ${sportTypeId}:`, {
+      accuracyThreshold: profile.accuracyThreshold,
+      minDistanceThreshold: profile.minDistanceThreshold,
+      maxRealisticSpeed: profile.maxRealisticSpeed,
+      timeInterval: profile.timeInterval,
+    });
 
     currentActivityId.current = activityId;
 
@@ -233,22 +289,31 @@ export function useLiveActivity() {
       await setActiveActivityId(activityId);
 
       // Start background location tracking (works when app is backgrounded)
-      await startBackgroundLocationTracking();
+      await startBackgroundLocationTracking(profile);
 
       // Also start foreground tracking for immediate UI updates
       locationSubscription.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
-          distanceInterval: 10, // meters
-          timeInterval: 5000, // ms
+          distanceInterval: profile.distanceInterval,
+          timeInterval: profile.timeInterval,
         },
         (location) => {
-          // Filter out inaccurate GPS readings (accuracy > 30 meters is unreliable)
+          const gpsProfile = currentGpsProfile.current;
+
+          // Filter out inaccurate GPS readings
           const accuracy = location.coords.accuracy;
-          if (accuracy && accuracy > 30) {
-            console.log(`GPS reading filtered: accuracy ${accuracy.toFixed(1)}m > 30m threshold`);
+          if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
+            console.log(`GPS reading filtered: accuracy ${accuracy.toFixed(1)}m > ${gpsProfile.accuracyThreshold}m threshold`);
             return;
           }
+
+          // Stationary detection: if GPS reports very low speed, use stricter distance threshold
+          const gpsSpeed = location.coords.speed;
+          const isLikelyStationary = gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < 0.5; // < 0.5 m/s = < 1.8 km/h
+          const effectiveMinDistance = isLikelyStationary
+            ? Math.max(gpsProfile.minDistanceThreshold, 8) // At least 8m when stationary
+            : gpsProfile.minDistanceThreshold;
 
           const point: GpsPoint = {
             lat: location.coords.latitude,
@@ -258,34 +323,41 @@ export function useLiveActivity() {
             speed: location.coords.speed ?? undefined,
           };
 
+          // Apply GPS smoothing to reduce jitter/drift
+          const smoothedPoint = getSmoothedPosition({
+            lat: point.lat,
+            lng: point.lng,
+            ele: point.ele,
+            timestamp: location.timestamp,
+          });
+
           // Calculate local distance for immediate UI feedback
           if (lastPosition.current) {
+            // Use smoothed position for distance calculation
             const dist = calculateDistance(
               lastPosition.current.lat,
               lastPosition.current.lng,
-              point.lat,
-              point.lng
+              smoothedPoint.lat,
+              smoothedPoint.lng
             );
 
             // Calculate actual time difference between GPS readings
             const timeSinceLastPoint = lastPosition.current.timestamp
               ? (location.timestamp - lastPosition.current.timestamp) / 1000
-              : 5; // fallback to 5 seconds if no timestamp
+              : 3; // fallback to 3 seconds if no timestamp
 
-            // Calculate speed in m/s based on actual time difference
-            // Max realistic speed: running ~12 m/s (43 km/h), cycling ~25 m/s (90 km/h)
-            // Use 15 m/s (~54 km/h) as filter - allows fast cycling but blocks GPS glitches
-            const maxRealisticSpeed = 15; // m/s (~54 km/h)
+            // Calculate implied speed to filter GPS glitches
             const impliedSpeed = timeSinceLastPoint > 0 ? dist / timeSinceLastPoint : 999;
 
-            if (dist > 2 && impliedSpeed < maxRealisticSpeed) {
-              // Only count if moved more than 2 meters AND speed is realistic
+            if (dist > effectiveMinDistance && impliedSpeed < gpsProfile.maxRealisticSpeed) {
+              // Only count if moved more than threshold AND speed is realistic
               localStatsRef.current.distance += dist;
 
-              // Calculate elevation gain
-              if (point.ele && lastPosition.current.ele) {
-                const elevDiff = point.ele - lastPosition.current.ele;
-                if (elevDiff > 0) {
+              // Calculate elevation gain with noise filter
+              if (smoothedPoint.ele && lastPosition.current.ele) {
+                const elevDiff = smoothedPoint.ele - lastPosition.current.ele;
+                // Only count significant elevation changes to filter GPS altitude noise
+                if (elevDiff > gpsProfile.minElevationChange) {
                   localStatsRef.current.elevation_gain += elevDiff;
                 }
               }
@@ -294,12 +366,16 @@ export function useLiveActivity() {
                 ...prev,
                 currentStats: { ...localStatsRef.current },
               }));
-            } else if (impliedSpeed >= maxRealisticSpeed) {
+            } else if (dist > effectiveMinDistance && impliedSpeed >= gpsProfile.maxRealisticSpeed) {
               console.log(`GPS glitch filtered: ${dist.toFixed(1)}m in ${timeSinceLastPoint.toFixed(1)}s = ${(impliedSpeed * 3.6).toFixed(1)} km/h`);
+            } else if (dist <= effectiveMinDistance) {
+              console.log(`Small movement filtered: ${dist.toFixed(1)}m < ${effectiveMinDistance}m threshold${isLikelyStationary ? ' (stationary mode)' : ''}`);
             }
           }
 
-          lastPosition.current = { lat: point.lat, lng: point.lng, ele: point.ele, timestamp: location.timestamp };
+          // Update last position with smoothed values for next calculation
+          lastPosition.current = { lat: smoothedPoint.lat, lng: smoothedPoint.lng, ele: smoothedPoint.ele, timestamp: location.timestamp };
+          // Store original (non-smoothed) point for server sync
           pointsBuffer.current.push(point);
         }
       );
@@ -341,6 +417,9 @@ export function useLiveActivity() {
     await stopBackgroundLocationTracking();
     await setActiveActivityId(null);
     await clearLocationBuffer();
+
+    // Clear GPS smoothing buffer
+    gpsBuffer.current = [];
 
     currentActivityId.current = null;
     stopDurationTimer();
@@ -443,8 +522,8 @@ export function useLiveActivity() {
           hasExistingActivity: false,
         }));
 
-        // Start GPS tracking
-        await startGpsTracking(activity.id);
+        // Start GPS tracking with sport-specific profile
+        await startGpsTracking(activity.id, sportTypeId);
 
         return activity;
       } catch (error: any) {
@@ -522,8 +601,8 @@ export function useLiveActivity() {
         hasExistingActivity: false, // Clear the flag - user chose to resume
       }));
 
-      // Restart GPS tracking (this also starts the duration timer)
-      await startGpsTracking(activity.id);
+      // Restart GPS tracking with sport-specific profile
+      await startGpsTracking(activity.id, activity.sport_type_id);
     } catch (error: any) {
       console.error('Failed to resume activity:', error);
       setState((prev) => ({

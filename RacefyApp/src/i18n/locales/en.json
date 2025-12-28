@@ -264,7 +264,10 @@
       "continue": "Continue",
       "finish": "Finish & Save",
       "discard": "Discard"
-    }
+    },
+    "showMoreSports": "+{{count}} more sports",
+    "error": "Error",
+    "selectSportFirst": "Please select a sport first"
   },
   "difficulty": {
     "beginner": "Beginner",
