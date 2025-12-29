@@ -792,7 +792,9 @@ class ApiService {
     return response.preferences;
   }
 
-  async updatePreferences(data: Partial<Types.UserPreferences>): Promise<Types.UserPreferences> {
+  async updatePreferences(
+    data: Partial<Types.UserPreferences> | Record<string, any>
+  ): Promise<Types.UserPreferences> {
     const response = await this.request<{ preferences: Types.UserPreferences }>(
       '/profile/preferences',
       {

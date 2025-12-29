@@ -19,7 +19,7 @@ import { api } from '../../services/api';
 import { colors, spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { UserPreferences } from '../../types/api';
+import type { UserPreferences, NotificationChannelSettings } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -65,17 +65,75 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
   );
 }
 
+// Notification row with email and push toggles
+interface NotificationRowProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  description?: string;
+  settings: NotificationChannelSettings;
+  onEmailChange: (value: boolean) => void;
+  onPushChange: (value: boolean) => void;
+}
+
+function NotificationRow({ icon, label, description, settings, onEmailChange, onPushChange }: NotificationRowProps) {
+  return (
+    <View style={styles.notificationRow}>
+      <View style={styles.notificationHeader}>
+        <Ionicons name={icon} size={20} color={colors.textSecondary} style={styles.notificationIcon} />
+        <View style={styles.notificationLabelContainer}>
+          <Text style={styles.notificationLabel}>{label}</Text>
+          {description && <Text style={styles.notificationDescription}>{description}</Text>}
+        </View>
+      </View>
+      <View style={styles.notificationToggles}>
+        <View style={styles.toggleItem}>
+          <Text style={styles.toggleLabel}>Email</Text>
+          <Switch
+            value={settings.email}
+            onValueChange={(value) => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onEmailChange(value);
+            }}
+            trackColor={{ false: colors.border, true: colors.primaryLight }}
+            thumbColor={settings.email ? colors.primary : colors.white}
+          />
+        </View>
+        <View style={styles.toggleItem}>
+          <Text style={styles.toggleLabel}>Push</Text>
+          <Switch
+            value={settings.push}
+            onValueChange={(value) => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onPushChange(value);
+            }}
+            trackColor={{ false: colors.border, true: colors.primaryLight }}
+            thumbColor={settings.push ? colors.primary : colors.white}
+          />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const DEFAULT_CHANNEL_SETTINGS: NotificationChannelSettings = {
+  email: true,
+  push: true,
+  websocket: true,
+};
+
 const DEFAULT_PREFERENCES: UserPreferences = {
   units: 'metric',
   language: 'en',
   theme: 'system',
   notifications: {
-    email_weekly_summary: true,
-    email_event_reminders: true,
-    push_likes: true,
-    push_comments: true,
-    push_follows: true,
-    push_messages: true,
+    likes: { ...DEFAULT_CHANNEL_SETTINGS },
+    comments: { ...DEFAULT_CHANNEL_SETTINGS },
+    follows: { ...DEFAULT_CHANNEL_SETTINGS },
+    messages: { ...DEFAULT_CHANNEL_SETTINGS },
+    event_reminders: { ...DEFAULT_CHANNEL_SETTINGS },
+    weekly_summary: { ...DEFAULT_CHANNEL_SETTINGS },
+    activity_reactions: { ...DEFAULT_CHANNEL_SETTINGS },
+    mentions: { ...DEFAULT_CHANNEL_SETTINGS },
   },
   privacy: {
     profile_visibility: 'public',
@@ -135,7 +193,9 @@ export function SettingsScreen({ navigation }: Props) {
     setPreferences(prev => ({ ...prev, [key]: value }));
 
     try {
-      await api.updatePreferences({ [key]: value });
+      const updatedPrefs = await api.updatePreferences({ [key]: value });
+      // Sync with server response
+      setPreferences(updatedPrefs);
     } catch (error) {
       console.error('Failed to update preferences:', error);
       setPreferences(oldPreferences);
@@ -157,9 +217,45 @@ export function SettingsScreen({ navigation }: Props) {
     setPreferences(prev => ({ ...prev, [category]: updatedCategory }));
 
     try {
-      await api.updatePreferences({ [category]: updatedCategory });
+      // Use dot notation for partial update
+      const updatedPrefs = await api.updatePreferences({
+        [`${category}.${String(key)}`]: value,
+      });
+      // Sync with server response
+      setPreferences(updatedPrefs);
     } catch (error) {
       console.error('Failed to update preferences:', error);
+      setPreferences(oldPreferences);
+      Alert.alert(t('common.error'), t('settings.updateFailed'));
+    }
+  };
+
+  // Update a specific notification channel (email/push) for a notification type
+  const updateNotificationChannel = async (
+    notificationType: keyof UserPreferences['notifications'],
+    channel: 'email' | 'push',
+    value: boolean
+  ) => {
+    const oldPreferences = { ...preferences };
+    const updatedNotificationType = {
+      ...preferences.notifications[notificationType],
+      [channel]: value,
+    };
+    const updatedNotifications = {
+      ...preferences.notifications,
+      [notificationType]: updatedNotificationType,
+    };
+    setPreferences(prev => ({ ...prev, notifications: updatedNotifications }));
+
+    try {
+      // Use dot notation for partial update as supported by API
+      const updatedPrefs = await api.updatePreferences({
+        [`notifications.${notificationType}.${channel}`]: value,
+      });
+      // Sync with server response
+      setPreferences(updatedPrefs);
+    } catch (error) {
+      console.error('Failed to update notification preference:', error);
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
@@ -395,77 +491,69 @@ export function SettingsScreen({ navigation }: Props) {
         {/* Notifications */}
         <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
         <View style={styles.section}>
-          <SettingsRow
-            icon="mail-outline"
-            label={t('settings.emailWeeklySummary')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.email_weekly_summary}
-                onValueChange={(value) => updateNestedPreference('notifications', 'email_weekly_summary', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.email_weekly_summary ? colors.primary : colors.white}
-              />
-            }
-          />
-          <SettingsRow
-            icon="calendar-outline"
-            label={t('settings.emailEventReminders')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.email_event_reminders}
-                onValueChange={(value) => updateNestedPreference('notifications', 'email_event_reminders', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.email_event_reminders ? colors.primary : colors.white}
-              />
-            }
-          />
-          <SettingsRow
+          <NotificationRow
             icon="heart-outline"
-            label={t('settings.pushLikes')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.push_likes}
-                onValueChange={(value) => updateNestedPreference('notifications', 'push_likes', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.push_likes ? colors.primary : colors.white}
-              />
-            }
+            label={t('settings.notif_likes')}
+            description={t('settings.notif_likes_desc')}
+            settings={preferences.notifications.likes}
+            onEmailChange={(value) => updateNotificationChannel('likes', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('likes', 'push', value)}
           />
-          <SettingsRow
+          <NotificationRow
             icon="chatbubble-outline"
-            label={t('settings.pushComments')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.push_comments}
-                onValueChange={(value) => updateNestedPreference('notifications', 'push_comments', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.push_comments ? colors.primary : colors.white}
-              />
-            }
+            label={t('settings.notif_comments')}
+            description={t('settings.notif_comments_desc')}
+            settings={preferences.notifications.comments}
+            onEmailChange={(value) => updateNotificationChannel('comments', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('comments', 'push', value)}
           />
-          <SettingsRow
+          <NotificationRow
             icon="person-add-outline"
-            label={t('settings.pushFollows')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.push_follows}
-                onValueChange={(value) => updateNestedPreference('notifications', 'push_follows', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.push_follows ? colors.primary : colors.white}
-              />
-            }
+            label={t('settings.notif_follows')}
+            description={t('settings.notif_follows_desc')}
+            settings={preferences.notifications.follows}
+            onEmailChange={(value) => updateNotificationChannel('follows', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('follows', 'push', value)}
           />
-          <SettingsRow
+          <NotificationRow
             icon="chatbubbles-outline"
-            label={t('settings.pushMessages')}
-            rightElement={
-              <Switch
-                value={preferences.notifications.push_messages}
-                onValueChange={(value) => updateNestedPreference('notifications', 'push_messages', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.notifications.push_messages ? colors.primary : colors.white}
-              />
-            }
+            label={t('settings.notif_messages')}
+            description={t('settings.notif_messages_desc')}
+            settings={preferences.notifications.messages}
+            onEmailChange={(value) => updateNotificationChannel('messages', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('messages', 'push', value)}
+          />
+          <NotificationRow
+            icon="calendar-outline"
+            label={t('settings.notif_event_reminders')}
+            description={t('settings.notif_event_reminders_desc')}
+            settings={preferences.notifications.event_reminders}
+            onEmailChange={(value) => updateNotificationChannel('event_reminders', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('event_reminders', 'push', value)}
+          />
+          <NotificationRow
+            icon="stats-chart-outline"
+            label={t('settings.notif_weekly_summary')}
+            description={t('settings.notif_weekly_summary_desc')}
+            settings={preferences.notifications.weekly_summary}
+            onEmailChange={(value) => updateNotificationChannel('weekly_summary', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('weekly_summary', 'push', value)}
+          />
+          <NotificationRow
+            icon="thumbs-up-outline"
+            label={t('settings.notif_activity_reactions')}
+            description={t('settings.notif_activity_reactions_desc')}
+            settings={preferences.notifications.activity_reactions}
+            onEmailChange={(value) => updateNotificationChannel('activity_reactions', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('activity_reactions', 'push', value)}
+          />
+          <NotificationRow
+            icon="at-outline"
+            label={t('settings.notif_mentions')}
+            description={t('settings.notif_mentions_desc')}
+            settings={preferences.notifications.mentions}
+            onEmailChange={(value) => updateNotificationChannel('mentions', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('mentions', 'push', value)}
           />
         </View>
 
@@ -685,5 +773,49 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginBottom: spacing.md,
     lineHeight: 20,
+  },
+  // Notification row styles
+  notificationRow: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  notificationIcon: {
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
+  notificationLabelContainer: {
+    flex: 1,
+  },
+  notificationLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  notificationDescription: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  notificationToggles: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.xl,
+    marginTop: spacing.xs,
+  },
+  toggleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  toggleLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
 });

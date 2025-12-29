@@ -42,17 +42,25 @@ export interface LoginRequest {
 
 // ============ USER PREFERENCES ============
 
+export interface NotificationChannelSettings {
+  email: boolean;
+  push: boolean;
+  websocket: boolean;
+}
+
 export interface UserPreferences {
   units: 'metric' | 'imperial';
   language: 'en' | 'pl';
   theme: 'light' | 'dark' | 'system';
   notifications: {
-    email_weekly_summary: boolean;
-    email_event_reminders: boolean;
-    push_likes: boolean;
-    push_comments: boolean;
-    push_follows: boolean;
-    push_messages: boolean;
+    likes: NotificationChannelSettings;
+    comments: NotificationChannelSettings;
+    follows: NotificationChannelSettings;
+    messages: NotificationChannelSettings;
+    event_reminders: NotificationChannelSettings;
+    weekly_summary: NotificationChannelSettings;
+    activity_reactions: NotificationChannelSettings;
+    mentions: NotificationChannelSettings;
   };
   privacy: {
     profile_visibility: 'public' | 'followers' | 'private';
