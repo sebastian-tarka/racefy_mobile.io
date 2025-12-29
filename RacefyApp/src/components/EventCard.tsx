@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
 import { Badge } from './Badge';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import type { Event } from '../types/api';
 
@@ -21,6 +22,7 @@ const difficultyLabels: Record<string, string> = {
 };
 
 export function EventCard({ event, onPress }: EventCardProps) {
+  const { colors } = useTheme();
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
 
   // Use cover_image_url as primary, fallback to first photo
@@ -59,7 +61,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 resizeMode="cover"
               />
             ) : (
-              <View style={styles.iconPlaceholder}>
+              <View style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
                 <Ionicons
                   name={getSportIcon()}
                   size={32}
@@ -70,7 +72,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
           </View>
 
           <View style={styles.info}>
-            <Text style={styles.title} numberOfLines={2}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
               {event.post?.title || 'Untitled Event'}
             </Text>
 
@@ -80,11 +82,11 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailText}>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {event.sport_type?.name || 'Sport'}
               </Text>
-              <Text style={styles.separator}>·</Text>
-              <Text style={styles.detailText}>
+              <Text style={[styles.separator, { color: colors.textSecondary }]}>·</Text>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {difficultyLabels[event.difficulty]}
               </Text>
             </View>
@@ -95,7 +97,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailText} numberOfLines={1}>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>
                 {event.location_name}
               </Text>
             </View>
@@ -106,7 +108,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailText}>{formattedDate}</Text>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>{formattedDate}</Text>
             </View>
 
             <View style={styles.detailRow}>
@@ -115,7 +117,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailText}>{spotsText} participants</Text>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>{spotsText} participants</Text>
             </View>
           </View>
         </View>
@@ -129,7 +131,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={16}
                 color={colors.primary}
               />
-              <Text style={styles.registeredText}>Registered</Text>
+              <Text style={[styles.registeredText, { color: colors.primary }]}>Registered</Text>
             </View>
           )}
         </View>
@@ -160,7 +162,6 @@ const styles = StyleSheet.create({
   iconPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.primaryLight + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -171,7 +172,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   detailRow: {
@@ -181,12 +181,10 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginLeft: spacing.xs,
     flex: 1,
   },
   separator: {
-    color: colors.textSecondary,
     marginHorizontal: spacing.xs,
   },
   footer: {
@@ -202,7 +200,6 @@ const styles = StyleSheet.create({
   },
   registeredText: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     marginLeft: spacing.xs,
     fontWeight: '500',
   },

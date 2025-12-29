@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, Button } from '../../../../components';
-import { colors, spacing, fontSize } from '../../../../theme';
+import { useTheme } from '../../../../hooks/useTheme';
+import { spacing, fontSize } from '../../../../theme';
 
 interface AuthCardProps {
   onSignIn: () => void;
@@ -11,11 +12,12 @@ interface AuthCardProps {
 
 export function AuthCard({ onSignIn, onSignUp }: AuthCardProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   return (
     <Card style={styles.container}>
-      <Text style={styles.title}>{t('home.getStarted')}</Text>
-      <Text style={styles.subtitle}>{t('home.getStartedMessage')}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('home.getStarted')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('home.getStartedMessage')}</Text>
       <View style={styles.buttons}>
         <Button
           title={t('common.signIn')}
@@ -41,12 +43,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginBottom: spacing.lg,
   },
   buttons: {

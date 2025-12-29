@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, Text, StyleSheet } from 'react-native';
-import { colors, avatarSizes } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { avatarSizes } from '../theme';
 
 interface AvatarProps {
   uri?: string | null;
@@ -9,8 +10,9 @@ interface AvatarProps {
 }
 
 export function Avatar({ uri, name, size = 'md' }: AvatarProps) {
+  const { colors } = useTheme();
   const dimension = avatarSizes[size];
-  const fontSize = dimension * 0.4;
+  const fontSizeValue = dimension * 0.4;
 
   const getInitial = () => {
     if (!name) return '?';
@@ -27,6 +29,7 @@ export function Avatar({ uri, name, size = 'md' }: AvatarProps) {
             width: dimension,
             height: dimension,
             borderRadius: dimension / 2,
+            backgroundColor: colors.border,
           },
         ]}
       />
@@ -41,25 +44,22 @@ export function Avatar({ uri, name, size = 'md' }: AvatarProps) {
           width: dimension,
           height: dimension,
           borderRadius: dimension / 2,
+          backgroundColor: colors.primary,
         },
       ]}
     >
-      <Text style={[styles.initial, { fontSize }]}>{getInitial()}</Text>
+      <Text style={[styles.initial, { fontSize: fontSizeValue, color: colors.white }]}>{getInitial()}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  image: {
-    backgroundColor: colors.border,
-  },
+  image: {},
   placeholder: {
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   initial: {
-    color: colors.white,
     fontWeight: '600',
   },
 });

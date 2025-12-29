@@ -7,7 +7,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, borderRadius, fontSize } from '../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 
@@ -32,6 +33,8 @@ export function Button({
   textStyle,
   fullWidth = false,
 }: ButtonProps) {
+  const { colors } = useTheme();
+
   const getButtonStyle = (): ViewStyle => {
     const base: ViewStyle = {
       ...styles.button,

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, fontSize } from '../../../../theme';
+import { useTheme } from '../../../../hooks/useTheme';
+import { spacing, fontSize } from '../../../../theme';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -24,14 +25,15 @@ const defaultStats: Stat[] = [
 
 export function StatsSection({ stats = defaultStats }: StatsSectionProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderTopColor: colors.border }]}>
       {stats.map((stat, index) => (
         <View key={index} style={styles.statItem}>
           <Ionicons name={stat.icon} size={24} color={colors.primary} />
-          <Text style={styles.statValue}>{stat.value}</Text>
-          <Text style={styles.statLabel}>{t(stat.labelKey)}</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t(stat.labelKey)}</Text>
         </View>
       ))}
     </View>
@@ -45,7 +47,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     paddingVertical: spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   statItem: {
     alignItems: 'center',
@@ -53,12 +54,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginTop: spacing.sm,
   },
   statLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
 });

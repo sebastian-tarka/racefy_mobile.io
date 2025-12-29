@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform, Actio
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 
 interface ImagePickerButtonProps {
   value: string | null;
@@ -19,6 +20,7 @@ export function ImagePickerButton({
   placeholder,
 }: ImagePickerButtonProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   const launchGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -102,16 +104,16 @@ export function ImagePickerButton({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{t('eventForm.coverImage')}</Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.coverImage')}</Text>
       <TouchableOpacity
-        style={styles.imageContainer}
+        style={[styles.imageContainer, { backgroundColor: colors.background, borderColor: colors.border }]}
         onPress={pickImage}
         activeOpacity={0.8}
       >
         {value ? (
           <>
             <Image source={{ uri: value }} style={styles.image} resizeMode="cover" />
-            <TouchableOpacity style={styles.removeButton} onPress={removeImage}>
+            <TouchableOpacity style={[styles.removeButton, { backgroundColor: colors.cardBackground }]} onPress={removeImage}>
               <Ionicons name="close-circle" size={28} color={colors.error} />
             </TouchableOpacity>
             <View style={styles.changeOverlay}>
@@ -122,7 +124,7 @@ export function ImagePickerButton({
         ) : (
           <View style={styles.placeholder}>
             <Ionicons name="image-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.placeholderText}>
+            <Text style={[styles.placeholderText, { color: colors.textMuted }]}>
               {placeholder || t('eventForm.tapToSelectImage')}
             </Text>
           </View>
@@ -139,7 +141,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   imageContainer: {
@@ -147,9 +148,7 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   image: {
@@ -160,7 +159,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.sm,
     right: spacing.sm,
-    backgroundColor: colors.cardBackground,
     borderRadius: 14,
   },
   changeOverlay: {
@@ -188,7 +186,6 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     textAlign: 'center',
   },
 });

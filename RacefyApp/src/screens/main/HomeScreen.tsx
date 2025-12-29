@@ -2,8 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
-import { colors, spacing } from '../../theme';
+import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
 
@@ -28,6 +29,7 @@ type ConnectionStatus = {
 
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
+  const { colors } = useTheme();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,
     connected: true,
@@ -89,7 +91,7 @@ export function HomeScreen({ navigation }: Props) {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -137,7 +139,6 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,

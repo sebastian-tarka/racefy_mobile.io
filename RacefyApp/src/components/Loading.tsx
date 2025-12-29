@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
-import { colors, spacing, fontSize } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize } from '../theme';
 
 interface LoadingProps {
   message?: string;
@@ -8,11 +9,13 @@ interface LoadingProps {
 }
 
 export function Loading({ message, fullScreen = false }: LoadingProps) {
+  const { colors } = useTheme();
+
   if (fullScreen) {
     return (
-      <View style={styles.fullScreen}>
+      <View style={[styles.fullScreen, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        {message && <Text style={styles.message}>{message}</Text>}
+        {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
       </View>
     );
   }
@@ -20,7 +23,7 @@ export function Loading({ message, fullScreen = false }: LoadingProps) {
   return (
     <View style={styles.container}>
       <ActivityIndicator size="small" color={colors.primary} />
-      {message && <Text style={styles.message}>{message}</Text>}
+      {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
     </View>
   );
 }
@@ -30,7 +33,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
   container: {
     padding: spacing.xl,
@@ -39,6 +41,5 @@ const styles = StyleSheet.create({
   message: {
     marginTop: spacing.md,
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
 });

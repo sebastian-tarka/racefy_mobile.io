@@ -24,9 +24,10 @@ import {
   EventCard,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
-import { colors, spacing, fontSize } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -45,6 +46,7 @@ type TabType = 'posts' | 'activities' | 'events';
 export function ProfileScreen({ navigation }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -237,9 +239,9 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('profile.title')}</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
         </View>
         <EmptyState
           icon="person-outline"
@@ -265,7 +267,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       {user?.background_image_url ? (
         <ImageBackground
           source={{ uri: fixStorageUrl(user.background_image_url) || undefined }}
-          style={styles.coverImage}
+          style={[styles.coverImage, { backgroundColor: colors.primary }]}
           resizeMode="cover"
         >
           <TouchableOpacity
@@ -278,7 +280,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
           </TouchableOpacity>
         </ImageBackground>
       ) : (
-        <View style={styles.coverImage}>
+        <View style={[styles.coverImage, { backgroundColor: colors.primary }]}>
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => navigation.navigate('Settings')}
@@ -290,28 +292,28 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
         </View>
       )}
 
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
+      <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
           <Avatar uri={user?.avatar} name={user?.name} size="xxl" />
         </View>
 
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.username}>@{user?.username}</Text>
+        <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
+        <Text style={[styles.username, { color: colors.textSecondary }]}>@{user?.username}</Text>
 
-        {user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
+        {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{user.bio}</Text>}
 
         <View style={styles.statsRow}>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.posts.total ?? 0}</Text>
-            <Text style={styles.statLabel}>{t('profile.stats.posts')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.posts.total ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.posts')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.social.followers ?? 0}</Text>
-            <Text style={styles.statLabel}>{t('profile.stats.followers')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.social.following ?? 0}</Text>
-            <Text style={styles.statLabel}>{t('profile.stats.following')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -332,11 +334,11 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
         </View>
       </View>
 
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.value}
-            style={[styles.tab, activeTab === tab.value && styles.tabActive]}
+            style={[styles.tab, activeTab === tab.value && { borderBottomColor: colors.primary }]}
             onPress={() => setActiveTab(tab.value)}
           >
             <Ionicons
@@ -345,7 +347,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
               color={activeTab === tab.value ? colors.primary : colors.textSecondary}
             />
             <Text
-              style={[styles.tabText, activeTab === tab.value && styles.tabTextActive]}
+              style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}
             >
               {tab.label}
             </Text>
@@ -455,7 +457,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <FlatList
         data={getData()}
         keyExtractor={getKeyExtractor}
@@ -482,7 +484,6 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -490,21 +491,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   listContent: {
     flexGrow: 1,
   },
   coverImage: {
     height: 120,
-    backgroundColor: colors.primary,
     position: 'relative',
   },
   settingsButton: {
@@ -523,30 +520,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   avatarContainer: {
     marginTop: -40,
     borderWidth: 4,
-    borderColor: colors.cardBackground,
     borderRadius: 44,
   },
   name: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginTop: spacing.md,
   },
   username: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   bio: {
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     textAlign: 'center',
     marginTop: spacing.md,
     paddingHorizontal: spacing.xl,
@@ -562,11 +553,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   statLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   actions: {
@@ -579,9 +568,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
@@ -593,16 +580,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabActive: {
-    borderBottomColor: colors.primary,
-  },
   tabText: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.primary,
   },
   footer: {
     paddingVertical: spacing.lg,

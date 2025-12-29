@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 
 type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 
@@ -19,21 +20,30 @@ const DIFFICULTY_OPTIONS: DifficultyLevel[] = [
 
 export function DifficultySelector({ value, onChange }: DifficultySelectorProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{t('eventForm.difficulty')}</Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.difficulty')}</Text>
       <View style={styles.optionsRow}>
         {DIFFICULTY_OPTIONS.map((option) => {
           const isSelected = value === option;
           return (
             <TouchableOpacity
               key={option}
-              style={[styles.option, isSelected && styles.optionSelected]}
+              style={[
+                styles.option,
+                { backgroundColor: colors.background, borderColor: colors.border },
+                isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+              ]}
               onPress={() => onChange(option)}
             >
               <Text
-                style={[styles.optionText, isSelected && styles.optionTextSelected]}
+                style={[
+                  styles.optionText,
+                  { color: colors.textSecondary },
+                  isSelected && styles.optionTextSelected,
+                ]}
               >
                 {t(`difficulty.${option}`)}
               </Text>
@@ -52,7 +62,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   optionsRow: {
@@ -64,17 +73,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   optionSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    // styles applied inline
   },
   optionText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   optionTextSelected: {

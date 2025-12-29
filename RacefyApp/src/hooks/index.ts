@@ -7,3 +7,4 @@ export * from './useConversations';
 export * from './useMessages';
 export * from './useUnreadCount';
 export * from './useSportTypes';
+export * from './useTheme';

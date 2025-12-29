@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,24 +15,28 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Loading, Badge } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Event } from '../../types/api';
+import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
 
-const difficultyColors: Record<string, string> = {
+const getDifficultyColors = (colors: ThemeColors): Record<string, string> => ({
   beginner: colors.success,
   intermediate: colors.warning || '#f59e0b',
   advanced: colors.error,
   all_levels: colors.primary,
-};
+});
 
 export function EventDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const difficultyColors = useMemo(() => getDifficultyColors(colors), [colors]);
   const { eventId } = route.params;
   const { isAuthenticated, user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
@@ -148,15 +152,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   if (error || !event) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('eventDetail.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
@@ -165,7 +169,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
             size={64}
             color={colors.textMuted}
           />
-          <Text style={styles.errorText}>{error || t('eventDetail.notFound')}</Text>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('eventDetail.notFound')}</Text>
           <Button title={t('common.tryAgain')} onPress={fetchEvent} variant="primary" />
         </View>
       </SafeAreaView>
@@ -189,15 +193,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const canEdit = isOwnEvent && event.status === 'upcoming';
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('eventDetail.title')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
         {canEdit ? (
           <TouchableOpacity
             onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
@@ -217,7 +221,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
         }
       >
         {/* Event Image/Header */}
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
           {(event.cover_image_url || event.post?.photos?.[0]?.url) ? (
             <Image
               source={{ uri: fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined }}
@@ -225,7 +229,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.imagePlaceholder}>
+            <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
               <Ionicons name={getSportIcon()} size={64} color={colors.primary} />
             </View>
           )}
@@ -235,8 +239,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
         </View>
 
         {/* Title */}
-        <View style={styles.titleSection}>
-          <Text style={styles.title}>
+        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
             {event.post?.title || t('eventDetail.untitled')}
           </Text>
           {event.is_registered && (
@@ -246,7 +250,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 size={16}
                 color={colors.primary}
               />
-              <Text style={styles.registeredText}>{t('eventDetail.registered')}</Text>
+              <Text style={[styles.registeredText, { color: colors.primary }]}>{t('eventDetail.registered')}</Text>
             </View>
           )}
         </View>
@@ -254,8 +258,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
         {/* About */}
         {event.post?.content && (
           <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('eventDetail.about')}</Text>
-            <Text style={styles.description}>{event.post.content}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('eventDetail.about')}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{event.post.content}</Text>
           </Card>
         )}
 
@@ -268,11 +272,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
               color={colors.primary}
             />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>{t('eventDetail.dateTime')}</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('eventDetail.dateTime')}</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
                 {format(startDate, 'EEEE, MMMM d, yyyy')}
               </Text>
-              <Text style={styles.infoSubvalue}>
+              <Text style={[styles.infoSubvalue, { color: colors.textSecondary }]}>
                 {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
               </Text>
             </View>
@@ -288,15 +292,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
               color={colors.primary}
             />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>{t('eventDetail.location')}</Text>
-              <Text style={styles.infoValue}>{event.location_name}</Text>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('eventDetail.location')}</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{event.location_name}</Text>
             </View>
           </View>
         </Card>
 
         {/* Details Grid */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('eventDetail.details')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('eventDetail.details')}</Text>
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
               <Ionicons
@@ -304,8 +308,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 size={20}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailLabel}>{t('eventDetail.sport')}</Text>
-              <Text style={styles.detailValue}>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.sport')}</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                 {event.sport_type?.name || t('eventDetail.sport')}
               </Text>
             </View>
@@ -315,11 +319,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 size={20}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailLabel}>{t('eventDetail.difficulty')}</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.difficulty')}</Text>
               <Text
                 style={[
                   styles.detailValue,
-                  { color: difficultyColors[event.difficulty] },
+                  { color: difficultyColors[event.difficulty] || colors.textPrimary },
                 ]}
               >
                 {t(`difficulty.${event.difficulty}`)}
@@ -331,8 +335,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 size={20}
                 color={colors.textSecondary}
               />
-              <Text style={styles.detailLabel}>{t('eventDetail.participants')}</Text>
-              <Text style={styles.detailValue}>{spotsText}</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.participants')}</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{spotsText}</Text>
             </View>
             {event.distance && (
               <View style={styles.detailItem}>
@@ -341,8 +345,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                   size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.detailLabel}>{t('eventDetail.distance')}</Text>
-                <Text style={styles.detailValue}>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.distance')}</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                   {(event.distance / 1000).toFixed(1)} km
                 </Text>
               </View>
@@ -354,8 +358,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                   size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.detailLabel}>{t('eventDetail.entryFee')}</Text>
-                <Text style={styles.detailValue}>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.entryFee')}</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                   {event.entry_fee === 0 ? t('eventDetail.free') : `$${event.entry_fee}`}
                 </Text>
               </View>
@@ -367,11 +371,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
                   size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.detailLabel}>{t('eventDetail.available')}</Text>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>{t('eventDetail.available')}</Text>
                 <Text
                   style={[
                     styles.detailValue,
-                    isFull && { color: colors.error },
+                    { color: isFull ? colors.error : colors.textPrimary },
                   ]}
                 >
                   {isFull ? t('eventDetail.full') : t('eventDetail.spots', { count: availableSpots })}
@@ -384,11 +388,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
         {/* Registration Info */}
         {(event.registration_opens_at || event.registration_closes_at) && (
           <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('eventDetail.registrationPeriod')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('eventDetail.registrationPeriod')}</Text>
             {event.registration_opens_at && (
               <View style={styles.registrationRow}>
-                <Text style={styles.registrationLabel}>{t('eventDetail.opens')}:</Text>
-                <Text style={styles.registrationValue}>
+                <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>{t('eventDetail.opens')}:</Text>
+                <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
                   {format(
                     new Date(event.registration_opens_at),
                     'MMM d, yyyy h:mm a'
@@ -398,8 +402,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
             )}
             {event.registration_closes_at && (
               <View style={styles.registrationRow}>
-                <Text style={styles.registrationLabel}>{t('eventDetail.closes')}:</Text>
-                <Text style={styles.registrationValue}>
+                <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>{t('eventDetail.closes')}:</Text>
+                <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
                   {format(
                     new Date(event.registration_closes_at),
                     'MMM d, yyyy h:mm a'
@@ -415,7 +419,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       </ScrollView>
 
       {/* Bottom Action Button */}
-      <View style={styles.bottomAction}>
+      <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
         {event.is_registered ? (
           <Button
             title={t('eventDetail.cancelRegistration')}
@@ -433,13 +437,13 @@ export function EventDetailScreen({ route, navigation }: Props) {
             style={styles.actionButton}
           />
         ) : isFull ? (
-          <View style={styles.fullBanner}>
+          <View style={[styles.fullBanner, { backgroundColor: colors.error + '10' }]}>
             <Ionicons name="alert-circle" size={20} color={colors.error} />
-            <Text style={styles.fullText}>{t('eventDetail.eventFull')}</Text>
+            <Text style={[styles.fullText, { color: colors.error }]}>{t('eventDetail.eventFull')}</Text>
           </View>
         ) : event.status !== 'upcoming' ? (
-          <View style={styles.statusBanner}>
-            <Text style={styles.statusText}>
+          <View style={[styles.statusBanner, { backgroundColor: colors.border }]}>
+            <Text style={[styles.statusText, { color: colors.textSecondary }]}>
               {event.status === 'completed' ? t('eventDetail.registrationClosed') : t('eventDetail.registrationNotAvailable')}
             </Text>
           </View>
@@ -452,7 +456,6 @@ export function EventDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -460,9 +463,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -470,7 +471,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   placeholder: {
     width: 32,
@@ -483,7 +483,6 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     height: 200,
-    backgroundColor: colors.border,
     position: 'relative',
   },
   image: {
@@ -493,7 +492,6 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.primaryLight + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -504,12 +502,10 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     padding: spacing.lg,
-    backgroundColor: colors.cardBackground,
   },
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   registeredTag: {
@@ -518,7 +514,6 @@ const styles = StyleSheet.create({
   },
   registeredText: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: '500',
     marginLeft: spacing.xs,
   },
@@ -529,12 +524,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.md,
   },
   description: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     lineHeight: 22,
   },
   infoRow: {
@@ -547,17 +540,14 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     marginBottom: 2,
   },
   infoValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   infoSubvalue: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   detailsGrid: {
@@ -571,13 +561,11 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   detailValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   registrationRow: {
     flexDirection: 'row',
@@ -586,22 +574,18 @@ const styles = StyleSheet.create({
   },
   registrationLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   registrationValue: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
   },
   bottomAction: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.cardBackground,
     padding: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   actionButton: {
     width: '100%',
@@ -611,24 +595,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.md,
-    backgroundColor: colors.error + '10',
     borderRadius: borderRadius.lg,
   },
   fullText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.error,
     marginLeft: spacing.sm,
   },
   statusBanner: {
     padding: spacing.md,
-    backgroundColor: colors.border,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
   },
   statusText: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -638,7 +618,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.lg,
-    color: colors.textSecondary,
     marginVertical: spacing.lg,
     textAlign: 'center',
   },

@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, fontSize } from '../../../../theme';
+import { useTheme } from '../../../../hooks/useTheme';
+import { spacing, fontSize } from '../../../../theme';
 
 export function HeroSection() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{t('home.heroTitle')}</Text>
-      <Text style={styles.subtitle}>{t('home.heroSubtitle')}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{t('home.heroTitle')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('home.heroSubtitle')}</Text>
     </View>
   );
 }
@@ -21,12 +23,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.title,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     lineHeight: 22,
   },
 });

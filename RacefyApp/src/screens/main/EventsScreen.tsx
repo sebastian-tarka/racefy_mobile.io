@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { EventCard, Loading, EmptyState, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -28,6 +29,7 @@ type FilterOption = 'all' | 'upcoming' | 'ongoing' | 'completed';
 
 export function EventsScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const {
     events,
@@ -73,15 +75,15 @@ export function EventsScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={styles.title}>{t('events.title')}</Text>
-          <Text style={styles.subtitle}>{t('events.subtitle')}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('events.title')}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('events.subtitle')}</Text>
         </View>
         {isAuthenticated && (
           <TouchableOpacity
-            style={styles.createButton}
+            style={[styles.createButton, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('EventForm', {})}
           >
             <Ionicons name="add" size={24} color={colors.white} />
@@ -89,20 +91,22 @@ export function EventsScreen({ navigation }: Props) {
         )}
       </View>
 
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         {filters.map((filter) => (
           <TouchableOpacity
             key={filter.value}
             style={[
               styles.filterButton,
-              activeFilter === filter.value && styles.filterButtonActive,
+              { backgroundColor: colors.borderLight },
+              activeFilter === filter.value && { backgroundColor: colors.primary },
             ]}
             onPress={() => setActiveFilter(filter.value)}
           >
             <Text
               style={[
                 styles.filterText,
-                activeFilter === filter.value && styles.filterTextActive,
+                { color: colors.textSecondary },
+                activeFilter === filter.value && { color: colors.white },
               ]}
             >
               {filter.label}
@@ -168,7 +172,6 @@ export function EventsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -176,25 +179,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   subtitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   createButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -202,27 +200,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     gap: spacing.sm,
   },
   filterButton: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.borderLight,
-  },
-  filterButtonActive: {
-    backgroundColor: colors.primary,
   },
   filterText: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  filterTextActive: {
-    color: colors.white,
   },
   listContent: {
     padding: spacing.md,

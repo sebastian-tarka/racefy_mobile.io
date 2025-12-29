@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
-import { colors, spacing, fontSize } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize } from '../theme';
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -19,11 +20,13 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <Ionicons name={icon} size={64} color={colors.textMuted} />
-      <Text style={styles.title}>{title}</Text>
-      {message && <Text style={styles.message}>{message}</Text>}
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+      {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
       {actionLabel && onAction && (
         <Button
           title={actionLabel}
@@ -46,13 +49,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginTop: spacing.lg,
     textAlign: 'center',
   },
   message: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginTop: spacing.sm,
     textAlign: 'center',
   },

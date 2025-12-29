@@ -15,7 +15,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Avatar, EmptyState, Loading } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation } from '../../types/api';
@@ -24,6 +25,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ConversationsList'>;
 
 export function ConversationsListScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const {
     conversations,
@@ -83,7 +85,10 @@ export function ConversationsListScreen({ navigation }: Props) {
 
     return (
       <TouchableOpacity
-        style={styles.conversationItem}
+        style={[
+          styles.conversationItem,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight },
+        ]}
         onPress={() => handleConversationPress(item)}
         onLongPress={() => handleDeleteConversation(item)}
         activeOpacity={0.7}
@@ -95,21 +100,21 @@ export function ConversationsListScreen({ navigation }: Props) {
         />
         <View style={styles.conversationContent}>
           <View style={styles.conversationHeader}>
-            <Text style={styles.participantName} numberOfLines={1}>
+            <Text style={[styles.participantName, { color: colors.textPrimary }]} numberOfLines={1}>
               {item.participant.name}
             </Text>
-            {timeAgo && <Text style={styles.timeAgo}>{timeAgo}</Text>}
+            {timeAgo && <Text style={[styles.timeAgo, { color: colors.textMuted }]}>{timeAgo}</Text>}
           </View>
-          <Text style={styles.username}>@{item.participant.username}</Text>
+          <Text style={[styles.username, { color: colors.textSecondary }]}>@{item.participant.username}</Text>
           {lastMessagePreview && (
-            <Text style={styles.lastMessage} numberOfLines={1}>
+            <Text style={[styles.lastMessage, { color: colors.textMuted }]} numberOfLines={1}>
               {lastMessagePreview}
             </Text>
           )}
         </View>
         {item.unread_count > 0 && (
-          <View style={styles.unreadBadge}>
-            <Text style={styles.unreadCount}>
+          <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.unreadCount, { color: colors.white }]}>
               {item.unread_count > 99 ? '99+' : item.unread_count}
             </Text>
           </View>
@@ -120,15 +125,15 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('messaging.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
           <View style={styles.headerRight} />
         </View>
         <EmptyState
@@ -144,15 +149,15 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   if (isLoading && conversations.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('messaging.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
           <View style={styles.headerRight} />
         </View>
         <Loading fullScreen message={t('common.loading')} />
@@ -161,15 +166,15 @@ export function ConversationsListScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('messaging.title')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -218,7 +223,6 @@ export function ConversationsListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -226,9 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -236,7 +238,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   headerRight: {
     width: 32,
@@ -248,9 +249,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   conversationContent: {
     flex: 1,
@@ -264,29 +263,24 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
     flex: 1,
   },
   timeAgo: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     marginLeft: spacing.sm,
   },
   username: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 1,
   },
   lastMessage: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   unreadBadge: {
     minWidth: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.xs,
@@ -295,6 +289,5 @@ const styles = StyleSheet.create({
   unreadCount: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-    color: colors.white,
   },
 });

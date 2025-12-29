@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Loading, Avatar, RoutePreview } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack } from '../../types/api';
@@ -23,6 +24,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
 export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { activityId } = route.params;
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
@@ -118,17 +120,17 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   if (error || !activity) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('activityDetail.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={styles.errorText}>{error || t('activityDetail.notFound')}</Text>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('activityDetail.notFound')}</Text>
           <Button title={t('common.tryAgain')} onPress={fetchActivity} variant="primary" />
         </View>
       </SafeAreaView>
@@ -136,12 +138,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('activityDetail.title')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
         <View style={styles.placeholder} />
       </View>
 
@@ -159,12 +161,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         )}
 
         {/* Title Section */}
-        <View style={styles.titleSection}>
+        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
           <View style={styles.titleRow}>
             <Ionicons name={getSportIcon()} size={28} color={colors.primary} />
             <View style={styles.titleContent}>
-              <Text style={styles.title}>{activity.title}</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 {activity.sport_type?.name || t('activityDetail.activity')} ·{' '}
                 {format(new Date(activity.started_at), 'EEEE, MMMM d, yyyy')}
               </Text>
@@ -172,11 +174,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           </View>
           {activity.user && (
             <TouchableOpacity
-              style={styles.userRow}
+              style={[styles.userRow, { borderTopColor: colors.border }]}
               onPress={() => navigation.navigate('UserProfile', { username: activity.user!.username })}
             >
               <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
-              <Text style={styles.userName}>{activity.user.name}</Text>
+              <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -185,68 +187,68 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         <Card style={styles.statsCard}>
           <View style={styles.mainStats}>
             <View style={styles.mainStatItem}>
-              <Text style={styles.mainStatValue}>{formatDuration(activity.duration)}</Text>
-              <Text style={styles.mainStatLabel}>{t('activityDetail.duration')}</Text>
+              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
+              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.duration')}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.mainStatItem}>
-              <Text style={styles.mainStatValue}>{formatDistance(activity.distance)}</Text>
-              <Text style={styles.mainStatLabel}>{t('activityDetail.distance')}</Text>
+              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
+              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.distance')}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.mainStatItem}>
-              <Text style={styles.mainStatValue}>
+              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
                 {formatPace(activity.duration, activity.distance)}
               </Text>
-              <Text style={styles.mainStatLabel}>{t('activityDetail.pace')}</Text>
+              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.pace')}</Text>
             </View>
           </View>
         </Card>
 
         {/* Secondary Stats */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('activityDetail.stats')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.stats')}</Text>
           <View style={styles.statsGrid}>
             {activity.calories !== null && activity.calories > 0 && (
               <View style={styles.statGridItem}>
                 <Ionicons name="flame-outline" size={20} color={colors.primary} />
-                <Text style={styles.statGridValue}>{activity.calories}</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.calories')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
               </View>
             )}
             {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
               <View style={styles.statGridItem}>
                 <Ionicons name="trending-up-outline" size={20} color={colors.primary} />
-                <Text style={styles.statGridValue}>{Math.round(activity.elevation_gain)} m</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.elevationGain')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{Math.round(activity.elevation_gain)} m</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
               </View>
             )}
             {activity.avg_speed !== null && (
               <View style={styles.statGridItem}>
                 <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
-                <Text style={styles.statGridValue}>{formatSpeed(activity.avg_speed)}</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.avgSpeed')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.avg_speed)}</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
               </View>
             )}
             {activity.max_speed !== null && (
               <View style={styles.statGridItem}>
                 <Ionicons name="flash-outline" size={20} color={colors.primary} />
-                <Text style={styles.statGridValue}>{formatSpeed(activity.max_speed)}</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.maxSpeed')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.max_speed)}</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
               </View>
             )}
             {activity.avg_heart_rate !== null && (
               <View style={styles.statGridItem}>
                 <Ionicons name="heart-outline" size={20} color={colors.error} />
-                <Text style={styles.statGridValue}>{activity.avg_heart_rate} bpm</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.avgHeartRate')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
               </View>
             )}
             {activity.max_heart_rate !== null && (
               <View style={styles.statGridItem}>
                 <Ionicons name="heart" size={20} color={colors.error} />
-                <Text style={styles.statGridValue}>{activity.max_heart_rate} bpm</Text>
-                <Text style={styles.statGridLabel}>{t('activityDetail.maxHeartRate')}</Text>
+                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
+                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
               </View>
             )}
           </View>
@@ -255,25 +257,25 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {/* Description */}
         {activity.description && (
           <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('activityDetail.description')}</Text>
-            <Text style={styles.description}>{activity.description}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.description')}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{activity.description}</Text>
           </Card>
         )}
 
         {/* Activity Info */}
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('activityDetail.info')}</Text>
-          <View style={styles.infoRow}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.info')}</Text>
+          <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
             <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-            <Text style={styles.infoLabel}>{t('activityDetail.date')}</Text>
-            <Text style={styles.infoValue}>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.date')}</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
               {format(new Date(activity.started_at), 'PPpp')}
             </Text>
           </View>
-          <View style={styles.infoRow}>
+          <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
             <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
-            <Text style={styles.infoLabel}>{t('activityDetail.source')}</Text>
-            <Text style={styles.infoValue}>
+            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.source')}</Text>
+            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
               {activity.source === 'app'
                 ? t('activityDetail.sources.app')
                 : activity.source === 'manual'
@@ -284,10 +286,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </Text>
           </View>
           {gpsTrack && (
-            <View style={styles.infoRow}>
+            <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
               <Ionicons name="location-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.infoLabel}>{t('activityDetail.gpsPoints')}</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.gpsPoints')}</Text>
+              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
                 {gpsTrack.points_count.toLocaleString()} {t('activityDetail.points')}
               </Text>
             </View>
@@ -303,7 +305,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -311,9 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -321,7 +320,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   placeholder: {
     width: 32,
@@ -331,7 +329,6 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     padding: spacing.lg,
-    backgroundColor: colors.cardBackground,
   },
   titleRow: {
     flexDirection: 'row',
@@ -344,11 +341,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   subtitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   userRow: {
@@ -357,12 +352,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   userName: {
     fontSize: fontSize.md,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginLeft: spacing.sm,
   },
   statsCard: {
@@ -381,17 +374,14 @@ const styles = StyleSheet.create({
   mainStatValue: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   mainStatLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     marginTop: spacing.xs,
     textTransform: 'uppercase',
   },
   statDivider: {
     width: 1,
-    backgroundColor: colors.border,
     marginVertical: spacing.xs,
   },
   section: {
@@ -401,7 +391,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.md,
   },
   statsGrid: {
@@ -416,17 +405,14 @@ const styles = StyleSheet.create({
   statGridValue: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginTop: spacing.xs,
   },
   statGridLabel: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     marginTop: 2,
   },
   description: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     lineHeight: 22,
   },
   infoRow: {
@@ -434,18 +420,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   infoLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginLeft: spacing.sm,
     flex: 1,
   },
   infoValue: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
   },
   errorContainer: {
     flex: 1,
@@ -455,7 +438,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.lg,
-    color: colors.textSecondary,
     marginVertical: spacing.lg,
     textAlign: 'center',
   },

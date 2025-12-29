@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { Avatar, Loading } from '../../components';
 import { useMessages } from '../../hooks/useMessages';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
+import type { ThemeColors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Message } from '../../types/api';
@@ -26,9 +28,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 export function ChatScreen({ navigation, route }: Props) {
   const { conversationId, participant } = route.params;
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { messages, isLoading, isSending, sendMessage } = useMessages(conversationId);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -80,15 +85,15 @@ export function ChatScreen({ navigation, route }: Props) {
         <View
           style={[
             styles.messageBubble,
-            isOwn ? styles.ownBubble : styles.otherBubble,
+            isOwn ? themedStyles.ownBubble : themedStyles.otherBubble,
           ]}
         >
           <Text
-            style={[styles.messageText, isOwn && styles.ownMessageText]}
+            style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}
           >
             {item.content}
           </Text>
-          <Text style={[styles.messageTime, isOwn && styles.ownMessageTime]}>
+          <Text style={[themedStyles.messageTime, isOwn && themedStyles.ownMessageTime]}>
             {time}
           </Text>
         </View>
@@ -98,8 +103,8 @@ export function ChatScreen({ navigation, route }: Props) {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, themedStyles.container]} edges={['top']}>
+        <View style={[styles.header, themedStyles.header]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}
@@ -116,8 +121,8 @@ export function ChatScreen({ navigation, route }: Props) {
               size="sm"
             />
             <View style={styles.headerTextContainer}>
-              <Text style={styles.headerName}>{participant.name}</Text>
-              <Text style={styles.headerUsername}>@{participant.username}</Text>
+              <Text style={[styles.headerName, themedStyles.headerName]}>{participant.name}</Text>
+              <Text style={[styles.headerUsername, themedStyles.headerUsername]}>@{participant.username}</Text>
             </View>
           </TouchableOpacity>
           <View style={styles.headerRight} />
@@ -128,8 +133,8 @@ export function ChatScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, themedStyles.container]} edges={['top']}>
+      <View style={[styles.header, themedStyles.header]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -146,8 +151,8 @@ export function ChatScreen({ navigation, route }: Props) {
             size="sm"
           />
           <View style={styles.headerTextContainer}>
-            <Text style={styles.headerName}>{participant.name}</Text>
-            <Text style={styles.headerUsername}>@{participant.username}</Text>
+            <Text style={[styles.headerName, themedStyles.headerName]}>{participant.name}</Text>
+            <Text style={[styles.headerUsername, themedStyles.headerUsername]}>@{participant.username}</Text>
           </View>
         </TouchableOpacity>
         <View style={styles.headerRight} />
@@ -169,9 +174,9 @@ export function ChatScreen({ navigation, route }: Props) {
           }
         />
 
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, themedStyles.inputContainer]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, themedStyles.input]}
             placeholder={t('messaging.placeholder')}
             placeholderTextColor={colors.textMuted}
             value={inputText}
@@ -182,7 +187,8 @@ export function ChatScreen({ navigation, route }: Props) {
           <TouchableOpacity
             style={[
               styles.sendButton,
-              (!inputText.trim() || isSending) && styles.sendButtonDisabled,
+              themedStyles.sendButton,
+              (!inputText.trim() || isSending) && themedStyles.sendButtonDisabled,
             ]}
             onPress={handleSend}
             disabled={!inputText.trim() || isSending}
@@ -202,16 +208,13 @@ export function ChatScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -228,11 +231,9 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   headerUsername: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
   },
   headerRight: {
     width: 32,
@@ -268,63 +269,86 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     maxWidth: '100%',
   },
-  ownBubble: {
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: spacing.xs,
-  },
-  otherBubble: {
-    backgroundColor: colors.cardBackground,
-    borderBottomLeftRadius: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  messageText: {
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    lineHeight: 20,
-  },
-  ownMessageText: {
-    color: colors.white,
-  },
-  messageTime: {
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
-    alignSelf: 'flex-end',
-  },
-  ownMessageTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.background,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     maxHeight: 100,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: spacing.sm,
   },
-  sendButtonDisabled: {
-    backgroundColor: colors.textMuted,
-  },
 });
+
+const createThemedStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    header: {
+      backgroundColor: colors.cardBackground,
+      borderBottomColor: colors.border,
+    },
+    headerName: {
+      color: colors.textPrimary,
+    },
+    headerUsername: {
+      color: colors.textSecondary,
+    },
+    ownBubble: {
+      backgroundColor: colors.primary,
+      borderBottomRightRadius: spacing.xs,
+    },
+    otherBubble: {
+      backgroundColor: colors.cardBackground,
+      borderBottomLeftRadius: spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    messageText: {
+      fontSize: fontSize.md,
+      color: colors.textPrimary,
+      lineHeight: 20,
+    },
+    ownMessageText: {
+      color: colors.white,
+    },
+    messageTime: {
+      fontSize: fontSize.xs,
+      color: colors.textMuted,
+      marginTop: spacing.xs,
+      alignSelf: 'flex-end',
+    },
+    ownMessageTime: {
+      color: 'rgba(255, 255, 255, 0.7)',
+    },
+    inputContainer: {
+      backgroundColor: colors.cardBackground,
+      borderTopColor: colors.border,
+    },
+    input: {
+      backgroundColor: colors.background,
+      color: colors.textPrimary,
+      borderColor: colors.border,
+    },
+    sendButton: {
+      backgroundColor: colors.primary,
+    },
+    sendButtonDisabled: {
+      backgroundColor: colors.textMuted,
+    },
+  });

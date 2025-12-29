@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing, fontSize } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
 
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 export function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -81,7 +83,7 @@ export function RegisterScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -92,12 +94,12 @@ export function RegisterScreen({ navigation }: Props) {
         >
           <View style={styles.header}>
             <Ionicons name="walk" size={48} color={colors.primary} />
-            <Text style={styles.logo}>{t('app.name')}</Text>
-            <Text style={styles.tagline}>{t('app.tagline')}</Text>
+            <Text style={[styles.logo, { color: colors.primary }]}>{t('app.name')}</Text>
+            <Text style={[styles.tagline, { color: colors.textSecondary }]}>{t('app.tagline')}</Text>
           </View>
 
-          <View style={styles.form}>
-            <Text style={styles.title}>{t('auth.createAccount')}</Text>
+          <View style={[styles.form, { backgroundColor: colors.cardBackground, shadowColor: colors.black }]}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.createAccount')}</Text>
 
             <Input
               label={t('auth.name')}
@@ -153,9 +155,9 @@ export function RegisterScreen({ navigation }: Props) {
             />
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>{t('auth.haveAccount')} </Text>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.haveAccount')} </Text>
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>{t('auth.signIn')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -168,7 +170,6 @@ export function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -185,19 +186,15 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: fontSize.title,
     fontWeight: '700',
-    color: colors.primary,
     marginTop: spacing.md,
   },
   tagline: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   form: {
-    backgroundColor: colors.cardBackground,
     padding: spacing.xl,
     borderRadius: 16,
-    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -206,7 +203,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: spacing.xl,
   },
   button: {
@@ -219,11 +215,9 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   footerLink: {
     fontSize: fontSize.md,
-    color: colors.primary,
     fontWeight: '600',
   },
 });

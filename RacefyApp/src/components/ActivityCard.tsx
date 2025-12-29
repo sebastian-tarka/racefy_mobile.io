@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
 
 interface ActivityCardProps {
@@ -14,6 +15,7 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onPress, showUser = false }: ActivityCardProps) {
+  const { colors } = useTheme();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
 
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
@@ -56,52 +58,52 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card>
         {showUser && activity.user && (
-          <View style={styles.userHeader}>
+          <View style={[styles.userHeader, { borderBottomColor: colors.borderLight }]}>
             <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{activity.user.name}</Text>
-              <Text style={styles.userDate}>{formattedDate}</Text>
+              <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
+              <Text style={[styles.userDate, { color: colors.textSecondary }]}>{formattedDate}</Text>
             </View>
           </View>
         )}
 
         <View style={styles.header}>
-          <View style={styles.sportBadge}>
+          <View style={[styles.sportBadge, { backgroundColor: colors.primaryLight + '20' }]}>
             <Ionicons name={getSportIcon()} size={20} color={colors.primary} />
           </View>
           <View style={styles.titleContainer}>
-            <Text style={styles.title} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
               {activity.title}
             </Text>
-            <Text style={styles.sportName}>
+            <Text style={[styles.sportName, { color: colors.textSecondary }]}>
               {activity.sport_type?.name || 'Activity'}{!showUser ? ` · ${formattedDate}` : ''}
             </Text>
           </View>
         </View>
 
-        <View style={styles.statsContainer}>
+        <View style={[styles.statsContainer, { borderTopColor: colors.borderLight }]}>
           <View style={styles.statItem}>
             <Ionicons name="navigate-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>{formatDistance(activity.distance)}</Text>
-            <Text style={styles.statLabel}>Distance</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Distance</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
 
           <View style={styles.statItem}>
             <Ionicons name="time-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>{formatDuration(activity.duration)}</Text>
-            <Text style={styles.statLabel}>Duration</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
           </View>
 
-          <View style={styles.statDivider} />
+          <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
 
           <View style={styles.statItem}>
             <Ionicons name="speedometer-outline" size={18} color={colors.textSecondary} />
-            <Text style={styles.statValue}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatPace(activity.distance, activity.duration)}
             </Text>
-            <Text style={styles.statLabel}>Pace</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pace</Text>
           </View>
         </View>
 
@@ -111,13 +113,13 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
             {activity.elevation_gain != null && activity.elevation_gain > 0 ? (
               <View style={styles.secondaryStatItem}>
                 <Ionicons name="trending-up" size={14} color={colors.textMuted} />
-                <Text style={styles.secondaryStatText}>{activity.elevation_gain}m</Text>
+                <Text style={[styles.secondaryStatText, { color: colors.textMuted }]}>{activity.elevation_gain}m</Text>
               </View>
             ) : null}
             {activity.calories != null && activity.calories > 0 ? (
               <View style={styles.secondaryStatItem}>
                 <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.secondaryStatText}>{activity.calories} kcal</Text>
+                <Text style={[styles.secondaryStatText, { color: colors.textMuted }]}>{activity.calories} kcal</Text>
               </View>
             ) : null}
           </View>
@@ -134,7 +136,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   userInfo: {
     marginLeft: spacing.sm,
@@ -142,11 +143,9 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   userDate: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -156,7 +155,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primaryLight + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -167,11 +165,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   sportName: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   statsContainer: {
@@ -179,7 +175,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingTop: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
   },
   statItem: {
     flex: 1,
@@ -187,17 +182,14 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: colors.borderLight,
   },
   statValue: {
     fontSize: fontSize.md,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginTop: spacing.xs,
   },
   statLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   secondaryStats: {
@@ -211,7 +203,6 @@ const styles = StyleSheet.create({
   },
   secondaryStatText: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     marginLeft: spacing.xs,
   },
 });

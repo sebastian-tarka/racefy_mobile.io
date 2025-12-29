@@ -23,7 +23,8 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -38,6 +39,7 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Feed'>;
 
 export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavigationProp }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { user, isAuthenticated } = useAuth();
   const { count: unreadCount } = useUnreadCount();
   const {
@@ -99,9 +101,9 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('feed.title')}</Text>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         </View>
         <EmptyState
           icon="lock-closed-outline"
@@ -121,17 +123,17 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('feed.title')}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         <TouchableOpacity
           style={styles.messagesButton}
           onPress={() => navigation.navigate('ConversationsList')}
         >
           <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
           {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>
+            <View style={[styles.unreadBadge, { backgroundColor: colors.error }]}>
+              <Text style={[styles.unreadBadgeText, { color: colors.white }]}>
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </View>
@@ -163,7 +165,7 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
             <View style={styles.createPostHeader}>
               <Avatar uri={user?.avatar} name={user?.name} size="md" />
               <TextInput
-                style={styles.createPostInput}
+                style={[styles.createPostInput, { color: colors.textPrimary }]}
                 placeholder={t('feed.placeholder')}
                 placeholderTextColor={colors.textMuted}
                 value={newPostContent}
@@ -171,14 +173,14 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
                 multiline
               />
             </View>
-            <View style={styles.createPostActions}>
+            <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
               <TouchableOpacity style={styles.photoButton}>
                 <Ionicons
                   name="image-outline"
                   size={20}
                   color={colors.textSecondary}
                 />
-                <Text style={styles.photoButtonText}>{t('feed.photo')}</Text>
+                <Text style={[styles.photoButtonText, { color: colors.textSecondary }]}>{t('feed.photo')}</Text>
               </TouchableOpacity>
               <Button
                 title={t('feed.post')}
@@ -231,7 +233,6 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -240,13 +241,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.cardBackground,
   },
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   messagesButton: {
     padding: spacing.xs,
@@ -256,7 +254,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     right: 0,
-    backgroundColor: colors.error,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -265,7 +262,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   unreadBadgeText: {
-    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
   },
@@ -284,7 +280,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.md,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     minHeight: 60,
     textAlignVertical: 'top',
   },
@@ -295,7 +290,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
   },
   photoButton: {
     flexDirection: 'row',
@@ -305,7 +299,6 @@ const styles = StyleSheet.create({
   photoButtonText: {
     marginLeft: spacing.xs,
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   postButton: {
     paddingHorizontal: spacing.xl,

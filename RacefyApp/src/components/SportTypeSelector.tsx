@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 import { useSportTypes, type SportTypeWithIcon, FALLBACK_SPORTS } from '../hooks/useSportTypes';
 
 export interface SportTypeOption {
@@ -31,6 +32,7 @@ interface SportTypeSelectorProps {
 
 export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { sportTypes, isLoading, getSportById } = useSportTypes();
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -40,20 +42,24 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
     const isSelected = item.id === value;
     return (
       <TouchableOpacity
-        style={[styles.sportItem, isSelected && styles.sportItemSelected]}
+        style={[
+          styles.sportItem,
+          { backgroundColor: colors.cardBackground },
+          isSelected && { backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary },
+        ]}
         onPress={() => {
           onChange(item.id);
           setIsModalVisible(false);
         }}
       >
-        <View style={[styles.sportIcon, isSelected && styles.sportIconSelected]}>
+        <View style={[styles.sportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
           <Ionicons
             name={item.icon}
             size={24}
             color={isSelected ? colors.primary : colors.textSecondary}
           />
         </View>
-        <Text style={[styles.sportName, isSelected && styles.sportNameSelected]}>
+        <Text style={[styles.sportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
           {item.name}
         </Text>
         {isSelected && (
@@ -65,9 +71,13 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{t('eventForm.sportType')}</Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.sportType')}</Text>
       <TouchableOpacity
-        style={[styles.selector, error && styles.selectorError]}
+        style={[
+          styles.selector,
+          { backgroundColor: colors.background, borderColor: colors.border },
+          error && { borderColor: colors.error },
+        ]}
         onPress={() => setIsModalVisible(true)}
       >
         {selectedSport ? (
@@ -77,14 +87,14 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
               size={20}
               color={colors.primary}
             />
-            <Text style={styles.selectedText}>{selectedSport.name}</Text>
+            <Text style={[styles.selectedText, { color: colors.textPrimary }]}>{selectedSport.name}</Text>
           </View>
         ) : (
-          <Text style={styles.placeholder}>{t('eventForm.selectSportType')}</Text>
+          <Text style={[styles.placeholder, { color: colors.textMuted }]}>{t('eventForm.selectSportType')}</Text>
         )}
         <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
 
       <Modal
         visible={isModalVisible}
@@ -92,9 +102,9 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
         presentationStyle="pageSheet"
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('eventForm.selectSportType')}</Text>
+        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('eventForm.selectSportType')}</Text>
             <TouchableOpacity
               onPress={() => setIsModalVisible(false)}
               style={styles.closeButton}
@@ -127,27 +137,23 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   selector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     minHeight: 48,
   },
   selectorError: {
-    borderColor: colors.error,
+    // borderColor applied inline
   },
   placeholder: {
     fontSize: fontSize.md,
-    color: colors.textMuted,
   },
   selectedValue: {
     flexDirection: 'row',
@@ -156,16 +162,13 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     fontSize: fontSize.md,
-    color: colors.textPrimary,
   },
   errorText: {
     fontSize: fontSize.sm,
-    color: colors.error,
     marginTop: spacing.xs,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -174,13 +177,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.cardBackground,
   },
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   closeButton: {
     padding: spacing.xs,
@@ -197,34 +197,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
   },
   sportItemSelected: {
-    backgroundColor: colors.primaryLight + '15',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    // styles applied inline
   },
   sportIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
   sportIconSelected: {
-    backgroundColor: colors.primaryLight + '30',
+    // styles applied inline
   },
   sportName: {
     flex: 1,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
   },
   sportNameSelected: {
-    fontWeight: '600',
-    color: colors.primary,
+    // styles applied inline
   },
 });

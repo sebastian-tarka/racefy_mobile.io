@@ -17,7 +17,8 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Badge } from '../../components';
 import { useLiveActivity, usePermissions } from '../../hooks';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 
 // Mock data for milestones based on previous activities
 const mockMilestones = [
@@ -35,6 +36,7 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { requestActivityTrackingPermissions } = usePermissions();
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const {
@@ -345,19 +347,19 @@ export function ActivityRecordingScreen() {
   const renderLoadingOverlay = () => {
     if (!isLoading) return null;
     return (
-      <View style={styles.loadingOverlay}>
+      <View style={[styles.loadingOverlay, { backgroundColor: colors.background + 'CC' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>{t('common.pleaseWait')}</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('common.pleaseWait')}</Text>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('recording.title')}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('recording.title')}</Text>
         {activity && (
-          <Text style={styles.activityId}>ID: {activity.id}</Text>
+          <Text style={[styles.activityId, { color: colors.textMuted }]}>ID: {activity.id}</Text>
         )}
       </View>
 
@@ -365,7 +367,7 @@ export function ActivityRecordingScreen() {
         {/* Sport Type Selector */}
         {status === 'idle' && (
           <Card style={styles.sportSelector}>
-            <Text style={styles.sectionTitle}>{t('recording.selectSport')}</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
             {sportsLoading ? (
               <View style={styles.sportsLoading}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -378,7 +380,8 @@ export function ActivityRecordingScreen() {
                       key={sport.id}
                       style={[
                         styles.sportButton,
-                        selectedSport?.id === sport.id && styles.sportButtonActive,
+                        { backgroundColor: colors.primary + '20' },
+                        selectedSport?.id === sport.id && [styles.sportButtonActive, { backgroundColor: colors.primary, borderColor: colors.primaryDark }],
                       ]}
                       onPress={() => setSelectedSport(sport)}
                       disabled={isLoading}
@@ -395,6 +398,7 @@ export function ActivityRecordingScreen() {
                       <Text
                         style={[
                           styles.sportLabel,
+                          { color: colors.primary },
                           selectedSport?.id === sport.id && styles.sportLabelActive,
                         ]}
                       >
@@ -408,7 +412,7 @@ export function ActivityRecordingScreen() {
                     style={styles.showMoreButton}
                     onPress={() => setSportModalVisible(true)}
                   >
-                    <Text style={styles.showMoreText}>
+                    <Text style={[styles.showMoreText, { color: colors.primary }]}>
                       {t('recording.showMoreSports', { count: sportTypes.length - INITIAL_SPORTS_COUNT })}
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color={colors.primary} />
@@ -427,7 +431,7 @@ export function ActivityRecordingScreen() {
               size={24}
               color={colors.primary}
             />
-            <Text style={styles.currentSportText}>{selectedSport.name}</Text>
+            <Text style={[styles.currentSportText, { color: colors.textPrimary }]}>{selectedSport.name}</Text>
             <Badge
               label={
                 status === 'recording'
@@ -449,8 +453,8 @@ export function ActivityRecordingScreen() {
 
         {/* Timer Display */}
         <Card style={styles.timerCard}>
-          <Text style={styles.timerLabel}>{t('recording.duration')}</Text>
-          <Text style={styles.timer}>{formatTime(localDuration)}</Text>
+          <Text style={[styles.timerLabel, { color: colors.textSecondary }]}>{t('recording.duration')}</Text>
+          <Text style={[styles.timer, { color: colors.textPrimary }]}>{formatTime(localDuration)}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
@@ -459,28 +463,28 @@ export function ActivityRecordingScreen() {
                 size={20}
                 color={colors.primary}
               />
-              <Text style={styles.statValue}>{formatDistance(distance)}</Text>
-              <Text style={styles.statLabel}>{t('recording.distance')}</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(distance)}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.distance')}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Ionicons
                 name="speedometer-outline"
                 size={20}
                 color={colors.primary}
               />
-              <Text style={styles.statValue}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {formatPace(localDuration, distance)}
               </Text>
-              <Text style={styles.statLabel}>{t('recording.pace')}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.pace')}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Ionicons name="flame-outline" size={20} color={colors.primary} />
-              <Text style={styles.statValue}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {Math.floor(localDuration * 0.15)}
               </Text>
-              <Text style={styles.statLabel}>{t('recording.calories')}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.calories')}</Text>
             </View>
           </View>
 
@@ -488,7 +492,7 @@ export function ActivityRecordingScreen() {
           {currentStats.elevation_gain > 0 && (
             <View style={styles.elevationRow}>
               <Ionicons name="trending-up" size={16} color={colors.primary} />
-              <Text style={styles.elevationText}>
+              <Text style={[styles.elevationText, { color: colors.textSecondary }]}>
                 {Math.round(currentStats.elevation_gain)} {t('recording.elevationGain')}
               </Text>
             </View>
@@ -499,7 +503,7 @@ export function ActivityRecordingScreen() {
         <View style={styles.controls}>
           {status === 'idle' && (
             <TouchableOpacity
-              style={[styles.startButton, isLoading && styles.buttonDisabled]}
+              style={[styles.startButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, isLoading && styles.buttonDisabled]}
               onPress={handleStart}
               disabled={isLoading}
             >
@@ -517,7 +521,7 @@ export function ActivityRecordingScreen() {
           {status === 'recording' && (
             <View style={styles.recordingControls}>
               <TouchableOpacity
-                style={[styles.controlButton, isLoading && styles.buttonDisabled]}
+                style={[styles.controlButton, { backgroundColor: colors.primary }, isLoading && styles.buttonDisabled]}
                 onPress={handlePause}
                 disabled={isLoading}
               >
@@ -526,7 +530,7 @@ export function ActivityRecordingScreen() {
               <TouchableOpacity
                 style={[
                   styles.controlButton,
-                  styles.stopButton,
+                  { backgroundColor: colors.error },
                   isLoading && styles.buttonDisabled,
                 ]}
                 onPress={handleStop}
@@ -541,7 +545,7 @@ export function ActivityRecordingScreen() {
             <View style={styles.pausedControls}>
               <View style={styles.recordingControls}>
                 <TouchableOpacity
-                  style={[styles.controlButton, isLoading && styles.buttonDisabled]}
+                  style={[styles.controlButton, { backgroundColor: colors.primary }, isLoading && styles.buttonDisabled]}
                   onPress={handleResume}
                   disabled={isLoading}
                 >
@@ -569,8 +573,8 @@ export function ActivityRecordingScreen() {
 
         {/* Milestones */}
         <Card style={styles.milestonesCard}>
-          <Text style={styles.sectionTitle}>{t('recording.milestones')}</Text>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.milestones')}</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
             {t('recording.compareWith', { sport: selectedSport?.name?.toLowerCase() || '' })}
           </Text>
 
@@ -583,14 +587,16 @@ export function ActivityRecordingScreen() {
                 key={milestone.distance}
                 style={[
                   styles.milestoneRow,
-                  isPassed && styles.milestoneRowPassed,
+                  { borderBottomColor: colors.border },
+                  isPassed && [styles.milestoneRowPassed, { backgroundColor: colors.success + '15' }],
                 ]}
               >
                 <View style={styles.milestoneLeft}>
                   <View
                     style={[
                       styles.milestoneIcon,
-                      isPassed && styles.milestoneIconPassed,
+                      { backgroundColor: colors.border },
+                      isPassed && { backgroundColor: colors.primary },
                     ]}
                   >
                     <Ionicons
@@ -603,7 +609,8 @@ export function ActivityRecordingScreen() {
                     <Text
                       style={[
                         styles.milestoneLabel,
-                        isPassed && styles.milestoneLabelPassed,
+                        { color: colors.textSecondary },
+                        isPassed && { color: colors.textPrimary },
                       ]}
                     >
                       {milestone.label}
@@ -622,10 +629,10 @@ export function ActivityRecordingScreen() {
                 </View>
 
                 <View style={styles.milestoneRight}>
-                  <Text style={styles.milestoneTime}>
+                  <Text style={[styles.milestoneTime, { color: colors.textPrimary }]}>
                     {t('recording.best')}: {formatTime(milestone.bestTime)}
                   </Text>
-                  <Text style={styles.milestoneTimeAvg}>
+                  <Text style={[styles.milestoneTimeAvg, { color: colors.textMuted }]}>
                     {t('recording.avg')}: {formatTime(milestone.avgTime)}
                   </Text>
                 </View>
@@ -636,25 +643,25 @@ export function ActivityRecordingScreen() {
 
         {/* Previous Activities Summary */}
         <Card style={styles.previousCard}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             {t('recording.yourStats', { sport: selectedSport?.name || '' })}
           </Text>
           <View style={styles.prevStatsGrid}>
             <View style={styles.prevStatItem}>
-              <Text style={styles.prevStatValue}>23</Text>
-              <Text style={styles.prevStatLabel}>{t('recording.activities')}</Text>
+              <Text style={[styles.prevStatValue, { color: colors.primary }]}>23</Text>
+              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.activities')}</Text>
             </View>
             <View style={styles.prevStatItem}>
-              <Text style={styles.prevStatValue}>156 km</Text>
-              <Text style={styles.prevStatLabel}>{t('recording.totalDistance')}</Text>
+              <Text style={[styles.prevStatValue, { color: colors.primary }]}>156 km</Text>
+              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.totalDistance')}</Text>
             </View>
             <View style={styles.prevStatItem}>
-              <Text style={styles.prevStatValue}>12:45h</Text>
-              <Text style={styles.prevStatLabel}>{t('recording.totalTime')}</Text>
+              <Text style={[styles.prevStatValue, { color: colors.primary }]}>12:45h</Text>
+              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.totalTime')}</Text>
             </View>
             <View style={styles.prevStatItem}>
-              <Text style={styles.prevStatValue}>5:28</Text>
-              <Text style={styles.prevStatLabel}>{t('recording.avgPace')}</Text>
+              <Text style={[styles.prevStatValue, { color: colors.primary }]}>5:28</Text>
+              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.avgPace')}</Text>
             </View>
           </View>
         </Card>
@@ -669,9 +676,9 @@ export function ActivityRecordingScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setSportModalVisible(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('recording.selectSport')}</Text>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
             <TouchableOpacity
               onPress={() => setSportModalVisible(false)}
               style={styles.modalCloseButton}
@@ -687,20 +694,24 @@ export function ActivityRecordingScreen() {
               const isSelected = selectedSport?.id === sport.id;
               return (
                 <TouchableOpacity
-                  style={[styles.modalSportItem, isSelected && styles.modalSportItemSelected]}
+                  style={[
+                    styles.modalSportItem,
+                    { backgroundColor: colors.cardBackground },
+                    isSelected && { backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary },
+                  ]}
                   onPress={() => {
                     setSelectedSport(sport);
                     setSportModalVisible(false);
                   }}
                 >
-                  <View style={[styles.modalSportIcon, isSelected && styles.modalSportIconSelected]}>
+                  <View style={[styles.modalSportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
                     <Ionicons
                       name={sport.icon}
                       size={24}
                       color={isSelected ? colors.primary : colors.textSecondary}
                     />
                   </View>
-                  <Text style={[styles.modalSportName, isSelected && styles.modalSportNameSelected]}>
+                  <Text style={[styles.modalSportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
                     {sport.name}
                   </Text>
                   {isSelected && (
@@ -719,14 +730,11 @@ export function ActivityRecordingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -734,11 +742,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   activityId: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
   },
   content: {
     padding: spacing.md,
@@ -749,12 +755,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   sectionSubtitle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginBottom: spacing.md,
   },
   sportGrid: {
@@ -768,22 +772,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.primaryLight + '20',
     borderWidth: 2,
     borderColor: 'transparent',
   },
   sportButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryDark,
+    // backgroundColor and borderColor applied inline
   },
   sportLabel: {
     marginTop: spacing.xs,
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.primary,
   },
   sportLabelActive: {
-    color: colors.white,
+    color: '#ffffff',
   },
   currentSport: {
     flexDirection: 'row',
@@ -795,7 +796,6 @@ const styles = StyleSheet.create({
   currentSportText: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   timerCard: {
     alignItems: 'center',
@@ -803,13 +803,11 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   timer: {
     fontSize: 56,
     fontWeight: '700',
-    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   statsRow: {
@@ -823,18 +821,15 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: colors.border,
     marginVertical: spacing.xs,
   },
   statValue: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginTop: spacing.xs,
   },
   statLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   elevationRow: {
@@ -845,7 +840,6 @@ const styles = StyleSheet.create({
   },
   elevationText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   controls: {
     alignItems: 'center',
@@ -855,17 +849,15 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   startButtonText: {
-    color: colors.white,
+    color: '#ffffff',
     fontSize: fontSize.lg,
     fontWeight: '700',
     marginTop: spacing.xs,
@@ -884,17 +876,16 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   stopButton: {
-    backgroundColor: colors.error,
+    // backgroundColor applied inline
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -915,10 +906,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   milestoneRowPassed: {
-    backgroundColor: colors.successLight,
     marginHorizontal: -spacing.lg,
     paddingHorizontal: spacing.lg,
   },
@@ -931,20 +920,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   milestoneIconPassed: {
-    backgroundColor: colors.primary,
+    // backgroundColor applied inline
   },
   milestoneLabel: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   milestoneLabelPassed: {
-    color: colors.textPrimary,
+    // color applied inline
   },
   milestoneStatus: {
     fontSize: fontSize.xs,
@@ -957,11 +944,9 @@ const styles = StyleSheet.create({
   milestoneTime: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
   },
   milestoneTimeAvg: {
     fontSize: fontSize.xs,
-    color: colors.textMuted,
     marginTop: 2,
   },
   previousCard: {
@@ -979,16 +964,13 @@ const styles = StyleSheet.create({
   prevStatValue: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    color: colors.primary,
   },
   prevStatLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
@@ -996,7 +978,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.md,
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   sportsLoading: {
     padding: spacing.xl,
@@ -1012,12 +993,10 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: '500',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1026,13 +1005,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.cardBackground,
   },
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   modalCloseButton: {
     padding: spacing.xs,
@@ -1044,34 +1020,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
   },
   modalSportItemSelected: {
-    backgroundColor: colors.primaryLight + '15',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    // styles applied inline
   },
   modalSportIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
   modalSportIconSelected: {
-    backgroundColor: colors.primaryLight + '30',
+    // styles applied inline
   },
   modalSportName: {
     flex: 1,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
   },
   modalSportNameSelected: {
-    fontWeight: '600',
-    color: colors.primary,
+    // styles applied inline
   },
 });

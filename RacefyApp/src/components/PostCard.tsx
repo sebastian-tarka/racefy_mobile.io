@@ -12,7 +12,8 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post, Activity, Event } from '../types/api';
 
 interface PostCardProps {
@@ -73,6 +74,7 @@ export function PostCard({
   isOwner = false,
 }: PostCardProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: false,
   });
@@ -115,7 +117,7 @@ export function PostCard({
     const activity = post.activity;
 
     return (
-      <View style={styles.activityPreview}>
+      <View style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
         <View style={styles.activityHeader}>
           <View style={[styles.sportBadge, { backgroundColor: colors.primary + '20' }]}>
             <Ionicons
@@ -125,27 +127,27 @@ export function PostCard({
             />
           </View>
           <View style={styles.activityTitleContainer}>
-            <Text style={styles.activityTitle} numberOfLines={1}>
+            <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
               {activity.title}
             </Text>
-            <Text style={styles.activitySport}>
+            <Text style={[styles.activitySport, { color: colors.textSecondary }]}>
               {activity.sport_type?.name || t('activityDetail.activity')}
             </Text>
           </View>
         </View>
 
-        <View style={styles.activityStats}>
+        <View style={[styles.activityStats, { borderTopColor: colors.borderLight }]}>
           <View style={styles.activityStatItem}>
             <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.activityStatValue}>{formatDistance(activity.distance)}</Text>
+            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
           </View>
           <View style={styles.activityStatItem}>
             <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.activityStatValue}>{formatDuration(activity.duration)}</Text>
+            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
           </View>
           <View style={styles.activityStatItem}>
             <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.activityStatValue}>
+            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
               {formatPace(activity.distance, activity.duration)}
             </Text>
           </View>
@@ -159,30 +161,30 @@ export function PostCard({
     const event = post.event;
 
     return (
-      <View style={styles.eventPreview}>
+      <View style={[styles.eventPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
         <View style={styles.eventHeader}>
-          <View style={styles.eventDateBadge}>
-            <Text style={styles.eventDateDay}>
+          <View style={[styles.eventDateBadge, { backgroundColor: colors.warning }]}>
+            <Text style={[styles.eventDateDay, { color: colors.white }]}>
               {format(new Date(event.starts_at), 'd')}
             </Text>
-            <Text style={styles.eventDateMonth}>
+            <Text style={[styles.eventDateMonth, { color: colors.white }]}>
               {format(new Date(event.starts_at), 'MMM')}
             </Text>
           </View>
           <View style={styles.eventInfo}>
-            <Text style={styles.eventTitle} numberOfLines={1}>
+            <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
               {post.title || t('eventDetail.untitled')}
             </Text>
             <View style={styles.eventMeta}>
               <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-              <Text style={styles.eventLocation} numberOfLines={1}>
+              <Text style={[styles.eventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
                 {event.location_name}
               </Text>
             </View>
             <View style={styles.eventTags}>
               {event.sport_type && (
-                <View style={styles.eventTag}>
-                  <Text style={styles.eventTagText}>{event.sport_type.name}</Text>
+                <View style={[styles.eventTag, { backgroundColor: colors.border }]}>
+                  <Text style={[styles.eventTagText, { color: colors.textSecondary }]}>{event.sport_type.name}</Text>
                 </View>
               )}
               <View style={[styles.eventTag, { backgroundColor: colors.primary + '15' }]}>
@@ -250,10 +252,10 @@ export function PostCard({
             />
             <View style={styles.userText}>
               <View style={styles.userNameRow}>
-                <Text style={styles.userName}>{post.user?.name}</Text>
+                <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
                 {renderTypeBadge()}
               </View>
-              <Text style={styles.userHandle}>
+              <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
                 @{post.user?.username} · {timeAgo}
               </Text>
             </View>
@@ -269,7 +271,7 @@ export function PostCard({
           )}
         </View>
 
-        {post.content && <Text style={styles.content}>{post.content}</Text>}
+        {post.content && <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>}
 
         {renderActivityPreview()}
         {renderEventPreview()}
@@ -277,7 +279,7 @@ export function PostCard({
         {renderPhotos()}
       </TouchableOpacity>
 
-      <View style={styles.actions}>
+      <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
         <TouchableOpacity
           onPress={onLike}
           style={styles.actionButton}
@@ -289,7 +291,7 @@ export function PostCard({
             color={post.is_liked ? colors.error : colors.textSecondary}
           />
           <Text
-            style={[styles.actionText, post.is_liked && styles.likedText]}
+            style={[styles.actionText, { color: colors.textSecondary }, post.is_liked && { color: colors.error }]}
           >
             {post.likes_count}
           </Text>
@@ -305,7 +307,7 @@ export function PostCard({
             size={20}
             color={colors.textSecondary}
           />
-          <Text style={styles.actionText}>{post.comments_count}</Text>
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.comments_count}</Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -340,16 +342,13 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   userHandle: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
   menuButton: {
     padding: spacing.sm,
   },
-  // Type badge
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -364,20 +363,16 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     lineHeight: 22,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
-  // Activity preview
   activityPreview: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
   },
   activityHeader: {
     flexDirection: 'row',
@@ -397,18 +392,15 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   activitySport: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
   },
   activityStats: {
     flexDirection: 'row',
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
     justifyContent: 'space-around',
   },
   activityStatItem: {
@@ -419,17 +411,13 @@ const styles = StyleSheet.create({
   activityStatValue: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
-  // Event preview
   eventPreview: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
   },
   eventHeader: {
     flexDirection: 'row',
@@ -439,7 +427,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.warning,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -447,12 +434,10 @@ const styles = StyleSheet.create({
   eventDateDay: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.white,
   },
   eventDateMonth: {
     fontSize: fontSize.xs,
     fontWeight: '500',
-    color: colors.white,
     textTransform: 'uppercase',
   },
   eventInfo: {
@@ -461,7 +446,6 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   eventMeta: {
     flexDirection: 'row',
@@ -470,7 +454,6 @@ const styles = StyleSheet.create({
   },
   eventLocation: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     marginLeft: 4,
     flex: 1,
   },
@@ -483,11 +466,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.border,
   },
   eventTagText: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   singlePhoto: {
@@ -511,7 +492,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
     marginTop: spacing.md,
   },
   actionButton: {
@@ -522,9 +502,5 @@ const styles = StyleSheet.create({
   actionText: {
     marginLeft: spacing.xs,
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  likedText: {
-    color: colors.error,
   },
 });

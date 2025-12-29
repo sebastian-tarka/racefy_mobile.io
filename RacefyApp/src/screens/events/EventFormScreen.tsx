@@ -25,7 +25,8 @@ import {
 } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Event, CreateEventRequest, UpdateEventRequest } from '../../types/api';
@@ -74,6 +75,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   const { eventId } = route.params || {};
   const isEditMode = !!eventId;
   const { t } = useTranslation();
+  const { colors } = useTheme();
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
@@ -325,12 +327,12 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   if (isFetching) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
           </Text>
           <View style={styles.headerRight} />
@@ -343,16 +345,16 @@ export function EventFormScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
           </Text>
           <View style={styles.headerRight} />
@@ -377,7 +379,7 @@ export function EventFormScreen({ navigation, route }: Props) {
 
           {/* Description */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>{t('eventForm.description')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.description')}</Text>
             <Input
               placeholder={t('eventForm.descriptionPlaceholder')}
               value={formData.content}
@@ -413,28 +415,36 @@ export function EventFormScreen({ navigation, route }: Props) {
 
           {/* Start Date */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>{t('eventForm.startDate')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.startDate')}</Text>
             <TouchableOpacity
-              style={[styles.dateButton, errors.starts_at && styles.dateButtonError]}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                errors.starts_at && { borderColor: colors.error },
+              ]}
               onPress={() => openDatePicker('starts_at')}
             >
               <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.dateText}>{formatDateTime(formData.starts_at)}</Text>
+              <Text style={[styles.dateText, { color: colors.textPrimary }]}>{formatDateTime(formData.starts_at)}</Text>
             </TouchableOpacity>
-            {errors.starts_at && <Text style={styles.errorText}>{errors.starts_at}</Text>}
+            {errors.starts_at && <Text style={[styles.errorText, { color: colors.error }]}>{errors.starts_at}</Text>}
           </View>
 
           {/* End Date */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>{t('eventForm.endDate')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.endDate')}</Text>
             <TouchableOpacity
-              style={[styles.dateButton, errors.ends_at && styles.dateButtonError]}
+              style={[
+                styles.dateButton,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                errors.ends_at && { borderColor: colors.error },
+              ]}
               onPress={() => openDatePicker('ends_at')}
             >
               <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.dateText}>{formatDateTime(formData.ends_at)}</Text>
+              <Text style={[styles.dateText, { color: colors.textPrimary }]}>{formatDateTime(formData.ends_at)}</Text>
             </TouchableOpacity>
-            {errors.ends_at && <Text style={styles.errorText}>{errors.ends_at}</Text>}
+            {errors.ends_at && <Text style={[styles.errorText, { color: colors.error }]}>{errors.ends_at}</Text>}
           </View>
 
           {/* Optional Fields Toggle */}
@@ -442,7 +452,7 @@ export function EventFormScreen({ navigation, route }: Props) {
             style={styles.optionalToggle}
             onPress={() => setShowOptionalFields(!showOptionalFields)}
           >
-            <Text style={styles.optionalToggleText}>{t('eventForm.eventDetails')}</Text>
+            <Text style={[styles.optionalToggleText, { color: colors.textPrimary }]}>{t('eventForm.eventDetails')}</Text>
             <Ionicons
               name={showOptionalFields ? 'chevron-up' : 'chevron-down'}
               size={20}
@@ -454,13 +464,13 @@ export function EventFormScreen({ navigation, route }: Props) {
             <Card style={styles.optionalCard}>
               {/* Registration Opens */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('eventForm.registrationOpens')}</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.registrationOpens')}</Text>
                 <TouchableOpacity
-                  style={styles.dateButton}
+                  style={[styles.dateButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                   onPress={() => openDatePicker('registration_opens_at')}
                 >
                   <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-                  <Text style={styles.dateText}>
+                  <Text style={[styles.dateText, { color: colors.textPrimary }]}>
                     {formatDateTime(formData.registration_opens_at)}
                   </Text>
                 </TouchableOpacity>
@@ -468,13 +478,13 @@ export function EventFormScreen({ navigation, route }: Props) {
 
               {/* Registration Closes */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('eventForm.registrationCloses')}</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.registrationCloses')}</Text>
                 <TouchableOpacity
-                  style={styles.dateButton}
+                  style={[styles.dateButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                   onPress={() => openDatePicker('registration_closes_at')}
                 >
                   <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-                  <Text style={styles.dateText}>
+                  <Text style={[styles.dateText, { color: colors.textPrimary }]}>
                     {formatDateTime(formData.registration_closes_at)}
                   </Text>
                 </TouchableOpacity>
@@ -539,7 +549,6 @@ export function EventFormScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -550,9 +559,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -560,7 +567,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   headerRight: {
     width: 32,
@@ -582,7 +588,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   textArea: {
@@ -592,25 +597,18 @@ const styles = StyleSheet.create({
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     gap: spacing.sm,
   },
-  dateButtonError: {
-    borderColor: colors.error,
-  },
   dateText: {
     fontSize: fontSize.md,
-    color: colors.textPrimary,
     flex: 1,
   },
   errorText: {
     fontSize: fontSize.sm,
-    color: colors.error,
     marginTop: spacing.xs,
   },
   optionalToggle: {
@@ -623,7 +621,6 @@ const styles = StyleSheet.create({
   optionalToggleText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   optionalCard: {
     marginBottom: spacing.md,

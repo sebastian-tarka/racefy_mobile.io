@@ -1,11 +1,11 @@
 import React from 'react';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 import { Loading } from '../components';
-import { colors } from '../theme';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -49,6 +49,7 @@ function AuthNavigator() {
 
 function MainNavigator() {
   const { isAuthenticated } = useAuth();
+  const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Auth guard listener - redirects to Auth screen if not authenticated
@@ -142,13 +143,28 @@ function MainNavigator() {
 
 export function AppNavigator() {
   const { isLoading } = useAuth();
+  const { colors, isDark } = useTheme();
 
   if (isLoading) {
     return <Loading fullScreen message="Loading..." />;
   }
 
+  // Create custom theme for React Navigation
+  const navigationTheme: Theme = {
+    dark: isDark,
+    colors: {
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.cardBackground,
+      text: colors.textPrimary,
+      border: colors.border,
+      notification: colors.primary,
+    },
+    fonts: isDark ? DarkTheme.fonts : DefaultTheme.fonts,
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,

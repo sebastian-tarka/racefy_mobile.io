@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { spacing, borderRadius, fontSize } from '../theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -27,6 +28,7 @@ export function Input({
   secureTextEntry,
   ...props
 }: InputProps) {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -35,12 +37,13 @@ export function Input({
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>}
       <View
         style={[
           styles.inputContainer,
-          isFocused && styles.inputContainerFocused,
-          error && styles.inputContainerError,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          isFocused && { borderColor: colors.primary, borderWidth: 2 },
+          error && { borderColor: colors.error },
         ]}
       >
         {leftIcon && (
@@ -52,7 +55,7 @@ export function Input({
           />
         )}
         <TextInput
-          style={[styles.input, leftIcon && styles.inputWithLeftIcon]}
+          style={[styles.input, { color: colors.textPrimary }, leftIcon && styles.inputWithLeftIcon]}
           placeholderTextColor={colors.textMuted}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -81,7 +84,7 @@ export function Input({
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 }
@@ -93,30 +96,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
-  },
-  inputContainerFocused: {
-    borderColor: colors.primary,
-    borderWidth: 2,
-  },
-  inputContainerError: {
-    borderColor: colors.error,
   },
   input: {
     flex: 1,
     height: 48,
     fontSize: fontSize.md,
-    color: colors.textPrimary,
   },
   inputWithLeftIcon: {
     marginLeft: spacing.sm,
@@ -129,7 +121,6 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: fontSize.sm,
-    color: colors.error,
     marginTop: spacing.xs,
   },
 });

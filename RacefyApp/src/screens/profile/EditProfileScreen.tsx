@@ -17,9 +17,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, Avatar } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -35,6 +36,7 @@ interface FormData {
 export function EditProfileScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth();
+  const { colors } = useTheme();
 
   const [formData, setFormData] = useState<FormData>({
     name: user?.name || '',
@@ -278,16 +280,16 @@ export function EditProfileScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('editProfile.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('editProfile.title')}</Text>
         </View>
 
         <ScrollView
@@ -296,7 +298,7 @@ export function EditProfileScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           {/* Background Image Section */}
-          <TouchableOpacity onPress={pickBackground} style={styles.backgroundSection}>
+          <TouchableOpacity onPress={pickBackground} style={[styles.backgroundSection, { backgroundColor: colors.primary }]}>
             {backgroundUri ? (
               <Image source={{ uri: isLocalImage(backgroundUri) ? backgroundUri : (fixStorageUrl(backgroundUri) || backgroundUri) }} style={styles.backgroundImage} />
             ) : (
@@ -320,12 +322,12 @@ export function EditProfileScreen({ navigation }: Props) {
               ) : (
                 <Avatar name={formData.name} size="xxl" />
               )}
-              <View style={styles.cameraButton}>
+              <View style={[styles.cameraButton, { backgroundColor: colors.primary, borderColor: colors.cardBackground }]}>
                 <Ionicons name="camera" size={18} color={colors.white} />
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={pickAvatar}>
-              <Text style={styles.changePhotoText}>{t('editProfile.changePhoto')}</Text>
+              <Text style={[styles.changePhotoText, { color: colors.primary }]}>{t('editProfile.changePhoto')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -363,7 +365,7 @@ export function EditProfileScreen({ navigation }: Props) {
           />
 
           <View style={styles.bioContainer}>
-            <Text style={styles.label}>{t('editProfile.bio')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('editProfile.bio')}</Text>
             <Input
               placeholder={t('editProfile.bioPlaceholder')}
               value={formData.bio}
@@ -390,7 +392,6 @@ export function EditProfileScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -400,9 +401,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -411,7 +410,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   scrollView: {
     flex: 1,
@@ -421,7 +419,6 @@ const styles = StyleSheet.create({
   },
   backgroundSection: {
     height: 150,
-    backgroundColor: colors.primary,
     position: 'relative',
     marginBottom: spacing.md,
   },
@@ -447,7 +444,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   backgroundOverlayText: {
-    color: colors.white,
+    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '500',
   },
@@ -474,15 +471,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: colors.cardBackground,
   },
   changePhotoText: {
     fontSize: fontSize.md,
-    color: colors.primary,
     fontWeight: '500',
   },
   bioContainer: {
@@ -491,7 +485,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
   bioInput: {

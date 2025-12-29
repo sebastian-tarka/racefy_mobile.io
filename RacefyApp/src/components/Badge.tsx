@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { useTheme, type ThemeColors } from '../hooks/useTheme';
+import { spacing, borderRadius, fontSize } from '../theme';
 
 type BadgeVariant =
   | 'upcoming'
@@ -17,10 +18,10 @@ interface BadgeProps {
   variant?: BadgeVariant;
 }
 
-const variantStyles: Record<
+const getVariantStyles = (colors: ThemeColors): Record<
   BadgeVariant,
   { backgroundColor: string; color: string }
-> = {
+> => ({
   upcoming: { backgroundColor: colors.upcoming.bg, color: colors.upcoming.text },
   ongoing: { backgroundColor: colors.ongoing.bg, color: colors.ongoing.text },
   completed: {
@@ -35,9 +36,11 @@ const variantStyles: Record<
   intermediate: { backgroundColor: '#fef3c7', color: '#92400e' },
   advanced: { backgroundColor: '#fee2e2', color: '#991b1b' },
   all_levels: { backgroundColor: '#e0e7ff', color: '#3730a3' },
-};
+});
 
 export function Badge({ label, variant = 'upcoming' }: BadgeProps) {
+  const { colors } = useTheme();
+  const variantStyles = getVariantStyles(colors);
   const style = variantStyles[variant];
 
   return (

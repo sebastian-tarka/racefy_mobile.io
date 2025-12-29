@@ -4,8 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { Card } from '../../../../components';
+import { useTheme } from '../../../../hooks/useTheme';
 import { api } from '../../../../services/api';
-import { colors, spacing, fontSize, borderRadius } from '../../../../theme';
+import { spacing, fontSize, borderRadius } from '../../../../theme';
 import type { Event } from '../../../../types/api';
 
 interface UpcomingEventsPreviewProps {
@@ -20,6 +21,7 @@ export function UpcomingEventsPreview({
   limit = 3,
 }: UpcomingEventsPreviewProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,7 +43,7 @@ export function UpcomingEventsPreview({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.sectionTitle}>{t('home.upcomingEvents')}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('home.upcomingEvents')}</Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={colors.primary} />
         </View>
@@ -52,11 +54,6 @@ export function UpcomingEventsPreview({
   if (events.length === 0) {
     return null;
   }
-
-  const formatEventDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return format(date, 'MMM d, HH:mm');
-  };
 
   const getDifficultyColor = (difficulty: Event['difficulty']) => {
     switch (difficulty) {
@@ -74,9 +71,9 @@ export function UpcomingEventsPreview({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>{t('home.upcomingEvents')}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('home.upcomingEvents')}</Text>
         <TouchableOpacity onPress={onViewAllPress}>
-          <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
+          <Text style={[styles.viewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -87,21 +84,21 @@ export function UpcomingEventsPreview({
           activeOpacity={0.8}
         >
           <Card style={styles.eventCard}>
-            <View style={styles.eventDateBadge}>
-              <Text style={styles.eventDateDay}>
+            <View style={[styles.eventDateBadge, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.eventDateDay, { color: colors.white }]}>
                 {format(new Date(event.starts_at), 'd')}
               </Text>
-              <Text style={styles.eventDateMonth}>
+              <Text style={[styles.eventDateMonth, { color: colors.white }]}>
                 {format(new Date(event.starts_at), 'MMM')}
               </Text>
             </View>
             <View style={styles.eventContent}>
-              <Text style={styles.eventTitle} numberOfLines={1}>
+              <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
                 {event.post?.title || t('eventDetail.untitled')}
               </Text>
               <View style={styles.eventMeta}>
                 <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.eventLocation} numberOfLines={1}>
+                <Text style={[styles.eventLocation, { color: colors.textMuted }]} numberOfLines={1}>
                   {event.location_name}
                 </Text>
               </View>
@@ -112,8 +109,8 @@ export function UpcomingEventsPreview({
                   </Text>
                 </View>
                 {event.sport_type && (
-                  <View style={styles.tag}>
-                    <Text style={styles.tagText}>{event.sport_type.name}</Text>
+                  <View style={[styles.tag, { backgroundColor: colors.border }]}>
+                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>{event.sport_type.name}</Text>
                   </View>
                 )}
               </View>
@@ -139,11 +136,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   viewAll: {
     fontSize: fontSize.sm,
-    color: colors.primary,
     fontWeight: '500',
   },
   loadingContainer: {
@@ -159,7 +154,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -167,12 +161,10 @@ const styles = StyleSheet.create({
   eventDateDay: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.white,
   },
   eventDateMonth: {
     fontSize: fontSize.xs,
     fontWeight: '500',
-    color: colors.white,
     textTransform: 'uppercase',
   },
   eventContent: {
@@ -181,7 +173,6 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: 2,
   },
   eventMeta: {
@@ -191,7 +182,6 @@ const styles = StyleSheet.create({
   },
   eventLocation: {
     fontSize: fontSize.sm,
-    color: colors.textMuted,
     marginLeft: 4,
     flex: 1,
   },
@@ -203,11 +193,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.border,
   },
   tagText: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
 });

@@ -15,8 +15,9 @@ import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
-import { colors, spacing, fontSize } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { UserPreferences, NotificationChannelSettings } from '../../types/api';
@@ -33,6 +34,8 @@ interface SettingsRowProps {
 }
 
 function SettingsRow({ icon, label, value, onPress, rightElement, danger }: SettingsRowProps) {
+  const { colors } = useTheme();
+
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.();
@@ -40,7 +43,7 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
 
   return (
     <TouchableOpacity
-      style={styles.row}
+      style={[styles.row, { borderBottomColor: colors.border }]}
       onPress={handlePress}
       disabled={!onPress && !rightElement}
       activeOpacity={onPress ? 0.7 : 1}
@@ -52,10 +55,10 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
           color={danger ? colors.error : colors.textSecondary}
           style={styles.rowIcon}
         />
-        <Text style={[styles.rowLabel, danger && styles.rowLabelDanger]}>{label}</Text>
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }, danger && { color: colors.error }]}>{label}</Text>
       </View>
       <View style={styles.rowRight}>
-        {value && <Text style={styles.rowValue}>{value}</Text>}
+        {value && <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>}
         {rightElement}
         {onPress && !rightElement && (
           <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -76,18 +79,20 @@ interface NotificationRowProps {
 }
 
 function NotificationRow({ icon, label, description, settings, onEmailChange, onPushChange }: NotificationRowProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.notificationRow}>
+    <View style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
       <View style={styles.notificationHeader}>
         <Ionicons name={icon} size={20} color={colors.textSecondary} style={styles.notificationIcon} />
         <View style={styles.notificationLabelContainer}>
-          <Text style={styles.notificationLabel}>{label}</Text>
-          {description && <Text style={styles.notificationDescription}>{description}</Text>}
+          <Text style={[styles.notificationLabel, { color: colors.textPrimary }]}>{label}</Text>
+          {description && <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>{description}</Text>}
         </View>
       </View>
       <View style={styles.notificationToggles}>
         <View style={styles.toggleItem}>
-          <Text style={styles.toggleLabel}>Email</Text>
+          <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>Email</Text>
           <Switch
             value={settings.email}
             onValueChange={(value) => {
@@ -99,7 +104,7 @@ function NotificationRow({ icon, label, description, settings, onEmailChange, on
           />
         </View>
         <View style={styles.toggleItem}>
-          <Text style={styles.toggleLabel}>Push</Text>
+          <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>Push</Text>
           <Switch
             value={settings.push}
             onValueChange={(value) => {
@@ -150,6 +155,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { logout } = useAuth();
+  const { colors, themePreference, setThemePreference } = useTheme();
 
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
@@ -177,6 +183,10 @@ export function SettingsScreen({ navigation }: Props) {
     try {
       const prefs = await api.getPreferences();
       setPreferences(prefs);
+      // Sync local theme with server preferences
+      if (prefs.theme && prefs.theme !== themePreference) {
+        setThemePreference(prefs.theme);
+      }
     } catch (error) {
       console.error('Failed to load preferences:', error);
     } finally {
@@ -390,22 +400,23 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('settings.title')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('settings.title')}</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Account Section */}
-        <Text style={styles.sectionTitle}>{t('settings.account')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.account')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="person-outline"
             label={t('settings.editProfile')}
             onPress={() => navigation.navigate('EditProfile')}
+            
           />
           <SettingsRow
             icon="lock-closed-outline"
@@ -414,12 +425,13 @@ export function SettingsScreen({ navigation }: Props) {
               setShowPasswordChange(!showPasswordChange);
               setPasswordErrors({});
             }}
+            
           />
         </View>
 
         {/* Password Change Form */}
         {showPasswordChange && (
-          <View style={styles.formSection}>
+          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <Input
               label={t('settings.currentPassword')}
               placeholder={t('settings.currentPasswordPlaceholder')}
@@ -454,12 +466,13 @@ export function SettingsScreen({ navigation }: Props) {
         )}
 
         {/* General Preferences */}
-        <Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.preferences')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="speedometer-outline"
             label={t('settings.units')}
             value={preferences.units === 'metric' ? t('settings.metric') : t('settings.imperial')}
+            
             rightElement={
               <Switch
                 value={preferences.units === 'imperial'}
@@ -475,22 +488,28 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.language')}
             value={preferences.language === 'en' ? 'English' : 'Polski'}
             onPress={() => updatePreference('language', preferences.language === 'en' ? 'pl' : 'en')}
+            
           />
           <SettingsRow
             icon="color-palette-outline"
             label={t('settings.theme')}
-            value={t(`settings.theme_${preferences.theme}`)}
-            onPress={() => {
+            value={t(`settings.theme_${themePreference}`)}
+            
+            onPress={async () => {
               const themes: ('light' | 'dark' | 'system')[] = ['system', 'light', 'dark'];
-              const currentIndex = themes.indexOf(preferences.theme);
-              updatePreference('theme', themes[(currentIndex + 1) % themes.length]);
+              const currentIndex = themes.indexOf(themePreference);
+              const newTheme = themes[(currentIndex + 1) % themes.length];
+              // Update local theme immediately
+              await setThemePreference(newTheme);
+              // Also sync to server
+              updatePreference('theme', newTheme);
             }}
           />
         </View>
 
         {/* Notifications */}
-        <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.notifications')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <NotificationRow
             icon="heart-outline"
             label={t('settings.notif_likes')}
@@ -498,6 +517,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.likes}
             onEmailChange={(value) => updateNotificationChannel('likes', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('likes', 'push', value)}
+            
           />
           <NotificationRow
             icon="chatbubble-outline"
@@ -506,6 +526,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.comments}
             onEmailChange={(value) => updateNotificationChannel('comments', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('comments', 'push', value)}
+            
           />
           <NotificationRow
             icon="person-add-outline"
@@ -514,6 +535,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.follows}
             onEmailChange={(value) => updateNotificationChannel('follows', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('follows', 'push', value)}
+            
           />
           <NotificationRow
             icon="chatbubbles-outline"
@@ -522,6 +544,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.messages}
             onEmailChange={(value) => updateNotificationChannel('messages', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('messages', 'push', value)}
+            
           />
           <NotificationRow
             icon="calendar-outline"
@@ -530,6 +553,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.event_reminders}
             onEmailChange={(value) => updateNotificationChannel('event_reminders', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('event_reminders', 'push', value)}
+            
           />
           <NotificationRow
             icon="stats-chart-outline"
@@ -538,6 +562,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.weekly_summary}
             onEmailChange={(value) => updateNotificationChannel('weekly_summary', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('weekly_summary', 'push', value)}
+            
           />
           <NotificationRow
             icon="thumbs-up-outline"
@@ -546,6 +571,7 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.activity_reactions}
             onEmailChange={(value) => updateNotificationChannel('activity_reactions', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('activity_reactions', 'push', value)}
+            
           />
           <NotificationRow
             icon="at-outline"
@@ -554,21 +580,24 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.mentions}
             onEmailChange={(value) => updateNotificationChannel('mentions', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('mentions', 'push', value)}
+            
           />
         </View>
 
         {/* Privacy */}
-        <Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.privacy')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="eye-outline"
             label={t('settings.profileVisibility')}
             value={getVisibilityLabel(preferences.privacy.profile_visibility)}
             onPress={() => updateNestedPreference('privacy', 'profile_visibility', cycleVisibility(preferences.privacy.profile_visibility))}
+            
           />
           <SettingsRow
             icon="fitness-outline"
             label={t('settings.showActivities')}
+            
             rightElement={
               <Switch
                 value={preferences.privacy.show_activities}
@@ -581,6 +610,7 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="stats-chart-outline"
             label={t('settings.showStats')}
+            
             rightElement={
               <Switch
                 value={preferences.privacy.show_stats}
@@ -595,21 +625,24 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.allowMessages')}
             value={getMessagesLabel(preferences.privacy.allow_messages)}
             onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
+            
           />
         </View>
 
         {/* Activity Defaults */}
-        <Text style={styles.sectionTitle}>{t('settings.activityDefaults')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.activityDefaults')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="globe-outline"
             label={t('settings.defaultVisibility')}
             value={getVisibilityLabel(preferences.activity_defaults.visibility)}
             onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
+            
           />
           <SettingsRow
             icon="share-outline"
             label={t('settings.autoShare')}
+            
             rightElement={
               <Switch
                 value={preferences.activity_defaults.auto_share}
@@ -622,39 +655,42 @@ export function SettingsScreen({ navigation }: Props) {
         </View>
 
         {/* App Section */}
-        <Text style={styles.sectionTitle}>{t('settings.app')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.app')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="information-circle-outline"
             label={t('settings.version')}
             value={appVersion}
+            
           />
         </View>
 
         {/* Logout */}
-        <View style={[styles.section, styles.logoutSection]}>
+        <View style={[styles.section, styles.logoutSection, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="log-out-outline"
             label={t('common.logout')}
             onPress={handleLogout}
+            
           />
         </View>
 
         {/* Danger Zone */}
-        <Text style={[styles.sectionTitle, styles.dangerTitle]}>{t('settings.dangerZone')}</Text>
-        <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.error }]}>{t('settings.dangerZone')}</Text>
+        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="trash-outline"
             label={t('settings.deleteAccount')}
             onPress={() => setShowDeleteAccount(!showDeleteAccount)}
             danger
+            
           />
         </View>
 
         {/* Delete Account Form */}
         {showDeleteAccount && (
-          <View style={styles.formSection}>
-            <Text style={styles.dangerText}>{t('settings.deleteAccountWarning')}</Text>
+          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
             <Input
               label={t('settings.confirmPassword')}
               placeholder={t('settings.enterPasswordToDelete')}
@@ -679,16 +715,13 @@ export function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backButton: {
     padding: spacing.xs,
@@ -697,7 +730,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   scrollView: {
     flex: 1,
@@ -708,17 +740,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.textSecondary,
     textTransform: 'uppercase',
     marginTop: spacing.xl,
     marginBottom: spacing.sm,
     marginHorizontal: spacing.lg,
   },
   section: {
-    backgroundColor: colors.cardBackground,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.border,
   },
   row: {
     flexDirection: 'row',
@@ -727,7 +756,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   rowLeft: {
     flexDirection: 'row',
@@ -739,10 +767,6 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontSize: fontSize.md,
-    color: colors.textPrimary,
-  },
-  rowLabelDanger: {
-    color: colors.error,
   },
   rowRight: {
     flexDirection: 'row',
@@ -751,13 +775,10 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   formSection: {
-    backgroundColor: colors.cardBackground,
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   formButton: {
     marginTop: spacing.sm,
@@ -765,12 +786,8 @@ const styles = StyleSheet.create({
   logoutSection: {
     marginTop: spacing.xl,
   },
-  dangerTitle: {
-    color: colors.error,
-  },
   dangerText: {
     fontSize: fontSize.sm,
-    color: colors.error,
     marginBottom: spacing.md,
     lineHeight: 20,
   },
@@ -779,7 +796,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -796,11 +812,9 @@ const styles = StyleSheet.create({
   notificationLabel: {
     fontSize: fontSize.md,
     fontWeight: '500',
-    color: colors.textPrimary,
   },
   notificationDescription: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
     marginTop: 2,
   },
   notificationToggles: {
@@ -816,6 +830,5 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
   },
 });
