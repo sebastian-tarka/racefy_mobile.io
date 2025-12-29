@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import { api } from '../services/api';
 import type { Post } from '../types/api';
 
@@ -91,9 +92,37 @@ export function useFeed() {
     [likePost, unlikePost]
   );
 
-  const createPost = useCallback(async (content: string) => {
+  const createPost = useCallback(async (content: string, imageUri?: string) => {
     try {
-      const newPost = await api.createPost({ content });
+      const newPost = await api.createPost({ content: content || ' ' });
+
+      // Upload image if provided
+      if (imageUri) {
+        const formData = new FormData();
+        const filename = imageUri.split('/').pop() || 'photo.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        let type = 'image/jpeg';
+        if (match) {
+          const ext = match[1].toLowerCase();
+          if (ext === 'png') type = 'image/png';
+          else if (ext === 'gif') type = 'image/gif';
+          else if (ext === 'heic' || ext === 'heif') type = 'image/heic';
+          else type = 'image/jpeg';
+        }
+
+        // iOS requires removing file:// prefix
+        const uri = Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri;
+
+        formData.append('photo', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+
+        const photo = await api.uploadPostPhoto(newPost.id, formData);
+        newPost.photos = [photo];
+      }
+
       setPosts((prev) => [newPost, ...prev]);
       return newPost;
     } catch (err) {

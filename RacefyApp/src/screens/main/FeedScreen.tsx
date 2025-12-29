@@ -8,9 +8,13 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
+  Platform,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import {
   PostCard,
@@ -57,6 +61,7 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
 
   const [newPostContent, setNewPostContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -65,16 +70,80 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
   }, [isAuthenticated]);
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim()) return;
+    if (!newPostContent.trim() && !selectedImage) return;
 
     setIsPosting(true);
     try {
-      await createPost(newPostContent.trim());
+      await createPost(newPostContent.trim(), selectedImage || undefined);
       setNewPostContent('');
+      setSelectedImage(null);
     } catch (error) {
       Alert.alert(t('common.error'), t('feed.failedToCreate'));
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const pickImageFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('common.error'), t('permissions.gallery'));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: Platform.OS === 'ios',
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const pickImageFromCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('common.error'), t('permissions.camera'));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: Platform.OS === 'ios',
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  const handlePickImage = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [t('common.cancel'), t('feed.takePhoto'), t('feed.chooseFromLibrary')],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            pickImageFromCamera();
+          } else if (buttonIndex === 2) {
+            pickImageFromGallery();
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        t('feed.addPhoto'),
+        undefined,
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('feed.takePhoto'), onPress: pickImageFromCamera },
+          { text: t('feed.chooseFromLibrary'), onPress: pickImageFromGallery },
+        ]
+      );
     }
   };
 
@@ -173,20 +242,31 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
                 multiline
               />
             </View>
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                <TouchableOpacity
+                  style={[styles.removeImageButton, { backgroundColor: colors.error }]}
+                  onPress={() => setSelectedImage(null)}
+                >
+                  <Ionicons name="close" size={16} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+            )}
             <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
-              <TouchableOpacity style={styles.photoButton}>
+              <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
                 <Ionicons
-                  name="image-outline"
+                  name={selectedImage ? 'image' : 'image-outline'}
                   size={20}
-                  color={colors.textSecondary}
+                  color={selectedImage ? colors.primary : colors.textSecondary}
                 />
-                <Text style={[styles.photoButtonText, { color: colors.textSecondary }]}>{t('feed.photo')}</Text>
+                <Text style={[styles.photoButtonText, { color: selectedImage ? colors.primary : colors.textSecondary }]}>{t('feed.photo')}</Text>
               </TouchableOpacity>
               <Button
                 title={t('feed.post')}
                 onPress={handleCreatePost}
                 loading={isPosting}
-                disabled={!newPostContent.trim()}
+                disabled={!newPostContent.trim() && !selectedImage}
                 style={styles.postButton}
               />
             </View>
@@ -302,5 +382,24 @@ const styles = StyleSheet.create({
   },
   postButton: {
     paddingHorizontal: spacing.xl,
+  },
+  imagePreviewContainer: {
+    marginTop: spacing.md,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: borderRadius.md,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

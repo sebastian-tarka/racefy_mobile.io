@@ -92,6 +92,9 @@
     "loadingMore": "Loading more...",
     "placeholder": "What's on your mind?",
     "photo": "Photo",
+    "addPhoto": "Add Photo",
+    "takePhoto": "Take Photo",
+    "chooseFromLibrary": "Choose from Library",
     "post": "Post",
     "noPosts": "No posts yet",
     "beFirst": "Be the first to share something!",
@@ -367,6 +370,10 @@
       "endDateRequired": "End date is required",
       "endDateBeforeStart": "End date must be after start date"
     }
+  },
+  "permissions": {
+    "gallery": "Permission to access photos is required to select an image.",
+    "camera": "Permission to access camera is required to take a photo."
   },
   "settings": {
     "title": "Settings",

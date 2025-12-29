@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
+import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post, Activity, Event } from '../types/api';
 
@@ -206,9 +207,11 @@ export function PostCard({
     const photoWidth = screenWidth - spacing.lg * 4;
 
     if (photos.length === 1) {
+      const photoUrl = fixStorageUrl(photos[0].url);
+      if (!photoUrl) return null;
       return (
         <Image
-          source={{ uri: photos[0].url }}
+          source={{ uri: photoUrl }}
           style={[styles.singlePhoto, { width: photoWidth }]}
           resizeMode="cover"
         />
@@ -217,17 +220,21 @@ export function PostCard({
 
     return (
       <View style={styles.photoGrid}>
-        {photos.map((photo, index) => (
-          <Image
-            key={photo.id}
-            source={{ uri: photo.url }}
-            style={[
-              styles.gridPhoto,
-              { width: (photoWidth - spacing.xs) / 2 },
-            ]}
-            resizeMode="cover"
-          />
-        ))}
+        {photos.map((photo) => {
+          const photoUrl = fixStorageUrl(photo.url);
+          if (!photoUrl) return null;
+          return (
+            <Image
+              key={photo.id}
+              source={{ uri: photoUrl }}
+              style={[
+                styles.gridPhoto,
+                { width: (photoWidth - spacing.xs) / 2 },
+              ]}
+              resizeMode="cover"
+            />
+          );
+        })}
       </View>
     );
   };

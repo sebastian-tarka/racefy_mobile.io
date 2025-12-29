@@ -92,6 +92,9 @@
     "loadingMore": "Ładowanie więcej...",
     "placeholder": "Co masz na myśli?",
     "photo": "Zdjęcie",
+    "addPhoto": "Dodaj zdjęcie",
+    "takePhoto": "Zrób zdjęcie",
+    "chooseFromLibrary": "Wybierz z biblioteki",
     "post": "Opublikuj",
     "noPosts": "Brak postów",
     "beFirst": "Bądź pierwszy i podziel się czymś!",
@@ -367,6 +370,10 @@
       "endDateRequired": "Data zakończenia jest wymagana",
       "endDateBeforeStart": "Data zakończenia musi być późniejsza niż data rozpoczęcia"
     }
+  },
+  "permissions": {
+    "gallery": "Wymagane jest pozwolenie na dostęp do zdjęć.",
+    "camera": "Wymagane jest pozwolenie na dostęp do aparatu."
   },
   "settings": {
     "title": "Ustawienia",
