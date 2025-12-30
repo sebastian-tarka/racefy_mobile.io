@@ -38,14 +38,19 @@ cd RacefyApp && npx expo install <package>
 - `navigation/` - AppNavigator with MainTabs and Auth modal stack
 - `screens/auth/` - Login/Register screens
 - `screens/main/` - Home, Feed, Events, Profile, ActivityRecording
-- `components/` - Reusable UI components (Button, Input, Card, Avatar, etc.)
+- `screens/details/` - Detail screens (EventDetail, ActivityDetail, UserProfile)
+- `screens/settings/` - Settings screen
+- `components/` - Reusable UI components (Button, Input, Card, Avatar, ScreenHeader, etc.)
 - `theme/` - Colors (emerald primary #10b981), spacing, typography tokens
 - `types/api.ts` - TypeScript interfaces matching Laravel API
 - `i18n/` - Translation setup and locale files
+- `docs/` - Internal documentation (UI_PATTERNS.md)
 
 ### Key Patterns
 
-**Authentication**: `useAuth` hook provides context with user state, login/register/logout. Token stored in AsyncStorage as `@racefy_token`.
+**Authentication**: `useAuth` hook provides context with user state, login/register/logout. Token stored in AsyncStorage as `@racefy_token`. On login/app start, user preferences (language, theme) are synced from server.
+
+**Language Sync**: Language preference is stored locally in AsyncStorage (`@racefy_language`) for instant app start, then synced with server preferences when user is authenticated.
 
 **API Configuration**: Platform-aware URL detection in `config/api.ts`:
 - Android Emulator: `http://10.0.2.2:8080/api`
@@ -70,6 +75,31 @@ RootStack
     ├── Login
     └── Register
 ```
+
+## UI Conventions
+
+For detailed UI patterns, see `RacefyApp/docs/UI_PATTERNS.md`.
+
+**Screen Headers**: Use `ScreenHeader` component for consistent headers:
+```tsx
+<ScreenHeader title={t('screen.title')} showBack onBack={() => navigation.goBack()} />
+```
+
+**Theming**: Always use `useTheme()` hook for colors:
+```tsx
+const { colors } = useTheme();
+<View style={{ backgroundColor: colors.cardBackground }}>
+```
+
+**Translations**: Never hardcode strings, use i18n:
+```tsx
+const { t } = useTranslation();
+<Text>{t('screen.title')}</Text>
+```
+
+**Spacing**: Use theme tokens from `spacing` object (xs=4, sm=8, md=16, lg=24, xl=32).
+
+**Card Lists**: Cards have built-in `marginBottom: spacing.md`. Lists use `paddingHorizontal: spacing.md`.
 
 ## Environment Setup
 
@@ -97,3 +127,15 @@ For API endpoint details, request/response formats, and implementation examples,
 - `docs/api/CHANGELOG.md` - API version changes and updates
 
 Use these docs when implementing new features that interact with the Laravel backend.
+
+## Development Guidelines
+
+When implementing new features:
+
+1. **New Screens**: Use `ScreenHeader` component, `SafeAreaView` with `edges={['top']}`, and theme colors
+2. **New Components**: Export from `components/index.ts`, use theme tokens for spacing/colors
+3. **New Translations**: Add keys to both `en.json` and `pl.json`
+4. **API Integration**: Add methods to `services/api.ts`, types to `types/api.ts`
+5. **Forms**: Use existing `Input`, `Button` components with validation patterns from existing screens
+6. **Lists**: Use `FlatList` with card components, ensure consistent spacing with `listContent` style
+7. **UI Patterns**: When adding new reusable UI patterns or components, update `RacefyApp/docs/UI_PATTERNS.md` with usage examples
