@@ -430,7 +430,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
             <View style={styles.participantsRow}>
               {participants.slice(0, 6).map((registration, index) => (
                 <TouchableOpacity
-                  key={`participant-${registration.id}-${registration.user_id}`}
+                  key={`participant-${index}-${registration.id ?? 'no-id'}-${registration.user_id ?? 'no-user'}`}
                   style={[
                     styles.participantAvatar,
                     index > 0 && styles.participantAvatarOverlap,

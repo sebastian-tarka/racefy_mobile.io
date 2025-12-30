@@ -432,6 +432,7 @@
     "theme_system": "Systemowy",
     "theme_light": "Jasny",
     "theme_dark": "Ciemny",
+    "hapticFeedback": "Wibracje",
     "notifications": "Powiadomienia",
     "notif_likes": "Polubienia",
     "notif_likes_desc": "Gdy ktoś polubi Twój post lub aktywność",

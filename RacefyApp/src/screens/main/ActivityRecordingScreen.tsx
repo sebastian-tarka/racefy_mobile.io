@@ -19,6 +19,8 @@ import { useLiveActivity, usePermissions, useActivityStats } from '../../hooks';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import { triggerHaptic } from '../../hooks/useHaptics';
+import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 
 // Mock data for milestones based on previous activities
@@ -268,6 +270,7 @@ export function ActivityRecordingScreen() {
 
   const handleStart = async () => {
     console.log('Start button pressed');
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     if (!selectedSport) {
       Alert.alert(t('recording.error'), t('recording.selectSportFirst'));
@@ -292,6 +295,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handlePause = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await pauseTracking();
       console.log('Activity paused');
@@ -301,6 +305,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handleResume = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await resumeTracking();
       console.log('Activity resumed');
@@ -310,6 +315,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handleStop = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
     // First pause, then user can save or discard
     if (isTracking) {
       await handlePause();
@@ -320,6 +326,7 @@ export function ActivityRecordingScreen() {
 
   const handleSave = async () => {
     if (!activity || !selectedSport) return;
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       const finishedActivity = await finishTracking({
@@ -335,6 +342,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handleDiscard = async () => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       t('recording.discardActivity'),
       t('recording.discardConfirm'),

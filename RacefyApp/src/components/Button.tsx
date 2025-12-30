@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -8,6 +8,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
+import { triggerHaptic } from '../hooks/useHaptics';
 import { spacing, borderRadius, fontSize } from '../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
@@ -21,6 +22,7 @@ interface ButtonProps {
   style?: ViewStyle;
   textStyle?: TextStyle;
   fullWidth?: boolean;
+  haptic?: boolean;
 }
 
 export function Button({
@@ -32,8 +34,16 @@ export function Button({
   style,
   textStyle,
   fullWidth = false,
+  haptic = true,
 }: ButtonProps) {
   const { colors } = useTheme();
+
+  const handlePress = useCallback(() => {
+    if (haptic) {
+      triggerHaptic();
+    }
+    onPress();
+  }, [haptic, onPress]);
 
   const getButtonStyle = (): ViewStyle => {
     const base: ViewStyle = {
@@ -85,7 +95,7 @@ export function Button({
   return (
     <TouchableOpacity
       style={[getButtonStyle(), style]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.7}
     >

@@ -432,6 +432,7 @@
     "theme_system": "System",
     "theme_light": "Light",
     "theme_dark": "Dark",
+    "hapticFeedback": "Haptic Feedback",
     "notifications": "Notifications",
     "notif_likes": "Likes",
     "notif_likes_desc": "When someone likes your post or activity",

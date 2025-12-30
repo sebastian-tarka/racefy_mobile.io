@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
+import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { AppNavigator } from './src/navigation';
 
 // Initialize i18n
@@ -18,6 +19,7 @@ function AppContent() {
 
   useEffect(() => {
     loadSavedLanguage();
+    loadGlobalHapticsPreference();
   }, []);
 
   return (

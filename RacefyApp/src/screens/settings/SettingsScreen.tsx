@@ -16,6 +16,7 @@ import * as Application from 'expo-application';
 import { Input, Button, ScreenHeader } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { changeLanguage } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
@@ -38,7 +39,7 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
   const { colors } = useTheme();
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    triggerHaptic();
     onPress?.();
   };
 
@@ -97,7 +98,7 @@ function NotificationRow({ icon, label, description, settings, onEmailChange, on
           <Switch
             value={settings.email}
             onValueChange={(value) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              triggerHaptic();
               onEmailChange(value);
             }}
             trackColor={{ false: colors.border, true: colors.primaryLight }}
@@ -109,7 +110,7 @@ function NotificationRow({ icon, label, description, settings, onEmailChange, on
           <Switch
             value={settings.push}
             onValueChange={(value) => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              triggerHaptic();
               onPushChange(value);
             }}
             trackColor={{ false: colors.border, true: colors.primaryLight }}
@@ -157,6 +158,7 @@ export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { logout } = useAuth();
   const { colors, themePreference, setThemePreference } = useTheme();
+  const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
 
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,7 +205,7 @@ export function SettingsScreen({ navigation }: Props) {
     key: K,
     value: UserPreferences[K]
   ) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    triggerHaptic();
     const oldPreferences = { ...preferences };
     setPreferences(prev => ({ ...prev, [key]: value }));
 
@@ -226,7 +228,7 @@ export function SettingsScreen({ navigation }: Props) {
     key: NK,
     value: UserPreferences[K][NK]
   ) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    triggerHaptic();
     const oldPreferences = { ...preferences };
     const updatedCategory = { ...preferences[category], [key]: value };
     setPreferences(prev => ({ ...prev, [category]: updatedCategory }));
@@ -295,7 +297,7 @@ export function SettingsScreen({ navigation }: Props) {
     if (Object.keys(errors).length > 0) return;
 
     setIsChangingPassword(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       await api.updatePassword({
@@ -338,7 +340,7 @@ export function SettingsScreen({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             setIsDeleting(true);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
 
             try {
               await api.deleteAccount(deletePassword);
@@ -361,7 +363,7 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
   const handleLogout = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -503,7 +505,7 @@ export function SettingsScreen({ navigation }: Props) {
             icon="color-palette-outline"
             label={t('settings.theme')}
             value={t(`settings.theme_${themePreference}`)}
-            
+
             onPress={async () => {
               const themes: ('light' | 'dark' | 'system')[] = ['system', 'light', 'dark'];
               const currentIndex = themes.indexOf(themePreference);
@@ -513,6 +515,24 @@ export function SettingsScreen({ navigation }: Props) {
               // Also sync to server
               updatePreference('theme', newTheme);
             }}
+          />
+          <SettingsRow
+            icon="phone-portrait-outline"
+            label={t('settings.hapticFeedback')}
+            rightElement={
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={(value) => {
+                  if (value) {
+                    // Trigger haptic when enabling to show it works
+                    triggerHaptic();
+                  }
+                  setHapticsEnabled(value);
+                }}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={hapticsEnabled ? colors.primary : colors.white}
+              />
+            }
           />
         </View>
 
