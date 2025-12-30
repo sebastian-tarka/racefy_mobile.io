@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -153,17 +153,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
   if (error || !event) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
-          </View>
-        </View>
+        <ScreenHeader
+          title={t('eventDetail.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.errorContainer}>
           <Ionicons
             name="alert-circle-outline"
@@ -195,25 +189,19 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
-        </View>
-        {canEdit && (
+      <ScreenHeader
+        title={t('eventDetail.title')}
+        showBack
+        onBack={() => navigation.goBack()}
+        rightAction={canEdit ? (
           <TouchableOpacity
             onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
-            style={styles.editButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-        )}
-      </View>
+        ) : undefined}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -457,29 +445,6 @@ export function EventDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-  },
-  editButton: {
-    padding: spacing.xs,
   },
   scrollContent: {
     paddingBottom: spacing.lg,

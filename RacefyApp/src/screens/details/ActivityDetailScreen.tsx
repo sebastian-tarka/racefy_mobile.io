@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
@@ -121,12 +121,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   if (error || !activity) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
-        </View>
+        <ScreenHeader
+          title={t('activityDetail.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('activityDetail.notFound')}</Text>
@@ -138,12 +137,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
-      </View>
+      <ScreenHeader
+        title={t('activityDetail.title')}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -303,21 +301,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
   },
   scrollContent: {
     paddingBottom: spacing.lg,

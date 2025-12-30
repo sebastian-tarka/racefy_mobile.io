@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button } from '../../components';
+import { Input, Button, ScreenHeader } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -406,12 +406,11 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('settings.title')}</Text>
-      </View>
+      <ScreenHeader
+        title={t('settings.title')}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Account Section */}
@@ -725,21 +724,6 @@ export function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

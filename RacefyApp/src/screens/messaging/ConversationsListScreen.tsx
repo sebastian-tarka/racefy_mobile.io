@@ -9,10 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
-import { Avatar, EmptyState, Loading } from '../../components';
+import { Avatar, EmptyState, Loading, ScreenHeader } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -126,15 +125,11 @@ export function ConversationsListScreen({ navigation }: Props) {
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-        </View>
+        <ScreenHeader
+          title={t('messaging.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <EmptyState
           icon="lock-closed-outline"
           title={t('feed.signInRequired')}
@@ -149,15 +144,11 @@ export function ConversationsListScreen({ navigation }: Props) {
   if (isLoading && conversations.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-        </View>
+        <ScreenHeader
+          title={t('messaging.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <Loading fullScreen message={t('common.loading')} />
       </SafeAreaView>
     );
@@ -165,15 +156,11 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-      </View>
+      <ScreenHeader
+        title={t('messaging.title')}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
 
       <FlatList
         data={conversations}
@@ -220,21 +207,6 @@ export function ConversationsListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
   },
   listContent: {
     flexGrow: 1,

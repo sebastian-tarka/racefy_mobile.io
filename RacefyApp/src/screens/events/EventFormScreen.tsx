@@ -22,6 +22,7 @@ import {
   SportTypeSelector,
   DifficultySelector,
   ImagePickerButton,
+  ScreenHeader,
 } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
@@ -328,14 +329,11 @@ export function EventFormScreen({ navigation, route }: Props) {
   if (isFetching) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
-          </Text>
-        </View>
+        <ScreenHeader
+          title={isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -349,14 +347,11 @@ export function EventFormScreen({ navigation, route }: Props) {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
-          </Text>
-        </View>
+        <ScreenHeader
+          title={isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
 
         <ScrollView
           style={styles.scrollView}
@@ -550,21 +545,6 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: spacing.xs,
-    marginRight: spacing.sm,
-  },
-  headerTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

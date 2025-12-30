@@ -11,4 +11,5 @@ export * from './Input';
 export * from './LeafletMap';
 export * from './Loading';
 export * from './PostCard';
+export * from './ScreenHeader';
 export * from './SportTypeSelector';

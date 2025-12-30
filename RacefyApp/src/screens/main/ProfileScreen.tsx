@@ -354,6 +354,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
           </TouchableOpacity>
         ))}
       </View>
+      <View style={styles.tabSpacer} />
     </>
   );
 
@@ -499,7 +500,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  tabSpacer: {
+    height: spacing.md,
   },
   coverImage: {
     height: 120,
