@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 import { api } from '../services/api';
+import { changeLanguage } from '../i18n';
 import type { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthContextType {
@@ -24,6 +25,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Sync language preference from server to local i18n
+  async function syncLanguagePreference() {
+    try {
+      const prefs = await api.getPreferences();
+      if (prefs.language) {
+        await changeLanguage(prefs.language);
+      }
+    } catch (error) {
+      // Ignore errors - local language preference will be used
+      console.log('Failed to sync language preference:', error);
+    }
+  }
+
   useEffect(() => {
     initAuth();
   }, []);
@@ -34,6 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (api.isAuthenticated()) {
         const userData = await api.getUser();
         setUser(userData);
+        // Sync language preference from server after auth
+        syncLanguagePreference();
       }
     } catch (error) {
       await api.clearToken();
@@ -46,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.login(data);
     console.log('Auth hook received user:', response.user);
     setUser(response.user);
+    // Sync language preference after login
+    syncLanguagePreference();
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {

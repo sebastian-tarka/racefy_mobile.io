@@ -134,7 +134,6 @@ export function ConversationsListScreen({ navigation }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-          <View style={styles.headerRight} />
         </View>
         <EmptyState
           icon="lock-closed-outline"
@@ -158,7 +157,6 @@ export function ConversationsListScreen({ navigation }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-          <View style={styles.headerRight} />
         </View>
         <Loading fullScreen message={t('common.loading')} />
       </SafeAreaView>
@@ -175,7 +173,6 @@ export function ConversationsListScreen({ navigation }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('messaging.title')}</Text>
-        <View style={styles.headerRight} />
       </View>
 
       <FlatList
@@ -227,20 +224,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-  },
-  headerRight: {
-    width: 32,
   },
   listContent: {
     flexGrow: 1,

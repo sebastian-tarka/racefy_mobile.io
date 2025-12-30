@@ -126,7 +126,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
-          <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
@@ -144,7 +143,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('activityDetail.title')}</Text>
-        <View style={styles.placeholder} />
       </View>
 
       <ScrollView
@@ -309,20 +307,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-  },
-  placeholder: {
-    width: 32,
   },
   scrollContent: {
     paddingBottom: spacing.lg,

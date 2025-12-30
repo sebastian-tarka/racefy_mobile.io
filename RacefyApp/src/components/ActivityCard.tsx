@@ -56,7 +56,7 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
-      <Card>
+      <Card style={styles.card}>
         {showUser && activity.user && (
           <View style={[styles.userHeader, { borderBottomColor: colors.borderLight }]}>
             <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
@@ -130,6 +130,9 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
 }
 
 const styles = StyleSheet.create({
+  card: {
+    marginBottom: spacing.md,
+  },
   userHeader: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -154,14 +154,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
-          <View style={styles.placeholder} />
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
+          </View>
         </View>
         <View style={styles.errorContainer}>
           <Ionicons
@@ -195,22 +196,22 @@ export function EventDetailScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
-        {canEdit ? (
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('eventDetail.title')}</Text>
+        </View>
+        {canEdit && (
           <TouchableOpacity
             onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
             style={styles.editButton}
           >
             <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-        ) : (
-          <View style={styles.placeholder} />
         )}
       </View>
 
@@ -460,20 +461,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-  },
-  placeholder: {
-    width: 32,
   },
   editButton: {
     padding: spacing.xs,

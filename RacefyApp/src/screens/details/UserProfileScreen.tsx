@@ -269,7 +269,6 @@ export function UserProfileScreen({ navigation, route }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
-          <View style={styles.headerRight} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -286,7 +285,6 @@ export function UserProfileScreen({ navigation, route }: Props) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
-          <View style={styles.headerRight} />
         </View>
         <EmptyState
           icon="alert-circle-outline"
@@ -306,7 +304,6 @@ export function UserProfileScreen({ navigation, route }: Props) {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>@{profile.username}</Text>
-        <View style={styles.headerRight} />
       </View>
 
       {profile.background_image_url ? (
@@ -518,7 +515,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -526,20 +522,17 @@ const styles = StyleSheet.create({
   navHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-  },
-  headerRight: {
-    width: 32,
   },
   loadingContainer: {
     flex: 1,
@@ -548,6 +541,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
+    padding: spacing.md,
   },
   coverImage: {
     height: 120,

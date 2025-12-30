@@ -17,6 +17,7 @@ import { Input, Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { changeLanguage } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -186,6 +187,10 @@ export function SettingsScreen({ navigation }: Props) {
       // Sync local theme with server preferences
       if (prefs.theme && prefs.theme !== themePreference) {
         setThemePreference(prefs.theme);
+      }
+      // Sync local language with server preferences
+      if (prefs.language) {
+        await changeLanguage(prefs.language);
       }
     } catch (error) {
       console.error('Failed to load preferences:', error);
@@ -487,8 +492,13 @@ export function SettingsScreen({ navigation }: Props) {
             icon="language-outline"
             label={t('settings.language')}
             value={preferences.language === 'en' ? 'English' : 'Polski'}
-            onPress={() => updatePreference('language', preferences.language === 'en' ? 'pl' : 'en')}
-            
+            onPress={async () => {
+              const newLang = preferences.language === 'en' ? 'pl' : 'en';
+              // Update local i18n immediately for instant UI change
+              await changeLanguage(newLang);
+              // Then sync with server
+              updatePreference('language', newLang);
+            }}
           />
           <SettingsRow
             icon="color-palette-outline"

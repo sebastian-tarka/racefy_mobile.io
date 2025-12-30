@@ -285,6 +285,7 @@
     "totalDistance": "Całkowity dystans",
     "totalTime": "Całkowity czas",
     "avgPace": "Śr. tempo /km",
+    "noStats": "Brak zarejestrowanych aktywności. Rozpocznij swoją pierwszą aktywność {{sport}}!",
     "existingActivity": {
       "title": "Niedokończona aktywność",
       "message": "Masz wstrzymaną aktywność ({{duration}}, {{distance}}). Co chcesz zrobić?",

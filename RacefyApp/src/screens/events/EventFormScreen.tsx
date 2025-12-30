@@ -335,7 +335,6 @@ export function EventFormScreen({ navigation, route }: Props) {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
           </Text>
-          <View style={styles.headerRight} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -357,7 +356,6 @@ export function EventFormScreen({ navigation, route }: Props) {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             {isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
           </Text>
-          <View style={styles.headerRight} />
         </View>
 
         <ScrollView
@@ -556,20 +554,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   backButton: {
     padding: spacing.xs,
+    marginRight: spacing.sm,
   },
   headerTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-  },
-  headerRight: {
-    width: 32,
   },
   loadingContainer: {
     flex: 1,

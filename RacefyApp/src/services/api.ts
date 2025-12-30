@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config/api';
+import { getCurrentLanguage } from '../i18n';
 import type * as Types from '../types/api';
 
 const TOKEN_KEY = '@racefy_token';
@@ -18,7 +19,7 @@ class ApiService {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'Accept-Language': 'en',
+      'Accept-Language': getCurrentLanguage(),
       ...options.headers,
     };
 

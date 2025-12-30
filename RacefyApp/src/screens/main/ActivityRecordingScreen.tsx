@@ -15,9 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Badge } from '../../components';
-import { useLiveActivity, usePermissions } from '../../hooks';
+import { useLiveActivity, usePermissions, useActivityStats } from '../../hooks';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../hooks/useAuth';
 import { spacing, fontSize, borderRadius } from '../../theme';
 
 // Mock data for milestones based on previous activities
@@ -37,6 +38,7 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const {
@@ -58,6 +60,11 @@ export function ActivityRecordingScreen() {
   const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
   const [showAllSports, setShowAllSports] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
+
+  // Fetch stats for selected sport type (only when authenticated)
+  const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
+    isAuthenticated && selectedSport ? selectedSport.id : undefined
+  );
 
   // Set default sport when sports are loaded
   useEffect(() => {
@@ -232,6 +239,31 @@ export function ActivityRecordingScreen() {
     const mins = Math.floor(paceSeconds / 60);
     const secs = Math.floor(paceSeconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')} /km`;
+  };
+
+  const formatTotalDistance = (meters: number): string => {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(0)} km`;
+    }
+    return `${Math.round(meters)} m`;
+  };
+
+  const formatTotalTime = (seconds: number): string => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}h`;
+    }
+    return `${mins}m`;
+  };
+
+  const formatAvgPace = (avgSpeed: number): string => {
+    if (!avgSpeed || avgSpeed === 0) return '--:--';
+    // avgSpeed is in m/s, convert to min/km
+    const paceSeconds = 1000 / avgSpeed;
+    const mins = Math.floor(paceSeconds / 60);
+    const secs = Math.floor(paceSeconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handleStart = async () => {
@@ -642,29 +674,59 @@ export function ActivityRecordingScreen() {
         </Card>
 
         {/* Previous Activities Summary */}
-        <Card style={styles.previousCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('recording.yourStats', { sport: selectedSport?.name || '' })}
-          </Text>
-          <View style={styles.prevStatsGrid}>
-            <View style={styles.prevStatItem}>
-              <Text style={[styles.prevStatValue, { color: colors.primary }]}>23</Text>
-              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.activities')}</Text>
-            </View>
-            <View style={styles.prevStatItem}>
-              <Text style={[styles.prevStatValue, { color: colors.primary }]}>156 km</Text>
-              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.totalDistance')}</Text>
-            </View>
-            <View style={styles.prevStatItem}>
-              <Text style={[styles.prevStatValue, { color: colors.primary }]}>12:45h</Text>
-              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.totalTime')}</Text>
-            </View>
-            <View style={styles.prevStatItem}>
-              <Text style={[styles.prevStatValue, { color: colors.primary }]}>5:28</Text>
-              <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>{t('recording.avgPace')}</Text>
-            </View>
-          </View>
-        </Card>
+        {isAuthenticated && (
+          <Card style={styles.previousCard}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('recording.yourStats', { sport: selectedSport?.name || '' })}
+            </Text>
+            {statsLoading ? (
+              <View style={styles.statsLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : activityStats ? (
+              <View style={styles.prevStatsGrid}>
+                <View style={styles.prevStatItem}>
+                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
+                    {activityStats.count}
+                  </Text>
+                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
+                    {t('recording.activities')}
+                  </Text>
+                </View>
+                <View style={styles.prevStatItem}>
+                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
+                    {formatTotalDistance(activityStats.totals.distance)}
+                  </Text>
+                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
+                    {t('recording.totalDistance')}
+                  </Text>
+                </View>
+                <View style={styles.prevStatItem}>
+                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
+                    {formatTotalTime(activityStats.totals.duration)}
+                  </Text>
+                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
+                    {t('recording.totalTime')}
+                  </Text>
+                </View>
+                <View style={styles.prevStatItem}>
+                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
+                    {formatAvgPace(activityStats.averages.speed)}
+                  </Text>
+                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
+                    {t('recording.avgPace')}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.noStatsContainer}>
+                <Text style={[styles.noStatsText, { color: colors.textMuted }]}>
+                  {t('recording.noStats', { sport: selectedSport?.name?.toLowerCase() || '' })}
+                </Text>
+              </View>
+            )}
+          </Card>
+        )}
       </ScrollView>
 
       {renderLoadingOverlay()}
@@ -968,6 +1030,18 @@ const styles = StyleSheet.create({
   prevStatLabel: {
     fontSize: fontSize.xs,
     marginTop: 2,
+  },
+  statsLoading: {
+    padding: spacing.xl,
+    alignItems: 'center',
+  },
+  noStatsContainer: {
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  noStatsText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,

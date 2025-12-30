@@ -285,6 +285,7 @@
     "totalDistance": "Total Distance",
     "totalTime": "Total Time",
     "avgPace": "Avg Pace /km",
+    "noStats": "No activities recorded yet. Start your first {{sport}} activity!",
     "existingActivity": {
       "title": "Unfinished Activity",
       "message": "You have a paused activity ({{duration}}, {{distance}}). What would you like to do?",

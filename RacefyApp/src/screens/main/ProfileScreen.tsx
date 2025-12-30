@@ -499,6 +499,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
+    padding: spacing.md,
   },
   coverImage: {
     height: 120,
