@@ -22,15 +22,16 @@ import {
   PostCard,
   ActivityCard,
   EventCard,
-  CollapsibleSection,
   SportStatsChart,
   PointsCard,
+  CompareUserSelector,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useActivityStats } from '../../hooks/useActivityStats';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useSportTypes } from '../../hooks/useSportTypes';
+import { useFollowing } from '../../hooks/useFollowing';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize } from '../../theme';
@@ -38,7 +39,7 @@ import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navig
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { UserStats, Post, Activity, Event } from '../../types/api';
+import type { UserStats, Post, Activity, Event, User, ActivityStats } from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -47,25 +48,57 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
-type TabType = 'posts' | 'activities' | 'events';
+type TabType = 'posts' | 'stats' | 'activities' | 'events';
 
-export function ProfileScreen({ navigation }: Props & { navigation: ProfileScreenNavigationProp }) {
+export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState<TabType>('posts');
+  const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Collapsible section states for activities tab
-  const [statsExpanded, setStatsExpanded] = useState(true);
-  const [activitiesExpanded, setActivitiesExpanded] = useState(true);
+  // Update active tab when navigating with initialTab param
+  useEffect(() => {
+    if (route.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params?.initialTab]);
 
   // Activity stats and points hooks
   const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats();
   const { stats: pointStats, isLoading: isLoadingPointStats, refetch: refetchPointStats } = usePointStats();
   const { sportTypes } = useSportTypes();
+  const { following, isLoading: isLoadingFollowing } = useFollowing();
+
+  // Comparison state
+  const [compareUser, setCompareUser] = useState<User | null>(null);
+  const [compareStats, setCompareStats] = useState<ActivityStats | null>(null);
+  const [isLoadingCompareStats, setIsLoadingCompareStats] = useState(false);
+
+  // Fetch comparison user stats when selected
+  useEffect(() => {
+    const fetchCompareStats = async () => {
+      if (!compareUser) {
+        setCompareStats(null);
+        return;
+      }
+
+      setIsLoadingCompareStats(true);
+      try {
+        const stats = await api.getUserActiveActivityStats(compareUser.id);
+        setCompareStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch compare user stats:', error);
+        setCompareStats(null);
+      } finally {
+        setIsLoadingCompareStats(false);
+      }
+    };
+
+    fetchCompareStats();
+  }, [compareUser]);
 
   // Posts state
   const [posts, setPosts] = useState<Post[]>([]);
@@ -201,14 +234,15 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       setPostsPage(1);
       setHasMorePosts(true);
       await fetchPosts(1, true);
-    } else if (activeTab === 'activities') {
-      setActivitiesPage(1);
-      setHasMoreActivities(true);
+    } else if (activeTab === 'stats') {
       await Promise.all([
-        fetchActivities(1, true),
         refetchActivityStats(),
         refetchPointStats(),
       ]);
+    } else if (activeTab === 'activities') {
+      setActivitiesPage(1);
+      setHasMoreActivities(true);
+      await fetchActivities(1, true);
     } else if (activeTab === 'events') {
       setEventsPage(1);
       setHasMoreEvents(true);
@@ -277,6 +311,7 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
+    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart' },
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
@@ -375,69 +410,36 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
       </View>
       <View style={styles.tabSpacer} />
 
-      {/* Activities Tab Content - Collapsible Sections */}
-      {activeTab === 'activities' && (
-        <View style={styles.activitiesTabContent}>
-          {/* Stats Section */}
-          <CollapsibleSection
-            title={t('profile.activities.stats')}
-            icon="stats-chart"
-            isExpanded={statsExpanded}
-            onToggle={() => setStatsExpanded(!statsExpanded)}
-          >
-            {/* Bar Chart */}
-            {activityStats?.by_sport_type && (
+      {/* Stats Tab Content */}
+      {activeTab === 'stats' && (
+        <View style={styles.statsTabContent}>
+          {/* User Comparison Selector */}
+          <CompareUserSelector
+            following={following}
+            selectedUser={compareUser}
+            onSelectUser={setCompareUser}
+            isLoading={isLoadingFollowing}
+          />
+
+          {/* Bar Chart */}
+          {activityStats?.by_sport_type && (
+            <View style={[styles.chartCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
               <SportStatsChart
                 data={activityStats.by_sport_type}
                 sportTypes={sportTypes}
+                compareData={compareStats?.by_sport_type}
+                compareUserName={compareUser?.name}
               />
-            )}
+              {isLoadingCompareStats && (
+                <View style={styles.chartLoadingOverlay}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
+            </View>
+          )}
 
-            {/* Points Card */}
-            <PointsCard stats={pointStats} isLoading={isLoadingPointStats} />
-          </CollapsibleSection>
-
-          {/* Recent Activities Section */}
-          <CollapsibleSection
-            title={t('profile.activities.recentActivities')}
-            icon="fitness-outline"
-            isExpanded={activitiesExpanded}
-            onToggle={() => setActivitiesExpanded(!activitiesExpanded)}
-            rightElement={
-              <Text style={[styles.activitiesCount, { color: colors.textSecondary }]}>
-                {activities.length}
-              </Text>
-            }
-          >
-            {activities.length === 0 && !isLoadingActivities ? (
-              <EmptyState
-                icon="fitness-outline"
-                title={t('profile.empty.noActivities')}
-                message={t('profile.empty.noActivitiesMessage')}
-              />
-            ) : (
-              <>
-                {activities.slice(0, 10).map((activity) => (
-                  <ActivityCard
-                    key={`activity-section-${activity.id}`}
-                    activity={activity}
-                    onPress={() => {
-                      navigation.navigate('ActivityDetail', { activityId: activity.id });
-                    }}
-                  />
-                ))}
-                {hasMoreActivities && (
-                  <Button
-                    title={t('common.viewAll')}
-                    variant="ghost"
-                    onPress={handleLoadMoreActivities}
-                    loading={isLoadingActivities}
-                    style={styles.loadMoreButton}
-                  />
-                )}
-              </>
-            )}
-          </CollapsibleSection>
+          {/* Points Card */}
+          <PointsCard stats={pointStats} isLoading={isLoadingPointStats} />
         </View>
       )}
     </>
@@ -459,11 +461,12 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   };
 
   const renderEmpty = () => {
-    // Activities empty state is handled in the collapsible section
-    if (activeTab === 'activities') return null;
+    // Stats tab content is rendered in header
+    if (activeTab === 'stats') return null;
 
     const isLoading =
       (activeTab === 'posts' && isLoadingPosts && posts.length === 0) ||
+      (activeTab === 'activities' && isLoadingActivities && activities.length === 0) ||
       (activeTab === 'events' && isLoadingEvents && events.length === 0);
 
     if (isLoading) return null;
@@ -474,6 +477,15 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
           icon="newspaper-outline"
           title={t('profile.empty.noPosts')}
           message={t('profile.empty.noPostsMessage')}
+        />
+      );
+    }
+    if (activeTab === 'activities') {
+      return (
+        <EmptyState
+          icon="fitness-outline"
+          title={t('profile.empty.noActivities')}
+          message={t('profile.empty.noActivitiesMessage')}
         />
       );
     }
@@ -488,8 +500,8 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   const getData = () => {
     if (activeTab === 'posts') return posts;
-    // Activities are rendered in the header collapsible section
-    if (activeTab === 'activities') return [];
+    if (activeTab === 'stats') return []; // Stats content rendered in header
+    if (activeTab === 'activities') return activities;
     return events;
   };
 
@@ -673,14 +685,25 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: 'center',
   },
-  activitiesTabContent: {
+  statsTabContent: {
     marginTop: spacing.sm,
   },
-  activitiesCount: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+  chartCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    position: 'relative',
   },
-  loadMoreButton: {
-    marginTop: spacing.sm,
+  chartLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
   },
 });

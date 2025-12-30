@@ -10,3 +10,4 @@ export * from './useSportTypes';
 export * from './useTheme';
 export * from './useActivityStats';
 export * from './usePointStats';
+export * from './useFollowing';

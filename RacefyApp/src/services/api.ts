@@ -693,6 +693,20 @@ class ApiService {
     return response.data;
   }
 
+  async getUserActivityStats(userId: number): Promise<Types.ActivityStats> {
+    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
+      `/users/${userId}/stats/activities`
+    );
+    return response.data;
+  }
+
+  async getUserActiveActivityStats(userId: number): Promise<Types.ActivityStats> {
+    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
+      `/users/${userId}/stats/activities/active`
+    );
+    return response.data;
+  }
+
   // ============ POINTS & LEADERBOARD ============
 
   async getMyPointStats(): Promise<Types.UserPointStats> {

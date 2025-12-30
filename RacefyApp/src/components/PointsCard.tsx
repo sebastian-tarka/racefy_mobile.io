@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +11,7 @@ interface PointsCardProps {
   isLoading: boolean;
 }
 
-export function PointsCard({ stats, isLoading }: PointsCardProps) {
+function PointsCardComponent({ stats, isLoading }: PointsCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -182,3 +182,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+// Memoize to prevent re-renders when parent state changes
+export const PointsCard = memo(PointsCardComponent);

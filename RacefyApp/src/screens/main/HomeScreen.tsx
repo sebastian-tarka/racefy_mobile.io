@@ -86,7 +86,13 @@ export function HomeScreen({ navigation }: Props) {
       icon: 'fitness-outline' as const,
       titleKey: 'home.activities',
       descriptionKey: 'home.activitiesDesc',
-      onPress: () => navigateToScreen('Profile', true),
+      onPress: () => {
+        if (!isAuthenticated) {
+          navigateToAuth('Login');
+        } else {
+          navigation.navigate('Profile', { initialTab: 'stats' });
+        }
+      },
     },
   ];
 

@@ -122,13 +122,21 @@
     "unfollow": "Przestań obserwować",
     "tabs": {
       "posts": "Posty",
+      "stats": "Statystyki",
       "activities": "Aktywności",
       "events": "Wydarzenia"
     },
     "stats": {
       "posts": "Posty",
       "followers": "Obserwujący",
-      "following": "Obserwowani"
+      "following": "Obserwowani",
+      "compareWith": "Porównaj z",
+      "selectUser": "Wybierz użytkownika",
+      "selectUserTitle": "Wybierz użytkownika",
+      "clearComparison": "Usuń porównanie",
+      "noFollowing": "Nie obserwujesz jeszcze nikogo",
+      "you": "Ty",
+      "compareUser": "Inny użytkownik"
     },
     "empty": {
       "noPosts": "Brak postów",

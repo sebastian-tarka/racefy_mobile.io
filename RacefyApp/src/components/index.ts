@@ -4,6 +4,7 @@ export * from './Badge';
 export * from './Button';
 export * from './Card';
 export * from './CollapsibleSection';
+export * from './CompareUserSelector';
 export * from './DifficultySelector';
 export * from './EmptyState';
 export * from './EventCard';

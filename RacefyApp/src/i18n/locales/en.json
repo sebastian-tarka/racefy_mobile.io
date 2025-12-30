@@ -122,13 +122,21 @@
     "unfollow": "Unfollow",
     "tabs": {
       "posts": "Posts",
+      "stats": "Stats",
       "activities": "Activities",
       "events": "Events"
     },
     "stats": {
       "posts": "Posts",
       "followers": "Followers",
-      "following": "Following"
+      "following": "Following",
+      "compareWith": "Compare with",
+      "selectUser": "Select user to compare",
+      "selectUserTitle": "Select user",
+      "clearComparison": "Clear comparison",
+      "noFollowing": "You're not following anyone yet",
+      "you": "You",
+      "compareUser": "Other user"
     },
     "empty": {
       "noPosts": "No posts yet",

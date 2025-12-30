@@ -11,7 +11,7 @@ export type MainTabParamList = {
   Feed: undefined;
   Record: undefined;
   Events: undefined;
-  Profile: undefined;
+  Profile: { initialTab?: 'posts' | 'stats' | 'activities' | 'events' } | undefined;
 };
 
 export type RootStackParamList = {
