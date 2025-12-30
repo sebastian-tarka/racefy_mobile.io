@@ -22,9 +22,15 @@ import {
   PostCard,
   ActivityCard,
   EventCard,
+  CollapsibleSection,
+  SportStatsChart,
+  PointsCard,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useActivityStats } from '../../hooks/useActivityStats';
+import { usePointStats } from '../../hooks/usePointStats';
+import { useSportTypes } from '../../hooks/useSportTypes';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize } from '../../theme';
@@ -51,6 +57,15 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Collapsible section states for activities tab
+  const [statsExpanded, setStatsExpanded] = useState(true);
+  const [activitiesExpanded, setActivitiesExpanded] = useState(true);
+
+  // Activity stats and points hooks
+  const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats();
+  const { stats: pointStats, isLoading: isLoadingPointStats, refetch: refetchPointStats } = usePointStats();
+  const { sportTypes } = useSportTypes();
 
   // Posts state
   const [posts, setPosts] = useState<Post[]>([]);
@@ -189,7 +204,11 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
     } else if (activeTab === 'activities') {
       setActivitiesPage(1);
       setHasMoreActivities(true);
-      await fetchActivities(1, true);
+      await Promise.all([
+        fetchActivities(1, true),
+        refetchActivityStats(),
+        refetchPointStats(),
+      ]);
     } else if (activeTab === 'events') {
       setEventsPage(1);
       setHasMoreEvents(true);
@@ -355,6 +374,72 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
         ))}
       </View>
       <View style={styles.tabSpacer} />
+
+      {/* Activities Tab Content - Collapsible Sections */}
+      {activeTab === 'activities' && (
+        <View style={styles.activitiesTabContent}>
+          {/* Stats Section */}
+          <CollapsibleSection
+            title={t('profile.activities.stats')}
+            icon="stats-chart"
+            isExpanded={statsExpanded}
+            onToggle={() => setStatsExpanded(!statsExpanded)}
+          >
+            {/* Bar Chart */}
+            {activityStats?.by_sport_type && (
+              <SportStatsChart
+                data={activityStats.by_sport_type}
+                sportTypes={sportTypes}
+              />
+            )}
+
+            {/* Points Card */}
+            <PointsCard stats={pointStats} isLoading={isLoadingPointStats} />
+          </CollapsibleSection>
+
+          {/* Recent Activities Section */}
+          <CollapsibleSection
+            title={t('profile.activities.recentActivities')}
+            icon="fitness-outline"
+            isExpanded={activitiesExpanded}
+            onToggle={() => setActivitiesExpanded(!activitiesExpanded)}
+            rightElement={
+              <Text style={[styles.activitiesCount, { color: colors.textSecondary }]}>
+                {activities.length}
+              </Text>
+            }
+          >
+            {activities.length === 0 && !isLoadingActivities ? (
+              <EmptyState
+                icon="fitness-outline"
+                title={t('profile.empty.noActivities')}
+                message={t('profile.empty.noActivitiesMessage')}
+              />
+            ) : (
+              <>
+                {activities.slice(0, 10).map((activity) => (
+                  <ActivityCard
+                    key={`activity-section-${activity.id}`}
+                    activity={activity}
+                    onPress={() => {
+                      navigation.navigate('ActivityDetail', { activityId: activity.id });
+                    }}
+                  />
+                ))}
+                {hasMoreActivities && (
+                  <Button
+                    title={t('common.viewAll')}
+                    variant="ghost"
+                    onPress={handleLoadMoreActivities}
+                    loading={isLoadingActivities}
+                    style={styles.loadMoreButton}
+                  />
+                )}
+              </>
+            )}
+          </CollapsibleSection>
+        </View>
+      )}
     </>
   );
 
@@ -374,9 +459,11 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
   };
 
   const renderEmpty = () => {
+    // Activities empty state is handled in the collapsible section
+    if (activeTab === 'activities') return null;
+
     const isLoading =
       (activeTab === 'posts' && isLoadingPosts && posts.length === 0) ||
-      (activeTab === 'activities' && isLoadingActivities && activities.length === 0) ||
       (activeTab === 'events' && isLoadingEvents && events.length === 0);
 
     if (isLoading) return null;
@@ -387,15 +474,6 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
           icon="newspaper-outline"
           title={t('profile.empty.noPosts')}
           message={t('profile.empty.noPostsMessage')}
-        />
-      );
-    }
-    if (activeTab === 'activities') {
-      return (
-        <EmptyState
-          icon="fitness-outline"
-          title={t('profile.empty.noActivities')}
-          message={t('profile.empty.noActivitiesMessage')}
         />
       );
     }
@@ -410,7 +488,8 @@ export function ProfileScreen({ navigation }: Props & { navigation: ProfileScree
 
   const getData = () => {
     if (activeTab === 'posts') return posts;
-    if (activeTab === 'activities') return activities;
+    // Activities are rendered in the header collapsible section
+    if (activeTab === 'activities') return [];
     return events;
   };
 
@@ -593,5 +672,15 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
+  },
+  activitiesTabContent: {
+    marginTop: spacing.sm,
+  },
+  activitiesCount: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  loadMoreButton: {
+    marginTop: spacing.sm,
   },
 });

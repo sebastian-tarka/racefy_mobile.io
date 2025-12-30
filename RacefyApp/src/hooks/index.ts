@@ -9,3 +9,4 @@ export * from './useUnreadCount';
 export * from './useSportTypes';
 export * from './useTheme';
 export * from './useActivityStats';
+export * from './usePointStats';

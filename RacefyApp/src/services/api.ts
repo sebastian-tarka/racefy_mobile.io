@@ -316,6 +316,13 @@ class ApiService {
     await this.request(`/events/${eventId}/register`, { method: 'DELETE' });
   }
 
+  async getEventParticipants(eventId: number): Promise<Types.EventRegistration[]> {
+    const response = await this.request<
+      Types.ApiResponse<Types.EventRegistration[]>
+    >(`/events/${eventId}/participants`);
+    return response.data;
+  }
+
   async getMyEvents(): Promise<Types.Event[]> {
     const response =
       await this.request<Types.ApiResponse<Types.Event[]>>('/my-events');
@@ -682,6 +689,15 @@ class ApiService {
     const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
     const response = await this.request<Types.ApiResponse<Types.WeeklyStats>>(
       `/stats/weekly${query}`
+    );
+    return response.data;
+  }
+
+  // ============ POINTS & LEADERBOARD ============
+
+  async getMyPointStats(): Promise<Types.UserPointStats> {
+    const response = await this.request<Types.ApiResponse<Types.UserPointStats>>(
+      '/leaderboard/me'
     );
     return response.data;
   }

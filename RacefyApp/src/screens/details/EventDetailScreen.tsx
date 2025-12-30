@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge, ScreenHeader } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader, Avatar } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -21,7 +21,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event } from '../../types/api';
+import type { Event, EventRegistration } from '../../types/api';
 import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
@@ -40,16 +40,30 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
   const { isAuthenticated, user } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
+  const [participants, setParticipants] = useState<EventRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchParticipants = useCallback(async () => {
+    try {
+      const participantsData = await api.getEventParticipants(eventId);
+      setParticipants(participantsData);
+    } catch (err) {
+      // Silently fail - participants are optional
+    }
+  }, [eventId]);
+
   const fetchEvent = useCallback(async () => {
     try {
       setError(null);
-      const data = await api.getEvent(eventId);
-      setEvent(data);
+      const [eventData, participantsData] = await Promise.all([
+        api.getEvent(eventId),
+        api.getEventParticipants(eventId).catch(() => []),
+      ]);
+      setEvent(eventData);
+      setParticipants(participantsData);
     } catch (err) {
       setError(t('eventDetail.failedToLoad'));
     } finally {
@@ -87,6 +101,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
             }
           : null
       );
+      // Refresh participants list to show updated avatars
+      fetchParticipants();
       Alert.alert(t('common.success'), t('eventDetail.registrationSuccess'));
     } catch (err: any) {
       Alert.alert(t('common.error'), err.message || t('eventDetail.registrationFailed'));
@@ -119,6 +135,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                     }
                   : null
               );
+              // Refresh participants list to show updated avatars
+              fetchParticipants();
               Alert.alert(t('common.success'), t('eventDetail.cancelSuccess'));
             } catch (err: any) {
               Alert.alert(
@@ -403,6 +421,44 @@ export function EventDetailScreen({ route, navigation }: Props) {
           </Card>
         )}
 
+        {/* Participants */}
+        {participants.length > 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('eventDetail.participants')} ({participants.length})
+            </Text>
+            <View style={styles.participantsRow}>
+              {participants.slice(0, 6).map((registration, index) => (
+                <TouchableOpacity
+                  key={`participant-${registration.id}-${registration.user_id}`}
+                  style={[
+                    styles.participantAvatar,
+                    index > 0 && styles.participantAvatarOverlap,
+                  ]}
+                  onPress={() => {
+                    if (registration.user?.username) {
+                      navigation.navigate('UserProfile', { username: registration.user.username });
+                    }
+                  }}
+                >
+                  <Avatar
+                    uri={registration.user?.avatar}
+                    name={registration.user?.name || '?'}
+                    size="md"
+                  />
+                </TouchableOpacity>
+              ))}
+              {participants.length > 6 && (
+                <View style={[styles.participantAvatar, styles.participantAvatarOverlap, styles.moreParticipants, { backgroundColor: colors.border }]}>
+                  <Text style={[styles.moreParticipantsText, { color: colors.textPrimary }]}>
+                    +{participants.length - 6}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
+
         {/* Spacer for button */}
         <View style={{ height: 80 }} />
       </ScrollView>
@@ -588,5 +644,26 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     marginVertical: spacing.lg,
     textAlign: 'center',
+  },
+  participantsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  participantAvatar: {
+    borderRadius: 20,
+  },
+  participantAvatarOverlap: {
+    marginLeft: -spacing.sm,
+  },
+  moreParticipants: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreParticipantsText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });

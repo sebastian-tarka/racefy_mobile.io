@@ -427,6 +427,20 @@ export interface WeeklyStats {
   >;
 }
 
+// ============ POINTS & LEADERBOARD ============
+
+export interface UserPointStats {
+  total_points: number;
+  weekly_points: number;
+  monthly_points: number;
+  global_rank: number;
+  weekly_rank: number;
+  monthly_rank: number;
+  total_transactions: number;
+  activity_points: number;
+  event_points: number;
+}
+
 // ============ PAGINATION ============
 
 export interface PaginatedResponse<T> {

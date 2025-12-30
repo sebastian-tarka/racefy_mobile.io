@@ -137,6 +137,28 @@
       "noActivitiesMessage": "Start tracking your workouts",
       "noEvents": "No events yet",
       "noEventsMessage": "Join events to see them here"
+    },
+    "activities": {
+      "stats": "Statistics",
+      "recentActivities": "Recent Activities",
+      "noStats": "No activity data yet",
+      "chartMetric": {
+        "distance": "Distance",
+        "count": "Count",
+        "duration": "Duration"
+      }
+    },
+    "points": {
+      "title": "Points",
+      "totalPoints": "Total Points",
+      "weeklyPoints": "This Week",
+      "monthlyPoints": "This Month",
+      "globalRank": "Global Rank",
+      "weeklyRank": "Weekly Rank",
+      "monthlyRank": "Monthly Rank",
+      "fromActivities": "From Activities",
+      "fromEvents": "From Events",
+      "noPoints": "No points yet"
     }
   },
   "editProfile": {

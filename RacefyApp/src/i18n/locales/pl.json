@@ -137,6 +137,28 @@
       "noActivitiesMessage": "Zacznij śledzić swoje treningi",
       "noEvents": "Brak wydarzeń",
       "noEventsMessage": "Dołącz do wydarzeń, aby je tutaj zobaczyć"
+    },
+    "activities": {
+      "stats": "Statystyki",
+      "recentActivities": "Ostatnie aktywności",
+      "noStats": "Brak danych o aktywnościach",
+      "chartMetric": {
+        "distance": "Dystans",
+        "count": "Ilość",
+        "duration": "Czas"
+      }
+    },
+    "points": {
+      "title": "Punkty",
+      "totalPoints": "Wszystkie punkty",
+      "weeklyPoints": "Ten tydzień",
+      "monthlyPoints": "Ten miesiąc",
+      "globalRank": "Ranking globalny",
+      "weeklyRank": "Ranking tygodnia",
+      "monthlyRank": "Ranking miesiąca",
+      "fromActivities": "Z aktywności",
+      "fromEvents": "Z wydarzeń",
+      "noPoints": "Brak punktów"
     }
   },
   "editProfile": {

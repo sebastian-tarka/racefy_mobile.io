@@ -35,10 +35,12 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
 function AuthNavigator() {
+  const { colors } = useTheme();
   return (
     <AuthStack.Navigator
       screenOptions={{
         headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
@@ -57,7 +59,7 @@ function MainNavigator() {
     tabPress: (e: { preventDefault: () => void }) => {
       if (!isAuthenticated) {
         e.preventDefault();
-        navigation.navigate('Auth');
+        navigation.navigate('Auth', { screen: 'Login' });
       }
     },
   };
@@ -168,6 +170,7 @@ export function AppNavigator() {
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <RootStack.Screen name="Main" component={MainNavigator} />
