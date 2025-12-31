@@ -86,6 +86,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     '@react-native-community/datetimepicker',
+    'expo-video',
   ],
   extra: {
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',

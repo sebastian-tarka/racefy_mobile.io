@@ -25,6 +25,17 @@ export function useFeed() {
         const currentPage = reset ? 1 : page;
         const response = await api.getFeed(currentPage);
 
+        // Debug: Log raw API response
+        console.log('[useFeed] API response:', JSON.stringify(response.data.slice(0, 2), null, 2));
+        response.data.forEach((post, idx) => {
+          if (post.videos && post.videos.length > 0) {
+            console.log(`[useFeed] Post ${post.id} has videos:`, post.videos);
+          }
+          if (post.media && post.media.length > 0) {
+            console.log(`[useFeed] Post ${post.id} has media:`, post.media);
+          }
+        });
+
         setPosts((prev) => {
           if (reset) return response.data;
           // Deduplicate by post ID when loading more

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Text,
 } from 'react-native';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
@@ -27,28 +27,75 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayerProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const videoRef = useRef<Video>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [showControls, setShowControls] = useState(true);
 
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setIsLoading(false);
-      setIsPlaying(status.isPlaying);
-      setPosition(status.positionMillis);
-      setDuration(status.durationMillis || 0);
-    }
-  };
+  // Debug: Log video player initialization
+  console.log('[VideoPlayer] Initializing with:', {
+    uri,
+    visible,
+    thumbnailUrl,
+  });
 
-  const togglePlayPause = async () => {
-    if (!videoRef.current) return;
+  const player = useVideoPlayer(uri, (player) => {
+    console.log('[VideoPlayer] Player created, starting playback');
+    player.loop = true;
+    player.play();
+  });
+
+  useEffect(() => {
+    if (!player) return;
+
+    const statusSubscription = player.addListener('statusChange', (payload) => {
+      const status = payload.status;
+      console.log('[VideoPlayer] Status changed:', status, payload);
+      if (status === 'readyToPlay') {
+        console.log('[VideoPlayer] Ready to play!');
+        setIsLoading(false);
+        setError(null);
+      } else if (status === 'error') {
+        console.error('[VideoPlayer] Error:', payload.error);
+        console.error('[VideoPlayer] Failed URI:', uri);
+        setIsLoading(false);
+        setError(payload.error?.message || 'Failed to load video');
+      } else if (status === 'loading') {
+        console.log('[VideoPlayer] Loading...');
+        setIsLoading(true);
+      }
+    });
+
+    const playingSubscription = player.addListener('playingChange', (payload) => {
+      setIsPlaying(payload.isPlaying);
+    });
+
+    return () => {
+      statusSubscription.remove();
+      playingSubscription.remove();
+    };
+  }, [player, uri]);
+
+  // Update position periodically
+  useEffect(() => {
+    if (!player || !visible) return;
+
+    const interval = setInterval(() => {
+      setPosition(player.currentTime * 1000);
+      setDuration(player.duration * 1000);
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [player, visible]);
+
+  const togglePlayPause = () => {
+    if (!player) return;
     if (isPlaying) {
-      await videoRef.current.pauseAsync();
+      player.pause();
     } else {
-      await videoRef.current.playAsync();
+      player.play();
     }
   };
 
@@ -57,15 +104,16 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
   };
 
   const formatTime = (millis: number): string => {
+    if (!millis || isNaN(millis)) return '0:00';
     const totalSeconds = Math.floor(millis / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleClose = async () => {
-    if (videoRef.current) {
-      await videoRef.current.pauseAsync();
+  const handleClose = () => {
+    if (player) {
+      player.pause();
     }
     onClose();
   };
@@ -79,16 +127,11 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
           activeOpacity={1}
           onPress={toggleControls}
         >
-          <Video
-            ref={videoRef}
-            source={{ uri }}
+          <VideoView
+            player={player}
             style={styles.video}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay={true}
-            isLooping
-            onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-            posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
-            usePoster={!!thumbnailUrl}
+            contentFit="contain"
+            nativeControls={false}
           />
 
           {isLoading && (
@@ -97,7 +140,15 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
             </View>
           )}
 
-          {showControls && !isLoading && (
+          {error && (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.errorText}>Failed to load video</Text>
+              <Text style={styles.errorDetail}>{error}</Text>
+              <Text style={styles.errorDetail} numberOfLines={2}>{uri}</Text>
+            </View>
+          )}
+
+          {showControls && !isLoading && !error && (
             <View style={styles.controlsOverlay}>
               <TouchableOpacity
                 style={styles.playPauseButton}
@@ -122,7 +173,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
         </TouchableOpacity>
 
         {/* Progress bar */}
-        {showControls && duration > 0 && (
+        {showControls && duration > 0 && !error && (
           <View style={[styles.progressContainer, { bottom: insets.bottom + spacing.lg }]}>
             <Text style={styles.timeText}>{formatTime(position)}</Text>
             <View style={styles.progressBarContainer}>
@@ -210,5 +261,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     minWidth: 40,
     textAlign: 'center',
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  errorDetail: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
   },
 });

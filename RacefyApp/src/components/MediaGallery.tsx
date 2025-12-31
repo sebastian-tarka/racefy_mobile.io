@@ -15,11 +15,12 @@ import { useTheme } from '../hooks/useTheme';
 import { VideoPlayer } from './VideoPlayer';
 import { fixStorageUrl } from '../config/api';
 import { spacing, borderRadius } from '../theme';
-import type { Media, Photo } from '../types/api';
+import type { Media, Photo, Video } from '../types/api';
 
 interface MediaGalleryProps {
   media?: Media[];
   photos?: Photo[];
+  videos?: Video[];
   width?: number;
 }
 
@@ -29,6 +30,7 @@ const DEFAULT_WIDTH = screenWidth - spacing.lg * 4;
 export function MediaGallery({
   media = [],
   photos = [],
+  videos = [],
   width = DEFAULT_WIDTH,
 }: MediaGalleryProps) {
   const { colors } = useTheme();
@@ -36,29 +38,84 @@ export function MediaGallery({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoPlayerVisible, setVideoPlayerVisible] = useState(false);
   const [selectedVideoUri, setSelectedVideoUri] = useState<string | null>(null);
+  const [selectedVideoThumbnail, setSelectedVideoThumbnail] = useState<string | null>(null);
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
-  // Combine media and photos into a unified list
+  // Debug: Log incoming props
+  console.log('[MediaGallery] Props received:', {
+    mediaCount: media.length,
+    photosCount: photos.length,
+    videosCount: videos.length,
+    videos: videos,
+  });
+
+  // Helper to detect media type from URL or mime_type
+  const detectMediaType = (item: { url?: string; mime_type?: string; type?: string }): 'image' | 'video' => {
+    // If type is already set, use it
+    if (item.type === 'video' || item.type === 'image') {
+      return item.type;
+    }
+    // Check mime_type
+    if (item.mime_type?.startsWith('video/')) {
+      return 'video';
+    }
+    // Check URL for video extensions
+    const url = item.url?.toLowerCase() || '';
+    if (url.includes('/videos/') || url.match(/\.(mp4|mov|avi|webm|mkv)(\?|$)/)) {
+      return 'video';
+    }
+    return 'image';
+  };
+
+  // Combine media, photos, and videos into a unified list
   const items: Array<{
     id: number;
     type: 'image' | 'video';
     url: string;
     thumbnailUrl?: string | null;
   }> = [
-    ...media.map((m) => ({
-      id: m.id,
-      type: m.type,
-      url: fixStorageUrl(m.url) || '',
-      thumbnailUrl: m.thumbnail_url ? fixStorageUrl(m.thumbnail_url) : null,
-    })),
+    ...media.map((m) => {
+      const detectedType = detectMediaType(m);
+      console.log('[MediaGallery] Media item type detection:', {
+        id: m.id,
+        originalType: m.type,
+        mimeType: m.mime_type,
+        url: m.url,
+        detectedType
+      });
+      return {
+        id: m.id,
+        type: detectedType,
+        url: fixStorageUrl(m.url) || '',
+        thumbnailUrl: m.thumbnail_url ? fixStorageUrl(m.thumbnail_url) : null,
+      };
+    }),
     ...photos.map((p) => ({
       id: p.id,
       type: 'image' as const,
       url: fixStorageUrl(p.url) || '',
       thumbnailUrl: null,
     })),
+    ...videos.map((v) => {
+      const fixedUrl = fixStorageUrl(v.url);
+      const fixedThumbnail = v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null;
+      console.log('[MediaGallery] Video URL transform:', {
+        original: v.url,
+        fixed: fixedUrl,
+        thumbnailOriginal: v.thumbnail_url,
+        thumbnailFixed: fixedThumbnail,
+      });
+      return {
+        id: v.id,
+        type: 'video' as const,
+        url: fixedUrl || '',
+        thumbnailUrl: fixedThumbnail,
+      };
+    }),
   ];
+
+  console.log('[MediaGallery] Final items:', items);
 
   if (items.length === 0) return null;
 
@@ -71,6 +128,7 @@ export function MediaGallery({
   const handleItemPress = (item: typeof items[0]) => {
     if (item.type === 'video') {
       setSelectedVideoUri(item.url);
+      setSelectedVideoThumbnail(item.thumbnailUrl || null);
       setVideoPlayerVisible(true);
     } else {
       setSelectedImageUri(item.url);
@@ -109,8 +167,9 @@ export function MediaGallery({
             onClose={() => {
               setVideoPlayerVisible(false);
               setSelectedVideoUri(null);
+              setSelectedVideoThumbnail(null);
             }}
-            thumbnailUrl={item.thumbnailUrl}
+            thumbnailUrl={selectedVideoThumbnail}
           />
         )}
 
@@ -202,7 +261,9 @@ export function MediaGallery({
           onClose={() => {
             setVideoPlayerVisible(false);
             setSelectedVideoUri(null);
+            setSelectedVideoThumbnail(null);
           }}
+          thumbnailUrl={selectedVideoThumbnail}
         />
       )}
 

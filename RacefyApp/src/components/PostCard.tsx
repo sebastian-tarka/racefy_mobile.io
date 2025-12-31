@@ -200,11 +200,22 @@ export function PostCard({
   };
 
   const renderMedia = () => {
-    // Check for media first (new format), fallback to photos (legacy)
+    // Check for media, photos, or videos
     const hasMedia = post.media && post.media.length > 0;
     const hasPhotos = post.photos && post.photos.length > 0;
+    const hasVideos = post.videos && post.videos.length > 0;
 
-    if (!hasMedia && !hasPhotos) return null;
+    // Debug: Log post media data
+    console.log('[PostCard] Post ID:', post.id, 'Media check:', {
+      hasMedia,
+      hasPhotos,
+      hasVideos,
+      media: post.media,
+      photos: post.photos,
+      videos: post.videos,
+    });
+
+    if (!hasMedia && !hasPhotos && !hasVideos) return null;
 
     const mediaWidth = screenWidth - spacing.lg * 4;
 
@@ -212,6 +223,7 @@ export function PostCard({
       <MediaGallery
         media={post.media}
         photos={post.photos}
+        videos={post.videos}
         width={mediaWidth}
       />
     );
