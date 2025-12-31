@@ -10,16 +10,15 @@ export function useMessages(conversationId: number) {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageIdRef = useRef<number | null>(null);
 
-  // Fetch messages (API returns newest first, we reverse for display)
+  // Fetch messages (API returns oldest first for chat display)
   const fetchMessages = useCallback(async () => {
     try {
       setError(null);
       const response = await api.getMessages(conversationId);
-      const reversedMessages = [...response.data].reverse();
-      setMessages(reversedMessages);
+      setMessages(response.data);
 
-      if (reversedMessages.length > 0) {
-        lastMessageIdRef.current = reversedMessages[reversedMessages.length - 1].id;
+      if (response.data.length > 0) {
+        lastMessageIdRef.current = response.data[response.data.length - 1].id;
       }
 
       // Mark conversation as read
@@ -60,18 +59,18 @@ export function useMessages(conversationId: number) {
   const pollForNewMessages = useCallback(async () => {
     try {
       const response = await api.getMessages(conversationId);
-      const reversedMessages = [...response.data].reverse();
+      const fetchedMessages = response.data;
 
-      if (reversedMessages.length > 0) {
-        const latestMessageId = reversedMessages[reversedMessages.length - 1].id;
+      if (fetchedMessages.length > 0) {
+        const latestMessageId = fetchedMessages[fetchedMessages.length - 1].id;
 
         // Only update if there are new messages
         if (latestMessageId !== lastMessageIdRef.current) {
-          setMessages(reversedMessages);
+          setMessages(fetchedMessages);
           lastMessageIdRef.current = latestMessageId;
 
           // Mark as read if there are new messages from others
-          const hasNewFromOthers = reversedMessages.some(
+          const hasNewFromOthers = fetchedMessages.some(
             (m) => !m.is_own && m.id > (lastMessageIdRef.current || 0)
           );
           if (hasNewFromOthers) {

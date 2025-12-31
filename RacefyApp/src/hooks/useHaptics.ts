@@ -5,6 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HAPTICS_ENABLED_KEY = '@racefy_haptics_enabled';
 
+// Global state for non-hook usage (e.g., in Button component)
+let globalHapticsEnabled = true;
+
 interface UseHapticsResult {
   isEnabled: boolean;
   isSupported: boolean;
@@ -26,13 +29,16 @@ export function useHaptics(): UseHapticsResult {
   const [isEnabled, setIsEnabled] = useState(true);
   const [isSupported] = useState(checkHapticsSupport);
 
-  // Load saved preference
+  // Load saved preference and sync with global
   useEffect(() => {
     const loadPreference = async () => {
       try {
         const saved = await AsyncStorage.getItem(HAPTICS_ENABLED_KEY);
         if (saved !== null) {
-          setIsEnabled(saved === 'true');
+          const enabled = saved === 'true';
+          setIsEnabled(enabled);
+          // Sync with global variable
+          globalHapticsEnabled = enabled;
         }
       } catch (error) {
         console.error('Failed to load haptics preference:', error);
@@ -41,9 +47,11 @@ export function useHaptics(): UseHapticsResult {
     loadPreference();
   }, []);
 
-  // Save preference
+  // Save preference and update global state
   const setEnabled = useCallback(async (enabled: boolean) => {
     setIsEnabled(enabled);
+    // Also update the global variable for triggerHaptic
+    globalHapticsEnabled = enabled;
     try {
       await AsyncStorage.setItem(HAPTICS_ENABLED_KEY, String(enabled));
     } catch (error) {
@@ -88,8 +96,10 @@ export function useHaptics(): UseHapticsResult {
   };
 }
 
-// Singleton for non-hook usage (e.g., in Button component)
-let globalHapticsEnabled = true;
+// Update global variable directly (used by hook)
+export const updateGlobalHapticsEnabled = (enabled: boolean): void => {
+  globalHapticsEnabled = enabled;
+};
 
 export const loadGlobalHapticsPreference = async (): Promise<void> => {
   try {
