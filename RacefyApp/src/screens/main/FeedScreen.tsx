@@ -8,13 +8,9 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Image,
-  Platform,
-  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import {
   PostCard,
@@ -23,16 +19,18 @@ import {
   Loading,
   EmptyState,
   Button,
+  MediaPicker,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import type { MediaItem } from '../../types/api';
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Feed'>,
@@ -61,7 +59,8 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
 
   const [newPostContent, setNewPostContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+  const [isComposerVisible, setIsComposerVisible] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -70,80 +69,18 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
   }, [isAuthenticated]);
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim() && !selectedImage) return;
+    if (!newPostContent.trim() && selectedMedia.length === 0) return;
 
     setIsPosting(true);
     try {
-      await createPost(newPostContent.trim(), selectedImage || undefined);
+      await createPost(newPostContent.trim(), selectedMedia);
       setNewPostContent('');
-      setSelectedImage(null);
+      setSelectedMedia([]);
+      setIsComposerVisible(false);
     } catch (error) {
       Alert.alert(t('common.error'), t('feed.failedToCreate'));
     } finally {
       setIsPosting(false);
-    }
-  };
-
-  const pickImageFromGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('permissions.gallery'));
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: Platform.OS === 'ios',
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
-
-  const pickImageFromCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('permissions.camera'));
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: Platform.OS === 'ios',
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-    }
-  };
-
-  const handlePickImage = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: [t('common.cancel'), t('feed.takePhoto'), t('feed.chooseFromLibrary')],
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            pickImageFromCamera();
-          } else if (buttonIndex === 2) {
-            pickImageFromGallery();
-          }
-        }
-      );
-    } else {
-      Alert.alert(
-        t('feed.addPhoto'),
-        undefined,
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('feed.takePhoto'), onPress: pickImageFromCamera },
-          { text: t('feed.chooseFromLibrary'), onPress: pickImageFromGallery },
-        ]
-      );
     }
   };
 
@@ -195,19 +132,31 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
-        <TouchableOpacity
-          style={styles.messagesButton}
-          onPress={() => navigation.navigate('ConversationsList')}
-        >
-          <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
-          {unreadCount > 0 && (
-            <View style={[styles.unreadBadge, { backgroundColor: colors.error }]}>
-              <Text style={[styles.unreadBadgeText, { color: colors.white }]}>
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setIsComposerVisible(!isComposerVisible)}
+          >
+            <Ionicons
+              name={isComposerVisible ? 'close-circle-outline' : 'add-circle-outline'}
+              size={26}
+              color={isComposerVisible ? colors.error : colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('ConversationsList')}
+          >
+            <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
+            {unreadCount > 0 && (
+              <View style={[styles.unreadBadge, { backgroundColor: colors.error }]}>
+                <Text style={[styles.unreadBadgeText, { color: colors.white }]}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -230,47 +179,49 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
           />
         )}
         ListHeaderComponent={
-          <Card style={styles.createPostCard}>
-            <View style={styles.createPostHeader}>
-              <Avatar uri={user?.avatar} name={user?.name} size="md" />
-              <TextInput
-                style={[styles.createPostInput, { color: colors.textPrimary }]}
-                placeholder={t('feed.placeholder')}
-                placeholderTextColor={colors.textMuted}
-                value={newPostContent}
-                onChangeText={setNewPostContent}
-                multiline
-              />
-            </View>
-            {selectedImage && (
-              <View style={styles.imagePreviewContainer}>
-                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
-                <TouchableOpacity
-                  style={[styles.removeImageButton, { backgroundColor: colors.error }]}
-                  onPress={() => setSelectedImage(null)}
-                >
-                  <Ionicons name="close" size={16} color={colors.white} />
-                </TouchableOpacity>
-              </View>
-            )}
-            <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
-              <TouchableOpacity style={styles.photoButton} onPress={handlePickImage}>
-                <Ionicons
-                  name={selectedImage ? 'image' : 'image-outline'}
-                  size={20}
-                  color={selectedImage ? colors.primary : colors.textSecondary}
+          isComposerVisible ? (
+            <Card style={styles.createPostCard}>
+              <View style={styles.createPostHeader}>
+                <Avatar uri={user?.avatar} name={user?.name} size="md" />
+                <TextInput
+                  style={[styles.createPostInput, { color: colors.textPrimary }]}
+                  placeholder={t('feed.placeholder')}
+                  placeholderTextColor={colors.textMuted}
+                  value={newPostContent}
+                  onChangeText={setNewPostContent}
+                  multiline
+                  autoFocus
                 />
-                <Text style={[styles.photoButtonText, { color: selectedImage ? colors.primary : colors.textSecondary }]}>{t('feed.photo')}</Text>
-              </TouchableOpacity>
-              <Button
-                title={t('feed.post')}
-                onPress={handleCreatePost}
-                loading={isPosting}
-                disabled={!newPostContent.trim() && !selectedImage}
-                style={styles.postButton}
+              </View>
+              <MediaPicker
+                media={selectedMedia}
+                onChange={setSelectedMedia}
+                maxItems={10}
+                allowVideo
               />
-            </View>
-          </Card>
+              <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
+                <View style={styles.mediaInfoContainer}>
+                  <Ionicons
+                    name={selectedMedia.length > 0 ? 'images' : 'images-outline'}
+                    size={20}
+                    color={selectedMedia.length > 0 ? colors.primary : colors.textSecondary}
+                  />
+                  {selectedMedia.length > 0 && (
+                    <Text style={[styles.mediaCount, { color: colors.primary }]}>
+                      {selectedMedia.length}
+                    </Text>
+                  )}
+                </View>
+                <Button
+                  title={t('feed.post')}
+                  onPress={handleCreatePost}
+                  loading={isPosting}
+                  disabled={!newPostContent.trim() && selectedMedia.length === 0}
+                  style={styles.postButton}
+                />
+              </View>
+            </Card>
+          ) : null
         }
         ListEmptyComponent={
           error ? (
@@ -326,7 +277,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
-  messagesButton: {
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerButton: {
     padding: spacing.xs,
     position: 'relative',
   },
@@ -371,35 +327,16 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
   },
-  photoButton: {
+  mediaInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.sm,
+    gap: spacing.xs,
   },
-  photoButtonText: {
-    marginLeft: spacing.xs,
+  mediaCount: {
     fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   postButton: {
     paddingHorizontal: spacing.xl,
-  },
-  imagePreviewContainer: {
-    marginTop: spacing.md,
-    position: 'relative',
-  },
-  imagePreview: {
-    width: '100%',
-    height: 200,
-    borderRadius: borderRadius.md,
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

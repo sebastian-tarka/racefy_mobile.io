@@ -22,6 +22,7 @@ import {
   SportTypeSelector,
   DifficultySelector,
   ImagePickerButton,
+  MediaPicker,
   ScreenHeader,
 } from '../../components';
 import { api } from '../../services/api';
@@ -30,7 +31,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event, CreateEventRequest, UpdateEventRequest } from '../../types/api';
+import type { Event, CreateEventRequest, UpdateEventRequest, MediaItem } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventForm'>;
 
@@ -80,6 +81,7 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
@@ -360,6 +362,19 @@ export function EventFormScreen({ navigation, route }: Props) {
         >
           {/* Cover Image */}
           <ImagePickerButton value={coverImage} onChange={setCoverImage} />
+
+          {/* Additional Media */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {t('eventForm.additionalMedia')}
+            </Text>
+            <MediaPicker
+              media={eventMedia}
+              onChange={setEventMedia}
+              maxItems={10}
+              allowVideo
+            />
+          </View>
 
           {/* Title */}
           <Input

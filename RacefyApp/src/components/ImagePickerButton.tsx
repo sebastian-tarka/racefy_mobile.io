@@ -36,7 +36,7 @@ export function ImagePickerButton({
     // On Android, disable editing to avoid crop screen issues
     // On iOS, editing works fine
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: Platform.OS === 'ios',
       aspect: aspectRatio,
       quality: 0.8,
@@ -59,7 +59,7 @@ export function ImagePickerButton({
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: Platform.OS === 'ios',
       aspect: aspectRatio,
       quality: 0.8,

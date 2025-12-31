@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,10 +11,10 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
+import { MediaGallery } from './MediaGallery';
 import { useTheme } from '../hooks/useTheme';
-import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
-import type { Post, Activity, Event } from '../types/api';
+import type { Post } from '../types/api';
 
 interface PostCardProps {
   post: Post;
@@ -200,42 +199,21 @@ export function PostCard({
     );
   };
 
-  const renderPhotos = () => {
-    if (!post.photos || post.photos.length === 0) return null;
+  const renderMedia = () => {
+    // Check for media first (new format), fallback to photos (legacy)
+    const hasMedia = post.media && post.media.length > 0;
+    const hasPhotos = post.photos && post.photos.length > 0;
 
-    const photos = post.photos.slice(0, 4);
-    const photoWidth = screenWidth - spacing.lg * 4;
+    if (!hasMedia && !hasPhotos) return null;
 
-    if (photos.length === 1) {
-      const photoUrl = fixStorageUrl(photos[0].url);
-      if (!photoUrl) return null;
-      return (
-        <Image
-          source={{ uri: photoUrl }}
-          style={[styles.singlePhoto, { width: photoWidth }]}
-          resizeMode="cover"
-        />
-      );
-    }
+    const mediaWidth = screenWidth - spacing.lg * 4;
 
     return (
-      <View style={styles.photoGrid}>
-        {photos.map((photo) => {
-          const photoUrl = fixStorageUrl(photo.url);
-          if (!photoUrl) return null;
-          return (
-            <Image
-              key={photo.id}
-              source={{ uri: photoUrl }}
-              style={[
-                styles.gridPhoto,
-                { width: (photoWidth - spacing.xs) / 2 },
-              ]}
-              resizeMode="cover"
-            />
-          );
-        })}
-      </View>
+      <MediaGallery
+        media={post.media}
+        photos={post.photos}
+        width={mediaWidth}
+      />
     );
   };
 
@@ -283,7 +261,7 @@ export function PostCard({
         {renderActivityPreview()}
         {renderEventPreview()}
 
-        {renderPhotos()}
+        {renderMedia()}
       </TouchableOpacity>
 
       <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
@@ -477,22 +455,6 @@ const styles = StyleSheet.create({
   eventTagText: {
     fontSize: fontSize.xs,
     fontWeight: '500',
-  },
-  singlePhoto: {
-    height: 200,
-    marginTop: spacing.md,
-    borderRadius: 0,
-  },
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.md,
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-  },
-  gridPhoto: {
-    height: 150,
-    borderRadius: 8,
   },
   actions: {
     flexDirection: 'row',

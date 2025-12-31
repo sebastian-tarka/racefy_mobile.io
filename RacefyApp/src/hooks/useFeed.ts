@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
-import { Platform } from 'react-native';
 import { api } from '../services/api';
-import type { Post } from '../types/api';
+import type { Post, MediaItem } from '../types/api';
 
 export function useFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -92,35 +91,23 @@ export function useFeed() {
     [likePost, unlikePost]
   );
 
-  const createPost = useCallback(async (content: string, imageUri?: string) => {
+  const createPost = useCallback(async (content: string, media?: MediaItem[]) => {
     try {
       const newPost = await api.createPost({ content: content || ' ' });
 
-      // Upload image if provided
-      if (imageUri) {
-        const formData = new FormData();
-        const filename = imageUri.split('/').pop() || 'photo.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        let type = 'image/jpeg';
-        if (match) {
-          const ext = match[1].toLowerCase();
-          if (ext === 'png') type = 'image/png';
-          else if (ext === 'gif') type = 'image/gif';
-          else if (ext === 'heic' || ext === 'heif') type = 'image/heic';
-          else type = 'image/jpeg';
+      // Upload media items if provided
+      if (media && media.length > 0) {
+        const uploadedMedia = [];
+        for (const item of media) {
+          try {
+            const uploaded = await api.uploadPostMedia(newPost.id, item);
+            uploadedMedia.push(uploaded);
+          } catch (uploadError) {
+            console.error('Failed to upload media item:', uploadError);
+            // Continue with other uploads
+          }
         }
-
-        // iOS requires removing file:// prefix
-        const uri = Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri;
-
-        formData.append('photo', {
-          uri,
-          name: filename,
-          type,
-        } as any);
-
-        const photo = await api.uploadPostPhoto(newPost.id, formData);
-        newPost.photos = [photo];
+        newPost.media = uploadedMedia;
       }
 
       setPosts((prev) => [newPost, ...prev]);

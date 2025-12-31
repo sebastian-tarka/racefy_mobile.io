@@ -585,6 +585,57 @@ class ApiService {
     return data.data;
   }
 
+  async uploadPostMedia(postId: number, mediaItem: Types.MediaItem): Promise<Types.Media> {
+    const formData = new FormData();
+
+    // Get file extension and determine mime type
+    const filename = mediaItem.uri.split('/').pop() || 'file';
+    const match = /\.(\w+)$/.exec(filename);
+    let mimeType = 'application/octet-stream';
+
+    if (match) {
+      const ext = match[1].toLowerCase();
+      if (mediaItem.type === 'video') {
+        if (ext === 'mp4') mimeType = 'video/mp4';
+        else if (ext === 'mov') mimeType = 'video/quicktime';
+        else if (ext === 'avi') mimeType = 'video/x-msvideo';
+        else if (ext === 'webm') mimeType = 'video/webm';
+        else mimeType = 'video/mp4';
+      } else {
+        if (ext === 'png') mimeType = 'image/png';
+        else if (ext === 'gif') mimeType = 'image/gif';
+        else if (ext === 'heic' || ext === 'heif') mimeType = 'image/heic';
+        else mimeType = 'image/jpeg';
+      }
+    }
+
+    // Use correct field name based on media type
+    const fieldName = mediaItem.type === 'video' ? 'video' : 'photo';
+    formData.append(fieldName, {
+      uri: mediaItem.uri,
+      name: filename,
+      type: mimeType,
+    } as any);
+
+    if (mediaItem.duration) {
+      formData.append('duration', String(mediaItem.duration));
+    }
+
+    // Use separate endpoints for photos and videos
+    const endpoint = mediaItem.type === 'video' ? 'videos' : 'photos';
+    const response = await fetch(`${API_BASE_URL}/posts/${postId}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+      },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data.data;
+  }
+
   async uploadActivityPhoto(
     activityId: number,
     formData: FormData

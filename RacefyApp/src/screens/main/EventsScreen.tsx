@@ -83,10 +83,10 @@ export function EventsScreen({ navigation }: Props) {
         </View>
         {isAuthenticated && (
           <TouchableOpacity
-            style={[styles.createButton, { backgroundColor: colors.primary }]}
+            style={styles.headerButton}
             onPress={() => navigation.navigate('EventForm', {})}
           >
-            <Ionicons name="add" size={24} color={colors.white} />
+            <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -189,12 +189,8 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginTop: 2,
   },
-  createButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  headerButton: {
+    padding: spacing.xs,
   },
   filterContainer: {
     flexDirection: 'row',
