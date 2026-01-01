@@ -93,6 +93,15 @@ RacefyApp/
 ### Installation
 
 ```bash
+# Clone with submodules
+git clone --recurse-submodules <repo-url>
+
+# Or if already cloned, init submodules
+git submodule update --init --recursive
+
+# Install git hooks (auto-sync docs on pull)
+./scripts/install-hooks.sh
+
 # Navigate to app directory
 cd RacefyApp
 
