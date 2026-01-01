@@ -3,6 +3,7 @@ import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme } fr
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { Loading } from '../components';
@@ -53,6 +54,7 @@ function MainNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
 
   // Auth guard listener - redirects to Auth screen if not authenticated
   const authGuardListener = {
@@ -63,6 +65,10 @@ function MainNavigator() {
       }
     },
   };
+
+  // Calculate tab bar height based on safe area insets
+  const tabBarHeight = 60 + insets.bottom;
+  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
   return (
     <MainTab.Navigator
@@ -99,8 +105,8 @@ function MainNavigator() {
           backgroundColor: colors.cardBackground,
           borderTopColor: colors.border,
           paddingTop: 4,
-          height: 60,
-          paddingBottom: 8,
+          height: tabBarHeight,
+          paddingBottom: tabBarPaddingBottom,
         },
         tabBarLabelStyle: {
           fontSize: 12,
