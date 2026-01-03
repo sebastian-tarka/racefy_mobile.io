@@ -13,10 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
-import { ScreenHeader, Button, Card } from '../../components';
+import { ScreenHeader, Button, Card, EventSelectionSheet } from '../../components';
 import { api } from '../../services/api';
 import { useTheme } from '../../hooks/useTheme';
+import { useOngoingEvents } from '../../hooks/useOngoingEvents';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
+import type { Event } from '../../types/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -37,7 +39,12 @@ export function GpxImportScreen({ navigation }: Props) {
 
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [eventSheetVisible, setEventSheetVisible] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Fetch ongoing events where user is registered
+  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
 
   const handleSelectFile = async () => {
     try {
@@ -86,6 +93,11 @@ export function GpxImportScreen({ navigation }: Props) {
       } as any);
 
       formData.append('sport_type_id', String(selectedSport.id));
+
+      // Add event_id if an event is selected
+      if (selectedEvent) {
+        formData.append('event_id', String(selectedEvent.id));
+      }
 
       const activity = await api.importGpx(formData);
 
@@ -254,6 +266,62 @@ export function GpxImportScreen({ navigation }: Props) {
           )}
         </Card>
 
+        {/* Event Selection (Optional) */}
+        <Card style={styles.sectionCard}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('gpxImport.linkToEvent')}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.eventSelector,
+              { backgroundColor: colors.background, borderColor: colors.border },
+              selectedEvent && { borderColor: colors.primary },
+            ]}
+            onPress={() => {
+              refreshEvents();
+              setEventSheetVisible(true);
+            }}
+            activeOpacity={0.7}
+          >
+            {selectedEvent ? (
+              <>
+                <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                  <Ionicons
+                    name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
+                    size={20}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.eventSelectorContent}>
+                  <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {selectedEvent.post?.title || t('eventDetail.untitled')}
+                  </Text>
+                  <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {selectedEvent.location_name}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setSelectedEvent(null)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
+                  <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
+                </View>
+                <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>
+                  {t('gpxImport.selectEvent')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </>
+            )}
+          </TouchableOpacity>
+        </Card>
+
         {/* Import Button */}
         <Button
           title={isImporting ? t('gpxImport.importing') : t('gpxImport.importButton')}
@@ -263,6 +331,16 @@ export function GpxImportScreen({ navigation }: Props) {
           style={styles.importButton}
         />
       </ScrollView>
+
+      {/* Event Selection Sheet */}
+      <EventSelectionSheet
+        visible={eventSheetVisible}
+        onClose={() => setEventSheetVisible(false)}
+        onSelect={setSelectedEvent}
+        events={ongoingEvents}
+        selectedEvent={selectedEvent}
+        isLoading={eventsLoading}
+      />
     </SafeAreaView>
   );
 }
@@ -374,6 +452,36 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '500',
     flex: 1,
+  },
+  eventSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  eventIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  eventSelectorContent: {
+    flex: 1,
+  },
+  eventSelectorTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
+  eventSelectorSubtitle: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  eventSelectorPlaceholder: {
+    flex: 1,
+    fontSize: fontSize.md,
   },
   importButton: {
     marginTop: spacing.md,

@@ -361,6 +361,9 @@
       "discard": "Odrzuć"
     },
     "showMoreSports": "+{{count}} więcej sportów",
+    "linkToEvent": "Powiąż z wydarzeniem (opcjonalne)",
+    "selectEvent": "Wybierz wydarzenie",
+    "linkedToEvent": "Powiązano z: {{event}}",
     "error": "Błąd",
     "selectSportFirst": "Najpierw wybierz sport",
     "addOptions": {
@@ -379,6 +382,8 @@
     "tapToSelect": "Dotknij, aby wybrać plik",
     "gpxFilesOnly": "Tylko pliki .gpx",
     "selectSportType": "Wybierz typ sportu",
+    "linkToEvent": "Powiąż z wydarzeniem (opcjonalne)",
+    "selectEvent": "Wybierz wydarzenie",
     "importButton": "Importuj aktywność",
     "importing": "Importowanie...",
     "importSuccess": "Aktywność została zaimportowana!",
@@ -386,6 +391,14 @@
     "invalidFileType": "Wybierz plik .gpx",
     "selectFileFailed": "Nie udało się wybrać pliku",
     "viewActivity": "Zobacz aktywność"
+  },
+  "eventSelection": {
+    "title": "Powiąż z wydarzeniem",
+    "subtitle": "Wybierz trwające wydarzenie, na które jesteś zarejestrowany",
+    "noEvent": "Bez wydarzenia",
+    "noEventDescription": "Nagraj aktywność bez powiązania z wydarzeniem",
+    "noOngoingEvents": "Brak trwających wydarzeń",
+    "noOngoingEventsHint": "Nie masz żadnych zarejestrowanych wydarzeń, które aktualnie trwają"
   },
   "difficulty": {
     "beginner": "Początkujący",

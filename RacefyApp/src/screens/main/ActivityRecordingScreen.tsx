@@ -16,8 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, Button, Badge, BottomSheet, type BottomSheetOption } from '../../components';
-import { useLiveActivity, usePermissions, useActivityStats } from '../../hooks';
+import { Card, Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
+import { useLiveActivity, usePermissions, useActivityStats, useOngoingEvents } from '../../hooks';
+import type { Event } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -67,6 +68,11 @@ export function ActivityRecordingScreen() {
   const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
   const [showAllSports, setShowAllSports] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [eventSheetVisible, setEventSheetVisible] = useState(false);
+
+  // Fetch ongoing events where user is registered
+  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
 
   // Fetch stats for selected sport type (only when authenticated)
   const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
@@ -291,8 +297,13 @@ export function ActivityRecordingScreen() {
 
     // Start live activity with API
     try {
-      await startTracking(selectedSport.id, `${selectedSport.name} Activity`);
+      await startTracking(
+        selectedSport.id,
+        `${selectedSport.name} Activity`,
+        selectedEvent?.id
+      );
       setPassedMilestones([]);
+      setSelectedEvent(null); // Reset event selection after starting
       console.log('Activity started successfully');
     } catch (err) {
       console.error('Failed to start activity:', err);
@@ -500,6 +511,63 @@ export function ActivityRecordingScreen() {
                 )}
               </>
             )}
+          </Card>
+        )}
+
+        {/* Event Selection (only when idle and authenticated) */}
+        {status === 'idle' && isAuthenticated && (
+          <Card style={styles.eventSelector}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('recording.linkToEvent')}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.eventSelectorButton,
+                { backgroundColor: colors.background, borderColor: colors.border },
+                selectedEvent && { borderColor: colors.primary },
+              ]}
+              onPress={() => {
+                refreshEvents();
+                setEventSheetVisible(true);
+              }}
+              disabled={isLoading}
+            >
+              {selectedEvent ? (
+                <>
+                  <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                    <Ionicons
+                      name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
+                      size={20}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <View style={styles.eventSelectorContent}>
+                    <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {selectedEvent.post?.title || t('eventDetail.untitled')}
+                    </Text>
+                    <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                      {selectedEvent.location_name}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setSelectedEvent(null)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
+                    <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
+                  </View>
+                  <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>
+                    {t('recording.selectEvent')}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </>
+              )}
+            </TouchableOpacity>
           </Card>
         )}
 
@@ -841,6 +909,16 @@ export function ActivityRecordingScreen() {
         title={t('recording.addOptions.title')}
         options={addActivityOptions}
       />
+
+      {/* Event Selection Sheet */}
+      <EventSelectionSheet
+        visible={eventSheetVisible}
+        onClose={() => setEventSheetVisible(false)}
+        onSelect={setSelectedEvent}
+        events={ongoingEvents}
+        selectedEvent={selectedEvent}
+        isLoading={eventsLoading}
+      />
     </SafeAreaView>
   );
 }
@@ -881,6 +959,39 @@ const styles = StyleSheet.create({
   },
   sportSelector: {
     marginBottom: spacing.md,
+  },
+  eventSelector: {
+    marginBottom: spacing.md,
+  },
+  eventSelectorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  eventIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  eventSelectorContent: {
+    flex: 1,
+  },
+  eventSelectorTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
+  eventSelectorSubtitle: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  eventSelectorPlaceholder: {
+    flex: 1,
+    fontSize: fontSize.md,
   },
   sectionTitle: {
     fontSize: fontSize.md,

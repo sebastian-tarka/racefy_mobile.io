@@ -361,6 +361,9 @@
       "discard": "Discard"
     },
     "showMoreSports": "+{{count}} more sports",
+    "linkToEvent": "Link to Event (Optional)",
+    "selectEvent": "Select Event",
+    "linkedToEvent": "Linked to: {{event}}",
     "error": "Error",
     "selectSportFirst": "Please select a sport first",
     "addOptions": {
@@ -379,6 +382,8 @@
     "tapToSelect": "Tap to select file",
     "gpxFilesOnly": ".gpx files only",
     "selectSportType": "Select Sport Type",
+    "linkToEvent": "Link to Event (Optional)",
+    "selectEvent": "Select Event",
     "importButton": "Import Activity",
     "importing": "Importing...",
     "importSuccess": "Activity imported successfully!",
@@ -386,6 +391,14 @@
     "invalidFileType": "Please select a .gpx file",
     "selectFileFailed": "Failed to select file",
     "viewActivity": "View Activity"
+  },
+  "eventSelection": {
+    "title": "Link to Event",
+    "subtitle": "Select an ongoing event you're registered for",
+    "noEvent": "No Event",
+    "noEventDescription": "Record activity without linking to an event",
+    "noOngoingEvents": "No ongoing events",
+    "noOngoingEventsHint": "You don't have any registered events that are currently ongoing"
   },
   "difficulty": {
     "beginner": "Beginner",

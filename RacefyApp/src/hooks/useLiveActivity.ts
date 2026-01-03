@@ -468,7 +468,7 @@ export function useLiveActivity() {
   };
 
   const startTracking = useCallback(
-    async (sportTypeId: number, title?: string) => {
+    async (sportTypeId: number, title?: string, eventId?: number) => {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
@@ -503,6 +503,7 @@ export function useLiveActivity() {
           sport_type_id: sportTypeId,
           title,
           started_at: new Date().toISOString(),
+          event_id: eventId,
         });
 
         // Reset local stats

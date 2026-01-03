@@ -26,3 +26,4 @@ export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './VideoPlayer';
 export * from './BottomSheet';
+export * from './EventSelectionSheet';

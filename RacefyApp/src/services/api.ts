@@ -565,11 +565,13 @@ class ApiService {
 
   /**
    * Start a new live activity
+   * @param event_id - Optional event ID to link activity to (event must be ongoing, user must be registered)
    */
   async startLiveActivity(data: {
     sport_type_id: number;
     title?: string;
     started_at?: string;
+    event_id?: number;
   }): Promise<Types.Activity> {
     const response = await this.request<Types.ApiResponse<Types.Activity>>(
       '/activities/start',
@@ -662,6 +664,13 @@ class ApiService {
     await this.request(`/activities/${activityId}/discard`, { method: 'DELETE' });
   }
 
+  /**
+   * Import a GPX file as an activity
+   * FormData should contain:
+   * - file: GPX file
+   * - sport_type_id: Sport type ID
+   * - event_id (optional): Event ID to link activity to (event must be ongoing, user must be registered)
+   */
   async importGpx(file: FormData): Promise<Types.Activity> {
     const response = await fetch(`${API_BASE_URL}/activities/import`, {
       method: 'POST',
