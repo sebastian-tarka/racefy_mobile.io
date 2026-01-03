@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Alert,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,12 +77,19 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { user: currentUser, isAuthenticated } = useAuth();
   const { postId } = route.params;
+  const scrollViewRef = useRef<ScrollView>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -287,96 +296,108 @@ export function PostDetailScreen({ route, navigation }: Props) {
         }
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Post content */}
-        <Card style={styles.postCard}>
-          {/* Header */}
-          <TouchableOpacity
-            style={styles.header}
-            onPress={() => post.user && handleUserPress(post.user)}
-            disabled={!post.user}
-          >
-            <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
-            <View style={styles.userText}>
-              <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
-              <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
-                @{post.user?.username} · {timeAgo}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Content */}
-          {post.content && (
-            <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>
-          )}
-
-          {/* Activity/Event Preview */}
-          {renderActivityPreview()}
-          {renderEventPreview()}
-
-          {/* Media */}
-          {((post.media && post.media.length > 0) ||
-            (post.photos && post.photos.length > 0) ||
-            (post.videos && post.videos.length > 0)) && (
-            <View style={styles.mediaContainer}>
-              <MediaGallery
-                media={post.media}
-                photos={post.photos}
-                videos={post.videos}
-                width={mediaWidth}
-              />
-            </View>
-          )}
-
-          {/* Actions */}
-          <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
-            <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-              <Ionicons
-                name={isLiked ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isLiked ? colors.error : colors.textSecondary}
-              />
-              <Text
-                style={[
-                  styles.actionText,
-                  { color: isLiked ? colors.error : colors.textSecondary },
-                ]}
-              >
-                {likesCount}
-              </Text>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Post content */}
+          <Card style={styles.postCard}>
+            {/* Header */}
+            <TouchableOpacity
+              style={styles.header}
+              onPress={() => post.user && handleUserPress(post.user)}
+              disabled={!post.user}
+            >
+              <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+              <View style={styles.userText}>
+                <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
+                <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
+                  @{post.user?.username} · {timeAgo}
+                </Text>
+              </View>
             </TouchableOpacity>
 
-            <View style={styles.actionButton}>
-              <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                {post.comments_count}
-              </Text>
+            {/* Content */}
+            {post.content && (
+              <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>
+            )}
+
+            {/* Activity/Event Preview */}
+            {renderActivityPreview()}
+            {renderEventPreview()}
+
+            {/* Media */}
+            {((post.media && post.media.length > 0) ||
+              (post.photos && post.photos.length > 0) ||
+              (post.videos && post.videos.length > 0)) && (
+              <View style={styles.mediaContainer}>
+                <MediaGallery
+                  media={post.media}
+                  photos={post.photos}
+                  videos={post.videos}
+                  width={mediaWidth}
+                />
+              </View>
+            )}
+
+            {/* Actions */}
+            <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
+              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+                <Ionicons
+                  name={isLiked ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={isLiked ? colors.error : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.actionText,
+                    { color: isLiked ? colors.error : colors.textSecondary },
+                  ]}
+                >
+                  {likesCount}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.actionButton}>
+                <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+                  {post.comments_count}
+                </Text>
+              </View>
             </View>
+          </Card>
+
+          {/* Comments Section */}
+          <View style={styles.commentsContainer}>
+            <CommentSection
+              commentableType="post"
+              commentableId={postId}
+              commentsCount={post.comments_count}
+              initialExpanded={true}
+              onUserPress={handleUserPress}
+              onInputFocus={scrollToBottom}
+            />
           </View>
-        </Card>
 
-        {/* Comments Section */}
-        <View style={styles.commentsContainer}>
-          <CommentSection
-            commentableType="post"
-            commentableId={postId}
-            commentsCount={post.comments_count}
-            initialExpanded={true}
-            onUserPress={handleUserPress}
-          />
-        </View>
-
-        <View style={{ height: spacing.xl }} />
-      </ScrollView>
+          <View style={{ height: spacing.xl }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   scrollContent: {

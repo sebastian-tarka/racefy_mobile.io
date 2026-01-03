@@ -236,6 +236,38 @@ class ApiService {
     postId: number,
     data: Types.CreateCommentRequest
   ): Promise<Types.Comment> {
+    // Use FormData if photo is included
+    if (data.photo) {
+      const formData = new FormData();
+      formData.append('content', data.content);
+      if (data.parent_id) {
+        formData.append('parent_id', String(data.parent_id));
+      }
+
+      const filename = data.photo.uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const ext = match ? match[1].toLowerCase() : 'jpg';
+      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+
+      formData.append('photo', {
+        uri: data.photo.uri,
+        name: filename,
+        type: mimeType,
+      } as any);
+
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result.data;
+    }
+
     const response = await this.request<Types.ApiResponse<Types.Comment>>(
       `/posts/${postId}/comments`,
       {
@@ -258,7 +290,40 @@ class ApiService {
     await this.request(`/comments/${id}/like`, { method: 'DELETE' });
   }
 
-  async updateComment(id: number, content: string): Promise<Types.Comment> {
+  async updateComment(
+    id: number,
+    content: string,
+    photo?: Types.MediaItem
+  ): Promise<Types.Comment> {
+    // Use FormData if photo is included
+    if (photo) {
+      const formData = new FormData();
+      formData.append('content', content);
+
+      const filename = photo.uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const ext = match ? match[1].toLowerCase() : 'jpg';
+      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+
+      formData.append('photo', {
+        uri: photo.uri,
+        name: filename,
+        type: mimeType,
+      } as any);
+
+      const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result.data;
+    }
+
     const response = await this.request<Types.ApiResponse<Types.Comment>>(
       `/comments/${id}`,
       {
@@ -267,52 +332,6 @@ class ApiService {
       }
     );
     return response.data;
-  }
-
-  async uploadCommentMedia(commentId: number, mediaItem: Types.MediaItem): Promise<Types.Media> {
-    const formData = new FormData();
-
-    const filename = mediaItem.uri.split('/').pop() || 'file';
-    const match = /\.(\w+)$/.exec(filename);
-    let mimeType = 'application/octet-stream';
-
-    if (match) {
-      const ext = match[1].toLowerCase();
-      if (mediaItem.type === 'video') {
-        if (ext === 'mp4') mimeType = 'video/mp4';
-        else if (ext === 'mov') mimeType = 'video/quicktime';
-        else mimeType = 'video/mp4';
-      } else {
-        if (ext === 'png') mimeType = 'image/png';
-        else if (ext === 'gif') mimeType = 'image/gif';
-        else if (ext === 'heic' || ext === 'heif') mimeType = 'image/heic';
-        else mimeType = 'image/jpeg';
-      }
-    }
-
-    const fieldName = mediaItem.type === 'video' ? 'video' : 'photo';
-    formData.append(fieldName, {
-      uri: mediaItem.uri,
-      name: filename,
-      type: mimeType,
-    } as any);
-
-    if (mediaItem.duration) {
-      formData.append('duration', String(mediaItem.duration));
-    }
-
-    const endpoint = mediaItem.type === 'video' ? 'videos' : 'photos';
-    const response = await fetch(`${API_BASE_URL}/comments/${commentId}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
-    const data = await response.json();
-    if (!response.ok) throw data;
-    return data.data;
   }
 
   // ============ EVENTS ============
@@ -730,6 +749,38 @@ class ApiService {
     activityId: number,
     data: Types.CreateCommentRequest
   ): Promise<Types.Comment> {
+    // Use FormData if photo is included
+    if (data.photo) {
+      const formData = new FormData();
+      formData.append('content', data.content);
+      if (data.parent_id) {
+        formData.append('parent_id', String(data.parent_id));
+      }
+
+      const filename = data.photo.uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const ext = match ? match[1].toLowerCase() : 'jpg';
+      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+
+      formData.append('photo', {
+        uri: data.photo.uri,
+        name: filename,
+        type: mimeType,
+      } as any);
+
+      const response = await fetch(`${API_BASE_URL}/activities/${activityId}/comments`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result.data;
+    }
+
     const response = await this.request<Types.ApiResponse<Types.Comment>>(
       `/activities/${activityId}/comments`,
       {
@@ -753,6 +804,38 @@ class ApiService {
     eventId: number,
     data: Types.CreateCommentRequest
   ): Promise<Types.Comment> {
+    // Use FormData if photo is included
+    if (data.photo) {
+      const formData = new FormData();
+      formData.append('content', data.content);
+      if (data.parent_id) {
+        formData.append('parent_id', String(data.parent_id));
+      }
+
+      const filename = data.photo.uri.split('/').pop() || 'photo.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const ext = match ? match[1].toLowerCase() : 'jpg';
+      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+
+      formData.append('photo', {
+        uri: data.photo.uri,
+        name: filename,
+        type: mimeType,
+      } as any);
+
+      const response = await fetch(`${API_BASE_URL}/events/${eventId}/comments`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      });
+      const result = await response.json();
+      if (!response.ok) throw result;
+      return result.data;
+    }
+
     const response = await this.request<Types.ApiResponse<Types.Comment>>(
       `/events/${eventId}/comments`,
       {

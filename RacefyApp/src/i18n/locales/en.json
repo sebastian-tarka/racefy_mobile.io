@@ -503,7 +503,9 @@
     "reply": "Reply",
     "unknownUser": "Unknown User",
     "viewReplies": "View {{count}} replies",
-    "hideReplies": "Hide replies"
+    "hideReplies": "Hide replies",
+    "failedToEdit": "Failed to update comment",
+    "addPhoto": "Add photo"
   },
   "legal": {
     "consentTitle": "Consents & Policies",

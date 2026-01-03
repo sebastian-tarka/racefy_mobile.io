@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,11 +28,18 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { activityId } = route.params;
+  const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
   const fetchActivity = useCallback(async () => {
     try {
       setError(null);
@@ -143,12 +152,19 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Map Section */}
-        {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg) && (
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Map Section */}
+          {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg) && (
           <RoutePreview
             routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
             routeSvg={gpsTrack.route_svg}
@@ -292,23 +308,28 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           )}
         </Card>
 
-        {/* Comments Section */}
-        <View style={styles.section}>
-          <CommentSection
-            commentableType="activity"
-            commentableId={activityId}
-            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
-          />
-        </View>
+          {/* Comments Section */}
+          <View style={styles.section}>
+            <CommentSection
+              commentableType="activity"
+              commentableId={activityId}
+              onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+              onInputFocus={scrollToBottom}
+            />
+          </View>
 
-        <View style={{ height: spacing.xl }} />
-      </ScrollView>
+          <View style={{ height: spacing.xl }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   scrollContent: {

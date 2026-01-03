@@ -503,7 +503,9 @@
     "reply": "Odpowiedz",
     "unknownUser": "Nieznany użytkownik",
     "viewReplies": "Zobacz {{count}} odpowiedzi",
-    "hideReplies": "Ukryj odpowiedzi"
+    "hideReplies": "Ukryj odpowiedzi",
+    "failedToEdit": "Nie udało się zaktualizować komentarza",
+    "addPhoto": "Dodaj zdjęcie"
   },
   "legal": {
     "consentTitle": "Zgody i regulaminy",

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  ScrollView,
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,14 +14,15 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
-import type { MediaItem, Comment } from '../types/api';
+import type { Comment, MediaItem } from '../types/api';
 
 interface CommentInputProps {
-  onSubmit: (content: string, media?: MediaItem[]) => Promise<void>;
+  onSubmit: (content: string, photo?: MediaItem) => Promise<void>;
   replyingTo?: Comment | null;
   onCancelReply?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  onFocus?: () => void;
 }
 
 export function CommentInput({
@@ -31,15 +31,16 @@ export function CommentInput({
   onCancelReply,
   placeholder,
   disabled = false,
+  onFocus,
 }: CommentInputProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const inputRef = useRef<TextInput>(null);
   const [content, setContent] = useState('');
-  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [photo, setPhoto] = useState<MediaItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canSubmit = (content.trim().length > 0 || media.length > 0) && !isSubmitting && !disabled;
+  const canSubmit = (content.trim().length > 0 || photo !== null) && !isSubmitting && !disabled;
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -48,26 +49,24 @@ export function CommentInput({
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
-      allowsMultipleSelection: true,
-      selectionLimit: 4 - media.length,
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const newMedia: MediaItem[] = result.assets.map((asset) => ({
+      const asset = result.assets[0];
+      setPhoto({
         uri: asset.uri,
-        type: asset.type === 'video' ? 'video' : 'image',
+        type: 'image',
         width: asset.width,
         height: asset.height,
-        duration: asset.duration || undefined,
-      }));
-      setMedia((prev) => [...prev, ...newMedia].slice(0, 4));
+      });
     }
   };
 
-  const handleRemoveMedia = (index: number) => {
-    setMedia((prev) => prev.filter((_, i) => i !== index));
+  const handleRemovePhoto = () => {
+    setPhoto(null);
   };
 
   const handleSubmit = async () => {
@@ -77,9 +76,9 @@ export function CommentInput({
     Keyboard.dismiss();
 
     try {
-      await onSubmit(content.trim(), media.length > 0 ? media : undefined);
+      await onSubmit(content.trim(), photo || undefined);
       setContent('');
-      setMedia([]);
+      setPhoto(null);
       onCancelReply?.();
     } finally {
       setIsSubmitting(false);
@@ -101,39 +100,30 @@ export function CommentInput({
         </View>
       )}
 
-      {/* Media preview */}
-      {media.length > 0 && (
-        <ScrollView horizontal style={styles.mediaPreview} showsHorizontalScrollIndicator={false}>
-          {media.map((item, index) => (
-            <View key={index} style={styles.mediaItem}>
-              <Image source={{ uri: item.uri }} style={styles.mediaThumbnail} />
-              {item.type === 'video' && (
-                <View style={styles.videoOverlay}>
-                  <Ionicons name="play" size={16} color="#fff" />
-                </View>
-              )}
-              <TouchableOpacity
-                style={[styles.removeMedia, { backgroundColor: colors.error }]}
-                onPress={() => handleRemoveMedia(index)}
-              >
-                <Ionicons name="close" size={14} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
+      {/* Photo preview */}
+      {photo && (
+        <View style={styles.photoPreview}>
+          <Image source={{ uri: photo.uri }} style={styles.photoThumbnail} />
+          <TouchableOpacity
+            style={[styles.removePhoto, { backgroundColor: colors.error }]}
+            onPress={handleRemovePhoto}
+          >
+            <Ionicons name="close" size={14} color="#fff" />
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Input row */}
       <View style={styles.inputRow}>
         <TouchableOpacity
-          style={styles.mediaButton}
+          style={styles.photoButton}
           onPress={handlePickImage}
-          disabled={media.length >= 4 || disabled}
+          disabled={photo !== null || disabled}
         >
           <Ionicons
             name="image-outline"
             size={24}
-            color={media.length >= 4 ? colors.textMuted : colors.primary}
+            color={photo !== null ? colors.textMuted : colors.primary}
           />
         </TouchableOpacity>
 
@@ -151,8 +141,9 @@ export function CommentInput({
           placeholderTextColor={colors.textMuted}
           value={content}
           onChangeText={setContent}
+          onFocus={onFocus}
           multiline
-          maxLength={1000}
+          maxLength={2000}
           editable={!disabled}
         />
 
@@ -196,36 +187,23 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginLeft: spacing.sm,
   },
-  mediaPreview: {
+  photoPreview: {
     marginBottom: spacing.sm,
-  },
-  mediaItem: {
-    marginRight: spacing.sm,
     position: 'relative',
+    alignSelf: 'flex-start',
   },
-  mediaThumbnail: {
-    width: 60,
-    height: 60,
-    borderRadius: borderRadius.sm,
+  photoThumbnail: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
   },
-  videoOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    borderRadius: borderRadius.sm,
-  },
-  removeMedia: {
+  removePhoto: {
     position: 'absolute',
     top: -6,
     right: -6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -233,7 +211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  mediaButton: {
+  photoButton: {
     padding: spacing.xs,
     marginRight: spacing.xs,
     marginBottom: 4,

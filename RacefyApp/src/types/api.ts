@@ -319,6 +319,8 @@ export interface Comment {
   updated_at?: string;
   user?: User;
   replies?: Comment[];
+  photos?: Photo[];
+  videos?: Video[];
   media?: Media[];
   is_liked?: boolean;
 }
@@ -326,6 +328,7 @@ export interface Comment {
 export interface CreateCommentRequest {
   content: string;
   parent_id?: number;
+  photo?: MediaItem;
 }
 
 // ============ PHOTOS & MEDIA ============

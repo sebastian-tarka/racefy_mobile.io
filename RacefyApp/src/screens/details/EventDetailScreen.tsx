@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,12 +41,19 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const difficultyColors = useMemo(() => getDifficultyColors(colors), [colors]);
   const { eventId } = route.params;
   const { isAuthenticated, user } = useAuth();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<EventRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
 
   const fetchParticipants = useCallback(async () => {
     try {
@@ -221,13 +230,20 @@ export function EventDetailScreen({ route, navigation }: Props) {
         ) : undefined}
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-        }
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Event Image/Header */}
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+          }
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Event Image/Header */}
         <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
           {(event.cover_image_url || event.post?.photos?.[0]?.url) ? (
             <Image
@@ -465,12 +481,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
             commentableType="event"
             commentableId={eventId}
             onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+            onInputFocus={scrollToBottom}
           />
         </View>
 
-        {/* Spacer for button */}
-        <View style={{ height: 80 }} />
-      </ScrollView>
+          {/* Spacer for button */}
+          <View style={{ height: 80 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Bottom Action Button */}
       <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
@@ -509,6 +527,9 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoid: {
     flex: 1,
   },
   scrollContent: {

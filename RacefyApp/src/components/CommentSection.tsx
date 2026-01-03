@@ -17,7 +17,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { spacing, fontSize } from '../theme';
-import type { Comment, CommentableType, MediaItem, User } from '../types/api';
+import type { Comment, CommentableType, User, MediaItem } from '../types/api';
 
 interface CommentSectionProps {
   commentableType: CommentableType;
@@ -25,6 +25,7 @@ interface CommentSectionProps {
   onUserPress?: (user: User) => void;
   initialExpanded?: boolean;
   commentsCount?: number;
+  onInputFocus?: () => void;
 }
 
 export function CommentSection({
@@ -33,6 +34,7 @@ export function CommentSection({
   onUserPress,
   initialExpanded = false,
   commentsCount = 0,
+  onInputFocus,
 }: CommentSectionProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -86,10 +88,11 @@ export function CommentSection({
     fetchComments();
   }, [fetchComments]);
 
-  const handleCreateComment = async (content: string, media?: MediaItem[]) => {
+  const handleCreateComment = async (content: string, photo?: MediaItem) => {
     const data = {
       content,
       parent_id: replyingTo?.id,
+      photo,
     };
 
     let newComment: Comment;
@@ -105,20 +108,6 @@ export function CommentSection({
         break;
       default:
         throw new Error('Invalid commentable type');
-    }
-
-    // Upload media if any
-    if (media && media.length > 0) {
-      const uploadedMedia = [];
-      for (const item of media) {
-        try {
-          const uploaded = await api.uploadCommentMedia(newComment.id, item);
-          uploadedMedia.push(uploaded);
-        } catch (uploadError) {
-          console.error('Failed to upload comment media:', uploadError);
-        }
-      }
-      newComment.media = uploadedMedia;
     }
 
     // Add user info to the new comment
@@ -166,6 +155,57 @@ export function CommentSection({
     setLocalCommentsCount((prev) => prev - 1);
   };
 
+  const handleEditComment = async (
+    commentId: number,
+    data: { content: string; deleteMediaId?: number; newMedia?: MediaItem }
+  ) => {
+    // Delete existing media if requested (before update)
+    if (data.deleteMediaId) {
+      try {
+        await api.deletePhoto(data.deleteMediaId);
+      } catch (e) {
+        console.log('Failed to delete photo:', e);
+      }
+    }
+
+    // Update comment content (with optional new photo)
+    const updatedComment = await api.updateComment(
+      commentId,
+      data.content,
+      data.newMedia
+    );
+
+    // Update local state with the returned comment data
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id === commentId) {
+          return {
+            ...c,
+            content: updatedComment.content,
+            photos: updatedComment.photos || [],
+          };
+        }
+        // Check in replies
+        if (c.replies) {
+          return {
+            ...c,
+            replies: c.replies.map((r) => {
+              if (r.id === commentId) {
+                return {
+                  ...r,
+                  content: updatedComment.content,
+                  photos: updatedComment.photos || [],
+                };
+              }
+              return r;
+            }),
+          };
+        }
+        return c;
+      })
+    );
+  };
+
   const handleReply = (comment: Comment) => {
     setReplyingTo(comment);
   };
@@ -184,6 +224,7 @@ export function CommentSection({
       onLike={handleLikeComment}
       onUnlike={handleUnlikeComment}
       onDelete={handleDeleteComment}
+      onEdit={handleEditComment}
       onReply={handleReply}
       onUserPress={onUserPress}
     />
@@ -266,6 +307,7 @@ export function CommentSection({
               onSubmit={handleCreateComment}
               replyingTo={replyingTo}
               onCancelReply={handleCancelReply}
+              onFocus={onInputFocus}
               placeholder={
                 replyingTo
                   ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
