@@ -21,7 +21,7 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   ConsentModal: undefined;
   LegalDocuments: { documentType?: LegalDocumentType };
-  PostDetail: { postId: number };
+  PostDetail: { postId: number; focusComments?: boolean };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };
   UserProfile: { username: string };

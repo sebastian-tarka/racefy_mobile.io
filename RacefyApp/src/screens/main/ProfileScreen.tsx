@@ -535,7 +535,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           post={post}
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
           onLike={() => handleLikePost(post)}
-          onComment={() => navigation.navigate('PostDetail', { postId: post.id })}
+          onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
           onUserPress={() => {}}
           isOwner={post.is_owner}
         />

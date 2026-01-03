@@ -167,7 +167,7 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
             post={item}
             onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
             onLike={() => toggleLike(item)}
-            onComment={() => navigation.navigate('PostDetail', { postId: item.id })}
+            onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
             onUserPress={() => {
               if (item.user?.username) {
                 navigation.navigate('UserProfile', { username: item.user.username });

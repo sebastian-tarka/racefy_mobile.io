@@ -76,14 +76,16 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { user: currentUser, isAuthenticated } = useAuth();
-  const { postId } = route.params;
+  const { postId, focusComments } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
+  const commentsRef = useRef<View>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [commentsY, setCommentsY] = useState(0);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -109,6 +111,15 @@ export function PostDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     fetchPost();
   }, [fetchPost]);
+
+  // Scroll to comments when focusComments is true and post is loaded
+  useEffect(() => {
+    if (focusComments && post && commentsY > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: commentsY, animated: true });
+      }, 300);
+    }
+  }, [focusComments, post, commentsY]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -387,7 +398,11 @@ export function PostDetailScreen({ route, navigation }: Props) {
           </Card>
 
           {/* Comments Section */}
-          <View style={styles.commentsContainer}>
+          <View
+            ref={commentsRef}
+            style={styles.commentsContainer}
+            onLayout={(event) => setCommentsY(event.nativeEvent.layout.y)}
+          >
             <CommentSection
               commentableType="post"
               commentableId={postId}
