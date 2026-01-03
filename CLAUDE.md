@@ -57,6 +57,32 @@ cd RacefyApp && npx expo install <package>
 - iOS Simulator: `http://localhost:8080/api`
 - Physical device: Uses `API_LOCAL_IP` from `.env`
 
+**API Service** (`services/api.ts`): Single `request<T>(endpoint, options)` method for all API calls:
+- Auto-detects FormData and skips Content-Type header (browser sets it with boundary)
+- Adds Authorization, Accept, Accept-Language headers automatically
+- Appends Xdebug trigger when enabled (for PHP debugging)
+- Parses JSON response and throws on error
+
+```typescript
+// JSON request
+async getEvents(): Promise<Types.Event[]> {
+  const response = await this.request<Types.ApiResponse<Types.Event[]>>('/events');
+  return response.data;
+}
+
+// FormData upload (same method, auto-detected)
+async uploadAvatar(imageUri: string): Promise<Types.User> {
+  const formData = new FormData();
+  formData.append('avatar', { uri: imageUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
+
+  const result = await this.request<Types.ApiResponse<Types.User>>(
+    '/profile/avatar',
+    { method: 'POST', body: formData }
+  );
+  return result.data;
+}
+```
+
 **Live Activity Tracking**: `useLiveActivity` hook manages GPS tracking with:
 - Server sync every 30 seconds via `/activities/{id}/points`
 - Pause/resume support with duration tracking
@@ -135,7 +161,7 @@ When implementing new features:
 1. **New Screens**: Use `ScreenHeader` component, `SafeAreaView` with `edges={['top']}`, and theme colors
 2. **New Components**: Export from `components/index.ts`, use theme tokens for spacing/colors
 3. **New Translations**: Add keys to both `en.json` and `pl.json`
-4. **API Integration**: Add methods to `services/api.ts`, types to `types/api.ts`
+4. **API Integration**: Add methods to `services/api.ts`, types to `types/api.ts`. Always use `this.request()` - it handles both JSON and FormData automatically. Never use `fetch()` directly.
 5. **Forms**: Use existing `Input`, `Button` components with validation patterns from existing screens
 6. **Lists**: Use `FlatList` with card components, ensure consistent spacing with `listContent` style
 7. **UI Patterns**: When adding new reusable UI patterns or components, update `RacefyApp/docs/UI_PATTERNS.md` with usage examples
