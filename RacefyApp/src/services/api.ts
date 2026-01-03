@@ -295,7 +295,7 @@ class ApiService {
     content: string,
     photo?: Types.MediaItem
   ): Promise<Types.Comment> {
-    // Use FormData if photo is included
+    // Use FormData if photo is included (replaces existing photos)
     if (photo) {
       const formData = new FormData();
       formData.append('content', content);
@@ -332,6 +332,37 @@ class ApiService {
       }
     );
     return response.data;
+  }
+
+  async addCommentPhoto(commentId: number, photo: Types.MediaItem): Promise<Types.Photo> {
+    const formData = new FormData();
+
+    const filename = photo.uri.split('/').pop() || 'photo.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const ext = match ? match[1].toLowerCase() : 'jpg';
+    const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+
+    formData.append('photo', {
+      uri: photo.uri,
+      name: filename,
+      type: mimeType,
+    } as any);
+
+    const response = await fetch(`${API_BASE_URL}/comments/${commentId}/photos`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+      },
+      body: formData,
+    });
+    const result = await response.json();
+    if (!response.ok) throw result;
+    return result.data;
+  }
+
+  async deleteCommentPhoto(commentId: number, photoId: number): Promise<void> {
+    await this.request(`/comments/${commentId}/photos/${photoId}`, { method: 'DELETE' });
   }
 
   // ============ EVENTS ============

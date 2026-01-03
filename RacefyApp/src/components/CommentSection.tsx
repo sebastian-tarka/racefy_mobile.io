@@ -162,13 +162,13 @@ export function CommentSection({
     // Delete existing media if requested (before update)
     if (data.deleteMediaId) {
       try {
-        await api.deletePhoto(data.deleteMediaId);
+        await api.deleteCommentPhoto(commentId, data.deleteMediaId);
       } catch (e) {
         console.log('Failed to delete photo:', e);
       }
     }
 
-    // Update comment content (with optional new photo)
+    // Update comment content (with optional new photo - replaces existing)
     const updatedComment = await api.updateComment(
       commentId,
       data.content,
