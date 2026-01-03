@@ -22,6 +22,8 @@ import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { PostDetailScreen } from '../screens/details/PostDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen } from '../screens/events';
+import { PostFormScreen } from '../screens/posts';
+import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
 import { EditProfileScreen } from '../screens/profile';
 import { SettingsScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
@@ -239,6 +241,18 @@ export function AppNavigator() {
             <RootStack.Screen
               name="EventForm"
               component={EventFormScreen}
+            />
+            <RootStack.Screen
+              name="PostForm"
+              component={PostFormScreen}
+            />
+            <RootStack.Screen
+              name="ActivityForm"
+              component={ActivityFormScreen}
+            />
+            <RootStack.Screen
+              name="GpxImport"
+              component={GpxImportScreen}
             />
             <RootStack.Screen
               name="EditProfile"

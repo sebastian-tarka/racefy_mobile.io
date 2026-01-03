@@ -113,6 +113,20 @@
       "event": "Event"
     }
   },
+  "postForm": {
+    "editTitle": "Edit Post",
+    "title": "Title (optional)",
+    "titlePlaceholder": "Add a title...",
+    "content": "Content",
+    "contentPlaceholder": "What's on your mind?",
+    "updateButton": "Update Post",
+    "updateSuccess": "Post updated successfully!",
+    "updateFailed": "Failed to update post",
+    "failedToLoad": "Failed to load post",
+    "validation": {
+      "contentRequired": "Content is required"
+    }
+  },
   "profile": {
     "title": "Profile",
     "signInRequired": "Sign in to view profile",
@@ -282,6 +296,22 @@
       "amazfit": "Amazfit"
     }
   },
+  "activityForm": {
+    "editTitle": "Edit Activity",
+    "title": "Title",
+    "titlePlaceholder": "Activity title",
+    "description": "Description",
+    "descriptionPlaceholder": "Add notes about your activity...",
+    "privateActivity": "Private Activity",
+    "privateDescription": "Only you can see this activity",
+    "updateButton": "Update Activity",
+    "updateSuccess": "Activity updated successfully!",
+    "updateFailed": "Failed to update activity",
+    "failedToLoad": "Failed to load activity",
+    "validation": {
+      "titleRequired": "Title is required"
+    }
+  },
   "recording": {
     "title": "Record Activity",
     "selectSport": "Select Sport",
@@ -332,7 +362,30 @@
     },
     "showMoreSports": "+{{count}} more sports",
     "error": "Error",
-    "selectSportFirst": "Please select a sport first"
+    "selectSportFirst": "Please select a sport first",
+    "addOptions": {
+      "title": "Add Activity",
+      "recordActivity": "Record Activity",
+      "recordDescription": "Track with GPS in real-time",
+      "importGpx": "Import GPX File",
+      "importDescription": "From Garmin, Strava, Polar..."
+    }
+  },
+  "gpxImport": {
+    "title": "Import GPX",
+    "supportedDevices": "Supported Devices",
+    "supportedDevicesDesc": "Garmin, Amazfit, Strava exports, Polar, Coros, and any GPX 1.1 format",
+    "selectFile": "Select GPX File",
+    "tapToSelect": "Tap to select file",
+    "gpxFilesOnly": ".gpx files only",
+    "selectSportType": "Select Sport Type",
+    "importButton": "Import Activity",
+    "importing": "Importing...",
+    "importSuccess": "Activity imported successfully!",
+    "importFailed": "Failed to import GPX file",
+    "invalidFileType": "Please select a .gpx file",
+    "selectFileFailed": "Failed to select file",
+    "viewActivity": "View Activity"
   },
   "difficulty": {
     "beginner": "Beginner",

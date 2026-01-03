@@ -105,6 +105,7 @@ export interface Post {
   event?: Event;
   activity?: Activity;
   is_liked?: boolean;
+  is_owner?: boolean;
 }
 
 export interface CreatePostRequest {
@@ -139,6 +140,7 @@ export interface Event {
   sport_type?: SportType;
   post?: Post;
   is_registered?: boolean;
+  is_owner?: boolean;
   available_spots?: number | null;
 }
 
@@ -223,6 +225,7 @@ export interface Activity {
   gps_track?: GpsTrack;
   photos?: Photo[];
   user?: User;
+  is_owner?: boolean;
   duration_formatted?: string;
   distance_formatted?: string;
   pace?: string | null;

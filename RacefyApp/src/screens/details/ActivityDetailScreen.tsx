@@ -144,12 +144,24 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const isOwner = activity?.is_owner ?? false;
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScreenHeader
         title={t('activityDetail.title')}
         showBack
         onBack={() => navigation.goBack()}
+        rightAction={
+          isOwner ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ActivityForm', { activityId })}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
 
       <KeyboardAvoidingView

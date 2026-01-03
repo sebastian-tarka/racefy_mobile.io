@@ -26,6 +26,7 @@ export function Input({
   rightIcon,
   onRightIconPress,
   secureTextEntry,
+  style,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
@@ -55,7 +56,12 @@ export function Input({
           />
         )}
         <TextInput
-          style={[styles.input, { color: colors.textPrimary }, leftIcon && styles.inputWithLeftIcon]}
+          style={[
+            styles.input,
+            { color: colors.textPrimary },
+            leftIcon && styles.inputWithLeftIcon,
+            style,
+          ]}
           placeholderTextColor={colors.textMuted}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

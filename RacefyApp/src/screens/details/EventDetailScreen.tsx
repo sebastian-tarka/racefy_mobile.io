@@ -211,8 +211,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const isFull = availableSpots !== null && availableSpots <= 0;
   const canRegister =
     event.status === 'upcoming' && !event.is_registered && !isFull;
-  const isOwnEvent = user && event.created_by === user.id;
-  const canEdit = isOwnEvent && event.status === 'upcoming';
+  const canEdit = event.is_owner ?? false;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

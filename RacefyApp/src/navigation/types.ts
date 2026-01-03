@@ -30,6 +30,9 @@ export type RootStackParamList = {
   ConversationsList: undefined;
   Chat: { conversationId: number; participant: ConversationParticipant };
   EventForm: { eventId?: number };
+  PostForm: { postId?: number };
+  ActivityForm: { activityId?: number };
+  GpxImport: undefined;
 };
 
 declare global {

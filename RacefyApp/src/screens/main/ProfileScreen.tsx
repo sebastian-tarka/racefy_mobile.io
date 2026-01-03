@@ -509,12 +509,35 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     return `${activeTab}-${item.id}`;
   };
 
+  const handleLikePost = async (post: Post) => {
+    try {
+      if (post.is_liked) {
+        await api.unlikePost(post.id);
+      } else {
+        await api.likePost(post.id);
+      }
+      // Update local state
+      setPosts(prev => prev.map(p =>
+        p.id === post.id
+          ? { ...p, is_liked: !p.is_liked, likes_count: p.is_liked ? p.likes_count - 1 : p.likes_count + 1 }
+          : p
+      ));
+    } catch (error) {
+      console.error('Failed to like/unlike post:', error);
+    }
+  };
+
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {
+      const post = item as Post;
       return (
         <PostCard
-          post={item as Post}
+          post={post}
+          onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
+          onLike={() => handleLikePost(post)}
+          onComment={() => navigation.navigate('PostDetail', { postId: post.id })}
           onUserPress={() => {}}
+          isOwner={post.is_owner}
         />
       );
     }

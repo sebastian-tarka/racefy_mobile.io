@@ -113,6 +113,20 @@
       "event": "Wydarzenie"
     }
   },
+  "postForm": {
+    "editTitle": "Edytuj post",
+    "title": "Tytuł (opcjonalnie)",
+    "titlePlaceholder": "Dodaj tytuł...",
+    "content": "Treść",
+    "contentPlaceholder": "Co masz na myśli?",
+    "updateButton": "Zaktualizuj post",
+    "updateSuccess": "Post został zaktualizowany!",
+    "updateFailed": "Nie udało się zaktualizować postu",
+    "failedToLoad": "Nie udało się załadować postu",
+    "validation": {
+      "contentRequired": "Treść jest wymagana"
+    }
+  },
   "profile": {
     "title": "Profil",
     "signInRequired": "Zaloguj się, aby zobaczyć profil",
@@ -282,6 +296,22 @@
       "amazfit": "Amazfit"
     }
   },
+  "activityForm": {
+    "editTitle": "Edytuj aktywność",
+    "title": "Tytuł",
+    "titlePlaceholder": "Tytuł aktywności",
+    "description": "Opis",
+    "descriptionPlaceholder": "Dodaj notatki o aktywności...",
+    "privateActivity": "Prywatna aktywność",
+    "privateDescription": "Tylko Ty możesz zobaczyć tę aktywność",
+    "updateButton": "Zaktualizuj aktywność",
+    "updateSuccess": "Aktywność została zaktualizowana!",
+    "updateFailed": "Nie udało się zaktualizować aktywności",
+    "failedToLoad": "Nie udało się załadować aktywności",
+    "validation": {
+      "titleRequired": "Tytuł jest wymagany"
+    }
+  },
   "recording": {
     "title": "Zapisz aktywność",
     "selectSport": "Wybierz sport",
@@ -332,7 +362,30 @@
     },
     "showMoreSports": "+{{count}} więcej sportów",
     "error": "Błąd",
-    "selectSportFirst": "Najpierw wybierz sport"
+    "selectSportFirst": "Najpierw wybierz sport",
+    "addOptions": {
+      "title": "Dodaj aktywność",
+      "recordActivity": "Nagraj aktywność",
+      "recordDescription": "Śledź z GPS w czasie rzeczywistym",
+      "importGpx": "Importuj plik GPX",
+      "importDescription": "Z Garmin, Strava, Polar..."
+    }
+  },
+  "gpxImport": {
+    "title": "Importuj GPX",
+    "supportedDevices": "Obsługiwane urządzenia",
+    "supportedDevicesDesc": "Garmin, Amazfit, eksport Strava, Polar, Coros i dowolny format GPX 1.1",
+    "selectFile": "Wybierz plik GPX",
+    "tapToSelect": "Dotknij, aby wybrać plik",
+    "gpxFilesOnly": "Tylko pliki .gpx",
+    "selectSportType": "Wybierz typ sportu",
+    "importButton": "Importuj aktywność",
+    "importing": "Importowanie...",
+    "importSuccess": "Aktywność została zaimportowana!",
+    "importFailed": "Nie udało się zaimportować pliku GPX",
+    "invalidFileType": "Wybierz plik .gpx",
+    "selectFileFailed": "Nie udało się wybrać pliku",
+    "viewActivity": "Zobacz aktywność"
   },
   "difficulty": {
     "beginner": "Początkujący",

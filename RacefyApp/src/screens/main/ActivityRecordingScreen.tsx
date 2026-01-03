@@ -14,7 +14,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Badge } from '../../components';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Card, Button, Badge, BottomSheet, type BottomSheetOption } from '../../components';
 import { useLiveActivity, usePermissions, useActivityStats } from '../../hooks';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
@@ -22,6 +24,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import type { RootStackParamList } from '../../navigation/types';
 
 // Mock data for milestones based on previous activities
 const mockMilestones = [
@@ -42,6 +45,8 @@ export function ActivityRecordingScreen() {
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [showAddOptions, setShowAddOptions] = useState(false);
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const {
     activity,
@@ -383,6 +388,30 @@ export function ActivityRecordingScreen() {
     return { status: 'normal', color: colors.textSecondary, label: t('recording.completed') };
   };
 
+  // Bottom sheet options for adding activity
+  const addActivityOptions: BottomSheetOption[] = [
+    {
+      id: 'record',
+      icon: 'navigate-circle-outline',
+      title: t('recording.addOptions.recordActivity'),
+      description: t('recording.addOptions.recordDescription'),
+      onPress: () => {
+        // Just close sheet, user will see sport selector
+      },
+      color: colors.primary,
+    },
+    {
+      id: 'import',
+      icon: 'cloud-upload-outline',
+      title: t('recording.addOptions.importGpx'),
+      description: t('recording.addOptions.importDescription'),
+      onPress: () => {
+        navigation.navigate('GpxImport');
+      },
+      color: colors.success,
+    },
+  ];
+
   // Show loading overlay
   const renderLoadingOverlay = () => {
     if (!isLoading) return null;
@@ -398,9 +427,20 @@ export function ActivityRecordingScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('recording.title')}</Text>
-        {activity && (
-          <Text style={[styles.activityId, { color: colors.textMuted }]}>ID: {activity.id}</Text>
-        )}
+        <View style={styles.headerRight}>
+          {activity && (
+            <Text style={[styles.activityId, { color: colors.textMuted }]}>ID: {activity.id}</Text>
+          )}
+          {status === 'idle' && (
+            <TouchableOpacity
+              onPress={() => setShowAddOptions(true)}
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="add" size={20} color={colors.white} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -793,6 +833,14 @@ export function ActivityRecordingScreen() {
           />
         </SafeAreaView>
       </Modal>
+
+      {/* Add Activity Options Bottom Sheet */}
+      <BottomSheet
+        visible={showAddOptions}
+        onClose={() => setShowAddOptions(false)}
+        title={t('recording.addOptions.title')}
+        options={addActivityOptions}
+      />
     </SafeAreaView>
   );
 }
@@ -809,12 +857,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
   activityId: {
     fontSize: fontSize.xs,
+  },
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     padding: spacing.md,

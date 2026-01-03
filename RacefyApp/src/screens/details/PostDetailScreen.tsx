@@ -167,7 +167,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
     ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
     : '';
 
-  const isOwner = currentUser?.id === post?.user_id;
+  const isOwner = post?.is_owner ?? false;
 
   const renderActivityPreview = () => {
     if (post?.type !== 'activity' || !post.activity) return null;
@@ -289,9 +289,21 @@ export function PostDetailScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
         rightAction={
           isOwner ? (
-            <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <Ionicons name="trash-outline" size={22} color={colors.error} />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('PostForm', { postId })}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.headerActionButton}
+              >
+                <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDelete}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="trash-outline" size={22} color={colors.error} />
+              </TouchableOpacity>
+            </View>
           ) : undefined
         }
       />
@@ -548,5 +560,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     marginVertical: spacing.lg,
     textAlign: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  headerActionButton: {
+    marginRight: spacing.xs,
   },
 });
