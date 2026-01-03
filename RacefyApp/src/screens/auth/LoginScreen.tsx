@@ -17,9 +17,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList } from '../../navigation/types';
+import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
+import type { CompositeScreenProps } from '@react-navigation/native';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<AuthStackParamList, 'Login'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -29,8 +33,11 @@ export function LoginScreen({ navigation }: Props) {
   // Auto-close modal when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User authenticated, closing auth modal');
-      navigation.getParent()?.goBack();
+      const parent = navigation.getParent();
+      if (parent?.canGoBack()) {
+        console.log('User authenticated, closing auth modal');
+        parent.goBack();
+      }
     }
   }, [isAuthenticated, navigation]);
   const [email, setEmail] = useState('');
@@ -62,10 +69,8 @@ export function LoginScreen({ navigation }: Props) {
     try {
       console.log('Attempting login with:', email);
       await login({ email, password });
-      console.log('Login successful, navigating...');
-      // Navigation should happen automatically when user state changes
-      // But let's also try explicit navigation
-      navigation.getParent()?.goBack();
+      console.log('Login successful');
+      // Navigation handled by useEffect watching isAuthenticated
     } catch (error: any) {
       console.log('Login error:', error);
       const message =
@@ -132,6 +137,16 @@ export function LoginScreen({ navigation }: Props) {
                 <Text style={[styles.footerLink, { color: colors.primary }]}>{t('auth.signUp')}</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={styles.legalLinks}>
+              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}>
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.terms')}</Text>
+              </TouchableOpacity>
+              <Text style={[styles.legalSeparator, { color: colors.textMuted }]}> • </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}>
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.privacy')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -191,5 +206,17 @@ const styles = StyleSheet.create({
   footerLink: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  legalLink: {
+    fontSize: fontSize.sm,
+  },
+  legalSeparator: {
+    fontSize: fontSize.sm,
   },
 });

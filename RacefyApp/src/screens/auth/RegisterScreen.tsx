@@ -17,9 +17,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList } from '../../navigation/types';
+import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
+import type { CompositeScreenProps } from '@react-navigation/native';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<AuthStackParamList, 'Register'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -160,6 +164,19 @@ export function RegisterScreen({ navigation }: Props) {
                 <Text style={[styles.footerLink, { color: colors.primary }]}>{t('auth.signIn')}</Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={[styles.termsNotice, { color: colors.textMuted }]}>
+              {t('legal.registerTermsNotice')}
+            </Text>
+            <View style={styles.legalLinks}>
+              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}>
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.terms')}</Text>
+              </TouchableOpacity>
+              <Text style={[styles.legalSeparator, { color: colors.textMuted }]}> • </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}>
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.privacy')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -219,5 +236,22 @@ const styles = StyleSheet.create({
   footerLink: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  termsNotice: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  legalLink: {
+    fontSize: fontSize.sm,
+  },
+  legalSeparator: {
+    fontSize: fontSize.sm,
   },
 });

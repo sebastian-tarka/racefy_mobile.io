@@ -17,6 +17,7 @@ export * from './MediaPicker';
 export * from './MediaThumbnail';
 export * from './PointsCard';
 export * from './PostCard';
+export * from './PrivacyConsentsSection';
 export * from './ScreenHeader';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';

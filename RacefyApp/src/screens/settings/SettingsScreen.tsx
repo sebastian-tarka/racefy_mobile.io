@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button, ScreenHeader } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
@@ -470,6 +470,10 @@ export function SettingsScreen({ navigation }: Props) {
             />
           </View>
         )}
+
+        {/* Legal Consents */}
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('legal.consentsTitle')}</Text>
+        <PrivacyConsentsSection />
 
         {/* General Preferences */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.preferences')}</Text>

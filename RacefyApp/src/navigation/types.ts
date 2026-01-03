@@ -1,9 +1,11 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { ConversationParticipant } from '../types/api';
+import type { LegalDocumentType } from '../types/legal';
 
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  LegalDocuments: { documentType?: LegalDocumentType };
 };
 
 export type MainTabParamList = {
@@ -17,6 +19,8 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>;
   Auth: NavigatorScreenParams<AuthStackParamList>;
+  ConsentModal: undefined;
+  LegalDocuments: { documentType?: LegalDocumentType };
   PostDetail: { postId: number };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };

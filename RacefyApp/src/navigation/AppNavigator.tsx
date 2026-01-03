@@ -23,6 +23,7 @@ import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen } from '../screens/events';
 import { EditProfileScreen } from '../screens/profile';
 import { SettingsScreen } from '../screens/settings';
+import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
 
 // Types
 import type {
@@ -46,6 +47,7 @@ function AuthNavigator() {
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="LegalDocuments" component={LegalDocumentsScreen} />
     </AuthStack.Navigator>
   );
 }
@@ -150,7 +152,7 @@ function MainNavigator() {
 }
 
 export function AppNavigator() {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated, requiresConsent } = useAuth();
   const { colors, isDark } = useTheme();
 
   if (isLoading) {
@@ -171,6 +173,9 @@ export function AppNavigator() {
     fonts: isDark ? DarkTheme.fonts : DefaultTheme.fonts,
   };
 
+  // If user is authenticated but hasn't accepted required consents, show ConsentModal
+  const showConsentModal = isAuthenticated && requiresConsent;
+
   return (
     <NavigationContainer theme={navigationTheme}>
       <RootStack.Navigator
@@ -179,46 +184,71 @@ export function AppNavigator() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <RootStack.Screen name="Main" component={MainNavigator} />
-        <RootStack.Screen
-          name="Auth"
-          component={AuthNavigator}
-          options={{
-            presentation: 'modal',
-          }}
-        />
-        <RootStack.Screen
-          name="EventDetail"
-          component={EventDetailScreen}
-        />
-        <RootStack.Screen
-          name="UserProfile"
-          component={UserProfileScreen}
-        />
-        <RootStack.Screen
-          name="ActivityDetail"
-          component={ActivityDetailScreen}
-        />
-        <RootStack.Screen
-          name="ConversationsList"
-          component={ConversationsListScreen}
-        />
-        <RootStack.Screen
-          name="Chat"
-          component={ChatScreen}
-        />
-        <RootStack.Screen
-          name="EventForm"
-          component={EventFormScreen}
-        />
-        <RootStack.Screen
-          name="EditProfile"
-          component={EditProfileScreen}
-        />
-        <RootStack.Screen
-          name="Settings"
-          component={SettingsScreen}
-        />
+        {showConsentModal ? (
+          // Consent required - show blocking consent modal
+          <>
+            <RootStack.Screen
+              name="ConsentModal"
+              component={ConsentModalScreen}
+              options={{
+                gestureEnabled: false,
+                animation: 'fade',
+              }}
+            />
+            <RootStack.Screen
+              name="LegalDocuments"
+              component={LegalDocumentsScreen}
+            />
+          </>
+        ) : (
+          // Normal app flow
+          <>
+            <RootStack.Screen name="Main" component={MainNavigator} />
+            <RootStack.Screen
+              name="Auth"
+              component={AuthNavigator}
+              options={{
+                presentation: 'modal',
+              }}
+            />
+            <RootStack.Screen
+              name="EventDetail"
+              component={EventDetailScreen}
+            />
+            <RootStack.Screen
+              name="UserProfile"
+              component={UserProfileScreen}
+            />
+            <RootStack.Screen
+              name="ActivityDetail"
+              component={ActivityDetailScreen}
+            />
+            <RootStack.Screen
+              name="ConversationsList"
+              component={ConversationsListScreen}
+            />
+            <RootStack.Screen
+              name="Chat"
+              component={ChatScreen}
+            />
+            <RootStack.Screen
+              name="EventForm"
+              component={EventFormScreen}
+            />
+            <RootStack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+            />
+            <RootStack.Screen
+              name="Settings"
+              component={SettingsScreen}
+            />
+            <RootStack.Screen
+              name="LegalDocuments"
+              component={LegalDocumentsScreen}
+            />
+          </>
+        )}
       </RootStack.Navigator>
     </NavigationContainer>
   );

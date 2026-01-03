@@ -12,7 +12,7 @@ class ApiService {
     this.token = await AsyncStorage.getItem(TOKEN_KEY);
   }
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
