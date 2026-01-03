@@ -11,14 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Activity, GpsTrack } from '../../types/api';
+import type { Activity, GpsTrack, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -291,6 +291,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </View>
           )}
         </Card>
+
+        {/* Comments Section */}
+        <View style={styles.section}>
+          <CommentSection
+            commentableType="activity"
+            commentableId={activityId}
+            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+          />
+        </View>
 
         <View style={{ height: spacing.xl }} />
       </ScrollView>

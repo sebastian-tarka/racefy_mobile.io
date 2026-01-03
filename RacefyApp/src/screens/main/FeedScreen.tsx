@@ -165,10 +165,9 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
         renderItem={({ item }) => (
           <PostCard
             post={item}
+            onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
             onLike={() => toggleLike(item)}
-            onComment={() => {
-              // Navigate to post detail
-            }}
+            onComment={() => navigation.navigate('PostDetail', { postId: item.id })}
             onUserPress={() => {
               if (item.user?.username) {
                 navigation.navigate('UserProfile', { username: item.user.username });

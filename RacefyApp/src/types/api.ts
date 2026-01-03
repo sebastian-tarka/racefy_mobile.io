@@ -305,16 +305,21 @@ export interface GeoJSONLineString {
 
 // ============ COMMENTS ============
 
+export type CommentableType = 'post' | 'activity' | 'event';
+
 export interface Comment {
   id: number;
   user_id: number;
-  post_id: number;
+  commentable_type: CommentableType;
+  commentable_id: number;
   parent_id: number | null;
   content: string;
   likes_count: number;
   created_at: string;
+  updated_at?: string;
   user?: User;
   replies?: Comment[];
+  media?: Media[];
   is_liked?: boolean;
 }
 

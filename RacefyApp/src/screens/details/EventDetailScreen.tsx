@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge, ScreenHeader, Avatar } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -21,7 +21,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event, EventRegistration } from '../../types/api';
+import type { Event, EventRegistration, User } from '../../types/api';
 import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
@@ -458,6 +458,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
             </View>
           </Card>
         )}
+
+        {/* Comments Section */}
+        <View style={styles.section}>
+          <CommentSection
+            commentableType="event"
+            commentableId={eventId}
+            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+          />
+        </View>
 
         {/* Spacer for button */}
         <View style={{ height: 80 }} />

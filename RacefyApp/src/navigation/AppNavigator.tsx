@@ -19,6 +19,7 @@ import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
+import { PostDetailScreen } from '../screens/details/PostDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen } from '../screens/events';
 import { EditProfileScreen } from '../screens/profile';
@@ -222,6 +223,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="ActivityDetail"
               component={ActivityDetailScreen}
+            />
+            <RootStack.Screen
+              name="PostDetail"
+              component={PostDetailScreen}
             />
             <RootStack.Screen
               name="ConversationsList"

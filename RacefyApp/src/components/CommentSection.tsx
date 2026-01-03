@@ -1,0 +1,346 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { CommentItem } from './CommentItem';
+import { CommentInput } from './CommentInput';
+import { Card } from './Card';
+import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/api';
+import { spacing, fontSize } from '../theme';
+import type { Comment, CommentableType, MediaItem, User } from '../types/api';
+
+interface CommentSectionProps {
+  commentableType: CommentableType;
+  commentableId: number;
+  onUserPress?: (user: User) => void;
+  initialExpanded?: boolean;
+  commentsCount?: number;
+}
+
+export function CommentSection({
+  commentableType,
+  commentableId,
+  onUserPress,
+  initialExpanded = false,
+  commentsCount = 0,
+}: CommentSectionProps) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const { isAuthenticated, user } = useAuth();
+
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
+  const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
+  const [localCommentsCount, setLocalCommentsCount] = useState(commentsCount);
+
+  const fetchComments = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let fetchedComments: Comment[];
+      switch (commentableType) {
+        case 'post':
+          fetchedComments = await api.getComments(commentableId);
+          break;
+        case 'activity':
+          fetchedComments = await api.getActivityComments(commentableId);
+          break;
+        case 'event':
+          fetchedComments = await api.getEventComments(commentableId);
+          break;
+        default:
+          fetchedComments = [];
+      }
+      setComments(fetchedComments);
+      setLocalCommentsCount(fetchedComments.length);
+    } catch (err) {
+      setError(t('comments.failedToLoad'));
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [commentableType, commentableId, t]);
+
+  useEffect(() => {
+    if (isExpanded && comments.length === 0) {
+      fetchComments();
+    }
+  }, [isExpanded, fetchComments, comments.length]);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    fetchComments();
+  }, [fetchComments]);
+
+  const handleCreateComment = async (content: string, media?: MediaItem[]) => {
+    const data = {
+      content,
+      parent_id: replyingTo?.id,
+    };
+
+    let newComment: Comment;
+    switch (commentableType) {
+      case 'post':
+        newComment = await api.createComment(commentableId, data);
+        break;
+      case 'activity':
+        newComment = await api.createActivityComment(commentableId, data);
+        break;
+      case 'event':
+        newComment = await api.createEventComment(commentableId, data);
+        break;
+      default:
+        throw new Error('Invalid commentable type');
+    }
+
+    // Upload media if any
+    if (media && media.length > 0) {
+      const uploadedMedia = [];
+      for (const item of media) {
+        try {
+          const uploaded = await api.uploadCommentMedia(newComment.id, item);
+          uploadedMedia.push(uploaded);
+        } catch (uploadError) {
+          console.error('Failed to upload comment media:', uploadError);
+        }
+      }
+      newComment.media = uploadedMedia;
+    }
+
+    // Add user info to the new comment
+    if (user) {
+      newComment.user = user;
+    }
+
+    if (replyingTo) {
+      // Add as reply to parent comment
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === replyingTo.id
+            ? { ...c, replies: [...(c.replies || []), newComment] }
+            : c
+        )
+      );
+    } else {
+      // Add as top-level comment
+      setComments((prev) => [newComment, ...prev]);
+    }
+
+    setLocalCommentsCount((prev) => prev + 1);
+    setReplyingTo(null);
+  };
+
+  const handleLikeComment = async (commentId: number) => {
+    await api.likeComment(commentId);
+  };
+
+  const handleUnlikeComment = async (commentId: number) => {
+    await api.unlikeComment(commentId);
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    await api.deleteComment(commentId);
+    setComments((prev) => {
+      // Remove from top-level
+      const filtered = prev.filter((c) => c.id !== commentId);
+      // Remove from replies
+      return filtered.map((c) => ({
+        ...c,
+        replies: c.replies?.filter((r) => r.id !== commentId),
+      }));
+    });
+    setLocalCommentsCount((prev) => prev - 1);
+  };
+
+  const handleReply = (comment: Comment) => {
+    setReplyingTo(comment);
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+  };
+
+  const toggleExpanded = () => {
+    setIsExpanded((prev) => !prev);
+  };
+
+  const renderComment = ({ item }: { item: Comment }) => (
+    <CommentItem
+      comment={item}
+      onLike={handleLikeComment}
+      onUnlike={handleUnlikeComment}
+      onDelete={handleDeleteComment}
+      onReply={handleReply}
+      onUserPress={onUserPress}
+    />
+  );
+
+  const renderEmpty = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{error}</Text>
+          <TouchableOpacity onPress={fetchComments}>
+            <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.tryAgain')}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="chatbubble-outline" size={32} color={colors.textMuted} />
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+          {t('comments.noComments')}
+        </Text>
+        <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+          {t('comments.beFirst')}
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <Card style={styles.container}>
+      {/* Header */}
+      <TouchableOpacity style={styles.header} onPress={toggleExpanded}>
+        <View style={styles.headerLeft}>
+          <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} />
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            {t('comments.title')}
+          </Text>
+          {localCommentsCount > 0 && (
+            <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
+              <Text style={styles.countText}>{localCommentsCount}</Text>
+            </View>
+          )}
+        </View>
+        <Ionicons
+          name={isExpanded ? 'chevron-up' : 'chevron-down'}
+          size={20}
+          color={colors.textMuted}
+        />
+      </TouchableOpacity>
+
+      {/* Expanded content */}
+      {isExpanded && (
+        <>
+          {/* Comments list */}
+          <FlatList
+            data={comments}
+            renderItem={renderComment}
+            keyExtractor={(item) => String(item.id)}
+            ListEmptyComponent={renderEmpty}
+            scrollEnabled={false}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+            }
+          />
+
+          {/* Comment input (only for authenticated users) */}
+          {isAuthenticated ? (
+            <CommentInput
+              onSubmit={handleCreateComment}
+              replyingTo={replyingTo}
+              onCancelReply={handleCancelReply}
+              placeholder={
+                replyingTo
+                  ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
+                  : undefined
+              }
+            />
+          ) : (
+            <View style={[styles.signInPrompt, { borderTopColor: colors.border }]}>
+              <Text style={[styles.signInText, { color: colors.textMuted }]}>
+                {t('comments.signInToComment')}
+              </Text>
+            </View>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginLeft: spacing.sm,
+  },
+  countBadge: {
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  countText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  listContent: {
+    paddingVertical: spacing.sm,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyText: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.sm,
+  },
+  emptySubtext: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
+  },
+  retryText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    marginTop: spacing.sm,
+  },
+  signInPrompt: {
+    borderTopWidth: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  signInText: {
+    fontSize: fontSize.sm,
+  },
+});

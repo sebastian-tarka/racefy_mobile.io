@@ -488,6 +488,23 @@
     "confirmPassword": "Hasło",
     "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić"
   },
+  "comments": {
+    "title": "Komentarze",
+    "placeholder": "Napisz komentarz...",
+    "replyPlaceholder": "Odpowiedz {{name}}...",
+    "noComments": "Brak komentarzy",
+    "beFirst": "Bądź pierwszy i skomentuj!",
+    "signInToComment": "Zaloguj się, aby dodać komentarz",
+    "failedToLoad": "Nie udało się załadować komentarzy",
+    "failedToCreate": "Nie udało się dodać komentarza",
+    "failedToDelete": "Nie udało się usunąć komentarza",
+    "deleteComment": "Usuń komentarz",
+    "deleteConfirm": "Czy na pewno chcesz usunąć ten komentarz?",
+    "reply": "Odpowiedz",
+    "unknownUser": "Nieznany użytkownik",
+    "viewReplies": "Zobacz {{count}} odpowiedzi",
+    "hideReplies": "Ukryj odpowiedzi"
+  },
   "legal": {
     "consentTitle": "Zgody i regulaminy",
     "consentDescription": "Aby kontynuować korzystanie z aplikacji, zaakceptuj wymagane dokumenty.",

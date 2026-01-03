@@ -258,6 +258,63 @@ class ApiService {
     await this.request(`/comments/${id}/like`, { method: 'DELETE' });
   }
 
+  async updateComment(id: number, content: string): Promise<Types.Comment> {
+    const response = await this.request<Types.ApiResponse<Types.Comment>>(
+      `/comments/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      }
+    );
+    return response.data;
+  }
+
+  async uploadCommentMedia(commentId: number, mediaItem: Types.MediaItem): Promise<Types.Media> {
+    const formData = new FormData();
+
+    const filename = mediaItem.uri.split('/').pop() || 'file';
+    const match = /\.(\w+)$/.exec(filename);
+    let mimeType = 'application/octet-stream';
+
+    if (match) {
+      const ext = match[1].toLowerCase();
+      if (mediaItem.type === 'video') {
+        if (ext === 'mp4') mimeType = 'video/mp4';
+        else if (ext === 'mov') mimeType = 'video/quicktime';
+        else mimeType = 'video/mp4';
+      } else {
+        if (ext === 'png') mimeType = 'image/png';
+        else if (ext === 'gif') mimeType = 'image/gif';
+        else if (ext === 'heic' || ext === 'heif') mimeType = 'image/heic';
+        else mimeType = 'image/jpeg';
+      }
+    }
+
+    const fieldName = mediaItem.type === 'video' ? 'video' : 'photo';
+    formData.append(fieldName, {
+      uri: mediaItem.uri,
+      name: filename,
+      type: mimeType,
+    } as any);
+
+    if (mediaItem.duration) {
+      formData.append('duration', String(mediaItem.duration));
+    }
+
+    const endpoint = mediaItem.type === 'video' ? 'videos' : 'photos';
+    const response = await fetch(`${API_BASE_URL}/comments/${commentId}/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: 'application/json',
+      },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) throw data;
+    return data.data;
+  }
+
   // ============ EVENTS ============
 
   async getEvents(params?: {
@@ -658,6 +715,52 @@ class ApiService {
 
   async deletePhoto(id: number): Promise<void> {
     await this.request(`/photos/${id}`, { method: 'DELETE' });
+  }
+
+  // ============ ACTIVITY COMMENTS ============
+
+  async getActivityComments(activityId: number): Promise<Types.Comment[]> {
+    const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
+      `/activities/${activityId}/comments`
+    );
+    return response.data;
+  }
+
+  async createActivityComment(
+    activityId: number,
+    data: Types.CreateCommentRequest
+  ): Promise<Types.Comment> {
+    const response = await this.request<Types.ApiResponse<Types.Comment>>(
+      `/activities/${activityId}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
+  }
+
+  // ============ EVENT COMMENTS ============
+
+  async getEventComments(eventId: number): Promise<Types.Comment[]> {
+    const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
+      `/events/${eventId}/comments`
+    );
+    return response.data;
+  }
+
+  async createEventComment(
+    eventId: number,
+    data: Types.CreateCommentRequest
+  ): Promise<Types.Comment> {
+    const response = await this.request<Types.ApiResponse<Types.Comment>>(
+      `/events/${eventId}/comments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
   }
 
   // ============ FOLLOWS ============
