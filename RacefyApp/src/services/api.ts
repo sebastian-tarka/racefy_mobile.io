@@ -1,9 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, XDEBUG_ENABLED } from '../config/api';
 import { getCurrentLanguage } from '../i18n';
 import type * as Types from '../types/api';
 
 const TOKEN_KEY = '@racefy_token';
+
+/**
+ * Append Xdebug trigger to URL when debugging is enabled
+ * Used for all API requests to enable PHP debugging in dev mode
+ */
+export const appendXdebugTrigger = (url: string): string => {
+  if (!XDEBUG_ENABLED) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}XDEBUG_TRIGGER=PHPSTORM`;
+};
 
 class ApiService {
   private token: string | null = null;
@@ -28,7 +38,8 @@ class ApiService {
         `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = appendXdebugTrigger(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(url, {
       ...options,
       headers,
     });
@@ -255,14 +266,17 @@ class ApiService {
         type: mimeType,
       } as any);
 
-      const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          Accept: 'application/json',
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        appendXdebugTrigger(`${API_BASE_URL}/posts/${postId}/comments`),
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
       const result = await response.json();
       if (!response.ok) throw result;
       return result.data;
@@ -311,14 +325,17 @@ class ApiService {
         type: mimeType,
       } as any);
 
-      const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          Accept: 'application/json',
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        appendXdebugTrigger(`${API_BASE_URL}/comments/${id}`),
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
       const result = await response.json();
       if (!response.ok) throw result;
       return result.data;
@@ -348,14 +365,17 @@ class ApiService {
       type: mimeType,
     } as any);
 
-    const response = await fetch(`${API_BASE_URL}/comments/${commentId}/photos`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/comments/${commentId}/photos`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      }
+    );
     const result = await response.json();
     if (!response.ok) throw result;
     return result.data;
@@ -467,15 +487,18 @@ class ApiService {
       name: `cover.${fileExtension}`,
     } as any);
 
-    const response = await fetch(`${API_BASE_URL}/events/${eventId}/cover-image`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-        // Don't set Content-Type - let fetch set it with boundary for multipart
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/events/${eventId}/cover-image`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+          // Don't set Content-Type - let fetch set it with boundary for multipart
+        },
+        body: formData,
+      }
+    );
 
     const data = await response.json();
 
@@ -679,14 +702,17 @@ class ApiService {
    * - event_id (optional): Event ID to link activity to (event must be ongoing, user must be registered)
    */
   async importGpx(file: FormData): Promise<Types.Activity> {
-    const response = await fetch(`${API_BASE_URL}/activities/import`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: file,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/activities/import`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: file,
+      }
+    );
     const data = await response.json();
     if (!response.ok) throw data;
     return data.data;
@@ -695,14 +721,17 @@ class ApiService {
   // ============ PHOTOS ============
 
   async uploadPostPhoto(postId: number, formData: FormData): Promise<Types.Photo> {
-    const response = await fetch(`${API_BASE_URL}/posts/${postId}/photos`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/posts/${postId}/photos`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      }
+    );
     const data = await response.json();
     if (!response.ok) throw data;
     return data.data;
@@ -746,14 +775,17 @@ class ApiService {
 
     // Use separate endpoints for photos and videos
     const endpoint = mediaItem.type === 'video' ? 'videos' : 'photos';
-    const response = await fetch(`${API_BASE_URL}/posts/${postId}/${endpoint}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/posts/${postId}/${endpoint}`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      }
+    );
     const data = await response.json();
     if (!response.ok) throw data;
     return data.data;
@@ -764,7 +796,7 @@ class ApiService {
     formData: FormData
   ): Promise<Types.Photo> {
     const response = await fetch(
-      `${API_BASE_URL}/activities/${activityId}/photos`,
+      appendXdebugTrigger(`${API_BASE_URL}/activities/${activityId}/photos`),
       {
         method: 'POST',
         headers: {
@@ -815,14 +847,17 @@ class ApiService {
         type: mimeType,
       } as any);
 
-      const response = await fetch(`${API_BASE_URL}/activities/${activityId}/comments`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          Accept: 'application/json',
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        appendXdebugTrigger(`${API_BASE_URL}/activities/${activityId}/comments`),
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
       const result = await response.json();
       if (!response.ok) throw result;
       return result.data;
@@ -870,14 +905,17 @@ class ApiService {
         type: mimeType,
       } as any);
 
-      const response = await fetch(`${API_BASE_URL}/events/${eventId}/comments`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          Accept: 'application/json',
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        appendXdebugTrigger(`${API_BASE_URL}/events/${eventId}/comments`),
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.token}`,
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
       const result = await response.json();
       if (!response.ok) throw result;
       return result.data;
@@ -1038,14 +1076,17 @@ class ApiService {
       name: `avatar.${fileExtension}`,
     } as any);
 
-    const response = await fetch(`${API_BASE_URL}/profile/avatar`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/profile/avatar`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw data;
@@ -1065,14 +1106,17 @@ class ApiService {
       name: `background.${fileExtension}`,
     } as any);
 
-    const response = await fetch(`${API_BASE_URL}/profile/background-image`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/json',
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      appendXdebugTrigger(`${API_BASE_URL}/profile/background-image`),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: 'application/json',
+        },
+        body: formData,
+      }
+    );
 
     const data = await response.json();
     if (!response.ok) throw data;

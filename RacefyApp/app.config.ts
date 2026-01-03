@@ -92,5 +92,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',
     apiProductionUrl: process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api',
     apiLocalPort: process.env.API_LOCAL_PORT || '8080',
+    xdebugEnabled: process.env.XDEBUG_ENABLED === 'true',
   },
 });

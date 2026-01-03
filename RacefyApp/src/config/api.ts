@@ -8,6 +8,9 @@ const LOCAL_IP = extra.apiLocalIp || '192.168.1.100';
 const LOCAL_PORT = extra.apiLocalPort || '8080';
 const PRODUCTION_URL = extra.apiProductionUrl || 'https://api.racefy.app/api';
 
+// Xdebug debugging - only active in development mode
+export const XDEBUG_ENABLED = __DEV__ && extra.xdebugEnabled === true;
+
 // API Base URL configuration
 const getBaseUrl = (): string => {
   if (__DEV__) {
