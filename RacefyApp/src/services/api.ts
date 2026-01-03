@@ -443,6 +443,13 @@ class ApiService {
     return response.data;
   }
 
+  async getMyOngoingEvents(): Promise<Types.Event[]> {
+    const response = await this.request<Types.ApiResponse<Types.Event[]>>(
+      '/my-registrations/ongoing-events'
+    );
+    return response.data;
+  }
+
   async uploadEventCoverImage(
     eventId: number,
     imageUri: string

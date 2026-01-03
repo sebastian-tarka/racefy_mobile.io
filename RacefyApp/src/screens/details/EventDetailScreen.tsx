@@ -161,6 +161,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
     );
   };
 
+  const handleStartActivity = () => {
+    if (!event) return;
+    navigation.navigate('Main', {
+      screen: 'Record',
+      params: { preselectedEvent: event },
+    });
+  };
+
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = event?.sport_type?.name?.toLowerCase() || '';
     if (sportName.includes('run')) return 'walk-outline';
@@ -211,6 +219,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const isFull = availableSpots !== null && availableSpots <= 0;
   const canRegister =
     event.status === 'upcoming' && !event.is_registered && !isFull;
+  const canStartActivity = event.status === 'ongoing' && event.is_registered;
   const canEdit = event.is_owner ?? false;
 
   return (
@@ -491,7 +500,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
       {/* Bottom Action Button */}
       <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
-        {event.is_registered ? (
+        {canStartActivity ? (
+          <Button
+            title={t('eventDetail.startActivity')}
+            onPress={handleStartActivity}
+            variant="primary"
+            style={styles.actionButton}
+          />
+        ) : event.is_registered ? (
           <Button
             title={t('eventDetail.cancelRegistration')}
             onPress={handleCancelRegistration}

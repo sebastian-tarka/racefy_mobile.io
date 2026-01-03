@@ -262,7 +262,8 @@
     "registrationSuccess": "Zostałeś zarejestrowany na to wydarzenie!",
     "registrationFailed": "Nie udało się zarejestrować na wydarzenie",
     "cancelSuccess": "Twoja rejestracja została anulowana.",
-    "cancelFailed": "Nie udało się anulować rejestracji"
+    "cancelFailed": "Nie udało się anulować rejestracji",
+    "startActivity": "Rozpocznij aktywność"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",

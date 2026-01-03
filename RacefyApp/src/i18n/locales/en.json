@@ -262,7 +262,8 @@
     "registrationSuccess": "You have been registered for this event!",
     "registrationFailed": "Failed to register for event",
     "cancelSuccess": "Your registration has been cancelled.",
-    "cancelFailed": "Failed to cancel registration"
+    "cancelFailed": "Failed to cancel registration",
+    "startActivity": "Start Activity"
   },
   "activityDetail": {
     "title": "Activity Details",

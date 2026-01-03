@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { ConversationParticipant } from '../types/api';
+import type { ConversationParticipant, Event } from '../types/api';
 import type { LegalDocumentType } from '../types/legal';
 
 export type AuthStackParamList = {
@@ -11,7 +11,7 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Feed: undefined;
-  Record: undefined;
+  Record: { preselectedEvent?: Event } | undefined;
   Events: undefined;
   Profile: { initialTab?: 'posts' | 'stats' | 'activities' | 'events' } | undefined;
 };

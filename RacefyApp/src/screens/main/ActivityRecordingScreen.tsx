@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
 import { useLiveActivity, usePermissions, useActivityStats, useOngoingEvents } from '../../hooks';
@@ -25,7 +25,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import type { RootStackParamList } from '../../navigation/types';
+import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 
 // Mock data for milestones based on previous activities
 const mockMilestones = [
@@ -47,6 +47,7 @@ export function ActivityRecordingScreen() {
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<MainTabParamList, 'Record'>>();
   const [showAddOptions, setShowAddOptions] = useState(false);
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const {
@@ -85,6 +86,21 @@ export function ActivityRecordingScreen() {
       setSelectedSport(sportTypes[0]);
     }
   }, [sportTypes, selectedSport]);
+
+  // Handle preselected event from navigation params
+  useEffect(() => {
+    const preselectedEvent = route.params?.preselectedEvent;
+    if (preselectedEvent && !selectedEvent) {
+      setSelectedEvent(preselectedEvent);
+      // Also select matching sport type if available
+      if (preselectedEvent.sport_type_id && sportTypes.length > 0) {
+        const matchingSport = sportTypes.find(s => s.id === preselectedEvent.sport_type_id);
+        if (matchingSport) {
+          setSelectedSport(matchingSport);
+        }
+      }
+    }
+  }, [route.params?.preselectedEvent, sportTypes, selectedEvent]);
 
   // Sports to display (first N or all)
   const displayedSports = showAllSports
