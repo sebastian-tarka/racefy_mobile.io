@@ -71,6 +71,7 @@ export function ActivityRecordingScreen() {
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
+  const preselectedEventHandled = useRef(false);
 
   // Fetch ongoing events where user is registered
   const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
@@ -87,10 +88,11 @@ export function ActivityRecordingScreen() {
     }
   }, [sportTypes, selectedSport]);
 
-  // Handle preselected event from navigation params
+  // Handle preselected event from navigation params (only once)
   useEffect(() => {
     const preselectedEvent = route.params?.preselectedEvent;
-    if (preselectedEvent && !selectedEvent) {
+    if (preselectedEvent && !preselectedEventHandled.current) {
+      preselectedEventHandled.current = true;
       setSelectedEvent(preselectedEvent);
       // Also select matching sport type if available
       if (preselectedEvent.sport_type_id && sportTypes.length > 0) {
@@ -100,7 +102,7 @@ export function ActivityRecordingScreen() {
         }
       }
     }
-  }, [route.params?.preselectedEvent, sportTypes, selectedEvent]);
+  }, [route.params?.preselectedEvent, sportTypes]);
 
   // Sports to display (first N or all)
   const displayedSports = showAllSports
@@ -536,44 +538,56 @@ export function ActivityRecordingScreen() {
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
               {t('recording.linkToEvent')}
             </Text>
-            <TouchableOpacity
+            <View
               style={[
                 styles.eventSelectorButton,
                 { backgroundColor: colors.background, borderColor: colors.border },
                 selectedEvent && { borderColor: colors.primary },
               ]}
-              onPress={() => {
-                refreshEvents();
-                setEventSheetVisible(true);
-              }}
-              disabled={isLoading}
             >
               {selectedEvent ? (
                 <>
-                  <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
-                    <Ionicons
-                      name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
-                      size={20}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.eventSelectorContent}>
-                    <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {selectedEvent.post?.title || t('eventDetail.untitled')}
-                    </Text>
-                    <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                      {selectedEvent.location_name}
-                    </Text>
-                  </View>
+                  <TouchableOpacity
+                    style={styles.eventSelectorTouchable}
+                    onPress={() => {
+                      refreshEvents();
+                      setEventSheetVisible(true);
+                    }}
+                    disabled={isLoading}
+                  >
+                    <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                      <Ionicons
+                        name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
+                        size={20}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.eventSelectorContent}>
+                      <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {selectedEvent.post?.title || t('eventDetail.untitled')}
+                      </Text>
+                      <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {selectedEvent.location_name}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => setSelectedEvent(null)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.eventClearButton}
                   >
                     <Ionicons name="close-circle" size={22} color={colors.textMuted} />
                   </TouchableOpacity>
                 </>
               ) : (
-                <>
+                <TouchableOpacity
+                  style={styles.eventSelectorTouchable}
+                  onPress={() => {
+                    refreshEvents();
+                    setEventSheetVisible(true);
+                  }}
+                  disabled={isLoading}
+                >
                   <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
                     <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
                   </View>
@@ -581,9 +595,9 @@ export function ActivityRecordingScreen() {
                     {t('recording.selectEvent')}
                   </Text>
                   <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+            </View>
           </Card>
         )}
 
@@ -1008,6 +1022,14 @@ const styles = StyleSheet.create({
   eventSelectorPlaceholder: {
     flex: 1,
     fontSize: fontSize.md,
+  },
+  eventSelectorTouchable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eventClearButton: {
+    padding: spacing.xs,
   },
   sectionTitle: {
     fontSize: fontSize.md,
