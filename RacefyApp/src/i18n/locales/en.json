@@ -543,6 +543,27 @@
     "everyone": "Everyone",
     "noOne": "No One",
     "updateFailed": "Failed to update settings",
+    "aiPostsUpdated": "AI posts preference updated",
+    "aiPostsFailed": "Failed to update AI posts preference",
+    "aiPosts": {
+      "title": "AI-Generated Posts",
+      "description": "Let AI help you create engaging posts from your activities. Posts are created as drafts for your review.",
+      "enable": "Enable AI Posts",
+      "enableDescription": "Allow AI to generate post drafts from your activities",
+      "defaultStyle": "Default Style",
+      "styleDescription": "Choose how AI describes your activities. You can change this per activity.",
+      "styles": {
+        "achievement": "Achievement",
+        "statistical": "Statistical",
+        "comparison": "Comparison"
+      },
+      "triggers": "Auto-generate when",
+      "triggerActivityCompletion": "Activity is completed",
+      "triggerActivityShare": "Sharing an activity",
+      "triggerEventResults": "Event results are published",
+      "autoPublish": "Auto-publish",
+      "autoPublishDescription": "Publish posts automatically without review (not recommended)"
+    },
     "app": "App",
     "version": "Version",
     "dangerZone": "Danger Zone",

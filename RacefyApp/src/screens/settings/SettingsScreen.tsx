@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
@@ -152,6 +152,16 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     visibility: 'public',
     auto_share: true,
   },
+  ai_posts: {
+    enabled: false,
+    default_style: 'achievement',
+    triggers: {
+      activity_completion: true,
+      activity_share: false,
+      event_results: true,
+    },
+    auto_publish: false,
+  },
 };
 
 export function SettingsScreen({ navigation }: Props) {
@@ -162,6 +172,7 @@ export function SettingsScreen({ navigation }: Props) {
 
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingAiPosts, setIsUpdatingAiPosts] = useState(false);
 
   // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -275,6 +286,51 @@ export function SettingsScreen({ navigation }: Props) {
       console.error('Failed to update notification preference:', error);
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
+    }
+  };
+
+  // Update AI posts preference using dot notation (e.g., 'ai_posts.enabled')
+  const updateAiPostsPreference = async (key: string, value: any) => {
+    setIsUpdatingAiPosts(true);
+    const oldPreferences = { ...preferences };
+
+    // Optimistically update local state
+    const keys = key.split('.');
+    if (keys.length === 2) {
+      // Simple key like 'ai_posts.enabled'
+      setPreferences(prev => ({
+        ...prev,
+        ai_posts: {
+          ...prev.ai_posts,
+          [keys[1]]: value,
+        },
+      }));
+    } else if (keys.length === 3) {
+      // Nested key like 'ai_posts.triggers.activity_completion'
+      setPreferences(prev => ({
+        ...prev,
+        ai_posts: {
+          ...prev.ai_posts,
+          [keys[1]]: {
+            ...(prev.ai_posts[keys[1] as keyof typeof prev.ai_posts] as any),
+            [keys[2]]: value,
+          },
+        },
+      }));
+    }
+
+    try {
+      const updatedPrefs = await api.updatePreferences({
+        [key]: value,
+      });
+      // Sync with server response
+      setPreferences(updatedPrefs);
+    } catch (error) {
+      console.error('Failed to update AI posts preference:', error);
+      setPreferences(oldPreferences);
+      Alert.alert(t('common.error'), t('settings.aiPostsFailed'));
+    } finally {
+      setIsUpdatingAiPosts(false);
     }
   };
 
@@ -670,12 +726,12 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.defaultVisibility')}
             value={getVisibilityLabel(preferences.activity_defaults.visibility)}
             onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
-            
+
           />
           <SettingsRow
             icon="share-outline"
             label={t('settings.autoShare')}
-            
+
             rightElement={
               <Switch
                 value={preferences.activity_defaults.auto_share}
@@ -686,6 +742,13 @@ export function SettingsScreen({ navigation }: Props) {
             }
           />
         </View>
+
+        {/* AI Posts Settings */}
+        <AiPostsSettings
+          preferences={preferences.ai_posts}
+          onPreferenceChange={updateAiPostsPreference}
+          isUpdating={isUpdatingAiPosts}
+        />
 
         {/* App Section */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.app')}</Text>

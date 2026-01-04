@@ -48,6 +48,17 @@ export interface NotificationChannelSettings {
   websocket: boolean;
 }
 
+export interface AiPostsPreferences {
+  enabled: boolean;
+  default_style: 'achievement' | 'statistical' | 'comparison';
+  triggers: {
+    activity_completion: boolean;
+    activity_share: boolean;
+    event_results: boolean;
+  };
+  auto_publish: boolean;
+}
+
 export interface UserPreferences {
   units: 'metric' | 'imperial';
   language: 'en' | 'pl';
@@ -72,6 +83,7 @@ export interface UserPreferences {
     visibility: 'public' | 'followers' | 'private';
     auto_share: boolean;
   };
+  ai_posts: AiPostsPreferences;
 }
 
 // ============ SPORT TYPES ============

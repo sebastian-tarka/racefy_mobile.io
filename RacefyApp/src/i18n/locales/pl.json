@@ -543,6 +543,27 @@
     "everyone": "Wszyscy",
     "noOne": "Nikt",
     "updateFailed": "Nie udało się zaktualizować ustawień",
+    "aiPostsUpdated": "Preferencja postów AI zaktualizowana",
+    "aiPostsFailed": "Nie udało się zaktualizować preferencji postów AI",
+    "aiPosts": {
+      "title": "Posty generowane przez AI",
+      "description": "Pozwól AI pomóc Ci tworzyć angażujące posty z Twoich aktywności. Posty są tworzone jako wersje robocze do Twojej weryfikacji.",
+      "enable": "Włącz posty AI",
+      "enableDescription": "Zezwól AI na generowanie wersji roboczych postów z Twoich aktywności",
+      "defaultStyle": "Domyślny styl",
+      "styleDescription": "Wybierz, jak AI opisuje Twoje aktywności. Możesz to zmienić dla każdej aktywności.",
+      "styles": {
+        "achievement": "Osiągnięcia",
+        "statistical": "Statystyczny",
+        "comparison": "Porównanie"
+      },
+      "triggers": "Auto-generuj gdy",
+      "triggerActivityCompletion": "Aktywność jest ukończona",
+      "triggerActivityShare": "Udostępnianie aktywności",
+      "triggerEventResults": "Wyniki wydarzenia są opublikowane",
+      "autoPublish": "Auto-publikuj",
+      "autoPublishDescription": "Publikuj posty automatycznie bez sprawdzania (niezalecane)"
+    },
     "app": "Aplikacja",
     "version": "Wersja",
     "dangerZone": "Strefa zagrożenia",

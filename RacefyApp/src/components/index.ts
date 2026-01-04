@@ -1,4 +1,5 @@
 export * from './ActivityCard';
+export * from './AiPostsSettings';
 export * from './Avatar';
 export * from './Badge';
 export * from './Button';
