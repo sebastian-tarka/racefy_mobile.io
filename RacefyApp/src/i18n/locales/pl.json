@@ -127,6 +127,25 @@
       "contentRequired": "Treść jest wymagana"
     }
   },
+  "drafts": {
+    "title": "Wersje robocze",
+    "noDrafts": "Brak wersji roboczych",
+    "noDraftsDesc": "Wersje robocze postów pojawią się tutaj. Posty generowane przez AI są domyślnie tworzone jako wersje robocze.",
+    "publish": "Opublikuj",
+    "editThenPublish": "Edytuj i opublikuj",
+    "published": "Post został opublikowany!",
+    "publishFailed": "Nie udało się opublikować posta",
+    "deleted": "Wersja robocza usunięta",
+    "deleteFailed": "Nie udało się usunąć wersji roboczej",
+    "confirmPublishTitle": "Opublikować post",
+    "confirmPublish": "Opublikować ten post? Będzie widoczny dla innych zgodnie z ustawieniami widoczności.",
+    "confirmDeleteTitle": "Usunąć wersję roboczą",
+    "confirmDelete": "Usunąć tę wersję roboczą? Ta operacja jest nieodwracalna.",
+    "aiGenerated": "Wygenerowane przez AI",
+    "draftBanner": "Ten post jest wersją roboczą i jest widoczny tylko dla Ciebie",
+    "loadingDrafts": "Ładowanie wersji roboczych...",
+    "refreshing": "Odświeżanie..."
+  },
   "profile": {
     "title": "Profil",
     "signInRequired": "Zaloguj się, aby zobaczyć profil",
@@ -141,6 +160,7 @@
     "unfollow": "Przestań obserwować",
     "tabs": {
       "posts": "Posty",
+      "drafts": "Wersje robocze",
       "stats": "Statystyki",
       "activities": "Aktywności",
       "events": "Wydarzenia"

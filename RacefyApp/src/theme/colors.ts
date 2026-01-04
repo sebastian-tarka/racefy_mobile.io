@@ -28,6 +28,13 @@ export const lightColors = {
   info: '#3b82f6',
   infoLight: '#eff6ff',
 
+  // AI/Draft badge colors
+  ai: '#6B21A8',
+  aiLight: '#F3E8FF',
+  draft: '#92400E',
+  draftLight: '#FEF3C7',
+  draftBorder: '#FCD34D',
+
   // Event status badges
   upcoming: {
     bg: '#ecfdf5',
@@ -82,6 +89,13 @@ export const darkColors = {
   warningLight: '#78350f',
   info: '#60a5fa',
   infoLight: '#1e3a5f',
+
+  // AI/Draft badge colors
+  ai: '#A855F7',
+  aiLight: '#3B0764',
+  draft: '#FCD34D',
+  draftLight: '#422006',
+  draftBorder: '#78350F',
 
   // Event status badges
   upcoming: {

@@ -13,7 +13,7 @@ export type MainTabParamList = {
   Feed: undefined;
   Record: { preselectedEvent?: Event } | undefined;
   Events: undefined;
-  Profile: { initialTab?: 'posts' | 'stats' | 'activities' | 'events' } | undefined;
+  Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;
 };
 
 export type RootStackParamList = {

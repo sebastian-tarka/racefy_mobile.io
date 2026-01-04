@@ -127,6 +127,25 @@
       "contentRequired": "Content is required"
     }
   },
+  "drafts": {
+    "title": "Drafts",
+    "noDrafts": "No drafts yet",
+    "noDraftsDesc": "Draft posts will appear here. AI-generated posts are created as drafts by default.",
+    "publish": "Publish",
+    "editThenPublish": "Edit & Publish",
+    "published": "Post published successfully!",
+    "publishFailed": "Failed to publish post",
+    "deleted": "Draft deleted",
+    "deleteFailed": "Failed to delete draft",
+    "confirmPublishTitle": "Publish Post",
+    "confirmPublish": "Publish this post? It will be visible to others based on visibility settings.",
+    "confirmDeleteTitle": "Delete Draft",
+    "confirmDelete": "Delete this draft? This action cannot be undone.",
+    "aiGenerated": "AI Generated",
+    "draftBanner": "This is a draft and only visible to you",
+    "loadingDrafts": "Loading drafts...",
+    "refreshing": "Refreshing..."
+  },
   "profile": {
     "title": "Profile",
     "signInRequired": "Sign in to view profile",
@@ -141,6 +160,7 @@
     "unfollow": "Unfollow",
     "tabs": {
       "posts": "Posts",
+      "drafts": "Drafts",
       "stats": "Stats",
       "activities": "Activities",
       "events": "Events"

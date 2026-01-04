@@ -248,6 +248,27 @@ class ApiService {
     await this.request(`/posts/${id}/like`, { method: 'DELETE' });
   }
 
+  // ============ DRAFTS ============
+
+  async getDrafts(params?: {
+    page?: number;
+    per_page?: number;
+  }): Promise<Types.DraftsResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    const queryString = query.toString();
+    return this.request(`/posts/drafts${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async publishDraft(postId: number): Promise<Types.Post> {
+    return this.updatePost(postId, { status: 'published' });
+  }
+
+  async deleteDraft(postId: number): Promise<void> {
+    return this.deletePost(postId);
+  }
+
   // ============ COMMENTS ============
 
   async getComments(postId: number): Promise<Types.Comment[]> {

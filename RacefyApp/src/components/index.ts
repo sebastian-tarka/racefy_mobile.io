@@ -10,6 +10,8 @@ export * from './CommentInput';
 export * from './CommentSection';
 export * from './CompareUserSelector';
 export * from './DifficultySelector';
+export * from './DraftPostCard';
+export * from './DraftsTab';
 export * from './EmptyState';
 export * from './EventCard';
 export * from './ImagePickerButton';

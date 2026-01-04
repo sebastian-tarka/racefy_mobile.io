@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   Avatar,
   Button,
+  DraftsTab,
   EmptyState,
   PostCard,
   ActivityCard,
@@ -48,7 +49,7 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
-type TabType = 'posts' | 'stats' | 'activities' | 'events';
+type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
 
 export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
@@ -311,6 +312,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
+    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
     { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart' },
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
@@ -500,6 +502,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const getData = () => {
     if (activeTab === 'posts') return posts;
+    if (activeTab === 'drafts') return []; // Drafts content rendered separately
     if (activeTab === 'stats') return []; // Stats content rendered in header
     if (activeTab === 'activities') return activities;
     return events;
@@ -573,25 +576,42 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <FlatList
-        data={getData()}
-        keyExtractor={getKeyExtractor}
-        renderItem={renderItem}
-        ListHeaderComponent={renderProfileHeader}
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-      />
+      {activeTab === 'drafts' ? (
+        <DraftsTab
+          isOwnProfile={true}
+          ListHeaderComponent={renderProfileHeader}
+          onPublishSuccess={() => {
+            // Refresh posts tab after successful publish
+            fetchPosts(1, true);
+            // Switch to posts tab
+            setActiveTab('posts');
+          }}
+          onEditDraft={(draft) => {
+            // Navigate to PostForm for editing
+            navigation.navigate('PostForm', { postId: draft.id });
+          }}
+        />
+      ) : (
+        <FlatList
+          data={getData()}
+          keyExtractor={getKeyExtractor}
+          renderItem={renderItem}
+          ListHeaderComponent={renderProfileHeader}
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+        />
+      )}
     </SafeAreaView>
   );
 }

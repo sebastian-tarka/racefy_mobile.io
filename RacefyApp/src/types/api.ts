@@ -127,6 +127,31 @@ export interface CreatePostRequest {
   status?: 'draft' | 'published';
 }
 
+// AI generation metadata included with AI-generated drafts
+export interface AiGenerationInfo {
+  id: number;
+  trigger: 'activity_completion' | 'activity_share' | 'event_results' | 'event_forced';
+  style: 'achievement' | 'statistical' | 'comparison';
+  is_ai_generated: true;
+}
+
+// Draft post data structure - extends Post with AI generation info
+export interface DraftPost extends Post {
+  status: 'draft';
+  ai_generation?: AiGenerationInfo;
+}
+
+// Paginated response for drafts
+export interface DraftsResponse {
+  data: DraftPost[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
 // ============ EVENTS ============
 
 export interface Event {
