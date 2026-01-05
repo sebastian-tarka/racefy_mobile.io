@@ -1,5 +1,16 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
+// Determine API URL based on APP_ENV
+const getApiUrl = (): string => {
+  const env = process.env.APP_ENV || 'production';
+
+  if (env === 'staging') {
+    return process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api';
+  }
+
+  return process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api';
+};
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
@@ -89,9 +100,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-video',
   ],
   extra: {
+    appEnv: process.env.APP_ENV || 'production',
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',
-    apiProductionUrl: process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api',
     apiLocalPort: process.env.API_LOCAL_PORT || '8080',
+    apiUrl: getApiUrl(),
     xdebugEnabled: process.env.XDEBUG_ENABLED === 'true',
+    eas: {
+      projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
+    },
   },
 });

@@ -6,10 +6,14 @@ import * as Device from 'expo-device';
 const extra = Constants.expoConfig?.extra ?? {};
 const LOCAL_IP = extra.apiLocalIp || '192.168.1.100';
 const LOCAL_PORT = extra.apiLocalPort || '8080';
-const PRODUCTION_URL = extra.apiProductionUrl || 'https://api.racefy.app/api';
+const API_URL = extra.apiUrl || 'https://api.racefy.app/api';
+const APP_ENV = extra.appEnv || 'production';
 
 // Xdebug debugging - only active in development mode
 export const XDEBUG_ENABLED = __DEV__ && extra.xdebugEnabled === true;
+
+// Export environment info for debugging
+export { APP_ENV };
 
 // API Base URL configuration
 const getBaseUrl = (): string => {
@@ -26,8 +30,8 @@ const getBaseUrl = (): string => {
     // iOS Simulator can use localhost directly
     return `http://localhost:${LOCAL_PORT}/api`;
   }
-  // Production
-  return PRODUCTION_URL;
+  // Production / Staging (based on APP_ENV)
+  return API_URL;
 };
 
 export const API_BASE_URL = getBaseUrl();
@@ -43,8 +47,8 @@ const getStorageBaseUrl = (): string => {
     }
     return `http://localhost:${LOCAL_PORT}`;
   }
-  // Production - strip /api from the URL
-  return PRODUCTION_URL.replace('/api', '');
+  // Production / Staging - strip /api from the URL
+  return API_URL.replace('/api', '');
 };
 
 /**

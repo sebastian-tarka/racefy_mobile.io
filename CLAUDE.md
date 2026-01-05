@@ -133,10 +133,56 @@ Copy `.env.example` to `.env` in RacefyApp/ and set your local IP:
 ```
 API_LOCAL_IP=your.local.ip
 API_LOCAL_PORT=8080
+API_STAGING_URL=https://app.dev.racefy.io/api
 API_PRODUCTION_URL=https://api.racefy.app/api
 ```
 
 The Laravel API backend runs via Sail on port 8080.
+
+## EAS Build & Deployment
+
+The app uses [EAS Build](https://docs.expo.dev/build/introduction/) for creating Android/iOS builds.
+
+### Prerequisites
+```bash
+npm install -g eas-cli
+eas login
+```
+
+### Build Profiles
+
+| Profile | Platform | Output | API URL | Command |
+|---------|----------|--------|---------|---------|
+| `staging` | Android | APK | `https://app.dev.racefy.io/api` | `eas build --platform android --profile staging` |
+| `production` | Android | AAB | `https://api.racefy.app/api` | `eas build --platform android --profile production` |
+
+### Build Commands
+```bash
+# Staging APK (for testing)
+cd RacefyApp && eas build --platform android --profile staging
+
+# Production AAB (for Google Play)
+cd RacefyApp && eas build --platform android --profile production
+
+# iOS builds (requires Apple Developer account)
+cd RacefyApp && eas build --platform ios --profile staging
+cd RacefyApp && eas build --platform ios --profile production
+```
+
+### How Environment Selection Works
+
+1. `eas.json` defines build profiles with `APP_ENV` variable (`staging` or `production`)
+2. `app.config.ts` reads `APP_ENV` and selects the appropriate API URL
+3. `config/api.ts` uses `extra.apiUrl` from the config for production/staging builds
+
+**Note:** Local `.env` file is NOT used during EAS cloud builds. The API URLs are hardcoded as fallbacks in `app.config.ts`. To use custom URLs, set environment variables in EAS:
+```bash
+eas secret:create --name API_STAGING_URL --value "https://your-staging.api/api" --scope project
+```
+
+### Expo Dashboard
+- Project: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp
+- Builds: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp/builds
 
 ## Test Credentials
 ```
