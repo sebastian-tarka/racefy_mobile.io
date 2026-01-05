@@ -25,27 +25,28 @@ export function useFeed() {
         const currentPage = reset ? 1 : page;
         const response = await api.getFeed(currentPage);
 
-        // Debug: Log raw API response
-        console.log('[useFeed] API response:', JSON.stringify(response.data.slice(0, 2), null, 2));
-        response.data.forEach((post, idx) => {
-          if (post.videos && post.videos.length > 0) {
-            console.log(`[useFeed] Post ${post.id} has videos:`, post.videos);
-          }
-          if (post.media && post.media.length > 0) {
-            console.log(`[useFeed] Post ${post.id} has media:`, post.media);
-          }
-        });
+        // Handle different API response structures
+        const responseAny = response as any;
+        const postsData: Post[] = responseAny?.data ?? responseAny ?? [];
+        const meta = responseAny?.meta ?? { current_page: 1, last_page: 1 };
+
+        if (!Array.isArray(postsData)) {
+          console.error('[useFeed] Invalid response - data is not an array:', postsData);
+          setError('Failed to load feed');
+          return;
+        }
 
         setPosts((prev) => {
-          if (reset) return response.data;
+          if (reset) return postsData;
           // Deduplicate by post ID when loading more
           const existingIds = new Set(prev.map((p) => p.id));
-          const newPosts = response.data.filter((p) => !existingIds.has(p.id));
+          const newPosts = postsData.filter((p) => !existingIds.has(p.id));
           return [...prev, ...newPosts];
         });
-        setHasMore(response.meta.current_page < response.meta.last_page);
+        setHasMore(meta.current_page < meta.last_page);
         setPage(currentPage + 1);
       } catch (err) {
+        console.error('[useFeed] Failed to fetch posts:', err);
         setError('Failed to load feed');
       } finally {
         setIsLoading(false);

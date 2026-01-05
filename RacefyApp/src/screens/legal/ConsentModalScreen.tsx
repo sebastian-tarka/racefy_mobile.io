@@ -60,12 +60,23 @@ export function ConsentModalScreen() {
         getCurrentDocuments(selectedLanguage),
         getAvailableLanguages(),
       ]);
-      setDocuments(docsResponse.documents);
-      setLanguages(langsResponse.supported);
+
+      // Extract documents and languages from responses
+      const docs = docsResponse?.data ?? [];
+      const langs = langsResponse?.supported ?? ['en', 'pl'];
+
+      if (!Array.isArray(docs)) {
+        console.error('[ConsentModal] Invalid documents response - not an array:', docs);
+        setError(t('legal.loadError'));
+        return;
+      }
+
+      setDocuments(docs);
+      setLanguages(Array.isArray(langs) ? langs : ['en', 'pl']);
 
       // Initialize consents (all unchecked)
       const initialConsents: Record<number, boolean> = {};
-      docsResponse.documents.forEach(doc => {
+      docs.forEach(doc => {
         initialConsents[doc.version_id] = false;
       });
       setConsents(initialConsents);

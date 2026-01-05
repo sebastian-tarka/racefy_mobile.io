@@ -14,14 +14,15 @@ export interface LegalDocument {
 }
 
 // Response from GET /legal/documents/current
+// Note: API returns { data: [...] } not { documents: [...] }
 export interface CurrentDocumentsResponse {
-  documents: LegalDocument[];
+  data: LegalDocument[];
 }
 
 // Response from GET /legal/languages
 export interface LanguagesResponse {
   supported: string[];
-  fallback: {
+  fallbacks: {
     [key: string]: string[];
   };
 }

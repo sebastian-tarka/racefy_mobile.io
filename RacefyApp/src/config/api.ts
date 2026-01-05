@@ -7,7 +7,9 @@ const extra = Constants.expoConfig?.extra ?? {};
 const LOCAL_IP = extra.apiLocalIp || '192.168.1.100';
 const LOCAL_PORT = extra.apiLocalPort || '8080';
 const API_URL = extra.apiUrl || 'https://api.racefy.app/api';
+const API_STAGING_URL = extra.apiStagingUrl || 'https://app.dev.racefy.io/api';
 const APP_ENV = extra.appEnv || 'production';
+const USE_STAGING_IN_DEV = extra.useStagingInDev === true;
 
 // Xdebug debugging - only active in development mode
 export const XDEBUG_ENABLED = __DEV__ && extra.xdebugEnabled === true;
@@ -18,6 +20,12 @@ export { APP_ENV };
 // API Base URL configuration
 const getBaseUrl = (): string => {
   if (__DEV__) {
+    // Option to use staging API in development mode
+    if (USE_STAGING_IN_DEV) {
+      console.log('[API] Using staging API in dev mode:', API_STAGING_URL);
+      return API_STAGING_URL;
+    }
+
     // Physical device (Expo Go or dev build) - use local IP from .env
     if (Device.isDevice) {
       return `http://${LOCAL_IP}:${LOCAL_PORT}/api`;
@@ -39,6 +47,11 @@ export const API_BASE_URL = getBaseUrl();
 // Get the base host for storage URLs (without /api)
 const getStorageBaseUrl = (): string => {
   if (__DEV__) {
+    // When using staging API in dev mode, use staging storage URL
+    if (USE_STAGING_IN_DEV) {
+      return API_STAGING_URL.replace('/api', '');
+    }
+
     if (Device.isDevice) {
       return `http://${LOCAL_IP}:${LOCAL_PORT}`;
     }

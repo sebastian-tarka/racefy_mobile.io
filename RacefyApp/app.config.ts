@@ -104,6 +104,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',
     apiLocalPort: process.env.API_LOCAL_PORT || '8080',
     apiUrl: getApiUrl(),
+    apiStagingUrl: process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api',
+    useStagingInDev: process.env.USE_STAGING_IN_DEV === 'true',
     xdebugEnabled: process.env.XDEBUG_ENABLED === 'true',
     eas: {
       projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
