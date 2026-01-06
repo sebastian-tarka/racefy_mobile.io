@@ -103,9 +103,13 @@ export function useFeed() {
     [likePost, unlikePost]
   );
 
-  const createPost = useCallback(async (content: string, media?: MediaItem[]) => {
+  const createPost = useCallback(async (
+    content: string,
+    media?: MediaItem[],
+    visibility: 'public' | 'followers' | 'private' = 'public'
+  ) => {
     try {
-      const newPost = await api.createPost({ content: content || ' ' });
+      const newPost = await api.createPost({ content: content || ' ', visibility });
 
       // Upload media items if provided
       if (media && media.length > 0) {

@@ -25,12 +25,14 @@ import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize } from '../../theme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import type { MediaItem } from '../../types/api';
+
+type PostVisibility = 'public' | 'followers' | 'private';
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Feed'>,
@@ -61,6 +63,13 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
   const [isPosting, setIsPosting] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [isComposerVisible, setIsComposerVisible] = useState(false);
+  const [visibility, setVisibility] = useState<PostVisibility>('public');
+
+  const visibilityOptions: { value: PostVisibility; icon: string }[] = [
+    { value: 'public', icon: 'globe-outline' },
+    { value: 'followers', icon: 'people-outline' },
+    { value: 'private', icon: 'lock-closed-outline' },
+  ];
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -73,9 +82,10 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
 
     setIsPosting(true);
     try {
-      await createPost(newPostContent.trim(), selectedMedia);
+      await createPost(newPostContent.trim(), selectedMedia, visibility);
       setNewPostContent('');
       setSelectedMedia([]);
+      setVisibility('public');
       setIsComposerVisible(false);
     } catch (error) {
       Alert.alert(t('common.error'), t('feed.failedToCreate'));
@@ -199,17 +209,44 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
                 allowVideo
               />
               <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
-                <View style={styles.mediaInfoContainer}>
-                  <Ionicons
-                    name={selectedMedia.length > 0 ? 'images' : 'images-outline'}
-                    size={20}
-                    color={selectedMedia.length > 0 ? colors.primary : colors.textSecondary}
-                  />
-                  {selectedMedia.length > 0 && (
-                    <Text style={[styles.mediaCount, { color: colors.primary }]}>
-                      {selectedMedia.length}
-                    </Text>
-                  )}
+                <View style={styles.actionsLeft}>
+                  <View style={styles.mediaInfoContainer}>
+                    <Ionicons
+                      name={selectedMedia.length > 0 ? 'images' : 'images-outline'}
+                      size={20}
+                      color={selectedMedia.length > 0 ? colors.primary : colors.textSecondary}
+                    />
+                    {selectedMedia.length > 0 && (
+                      <Text style={[styles.mediaCount, { color: colors.primary }]}>
+                        {selectedMedia.length}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.visibilitySelector}>
+                    {visibilityOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          styles.visibilityOption,
+                          {
+                            backgroundColor: visibility === option.value
+                              ? colors.primary
+                              : colors.background,
+                            borderColor: visibility === option.value
+                              ? colors.primary
+                              : colors.border,
+                          },
+                        ]}
+                        onPress={() => setVisibility(option.value)}
+                      >
+                        <Ionicons
+                          name={option.icon as any}
+                          size={16}
+                          color={visibility === option.value ? '#fff' : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
                 <Button
                   title={t('feed.post')}
@@ -326,6 +363,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
   },
+  actionsLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   mediaInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,6 +376,18 @@ const styles = StyleSheet.create({
   mediaCount: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  visibilitySelector: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  visibilityOption: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   postButton: {
     paddingHorizontal: spacing.xl,

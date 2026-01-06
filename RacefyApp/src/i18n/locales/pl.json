@@ -119,6 +119,10 @@
     "titlePlaceholder": "Dodaj tytuł...",
     "content": "Treść",
     "contentPlaceholder": "Co masz na myśli?",
+    "visibility": "Widoczność",
+    "media": "Zdjęcia i filmy",
+    "addMoreMedia": "Dodaj więcej",
+    "mediaItems": "elementów",
     "updateButton": "Zaktualizuj post",
     "updateSuccess": "Post został zaktualizowany!",
     "updateFailed": "Nie udało się zaktualizować postu",
@@ -206,6 +210,23 @@
       "fromActivities": "Z aktywności",
       "fromEvents": "Z wydarzeń",
       "noPoints": "Brak punktów"
+    },
+    "followersList": {
+      "title": "Obserwujący",
+      "noFollowers": "Brak obserwujących",
+      "noFollowersMessage": "Gdy ktoś zacznie obserwować ten profil, pojawi się tutaj"
+    },
+    "followingList": {
+      "title": "Obserwowani",
+      "noFollowing": "Nie obserwuje nikogo",
+      "noFollowingMessage": "Gdy ten profil zacznie kogoś obserwować, pojawi się tutaj"
+    },
+    "privacy": {
+      "restricted": "Ten profil jest prywatny",
+      "restrictedMessage": "Zaobserwuj tego użytkownika, aby zobaczyć jego treści",
+      "restrictedStats": "Statystyki są ukryte",
+      "restrictedActivities": "Aktywności są ukryte",
+      "restrictedPosts": "Posty są ukryte"
     }
   },
   "editProfile": {

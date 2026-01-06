@@ -19,15 +19,22 @@ import {
   PostCard,
   ActivityCard,
   EventCard,
+  UserListModal,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
+import {
+  canViewFollowersList,
+  canViewFollowingList,
+  canViewActivities,
+  canViewPosts,
+} from '../../utils/privacy';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { UserProfile, Post, Activity, Event } from '../../types/api';
+import type { UserProfile, Post, Activity, Event, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -46,6 +53,10 @@ export function UserProfileScreen({ navigation, route }: Props) {
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('posts');
   const [error, setError] = useState<string | null>(null);
+
+  // Modal state
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   // Posts state
   const [posts, setPosts] = useState<Post[]>([]);
@@ -255,6 +266,28 @@ export function UserProfileScreen({ navigation, route }: Props) {
     }
   };
 
+  const handleFollowersPress = () => {
+    setShowFollowersModal(true);
+  };
+
+  const handleFollowingPress = () => {
+    setShowFollowingModal(true);
+  };
+
+  const handleUserNavigation = (user: User) => {
+    setShowFollowersModal(false);
+    setShowFollowingModal(false);
+    navigation.push('UserProfile', { username: user.username });
+  };
+
+  // Privacy checks
+  const canViewFollowers = profile
+    ? canViewFollowersList(profile, currentUser ?? null, isFollowing)
+    : false;
+  const canViewFollowing = profile
+    ? canViewFollowingList(profile, currentUser ?? null, isFollowing)
+    : false;
+
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
@@ -327,15 +360,15 @@ export function UserProfileScreen({ navigation, route }: Props) {
         {profile.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text>}
 
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statItem}>
+          <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profile.posts_count}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.posts')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
+          </View>
+          <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profile.followers_count}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
+          <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profile.following_count}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
           </TouchableOpacity>
@@ -506,6 +539,29 @@ export function UserProfileScreen({ navigation, route }: Props) {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
       />
+
+      {profile && (
+        <>
+          <UserListModal
+            visible={showFollowersModal}
+            onClose={() => setShowFollowersModal(false)}
+            title={t('profile.followersList.title')}
+            userId={profile.id}
+            listType="followers"
+            onUserPress={handleUserNavigation}
+            isRestricted={!canViewFollowers}
+          />
+          <UserListModal
+            visible={showFollowingModal}
+            onClose={() => setShowFollowingModal(false)}
+            title={t('profile.followingList.title')}
+            userId={profile.id}
+            listType="following"
+            onUserPress={handleUserNavigation}
+            isRestricted={!canViewFollowing}
+          />
+        </>
+      )}
     </SafeAreaView>
   );
 }

@@ -30,6 +30,7 @@ export * from './ScreenHeader';
 export * from './SettingsSection';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
+export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './BottomSheet';
 export * from './EventSelectionSheet';

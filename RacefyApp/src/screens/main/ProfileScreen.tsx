@@ -26,6 +26,7 @@ import {
   SportStatsChart,
   PointsCard,
   CompareUserSelector,
+  UserListModal,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -59,6 +60,10 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Modal state
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
 
   // Update active tab when navigating with initialTab param
   useEffect(() => {
@@ -291,6 +296,20 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     ]);
   };
 
+  const handleFollowersPress = () => {
+    setShowFollowersModal(true);
+  };
+
+  const handleFollowingPress = () => {
+    setShowFollowingModal(true);
+  };
+
+  const handleUserNavigation = (selectedUser: User) => {
+    setShowFollowersModal(false);
+    setShowFollowingModal(false);
+    navigation.navigate('UserProfile', { username: selectedUser.username });
+  };
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -359,15 +378,15 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{user.bio}</Text>}
 
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statItem}>
+          <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.posts.total ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.posts')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
+          </View>
+          <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
+          <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
           </TouchableOpacity>
@@ -612,6 +631,27 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
         />
+      )}
+
+      {user && (
+        <>
+          <UserListModal
+            visible={showFollowersModal}
+            onClose={() => setShowFollowersModal(false)}
+            title={t('profile.followersList.title')}
+            userId={user.id}
+            listType="followers"
+            onUserPress={handleUserNavigation}
+          />
+          <UserListModal
+            visible={showFollowingModal}
+            onClose={() => setShowFollowingModal(false)}
+            title={t('profile.followingList.title')}
+            userId={user.id}
+            listType="following"
+            onUserPress={handleUserNavigation}
+          />
+        </>
       )}
     </SafeAreaView>
   );

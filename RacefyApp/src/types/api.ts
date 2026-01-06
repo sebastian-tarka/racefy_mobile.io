@@ -15,11 +15,19 @@ export interface User {
   updated_at: string;
 }
 
+export interface UserProfilePrivacy {
+  profile_visibility: 'public' | 'followers' | 'private';
+  show_activities: boolean;
+  show_stats: boolean;
+  allow_messages: 'everyone' | 'followers' | 'none';
+}
+
 export interface UserProfile extends User {
   followers_count: number;
   following_count: number;
   posts_count: number;
   is_following?: boolean;
+  privacy?: UserProfilePrivacy;
 }
 
 export interface AuthResponse {

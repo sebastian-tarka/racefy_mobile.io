@@ -119,6 +119,10 @@
     "titlePlaceholder": "Add a title...",
     "content": "Content",
     "contentPlaceholder": "What's on your mind?",
+    "visibility": "Visibility",
+    "media": "Photos & Videos",
+    "addMoreMedia": "Add more",
+    "mediaItems": "items",
     "updateButton": "Update Post",
     "updateSuccess": "Post updated successfully!",
     "updateFailed": "Failed to update post",
@@ -206,6 +210,23 @@
       "fromActivities": "From Activities",
       "fromEvents": "From Events",
       "noPoints": "No points yet"
+    },
+    "followersList": {
+      "title": "Followers",
+      "noFollowers": "No followers yet",
+      "noFollowersMessage": "When someone follows this profile, they'll appear here"
+    },
+    "followingList": {
+      "title": "Following",
+      "noFollowing": "Not following anyone",
+      "noFollowingMessage": "When this profile follows someone, they'll appear here"
+    },
+    "privacy": {
+      "restricted": "This profile is private",
+      "restrictedMessage": "Follow this user to see their content",
+      "restrictedStats": "Stats are hidden",
+      "restrictedActivities": "Activities are hidden",
+      "restrictedPosts": "Posts are hidden"
     }
   },
   "editProfile": {

@@ -813,6 +813,15 @@ class ApiService {
     await this.request(`/photos/${id}`, { method: 'DELETE' });
   }
 
+  async deleteVideo(id: number): Promise<void> {
+    await this.request(`/videos/${id}`, { method: 'DELETE' });
+  }
+
+  async deletePostMedia(mediaId: number, mediaType: 'image' | 'video'): Promise<void> {
+    const endpoint = mediaType === 'video' ? 'videos' : 'photos';
+    await this.request(`/${endpoint}/${mediaId}`, { method: 'DELETE' });
+  }
+
   // ============ ACTIVITY BOOSTS ============
 
   async boostActivity(activityId: number): Promise<Types.BoostResponse> {
