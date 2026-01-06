@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, XDEBUG_ENABLED } from '../config/api';
 import { getCurrentLanguage } from '../i18n';
+import { logger } from './logger';
 import type * as Types from '../types/api';
 
 const TOKEN_KEY = '@racefy_token';
@@ -40,7 +41,18 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    const method = options.method || 'GET';
+    const startTime = Date.now();
     const isFormData = options.body instanceof FormData;
+
+    // Log request start (skip logging for debug/logs endpoint to avoid infinite loop)
+    const shouldLog = !endpoint.includes('/debug/logs');
+    if (shouldLog) {
+      logger.api(`${method} ${endpoint}`, {
+        hasBody: !!options.body,
+        isFormData,
+      });
+    }
 
     const headers: HeadersInit = {
       Accept: 'application/json',
@@ -53,18 +65,45 @@ class ApiService {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(this.buildUrl(endpoint), {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(this.buildUrl(endpoint), {
+        ...options,
+        headers,
+      });
 
-    const data = await response.json();
+      const duration = Date.now() - startTime;
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw data as Types.ApiError;
+      if (!response.ok) {
+        if (shouldLog) {
+          logger.error('api', `${method} ${endpoint} failed`, {
+            status: response.status,
+            duration,
+            error: (data as Types.ApiError).message,
+          });
+        }
+        throw data as Types.ApiError;
+      }
+
+      if (shouldLog) {
+        logger.debug('api', `${method} ${endpoint} completed`, {
+          status: response.status,
+          duration,
+        });
+      }
+
+      return data;
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      if (shouldLog && !error.message) {
+        // Network error (not API error)
+        logger.error('api', `${method} ${endpoint} network error`, {
+          duration,
+          error: error.toString(),
+        });
+      }
+      throw error;
     }
-
-    return data;
   }
 
   private async setToken(token: string) {
@@ -1159,6 +1198,25 @@ class ApiService {
       '/conversations/unread-count'
     );
     return response.unread_count;
+  }
+
+  // ============ DEBUG LOGS ============
+
+  /**
+   * Send debug logs to server for analysis
+   * Used during development to help diagnose issues
+   */
+  async sendDebugLogs(
+    payload: Types.DebugLogsRequest
+  ): Promise<Types.DebugLogsResponse> {
+    const response = await this.request<Types.DebugLogsResponse>(
+      '/debug/logs',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return response;
   }
 }
 

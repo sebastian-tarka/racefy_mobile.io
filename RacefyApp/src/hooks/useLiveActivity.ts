@@ -12,6 +12,7 @@ import {
 import type { Activity, GpsPoint } from '../types/api';
 import { DEFAULT_GPS_PROFILE, convertToApiGpsProfile, type GpsProfile } from '../config/gpsProfiles';
 import { useSportTypes } from './useSportTypes';
+import { logger } from '../services/logger';
 
 const isWeb = Platform.OS === 'web';
 
@@ -156,9 +157,15 @@ export function useLiveActivity() {
 
   const checkExistingActivity = async () => {
     try {
+      logger.activity('Checking for existing activity');
       setState((prev) => ({ ...prev, isLoading: true }));
       const activity = await api.getCurrentActivity();
       if (activity) {
+        logger.activity('Found existing activity', {
+          id: activity.id,
+          status: activity.status,
+          sportTypeId: activity.sport_type_id,
+        });
         const stats: LiveActivityStats = {
           distance: activity.distance,
           duration: activity.duration,
@@ -191,10 +198,11 @@ export function useLiveActivity() {
         // - Finish: call finishTracking()
         // - Discard: call discardTracking()
       } else {
+        logger.activity('No existing activity found');
         setState((prev) => ({ ...prev, isLoading: false, hasExistingActivity: false }));
       }
     } catch (error) {
-      console.error('Failed to check existing activity:', error);
+      logger.error('activity', 'Failed to check existing activity', { error });
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   };
@@ -256,7 +264,7 @@ export function useLiveActivity() {
 
   const startGpsTracking = async (activityId: number, sportTypeId: number) => {
     if (isWeb) {
-      console.log('GPS tracking not available on web');
+      logger.gps('GPS tracking not available on web');
       return;
     }
 
@@ -266,15 +274,19 @@ export function useLiveActivity() {
 
     // Check if GPS is enabled for this activity type
     if (!profile.enabled) {
-      console.log(`GPS tracking disabled for sport type ${sportTypeId}`);
+      logger.gps('GPS tracking disabled for sport type', { sportTypeId });
       return;
     }
 
-    console.log(`Using GPS profile for sport type ${sportTypeId}:`, {
-      accuracyThreshold: profile.accuracyThreshold,
-      minDistanceThreshold: profile.minDistanceThreshold,
-      maxRealisticSpeed: profile.maxRealisticSpeed,
-      timeInterval: profile.timeInterval,
+    logger.gps('Starting GPS tracking', {
+      activityId,
+      sportTypeId,
+      profile: {
+        accuracyThreshold: profile.accuracyThreshold,
+        minDistanceThreshold: profile.minDistanceThreshold,
+        maxRealisticSpeed: profile.maxRealisticSpeed,
+        timeInterval: profile.timeInterval,
+      },
     });
 
     currentActivityId.current = activityId;
@@ -302,7 +314,10 @@ export function useLiveActivity() {
           // Filter out inaccurate GPS readings
           const accuracy = location.coords.accuracy;
           if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
-            console.log(`GPS reading filtered: accuracy ${accuracy.toFixed(1)}m > ${gpsProfile.accuracyThreshold}m threshold`);
+            logger.gps('GPS point filtered: poor accuracy', {
+              accuracy: accuracy.toFixed(1),
+              threshold: gpsProfile.accuracyThreshold,
+            });
             return;
           }
 
@@ -365,9 +380,18 @@ export function useLiveActivity() {
                 currentStats: { ...localStatsRef.current },
               }));
             } else if (dist > effectiveMinDistance && impliedSpeed >= gpsProfile.maxRealisticSpeed) {
-              console.log(`GPS glitch filtered: ${dist.toFixed(1)}m in ${timeSinceLastPoint.toFixed(1)}s = ${(impliedSpeed * 3.6).toFixed(1)} km/h`);
+              logger.gps('GPS point filtered: unrealistic speed', {
+                distance: dist.toFixed(1),
+                timeDelta: timeSinceLastPoint.toFixed(1),
+                speedKmh: (impliedSpeed * 3.6).toFixed(1),
+                maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
+              });
             } else if (dist <= effectiveMinDistance) {
-              console.log(`Small movement filtered: ${dist.toFixed(1)}m < ${effectiveMinDistance}m threshold${isLikelyStationary ? ' (stationary mode)' : ''}`);
+              logger.debug('gps', 'GPS point filtered: small movement', {
+                distance: dist.toFixed(1),
+                threshold: effectiveMinDistance,
+                isStationary: isLikelyStationary,
+              });
             }
           }
 
@@ -390,9 +414,9 @@ export function useLiveActivity() {
       // Start duration timer with current stats (important for crash recovery)
       startDurationTimer(localStatsRef.current.duration, localStatsRef.current.calories);
 
-      console.log('GPS tracking started (foreground + background)');
+      logger.gps('GPS tracking started successfully', { activityId, mode: 'foreground+background' });
     } catch (error) {
-      console.error('Failed to start GPS tracking:', error);
+      logger.error('gps', 'Failed to start GPS tracking', { error, activityId });
     }
   };
 
@@ -422,7 +446,7 @@ export function useLiveActivity() {
     currentActivityId.current = null;
     stopDurationTimer();
 
-    console.log('GPS tracking stopped (foreground + background)');
+    logger.gps('GPS tracking stopped');
   };
 
   const syncPoints = async (activityId: number) => {
@@ -430,6 +454,8 @@ export function useLiveActivity() {
 
     const pointsToSync = [...pointsBuffer.current];
     pointsBuffer.current = [];
+
+    logger.gps('Syncing GPS points to server', { activityId, count: pointsToSync.length });
 
     try {
       // Send points with current calories for crash recovery
@@ -457,17 +483,27 @@ export function useLiveActivity() {
         currentStats: newStats,
       }));
 
-      console.log(`Synced ${result.points_count} points, total: ${result.total_points}`);
+      logger.gps('GPS points synced successfully', {
+        synced: result.points_count,
+        total: result.total_points,
+        distance: result.stats.distance,
+        duration: result.stats.duration,
+      });
     } catch (error) {
       // Re-add points on failure
       pointsBuffer.current = [...pointsToSync, ...pointsBuffer.current];
-      console.error('Failed to sync points:', error);
+      logger.error('gps', 'Failed to sync GPS points', {
+        activityId,
+        pointsCount: pointsToSync.length,
+        error,
+      });
     }
   };
 
   const startTracking = useCallback(
     async (sportTypeId: number, title?: string, eventId?: number) => {
       try {
+        logger.activity('Starting activity tracking', { sportTypeId, title, eventId });
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
         // IMPORTANT: Check for existing activity first!
@@ -529,9 +565,15 @@ export function useLiveActivity() {
         // Start GPS tracking with sport-specific profile
         await startGpsTracking(activity.id, sportTypeId);
 
+        logger.activity('Activity started successfully', {
+          id: activity.id,
+          sportTypeId,
+          eventId,
+        });
+
         return activity;
       } catch (error: any) {
-        console.error('Failed to start activity:', error);
+        logger.error('activity', 'Failed to start activity', { sportTypeId, error: error.message });
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -547,6 +589,7 @@ export function useLiveActivity() {
     if (!state.activity) return;
 
     try {
+      logger.activity('Pausing activity', { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS
@@ -558,6 +601,8 @@ export function useLiveActivity() {
       // Pause on server
       const activity = await api.pauseActivity(state.activity.id);
 
+      logger.activity('Activity paused', { id: activity.id, duration: activity.duration });
+
       setState((prev) => ({
         ...prev,
         activity,
@@ -566,7 +611,7 @@ export function useLiveActivity() {
         isLoading: false,
       }));
     } catch (error: any) {
-      console.error('Failed to pause activity:', error);
+      logger.error('activity', 'Failed to pause activity', { id: state.activity.id, error: error.message });
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -580,6 +625,7 @@ export function useLiveActivity() {
     if (!state.activity) return;
 
     try {
+      logger.activity('Resuming activity', { id: state.activity.id, status: state.activity.status });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       let activity = state.activity;
@@ -590,10 +636,11 @@ export function useLiveActivity() {
         activity = await api.resumeActivity(state.activity.id);
         // Update paused duration from server
         pausedDuration.current = activity.total_paused_duration || 0;
+        logger.activity('Activity resumed via API', { id: activity.id });
       } else if (state.activity.status === 'in_progress') {
         // Activity is already in progress, just need to restart local GPS tracking
         // No API call needed
-        console.log('Activity already in progress, restarting GPS tracking');
+        logger.activity('Activity already in progress, restarting GPS tracking', { id: activity.id });
       }
 
       setState((prev) => ({
@@ -608,7 +655,7 @@ export function useLiveActivity() {
       // Restart GPS tracking with sport-specific profile
       await startGpsTracking(activity.id, activity.sport_type_id);
     } catch (error: any) {
-      console.error('Failed to resume activity:', error);
+      logger.error('activity', 'Failed to resume activity', { id: state.activity.id, error: error.message });
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -623,6 +670,7 @@ export function useLiveActivity() {
       if (!state.activity) return null;
 
       try {
+        logger.activity('Finishing activity', { id: state.activity.id });
         setState((prev) => ({ ...prev, isLoading: true }));
 
         // Stop GPS
@@ -635,6 +683,13 @@ export function useLiveActivity() {
         const activity = await api.finishActivity(state.activity.id, {
           ...data,
           ended_at: new Date().toISOString(),
+        });
+
+        logger.activity('Activity finished successfully', {
+          id: activity.id,
+          distance: activity.distance,
+          duration: activity.duration,
+          hasGpsTrack: activity.has_gps_track,
         });
 
         // Reset state
@@ -656,7 +711,7 @@ export function useLiveActivity() {
 
         return activity;
       } catch (error: any) {
-        console.error('Failed to finish activity:', error);
+        logger.error('activity', 'Failed to finish activity', { id: state.activity.id, error: error.message });
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -672,6 +727,7 @@ export function useLiveActivity() {
     if (!state.activity) return;
 
     try {
+      logger.activity('Discarding activity', { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS
@@ -679,6 +735,8 @@ export function useLiveActivity() {
 
       // Discard on server
       await api.discardActivity(state.activity.id);
+
+      logger.activity('Activity discarded', { id: state.activity.id });
 
       // Reset state
       localStatsRef.current = { ...initialStats };
@@ -697,7 +755,7 @@ export function useLiveActivity() {
         hasExistingActivity: false,
       });
     } catch (error: any) {
-      console.error('Failed to discard activity:', error);
+      logger.error('activity', 'Failed to discard activity', { id: state.activity.id, error: error.message });
       setState((prev) => ({
         ...prev,
         isLoading: false,

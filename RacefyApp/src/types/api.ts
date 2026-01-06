@@ -655,3 +655,33 @@ export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
 }
+
+// ============ DEBUG LOGS ============
+
+export type DebugLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type DebugLogCategory = 'gps' | 'api' | 'auth' | 'activity' | 'navigation' | 'general';
+
+export interface DebugLogEntry {
+  timestamp: string;
+  level: DebugLogLevel;
+  message: string;
+  context?: Record<string, any>;
+  stack_trace?: string;
+}
+
+export interface DebugLogsRequest {
+  device_info: {
+    platform: string;
+    os_version: string;
+    app_version: string;
+    device_model: string;
+    device_id: string;
+  };
+  session_id: string;
+  logs: DebugLogEntry[];
+}
+
+export interface DebugLogsResponse {
+  message: string;
+  log_reference: string;
+}

@@ -8,6 +8,7 @@ import React, {
 import { api } from '../services/api';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
+import { logger } from '../services/logger';
 import type { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthContextType {
@@ -65,18 +66,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function initAuth() {
+    logger.auth('Initializing authentication');
     try {
       await api.init();
       if (api.isAuthenticated()) {
+        logger.auth('Token found, fetching user');
         const userData = await api.getUser();
         setUser(userData);
+        logger.auth('User authenticated', { userId: userData.id, username: userData.username });
         // Sync language preference from server after auth
         syncLanguagePreference();
         // Check consent status for existing authenticated users
         const status = await getConsentStatus();
         setRequiresConsent(!status.accepted);
+      } else {
+        logger.auth('No token found, user not authenticated');
       }
     } catch (error) {
+      logger.error('auth', 'Auth initialization failed', { error });
       await api.clearToken();
     } finally {
       setIsLoading(false);
@@ -84,9 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = useCallback(async (data: LoginRequest) => {
+    logger.auth('Login attempt', { email: data.email });
     const response = await api.login(data);
-    console.log('Auth hook received user:', response.user);
     setUser(response.user);
+    logger.auth('Login successful', { userId: response.user.id, username: response.user.username });
     // Sync language preference after login
     syncLanguagePreference();
     // Check consent status after login
@@ -95,16 +103,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
+    logger.auth('Registration attempt', { email: data.email, name: data.name });
     const response = await api.register(data);
     setUser(response.user);
+    logger.auth('Registration successful', { userId: response.user.id });
     // New users always need to accept consents
     setRequiresConsent(true);
   }, []);
 
   const logout = useCallback(async () => {
+    logger.auth('Logout');
     await api.logout();
     setUser(null);
     setRequiresConsent(false);
+    logger.auth('User logged out');
   }, []);
 
   const refreshUser = useCallback(async () => {

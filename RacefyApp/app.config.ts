@@ -107,6 +107,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     apiStagingUrl: process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api',
     useStagingInDev: process.env.USE_STAGING_IN_DEV === 'true',
     xdebugEnabled: process.env.XDEBUG_ENABLED === 'true',
+    // Debug logging configuration
+    logEnabled: process.env.LOG_ENABLED === 'true',
+    logLevel: process.env.LOG_LEVEL || 'debug',
+    logPersist: process.env.LOG_PERSIST !== 'false',
+    logMaxEntries: parseInt(process.env.LOG_MAX_ENTRIES || '2000', 10),
+    logCategories: process.env.LOG_CATEGORIES || 'all',
+    logConsoleOutput: process.env.LOG_CONSOLE_OUTPUT !== 'false',
     eas: {
       projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
     },

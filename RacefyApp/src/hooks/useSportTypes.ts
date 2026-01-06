@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { SportType } from '../types/api';
 import type { Ionicons } from '@expo/vector-icons';
 import {
@@ -105,11 +106,13 @@ export function useSportTypes(): UseSportTypesResult {
   const fetchSportTypes = useCallback(async (force = false) => {
     // Use cache if valid and not forcing refresh
     if (!force && cachedSportTypes && Date.now() - cacheTimestamp < CACHE_DURATION) {
+      logger.debug('general', 'Using cached sport types', { count: cachedSportTypes.length });
       setSportTypes(cachedSportTypes);
       setIsLoading(false);
       return;
     }
 
+    logger.info('general', 'Fetching sport types from API');
     setIsLoading(true);
     setError(null);
 
@@ -131,9 +134,14 @@ export function useSportTypes(): UseSportTypesResult {
       // Update GPS profile static cache for background service
       updateGpsProfileCache(apiSports);
 
+      logger.info('general', 'Sport types loaded', {
+        count: sportsWithIcons.length,
+        withGpsProfiles: apiSports.filter(s => s.gps_profile).length,
+      });
+
       setSportTypes(sportsWithIcons);
     } catch (err: any) {
-      console.error('Failed to fetch sport types:', err);
+      logger.error('general', 'Failed to fetch sport types', { error: err.message });
       setError(err.message || 'Failed to load sports');
       // Use fallback sports on error
       setSportTypes(FALLBACK_SPORTS);

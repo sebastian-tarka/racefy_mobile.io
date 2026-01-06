@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
@@ -749,6 +749,9 @@ export function SettingsScreen({ navigation }: Props) {
           onPreferenceChange={updateAiPostsPreference}
           isUpdating={isUpdatingAiPosts}
         />
+
+        {/* Debug Logs (only visible in dev mode when enabled) */}
+        <DebugLogsSection />
 
         {/* App Section */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.app')}</Text>
