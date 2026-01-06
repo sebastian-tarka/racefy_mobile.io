@@ -8,6 +8,7 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -80,6 +81,28 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     setIsRefreshing(true);
     fetchActivity();
   }, [fetchActivity]);
+
+  const handleDelete = useCallback(() => {
+    Alert.alert(
+      t('activityDetail.deleteActivity'),
+      t('activityDetail.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteActivity(activityId);
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert(t('common.error'), t('activityDetail.deleteFailed'));
+            }
+          },
+        },
+      ]
+    );
+  }, [activityId, navigation, t]);
 
   const formatDuration = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -154,12 +177,21 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
         rightAction={
           isOwner ? (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('ActivityForm', { activityId })}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ActivityForm', { activityId })}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDelete}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.deleteButton}
+              >
+                <Ionicons name="trash-outline" size={22} color={colors.error} />
+              </TouchableOpacity>
+            </View>
           ) : undefined
         }
       />
@@ -381,6 +413,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  deleteButton: {
+    marginLeft: spacing.xs,
   },
   keyboardAvoid: {
     flex: 1,
