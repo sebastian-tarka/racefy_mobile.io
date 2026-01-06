@@ -10,12 +10,14 @@ interface AiPostsSettingsProps {
   preferences: AiPostsPreferences;
   onPreferenceChange: (key: string, value: any) => Promise<void>;
   isUpdating: boolean;
+  embedded?: boolean;
 }
 
 export function AiPostsSettings({
   preferences,
   onPreferenceChange,
   isUpdating,
+  embedded = false,
 }: AiPostsSettingsProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -32,20 +34,35 @@ export function AiPostsSettings({
 
   const isDisabled = !preferences.enabled || isUpdating;
 
+  const containerStyle = embedded
+    ? {}
+    : [styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }];
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('settings.aiPosts.title')}
-        </Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
-          {t('settings.aiPosts.description')}
-        </Text>
-      </View>
+    <View style={containerStyle}>
+      {/* Header - only show when not embedded */}
+      {!embedded && (
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('settings.aiPosts.title')}
+          </Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {t('settings.aiPosts.description')}
+          </Text>
+        </View>
+      )}
+
+      {/* Description when embedded */}
+      {embedded && (
+        <View style={styles.embeddedDescription}>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {t('settings.aiPosts.description')}
+          </Text>
+        </View>
+      )}
 
       {/* Enable Toggle */}
-      <View style={[styles.section, { borderTopColor: colors.border }]}>
+      <View style={[styles.section, !embedded && { borderTopColor: colors.border }]}>
         <View style={styles.row}>
           <View style={styles.textColumn}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>
@@ -170,6 +187,10 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: spacing.lg,
+  },
+  embeddedDescription: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   title: {
     fontSize: fontSize.lg,

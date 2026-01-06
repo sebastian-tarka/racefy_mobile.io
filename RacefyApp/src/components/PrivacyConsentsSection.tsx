@@ -35,7 +35,11 @@ const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString();
 };
 
-export function PrivacyConsentsSection() {
+interface PrivacyConsentsSectionProps {
+  embedded?: boolean;
+}
+
+export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSectionProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation<NavigationProp>();
@@ -102,9 +106,13 @@ export function PrivacyConsentsSection() {
     }
   };
 
+  const sectionStyle = embedded
+    ? {}
+    : [styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }];
+
   if (loading) {
     return (
-      <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={sectionStyle}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={colors.primary} />
         </View>
@@ -117,7 +125,7 @@ export function PrivacyConsentsSection() {
   // Show link to legal documents even when no consents
   if (validConsents.length === 0) {
     return (
-      <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={sectionStyle}>
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           {t('legal.noConsentsYet')}
         </Text>
@@ -138,7 +146,7 @@ export function PrivacyConsentsSection() {
   }
 
   return (
-    <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View style={sectionStyle}>
       {validConsents.map((consent, index) => (
         <View
           key={consent.version_id}

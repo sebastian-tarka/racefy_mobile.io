@@ -27,6 +27,7 @@ export * from './PointsCard';
 export * from './PostCard';
 export * from './PrivacyConsentsSection';
 export * from './ScreenHeader';
+export * from './SettingsSection';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './VideoPlayer';

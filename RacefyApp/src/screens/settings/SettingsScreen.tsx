@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
@@ -186,6 +186,23 @@ export function SettingsScreen({ navigation }: Props) {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Section collapse state
+  const [expandedSections, setExpandedSections] = useState({
+    account: true,
+    consents: true,
+    preferences: true,
+    notifications: true,
+    privacy: true,
+    activityDefaults: true,
+    aiPosts: true,
+    app: true,
+    dangerZone: false,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const appVersion = Application.nativeApplicationVersion || '1.0.0';
 
@@ -472,13 +489,15 @@ export function SettingsScreen({ navigation }: Props) {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Account Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.account')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.account')}
+          isExpanded={expandedSections.account}
+          onToggle={() => toggleSection('account')}
+        >
           <SettingsRow
             icon="person-outline"
             label={t('settings.editProfile')}
             onPress={() => navigation.navigate('EditProfile')}
-            
           />
           <SettingsRow
             icon="lock-closed-outline"
@@ -487,58 +506,63 @@ export function SettingsScreen({ navigation }: Props) {
               setShowPasswordChange(!showPasswordChange);
               setPasswordErrors({});
             }}
-            
           />
-        </View>
-
-        {/* Password Change Form */}
-        {showPasswordChange && (
-          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Input
-              label={t('settings.currentPassword')}
-              placeholder={t('settings.currentPasswordPlaceholder')}
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-              error={passwordErrors.currentPassword}
-            />
-            <Input
-              label={t('settings.newPassword')}
-              placeholder={t('settings.newPasswordPlaceholder')}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-              error={passwordErrors.newPassword}
-            />
-            <Input
-              label={t('auth.confirmPassword')}
-              placeholder={t('auth.confirmPasswordPlaceholder')}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              error={passwordErrors.confirmPassword}
-            />
-            <Button
-              title={t('settings.updatePassword')}
-              onPress={handlePasswordChange}
-              loading={isChangingPassword}
-              style={styles.formButton}
-            />
-          </View>
-        )}
+          {/* Password Change Form */}
+          {showPasswordChange && (
+            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+              <Input
+                label={t('settings.currentPassword')}
+                placeholder={t('settings.currentPasswordPlaceholder')}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                secureTextEntry
+                error={passwordErrors.currentPassword}
+              />
+              <Input
+                label={t('settings.newPassword')}
+                placeholder={t('settings.newPasswordPlaceholder')}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry
+                error={passwordErrors.newPassword}
+              />
+              <Input
+                label={t('auth.confirmPassword')}
+                placeholder={t('auth.confirmPasswordPlaceholder')}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                error={passwordErrors.confirmPassword}
+              />
+              <Button
+                title={t('settings.updatePassword')}
+                onPress={handlePasswordChange}
+                loading={isChangingPassword}
+                style={styles.formButton}
+              />
+            </View>
+          )}
+        </SettingsSection>
 
         {/* Legal Consents */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('legal.consentsTitle')}</Text>
-        <PrivacyConsentsSection />
+        <SettingsSection
+          title={t('legal.consentsTitle')}
+          isExpanded={expandedSections.consents}
+          onToggle={() => toggleSection('consents')}
+        >
+          <PrivacyConsentsSection embedded />
+        </SettingsSection>
 
         {/* General Preferences */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.preferences')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.preferences')}
+          isExpanded={expandedSections.preferences}
+          onToggle={() => toggleSection('preferences')}
+        >
           <SettingsRow
             icon="speedometer-outline"
             label={t('settings.units')}
             value={preferences.units === 'metric' ? t('settings.metric') : t('settings.imperial')}
-            
             rightElement={
               <Switch
                 value={preferences.units === 'imperial'}
@@ -555,9 +579,7 @@ export function SettingsScreen({ navigation }: Props) {
             value={preferences.language === 'en' ? 'English' : 'Polski'}
             onPress={async () => {
               const newLang = preferences.language === 'en' ? 'pl' : 'en';
-              // Update local i18n immediately for instant UI change
               await changeLanguage(newLang);
-              // Then sync with server
               updatePreference('language', newLang);
             }}
           />
@@ -565,14 +587,11 @@ export function SettingsScreen({ navigation }: Props) {
             icon="color-palette-outline"
             label={t('settings.theme')}
             value={t(`settings.theme_${themePreference}`)}
-
             onPress={async () => {
               const themes: ('light' | 'dark' | 'system')[] = ['system', 'light', 'dark'];
               const currentIndex = themes.indexOf(themePreference);
               const newTheme = themes[(currentIndex + 1) % themes.length];
-              // Update local theme immediately
               await setThemePreference(newTheme);
-              // Also sync to server
               updatePreference('theme', newTheme);
             }}
           />
@@ -584,7 +603,6 @@ export function SettingsScreen({ navigation }: Props) {
                 value={hapticsEnabled}
                 onValueChange={(value) => {
                   if (value) {
-                    // Trigger haptic when enabling to show it works
                     triggerHaptic();
                   }
                   setHapticsEnabled(value);
@@ -594,11 +612,14 @@ export function SettingsScreen({ navigation }: Props) {
               />
             }
           />
-        </View>
+        </SettingsSection>
 
         {/* Notifications */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.notifications')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.notifications')}
+          isExpanded={expandedSections.notifications}
+          onToggle={() => toggleSection('notifications')}
+        >
           <NotificationRow
             icon="heart-outline"
             label={t('settings.notif_likes')}
@@ -606,7 +627,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.likes}
             onEmailChange={(value) => updateNotificationChannel('likes', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('likes', 'push', value)}
-            
           />
           <NotificationRow
             icon="chatbubble-outline"
@@ -615,7 +635,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.comments}
             onEmailChange={(value) => updateNotificationChannel('comments', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('comments', 'push', value)}
-            
           />
           <NotificationRow
             icon="person-add-outline"
@@ -624,7 +643,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.follows}
             onEmailChange={(value) => updateNotificationChannel('follows', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('follows', 'push', value)}
-            
           />
           <NotificationRow
             icon="chatbubbles-outline"
@@ -633,7 +651,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.messages}
             onEmailChange={(value) => updateNotificationChannel('messages', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('messages', 'push', value)}
-            
           />
           <NotificationRow
             icon="calendar-outline"
@@ -642,7 +659,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.event_reminders}
             onEmailChange={(value) => updateNotificationChannel('event_reminders', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('event_reminders', 'push', value)}
-            
           />
           <NotificationRow
             icon="stats-chart-outline"
@@ -651,7 +667,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.weekly_summary}
             onEmailChange={(value) => updateNotificationChannel('weekly_summary', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('weekly_summary', 'push', value)}
-            
           />
           <NotificationRow
             icon="thumbs-up-outline"
@@ -660,7 +675,6 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.activity_reactions}
             onEmailChange={(value) => updateNotificationChannel('activity_reactions', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('activity_reactions', 'push', value)}
-            
           />
           <NotificationRow
             icon="at-outline"
@@ -669,24 +683,24 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.mentions}
             onEmailChange={(value) => updateNotificationChannel('mentions', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('mentions', 'push', value)}
-            
           />
-        </View>
+        </SettingsSection>
 
         {/* Privacy */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.privacy')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.privacy')}
+          isExpanded={expandedSections.privacy}
+          onToggle={() => toggleSection('privacy')}
+        >
           <SettingsRow
             icon="eye-outline"
             label={t('settings.profileVisibility')}
             value={getVisibilityLabel(preferences.privacy.profile_visibility)}
             onPress={() => updateNestedPreference('privacy', 'profile_visibility', cycleVisibility(preferences.privacy.profile_visibility))}
-            
           />
           <SettingsRow
             icon="fitness-outline"
             label={t('settings.showActivities')}
-            
             rightElement={
               <Switch
                 value={preferences.privacy.show_activities}
@@ -699,7 +713,6 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="stats-chart-outline"
             label={t('settings.showStats')}
-            
             rightElement={
               <Switch
                 value={preferences.privacy.show_stats}
@@ -714,24 +727,24 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.allowMessages')}
             value={getMessagesLabel(preferences.privacy.allow_messages)}
             onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
-            
           />
-        </View>
+        </SettingsSection>
 
         {/* Activity Defaults */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.activityDefaults')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.activityDefaults')}
+          isExpanded={expandedSections.activityDefaults}
+          onToggle={() => toggleSection('activityDefaults')}
+        >
           <SettingsRow
             icon="globe-outline"
             label={t('settings.defaultVisibility')}
             value={getVisibilityLabel(preferences.activity_defaults.visibility)}
             onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
-
           />
           <SettingsRow
             icon="share-outline"
             label={t('settings.autoShare')}
-
             rightElement={
               <Switch
                 value={preferences.activity_defaults.auto_share}
@@ -741,71 +754,77 @@ export function SettingsScreen({ navigation }: Props) {
               />
             }
           />
-        </View>
+        </SettingsSection>
 
         {/* AI Posts Settings */}
-        <AiPostsSettings
-          preferences={preferences.ai_posts}
-          onPreferenceChange={updateAiPostsPreference}
-          isUpdating={isUpdatingAiPosts}
-        />
+        <SettingsSection
+          title={t('settings.aiPosts.title')}
+          isExpanded={expandedSections.aiPosts}
+          onToggle={() => toggleSection('aiPosts')}
+        >
+          <AiPostsSettings
+            preferences={preferences.ai_posts}
+            onPreferenceChange={updateAiPostsPreference}
+            isUpdating={isUpdatingAiPosts}
+            embedded
+          />
+        </SettingsSection>
 
         {/* Debug Logs (only visible in dev mode when enabled) */}
         <DebugLogsSection />
 
         {/* App Section */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{t('settings.app')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.app')}
+          isExpanded={expandedSections.app}
+          onToggle={() => toggleSection('app')}
+        >
           <SettingsRow
             icon="information-circle-outline"
             label={t('settings.version')}
             value={appVersion}
-            
           />
-        </View>
-
-        {/* Logout */}
-        <View style={[styles.section, styles.logoutSection, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <SettingsRow
             icon="log-out-outline"
             label={t('common.logout')}
             onPress={handleLogout}
-            
           />
-        </View>
+        </SettingsSection>
 
         {/* Danger Zone */}
-        <Text style={[styles.sectionTitle, { color: colors.error }]}>{t('settings.dangerZone')}</Text>
-        <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <SettingsSection
+          title={t('settings.dangerZone')}
+          isExpanded={expandedSections.dangerZone}
+          onToggle={() => toggleSection('dangerZone')}
+          titleColor={colors.error}
+        >
           <SettingsRow
             icon="trash-outline"
             label={t('settings.deleteAccount')}
             onPress={() => setShowDeleteAccount(!showDeleteAccount)}
             danger
-            
           />
-        </View>
-
-        {/* Delete Account Form */}
-        {showDeleteAccount && (
-          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
-            <Input
-              label={t('settings.confirmPassword')}
-              placeholder={t('settings.enterPasswordToDelete')}
-              value={deletePassword}
-              onChangeText={setDeletePassword}
-              secureTextEntry
-            />
-            <Button
-              title={t('settings.deleteAccountButton')}
-              onPress={handleDeleteAccount}
-              loading={isDeleting}
-              variant="danger"
-              style={styles.formButton}
-            />
-          </View>
-        )}
+          {/* Delete Account Form */}
+          {showDeleteAccount && (
+            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+              <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
+              <Input
+                label={t('settings.confirmPassword')}
+                placeholder={t('settings.enterPasswordToDelete')}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry
+              />
+              <Button
+                title={t('settings.deleteAccountButton')}
+                onPress={handleDeleteAccount}
+                loading={isDeleting}
+                variant="danger"
+                style={styles.formButton}
+              />
+            </View>
+          )}
+        </SettingsSection>
       </ScrollView>
     </SafeAreaView>
   );
