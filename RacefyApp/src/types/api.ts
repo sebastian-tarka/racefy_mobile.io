@@ -100,6 +100,18 @@ export interface GpsProfileApiResponse {
   smoothing_buffer_size: number;
 }
 
+// GPS Profile for API requests (snake_case, optional fields)
+export interface GpsProfileRequest {
+  enabled: boolean;
+  accuracy_threshold?: number;
+  min_distance_threshold?: number;
+  max_realistic_speed?: number;
+  min_elevation_change?: number;
+  time_interval?: number;
+  distance_interval?: number;
+  smoothing_buffer_size?: number;
+}
+
 export interface SportType {
   id: number;
   name: string;
@@ -285,6 +297,8 @@ export interface Activity {
   comments_count?: number;
   is_liked?: boolean;
   is_boosted?: boolean;
+  // GPS profile used during tracking (returned by API after activity is finished)
+  gps_profile_used?: GpsProfileApiResponse | null;
 }
 
 // ============ ACTIVITY BOOSTS ============

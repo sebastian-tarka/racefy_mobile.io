@@ -10,7 +10,7 @@ import {
   clearLocationBuffer,
 } from '../services/backgroundLocation';
 import type { Activity, GpsPoint } from '../types/api';
-import { DEFAULT_GPS_PROFILE, type GpsProfile } from '../config/gpsProfiles';
+import { DEFAULT_GPS_PROFILE, convertToApiGpsProfile, type GpsProfile } from '../config/gpsProfiles';
 import { useSportTypes } from './useSportTypes';
 
 const isWeb = Platform.OS === 'web';
@@ -496,12 +496,17 @@ export function useLiveActivity() {
           throw new Error('An activity is already in progress. Please finish or discard it first.');
         }
 
-        // Start activity on server
+        // Get GPS profile for this sport type and send it to API
+        const gpsProfile = getGpsProfileForSport(sportTypeId);
+        const gpsProfileRequest = convertToApiGpsProfile(gpsProfile);
+
+        // Start activity on server with GPS profile
         const activity = await api.startLiveActivity({
           sport_type_id: sportTypeId,
           title,
           started_at: new Date().toISOString(),
           event_id: eventId,
+          gps_profile: gpsProfileRequest,
         });
 
         // Reset local stats

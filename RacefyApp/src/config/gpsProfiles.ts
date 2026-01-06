@@ -9,7 +9,7 @@
  * - Static getters for background location service (which can't use hooks)
  */
 
-import type { GpsProfileApiResponse } from '../types/api';
+import type { GpsProfileApiResponse, GpsProfileRequest } from '../types/api';
 
 // ============ TYPE DEFINITIONS ============
 
@@ -115,6 +115,23 @@ export function convertApiGpsProfile(apiProfile: GpsProfileApiResponse): GpsProf
   };
 
   return validateProfile(profile);
+}
+
+/**
+ * Converts app GPS profile (camelCase) to API request format (snake_case)
+ * Used when sending GPS profile to API on activity start
+ */
+export function convertToApiGpsProfile(profile: GpsProfile): GpsProfileRequest {
+  return {
+    enabled: profile.enabled,
+    accuracy_threshold: profile.accuracyThreshold,
+    min_distance_threshold: profile.minDistanceThreshold,
+    max_realistic_speed: profile.maxRealisticSpeed,
+    min_elevation_change: profile.minElevationChange,
+    time_interval: profile.timeInterval,
+    distance_interval: profile.distanceInterval,
+    smoothing_buffer_size: profile.smoothingBufferSize,
+  };
 }
 
 // ============ DEFAULT PROFILES ============

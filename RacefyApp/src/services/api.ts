@@ -589,12 +589,14 @@ class ApiService {
   /**
    * Start a new live activity
    * @param event_id - Optional event ID to link activity to (event must be ongoing, user must be registered)
+   * @param gps_profile - Optional GPS tracking settings used by the mobile app
    */
   async startLiveActivity(data: {
     sport_type_id: number;
     title?: string;
     started_at?: string;
     event_id?: number;
+    gps_profile?: Types.GpsProfileRequest;
   }): Promise<Types.Activity> {
     const response = await this.request<Types.ApiResponse<Types.Activity>>(
       '/activities/start',
