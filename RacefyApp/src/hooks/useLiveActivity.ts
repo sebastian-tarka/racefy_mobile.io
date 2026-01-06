@@ -10,12 +10,8 @@ import {
   clearLocationBuffer,
 } from '../services/backgroundLocation';
 import type { Activity, GpsPoint } from '../types/api';
-import {
-  getGpsProfile,
-  isGpsEnabledForSport,
-  DEFAULT_GPS_PROFILE,
-  type GpsProfile,
-} from '../config/gpsProfiles';
+import { DEFAULT_GPS_PROFILE, type GpsProfile } from '../config/gpsProfiles';
+import { useSportTypes } from './useSportTypes';
 
 const isWeb = Platform.OS === 'web';
 
@@ -58,6 +54,8 @@ const initialStats: LiveActivityStats = {
 const CALORIES_PER_SECOND = 0.15; // Rough average for moderate activity
 
 export function useLiveActivity() {
+  const { getGpsProfileForSport } = useSportTypes();
+
   const [state, setState] = useState<LiveActivityState>({
     activity: null,
     isTracking: false,
@@ -262,8 +260,8 @@ export function useLiveActivity() {
       return;
     }
 
-    // Load GPS profile for this activity type
-    const profile = getGpsProfile(sportTypeId);
+    // Load GPS profile for this activity type from API or fallback
+    const profile = getGpsProfileForSport(sportTypeId);
     currentGpsProfile.current = profile;
 
     // Check if GPS is enabled for this activity type

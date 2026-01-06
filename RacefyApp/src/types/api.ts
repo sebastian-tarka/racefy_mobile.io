@@ -88,12 +88,25 @@ export interface UserPreferences {
 
 // ============ SPORT TYPES ============
 
+// GPS Profile from API (snake_case)
+export interface GpsProfileApiResponse {
+  enabled: boolean;
+  accuracy_threshold: number;
+  min_distance_threshold: number;
+  max_realistic_speed: number;
+  min_elevation_change: number;
+  time_interval: number;
+  distance_interval: number;
+  smoothing_buffer_size: number;
+}
+
 export interface SportType {
   id: number;
   name: string;
   slug: string;
   icon: string | null;
   is_active: boolean;
+  gps_profile?: GpsProfileApiResponse; // Optional: may not be present in fallback data
 }
 
 // ============ POSTS ============

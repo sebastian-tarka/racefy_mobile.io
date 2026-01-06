@@ -1,10 +1,17 @@
 /**
  * GPS tracking profiles for different activity types.
- * Each profile is optimized for the typical movement patterns and speeds of that activity.
  *
- * Profiles are matched by sport slug (from API) for flexibility.
- * New sports added via API will use the default profile unless a specific profile is defined.
+ * GPS profiles are now primarily fetched from the API via /sport-types endpoint.
+ * This file provides:
+ * - Type definitions for GPS profiles
+ * - Conversion from API format (snake_case) to app format (camelCase)
+ * - Fallback profiles when API data is unavailable
+ * - Static getters for background location service (which can't use hooks)
  */
+
+import type { GpsProfileApiResponse } from '../types/api';
+
+// ============ TYPE DEFINITIONS ============
 
 export interface GpsProfile {
   /** Whether GPS tracking is enabled for this activity type */
@@ -25,6 +32,93 @@ export interface GpsProfile {
   smoothingBufferSize: number;
 }
 
+// ============ VALIDATION ============
+
+/** Valid ranges for GPS profile values */
+const PROFILE_CONSTRAINTS = {
+  accuracyThreshold: { min: 5, max: 100 },
+  minDistanceThreshold: { min: 1, max: 50 },
+  maxRealisticSpeed: { min: 1, max: 100 }, // 1-100 m/s (3.6-360 km/h)
+  minElevationChange: { min: 0, max: 50 },
+  timeInterval: { min: 1000, max: 30000 }, // 1-30 seconds
+  distanceInterval: { min: 1, max: 50 },
+  smoothingBufferSize: { min: 1, max: 10 },
+} as const;
+
+/**
+ * Validates a GPS profile value is within acceptable range
+ */
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+/**
+ * Validates and sanitizes a GPS profile from API
+ */
+function validateProfile(profile: GpsProfile): GpsProfile {
+  return {
+    enabled: profile.enabled,
+    accuracyThreshold: clamp(
+      profile.accuracyThreshold,
+      PROFILE_CONSTRAINTS.accuracyThreshold.min,
+      PROFILE_CONSTRAINTS.accuracyThreshold.max
+    ),
+    minDistanceThreshold: clamp(
+      profile.minDistanceThreshold,
+      PROFILE_CONSTRAINTS.minDistanceThreshold.min,
+      PROFILE_CONSTRAINTS.minDistanceThreshold.max
+    ),
+    maxRealisticSpeed: clamp(
+      profile.maxRealisticSpeed,
+      PROFILE_CONSTRAINTS.maxRealisticSpeed.min,
+      PROFILE_CONSTRAINTS.maxRealisticSpeed.max
+    ),
+    minElevationChange: clamp(
+      profile.minElevationChange,
+      PROFILE_CONSTRAINTS.minElevationChange.min,
+      PROFILE_CONSTRAINTS.minElevationChange.max
+    ),
+    timeInterval: clamp(
+      profile.timeInterval,
+      PROFILE_CONSTRAINTS.timeInterval.min,
+      PROFILE_CONSTRAINTS.timeInterval.max
+    ),
+    distanceInterval: clamp(
+      profile.distanceInterval,
+      PROFILE_CONSTRAINTS.distanceInterval.min,
+      PROFILE_CONSTRAINTS.distanceInterval.max
+    ),
+    smoothingBufferSize: clamp(
+      profile.smoothingBufferSize,
+      PROFILE_CONSTRAINTS.smoothingBufferSize.min,
+      PROFILE_CONSTRAINTS.smoothingBufferSize.max
+    ),
+  };
+}
+
+// ============ API CONVERSION ============
+
+/**
+ * Converts API GPS profile (snake_case) to app GPS profile (camelCase)
+ * Also validates values are within acceptable ranges
+ */
+export function convertApiGpsProfile(apiProfile: GpsProfileApiResponse): GpsProfile {
+  const profile: GpsProfile = {
+    enabled: apiProfile.enabled,
+    accuracyThreshold: apiProfile.accuracy_threshold,
+    minDistanceThreshold: apiProfile.min_distance_threshold,
+    maxRealisticSpeed: apiProfile.max_realistic_speed,
+    minElevationChange: apiProfile.min_elevation_change,
+    timeInterval: apiProfile.time_interval,
+    distanceInterval: apiProfile.distance_interval,
+    smoothingBufferSize: apiProfile.smoothing_buffer_size,
+  };
+
+  return validateProfile(profile);
+}
+
+// ============ DEFAULT PROFILES ============
+
 /**
  * Default GPS profile - used for unknown sports or as fallback
  */
@@ -32,55 +126,72 @@ export const DEFAULT_GPS_PROFILE: GpsProfile = {
   enabled: true,
   accuracyThreshold: 25,
   minDistanceThreshold: 3,
-  maxRealisticSpeed: 15, // ~54 km/h
+  maxRealisticSpeed: 15, // ~54 km/h - reasonable for most activities
   minElevationChange: 3,
-  timeInterval: 3000,
+  timeInterval: 3000, // 3 seconds
   distanceInterval: 5,
   smoothingBufferSize: 3,
 };
 
 /**
- * GPS profiles indexed by sport slug (matches API sport_type.slug)
- * This allows the backend to add new sports without requiring app updates.
+ * Essential fallback profiles by sport slug
+ * These are used when API data is unavailable
+ * Only includes sports with significantly different GPS requirements
  */
-export const GPS_PROFILES_BY_SLUG: Record<string, GpsProfile> = {
-  // Running: Medium speed, consistent movement, usually outdoors
+export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
+  // Outdoor GPS-enabled sports
   running: {
     enabled: true,
     accuracyThreshold: 25,
     minDistanceThreshold: 3,
-    maxRealisticSpeed: 12, // ~43 km/h (fast sprint)
+    maxRealisticSpeed: 12, // ~43 km/h
     minElevationChange: 3,
     timeInterval: 3000,
     distanceInterval: 5,
     smoothingBufferSize: 3,
   },
-
-  // Cycling: Fast speed, covers more distance, smoother paths
   cycling: {
     enabled: true,
-    accuracyThreshold: 20, // Better accuracy expected on open roads
-    minDistanceThreshold: 5, // Larger movements OK
-    maxRealisticSpeed: 30, // ~108 km/h (fast downhill)
-    minElevationChange: 5, // Less sensitive to small changes
-    timeInterval: 2000, // Faster updates for higher speeds
+    accuracyThreshold: 20,
+    minDistanceThreshold: 5,
+    maxRealisticSpeed: 30, // ~108 km/h
+    minElevationChange: 5,
+    timeInterval: 2000,
     distanceInterval: 8,
     smoothingBufferSize: 3,
   },
+  walking: {
+    enabled: true,
+    accuracyThreshold: 25,
+    minDistanceThreshold: 5,
+    maxRealisticSpeed: 4, // ~14 km/h
+    minElevationChange: 3,
+    timeInterval: 5000,
+    distanceInterval: 5,
+    smoothingBufferSize: 4,
+  },
+  hiking: {
+    enabled: true,
+    accuracyThreshold: 30,
+    minDistanceThreshold: 2,
+    maxRealisticSpeed: 8, // ~28 km/h
+    minElevationChange: 5,
+    timeInterval: 5000,
+    distanceInterval: 5,
+    smoothingBufferSize: 4,
+  },
 
-  // Swimming: GPS unreliable underwater
+  // Indoor/GPS-disabled sports
   swimming: {
     enabled: false,
     accuracyThreshold: 50,
     minDistanceThreshold: 5,
-    maxRealisticSpeed: 3, // ~10 km/h
+    maxRealisticSpeed: 3,
     minElevationChange: 0,
     timeInterval: 10000,
     distanceInterval: 10,
     smoothingBufferSize: 5,
   },
-
-  // Gym: Indoor, no GPS signal
   gym: {
     enabled: false,
     accuracyThreshold: 50,
@@ -91,8 +202,6 @@ export const GPS_PROFILES_BY_SLUG: Record<string, GpsProfile> = {
     distanceInterval: 10,
     smoothingBufferSize: 3,
   },
-
-  // Yoga: Indoor, stationary
   yoga: {
     enabled: false,
     accuracyThreshold: 50,
@@ -103,191 +212,93 @@ export const GPS_PROFILES_BY_SLUG: Record<string, GpsProfile> = {
     distanceInterval: 10,
     smoothingBufferSize: 3,
   },
-
-  // Hiking: Slow to medium speed, variable terrain, often in mountains/forests
-  hiking: {
-    enabled: true,
-    accuracyThreshold: 30, // More tolerant (forests, valleys)
-    minDistanceThreshold: 2, // Detect smaller steps
-    maxRealisticSpeed: 8, // ~28 km/h (fast walking/light jog)
-    minElevationChange: 5, // More significant elevation tracking
-    timeInterval: 5000, // Slower updates OK
-    distanceInterval: 5,
-    smoothingBufferSize: 4, // More smoothing for variable terrain
-  },
-
-  // Tennis: Court-based, short bursts
-  tennis: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 2,
-    maxRealisticSpeed: 10, // ~36 km/h
-    minElevationChange: 2,
-    timeInterval: 2000,
-    distanceInterval: 3,
-    smoothingBufferSize: 2,
-  },
-
-  // Football: Field-based, running with breaks
-  football: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 2,
-    maxRealisticSpeed: 12, // ~43 km/h (sprint)
-    minElevationChange: 2,
-    timeInterval: 2000,
-    distanceInterval: 3,
-    smoothingBufferSize: 2,
-  },
-
-  // Basketball: Court-based, short intense movements
-  basketball: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 2,
-    maxRealisticSpeed: 10, // ~36 km/h
-    minElevationChange: 2,
-    timeInterval: 2000,
-    distanceInterval: 3,
-    smoothingBufferSize: 2,
-  },
-
-  // Walking: Slow speed, frequent stops, urban areas
-  walking: {
-    enabled: true,
-    accuracyThreshold: 25, // Tighter accuracy to reduce drift
-    minDistanceThreshold: 5, // Higher threshold to filter GPS drift when stationary
-    maxRealisticSpeed: 4, // ~14 km/h max (brisk walking is ~6 km/h, fast walk ~8 km/h)
-    minElevationChange: 3,
-    timeInterval: 5000, // 5s updates
-    distanceInterval: 5,
-    smoothingBufferSize: 4, // More smoothing for slow movement
-  },
-
-  // Trail Running: Similar to running but more elevation tolerance
-  'trail-running': {
-    enabled: true,
-    accuracyThreshold: 30, // More tolerant (forests, trails)
-    minDistanceThreshold: 3,
-    maxRealisticSpeed: 12, // ~43 km/h
-    minElevationChange: 5, // More elevation changes on trails
-    timeInterval: 3000,
-    distanceInterval: 5,
-    smoothingBufferSize: 4,
-  },
-
-  // Mountain Biking: Moderate speed, variable terrain
-  'mountain-biking': {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 5,
-    maxRealisticSpeed: 25, // ~90 km/h (downhill)
-    minElevationChange: 5,
-    timeInterval: 2000,
-    distanceInterval: 8,
-    smoothingBufferSize: 3,
-  },
-
-  // Road Cycling: Fast, smooth paths
-  'road-cycling': {
-    enabled: true,
-    accuracyThreshold: 20,
-    minDistanceThreshold: 5,
-    maxRealisticSpeed: 30, // ~108 km/h
-    minElevationChange: 5,
-    timeInterval: 2000,
-    distanceInterval: 8,
-    smoothingBufferSize: 3,
-  },
-
-  // Triathlon: Multi-sport, use balanced settings
-  triathlon: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 3,
-    maxRealisticSpeed: 30, // Cycling portion can be fast
-    minElevationChange: 3,
-    timeInterval: 2000,
-    distanceInterval: 5,
-    smoothingBufferSize: 3,
-  },
-
-  // Cross-Country Skiing: Moderate speed, winter terrain
-  'cross-country-skiing': {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 3,
-    maxRealisticSpeed: 15, // ~54 km/h
-    minElevationChange: 5,
-    timeInterval: 3000,
-    distanceInterval: 5,
-    smoothingBufferSize: 3,
-  },
-
-  // Skiing/Snowboarding: Fast downhill, variable terrain
-  skiing: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 5,
-    maxRealisticSpeed: 40, // ~144 km/h for downhill
-    minElevationChange: 10,
-    timeInterval: 2000,
-    distanceInterval: 10,
-    smoothingBufferSize: 3,
-  },
-
-  // Skating/Rollerblading
-  skating: {
-    enabled: true,
-    accuracyThreshold: 25,
-    minDistanceThreshold: 3,
-    maxRealisticSpeed: 15, // ~54 km/h
-    minElevationChange: 3,
-    timeInterval: 2500,
-    distanceInterval: 5,
-    smoothingBufferSize: 3,
-  },
-
-  // Other/Generic: Default balanced settings
-  other: {
-    ...DEFAULT_GPS_PROFILE,
-  },
 };
 
+// ============ PROFILE GETTERS ============
+
 /**
- * Get the GPS profile for a given sport slug
+ * Get the fallback GPS profile for a given sport slug
+ * Use this when API data is not available
  */
 export function getGpsProfileBySlug(slug: string): GpsProfile {
   const normalizedSlug = slug.toLowerCase();
-  return GPS_PROFILES_BY_SLUG[normalizedSlug] || DEFAULT_GPS_PROFILE;
+  return FALLBACK_GPS_PROFILES[normalizedSlug] || DEFAULT_GPS_PROFILE;
 }
 
 /**
- * Check if GPS tracking should be enabled for a sport slug
+ * Check if GPS tracking should be enabled for a sport slug (using fallback profiles)
  */
 export function isGpsEnabledForSportSlug(slug: string): boolean {
-  const profile = getGpsProfileBySlug(slug);
-  return profile.enabled;
+  return getGpsProfileBySlug(slug).enabled;
 }
 
-// Legacy support: Get profile by sport ID (uses slug lookup internally)
-// This requires the sport data to be available
-import { getSportSlugById } from '../hooks/useSportTypes';
+// ============ STATIC CACHE FOR BACKGROUND SERVICE ============
 
 /**
- * Get the GPS profile for a given sport type ID
- * @deprecated Use getGpsProfileBySlug with the sport's slug instead
+ * Static cache for GPS profiles from API
+ * This allows the background location service to access profiles without hooks
  */
-export function getGpsProfile(sportTypeId: number): GpsProfile {
-  const slug = getSportSlugById(sportTypeId);
+let cachedApiProfiles: Map<string, GpsProfile> = new Map();
+let cachedSportIdToSlug: Map<number, string> = new Map();
+
+/**
+ * Update the static GPS profile cache (called from useSportTypes hook)
+ * This enables background location service to use API profiles
+ */
+export function updateGpsProfileCache(
+  sports: Array<{
+    id: number;
+    slug: string;
+    gps_profile?: GpsProfileApiResponse;
+  }>
+): void {
+  cachedApiProfiles.clear();
+  cachedSportIdToSlug.clear();
+
+  for (const sport of sports) {
+    cachedSportIdToSlug.set(sport.id, sport.slug);
+    if (sport.gps_profile) {
+      cachedApiProfiles.set(sport.slug, convertApiGpsProfile(sport.gps_profile));
+    }
+  }
+}
+
+/**
+ * Get GPS profile from static cache (for background service)
+ * Falls back to hardcoded profiles if not in cache
+ *
+ * @param slugOrId - Sport slug (string) or sport ID (number)
+ */
+export function getGpsProfileFromCache(slugOrId: string | number): GpsProfile {
+  let slug: string;
+
+  if (typeof slugOrId === 'number') {
+    slug = cachedSportIdToSlug.get(slugOrId) || 'other';
+  } else {
+    slug = slugOrId;
+  }
+
+  // Try cached API profile first
+  const cachedProfile = cachedApiProfiles.get(slug);
+  if (cachedProfile) {
+    return cachedProfile;
+  }
+
+  // Fall back to hardcoded profiles
   return getGpsProfileBySlug(slug);
 }
 
 /**
- * Check if GPS tracking should be enabled for a sport type
- * @deprecated Use isGpsEnabledForSportSlug with the sport's slug instead
+ * Check if GPS is enabled for a sport (using static cache)
  */
-export function isGpsEnabledForSport(sportTypeId: number): boolean {
-  const slug = getSportSlugById(sportTypeId);
-  return isGpsEnabledForSportSlug(slug);
+export function isGpsEnabledFromCache(slugOrId: string | number): boolean {
+  return getGpsProfileFromCache(slugOrId).enabled;
+}
+
+/**
+ * Clear the static cache (useful for testing or logout)
+ */
+export function clearGpsProfileCache(): void {
+  cachedApiProfiles.clear();
+  cachedSportIdToSlug.clear();
 }

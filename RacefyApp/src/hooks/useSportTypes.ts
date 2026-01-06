@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import type { SportType } from '../types/api';
 import type { Ionicons } from '@expo/vector-icons';
+import {
+  convertApiGpsProfile,
+  getGpsProfileBySlug,
+  updateGpsProfileCache,
+  type GpsProfile,
+} from '../config/gpsProfiles';
 
 // Map sport slugs/names to Ionicon names (lowercase keys for case-insensitive matching)
 const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -81,6 +87,7 @@ interface UseSportTypesResult {
   refetch: () => Promise<void>;
   getSportById: (id: number) => SportTypeWithIcon | undefined;
   getSportBySlug: (slug: string) => SportTypeWithIcon | undefined;
+  getGpsProfileForSport: (slugOrId: string | number) => GpsProfile;
 }
 
 // Cache for sport types to avoid refetching
@@ -121,6 +128,9 @@ export function useSportTypes(): UseSportTypesResult {
       cachedSportTypes = sportsWithIcons;
       cacheTimestamp = Date.now();
 
+      // Update GPS profile static cache for background service
+      updateGpsProfileCache(apiSports);
+
       setSportTypes(sportsWithIcons);
     } catch (err: any) {
       console.error('Failed to fetch sport types:', err);
@@ -154,6 +164,34 @@ export function useSportTypes(): UseSportTypesResult {
     await fetchSportTypes(true);
   }, [fetchSportTypes]);
 
+  /**
+   * Get GPS profile for a sport from API data or fallback to hardcoded profiles
+   * @param slugOrId - Sport slug (string) or sport ID (number)
+   * @returns GPS profile with camelCase properties
+   */
+  const getGpsProfileForSport = useCallback(
+    (slugOrId: string | number): GpsProfile => {
+      let sport: SportTypeWithIcon | undefined;
+
+      // Find sport by slug or ID
+      if (typeof slugOrId === 'string') {
+        sport = sportTypes.find((s) => s.slug === slugOrId);
+      } else {
+        sport = sportTypes.find((s) => s.id === slugOrId);
+      }
+
+      // If sport found and has GPS profile from API, use it
+      if (sport?.gps_profile) {
+        return convertApiGpsProfile(sport.gps_profile);
+      }
+
+      // Fall back to hardcoded profiles
+      const slug = typeof slugOrId === 'string' ? slugOrId : sport?.slug || 'other';
+      return getGpsProfileBySlug(slug);
+    },
+    [sportTypes]
+  );
+
   return {
     sportTypes,
     isLoading,
@@ -161,6 +199,7 @@ export function useSportTypes(): UseSportTypesResult {
     refetch,
     getSportById,
     getSportBySlug,
+    getGpsProfileForSport,
   };
 }
 
@@ -204,20 +243,6 @@ function getIconForSport(sport: SportType): keyof typeof Ionicons.glyphMap {
 function isValidIonicon(iconName: string): boolean {
   // Common Ionicon patterns
   return iconName.endsWith('-outline') || iconName.endsWith('-sharp') || !iconName.includes('-');
-}
-
-/**
- * Get the slug for a sport by ID (useful for GPS profiles)
- * This is a static helper that works without the hook
- */
-export function getSportSlugById(sportId: number): string {
-  if (cachedSportTypes) {
-    const sport = cachedSportTypes.find((s) => s.id === sportId);
-    if (sport) return sport.slug;
-  }
-  // Fallback mapping for common IDs
-  const fallback = FALLBACK_SPORTS.find((s) => s.id === sportId);
-  return fallback?.slug || 'other';
 }
 
 /**
