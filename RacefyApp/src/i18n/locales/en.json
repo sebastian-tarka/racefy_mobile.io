@@ -615,6 +615,23 @@
     "failedToEdit": "Failed to update comment",
     "addPhoto": "Add photo"
   },
+  "engagement": {
+    "boost": "Boost",
+    "boosts": "Boosts",
+    "boosted": "Boosted",
+    "boostActivity": "Boost activity",
+    "removeBoost": "Remove boost",
+    "boostAdded": "Activity boosted!",
+    "boostRemoved": "Boost removed",
+    "boostFailed": "Failed to boost activity",
+    "cannotBoostOwn": "You can't boost your own activity",
+    "boostsCount": "{{count}} boosts",
+    "like": "Like",
+    "likes": "Likes",
+    "liked": "Liked",
+    "comment": "Comment",
+    "comments": "Comments"
+  },
   "legal": {
     "consentTitle": "Consents & Policies",
     "consentDescription": "To continue using the app, please accept the required documents.",

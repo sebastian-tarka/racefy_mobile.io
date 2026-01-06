@@ -772,6 +772,24 @@ class ApiService {
     await this.request(`/photos/${id}`, { method: 'DELETE' });
   }
 
+  // ============ ACTIVITY BOOSTS ============
+
+  async boostActivity(activityId: number): Promise<Types.BoostResponse> {
+    const response = await this.request<Types.BoostResponse>(
+      `/activities/${activityId}/boost`,
+      { method: 'POST' }
+    );
+    return response;
+  }
+
+  async unboostActivity(activityId: number): Promise<Types.BoostResponse> {
+    const response = await this.request<Types.BoostResponse>(
+      `/activities/${activityId}/boost`,
+      { method: 'DELETE' }
+    );
+    return response;
+  }
+
   // ============ ACTIVITY COMMENTS ============
 
   async getActivityComments(activityId: number): Promise<Types.Comment[]> {

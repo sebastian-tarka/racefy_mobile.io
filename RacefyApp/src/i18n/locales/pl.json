@@ -615,6 +615,23 @@
     "failedToEdit": "Nie udało się zaktualizować komentarza",
     "addPhoto": "Dodaj zdjęcie"
   },
+  "engagement": {
+    "boost": "Doładuj",
+    "boosts": "Doładowania",
+    "boosted": "Doładowano",
+    "boostActivity": "Doładuj aktywność",
+    "removeBoost": "Usuń doładowanie",
+    "boostAdded": "Aktywność doładowana!",
+    "boostRemoved": "Doładowanie usunięte",
+    "boostFailed": "Nie udało się doładować aktywności",
+    "cannotBoostOwn": "Nie możesz doładować własnej aktywności",
+    "boostsCount": "{{count}} doładowań",
+    "like": "Polub",
+    "likes": "Polubienia",
+    "liked": "Polubiono",
+    "comment": "Komentarz",
+    "comments": "Komentarze"
+  },
   "legal": {
     "consentTitle": "Zgody i regulaminy",
     "consentDescription": "Aby kontynuować korzystanie z aplikacji, zaakceptuj wymagane dokumenty.",

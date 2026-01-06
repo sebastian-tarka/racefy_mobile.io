@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
+import { BoostButton } from './BoostButton';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
@@ -12,11 +13,22 @@ interface ActivityCardProps {
   activity: Activity;
   onPress?: () => void;
   showUser?: boolean;
+  /** Show engagement buttons (like, boost, comments) */
+  showEngagement?: boolean;
 }
 
-export function ActivityCard({ activity, onPress, showUser = false }: ActivityCardProps) {
+export function ActivityCard({
+  activity,
+  onPress,
+  showUser = false,
+  showEngagement = false,
+}: ActivityCardProps) {
   const { colors } = useTheme();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
+
+  // Engagement state
+  const [boostsCount, setBoostsCount] = useState(activity.boosts_count || 0);
+  const [isBoosted, setIsBoosted] = useState(activity.is_boosted || false);
 
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = activity.sport_type?.name?.toLowerCase() || '';
@@ -124,6 +136,44 @@ export function ActivityCard({ activity, onPress, showUser = false }: ActivityCa
             ) : null}
           </View>
         ) : null}
+
+        {/* Engagement bar */}
+        {showEngagement && (
+          <View style={[styles.engagementBar, { borderTopColor: colors.borderLight }]}>
+            {/* Likes */}
+            <View style={styles.engagementItem}>
+              <Ionicons
+                name={activity.is_liked ? 'heart' : 'heart-outline'}
+                size={18}
+                color={activity.is_liked ? '#E53E3E' : colors.textMuted}
+              />
+              <Text style={[styles.engagementText, { color: colors.textMuted }]}>
+                {activity.likes_count || 0}
+              </Text>
+            </View>
+
+            {/* Boosts */}
+            <BoostButton
+              activityId={activity.id}
+              initialBoostsCount={boostsCount}
+              initialIsBoosted={isBoosted}
+              disabled={activity.is_owner}
+              compact
+              onBoostChange={(newIsBoosted, newCount) => {
+                setIsBoosted(newIsBoosted);
+                setBoostsCount(newCount);
+              }}
+            />
+
+            {/* Comments */}
+            <View style={styles.engagementItem}>
+              <Ionicons name="chatbubble-outline" size={18} color={colors.textMuted} />
+              <Text style={[styles.engagementText, { color: colors.textMuted }]}>
+                {activity.comments_count || 0}
+              </Text>
+            </View>
+          </View>
+        )}
       </Card>
     </TouchableOpacity>
   );
@@ -207,5 +257,24 @@ const styles = StyleSheet.create({
   secondaryStatText: {
     fontSize: fontSize.sm,
     marginLeft: spacing.xs,
+  },
+  engagementBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  engagementItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  engagementText: {
+    fontSize: fontSize.sm,
+    marginLeft: spacing.xs,
+    fontWeight: '600',
   },
 });

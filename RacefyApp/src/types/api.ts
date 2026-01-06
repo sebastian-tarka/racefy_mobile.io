@@ -279,6 +279,26 @@ export interface Activity {
   duration_formatted?: string;
   distance_formatted?: string;
   pace?: string | null;
+  // Engagement fields
+  likes_count?: number;
+  boosts_count?: number;
+  comments_count?: number;
+  is_liked?: boolean;
+  is_boosted?: boolean;
+}
+
+// ============ ACTIVITY BOOSTS ============
+
+export interface ActivityBoost {
+  id: number;
+  activity_id: number;
+  user_id: number;
+  created_at: string;
+}
+
+export interface BoostResponse {
+  message: string;
+  boosts_count: number;
 }
 
 // GPS Point for live tracking
