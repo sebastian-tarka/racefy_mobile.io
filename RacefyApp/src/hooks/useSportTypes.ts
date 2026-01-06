@@ -62,7 +62,7 @@ const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
 // Default icon for unknown sports
 const DEFAULT_SPORT_ICON: keyof typeof Ionicons.glyphMap = 'fitness-outline';
 
-// Fallback sports for when API is unavailable
+// Fallback sports for when API is unavailable (gps_profile loaded from fallbacks)
 const FALLBACK_SPORTS: SportTypeWithIcon[] = [
   { id: 1, name: 'Running', slug: 'running', icon: 'walk-outline', is_active: true },
   { id: 2, name: 'Cycling', slug: 'cycling', icon: 'bicycle-outline', is_active: true },
