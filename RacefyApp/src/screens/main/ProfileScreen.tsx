@@ -551,6 +551,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onPress={() => {
             navigation.navigate('ActivityDetail', { activityId: item.id });
           }}
+          showEngagement
         />
       );
     }

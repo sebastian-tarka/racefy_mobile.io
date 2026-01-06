@@ -461,6 +461,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           onPress={() => {
             navigation.navigate('ActivityDetail', { activityId: item.id });
           }}
+          showEngagement
         />
       );
     }

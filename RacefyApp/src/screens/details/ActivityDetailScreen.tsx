@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton } from '../../components';
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
@@ -320,6 +320,47 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           )}
         </Card>
 
+          {/* Engagement Section */}
+          <Card style={styles.engagementCard}>
+            <View style={styles.engagementRow}>
+              {/* Likes */}
+              <View style={styles.engagementItem}>
+                <Ionicons
+                  name={activity.is_liked ? 'heart' : 'heart-outline'}
+                  size={24}
+                  color={activity.is_liked ? '#E53E3E' : colors.textMuted}
+                />
+                <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
+                  {activity.likes_count || 0}
+                </Text>
+                <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
+                  {t('engagement.likes')}
+                </Text>
+              </View>
+
+              {/* Boosts */}
+              <View style={styles.engagementItem}>
+                <BoostButton
+                  activityId={activity.id}
+                  initialBoostsCount={activity.boosts_count || 0}
+                  initialIsBoosted={activity.is_boosted || false}
+                  disabled={isOwner}
+                />
+              </View>
+
+              {/* Comments */}
+              <View style={styles.engagementItem}>
+                <Ionicons name="chatbubble-outline" size={24} color={colors.textMuted} />
+                <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
+                  {activity.comments_count || 0}
+                </Text>
+                <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
+                  {t('engagement.comments')}
+                </Text>
+              </View>
+            </View>
+          </Card>
+
           {/* Comments Section */}
           <View style={styles.section}>
             <CommentSection
@@ -460,5 +501,28 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     marginVertical: spacing.lg,
     textAlign: 'center',
+  },
+  engagementCard: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  engagementRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  engagementItem: {
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  engagementCount: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+  },
+  engagementLabel: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
 });
