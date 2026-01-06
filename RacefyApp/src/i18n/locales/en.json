@@ -336,7 +336,10 @@
       "garmin": "Garmin",
       "strava": "Strava",
       "amazfit": "Amazfit"
-    }
+    },
+    "deleteActivity": "Delete Activity",
+    "deleteConfirm": "Are you sure you want to delete this activity? This action cannot be undone.",
+    "deleteFailed": "Failed to delete activity"
   },
   "activityForm": {
     "editTitle": "Edit Activity",
