@@ -337,7 +337,12 @@
     "startActivity": "Rozpocznij aktywność",
     "deleteEvent": "Usuń wydarzenie",
     "deleteEventConfirm": "Czy na pewno chcesz usunąć to wydarzenie? Tej operacji nie można cofnąć.",
-    "deleteEventFailed": "Nie udało się usunąć wydarzenia"
+    "deleteEventFailed": "Nie udało się usunąć wydarzenia",
+    "registrationOpensIn": "Rejestracja rozpocznie się za",
+    "days": "dni",
+    "hours": "godz",
+    "minutes": "min",
+    "seconds": "sek"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",
@@ -714,6 +719,13 @@
     "seeAll": "Zobacz wszystko",
     "recentSearches": "Ostatnie wyszukiwania",
     "clearRecent": "Wyczyść"
+  },
+  "countdown": {
+    "default": "Pozostały czas",
+    "days": "dni",
+    "hours": "godz",
+    "minutes": "min",
+    "seconds": "sek"
   },
   "legal": {
     "consentTitle": "Zgody i regulaminy",

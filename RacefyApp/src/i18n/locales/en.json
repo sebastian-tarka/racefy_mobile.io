@@ -337,7 +337,12 @@
     "startActivity": "Start Activity",
     "deleteEvent": "Delete Event",
     "deleteEventConfirm": "Are you sure you want to delete this event? This action cannot be undone.",
-    "deleteEventFailed": "Failed to delete event"
+    "deleteEventFailed": "Failed to delete event",
+    "registrationOpensIn": "Registration opens in",
+    "days": "days",
+    "hours": "hours",
+    "minutes": "min",
+    "seconds": "sec"
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -714,6 +719,13 @@
     "seeAll": "See all",
     "recentSearches": "Recent Searches",
     "clearRecent": "Clear"
+  },
+  "countdown": {
+    "default": "Time remaining",
+    "days": "days",
+    "hours": "hours",
+    "minutes": "min",
+    "seconds": "sec"
   },
   "legal": {
     "consentTitle": "Consents & Policies",

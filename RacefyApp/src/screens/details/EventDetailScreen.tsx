@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection, CountdownTimer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -458,6 +458,18 @@ export function EventDetailScreen({ route, navigation }: Props) {
         {(event.registration_opens_at || event.registration_closes_at) && (
           <Card style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('eventDetail.registrationPeriod')}</Text>
+
+            {/* Countdown Timer when registration not yet open */}
+            {event.registration_opens_at && (
+              <View style={styles.countdownWrapper}>
+                <CountdownTimer
+                  targetDate={event.registration_opens_at}
+                  title={t('eventDetail.registrationOpensIn')}
+                  onComplete={fetchEvent}
+                />
+              </View>
+            )}
+
             {event.registration_opens_at && (
               <View style={styles.registrationRow}>
                 <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>{t('eventDetail.opens')}:</Text>
@@ -695,6 +707,9 @@ const styles = StyleSheet.create({
   registrationValue: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+  },
+  countdownWrapper: {
+    marginBottom: spacing.md,
   },
   bottomAction: {
     position: 'absolute',
