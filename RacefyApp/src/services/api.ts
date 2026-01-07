@@ -564,6 +564,28 @@ class ApiService {
     return this.request(`/activities?${query}`);
   }
 
+  async getActivitiesFeed(params?: {
+    page?: number;
+    per_page?: number;
+  }): Promise<Types.PaginatedResponse<Types.Activity>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    const queryString = query.toString();
+    return this.request(`/activities/feed${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getActivitiesDiscover(params?: {
+    page?: number;
+    per_page?: number;
+  }): Promise<Types.PaginatedResponse<Types.Activity>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    const queryString = query.toString();
+    return this.request(`/activities/discover${queryString ? `?${queryString}` : ''}`);
+  }
+
   async getActivity(id: number): Promise<Types.Activity> {
     const response = await this.request<Types.ApiResponse<Types.Activity>>(
       `/activities/${id}`
@@ -1230,6 +1252,33 @@ class ApiService {
       }
     );
     return response;
+  }
+
+  // ============ BRAND ASSETS (PUBLIC) ============
+
+  /**
+   * Get all brand assets organized by category and variant
+   * No authentication required
+   */
+  async getBrandAssets(): Promise<Types.BrandAssetsResponse> {
+    return this.request<Types.BrandAssetsResponse>('/brand-assets');
+  }
+
+  /**
+   * Get a specific brand asset by category and optional variant
+   * No authentication required
+   * @param category - logo-full, logo-icon, or logo-text
+   * @param variant - default, dark, or light (optional, defaults to 'default')
+   */
+  async getBrandAsset(
+    category: Types.BrandAssetCategory,
+    variant?: Types.BrandAssetVariant
+  ): Promise<Types.BrandAsset> {
+    const endpoint = variant
+      ? `/brand-assets/${category}/${variant}`
+      : `/brand-assets/${category}`;
+    const response = await this.request<Types.BrandAssetResponse>(endpoint);
+    return response.data;
   }
 }
 

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
@@ -167,7 +167,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { logout } = useAuth();
-  const { colors, themePreference, setThemePreference } = useTheme();
+  const { colors, isDark, themePreference, setThemePreference } = useTheme();
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
 
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
@@ -779,11 +779,16 @@ export function SettingsScreen({ navigation }: Props) {
           isExpanded={expandedSections.app}
           onToggle={() => toggleSection('app')}
         >
-          <SettingsRow
-            icon="information-circle-outline"
-            label={t('settings.version')}
-            value={appVersion}
-          />
+          {/* About/Branding */}
+          <View style={[styles.aboutSection, { borderBottomColor: colors.border }]}>
+            <BrandLogo category="logo-full" variant={isDark ? 'light' : 'dark'} width={160} height={45} />
+            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+              {t('settings.version')} {appVersion}
+            </Text>
+            <Text style={[styles.copyrightText, { color: colors.textMuted }]}>
+              © {new Date().getFullYear()} Racefy. {t('settings.allRightsReserved')}
+            </Text>
+          </View>
           <SettingsRow
             icon="log-out-outline"
             label={t('common.logout')}
@@ -933,5 +938,19 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     fontSize: fontSize.sm,
+  },
+  // About section styles
+  aboutSection: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+    borderBottomWidth: 1,
+  },
+  versionText: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.md,
+  },
+  copyrightText: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
   },
 });

@@ -5,3 +5,4 @@ export { AuthCard } from './AuthCard';
 export { FeaturesList } from './FeaturesList';
 export { StatsSection } from './StatsSection';
 export { UpcomingEventsPreview } from './UpcomingEventsPreview';
+export { ActivitiesFeedPreview } from './ActivitiesFeedPreview';

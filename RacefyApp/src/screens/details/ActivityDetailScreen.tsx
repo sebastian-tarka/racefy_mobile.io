@@ -9,6 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +28,8 @@ import type { Activity, GpsTrack, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -35,6 +40,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -318,6 +324,82 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           </Card>
         )}
 
+        {/* Photo Gallery */}
+        {activity.photos && activity.photos.length > 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('activityDetail.photos')} ({activity.photos.length})
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.photoGallery}
+            >
+              {activity.photos.map((photo, index) => (
+                <TouchableOpacity
+                  key={photo.id}
+                  onPress={() => setSelectedPhotoIndex(index)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: fixStorageUrl(photo.url) || '' }}
+                    style={styles.photoThumbnail}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Card>
+        )}
+
+        {/* Fullscreen Photo Modal */}
+        <Modal
+          visible={selectedPhotoIndex !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedPhotoIndex(null)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setSelectedPhotoIndex(null)}
+            >
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+
+            {selectedPhotoIndex !== null && activity.photos && (
+              <>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  contentOffset={{ x: selectedPhotoIndex * SCREEN_WIDTH, y: 0 }}
+                  onMomentumScrollEnd={(e) => {
+                    const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                    setSelectedPhotoIndex(newIndex);
+                  }}
+                >
+                  {activity.photos.map((photo) => (
+                    <View key={photo.id} style={styles.modalImageContainer}>
+                      <Image
+                        source={{ uri: fixStorageUrl(photo.url) || '' }}
+                        style={styles.modalImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  ))}
+                </ScrollView>
+
+                {/* Photo counter */}
+                <View style={styles.photoCounter}>
+                  <Text style={styles.photoCounterText}>
+                    {selectedPhotoIndex + 1} / {activity.photos.length}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </Modal>
+
         {/* Activity Info */}
         <Card style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.info')}</Text>
@@ -564,5 +646,54 @@ const styles = StyleSheet.create({
   engagementLabel: {
     fontSize: fontSize.xs,
     marginTop: 2,
+  },
+  // Photo gallery styles
+  photoGallery: {
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  photoThumbnail: {
+    width: 120,
+    height: 120,
+    borderRadius: borderRadius.md,
+  },
+  // Fullscreen modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: borderRadius.full,
+  },
+  modalImageContainer: {
+    width: SCREEN_WIDTH,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH,
+  },
+  photoCounter: {
+    position: 'absolute',
+    bottom: 50,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.lg,
+  },
+  photoCounterText: {
+    color: '#fff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });

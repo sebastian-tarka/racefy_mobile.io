@@ -10,9 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Input, Button } from '../../components';
+import { Input, Button, BrandLogo } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize } from '../../theme';
@@ -92,8 +91,7 @@ export function LoginScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Ionicons name="walk" size={48} color={colors.primary} />
-            <Text style={[styles.logo, { color: colors.primary }]}>{t('app.name')}</Text>
+            <BrandLogo category="logo-full" width={200} height={56} />
             <Text style={[styles.tagline, { color: colors.textSecondary }]}>{t('app.tagline')}</Text>
           </View>
 
@@ -170,14 +168,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xxxl,
   },
-  logo: {
-    fontSize: fontSize.title,
-    fontWeight: '700',
-    marginTop: spacing.md,
-  },
   tagline: {
     fontSize: fontSize.md,
-    marginTop: spacing.xs,
+    marginTop: spacing.lg,
   },
   form: {
     padding: spacing.xl,

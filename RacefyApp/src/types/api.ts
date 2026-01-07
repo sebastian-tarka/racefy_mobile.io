@@ -693,3 +693,29 @@ export interface DebugLogsResponse {
   message: string;
   log_reference: string;
 }
+
+// ============ BRAND ASSETS ============
+
+export interface BrandAsset {
+  filename: string;
+  url: string;
+  type: string;
+  size: number;
+  category: string;
+  variant: string;
+}
+
+export type BrandAssetVariant = 'default' | 'dark' | 'light';
+export type BrandAssetCategory = 'logo-full' | 'logo-icon' | 'logo-text';
+
+export interface BrandAssetsResponse {
+  data: Record<BrandAssetCategory, Record<BrandAssetVariant, BrandAsset>>;
+  meta: {
+    base_url: string;
+    total_assets: number;
+  };
+}
+
+export interface BrandAssetResponse {
+  data: BrandAsset;
+}

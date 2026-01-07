@@ -82,7 +82,8 @@
     },
     "connectionError": "Nie można połączyć z serwerem",
     "checkConnection": "Sprawdź połączenie internetowe",
-    "upcomingEvents": "Nadchodzące wydarzenia"
+    "upcomingEvents": "Nadchodzące wydarzenia",
+    "recentActivities": "Ostatnie aktywności"
   },
   "feed": {
     "title": "Aktualności",
@@ -326,6 +327,7 @@
     "avgHeartRate": "Śr. tętno",
     "maxHeartRate": "Maks. tętno",
     "description": "Opis",
+    "photos": "Zdjęcia",
     "info": "Informacje o aktywności",
     "date": "Data",
     "source": "Źródło",
@@ -356,6 +358,14 @@
     "updateSuccess": "Aktywność została zaktualizowana!",
     "updateFailed": "Nie udało się zaktualizować aktywności",
     "failedToLoad": "Nie udało się załadować aktywności",
+    "photos": "Zdjęcia",
+    "addPhoto": "Dodaj zdjęcie",
+    "deletePhoto": "Usuń zdjęcie",
+    "deletePhotoConfirm": "Czy na pewno chcesz usunąć to zdjęcie?",
+    "deletePhotoFailed": "Nie udało się usunąć zdjęcia",
+    "maxPhotosReached": "Maksymalnie {{count}} zdjęć",
+    "uploadingPhotos": "Przesyłanie zdjęć...",
+    "new": "NOWE",
     "validation": {
       "titleRequired": "Tytuł jest wymagany"
     }
@@ -613,6 +623,7 @@
     },
     "app": "Aplikacja",
     "version": "Wersja",
+    "allRightsReserved": "Wszelkie prawa zastrzeżone",
     "dangerZone": "Strefa zagrożenia",
     "deleteAccount": "Usuń konto",
     "deleteAccountConfirm": "Ta operacja jest nieodwracalna. Wszystkie Twoje dane zostaną trwale usunięte.",

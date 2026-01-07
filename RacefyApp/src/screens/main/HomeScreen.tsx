@@ -16,6 +16,7 @@ import {
   FeaturesList,
   StatsSection,
   UpcomingEventsPreview,
+  ActivitiesFeedPreview,
 } from './home/components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -115,6 +116,10 @@ export function HomeScreen({ navigation }: Props) {
         <HomeHeader
           userName={user?.name}
           isAuthenticated={isAuthenticated}
+          onNotificationPress={() => {
+            // TODO: Navigate to notifications screen
+            console.log('Notifications pressed');
+          }}
         />
 
         <HeroSection />
@@ -125,6 +130,15 @@ export function HomeScreen({ navigation }: Props) {
             onSignUp={() => navigateToAuth('Register')}
           />
         )}
+
+        <ActivitiesFeedPreview
+          onActivityPress={(activityId) => {
+            navigation.getParent()?.navigate('ActivityDetail', { activityId });
+          }}
+          onViewAllPress={() => navigation.navigate('Feed')}
+          onLoginPress={() => navigateToAuth('Login')}
+          limit={3}
+        />
 
         <UpcomingEventsPreview
           onEventPress={(eventId) => {
