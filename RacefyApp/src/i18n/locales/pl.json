@@ -669,6 +669,8 @@
     "noComments": "Brak komentarzy",
     "beFirst": "Bądź pierwszy i skomentuj!",
     "signInToComment": "Zaloguj się, aby dodać komentarz",
+    "signInRequired": "Wymagane logowanie",
+    "signInToViewComments": "Zaloguj się lub utwórz konto, aby zobaczyć i dodać komentarze",
     "failedToLoad": "Nie udało się załadować komentarzy",
     "failedToCreate": "Nie udało się dodać komentarza",
     "failedToDelete": "Nie udało się usunąć komentarza",

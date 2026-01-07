@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { useAuth } from './useAuth';
 import type { ActivityStats } from '../types/api';
 
 interface UseActivityStatsResult {
@@ -10,11 +11,18 @@ interface UseActivityStatsResult {
 }
 
 export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
+  const { isAuthenticated } = useAuth();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
+    if (!isAuthenticated) {
+      setStats(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -30,7 +38,7 @@ export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
     } finally {
       setIsLoading(false);
     }
-  }, [sportTypeId]);
+  }, [sportTypeId, isAuthenticated]);
 
   useEffect(() => {
     fetchStats();

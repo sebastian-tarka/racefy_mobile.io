@@ -12,6 +12,7 @@ import {
 import type { Activity, GpsPoint } from '../types/api';
 import { DEFAULT_GPS_PROFILE, convertToApiGpsProfile, type GpsProfile } from '../config/gpsProfiles';
 import { useSportTypes } from './useSportTypes';
+import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
 
 const isWeb = Platform.OS === 'web';
@@ -56,6 +57,7 @@ const CALORIES_PER_SECOND = 0.15; // Rough average for moderate activity
 
 export function useLiveActivity() {
   const { getGpsProfileForSport } = useSportTypes();
+  const { isAuthenticated } = useAuth();
 
   const [state, setState] = useState<LiveActivityState>({
     activity: null,
@@ -132,10 +134,12 @@ export function useLiveActivity() {
     return R * c;
   };
 
-  // Check for existing active activity on mount
+  // Check for existing active activity on mount (only for authenticated users)
   useEffect(() => {
-    checkExistingActivity();
-  }, []);
+    if (isAuthenticated) {
+      checkExistingActivity();
+    }
+  }, [isAuthenticated]);
 
   // Cleanup on unmount
   useEffect(() => {

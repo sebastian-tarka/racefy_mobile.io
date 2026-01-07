@@ -669,6 +669,8 @@
     "noComments": "No comments yet",
     "beFirst": "Be the first to comment!",
     "signInToComment": "Sign in to leave a comment",
+    "signInRequired": "Sign in required",
+    "signInToViewComments": "Sign in or create an account to view and post comments",
     "failedToLoad": "Failed to load comments",
     "failedToCreate": "Failed to post comment",
     "failedToDelete": "Failed to delete comment",

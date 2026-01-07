@@ -498,10 +498,12 @@ export function EventDetailScreen({ route, navigation }: Props) {
                     index > 0 && styles.participantAvatarOverlap,
                   ]}
                   onPress={() => {
-                    if (registration.user?.username) {
+                    if (isAuthenticated && registration.user?.username) {
                       navigation.navigate('UserProfile', { username: registration.user.username });
                     }
                   }}
+                  disabled={!isAuthenticated}
+                  activeOpacity={isAuthenticated ? 0.7 : 1}
                 >
                   <Avatar
                     uri={registration.user?.avatar}
@@ -526,7 +528,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           <CommentSection
             commentableType="event"
             commentableId={eventId}
-            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+            onUserPress={isAuthenticated ? (user: User) => navigation.navigate('UserProfile', { username: user.username }) : undefined}
             onInputFocus={scrollToBottom}
           />
         </View>

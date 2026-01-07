@@ -78,10 +78,10 @@ export function CommentSection({
   }, [commentableType, commentableId, t]);
 
   useEffect(() => {
-    if (isExpanded && comments.length === 0) {
+    if (isExpanded && comments.length === 0 && isAuthenticated) {
       fetchComments();
     }
-  }, [isExpanded, fetchComments, comments.length]);
+  }, [isExpanded, fetchComments, comments.length, isAuthenticated]);
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -288,36 +288,42 @@ export function CommentSection({
       {/* Expanded content */}
       {isExpanded && (
         <>
-          {/* Comments list */}
-          <FlatList
-            data={comments}
-            renderItem={renderComment}
-            keyExtractor={(item) => String(item.id)}
-            ListEmptyComponent={renderEmpty}
-            scrollEnabled={false}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-            }
-          />
-
-          {/* Comment input (only for authenticated users) */}
           {isAuthenticated ? (
-            <CommentInput
-              onSubmit={handleCreateComment}
-              replyingTo={replyingTo}
-              onCancelReply={handleCancelReply}
-              onFocus={onInputFocus}
-              placeholder={
-                replyingTo
-                  ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
-                  : undefined
-              }
-            />
+            <>
+              {/* Comments list */}
+              <FlatList
+                data={comments}
+                renderItem={renderComment}
+                keyExtractor={(item) => String(item.id)}
+                ListEmptyComponent={renderEmpty}
+                scrollEnabled={false}
+                contentContainerStyle={styles.listContent}
+                refreshControl={
+                  <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+                }
+              />
+
+              {/* Comment input */}
+              <CommentInput
+                onSubmit={handleCreateComment}
+                replyingTo={replyingTo}
+                onCancelReply={handleCancelReply}
+                onFocus={onInputFocus}
+                placeholder={
+                  replyingTo
+                    ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
+                    : undefined
+                }
+              />
+            </>
           ) : (
-            <View style={[styles.signInPrompt, { borderTopColor: colors.border }]}>
-              <Text style={[styles.signInText, { color: colors.textMuted }]}>
-                {t('comments.signInToComment')}
+            <View style={styles.authPrompt}>
+              <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
+              <Text style={[styles.authPromptTitle, { color: colors.textPrimary }]}>
+                {t('comments.signInRequired')}
+              </Text>
+              <Text style={[styles.authPromptText, { color: colors.textMuted }]}>
+                {t('comments.signInToViewComments')}
               </Text>
             </View>
           )}
@@ -377,12 +383,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: spacing.sm,
   },
-  signInPrompt: {
-    borderTopWidth: 1,
-    paddingVertical: spacing.md,
+  authPrompt: {
     alignItems: 'center',
+    paddingVertical: spacing.xl,
   },
-  signInText: {
+  authPromptTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginTop: spacing.sm,
+  },
+  authPromptText: {
     fontSize: fontSize.sm,
+    marginTop: spacing.xs,
+    textAlign: 'center',
   },
 });
