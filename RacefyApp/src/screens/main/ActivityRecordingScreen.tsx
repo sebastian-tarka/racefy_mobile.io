@@ -88,21 +88,27 @@ export function ActivityRecordingScreen() {
     }
   }, [sportTypes, selectedSport]);
 
-  // Handle preselected event from navigation params (only once)
+  // Handle preselected event from navigation params
   useEffect(() => {
     const preselectedEvent = route.params?.preselectedEvent;
     if (preselectedEvent && !preselectedEventHandled.current) {
-      preselectedEventHandled.current = true;
+      // Set the event immediately
       setSelectedEvent(preselectedEvent);
-      // Also select matching sport type if available
-      if (preselectedEvent.sport_type_id && sportTypes.length > 0) {
-        const matchingSport = sportTypes.find(s => s.id === preselectedEvent.sport_type_id);
+
+      // Get sport type ID - fallback to sport_type.id if sport_type_id is undefined
+      const eventSportTypeId = preselectedEvent.sport_type_id ?? preselectedEvent.sport_type?.id;
+
+      // Only mark as fully handled when we've also set the sport type
+      // This allows the effect to run again when sportTypes load
+      if (eventSportTypeId && sportTypes.length > 0 && !sportsLoading) {
+        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
         if (matchingSport) {
           setSelectedSport(matchingSport);
+          preselectedEventHandled.current = true;
         }
       }
     }
-  }, [route.params?.preselectedEvent, sportTypes]);
+  }, [route.params?.preselectedEvent, sportTypes, sportsLoading]);
 
   // Sports to display (first N or all)
   const displayedSports = showAllSports

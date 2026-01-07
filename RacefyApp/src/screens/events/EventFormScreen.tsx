@@ -79,7 +79,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   const isEditMode = !!eventId;
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { isLoading: isSportTypesLoading } = useSportTypes();
+  const { sportTypes, isLoading: isSportTypesLoading } = useSportTypes();
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
@@ -107,6 +107,11 @@ export function EventFormScreen({ navigation, route }: Props) {
     setIsFetching(true);
     try {
       const event = await api.getEvent(id);
+      console.log('[EventFormScreen] Fetched event:', {
+        id: event.id,
+        sport_type_id: event.sport_type_id,
+        sport_type: event.sport_type,
+      });
       populateForm(event);
     } catch (error) {
       console.error('Failed to fetch event:', error);
@@ -119,10 +124,12 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const populateForm = (event: Event) => {
     setEventStatus(event.status);
+    // Use sport_type_id if available, otherwise fallback to sport_type.id
+    const sportTypeId = event.sport_type_id ?? event.sport_type?.id ?? null;
     setFormData({
       title: event.post?.title || '',
       content: event.post?.content || '',
-      sport_type_id: event.sport_type_id,
+      sport_type_id: sportTypeId,
       location_name: event.location_name,
       latitude: event.latitude,
       longitude: event.longitude,
@@ -335,8 +342,22 @@ export function EventFormScreen({ navigation, route }: Props) {
     return format(date, 'MMM d, yyyy h:mm a');
   };
 
-  // Show loading while fetching event data or while sport types are loading in edit mode
-  if (isFetching || (isEditMode && isSportTypesLoading)) {
+  // Check if the selected sport type exists in the loaded sport types
+  const sportTypeExists = formData.sport_type_id
+    ? sportTypes.some(s => s.id === formData.sport_type_id)
+    : true;
+
+  // Debug logging
+  console.log('[EventFormScreen] Sport type check:', {
+    formDataSportTypeId: formData.sport_type_id,
+    sportTypesLoading: isSportTypesLoading,
+    sportTypesCount: sportTypes.length,
+    sportTypeIds: sportTypes.map(s => s.id),
+    sportTypeExists,
+  });
+
+  // Show loading while fetching event data, sport types are loading, or sport type doesn't exist yet
+  if (isFetching || (isEditMode && (isSportTypesLoading || (formData.sport_type_id && !sportTypeExists)))) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <ScreenHeader
