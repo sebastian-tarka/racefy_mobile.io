@@ -14,7 +14,9 @@
       },
       "distribution": "internal",
       "env": {
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        "LOG_ENABLED": "true",
+        "LOG_LEVEL": "debug"
       }
     },
     "production": {

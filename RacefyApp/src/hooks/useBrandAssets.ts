@@ -72,7 +72,8 @@ export function useBrandAssets(): UseBrandAssetsResult {
       }
 
       // Auto-select variant based on theme
-      const themeVariant = isDark ? 'dark' : 'light';
+      // Use light logo on dark background, dark logo on light background
+      const themeVariant = isDark ? 'light' : 'dark';
       return categoryAssets[themeVariant] || categoryAssets.default || null;
     },
     [assets, isDark]

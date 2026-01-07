@@ -97,7 +97,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
     setIsLoadingPosts(true);
     try {
-      const response = await api.getPosts({ user_id: userId, page });
+      const response = await api.getUserPosts(userId, page);
       if (refresh) {
         setPosts(response.data);
       } else {
@@ -117,7 +117,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
     setIsLoadingActivities(true);
     try {
-      const response = await api.getActivities({ user_id: userId, page });
+      const response = await api.getUserActivities(userId, page);
       if (refresh) {
         setActivities(response.data);
       } else {
