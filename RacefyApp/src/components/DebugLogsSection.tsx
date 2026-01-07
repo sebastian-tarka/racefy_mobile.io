@@ -54,23 +54,53 @@ export function DebugLogsSection() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setIsSending(true);
 
+    const MAX_LOGS_PER_REQUEST = 1000;
+
     try {
-      const payload = logger.prepareLogsPayload();
-      const response = await api.sendDebugLogs(payload);
+      const fullPayload = logger.prepareLogsPayload();
+      const totalLogs = fullPayload.logs.length;
+      const chunks = Math.ceil(totalLogs / MAX_LOGS_PER_REQUEST);
+      const references: string[] = [];
+
+      // Split logs into chunks and send multiple requests
+      for (let i = 0; i < chunks; i++) {
+        const startIndex = i * MAX_LOGS_PER_REQUEST;
+        const endIndex = Math.min(startIndex + MAX_LOGS_PER_REQUEST, totalLogs);
+        const chunkLogs = fullPayload.logs.slice(startIndex, endIndex);
+
+        const chunkPayload = {
+          ...fullPayload,
+          logs: chunkLogs,
+        };
+
+        const response = await api.sendDebugLogs(chunkPayload);
+        references.push(response.log_reference);
+      }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setLastSentRef(response.log_reference);
+
+      // Store last reference
+      const lastRef = references[references.length - 1];
+      setLastSentRef(lastRef);
+
+      // Clear logs and start new session after successful send
+      await logger.clearLogs();
+      await logger.startNewSession();
+      setLogsCount(0);
 
       Alert.alert(
         t('settings.debug.sent', 'Logs Sent'),
-        t('settings.debug.sentMessage', 'Debug logs sent successfully.\n\nReference: {{ref}}', {
-          ref: response.log_reference,
+        t('settings.debug.sentMessageMultiple', 'Debug logs sent successfully in {{chunks}} request(s).\n\nTotal logs: {{total}}\nReference: {{ref}}', {
+          chunks,
+          total: totalLogs,
+          ref: lastRef,
         })
       );
 
       logger.info('general', 'Debug logs sent to server', {
-        reference: response.log_reference,
-        logsCount: payload.logs.length,
+        references,
+        totalLogs,
+        chunks,
       });
     } catch (error: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
