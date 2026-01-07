@@ -596,7 +596,8 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {activeTab === 'drafts' ? (
+      {/* Keep DraftsTab mounted but hidden to prevent blinking on tab switch */}
+      <View style={[styles.tabContent, activeTab !== 'drafts' && styles.hiddenTab]}>
         <DraftsTab
           isOwnProfile={true}
           ListHeaderComponent={renderProfileHeader}
@@ -611,7 +612,8 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             navigation.navigate('PostForm', { postId: draft.id });
           }}
         />
-      ) : (
+      </View>
+      <View style={[styles.tabContent, activeTab === 'drafts' && styles.hiddenTab]}>
         <FlatList
           data={getData()}
           keyExtractor={getKeyExtractor}
@@ -631,7 +633,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
         />
-      )}
+      </View>
 
       {user && (
         <>
@@ -660,6 +662,16 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  tabContent: {
+    flex: 1,
+  },
+  hiddenTab: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    overflow: 'hidden',
+    opacity: 0,
   },
   header: {
     flexDirection: 'row',

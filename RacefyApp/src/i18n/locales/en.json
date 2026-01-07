@@ -115,6 +115,7 @@
   },
   "feed": {
     "title": "Feed",
+    "createPost": "Create Post",
     "signInRequired": "Sign in to view feed",
     "signInDescription": "Connect with other athletes and share your activities",
     "loadingFeed": "Loading feed...",

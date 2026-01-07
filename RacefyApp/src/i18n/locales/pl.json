@@ -115,6 +115,7 @@
   },
   "feed": {
     "title": "Aktualności",
+    "createPost": "Utwórz post",
     "signInRequired": "Zaloguj się, aby zobaczyć aktualności",
     "signInDescription": "Połącz się z innymi sportowcami i dziel się swoimi aktywnościami",
     "loadingFeed": "Ładowanie aktualności...",

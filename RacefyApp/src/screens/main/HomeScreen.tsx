@@ -126,8 +126,7 @@ export function HomeScreen({ navigation }: Props) {
               navigation.navigate('Record');
             }}
             onCreatePost={() => {
-              navigation.navigate('Feed');
-              // TODO: Open create post modal
+              navigation.navigate('Feed', { openComposer: true });
             }}
             onFindEvents={() => {
               navigation.navigate('Events');
