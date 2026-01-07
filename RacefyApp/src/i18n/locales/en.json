@@ -63,7 +63,35 @@
     }
   },
   "home": {
-    "greeting": "Hello, {{name}}!",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Good night"
+    },
+    "motivation": {
+      "morning": "Start your day with energy!",
+      "afternoon": "Keep pushing forward!",
+      "evening": "Great time for a workout!",
+      "night": "Rest well, champion!"
+    },
+    "quickActions": {
+      "startActivity": "Start Activity",
+      "createPost": "Create Post",
+      "findEvents": "Find Events"
+    },
+    "weeklyStats": {
+      "title": "Your Stats",
+      "activities": "Activities",
+      "distance": "Distance",
+      "time": "Time",
+      "calories": "Calories"
+    },
+    "liveActivity": {
+      "recording": "Recording Activity",
+      "paused": "Activity Paused",
+      "tap": "Tap to view"
+    },
     "heroTitle": "Sports & Fitness Community",
     "heroSubtitle": "Track activities, join events, and connect with fitness enthusiasts",
     "getStarted": "Get Started",

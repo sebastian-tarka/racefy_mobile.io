@@ -63,7 +63,35 @@
     }
   },
   "home": {
-    "greeting": "Cześć, {{name}}!",
+    "greeting": {
+      "morning": "Dzień dobry",
+      "afternoon": "Dzień dobry",
+      "evening": "Dobry wieczór",
+      "night": "Dobranoc"
+    },
+    "motivation": {
+      "morning": "Zacznij dzień z energią!",
+      "afternoon": "Nie poddawaj się!",
+      "evening": "Świetny czas na trening!",
+      "night": "Odpocznij, mistrzu!"
+    },
+    "quickActions": {
+      "startActivity": "Rozpocznij",
+      "createPost": "Dodaj post",
+      "findEvents": "Wydarzenia"
+    },
+    "weeklyStats": {
+      "title": "Twoje statystyki",
+      "activities": "Aktywności",
+      "distance": "Dystans",
+      "time": "Czas",
+      "calories": "Kalorie"
+    },
+    "liveActivity": {
+      "recording": "Nagrywanie aktywności",
+      "paused": "Aktywność wstrzymana",
+      "tap": "Dotknij, aby zobaczyć"
+    },
     "heroTitle": "Społeczność sportowa i fitness",
     "heroSubtitle": "Śledź aktywności, dołączaj do wydarzeń i łącz się z entuzjastami fitnessu",
     "getStarted": "Rozpocznij",

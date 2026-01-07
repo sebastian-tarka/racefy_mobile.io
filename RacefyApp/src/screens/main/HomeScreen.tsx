@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useLiveActivity } from '../../hooks/useLiveActivity';
 import { api } from '../../services/api';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -11,12 +12,13 @@ import type { MainTabParamList } from '../../navigation/types';
 import {
   ConnectionErrorBanner,
   HomeHeader,
-  HeroSection,
   AuthCard,
-  FeaturesList,
-  StatsSection,
   UpcomingEventsPreview,
   ActivitiesFeedPreview,
+  DynamicGreeting,
+  WeeklyStatsCard,
+  QuickActionsBar,
+  LiveActivityBanner,
 } from './home/components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -31,6 +33,7 @@ type ConnectionStatus = {
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const { isTracking, isPaused, currentStats } = useLiveActivity();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,
     connected: true,
@@ -62,41 +65,6 @@ export function HomeScreen({ navigation }: Props) {
     navigation.getParent()?.navigate('Auth', { screen });
   };
 
-  const navigateToScreen = (screen: keyof MainTabParamList, requiresAuth: boolean) => {
-    if (requiresAuth && !isAuthenticated) {
-      navigateToAuth('Login');
-    } else {
-      navigation.navigate(screen);
-    }
-  };
-
-  const features = [
-    {
-      icon: 'newspaper-outline' as const,
-      titleKey: 'home.socialFeed',
-      descriptionKey: 'home.socialFeedDesc',
-      onPress: () => navigateToScreen('Feed', true),
-    },
-    {
-      icon: 'calendar-outline' as const,
-      titleKey: 'home.events',
-      descriptionKey: 'home.eventsDesc',
-      onPress: () => navigateToScreen('Events', false),
-    },
-    {
-      icon: 'fitness-outline' as const,
-      titleKey: 'home.activities',
-      descriptionKey: 'home.activitiesDesc',
-      onPress: () => {
-        if (!isAuthenticated) {
-          navigateToAuth('Login');
-        } else {
-          navigation.navigate('Profile', { initialTab: 'stats' });
-        }
-      },
-    },
-  ];
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
@@ -115,15 +83,35 @@ export function HomeScreen({ navigation }: Props) {
 
         <HomeHeader
           userName={user?.name}
+          userAvatar={user?.avatar}
           isAuthenticated={isAuthenticated}
           onNotificationPress={() => {
             // TODO: Navigate to notifications screen
             console.log('Notifications pressed');
           }}
+          onAvatarPress={() => {
+            navigation.navigate('Profile');
+          }}
         />
 
-        <HeroSection />
+        {/* Live Activity Banner - shows when recording */}
+        <LiveActivityBanner
+          isActive={isTracking}
+          isPaused={isPaused}
+          duration={currentStats.duration}
+          distance={currentStats.distance}
+          onPress={() => {
+            navigation.navigate('Record');
+          }}
+        />
 
+        {/* Dynamic Greeting with time-based message */}
+        <DynamicGreeting
+          userName={user?.name}
+          isAuthenticated={isAuthenticated}
+        />
+
+        {/* Auth Card for non-authenticated users */}
         {!isAuthenticated && (
           <AuthCard
             onSignIn={() => navigateToAuth('Login')}
@@ -131,6 +119,26 @@ export function HomeScreen({ navigation }: Props) {
           />
         )}
 
+        {/* Quick Actions for authenticated users */}
+        {isAuthenticated && (
+          <QuickActionsBar
+            onStartActivity={() => {
+              navigation.navigate('Record');
+            }}
+            onCreatePost={() => {
+              navigation.navigate('Feed');
+              // TODO: Open create post modal
+            }}
+            onFindEvents={() => {
+              navigation.navigate('Events');
+            }}
+          />
+        )}
+
+        {/* Weekly Stats Card for authenticated users */}
+        {isAuthenticated && <WeeklyStatsCard />}
+
+        {/* Activities Feed */}
         <ActivitiesFeedPreview
           onActivityPress={(activityId) => {
             navigation.getParent()?.navigate('ActivityDetail', { activityId });
@@ -140,6 +148,7 @@ export function HomeScreen({ navigation }: Props) {
           limit={3}
         />
 
+        {/* Upcoming Events */}
         <UpcomingEventsPreview
           onEventPress={(eventId) => {
             navigation.getParent()?.navigate('EventDetail', { eventId });
@@ -147,10 +156,6 @@ export function HomeScreen({ navigation }: Props) {
           onViewAllPress={() => navigation.navigate('Events')}
           limit={3}
         />
-
-        <FeaturesList features={features} />
-
-        <StatsSection />
       </ScrollView>
     </SafeAreaView>
   );

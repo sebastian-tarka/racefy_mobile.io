@@ -6,3 +6,7 @@ export { FeaturesList } from './FeaturesList';
 export { StatsSection } from './StatsSection';
 export { UpcomingEventsPreview } from './UpcomingEventsPreview';
 export { ActivitiesFeedPreview } from './ActivitiesFeedPreview';
+export { DynamicGreeting } from './DynamicGreeting';
+export { WeeklyStatsCard } from './WeeklyStatsCard';
+export { QuickActionsBar } from './QuickActionsBar';
+export { LiveActivityBanner } from './LiveActivityBanner';
