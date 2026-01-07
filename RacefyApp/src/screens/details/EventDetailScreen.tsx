@@ -241,10 +241,13 @@ export function EventDetailScreen({ route, navigation }: Props) {
       ? event.max_participants - event.participants_count
       : null;
   const isFull = availableSpots !== null && availableSpots <= 0;
+  const canModifyStatus = event.status === 'upcoming' || event.status === 'cancelled';
   const canRegister =
     event.status === 'upcoming' && !event.is_registered && !isFull;
+  const canUnregister = canModifyStatus && event.is_registered;
   const canStartActivity = event.status === 'ongoing' && event.is_registered;
   const canEdit = event.is_owner ?? false;
+  const canDelete = canEdit && canModifyStatus;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -260,13 +263,15 @@ export function EventDetailScreen({ route, navigation }: Props) {
             >
               <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDeleteEvent}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={styles.deleteButton}
-            >
-              <Ionicons name="trash-outline" size={24} color={colors.error} />
-            </TouchableOpacity>
+            {canDelete && (
+              <TouchableOpacity
+                onPress={handleDeleteEvent}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={styles.deleteButton}
+              >
+                <Ionicons name="trash-outline" size={24} color={colors.error} />
+              </TouchableOpacity>
+            )}
           </View>
         ) : undefined}
       />
@@ -540,7 +545,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
             variant="primary"
             style={styles.actionButton}
           />
-        ) : event.is_registered ? (
+        ) : canUnregister ? (
           <Button
             title={t('eventDetail.cancelRegistration')}
             onPress={handleCancelRegistration}

@@ -28,9 +28,10 @@ interface SportTypeSelectorProps {
   value: number | null;
   onChange: (sportTypeId: number) => void;
   error?: string;
+  disabled?: boolean;
 }
 
-export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorProps) {
+export function SportTypeSelector({ value, onChange, error, disabled }: SportTypeSelectorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes, isLoading, getSportById } = useSportTypes();
@@ -77,17 +78,19 @@ export function SportTypeSelector({ value, onChange, error }: SportTypeSelectorP
           styles.selector,
           { backgroundColor: colors.background, borderColor: colors.border },
           error && { borderColor: colors.error },
+          disabled && { opacity: 0.6 },
         ]}
-        onPress={() => setIsModalVisible(true)}
+        onPress={() => !disabled && setIsModalVisible(true)}
+        disabled={disabled}
       >
         {selectedSport ? (
           <View style={styles.selectedValue}>
             <Ionicons
               name={selectedSport.icon}
               size={20}
-              color={colors.primary}
+              color={disabled ? colors.textMuted : colors.primary}
             />
-            <Text style={[styles.selectedText, { color: colors.textPrimary }]}>{selectedSport.name}</Text>
+            <Text style={[styles.selectedText, { color: disabled ? colors.textMuted : colors.textPrimary }]}>{selectedSport.name}</Text>
           </View>
         ) : (
           <Text style={[styles.placeholder, { color: colors.textMuted }]}>{t('eventForm.selectSportType')}</Text>

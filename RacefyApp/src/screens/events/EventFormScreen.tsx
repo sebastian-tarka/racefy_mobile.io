@@ -92,6 +92,10 @@ export function EventFormScreen({ navigation, route }: Props) {
     mode: 'date' | 'time';
   } | null>(null);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
+  const [eventStatus, setEventStatus] = useState<string | null>(null);
+
+  // Limited edit mode for ongoing/completed events - only media, title, description can be edited
+  const isLimitedEdit = isEditMode && (eventStatus === 'ongoing' || eventStatus === 'completed');
 
   useEffect(() => {
     if (isEditMode && eventId) {
@@ -114,6 +118,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   };
 
   const populateForm = (event: Event) => {
+    setEventStatus(event.status);
     setFormData({
       title: event.post?.title || '',
       content: event.post?.content || '',
@@ -406,12 +411,14 @@ export function EventFormScreen({ navigation, route }: Props) {
             value={formData.sport_type_id}
             onChange={(id) => updateField('sport_type_id', id)}
             error={errors.sport_type_id}
+            disabled={isLimitedEdit}
           />
 
           {/* Difficulty */}
           <DifficultySelector
             value={formData.difficulty}
             onChange={(difficulty) => updateField('difficulty', difficulty)}
+            disabled={isLimitedEdit}
           />
 
           {/* Location */}
@@ -422,10 +429,12 @@ export function EventFormScreen({ navigation, route }: Props) {
             onChangeText={(text) => updateField('location_name', text)}
             error={errors.location_name}
             leftIcon="location-outline"
+            editable={!isLimitedEdit}
+            style={isLimitedEdit ? { opacity: 0.6 } : undefined}
           />
 
           {/* Start Date */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, isLimitedEdit && { opacity: 0.6 }]}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.startDate')}</Text>
             <TouchableOpacity
               style={[
@@ -434,6 +443,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 errors.starts_at && { borderColor: colors.error },
               ]}
               onPress={() => openDatePicker('starts_at')}
+              disabled={isLimitedEdit}
             >
               <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.dateText, { color: colors.textPrimary }]}>{formatDateTime(formData.starts_at)}</Text>
@@ -442,7 +452,7 @@ export function EventFormScreen({ navigation, route }: Props) {
           </View>
 
           {/* End Date */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, isLimitedEdit && { opacity: 0.6 }]}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.endDate')}</Text>
             <TouchableOpacity
               style={[
@@ -451,6 +461,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 errors.ends_at && { borderColor: colors.error },
               ]}
               onPress={() => openDatePicker('ends_at')}
+              disabled={isLimitedEdit}
             >
               <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.dateText, { color: colors.textPrimary }]}>{formatDateTime(formData.ends_at)}</Text>
@@ -472,6 +483,7 @@ export function EventFormScreen({ navigation, route }: Props) {
           </TouchableOpacity>
 
           {showOptionalFields && (
+            <View style={isLimitedEdit ? { opacity: 0.6 } : undefined}>
             <Card style={styles.optionalCard}>
               {/* Registration Opens */}
               <View style={styles.inputContainer}>
@@ -479,6 +491,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 <TouchableOpacity
                   style={[styles.dateButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                   onPress={() => openDatePicker('registration_opens_at')}
+                  disabled={isLimitedEdit}
                 >
                   <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
                   <Text style={[styles.dateText, { color: colors.textPrimary }]}>
@@ -493,6 +506,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 <TouchableOpacity
                   style={[styles.dateButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                   onPress={() => openDatePicker('registration_closes_at')}
+                  disabled={isLimitedEdit}
                 >
                   <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
                   <Text style={[styles.dateText, { color: colors.textPrimary }]}>
@@ -509,6 +523,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 onChangeText={(text) => updateField('max_participants', text)}
                 keyboardType="number-pad"
                 leftIcon="people-outline"
+                editable={!isLimitedEdit}
               />
 
               {/* Distance */}
@@ -519,6 +534,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                 onChangeText={(text) => updateField('distance', text)}
                 keyboardType="decimal-pad"
                 leftIcon="map-outline"
+                editable={!isLimitedEdit}
               />
 
               {/* Entry Fee */}
@@ -529,8 +545,10 @@ export function EventFormScreen({ navigation, route }: Props) {
                 onChangeText={(text) => updateField('entry_fee', text)}
                 keyboardType="decimal-pad"
                 leftIcon="cash-outline"
+                editable={!isLimitedEdit}
               />
             </Card>
+            </View>
           )}
 
           {/* Submit Button */}
