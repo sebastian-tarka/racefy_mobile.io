@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -20,6 +21,8 @@ import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { changeLanguage } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
+
+const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { UserPreferences, NotificationChannelSettings } from '../../types/api';
@@ -187,22 +190,45 @@ export function SettingsScreen({ navigation }: Props) {
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Section collapse state
+  // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
     account: true,
-    consents: true,
-    preferences: true,
-    notifications: true,
-    privacy: true,
-    activityDefaults: true,
-    aiPosts: true,
+    consents: false,
+    preferences: false,
+    notifications: false,
+    privacy: false,
+    activityDefaults: false,
+    aiPosts: false,
     app: true,
     dangerZone: false,
   });
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+  // Load saved section states from storage
+  useEffect(() => {
+    const loadSectionStates = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(SETTINGS_SECTIONS_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setExpandedSections(prev => ({ ...prev, ...parsed }));
+        }
+      } catch (error) {
+        console.log('Failed to load section states:', error);
+      }
+    };
+    loadSectionStates();
+  }, []);
+
+  const toggleSection = useCallback(async (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => {
+      const newState = { ...prev, [section]: !prev[section] };
+      // Save to storage (async, don't await)
+      AsyncStorage.setItem(SETTINGS_SECTIONS_KEY, JSON.stringify(newState)).catch(err => {
+        console.log('Failed to save section states:', err);
+      });
+      return newState;
+    });
+  }, []);
 
   const appVersion = Application.nativeApplicationVersion || '1.0.0';
 
