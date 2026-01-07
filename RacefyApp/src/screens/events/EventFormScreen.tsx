@@ -28,6 +28,7 @@ import {
 import { api } from '../../services/api';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
+import { useSportTypes } from '../../hooks/useSportTypes';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -78,6 +79,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   const isEditMode = !!eventId;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { isLoading: isSportTypesLoading } = useSportTypes();
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
@@ -328,7 +330,8 @@ export function EventFormScreen({ navigation, route }: Props) {
     return format(date, 'MMM d, yyyy h:mm a');
   };
 
-  if (isFetching) {
+  // Show loading while fetching event data or while sport types are loading in edit mode
+  if (isFetching || (isEditMode && isSportTypesLoading)) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <ScreenHeader

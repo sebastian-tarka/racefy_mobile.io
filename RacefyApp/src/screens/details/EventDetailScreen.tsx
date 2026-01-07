@@ -169,6 +169,30 @@ export function EventDetailScreen({ route, navigation }: Props) {
     });
   };
 
+  const handleDeleteEvent = useCallback(() => {
+    if (!event) return;
+
+    Alert.alert(
+      t('eventDetail.deleteEvent'),
+      t('eventDetail.deleteEventConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteEvent(event.id);
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert(t('common.error'), t('eventDetail.deleteEventFailed'));
+            }
+          },
+        },
+      ]
+    );
+  }, [event, navigation, t]);
+
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = event?.sport_type?.name?.toLowerCase() || '';
     if (sportName.includes('run')) return 'walk-outline';
@@ -229,12 +253,21 @@ export function EventDetailScreen({ route, navigation }: Props) {
         showBack
         onBack={() => navigation.goBack()}
         rightAction={canEdit ? (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleDeleteEvent}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.deleteButton}
+            >
+              <Ionicons name="trash-outline" size={24} color={colors.error} />
+            </TouchableOpacity>
+          </View>
         ) : undefined}
       />
 
@@ -543,6 +576,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  deleteButton: {
+    marginLeft: spacing.xs,
   },
   keyboardAvoid: {
     flex: 1,

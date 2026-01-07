@@ -304,7 +304,10 @@
     "registrationFailed": "Nie udało się zarejestrować na wydarzenie",
     "cancelSuccess": "Twoja rejestracja została anulowana.",
     "cancelFailed": "Nie udało się anulować rejestracji",
-    "startActivity": "Rozpocznij aktywność"
+    "startActivity": "Rozpocznij aktywność",
+    "deleteEvent": "Usuń wydarzenie",
+    "deleteEventConfirm": "Czy na pewno chcesz usunąć to wydarzenie? Tej operacji nie można cofnąć.",
+    "deleteEventFailed": "Nie udało się usunąć wydarzenia"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",

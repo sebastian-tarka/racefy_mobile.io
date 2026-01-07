@@ -479,6 +479,10 @@ class ApiService {
     return response.data;
   }
 
+  async deleteEvent(id: number): Promise<void> {
+    await this.request(`/events/${id}`, { method: 'DELETE' });
+  }
+
   async registerForEvent(eventId: number): Promise<Types.EventRegistration> {
     const response = await this.request<
       Types.ApiResponse<Types.EventRegistration>
