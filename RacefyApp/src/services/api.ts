@@ -1280,6 +1280,34 @@ class ApiService {
     const response = await this.request<Types.BrandAssetResponse>(endpoint);
     return response.data;
   }
+
+  // ============ SEARCH ============
+
+  /**
+   * Unified search for users, events, and posts
+   * @param query - Search query (min 2 characters)
+   * @param type - Filter results: all, users, events, posts (default: all)
+   * @param perType - Results per category, 1-20 (default: 5)
+   */
+  async search(params: {
+    query: string;
+    type?: 'all' | 'users' | 'events' | 'posts';
+    per_type?: number;
+  }): Promise<Types.SearchResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.append('q', params.query);
+    if (params.type) searchParams.append('type', params.type);
+    if (params.per_type) searchParams.append('per_type', String(params.per_type));
+    return this.request<Types.SearchResponse>(`/search?${searchParams}`);
+  }
+
+  /**
+   * Search users only (for autocomplete)
+   * @param query - Search query (min 2 characters)
+   */
+  async searchUsers(query: string): Promise<Types.SearchUsersResponse> {
+    return this.request<Types.SearchUsersResponse>(`/search/users?q=${encodeURIComponent(query)}`);
+  }
 }
 
 export const api = new ApiService();

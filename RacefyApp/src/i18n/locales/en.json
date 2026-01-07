@@ -700,6 +700,20 @@
     "comment": "Comment",
     "comments": "Comments"
   },
+  "search": {
+    "placeholder": "Search users, events, posts...",
+    "placeholderEvents": "Search events...",
+    "minChars": "Enter at least 2 characters",
+    "noResults": "No results found",
+    "noResultsFor": "No results found for \"{{query}}\"",
+    "searching": "Searching...",
+    "users": "Users",
+    "events": "Events",
+    "posts": "Posts",
+    "seeAll": "See all",
+    "recentSearches": "Recent Searches",
+    "clearRecent": "Clear"
+  },
   "legal": {
     "consentTitle": "Consents & Policies",
     "consentDescription": "To continue using the app, please accept the required documents.",

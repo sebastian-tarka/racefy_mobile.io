@@ -652,6 +652,31 @@ export interface SendMessageRequest {
   type?: 'text';
 }
 
+// ============ SEARCH ============
+
+export interface SearchResultCategory<T> {
+  data: T[];
+  count: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  total_count: number;
+  results: {
+    users: SearchResultCategory<User>;
+    events: SearchResultCategory<Event>;
+    posts: SearchResultCategory<Post>;
+  };
+}
+
+export interface SearchUsersResponse {
+  query: string;
+  total_count: number;
+  results: {
+    users: SearchResultCategory<User>;
+  };
+}
+
 // ============ API RESPONSE ============
 
 export interface ApiResponse<T> {

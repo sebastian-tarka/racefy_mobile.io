@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,10 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Animated,
+  ActivityIndicator,
+  Keyboard,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,12 +29,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
+import { api } from '../../services/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { MediaItem } from '../../types/api';
+import type { MediaItem, User, Event, Post } from '../../types/api';
 
 type PostVisibility = 'public' | 'followers' | 'private';
 
@@ -40,6 +45,12 @@ type FeedScreenNavigationProp = CompositeNavigationProp<
 >;
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Feed'>;
+
+interface SearchResults {
+  users: User[];
+  events: Event[];
+  posts: Post[];
+}
 
 export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavigationProp }) {
   const { t } = useTranslation();
@@ -65,6 +76,15 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
   const [isComposerVisible, setIsComposerVisible] = useState(false);
   const [visibility, setVisibility] = useState<PostVisibility>('public');
 
+  // Search state
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  const searchInputRef = useRef<TextInput>(null);
+  const searchAnimValue = useRef(new Animated.Value(0)).current;
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
   const visibilityOptions: { value: PostVisibility; icon: string }[] = [
     { value: 'public', icon: 'globe-outline' },
     { value: 'followers', icon: 'people-outline' },
@@ -76,6 +96,74 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
       refresh();
     }
   }, [isAuthenticated]);
+
+  // Animate search visibility
+  useEffect(() => {
+    Animated.timing(searchAnimValue, {
+      toValue: isSearchVisible ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start(() => {
+      if (isSearchVisible) {
+        searchInputRef.current?.focus();
+      }
+    });
+  }, [isSearchVisible]);
+
+  // Handle search
+  const performSearch = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults(null);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await api.search({ query, type: 'all', per_type: 5 });
+      setSearchResults({
+        users: response.results.users.data,
+        events: response.results.events.data,
+        posts: response.results.posts.data,
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults(null);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Debounced search
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchQuery(text);
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    if (text.length >= 2) {
+      setIsSearching(true);
+      searchDebounceRef.current = setTimeout(() => {
+        performSearch(text);
+      }, 300);
+    } else {
+      setSearchResults(null);
+      setIsSearching(false);
+    }
+  }, [performSearch]);
+
+  const toggleSearch = useCallback(() => {
+    if (isSearchVisible) {
+      setSearchQuery('');
+      setSearchResults(null);
+      Keyboard.dismiss();
+    }
+    setIsSearchVisible(!isSearchVisible);
+    if (isComposerVisible) {
+      setIsComposerVisible(false);
+    }
+  }, [isSearchVisible, isComposerVisible]);
 
   const handleCreatePost = async () => {
     if (!newPostContent.trim() && selectedMedia.length === 0) return;
@@ -115,6 +203,187 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
     );
   };
 
+  const renderSearchResults = () => {
+    if (!isSearchVisible) return null;
+
+    const searchBarHeight = searchAnimValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 56],
+    });
+
+    return (
+      <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
+            <Ionicons name="search" size={20} color={colors.textMuted} />
+            <TextInput
+              ref={searchInputRef}
+              style={[styles.searchInput, { color: colors.textPrimary }]}
+              placeholder={t('search.placeholder')}
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearchChange('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Animated.View>
+    );
+  };
+
+  const renderSearchResultsContent = () => {
+    if (!isSearchVisible || searchQuery.length === 0) return null;
+
+    if (searchQuery.length < 2) {
+      return (
+        <View style={styles.searchResultsContainer}>
+          <Text style={[styles.searchHint, { color: colors.textMuted }]}>
+            {t('search.minChars')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (isSearching) {
+      return (
+        <View style={styles.searchResultsContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={[styles.searchingText, { color: colors.textMuted }]}>
+            {t('search.searching')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (!searchResults) return null;
+
+    const hasResults =
+      searchResults.users.length > 0 ||
+      searchResults.events.length > 0 ||
+      searchResults.posts.length > 0;
+
+    if (!hasResults) {
+      return (
+        <View style={styles.searchResultsContainer}>
+          <EmptyState
+            icon="search-outline"
+            title={t('search.noResults')}
+            message={t('search.noResultsFor', { query: searchQuery })}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView
+        style={styles.searchResultsScroll}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Users */}
+        {searchResults.users.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.users')}
+            </Text>
+            {searchResults.users.map((searchUser) => (
+              <TouchableOpacity
+                key={`user-${searchUser.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('UserProfile', { username: searchUser.username });
+                }}
+              >
+                <Avatar uri={searchUser.avatar_url} name={searchUser.name} size="sm" />
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
+                    {searchUser.name}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    @{searchUser.username}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Events */}
+        {searchResults.events.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.events')}
+            </Text>
+            {searchResults.events.map((event) => (
+              <TouchableOpacity
+                key={`event-${event.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('EventDetail', { eventId: event.id });
+                }}
+              >
+                <View style={[styles.searchResultIcon, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="calendar" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
+                    {event.post?.title || t('eventDetail.untitled')}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    {event.location_name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Posts */}
+        {searchResults.posts.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.posts')}
+            </Text>
+            {searchResults.posts.map((post) => (
+              <TouchableOpacity
+                key={`post-${post.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('PostDetail', { postId: post.id });
+                }}
+              >
+                <Avatar uri={post.user?.avatar_url} name={post.user?.name} size="sm" />
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {post.title || post.content}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    {post.user?.name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -145,7 +414,24 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setIsComposerVisible(!isComposerVisible)}
+            onPress={toggleSearch}
+          >
+            <Ionicons
+              name={isSearchVisible ? 'close' : 'search'}
+              size={24}
+              color={isSearchVisible ? colors.error : colors.textPrimary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => {
+              setIsComposerVisible(!isComposerVisible);
+              if (isSearchVisible) {
+                setIsSearchVisible(false);
+                setSearchQuery('');
+                setSearchResults(null);
+              }
+            }}
           >
             <Ionicons
               name={isComposerVisible ? 'close-circle-outline' : 'add-circle-outline'}
@@ -169,130 +455,136 @@ export function FeedScreen({ navigation }: Props & { navigation: FeedScreenNavig
         </View>
       </View>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
-            onLike={() => toggleLike(item)}
-            onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
-            onUserPress={() => {
-              if (item.user?.username) {
-                navigation.navigate('UserProfile', { username: item.user.username });
-              }
-            }}
-            onMenuPress={() => handleDeletePost(item.id)}
-            isOwner={item.user_id === user?.id}
-          />
-        )}
-        ListHeaderComponent={
-          isComposerVisible ? (
-            <Card style={styles.createPostCard}>
-              <View style={styles.createPostHeader}>
-                <Avatar uri={user?.avatar} name={user?.name} size="md" />
-                <TextInput
-                  style={[styles.createPostInput, { color: colors.textPrimary }]}
-                  placeholder={t('feed.placeholder')}
-                  placeholderTextColor={colors.textMuted}
-                  value={newPostContent}
-                  onChangeText={setNewPostContent}
-                  multiline
-                  autoFocus
-                />
-              </View>
-              <MediaPicker
-                media={selectedMedia}
-                onChange={setSelectedMedia}
-                maxItems={10}
-                allowVideo
-              />
-              <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
-                <View style={styles.actionsLeft}>
-                  <View style={styles.mediaInfoContainer}>
-                    <Ionicons
-                      name={selectedMedia.length > 0 ? 'images' : 'images-outline'}
-                      size={20}
-                      color={selectedMedia.length > 0 ? colors.primary : colors.textSecondary}
-                    />
-                    {selectedMedia.length > 0 && (
-                      <Text style={[styles.mediaCount, { color: colors.primary }]}>
-                        {selectedMedia.length}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.visibilitySelector}>
-                    {visibilityOptions.map((option) => (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          styles.visibilityOption,
-                          {
-                            backgroundColor: visibility === option.value
-                              ? colors.primary
-                              : colors.background,
-                            borderColor: visibility === option.value
-                              ? colors.primary
-                              : colors.border,
-                          },
-                        ]}
-                        onPress={() => setVisibility(option.value)}
-                      >
-                        <Ionicons
-                          name={option.icon as any}
-                          size={16}
-                          color={visibility === option.value ? '#fff' : colors.textSecondary}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+      {renderSearchResults()}
+
+      {isSearchVisible && searchQuery.length > 0 ? (
+        renderSearchResultsContent()
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <PostCard
+              post={item}
+              onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
+              onLike={() => toggleLike(item)}
+              onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
+              onUserPress={() => {
+                if (item.user?.username) {
+                  navigation.navigate('UserProfile', { username: item.user.username });
+                }
+              }}
+              onMenuPress={() => handleDeletePost(item.id)}
+              isOwner={item.user_id === user?.id}
+            />
+          )}
+          ListHeaderComponent={
+            isComposerVisible ? (
+              <Card style={styles.createPostCard}>
+                <View style={styles.createPostHeader}>
+                  <Avatar uri={user?.avatar} name={user?.name} size="md" />
+                  <TextInput
+                    style={[styles.createPostInput, { color: colors.textPrimary }]}
+                    placeholder={t('feed.placeholder')}
+                    placeholderTextColor={colors.textMuted}
+                    value={newPostContent}
+                    onChangeText={setNewPostContent}
+                    multiline
+                    autoFocus
+                  />
                 </View>
-                <Button
-                  title={t('feed.post')}
-                  onPress={handleCreatePost}
-                  loading={isPosting}
-                  disabled={!newPostContent.trim() && selectedMedia.length === 0}
-                  style={styles.postButton}
+                <MediaPicker
+                  media={selectedMedia}
+                  onChange={setSelectedMedia}
+                  maxItems={10}
+                  allowVideo
                 />
-              </View>
-            </Card>
-          ) : null
-        }
-        ListEmptyComponent={
-          error ? (
-            <EmptyState
-              icon="alert-circle-outline"
-              title={t('feed.failedToLoad')}
-              message={error}
-              actionLabel={t('common.tryAgain')}
-              onAction={refresh}
+                <View style={[styles.createPostActions, { borderTopColor: colors.borderLight }]}>
+                  <View style={styles.actionsLeft}>
+                    <View style={styles.mediaInfoContainer}>
+                      <Ionicons
+                        name={selectedMedia.length > 0 ? 'images' : 'images-outline'}
+                        size={20}
+                        color={selectedMedia.length > 0 ? colors.primary : colors.textSecondary}
+                      />
+                      {selectedMedia.length > 0 && (
+                        <Text style={[styles.mediaCount, { color: colors.primary }]}>
+                          {selectedMedia.length}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={styles.visibilitySelector}>
+                      {visibilityOptions.map((option) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.visibilityOption,
+                            {
+                              backgroundColor: visibility === option.value
+                                ? colors.primary
+                                : colors.background,
+                              borderColor: visibility === option.value
+                                ? colors.primary
+                                : colors.border,
+                            },
+                          ]}
+                          onPress={() => setVisibility(option.value)}
+                        >
+                          <Ionicons
+                            name={option.icon as any}
+                            size={16}
+                            color={visibility === option.value ? '#fff' : colors.textSecondary}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                  <Button
+                    title={t('feed.post')}
+                    onPress={handleCreatePost}
+                    loading={isPosting}
+                    disabled={!newPostContent.trim() && selectedMedia.length === 0}
+                    style={styles.postButton}
+                  />
+                </View>
+              </Card>
+            ) : null
+          }
+          ListEmptyComponent={
+            error ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title={t('feed.failedToLoad')}
+                message={error}
+                actionLabel={t('common.tryAgain')}
+                onAction={refresh}
+              />
+            ) : (
+              <EmptyState
+                icon="newspaper-outline"
+                title={t('feed.noPosts')}
+                message={t('feed.beFirst')}
+              />
+            )
+          }
+          ListFooterComponent={
+            isLoading && posts.length > 0 ? (
+              <Loading message={t('feed.loadingMore')} />
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
-          ) : (
-            <EmptyState
-              icon="newspaper-outline"
-              title={t('feed.noPosts')}
-              message={t('feed.beFirst')}
-            />
-          )
-        }
-        ListFooterComponent={
-          isLoading && posts.length > 0 ? (
-            <Loading message={t('feed.loadingMore')} />
-          ) : null
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={refresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        contentContainerStyle={styles.listContent}
-      />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -337,6 +629,80 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
+  // Search styles
+  searchContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    height: 40,
+    gap: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.md,
+    height: '100%',
+  },
+  searchResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  searchHint: {
+    fontSize: fontSize.md,
+    textAlign: 'center',
+  },
+  searchingText: {
+    fontSize: fontSize.md,
+    marginTop: spacing.sm,
+  },
+  searchResultsScroll: {
+    flex: 1,
+  },
+  searchSection: {
+    paddingTop: spacing.md,
+  },
+  searchSectionTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    borderRadius: borderRadius.md,
+    gap: spacing.md,
+  },
+  searchResultIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
+  searchResultMeta: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  // List styles
   listContent: {
     padding: spacing.md,
     flexGrow: 1,

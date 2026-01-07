@@ -700,6 +700,20 @@
     "comment": "Komentarz",
     "comments": "Komentarze"
   },
+  "search": {
+    "placeholder": "Szukaj użytkowników, wydarzeń, postów...",
+    "placeholderEvents": "Szukaj wydarzeń...",
+    "minChars": "Wprowadź co najmniej 2 znaki",
+    "noResults": "Brak wyników",
+    "noResultsFor": "Brak wyników dla \"{{query}}\"",
+    "searching": "Wyszukiwanie...",
+    "users": "Użytkownicy",
+    "events": "Wydarzenia",
+    "posts": "Posty",
+    "seeAll": "Zobacz wszystko",
+    "recentSearches": "Ostatnie wyszukiwania",
+    "clearRecent": "Wyczyść"
+  },
   "legal": {
     "consentTitle": "Zgody i regulaminy",
     "consentDescription": "Aby kontynuować korzystanie z aplikacji, zaakceptuj wymagane dokumenty.",
