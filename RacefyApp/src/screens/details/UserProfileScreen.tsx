@@ -35,6 +35,7 @@ import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { UserProfile, Post, Activity, Event, User } from '../../types/api';
+import {logger} from "../../services/logger";
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -86,7 +87,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
       setIsFollowing(data.is_following ?? false);
       return data;
     } catch (err) {
-      console.error('Failed to fetch profile:', err);
+      logger.error('api','Failed to fetch profile:', {err});
       setError(t('profile.failedToLoad'));
       return null;
     }
@@ -106,7 +107,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
       setHasMorePosts(response.meta.current_page < response.meta.last_page);
       setPostsPage(page);
     } catch (err) {
-      console.error('Failed to fetch posts:', err);
+      logger.error('api','Failed to fetch posts:', {err});
     } finally {
       setIsLoadingPosts(false);
     }
@@ -126,7 +127,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
       setHasMoreActivities(response.meta.current_page < response.meta.last_page);
       setActivitiesPage(page);
     } catch (err) {
-      console.error('Failed to fetch activities:', err);
+      logger.error('api','Failed to fetch activities:', {err});
     } finally {
       setIsLoadingActivities(false);
     }
@@ -146,7 +147,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
       setHasMoreEvents(response.meta.current_page < response.meta.last_page);
       setEventsPage(page);
     } catch (err) {
-      console.error('Failed to fetch events:', err);
+      logger.error('api','Failed to fetch events:', {err});
     } finally {
       setIsLoadingEvents(false);
     }
@@ -238,7 +239,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
         );
       }
     } catch (err) {
-      console.error('Failed to toggle follow:', err);
+      logger.error('api','Failed to toggle follow:', {err});
     } finally {
       setIsFollowLoading(false);
     }
@@ -260,7 +261,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
         },
       });
     } catch (err) {
-      console.error('Failed to start conversation:', err);
+      logger.error('api','Failed to start conversation:', {err});
     } finally {
       setIsMessageLoading(false);
     }
