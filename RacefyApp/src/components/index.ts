@@ -37,3 +37,7 @@ export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './BottomSheet';
 export * from './EventSelectionSheet';
+export * from './ProfileStats';
+export * from './ProfileActions';
+export * from './ProfileTabs';
+export * from './UserProfileHeader';

@@ -15,3 +15,5 @@ export * from './useFollowing';
 export * from './useHaptics';
 export * from './useOngoingEvents';
 export * from './useBrandAssets';
+export * from './usePaginatedTabData';
+export * from './useUserProfile';
