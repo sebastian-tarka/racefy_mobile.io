@@ -26,6 +26,7 @@ import { triggerHaptic } from '../../hooks/useHaptics';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
+import { logger } from '../../services/logger';
 
 // Mock data for milestones based on previous activities
 const mockMilestones = [
@@ -216,18 +217,26 @@ export function ActivityRecordingScreen() {
                 await requestActivityTrackingPermissions();
                 await resumeTracking();
               } catch (err) {
-                console.error('Failed to resume:', err);
+                logger.error('activity', 'Failed to resume from existing activity dialog', { error: err });
               }
             },
           },
           {
             text: t('recording.existingActivity.finish'),
             onPress: async () => {
+              // Debounce: prevent duplicate finish calls
+              if (isFinishingRef.current) {
+                logger.debug('activity', 'Finish already in progress (existing activity dialog), ignoring duplicate call');
+                return;
+              }
+              isFinishingRef.current = true;
               try {
                 await finishTracking();
                 Alert.alert(t('common.success'), t('recording.activitySaved'));
               } catch (err) {
-                console.error('Failed to finish:', err);
+                logger.error('activity', 'Failed to finish from existing activity dialog', { error: err });
+              } finally {
+                isFinishingRef.current = false;
               }
             },
           },
@@ -238,7 +247,7 @@ export function ActivityRecordingScreen() {
               try {
                 await discardTracking();
               } catch (err) {
-                console.error('Failed to discard:', err);
+                logger.error('activity', 'Failed to discard from existing activity dialog', { error: err });
               }
             },
           },
@@ -304,7 +313,7 @@ export function ActivityRecordingScreen() {
   };
 
   const handleStart = async () => {
-    console.log('Start button pressed');
+    logger.debug('activity', 'Start button pressed');
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     if (!selectedSport) {
@@ -316,7 +325,7 @@ export function ActivityRecordingScreen() {
     try {
       await requestActivityTrackingPermissions();
     } catch (err) {
-      console.log('Permission error:', err);
+      logger.error('activity', 'Permission error', { error: err });
     }
 
     // Start live activity with API
@@ -328,9 +337,9 @@ export function ActivityRecordingScreen() {
       );
       setPassedMilestones([]);
       setSelectedEvent(null); // Reset event selection after starting
-      console.log('Activity started successfully');
+      logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
     } catch (err) {
-      console.error('Failed to start activity:', err);
+      logger.error('activity', 'Failed to start activity from UI', { error: err });
     }
   };
 
@@ -338,9 +347,9 @@ export function ActivityRecordingScreen() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await pauseTracking();
-      console.log('Activity paused');
+      logger.activity('Activity paused from UI');
     } catch (err) {
-      console.error('Failed to pause:', err);
+      logger.error('activity', 'Failed to pause activity from UI', { error: err });
     }
   };
 
@@ -348,9 +357,9 @@ export function ActivityRecordingScreen() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     try {
       await resumeTracking();
-      console.log('Activity resumed');
+      logger.activity('Activity resumed from UI');
     } catch (err) {
-      console.error('Failed to resume:', err);
+      logger.error('activity', 'Failed to resume activity from UI', { error: err });
     }
   };
 
@@ -364,8 +373,19 @@ export function ActivityRecordingScreen() {
     // They'll use Save or Discard buttons to finish
   };
 
+  // Ref to prevent double-taps on finish button
+  const isFinishingRef = useRef(false);
+
   const handleSave = async () => {
     if (!activity || !selectedSport) return;
+
+    // Debounce: prevent duplicate finish calls
+    if (isFinishingRef.current) {
+      logger.debug('activity', 'Finish already in progress (handleSave), ignoring duplicate call');
+      return;
+    }
+
+    isFinishingRef.current = true;
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
@@ -373,11 +393,14 @@ export function ActivityRecordingScreen() {
         title: `${selectedSport.name} Activity`,
         calories: Math.floor(localDuration * 0.15),
       });
-      console.log('Activity saved:', finishedActivity);
+      logger.activity('Activity saved from UI', { activityId: finishedActivity?.id });
       setPassedMilestones([]);
       Alert.alert(t('common.success'), t('recording.activitySaved'));
     } catch (err) {
-      console.error('Failed to save:', err);
+      logger.error('activity', 'Failed to save activity from UI', { error: err });
+    } finally {
+      // Reset the flag after completion or error
+      isFinishingRef.current = false;
     }
   };
 
@@ -395,9 +418,9 @@ export function ActivityRecordingScreen() {
             try {
               await discardTracking();
               setPassedMilestones([]);
-              console.log('Activity discarded');
+              logger.activity('Activity discarded from UI');
             } catch (err) {
-              console.error('Failed to discard:', err);
+              logger.error('activity', 'Failed to discard activity from UI', { error: err });
             }
           },
         },

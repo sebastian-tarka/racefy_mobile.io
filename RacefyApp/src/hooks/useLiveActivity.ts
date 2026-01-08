@@ -80,6 +80,9 @@ export function useLiveActivity() {
   const pausedDuration = useRef<number>(0);
   const currentActivityId = useRef<number | null>(null);
 
+  // Guard to prevent concurrent finish/discard calls
+  const isFinishingOrDiscardingRef = useRef<boolean>(false);
+
   // GPS smoothing buffer - stores last N positions for averaging
   const gpsBuffer = useRef<Array<{ lat: number; lng: number; ele?: number; timestamp: number }>>([]);
 
@@ -673,6 +676,14 @@ export function useLiveActivity() {
     async (data?: { title?: string; description?: string; calories?: number }) => {
       if (!state.activity) return null;
 
+      // Guard: prevent concurrent finish/discard calls
+      if (isFinishingOrDiscardingRef.current) {
+        logger.activity('Finish already in progress, ignoring duplicate call', { id: state.activity.id });
+        return null;
+      }
+
+      isFinishingOrDiscardingRef.current = true;
+
       try {
         logger.activity('Finishing activity', { id: state.activity.id });
         setState((prev) => ({ ...prev, isLoading: true }));
@@ -722,6 +733,9 @@ export function useLiveActivity() {
           error: error.message || 'Failed to finish activity',
         }));
         throw error;
+      } finally {
+        // Always reset the guard flag
+        isFinishingOrDiscardingRef.current = false;
       }
     },
     [state.activity]
@@ -729,6 +743,14 @@ export function useLiveActivity() {
 
   const discardTracking = useCallback(async () => {
     if (!state.activity) return;
+
+    // Guard: prevent concurrent finish/discard calls
+    if (isFinishingOrDiscardingRef.current) {
+      logger.activity('Discard already in progress, ignoring duplicate call', { id: state.activity.id });
+      return;
+    }
+
+    isFinishingOrDiscardingRef.current = true;
 
     try {
       logger.activity('Discarding activity', { id: state.activity.id });
@@ -766,6 +788,9 @@ export function useLiveActivity() {
         error: error.message || 'Failed to discard activity',
       }));
       throw error;
+    } finally {
+      // Always reset the guard flag
+      isFinishingOrDiscardingRef.current = false;
     }
   }, [state.activity]);
 
