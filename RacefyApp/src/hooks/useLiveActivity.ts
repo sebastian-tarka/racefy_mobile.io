@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
 import {
@@ -89,6 +89,11 @@ export function useLiveActivity() {
   // Current GPS profile based on activity type
   const currentGpsProfile = useRef<GpsProfile>(DEFAULT_GPS_PROFILE);
 
+  // App state tracking for GPS drift prevention
+  const appState = useRef<AppStateStatus>(AppState.currentState);
+  const skipNextGpsPoint = useRef<boolean>(false);
+  const appStateSubscription = useRef<any>(null);
+
   // Calculate smoothed position from GPS buffer
   const getSmoothedPosition = (newPoint: { lat: number; lng: number; ele?: number; timestamp: number }) => {
     const bufferSize = currentGpsProfile.current.smoothingBufferSize;
@@ -158,6 +163,9 @@ export function useLiveActivity() {
       }
       if (backgroundSyncInterval.current) {
         clearInterval(backgroundSyncInterval.current);
+      }
+      if (appStateSubscription.current) {
+        appStateSubscription.current.remove();
       }
     };
   }, []);
@@ -253,7 +261,7 @@ export function useLiveActivity() {
     try {
       const backgroundPoints = await getAndClearLocationBuffer();
       if (backgroundPoints.length > 0) {
-        console.log(`Syncing ${backgroundPoints.length} background points`);
+        logger.gps('Syncing background points', { activityId, count: backgroundPoints.length });
         // Convert to GpsPoint format and add to buffer
         const points: GpsPoint[] = backgroundPoints.map((p) => ({
           lat: p.lat,
@@ -265,7 +273,7 @@ export function useLiveActivity() {
         pointsBuffer.current.push(...points);
       }
     } catch (error) {
-      console.error('Failed to sync background points:', error);
+      logger.error('gps', 'Failed to sync background points', { activityId, error });
     }
   };
 
@@ -308,6 +316,23 @@ export function useLiveActivity() {
       // Start background location tracking (works when app is backgrounded)
       await startBackgroundLocationTracking(profile);
 
+      // Set up app state change listener to handle GPS drift when returning from background
+      appStateSubscription.current = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+        const previousAppState = appState.current;
+
+        if (previousAppState.match(/inactive|background/) && nextAppState === 'active') {
+          // App has come to foreground - skip next GPS point to avoid drift
+          logger.gps('App returned to foreground, will skip next GPS point to avoid drift');
+          skipNextGpsPoint.current = true;
+          // Clear GPS smoothing buffer to reset it
+          gpsBuffer.current = [];
+        } else if (previousAppState === 'active' && nextAppState.match(/inactive|background/)) {
+          logger.gps('App went to background');
+        }
+
+        appState.current = nextAppState;
+      });
+
       // Also start foreground tracking for immediate UI updates
       locationSubscription.current = await Location.watchPositionAsync(
         {
@@ -317,6 +342,16 @@ export function useLiveActivity() {
         },
         (location) => {
           const gpsProfile = currentGpsProfile.current;
+
+          // Skip first GPS point after returning from background to avoid drift
+          if (skipNextGpsPoint.current) {
+            logger.gps('Skipping first GPS point after returning from background', {
+              accuracy: location.coords.accuracy,
+              speed: location.coords.speed,
+            });
+            skipNextGpsPoint.current = false;
+            return;
+          }
 
           // Filter out inaccurate GPS readings
           const accuracy = location.coords.accuracy;
@@ -442,6 +477,12 @@ export function useLiveActivity() {
       backgroundSyncInterval.current = null;
     }
 
+    // Stop app state change listener
+    if (appStateSubscription.current) {
+      appStateSubscription.current.remove();
+      appStateSubscription.current = null;
+    }
+
     // Stop background tracking
     await stopBackgroundLocationTracking();
     await setActiveActivityId(null);
@@ -449,6 +490,9 @@ export function useLiveActivity() {
 
     // Clear GPS smoothing buffer
     gpsBuffer.current = [];
+
+    // Reset app state tracking
+    skipNextGpsPoint.current = false;
 
     currentActivityId.current = null;
     stopDurationTimer();
