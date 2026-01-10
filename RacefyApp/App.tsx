@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
+import { LiveActivityProvider } from './src/hooks/useLiveActivity';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { AppNavigator } from './src/navigation';
 
@@ -35,7 +36,9 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <LiveActivityProvider>
+            <AppContent />
+          </LiveActivityProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

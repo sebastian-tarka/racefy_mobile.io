@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
-import { useLiveActivity, usePermissions, useActivityStats, useOngoingEvents } from '../../hooks';
+import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents } from '../../hooks';
 import type { Event } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
@@ -66,7 +66,7 @@ export function ActivityRecordingScreen() {
     finishTracking,
     discardTracking,
     clearError,
-  } = useLiveActivity();
+  } = useLiveActivityContext();
 
   const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
   const [showAllSports, setShowAllSports] = useState(false);

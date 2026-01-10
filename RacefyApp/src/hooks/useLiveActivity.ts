@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
@@ -56,7 +56,8 @@ const initialStats: LiveActivityStats = {
 // MET values: Running ~10, Cycling ~8, Swimming ~8, Gym ~5
 const CALORIES_PER_SECOND = 0.15; // Rough average for moderate activity
 
-export function useLiveActivity() {
+// Internal hook implementation (not exported directly)
+function useLiveActivityInternal() {
   const { getGpsProfileForSport } = useSportTypes();
   const { isAuthenticated } = useAuth();
 
@@ -898,4 +899,50 @@ export function useLiveActivity() {
     clearError,
     checkExistingActivity,
   };
+}
+
+// Context type
+interface LiveActivityContextType {
+  activity: Activity | null;
+  isTracking: boolean;
+  isPaused: boolean;
+  isLoading: boolean;
+  error: string | null;
+  currentStats: LiveActivityStats;
+  hasExistingActivity: boolean;
+  startTracking: (sportTypeId: number, title?: string, eventId?: number) => Promise<Activity | undefined>;
+  pauseTracking: () => Promise<void>;
+  resumeTracking: () => Promise<void>;
+  finishTracking: (data?: {
+    title?: string;
+    description?: string;
+    calories?: number;
+    skip_auto_post?: boolean;
+  }) => Promise<{ activity: Activity; post?: AutoCreatedPost } | null>;
+  discardTracking: () => Promise<void>;
+  clearError: () => void;
+  checkExistingActivity: () => Promise<void>;
+}
+
+// Create Context
+const LiveActivityContext = createContext<LiveActivityContextType | null>(null);
+
+// Provider Component
+export function LiveActivityProvider({ children }: { children: React.ReactNode }) {
+  const liveActivityState = useLiveActivityInternal();
+
+  return React.createElement(
+    LiveActivityContext.Provider,
+    { value: liveActivityState },
+    children
+  );
+}
+
+// Hook to use the context (replaces the direct hook usage)
+export function useLiveActivityContext() {
+  const context = useContext(LiveActivityContext);
+  if (!context) {
+    throw new Error('useLiveActivityContext must be used within LiveActivityProvider');
+  }
+  return context;
 }

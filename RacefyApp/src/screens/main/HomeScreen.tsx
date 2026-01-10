@@ -3,7 +3,7 @@ import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { useLiveActivity } from '../../hooks/useLiveActivity';
+import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { api } from '../../services/api';
 import { spacing } from '../../theme';
@@ -35,7 +35,7 @@ type ConnectionStatus = {
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
-  const { isTracking, isPaused, currentStats } = useLiveActivity();
+  const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount } = useNotifications();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,

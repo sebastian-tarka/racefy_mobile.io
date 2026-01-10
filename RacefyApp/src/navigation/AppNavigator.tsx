@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Animated, View } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
+import { useLiveActivityContext } from '../hooks/useLiveActivity';
 import { Loading, ImpersonationBanner } from '../components';
 
 // Screens
@@ -41,6 +43,70 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
+// Pulsing Record Icon Component
+function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
+  focused: boolean;
+  size: number;
+  hasActiveRecording: boolean;  // true when there's any activity (recording or paused)
+  isActivelyTracking: boolean;  // true when GPS is actively tracking
+}) {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Only pulse when actively tracking AND not on the Record tab
+  const shouldPulse = isActivelyTracking && !focused;
+
+  useEffect(() => {
+    if (shouldPulse) {
+      // Start pulsing animation when tracking and not focused
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    } else {
+      // Reset scale when not pulsing
+      pulseAnim.setValue(1);
+    }
+  }, [shouldPulse, pulseAnim]);
+
+  // When focused (on Record tab): always show green add-circle (normal focused state)
+  // When not focused but has recording: show recording indicator
+  // When not focused and no recording: show gray outline
+  let iconName: keyof typeof Ionicons.glyphMap;
+  let color: string;
+
+  if (focused) {
+    // On Record tab - always green, normal icon
+    iconName = 'add-circle';
+    color = '#10b981'; // green
+  } else if (hasActiveRecording) {
+    // Not on Record tab, but has active recording - show indicator
+    iconName = 'radio-button-on';
+    color = isActivelyTracking ? '#ef4444' : '#f97316'; // red if tracking, orange if paused
+  } else {
+    // Not on Record tab, no recording - normal inactive state
+    iconName = 'add-circle-outline';
+    color = '#9ca3af'; // gray
+  }
+
+  return (
+    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+      <Ionicons name={iconName} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
 function AuthNavigator() {
   const { colors } = useTheme();
   return (
@@ -62,6 +128,7 @@ function MainNavigator() {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
+  const { isTracking, activity } = useLiveActivityContext();
 
   // Auth guard listener - redirects to Auth screen if not authenticated
   const authGuardListener = {
@@ -137,7 +204,17 @@ function MainNavigator() {
       <MainTab.Screen
         name="Record"
         component={ActivityRecordingScreen}
-        options={{ tabBarLabel: 'Record' }}
+        options={{
+          tabBarLabel: 'Record',
+          tabBarIcon: ({ focused, size }) => (
+            <RecordIcon
+              focused={focused}
+              size={size}
+              hasActiveRecording={!!activity}
+              isActivelyTracking={isTracking}
+            />
+          ),
+        }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
