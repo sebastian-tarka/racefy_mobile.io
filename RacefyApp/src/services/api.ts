@@ -106,7 +106,7 @@ class ApiService {
     }
   }
 
-  private async setToken(token: string) {
+  async setToken(token: string) {
     this.token = token;
     await AsyncStorage.setItem(TOKEN_KEY, token);
   }
@@ -1308,6 +1308,52 @@ class ApiService {
    */
   async searchUsers(query: string): Promise<Types.SearchUsersResponse> {
     return this.request<Types.SearchUsersResponse>(`/search/users?q=${encodeURIComponent(query)}`);
+  }
+
+  // ============ ADMIN - IMPERSONATION ============
+
+  /**
+   * Search users for impersonation (admin only, excludes admins)
+   * @param query - Search query for name, username, or email
+   */
+  async searchUsersForImpersonation(query: string): Promise<Types.User[]> {
+    const response = await this.request<Types.ApiResponse<Types.User[]>>(
+      `/admin/users/search?q=${encodeURIComponent(query)}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Start impersonating a user (admin only)
+   * @param userId - ID of user to impersonate
+   */
+  async startImpersonation(userId: number): Promise<Types.StartImpersonationResponse> {
+    return await this.request<Types.StartImpersonationResponse>(
+      '/admin/impersonate/start',
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId }),
+      }
+    );
+  }
+
+  /**
+   * Stop impersonating and return to admin account
+   */
+  async stopImpersonation(): Promise<Types.StopImpersonationResponse> {
+    return await this.request<Types.StopImpersonationResponse>(
+      '/admin/impersonate/stop',
+      { method: 'POST' }
+    );
+  }
+
+  /**
+   * Check if currently impersonating
+   */
+  async getImpersonationStatus(): Promise<Types.ImpersonationStatusResponse> {
+    return await this.request<Types.ImpersonationStatusResponse>(
+      '/admin/impersonate/status'
+    );
   }
 }
 

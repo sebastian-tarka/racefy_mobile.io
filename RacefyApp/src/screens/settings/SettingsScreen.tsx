@@ -169,7 +169,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { colors, isDark, themePreference, setThemePreference } = useTheme();
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
 
@@ -193,6 +193,7 @@ export function SettingsScreen({ navigation }: Props) {
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
     account: true,
+    adminTools: false,
     consents: false,
     preferences: false,
     notifications: false,
@@ -570,6 +571,21 @@ export function SettingsScreen({ navigation }: Props) {
             </View>
           )}
         </SettingsSection>
+
+        {/* Admin Tools (only visible to admins) */}
+        {user?.role === 'admin' && (
+          <SettingsSection
+            title={t('settings.adminTools.title')}
+            isExpanded={expandedSections.adminTools}
+            onToggle={() => toggleSection('adminTools')}
+          >
+            <SettingsRow
+              icon="person-circle-outline"
+              label={t('settings.adminTools.impersonate')}
+              onPress={() => navigation.navigate('ImpersonateUser')}
+            />
+          </SettingsSection>
+        )}
 
         {/* Legal Consents */}
         <SettingsSection

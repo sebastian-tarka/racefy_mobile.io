@@ -27,6 +27,7 @@ export type RootStackParamList = {
   UserProfile: { username: string };
   Settings: undefined;
   EditProfile: undefined;
+  ImpersonateUser: undefined;
   ConversationsList: undefined;
   Chat: { conversationId: number; participant: ConversationParticipant };
   EventForm: { eventId?: number };

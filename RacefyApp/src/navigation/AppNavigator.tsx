@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
-import { Loading } from '../components';
+import { Loading, ImpersonationBanner } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -27,6 +27,7 @@ import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
 import { EditProfileScreen } from '../screens/profile';
 import { SettingsScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
+import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 
 // Types
 import type {
@@ -263,12 +264,20 @@ export function AppNavigator() {
               component={SettingsScreen}
             />
             <RootStack.Screen
+              name="ImpersonateUser"
+              component={ImpersonateUserScreen}
+              options={{
+                presentation: 'modal',
+              }}
+            />
+            <RootStack.Screen
               name="LegalDocuments"
               component={LegalDocumentsScreen}
             />
           </>
         )}
       </RootStack.Navigator>
+      <ImpersonationBanner />
     </NavigationContainer>
   );
 }

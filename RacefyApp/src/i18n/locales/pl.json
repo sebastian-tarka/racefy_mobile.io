@@ -675,7 +675,11 @@
     "deleteAccountFailed": "Nie udało się usunąć konta",
     "passwordRequiredForDelete": "Hasło jest wymagane do usunięcia konta",
     "confirmPassword": "Hasło",
-    "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić"
+    "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić",
+    "adminTools": {
+      "title": "Narzędzia administratora",
+      "impersonate": "Podszywaj się pod użytkownika"
+    }
   },
   "comments": {
     "title": "Komentarze",
@@ -764,5 +768,32 @@
     "submitError": "Nie udało się wysłać zgody. Spróbuj ponownie.",
     "consentUpdated": "Preferencje zgody zaktualizowane",
     "consentFailed": "Nie udało się zaktualizować zgody"
+  },
+  "admin": {
+    "impersonate": {
+      "title": "Podszywanie się pod użytkownika",
+      "warning": "⚠️ Zamierzasz podszyć się pod innego użytkownika. Wszystkie działania będą wykonywane jako ten użytkownik. Używaj tej funkcji odpowiedzialnie i tylko w celach wsparcia.",
+      "searchPlaceholder": "Szukaj po nazwie, nazwie użytkownika lub e-mailu...",
+      "searchError": "Nie udało się wyszukać użytkowników. Spróbuj ponownie.",
+      "noResults": "Nie znaleziono użytkowników",
+      "starting": "Rozpoczynanie podszywania się...",
+      "startError": "Nie udało się rozpocząć podszywania się. Spróbuj ponownie.",
+      "exitError": "Nie udało się zakończyć podszywania się. Spróbuj ponownie.",
+      "confirm": {
+        "title": "Potwierdź podszywanie się",
+        "message": "Czy na pewno chcesz podszyć się pod @{{username}}?",
+        "confirm": "Podszyj się"
+      },
+      "exitConfirm": {
+        "title": "Zakończ podszywanie się",
+        "message": "Czy na pewno chcesz przestać się podszywać i wrócić do swojego konta administratora?",
+        "confirm": "Zakończ"
+      },
+      "banner": {
+        "impersonating": "Podszywanie się pod",
+        "admin": "Administrator",
+        "exit": "Zakończ"
+      }
+    }
   }
 }

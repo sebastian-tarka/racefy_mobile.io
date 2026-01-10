@@ -675,7 +675,11 @@
     "deleteAccountFailed": "Failed to delete account",
     "passwordRequiredForDelete": "Password is required to delete your account",
     "confirmPassword": "Password",
-    "enterPasswordToDelete": "Enter your password to confirm"
+    "enterPasswordToDelete": "Enter your password to confirm",
+    "adminTools": {
+      "title": "Admin Tools",
+      "impersonate": "Impersonate User"
+    }
   },
   "comments": {
     "title": "Comments",
@@ -764,5 +768,32 @@
     "submitError": "Failed to submit consent. Please try again.",
     "consentUpdated": "Consent preference updated",
     "consentFailed": "Failed to update consent"
+  },
+  "admin": {
+    "impersonate": {
+      "title": "Impersonate User",
+      "warning": "⚠️ You are about to impersonate another user. All actions will be performed as that user. Use this feature responsibly and only for support purposes.",
+      "searchPlaceholder": "Search by name, username, or email...",
+      "searchError": "Failed to search users. Please try again.",
+      "noResults": "No users found",
+      "starting": "Starting impersonation...",
+      "startError": "Failed to start impersonation. Please try again.",
+      "exitError": "Failed to exit impersonation. Please try again.",
+      "confirm": {
+        "title": "Confirm Impersonation",
+        "message": "Are you sure you want to impersonate @{{username}}?",
+        "confirm": "Impersonate"
+      },
+      "exitConfirm": {
+        "title": "Exit Impersonation",
+        "message": "Are you sure you want to stop impersonating and return to your admin account?",
+        "confirm": "Exit"
+      },
+      "banner": {
+        "impersonating": "Impersonating",
+        "admin": "Admin",
+        "exit": "Exit"
+      }
+    }
   }
 }

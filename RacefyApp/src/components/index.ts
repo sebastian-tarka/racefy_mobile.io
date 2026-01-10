@@ -41,3 +41,4 @@ export * from './ProfileStats';
 export * from './ProfileActions';
 export * from './ProfileTabs';
 export * from './UserProfileHeader';
+export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
