@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { CommonActions } from '@react-navigation/native';
 import { Input, Avatar, ScreenHeader } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -62,11 +63,22 @@ export function ImpersonateUserScreen({ navigation }: Props) {
             setImpersonating(true);
             try {
               await startImpersonation(user.id);
-              navigation.goBack(); // Return to settings
-              // Navigate to home after a brief delay
-              setTimeout(() => {
-                navigation.navigate('Main', { screen: 'Home' });
-              }, 100);
+
+              // Reset navigation to Home screen to refresh all data with impersonated user
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'Main',
+                      state: {
+                        routes: [{ name: 'Home' }],
+                        index: 0,
+                      },
+                    },
+                  ],
+                })
+              );
             } catch (error) {
               Alert.alert(t('common.error'), t('admin.impersonate.startError'));
             } finally {
