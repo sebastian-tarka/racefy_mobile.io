@@ -143,7 +143,8 @@ export function EventFormScreen({ navigation, route }: Props) {
         : null,
       max_participants: event.max_participants?.toString() || '',
       difficulty: event.difficulty,
-      distance: event.distance?.toString() || '',
+      // Convert from meters (API) to km (form display)
+      distance: event.distance ? (event.distance / 1000).toString() : '',
       entry_fee: event.entry_fee?.toString() || '',
     });
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
@@ -227,7 +228,8 @@ export function EventFormScreen({ navigation, route }: Props) {
             ? parseInt(formData.max_participants, 10)
             : null,
           difficulty: formData.difficulty,
-          distance: formData.distance ? parseFloat(formData.distance) : null,
+          // Convert from km (form) to meters (API)
+          distance: formData.distance ? parseFloat(formData.distance) * 1000 : null,
           entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : null,
         };
 
@@ -249,7 +251,8 @@ export function EventFormScreen({ navigation, route }: Props) {
             ? parseInt(formData.max_participants, 10)
             : undefined,
           difficulty: formData.difficulty,
-          distance: formData.distance ? parseFloat(formData.distance) : undefined,
+          // Convert from km (form) to meters (API)
+          distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
           entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : undefined,
         };
 
