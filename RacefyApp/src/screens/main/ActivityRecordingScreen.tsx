@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,6 +73,7 @@ export function ActivityRecordingScreen() {
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
+  const [skipAutoPost, setSkipAutoPost] = useState(false);
   const preselectedEventHandled = useRef(false);
 
   // Fetch ongoing events where user is registered
@@ -389,13 +391,51 @@ export function ActivityRecordingScreen() {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      const finishedActivity = await finishTracking({
+      const result = await finishTracking({
         title: `${selectedSport.name} Activity`,
         calories: Math.floor(localDuration * 0.15),
+        skip_auto_post: skipAutoPost,
       });
-      logger.activity('Activity saved from UI', { activityId: finishedActivity?.id });
+
+      logger.activity('Activity saved from UI', {
+        activityId: result?.activity?.id,
+        hasPost: !!result?.post,
+        postStatus: result?.post?.status,
+      });
+
       setPassedMilestones([]);
-      Alert.alert(t('common.success'), t('recording.activitySaved'));
+      setSkipAutoPost(false); // Reset for next activity
+
+      // Handle post response with appropriate UX
+      if (result?.post) {
+        if (result.post.status === 'published') {
+          // Published post - show subtle success message
+          Alert.alert(
+            t('common.success'),
+            t('recording.activityShared'),
+            [{ text: t('common.ok') }]
+          );
+        } else if (result.post.status === 'draft') {
+          // Draft post - offer to review
+          Alert.alert(
+            t('recording.activitySaved'),
+            t('recording.draftCreated'),
+            [
+              { text: t('recording.later'), style: 'cancel' },
+              {
+                text: t('recording.viewDraft'),
+                onPress: () => {
+                  // Navigate to the post detail (draft mode)
+                  navigation.navigate('PostDetail', { postId: result.post!.id });
+                },
+              },
+            ]
+          );
+        }
+      } else {
+        // No post created (skip_auto_post or preference disabled)
+        Alert.alert(t('common.success'), t('recording.activitySaved'));
+      }
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
     } finally {
@@ -760,6 +800,26 @@ export function ActivityRecordingScreen() {
                 </TouchableOpacity>
               </View>
               <View style={styles.finishedControls}>
+                {/* Skip auto-post option - only show for authenticated users */}
+                {isAuthenticated && (
+                  <TouchableOpacity
+                    style={styles.skipPostRow}
+                    onPress={() => setSkipAutoPost(!skipAutoPost)}
+                    disabled={isLoading}
+                    activeOpacity={0.7}
+                  >
+                    <Switch
+                      value={skipAutoPost}
+                      onValueChange={setSkipAutoPost}
+                      trackColor={{ false: colors.border, true: colors.primaryLight }}
+                      thumbColor={skipAutoPost ? colors.primary : colors.white}
+                      disabled={isLoading}
+                    />
+                    <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
+                      {t('recording.skipAutoPost')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <Button
                   title={isLoading ? t('recording.saving') : t('recording.saveActivity')}
                   onPress={handleSave}
@@ -1201,6 +1261,15 @@ const styles = StyleSheet.create({
   finishedControls: {
     width: '100%',
     gap: spacing.md,
+  },
+  skipPostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  skipPostText: {
+    fontSize: fontSize.sm,
   },
   saveButton: {
     width: '100%',

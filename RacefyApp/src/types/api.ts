@@ -263,6 +263,30 @@ export interface EventRegistration {
 
 // ============ ACTIVITIES ============
 
+// Location data for activity (captured at start/finish)
+export interface ActivityLocation {
+  latitude: number;
+  longitude: number;
+  city?: string;
+  region?: string;
+  country?: string;
+  country_code?: string;
+  location_name?: string;
+}
+
+// Location as returned by the API (with coordinates nested)
+export interface ActivityLocationResponse {
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  country_code: string | null;
+  location_name: string | null;
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  } | null;
+}
+
 export interface Activity {
   id: number;
   user_id: number;
@@ -299,6 +323,8 @@ export interface Activity {
   duration_formatted?: string;
   distance_formatted?: string;
   pace?: string | null;
+  // Location (captured at activity start/finish)
+  location?: ActivityLocationResponse;
   // Engagement fields
   likes_count?: number;
   boosts_count?: number;
@@ -373,6 +399,45 @@ export interface CreateActivityRequest {
   source: 'app' | 'manual';
   is_private?: boolean;
   track_data?: GeoJSONLineString;
+}
+
+// Request data for finishing a live activity
+export interface FinishActivityRequest {
+  title?: string;
+  description?: string;
+  ended_at?: string;
+  calories?: number;
+  avg_heart_rate?: number;
+  max_heart_rate?: number;
+  location?: ActivityLocation;
+  skip_auto_post?: boolean;
+}
+
+// Auto-created post info returned when finishing an activity
+export interface AutoCreatedPost {
+  id: number;
+  status: 'published' | 'draft';
+  title: string;
+}
+
+// Response from finishing an activity (includes optional auto-created post)
+export interface FinishActivityResponse {
+  data: Activity;
+  message: string;
+  points_earned?: number;
+  splits?: {
+    distance_splits: Array<{
+      distance: number;
+      time: number;
+      pace: string;
+    }>;
+    time_splits: Array<{
+      time: number;
+      distance: number;
+      speed: number;
+    }>;
+  };
+  post?: AutoCreatedPost;
 }
 
 export interface GpsTrack {

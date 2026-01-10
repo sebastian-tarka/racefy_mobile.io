@@ -725,26 +725,20 @@ class ApiService {
 
   /**
    * Finish an active activity
+   * Returns activity data plus optional auto-created post info
    */
   async finishActivity(
     activityId: number,
-    data?: {
-      title?: string;
-      description?: string;
-      ended_at?: string;
-      calories?: number;
-      avg_heart_rate?: number;
-      max_heart_rate?: number;
-    }
-  ): Promise<Types.Activity> {
-    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+    data?: Types.FinishActivityRequest
+  ): Promise<Types.FinishActivityResponse> {
+    const response = await this.request<Types.FinishActivityResponse>(
       `/activities/${activityId}/finish`,
       {
         method: 'POST',
         body: JSON.stringify(data || {}),
       }
     );
-    return response.data;
+    return response;
   }
 
   /**

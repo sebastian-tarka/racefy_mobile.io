@@ -9,11 +9,12 @@ import {
   setActiveActivityId,
   clearLocationBuffer,
 } from '../services/backgroundLocation';
-import type { Activity, GpsPoint } from '../types/api';
+import type { Activity, GpsPoint, ActivityLocation, AutoCreatedPost } from '../types/api';
 import { DEFAULT_GPS_PROFILE, convertToApiGpsProfile, type GpsProfile } from '../config/gpsProfiles';
 import { useSportTypes } from './useSportTypes';
 import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
+import { captureActivityLocation } from '../utils/locationCapture';
 
 const isWeb = Platform.OS === 'web';
 
@@ -82,6 +83,9 @@ export function useLiveActivity() {
 
   // Guard to prevent concurrent finish/discard calls
   const isFinishingOrDiscardingRef = useRef<boolean>(false);
+
+  // Location captured at activity start (for sending with finish request)
+  const activityLocationRef = useRef<ActivityLocation | null>(null);
 
   // GPS smoothing buffer - stores last N positions for averaging
   const gpsBuffer = useRef<Array<{ lat: number; lng: number; ele?: number; timestamp: number }>>([]);
@@ -583,6 +587,22 @@ export function useLiveActivity() {
           throw new Error('An activity is already in progress. Please finish or discard it first.');
         }
 
+        // Capture location at activity start (non-blocking - runs in parallel)
+        // This location will be sent when finishing the activity
+        captureActivityLocation()
+          .then((location) => {
+            activityLocationRef.current = location;
+            logger.activity('Location captured at activity start', {
+              hasLocation: !!location,
+              city: location?.city,
+              country: location?.country,
+            });
+          })
+          .catch((err) => {
+            logger.debug('activity', 'Location capture failed (non-blocking)', { error: err });
+            activityLocationRef.current = null;
+          });
+
         // Get GPS profile for this sport type and send it to API
         const gpsProfile = getGpsProfileForSport(sportTypeId);
         const gpsProfileRequest = convertToApiGpsProfile(gpsProfile);
@@ -717,7 +737,12 @@ export function useLiveActivity() {
   }, [state.activity]);
 
   const finishTracking = useCallback(
-    async (data?: { title?: string; description?: string; calories?: number }) => {
+    async (data?: {
+      title?: string;
+      description?: string;
+      calories?: number;
+      skip_auto_post?: boolean;
+    }): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
       if (!state.activity) return null;
 
       // Guard: prevent concurrent finish/discard calls
@@ -738,17 +763,22 @@ export function useLiveActivity() {
         // Sync remaining points
         await syncPoints(state.activity.id);
 
-        // Finish on server
-        const activity = await api.finishActivity(state.activity.id, {
+        // Finish on server - include location captured at start
+        const response = await api.finishActivity(state.activity.id, {
           ...data,
           ended_at: new Date().toISOString(),
+          location: activityLocationRef.current ?? undefined,
         });
+
+        const activity = response.data;
 
         logger.activity('Activity finished successfully', {
           id: activity.id,
           distance: activity.distance,
           duration: activity.duration,
           hasGpsTrack: activity.has_gps_track,
+          hasPost: !!response.post,
+          postStatus: response.post?.status,
         });
 
         // Reset state
@@ -757,6 +787,7 @@ export function useLiveActivity() {
         pointsBuffer.current = [];
         pausedDuration.current = 0;
         trackingStartTime.current = null;
+        activityLocationRef.current = null;
 
         setState({
           activity: null,
@@ -768,7 +799,7 @@ export function useLiveActivity() {
           hasExistingActivity: false,
         });
 
-        return activity;
+        return { activity, post: response.post };
       } catch (error: any) {
         logger.error('activity', 'Failed to finish activity', { id: state.activity.id, error: error.message });
         setState((prev) => ({
@@ -814,6 +845,7 @@ export function useLiveActivity() {
       pointsBuffer.current = [];
       pausedDuration.current = 0;
       trackingStartTime.current = null;
+      activityLocationRef.current = null;
 
       setState({
         activity: null,

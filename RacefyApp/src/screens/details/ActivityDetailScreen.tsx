@@ -232,6 +232,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 {activity.sport_type?.name || t('activityDetail.activity')} ·{' '}
                 {format(new Date(activity.started_at), 'EEEE, MMMM d, yyyy')}
               </Text>
+              {/* Location display */}
+              {activity.location?.location_name && (
+                <View style={styles.locationRow}>
+                  <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.locationText, { color: colors.textMuted }]}>
+                    {activity.location.location_name}
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
           {activity.user && (
@@ -528,6 +537,15 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: fontSize.sm,
     marginTop: spacing.xs,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+    gap: spacing.xs,
+  },
+  locationText: {
+    fontSize: fontSize.sm,
   },
   userRow: {
     flexDirection: 'row',
