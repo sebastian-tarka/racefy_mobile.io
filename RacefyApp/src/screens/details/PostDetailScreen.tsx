@@ -23,14 +23,16 @@ import {
   ScreenHeader,
   MediaGallery,
   CommentSection,
+  RoutePreview,
 } from '../../components';
 import { api } from '../../services/api';
+import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Post, User } from '../../types/api';
+import type { Post, User, GpsTrack } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PostDetail'>;
 
@@ -80,6 +82,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const commentsRef = useRef<View>(null);
   const [post, setPost] = useState<Post | null>(null);
+  const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +103,16 @@ export function PostDetailScreen({ route, navigation }: Props) {
       setPost(data);
       setIsLiked(data.is_liked || false);
       setLikesCount(data.likes_count);
+
+      // Fetch GPS track if this is an activity post with GPS data
+      if (data.type === 'activity' && data.activity?.has_gps_track) {
+        try {
+          const track = await api.getActivityTrack(data.activity.id);
+          setGpsTrack(track);
+        } catch (trackError) {
+          console.log('Failed to load GPS track for activity post:', trackError);
+        }
+      }
     } catch (err) {
       setError(t('feed.failedToLoad'));
     } finally {
@@ -123,6 +136,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
+    setGpsTrack(null);
     fetchPost();
   }, [fetchPost]);
 
@@ -184,11 +198,29 @@ export function PostDetailScreen({ route, navigation }: Props) {
     if (post?.type !== 'activity' || !post.activity) return null;
     const activity = post.activity;
 
+    // Check if we have route data from the fetched GPS track or embedded in activity
+    const routeMapUrl = gpsTrack?.route_map_url || activity.route_map_url;
+    const routeSvg = gpsTrack?.route_svg || activity.route_svg;
+    const hasRouteMap = routeMapUrl || routeSvg;
+
     return (
       <TouchableOpacity
         style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
         onPress={() => navigation.navigate('ActivityDetail', { activityId: activity.id })}
+        activeOpacity={0.8}
       >
+        {/* Route Map Preview */}
+        {hasRouteMap && (
+          <View style={styles.activityMapContainer}>
+            <RoutePreview
+              routeMapUrl={fixStorageUrl(routeMapUrl)}
+              routeSvg={routeSvg}
+              height={180}
+              backgroundColor={colors.background}
+            />
+          </View>
+        )}
+
         <View style={styles.activityHeader}>
           <View style={[styles.sportBadge, { backgroundColor: colors.primary + '20' }]}>
             <Ionicons
@@ -201,9 +233,21 @@ export function PostDetailScreen({ route, navigation }: Props) {
             <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
               {activity.title}
             </Text>
-            <Text style={[styles.activitySport, { color: colors.textSecondary }]}>
-              {activity.sport_type?.name || t('activityDetail.activity')}
-            </Text>
+            <View style={styles.activitySubtitleRow}>
+              <Text style={[styles.activitySport, { color: colors.textSecondary }]}>
+                {activity.sport_type?.name || t('activityDetail.activity')}
+              </Text>
+              {/* Location display */}
+              {activity.location?.location_name && (
+                <>
+                  <Text style={[styles.activitySport, { color: colors.textSecondary }]}> · </Text>
+                  <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+                  <Text style={[styles.activitySport, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {activity.location.location_name}
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
         </View>
@@ -460,13 +504,19 @@ const styles = StyleSheet.create({
   },
   activityPreview: {
     marginTop: spacing.md,
-    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
+    overflow: 'hidden',
+  },
+  activityMapContainer: {
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
+    overflow: 'hidden',
   },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: spacing.md,
   },
   sportBadge: {
     width: 36,
@@ -486,10 +536,15 @@ const styles = StyleSheet.create({
   activitySport: {
     fontSize: fontSize.xs,
   },
+  activitySubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   activityStats: {
     flexDirection: 'row',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderTopWidth: 1,
     justifyContent: 'space-around',
   },

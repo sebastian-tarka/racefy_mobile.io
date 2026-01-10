@@ -12,7 +12,9 @@ import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { MediaGallery } from './MediaGallery';
+import { RoutePreview } from './LeafletMap';
 import { useTheme } from '../hooks/useTheme';
+import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post } from '../types/api';
 
@@ -116,8 +118,23 @@ export function PostCard({
     if (post.type !== 'activity' || !post.activity) return null;
     const activity = post.activity;
 
+    // Check if activity has route map or SVG
+    const hasRouteMap = activity.route_map_url || activity.route_svg;
+
     return (
       <View style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
+        {/* Route Map Preview */}
+        {hasRouteMap && (
+          <View style={styles.activityMapContainer}>
+            <RoutePreview
+              routeMapUrl={fixStorageUrl(activity.route_map_url)}
+              routeSvg={activity.route_svg}
+              height={150}
+              backgroundColor={colors.background}
+            />
+          </View>
+        )}
+
         <View style={styles.activityHeader}>
           <View style={[styles.sportBadge, { backgroundColor: colors.primary + '20' }]}>
             <Ionicons
@@ -130,9 +147,21 @@ export function PostCard({
             <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
               {activity.title}
             </Text>
-            <Text style={[styles.activitySport, { color: colors.textSecondary }]}>
-              {activity.sport_type?.name || t('activityDetail.activity')}
-            </Text>
+            <View style={styles.activitySubtitleRow}>
+              <Text style={[styles.activitySport, { color: colors.textSecondary }]}>
+                {activity.sport_type?.name || t('activityDetail.activity')}
+              </Text>
+              {/* Location display */}
+              {activity.location?.location_name && (
+                <>
+                  <Text style={[styles.activitySport, { color: colors.textSecondary }]}> · </Text>
+                  <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+                  <Text style={[styles.activitySport, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {activity.location.location_name}
+                  </Text>
+                </>
+              )}
+            </View>
           </View>
         </View>
 
@@ -367,13 +396,19 @@ const styles = StyleSheet.create({
   activityPreview: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
+    overflow: 'hidden',
+  },
+  activityMapContainer: {
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
+    overflow: 'hidden',
   },
   activityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: spacing.md,
   },
   sportBadge: {
     width: 36,
@@ -393,10 +428,15 @@ const styles = StyleSheet.create({
   activitySport: {
     fontSize: fontSize.xs,
   },
+  activitySubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   activityStats: {
     flexDirection: 'row',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderTopWidth: 1,
     justifyContent: 'space-around',
   },
