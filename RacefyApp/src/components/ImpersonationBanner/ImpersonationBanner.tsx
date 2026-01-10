@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing } from '../../theme';
@@ -9,6 +11,7 @@ import { spacing } from '../../theme';
 export function ImpersonationBanner() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const { isImpersonating, impersonatedUser, user, stopImpersonation } = useAuth();
 
   if (!isImpersonating || !impersonatedUser) return null;
@@ -25,6 +28,22 @@ export function ImpersonationBanner() {
           onPress: async () => {
             try {
               await stopImpersonation();
+
+              // Reset navigation to Home screen to refresh all data
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'Main',
+                      state: {
+                        routes: [{ name: 'Home' }],
+                        index: 0,
+                      },
+                    },
+                  ],
+                })
+              );
             } catch (error) {
               Alert.alert(t('common.error'), t('admin.impersonate.exitError'));
             }
