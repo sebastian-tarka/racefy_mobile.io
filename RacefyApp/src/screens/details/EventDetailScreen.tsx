@@ -23,7 +23,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event, EventRegistration, User } from '../../types/api';
+import type { Event, EventRegistration, User, Activity } from '../../types/api';
 import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
@@ -44,6 +44,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<EventRegistration[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -67,19 +68,21 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const fetchEvent = useCallback(async () => {
     try {
       setError(null);
-      const [eventData, participantsData] = await Promise.all([
+      const [eventData, participantsData, activitiesData] = await Promise.all([
         api.getEvent(eventId),
         api.getEventParticipants(eventId).catch(() => []),
+        api.getEventActivities(eventId).catch(() => []),
       ]);
       setEvent(eventData);
       setParticipants(participantsData);
+      setActivities(activitiesData);
     } catch (err) {
       setError(t('eventDetail.failedToLoad'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [eventId]);
+  }, [eventId, t]);
 
   useEffect(() => {
     fetchEvent();
@@ -535,6 +538,49 @@ export function EventDetailScreen({ route, navigation }: Props) {
           </Card>
         )}
 
+        {/* Activities */}
+        {activities.length > 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('eventDetail.activities')} ({activities.length})
+            </Text>
+            {activities.slice(0, 5).map((activity) => (
+              <TouchableOpacity
+                key={activity.id}
+                style={[styles.activityItem, { borderBottomColor: colors.border }]}
+                onPress={() => navigation.navigate('ActivityDetail', { activityId: activity.id })}
+              >
+                <View style={styles.activityLeft}>
+                  <Avatar
+                    uri={activity.user?.avatar}
+                    name={activity.user?.name || '?'}
+                    size="sm"
+                  />
+                  <View style={styles.activityInfo}>
+                    <Text style={[styles.activityUser, { color: colors.textPrimary }]}>
+                      {activity.user?.name}
+                    </Text>
+                    <Text style={[styles.activityTitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                      {activity.title}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.activityStats}>
+                  <Text style={[styles.activityDistance, { color: colors.primary }]}>
+                    {(activity.distance / 1000).toFixed(2)} km
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </View>
+              </TouchableOpacity>
+            ))}
+            {activities.length > 5 && (
+              <Text style={[styles.moreActivitiesText, { color: colors.textMuted }]}>
+                {t('eventDetail.moreActivities', { count: activities.length - 5 })}
+              </Text>
+            )}
+          </Card>
+        )}
+
         {/* Comments Section */}
         <View style={styles.section}>
           <CommentSection
@@ -773,5 +819,43 @@ const styles = StyleSheet.create({
   moreParticipantsText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  activityLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  activityInfo: {
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  activityUser: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  activityTitle: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  activityStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  activityDistance: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  moreActivitiesText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    paddingTop: spacing.sm,
   },
 });

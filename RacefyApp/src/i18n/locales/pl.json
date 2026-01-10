@@ -344,7 +344,9 @@
     "days": "dni",
     "hours": "godz",
     "minutes": "min",
-    "seconds": "sek"
+    "seconds": "sek",
+    "activities": "Aktywności",
+    "moreActivities": "+{{count}} więcej"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",

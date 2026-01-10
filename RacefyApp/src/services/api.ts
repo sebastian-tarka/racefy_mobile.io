@@ -501,6 +501,13 @@ class ApiService {
     return response.data;
   }
 
+  async getEventActivities(eventId: number): Promise<Types.Activity[]> {
+    const response = await this.request<
+      Types.ApiResponse<Types.Activity[]>
+    >(`/events/${eventId}/activities`);
+    return response.data;
+  }
+
   async getMyEvents(): Promise<Types.Event[]> {
     const response =
       await this.request<Types.ApiResponse<Types.Event[]>>('/my-events');
