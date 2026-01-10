@@ -347,23 +347,37 @@ export function useLiveActivity() {
         (location) => {
           const gpsProfile = currentGpsProfile.current;
 
-          // Skip first GPS point after returning from background to avoid drift
-          if (skipNextGpsPoint.current) {
-            logger.gps('Skipping first GPS point after returning from background', {
-              accuracy: location.coords.accuracy,
-              speed: location.coords.speed,
-            });
-            skipNextGpsPoint.current = false;
-            return;
-          }
-
-          // Filter out inaccurate GPS readings
+          // Filter out inaccurate GPS readings first
           const accuracy = location.coords.accuracy;
           if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
             logger.gps('GPS point filtered: poor accuracy', {
               accuracy: accuracy.toFixed(1),
               threshold: gpsProfile.accuracyThreshold,
             });
+            return;
+          }
+
+          // Skip first GPS point after returning from background to avoid drift
+          // BUT update lastPosition so the next point has a valid baseline
+          if (skipNextGpsPoint.current) {
+            logger.gps('Skipping first GPS point after returning from background (using as new baseline)', {
+              accuracy: location.coords.accuracy,
+              speed: location.coords.speed,
+              lat: location.coords.latitude,
+              lng: location.coords.longitude,
+            });
+            skipNextGpsPoint.current = false;
+
+            // Update lastPosition with this point as the new baseline
+            // This prevents distance spike when the next point arrives
+            lastPosition.current = {
+              lat: location.coords.latitude,
+              lng: location.coords.longitude,
+              ele: location.coords.altitude ?? undefined,
+              timestamp: location.timestamp,
+            };
+
+            // Don't add to buffer or calculate distance, just set baseline
             return;
           }
 
