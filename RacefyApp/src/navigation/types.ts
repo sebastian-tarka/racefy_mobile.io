@@ -12,7 +12,7 @@ export type MainTabParamList = {
   Home: undefined;
   Feed: { openComposer?: boolean } | undefined;
   Record: { preselectedEvent?: Event } | undefined;
-  Events: undefined;
+  Events: { initialFilter?: 'all' | 'upcoming' | 'ongoing' | 'completed' } | undefined;
   Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;
 };
 

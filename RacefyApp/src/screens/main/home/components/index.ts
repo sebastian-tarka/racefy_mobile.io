@@ -5,6 +5,7 @@ export { AuthCard } from './AuthCard';
 export { FeaturesList } from './FeaturesList';
 export { StatsSection } from './StatsSection';
 export { UpcomingEventsPreview } from './UpcomingEventsPreview';
+export { OngoingEventsPreview } from './OngoingEventsPreview';
 export { ActivitiesFeedPreview } from './ActivitiesFeedPreview';
 export { DynamicGreeting } from './DynamicGreeting';
 export { WeeklyStatsCard } from './WeeklyStatsCard';

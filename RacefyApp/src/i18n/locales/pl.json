@@ -111,6 +111,8 @@
     "connectionError": "Nie można połączyć z serwerem",
     "checkConnection": "Sprawdź połączenie internetowe",
     "upcomingEvents": "Nadchodzące wydarzenia",
+    "ongoingEvents": "Trwają teraz",
+    "live": "NA ŻYWO",
     "recentActivities": "Ostatnie aktywności"
   },
   "feed": {

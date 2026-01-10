@@ -110,6 +110,8 @@
     },
     "connectionError": "Unable to connect to server",
     "upcomingEvents": "Upcoming Events",
+    "ongoingEvents": "Happening Now",
+    "live": "LIVE",
     "recentActivities": "Recent Activities",
     "checkConnection": "Check your internet connection"
   },

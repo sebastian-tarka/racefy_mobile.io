@@ -34,7 +34,7 @@ type Props = CompositeScreenProps<
 
 type FilterOption = 'all' | 'upcoming' | 'ongoing' | 'completed';
 
-export function EventsScreen({ navigation }: Props) {
+export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
@@ -57,7 +57,7 @@ export function EventsScreen({ navigation }: Props) {
     { label: t('events.filters.completed'), value: 'completed' },
   ];
 
-  const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
+  const [activeFilter, setActiveFilter] = useState<FilterOption>(route.params?.initialFilter || 'all');
 
   // Search state
   const [isSearchVisible, setIsSearchVisible] = useState(false);

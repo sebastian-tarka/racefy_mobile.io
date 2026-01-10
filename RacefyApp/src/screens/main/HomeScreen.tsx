@@ -14,6 +14,7 @@ import {
   HomeHeader,
   AuthCard,
   UpcomingEventsPreview,
+  OngoingEventsPreview,
   ActivitiesFeedPreview,
   DynamicGreeting,
   WeeklyStatsCard,
@@ -39,6 +40,7 @@ export function HomeScreen({ navigation }: Props) {
     connected: true,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const checkConnection = useCallback(async () => {
     const result = await api.checkHealth();
@@ -54,6 +56,8 @@ export function HomeScreen({ navigation }: Props) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await checkConnection();
+    // Increment refresh key to force remounting of preview components
+    setRefreshKey((prev) => prev + 1);
     setRefreshing(false);
   }, [checkConnection]);
 
@@ -135,10 +139,11 @@ export function HomeScreen({ navigation }: Props) {
         )}
 
         {/* Weekly Stats Card for authenticated users */}
-        {isAuthenticated && <WeeklyStatsCard />}
+        {isAuthenticated && <WeeklyStatsCard key={`stats-${refreshKey}`} />}
 
         {/* Activities Feed */}
         <ActivitiesFeedPreview
+          key={`activities-${refreshKey}`}
           onActivityPress={(activityId) => {
             navigation.getParent()?.navigate('ActivityDetail', { activityId });
           }}
@@ -147,12 +152,23 @@ export function HomeScreen({ navigation }: Props) {
           limit={3}
         />
 
-        {/* Upcoming Events */}
-        <UpcomingEventsPreview
+        {/* Ongoing Events */}
+        <OngoingEventsPreview
+          key={`ongoing-${refreshKey}`}
           onEventPress={(eventId) => {
             navigation.getParent()?.navigate('EventDetail', { eventId });
           }}
-          onViewAllPress={() => navigation.navigate('Events')}
+          onViewAllPress={() => navigation.navigate('Events', { initialFilter: 'ongoing' })}
+          limit={3}
+        />
+
+        {/* Upcoming Events */}
+        <UpcomingEventsPreview
+          key={`upcoming-${refreshKey}`}
+          onEventPress={(eventId) => {
+            navigation.getParent()?.navigate('EventDetail', { eventId });
+          }}
+          onViewAllPress={() => navigation.navigate('Events', { initialFilter: 'upcoming' })}
           limit={3}
         />
       </ScrollView>
