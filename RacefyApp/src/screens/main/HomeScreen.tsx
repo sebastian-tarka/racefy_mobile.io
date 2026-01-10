@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivity } from '../../hooks/useLiveActivity';
+import { useNotifications } from '../../hooks/useNotifications';
 import { api } from '../../services/api';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -35,6 +36,7 @@ export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
   const { isTracking, isPaused, currentStats } = useLiveActivity();
+  const { unreadCount } = useNotifications();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,
     connected: true,
@@ -89,9 +91,9 @@ export function HomeScreen({ navigation }: Props) {
           userName={user?.name}
           userAvatar={user?.avatar}
           isAuthenticated={isAuthenticated}
+          unreadCount={unreadCount}
           onNotificationPress={() => {
-            // TODO: Navigate to notifications screen
-            console.log('Notifications pressed');
+            navigation.getParent()?.navigate('Notifications');
           }}
           onAvatarPress={() => {
             navigation.navigate('Profile');

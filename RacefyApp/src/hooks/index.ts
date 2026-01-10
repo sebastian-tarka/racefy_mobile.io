@@ -7,6 +7,7 @@ export * from './useLiveActivity';
 export * from './useConversations';
 export * from './useMessages';
 export * from './useUnreadCount';
+export * from './useNotifications';
 export * from './useSportTypes';
 export * from './useTheme';
 export * from './useActivityStats';

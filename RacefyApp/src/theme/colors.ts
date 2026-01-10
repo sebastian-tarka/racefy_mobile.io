@@ -8,6 +8,7 @@ export const lightColors = {
   // Background colors
   background: '#f9fafb',
   cardBackground: '#ffffff',
+  cardBackgroundHighlight: '#f0fdf4', // Light emerald tint for unread notifications
 
   // Text colors
   textPrimary: '#111827',
@@ -70,6 +71,7 @@ export const darkColors = {
   // Background colors
   background: '#111827',
   cardBackground: '#1f2937',
+  cardBackgroundHighlight: '#14532d', // Dark emerald tint for unread notifications
 
   // Text colors
   textPrimary: '#f9fafb',

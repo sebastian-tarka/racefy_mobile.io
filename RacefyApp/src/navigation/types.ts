@@ -28,8 +28,10 @@ export type RootStackParamList = {
   Settings: undefined;
   EditProfile: undefined;
   ImpersonateUser: undefined;
+  Notifications: undefined;
   ConversationsList: undefined;
   Chat: { conversationId: number; participant: ConversationParticipant };
+  Messages: { conversationId?: number };
   EventForm: { eventId?: number };
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };

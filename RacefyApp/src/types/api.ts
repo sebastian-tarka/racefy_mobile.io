@@ -839,3 +839,79 @@ export interface BrandAssetsResponse {
 export interface BrandAssetResponse {
   data: BrandAsset;
 }
+
+// ============ NOTIFICATIONS ============
+
+export type NotificationType =
+  | 'likes'
+  | 'comments'
+  | 'follows'
+  | 'mentions'
+  | 'boosts'
+  | 'activity_reactions'
+  | 'messages'
+  | 'event_reminders'
+  | 'ai_post_ready';
+
+export interface NotificationData {
+  type: NotificationType;
+  actor_id: number;
+  actor_name: string;
+  actor_username: string;
+  actor_avatar: string | null;
+  timestamp: string;
+  url: string | null;
+  // Type-specific fields (may not be present in all notifications)
+  post_id?: number;
+  activity_id?: number;
+  comment_id?: number;
+  event_id?: number;
+  conversation_id?: number;
+  likeable_type?: 'post' | 'activity' | 'comment';
+  likeable_id?: number;
+  commentable_type?: 'post' | 'activity';
+  commentable_id?: number;
+}
+
+export interface Notification {
+  id: string;
+  user_id: number;
+  type: NotificationType;
+  data: {
+    type: NotificationType;
+    title: string;
+    body: string;
+    data: NotificationData;
+  };
+  read_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationListResponse {
+  data: Notification[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    unread_count: number;
+  };
+}
+
+export interface UnreadCountResponse {
+  unread_count: number;
+}
+
+export interface MarkAsReadResponse {
+  message: string;
+  data: {
+    id: string;
+    read_at: string;
+  };
+}
+
+export interface MarkAllAsReadResponse {
+  message: string;
+  marked_count: number;
+}

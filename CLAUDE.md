@@ -102,6 +102,38 @@ RootStack
     └── Register
 ```
 
+**Logging**: Always use the logger service instead of console.log/console.error/console.warn:
+```typescript
+import { logger } from '../services/logger';
+
+// By log level
+logger.debug('category', 'Debug message', { context: 'optional' });
+logger.info('category', 'Info message', { userId: 123 });
+logger.warn('category', 'Warning message');
+logger.error('category', 'Error message', { error: err });
+
+// Category shortcuts
+logger.gps('GPS fix acquired', { lat, lon, accuracy });
+logger.api('API request completed', { endpoint, duration });
+logger.auth('User logged in', { userId, username });
+logger.activity('Activity started', { activityId, sportType });
+logger.nav('Navigated to screen', { screen: 'Home' });
+```
+
+**Available Categories**: `gps`, `api`, `auth`, `activity`, `navigation`, `general`
+
+**Log Levels**: `debug` (most verbose), `info`, `warn`, `error` (least verbose)
+
+**Features**:
+- Stores logs locally in AsyncStorage (up to 2000 entries)
+- Can be enabled/disabled via `.env` (LOG_ENABLED, LOG_LEVEL, LOG_CATEGORIES)
+- Logs can be sent to backend via `/api/debug/logs` endpoint
+- Includes device info, session ID, and timestamps
+- Auto-rotates logs to prevent storage bloat
+- Console output is configurable (LOG_CONSOLE_OUTPUT)
+
+**Where to find logs**: Settings → Developer → Debug Logs (when LOG_ENABLED=true)
+
 ## UI Conventions
 
 For detailed UI patterns, see `RacefyApp/docs/UI_PATTERNS.md`.

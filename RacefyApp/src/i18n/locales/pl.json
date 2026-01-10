@@ -795,5 +795,18 @@
         "exit": "Zakończ"
       }
     }
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "empty": {
+      "title": "Brak powiadomień",
+      "description": "Nie masz jeszcze żadnych powiadomień"
+    },
+    "unreadCount": "{{count}} nieprzeczytanych",
+    "markAllAsRead": "Oznacz wszystkie jako przeczytane",
+    "markAllAsReadConfirm": "Czy na pewno chcesz oznaczyć wszystkie powiadomienia jako przeczytane?",
+    "markAllAsReadError": "Nie udało się oznaczyć wszystkich powiadomień jako przeczytane",
+    "loadError": "Nie udało się załadować powiadomień. Spróbuj ponownie.",
+    "navigationError": "Nie można przejść do tej treści"
   }
 }

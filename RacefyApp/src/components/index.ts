@@ -26,6 +26,8 @@ export * from './Loading';
 export * from './MediaGallery';
 export * from './MediaPicker';
 export * from './MediaThumbnail';
+export * from './NotificationItem';
+export * from './NotificationBadge';
 export * from './PointsCard';
 export * from './PostCard';
 export * from './PrivacyConsentsSection';

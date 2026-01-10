@@ -1355,6 +1355,51 @@ class ApiService {
       '/admin/impersonate/status'
     );
   }
+
+  // ============ NOTIFICATIONS ============
+
+  /**
+   * Get paginated notifications
+   */
+  async getNotifications(
+    page: number = 1,
+    perPage: number = 20
+  ): Promise<Types.NotificationListResponse> {
+    return await this.request<Types.NotificationListResponse>(
+      `/notifications?per_page=${perPage}&page=${page}`
+    );
+  }
+
+  /**
+   * Get unread notification count
+   */
+  async getUnreadNotificationCount(): Promise<Types.UnreadCountResponse> {
+    return await this.request<Types.UnreadCountResponse>(
+      '/notifications/unread-count'
+    );
+  }
+
+  /**
+   * Mark a notification as read
+   */
+  async markNotificationAsRead(
+    notificationId: string
+  ): Promise<Types.MarkAsReadResponse> {
+    return await this.request<Types.MarkAsReadResponse>(
+      `/notifications/${notificationId}/read`,
+      { method: 'POST' }
+    );
+  }
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllNotificationsAsRead(): Promise<Types.MarkAllAsReadResponse> {
+    return await this.request<Types.MarkAllAsReadResponse>(
+      '/notifications/read-all',
+      { method: 'POST' }
+    );
+  }
 }
 
 export const api = new ApiService();

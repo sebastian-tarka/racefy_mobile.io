@@ -795,5 +795,18 @@
         "exit": "Exit"
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": {
+      "title": "No notifications",
+      "description": "You don't have any notifications yet"
+    },
+    "unreadCount": "{{count}} unread",
+    "markAllAsRead": "Mark all as read",
+    "markAllAsReadConfirm": "Are you sure you want to mark all notifications as read?",
+    "markAllAsReadError": "Failed to mark all notifications as read",
+    "loadError": "Failed to load notifications. Please try again.",
+    "navigationError": "Unable to navigate to this content"
   }
 }
