@@ -470,6 +470,7 @@ export function SettingsScreen({ navigation }: Props) {
         style: 'destructive',
         onPress: async () => {
           await logout();
+          navigation.navigate('Auth', { screen: 'Login' });
         },
       },
     ]);
