@@ -26,6 +26,18 @@
     "goBack": "Go Back",
     "viewAll": "View All"
   },
+  "sports": {
+    "running": "Running",
+    "cycling": "Cycling",
+    "swimming": "Swimming",
+    "gym": "Gym",
+    "yoga": "Yoga",
+    "hiking": "Hiking",
+    "tennis": "Tennis",
+    "football": "Football",
+    "basketball": "Basketball",
+    "other": "Other"
+  },
   "app": {
     "name": "Racefy",
     "tagline": "Sports & Fitness Community"
@@ -411,12 +423,6 @@
   "recording": {
     "title": "Record Activity",
     "selectSport": "Select Sport",
-    "sports": {
-      "running": "Running",
-      "cycling": "Cycling",
-      "swimming": "Swimming",
-      "gym": "Gym"
-    },
     "status": {
       "recording": "Recording",
       "paused": "Paused",

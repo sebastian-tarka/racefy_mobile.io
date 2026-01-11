@@ -26,6 +26,18 @@
     "goBack": "Wróć",
     "viewAll": "Zobacz wszystkie"
   },
+  "sports": {
+    "running": "Bieganie",
+    "cycling": "Kolarstwo",
+    "swimming": "Pływanie",
+    "gym": "Siłownia",
+    "yoga": "Joga",
+    "hiking": "Wędrówki",
+    "tennis": "Tenis",
+    "football": "Piłka nożna",
+    "basketball": "Koszykówka",
+    "other": "Inne"
+  },
   "app": {
     "name": "Racefy",
     "tagline": "Społeczność sportowa i fitness"
@@ -411,12 +423,6 @@
   "recording": {
     "title": "Zapisz aktywność",
     "selectSport": "Wybierz sport",
-    "sports": {
-      "running": "Bieganie",
-      "cycling": "Kolarstwo",
-      "swimming": "Pływanie",
-      "gym": "Siłownia"
-    },
     "status": {
       "recording": "Nagrywanie",
       "paused": "Wstrzymano",

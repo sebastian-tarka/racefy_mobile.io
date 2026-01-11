@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { SportType } from '../types/api';
@@ -63,19 +65,35 @@ const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
 // Default icon for unknown sports
 const DEFAULT_SPORT_ICON: keyof typeof Ionicons.glyphMap = 'fitness-outline';
 
-// Fallback sports for when API is unavailable (gps_profile loaded from fallbacks)
-const FALLBACK_SPORTS: SportTypeWithIcon[] = [
-  { id: 1, name: 'Running', slug: 'running', icon: 'walk-outline', is_active: true },
-  { id: 2, name: 'Cycling', slug: 'cycling', icon: 'bicycle-outline', is_active: true },
-  { id: 3, name: 'Swimming', slug: 'swimming', icon: 'water-outline', is_active: true },
-  { id: 4, name: 'Gym', slug: 'gym', icon: 'barbell-outline', is_active: true },
-  { id: 5, name: 'Yoga', slug: 'yoga', icon: 'body-outline', is_active: true },
-  { id: 6, name: 'Hiking', slug: 'hiking', icon: 'trail-sign-outline', is_active: true },
-  { id: 7, name: 'Tennis', slug: 'tennis', icon: 'tennisball-outline', is_active: true },
-  { id: 8, name: 'Football', slug: 'football', icon: 'football-outline', is_active: true },
-  { id: 9, name: 'Basketball', slug: 'basketball', icon: 'basketball-outline', is_active: true },
-  { id: 10, name: 'Other', slug: 'other', icon: 'fitness-outline', is_active: true },
+// Fallback sport definitions (without names - names come from translations)
+const FALLBACK_SPORT_DEFINITIONS: Array<{ id: number; slug: string; icon: keyof typeof Ionicons.glyphMap }> = [
+  { id: 1, slug: 'running', icon: 'walk-outline' },
+  { id: 2, slug: 'cycling', icon: 'bicycle-outline' },
+  { id: 3, slug: 'swimming', icon: 'water-outline' },
+  { id: 4, slug: 'gym', icon: 'barbell-outline' },
+  { id: 5, slug: 'yoga', icon: 'body-outline' },
+  { id: 6, slug: 'hiking', icon: 'trail-sign-outline' },
+  { id: 7, slug: 'tennis', icon: 'tennisball-outline' },
+  { id: 8, slug: 'football', icon: 'football-outline' },
+  { id: 9, slug: 'basketball', icon: 'basketball-outline' },
+  { id: 10, slug: 'other', icon: 'fitness-outline' },
 ];
+
+// Function to get fallback sports with translated names
+function getFallbackSports(t: (key: string) => string): SportTypeWithIcon[] {
+  return FALLBACK_SPORT_DEFINITIONS.map((sport) => ({
+    ...sport,
+    name: t(`sports.${sport.slug}`),
+    is_active: true,
+  }));
+}
+
+// Legacy export for backwards compatibility (English names)
+const FALLBACK_SPORTS: SportTypeWithIcon[] = FALLBACK_SPORT_DEFINITIONS.map((sport) => ({
+  ...sport,
+  name: sport.slug.charAt(0).toUpperCase() + sport.slug.slice(1), // Capitalize slug as fallback
+  is_active: true,
+}));
 
 export interface SportTypeWithIcon extends SportType {
   icon: keyof typeof Ionicons.glyphMap;
@@ -94,25 +112,46 @@ interface UseSportTypesResult {
 // Cache for sport types to avoid refetching
 let cachedSportTypes: SportTypeWithIcon[] | null = null;
 let cacheTimestamp: number = 0;
+let cachedLanguage: string | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Function to invalidate cache (called when language changes)
+export function invalidateSportTypesCache() {
+  cachedSportTypes = null;
+  cacheTimestamp = 0;
+  cachedLanguage = null;
+  logger.info('general', 'Sport types cache invalidated');
+}
+
 export function useSportTypes(): UseSportTypesResult {
+  const { t, i18n: i18nInstance } = useTranslation();
+  const currentLanguage = i18nInstance.language;
+
+  // Get translated fallback sports
+  const translatedFallbackSports = getFallbackSports(t);
+
   const [sportTypes, setSportTypes] = useState<SportTypeWithIcon[]>(
-    cachedSportTypes || FALLBACK_SPORTS
+    cachedSportTypes || translatedFallbackSports
   );
   const [isLoading, setIsLoading] = useState(!cachedSportTypes);
   const [error, setError] = useState<string | null>(null);
 
+  // Track if this is the first render
+  const isFirstRender = useRef(true);
+  const previousLanguage = useRef(currentLanguage);
+
   const fetchSportTypes = useCallback(async (force = false) => {
-    // Use cache if valid and not forcing refresh
-    if (!force && cachedSportTypes && Date.now() - cacheTimestamp < CACHE_DURATION) {
-      logger.debug('general', 'Using cached sport types', { count: cachedSportTypes.length });
+    const lang = i18n.language || 'en';
+
+    // Use cache if valid, not forcing refresh, and language hasn't changed
+    if (!force && cachedSportTypes && cachedLanguage === lang && Date.now() - cacheTimestamp < CACHE_DURATION) {
+      logger.debug('general', 'Using cached sport types', { count: cachedSportTypes.length, language: lang });
       setSportTypes(cachedSportTypes);
       setIsLoading(false);
       return;
     }
 
-    logger.info('general', 'Fetching sport types from API');
+    logger.info('general', 'Fetching sport types from API', { language: lang });
     setIsLoading(true);
     setError(null);
 
@@ -127,9 +166,10 @@ export function useSportTypes(): UseSportTypesResult {
           icon: getIconForSport(sport),
         }));
 
-      // Update cache
+      // Update cache with language tag
       cachedSportTypes = sportsWithIcons;
       cacheTimestamp = Date.now();
+      cachedLanguage = lang;
 
       // Update GPS profile static cache for background service
       updateGpsProfileCache(apiSports);
@@ -137,22 +177,45 @@ export function useSportTypes(): UseSportTypesResult {
       logger.info('general', 'Sport types loaded', {
         count: sportsWithIcons.length,
         withGpsProfiles: apiSports.filter(s => s.gps_profile).length,
+        language: lang,
       });
 
       setSportTypes(sportsWithIcons);
     } catch (err: any) {
       logger.error('general', 'Failed to fetch sport types', { error: err.message });
       setError(err.message || 'Failed to load sports');
-      // Use fallback sports on error
-      setSportTypes(FALLBACK_SPORTS);
+      // Use translated fallback sports on error
+      setSportTypes(translatedFallbackSports);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [translatedFallbackSports]);
 
+  // Initial fetch
   useEffect(() => {
     fetchSportTypes();
   }, [fetchSportTypes]);
+
+  // Refetch when language changes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      previousLanguage.current = currentLanguage;
+      return;
+    }
+
+    if (previousLanguage.current !== currentLanguage) {
+      logger.info('general', 'Language changed, refetching sport types', {
+        from: previousLanguage.current,
+        to: currentLanguage,
+      });
+      previousLanguage.current = currentLanguage;
+
+      // Invalidate cache and refetch with new language
+      invalidateSportTypesCache();
+      fetchSportTypes(true);
+    }
+  }, [currentLanguage, fetchSportTypes]);
 
   const getSportById = useCallback(
     (id: number): SportTypeWithIcon | undefined => {
