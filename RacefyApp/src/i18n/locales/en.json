@@ -42,6 +42,30 @@
     "name": "Racefy",
     "tagline": "Sports & Fitness Community"
   },
+  "landing": {
+    "heroTitle": "Your Fitness Journey Starts Here",
+    "heroSubtitle": "Track your activities, connect with athletes, and join exciting sports events in your community",
+    "whyRacefy": "Why Choose Racefy?",
+    "features": {
+      "track": {
+        "title": "Track Activities",
+        "description": "Record your workouts with GPS tracking, monitor your progress, and analyze your performance over time"
+      },
+      "connect": {
+        "title": "Connect with Athletes",
+        "description": "Join a vibrant community of fitness enthusiasts, share achievements, and motivate each other"
+      },
+      "events": {
+        "title": "Join Events",
+        "description": "Discover local sports events, register for competitions, and challenge yourself with new goals"
+      }
+    },
+    "ctaTitle": "Ready to Get Moving?",
+    "ctaDescription": "Join thousands of athletes who are already tracking their fitness journey with Racefy",
+    "getStarted": "Get Started",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign In"
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",

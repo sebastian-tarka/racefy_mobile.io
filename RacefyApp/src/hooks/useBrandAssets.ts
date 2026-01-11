@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { fixStorageUrl } from '../config/api';
 import { useTheme } from './useTheme';
 import type { BrandAsset, BrandAssetCategory, BrandAssetVariant, BrandAssetsResponse } from '../types/api';
 
@@ -67,14 +68,24 @@ export function useBrandAssets(): UseBrandAssetsResult {
       if (!categoryAssets) return null;
 
       // If variant specified, use it directly
+      let asset: BrandAsset | undefined;
       if (variant) {
-        return categoryAssets[variant] || categoryAssets.default || null;
+        asset = categoryAssets[variant] || categoryAssets.default;
+      } else {
+        // Auto-select variant based on theme
+        // Use light logo on dark background, dark logo on light background
+        const themeVariant = isDark ? 'light' : 'dark';
+        asset = categoryAssets[themeVariant] || categoryAssets.default;
       }
 
-      // Auto-select variant based on theme
-      // Use light logo on dark background, dark logo on light background
-      const themeVariant = isDark ? 'light' : 'dark';
-      return categoryAssets[themeVariant] || categoryAssets.default || null;
+      if (!asset) return null;
+
+      // Fix URL for current platform (emulator/device)
+      const fixedUrl = fixStorageUrl(asset.url);
+      return {
+        ...asset,
+        url: fixedUrl || asset.url,
+      };
     },
     [assets, isDark]
   );

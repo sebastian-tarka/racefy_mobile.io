@@ -31,6 +31,7 @@ import { SettingsScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
 import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
+import { LandingScreen } from '../screens/landing';
 
 // Types
 import type {
@@ -258,8 +259,11 @@ export function AppNavigator() {
   // If user is authenticated but hasn't accepted required consents, show ConsentModal
   const showConsentModal = isAuthenticated && requiresConsent;
 
+  // Key forces navigation reset when auth state changes
+  const authStateKey = showConsentModal ? 'consent' : isAuthenticated ? 'auth' : 'guest';
+
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer theme={navigationTheme} key={authStateKey}>
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -282,8 +286,30 @@ export function AppNavigator() {
               component={LegalDocumentsScreen}
             />
           </>
+        ) : !isAuthenticated ? (
+          // Not authenticated - show landing screen first
+          <>
+            <RootStack.Screen
+              name="Landing"
+              component={LandingScreen}
+              options={{
+                animation: 'fade',
+              }}
+            />
+            <RootStack.Screen
+              name="Auth"
+              component={AuthNavigator}
+              options={{
+                presentation: 'modal',
+              }}
+            />
+            <RootStack.Screen
+              name="LegalDocuments"
+              component={LegalDocumentsScreen}
+            />
+          </>
         ) : (
-          // Normal app flow
+          // Authenticated - normal app flow
           <>
             <RootStack.Screen name="Main" component={MainNavigator} />
             <RootStack.Screen

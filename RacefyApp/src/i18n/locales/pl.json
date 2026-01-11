@@ -42,6 +42,30 @@
     "name": "Racefy",
     "tagline": "Społeczność sportowa i fitness"
   },
+  "landing": {
+    "heroTitle": "Twoja przygoda z fitnessem zaczyna się tutaj",
+    "heroSubtitle": "Śledź aktywności, łącz się ze sportowcami i dołączaj do ekscytujących wydarzeń sportowych w Twojej okolicy",
+    "whyRacefy": "Dlaczego Racefy?",
+    "features": {
+      "track": {
+        "title": "Śledź aktywności",
+        "description": "Nagrywaj treningi z GPS, monitoruj postępy i analizuj swoje wyniki w czasie"
+      },
+      "connect": {
+        "title": "Łącz się ze sportowcami",
+        "description": "Dołącz do aktywnej społeczności miłośników fitnessu, dziel się osiągnięciami i motywujcie się nawzajem"
+      },
+      "events": {
+        "title": "Dołączaj do wydarzeń",
+        "description": "Odkrywaj lokalne wydarzenia sportowe, rejestruj się na zawody i stawiaj sobie nowe cele"
+      }
+    },
+    "ctaTitle": "Gotowy do działania?",
+    "ctaDescription": "Dołącz do tysięcy sportowców, którzy już śledzą swoją drogę fitness z Racefy",
+    "getStarted": "Rozpocznij",
+    "alreadyHaveAccount": "Masz już konto?",
+    "signIn": "Zaloguj się"
+  },
   "auth": {
     "signIn": "Zaloguj się",
     "signUp": "Zarejestruj się",

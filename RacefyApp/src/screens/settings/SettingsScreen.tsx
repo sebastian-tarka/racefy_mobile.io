@@ -507,6 +507,9 @@ export function SettingsScreen({ navigation }: Props) {
     return order[(currentIndex + 1) % order.length];
   };
 
+
+  console.log(user?.role , 'user?.role ')
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScreenHeader

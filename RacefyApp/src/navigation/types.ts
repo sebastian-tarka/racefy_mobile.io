@@ -17,6 +17,7 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
+  Landing: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   Auth: NavigatorScreenParams<AuthStackParamList>;
   ConsentModal: undefined;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -27,18 +27,10 @@ type Props = CompositeScreenProps<
 export function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
 
-  // Auto-close modal when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      const parent = navigation.getParent();
-      if (parent?.canGoBack()) {
-        console.log('User authenticated, closing auth modal');
-        parent.goBack();
-      }
-    }
-  }, [isAuthenticated, navigation]);
+  // Note: Navigation after login is handled automatically by AppNavigator's
+  // conditional rendering based on isAuthenticated state. No manual navigation needed.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +61,7 @@ export function LoginScreen({ navigation }: Props) {
       console.log('Attempting login with:', email);
       await login({ email, password });
       console.log('Login successful');
-      // Navigation handled by useEffect watching isAuthenticated
+      // Navigation handled automatically by AppNavigator's conditional rendering
     } catch (error: any) {
       console.log('Login error:', error);
       const message =
