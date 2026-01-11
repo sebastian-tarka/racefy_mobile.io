@@ -52,16 +52,17 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
-    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    gap: 2,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   tabText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     fontWeight: '500',
+    textAlign: 'center',
   },
 });

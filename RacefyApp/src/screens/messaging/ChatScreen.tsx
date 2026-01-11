@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -29,6 +29,7 @@ export function ChatScreen({ navigation, route }: Props) {
   const { conversationId, participant } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { messages, isLoading, isSending, sendMessage } = useMessages(conversationId);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -174,7 +175,7 @@ export function ChatScreen({ navigation, route }: Props) {
           }
         />
 
-        <View style={[styles.inputContainer, themedStyles.inputContainer]}>
+        <View style={[styles.inputContainer, themedStyles.inputContainer, { paddingBottom: spacing.md + insets.bottom }]}>
           <TextInput
             style={[styles.input, themedStyles.input]}
             placeholder={t('messaging.placeholder')}

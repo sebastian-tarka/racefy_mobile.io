@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +38,7 @@ const getDifficultyColors = (colors: ThemeColors): Record<string, string> => ({
 export function EventDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const difficultyColors = useMemo(() => getDifficultyColors(colors), [colors]);
   const { eventId } = route.params;
   const { isAuthenticated, user } = useAuth();
@@ -597,7 +598,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
       </KeyboardAvoidingView>
 
       {/* Bottom Action Button */}
-      <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+      <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: spacing.md + insets.bottom }]}>
         {canStartActivity ? (
           <Button
             title={t('eventDetail.startActivity')}
