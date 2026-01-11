@@ -8,7 +8,6 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  Image,
   ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -34,7 +33,9 @@ import { useActivityStats } from '../../hooks/useActivityStats';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
+import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -51,6 +52,9 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
 type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
+
+const INITIAL_PAGE = 1;
+const SETTINGS_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
@@ -96,7 +100,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         const stats = await api.getUserActiveActivityStats(compareUser.id);
         setCompareStats(stats);
       } catch (error) {
-        console.error('Failed to fetch compare user stats:', error);
+        logger.error('api', 'Failed to fetch compare user stats', { error, userId: compareUser.id });
         setCompareStats(null);
       } finally {
         setIsLoadingCompareStats(false);
@@ -106,23 +110,45 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     fetchCompareStats();
   }, [compareUser]);
 
-  // Posts state
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [postsPage, setPostsPage] = useState(1);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  // Wrapper functions for usePaginatedTabData
+  const fetchPostsWrapper = useCallback((userId: number, page: number) => {
+    return api.getPosts({ user_id: userId, page });
+  }, []);
 
-  // Activities state
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [activitiesPage, setActivitiesPage] = useState(1);
-  const [hasMoreActivities, setHasMoreActivities] = useState(true);
-  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const fetchActivitiesWrapper = useCallback((userId: number, page: number) => {
+    return api.getActivities({ user_id: userId, page });
+  }, []);
 
-  // Events state
-  const [events, setEvents] = useState<Event[]>([]);
-  const [eventsPage, setEventsPage] = useState(1);
-  const [hasMoreEvents, setHasMoreEvents] = useState(true);
-  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const fetchEventsWrapper = useCallback((userId: number, page: number) => {
+    return api.getEvents({ user_id: userId, page });
+  }, []);
+
+  // Use pagination hooks for posts, activities, and events
+  const postsData = usePaginatedTabData<Post>({
+    fetchFunction: fetchPostsWrapper,
+    userId: user?.id ?? null,
+  });
+
+  const activitiesData = usePaginatedTabData<Activity>({
+    fetchFunction: fetchActivitiesWrapper,
+    userId: user?.id ?? null,
+  });
+
+  const eventsData = usePaginatedTabData<Event>({
+    fetchFunction: fetchEventsWrapper,
+    userId: user?.id ?? null,
+  });
+
+  // Reset paginated data when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setStats(null);
+      postsData.reset();
+      activitiesData.reset();
+      eventsData.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const fetchStats = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -130,76 +156,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       const data = await api.getStats();
       setStats(data);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  }, [isAuthenticated]);
-
-  const fetchPosts = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingPosts) return;
-
-    setIsLoadingPosts(true);
-    try {
-      const response = await api.getPosts({ user_id: user.id, page });
-      if (refresh) {
-        setPosts(response.data);
-      } else {
-        setPosts(prev => [...prev, ...response.data]);
-      }
-      setHasMorePosts(response.meta.current_page < response.meta.last_page);
-      setPostsPage(page);
-    } catch (error) {
-      console.error('Failed to fetch posts:', error);
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  }, [user, isLoadingPosts]);
-
-  const fetchActivities = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingActivities) return;
-
-    setIsLoadingActivities(true);
-    try {
-      const response = await api.getActivities({ user_id: user.id, page });
-      if (refresh) {
-        setActivities(response.data);
-      } else {
-        setActivities(prev => [...prev, ...response.data]);
-      }
-      setHasMoreActivities(response.meta.current_page < response.meta.last_page);
-      setActivitiesPage(page);
-    } catch (error) {
-      console.error('Failed to fetch activities:', error);
-    } finally {
-      setIsLoadingActivities(false);
-    }
-  }, [user, isLoadingActivities]);
-
-  const fetchEvents = useCallback(async (page: number, refresh = false) => {
-    if (!user || isLoadingEvents) return;
-
-    setIsLoadingEvents(true);
-    try {
-      const response = await api.getEvents({ user_id: user.id, page });
-      if (refresh) {
-        setEvents(response.data);
-      } else {
-        setEvents(prev => [...prev, ...response.data]);
-      }
-      setHasMoreEvents(response.meta.current_page < response.meta.last_page);
-      setEventsPage(page);
-    } catch (error) {
-      console.error('Failed to fetch events:', error);
-    } finally {
-      setIsLoadingEvents(false);
-    }
-  }, [user, isLoadingEvents]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setStats(null);
-      setPosts([]);
-      setActivities([]);
-      setEvents([]);
+      logger.error('api', 'Failed to fetch user stats', { error });
     }
   }, [isAuthenticated]);
 
@@ -208,14 +165,15 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       if (isAuthenticated) {
         fetchStats();
         // Load initial data for current tab
-        if (activeTab === 'posts' && posts.length === 0) {
-          fetchPosts(1, true);
-        } else if (activeTab === 'activities' && activities.length === 0) {
-          fetchActivities(1, true);
-        } else if (activeTab === 'events' && events.length === 0) {
-          fetchEvents(1, true);
+        if (activeTab === 'posts' && postsData.data.length === 0) {
+          postsData.fetchData(INITIAL_PAGE, true);
+        } else if (activeTab === 'activities' && activitiesData.data.length === 0) {
+          activitiesData.fetchData(INITIAL_PAGE, true);
+        } else if (activeTab === 'events' && eventsData.data.length === 0) {
+          eventsData.fetchData(INITIAL_PAGE, true);
         }
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated, activeTab])
   );
 
@@ -223,13 +181,14 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    if (activeTab === 'posts' && posts.length === 0) {
-      fetchPosts(1, true);
-    } else if (activeTab === 'activities' && activities.length === 0) {
-      fetchActivities(1, true);
-    } else if (activeTab === 'events' && events.length === 0) {
-      fetchEvents(1, true);
+    if (activeTab === 'posts' && postsData.data.length === 0) {
+      postsData.fetchData(INITIAL_PAGE, true);
+    } else if (activeTab === 'activities' && activitiesData.data.length === 0) {
+      activitiesData.fetchData(INITIAL_PAGE, true);
+    } else if (activeTab === 'events' && eventsData.data.length === 0) {
+      eventsData.fetchData(INITIAL_PAGE, true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, isAuthenticated]);
 
   const handleRefresh = async () => {
@@ -237,43 +196,19 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     await fetchStats();
 
     if (activeTab === 'posts') {
-      setPostsPage(1);
-      setHasMorePosts(true);
-      await fetchPosts(1, true);
+      await postsData.refresh();
     } else if (activeTab === 'stats') {
       await Promise.all([
         refetchActivityStats(),
         refetchPointStats(),
       ]);
     } else if (activeTab === 'activities') {
-      setActivitiesPage(1);
-      setHasMoreActivities(true);
-      await fetchActivities(1, true);
+      await activitiesData.refresh();
     } else if (activeTab === 'events') {
-      setEventsPage(1);
-      setHasMoreEvents(true);
-      await fetchEvents(1, true);
+      await eventsData.refresh();
     }
 
     setIsRefreshing(false);
-  };
-
-  const handleLoadMorePosts = () => {
-    if (hasMorePosts && !isLoadingPosts) {
-      fetchPosts(postsPage + 1);
-    }
-  };
-
-  const handleLoadMoreActivities = () => {
-    if (hasMoreActivities && !isLoadingActivities) {
-      fetchActivities(activitiesPage + 1);
-    }
-  };
-
-  const handleLoadMoreEvents = () => {
-    if (hasMoreEvents && !isLoadingEvents) {
-      fetchEvents(eventsPage + 1);
-    }
   };
 
   const handleLogout = () => {
@@ -337,35 +272,43 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 
-  const renderProfileHeader = () => (
-    <>
-      {user?.background_image_url ? (
+  // Extract settings button to avoid duplication
+  const renderSettingsButton = () => (
+    <TouchableOpacity
+      style={styles.settingsButton}
+      onPress={() => navigation.navigate('Settings')}
+      activeOpacity={0.7}
+      hitSlop={SETTINGS_HIT_SLOP}
+    >
+      <Ionicons name="settings-outline" size={24} color={colors.white} />
+    </TouchableOpacity>
+  );
+
+  const renderCoverImage = () => {
+    const coverStyle = [styles.coverImage, { backgroundColor: colors.primary }];
+
+    if (user?.background_image_url) {
+      return (
         <ImageBackground
           source={{ uri: fixStorageUrl(user.background_image_url) || undefined }}
-          style={[styles.coverImage, { backgroundColor: colors.primary }]}
+          style={coverStyle}
           resizeMode="cover"
         >
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings')}
-            activeOpacity={0.7}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="settings-outline" size={24} color={colors.white} />
-          </TouchableOpacity>
+          {renderSettingsButton()}
         </ImageBackground>
-      ) : (
-        <View style={[styles.coverImage, { backgroundColor: colors.primary }]}>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings')}
-            activeOpacity={0.7}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="settings-outline" size={24} color={colors.white} />
-          </TouchableOpacity>
-        </View>
-      )}
+      );
+    }
+
+    return (
+      <View style={coverStyle}>
+        {renderSettingsButton()}
+      </View>
+    );
+  };
+
+  const renderProfileHeader = () => (
+    <>
+      {renderCoverImage()}
 
       <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
@@ -468,9 +411,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const renderFooter = () => {
     const isLoading =
-      (activeTab === 'posts' && isLoadingPosts) ||
-      (activeTab === 'activities' && isLoadingActivities) ||
-      (activeTab === 'events' && isLoadingEvents);
+      (activeTab === 'posts' && postsData.isLoading) ||
+      (activeTab === 'activities' && activitiesData.isLoading) ||
+      (activeTab === 'events' && eventsData.isLoading);
 
     if (!isLoading) return null;
 
@@ -486,9 +429,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     if (activeTab === 'stats') return null;
 
     const isLoading =
-      (activeTab === 'posts' && isLoadingPosts && posts.length === 0) ||
-      (activeTab === 'activities' && isLoadingActivities && activities.length === 0) ||
-      (activeTab === 'events' && isLoadingEvents && events.length === 0);
+      (activeTab === 'posts' && postsData.isLoading && postsData.data.length === 0) ||
+      (activeTab === 'activities' && activitiesData.isLoading && activitiesData.data.length === 0) ||
+      (activeTab === 'events' && eventsData.isLoading && eventsData.data.length === 0);
 
     if (isLoading) return null;
 
@@ -520,11 +463,11 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   };
 
   const getData = () => {
-    if (activeTab === 'posts') return posts;
+    if (activeTab === 'posts') return postsData.data;
     if (activeTab === 'drafts') return []; // Drafts content rendered separately
     if (activeTab === 'stats') return []; // Stats content rendered in header
-    if (activeTab === 'activities') return activities;
-    return events;
+    if (activeTab === 'activities') return activitiesData.data;
+    return eventsData.data;
   };
 
   const getKeyExtractor = (item: Post | Activity | Event) => {
@@ -538,14 +481,10 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       } else {
         await api.likePost(post.id);
       }
-      // Update local state
-      setPosts(prev => prev.map(p =>
-        p.id === post.id
-          ? { ...p, is_liked: !p.is_liked, likes_count: p.is_liked ? p.likes_count - 1 : p.likes_count + 1 }
-          : p
-      ));
+      // Refresh posts to get updated like status from server
+      await postsData.refresh();
     } catch (error) {
-      console.error('Failed to like/unlike post:', error);
+      logger.error('api', 'Failed to like/unlike post', { error, postId: post.id, action: post.is_liked ? 'unlike' : 'like' });
     }
   };
 
@@ -586,11 +525,11 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const handleEndReached = () => {
     if (activeTab === 'posts') {
-      handleLoadMorePosts();
+      postsData.loadMore();
     } else if (activeTab === 'activities') {
-      handleLoadMoreActivities();
+      activitiesData.loadMore();
     } else if (activeTab === 'events') {
-      handleLoadMoreEvents();
+      eventsData.loadMore();
     }
   };
 
@@ -603,7 +542,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           ListHeaderComponent={renderProfileHeader}
           onPublishSuccess={() => {
             // Refresh posts tab after successful publish
-            fetchPosts(1, true);
+            postsData.refresh();
             // Switch to posts tab
             setActiveTab('posts');
           }}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { logger } from '../services/logger';
 import type { PaginatedResponse } from '../types/api';
 
@@ -29,10 +29,16 @@ export function usePaginatedTabData<T>({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Use ref to track loading state without causing callback recreation
+  const isLoadingRef = useRef(false);
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+
   const fetchData = useCallback(
     async (pageNumber: number, refresh = false) => {
-      if (isLoading || !userId) return;
+      if (isLoadingRef.current || !userId) return;
 
+      isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
 
@@ -45,35 +51,44 @@ export function usePaginatedTabData<T>({
           setData((prev) => [...prev, ...response.data]);
         }
 
-        setHasMore(response.meta.current_page < response.meta.last_page);
+        const newHasMore = response.meta.current_page < response.meta.last_page;
+        setHasMore(newHasMore);
+        hasMoreRef.current = newHasMore;
         setPage(pageNumber);
+        pageRef.current = pageNumber;
       } catch (err) {
         logger.error('api', 'Failed to fetch paginated data:', { err });
         setError('Failed to load data');
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },
-    [fetchFunction, userId, isLoading]
+    [fetchFunction, userId]
   );
 
   const refresh = useCallback(async () => {
     setPage(1);
+    pageRef.current = 1;
     setHasMore(true);
+    hasMoreRef.current = true;
     await fetchData(1, true);
   }, [fetchData]);
 
   const loadMore = useCallback(() => {
-    if (hasMore && !isLoading) {
-      fetchData(page + 1);
+    if (hasMoreRef.current && !isLoadingRef.current) {
+      fetchData(pageRef.current + 1);
     }
-  }, [hasMore, isLoading, page, fetchData]);
+  }, [fetchData]);
 
   const reset = useCallback(() => {
     setData([]);
     setPage(1);
+    pageRef.current = 1;
     setHasMore(true);
+    hasMoreRef.current = true;
     setIsLoading(false);
+    isLoadingRef.current = false;
     setError(null);
   }, []);
 
