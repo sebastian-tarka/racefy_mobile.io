@@ -23,7 +23,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event, EventRegistration, User, Activity } from '../../types/api';
+import type { Event, EventRegistration, User, Activity, LeaderboardEntry } from '../../types/api';
 import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
@@ -46,6 +46,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<EventRegistration[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -69,14 +70,16 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const fetchEvent = useCallback(async () => {
     try {
       setError(null);
-      const [eventData, participantsData, activitiesData] = await Promise.all([
+      const [eventData, participantsData, activitiesData, leaderboardData] = await Promise.all([
         api.getEvent(eventId),
         api.getEventParticipants(eventId).catch(() => []),
         api.getEventActivities(eventId).catch(() => []),
+        api.getEventLeaderboard(eventId, 10).catch(() => ({ leaderboard: [] })),
       ]);
       setEvent(eventData);
       setParticipants(participantsData);
       setActivities(activitiesData);
+      setLeaderboard(leaderboardData.leaderboard);
     } catch (err) {
       setError(t('eventDetail.failedToLoad'));
     } finally {
@@ -582,6 +585,63 @@ export function EventDetailScreen({ route, navigation }: Props) {
           </Card>
         )}
 
+        {/* Event Leaderboard */}
+        {leaderboard.length > 0 && (
+          <Card style={styles.section}>
+            <View style={styles.leaderboardHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                {t('eventDetail.leaderboard')}
+              </Text>
+              <Ionicons name="trophy" size={20} color="#FFD700" />
+            </View>
+            {leaderboard.map((entry, index) => {
+              const medalColor = index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : null;
+              return (
+                <TouchableOpacity
+                  key={`leaderboard-${entry.rank}-${entry.user.id}`}
+                  style={[styles.leaderboardItem, { borderBottomColor: colors.border }]}
+                  onPress={() => {
+                    if (isAuthenticated && entry.user.username) {
+                      navigation.navigate('UserProfile', { username: entry.user.username });
+                    }
+                  }}
+                  disabled={!isAuthenticated}
+                  activeOpacity={isAuthenticated ? 0.7 : 1}
+                >
+                  <View style={styles.leaderboardRank}>
+                    {medalColor ? (
+                      <View style={[styles.medalBadge, { backgroundColor: medalColor + '20' }]}>
+                        <Ionicons name="trophy" size={14} color={medalColor} />
+                      </View>
+                    ) : (
+                      <Text style={[styles.rankNumber, { color: colors.textSecondary }]}>{entry.rank}</Text>
+                    )}
+                  </View>
+                  <Avatar
+                    uri={fixStorageUrl(entry.user.avatar)}
+                    name={entry.user.name}
+                    size="sm"
+                  />
+                  <View style={styles.leaderboardUserInfo}>
+                    <Text style={[styles.leaderboardUserName, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {entry.user.name}
+                    </Text>
+                    <Text style={[styles.leaderboardUsername, { color: colors.textMuted }]}>
+                      @{entry.user.username}
+                    </Text>
+                  </View>
+                  <View style={styles.leaderboardPoints}>
+                    <Text style={[styles.leaderboardPointsValue, { color: colors.primary }]}>
+                      {entry.points.toLocaleString()}
+                    </Text>
+                    <Text style={[styles.leaderboardPointsLabel, { color: colors.textMuted }]}>pts</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </Card>
+        )}
+
         {/* Comments Section */}
         <View style={styles.section}>
           <CommentSection
@@ -858,5 +918,56 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'center',
     paddingTop: spacing.sm,
+  },
+  leaderboardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  leaderboardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+  },
+  leaderboardRank: {
+    width: 28,
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  medalBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rankNumber: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  leaderboardUserInfo: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    marginRight: spacing.sm,
+  },
+  leaderboardUserName: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  leaderboardUsername: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  leaderboardPoints: {
+    alignItems: 'flex-end',
+  },
+  leaderboardPointsValue: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  leaderboardPointsLabel: {
+    fontSize: fontSize.xs,
   },
 });

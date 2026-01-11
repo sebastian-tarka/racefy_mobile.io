@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
@@ -9,9 +9,11 @@ import type { UserPointStats } from '../types/api';
 interface PointsCardProps {
   stats: UserPointStats | null;
   isLoading: boolean;
+  onViewHistory?: () => void;
+  onViewLeaderboard?: () => void;
 }
 
-function PointsCardComponent({ stats, isLoading }: PointsCardProps) {
+function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboard }: PointsCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -100,6 +102,36 @@ function PointsCardComponent({ stats, isLoading }: PointsCardProps) {
           </Text>
         </View>
       </View>
+
+      {/* Actions */}
+      {(onViewHistory || onViewLeaderboard) && (
+        <View style={[styles.actionsSection, { borderTopColor: colors.border }]}>
+          {onViewHistory && (
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              onPress={onViewHistory}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="time-outline" size={18} color={colors.primary} />
+              <Text style={[styles.actionText, { color: colors.primary }]}>
+                {t('profile.points.viewHistory')}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {onViewLeaderboard && (
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              onPress={onViewLeaderboard}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="podium-outline" size={18} color={colors.primary} />
+              <Text style={[styles.actionText, { color: colors.primary }]}>
+                {t('profile.points.viewLeaderboard')}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -180,6 +212,26 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginTop: spacing.sm,
     textAlign: 'center',
+  },
+  actionsSection: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.xs,
+  },
+  actionText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });
 

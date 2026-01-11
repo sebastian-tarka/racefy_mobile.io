@@ -18,3 +18,5 @@ export * from './useOngoingEvents';
 export * from './useBrandAssets';
 export * from './usePaginatedTabData';
 export * from './useUserProfile';
+export * from './useLeaderboard';
+export * from './usePointHistory';

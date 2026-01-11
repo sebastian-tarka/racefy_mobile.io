@@ -16,12 +16,14 @@ import {
   UserListModal,
   UserProfileHeader,
   ScreenHeader,
+  PointsCard,
 } from '../../components';
 import type { TabType } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
+import { useUserPointStats } from '../../hooks/usePointStats';
 import { api } from '../../services/api';
 import {
   canViewFollowersList,
@@ -84,6 +86,13 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
   const isOwnProfile = currentUser?.username === username;
 
+  // User point stats
+  const {
+    stats: userPointStats,
+    isLoading: isLoadingPointStats,
+    refetch: refetchPointStats,
+  } = useUserPointStats({ username, autoLoad: true });
+
   // Load initial posts when profile is loaded
   useEffect(() => {
     if (profile && postsData.data.length === 0) {
@@ -110,6 +119,8 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
     if (activeTab === 'posts') {
       await postsData.refresh();
+    } else if (activeTab === 'stats') {
+      await refetchPointStats();
     } else if (activeTab === 'activities') {
       await activitiesData.refresh();
     } else if (activeTab === 'events') {
@@ -146,6 +157,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
   // Tab configuration
   const tabs = [
     { label: t('profile.tabs.posts'), value: 'posts' as TabType, icon: 'newspaper-outline' as const },
+    { label: t('profile.tabs.stats'), value: 'stats' as TabType, icon: 'stats-chart' as const },
     { label: t('profile.tabs.activities'), value: 'activities' as TabType, icon: 'fitness-outline' as const },
     { label: t('profile.tabs.events'), value: 'events' as TabType, icon: 'calendar-outline' as const },
   ];
@@ -153,6 +165,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
   // Get current tab data
   const getCurrentTabData = () => {
     if (activeTab === 'posts') return postsData;
+    if (activeTab === 'stats') return { data: [], isLoading: isLoadingPointStats, loadMore: () => {} };
     if (activeTab === 'activities') return activitiesData;
     return eventsData;
   };
@@ -164,22 +177,32 @@ export function UserProfileScreen({ navigation, route }: Props) {
     if (!profile) return null;
 
     return (
-      <UserProfileHeader
-        profile={profile}
-        isOwnProfile={isOwnProfile}
-        isAuthenticated={isAuthenticated}
-        isFollowing={isFollowing}
-        isFollowLoading={isFollowLoading}
-        isMessageLoading={isMessageLoading}
-        activeTab={activeTab}
-        tabs={tabs}
-        onBackPress={() => navigation.goBack()}
-        onFollowersPress={() => setShowFollowersModal(true)}
-        onFollowingPress={() => setShowFollowingModal(true)}
-        onFollowToggle={handleFollowToggle}
-        onMessagePress={handleMessagePress}
-        onTabChange={setActiveTab}
-      />
+      <>
+        <UserProfileHeader
+          profile={profile}
+          isOwnProfile={isOwnProfile}
+          isAuthenticated={isAuthenticated}
+          isFollowing={isFollowing}
+          isFollowLoading={isFollowLoading}
+          isMessageLoading={isMessageLoading}
+          activeTab={activeTab}
+          tabs={tabs}
+          onBackPress={() => navigation.goBack()}
+          onFollowersPress={() => setShowFollowersModal(true)}
+          onFollowingPress={() => setShowFollowingModal(true)}
+          onFollowToggle={handleFollowToggle}
+          onMessagePress={handleMessagePress}
+          onTabChange={setActiveTab}
+        />
+        {activeTab === 'stats' && (
+          <View style={styles.statsTabContent}>
+            <PointsCard
+              stats={userPointStats}
+              isLoading={isLoadingPointStats}
+            />
+          </View>
+        )}
+      </>
     );
   };
 
@@ -194,6 +217,9 @@ export function UserProfileScreen({ navigation, route }: Props) {
   };
 
   const renderEmpty = () => {
+    // Stats tab content is rendered in header
+    if (activeTab === 'stats') return null;
+
     if (currentTabData.isLoading && currentTabData.data.length === 0) return null;
 
     if (activeTab === 'posts') {
@@ -350,5 +376,8 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
+  },
+  statsTabContent: {
+    marginTop: spacing.md,
   },
 });

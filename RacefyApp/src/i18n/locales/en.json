@@ -277,7 +277,9 @@
       "monthlyRank": "Monthly Rank",
       "fromActivities": "From Activities",
       "fromEvents": "From Events",
-      "noPoints": "No points yet"
+      "noPoints": "No points yet",
+      "viewHistory": "History",
+      "viewLeaderboard": "Leaderboard"
     },
     "followersList": {
       "title": "Followers",
@@ -382,7 +384,8 @@
     "minutes": "min",
     "seconds": "sec",
     "activities": "Activities",
-    "moreActivities": "+{{count}} more"
+    "moreActivities": "+{{count}} more",
+    "leaderboard": "Leaderboard"
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -838,5 +841,27 @@
     "markAllAsReadError": "Failed to mark all notifications as read",
     "loadError": "Failed to load notifications. Please try again.",
     "navigationError": "Unable to navigate to this content"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabs": {
+      "global": "Global",
+      "following": "Following"
+    },
+    "periods": {
+      "allTime": "All Time",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "noEntries": "No entries yet",
+    "noFollowingEntries": "No entries from people you follow",
+    "authRequired": "Sign in required",
+    "authRequiredMessage": "Sign in to see the leaderboard of people you follow",
+    "history": {
+      "title": "Point History",
+      "points": "pts",
+      "noTransactions": "No point transactions yet",
+      "allLoaded": "All transactions loaded"
+    }
   }
 }

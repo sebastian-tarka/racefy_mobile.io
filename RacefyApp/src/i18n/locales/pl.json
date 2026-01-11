@@ -277,7 +277,9 @@
       "monthlyRank": "Ranking miesiąca",
       "fromActivities": "Z aktywności",
       "fromEvents": "Z wydarzeń",
-      "noPoints": "Brak punktów"
+      "noPoints": "Brak punktów",
+      "viewHistory": "Historia",
+      "viewLeaderboard": "Ranking"
     },
     "followersList": {
       "title": "Obserwujący",
@@ -382,7 +384,8 @@
     "minutes": "min",
     "seconds": "sek",
     "activities": "Aktywności",
-    "moreActivities": "+{{count}} więcej"
+    "moreActivities": "+{{count}} więcej",
+    "leaderboard": "Ranking"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",
@@ -838,5 +841,27 @@
     "markAllAsReadError": "Nie udało się oznaczyć wszystkich powiadomień jako przeczytane",
     "loadError": "Nie udało się załadować powiadomień. Spróbuj ponownie.",
     "navigationError": "Nie można przejść do tej treści"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "tabs": {
+      "global": "Globalny",
+      "following": "Obserwowani"
+    },
+    "periods": {
+      "allTime": "Wszystkie",
+      "weekly": "Tydzień",
+      "monthly": "Miesiąc"
+    },
+    "noEntries": "Brak wpisów",
+    "noFollowingEntries": "Brak wpisów od obserwowanych",
+    "authRequired": "Wymagane logowanie",
+    "authRequiredMessage": "Zaloguj się, aby zobaczyć ranking obserwowanych",
+    "history": {
+      "title": "Historia punktów",
+      "points": "pkt",
+      "noTransactions": "Brak transakcji punktowych",
+      "allLoaded": "Wszystkie transakcje załadowane"
+    }
   }
 }

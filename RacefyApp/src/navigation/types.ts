@@ -37,6 +37,8 @@ export type RootStackParamList = {
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;
+  Leaderboard: undefined;
+  PointHistory: undefined;
 };
 
 declare global {

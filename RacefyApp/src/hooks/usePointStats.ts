@@ -45,3 +45,63 @@ export function usePointStats(): UsePointStatsResult {
     refetch,
   };
 }
+
+interface UseUserPointStatsOptions {
+  username: string | null;
+  autoLoad?: boolean;
+}
+
+interface UseUserPointStatsResult {
+  stats: UserPointStats | null;
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export function useUserPointStats({
+  username,
+  autoLoad = true,
+}: UseUserPointStatsOptions): UseUserPointStatsResult {
+  const [stats, setStats] = useState<UserPointStats | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    if (!username) {
+      setStats(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await api.getUserPointStats(username);
+      setStats(data.stats);
+    } catch (err: any) {
+      console.error('Failed to fetch user point stats:', err);
+      setError(err.message || 'Failed to load points');
+      setStats(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [username]);
+
+  useEffect(() => {
+    if (autoLoad && username) {
+      fetchStats();
+    }
+  }, [autoLoad, username, fetchStats]);
+
+  const refetch = useCallback(async () => {
+    await fetchStats();
+  }, [fetchStats]);
+
+  return {
+    stats,
+    isLoading,
+    error,
+    refetch,
+  };
+}

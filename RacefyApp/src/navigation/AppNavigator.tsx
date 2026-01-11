@@ -32,6 +32,7 @@ import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
 import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
 import { LandingScreen } from '../screens/landing';
+import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
 
 // Types
 import type {
@@ -381,6 +382,14 @@ export function AppNavigator() {
             <RootStack.Screen
               name="LegalDocuments"
               component={LegalDocumentsScreen}
+            />
+            <RootStack.Screen
+              name="Leaderboard"
+              component={LeaderboardScreen}
+            />
+            <RootStack.Screen
+              name="PointHistory"
+              component={PointHistoryScreen}
             />
           </>
         )}

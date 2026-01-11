@@ -403,7 +403,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           )}
 
           {/* Points Card */}
-          <PointsCard stats={pointStats} isLoading={isLoadingPointStats} />
+          <PointsCard
+            stats={pointStats}
+            isLoading={isLoadingPointStats}
+            onViewHistory={() => navigation.navigate('PointHistory')}
+            onViewLeaderboard={() => navigation.navigate('Leaderboard')}
+          />
         </View>
       )}
     </>

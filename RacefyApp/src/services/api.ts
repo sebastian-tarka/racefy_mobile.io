@@ -1072,6 +1072,67 @@ class ApiService {
     return response.data;
   }
 
+  /**
+   * Get global leaderboard (public, no auth required)
+   */
+  async getGlobalLeaderboard(
+    period: Types.LeaderboardPeriod = 'all_time',
+    limit = 50,
+    offset = 0
+  ): Promise<Types.LeaderboardResponse> {
+    const query = new URLSearchParams();
+    query.append('period', period);
+    query.append('limit', String(limit));
+    query.append('offset', String(offset));
+    return this.request<Types.LeaderboardResponse>(`/leaderboard/global?${query}`);
+  }
+
+  /**
+   * Get leaderboard for followed users (auth required)
+   */
+  async getFollowingLeaderboard(
+    period: Types.LeaderboardPeriod = 'all_time',
+    limit = 50
+  ): Promise<Types.LeaderboardResponse> {
+    const query = new URLSearchParams();
+    query.append('period', period);
+    query.append('limit', String(limit));
+    return this.request<Types.LeaderboardResponse>(`/leaderboard/following?${query}`);
+  }
+
+  /**
+   * Get event leaderboard (public, no auth required)
+   */
+  async getEventLeaderboard(eventId: number, limit = 50): Promise<Types.EventLeaderboardResponse> {
+    const query = new URLSearchParams();
+    query.append('limit', String(limit));
+    return this.request<Types.EventLeaderboardResponse>(`/leaderboard/event/${eventId}?${query}`);
+  }
+
+  /**
+   * Get user's point stats by username (public, no auth required)
+   */
+  async getUserPointStats(username: string): Promise<Types.UserStatsResponse> {
+    return this.request<Types.UserStatsResponse>(`/leaderboard/user/${username}`);
+  }
+
+  /**
+   * Get current user's point transaction history (auth required)
+   */
+  async getPointHistory(
+    page = 1,
+    limit = 20,
+    type?: Types.PointTransactionType
+  ): Promise<Types.PointHistoryResponse> {
+    const query = new URLSearchParams();
+    query.append('page', String(page));
+    query.append('limit', String(limit));
+    if (type) {
+      query.append('type', type);
+    }
+    return this.request<Types.PointHistoryResponse>(`/leaderboard/history?${query}`);
+  }
+
   // ============ PROFILE ============
 
   async getProfile(): Promise<Types.User> {

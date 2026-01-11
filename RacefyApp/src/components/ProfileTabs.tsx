@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
 
-export type TabType = 'posts' | 'activities' | 'events';
+export type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
 
 interface TabConfig {
   label: string;

@@ -681,6 +681,58 @@ export interface UserPointStats {
   event_points: number;
 }
 
+export type LeaderboardPeriod = 'all_time' | 'weekly' | 'monthly';
+
+export interface LeaderboardUser {
+  id: number;
+  name: string;
+  username: string;
+  avatar: string | null;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  points: number;
+  user: LeaderboardUser;
+}
+
+export interface LeaderboardResponse {
+  period: LeaderboardPeriod;
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface EventLeaderboardResponse {
+  event_id: number;
+  leaderboard: LeaderboardEntry[];
+}
+
+export interface UserStatsResponse {
+  user: LeaderboardUser;
+  stats: UserPointStats;
+}
+
+export type PointTransactionType = 'activity' | 'event_place' | 'event_finish' | 'bonus' | 'adjustment';
+
+export interface PointTransaction {
+  id: number;
+  points: number;
+  type: PointTransactionType;
+  description: string;
+  created_at: string;
+}
+
+export interface PointHistoryPagination {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
+export interface PointHistoryResponse {
+  transactions: PointTransaction[];
+  pagination: PointHistoryPagination;
+}
+
 // ============ PAGINATION ============
 
 export interface PaginatedResponse<T> {
