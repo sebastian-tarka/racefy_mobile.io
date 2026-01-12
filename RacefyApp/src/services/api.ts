@@ -1468,6 +1468,23 @@ class ApiService {
       { method: 'POST' }
     );
   }
+
+  // ============ ANALYTICS & USAGE TRACKING ============
+
+  /**
+   * Report map usage to backend for cost tracking
+   * Helps monitor Mapbox SDK usage and costs
+   */
+  async reportMapUsage(reports: Array<{
+    activityId: number;
+    timestamp: string;
+    mapType: 'interactive' | 'static';
+  }>): Promise<void> {
+    await this.request('/analytics/map-usage', {
+      method: 'POST',
+      body: JSON.stringify({ reports }),
+    });
+  }
 }
 
 export const api = new ApiService();

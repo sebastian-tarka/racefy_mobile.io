@@ -23,6 +23,7 @@ export * from './ImagePickerButton';
 export * from './Input';
 export * from './LeaderboardList';
 export * from './LeafletMap';
+// MapboxRouteMap is lazy-loaded by LeafletMap when @rnmapbox/maps is available
 export * from './Loading';
 export * from './MediaGallery';
 export * from './MediaPicker';

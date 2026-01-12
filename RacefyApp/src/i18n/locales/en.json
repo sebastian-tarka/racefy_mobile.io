@@ -412,6 +412,8 @@
     "gpsPoints": "GPS Points",
     "gpsTrackRecorded": "GPS Track Recorded",
     "points": "points",
+    "expandMap": "Expand Map",
+    "collapseMap": "Collapse Map",
     "sources": {
       "app": "Racefy App",
       "manual": "Manual Entry",

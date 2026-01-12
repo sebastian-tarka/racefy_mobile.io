@@ -98,6 +98,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     '@react-native-community/datetimepicker',
     'expo-video',
+    '@rnmapbox/maps',
   ],
   extra: {
     appEnv: process.env.APP_ENV || 'production',
@@ -107,6 +108,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     apiStagingUrl: process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api',
     useStagingInDev: process.env.USE_STAGING_IN_DEV === 'true',
     xdebugEnabled: process.env.XDEBUG_ENABLED === 'true',
+    mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN || null,
+    mapboxEnabled: process.env.MAPBOX_ENABLED !== 'false', // Default to true
     // Debug logging configuration
     logEnabled: process.env.LOG_ENABLED === 'true',
     logLevel: process.env.LOG_LEVEL || 'debug',

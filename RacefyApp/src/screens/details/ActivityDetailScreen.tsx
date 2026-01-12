@@ -12,6 +12,7 @@ import {
   Image,
   Dimensions,
   Modal,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +45,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const mapHeightAnim = useRef(new Animated.Value(250)).current;
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -157,7 +160,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   };
 
   const handleLike = useCallback(async () => {
-    if (!activity || isOwner) return;
+    if (!activity || activity.is_owner) return;
 
     // Optimistic update
     const previousLiked = isLiked;
@@ -178,7 +181,19 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       setLikesCount(previousCount);
       logger.error('activity', 'Failed to like/unlike activity', { error });
     }
-  }, [activity, activityId, isLiked, likesCount, isOwner]);
+  }, [activity, activityId, isLiked, likesCount]);
+
+  const toggleMapExpand = useCallback(() => {
+    const newExpandedState = !isMapExpanded;
+    setIsMapExpanded(newExpandedState);
+
+    Animated.spring(mapHeightAnim, {
+      toValue: newExpandedState ? 500 : 250,
+      useNativeDriver: false,
+      tension: 50,
+      friction: 8,
+    }).start();
+  }, [isMapExpanded, mapHeightAnim]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('activityDetail.loading')} />;
@@ -242,12 +257,32 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           {/* Map Section */}
-          {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg) && (
-          <RoutePreview
-            routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
-            routeSvg={gpsTrack.route_svg}
-            height={250}
-          />
+          {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
+          <Animated.View style={{ height: mapHeightAnim }}>
+            <RoutePreview
+              routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
+              routeSvg={gpsTrack.route_svg}
+              trackData={gpsTrack?.track_data}
+              activityId={activity.id}
+              height={isMapExpanded ? 500 : 250}
+              enableZoom={isMapExpanded}
+            />
+            {/* Map Expand/Collapse Toggle Button */}
+            <TouchableOpacity
+              style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
+              onPress={toggleMapExpand}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
+                size={20}
+                color={colors.textPrimary}
+              />
+              <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
+                {isMapExpanded ? t('activityDetail.collapseMap') : t('activityDetail.expandMap')}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
         )}
 
         {/* Title Section */}
@@ -746,5 +781,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  // Map toggle button styles
+  mapToggleButton: {
+    position: 'absolute',
+    bottom: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    gap: spacing.xs,
+  },
+  mapToggleText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
 });

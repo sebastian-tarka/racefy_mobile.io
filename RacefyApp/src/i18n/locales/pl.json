@@ -412,6 +412,8 @@
     "gpsPoints": "Punkty GPS",
     "gpsTrackRecorded": "Trasa GPS nagrana",
     "points": "punktów",
+    "expandMap": "Rozwiń mapę",
+    "collapseMap": "Zwiń mapę",
     "sources": {
       "app": "Aplikacja Racefy",
       "manual": "Wpis ręczny",

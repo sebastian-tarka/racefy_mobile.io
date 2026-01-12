@@ -15,6 +15,13 @@ const USE_STAGING_IN_DEV = extra.useStagingInDev === true;
 // Xdebug debugging - only active in development mode
 export const XDEBUG_ENABLED = __DEV__ && extra.xdebugEnabled === true;
 
+// Mapbox configuration
+const MAPBOX_TOKEN = extra.mapboxAccessToken || null;
+const MAPBOX_FEATURE_ENABLED = extra.mapboxEnabled !== false;
+
+// Only use Mapbox if both token is set AND feature is enabled
+export const MAPBOX_ACCESS_TOKEN = MAPBOX_FEATURE_ENABLED ? MAPBOX_TOKEN : null;
+
 // Export environment info for debugging
 export { APP_ENV };
 
