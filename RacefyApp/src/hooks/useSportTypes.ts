@@ -66,6 +66,7 @@ const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
 const DEFAULT_SPORT_ICON: keyof typeof Ionicons.glyphMap = 'fitness-outline';
 
 // Fallback sport definitions (without names - names come from translations)
+// These are used when API is unavailable - IDs should match API IDs
 const FALLBACK_SPORT_DEFINITIONS: Array<{ id: number; slug: string; icon: keyof typeof Ionicons.glyphMap }> = [
   { id: 1, slug: 'running', icon: 'walk-outline' },
   { id: 2, slug: 'cycling', icon: 'bicycle-outline' },
@@ -73,10 +74,11 @@ const FALLBACK_SPORT_DEFINITIONS: Array<{ id: number; slug: string; icon: keyof 
   { id: 4, slug: 'gym', icon: 'barbell-outline' },
   { id: 5, slug: 'yoga', icon: 'body-outline' },
   { id: 6, slug: 'hiking', icon: 'trail-sign-outline' },
-  { id: 7, slug: 'tennis', icon: 'tennisball-outline' },
-  { id: 8, slug: 'football', icon: 'football-outline' },
-  { id: 9, slug: 'basketball', icon: 'basketball-outline' },
-  { id: 10, slug: 'other', icon: 'fitness-outline' },
+  { id: 7, slug: 'walking', icon: 'walk-outline' },
+  { id: 8, slug: 'tennis', icon: 'tennisball-outline' },
+  { id: 9, slug: 'football', icon: 'football-outline' },
+  { id: 10, slug: 'basketball', icon: 'basketball-outline' },
+  { id: 99, slug: 'other', icon: 'fitness-outline' },
 ];
 
 // Function to get fallback sports with translated names
@@ -236,7 +238,8 @@ export function useSportTypes(): UseSportTypesResult {
   }, [fetchSportTypes]);
 
   /**
-   * Get GPS profile for a sport from API data or fallback to hardcoded profiles
+   * Get GPS profile for a sport from API data or fallback to default profile
+   * Priority: 1) API gps_profile, 2) Hardcoded profile by slug, 3) DEFAULT_GPS_PROFILE
    * @param slugOrId - Sport slug (string) or sport ID (number)
    * @returns GPS profile with camelCase properties
    */
@@ -251,14 +254,34 @@ export function useSportTypes(): UseSportTypesResult {
         sport = sportTypes.find((s) => s.id === slugOrId);
       }
 
-      // If sport found and has GPS profile from API, use it
+      // If sport found and has GPS profile from API, use it (preferred)
       if (sport?.gps_profile) {
+        logger.debug('gps', 'Using API GPS profile', {
+          sportId: sport.id,
+          slug: sport.slug,
+          maxRealisticSpeed: sport.gps_profile.max_realistic_speed,
+        });
         return convertApiGpsProfile(sport.gps_profile);
       }
 
-      // Fall back to hardcoded profiles
-      const slug = typeof slugOrId === 'string' ? slugOrId : sport?.slug || 'other';
-      return getGpsProfileBySlug(slug);
+      // If sport found but no API profile, try hardcoded profile by slug
+      if (sport?.slug) {
+        const fallbackProfile = getGpsProfileBySlug(sport.slug);
+        logger.debug('gps', 'Using hardcoded GPS profile for slug', {
+          sportId: sport.id,
+          slug: sport.slug,
+          maxRealisticSpeed: fallbackProfile.maxRealisticSpeed,
+        });
+        return fallbackProfile;
+      }
+
+      // Sport not found - use default profile
+      // This can happen if sport types not loaded yet or unknown sport ID
+      logger.warn('gps', 'Sport not found, using default GPS profile', {
+        slugOrId,
+        sportTypesLoaded: sportTypes.length,
+      });
+      return getGpsProfileBySlug('other');
     },
     [sportTypes]
   );

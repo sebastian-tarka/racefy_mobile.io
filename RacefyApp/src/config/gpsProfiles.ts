@@ -137,13 +137,14 @@ export function convertToApiGpsProfile(profile: GpsProfile): GpsProfileRequest {
 // ============ DEFAULT PROFILES ============
 
 /**
- * Default GPS profile - used for unknown sports or as fallback
+ * Default GPS profile - used for unknown sports or new sports from API without GPS profile
+ * Settings are permissive to work with any activity type
  */
 export const DEFAULT_GPS_PROFILE: GpsProfile = {
   enabled: true,
-  accuracyThreshold: 25,
+  accuracyThreshold: 30,
   minDistanceThreshold: 3,
-  maxRealisticSpeed: 15, // ~54 km/h - reasonable for most activities
+  maxRealisticSpeed: 20, // ~72 km/h - permissive to handle various activities
   minElevationChange: 3,
   timeInterval: 3000, // 3 seconds
   distanceInterval: 5,
@@ -180,8 +181,8 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
   walking: {
     enabled: true,
     accuracyThreshold: 25,
-    minDistanceThreshold: 5,
-    maxRealisticSpeed: 4, // ~14 km/h
+    minDistanceThreshold: 3,
+    maxRealisticSpeed: 6, // ~21 km/h - matches API, allows for GPS noise
     minElevationChange: 3,
     timeInterval: 5000,
     distanceInterval: 5,
