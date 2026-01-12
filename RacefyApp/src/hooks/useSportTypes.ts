@@ -176,9 +176,39 @@ export function useSportTypes(): UseSportTypesResult {
       // Update GPS profile static cache for background service
       updateGpsProfileCache(apiSports);
 
+      // Log GPS profiles for each sport
+      const sportsWithGps = apiSports.filter(s => s.gps_profile);
+      const sportsWithoutGps = apiSports.filter(s => !s.gps_profile);
+
+      logger.info('gps', 'Sport types loaded with GPS profiles', {
+        totalSports: apiSports.length,
+        withGpsProfiles: sportsWithGps.length,
+        withoutGpsProfiles: sportsWithoutGps.length,
+      });
+
+      // Log each sport's GPS profile details
+      sportsWithGps.forEach(sport => {
+        logger.debug('gps', `GPS profile for ${sport.slug}`, {
+          sportId: sport.id,
+          slug: sport.slug,
+          enabled: sport.gps_profile?.enabled,
+          maxRealisticSpeed: sport.gps_profile?.max_realistic_speed,
+          minDistanceThreshold: sport.gps_profile?.min_distance_threshold,
+          accuracyThreshold: sport.gps_profile?.accuracy_threshold,
+          timeInterval: sport.gps_profile?.time_interval,
+        });
+      });
+
+      // Log sports without GPS profiles (will use fallback)
+      if (sportsWithoutGps.length > 0) {
+        logger.debug('gps', 'Sports without GPS profiles (will use fallback)', {
+          sports: sportsWithoutGps.map(s => ({ id: s.id, slug: s.slug })),
+        });
+      }
+
       logger.info('general', 'Sport types loaded', {
         count: sportsWithIcons.length,
-        withGpsProfiles: apiSports.filter(s => s.gps_profile).length,
+        withGpsProfiles: sportsWithGps.length,
         language: lang,
       });
 

@@ -10,6 +10,7 @@
  */
 
 import type { GpsProfileApiResponse, GpsProfileRequest } from '../types/api';
+import { logger } from '../services/logger';
 
 // ============ TYPE DEFINITIONS ============
 
@@ -273,12 +274,21 @@ export function updateGpsProfileCache(
   cachedApiProfiles.clear();
   cachedSportIdToSlug.clear();
 
+  let cachedCount = 0;
   for (const sport of sports) {
     cachedSportIdToSlug.set(sport.id, sport.slug);
     if (sport.gps_profile) {
-      cachedApiProfiles.set(sport.slug, convertApiGpsProfile(sport.gps_profile));
+      const convertedProfile = convertApiGpsProfile(sport.gps_profile);
+      cachedApiProfiles.set(sport.slug, convertedProfile);
+      cachedCount++;
     }
   }
+
+  logger.info('gps', 'GPS profile cache updated', {
+    totalSports: sports.length,
+    cachedProfiles: cachedCount,
+    cachedSlugs: Array.from(cachedApiProfiles.keys()),
+  });
 }
 
 /**
