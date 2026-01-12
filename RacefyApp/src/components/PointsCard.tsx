@@ -19,7 +19,7 @@ function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboar
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}>
         <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
@@ -27,7 +27,7 @@ function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboar
 
   if (!stats) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}>
         <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           {t('profile.points.noPoints')}
@@ -37,7 +37,7 @@ function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboar
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
       {/* Total Points */}
       <View style={styles.totalSection}>
         <Ionicons name="trophy" size={28} color={colors.primary} />
@@ -141,6 +141,12 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginTop: spacing.md,
+    marginBottom: spacing.md,
+    minHeight: 100,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   totalSection: {
     alignItems: 'center',

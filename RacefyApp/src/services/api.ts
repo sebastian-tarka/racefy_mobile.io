@@ -1076,10 +1076,7 @@ class ApiService {
   // ============ POINTS & LEADERBOARD ============
 
   async getMyPointStats(): Promise<Types.UserPointStats> {
-    const response = await this.request<Types.ApiResponse<Types.UserPointStats>>(
-      '/leaderboard/me'
-    );
-    return response.data;
+    return this.request<Types.UserPointStats>('/leaderboard/me');
   }
 
   /**
