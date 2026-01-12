@@ -5,9 +5,11 @@ import type { GpsProfile } from '../config/gpsProfiles';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 const LOCATION_BUFFER_KEY = '@racefy_location_buffer';
+const FOREGROUND_BUFFER_KEY = '@racefy_foreground_buffer'; // Persisted foreground points
 const ACTIVE_ACTIVITY_KEY = '@racefy_active_activity_id';
 const GPS_PROFILE_KEY = '@racefy_gps_profile';
 const LAST_BACKGROUND_POSITION_KEY = '@racefy_last_bg_position';
+const LAST_SYNC_STATUS_KEY = '@racefy_last_sync_status';
 
 // Default thresholds - will be overridden by stored profile
 const DEFAULT_GPS_ACCURACY_THRESHOLD = 25;
@@ -313,4 +315,112 @@ export async function isBackgroundLocationTrackingRunning(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// ============================================
+// FOREGROUND BUFFER PERSISTENCE
+// Protects against app crash/kill during foreground tracking
+// ============================================
+
+// Get foreground buffer from AsyncStorage
+export async function getForegroundBuffer(): Promise<BufferedLocation[]> {
+  try {
+    const buffer = await AsyncStorage.getItem(FOREGROUND_BUFFER_KEY);
+    return buffer ? JSON.parse(buffer) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Save foreground buffer to AsyncStorage (call periodically during tracking)
+export async function saveForegroundBuffer(buffer: BufferedLocation[]): Promise<void> {
+  try {
+    await AsyncStorage.setItem(FOREGROUND_BUFFER_KEY, JSON.stringify(buffer));
+  } catch (err) {
+    console.error('Failed to persist foreground buffer:', err);
+  }
+}
+
+// Clear foreground buffer (after successful sync or activity end)
+export async function clearForegroundBuffer(): Promise<void> {
+  await AsyncStorage.removeItem(FOREGROUND_BUFFER_KEY);
+}
+
+// Get all persisted points (both foreground and background buffers)
+// Use this on app startup to recover any unsent points
+export async function getAllPersistedPoints(): Promise<BufferedLocation[]> {
+  const [foreground, background] = await Promise.all([
+    getForegroundBuffer(),
+    getLocationBuffer(),
+  ]);
+
+  // Combine and deduplicate by timestamp
+  const seen = new Set<string>();
+  const combined: BufferedLocation[] = [];
+
+  for (const point of [...foreground, ...background]) {
+    const key = point.time;
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(point);
+    }
+  }
+
+  // Sort by time
+  combined.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+  return combined;
+}
+
+// Clear all persisted points (after successful sync)
+export async function clearAllPersistedPoints(): Promise<void> {
+  await Promise.all([
+    clearForegroundBuffer(),
+    clearLocationBuffer(),
+  ]);
+}
+
+// ============================================
+// SYNC STATUS TRACKING
+// Track last sync attempt for UI feedback
+// ============================================
+
+export interface SyncStatus {
+  lastAttempt: string | null;     // ISO timestamp
+  lastSuccess: string | null;     // ISO timestamp
+  pendingPoints: number;          // Points waiting to be synced
+  lastError: string | null;       // Last error message if any
+  isOnline: boolean;              // Network status
+}
+
+export async function getSyncStatus(): Promise<SyncStatus> {
+  try {
+    const status = await AsyncStorage.getItem(LAST_SYNC_STATUS_KEY);
+    if (status) {
+      return JSON.parse(status);
+    }
+  } catch {
+    // Ignore
+  }
+  return {
+    lastAttempt: null,
+    lastSuccess: null,
+    pendingPoints: 0,
+    lastError: null,
+    isOnline: true,
+  };
+}
+
+export async function updateSyncStatus(updates: Partial<SyncStatus>): Promise<void> {
+  try {
+    const current = await getSyncStatus();
+    const updated = { ...current, ...updates };
+    await AsyncStorage.setItem(LAST_SYNC_STATUS_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('Failed to update sync status:', err);
+  }
+}
+
+export async function clearSyncStatus(): Promise<void> {
+  await AsyncStorage.removeItem(LAST_SYNC_STATUS_KEY);
 }
