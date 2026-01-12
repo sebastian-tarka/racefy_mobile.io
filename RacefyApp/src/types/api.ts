@@ -409,6 +409,8 @@ export interface AddActivityPointsResponse {
     duration: number;      // Total seconds (excludes paused time)
     elevation_gain: number; // Total meters climbed
     calories?: number;     // Current calories (if synced)
+    avg_speed?: number;    // Average speed in m/s (server-calculated)
+    max_speed?: number;    // Maximum speed in m/s (server-calculated)
   };
 }
 
