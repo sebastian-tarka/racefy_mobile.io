@@ -13,6 +13,7 @@ import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { MediaGallery } from './MediaGallery';
 import { RoutePreview } from './LeafletMap';
+import { BoostButton } from './BoostButton';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
@@ -26,6 +27,8 @@ interface PostCardProps {
   onComment?: () => void;
   onUserPress?: () => void;
   onMenuPress?: () => void;
+  onActivityPress?: () => void;
+  onEventPress?: () => void;
   isOwner?: boolean;
 }
 
@@ -74,6 +77,8 @@ export function PostCard({
   onComment,
   onUserPress,
   onMenuPress,
+  onActivityPress,
+  onEventPress,
   isOwner = false,
 }: PostCardProps) {
   const { t } = useTranslation();
@@ -123,7 +128,12 @@ export function PostCard({
     const hasRouteMap = activity.route_map_url || activity.route_svg;
 
     return (
-      <View style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
+      <TouchableOpacity
+        style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        onPress={onActivityPress}
+        activeOpacity={0.7}
+        disabled={!onActivityPress}
+      >
         {/* Route Map Preview */}
         {hasRouteMap && (
           <View style={styles.activityMapContainer}>
@@ -164,6 +174,9 @@ export function PostCard({
               )}
             </View>
           </View>
+          {onActivityPress && (
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          )}
         </View>
 
         <View style={[styles.activityStats, { borderTopColor: colors.borderLight }]}>
@@ -182,7 +195,18 @@ export function PostCard({
             </Text>
           </View>
         </View>
-      </View>
+
+        {/* Boost button for activity */}
+        <View style={[styles.activityBoostContainer, { borderTopColor: colors.borderLight }]}>
+          <BoostButton
+            activityId={activity.id}
+            initialBoostsCount={activity.boosts_count || 0}
+            initialIsBoosted={activity.is_boosted || false}
+            disabled={activity.is_owner || false}
+            compact
+          />
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -191,7 +215,12 @@ export function PostCard({
     const event = post.event;
 
     return (
-      <View style={[styles.eventPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
+      <TouchableOpacity
+        style={[styles.eventPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        onPress={onEventPress}
+        activeOpacity={0.7}
+        disabled={!onEventPress}
+      >
         <View style={styles.eventHeader}>
           <View style={[styles.eventDateBadge, { backgroundColor: colors.warning }]}>
             <Text style={[styles.eventDateDay, { color: colors.white }]}>
@@ -224,8 +253,11 @@ export function PostCard({
               </View>
             </View>
           </View>
+          {onEventPress && (
+            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+          )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -450,6 +482,13 @@ const styles = StyleSheet.create({
   activityStatValue: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  activityBoostContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
   },
   eventPreview: {
     marginHorizontal: spacing.lg,

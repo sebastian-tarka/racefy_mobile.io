@@ -503,6 +503,16 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onLike={() => handleLikePost(post)}
           onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
           onUserPress={() => {}}
+          onActivityPress={
+            post.type === 'activity' && post.activity
+              ? () => navigation.navigate('ActivityDetail', { activityId: post.activity!.id })
+              : undefined
+          }
+          onEventPress={
+            post.type === 'event' && post.event
+              ? () => navigation.navigate('EventDetail', { eventId: post.event!.id })
+              : undefined
+          }
           isOwner={post.is_owner}
         />
       );

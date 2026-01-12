@@ -486,6 +486,16 @@ export function FeedScreen({ navigation, route }: Props) {
                   navigation.navigate('UserProfile', { username: item.user.username });
                 }
               }}
+              onActivityPress={
+                item.type === 'activity' && item.activity
+                  ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
+                  : undefined
+              }
+              onEventPress={
+                item.type === 'event' && item.event
+                  ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
+                  : undefined
+              }
               onMenuPress={() => handleDeletePost(item.id)}
               isOwner={item.user_id === user?.id}
             />

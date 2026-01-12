@@ -867,6 +867,16 @@ class ApiService {
     return response;
   }
 
+  // ============ ACTIVITY LIKES ============
+
+  async likeActivity(id: number): Promise<void> {
+    await this.request(`/activities/${id}/like`, { method: 'POST' });
+  }
+
+  async unlikeActivity(id: number): Promise<void> {
+    await this.request(`/activities/${id}/like`, { method: 'DELETE' });
+  }
+
   // ============ ACTIVITY COMMENTS ============
 
   async getActivityComments(activityId: number): Promise<Types.Comment[]> {

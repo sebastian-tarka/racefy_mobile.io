@@ -255,10 +255,21 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {
+      const post = item as Post;
       return (
         <PostCard
-          post={item as Post}
+          post={post}
           onUserPress={() => {}}
+          onActivityPress={
+            post.type === 'activity' && post.activity
+              ? () => navigation.navigate('ActivityDetail', { activityId: post.activity!.id })
+              : undefined
+          }
+          onEventPress={
+            post.type === 'event' && post.event
+              ? () => navigation.navigate('EventDetail', { eventId: post.event!.id })
+              : undefined
+          }
         />
       );
     }

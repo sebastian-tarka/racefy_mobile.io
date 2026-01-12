@@ -42,6 +42,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -53,6 +55,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       setError(null);
       const data = await api.getActivity(activityId);
       setActivity(data);
+      setIsLiked(data.is_liked || false);
+      setLikesCount(data.likes_count || 0);
 
       // Fetch GPS track if available
       if (data.has_gps_track) {
@@ -151,6 +155,30 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     if (sportName.includes('yoga')) return 'body-outline';
     return 'fitness-outline';
   };
+
+  const handleLike = useCallback(async () => {
+    if (!activity || isOwner) return;
+
+    // Optimistic update
+    const previousLiked = isLiked;
+    const previousCount = likesCount;
+
+    setIsLiked(!isLiked);
+    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+
+    try {
+      if (isLiked) {
+        await api.unlikeActivity(activityId);
+      } else {
+        await api.likeActivity(activityId);
+      }
+    } catch (error) {
+      // Revert on error
+      setIsLiked(previousLiked);
+      setLikesCount(previousCount);
+      logger.error('activity', 'Failed to like/unlike activity', { error });
+    }
+  }, [activity, activityId, isLiked, likesCount, isOwner]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('activityDetail.loading')} />;
@@ -447,19 +475,24 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           <Card style={styles.engagementCard}>
             <View style={styles.engagementRow}>
               {/* Likes */}
-              <View style={styles.engagementItem}>
+              <TouchableOpacity
+                style={styles.engagementItem}
+                onPress={handleLike}
+                disabled={isOwner}
+                activeOpacity={0.7}
+              >
                 <Ionicons
-                  name={activity.is_liked ? 'heart' : 'heart-outline'}
+                  name={isLiked ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={activity.is_liked ? '#E53E3E' : colors.textMuted}
+                  color={isLiked ? '#E53E3E' : colors.textMuted}
                 />
                 <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
-                  {activity.likes_count || 0}
+                  {likesCount}
                 </Text>
                 <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
                   {t('engagement.likes')}
                 </Text>
-              </View>
+              </TouchableOpacity>
 
               {/* Boosts */}
               <View style={styles.engagementItem}>
