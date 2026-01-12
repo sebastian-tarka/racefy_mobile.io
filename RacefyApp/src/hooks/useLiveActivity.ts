@@ -559,9 +559,24 @@ function useLiveActivityInternal() {
     const profile = getGpsProfileForSport(sportTypeId);
     currentGpsProfile.current = profile;
 
+    logger.info('gps', 'GPS profile loaded for activity', {
+      activityId,
+      sportTypeId,
+      enabled: profile.enabled,
+      accuracyThreshold: profile.accuracyThreshold,
+      minDistanceThreshold: profile.minDistanceThreshold,
+      maxRealisticSpeed: profile.maxRealisticSpeed,
+      timeInterval: profile.timeInterval,
+      distanceInterval: profile.distanceInterval,
+    });
+
     // Check if GPS is enabled for this activity type
     if (!profile.enabled) {
-      logger.gps('GPS tracking disabled for sport type', { sportTypeId });
+      logger.warn('gps', 'GPS tracking disabled for sport type', {
+        sportTypeId,
+        activityId,
+        profileEnabled: profile.enabled
+      });
       return;
     }
 
@@ -942,7 +957,7 @@ function useLiveActivityInternal() {
         throw error;
       }
     },
-    []
+    [getGpsProfileForSport]
   );
 
   const pauseTracking = useCallback(async () => {
