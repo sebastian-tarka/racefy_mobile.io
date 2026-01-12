@@ -1086,6 +1086,13 @@ function useLiveActivityInternal() {
           error: null,
           currentStats: { ...initialStats },
           hasExistingActivity: false,
+          trackingStatus: {
+            gpsSignal: 'good',
+            isOnline: true,
+            pendingPoints: 0,
+            lastSyncTime: null,
+            syncError: null,
+          },
         });
 
         return { activity, post: response.post };
@@ -1144,6 +1151,13 @@ function useLiveActivityInternal() {
         error: null,
         currentStats: { ...initialStats },
         hasExistingActivity: false,
+        trackingStatus: {
+          gpsSignal: 'good',
+          isOnline: true,
+          pendingPoints: 0,
+          lastSyncTime: null,
+          syncError: null,
+        },
       });
     } catch (error: any) {
       logger.error('activity', 'Failed to discard activity', { id: state.activity.id, error: error.message });

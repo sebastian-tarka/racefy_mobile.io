@@ -60,6 +60,7 @@ export function ActivityRecordingScreen() {
     error,
     currentStats,
     hasExistingActivity,
+    trackingStatus,
     startTracking,
     pauseTracking,
     resumeTracking,
@@ -528,6 +529,24 @@ export function ActivityRecordingScreen() {
         <View style={styles.headerRight}>
           {activity && (
             <Text style={[styles.activityId, { color: colors.textMuted }]}>ID: {activity.id}</Text>
+          )}
+          {/* GPS Signal Indicator */}
+          {(isTracking || isPaused) && trackingStatus && (
+            <View style={[styles.gpsIndicator, {
+              backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
+                                trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
+                                colors.error + '20'
+            }]}>
+              <Ionicons
+                name={trackingStatus.gpsSignal === 'good' ? 'locate' :
+                      trackingStatus.gpsSignal === 'weak' ? 'locate-outline' :
+                      'locate-outline'}
+                size={16}
+                color={trackingStatus.gpsSignal === 'good' ? colors.success :
+                       trackingStatus.gpsSignal === 'weak' ? colors.warning :
+                       colors.error}
+              />
+            </View>
           )}
           {status === 'idle' && (
             <TouchableOpacity
@@ -1065,6 +1084,13 @@ const styles = StyleSheet.create({
   },
   activityId: {
     fontSize: fontSize.xs,
+  },
+  gpsIndicator: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButton: {
     width: 32,
