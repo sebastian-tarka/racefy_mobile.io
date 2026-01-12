@@ -159,6 +159,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   ai_posts: {
     enabled: false,
     default_style: 'achievement',
+    default_perspective: 'descriptive',
     triggers: {
       activity_completion: true,
       activity_share: false,

@@ -689,7 +689,17 @@
       "styles": {
         "achievement": "Achievement",
         "statistical": "Statistical",
-        "comparison": "Comparison"
+        "comparison": "Comparison",
+        "casual": "Casual",
+        "motivational": "Motivational",
+        "technical": "Technical",
+        "social": "Social"
+      },
+      "defaultPerspective": "Perspective",
+      "perspectiveDescription": "Choose the narrative voice for your AI posts. Coach Mode shares as a coach or observer, My Story writes in your personal voice.",
+      "perspectives": {
+        "descriptive": "Coach Mode",
+        "personal": "My Story"
       },
       "triggers": "Auto-generate when",
       "triggerActivityCompletion": "Activity is completed",

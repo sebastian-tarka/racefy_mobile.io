@@ -689,7 +689,17 @@
       "styles": {
         "achievement": "Osiągnięcia",
         "statistical": "Statystyczny",
-        "comparison": "Porównanie"
+        "comparison": "Porównanie",
+        "casual": "Swobodny",
+        "motivational": "Motywacyjny",
+        "technical": "Techniczny",
+        "social": "Towarzyski"
+      },
+      "defaultPerspective": "Perspektywa",
+      "perspectiveDescription": "Wybierz głos narracji dla postów AI. Tryb trenera opisuje z perspektywy obserwatora, Moja historia pisze w Twoim osobistym głosie.",
+      "perspectives": {
+        "descriptive": "Tryb trenera",
+        "personal": "Moja historia"
       },
       "triggers": "Auto-generuj gdy",
       "triggerActivityCompletion": "Aktywność jest ukończona",

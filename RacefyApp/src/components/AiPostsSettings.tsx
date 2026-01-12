@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { spacing, fontSize } from '../theme';
-import type { AiPostsPreferences } from '../types/api';
+import type { AiPostsPreferences, AiPostStyle, AiPostPerspective } from '../types/api';
 
 interface AiPostsSettingsProps {
   preferences: AiPostsPreferences;
@@ -27,9 +27,14 @@ export function AiPostsSettings({
     await onPreferenceChange(key, value);
   };
 
-  const handleStyleChange = async (style: 'achievement' | 'statistical' | 'comparison') => {
+  const handleStyleChange = async (style: AiPostStyle) => {
     triggerHaptic();
     await onPreferenceChange('ai_posts.default_style', style);
+  };
+
+  const handlePerspectiveChange = async (perspective: AiPostPerspective) => {
+    triggerHaptic();
+    await onPreferenceChange('ai_posts.default_perspective', perspective);
   };
 
   const isDisabled = !preferences.enabled || isUpdating;
@@ -87,12 +92,12 @@ export function AiPostsSettings({
         <Text style={[styles.label, { color: colors.textPrimary }]}>
           {t('settings.aiPosts.defaultStyle')}
         </Text>
-        <View style={styles.buttonRow}>
-          {(['achievement', 'statistical', 'comparison'] as const).map((style) => (
+        <View style={styles.buttonGrid}>
+          {(['achievement', 'statistical', 'comparison', 'casual', 'motivational', 'technical', 'social'] as const).map((style) => (
             <TouchableOpacity
               key={style}
               style={[
-                styles.styleButton,
+                styles.styleGridButton,
                 {
                   backgroundColor:
                     preferences.default_style === style ? colors.primary : colors.border,
@@ -120,6 +125,47 @@ export function AiPostsSettings({
         </View>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>
           {t('settings.aiPosts.styleDescription')}
+        </Text>
+      </View>
+
+      {/* Perspective Selector */}
+      <View style={[styles.section, { borderTopColor: colors.border }]}>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>
+          {t('settings.aiPosts.defaultPerspective')}
+        </Text>
+        <View style={styles.buttonRow}>
+          {(['descriptive', 'personal'] as const).map((perspective) => (
+            <TouchableOpacity
+              key={perspective}
+              style={[
+                styles.styleButton,
+                {
+                  backgroundColor:
+                    preferences.default_perspective === perspective ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => handlePerspectiveChange(perspective)}
+              disabled={isDisabled}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.styleButtonText,
+                  {
+                    color:
+                      preferences.default_perspective === perspective
+                        ? colors.white
+                        : colors.textSecondary,
+                  },
+                ]}
+              >
+                {t(`settings.aiPosts.perspectives.${perspective}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>
+          {t('settings.aiPosts.perspectiveDescription')}
         </Text>
       </View>
 
@@ -230,6 +276,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginVertical: spacing.sm,
   },
+  buttonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginVertical: spacing.sm,
+  },
   styleButton: {
     flex: 1,
     paddingHorizontal: spacing.sm,
@@ -237,6 +289,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  styleGridButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '30%',
   },
   styleButtonText: {
     fontSize: fontSize.sm,

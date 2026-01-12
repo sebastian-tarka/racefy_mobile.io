@@ -86,9 +86,13 @@ export interface NotificationChannelSettings {
   websocket: boolean;
 }
 
+export type AiPostStyle = 'achievement' | 'statistical' | 'comparison' | 'casual' | 'motivational' | 'technical' | 'social';
+export type AiPostPerspective = 'descriptive' | 'personal';
+
 export interface AiPostsPreferences {
   enabled: boolean;
-  default_style: 'achievement' | 'statistical' | 'comparison';
+  default_style: AiPostStyle;
+  default_perspective: AiPostPerspective;
   triggers: {
     activity_completion: boolean;
     activity_share: boolean;
@@ -194,7 +198,8 @@ export interface CreatePostRequest {
 export interface AiGenerationInfo {
   id: number;
   trigger: 'activity_completion' | 'activity_share' | 'event_results' | 'event_forced';
-  style: 'achievement' | 'statistical' | 'comparison';
+  style: AiPostStyle;
+  perspective: AiPostPerspective;
   is_ai_generated: true;
 }
 
