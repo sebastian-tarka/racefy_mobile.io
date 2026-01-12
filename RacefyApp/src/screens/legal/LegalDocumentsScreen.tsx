@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { ScreenHeader } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
 import { getCurrentLanguage } from '../../i18n';
 import { getPublicDocuments, getAvailableLanguages } from '../../services/legal';
 import { spacing, fontSize } from '../../theme';
@@ -63,7 +64,7 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
         getAvailableLanguages(),
       ]);
 
-      console.log('[LegalDocuments] API response:', JSON.stringify(docsResponse, null, 2));
+      logger.debug('api', 'LegalDocuments API response', { response: docsResponse });
 
       // Handle different API response structures
       const response: any = docsResponse;
@@ -78,12 +79,12 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
         docsData = response.data;
       }
 
-      console.log('[LegalDocuments] Parsed documents count:', docsData.length);
+      logger.debug('api', 'Parsed documents count', { count: docsData.length });
 
       setDocuments(docsData);
       setLanguages(langsResponse?.supported ?? ['en', 'pl']);
     } catch (err) {
-      console.error('Failed to load documents:', err);
+      logger.error('api', 'Failed to load documents', { error: err });
       setError(t('legal.loadError'));
     } finally {
       setLoading(false);

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { Event } from '../types/api';
 
 /**
@@ -25,7 +26,7 @@ export function useOngoingEvents() {
       const ongoingEvents = await api.getMyOngoingEvents();
       setEvents(ongoingEvents);
     } catch (err: any) {
-      console.error('Failed to fetch ongoing events:', err);
+      logger.error('general', 'Failed to fetch ongoing events', { error: err });
       setError(err.message || 'Failed to load ongoing events');
       setEvents([]);
     } finally {

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { Card } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
 import { api } from '../../../../services/api';
+import { logger } from '../../../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
 import type { Event } from '../../../../types/api';
 
@@ -31,7 +32,7 @@ export function UpcomingEventsPreview({
         const response = await api.getEvents({ status: 'upcoming', per_page: limit });
         setEvents(response.data);
       } catch (error) {
-        console.log('Failed to fetch upcoming events:', error);
+        logger.debug('api', 'Failed to fetch upcoming events', { error });
       } finally {
         setIsLoading(false);
       }

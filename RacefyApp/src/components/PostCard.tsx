@@ -16,6 +16,7 @@ import { RoutePreview } from './LeafletMap';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { logger } from '../services/logger';
 import type { Post } from '../types/api';
 
 interface PostCardProps {
@@ -235,7 +236,8 @@ export function PostCard({
     const hasVideos = post.videos && post.videos.length > 0;
 
     // Debug: Log post media data
-    console.log('[PostCard] Post ID:', post.id, 'Media check:', {
+    logger.debug('general', 'PostCard media check', {
+      postId: post.id,
       hasMedia,
       hasPhotos,
       hasVideos,

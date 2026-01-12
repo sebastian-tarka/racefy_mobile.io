@@ -12,6 +12,7 @@ import { DraftPostCard } from './DraftPostCard';
 import { EmptyState } from './EmptyState';
 import { Loading } from './Loading';
 import { useTheme } from '../hooks/useTheme';
+import { logger } from '../services/logger';
 import { spacing } from '../theme';
 import type { DraftPost } from '../types/api';
 
@@ -69,7 +70,7 @@ export function DraftsTab({
               onPublishSuccess?.();
             } catch (error) {
               Alert.alert(t('common.error'), t('drafts.publishFailed'));
-              console.error('[DraftsTab] Publish error:', error);
+              logger.error('api', 'DraftsTab publish error', { error });
             } finally {
               setPublishingId(null);
             }
@@ -103,7 +104,7 @@ export function DraftsTab({
               // Silently succeed - item removed from list is feedback enough
             } catch (error) {
               Alert.alert(t('common.error'), t('drafts.deleteFailed'));
-              console.error('[DraftsTab] Delete error:', error);
+              logger.error('api', 'DraftsTab delete error', { error });
             }
           },
           style: 'destructive',

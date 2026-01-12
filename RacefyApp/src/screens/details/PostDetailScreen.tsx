@@ -26,6 +26,7 @@ import {
   RoutePreview,
 } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -110,7 +111,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
           const track = await api.getActivityTrack(data.activity.id);
           setGpsTrack(track);
         } catch (trackError) {
-          console.log('Failed to load GPS track for activity post:', trackError);
+          logger.debug('gps', 'Failed to load GPS track for activity post', { error: trackError });
         }
       }
     } catch (err) {

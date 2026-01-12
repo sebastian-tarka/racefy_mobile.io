@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../services/logger';
 
 import en from './locales/en.json';
 import pl from './locales/pl.json';
@@ -39,7 +40,7 @@ export const loadSavedLanguage = async (): Promise<void> => {
       await i18n.changeLanguage(savedLanguage);
     }
   } catch (error) {
-    console.error('Failed to load saved language:', error);
+    logger.error('general', 'Failed to load saved language', { error });
   }
 };
 
@@ -49,7 +50,7 @@ export const changeLanguage = async (languageCode: string): Promise<void> => {
     await i18n.changeLanguage(languageCode);
     await AsyncStorage.setItem(LANGUAGE_KEY, languageCode);
   } catch (error) {
-    console.error('Failed to change language:', error);
+    logger.error('general', 'Failed to change language', { error });
   }
 };
 

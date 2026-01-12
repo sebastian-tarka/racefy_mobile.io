@@ -192,7 +192,7 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    console.log('Login response:', JSON.stringify(response, null, 2));
+    logger.auth('Login response received', { response });
 
     // Handle both { user, access_token } and { data: { user, access_token } }
     const authData = response.data || response;

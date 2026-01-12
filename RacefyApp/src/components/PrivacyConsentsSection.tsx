@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../hooks/useTheme';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { getUserConsents, updateOptionalConsent } from '../services/legal';
+import { logger } from '../services/logger';
 import { spacing, fontSize } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import type { UserConsent, LegalDocumentType } from '../types/legal';
@@ -55,7 +56,7 @@ export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSect
   const loadConsents = async () => {
     try {
       const response: any = await getUserConsents();
-      console.log('[PrivacyConsentsSection] API response:', JSON.stringify(response, null, 2));
+      logger.debug('api', 'PrivacyConsentsSection API response', { response });
 
       // Handle different response structures
       let consentsData: UserConsent[] = [];
@@ -73,10 +74,10 @@ export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSect
         consentsData = response.data;
       }
 
-      console.log('[PrivacyConsentsSection] Parsed consents:', consentsData.length);
+      logger.debug('api', 'PrivacyConsentsSection parsed consents', { count: consentsData.length });
       setConsents(consentsData);
     } catch (err) {
-      console.error('[PrivacyConsentsSection] Failed to load consents:', err);
+      logger.error('api', 'PrivacyConsentsSection failed to load consents', { error: err });
       setConsents([]);
     } finally {
       setLoading(false);
@@ -100,7 +101,7 @@ export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSect
         )
       );
     } catch (err) {
-      console.error('Failed to update consent:', err);
+      logger.error('api', 'Failed to update consent', { error: err });
     } finally {
       setUpdating(null);
     }

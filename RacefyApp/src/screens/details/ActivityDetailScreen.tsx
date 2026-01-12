@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -57,19 +58,18 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       if (data.has_gps_track) {
         try {
           const track = await api.getActivityTrack(activityId);
-          console.log('GPS Track loaded:', {
+          logger.debug('gps', 'GPS Track loaded', {
             hasTrack: !!track,
             pointsCount: track?.points_count,
             hasRouteMapUrl: !!track?.route_map_url,
-            routeMapUrl: track?.route_map_url,
             hasRouteSvg: !!track?.route_svg,
           });
           setGpsTrack(track);
         } catch (trackError) {
-          console.log('Failed to load GPS track:', trackError);
+          logger.debug('gps', 'Failed to load GPS track', { error: trackError });
         }
       } else {
-        console.log('Activity has no GPS track');
+        logger.debug('gps', 'Activity has no GPS track');
       }
     } catch (err) {
       setError(t('activityDetail.failedToLoad'));

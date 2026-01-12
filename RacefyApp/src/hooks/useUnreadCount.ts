@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 
 export function useUnreadCount(pollInterval = 30000) {
@@ -17,7 +18,7 @@ export function useUnreadCount(pollInterval = 30000) {
       const unreadCount = await api.getUnreadCount();
       setCount(unreadCount);
     } catch (err) {
-      console.error('Failed to fetch unread count:', err);
+      logger.error('api', 'Failed to fetch unread count', { error: err });
     }
   }, [isAuthenticated]);
 

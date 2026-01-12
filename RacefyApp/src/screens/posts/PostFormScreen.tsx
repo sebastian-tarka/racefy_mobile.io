@@ -22,6 +22,7 @@ import {
   MediaThumbnail,
 } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
@@ -69,7 +70,7 @@ export function PostFormScreen({ navigation, route }: Props) {
       const post = await api.getPost(id);
       populateForm(post);
     } catch (error) {
-      console.error('Failed to fetch post:', error);
+      logger.error('api', 'Failed to fetch post', { error });
       Alert.alert(t('common.error'), t('postForm.failedToLoad'));
       navigation.goBack();
     } finally {
@@ -169,7 +170,7 @@ export function PostFormScreen({ navigation, route }: Props) {
           try {
             await api.deletePostMedia(media.id, media.type);
           } catch (error) {
-            console.error(`Failed to delete ${media.type}:`, error);
+            logger.error('api', `Failed to delete ${media.type}`, { error });
           }
         }
 
@@ -178,7 +179,7 @@ export function PostFormScreen({ navigation, route }: Props) {
           try {
             await api.uploadPostMedia(postId, mediaItem);
           } catch (error) {
-            console.error('Failed to upload media:', error);
+            logger.error('api', 'Failed to upload media', { error });
           }
         }
 
@@ -186,7 +187,7 @@ export function PostFormScreen({ navigation, route }: Props) {
       }
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to save post:', error);
+      logger.error('api', 'Failed to save post', { error });
       Alert.alert(
         t('common.error'),
         t('postForm.updateFailed')

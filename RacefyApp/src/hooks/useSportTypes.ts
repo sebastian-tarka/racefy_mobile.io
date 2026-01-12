@@ -304,7 +304,7 @@ function getIconForSport(sport: SportType): keyof typeof Ionicons.glyphMap {
     }
   }
 
-  console.log(`No icon found for sport: slug="${sport.slug}", name="${sport.name}" - using default`);
+  logger.debug('general', `No icon found for sport: slug="${sport.slug}", name="${sport.name}" - using default`);
   return DEFAULT_SPORT_ICON;
 }
 

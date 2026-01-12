@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import type { ActivityLocation } from '../types/api';
+import { logger } from '../services/logger';
 
 /**
  * Captures current location with reverse geocoding.
@@ -13,7 +14,7 @@ export async function captureActivityLocation(): Promise<ActivityLocation | null
       // Try requesting if not granted
       const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
       if (newStatus !== 'granted') {
-        console.log('[LocationCapture] Permission denied');
+        logger.gps('Location permission denied for activity capture');
         return null;
       }
     }
@@ -48,7 +49,7 @@ export async function captureActivityLocation(): Promise<ActivityLocation | null
       }
     } catch (geocodeError) {
       // Geocoding failed, but we still have coordinates
-      console.log('[LocationCapture] Reverse geocoding failed:', geocodeError);
+      logger.warn('gps', 'Reverse geocoding failed', { error: geocodeError });
     }
 
     return {
@@ -61,7 +62,7 @@ export async function captureActivityLocation(): Promise<ActivityLocation | null
       location_name: locationName,
     };
   } catch (error) {
-    console.log('[LocationCapture] Failed to capture location:', error);
+    logger.warn('gps', 'Failed to capture activity location', { error });
     return null;
   }
 }

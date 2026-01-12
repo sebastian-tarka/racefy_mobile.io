@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
+import { logger } from '../services/logger';
 
 interface VideoPlayerProps {
   uri: string;
@@ -35,14 +36,14 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
   const [duration, setDuration] = useState(0);
 
   // Debug: Log video player initialization
-  console.log('[VideoPlayer] Initializing with:', {
+  logger.debug('general', 'VideoPlayer initializing', {
     uri,
     visible,
     thumbnailUrl,
   });
 
   const player = useVideoPlayer(uri, (player) => {
-    console.log('[VideoPlayer] Player created, starting playback');
+    logger.debug('general', 'VideoPlayer player created, starting playback');
     player.loop = true;
     player.play();
   });
@@ -52,18 +53,17 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
 
     const statusSubscription = player.addListener('statusChange', (payload) => {
       const status = payload.status;
-      console.log('[VideoPlayer] Status changed:', status, payload);
+      logger.debug('general', 'VideoPlayer status changed', { status, payload });
       if (status === 'readyToPlay') {
-        console.log('[VideoPlayer] Ready to play!');
+        logger.debug('general', 'VideoPlayer ready to play');
         setIsLoading(false);
         setError(null);
       } else if (status === 'error') {
-        console.error('[VideoPlayer] Error:', payload.error);
-        console.error('[VideoPlayer] Failed URI:', uri);
+        logger.error('general', 'VideoPlayer error', { error: payload.error, uri });
         setIsLoading(false);
         setError(payload.error?.message || 'Failed to load video');
       } else if (status === 'loading') {
-        console.log('[VideoPlayer] Loading...');
+        logger.debug('general', 'VideoPlayer loading');
         setIsLoading(true);
       }
     });

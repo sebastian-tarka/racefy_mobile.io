@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
 import { getCurrentLanguage } from '../../i18n';
 import {
   getCurrentDocuments,
@@ -66,7 +67,7 @@ export function ConsentModalScreen() {
       const langs = langsResponse?.supported ?? ['en', 'pl'];
 
       if (!Array.isArray(docs)) {
-        console.error('[ConsentModal] Invalid documents response - not an array:', docs);
+        logger.error('api', 'Invalid documents response - not an array', { docs });
         setError(t('legal.loadError'));
         return;
       }
@@ -81,7 +82,7 @@ export function ConsentModalScreen() {
       });
       setConsents(initialConsents);
     } catch (err) {
-      console.error('Failed to load documents:', err);
+      logger.error('api', 'Failed to load documents', { error: err });
       setError(t('legal.loadError'));
     } finally {
       setLoading(false);
@@ -115,7 +116,7 @@ export function ConsentModalScreen() {
       await submitConsent({ consents });
       setConsentComplete();
     } catch (err) {
-      console.error('Failed to submit consent:', err);
+      logger.error('api', 'Failed to submit consent', { error: err });
       setError(t('legal.submitError'));
     } finally {
       setSubmitting(false);

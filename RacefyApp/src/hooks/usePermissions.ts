@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
+import { logger } from '../services/logger';
 
 const isWeb = Platform.OS === 'web';
 
@@ -50,7 +51,7 @@ export function usePermissions() {
         mediaLibrary: mediaStatus.status as PermissionStatus,
       });
     } catch (error) {
-      console.error('Error checking permissions:', error);
+      logger.error('general', 'Error checking permissions', { error });
     } finally {
       setIsChecking(false);
     }
@@ -80,7 +81,7 @@ export function usePermissions() {
       setPermissions((prev) => ({ ...prev, location: 'denied' }));
       return false;
     } catch (error) {
-      console.error('Error requesting location permission:', error);
+      logger.error('gps', 'Error requesting location permission', { error });
       return false;
     }
   }, []);
@@ -144,7 +145,7 @@ export function usePermissions() {
       setPermissions((prev) => ({ ...prev, locationBackground: 'denied' }));
       return false;
     } catch (error) {
-      console.error('Error requesting background location permission:', error);
+      logger.error('gps', 'Error requesting background location permission', { error });
       return false;
     }
   }, [permissions.location, requestLocationPermission]);
@@ -169,7 +170,7 @@ export function usePermissions() {
       setPermissions((prev) => ({ ...prev, camera: 'denied' }));
       return false;
     } catch (error) {
-      console.error('Error requesting camera permission:', error);
+      logger.error('general', 'Error requesting camera permission', { error });
       return false;
     }
   }, []);
@@ -194,7 +195,7 @@ export function usePermissions() {
       setPermissions((prev) => ({ ...prev, mediaLibrary: 'denied' }));
       return false;
     } catch (error) {
-      console.error('Error requesting media library permission:', error);
+      logger.error('general', 'Error requesting media library permission', { error });
       return false;
     }
   }, []);
@@ -244,7 +245,7 @@ export function usePermissions() {
       }
       return true;
     } catch (error) {
-      console.error('Error checking location services:', error);
+      logger.error('gps', 'Error checking location services', { error });
       return true; // Return true on error to not block
     }
   }, []);
@@ -253,7 +254,7 @@ export function usePermissions() {
   const requestActivityTrackingPermissions = useCallback(async (): Promise<boolean> => {
     // On web, just return false (will use simulated)
     if (isWeb) {
-      console.log('Web platform - using simulated data');
+      logger.info('general', 'Web platform - using simulated data');
       return false;
     }
 
@@ -293,7 +294,7 @@ export function usePermissions() {
 
       return true; // Allow starting even without background permission
     } catch (error) {
-      console.error('Error requesting activity permissions:', error);
+      logger.error('activity', 'Error requesting activity permissions', { error });
       return false;
     }
   }, [checkLocationServices, requestLocationPermission, requestBackgroundLocationPermission]);

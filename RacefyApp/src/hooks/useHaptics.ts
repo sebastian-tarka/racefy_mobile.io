@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../services/logger';
 
 const HAPTICS_ENABLED_KEY = '@racefy_haptics_enabled';
 
@@ -41,7 +42,7 @@ export function useHaptics(): UseHapticsResult {
           globalHapticsEnabled = enabled;
         }
       } catch (error) {
-        console.error('Failed to load haptics preference:', error);
+        logger.error('general', 'Failed to load haptics preference', { error });
       }
     };
     loadPreference();
@@ -55,7 +56,7 @@ export function useHaptics(): UseHapticsResult {
     try {
       await AsyncStorage.setItem(HAPTICS_ENABLED_KEY, String(enabled));
     } catch (error) {
-      console.error('Failed to save haptics preference:', error);
+      logger.error('general', 'Failed to save haptics preference', { error });
     }
   }, []);
 
@@ -108,7 +109,7 @@ export const loadGlobalHapticsPreference = async (): Promise<void> => {
       globalHapticsEnabled = saved === 'true';
     }
   } catch (error) {
-    console.error('Failed to load haptics preference:', error);
+    logger.error('general', 'Failed to load haptics preference', { error });
   }
 };
 
@@ -125,7 +126,7 @@ export const setGlobalHapticsEnabled = async (enabled: boolean): Promise<void> =
   try {
     await AsyncStorage.setItem(HAPTICS_ENABLED_KEY, String(enabled));
   } catch (error) {
-    console.error('Failed to save haptics preference:', error);
+    logger.error('general', 'Failed to save haptics preference', { error });
   }
 };
 

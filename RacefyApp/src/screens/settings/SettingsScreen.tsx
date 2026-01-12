@@ -19,6 +19,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { changeLanguage } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
 
@@ -214,7 +215,7 @@ export function SettingsScreen({ navigation }: Props) {
           setExpandedSections(prev => ({ ...prev, ...parsed }));
         }
       } catch (error) {
-        console.log('Failed to load section states:', error);
+        logger.debug('general', 'Failed to load section states', { error });
       }
     };
     loadSectionStates();
@@ -225,7 +226,7 @@ export function SettingsScreen({ navigation }: Props) {
       const newState = { ...prev, [section]: !prev[section] };
       // Save to storage (async, don't await)
       AsyncStorage.setItem(SETTINGS_SECTIONS_KEY, JSON.stringify(newState)).catch(err => {
-        console.log('Failed to save section states:', err);
+        logger.debug('general', 'Failed to save section states', { error: err });
       });
       return newState;
     });
@@ -250,7 +251,7 @@ export function SettingsScreen({ navigation }: Props) {
         await changeLanguage(prefs.language);
       }
     } catch (error) {
-      console.error('Failed to load preferences:', error);
+      logger.error('api', 'Failed to load preferences', { error });
     } finally {
       setIsLoading(false);
     }
@@ -269,7 +270,7 @@ export function SettingsScreen({ navigation }: Props) {
       // Sync with server response
       setPreferences(updatedPrefs);
     } catch (error) {
-      console.error('Failed to update preferences:', error);
+      logger.error('api', 'Failed to update preferences', { error });
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
@@ -296,7 +297,7 @@ export function SettingsScreen({ navigation }: Props) {
       // Sync with server response
       setPreferences(updatedPrefs);
     } catch (error) {
-      console.error('Failed to update preferences:', error);
+      logger.error('api', 'Failed to update nested preferences', { error });
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
@@ -327,7 +328,7 @@ export function SettingsScreen({ navigation }: Props) {
       // Sync with server response
       setPreferences(updatedPrefs);
     } catch (error) {
-      console.error('Failed to update notification preference:', error);
+      logger.error('api', 'Failed to update notification preference', { error });
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
@@ -370,7 +371,7 @@ export function SettingsScreen({ navigation }: Props) {
       // Sync with server response
       setPreferences(updatedPrefs);
     } catch (error) {
-      console.error('Failed to update AI posts preference:', error);
+      logger.error('api', 'Failed to update AI posts preference', { error });
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.aiPostsFailed'));
     } finally {
@@ -508,7 +509,7 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
 
-  console.log(user?.role , 'user?.role ')
+  logger.debug('auth', 'Current user role', { role: user?.role });
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

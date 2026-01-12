@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { User } from '../types/api';
 
@@ -29,7 +30,7 @@ export function useFollowing(): UseFollowingResult {
       const data = await api.getFollowing(user.id);
       setFollowing(data);
     } catch (err) {
-      console.error('Failed to fetch following:', err);
+      logger.error('api', 'Failed to fetch following', { error: err });
       setError('Failed to load following list');
       setFollowing([]);
     } finally {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { Notification } from '../types/api';
 
@@ -22,7 +23,7 @@ export function useNotifications(pollInterval = 30000) {
       setUnreadCount(response.unread_count);
       // Unread count updated
     } catch (err) {
-      console.error('Failed to fetch unread count:', err);
+      logger.error('api', 'Failed to fetch unread count', { error: err });
     }
   }, [isAuthenticated]);
 
@@ -33,7 +34,7 @@ export function useNotifications(pollInterval = 30000) {
       setUnreadCount(prev => Math.max(0, prev - 1));
       // Marked as read
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+      logger.error('api', 'Failed to mark notification as read', { error: err });
       throw err;
     }
   }, []);
@@ -46,7 +47,7 @@ export function useNotifications(pollInterval = 30000) {
       // Marked all as read
       return response.marked_count;
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      logger.error('api', 'Failed to mark all notifications as read', { error: err });
       throw err;
     } finally {
       setLoading(false);

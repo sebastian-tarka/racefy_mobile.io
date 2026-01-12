@@ -22,6 +22,7 @@ import {
   ScreenHeader,
 } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { useTheme } from '../../hooks/useTheme';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -62,7 +63,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       const activity = await api.getActivity(id);
       populateForm(activity);
     } catch (error) {
-      console.error('Failed to fetch activity:', error);
+      logger.error('api', 'Failed to fetch activity', { error });
       Alert.alert(t('common.error'), t('activityForm.failedToLoad'));
       navigation.goBack();
     } finally {
@@ -164,7 +165,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
               await api.deletePhoto(photo.id);
               setExistingPhotos((prev) => prev.filter((p) => p.id !== photo.id));
             } catch (error) {
-              console.error('Failed to delete photo:', error);
+              logger.error('api', 'Failed to delete photo', { error });
               Alert.alert(t('common.error'), t('activityForm.deletePhotoFailed'));
             }
           },
@@ -198,7 +199,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       }
       setNewPhotos([]);
     } catch (error) {
-      console.error('Failed to upload photos:', error);
+      logger.error('api', 'Failed to upload photos', { error });
       throw error;
     } finally {
       setIsUploadingPhoto(false);
@@ -238,7 +239,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       }
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to save activity:', error);
+      logger.error('api', 'Failed to save activity', { error });
       Alert.alert(
         t('common.error'),
         t('activityForm.updateFailed')

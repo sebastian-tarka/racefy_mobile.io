@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { Message } from '../types/api';
 
 export function useMessages(conversationId: number) {
@@ -26,7 +27,7 @@ export function useMessages(conversationId: number) {
         // Ignore errors for marking as read
       });
     } catch (err) {
-      console.error('Failed to fetch messages:', err);
+      logger.error('api', 'Failed to fetch messages', { error: err });
       setError('Failed to load messages');
     } finally {
       setIsLoading(false);
@@ -45,7 +46,7 @@ export function useMessages(conversationId: number) {
         lastMessageIdRef.current = response.data.id;
         return true;
       } catch (err) {
-        console.error('Failed to send message:', err);
+        logger.error('api', 'Failed to send message', { error: err });
         setError('Failed to send message');
         return false;
       } finally {
@@ -79,7 +80,7 @@ export function useMessages(conversationId: number) {
         }
       }
     } catch (err) {
-      console.error('Polling error:', err);
+      logger.warn('api', 'Message polling error', { error: err });
     }
   }, [conversationId]);
 

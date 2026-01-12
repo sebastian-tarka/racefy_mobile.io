@@ -16,6 +16,7 @@ import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { spacing, fontSize } from '../theme';
 import type { Comment, CommentableType, User, MediaItem } from '../types/api';
 
@@ -164,7 +165,7 @@ export function CommentSection({
       try {
         await api.deleteCommentPhoto(commentId, data.deleteMediaId);
       } catch (e) {
-        console.log('Failed to delete photo:', e);
+        logger.warn('api', 'Failed to delete photo', { error: e });
       }
     }
 

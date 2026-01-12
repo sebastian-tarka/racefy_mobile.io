@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { logger } from '../services/logger';
 
 // Get config from app.config.ts extra field (loaded from .env)
 const extra = Constants.expoConfig?.extra ?? {};
@@ -22,7 +23,7 @@ const getBaseUrl = (): string => {
   if (__DEV__) {
     // Option to use staging API in development mode
     if (USE_STAGING_IN_DEV) {
-      console.log('[API] Using staging API in dev mode:', API_STAGING_URL);
+      logger.debug('api', 'Using staging API in dev mode', { url: API_STAGING_URL });
       return API_STAGING_URL;
     }
 
@@ -73,35 +74,33 @@ export const fixStorageUrl = (url: string | null | undefined): string | null => 
   if (!url) return null;
 
   const storageBase = getStorageBaseUrl();
-  console.log('[fixStorageUrl] Input:', url);
-  console.log('[fixStorageUrl] Storage base:', storageBase);
-  console.log('[fixStorageUrl] LOCAL_IP:', LOCAL_IP, 'LOCAL_PORT:', LOCAL_PORT);
+  logger.debug('api', 'fixStorageUrl input', { url, storageBase, LOCAL_IP, LOCAL_PORT });
 
   // Handle relative URLs (e.g., /storage/videos/...)
   if (url.startsWith('/')) {
     const result = `${storageBase}${url}`;
-    console.log('[fixStorageUrl] Relative URL, result:', result);
+    logger.debug('api', 'fixStorageUrl: relative URL resolved', { result });
     return result;
   }
 
   // Replace localhost with the correct host
   if (url.includes('localhost:')) {
     const result = url.replace(/http:\/\/localhost:\d+/, storageBase);
-    console.log('[fixStorageUrl] localhost replaced, result:', result);
+    logger.debug('api', 'fixStorageUrl: localhost replaced', { result });
     return result;
   }
 
   // Replace 127.0.0.1 with the correct host
   if (url.includes('127.0.0.1:')) {
     const result = url.replace(/http:\/\/127\.0\.0\.1:\d+/, storageBase);
-    console.log('[fixStorageUrl] 127.0.0.1 replaced, result:', result);
+    logger.debug('api', 'fixStorageUrl: 127.0.0.1 replaced', { result });
     return result;
   }
 
   // Replace 10.0.2.2 (Android emulator localhost) when on physical device
   if (url.includes('10.0.2.2:')) {
     const result = url.replace(/http:\/\/10\.0\.2\.2:\d+/, storageBase);
-    console.log('[fixStorageUrl] 10.0.2.2 replaced, result:', result);
+    logger.debug('api', 'fixStorageUrl: 10.0.2.2 replaced', { result });
     return result;
   }
 
@@ -110,7 +109,7 @@ export const fixStorageUrl = (url: string | null | undefined): string | null => 
   if (__DEV__ && url.includes(LOCAL_IP)) {
     const escapedIp = LOCAL_IP.replace(/\./g, '\\.');
     const result = url.replace(new RegExp(`http://${escapedIp}:\\d+`), storageBase);
-    console.log('[fixStorageUrl] Port mismatch fixed, result:', result);
+    logger.debug('api', 'fixStorageUrl: port mismatch fixed', { result });
     return result;
   }
 
@@ -121,11 +120,11 @@ export const fixStorageUrl = (url: string | null | undefined): string | null => 
     const privateIpPattern = /http:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+):\d+/;
     if (privateIpPattern.test(url)) {
       const result = url.replace(privateIpPattern, storageBase);
-      console.log('[fixStorageUrl] Private IP replaced, result:', result);
+      logger.debug('api', 'fixStorageUrl: private IP replaced', { result });
       return result;
     }
   }
 
-  console.log('[fixStorageUrl] No transformation needed, returning as-is:', url);
+  logger.debug('api', 'fixStorageUrl: no transformation needed', { url });
   return url;
 };

@@ -9,6 +9,7 @@ import React, {
 import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, ThemeColors } from '../theme/colors';
+import { logger } from '../services/logger';
 
 type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -49,7 +50,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setThemePreferenceState(savedTheme as ThemePreference);
       }
     } catch (error) {
-      console.error('Failed to load theme preference:', error);
+      logger.error('general', 'Failed to load theme preference', { error });
     } finally {
       setIsLoaded(true);
     }
@@ -60,7 +61,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, theme);
       setThemePreferenceState(theme);
     } catch (error) {
-      console.error('Failed to save theme preference:', error);
+      logger.error('general', 'Failed to save theme preference', { error });
     }
   }, []);
 

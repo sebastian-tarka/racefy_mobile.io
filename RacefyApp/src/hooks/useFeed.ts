@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { Post, MediaItem } from '../types/api';
 
 export function useFeed() {
@@ -31,7 +32,7 @@ export function useFeed() {
         const meta = responseAny?.meta ?? { current_page: 1, last_page: 1 };
 
         if (!Array.isArray(postsData)) {
-          console.error('[useFeed] Invalid response - data is not an array:', postsData);
+          logger.error('api', 'Invalid feed response - data is not an array', { postsData });
           setError('Failed to load feed');
           return;
         }
@@ -46,7 +47,7 @@ export function useFeed() {
         setHasMore(meta.current_page < meta.last_page);
         setPage(currentPage + 1);
       } catch (err) {
-        console.error('[useFeed] Failed to fetch posts:', err);
+        logger.error('api', 'Failed to fetch posts', { error: err });
         setError('Failed to load feed');
       } finally {
         setIsLoading(false);
@@ -119,7 +120,7 @@ export function useFeed() {
             const uploaded = await api.uploadPostMedia(newPost.id, item);
             uploadedMedia.push(uploaded);
           } catch (uploadError) {
-            console.error('Failed to upload media item:', uploadError);
+            logger.error('api', 'Failed to upload media item', { error: uploadError });
             // Continue with other uploads
           }
         }

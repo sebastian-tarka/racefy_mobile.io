@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
 import { ScreenHeader, Button, Card, EventSelectionSheet } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { useTheme } from '../../hooks/useTheme';
 import { useOngoingEvents } from '../../hooks/useOngoingEvents';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
@@ -74,7 +75,7 @@ export function GpxImportScreen({ navigation }: Props) {
         });
       }
     } catch (error) {
-      console.error('Document picker error:', error);
+      logger.error('general', 'Document picker error', { error });
       Alert.alert(t('common.error'), t('gpxImport.selectFileFailed'));
     }
   };
@@ -118,7 +119,7 @@ export function GpxImportScreen({ navigation }: Props) {
         ]
       );
     } catch (error: any) {
-      console.error('GPX import failed:', error);
+      logger.error('activity', 'GPX import failed', { error });
       Alert.alert(
         t('common.error'),
         error.message || t('gpxImport.importFailed')

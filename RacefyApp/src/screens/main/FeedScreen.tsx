@@ -30,6 +30,7 @@ import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -138,7 +139,7 @@ export function FeedScreen({ navigation, route }: Props) {
         posts: response.results.posts.data,
       });
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('api', 'Search error', { error });
       setSearchResults(null);
     } finally {
       setIsSearching(false);

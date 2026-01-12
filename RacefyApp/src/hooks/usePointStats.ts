@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { UserPointStats } from '../types/api';
 
 interface UsePointStatsResult {
@@ -22,7 +23,7 @@ export function usePointStats(): UsePointStatsResult {
       const data = await api.getMyPointStats();
       setStats(data);
     } catch (err: any) {
-      console.error('Failed to fetch point stats:', err);
+      logger.error('api', 'Failed to fetch point stats', { error: err });
       setError(err.message || 'Failed to load points');
       setStats(null);
     } finally {
@@ -80,7 +81,7 @@ export function useUserPointStats({
       const data = await api.getUserPointStats(username);
       setStats(data.stats);
     } catch (err: any) {
-      console.error('Failed to fetch user point stats:', err);
+      logger.error('api', 'Failed to fetch user point stats', { error: err });
       setError(err.message || 'Failed to load points');
       setStats(null);
     } finally {

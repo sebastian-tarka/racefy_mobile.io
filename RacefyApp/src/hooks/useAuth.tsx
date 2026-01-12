@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const status = await getConsentStatus();
       setRequiresConsent(!status.accepted);
     } catch (error) {
-      console.log('Failed to check consent status:', error);
+      logger.warn('auth', 'Failed to check consent status', { error });
       // On error, assume consent is not required to avoid blocking user
       setRequiresConsent(false);
     }
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       // Ignore errors - local language preference will be used
-      console.log('Failed to sync language preference:', error);
+      logger.warn('auth', 'Failed to sync language preference', { error });
     }
   }
 

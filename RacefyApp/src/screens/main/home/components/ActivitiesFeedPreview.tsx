@@ -13,6 +13,7 @@ import { ActivitySliderCard } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useAuth } from '../../../../hooks/useAuth';
 import { api } from '../../../../services/api';
+import { logger } from '../../../../services/logger';
 import { spacing, fontSize } from '../../../../theme';
 import type { Activity } from '../../../../types/api';
 
@@ -54,7 +55,7 @@ export function ActivitiesFeedPreview({
           : await api.getActivitiesDiscover({ per_page: limit });
         setActivities(response.data);
       } catch (error) {
-        console.log('Failed to fetch activities:', error);
+        logger.debug('api', 'Failed to fetch activities', { error });
       } finally {
         setIsLoading(false);
       }

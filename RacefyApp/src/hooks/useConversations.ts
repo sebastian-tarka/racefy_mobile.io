@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { Conversation } from '../types/api';
 
 export function useConversations() {
@@ -37,7 +38,7 @@ export function useConversations() {
         setHasMore(response.meta.current_page < response.meta.last_page);
         setPage(currentPage + 1);
       } catch (err) {
-        console.error('Failed to fetch conversations:', err);
+        logger.error('api', 'Failed to fetch conversations', { error: err });
         setError('Failed to load conversations');
       } finally {
         setIsLoading(false);
@@ -59,7 +60,7 @@ export function useConversations() {
       await api.deleteConversation(conversationId);
       setConversations((prev) => prev.filter((c) => c.id !== conversationId));
     } catch (err) {
-      console.error('Failed to delete conversation:', err);
+      logger.error('api', 'Failed to delete conversation', { error: err });
       throw err;
     }
   }, []);
@@ -75,7 +76,7 @@ export function useConversations() {
       });
       return response.data;
     } catch (err) {
-      console.error('Failed to start conversation:', err);
+      logger.error('api', 'Failed to start conversation', { error: err });
       throw err;
     }
   }, []);

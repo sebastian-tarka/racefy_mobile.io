@@ -19,6 +19,7 @@ import { Input, Button, Avatar } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -229,7 +230,7 @@ export function EditProfileScreen({ navigation }: Props) {
         try {
           await api.uploadAvatar(avatarUri);
         } catch (uploadError) {
-          console.error('Failed to upload avatar:', uploadError);
+          logger.error('api', 'Failed to upload avatar', { error: uploadError });
           Alert.alert(t('common.error'), t('editProfile.avatarUploadFailed'));
           setIsLoading(false);
           return;
@@ -241,7 +242,7 @@ export function EditProfileScreen({ navigation }: Props) {
         try {
           await api.uploadBackgroundImage(backgroundUri);
         } catch (uploadError) {
-          console.error('Failed to upload background image:', uploadError);
+          logger.error('api', 'Failed to upload background image', { error: uploadError });
           Alert.alert(t('common.error'), t('editProfile.backgroundUploadFailed'));
           setIsLoading(false);
           return;
@@ -262,7 +263,7 @@ export function EditProfileScreen({ navigation }: Props) {
       Alert.alert(t('common.success'), t('editProfile.updateSuccess'));
       navigation.goBack();
     } catch (error: any) {
-      console.error('Failed to update profile:', error);
+      logger.error('api', 'Failed to update profile', { error });
 
       // Handle validation errors from API
       if (error?.errors) {

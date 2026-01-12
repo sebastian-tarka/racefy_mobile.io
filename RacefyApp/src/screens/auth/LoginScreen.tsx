@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Input, Button, BrandLogo } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
@@ -58,12 +59,12 @@ export function LoginScreen({ navigation }: Props) {
 
     setIsLoading(true);
     try {
-      console.log('Attempting login with:', email);
+      logger.info('auth', 'Attempting login', { email });
       await login({ email, password });
-      console.log('Login successful');
+      logger.info('auth', 'Login successful');
       // Navigation handled automatically by AppNavigator's conditional rendering
     } catch (error: any) {
-      console.log('Login error:', error);
+      logger.error('auth', 'Login error', { error });
       const message =
         error?.message || t('auth.loginFailedMessage');
       Alert.alert(t('auth.loginFailed'), message);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { ActivityStats } from '../types/api';
 
@@ -32,7 +33,7 @@ export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
       );
       setStats(data);
     } catch (err: any) {
-      console.error('Failed to fetch activity stats:', err);
+      logger.error('activity', 'Failed to fetch activity stats', { error: err });
       setError(err.message || 'Failed to load statistics');
       setStats(null);
     } finally {

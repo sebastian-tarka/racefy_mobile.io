@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { VideoPlayer } from './VideoPlayer';
 import { fixStorageUrl } from '../config/api';
+import { logger } from '../services/logger';
 import { spacing, borderRadius } from '../theme';
 import type { Media, Photo, Video } from '../types/api';
 
@@ -43,7 +44,7 @@ export function MediaGallery({
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
   // Debug: Log incoming props
-  console.log('[MediaGallery] Props received:', {
+  logger.debug('general', 'MediaGallery props received', {
     mediaCount: media.length,
     photosCount: photos.length,
     videosCount: videos.length,
@@ -77,7 +78,7 @@ export function MediaGallery({
   }> = [
     ...media.map((m) => {
       const detectedType = detectMediaType(m);
-      console.log('[MediaGallery] Media item type detection:', {
+      logger.debug('general', 'MediaGallery media item type detection', {
         id: m.id,
         originalType: m.type,
         mimeType: m.mime_type,
@@ -100,7 +101,7 @@ export function MediaGallery({
     ...videos.map((v) => {
       const fixedUrl = fixStorageUrl(v.url);
       const fixedThumbnail = v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null;
-      console.log('[MediaGallery] Video URL transform:', {
+      logger.debug('general', 'MediaGallery video URL transform', {
         original: v.url,
         fixed: fixedUrl,
         thumbnailOriginal: v.thumbnail_url,
@@ -115,7 +116,7 @@ export function MediaGallery({
     }),
   ];
 
-  console.log('[MediaGallery] Final items:', items);
+  logger.debug('general', 'MediaGallery final items', { items });
 
   if (items.length === 0) return null;
 

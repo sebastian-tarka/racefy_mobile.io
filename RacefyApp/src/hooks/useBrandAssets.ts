@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import { useTheme } from './useTheme';
 import type { BrandAsset, BrandAssetCategory, BrandAssetVariant, BrandAssetsResponse } from '../types/api';
@@ -41,7 +42,7 @@ export function useBrandAssets(): UseBrandAssetsResult {
       cacheTimestamp = Date.now();
       setAssets(response);
     } catch (err: any) {
-      console.error('Failed to fetch brand assets:', err);
+      logger.error('api', 'Failed to fetch brand assets', { error: err });
       setError(err.message || 'Failed to load brand assets');
     } finally {
       setIsLoading(false);

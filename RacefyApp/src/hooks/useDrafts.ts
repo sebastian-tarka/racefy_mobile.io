@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import type { DraftPost, Post } from '../types/api';
 
 export function useDrafts() {
@@ -39,7 +40,7 @@ export function useDrafts() {
         setPage(currentPage + 1);
       } catch (err) {
         setError('Failed to load drafts');
-        console.error('[useDrafts] Error loading drafts:', err);
+        logger.error('general', 'Error loading drafts', { error: err });
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);

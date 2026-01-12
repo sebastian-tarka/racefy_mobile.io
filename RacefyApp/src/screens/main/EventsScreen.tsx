@@ -20,6 +20,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -108,7 +109,7 @@ export function EventsScreen({ navigation, route }: Props) {
       const response = await api.search({ query, type: 'events', per_type: 20 });
       setSearchResults(response.results.events.data);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('api', 'Search error', { error });
       setSearchResults(null);
     } finally {
       setIsSearching(false);

@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../hooks/useTheme';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { spacing, fontSize } from '../theme';
 
 // Boost button colors
@@ -108,7 +109,7 @@ export function BoostButton({
       // Rollback on error
       setIsBoosted(previousIsBoosted);
       setBoostsCount(previousBoostsCount);
-      console.error('Boost error:', error?.message || error);
+      logger.error('api', 'Boost error', { error: error?.message || error });
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from './logger';
 import type { GpsProfile } from '../config/gpsProfiles';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
@@ -98,7 +99,7 @@ async function clearLastBackgroundPosition(): Promise<void> {
 // Define the background task - this must be at module level
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
-    console.error('Background location task error:', error);
+    logger.error('gps', 'Background location task error', { error });
     return;
   }
 
@@ -124,7 +125,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // Filter by accuracy
           const accuracy = location.coords.accuracy;
           if (accuracy && accuracy > accuracyThreshold) {
-            console.log(`Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`);
+            logger.gps(`Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`);
             filteredByAccuracy++;
             continue;
           }
@@ -151,7 +152,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
             // Filter small movements (GPS drift)
             if (distance < effectiveMinDistance) {
-              console.log(`Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`);
+              logger.gps(`Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`);
               filteredByDistance++;
               continue;
             }
@@ -161,7 +162,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             if (timeDiff > 0) {
               const impliedSpeed = distance / timeDiff; // m/s
               if (impliedSpeed > maxRealisticSpeed) {
-                console.log(`Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`);
+                logger.gps(`Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`);
                 filteredBySpeed++;
                 continue;
               }
@@ -191,12 +192,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           const updatedBuffer = [...existingBuffer, ...newPoints];
           await saveLocationBuffer(updatedBuffer);
 
-          console.log(`Background: Added ${newPoints.length} points, total: ${updatedBuffer.length} (filtered: ${filteredByAccuracy} accuracy, ${filteredByDistance} distance, ${filteredBySpeed} speed)`);
+          logger.gps(`Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
-          console.log(`Background: All ${locations.length} points filtered (${filteredByAccuracy} accuracy, ${filteredByDistance} distance, ${filteredBySpeed} speed)`);
+          logger.gps(`Background: All ${locations.length} points filtered`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
         }
       } catch (err) {
-        console.error('Failed to save background location:', err);
+        logger.error('gps', 'Failed to save background location', { error: err });
       }
     }
   }
@@ -260,7 +261,7 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
     // Check if already running
     const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
     if (isRunning) {
-      console.log('Background location tracking already running');
+      logger.gps('Background location tracking already running');
       return true;
     }
 
@@ -284,10 +285,10 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
       activityType: Location.ActivityType.Fitness,
     });
 
-    console.log(`Background location tracking started with profile (interval: ${profile.timeInterval}ms, distance: ${profile.distanceInterval}m)`);
+    logger.gps(`Background location tracking started`, { timeInterval: profile.timeInterval, distanceInterval: profile.distanceInterval });
     return true;
   } catch (error) {
-    console.error('Failed to start background location tracking:', error);
+    logger.error('gps', 'Failed to start background location tracking', { error });
     return false;
   }
 }
@@ -298,13 +299,13 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
     const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
     if (isRunning) {
       await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-      console.log('Background location tracking stopped');
+      logger.gps('Background location tracking stopped');
     }
     // Clear stored profile and last position
     await clearGpsProfile();
     await clearLastBackgroundPosition();
   } catch (error) {
-    console.error('Failed to stop background location tracking:', error);
+    logger.error('gps', 'Failed to stop background location tracking', { error });
   }
 }
 
@@ -337,7 +338,7 @@ export async function saveForegroundBuffer(buffer: BufferedLocation[]): Promise<
   try {
     await AsyncStorage.setItem(FOREGROUND_BUFFER_KEY, JSON.stringify(buffer));
   } catch (err) {
-    console.error('Failed to persist foreground buffer:', err);
+    logger.error('gps', 'Failed to persist foreground buffer', { error: err });
   }
 }
 
@@ -417,7 +418,7 @@ export async function updateSyncStatus(updates: Partial<SyncStatus>): Promise<vo
     const updated = { ...current, ...updates };
     await AsyncStorage.setItem(LAST_SYNC_STATUS_KEY, JSON.stringify(updated));
   } catch (err) {
-    console.error('Failed to update sync status:', err);
+    logger.error('gps', 'Failed to update sync status', { error: err });
   }
 }
 

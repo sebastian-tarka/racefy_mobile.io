@@ -26,6 +26,7 @@ import {
   ScreenHeader,
 } from '../../components';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSportTypes } from '../../hooks/useSportTypes';
@@ -107,14 +108,14 @@ export function EventFormScreen({ navigation, route }: Props) {
     setIsFetching(true);
     try {
       const event = await api.getEvent(id);
-      console.log('[EventFormScreen] Fetched event:', {
+      logger.debug('api', 'Fetched event for form', {
         id: event.id,
         sport_type_id: event.sport_type_id,
         sport_type: event.sport_type,
       });
       populateForm(event);
     } catch (error) {
-      console.error('Failed to fetch event:', error);
+      logger.error('api', 'Failed to fetch event', { error });
       Alert.alert(t('common.error'), t('eventDetail.failedToLoad'));
       navigation.goBack();
     } finally {
@@ -265,7 +266,7 @@ export function EventFormScreen({ navigation, route }: Props) {
         try {
           await api.uploadEventCoverImage(savedEventId, coverImage);
         } catch (uploadError) {
-          console.error('Failed to upload cover image:', uploadError);
+          logger.error('api', 'Failed to upload cover image', { error: uploadError });
           // Don't fail the whole operation, just warn
           Alert.alert(
             t('common.success'),
@@ -284,7 +285,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       );
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to save event:', error);
+      logger.error('api', 'Failed to save event', { error });
       Alert.alert(
         t('common.error'),
         isEditMode ? t('eventForm.updateFailed') : t('eventForm.createFailed')
@@ -351,11 +352,10 @@ export function EventFormScreen({ navigation, route }: Props) {
     : true;
 
   // Debug logging
-  console.log('[EventFormScreen] Sport type check:', {
+  logger.debug('general', 'Sport type check', {
     formDataSportTypeId: formData.sport_type_id,
     sportTypesLoading: isSportTypesLoading,
     sportTypesCount: sportTypes.length,
-    sportTypeIds: sportTypes.map(s => s.id),
     sportTypeExists,
   });
 

@@ -15,6 +15,7 @@ import { useTheme } from '../hooks/useTheme';
 import { Avatar } from './Avatar';
 import { EmptyState } from './EmptyState';
 import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { User } from '../types/api';
 
@@ -53,7 +54,7 @@ function UserListModalComponent({
           : await api.getFollowing(userId);
       setUsers(data);
     } catch (err) {
-      console.error(`Failed to fetch ${listType}:`, err);
+      logger.error('api', `Failed to fetch ${listType}`, { error: err });
       setError(t('common.error'));
     } finally {
       setIsLoading(false);
