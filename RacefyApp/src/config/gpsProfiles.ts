@@ -31,6 +31,8 @@ export interface GpsProfile {
   distanceInterval: number;
   /** Number of points to average for GPS smoothing */
   smoothingBufferSize: number;
+  /** Speed threshold in m/s below which user is considered stationary (default: 0.5 m/s = 1.8 km/h) */
+  stationarySpeedThreshold: number;
 }
 
 // ============ VALIDATION ============
@@ -44,6 +46,7 @@ const PROFILE_CONSTRAINTS = {
   timeInterval: { min: 1000, max: 30000 }, // 1-30 seconds
   distanceInterval: { min: 1, max: 50 },
   smoothingBufferSize: { min: 1, max: 10 },
+  stationarySpeedThreshold: { min: 0.1, max: 3 }, // 0.1-3 m/s (0.36-10.8 km/h)
 } as const;
 
 /**
@@ -94,6 +97,11 @@ function validateProfile(profile: GpsProfile): GpsProfile {
       PROFILE_CONSTRAINTS.smoothingBufferSize.min,
       PROFILE_CONSTRAINTS.smoothingBufferSize.max
     ),
+    stationarySpeedThreshold: clamp(
+      profile.stationarySpeedThreshold ?? 0.5, // Default to 0.5 if not provided
+      PROFILE_CONSTRAINTS.stationarySpeedThreshold.min,
+      PROFILE_CONSTRAINTS.stationarySpeedThreshold.max
+    ),
   };
 }
 
@@ -113,6 +121,8 @@ export function convertApiGpsProfile(apiProfile: GpsProfileApiResponse): GpsProf
     timeInterval: apiProfile.time_interval,
     distanceInterval: apiProfile.distance_interval,
     smoothingBufferSize: apiProfile.smoothing_buffer_size,
+    // Use API value if available, otherwise default to 0.5 m/s
+    stationarySpeedThreshold: (apiProfile as any).stationary_speed_threshold ?? 0.5,
   };
 
   return validateProfile(profile);
@@ -150,6 +160,7 @@ export const DEFAULT_GPS_PROFILE: GpsProfile = {
   timeInterval: 3000, // 3 seconds
   distanceInterval: 5,
   smoothingBufferSize: 3,
+  stationarySpeedThreshold: 0.5, // 0.5 m/s = 1.8 km/h
 };
 
 /**
@@ -168,6 +179,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 3000,
     distanceInterval: 5,
     smoothingBufferSize: 3,
+    stationarySpeedThreshold: 0.5,
   },
   cycling: {
     enabled: true,
@@ -178,6 +190,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 2000,
     distanceInterval: 8,
     smoothingBufferSize: 3,
+    stationarySpeedThreshold: 0.8, // Higher for cycling (technical terrain, slow starts)
   },
   walking: {
     enabled: true,
@@ -188,6 +201,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 5000,
     distanceInterval: 5,
     smoothingBufferSize: 4,
+    stationarySpeedThreshold: 0.3, // Lower for walking (slower activity)
   },
   hiking: {
     enabled: true,
@@ -198,6 +212,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 5000,
     distanceInterval: 5,
     smoothingBufferSize: 4,
+    stationarySpeedThreshold: 0.3, // Lower for hiking (frequent stops, slow sections)
   },
 
   // Indoor/GPS-disabled sports
@@ -210,6 +225,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 10000,
     distanceInterval: 10,
     smoothingBufferSize: 5,
+    stationarySpeedThreshold: 0.5,
   },
   gym: {
     enabled: false,
@@ -220,6 +236,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 10000,
     distanceInterval: 10,
     smoothingBufferSize: 3,
+    stationarySpeedThreshold: 0.5,
   },
   yoga: {
     enabled: false,
@@ -230,6 +247,7 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     timeInterval: 10000,
     distanceInterval: 10,
     smoothingBufferSize: 3,
+    stationarySpeedThreshold: 0.5,
   },
 };
 

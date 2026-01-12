@@ -16,6 +16,7 @@ const LAST_SYNC_STATUS_KEY = '@racefy_last_sync_status';
 const DEFAULT_GPS_ACCURACY_THRESHOLD = 25;
 const DEFAULT_MIN_DISTANCE_THRESHOLD = 3;
 const DEFAULT_MAX_REALISTIC_SPEED = 15;
+const DEFAULT_STATIONARY_SPEED_THRESHOLD = 0.5; // 0.5 m/s = 1.8 km/h
 
 export interface BufferedLocation {
   lat: number;
@@ -30,6 +31,7 @@ async function getStoredGpsProfile(): Promise<{
   accuracyThreshold: number;
   minDistanceThreshold: number;
   maxRealisticSpeed: number;
+  stationarySpeedThreshold: number;
 }> {
   try {
     const profileJson = await AsyncStorage.getItem(GPS_PROFILE_KEY);
@@ -39,6 +41,7 @@ async function getStoredGpsProfile(): Promise<{
         accuracyThreshold: profile.accuracyThreshold,
         minDistanceThreshold: profile.minDistanceThreshold,
         maxRealisticSpeed: profile.maxRealisticSpeed,
+        stationarySpeedThreshold: profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
       };
     }
   } catch {
@@ -48,6 +51,7 @@ async function getStoredGpsProfile(): Promise<{
     accuracyThreshold: DEFAULT_GPS_ACCURACY_THRESHOLD,
     minDistanceThreshold: DEFAULT_MIN_DISTANCE_THRESHOLD,
     maxRealisticSpeed: DEFAULT_MAX_REALISTIC_SPEED,
+    stationarySpeedThreshold: DEFAULT_STATIONARY_SPEED_THRESHOLD,
   };
 }
 
@@ -73,13 +77,13 @@ function calculateDistanceBetweenCoords(
 }
 
 // Get and set last background position for distance filtering
-interface LastPosition {
+export interface LastPosition {
   lat: number;
   lng: number;
   timestamp: number;
 }
 
-async function getLastBackgroundPosition(): Promise<LastPosition | null> {
+export async function getLastBackgroundPosition(): Promise<LastPosition | null> {
   try {
     const json = await AsyncStorage.getItem(LAST_BACKGROUND_POSITION_KEY);
     return json ? JSON.parse(json) : null;
@@ -110,7 +114,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
       try {
         // Get GPS profile settings
         const profile = await getStoredGpsProfile();
-        const { accuracyThreshold, minDistanceThreshold, maxRealisticSpeed } = profile;
+        const { accuracyThreshold, minDistanceThreshold, maxRealisticSpeed, stationarySpeedThreshold } = profile;
 
         // Get existing buffer and last position
         const existingBuffer = await getLocationBuffer();
@@ -136,7 +140,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
           // Stationary detection: if GPS reports very low speed, use stricter distance threshold
           const gpsSpeed = location.coords.speed;
-          const isLikelyStationary = gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < 0.5;
+          const isLikelyStationary = gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationarySpeedThreshold;
           const effectiveMinDistance = isLikelyStationary
             ? Math.max(minDistanceThreshold, 8) // At least 8m when stationary
             : minDistanceThreshold;
@@ -222,9 +226,17 @@ export async function clearLocationBuffer(): Promise<void> {
 }
 
 export async function getAndClearLocationBuffer(): Promise<BufferedLocation[]> {
-  const buffer = await getLocationBuffer();
-  await clearLocationBuffer();
-  return buffer;
+  try {
+    const buffer = await getLocationBuffer();
+    // Only clear after successful read to prevent data loss
+    if (buffer.length > 0) {
+      await clearLocationBuffer();
+    }
+    return buffer;
+  } catch (error) {
+    logger.error('gps', 'Failed to get and clear location buffer', { error });
+    return []; // Return empty on error, don't clear
+  }
 }
 
 // Store active activity ID for background task reference
