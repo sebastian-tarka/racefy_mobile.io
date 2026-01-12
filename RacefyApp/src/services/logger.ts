@@ -26,6 +26,123 @@ import {
 const LOGS_STORAGE_KEY = '@racefy_debug_logs';
 const SESSION_ID_KEY = '@racefy_session_id';
 
+// Sensitive field patterns to redact (case-insensitive)
+const SENSITIVE_PATTERNS = [
+  /password/i,
+  /token/i,
+  /secret/i,
+  /credential/i,
+  /authorization/i,
+  /api[_-]?key/i,
+  /private[_-]?key/i,
+  /access[_-]?token/i,
+  /refresh[_-]?token/i,
+  /bearer/i,
+  /cookie/i,
+  /session/i,
+];
+
+// Fields that might contain PII but we want to keep type info
+const PII_PATTERNS = [
+  /email/i,
+  /phone/i,
+  /address/i,
+];
+
+const REDACTED = '[REDACTED]';
+
+/**
+ * Check if a field name matches sensitive patterns
+ */
+function isSensitiveField(fieldName: string): boolean {
+  return SENSITIVE_PATTERNS.some(pattern => pattern.test(fieldName));
+}
+
+/**
+ * Check if a field name matches PII patterns
+ */
+function isPiiField(fieldName: string): boolean {
+  return PII_PATTERNS.some(pattern => pattern.test(fieldName));
+}
+
+/**
+ * Sanitize a value, redacting sensitive content
+ */
+function sanitizeValue(key: string, value: any, depth: number = 0): any {
+  // Prevent infinite recursion
+  if (depth > 10) return '[MAX_DEPTH]';
+
+  // Redact sensitive fields entirely
+  if (isSensitiveField(key)) {
+    return REDACTED;
+  }
+
+  // For PII fields, keep type info but redact value
+  if (isPiiField(key) && typeof value === 'string') {
+    return `[REDACTED:${value.length} chars]`;
+  }
+
+  // Handle null/undefined
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  // Handle Error objects specially
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: sanitizeString(value.message),
+      stack: value.stack ? '[STACK_TRACE]' : undefined,
+    };
+  }
+
+  // Handle arrays
+  if (Array.isArray(value)) {
+    return value.map((item, index) => sanitizeValue(String(index), item, depth + 1));
+  }
+
+  // Handle objects
+  if (typeof value === 'object') {
+    const sanitized: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      sanitized[k] = sanitizeValue(k, v, depth + 1);
+    }
+    return sanitized;
+  }
+
+  // Handle strings - check for embedded sensitive data
+  if (typeof value === 'string') {
+    return sanitizeString(value);
+  }
+
+  // Return primitives as-is
+  return value;
+}
+
+/**
+ * Sanitize a string, redacting potential embedded secrets
+ */
+function sanitizeString(str: string): string {
+  // Redact Bearer tokens
+  let sanitized = str.replace(/Bearer\s+[A-Za-z0-9\-_]+\.?[A-Za-z0-9\-_]*\.?[A-Za-z0-9\-_]*/gi, 'Bearer [REDACTED]');
+
+  // Redact JWT-like patterns (xxx.xxx.xxx)
+  sanitized = sanitized.replace(/eyJ[A-Za-z0-9\-_]+\.eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+/g, '[JWT_REDACTED]');
+
+  // Redact API key patterns
+  sanitized = sanitized.replace(/api[_-]?key[=:]\s*["']?[A-Za-z0-9\-_]+["']?/gi, 'api_key=[REDACTED]');
+
+  return sanitized;
+}
+
+/**
+ * Sanitize entire context object
+ */
+function sanitizeContext(context: Record<string, any> | undefined): Record<string, any> | undefined {
+  if (!context) return undefined;
+  return sanitizeValue('root', context, 0) as Record<string, any>;
+}
+
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
@@ -125,27 +242,24 @@ class Logger {
   }
 
   /**
-   * Generate unique log entry ID
-   */
-  private generateLogId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-  }
-
-  /**
    * Core logging method
    */
   private log(level: LogLevel, category: LogCategory, message: string, context?: Record<string, any>): void {
     if (!shouldLog(this.config, level, category)) return;
 
+    // Sanitize context and message to remove sensitive data
+    const sanitizedContext = sanitizeContext(context);
+    const sanitizedMessage = sanitizeString(message);
+
     // Include category in message for API (category is app-internal concept)
-    const fullMessage = `[${category}] ${message}`;
+    const fullMessage = `[${category}] ${sanitizedMessage}`;
 
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       category,
       message: fullMessage,
-      context,
+      context: sanitizedContext,
     };
 
     // Add to in-memory logs
