@@ -44,7 +44,7 @@ cd RacefyApp && npx expo install <package>
 - `theme/` - Colors (emerald primary #10b981), spacing, typography tokens
 - `types/api.ts` - TypeScript interfaces matching Laravel API
 - `i18n/` - Translation setup and locale files
-- `docs/` - Internal documentation (UI_PATTERNS.md)
+- `docs/` - Internal documentation (UI_PATTERNS.md, LOCAL_BUILD_SETUP.md)
 
 ### Key Patterns
 
@@ -215,6 +215,34 @@ eas secret:create --name API_STAGING_URL --value "https://your-staging.api/api" 
 ### Expo Dashboard
 - Project: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp
 - Builds: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp/builds
+
+### Local Android Build
+
+For local builds without EAS cloud, see `docs/LOCAL_BUILD_SETUP.md` for full setup guide.
+
+**Quick start (if Android SDK already installed):**
+```bash
+cd RacefyApp
+
+# Generate native project
+npx expo prebuild --platform android --clean
+
+# Build release APK (skipping lint for faster builds)
+JAVA_HOME=$HOME/android-studio/jbr \
+ANDROID_HOME=$HOME/Android/Sdk \
+./android/gradlew app:assembleRelease -x lint -x lintRelease -x lintVitalRelease
+
+# Install on connected device
+adb install android/app/build/outputs/apk/release/app-release.apk
+```
+
+**Requirements:**
+- Android Studio with SDK (or standalone SDK)
+- `JAVA_HOME` and `ANDROID_HOME` environment variables
+- Mapbox secret token in `~/.gradle/gradle.properties`:
+  ```properties
+  MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_with_downloads_read_scope
+  ```
 
 ## Test Credentials
 ```

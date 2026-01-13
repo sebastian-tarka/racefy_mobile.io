@@ -18,7 +18,9 @@
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "error",
         "LOG_PERSIST": "true",
-        "LOG_CATEGORIES": "all"
+        "LOG_CATEGORIES": "all",
+        "LOG_CONSOLE_OUTPUT": "false",
+        "MAPBOX_ENABLED": "true"
       }
     },
     "production": {
