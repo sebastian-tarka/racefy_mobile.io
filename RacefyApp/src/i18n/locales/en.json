@@ -415,7 +415,7 @@
     "expandMap": "Expand Map",
     "collapseMap": "Collapse Map",
     "charts": "Performance Analysis",
-    "pacePerKm": "Pace per Kilometer",
+    "pacePerKm": "Kilometer Splits",
     "elevationPerKm": "Elevation per Kilometer",
     "heartRatePerKm": "Heart Rate per Kilometer",
     "sources": {

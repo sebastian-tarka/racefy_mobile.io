@@ -415,8 +415,8 @@
     "expandMap": "Rozwiń mapę",
     "collapseMap": "Zwiń mapę",
     "charts": "Analiza wydajności",
-    "pacePerKm": "Tempo na kilometr",
-    "elevationPerKm": "Wysokość na kilometr",
+    "pacePerKm": "Czasy kilometrowe",
+    "elevationPerKm": "Przewyższenie na kilometr",
     "heartRatePerKm": "Tętno na kilometr",
     "sources": {
       "app": "Aplikacja Racefy",
