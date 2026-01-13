@@ -414,6 +414,9 @@
     "points": "punktów",
     "expandMap": "Rozwiń mapę",
     "collapseMap": "Zwiń mapę",
+    "charts": "Wykresy",
+    "elevationProfile": "Profil wysokościowy",
+    "speedProfile": "Profil prędkości",
     "sources": {
       "app": "Aplikacja Racefy",
       "manual": "Wpis ręczny",

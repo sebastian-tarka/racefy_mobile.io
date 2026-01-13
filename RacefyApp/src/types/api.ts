@@ -500,6 +500,30 @@ export interface GeoJSONLineString {
   coordinates: [number, number][];
 }
 
+// Detailed track point from /activities/{id}/track-points endpoint
+export interface TrackPoint {
+  index: number;
+  lat: number;
+  lng: number;
+  distance: number;         // Cumulative distance in meters
+  timestamp: string;
+  elevation: number;        // Elevation in meters
+  speed: number;           // Speed in m/s
+}
+
+// Response from /activities/{id}/track-points endpoint
+export interface TrackPointsResponse {
+  data?: TrackPoint[]; // May be undefined for activities without detailed track data
+  total_points?: number;
+  sampled_points?: number;
+  bounds?: {
+    east: number;
+    west: number;
+    north: number;
+    south: number;
+  };
+}
+
 // ============ COMMENTS ============
 
 export type CommentableType = 'post' | 'activity' | 'event';

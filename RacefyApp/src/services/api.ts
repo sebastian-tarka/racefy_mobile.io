@@ -638,6 +638,13 @@ class ApiService {
     return response.data;
   }
 
+  async getActivityTrackPoints(id: number): Promise<Types.TrackPointsResponse> {
+    const response = await this.request<Types.ApiResponse<Types.TrackPointsResponse>>(
+      `/activities/${id}/track-points`
+    );
+    return response.data;
+  }
+
   async shareActivity(id: number): Promise<Types.Post> {
     const response = await this.request<Types.ApiResponse<Types.Post>>(
       `/activities/${id}/share`,

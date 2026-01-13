@@ -2,6 +2,23 @@ import { logger } from './logger';
 import { api } from './api';
 
 /**
+ * Format date for MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+ * Converts from ISO string to MySQL-compatible format
+ */
+function formatMySQLDateTime(date: Date): string {
+  const pad = (num: number) => String(num).padStart(2, '0');
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
  * MapboxAnalytics - Tracks Mapbox SDK usage to help monitor costs
  * Reports map loads to backend for usage tracking and cost management
  */
@@ -27,7 +44,7 @@ class MapboxAnalytics {
   trackMapLoad(activityId: number) {
     const report = {
       activityId,
-      timestamp: new Date().toISOString(),
+      timestamp: formatMySQLDateTime(new Date()),
       mapType: 'interactive' as const,
     };
 
@@ -47,7 +64,7 @@ class MapboxAnalytics {
   trackStaticMapView(activityId: number) {
     const report = {
       activityId,
-      timestamp: new Date().toISOString(),
+      timestamp: formatMySQLDateTime(new Date()),
       mapType: 'static' as const,
     };
 

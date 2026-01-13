@@ -414,6 +414,9 @@
     "points": "points",
     "expandMap": "Expand Map",
     "collapseMap": "Collapse Map",
+    "charts": "Charts",
+    "elevationProfile": "Elevation Profile",
+    "speedProfile": "Speed Profile",
     "sources": {
       "app": "Racefy App",
       "manual": "Manual Entry",

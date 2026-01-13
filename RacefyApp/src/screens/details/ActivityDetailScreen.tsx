@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, ElevationChart, SpeedChart } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
@@ -26,7 +26,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Activity, GpsTrack, User } from '../../types/api';
+import type { Activity, GpsTrack, User, TrackPoint } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -39,6 +39,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
+  const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +73,33 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             hasRouteSvg: !!track?.route_svg,
           });
           setGpsTrack(track);
+
+          // Fetch detailed track points for charts
+          try {
+            const trackPointsData = await api.getActivityTrackPoints(activityId);
+            logger.debug('gps', 'Track points loaded', {
+              totalPoints: trackPointsData.total_points,
+              sampledPoints: trackPointsData.sampled_points,
+              hasData: !!trackPointsData.data,
+              dataLength: trackPointsData.data?.length,
+            });
+            // Ensure data is an array before setting
+            if (trackPointsData.data && Array.isArray(trackPointsData.data)) {
+              setTrackPoints(trackPointsData.data);
+              logger.info('gps', 'Track points set successfully', {
+                count: trackPointsData.data.length,
+                firstPoint: trackPointsData.data[0],
+                lastPoint: trackPointsData.data[trackPointsData.data.length - 1]
+              });
+            } else {
+              logger.warn('gps', 'Track points data is not an array', {
+                data: trackPointsData.data,
+                type: typeof trackPointsData.data
+              });
+            }
+          } catch (pointsError) {
+            logger.error('gps', 'Failed to load track points', { error: pointsError });
+          }
         } catch (trackError) {
           logger.debug('gps', 'Failed to load GPS track', { error: trackError });
         }
@@ -89,6 +117,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     fetchActivity();
   }, [fetchActivity]);
+
+  // Debug: Monitor trackPoints state changes
+  useEffect(() => {
+    logger.info('gps', 'TrackPoints state changed', {
+      length: trackPoints.length,
+      isArray: Array.isArray(trackPoints),
+      sample: trackPoints.slice(0, 2)
+    });
+  }, [trackPoints]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -316,6 +353,26 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Charts Section */}
+        {trackPoints.length > 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.charts')}</Text>
+            <ElevationChart trackPoints={trackPoints} title={t('activityDetail.elevationProfile')} />
+            <SpeedChart trackPoints={trackPoints} title={t('activityDetail.speedProfile')} />
+          </Card>
+        )}
+        {/* Debug: Show why charts aren't rendering */}
+        {activity.has_gps_track && trackPoints.length === 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Debug Info</Text>
+            <Text style={{ color: colors.textSecondary }}>
+              Track points: {trackPoints.length}{'\n'}
+              Has GPS track: {activity.has_gps_track ? 'Yes' : 'No'}{'\n'}
+              GPS track loaded: {gpsTrack ? 'Yes' : 'No'}
+            </Text>
+          </Card>
+        )}
 
         {/* Main Stats */}
         <Card style={styles.statsCard}>
