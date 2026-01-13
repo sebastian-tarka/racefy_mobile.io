@@ -6,6 +6,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Racefy Mobile is a React Native/Expo fitness and sports community app. It connects to a Laravel API backend and provides features for activity tracking (GPS), social feed, events, and user profiles.
 
+## Quick Reference & Shortcuts
+
+### Most Used Commands
+```bash
+# Development
+cd RacefyApp && npx expo start          # Start dev server
+cd RacefyApp && npm run android         # Run on Android
+
+# Building
+cd RacefyApp && eas build --platform android --profile staging     # Build staging APK
+cd RacefyApp && eas build --platform android --profile production  # Build production AAB
+
+# Environment Variables Management
+eas env:list production --include-sensitive                         # List production env vars
+eas env:list preview --include-sensitive                            # List staging env vars
+eas env:create --name NAME --value "VALUE" --scope project --type string --visibility secret --environment production --non-interactive  # Add secret
+```
+
+### Important Paths
+- API Service: `RacefyApp/src/services/api.ts`
+- API Types: `RacefyApp/src/types/api.ts`
+- Navigation: `RacefyApp/src/navigation/AppNavigator.tsx`
+- Theme: `RacefyApp/src/theme/`
+- Translations: `RacefyApp/src/i18n/locales/`
+- UI Patterns: `RacefyApp/docs/UI_PATTERNS.md`
+- Local Build Guide: `RacefyApp/docs/LOCAL_BUILD_SETUP.md`
+
+### Expo Dashboard Links
+- Project: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp
+- Builds: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp/builds
+
+### Test Accounts
+```
+Email: test@racefy.test / Password: password
+Email: demo@racefy.test / Password: password
+```
+
 ## Commands
 
 ```bash
@@ -200,6 +237,142 @@ cd RacefyApp && eas build --platform android --profile production
 cd RacefyApp && eas build --platform ios --profile staging
 cd RacefyApp && eas build --platform ios --profile production
 ```
+
+### EAS Secrets Setup
+
+EAS secrets are secure environment variables that get injected into your builds. They are **not** committed to git and are managed through the EAS CLI.
+
+#### Prerequisites
+```bash
+npm install -g eas-cli
+eas login
+```
+
+#### Managing Secrets
+
+**Note:** The `eas secret:*` commands are deprecated. Use `eas env:*` commands instead.
+
+**Add a secret environment variable:**
+```bash
+eas env:create --name SECRET_NAME \
+  --value "your_secret_value" \
+  --scope project \
+  --type string \
+  --visibility secret \
+  --environment production \
+  --non-interactive
+
+# For staging builds (uses 'preview' environment)
+eas env:create --name SECRET_NAME \
+  --value "your_secret_value" \
+  --scope project \
+  --type string \
+  --visibility secret \
+  --environment preview \
+  --non-interactive
+```
+
+**List environment variables:**
+```bash
+eas env:list production --include-sensitive  # List production environment
+eas env:list preview --include-sensitive     # List staging/preview environment
+eas env:list development --include-sensitive # List development environment
+```
+
+**Delete an environment variable:**
+```bash
+eas env:delete --name SECRET_NAME --environment production
+```
+
+**Update a secret (use --force to overwrite):**
+```bash
+eas env:create --name SECRET_NAME \
+  --value "new_value" \
+  --scope project \
+  --type string \
+  --visibility secret \
+  --environment production \
+  --force \
+  --non-interactive
+```
+
+#### Secret Scopes
+
+- `--scope project` - Available to this project only (recommended for most cases)
+- `--scope account` - Available to all projects in your Expo account
+
+#### Required Secrets for Racefy
+
+**Mapbox Download Token:**
+
+This token is required for building the app because it authenticates with Mapbox servers to download the Maps SDK. Get your token from https://account.mapbox.com/access-tokens/ (must have `downloads:read` scope).
+
+```bash
+# Add to production environment
+eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
+  --value "sk.YOUR_MAPBOX_SECRET_TOKEN" \
+  --scope project \
+  --type string \
+  --visibility secret \
+  --environment production \
+  --non-interactive
+
+# Add to preview/staging environment
+eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
+  --value "sk.YOUR_MAPBOX_SECRET_TOKEN" \
+  --scope project \
+  --type string \
+  --visibility secret \
+  --environment preview \
+  --non-interactive
+```
+
+#### How It Works
+
+1. **During EAS builds**, secrets are automatically injected as environment variables
+2. **Gradle reads them** via `System.getenv()` in `build.gradle` (NOT gradle.properties - Gradle doesn't interpolate env vars in properties files)
+3. **Not visible in logs** - Secrets are automatically masked in build logs
+4. **Token lookup order** in `android/build.gradle`:
+   - First: `project.properties['MAPBOX_DOWNLOADS_TOKEN']` (from `~/.gradle/gradle.properties` for local builds)
+   - Second: `System.getenv('MAPBOX_DOWNLOADS_TOKEN')` (from EAS environment)
+   - Third: `System.getenv('RNMAPBOX_MAPS_DOWNLOAD_TOKEN')` (legacy fallback)
+
+#### Important Notes
+
+- ✅ Secrets are automatically injected as environment variables during builds
+- ✅ No need to declare secrets in `eas.json` env section (they're auto-injected)
+- ✅ Secrets are masked in build logs for security
+- ✅ **CRITICAL:** Build profiles must specify `environment` field to link to EAS environments (e.g., `"environment": "preview"`)
+- ❌ Don't commit secrets to git (use `.env` for local dev only, keep it in `.gitignore`)
+- ❌ Don't use empty strings in `eas.json` env section - EAS validation will fail
+
+#### Environment Mapping
+
+Build profiles need to specify which EAS environment to use:
+
+```json
+{
+  "build": {
+    "staging": {
+      "environment": "preview",  // Maps to 'preview' EAS environment
+      // ... other config
+    },
+    "production": {
+      "environment": "production",  // Maps to 'production' EAS environment
+      // ... other config
+    }
+  }
+}
+```
+
+Without the `environment` field, environment variables won't be injected into the build!
+
+#### Security Best Practices
+
+- Store production secrets with `--scope project` to limit access
+- Never share secrets in plain text or commit them to version control
+- Rotate secrets periodically, especially if they may have been exposed
+- Use separate tokens for development, staging, and production when possible
 
 ### How Environment Selection Works
 

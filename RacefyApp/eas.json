@@ -9,8 +9,10 @@
       "distribution": "internal"
     },
     "staging": {
+      "environment": "preview",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       },
       "distribution": "internal",
       "env": {
@@ -24,8 +26,10 @@
       }
     },
     "production": {
+      "environment": "production",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease"
       },
       "env": {
         "APP_ENV": "production"
