@@ -524,6 +524,70 @@ export interface TrackPointsResponse {
   };
 }
 
+// Split data (per kilometer)
+export interface ActivitySplit {
+  kilometer: number;
+  duration: number;                    // seconds for this km
+  pace: string;                        // formatted pace (e.g., "5:42")
+  cumulative_duration: number;         // total seconds up to this km
+  cumulative_distance: number;         // total meters up to this km
+  elevation_gain: number;              // meters gained in this km
+  elevation_loss: number;              // meters lost in this km
+  avg_heart_rate: number | null;       // average bpm for this km
+  max_heart_rate: number | null;       // max bpm for this km
+  avg_speed: number | null;            // m/s average for this km
+  max_speed: number | null;            // m/s max for this km
+  avg_cadence: number | null;          // steps per minute
+}
+
+// Splits summary from /activities/{id}/splits or /activities/{id}/stats
+export interface SplitsSummary {
+  splits: ActivitySplit[];
+  total_splits: number;
+  best_km: {
+    kilometer: number;
+    duration: number;
+    pace: string;
+  };
+  worst_km: {
+    kilometer: number;
+    duration: number;
+    pace: string;
+  };
+  average_pace: string;
+}
+
+// Activity stats from /activities/{id}/stats endpoint
+export interface ActivityStats {
+  primary: {
+    distance: number;           // meters
+    duration: number;           // seconds
+    elevation_gain: number;     // meters
+  };
+  performance: {
+    pace: {
+      average: number | null;   // seconds per kilometer
+      formatted: string;        // e.g., "5:42"
+    };
+    speed: {
+      average: number | null;   // m/s
+      max: number | null;       // m/s
+    };
+    heart_rate: {
+      average: number | null;   // bpm
+      max: number | null;       // bpm
+    };
+    calories: number | null;    // kcal
+  };
+  splits: SplitsSummary | null;
+  has_data: {
+    elevation: boolean;
+    heart_rate: boolean;
+    speed: boolean;
+    cadence: boolean;
+  };
+}
+
 // ============ COMMENTS ============
 
 export type CommentableType = 'post' | 'activity' | 'event';

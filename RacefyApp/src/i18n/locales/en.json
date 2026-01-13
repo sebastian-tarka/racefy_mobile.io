@@ -414,9 +414,10 @@
     "points": "points",
     "expandMap": "Expand Map",
     "collapseMap": "Collapse Map",
-    "charts": "Charts",
-    "elevationProfile": "Elevation Profile",
-    "speedProfile": "Speed Profile",
+    "charts": "Performance Analysis",
+    "pacePerKm": "Pace per Kilometer",
+    "elevationPerKm": "Elevation per Kilometer",
+    "heartRatePerKm": "Heart Rate per Kilometer",
     "sources": {
       "app": "Racefy App",
       "manual": "Manual Entry",

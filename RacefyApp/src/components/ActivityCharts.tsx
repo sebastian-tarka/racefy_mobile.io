@@ -1,71 +1,160 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
-import type { TrackPoint } from '../types/api';
+import type { ActivitySplit } from '../types/api';
 
 interface BaseChartProps {
-  trackPoints: TrackPoint[];
+  splits: ActivitySplit[];
   title: string;
 }
 
+interface PaceChartProps extends BaseChartProps {}
 interface ElevationChartProps extends BaseChartProps {}
-interface SpeedChartProps extends BaseChartProps {}
+interface HeartRateChartProps extends BaseChartProps {}
 
-const CHART_WIDTH = Dimensions.get('window').width - spacing.md * 2 - 32; // Account for card padding
+const CHART_WIDTH = Dimensions.get('window').width - spacing.md * 2 - 32;
 const CHART_HEIGHT = 220;
 
-export function ElevationChart({ trackPoints, title }: ElevationChartProps) {
+/**
+ * Pace Chart - Shows pace per kilometer (most important for runners)
+ * Uses bar chart to make it easy to compare kilometer performance
+ */
+export function PaceChart({ splits, title }: PaceChartProps) {
   const { colors } = useTheme();
 
-  console.log('[ElevationChart] Render with trackPoints:', {
-    length: trackPoints?.length,
-    isArray: Array.isArray(trackPoints),
-    sample: trackPoints?.slice(0, 2)
-  });
-
-  if (!trackPoints || !Array.isArray(trackPoints) || trackPoints.length === 0) {
-    console.log('[ElevationChart] Returning null - validation failed');
+  if (!splits || splits.length === 0) {
     return null;
   }
 
-  console.log('[ElevationChart] Validation passed, rendering chart');
+  // Convert pace string "5:42" to total seconds for charting
+  const paceToSeconds = (paceStr: string): number => {
+    const [mins, secs] = paceStr.split(':').map(Number);
+    return mins * 60 + secs;
+  };
 
-  // Sample data points if there are too many (keep max ~50 points for better performance)
-  const maxPoints = 50;
-  const step = Math.ceil(trackPoints.length / maxPoints);
-  const sampledPoints = trackPoints.filter((_, index) => index % step === 0);
+  const paceSeconds = splits.map((split) => paceToSeconds(split.pace));
+  const avgPace = paceSeconds.reduce((sum, p) => sum + p, 0) / paceSeconds.length;
+  const fastestPace = Math.min(...paceSeconds);
+  const slowestPace = Math.max(...paceSeconds);
 
-  // Prepare data: distance (km) vs elevation (m)
-  const distances = sampledPoints.map((point) => point.distance / 1000);
-  const elevations = sampledPoints.map((point) => point.elevation);
-
-  const minElevation = Math.min(...elevations);
-  const maxElevation = Math.max(...elevations);
-  const elevationRange = maxElevation - minElevation;
+  // Format seconds back to pace string
+  const formatPace = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const chartConfig = {
     backgroundColor: colors.cardBackground,
     backgroundGradientFrom: colors.cardBackground,
     backgroundGradientTo: colors.cardBackground,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, // Emerald color
+    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+    labelColor: (opacity = 1) => colors.textMuted,
+    style: {
+      borderRadius: 8,
+    },
+    propsForBackgroundLines: {
+      strokeDasharray: '',
+      stroke: colors.borderLight,
+    },
+  };
+
+  // Labels: show every 2nd km for readability
+  const labels = splits.map((split, i) => (i % 2 === 0 ? `${split.kilometer}` : ''));
+
+  return (
+    <View style={styles.chartContainer}>
+      <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>{title}</Text>
+      <BarChart
+        // @ts-ignore - BarChart props type mismatch in react-native-chart-kit
+        data={{
+          labels,
+          datasets: [
+            {
+              data: paceSeconds,
+            },
+          ],
+        }}
+        width={CHART_WIDTH}
+        height={CHART_HEIGHT}
+        chartConfig={chartConfig}
+        style={styles.chart}
+        showValuesOnTopOfBars={false}
+        fromZero={false}
+        withInnerLines
+        withHorizontalLabels
+        withVerticalLabels
+        yAxisSuffix=""
+        segments={5}
+      />
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
+      <View style={styles.statsRow}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Fastest</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {formatPace(fastestPace)} /km
+          </Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Average</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {formatPace(avgPace)} /km
+          </Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Slowest</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {formatPace(slowestPace)} /km
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * Elevation Chart - Shows elevation gain/loss per kilometer
+ */
+export function ElevationChart({ splits, title }: ElevationChartProps) {
+  const { colors } = useTheme();
+
+  if (!splits || splits.length === 0) {
+    return null;
+  }
+
+  // Check if there's meaningful elevation data
+  const totalElevationGain = splits.reduce((sum, s) => sum + s.elevation_gain, 0);
+  const totalElevationLoss = splits.reduce((sum, s) => sum + Math.abs(s.elevation_loss), 0);
+
+  if (totalElevationGain < 1 && totalElevationLoss < 1) {
+    return null; // No meaningful elevation data
+  }
+
+  const elevationGains = splits.map((split) => split.elevation_gain);
+
+  const chartConfig = {
+    backgroundColor: colors.cardBackground,
+    backgroundGradientFrom: colors.cardBackground,
+    backgroundGradientTo: colors.cardBackground,
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
     labelColor: (opacity = 1) => colors.textMuted,
     style: {
       borderRadius: 8,
     },
     propsForDots: {
-      r: '0', // Hide dots for cleaner look
+      r: '3',
     },
     propsForBackgroundLines: {
-      strokeDasharray: '', // Solid lines
+      strokeDasharray: '',
       stroke: colors.borderLight,
     },
   };
 
-  // Create labels (show every 3rd distance label to avoid crowding)
-  const labels = distances.map((d, i) => (i % 3 === 0 ? d.toFixed(1) : ''));
+  const labels = splits.map((split, i) => (i % 2 === 0 ? `${split.kilometer}` : ''));
 
   return (
     <View style={styles.chartContainer}>
@@ -75,7 +164,7 @@ export function ElevationChart({ trackPoints, title }: ElevationChartProps) {
           labels,
           datasets: [
             {
-              data: elevations,
+              data: elevationGains,
             },
           ],
         }}
@@ -92,26 +181,26 @@ export function ElevationChart({ trackPoints, title }: ElevationChartProps) {
         withHorizontalLabels
         yAxisSuffix=" m"
         xAxisLabel=""
-        fromZero={false}
+        fromZero
       />
-      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Distance (km)</Text>
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Gain</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(minElevation)} m
+            {Math.round(totalElevationGain)} m
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Max</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Loss</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(maxElevation)} m
+            {Math.round(totalElevationLoss)} m
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Range</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Net</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(elevationRange)} m
+            {Math.round(totalElevationGain - totalElevationLoss)} m
           </Text>
         </View>
       </View>
@@ -119,38 +208,39 @@ export function ElevationChart({ trackPoints, title }: ElevationChartProps) {
   );
 }
 
-export function SpeedChart({ trackPoints, title }: SpeedChartProps) {
+/**
+ * Heart Rate Chart - Shows average heart rate per kilometer (if available)
+ */
+export function HeartRateChart({ splits, title }: HeartRateChartProps) {
   const { colors } = useTheme();
 
-  if (!trackPoints || !Array.isArray(trackPoints) || trackPoints.length === 0) {
+  if (!splits || splits.length === 0) {
     return null;
   }
 
-  // Sample data points if there are too many
-  const maxPoints = 50;
-  const step = Math.ceil(trackPoints.length / maxPoints);
-  const sampledPoints = trackPoints.filter((_, index) => index % step === 0);
+  // Check if heart rate data is available
+  const heartRateData = splits.filter((s) => s.avg_heart_rate !== null);
+  if (heartRateData.length === 0) {
+    return null;
+  }
 
-  // Prepare data: distance (km) vs speed (km/h)
-  const distances = sampledPoints.map((point) => point.distance / 1000);
-  const speeds = sampledPoints.map((point) => point.speed * 3.6); // Convert m/s to km/h
-
-  const minSpeed = Math.min(...speeds);
-  const maxSpeed = Math.max(...speeds);
-  const avgSpeed = speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length;
+  const heartRates = splits.map((split) => split.avg_heart_rate || 0);
+  const avgHR = heartRates.reduce((sum, hr) => sum + hr, 0) / heartRates.length;
+  const maxHR = Math.max(...heartRates);
+  const minHR = Math.min(...heartRates.filter((hr) => hr > 0));
 
   const chartConfig = {
     backgroundColor: colors.cardBackground,
     backgroundGradientFrom: colors.cardBackground,
     backgroundGradientTo: colors.cardBackground,
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, // Emerald color
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`, // Red color for HR
     labelColor: (opacity = 1) => colors.textMuted,
     style: {
       borderRadius: 8,
     },
     propsForDots: {
-      r: '0',
+      r: '3',
     },
     propsForBackgroundLines: {
       strokeDasharray: '',
@@ -158,8 +248,7 @@ export function SpeedChart({ trackPoints, title }: SpeedChartProps) {
     },
   };
 
-  // Create labels
-  const labels = distances.map((d, i) => (i % 3 === 0 ? d.toFixed(1) : ''));
+  const labels = splits.map((split, i) => (i % 2 === 0 ? `${split.kilometer}` : ''));
 
   return (
     <View style={styles.chartContainer}>
@@ -169,7 +258,7 @@ export function SpeedChart({ trackPoints, title }: SpeedChartProps) {
           labels,
           datasets: [
             {
-              data: speeds,
+              data: heartRates,
             },
           ],
         }}
@@ -184,28 +273,28 @@ export function SpeedChart({ trackPoints, title }: SpeedChartProps) {
         withHorizontalLines
         withVerticalLabels
         withHorizontalLabels
-        yAxisSuffix=" km/h"
+        yAxisSuffix=" bpm"
         xAxisLabel=""
         fromZero={false}
       />
-      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Distance (km)</Text>
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {minSpeed.toFixed(1)} km/h
+            {Math.round(minHR)} bpm
           </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {avgSpeed.toFixed(1)} km/h
+            {Math.round(avgHR)} bpm
           </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Max</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {maxSpeed.toFixed(1)} km/h
+            {Math.round(maxHR)} bpm
           </Text>
         </View>
       </View>

@@ -639,8 +639,16 @@ class ApiService {
   }
 
   async getActivityTrackPoints(id: number): Promise<Types.TrackPointsResponse> {
-    const response = await this.request<Types.ApiResponse<Types.TrackPointsResponse>>(
+    // Note: This endpoint returns data directly, not wrapped in ApiResponse
+    const response = await this.request<Types.TrackPointsResponse>(
       `/activities/${id}/track-points`
+    );
+    return response;
+  }
+
+  async getActivityAnalysis(id: number): Promise<Types.ActivityStats> {
+    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
+      `/activities/${id}/stats`
     );
     return response.data;
   }
