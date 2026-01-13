@@ -557,13 +557,34 @@ function useLiveActivityInternal() {
       // App going to background
       logger.gps('App going to background - switching to background tracking');
 
-      // Stop foreground tracking
+      // On Android, background tracking was started preemptively when activity began
+      // On iOS, we start it now (iOS can start background tasks when going to background)
+      if (Platform.OS === 'ios') {
+        const bgStarted = await startBackgroundLocationTracking(currentGpsProfile.current);
+        if (!bgStarted) {
+          logger.warn('gps', 'Failed to start background tracking - GPS will pause in background');
+        }
+      }
+
+      // Stop foreground tracking (background tracking should now be running)
       stopForegroundTracking();
 
-      // Start background tracking
-      await startBackgroundLocationTracking(currentGpsProfile.current);
+      // Verify background tracking is running
+      const isBackgroundRunning = await Location.hasStartedLocationUpdatesAsync('background-location-task').catch(() => false);
 
-      logger.gps('Switched to background tracking mode');
+      if (!isBackgroundRunning) {
+        logger.warn('gps', 'Background tracking not running - GPS will pause in background');
+        setState((prev) => ({
+          ...prev,
+          trackingStatus: {
+            ...prev.trackingStatus,
+            gpsSignal: 'lost',
+            syncError: 'Background tracking not available',
+          },
+        }));
+      } else {
+        logger.gps('Background tracking confirmed running');
+      }
     } else if (previousAppState.match(/inactive|background/) && nextAppState === 'active') {
       // App returning to foreground
       logger.gps('App returning to foreground - switching to foreground tracking');
@@ -597,6 +618,16 @@ function useLiveActivityInternal() {
 
       // 6. NOW start foreground tracking
       await startForegroundTracking();
+
+      // 7. Reset GPS signal status (will update when first GPS point arrives)
+      setState((prev) => ({
+        ...prev,
+        trackingStatus: {
+          ...prev.trackingStatus,
+          gpsSignal: 'weak', // Set to weak until we get a fresh GPS reading
+          syncError: null,   // Clear any background tracking errors
+        },
+      }));
 
       logger.gps('Switched to foreground tracking mode');
     }
@@ -682,7 +713,19 @@ function useLiveActivityInternal() {
       // Set up app state change listener to toggle between foreground/background tracking
       appStateSubscription.current = AppState.addEventListener('change', handleAppStateChange);
 
-      // Start with foreground tracking (app is active when starting)
+      // IMPORTANT: On Android, start background tracking FIRST while app is in foreground
+      // This prevents the "foreground service cannot be started in background" error
+      // Background tracking runs alongside foreground tracking, ready for when app goes to background
+      if (Platform.OS === 'android') {
+        const bgStarted = await startBackgroundLocationTracking(profile);
+        if (!bgStarted) {
+          logger.warn('gps', 'Failed to start background tracking preemptively - GPS may not work in background');
+        } else {
+          logger.gps('Background tracking started preemptively (Android)');
+        }
+      }
+
+      // Start foreground tracking for real-time updates
       await startForegroundTracking();
 
       // Sync points to server every 30 seconds (with exponential backoff on failures)
