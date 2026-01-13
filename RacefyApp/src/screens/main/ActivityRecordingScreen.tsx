@@ -18,8 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
-import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents } from '../../hooks';
-import type { Event } from '../../types/api';
+import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
+import type { Event, MilestoneSingle } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,13 +29,26 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 import { logger } from '../../services/logger';
 
-// Mock data for milestones based on previous activities
-const mockMilestones = [
-  { distance: 1000, label: '1 km', bestTime: 298, avgTime: 325 },
-  { distance: 2000, label: '2 km', bestTime: 612, avgTime: 658 },
-  { distance: 3000, label: '3 km', bestTime: 935, avgTime: 1005 },
-  { distance: 5000, label: '5 km', bestTime: 1580, avgTime: 1720 },
-  { distance: 10000, label: '10 km', bestTime: 3250, avgTime: 3540 },
+// Mapping from API milestone types to display labels and thresholds
+const MILESTONE_LABELS: Record<string, string> = {
+  first_5km: '5 km',
+  first_10km: '10 km',
+  first_15km: '15 km',
+  first_half_marathon: '21.1 km',
+  first_30km: '30 km',
+  first_marathon: '42.2 km',
+  first_50km: '50 km',
+  first_100km: '100 km',
+};
+
+// Order of milestones to display (filtering only relevant distance milestones)
+const MILESTONE_ORDER = [
+  'first_5km',
+  'first_10km',
+  'first_15km',
+  'first_half_marathon',
+  'first_30km',
+  'first_marathon',
 ];
 
 // Number of sports to show initially before "Show more"
@@ -84,6 +97,16 @@ export function ActivityRecordingScreen() {
   const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
     isAuthenticated && selectedSport ? selectedSport.id : undefined
   );
+
+  // Fetch milestones for selected sport type (only when authenticated)
+  const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
+    isAuthenticated && selectedSport ? selectedSport.id : undefined
+  );
+
+  // Get ordered distance milestones from API data
+  const distanceMilestones = milestonesData?.distance_single
+    ?.filter((m) => MILESTONE_ORDER.includes(m.type))
+    ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
 
   // Set default sport when sports are loaded
   useEffect(() => {
@@ -175,18 +198,18 @@ export function ActivityRecordingScreen() {
     };
   }, [activity, isTracking, isPaused]);
 
-  // Check milestones
+  // Check milestones during activity recording
   useEffect(() => {
-    mockMilestones.forEach((milestone) => {
+    distanceMilestones.forEach((milestone) => {
       if (
-        distance >= milestone.distance &&
-        !passedMilestones.includes(milestone.distance)
+        distance >= milestone.threshold &&
+        !passedMilestones.includes(milestone.threshold)
       ) {
-        setPassedMilestones((prev) => [...prev, milestone.distance]);
+        setPassedMilestones((prev) => [...prev, milestone.threshold]);
         Vibration.vibrate(200);
       }
     });
-  }, [distance, passedMilestones]);
+  }, [distance, passedMilestones, distanceMilestones]);
 
   // Show error alerts
   useEffect(() => {
@@ -469,22 +492,21 @@ export function ActivityRecordingScreen() {
     );
   };
 
-  const getMilestoneStatus = (milestone: (typeof mockMilestones)[0]) => {
-    if (!passedMilestones.includes(milestone.distance)) {
-      return { status: 'upcoming', color: colors.textMuted };
+  // Get milestone status for display - combines API achievement data with during-activity tracking
+  const getMilestoneStatus = (milestone: MilestoneSingle) => {
+    const justPassedInActivity = passedMilestones.includes(milestone.threshold);
+
+    if (justPassedInActivity) {
+      // User just passed this milestone in current activity
+      if (!milestone.achieved) {
+        // First time achieving this distance!
+        return { status: 'record', color: colors.primary, label: t('recording.firstTime') };
+      }
+      return { status: 'normal', color: colors.success, label: t('recording.completed') };
     }
 
-    // Calculate time at this milestone (simplified)
-    const timeAtMilestone = Math.floor(
-      (localDuration * milestone.distance) / Math.max(distance, 1)
-    );
-
-    if (timeAtMilestone < milestone.bestTime) {
-      return { status: 'record', color: colors.primary, label: t('recording.newRecord') };
-    } else if (timeAtMilestone < milestone.avgTime) {
-      return { status: 'good', color: colors.success, label: t('recording.aboveAverage') };
-    }
-    return { status: 'normal', color: colors.textSecondary, label: t('recording.completed') };
+    // Not passed in current activity yet
+    return { status: 'upcoming', color: colors.textMuted };
   };
 
   // Bottom sheet options for adding activity
@@ -858,74 +880,97 @@ export function ActivityRecordingScreen() {
         </View>
 
         {/* Milestones */}
-        <Card style={styles.milestonesCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.milestones')}</Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            {t('recording.compareWith', { sport: selectedSport?.name?.toLowerCase() || '' })}
-          </Text>
+        {isAuthenticated && (
+          <Card style={styles.milestonesCard}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.milestones')}</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+              {t('recording.milestonesSubtitle', { sport: selectedSport?.name?.toLowerCase() || '' })}
+            </Text>
 
-          {mockMilestones.map((milestone) => {
-            const milestoneStatus = getMilestoneStatus(milestone);
-            const isPassed = passedMilestones.includes(milestone.distance);
+            {milestonesLoading ? (
+              <View style={styles.statsLoading}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            ) : distanceMilestones.length > 0 ? (
+              distanceMilestones.map((milestone) => {
+                const milestoneStatus = getMilestoneStatus(milestone);
+                const isPassed = passedMilestones.includes(milestone.threshold);
+                const progressPercent = Math.round(milestone.progress * 100);
 
-            return (
-              <View
-                key={milestone.distance}
-                style={[
-                  styles.milestoneRow,
-                  { borderBottomColor: colors.border },
-                  isPassed && [styles.milestoneRowPassed, { backgroundColor: colors.success + '15' }],
-                ]}
-              >
-                <View style={styles.milestoneLeft}>
+                return (
                   <View
+                    key={milestone.type}
                     style={[
-                      styles.milestoneIcon,
-                      { backgroundColor: colors.border },
-                      isPassed && { backgroundColor: colors.primary },
+                      styles.milestoneRow,
+                      { borderBottomColor: colors.border },
+                      isPassed && [styles.milestoneRowPassed, { backgroundColor: colors.success + '15' }],
                     ]}
                   >
-                    <Ionicons
-                      name={isPassed ? 'checkmark' : 'flag-outline'}
-                      size={16}
-                      color={isPassed ? colors.white : colors.textMuted}
-                    />
-                  </View>
-                  <View>
-                    <Text
-                      style={[
-                        styles.milestoneLabel,
-                        { color: colors.textSecondary },
-                        isPassed && { color: colors.textPrimary },
-                      ]}
-                    >
-                      {milestone.label}
-                    </Text>
-                    {isPassed && milestoneStatus.label && (
-                      <Text
+                    <View style={styles.milestoneLeft}>
+                      <View
                         style={[
-                          styles.milestoneStatus,
-                          { color: milestoneStatus.color },
+                          styles.milestoneIcon,
+                          { backgroundColor: milestone.achieved ? colors.success + '30' : colors.border },
+                          isPassed && { backgroundColor: colors.primary },
                         ]}
                       >
-                        {milestoneStatus.label}
-                      </Text>
-                    )}
-                  </View>
-                </View>
+                        <Ionicons
+                          name={isPassed ? 'checkmark' : milestone.achieved ? 'trophy-outline' : 'flag-outline'}
+                          size={16}
+                          color={isPassed ? colors.white : milestone.achieved ? colors.success : colors.textMuted}
+                        />
+                      </View>
+                      <View>
+                        <Text
+                          style={[
+                            styles.milestoneLabel,
+                            { color: milestone.achieved ? colors.textPrimary : colors.textSecondary },
+                            isPassed && { color: colors.textPrimary },
+                          ]}
+                        >
+                          {MILESTONE_LABELS[milestone.type] || milestone.type}
+                        </Text>
+                        {isPassed && milestoneStatus.label && (
+                          <Text
+                            style={[
+                              styles.milestoneStatus,
+                              { color: milestoneStatus.color },
+                            ]}
+                          >
+                            {milestoneStatus.label}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
 
-                <View style={styles.milestoneRight}>
-                  <Text style={[styles.milestoneTime, { color: colors.textPrimary }]}>
-                    {t('recording.best')}: {formatTime(milestone.bestTime)}
-                  </Text>
-                  <Text style={[styles.milestoneTimeAvg, { color: colors.textMuted }]}>
-                    {t('recording.avg')}: {formatTime(milestone.avgTime)}
-                  </Text>
-                </View>
+                    <View style={styles.milestoneRight}>
+                      {milestone.achieved ? (
+                        <Text style={[styles.milestoneTime, { color: colors.success }]}>
+                          {t('recording.achieved')}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.milestoneTime, { color: colors.textSecondary }]}>
+                          {progressPercent}%
+                        </Text>
+                      )}
+                      {milestone.first_date && (
+                        <Text style={[styles.milestoneTimeAvg, { color: colors.textMuted }]}>
+                          {new Date(milestone.first_date).toLocaleDateString()}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <View style={styles.noStatsContainer}>
+                <Text style={[styles.noStatsText, { color: colors.textMuted }]}>
+                  {t('recording.noMilestones')}
+                </Text>
               </View>
-            );
-          })}
-        </Card>
+            )}
+          </Card>
+        )}
 
         {/* Previous Activities Summary */}
         {isAuthenticated && (

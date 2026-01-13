@@ -762,6 +762,45 @@ export interface WeeklyStats {
   >;
 }
 
+// ============ MILESTONES ============
+
+export interface MilestoneSingle {
+  type: string;
+  threshold: number;
+  achieved: boolean;
+  activity_id: number | null;
+  first_date: string | null;
+  progress: number;
+}
+
+export interface MilestoneTotal {
+  type: string;
+  threshold: number;
+  achieved: boolean;
+  current: number;
+  achieved_date: string | null;
+  progress: number;
+}
+
+export interface MilestoneStreak {
+  type: string;
+  threshold: number;
+  achieved: boolean;
+  best_streak: number;
+  current_streak: number;
+  current_streak_start: string | null;
+}
+
+export interface MilestonesData {
+  sport_type_id: number | null;
+  distance_single: MilestoneSingle[];
+  distance_total: MilestoneTotal[];
+  elevation_single: MilestoneSingle[];
+  elevation_total: MilestoneTotal[];
+  activity_count: MilestoneTotal[];
+  consistency: MilestoneStreak[];
+}
+
 // ============ POINTS & LEADERBOARD ============
 
 export interface UserPointStats {

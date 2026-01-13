@@ -1074,6 +1074,22 @@ class ApiService {
     return response.data;
   }
 
+  async getMilestones(sportTypeId?: number): Promise<Types.MilestonesData> {
+    const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
+    const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
+      `/stats/milestones${query}`
+    );
+    return response.data;
+  }
+
+  async getUserMilestones(userId: number, sportTypeId?: number): Promise<Types.MilestonesData> {
+    const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
+    const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
+      `/users/${userId}/stats/milestones${query}`
+    );
+    return response.data;
+  }
+
   async getUserActivityStats(userId: number): Promise<Types.ActivityStats> {
     const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
       `/users/${userId}/stats/activities`

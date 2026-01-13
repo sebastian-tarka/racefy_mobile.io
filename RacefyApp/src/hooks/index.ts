@@ -11,6 +11,7 @@ export * from './useNotifications';
 export * from './useSportTypes';
 export * from './useTheme';
 export * from './useActivityStats';
+export * from './useMilestones';
 export * from './usePointStats';
 export * from './useFollowing';
 export * from './useHaptics';
