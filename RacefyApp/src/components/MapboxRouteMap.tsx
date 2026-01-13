@@ -9,7 +9,8 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
-import { colors } from '../theme';
+import { logger } from '../services/logger';
+import { useTheme } from '../hooks/useTheme';
 import type { GeoJSONLineString } from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
@@ -26,7 +27,7 @@ try {
   }
 } catch (e) {
   // @rnmapbox/maps not installed - fallback to static images
-  console.log('Mapbox SDK not available - using static map images');
+  logger.debug('gps', 'Mapbox SDK not available - using static map images');
 }
 
 interface MapboxRouteMapProps {
@@ -46,15 +47,20 @@ export function MapboxRouteMap({
   trackData,
   activityId,
   height = 250,
-  backgroundColor = colors.cardBackground,
+  backgroundColor,
   initialZoom = 13,
 }: MapboxRouteMapProps) {
+  const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
+  const mapReadyRef = useRef(false);
 
   // If MapboxGL is not available, return null
   if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
     return null;
   }
+
+  // Use theme-appropriate background if not provided
+  const bgColor = backgroundColor || colors.cardBackground;
 
   // Track map load for analytics/cost monitoring
   useEffect(() => {
@@ -79,14 +85,29 @@ export function MapboxRouteMap({
 
   const bounds = getBounds();
 
-  // Fit camera to bounds when map loads
-  useEffect(() => {
+  // Fit camera to bounds when map is ready
+  const fitMapBounds = () => {
     if (bounds && cameraRef.current) {
+      logger.debug('gps', 'Fitting map bounds', { bounds });
       setTimeout(() => {
         cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [40, 40, 40, 40], 500);
       }, 100);
     }
-  }, [bounds]);
+  };
+
+  // Handle map ready callback
+  const onMapReady = () => {
+    logger.debug('gps', 'Map finished loading');
+    mapReadyRef.current = true;
+    fitMapBounds();
+  };
+
+  // Re-fit bounds when height changes (only if map is already ready)
+  useEffect(() => {
+    if (mapReadyRef.current) {
+      fitMapBounds();
+    }
+  }, [height]);
 
   const lineGeoJSON: GeoJSON.Feature<GeoJSON.LineString> = {
     type: 'Feature',
@@ -97,16 +118,44 @@ export function MapboxRouteMap({
     },
   };
 
+  // Debug logging
+  useEffect(() => {
+    logger.debug('gps', 'MapboxRouteMap rendering', {
+      coordinatesCount: trackData.coordinates.length,
+      firstCoord: trackData.coordinates[0],
+      lastCoord: trackData.coordinates[trackData.coordinates.length - 1],
+      hasBounds: !!bounds,
+    });
+  }, [trackData, bounds]);
+
+  // Use size category as key to force re-render on significant height changes
+  const sizeCategory = height > 300 ? 'large' : 'small';
+
+  // Reset map ready state when size category or theme changes
+  useEffect(() => {
+    mapReadyRef.current = false;
+  }, [sizeCategory, isDark]);
+
+  // Select map style based on theme
+  const mapStyle = isDark ? MapboxGL.StyleURL.Dark : MapboxGL.StyleURL.Outdoors;
+
+  // Theme-aware colors
+  const routeColor = colors.primary; // Emerald green works in both themes
+  const startMarkerColor = isDark ? '#34d399' : '#22c55e'; // Lighter green in dark mode
+  const endMarkerColor = isDark ? '#f87171' : '#ef4444'; // Lighter red in dark mode
+
   return (
-    <View style={[styles.container, { height, backgroundColor }]}>
+    <View style={[styles.container, { height, backgroundColor: bgColor }]}>
       <MapboxGL.MapView
+        key={`mapbox-${activityId}-${sizeCategory}-${isDark ? 'dark' : 'light'}`}
         style={styles.map}
-        styleURL={MapboxGL.StyleURL.Outdoors}
+        styleURL={mapStyle}
         logoEnabled={false}
         attributionEnabled={false}
         compassEnabled={true}
         compassViewPosition={3} // Top right
         compassViewMargins={{ x: 16, y: 60 }}
+        onDidFinishLoadingMap={onMapReady}
       >
         <MapboxGL.Camera
           ref={cameraRef}
@@ -115,41 +164,68 @@ export function MapboxRouteMap({
           animationDuration={1000}
         />
 
-        {/* Route line */}
+         {/* Route line - must be rendered first to appear below markers */}
         <MapboxGL.ShapeSource id="routeSource" shape={lineGeoJSON}>
           <MapboxGL.LineLayer
             id="routeLine"
             style={{
-              lineColor: colors.primary,
-              lineWidth: 3,
+              lineColor: routeColor,
+              lineWidth: 4,
               lineCap: 'round',
               lineJoin: 'round',
+              lineOpacity: 1,
             }}
           />
         </MapboxGL.ShapeSource>
 
-        {/* Start marker */}
+        {/* Start marker - using ShapeSource + SymbolLayer for better performance */}
         {trackData.coordinates.length > 0 && (
-          <MapboxGL.PointAnnotation
-            id="startPoint"
-            coordinate={trackData.coordinates[0]}
+          <MapboxGL.ShapeSource
+            id="startPointSource"
+            shape={{
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: trackData.coordinates[0],
+              },
+              properties: {},
+            }}
           >
-            <View style={[styles.marker, styles.startMarker]}>
-              <View style={styles.markerInner} />
-            </View>
-          </MapboxGL.PointAnnotation>
+            <MapboxGL.CircleLayer
+              id="startCircle"
+              style={{
+                circleRadius: 10,
+                circleColor: startMarkerColor,
+                circleStrokeWidth: 3,
+                circleStrokeColor: '#ffffff',
+              }}
+            />
+          </MapboxGL.ShapeSource>
         )}
 
         {/* End marker */}
         {trackData.coordinates.length > 1 && (
-          <MapboxGL.PointAnnotation
-            id="endPoint"
-            coordinate={trackData.coordinates[trackData.coordinates.length - 1]}
+          <MapboxGL.ShapeSource
+            id="endPointSource"
+            shape={{
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: trackData.coordinates[trackData.coordinates.length - 1],
+              },
+              properties: {},
+            }}
           >
-            <View style={[styles.marker, styles.endMarker]}>
-              <View style={styles.markerInner} />
-            </View>
-          </MapboxGL.PointAnnotation>
+            <MapboxGL.CircleLayer
+              id="endCircle"
+              style={{
+                circleRadius: 10,
+                circleColor: endMarkerColor,
+                circleStrokeWidth: 3,
+                circleStrokeColor: '#ffffff',
+              }}
+            />
+          </MapboxGL.ShapeSource>
         )}
       </MapboxGL.MapView>
     </View>

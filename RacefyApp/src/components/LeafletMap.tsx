@@ -9,9 +9,10 @@ import {
 } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
-import { colors, spacing, borderRadius } from '../theme';
+import { spacing, borderRadius } from '../theme';
 import { MAPBOX_ACCESS_TOKEN } from '../config/api';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
+import { useTheme } from '../hooks/useTheme';
 import type { GeoJSONLineString } from '../types/api';
 
 // Lazy load MapboxRouteMap to avoid import errors if @rnmapbox/maps is not installed
@@ -44,9 +45,14 @@ export function RoutePreview({
   trackData,
   activityId,
   height = 250,
-  backgroundColor = colors.cardBackground,
+  backgroundColor,
   enableZoom = false,
 }: RoutePreviewProps) {
+  const { colors } = useTheme();
+
+  // Use theme-appropriate background if not provided
+  const bgColor = backgroundColor || colors.cardBackground;
+
   // Track static map usage when image is displayed
   useEffect(() => {
     if (routeMapUrl && activityId && !MAPBOX_ACCESS_TOKEN) {
@@ -61,7 +67,7 @@ export function RoutePreview({
         trackData={trackData}
         activityId={activityId}
         height={height}
-        backgroundColor={backgroundColor}
+        backgroundColor={bgColor}
       />
     );
   }
@@ -207,7 +213,7 @@ export function RoutePreview({
     );
 
     return (
-      <View style={[styles.container, { height, backgroundColor }]}>
+      <View style={[styles.container, { height, backgroundColor: bgColor }]}>
         {enableZoom ? (
           <>
             <PanGestureHandler
@@ -273,7 +279,7 @@ export function RoutePreview({
     );
 
     return (
-      <View style={[styles.container, { height, backgroundColor }]}>
+      <View style={[styles.container, { height, backgroundColor: bgColor }]}>
         {enableZoom ? (
           <>
             <PanGestureHandler
@@ -330,7 +336,7 @@ export function RoutePreview({
 
 // Backwards compatible alias
 export function LeafletMap(props: RoutePreviewProps & { coordinates?: unknown; bounds?: unknown; strokeColor?: string; strokeWidth?: number }) {
-  return <RoutePreview routeMapUrl={props.routeMapUrl} routeSvg={props.routeSvg} height={props.height} backgroundColor={props.backgroundColor} enableZoom={props.enableZoom} />;
+  return <RoutePreview routeMapUrl={props.routeMapUrl} routeSvg={props.routeSvg} trackData={props.trackData} activityId={props.activityId} height={props.height} backgroundColor={props.backgroundColor} enableZoom={props.enableZoom} />;
 }
 
 const styles = StyleSheet.create({
