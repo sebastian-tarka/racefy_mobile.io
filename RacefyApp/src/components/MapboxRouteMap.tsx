@@ -6,8 +6,8 @@
  * if @rnmapbox/maps is not installed.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
@@ -53,6 +53,8 @@ export function MapboxRouteMap({
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
   const mapReadyRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // If MapboxGL is not available, return null
   if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
@@ -100,6 +102,15 @@ export function MapboxRouteMap({
     logger.debug('gps', 'Map finished loading');
     mapReadyRef.current = true;
     fitMapBounds();
+
+    // Fade out the loading overlay
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setIsLoading(false);
+    });
   };
 
   // Re-fit bounds when height changes (only if map is already ready)
@@ -131,9 +142,11 @@ export function MapboxRouteMap({
   // Use size category as key to force re-render on significant height changes
   const sizeCategory = height > 300 ? 'large' : 'small';
 
-  // Reset map ready state when size category or theme changes
+  // Reset map ready state and loading state when size category or theme changes
   useEffect(() => {
     mapReadyRef.current = false;
+    setIsLoading(true);
+    fadeAnim.setValue(1);
   }, [sizeCategory, isDark]);
 
   // Select map style based on theme
@@ -228,6 +241,18 @@ export function MapboxRouteMap({
           </MapboxGL.ShapeSource>
         )}
       </MapboxGL.MapView>
+
+      {/* Loading overlay with spinner */}
+      {isLoading && (
+        <Animated.View
+          style={[
+            styles.loadingOverlay,
+            { backgroundColor: bgColor, opacity: fadeAnim },
+          ]}
+        >
+          <ActivityIndicator size="large" color={colors.primary} />
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -239,6 +264,11 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   marker: {
     width: 20,
