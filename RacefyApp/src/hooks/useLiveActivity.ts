@@ -26,6 +26,12 @@ import { useSportTypes } from './useSportTypes';
 import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
 import { captureActivityLocation } from '../utils/locationCapture';
+import {
+  type PaceSegment,
+  calculateCurrentPace,
+  smoothPace,
+  addPaceSegment,
+} from '../utils/paceCalculator';
 
 const isWeb = Platform.OS === 'web';
 
@@ -39,6 +45,8 @@ interface LiveActivityStats {
   avg_heart_rate?: number;
   max_heart_rate?: number;
   calories: number;
+  /** Current pace in seconds per kilometer (smoothed), or null if insufficient data */
+  currentPace: number | null;
 }
 
 // GPS and network status for UI feedback
@@ -72,6 +80,7 @@ const initialStats: LiveActivityStats = {
   avg_speed: 0,
   max_speed: 0,
   calories: 0,
+  currentPace: null,
 };
 
 // Simple calorie estimation based on activity type and duration
@@ -143,6 +152,10 @@ function useLiveActivityInternal() {
   const syncRetryCount = useRef<number>(0);
   const lastSyncAttempt = useRef<number>(0);
 
+  // Pace calculation - stores recent distance snapshots for current pace
+  const paceSegments = useRef<PaceSegment[]>([]);
+  const smoothedPaceRef = useRef<number | null>(null);
+
   // Calculate smoothed position from GPS buffer (with recency weighting)
   const getSmoothedPosition = (newPoint: { lat: number; lng: number; ele?: number; timestamp: number }) => {
     const bufferSize = currentGpsProfile.current.smoothingBufferSize;
@@ -201,6 +214,32 @@ function useLiveActivityInternal() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
+  };
+
+  // Update current pace based on recent GPS segments
+  const updateCurrentPace = () => {
+    const profile = currentGpsProfile.current;
+
+    // Calculate raw current pace from segments
+    const rawPace = calculateCurrentPace(
+      paceSegments.current,
+      profile.paceWindowSeconds,
+      profile.minSegmentDistance
+    );
+
+    if (rawPace !== null) {
+      // Apply smoothing for stable display
+      const smoothed = smoothPace(
+        rawPace,
+        smoothedPaceRef.current,
+        profile.paceSmoothingFactor
+      );
+      smoothedPaceRef.current = smoothed;
+      localStatsRef.current.currentPace = smoothed;
+    } else {
+      // Not enough data yet - keep previous value or null
+      localStatsRef.current.currentPace = smoothedPaceRef.current;
+    }
   };
 
   // Check for existing active activity on mount (only for authenticated users)
@@ -288,6 +327,7 @@ function useLiveActivityInternal() {
           avg_heart_rate: activity.avg_heart_rate || undefined,
           max_heart_rate: activity.max_heart_rate || undefined,
           calories: activity.calories || 0,
+          currentPace: null, // Will be calculated when tracking resumes
         };
 
         // Set hasExistingActivity flag to true - UI should show dialog
@@ -500,6 +540,16 @@ function useLiveActivityInternal() {
                 localStatsRef.current.elevation_gain += elevDiff;
               }
             }
+
+            // Track pace segment for current pace calculation
+            paceSegments.current = addPaceSegment(
+              paceSegments.current,
+              { timestamp: location.timestamp, distance: localStatsRef.current.distance },
+              30 // Keep max 30 segments
+            );
+
+            // Update current pace based on recent segments
+            updateCurrentPace();
 
             setState((prev) => ({
               ...prev,
@@ -957,6 +1007,8 @@ function useLiveActivityInternal() {
         max_heart_rate: localStatsRef.current.max_heart_rate,
         // Use server calories if available, otherwise keep local
         calories: result.stats.calories ?? localStatsRef.current.calories,
+        // Preserve locally calculated current pace (calculated from GPS segments)
+        currentPace: localStatsRef.current.currentPace,
       };
       localStatsRef.current = newStats;
 
@@ -1049,6 +1101,7 @@ function useLiveActivityInternal() {
             avg_heart_rate: existingActivity.avg_heart_rate || undefined,
             max_heart_rate: existingActivity.max_heart_rate || undefined,
             calories: existingActivity.calories || 0,
+            currentPace: null, // Will be calculated when tracking resumes
           };
           setState((prev) => ({
             ...prev,
@@ -1090,12 +1143,14 @@ function useLiveActivityInternal() {
           gps_profile: gpsProfileRequest,
         });
 
-        // Reset local stats
+        // Reset local stats and pace tracking
         localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
         pausedDuration.current = 0;
         trackingStartTime.current = null;
+        paceSegments.current = [];
+        smoothedPaceRef.current = null;
 
         setState((prev) => ({
           ...prev,
@@ -1268,13 +1323,15 @@ function useLiveActivityInternal() {
           postStatus: response.post?.status,
         });
 
-        // Reset state
+        // Reset state and pace tracking
         localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         activityLocationRef.current = null;
+        paceSegments.current = [];
+        smoothedPaceRef.current = null;
 
         setState({
           activity: null,
@@ -1333,13 +1390,15 @@ function useLiveActivityInternal() {
 
       logger.activity('Activity discarded', { id: state.activity.id });
 
-      // Reset state
+      // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
+      paceSegments.current = [];
+      smoothedPaceRef.current = null;
 
       setState({
         activity: null,
@@ -1384,6 +1443,8 @@ function useLiveActivityInternal() {
     discardTracking,
     clearError,
     checkExistingActivity,
+    // Expose GPS profile for UI to access pace settings (minDistanceForPace, etc.)
+    gpsProfile: currentGpsProfile.current,
   };
 }
 
@@ -1397,6 +1458,7 @@ interface LiveActivityContextType {
   currentStats: LiveActivityStats;
   hasExistingActivity: boolean;
   trackingStatus: TrackingStatus;
+  gpsProfile: GpsProfile;
   startTracking: (sportTypeId: number, title?: string, eventId?: number) => Promise<Activity | undefined>;
   pauseTracking: () => Promise<void>;
   resumeTracking: () => Promise<void>;

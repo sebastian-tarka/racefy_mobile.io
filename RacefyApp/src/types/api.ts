@@ -140,6 +140,11 @@ export interface GpsProfileApiResponse {
   time_interval: number;
   distance_interval: number;
   smoothing_buffer_size: number;
+  // Pace display settings (optional - API may not provide these yet)
+  pace_smoothing_factor?: number;     // EMA alpha for pace smoothing (0.1-0.9)
+  pace_window_seconds?: number;       // Time window for current pace calculation (20-120s)
+  min_distance_for_pace?: number;     // Min meters before showing any pace (20-200m)
+  min_segment_distance?: number;      // Min meters in window for valid current pace (10-100m)
 }
 
 // GPS Profile for API requests (snake_case, optional fields)
@@ -152,6 +157,11 @@ export interface GpsProfileRequest {
   time_interval?: number;
   distance_interval?: number;
   smoothing_buffer_size?: number;
+  // Pace display settings
+  pace_smoothing_factor?: number;
+  pace_window_seconds?: number;
+  min_distance_for_pace?: number;
+  min_segment_distance?: number;
 }
 
 export interface SportType {

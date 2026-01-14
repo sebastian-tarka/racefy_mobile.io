@@ -28,6 +28,7 @@ import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 import { logger } from '../../services/logger';
+import { formatPaceDisplay, calculateAveragePace } from '../../utils/paceCalculator';
 
 // Mapping from API milestone types to display labels and thresholds
 const MILESTONE_LABELS: Record<string, string> = {
@@ -74,6 +75,7 @@ export function ActivityRecordingScreen() {
     currentStats,
     hasExistingActivity,
     trackingStatus,
+    gpsProfile,
     startTracking,
     pauseTracking,
     resumeTracking,
@@ -305,6 +307,33 @@ export function ActivityRecordingScreen() {
     return `${Math.round(meters)} m`;
   };
 
+  // Format current pace (from GPS segments, smoothed)
+  const formatCurrentPace = (): string => {
+    const { currentPace } = currentStats;
+    const minDistance = gpsProfile?.minDistanceForPace ?? 50;
+
+    // Don't show pace until minimum distance traveled
+    if (currentStats.distance < minDistance) {
+      return '--:--';
+    }
+
+    return formatPaceDisplay(currentPace);
+  };
+
+  // Format average pace from total duration and distance
+  const formatAvgPaceFromStats = (): string => {
+    const minDistance = gpsProfile?.minDistanceForPace ?? 50;
+
+    // Don't show pace until minimum distance traveled
+    if (currentStats.distance < minDistance) {
+      return '--:--';
+    }
+
+    const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
+    return formatPaceDisplay(avgPace);
+  };
+
+  // Legacy pace format (for backward compatibility)
   const formatPace = (seconds: number, meters: number): string => {
     if (meters === 0) return '--:--';
     const paceSeconds = (seconds / meters) * 1000;
@@ -762,9 +791,21 @@ export function ActivityRecordingScreen() {
                 color={colors.primary}
               />
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatPace(localDuration, distance)}
+                {formatCurrentPace()}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.pace')}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.currentPace')}</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Ionicons
+                name="analytics-outline"
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {formatAvgPaceFromStats()}
+              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.avgPace')}</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>

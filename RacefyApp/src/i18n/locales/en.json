@@ -468,6 +468,8 @@
     "duration": "Duration",
     "distance": "Distance",
     "pace": "Pace",
+    "currentPace": "Current",
+    "avgPace": "Average",
     "calories": "Calories",
     "elevationGain": "m elevation gain",
     "start": "START",

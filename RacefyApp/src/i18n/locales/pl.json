@@ -468,6 +468,8 @@
     "duration": "Czas trwania",
     "distance": "Dystans",
     "pace": "Tempo",
+    "currentPace": "Aktualne",
+    "avgPace": "Średnie",
     "calories": "Kalorie",
     "elevationGain": "m przewyższenia",
     "start": "START",
