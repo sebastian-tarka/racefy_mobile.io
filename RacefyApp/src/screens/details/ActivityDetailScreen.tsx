@@ -201,6 +201,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     const newExpandedState = !isMapExpanded;
     setIsMapExpanded(newExpandedState);
 
+    // Scroll to top when expanding for better UX
+    if (newExpandedState) {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }
+
     Animated.spring(mapHeightAnim, {
       toValue: newExpandedState ? 500 : 250,
       useNativeDriver: false,
@@ -269,6 +274,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           contentContainerStyle={styles.scrollContent}
           refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
           keyboardShouldPersistTaps="handled"
+          scrollEnabled={!isMapExpanded}
         >
           {/* Map Section */}
           {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
@@ -299,63 +305,107 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           </Animated.View>
         )}
 
-        {/* Title Section */}
-        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
-          <View style={styles.titleRow}>
-            <Ionicons name={getSportIcon()} size={28} color={colors.primary} />
-            <View style={styles.titleContent}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                {activity.sport_type?.name || t('activityDetail.activity')} ·{' '}
-                {format(new Date(activity.started_at), 'EEEE, MMMM d, yyyy')}
-              </Text>
-              {/* Location display */}
-              {activity.location?.location_name && (
-                <View style={styles.locationRow}>
-                  <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-                  <Text style={[styles.locationText, { color: colors.textMuted }]}>
-                    {activity.location.location_name}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
+        {/* Header Section: Title + User Info Combined */}
+        <View style={[styles.headerSection, { backgroundColor: colors.cardBackground }]}>
+          {/* User Info */}
           {activity.user && (
             <TouchableOpacity
-              style={[styles.userRow, { borderTopColor: colors.border }]}
+              style={styles.userRow}
               onPress={() => navigation.navigate('UserProfile', { username: activity.user!.username })}
             >
-              <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
-              <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
+              <Avatar uri={activity.user.avatar} name={activity.user.name} size="md" />
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
+                <Text style={[styles.activityDate, { color: colors.textMuted }]}>
+                  {format(new Date(activity.started_at), 'EEEE, MMMM d · h:mm a')}
+                </Text>
+              </View>
             </TouchableOpacity>
+          )}
+
+          {/* Title and Sport */}
+          <View style={styles.titleRow}>
+            <Ionicons name={getSportIcon()} size={24} color={colors.primary} style={styles.sportIcon} />
+            <View style={styles.titleContent}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
+              <Text style={[styles.sportType, { color: colors.textSecondary }]}>
+                {activity.sport_type?.name || t('activityDetail.activity')}
+              </Text>
+            </View>
+          </View>
+
+          {/* Location */}
+          {activity.location?.location_name && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={16} color={colors.textMuted} />
+              <Text style={[styles.locationText, { color: colors.textMuted }]}>
+                {activity.location.location_name}
+              </Text>
+            </View>
           )}
         </View>
 
-        {/* Charts Section */}
-        {activityStats?.splits && activityStats.splits.splits.length > 0 && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.charts')}</Text>
-            <PaceChart splits={activityStats.splits.splits} title={t('activityDetail.pacePerKm')} />
-            {activityStats.has_data.elevation && (
-              <ElevationChart splits={activityStats.splits.splits} title={t('activityDetail.elevationPerKm')} />
-            )}
-            {activityStats.has_data.heart_rate && (
-              <HeartRateChart splits={activityStats.splits.splits} title={t('activityDetail.heartRatePerKm')} />
-            )}
-          </Card>
-        )}
+        {/* Engagement Section - Moved up for better UX */}
+        <Card style={styles.engagementCard}>
+          <View style={styles.engagementRow}>
+            {/* Likes */}
+            <TouchableOpacity
+              style={styles.engagementItem}
+              onPress={handleLike}
+              disabled={isOwner}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isLiked ? 'heart' : 'heart-outline'}
+                size={28}
+                color={isLiked ? '#E53E3E' : colors.textMuted}
+              />
+              <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
+                {likesCount}
+              </Text>
+              <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
+                {t('engagement.likes')}
+              </Text>
+            </TouchableOpacity>
 
-        {/* Main Stats */}
+            {/* Comments - Make it scrollable */}
+            <TouchableOpacity
+              style={styles.engagementItem}
+              onPress={scrollToBottom}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-outline" size={28} color={colors.textMuted} />
+              <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
+                {activity.comments_count || 0}
+              </Text>
+              <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
+                {t('engagement.comments')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Boosts */}
+            <View style={styles.engagementItem}>
+              <BoostButton
+                activityId={activity.id}
+                initialBoostsCount={activity.boosts_count || 0}
+                initialIsBoosted={activity.is_boosted || false}
+                disabled={isOwner}
+              />
+            </View>
+          </View>
+        </Card>
+
+        {/* Main Stats - Key Metrics First */}
         <Card style={styles.statsCard}>
           <View style={styles.mainStats}>
             <View style={styles.mainStatItem}>
-              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
-              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.duration')}</Text>
+              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
+              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.distance')}</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.mainStatItem}>
-              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
-              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.distance')}</Text>
+              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
+              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.duration')}</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.mainStatItem}>
@@ -367,60 +417,75 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           </View>
         </Card>
 
-        {/* Secondary Stats */}
-        <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.stats')}</Text>
-          <View style={styles.statsGrid}>
-            {activity.calories !== null && activity.calories > 0 && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="flame-outline" size={20} color={colors.primary} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
-              </View>
-            )}
-            {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="trending-up-outline" size={20} color={colors.primary} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{Math.round(activity.elevation_gain)} m</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
-              </View>
-            )}
-            {activity.avg_speed !== null && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="speedometer-outline" size={20} color={colors.primary} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.avg_speed)}</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
-              </View>
-            )}
-            {activity.max_speed !== null && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="flash-outline" size={20} color={colors.primary} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.max_speed)}</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
-              </View>
-            )}
-            {activity.avg_heart_rate !== null && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="heart-outline" size={20} color={colors.error} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
-              </View>
-            )}
-            {activity.max_heart_rate !== null && (
-              <View style={styles.statGridItem}>
-                <Ionicons name="heart" size={20} color={colors.error} />
-                <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
-                <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
-              </View>
-            )}
-          </View>
-        </Card>
-
-        {/* Description */}
+        {/* Description - Story comes before technical details */}
         {activity.description && (
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.description')}</Text>
             <Text style={[styles.description, { color: colors.textSecondary }]}>{activity.description}</Text>
+          </Card>
+        )}
+
+        {/* Secondary Stats - Detailed Metrics */}
+        {(activity.calories || activity.elevation_gain || activity.avg_speed || activity.max_speed || activity.avg_heart_rate || activity.max_heart_rate) && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.detailedStats')}</Text>
+            <View style={styles.statsGrid}>
+              {activity.calories !== null && activity.calories > 0 && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="flame-outline" size={22} color={colors.primary} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
+                </View>
+              )}
+              {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{Math.round(activity.elevation_gain)} m</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
+                </View>
+              )}
+              {activity.avg_speed !== null && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.avg_speed)}</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
+                </View>
+              )}
+              {activity.max_speed !== null && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="flash-outline" size={22} color={colors.primary} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.max_speed)}</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
+                </View>
+              )}
+              {activity.avg_heart_rate !== null && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="heart-outline" size={22} color={colors.error} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
+                </View>
+              )}
+              {activity.max_heart_rate !== null && (
+                <View style={styles.statGridItem}>
+                  <Ionicons name="heart" size={22} color={colors.error} />
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
+                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
+
+        {/* Charts Section - Performance Analysis */}
+        {activityStats?.splits && activityStats.splits.splits.length > 0 && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.performanceAnalysis')}</Text>
+            <PaceChart splits={activityStats.splits.splits} title={t('activityDetail.pacePerKm')} />
+            {activityStats.has_data.elevation && (
+              <ElevationChart splits={activityStats.splits.splits} title={t('activityDetail.elevationPerKm')} />
+            )}
+            {activityStats.has_data.heart_rate && (
+              <HeartRateChart splits={activityStats.splits.splits} title={t('activityDetail.heartRatePerKm')} />
+            )}
           </Card>
         )}
 
@@ -500,9 +565,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           </View>
         </Modal>
 
-        {/* Activity Info */}
+        {/* Activity Info - Technical Details */}
         <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.info')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.technicalInfo')}</Text>
           <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
             <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
             <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.date')}</Text>
@@ -524,7 +589,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </Text>
           </View>
           {gpsTrack && (
-            <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
+            <View style={[styles.infoRow, { borderBottomColor: 'transparent' }]}>
               <Ionicons name="location-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.gpsPoints')}</Text>
               <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
@@ -534,63 +599,17 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           )}
         </Card>
 
-          {/* Engagement Section */}
-          <Card style={styles.engagementCard}>
-            <View style={styles.engagementRow}>
-              {/* Likes */}
-              <TouchableOpacity
-                style={styles.engagementItem}
-                onPress={handleLike}
-                disabled={isOwner}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={isLiked ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isLiked ? '#E53E3E' : colors.textMuted}
-                />
-                <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
-                  {likesCount}
-                </Text>
-                <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
-                  {t('engagement.likes')}
-                </Text>
-              </TouchableOpacity>
+        {/* Comments Section */}
+        <View style={styles.commentsSection}>
+          <CommentSection
+            commentableType="activity"
+            commentableId={activityId}
+            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+            onInputFocus={scrollToBottom}
+          />
+        </View>
 
-              {/* Boosts */}
-              <View style={styles.engagementItem}>
-                <BoostButton
-                  activityId={activity.id}
-                  initialBoostsCount={activity.boosts_count || 0}
-                  initialIsBoosted={activity.is_boosted || false}
-                  disabled={isOwner}
-                />
-              </View>
-
-              {/* Comments */}
-              <View style={styles.engagementItem}>
-                <Ionicons name="chatbubble-outline" size={24} color={colors.textMuted} />
-                <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
-                  {activity.comments_count || 0}
-                </Text>
-                <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
-                  {t('engagement.comments')}
-                </Text>
-              </View>
-            </View>
-          </Card>
-
-          {/* Comments Section */}
-          <View style={styles.section}>
-            <CommentSection
-              commentableType="activity"
-              commentableId={activityId}
-              onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
-              onInputFocus={scrollToBottom}
-            />
-          </View>
-
-          <View style={{ height: spacing.xl }} />
+        <View style={{ height: spacing.xl }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -615,45 +634,55 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.lg,
   },
-  titleSection: {
+  headerSection: {
     padding: spacing.lg,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  titleContent: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.xs,
-    gap: spacing.xs,
-  },
-  locationText: {
-    fontSize: fontSize.sm,
+    paddingBottom: spacing.md,
   },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
+    marginBottom: spacing.md,
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: spacing.sm,
   },
   userName: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+  },
+  activityDate: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  sportIcon: {
+    marginRight: spacing.xs,
+  },
+  titleContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: fontSize.xxxl,
+    fontWeight: '700',
+    lineHeight: 32,
+  },
+  sportType: {
     fontSize: fontSize.md,
-    fontWeight: '500',
-    marginLeft: spacing.sm,
+    marginTop: 2,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  locationText: {
+    fontSize: fontSize.sm,
   },
   statsCard: {
     marginHorizontal: spacing.md,
@@ -740,26 +769,26 @@ const styles = StyleSheet.create({
   },
   engagementCard: {
     marginHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   engagementRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
   },
   engagementItem: {
     alignItems: 'center',
-    minWidth: 80,
+    minWidth: 90,
   },
   engagementCount: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '700',
     marginTop: spacing.xs,
   },
   engagementLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
   },
   // Photo gallery styles
   photoGallery: {
@@ -809,6 +838,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  commentsSection: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
   // Map toggle button styles
   mapToggleButton: {

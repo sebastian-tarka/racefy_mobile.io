@@ -309,7 +309,7 @@ This token is required for building the app because it authenticates with Mapbox
 
 ```bash
 # Add to production environment
-eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
+eas env:create --name RNMAPBOX_MAPS_DOWNLOAD_TOKEN \
   --value "sk.YOUR_MAPBOX_SECRET_TOKEN" \
   --scope project \
   --type string \
@@ -318,7 +318,7 @@ eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
   --non-interactive
 
 # Add to preview/staging environment
-eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
+eas env:create --name RNMAPBOX_MAPS_DOWNLOAD_TOKEN \
   --value "sk.YOUR_MAPBOX_SECRET_TOKEN" \
   --scope project \
   --type string \
@@ -333,9 +333,9 @@ eas env:create --name MAPBOX_DOWNLOADS_TOKEN \
 2. **Gradle reads them** via `System.getenv()` in `build.gradle` (NOT gradle.properties - Gradle doesn't interpolate env vars in properties files)
 3. **Not visible in logs** - Secrets are automatically masked in build logs
 4. **Token lookup order** in `android/build.gradle`:
-   - First: `project.properties['MAPBOX_DOWNLOADS_TOKEN']` (from `~/.gradle/gradle.properties` for local builds)
-   - Second: `System.getenv('MAPBOX_DOWNLOADS_TOKEN')` (from EAS environment)
-   - Third: `System.getenv('RNMAPBOX_MAPS_DOWNLOAD_TOKEN')` (legacy fallback)
+   - First: `project.properties['RNMAPBOX_MAPS_DOWNLOAD_TOKEN']` (from `~/.gradle/gradle.properties` for local builds)
+   - Second: `System.getenv('RNMAPBOX_MAPS_DOWNLOAD_TOKEN')` (from EAS environment - standard name)
+   - Third: `System.getenv('MAPBOX_DOWNLOADS_TOKEN')` (custom fallback for backwards compatibility)
 
 #### Important Notes
 
@@ -414,7 +414,7 @@ adb install android/app/build/outputs/apk/release/app-release.apk
 - `JAVA_HOME` and `ANDROID_HOME` environment variables
 - Mapbox secret token in `~/.gradle/gradle.properties`:
   ```properties
-  MAPBOX_DOWNLOADS_TOKEN=sk.your_secret_token_with_downloads_read_scope
+  RNMAPBOX_MAPS_DOWNLOAD_TOKEN=sk.your_secret_token_with_downloads_read_scope
   ```
 
 ## Test Credentials
