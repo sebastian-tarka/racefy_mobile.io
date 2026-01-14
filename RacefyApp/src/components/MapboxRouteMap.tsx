@@ -150,12 +150,15 @@ export function MapboxRouteMap({
   }, [sizeCategory, isDark]);
 
   // Select map style based on theme
-  const mapStyle = isDark ? MapboxGL.StyleURL.Dark : MapboxGL.StyleURL.Outdoors;
+  // Navigation Night is warmer and more readable than the harsh Dark style
+  const mapStyle = isDark
+    ? 'mapbox://styles/mapbox/navigation-night-v1'
+    : MapboxGL.StyleURL.Outdoors;
 
-  // Theme-aware colors
-  const routeColor = colors.primary; // Emerald green works in both themes
-  const startMarkerColor = isDark ? '#34d399' : '#22c55e'; // Lighter green in dark mode
-  const endMarkerColor = isDark ? '#f87171' : '#ef4444'; // Lighter red in dark mode
+  // Theme-aware colors - brighter in dark mode for better visibility
+  const routeColor = isDark ? '#34d399' : colors.primary; // Brighter emerald in dark mode
+  const startMarkerColor = isDark ? '#4ade80' : '#22c55e'; // Brighter green in dark mode
+  const endMarkerColor = isDark ? '#fb7185' : '#ef4444'; // Warmer red in dark mode
 
   return (
     <View style={[styles.container, { height, backgroundColor: bgColor }]}>
