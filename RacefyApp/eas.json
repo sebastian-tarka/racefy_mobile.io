@@ -18,10 +18,10 @@
       "env": {
         "APP_ENV": "staging",
         "LOG_ENABLED": "true",
-        "LOG_LEVEL": "error",
+        "LOG_LEVEL": "debug",
         "LOG_PERSIST": "true",
         "LOG_CATEGORIES": "all",
-        "LOG_CONSOLE_OUTPUT": "false",
+        "LOG_CONSOLE_OUTPUT": "true",
         "MAPBOX_ENABLED": "true"
       }
     },

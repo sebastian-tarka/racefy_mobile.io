@@ -607,22 +607,27 @@ function useLiveActivityInternal() {
       // App going to background
       logger.gps('App going to background - switching to background tracking');
 
-      // On Android, background tracking was started preemptively when activity began
-      // On iOS, we start it now (iOS can start background tasks when going to background)
-      if (Platform.OS === 'ios') {
+      // Check if background tracking is running, restart if needed
+      // (it may have been stopped when returning from previous background session)
+      const isBackgroundRunning = await Location.hasStartedLocationUpdatesAsync('background-location-task').catch(() => false);
+
+      if (!isBackgroundRunning) {
+        logger.gps('Background tracking not running, restarting...');
         const bgStarted = await startBackgroundLocationTracking(currentGpsProfile.current);
         if (!bgStarted) {
           logger.warn('gps', 'Failed to start background tracking - GPS will pause in background');
         }
+      } else {
+        logger.gps('Background tracking already running');
       }
 
       // Stop foreground tracking (background tracking should now be running)
       stopForegroundTracking();
 
-      // Verify background tracking is running
-      const isBackgroundRunning = await Location.hasStartedLocationUpdatesAsync('background-location-task').catch(() => false);
+      // Verify background tracking is running (final check)
+      const isBgRunningFinal = await Location.hasStartedLocationUpdatesAsync('background-location-task').catch(() => false);
 
-      if (!isBackgroundRunning) {
+      if (!isBgRunningFinal) {
         logger.warn('gps', 'Background tracking not running - GPS will pause in background');
         setState((prev) => ({
           ...prev,
