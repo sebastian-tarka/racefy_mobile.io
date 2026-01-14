@@ -99,12 +99,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     '@react-native-community/datetimepicker',
     'expo-video',
     'expo-secure-store',
-    [
-      '@rnmapbox/maps',
-      {
-        RNMAPBOX_MAPS_DOWNLOAD_TOKEN: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN || process.env.MAPBOX_DOWNLOADS_TOKEN,
-      },
-    ],
+    '@rnmapbox/maps',
   ],
   extra: {
     appEnv: process.env.APP_ENV || 'production',
