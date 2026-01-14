@@ -12,9 +12,6 @@ import { AppNavigator } from './src/navigation';
 import './src/i18n';
 import { loadSavedLanguage } from './src/i18n';
 
-// Register background location task (must be at top level)
-import './src/services/backgroundLocation';
-
 function AppContent() {
   const { colors, isDark } = useTheme();
 

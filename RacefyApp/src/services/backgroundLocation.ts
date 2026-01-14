@@ -5,6 +5,9 @@ import { logger } from './logger';
 import type { GpsProfile } from '../config/gpsProfiles';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
+
+// Log task registration at module load time for debugging
+console.log('[BackgroundLocation] Module loaded, will define task:', BACKGROUND_LOCATION_TASK);
 const LOCATION_BUFFER_KEY = '@racefy_location_buffer';
 const FOREGROUND_BUFFER_KEY = '@racefy_foreground_buffer'; // Persisted foreground points
 const ACTIVE_ACTIVITY_KEY = '@racefy_active_activity_id';
@@ -101,9 +104,18 @@ async function clearLastBackgroundPosition(): Promise<void> {
 }
 
 // Define the background task - this must be at module level
+// IMPORTANT: This code runs in a separate JS context when in background
+// It must be defined at module level BEFORE React Native initializes
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
     logger.error('gps', 'Background location task error', { error });
+    // Log to AsyncStorage for debugging (can't use logger in background on some Android versions)
+    try {
+      const errorLog = await AsyncStorage.getItem('@racefy_bg_errors') || '[]';
+      const errors = JSON.parse(errorLog);
+      errors.push({ timestamp: new Date().toISOString(), error: error.message });
+      await AsyncStorage.setItem('@racefy_bg_errors', JSON.stringify(errors.slice(-10)));
+    } catch {}
     return;
   }
 
@@ -206,6 +218,9 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     }
   }
 });
+
+// Verify task registration
+console.log('[BackgroundLocation] Task defined successfully:', BACKGROUND_LOCATION_TASK);
 
 // Helper functions for managing the location buffer
 export async function getLocationBuffer(): Promise<BufferedLocation[]> {

@@ -1,5 +1,9 @@
 import { registerRootComponent } from 'expo';
 
+// CRITICAL: Register background location task BEFORE any React components mount
+// This must happen at the earliest point in the app lifecycle for native builds
+import './src/services/backgroundLocation';
+
 import App from './App';
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
