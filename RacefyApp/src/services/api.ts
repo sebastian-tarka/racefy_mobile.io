@@ -2,9 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, XDEBUG_ENABLED } from '../config/api';
 import { getCurrentLanguage } from '../i18n';
 import { logger } from './logger';
+import { secureStorage } from './secureStorage';
 import type * as Types from '../types/api';
-
-const TOKEN_KEY = '@racefy_token';
 
 /**
  * Append Xdebug trigger to URL when debugging is enabled
@@ -18,9 +17,22 @@ export const appendXdebugTrigger = (url: string): string => {
 
 class ApiService {
   private token: string | null = null;
+  private onUnauthorizedCallback: (() => void) | null = null;
 
   async init() {
-    this.token = await AsyncStorage.getItem(TOKEN_KEY);
+    // First, migrate any legacy tokens to secure storage
+    await secureStorage.migrateLegacyTokens();
+    // Then load the token from secure storage
+    this.token = await secureStorage.getToken();
+    logger.debug('auth', 'API service initialized', { hasToken: !!this.token });
+  }
+
+  /**
+   * Set callback to be invoked when a 401 Unauthorized response is received.
+   * This allows the app to trigger re-authentication flow.
+   */
+  setOnUnauthorized(callback: () => void) {
+    this.onUnauthorizedCallback = callback;
   }
 
   /**
@@ -82,6 +94,16 @@ class ApiService {
             error: (data as Types.ApiError).message,
           });
         }
+
+        // Handle 401 Unauthorized - token expired or invalid
+        if (response.status === 401) {
+          logger.warn('auth', 'Received 401 Unauthorized, clearing token', { endpoint });
+          await this.clearToken();
+          if (this.onUnauthorizedCallback) {
+            this.onUnauthorizedCallback();
+          }
+        }
+
         throw data as Types.ApiError;
       }
 
@@ -108,12 +130,12 @@ class ApiService {
 
   async setToken(token: string) {
     this.token = token;
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await secureStorage.setToken(token);
   }
 
   async clearToken() {
     this.token = null;
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    await secureStorage.clearToken();
   }
 
   isAuthenticated(): boolean {

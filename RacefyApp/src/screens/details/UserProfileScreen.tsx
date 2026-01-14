@@ -28,6 +28,7 @@ import { api } from '../../services/api';
 import {
   canViewFollowersList,
   canViewFollowingList,
+  canSendMessage,
 } from '../../utils/privacy';
 import { spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -153,6 +154,9 @@ export function UserProfileScreen({ navigation, route }: Props) {
   const canViewFollowing = profile
     ? canViewFollowingList(profile, currentUser ?? null, isFollowing)
     : false;
+  const canMessageUser = profile
+    ? canSendMessage(profile, currentUser ?? null, isFollowing)
+    : false;
 
   // Tab configuration
   const tabs = [
@@ -185,6 +189,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           isFollowing={isFollowing}
           isFollowLoading={isFollowLoading}
           isMessageLoading={isMessageLoading}
+          canMessage={canMessageUser}
           activeTab={activeTab}
           tabs={tabs}
           onBackPress={() => navigation.goBack()}

@@ -17,6 +17,7 @@ interface UserProfileHeaderProps {
   isFollowing: boolean;
   isFollowLoading: boolean;
   isMessageLoading: boolean;
+  canMessage: boolean;
   activeTab: TabType;
   tabs: Array<{ label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }>;
   onBackPress: () => void;
@@ -34,6 +35,7 @@ export function UserProfileHeader({
   isFollowing,
   isFollowLoading,
   isMessageLoading,
+  canMessage,
   activeTab,
   tabs,
   onBackPress,
@@ -87,6 +89,7 @@ export function UserProfileHeader({
             isFollowing={isFollowing}
             isFollowLoading={isFollowLoading}
             isMessageLoading={isMessageLoading}
+            canMessage={canMessage}
             onFollowToggle={onFollowToggle}
             onMessagePress={onMessagePress}
           />

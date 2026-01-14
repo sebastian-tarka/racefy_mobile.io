@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
+import { secureStorage } from '../services/secureStorage';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
 import { logger } from '../services/logger';
@@ -32,9 +33,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// AsyncStorage keys for impersonation
-const IMPERSONATION_TOKEN_KEY = '@racefy_impersonation_token';
-const ORIGINAL_ADMIN_TOKEN_KEY = '@racefy_original_admin_token';
+// AsyncStorage key for non-sensitive session metadata
 const IMPERSONATION_SESSION_KEY = '@racefy_impersonation_session';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -76,18 +75,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    initAuth();
+  // Handle 401 unauthorized responses by clearing user state
+  const handleUnauthorized = useCallback(() => {
+    logger.auth('Session expired, logging out user');
+    setUser(null);
+    setIsImpersonating(false);
+    setImpersonatedUser(null);
+    setImpersonationSession(null);
+    setOriginalAdminToken(null);
+    setRequiresConsent(false);
   }, []);
+
+  useEffect(() => {
+    // Set up the unauthorized callback before initializing
+    api.setOnUnauthorized(handleUnauthorized);
+    initAuth();
+  }, [handleUnauthorized]);
 
   async function initAuth() {
     logger.auth('Initializing authentication');
     try {
-      await api.init(); // Loads token (could be impersonation or admin token)
+      await api.init(); // Loads token from secure storage (could be impersonation or admin token)
 
-      // Check if we have impersonation state
-      const impersonationToken = await AsyncStorage.getItem(IMPERSONATION_TOKEN_KEY);
-      const originalToken = await AsyncStorage.getItem(ORIGINAL_ADMIN_TOKEN_KEY);
+      // Check if we have impersonation state (tokens in secure storage, session metadata in AsyncStorage)
+      const impersonationToken = await secureStorage.getImpersonationToken();
+      const originalToken = await secureStorage.getAdminToken();
       const sessionData = await AsyncStorage.getItem(IMPERSONATION_SESSION_KEY);
 
       if (impersonationToken && originalToken && sessionData) {
@@ -175,10 +187,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Helper function to clear impersonation state
+  // Helper function to clear impersonation state (secure tokens + session metadata)
   async function clearImpersonationState() {
-    await AsyncStorage.removeItem(IMPERSONATION_TOKEN_KEY);
-    await AsyncStorage.removeItem(ORIGINAL_ADMIN_TOKEN_KEY);
+    await secureStorage.clearImpersonationToken();
+    await secureStorage.clearAdminToken();
     await AsyncStorage.removeItem(IMPERSONATION_SESSION_KEY);
     setIsImpersonating(false);
     setImpersonatedUser(null);
@@ -204,9 +216,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Call API to start impersonation
       const response = await api.startImpersonation(userId);
 
-      // Store original admin token
-      await AsyncStorage.setItem(ORIGINAL_ADMIN_TOKEN_KEY, adminToken);
-      await AsyncStorage.setItem(IMPERSONATION_TOKEN_KEY, response.impersonation_token);
+      // Store tokens securely and session metadata in AsyncStorage
+      await secureStorage.setAdminToken(adminToken);
+      await secureStorage.setImpersonationToken(response.impersonation_token);
       await AsyncStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(response));
 
       // Switch to impersonation token

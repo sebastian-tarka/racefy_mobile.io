@@ -8,6 +8,7 @@ interface ProfileActionsProps {
   isFollowing: boolean;
   isFollowLoading: boolean;
   isMessageLoading: boolean;
+  canMessage: boolean;
   onFollowToggle: () => void;
   onMessagePress: () => void;
 }
@@ -16,6 +17,7 @@ export function ProfileActions({
   isFollowing,
   isFollowLoading,
   isMessageLoading,
+  canMessage,
   onFollowToggle,
   onMessagePress,
 }: ProfileActionsProps) {
@@ -35,6 +37,7 @@ export function ProfileActions({
         onPress={onMessagePress}
         variant="outline"
         loading={isMessageLoading}
+        disabled={!canMessage}
         style={styles.messageButton}
       />
     </View>
