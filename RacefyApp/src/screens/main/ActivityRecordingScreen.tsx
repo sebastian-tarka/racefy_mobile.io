@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Vibration,
   Alert,
   ActivityIndicator,
   Modal,
@@ -24,11 +23,14 @@ import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { triggerHaptic } from '../../hooks/useHaptics';
+import { useActivityTimer } from '../../hooks/useActivityTimer';
+import { useMilestoneTracking } from '../../hooks/useMilestoneTracking';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 import { logger } from '../../services/logger';
 import { formatPaceDisplay, calculateAveragePace } from '../../utils/paceCalculator';
+import { formatTime, formatDistance, formatTotalDistance, formatTotalTime, formatAvgPace } from '../../utils/formatters';
 
 // Mapping from API milestone types to display labels and thresholds
 const MILESTONE_LABELS: Record<string, string> = {
@@ -147,12 +149,6 @@ export function ActivityRecordingScreen() {
   }, [showAllSports, sportTypes]);
 
   const hasMoreSports = sportTypes.length > INITIAL_SPORTS_COUNT;
-  const [localDuration, setLocalDuration] = useState(0);
-  const [passedMilestones, setPassedMilestones] = useState<number[]>([]);
-
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const pausedDurationRef = useRef<number>(0);
 
   // Derive status from live activity state
   const getStatus = (): RecordingStatus => {
@@ -166,55 +162,9 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
-  // Sync local timer with activity state
-  useEffect(() => {
-    if (activity && isTracking && !isPaused) {
-      // Start local timer
-      const activityStart = new Date(activity.started_at).getTime();
-      const pausedMs = (activity.total_paused_duration || 0) * 1000;
-      startTimeRef.current = activityStart + pausedMs;
-
-      intervalRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setLocalDuration(Math.max(0, elapsed));
-      }, 100);
-    } else if (isPaused && activity) {
-      // When paused, use the activity's duration
-      setLocalDuration(activity.duration);
-      pausedDurationRef.current = activity.duration;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    } else if (!activity) {
-      // Reset when no activity
-      setLocalDuration(0);
-      pausedDurationRef.current = 0;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [activity, isTracking, isPaused]);
-
-  // Check milestones during activity recording
-  useEffect(() => {
-    distanceMilestones.forEach((milestone) => {
-      if (
-        distance >= milestone.threshold &&
-        !passedMilestones.includes(milestone.threshold)
-      ) {
-        setPassedMilestones((prev) => [...prev, milestone.threshold]);
-        Vibration.vibrate(200);
-      }
-    });
-  }, [distance, passedMilestones, distanceMilestones]);
+  // Custom hooks for timer and milestone tracking
+  const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
+  const { passedMilestones, resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
 
   // Show error alerts
   useEffect(() => {
@@ -288,28 +238,6 @@ export function ActivityRecordingScreen() {
     }
   }, [hasExistingActivity, activity]);
 
-  const formatTime = (seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs
-        .toString()
-        .padStart(2, '0')}`;
-    }
-    return `${mins.toString().padStart(2, '0')}:${secs
-      .toString()
-      .padStart(2, '0')}`;
-  };
-
-  const formatDistance = (meters: number): string => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
-    }
-    return `${Math.round(meters)} m`;
-  };
-
   // Format current pace (from GPS segments, smoothed)
   const formatCurrentPace = (): string => {
     const { currentPace } = currentStats;
@@ -336,40 +264,6 @@ export function ActivityRecordingScreen() {
     return formatPaceDisplay(avgPace);
   };
 
-  // Legacy pace format (for backward compatibility)
-  const formatPace = (seconds: number, meters: number): string => {
-    if (meters === 0) return '--:--';
-    const paceSeconds = (seconds / meters) * 1000;
-    const mins = Math.floor(paceSeconds / 60);
-    const secs = Math.floor(paceSeconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')} /km`;
-  };
-
-  const formatTotalDistance = (meters: number): string => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(0)} km`;
-    }
-    return `${Math.round(meters)} m`;
-  };
-
-  const formatTotalTime = (seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}h`;
-    }
-    return `${mins}m`;
-  };
-
-  const formatAvgPace = (avgSpeed: number): string => {
-    if (!avgSpeed || avgSpeed === 0) return '--:--';
-    // avgSpeed is in m/s, convert to min/km
-    const paceSeconds = 1000 / avgSpeed;
-    const mins = Math.floor(paceSeconds / 60);
-    const secs = Math.floor(paceSeconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleStart = async () => {
     logger.debug('activity', 'Start button pressed');
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -393,7 +287,7 @@ export function ActivityRecordingScreen() {
         `${selectedSport.name} Activity`,
         selectedEvent?.id
       );
-      setPassedMilestones([]);
+      resetMilestones();
       setSelectedEvent(null); // Reset event selection after starting
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
     } catch (err) {
@@ -459,7 +353,7 @@ export function ActivityRecordingScreen() {
         postStatus: result?.post?.status,
       });
 
-      setPassedMilestones([]);
+      resetMilestones();
       setSkipAutoPost(false); // Reset for next activity
 
       // Handle post response with appropriate UX
@@ -513,7 +407,7 @@ export function ActivityRecordingScreen() {
           onPress: async () => {
             try {
               await discardTracking();
-              setPassedMilestones([]);
+              resetMilestones();
               logger.activity('Activity discarded from UI');
             } catch (err) {
               logger.error('activity', 'Failed to discard activity from UI', { error: err });
