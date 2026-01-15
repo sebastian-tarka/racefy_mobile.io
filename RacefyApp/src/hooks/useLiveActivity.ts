@@ -607,18 +607,19 @@ function useLiveActivityInternal() {
       // App going to background
       logger.gps('App going to background - switching to background tracking');
 
-      // Check if background tracking is running, restart if needed
-      // (it may have been stopped when returning from previous background session)
+      // Check if background tracking is running
+      // On Android: Should always be running (started preemptively, never stopped)
+      // On iOS: May have been stopped, need to restart
       const isBackgroundRunning = await Location.hasStartedLocationUpdatesAsync('background-location-task').catch(() => false);
 
       if (!isBackgroundRunning) {
-        logger.gps('Background tracking not running, restarting...');
+        logger.gps('Background tracking not running, starting now...');
         const bgStarted = await startBackgroundLocationTracking(currentGpsProfile.current);
         if (!bgStarted) {
           logger.warn('gps', 'Failed to start background tracking - GPS will pause in background');
         }
       } else {
-        logger.gps('Background tracking already running');
+        logger.gps('Background tracking already running (continuing)');
       }
 
       // Stop foreground tracking (background tracking should now be running)
@@ -644,11 +645,19 @@ function useLiveActivityInternal() {
       // App returning to foreground
       logger.gps('App returning to foreground - switching to foreground tracking');
 
-      // 1. Stop background tracking and wait for completion
-      await stopBackgroundLocationTracking();
+      // IMPORTANT: On Android, DON'T stop background tracking - keep it running throughout the activity
+      // Stopping it would prevent restart when going back to background (foreground service restriction)
+      // On iOS, we can stop it since iOS allows starting background tasks when going to background
+      const shouldStopBackground = Platform.OS === 'ios';
 
-      // 2. Small delay to ensure background listener is fully stopped (race condition fix)
-      await new Promise(resolve => setTimeout(resolve, 100));
+      if (shouldStopBackground) {
+        // 1. Stop background tracking and wait for completion (iOS only)
+        await stopBackgroundLocationTracking();
+        // 2. Small delay to ensure background listener is fully stopped (race condition fix)
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        logger.gps('Keeping background tracking running (Android)');
+      }
 
       // 3. Sync background points BEFORE starting foreground
       await syncBackgroundPoints(activityId);

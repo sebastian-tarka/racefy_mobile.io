@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { api } from '../services/api';
@@ -129,10 +129,10 @@ export function useSportTypes(): UseSportTypesResult {
   const { t, i18n: i18nInstance } = useTranslation();
   const currentLanguage = i18nInstance.language;
 
-  // Get translated fallback sports
-  const translatedFallbackSports = getFallbackSports(t);
+  // Get translated fallback sports (memoized to prevent re-render loops)
+  const translatedFallbackSports = useMemo(() => getFallbackSports(t), [t]);
 
-  const [sportTypes, setSportTypes] = useState<SportTypeWithIcon[]>(
+  const [sportTypes, setSportTypes] = useState<SportTypeWithIcon[]>(() =>
     cachedSportTypes || translatedFallbackSports
   );
   const [isLoading, setIsLoading] = useState(!cachedSportTypes);
@@ -141,17 +141,25 @@ export function useSportTypes(): UseSportTypesResult {
   // Track if this is the first render
   const isFirstRender = useRef(true);
   const previousLanguage = useRef(currentLanguage);
+  const isFetchingRef = useRef(false);
 
   const fetchSportTypes = useCallback(async (force = false) => {
     const lang = i18n.language || 'en';
 
+    // Prevent concurrent fetches
+    if (isFetchingRef.current && !force) {
+      logger.debug('general', 'Fetch already in progress, skipping');
+      return;
+    }
+
     // Use cache if valid, not forcing refresh, and language hasn't changed
     if (!force && cachedSportTypes && cachedLanguage === lang && Date.now() - cacheTimestamp < CACHE_DURATION) {
-      logger.debug('general', 'Using cached sport types', { count: cachedSportTypes.length, language: lang });
-      setSportTypes(cachedSportTypes);
+      // Cache is valid - don't fetch, don't log (hook is called by multiple components)
       setIsLoading(false);
       return;
     }
+
+    isFetchingRef.current = true;
 
     logger.info('general', 'Fetching sport types from API', { language: lang });
     setIsLoading(true);
@@ -216,19 +224,21 @@ export function useSportTypes(): UseSportTypesResult {
     } catch (err: any) {
       logger.error('general', 'Failed to fetch sport types', { error: err.message });
       setError(err.message || 'Failed to load sports');
-      // Use translated fallback sports on error
-      setSportTypes(translatedFallbackSports);
+      // Use translated fallback sports on error (get fresh copy each time)
+      setSportTypes(getFallbackSports(t));
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [translatedFallbackSports]);
+  }, [t]);  // Only depend on 't'
 
-  // Initial fetch
+  // Initial fetch (only on mount)
   useEffect(() => {
     fetchSportTypes();
-  }, [fetchSportTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // Empty deps - only run on mount
 
-  // Refetch when language changes
+  // Refetch when language changes (only on language change, not on every render)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -247,7 +257,8 @@ export function useSportTypes(): UseSportTypesResult {
       invalidateSportTypesCache();
       fetchSportTypes(true);
     }
-  }, [currentLanguage, fetchSportTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLanguage]);  // Only depend on language, call fetchSportTypes directly
 
   const getSportById = useCallback(
     (id: number): SportTypeWithIcon | undefined => {

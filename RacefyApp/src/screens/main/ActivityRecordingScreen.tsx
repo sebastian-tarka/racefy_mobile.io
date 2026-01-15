@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -105,10 +105,12 @@ export function ActivityRecordingScreen() {
     isAuthenticated && selectedSport ? selectedSport.id : undefined
   );
 
-  // Get ordered distance milestones from API data
-  const distanceMilestones = milestonesData?.distance_single
-    ?.filter((m) => MILESTONE_ORDER.includes(m.type))
-    ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
+  // Get ordered distance milestones from API data (memoized to prevent re-render loops)
+  const distanceMilestones = useMemo(() => {
+    return milestonesData?.distance_single
+      ?.filter((m) => MILESTONE_ORDER.includes(m.type))
+      ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
+  }, [milestonesData?.distance_single]);
 
   // Set default sport when sports are loaded
   useEffect(() => {
@@ -139,10 +141,11 @@ export function ActivityRecordingScreen() {
     }
   }, [route.params?.preselectedEvent, sportTypes, sportsLoading]);
 
-  // Sports to display (first N or all)
-  const displayedSports = showAllSports
-    ? sportTypes
-    : sportTypes.slice(0, INITIAL_SPORTS_COUNT);
+  // Sports to display (first N or all) - memoized to prevent re-renders
+  const displayedSports = useMemo(() => {
+    return showAllSports ? sportTypes : sportTypes.slice(0, INITIAL_SPORTS_COUNT);
+  }, [showAllSports, sportTypes]);
+
   const hasMoreSports = sportTypes.length > INITIAL_SPORTS_COUNT;
   const [localDuration, setLocalDuration] = useState(0);
   const [passedMilestones, setPassedMilestones] = useState<number[]>([]);
@@ -538,8 +541,8 @@ export function ActivityRecordingScreen() {
     return { status: 'upcoming', color: colors.textMuted };
   };
 
-  // Bottom sheet options for adding activity
-  const addActivityOptions: BottomSheetOption[] = [
+  // Bottom sheet options for adding activity (memoized to prevent re-renders)
+  const addActivityOptions: BottomSheetOption[] = useMemo(() => [
     {
       id: 'record',
       icon: 'navigate-circle-outline',
@@ -560,7 +563,7 @@ export function ActivityRecordingScreen() {
       },
       color: colors.success,
     },
-  ];
+  ], [t, colors.primary, colors.success, navigation]);
 
   // Show loading overlay
   const renderLoadingOverlay = () => {

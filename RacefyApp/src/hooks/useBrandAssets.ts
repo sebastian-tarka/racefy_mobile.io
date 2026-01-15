@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
@@ -58,11 +58,14 @@ export function useBrandAssets(): UseBrandAssetsResult {
   }, [fetchAssets]);
 
   /**
-   * Get a specific asset by category and variant
+   * Get a specific asset by category and variant (memoized to prevent re-render loops)
    * If variant is not specified, auto-selects based on theme (dark/light/default)
    */
-  const getAsset = useCallback(
-    (category: BrandAssetCategory, variant?: BrandAssetVariant): BrandAsset | null => {
+  const getAsset = useMemo(() => {
+    // Memoize the fixed URLs to prevent repeated fixStorageUrl calls
+    const urlCache = new Map<string, string>();
+
+    return (category: BrandAssetCategory, variant?: BrandAssetVariant): BrandAsset | null => {
       if (!assets?.data) return null;
 
       const categoryAssets = assets.data[category];
@@ -81,15 +84,19 @@ export function useBrandAssets(): UseBrandAssetsResult {
 
       if (!asset) return null;
 
-      // Fix URL for current platform (emulator/device)
-      const fixedUrl = fixStorageUrl(asset.url);
+      // Fix URL for current platform (with caching to prevent spam)
+      let fixedUrl = urlCache.get(asset.url);
+      if (!fixedUrl) {
+        fixedUrl = fixStorageUrl(asset.url);
+        urlCache.set(asset.url, fixedUrl);
+      }
+
       return {
         ...asset,
         url: fixedUrl || asset.url,
       };
-    },
-    [assets, isDark]
-  );
+    };
+  }, [assets, isDark]);
 
   /**
    * Convenience method to get logo URL with automatic theme selection
