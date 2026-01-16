@@ -15,7 +15,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection, CountdownTimer } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection, CountdownTimer, EventTabs, CommentaryTabContent } from '../../components';
+import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -51,6 +52,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<EventTabType>('details');
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -200,6 +202,11 @@ export function EventDetailScreen({ route, navigation }: Props) {
     );
   }, [event, navigation, t]);
 
+  const handleOpenCommentarySettings = useCallback(() => {
+    if (!event) return;
+    navigation.navigate('EventCommentarySettings', { eventId: event.id });
+  }, [event, navigation]);
+
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
     const sportName = event?.sport_type?.name?.toLowerCase() || '';
     if (sportName.includes('run')) return 'walk-outline';
@@ -211,6 +218,41 @@ export function EventDetailScreen({ route, navigation }: Props) {
     if (sportName.includes('yoga')) return 'body-outline';
     return 'fitness-outline';
   };
+
+  // Tab configuration
+  const tabs = useMemo(() => {
+    const tabConfig = [
+      {
+        label: t('eventDetail.tabs.details', 'Details'),
+        value: 'details' as EventTabType,
+        icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
+      },
+      {
+        label: t('eventDetail.tabs.commentary', 'Commentary'),
+        value: 'commentary' as EventTabType,
+        icon: 'mic-outline' as keyof typeof Ionicons.glyphMap,
+      },
+    ];
+
+    if (participants.length > 0) {
+      tabConfig.push({
+        label: t('eventDetail.tabs.participants', 'Participants'),
+        value: 'participants' as EventTabType,
+        icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
+        badge: participants.length,
+      } as any);
+    }
+
+    if (leaderboard.length > 0) {
+      tabConfig.push({
+        label: t('eventDetail.tabs.leaderboard', 'Leaderboard'),
+        value: 'leaderboard' as EventTabType,
+        icon: 'trophy-outline' as keyof typeof Ionicons.glyphMap,
+      });
+    }
+
+    return tabConfig;
+  }, [t, participants.length, leaderboard.length]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('eventDetail.loading')} />;
@@ -283,54 +325,64 @@ export function EventDetailScreen({ route, navigation }: Props) {
         ) : undefined}
       />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Event Image/Header */}
-        <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
-          {(event.cover_image_url || event.post?.photos?.[0]?.url) ? (
-            <Image
-              source={{ uri: fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
-              <Ionicons name={getSportIcon()} size={64} color={colors.primary} />
-            </View>
-          )}
-          <View style={styles.badgeContainer}>
-            <Badge label={event.status} variant={event.status} />
+      {/* Event Image/Header - Shared across all tabs */}
+      <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
+        {(event.cover_image_url || event.post?.photos?.[0]?.url) ? (
+          <Image
+            source={{ uri: fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
+            <Ionicons name={getSportIcon()} size={64} color={colors.primary} />
           </View>
+        )}
+        <View style={styles.badgeContainer}>
+          <Badge label={event.status} variant={event.status} />
         </View>
+      </View>
 
-        {/* Title */}
-        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {event.post?.title || t('eventDetail.untitled')}
-          </Text>
-          {event.is_registered && (
-            <View style={styles.registeredTag}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={[styles.registeredText, { color: colors.primary }]}>{t('eventDetail.registered')}</Text>
-            </View>
-          )}
-        </View>
+      {/* Title */}
+      <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {event.post?.title || t('eventDetail.untitled')}
+        </Text>
+        {event.is_registered && (
+          <View style={styles.registeredTag}>
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={colors.primary}
+            />
+            <Text style={[styles.registeredText, { color: colors.primary }]}>{t('eventDetail.registered')}</Text>
+          </View>
+        )}
+      </View>
 
+      {/* Tabs */}
+      <EventTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      {/* Tab Content: Details (uses ScrollView) */}
+      {activeTab === 'details' && (
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+            }
+            keyboardShouldPersistTaps="handled"
+          >
+        <>
         {/* About */}
         {event.post?.content && (
           <Card style={styles.section}>
@@ -652,10 +704,138 @@ export function EventDetailScreen({ route, navigation }: Props) {
           />
         </View>
 
-          {/* Spacer for button */}
-          <View style={{ height: 80 }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {/* Spacer for button */}
+        <View style={{ height: 80 }} />
+        </>
+          </ScrollView>
+        </KeyboardAvoidingView>
+        )}
+
+        {/* Tab Content: Commentary (uses FlatList, no ScrollView) */}
+        {activeTab === 'commentary' && (
+          <CommentaryTabContent
+            event={event}
+            onOpenSettings={canEdit ? handleOpenCommentarySettings : undefined}
+          />
+        )}
+
+        {/* Tab Content: Participants (uses ScrollView) */}
+        {activeTab === 'participants' && participants.length > 0 && (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+            }
+          >
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.participants')} ({participants.length})
+              </Text>
+              {participants.map((registration, index) => (
+                <TouchableOpacity
+                  key={`participant-detail-${index}-${registration.id ?? 'no-id'}-${registration.user_id ?? 'no-user'}`}
+                  style={[styles.participantRow, { borderBottomColor: colors.border }]}
+                  onPress={() => {
+                    if (isAuthenticated && registration.user?.username) {
+                      navigation.navigate('UserProfile', { username: registration.user.username });
+                    }
+                  }}
+                  disabled={!isAuthenticated}
+                  activeOpacity={isAuthenticated ? 0.7 : 1}
+                >
+                  <Avatar
+                    uri={registration.user?.avatar}
+                    name={registration.user?.name || '?'}
+                    size="md"
+                  />
+                  <View style={styles.participantInfo}>
+                    <Text style={[styles.participantName, { color: colors.textPrimary }]}>
+                      {registration.user?.name}
+                    </Text>
+                    {registration.user?.username && (
+                      <Text style={[styles.participantUsername, { color: colors.textMuted }]}>
+                        @{registration.user.username}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={styles.participantMeta}>
+                    <Text style={[styles.registrationNumber, { color: colors.textSecondary }]}>
+                      #{registration.registration_number}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </Card>
+            {/* Spacer for button */}
+            <View style={{ height: 80 }} />
+          </ScrollView>
+        )}
+
+        {/* Tab Content: Leaderboard (uses ScrollView) */}
+        {activeTab === 'leaderboard' && leaderboard.length > 0 && (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+            }
+          >
+            <Card style={styles.section}>
+              <View style={styles.leaderboardHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                  {t('eventDetail.leaderboard')}
+                </Text>
+                <Ionicons name="trophy" size={20} color="#FFD700" />
+              </View>
+              {leaderboard.map((entry, index) => {
+                const medalColor = index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : null;
+                return (
+                  <TouchableOpacity
+                    key={`leaderboard-${entry.rank}-${entry.user.id}`}
+                    style={[styles.leaderboardItem, { borderBottomColor: colors.border }]}
+                    onPress={() => {
+                      if (isAuthenticated && entry.user.username) {
+                        navigation.navigate('UserProfile', { username: entry.user.username });
+                      }
+                    }}
+                    disabled={!isAuthenticated}
+                    activeOpacity={isAuthenticated ? 0.7 : 1}
+                  >
+                    <View style={styles.leaderboardRank}>
+                      {medalColor ? (
+                        <View style={[styles.medalBadge, { backgroundColor: medalColor + '20' }]}>
+                          <Ionicons name="trophy" size={14} color={medalColor} />
+                        </View>
+                      ) : (
+                        <Text style={[styles.rankNumber, { color: colors.textSecondary }]}>{entry.rank}</Text>
+                      )}
+                    </View>
+                    <Avatar
+                      uri={fixStorageUrl(entry.user.avatar)}
+                      name={entry.user.name}
+                      size="sm"
+                    />
+                    <View style={styles.leaderboardUserInfo}>
+                      <Text style={[styles.leaderboardUserName, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {entry.user.name}
+                      </Text>
+                      <Text style={[styles.leaderboardUsername, { color: colors.textMuted }]}>
+                        @{entry.user.username}
+                      </Text>
+                    </View>
+                    <View style={styles.leaderboardPoints}>
+                      <Text style={[styles.leaderboardPointsValue, { color: colors.primary }]}>
+                        {entry.points.toLocaleString()}
+                      </Text>
+                      <Text style={[styles.leaderboardPointsLabel, { color: colors.textMuted }]}>pts</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </Card>
+            {/* Spacer for button */}
+            <View style={{ height: 80 }} />
+          </ScrollView>
+        )}
 
       {/* Bottom Action Button */}
       <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: spacing.md + insets.bottom }]}>
@@ -969,5 +1149,33 @@ const styles = StyleSheet.create({
   },
   leaderboardPointsLabel: {
     fontSize: fontSize.xs,
+  },
+  tabContent: {
+    flex: 1,
+  },
+  participantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  participantInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  participantName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  participantUsername: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  participantMeta: {
+    alignItems: 'flex-end',
+  },
+  registrationNumber: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
 });

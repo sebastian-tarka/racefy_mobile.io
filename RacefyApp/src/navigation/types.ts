@@ -34,6 +34,7 @@ export type RootStackParamList = {
   Chat: { conversationId: number; participant: ConversationParticipant };
   Messages: { conversationId?: number };
   EventForm: { eventId?: number };
+  EventCommentarySettings: { eventId: number };
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;

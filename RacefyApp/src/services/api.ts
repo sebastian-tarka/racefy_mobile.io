@@ -1538,6 +1538,117 @@ class ApiService {
       body: JSON.stringify({ reports }),
     });
   }
+
+  // ============ EVENT COMMENTARY ============
+
+  /**
+   * Get commentary stream for an event (public)
+   * @param eventId - Event ID
+   * @param params - Query parameters (per_page, page, language)
+   */
+  async getEventCommentary(
+    eventId: number,
+    params?: {
+      per_page?: number;
+      page?: number;
+      language?: Types.CommentaryLanguage;
+    }
+  ): Promise<Types.CommentaryListResponse> {
+    const query = new URLSearchParams();
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.language) query.append('language', params.language);
+    const queryString = query.toString();
+    return this.request<Types.CommentaryListResponse>(
+      `/events/${eventId}/commentary${queryString ? `?${queryString}` : ''}`
+    );
+  }
+
+  /**
+   * Get single commentary item (public)
+   * @param eventId - Event ID
+   * @param commentaryId - Commentary ID
+   */
+  async getCommentary(
+    eventId: number,
+    commentaryId: number
+  ): Promise<Types.EventCommentary> {
+    const response = await this.request<Types.ApiResponse<Types.EventCommentary>>(
+      `/events/${eventId}/commentary/${commentaryId}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get available commentary styles (public)
+   */
+  async getCommentaryStyles(): Promise<Types.CommentaryStylesResponse> {
+    return this.request<Types.CommentaryStylesResponse>('/commentary/styles');
+  }
+
+  /**
+   * Get available commentary languages (public)
+   */
+  async getCommentaryLanguages(): Promise<Types.CommentaryLanguagesResponse> {
+    return this.request<Types.CommentaryLanguagesResponse>('/commentary/languages');
+  }
+
+  /**
+   * Get commentary settings for an event (organizer only)
+   * @param eventId - Event ID
+   */
+  async getCommentarySettings(eventId: number): Promise<Types.CommentarySettings> {
+    return this.request<Types.CommentarySettings>(
+      `/events/${eventId}/commentary/settings`
+    );
+  }
+
+  /**
+   * Update commentary settings for an event (organizer only)
+   * @param eventId - Event ID
+   * @param settings - Updated settings
+   */
+  async updateCommentarySettings(
+    eventId: number,
+    settings: Types.UpdateCommentarySettingsRequest
+  ): Promise<Types.CommentarySettings> {
+    return this.request<Types.CommentarySettings>(
+      `/events/${eventId}/commentary/settings`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      }
+    );
+  }
+
+  /**
+   * Manually trigger commentary generation (organizer only)
+   * @param eventId - Event ID
+   * @param type - Commentary type to generate
+   */
+  async generateCommentary(
+    eventId: number,
+    type: Types.CommentaryType
+  ): Promise<Types.GenerateCommentaryResponse> {
+    return this.request<Types.GenerateCommentaryResponse>(
+      `/events/${eventId}/commentary/generate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ type }),
+      }
+    );
+  }
+
+  /**
+   * Delete a commentary item (organizer only)
+   * @param eventId - Event ID
+   * @param commentaryId - Commentary ID
+   */
+  async deleteCommentary(eventId: number, commentaryId: number): Promise<void> {
+    await this.request(`/events/${eventId}/commentary/${commentaryId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const api = new ApiService();

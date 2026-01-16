@@ -386,7 +386,13 @@
     "seconds": "sec",
     "activities": "Activities",
     "moreActivities": "+{{count}} more",
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Leaderboard",
+    "tabs": {
+      "details": "Details",
+      "commentary": "Commentary",
+      "participants": "Participants",
+      "leaderboard": "Leaderboard"
+    }
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -889,5 +895,42 @@
       "noTransactions": "No point transactions yet",
       "allLoaded": "All transactions loaded"
     }
+  },
+  "commentary": {
+    "title": "Commentary",
+    "settings": "Commentary Settings",
+    "tokenUsage": "Token Usage",
+    "unlimited": "Unlimited",
+    "liveActive": "Live Commentary Active",
+    "nextUpdate": "Next update in",
+    "loading": "Loading commentary...",
+    "emptyTitle": "No commentary yet",
+    "emptyMessage": "Commentary will appear as the event progresses",
+    "disabledTitle": "Commentary is disabled",
+    "disabledMessage": "AI commentary is not enabled for this event",
+    "errorTitle": "Failed to load commentary",
+    "enableAI": "Enable AI Commentary",
+    "enableDescription": "Generate AI commentary for this event",
+    "style": "Commentary Style",
+    "languages": "Languages",
+    "languagesDescription": "Select which languages to generate commentary in",
+    "advanced": "Advanced",
+    "autoPublish": "Auto-publish",
+    "autoPublishDescription": "Automatically publish generated commentary",
+    "updateInterval": "Update Interval",
+    "updateIntervalDescription": "How often to generate live updates",
+    "manualGeneration": "Manual Generation",
+    "manualGenerationDescription": "Generate commentary on demand",
+    "generate": "Generate Commentary",
+    "generateConfirm": "Generate a {{type}} commentary update? This will use tokens from your limit.",
+    "generateStarted": "Commentary generation has been started. It will appear in the feed shortly.",
+    "generateFailed": "Failed to generate commentary",
+    "generateLive": "Generate Live Update",
+    "generateSummary": "Generate Summary",
+    "updateFailed": "Failed to update commentary settings",
+    "loadFailed": "Failed to load settings",
+    "error": "Error",
+    "warning": "Warning",
+    "atLeastOneLanguage": "At least one language must be selected"
   }
 }

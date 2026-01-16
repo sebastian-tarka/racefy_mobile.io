@@ -23,7 +23,7 @@ import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { PostDetailScreen } from '../screens/details/PostDetailScreen';
 import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
-import { EventFormScreen } from '../screens/events';
+import { EventFormScreen, EventCommentarySettingsScreen } from '../screens/events';
 import { PostFormScreen } from '../screens/posts';
 import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
 import { EditProfileScreen } from '../screens/profile';
@@ -347,6 +347,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="EventForm"
               component={EventFormScreen}
+            />
+            <RootStack.Screen
+              name="EventCommentarySettings"
+              component={EventCommentarySettingsScreen}
             />
             <RootStack.Screen
               name="PostForm"

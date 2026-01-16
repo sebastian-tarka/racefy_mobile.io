@@ -23,3 +23,6 @@ export * from './useLeaderboard';
 export * from './usePointHistory';
 export * from './useActivityTimer';
 export * from './useMilestoneTracking';
+export * from './useEventCommentaryFeed';
+export * from './useCommentarySettings';
+export * from './useGenerateCommentary';

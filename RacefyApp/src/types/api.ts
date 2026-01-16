@@ -1111,3 +1111,111 @@ export interface MarkAllAsReadResponse {
   message: string;
   marked_count: number;
 }
+
+// ============ EVENT COMMENTARY ============
+
+export type CommentaryType = 'warmup' | 'live' | 'milestone' | 'summary';
+
+export type CommentaryTrigger =
+  | 'scheduled'
+  | 'activity_arrived'
+  | 'leader_change'
+  | 'event_started'
+  | 'event_completed'
+  | 'first_finish'
+  | 'halfway'
+  | 'manual';
+
+export type CommentaryStatus = 'pending' | 'processing' | 'published' | 'failed';
+
+export type CommentaryStyle =
+  | 'exciting'
+  | 'professional'
+  | 'casual'
+  | 'humorous'
+  | 'statistical'
+  | 'motivational';
+
+export type CommentaryLanguage = 'en' | 'pl';
+
+export interface StandingsSnapshot {
+  position: number;
+  user: {
+    id: number;
+    name: string;
+  };
+  activity: {
+    distance: number;
+    duration: number;
+  };
+  is_finished: boolean;
+}
+
+export interface EventCommentary {
+  id: number;
+  event_id: number;
+  type: CommentaryType;
+  trigger: CommentaryTrigger;
+  language: CommentaryLanguage;
+  title: string | null;
+  content: string;
+  status: CommentaryStatus;
+  tokens_used: number;
+  standings_snapshot?: StandingsSnapshot[];
+  error_message?: string;
+  published_at: string | null;
+  created_at: string;
+}
+
+export interface CommentaryListResponse {
+  data: EventCommentary[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    tokens_used: number;
+    token_limit: number;
+    commentary_enabled: boolean;
+    available_languages: Record<CommentaryLanguage, string>;
+    event_languages: CommentaryLanguage[];
+  };
+}
+
+export interface CommentarySettings {
+  enabled: boolean;
+  style: CommentaryStyle;
+  token_limit: number | null;
+  interval_minutes: number;
+  auto_publish: boolean;
+  tokens_used: number;
+  languages: CommentaryLanguage[];
+  available_styles: Record<CommentaryStyle, { name: string; description: string }>;
+  available_languages: Record<CommentaryLanguage, string>;
+}
+
+export interface UpdateCommentarySettingsRequest {
+  enabled?: boolean;
+  style?: CommentaryStyle;
+  token_limit?: number | null;
+  interval_minutes?: number;
+  auto_publish?: boolean;
+  languages?: CommentaryLanguage[] | null;
+}
+
+export interface GenerateCommentaryRequest {
+  type: CommentaryType;
+}
+
+export interface GenerateCommentaryResponse {
+  message: string;
+  type: CommentaryType;
+}
+
+export interface CommentaryStylesResponse {
+  styles: Record<CommentaryStyle, { name: string; description: string }>;
+}
+
+export interface CommentaryLanguagesResponse {
+  languages: Record<CommentaryLanguage, string>;
+}

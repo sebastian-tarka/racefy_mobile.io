@@ -386,7 +386,13 @@
     "seconds": "sek",
     "activities": "Aktywności",
     "moreActivities": "+{{count}} więcej",
-    "leaderboard": "Ranking"
+    "leaderboard": "Ranking",
+    "tabs": {
+      "details": "Szczegóły",
+      "commentary": "Komentarz",
+      "participants": "Uczestnicy",
+      "leaderboard": "Ranking"
+    }
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",
@@ -885,5 +891,42 @@
       "noTransactions": "Brak transakcji punktowych",
       "allLoaded": "Wszystkie transakcje załadowane"
     }
+  },
+  "commentary": {
+    "title": "Komentarz",
+    "settings": "Ustawienia komentarza",
+    "tokenUsage": "Użycie tokenów",
+    "unlimited": "Bez limitu",
+    "liveActive": "Komentarz na żywo aktywny",
+    "nextUpdate": "Następna aktualizacja za",
+    "loading": "Ładowanie komentarza...",
+    "emptyTitle": "Brak komentarzy",
+    "emptyMessage": "Komentarze pojawią się w miarę postępu wydarzenia",
+    "disabledTitle": "Komentarz jest wyłączony",
+    "disabledMessage": "Komentarz AI nie jest włączony dla tego wydarzenia",
+    "errorTitle": "Nie udało się załadować komentarza",
+    "enableAI": "Włącz komentarz AI",
+    "enableDescription": "Generuj komentarz AI dla tego wydarzenia",
+    "style": "Styl komentarza",
+    "languages": "Języki",
+    "languagesDescription": "Wybierz języki, w których ma być generowany komentarz",
+    "advanced": "Zaawansowane",
+    "autoPublish": "Automatyczna publikacja",
+    "autoPublishDescription": "Automatycznie publikuj wygenerowany komentarz",
+    "updateInterval": "Interwał aktualizacji",
+    "updateIntervalDescription": "Jak często generować aktualizacje na żywo",
+    "manualGeneration": "Ręczne generowanie",
+    "manualGenerationDescription": "Generuj komentarz na żądanie",
+    "generate": "Generuj komentarz",
+    "generateConfirm": "Wygenerować aktualizację komentarza {{type}}? To wykorzysta tokeny z Twojego limitu.",
+    "generateStarted": "Generowanie komentarza zostało rozpoczęte. Pojawi się wkrótce w feedzie.",
+    "generateFailed": "Nie udało się wygenerować komentarza",
+    "generateLive": "Generuj aktualizację na żywo",
+    "generateSummary": "Generuj podsumowanie",
+    "updateFailed": "Nie udało się zaktualizować ustawień komentarza",
+    "loadFailed": "Nie udało się załadować ustawień",
+    "error": "Błąd",
+    "warning": "Ostrzeżenie",
+    "atLeastOneLanguage": "Musi być wybrany co najmniej jeden język"
   }
 }
