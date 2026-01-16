@@ -15,6 +15,7 @@ export * from './CommentSection';
 export * from './CommentaryItem';
 export * from './CommentaryFeed';
 export * from './CommentaryTabContent';
+export * from './CommentarySettingsSection';
 export * from './CompareUserSelector';
 export * from './CountdownTimer';
 export * from './DebugLogsSection';

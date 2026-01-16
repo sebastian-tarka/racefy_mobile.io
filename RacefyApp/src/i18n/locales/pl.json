@@ -905,16 +905,25 @@
     "disabledTitle": "Komentarz jest wyłączony",
     "disabledMessage": "Komentarz AI nie jest włączony dla tego wydarzenia",
     "errorTitle": "Nie udało się załadować komentarza",
+    "aiCommentary": "Komentarz AI",
+    "enabled": "Włączony",
+    "disabled": "Wyłączony",
     "enableAI": "Włącz komentarz AI",
     "enableDescription": "Generuj komentarz AI dla tego wydarzenia",
     "style": "Styl komentarza",
+    "styleHint": "Wybierz ton i styl komentarza",
     "languages": "Języki",
     "languagesDescription": "Wybierz języki, w których ma być generowany komentarz",
+    "languagesHint": "Wybierz języki do generowania komentarzy",
     "advanced": "Zaawansowane",
     "autoPublish": "Automatyczna publikacja",
     "autoPublishDescription": "Automatycznie publikuj wygenerowany komentarz",
     "updateInterval": "Interwał aktualizacji",
     "updateIntervalDescription": "Jak często generować aktualizacje na żywo",
+    "intervalHint": "Jak często generować aktualizacje na żywo podczas wydarzenia",
+    "tokenLimit": "Limit tokenów",
+    "tokenLimitPlaceholder": "Pozostaw puste dla nieograniczonej liczby",
+    "tokenLimitHint": "Ustaw limit, aby kontrolować koszty AI. Pozostaw puste dla nieograniczonej liczby.",
     "manualGeneration": "Ręczne generowanie",
     "manualGenerationDescription": "Generuj komentarz na żądanie",
     "generate": "Generuj komentarz",
@@ -927,6 +936,32 @@
     "loadFailed": "Nie udało się załadować ustawień",
     "error": "Błąd",
     "warning": "Ostrzeżenie",
-    "atLeastOneLanguage": "Musi być wybrany co najmniej jeden język"
+    "atLeastOneLanguage": "Musi być wybrany co najmniej jeden język",
+    "styles": {
+      "exciting": {
+        "name": "Ekscytujący",
+        "description": "Energetyczny i entuzjastyczny"
+      },
+      "professional": {
+        "name": "Profesjonalny",
+        "description": "Formalny i obiektywny"
+      },
+      "casual": {
+        "name": "Swobodny",
+        "description": "Przyjazny i zrelaksowany"
+      },
+      "humorous": {
+        "name": "Humorystyczny",
+        "description": "Zabawny i dowcipny"
+      },
+      "statistical": {
+        "name": "Statystyczny",
+        "description": "Skupiony na danych"
+      },
+      "motivational": {
+        "name": "Motywujący",
+        "description": "Zachęcający i wspierający"
+      }
+    }
   }
 }

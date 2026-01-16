@@ -909,16 +909,25 @@
     "disabledTitle": "Commentary is disabled",
     "disabledMessage": "AI commentary is not enabled for this event",
     "errorTitle": "Failed to load commentary",
+    "aiCommentary": "AI Commentary",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
     "enableAI": "Enable AI Commentary",
     "enableDescription": "Generate AI commentary for this event",
     "style": "Commentary Style",
+    "styleHint": "Choose the tone and style of commentary",
     "languages": "Languages",
     "languagesDescription": "Select which languages to generate commentary in",
+    "languagesHint": "Select languages for commentary generation",
     "advanced": "Advanced",
     "autoPublish": "Auto-publish",
     "autoPublishDescription": "Automatically publish generated commentary",
     "updateInterval": "Update Interval",
     "updateIntervalDescription": "How often to generate live updates",
+    "intervalHint": "How often to generate live updates during event",
+    "tokenLimit": "Token Limit",
+    "tokenLimitPlaceholder": "Leave empty for unlimited",
+    "tokenLimitHint": "Set a limit to control AI usage costs. Leave empty for unlimited.",
     "manualGeneration": "Manual Generation",
     "manualGenerationDescription": "Generate commentary on demand",
     "generate": "Generate Commentary",
@@ -931,6 +940,32 @@
     "loadFailed": "Failed to load settings",
     "error": "Error",
     "warning": "Warning",
-    "atLeastOneLanguage": "At least one language must be selected"
+    "atLeastOneLanguage": "At least one language must be selected",
+    "styles": {
+      "exciting": {
+        "name": "Exciting",
+        "description": "Energetic and enthusiastic"
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "Formal and objective"
+      },
+      "casual": {
+        "name": "Casual",
+        "description": "Friendly and relaxed"
+      },
+      "humorous": {
+        "name": "Humorous",
+        "description": "Playful and witty"
+      },
+      "statistical": {
+        "name": "Statistical",
+        "description": "Data-focused analysis"
+      },
+      "motivational": {
+        "name": "Motivational",
+        "description": "Encouraging and supportive"
+      }
+    }
   }
 }
