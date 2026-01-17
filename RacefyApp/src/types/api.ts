@@ -232,53 +232,123 @@ export interface DraftsResponse {
 
 // ============ EVENTS ============
 
+export type EventRankingMode = 'fastest_time' | 'most_distance' | 'most_elevation' | 'first_finish';
+export type EventTeamScoring = 'sum' | 'average' | 'best_n';
+export type EventAiPostsStyle = 'achievement' | 'statistical' | 'comparison';
+export type EventVisibility = 'public' | 'followers' | 'private';
+
+export interface EventPointRewards {
+  first_place?: number;
+  second_place?: number;
+  third_place?: number;
+  finisher?: number;
+}
+
 export interface Event {
   id: number;
   created_by: number;
   post_id: number;
   sport_type_id: number;
+  slug?: string;
+  slug_expires_at?: string;
+  friendly_url?: string;
   location_name: string;
   latitude: number;
   longitude: number;
+  coordinates?: [number, number];
   starts_at: string;
   ends_at: string;
   registration_opens_at: string | null;
   registration_closes_at: string | null;
   max_participants: number | null;
   participants_count: number;
+  available_spots: number | null;
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   distance: number | null;
   entry_fee: number | null;
+  visibility?: EventVisibility;
   cover_image: string | null;
   cover_image_url: string | null;
+  // Ranking mode
+  ranking_mode?: EventRankingMode;
+  target_distance?: number;
+  target_elevation?: number;
+  time_limit?: number;
+  results_finalized?: boolean;
+  // Team event
+  is_team_event?: boolean;
+  team_size_min?: number;
+  team_size_max?: number;
+  team_scoring?: EventTeamScoring;
+  // AI Posts for participants
+  ai_posts_enabled?: boolean;
+  ai_posts_force_participants?: boolean;
+  ai_posts_style?: EventAiPostsStyle;
+  auto_publish?: boolean;
+  // Point rewards
+  point_rewards?: EventPointRewards;
+  // Registration status
+  is_registration_open?: boolean;
+  is_full?: boolean;
+  // Relations
   sport_type?: SportType;
   post?: Post;
   is_registered?: boolean;
   is_owner?: boolean;
-  available_spots?: number | null;
+  is_watching?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateEventRequest {
+  // Required fields
   title: string;
   content: string;
   sport_type_id: number;
   location_name: string;
-  latitude: number;
-  longitude: number;
   starts_at: string;
-  ends_at: string;
+  // Optional location
+  latitude?: number;
+  longitude?: number;
+  // Optional timing
+  ends_at?: string;
   registration_opens_at?: string;
   registration_closes_at?: string;
+  // Optional settings
   max_participants?: number;
-  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   distance?: number;
   entry_fee?: number;
+  visibility?: EventVisibility;
+  // Slug
+  slug?: string;
+  slug_expires_at?: string;
+  // Ranking mode
+  ranking_mode?: EventRankingMode;
+  target_distance?: number;
+  target_elevation?: number;
+  time_limit?: number;
+  // Team event
+  is_team_event?: boolean;
+  team_size_min?: number;
+  team_size_max?: number;
+  team_scoring?: EventTeamScoring;
+  // AI Posts for participants
+  ai_posts_enabled?: boolean;
+  ai_posts_force_participants?: boolean;
+  ai_posts_style?: EventAiPostsStyle;
+  auto_publish?: boolean;
+  // Point rewards
+  point_rewards?: EventPointRewards;
 }
 
 export interface UpdateEventRequest {
+  // Post fields (always allowed)
   title?: string;
   content?: string;
+  visibility?: EventVisibility;
+  // Event fields (restricted for ongoing/completed)
   sport_type_id?: number;
   location_name?: string;
   latitude?: number;
@@ -288,10 +358,29 @@ export interface UpdateEventRequest {
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;
   max_participants?: number | null;
+  status?: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
   distance?: number | null;
   entry_fee?: number | null;
-  cover_image?: string;
+  slug?: string;
+  slug_expires_at?: string;
+  // Ranking mode
+  ranking_mode?: EventRankingMode;
+  target_distance?: number;
+  target_elevation?: number;
+  time_limit?: number;
+  // Team event
+  is_team_event?: boolean;
+  team_size_min?: number;
+  team_size_max?: number;
+  team_scoring?: EventTeamScoring;
+  // AI Posts for participants
+  ai_posts_enabled?: boolean;
+  ai_posts_force_participants?: boolean;
+  ai_posts_style?: EventAiPostsStyle;
+  auto_publish?: boolean;
+  // Point rewards
+  point_rewards?: EventPointRewards;
 }
 
 export interface EventRegistration {

@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../hooks';
 import { Card } from './Card';
 import { Input } from './Input';
 import { spacing, fontSize, borderRadius } from '../theme';

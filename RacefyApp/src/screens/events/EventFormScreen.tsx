@@ -24,6 +24,7 @@ import {
   ImagePickerButton,
   MediaPicker,
   ScreenHeader,
+  CommentarySettingsSection,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -33,11 +34,37 @@ import { useSportTypes } from '../../hooks/useSportTypes';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Event, CreateEventRequest, UpdateEventRequest, MediaItem } from '../../types/api';
+import type {
+  Event,
+  CreateEventRequest,
+  UpdateEventRequest,
+  MediaItem,
+  CommentaryStyle,
+  CommentaryLanguage,
+} from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventForm'>;
 
 type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+
+// Local interface for commentary settings (managed via separate API)
+interface CommentarySettingsData {
+  enabled: boolean;
+  style: CommentaryStyle;
+  token_limit: number | null;
+  interval_minutes: number;
+  auto_publish: boolean;
+  languages: CommentaryLanguage[];
+}
+
+const defaultCommentarySettings: CommentarySettingsData = {
+  enabled: false,
+  style: 'exciting',
+  token_limit: 5000,
+  interval_minutes: 15,
+  auto_publish: true,
+  languages: ['en', 'pl'],
+};
 
 interface FormData {
   title: string;
@@ -85,6 +112,9 @@ export function EventFormScreen({ navigation, route }: Props) {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
+  const [commentarySettings, setCommentarySettings] = useState<CommentarySettingsData>(
+    defaultCommentarySettings
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
@@ -107,13 +137,31 @@ export function EventFormScreen({ navigation, route }: Props) {
   const fetchEvent = async (id: number) => {
     setIsFetching(true);
     try {
-      const event = await api.getEvent(id);
+      const [event, settings] = await Promise.all([
+        api.getEvent(id),
+        api.getCommentarySettings(id).catch((err) => {
+          // Commentary settings may not be accessible if user is not organizer
+          logger.debug('api', 'Could not load commentary settings', { error: err });
+          return null;
+        }),
+      ]);
       logger.debug('api', 'Fetched event for form', {
         id: event.id,
         sport_type_id: event.sport_type_id,
         sport_type: event.sport_type,
+        hasCommentarySettings: !!settings,
       });
       populateForm(event);
+      if (settings) {
+        setCommentarySettings({
+          enabled: settings.enabled,
+          style: settings.style,
+          token_limit: settings.token_limit,
+          interval_minutes: settings.interval_minutes,
+          auto_publish: settings.auto_publish,
+          languages: settings.languages,
+        });
+      }
     } catch (error) {
       logger.error('api', 'Failed to fetch event', { error });
       Alert.alert(t('common.error'), t('eventDetail.failedToLoad'));
@@ -277,6 +325,22 @@ export function EventFormScreen({ navigation, route }: Props) {
           navigation.goBack();
           return;
         }
+      }
+
+      // Save AI commentary settings (via separate API endpoint)
+      try {
+        await api.updateCommentarySettings(savedEventId, {
+          enabled: commentarySettings.enabled,
+          style: commentarySettings.style,
+          token_limit: commentarySettings.token_limit,
+          interval_minutes: commentarySettings.interval_minutes,
+          auto_publish: commentarySettings.auto_publish,
+          languages: commentarySettings.languages,
+        });
+        logger.debug('api', 'Commentary settings saved', { eventId: savedEventId });
+      } catch (commentaryError) {
+        logger.error('api', 'Failed to save commentary settings', { error: commentaryError });
+        // Don't fail the whole operation for commentary settings
       }
 
       Alert.alert(
@@ -574,6 +638,13 @@ export function EventFormScreen({ navigation, route }: Props) {
             </Card>
             </View>
           )}
+
+          {/* AI Commentary Settings */}
+          <CommentarySettingsSection
+            value={commentarySettings}
+            onChange={setCommentarySettings}
+            disabled={isLoading}
+          />
 
           {/* Submit Button */}
           <Button
