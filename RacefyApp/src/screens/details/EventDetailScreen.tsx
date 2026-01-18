@@ -10,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,11 +54,39 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<EventTabType>('details');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardWillShow', () => {
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardWillHide', () => {
+      setIsKeyboardVisible(false);
+    });
+
+    // Fallback for Android
+    const showSubscriptionAndroid = Keyboard.addListener('keyboardDidShow', () => {
+      setIsKeyboardVisible(true);
+    });
+    const hideSubscriptionAndroid = Keyboard.addListener('keyboardDidHide', () => {
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      showSubscriptionAndroid.remove();
+      hideSubscriptionAndroid.remove();
+    };
+  }, []);
 
   const scrollToBottom = useCallback(() => {
+    // Longer delay for iOS to account for keyboard animation
+    const delay = Platform.OS === 'ios' ? 300 : 150;
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    }, delay);
   }, []);
 
   const fetchParticipants = useCallback(async () => {
@@ -409,8 +438,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
       {activeTab === 'details' && (
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+          keyboardVerticalOffset={0}
         >
           <ScrollView
             ref={scrollViewRef}
@@ -875,40 +904,42 @@ export function EventDetailScreen({ route, navigation }: Props) {
           </ScrollView>
         )}
 
-      {/* Bottom Action Button */}
-      <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: spacing.md + insets.bottom }]}>
-        {canStartActivity ? (
-          <Button
-            title={t('eventDetail.startActivity')}
-            onPress={handleStartActivity}
-            variant="primary"
-            style={styles.actionButton}
-          />
-        ) : canUnregister ? (
-          <Button
-            title={t('eventDetail.cancelRegistration')}
-            onPress={handleCancelRegistration}
-            variant="outline"
-            loading={isRegistering}
-            style={styles.actionButton}
-          />
-        ) : canRegister ? (
-          <Button
-            title={isAuthenticated ? t('eventDetail.registerForEvent') : t('eventDetail.signInToRegister')}
-            onPress={handleRegister}
-            variant="primary"
-            loading={isRegistering}
-            style={styles.actionButton}
-          />
-        ) : (
-          <View style={[styles.statusBanner, { backgroundColor: colors.border }]}>
-            <Ionicons name="alert-circle-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-              {getRegistrationClosedMessage()}
-            </Text>
-          </View>
-        )}
-      </View>
+      {/* Bottom Action Button - Hide when keyboard is visible */}
+      {!isKeyboardVisible && (
+        <View style={[styles.bottomAction, { backgroundColor: colors.cardBackground, borderTopColor: colors.border, paddingBottom: spacing.md + insets.bottom }]}>
+          {canStartActivity ? (
+            <Button
+              title={t('eventDetail.startActivity')}
+              onPress={handleStartActivity}
+              variant="primary"
+              style={styles.actionButton}
+            />
+          ) : canUnregister ? (
+            <Button
+              title={t('eventDetail.cancelRegistration')}
+              onPress={handleCancelRegistration}
+              variant="outline"
+              loading={isRegistering}
+              style={styles.actionButton}
+            />
+          ) : canRegister ? (
+            <Button
+              title={isAuthenticated ? t('eventDetail.registerForEvent') : t('eventDetail.signInToRegister')}
+              onPress={handleRegister}
+              variant="primary"
+              loading={isRegistering}
+              style={styles.actionButton}
+            />
+          ) : (
+            <View style={[styles.statusBanner, { backgroundColor: colors.border }]}>
+              <Ionicons name="alert-circle-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.statusText, { color: colors.textSecondary }]}>
+                {getRegistrationClosedMessage()}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
     </SafeAreaView>
   );
 }
