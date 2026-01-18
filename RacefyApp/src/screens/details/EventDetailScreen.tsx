@@ -291,12 +291,50 @@ export function EventDetailScreen({ route, navigation }: Props) {
       : null;
   const isFull = availableSpots !== null && availableSpots <= 0;
   const canModifyStatus = event.status === 'upcoming' || event.status === 'cancelled';
-  const canRegister =
-    event.status === 'upcoming' && !event.is_registered && !isFull;
+
+  // Trust API's registration eligibility (single source of truth)
+  const eligibility = event.registration_eligibility || {
+    can_register: event.is_registration_open ?? false, // Backwards compatibility
+    reason: null,
+    opens_at: event.registration_opens_at,
+    closes_at: event.registration_closes_at,
+  };
+
+  const canRegister = eligibility.can_register && !event.is_registered;
   const canUnregister = canModifyStatus && event.is_registered;
   const canStartActivity = event.status === 'ongoing' && event.is_registered;
   const canEdit = event.is_owner ?? false;
   const canDelete = canEdit && canModifyStatus;
+
+  // Get user-friendly message for why registration is closed
+  const getRegistrationClosedMessage = (): string => {
+    if (!eligibility.reason) return t('eventDetail.registrationNotAvailable');
+
+    switch (eligibility.reason) {
+      case 'event_completed':
+        return t('eventDetail.eventEnded');
+      case 'event_cancelled':
+        return t('eventDetail.eventCancelled');
+      case 'event_not_upcoming':
+        return t('eventDetail.registrationNotAvailable');
+      case 'too_close_to_event':
+        return t('eventDetail.registrationTooLate');
+      case 'registration_not_opened':
+        return eligibility.opens_at
+          ? t('eventDetail.registrationOpensOn', {
+              date: format(new Date(eligibility.opens_at), 'MMM d, h:mm a'),
+            })
+          : t('eventDetail.registrationNotOpened');
+      case 'registration_closed':
+        return eligibility.closes_at
+          ? t('eventDetail.registrationClosedOn', {
+              date: format(new Date(eligibility.closes_at), 'MMM d, h:mm a'),
+            })
+          : t('eventDetail.registrationClosed');
+      default:
+        return t('eventDetail.registrationNotAvailable');
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -862,18 +900,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
             loading={isRegistering}
             style={styles.actionButton}
           />
-        ) : isFull ? (
-          <View style={[styles.fullBanner, { backgroundColor: colors.error + '10' }]}>
-            <Ionicons name="alert-circle" size={20} color={colors.error} />
-            <Text style={[styles.fullText, { color: colors.error }]}>{t('eventDetail.eventFull')}</Text>
-          </View>
-        ) : event.status !== 'upcoming' ? (
+        ) : (
           <View style={[styles.statusBanner, { backgroundColor: colors.border }]}>
+            <Ionicons name="alert-circle-outline" size={20} color={colors.textSecondary} />
             <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-              {event.status === 'completed' ? t('eventDetail.registrationClosed') : t('eventDetail.registrationNotAvailable')}
+              {getRegistrationClosedMessage()}
             </Text>
           </View>
-        ) : null}
+        )}
       </View>
     </SafeAreaView>
   );
@@ -1022,12 +1056,15 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   statusBanner: {
+    flexDirection: 'row',
     padding: spacing.md,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
+    gap: spacing.sm,
   },
   statusText: {
     fontSize: fontSize.md,
+    flex: 1,
   },
   errorContainer: {
     flex: 1,

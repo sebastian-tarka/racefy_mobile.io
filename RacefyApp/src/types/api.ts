@@ -243,6 +243,23 @@ export type EventTeamScoring = 'sum' | 'average' | 'best_n';
 export type EventAiPostsStyle = 'achievement' | 'statistical' | 'comparison';
 export type EventVisibility = 'public' | 'followers' | 'private';
 
+// Registration eligibility reason codes
+export type RegistrationEligibilityReason =
+  | 'event_completed'
+  | 'event_cancelled'
+  | 'event_not_upcoming'
+  | 'too_close_to_event'
+  | 'registration_not_opened'
+  | 'registration_closed';
+
+// Registration eligibility information
+export interface RegistrationEligibility {
+  can_register: boolean;
+  reason: RegistrationEligibilityReason | null;
+  opens_at: string | null;
+  closes_at: string | null;
+}
+
 export interface EventPointRewards {
   first_place?: number;
   second_place?: number;
@@ -295,8 +312,9 @@ export interface Event {
   // Point rewards
   point_rewards?: EventPointRewards;
   // Registration status
-  is_registration_open?: boolean;
+  is_registration_open?: boolean; // DEPRECATED: Use registration_eligibility instead
   is_full?: boolean;
+  registration_eligibility?: RegistrationEligibility;
   // Relations
   sport_type?: SportType;
   post?: Post;

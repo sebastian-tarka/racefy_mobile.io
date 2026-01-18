@@ -369,7 +369,7 @@
     "cancelConfirm": "Are you sure you want to cancel your registration?",
     "yesCancel": "Yes, Cancel",
     "eventFull": "This event is full",
-    "registrationClosed": "Registration closed",
+    "registrationClosed": "Registration has closed",
     "registrationNotAvailable": "Registration not available",
     "registrationSuccess": "You have been registered for this event!",
     "registrationFailed": "Failed to register for event",
@@ -392,7 +392,14 @@
       "commentary": "Commentary",
       "participants": "Participants",
       "leaderboard": "Leaderboard"
-    }
+    },
+    "eventEnded": "Event has ended",
+    "eventCancelled": "Event was cancelled",
+    "registrationUnavailable": "Registration unavailable",
+    "registrationTooLate": "Registration closed (event starts soon)",
+    "registrationNotOpened": "Registration not opened yet",
+    "registrationOpensOn": "Registration opens on {{date}}",
+    "registrationClosedOn": "Registration closed on {{date}}"
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -475,7 +482,7 @@
     "distance": "Distance",
     "pace": "Pace",
     "currentPace": "Current",
-    "avgPace": "Average",
+    "avgPace": "Avg Pace /km",
     "calories": "Calories",
     "elevationGain": "m elevation gain",
     "start": "START",
@@ -505,7 +512,6 @@
     "activities": "Activities",
     "totalDistance": "Total Distance",
     "totalTime": "Total Time",
-    "avgPace": "Avg Pace /km",
     "noStats": "No activities recorded yet. Start your first {{sport}} activity!",
     "existingActivity": {
       "title": "Unfinished Activity",

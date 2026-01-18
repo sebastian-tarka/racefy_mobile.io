@@ -369,7 +369,7 @@
     "cancelConfirm": "Czy na pewno chcesz anulować swoją rejestrację?",
     "yesCancel": "Tak, anuluj",
     "eventFull": "To wydarzenie jest pełne",
-    "registrationClosed": "Rejestracja zakończona",
+    "registrationClosed": "Rejestracja została zamknięta",
     "registrationNotAvailable": "Rejestracja niedostępna",
     "registrationSuccess": "Zostałeś zarejestrowany na to wydarzenie!",
     "registrationFailed": "Nie udało się zarejestrować na wydarzenie",
@@ -392,7 +392,14 @@
       "commentary": "Komentarz",
       "participants": "Uczestnicy",
       "leaderboard": "Ranking"
-    }
+    },
+    "eventEnded": "Wydarzenie się zakończyło",
+    "eventCancelled": "Wydarzenie zostało anulowane",
+    "registrationUnavailable": "Rejestracja niedostępna",
+    "registrationTooLate": "Rejestracja zamknięta (wydarzenie już się rozpoczyna)",
+    "registrationNotOpened": "Rejestracja jeszcze się nie otworzyła",
+    "registrationOpensOn": "Rejestracja otwiera się {{date}}",
+    "registrationClosedOn": "Rejestracja zamknięta {{date}}"
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",
@@ -475,7 +482,7 @@
     "distance": "Dystans",
     "pace": "Tempo",
     "currentPace": "Aktualne",
-    "avgPace": "Średnie",
+    "avgPace": "Śr. tempo /km",
     "calories": "Kalorie",
     "elevationGain": "m przewyższenia",
     "start": "START",
@@ -501,7 +508,6 @@
     "activities": "Aktywności",
     "totalDistance": "Całkowity dystans",
     "totalTime": "Całkowity czas",
-    "avgPace": "Śr. tempo /km",
     "noStats": "Brak zarejestrowanych aktywności. Rozpocznij swoją pierwszą aktywność {{sport}}!",
     "existingActivity": {
       "title": "Niedokończona aktywność",
