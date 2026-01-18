@@ -14,6 +14,9 @@
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
       },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
       "distribution": "internal",
       "env": {
         "APP_ENV": "staging",
@@ -26,13 +29,23 @@
       }
     },
     "production": {
-      "environment": "production",
+      "environment": "preview",
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
       },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "distribution": "store",
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "staging",
+        "LOG_ENABLED": "true",
+        "LOG_LEVEL": "debug",
+        "LOG_PERSIST": "true",
+        "LOG_CATEGORIES": "all",
+        "LOG_CONSOLE_OUTPUT": "true",
+        "MAPBOX_ENABLED": "true"
       }
     }
   },
