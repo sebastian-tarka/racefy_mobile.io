@@ -17,6 +17,8 @@ cd RacefyApp && npm run android         # Run on Android
 # Building
 cd RacefyApp && eas build --platform android --profile staging     # Build staging APK
 cd RacefyApp && eas build --platform android --profile production  # Build production AAB
+cd RacefyApp && eas build --platform ios --profile production      # Build iOS for TestFlight (staging API)
+cd RacefyApp && eas submit --platform ios --latest                 # Submit iOS build to TestFlight
 
 # Environment Variables Management
 eas env:list production --include-sensitive                         # List production env vars
@@ -32,6 +34,7 @@ eas env:create --name NAME --value "VALUE" --scope project --type string --visib
 - Translations: `RacefyApp/src/i18n/locales/`
 - UI Patterns: `RacefyApp/docs/UI_PATTERNS.md`
 - Local Build Guide: `RacefyApp/docs/LOCAL_BUILD_SETUP.md`
+- iOS Build Guide: `RacefyApp/docs/IOS_BUILD_GUIDE.md`
 
 ### Expo Dashboard Links
 - Project: https://expo.dev/accounts/sebastiantarka/projects/RacefyApp
