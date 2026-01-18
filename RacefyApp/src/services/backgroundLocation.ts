@@ -3,8 +3,12 @@ import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
 import type { GpsProfile } from '../config/gpsProfiles';
+import { syncPointsToServer } from './backgroundApiClient';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
+
+// Module-level timer for background sync
+let backgroundSyncTimer: NodeJS.Timeout | null = null;
 
 // Log task registration at module load time for debugging
 console.log('[BackgroundLocation] Module loaded, will define task:', BACKGROUND_LOCATION_TASK);
@@ -14,6 +18,7 @@ const ACTIVE_ACTIVITY_KEY = '@racefy_active_activity_id';
 const GPS_PROFILE_KEY = '@racefy_gps_profile';
 const LAST_BACKGROUND_POSITION_KEY = '@racefy_last_bg_position';
 const LAST_SYNC_STATUS_KEY = '@racefy_last_sync_status';
+const BACKGROUND_SYNC_STATE_KEY = '@racefy_bg_sync_state';
 
 // Default thresholds - will be overridden by stored profile
 const DEFAULT_GPS_ACCURACY_THRESHOLD = 25;
@@ -35,6 +40,8 @@ async function getStoredGpsProfile(): Promise<{
   minDistanceThreshold: number;
   maxRealisticSpeed: number;
   stationarySpeedThreshold: number;
+  backgroundSyncInterval?: number;
+  backgroundSyncEnabled?: boolean;
 }> {
   try {
     const profileJson = await AsyncStorage.getItem(GPS_PROFILE_KEY);
@@ -45,6 +52,8 @@ async function getStoredGpsProfile(): Promise<{
         minDistanceThreshold: profile.minDistanceThreshold,
         maxRealisticSpeed: profile.maxRealisticSpeed,
         stationarySpeedThreshold: profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
+        backgroundSyncInterval: profile.backgroundSyncInterval,
+        backgroundSyncEnabled: profile.backgroundSyncEnabled,
       };
     }
   } catch {
@@ -101,6 +110,63 @@ async function setLastBackgroundPosition(position: LastPosition): Promise<void> 
 
 async function clearLastBackgroundPosition(): Promise<void> {
   await AsyncStorage.removeItem(LAST_BACKGROUND_POSITION_KEY);
+}
+
+// ============================================
+// BACKGROUND SYNC LOGIC
+// Periodically syncs buffered GPS points to server
+// ============================================
+
+async function performBackgroundSync(): Promise<void> {
+  try {
+    // Get activity ID
+    const activityId = await getActiveActivityId();
+    if (!activityId) {
+      logger.gps('Background sync: No active activity');
+      return;
+    }
+
+    // Get sync state
+    const syncState = await getBackgroundSyncState();
+
+    // Get buffer and calculate unsynced points
+    const buffer = await getLocationBuffer();
+    const unsyncedPoints = buffer.slice(syncState.syncedPointsCount);
+
+    if (unsyncedPoints.length === 0) {
+      logger.gps('Background sync: No new points to sync');
+      return;
+    }
+
+    // Log attempt
+    logger.gps(`Background sync: Attempting to sync ${unsyncedPoints.length} points`);
+
+    // Call API
+    const result = await syncPointsToServer(activityId, unsyncedPoints);
+
+    if (result.success) {
+      // Update state: increment synced count
+      await updateBackgroundSyncState({
+        lastSyncSuccess: Date.now(),
+        lastSyncAttempt: Date.now(),
+        syncedPointsCount: buffer.length,
+        consecutiveFailures: 0,
+        totalPointsSynced: syncState.totalPointsSynced + unsyncedPoints.length,
+      });
+      logger.gps(`Background sync: SUCCESS (${unsyncedPoints.length} points synced, total: ${buffer.length})`);
+    } else {
+      // Update failure count
+      await updateBackgroundSyncState({
+        lastSyncAttempt: Date.now(),
+        consecutiveFailures: syncState.consecutiveFailures + 1,
+      });
+      logger.warn('gps', `Background sync: FAILED - ${result.error}`, {
+        consecutiveFailures: syncState.consecutiveFailures + 1,
+      });
+    }
+  } catch (err) {
+    logger.error('gps', 'Background sync: Exception', { error: err });
+  }
 }
 
 // Define the background task - this must be at module level
@@ -209,6 +275,23 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           await saveLocationBuffer(updatedBuffer);
 
           logger.gps(`Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
+
+          // Initialize background sync timer on first GPS update if not already running
+          if (!backgroundSyncTimer) {
+            const profile = await getStoredGpsProfile();
+            // Check if background sync is enabled for this profile
+            const syncEnabled = (profile as any).backgroundSyncEnabled ?? true;
+            const syncInterval = (profile as any).backgroundSyncInterval ?? 240000; // Default: 4 minutes
+
+            if (syncEnabled) {
+              logger.gps(`Background sync: Initializing timer (interval: ${syncInterval / 1000}s)`);
+              backgroundSyncTimer = setInterval(async () => {
+                await performBackgroundSync();
+              }, syncInterval);
+            } else {
+              logger.gps('Background sync: Disabled by GPS profile');
+            }
+          }
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
           logger.gps(`Background: All ${locations.length} points filtered`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
         }
@@ -327,6 +410,12 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
     if (isRunning) {
       await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       logger.gps('Background location tracking stopped');
+    }
+    // Clear background sync timer
+    if (backgroundSyncTimer) {
+      clearInterval(backgroundSyncTimer);
+      backgroundSyncTimer = null;
+      logger.gps('Background sync timer cleared');
     }
     // Clear stored profile and last position
     await clearGpsProfile();
@@ -451,4 +540,50 @@ export async function updateSyncStatus(updates: Partial<SyncStatus>): Promise<vo
 
 export async function clearSyncStatus(): Promise<void> {
   await AsyncStorage.removeItem(LAST_SYNC_STATUS_KEY);
+}
+
+// ============================================
+// BACKGROUND SYNC STATE MANAGEMENT
+// Tracks which points from the buffer have been synced
+// ============================================
+
+export interface BackgroundSyncState {
+  lastSyncAttempt: number | null;    // Timestamp (ms)
+  lastSyncSuccess: number | null;    // Timestamp (ms)
+  syncedPointsCount: number;         // Points already synced from buffer
+  consecutiveFailures: number;       // Failure counter for monitoring
+  totalPointsSynced: number;         // Lifetime counter
+}
+
+export async function getBackgroundSyncState(): Promise<BackgroundSyncState> {
+  try {
+    const state = await AsyncStorage.getItem(BACKGROUND_SYNC_STATE_KEY);
+    if (state) {
+      return JSON.parse(state);
+    }
+  } catch (err) {
+    logger.error('gps', 'Failed to get background sync state', { error: err });
+  }
+  // Return default state
+  return {
+    lastSyncAttempt: null,
+    lastSyncSuccess: null,
+    syncedPointsCount: 0,
+    consecutiveFailures: 0,
+    totalPointsSynced: 0,
+  };
+}
+
+export async function updateBackgroundSyncState(updates: Partial<BackgroundSyncState>): Promise<void> {
+  try {
+    const current = await getBackgroundSyncState();
+    const updated = { ...current, ...updates };
+    await AsyncStorage.setItem(BACKGROUND_SYNC_STATE_KEY, JSON.stringify(updated));
+  } catch (err) {
+    logger.error('gps', 'Failed to update background sync state', { error: err });
+  }
+}
+
+export async function clearBackgroundSyncState(): Promise<void> {
+  await AsyncStorage.removeItem(BACKGROUND_SYNC_STATE_KEY);
 }

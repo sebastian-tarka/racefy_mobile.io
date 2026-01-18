@@ -42,6 +42,11 @@ export interface GpsProfile {
   minDistanceForPace: number;
   /** Minimum distance delta in meters for valid current pace calculation (10-100m) */
   minSegmentDistance: number;
+  // Background sync settings
+  /** Background sync interval in milliseconds (default: 240000 = 4 minutes) */
+  backgroundSyncInterval: number;
+  /** Enable background sync (default: true if GPS enabled) */
+  backgroundSyncEnabled: boolean;
 }
 
 // ============ VALIDATION ============
@@ -61,6 +66,8 @@ const PROFILE_CONSTRAINTS = {
   paceWindowSeconds: { min: 20, max: 120 },
   minDistanceForPace: { min: 20, max: 200 },
   minSegmentDistance: { min: 10, max: 100 },
+  // Background sync constraints
+  backgroundSyncInterval: { min: 60000, max: 600000 }, // 1-10 minutes
 } as const;
 
 /**
@@ -137,6 +144,13 @@ function validateProfile(profile: GpsProfile): GpsProfile {
       PROFILE_CONSTRAINTS.minSegmentDistance.min,
       PROFILE_CONSTRAINTS.minSegmentDistance.max
     ),
+    // Background sync settings
+    backgroundSyncInterval: clamp(
+      profile.backgroundSyncInterval ?? 240000,
+      PROFILE_CONSTRAINTS.backgroundSyncInterval.min,
+      PROFILE_CONSTRAINTS.backgroundSyncInterval.max
+    ),
+    backgroundSyncEnabled: profile.backgroundSyncEnabled ?? profile.enabled,
   };
 }
 
@@ -163,6 +177,9 @@ export function convertApiGpsProfile(apiProfile: GpsProfileApiResponse): GpsProf
     paceWindowSeconds: apiProfile.pace_window_seconds ?? 45,
     minDistanceForPace: apiProfile.min_distance_for_pace ?? 50,
     minSegmentDistance: apiProfile.min_segment_distance ?? 20,
+    // Background sync settings (with sensible defaults if not provided by API)
+    backgroundSyncInterval: apiProfile.background_sync_interval ?? 240000,
+    backgroundSyncEnabled: apiProfile.background_sync_enabled ?? apiProfile.enabled,
   };
 
   return validateProfile(profile);
@@ -187,7 +204,10 @@ export function convertToApiGpsProfile(profile: GpsProfile): GpsProfileRequest {
     pace_window_seconds: profile.paceWindowSeconds,
     min_distance_for_pace: profile.minDistanceForPace,
     min_segment_distance: profile.minSegmentDistance,
-  };
+    // Background sync settings
+    background_sync_interval: profile.backgroundSyncInterval,
+    background_sync_enabled: profile.backgroundSyncEnabled,
+  } as GpsProfileRequest;
 }
 
 // ============ DEFAULT PROFILES ============
@@ -211,6 +231,9 @@ export const DEFAULT_GPS_PROFILE: GpsProfile = {
   paceWindowSeconds: 45,
   minDistanceForPace: 50,
   minSegmentDistance: 20,
+  // Background sync settings
+  backgroundSyncInterval: 240000, // 4 minutes
+  backgroundSyncEnabled: true,
 };
 
 /**
@@ -235,6 +258,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 30,
     minDistanceForPace: 50,
     minSegmentDistance: 20,
+    // Background sync: 4 minutes
+    backgroundSyncInterval: 240000,
+    backgroundSyncEnabled: true,
   },
   cycling: {
     enabled: true,
@@ -251,6 +277,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 20,
     minDistanceForPace: 100,
     minSegmentDistance: 30,
+    // Background sync: 3 minutes (faster speeds generate more points)
+    backgroundSyncInterval: 180000,
+    backgroundSyncEnabled: true,
   },
   walking: {
     enabled: true,
@@ -267,6 +296,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 60,
     minDistanceForPace: 30,
     minSegmentDistance: 15,
+    // Background sync: 5 minutes (slower, fewer points)
+    backgroundSyncInterval: 300000,
+    backgroundSyncEnabled: true,
   },
   hiking: {
     enabled: true,
@@ -283,6 +315,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 90,
     minDistanceForPace: 30,
     minSegmentDistance: 15,
+    // Background sync: 5 minutes (slower, fewer points)
+    backgroundSyncInterval: 300000,
+    backgroundSyncEnabled: true,
   },
 
   // Indoor/GPS-disabled sports (pace settings don't matter but included for type completeness)
@@ -300,6 +335,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 45,
     minDistanceForPace: 50,
     minSegmentDistance: 20,
+    // Background sync: disabled (GPS disabled)
+    backgroundSyncInterval: 240000,
+    backgroundSyncEnabled: false,
   },
   gym: {
     enabled: false,
@@ -315,6 +353,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 45,
     minDistanceForPace: 50,
     minSegmentDistance: 20,
+    // Background sync: disabled (GPS disabled)
+    backgroundSyncInterval: 240000,
+    backgroundSyncEnabled: false,
   },
   yoga: {
     enabled: false,
@@ -330,6 +371,9 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
     paceWindowSeconds: 45,
     minDistanceForPace: 50,
     minSegmentDistance: 20,
+    // Background sync: disabled (GPS disabled)
+    backgroundSyncInterval: 240000,
+    backgroundSyncEnabled: false,
   },
 };
 

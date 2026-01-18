@@ -16,6 +16,9 @@ import {
   clearSyncStatus,
   getLastBackgroundPosition,
   saveLocationBuffer,
+  getLocationBuffer,
+  getBackgroundSyncState,
+  clearBackgroundSyncState,
   type BufferedLocation,
   type LastPosition,
 } from '../services/backgroundLocation';
@@ -394,14 +397,29 @@ function useLiveActivityInternal() {
   };
 
   // Sync points collected by background task (with recovery mechanism)
+  // Respects background sync state to avoid duplicate point uploads
   const syncBackgroundPoints = async (activityId: number) => {
-    let backgroundPoints: BufferedLocation[] = [];
+    let unsyncedPoints: BufferedLocation[] = [];
     try {
-      backgroundPoints = await getAndClearLocationBuffer();
-      if (backgroundPoints.length > 0) {
-        logger.gps('Syncing background points', { activityId, count: backgroundPoints.length });
-        // Convert to GpsPoint format and add to buffer
-        const points: GpsPoint[] = backgroundPoints.map((p) => ({
+      // 1. Get background sync state
+      const syncState = await getBackgroundSyncState();
+
+      // 2. Get buffer (don't clear yet)
+      const buffer = await getLocationBuffer();
+
+      // 3. Calculate unsynced points (points not yet sent by background sync)
+      unsyncedPoints = buffer.slice(syncState.syncedPointsCount);
+
+      if (unsyncedPoints.length > 0) {
+        logger.gps('Foreground: Syncing remaining background points', {
+          activityId,
+          totalBuffered: buffer.length,
+          alreadySynced: syncState.syncedPointsCount,
+          unsyncedCount: unsyncedPoints.length,
+        });
+
+        // 4. Convert to GpsPoint format and add to foreground buffer
+        const points: GpsPoint[] = unsyncedPoints.map((p) => ({
           lat: p.lat,
           lng: p.lng,
           ele: p.ele,
@@ -409,14 +427,35 @@ function useLiveActivityInternal() {
           speed: p.speed,
         }));
         pointsBuffer.current.push(...points);
+
+        // 5. Clear buffer and state after successful addition to foreground buffer
+        await clearLocationBuffer();
+        await clearBackgroundSyncState();
+        logger.gps('Foreground: Cleared background buffer and sync state');
+      } else {
+        logger.gps('Foreground: No unsynced background points', {
+          totalBuffered: buffer.length,
+          alreadySynced: syncState.syncedPointsCount,
+        });
+        // Still clear the buffer and state even if all points were synced
+        if (buffer.length > 0) {
+          await clearLocationBuffer();
+          await clearBackgroundSyncState();
+        }
       }
     } catch (error) {
       logger.error('gps', 'Failed to sync background points', { activityId, error });
-      // Attempt recovery - re-save points if buffer add failed after clear
-      if (backgroundPoints.length > 0) {
+      // Attempt recovery - re-save points if processing failed
+      if (unsyncedPoints.length > 0) {
         try {
-          await saveLocationBuffer(backgroundPoints);
-          logger.gps('Re-saved background points after sync failure', { count: backgroundPoints.length });
+          // Re-save only the unsynced points
+          const syncState = await getBackgroundSyncState();
+          const existingBuffer = await getLocationBuffer();
+          // Only re-save if buffer was cleared
+          if (existingBuffer.length === 0) {
+            await saveLocationBuffer(unsyncedPoints);
+            logger.gps('Re-saved unsynced background points after failure', { count: unsyncedPoints.length });
+          }
         } catch (saveError) {
           logger.error('gps', 'Failed to recover background points', { saveError });
         }
