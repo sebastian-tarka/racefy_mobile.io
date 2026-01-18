@@ -110,9 +110,8 @@ export function CommentarySettingsSection({
     <>
       {/* Section Toggle */}
       <TouchableOpacity
-        style={[styles.sectionToggle, disabled && { opacity: 0.6 }]}
+        style={styles.sectionToggle}
         onPress={() => setIsExpanded(!isExpanded)}
-        disabled={disabled}
         activeOpacity={0.7}
       >
         <View style={styles.toggleLeft}>
@@ -370,8 +369,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   toggleLeft: {
     flexDirection: 'row',

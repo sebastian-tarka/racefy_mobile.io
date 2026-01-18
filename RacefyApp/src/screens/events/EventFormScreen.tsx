@@ -125,8 +125,11 @@ export function EventFormScreen({ navigation, route }: Props) {
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [eventStatus, setEventStatus] = useState<string | null>(null);
 
-  // Limited edit mode for ongoing/completed events - only media, title, description can be edited
-  const isLimitedEdit = isEditMode && (eventStatus === 'ongoing' || eventStatus === 'completed');
+  // Limited edit mode for ongoing/completed/cancelled events - only media, title, description can be edited
+  const isLimitedEdit = isEditMode && (eventStatus === 'ongoing' || eventStatus === 'completed' || eventStatus === 'cancelled');
+
+  // AI commentary is read-only for completed/cancelled events
+  const isCommentaryReadOnly = isEditMode && (eventStatus === 'completed' || eventStatus === 'cancelled');
 
   useEffect(() => {
     if (isEditMode && eventId) {
@@ -643,7 +646,7 @@ export function EventFormScreen({ navigation, route }: Props) {
           <CommentarySettingsSection
             value={commentarySettings}
             onChange={setCommentarySettings}
-            disabled={isLoading}
+            disabled={isLoading || isCommentaryReadOnly}
           />
 
           {/* Submit Button */}

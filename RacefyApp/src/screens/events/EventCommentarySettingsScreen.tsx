@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,19 +10,22 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCommentarySettings } from '../../hooks/useCommentarySettings';
 import { useGenerateCommentary } from '../../hooks/useGenerateCommentary';
 import { useTranslation } from 'react-i18next';
-import { spacing, borderRadius } from '../../theme';
+import { spacing, borderRadius, fontSize } from '../../theme';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { api } from '../../services/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type {
   CommentaryStyle,
   CommentaryLanguage,
   CommentaryType,
+  Event,
 } from '../../types/api';
 
 type RootStackParamList = {
@@ -38,6 +41,9 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isLoadingEvent, setIsLoadingEvent] = useState(true);
 
   const {
     settings,
@@ -65,6 +71,36 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     advanced: false,
     languages: false,
   });
+
+  // Fetch event to check status
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchEvent = async () => {
+      try {
+        const eventData = await api.getEvent(eventId);
+        if (isMounted) {
+          setEvent(eventData);
+        }
+      } catch (error) {
+        // Silently fail, we'll still show settings
+        console.error('Failed to fetch event:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingEvent(false);
+        }
+      }
+    };
+
+    fetchEvent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [eventId]);
+
+  // Check if event is read-only (completed or cancelled)
+  const isReadOnly = event?.status === 'completed' || event?.status === 'cancelled';
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({
@@ -233,6 +269,32 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
       />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {/* Read-Only Notice */}
+        {isReadOnly && (
+          <View
+            style={[
+              styles.readOnlyNotice,
+              {
+                backgroundColor: colors.warningLight || colors.warning + '20',
+                borderColor: colors.warning,
+              },
+            ]}
+          >
+            <Ionicons name="lock-closed" size={20} color={colors.warning} />
+            <View style={styles.readOnlyTextContainer}>
+              <Text style={[styles.readOnlyTitle, { color: colors.warning }]}>
+                {t('commentary.readOnly', 'Read-Only Mode')}
+              </Text>
+              <Text style={[styles.readOnlyMessage, { color: colors.textSecondary }]}>
+                {t(
+                  'commentary.readOnlyMessage',
+                  'Settings cannot be modified for completed or cancelled events'
+                )}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Token Usage */}
         <Card style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -289,7 +351,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
             <Switch
               value={settings.enabled}
               onValueChange={handleToggleEnabled}
-              disabled={isSaving}
+              disabled={isSaving || isReadOnly}
               trackColor={{ true: colors.primary, false: colors.border }}
               thumbColor={colors.white}
             />
@@ -315,10 +377,11 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                           : colors.transparent,
                       borderColor:
                         settings.style === key ? colors.success : colors.border,
+                      opacity: isReadOnly ? 0.5 : 1,
                     },
                   ]}
                   onPress={() => handleStyleChange(key as CommentaryStyle)}
-                  disabled={isSaving}
+                  disabled={isSaving || isReadOnly}
                 >
                   <View style={styles.styleInfo}>
                     <Text
@@ -370,7 +433,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                     onValueChange={() =>
                       handleToggleLanguage(code as CommentaryLanguage)
                     }
-                    disabled={isSaving}
+                    disabled={isSaving || isReadOnly}
                     trackColor={{ true: colors.primary, false: colors.border }}
                     thumbColor={colors.white}
                   />
@@ -401,7 +464,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 <Switch
                   value={settings.auto_publish}
                   onValueChange={handleToggleAutoPublish}
-                  disabled={isSaving}
+                  disabled={isSaving || isReadOnly}
                   trackColor={{ true: colors.primary, false: colors.border }}
                   thumbColor={colors.white}
                 />
@@ -433,10 +496,11 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                           settings.interval_minutes === interval
                             ? colors.primary
                             : colors.border,
+                        opacity: isReadOnly ? 0.5 : 1,
                       },
                     ]}
                     onPress={() => handleIntervalChange(interval)}
-                    disabled={isSaving}
+                    disabled={isSaving || isReadOnly}
                   >
                     <Text
                       style={[
@@ -472,14 +536,14 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 <Button
                   title={t('commentary.generateLive', 'Generate Live Update')}
                   onPress={() => handleGenerateCommentary('live')}
-                  disabled={isGenerating || isSaving}
+                  disabled={isGenerating || isSaving || isReadOnly}
                   variant="secondary"
                   size="small"
                 />
                 <Button
                   title={t('commentary.generateSummary', 'Generate Summary')}
                   onPress={() => handleGenerateCommentary('summary')}
-                  disabled={isGenerating || isSaving}
+                  disabled={isGenerating || isSaving || isReadOnly}
                   variant="secondary"
                   size="small"
                 />
@@ -517,6 +581,26 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  readOnlyNotice: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  readOnlyTextContainer: {
+    flex: 1,
+  },
+  readOnlyTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  readOnlyMessage: {
+    fontSize: fontSize.sm,
+    lineHeight: 18,
   },
   section: {
     marginBottom: spacing.md,
