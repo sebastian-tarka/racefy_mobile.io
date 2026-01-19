@@ -149,6 +149,11 @@
     "upcomingEvents": "Upcoming Events",
     "ongoingEvents": "Happening Now",
     "live": "LIVE",
+    "liveCommentary": "Live Commentary",
+    "waitingForCommentary": "Waiting for AI commentary...",
+    "noLiveEvents": "No live events right now",
+    "noLiveEventsMessage": "Check back later or browse upcoming events",
+    "browseUpcoming": "Browse Upcoming Events",
     "recentActivities": "Recent Activities",
     "checkConnection": "Check your internet connection"
   },

@@ -149,6 +149,11 @@
     "checkConnection": "Sprawdź połączenie internetowe",
     "upcomingEvents": "Nadchodzące wydarzenia",
     "ongoingEvents": "Trwają teraz",
+    "liveCommentary": "Komentarz na żywo",
+    "waitingForCommentary": "Oczekiwanie na komentarz AI...",
+    "noLiveEvents": "Brak wydarzeń na żywo",
+    "noLiveEventsMessage": "Sprawdź później lub przeglądaj nadchodzące wydarzenia",
+    "browseUpcoming": "Przeglądaj nadchodzące",
     "live": "NA ŻYWO",
     "recentActivities": "Ostatnie aktywności"
   },

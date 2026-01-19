@@ -1332,3 +1332,48 @@ export interface CommentaryStylesResponse {
 export interface CommentaryLanguagesResponse {
   languages: Record<CommentaryLanguage, string>;
 }
+
+// ============ HOME FEED ============
+
+export interface EventCommentaryWithBoost extends EventCommentary {
+  boosts_count: number;
+  user_boosted?: boolean;
+}
+
+export interface EventWithLatestCommentary extends Event {
+  latest_commentary?: EventCommentaryWithBoost | null;
+  active_participants_count?: number;
+  featured_media?: {
+    type: 'image' | 'video';
+    url: string;
+    thumbnail?: string;
+  } | null;
+}
+
+export interface ActivityWithUserInteraction extends Activity {
+  user_liked?: boolean;
+  user_boosted?: boolean;
+}
+
+export interface HomeMeta {
+  live_events_count: number;
+  upcoming_events_count: number;
+  activities_count: number;
+  cache_key: string;
+  cached_at: string;
+  ttl_seconds: number;
+  error?: boolean;
+  message?: string;
+}
+
+export interface HomeData {
+  live_events: EventWithLatestCommentary[];
+  upcoming_events: Event[];
+  recent_activities: ActivityWithUserInteraction[];
+  meta: HomeMeta;
+}
+
+export interface BoostCommentaryResponse {
+  message: string;
+  boosts_count: number;
+}

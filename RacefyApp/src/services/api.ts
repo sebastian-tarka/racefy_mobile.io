@@ -1539,6 +1539,33 @@ class ApiService {
     });
   }
 
+  // ============ HOME FEED ============
+
+  /**
+   * Get home feed (live events, upcoming events, recent activities)
+   * @param params - Query parameters (language, per_page, include_activities, include_upcoming)
+   */
+  async getHome(params?: {
+    language?: Types.CommentaryLanguage;
+    per_page?: number;
+    include_activities?: boolean;
+    include_upcoming?: boolean;
+  }): Promise<Types.HomeData> {
+    const query = new URLSearchParams();
+    if (params?.language) query.append('language', params.language);
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    if (params?.include_activities !== undefined) {
+      query.append('include_activities', String(params.include_activities));
+    }
+    if (params?.include_upcoming !== undefined) {
+      query.append('include_upcoming', String(params.include_upcoming));
+    }
+    const queryString = query.toString();
+    return this.request<Types.HomeData>(
+      `/home${queryString ? `?${queryString}` : ''}`
+    );
+  }
+
   // ============ EVENT COMMENTARY ============
 
   /**
@@ -1648,6 +1675,23 @@ class ApiService {
     await this.request(`/events/${eventId}/commentary/${commentaryId}`, {
       method: 'DELETE',
     });
+  }
+
+  /**
+   * Boost a commentary (authenticated)
+   * @param eventId - Event ID
+   * @param commentaryId - Commentary ID
+   */
+  async boostCommentary(
+    eventId: number,
+    commentaryId: number
+  ): Promise<Types.BoostCommentaryResponse> {
+    return this.request<Types.BoostCommentaryResponse>(
+      `/events/${eventId}/commentary/${commentaryId}/boost`,
+      {
+        method: 'POST',
+      }
+    );
   }
 }
 

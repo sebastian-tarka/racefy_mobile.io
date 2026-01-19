@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useHomeData } from '../../hooks/useHomeData';
 import { api } from '../../services/api';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -14,14 +16,18 @@ import {
   ConnectionErrorBanner,
   HomeHeader,
   AuthCard,
-  UpcomingEventsPreview,
-  OngoingEventsPreview,
-  ActivitiesFeedPreview,
   DynamicGreeting,
   WeeklyStatsCard,
   QuickActionsBar,
   LiveActivityBanner,
 } from './home/components';
+import {
+  ActivityCard,
+  EventCard,
+  LiveEventCard,
+  EmptyState,
+  Loading,
+} from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -35,14 +41,32 @@ type ConnectionStatus = {
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount } = useNotifications();
+
+  // Use new unified home data hook
+  const {
+    data: homeData,
+    loading,
+    refetch,
+    liveEvents,
+    upcomingEvents,
+    recentActivities,
+    hasLiveEvents,
+  } = useHomeData({
+    language: (i18n.language || 'en') as 'en' | 'pl',
+    perPage: 15,
+    includeActivities: true,
+    includeUpcoming: true,
+    enableAutoRefresh: true,
+  });
+
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     checked: false,
     connected: true,
   });
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const checkConnection = useCallback(async () => {
     const result = await api.checkHealth();
@@ -58,10 +82,9 @@ export function HomeScreen({ navigation }: Props) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await checkConnection();
-    // Increment refresh key to force remounting of preview components
-    setRefreshKey((prev) => prev + 1);
+    await refetch(); // Refetch home data
     setRefreshing(false);
-  }, [checkConnection]);
+  }, [checkConnection, refetch]);
 
   useEffect(() => {
     checkConnection();
@@ -141,38 +164,85 @@ export function HomeScreen({ navigation }: Props) {
         )}
 
         {/* Weekly Stats Card for authenticated users */}
-        {isAuthenticated && <WeeklyStatsCard key={`stats-${refreshKey}`} />}
+        {isAuthenticated && <WeeklyStatsCard />}
 
-        {/* Activities Feed */}
-        <ActivitiesFeedPreview
-          key={`activities-${refreshKey}`}
-          onActivityPress={(activityId) => {
-            navigation.getParent()?.navigate('ActivityDetail', { activityId });
-          }}
-          onViewAllPress={() => navigation.navigate('Feed')}
-          onLoginPress={() => navigateToAuth('Login')}
-          limit={3}
-        />
+        {/* Loading State */}
+        {loading && !homeData && <Loading />}
 
-        {/* Ongoing Events */}
-        <OngoingEventsPreview
-          key={`ongoing-${refreshKey}`}
-          onEventPress={(eventId) => {
-            navigation.getParent()?.navigate('EventDetail', { eventId });
-          }}
-          onViewAllPress={() => navigation.navigate('Events', { initialFilter: 'ongoing' })}
-          limit={3}
-        />
+        {/* Live Events with AI Commentary */}
+        {hasLiveEvents && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('home.ongoingEvents')}
+              </Text>
+              <Text style={[styles.sectionBadge, { color: colors.error }]}>
+                {t('home.live')}
+              </Text>
+            </View>
+            {liveEvents.map((event) => (
+              <LiveEventCard
+                key={event.id}
+                event={event}
+                onPress={() => {
+                  navigation.getParent()?.navigate('EventDetail', { eventId: event.id });
+                }}
+                onBoostComplete={() => refetch()}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* No Live Events Message */}
+        {!loading && !hasLiveEvents && (
+          <EmptyState
+            icon="chatbubbles-outline"
+            title={t('home.noLiveEvents')}
+            message={t('home.noLiveEventsMessage')}
+          />
+        )}
 
         {/* Upcoming Events */}
-        <UpcomingEventsPreview
-          key={`upcoming-${refreshKey}`}
-          onEventPress={(eventId) => {
-            navigation.getParent()?.navigate('EventDetail', { eventId });
-          }}
-          onViewAllPress={() => navigation.navigate('Events', { initialFilter: 'upcoming' })}
-          limit={3}
-        />
+        {upcomingEvents.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('home.upcomingEvents')}
+              </Text>
+            </View>
+            {upcomingEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onPress={() => {
+                  navigation.getParent()?.navigate('EventDetail', { eventId: event.id });
+                }}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* Recent Activities */}
+        {recentActivities.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('home.activities')}
+              </Text>
+            </View>
+            {recentActivities.slice(0, 3).map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                onPress={() => {
+                  navigation.getParent()?.navigate('ActivityDetail', {
+                    activityId: activity.id,
+                  });
+                }}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -184,5 +254,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
+  },
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  sectionBadge: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
