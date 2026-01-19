@@ -8,11 +8,15 @@ import Constants from 'expo-constants';
 const extra = Constants.expoConfig?.extra ?? {};
 
 /**
- * Use the new dynamic (config-based) Home screen.
+ * @deprecated This env variable is no longer used.
+ * Home screen version is now controlled by the API via `home_version` field
+ * in /home and /home/config endpoints.
  *
- * When true: Uses DynamicHomeScreen which renders based on /home/config endpoint
- * When false: Uses original HomeScreen with hardcoded layout
+ * The HomeScreenWrapper component reads `home_version` from the API response
+ * and renders either legacy HomeScreen or DynamicHomeScreen accordingly.
  *
- * Set via USE_DYNAMIC_HOME environment variable.
+ * This allows the backend to control which home experience users see,
+ * enabling gradual rollout, A/B testing, or per-user customization
+ * without requiring app updates.
  */
 export const USE_DYNAMIC_HOME: boolean = extra.useDynamicHome === true;

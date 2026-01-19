@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
-import type { HomeConfigResponse, HomeConfigData, HomeConfigMeta, HomeSection } from '../types/api';
+import type { HomeConfigResponse, HomeConfigData, HomeConfigMeta, HomeSection, HomeVersion } from '../types/api';
 import { logger } from '../services/logger';
 
 const HOME_CONFIG_CACHE_KEY = '@racefy_home_config';
@@ -13,6 +13,7 @@ const REFRESH_INTERVAL = 60000; // 60 seconds
  * This ensures the Home screen always renders something.
  */
 const STATIC_FALLBACK_CONFIG: HomeConfigData = {
+  home_version: 'legacy', // Fallback defaults to legacy for safety
   primary_cta: {
     action: 'view_events',
     label: 'Explore Events',
@@ -46,6 +47,8 @@ interface UseHomeConfigResult {
   sortedSections: HomeSection[];
   /** Whether using cached or fallback data */
   isStale: boolean;
+  /** Home version from API (controls which home screen to render) */
+  homeVersion: HomeVersion;
 }
 
 export function useHomeConfig(): UseHomeConfigResult {
@@ -152,6 +155,9 @@ export function useHomeConfig(): UseHomeConfigResult {
     .slice()
     .sort((a, b) => a.priority - b.priority);
 
+  // Default to 'legacy' for backwards compatibility if API doesn't return home_version
+  const homeVersion: HomeVersion = config?.home_version || 'legacy';
+
   return {
     config,
     meta,
@@ -160,5 +166,6 @@ export function useHomeConfig(): UseHomeConfigResult {
     refetch: fetchConfig,
     sortedSections,
     isStale,
+    homeVersion,
   };
 }

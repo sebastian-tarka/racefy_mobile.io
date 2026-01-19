@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
-import type { HomeData, CommentaryLanguage } from '../types/api';
+import type { HomeData, CommentaryLanguage, HomeVersion } from '../types/api';
 import { logger } from '../services/logger';
 
 const HOME_DATA_CACHE_KEY = '@racefy_home_data';
@@ -130,12 +130,17 @@ export function useHomeData(options: UseHomeDataOptions = {}) {
     };
   }, [fetchHome]);
 
+  // Default to 'legacy' for backwards compatibility if API doesn't return home_version
+  const homeVersion: HomeVersion = data?.home_version || 'legacy';
+
   return {
     data,
     loading,
     error,
     refetch: fetchHome,
     lastFetchTime,
+    // Home version from API (controls which home screen to render)
+    homeVersion,
     // Helpers
     liveEvents: data?.live_events || [],
     upcomingEvents: data?.upcoming_events || [],

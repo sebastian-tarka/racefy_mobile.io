@@ -1367,6 +1367,7 @@ export interface HomeMeta {
 }
 
 export interface HomeData {
+  home_version: HomeVersion;
   live_events: EventWithLatestCommentary[];
   upcoming_events: Event[];
   recent_activities: ActivityWithUserInteraction[];
@@ -1385,6 +1386,9 @@ export type HomeCtaAction =
   | 'view_events'
   | 'view_feed'
   | 'register';
+
+/** Home screen version - controlled by API */
+export type HomeVersion = 'legacy' | 'dynamic';
 
 export interface HomePrimaryCta {
   action: HomeCtaAction;
@@ -1507,6 +1511,7 @@ export interface HomeConfigMeta {
 }
 
 export interface HomeConfigData {
+  home_version: HomeVersion;
   primary_cta: HomePrimaryCta;
   sections: HomeSection[];
 }

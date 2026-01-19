@@ -13,9 +13,7 @@ import { Loading, ImpersonationBanner } from '../components';
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
-import { HomeScreen } from '../screens/main/HomeScreen';
-import { DynamicHomeScreen } from '../screens/main/DynamicHomeScreen';
-import { USE_DYNAMIC_HOME } from '../config/features';
+import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
 import { FeedScreen } from '../screens/main/FeedScreen';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
@@ -194,7 +192,7 @@ function MainNavigator() {
     >
       <MainTab.Screen
         name="Home"
-        component={USE_DYNAMIC_HOME ? DynamicHomeScreen : HomeScreen}
+        component={HomeScreenWrapper}
         options={{ tabBarLabel: 'Home' }}
       />
       <MainTab.Screen
