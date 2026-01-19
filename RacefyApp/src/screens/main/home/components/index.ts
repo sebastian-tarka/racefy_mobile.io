@@ -11,3 +11,8 @@ export { DynamicGreeting } from './DynamicGreeting';
 export { WeeklyStatsCard } from './WeeklyStatsCard';
 export { QuickActionsBar } from './QuickActionsBar';
 export { LiveActivityBanner } from './LiveActivityBanner';
+
+// Dynamic Home Config components
+export { PrimaryCTA } from './PrimaryCTA';
+export { SectionRenderer, getSectionComponentName } from './SectionRenderer';
+export * from './sections';

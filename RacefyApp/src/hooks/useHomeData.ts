@@ -83,16 +83,10 @@ export function useHomeData(options: UseHomeDataOptions = {}) {
       const errorMessage = err.message || 'Failed to load feed';
       setError(errorMessage);
       logger.error('home', 'Failed to fetch home data', { error: err });
-
-      // Don't clear data on error - keep showing stale data
-      if (!data) {
-        // Only set error state if we have no data at all
-        setLoading(false);
-      }
     } finally {
       setLoading(false);
     }
-  }, [language, perPage, includeActivities, includeUpcoming, data]);
+  }, [language, perPage, includeActivities, includeUpcoming]);
 
   // Initial load
   useEffect(() => {
@@ -104,13 +98,21 @@ export function useHomeData(options: UseHomeDataOptions = {}) {
     if (!enableAutoRefresh) return;
     if (!data?.live_events?.length) return; // No polling if no live events
 
+    logger.debug('home', 'Setting up auto-refresh', {
+      interval: AUTO_REFRESH_INTERVAL,
+      liveEventsCount: data.live_events.length,
+    });
+
     const interval = setInterval(() => {
-      logger.debug('home', 'Auto-refreshing home data');
+      logger.debug('home', 'Auto-refreshing home data (30s interval)');
       fetchHome();
     }, AUTO_REFRESH_INTERVAL);
 
-    return () => clearInterval(interval);
-  }, [enableAutoRefresh, data?.live_events, fetchHome]);
+    return () => {
+      logger.debug('home', 'Clearing auto-refresh interval');
+      clearInterval(interval);
+    };
+  }, [enableAutoRefresh, data?.live_events?.length, fetchHome]);
 
   // Handle AppState changes (pause polling in background)
   useEffect(() => {

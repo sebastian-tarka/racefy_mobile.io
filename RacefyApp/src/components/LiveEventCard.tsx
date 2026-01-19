@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
-import { Badge } from './Badge';
 import { CommentaryBoostButton } from './CommentaryBoostButton';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
@@ -48,12 +47,10 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
       <Card style={styles.card} noPadding>
         {/* LIVE Badge */}
         <View style={styles.liveBadgeContainer}>
-          <Badge variant="danger" size="small">
-            <View style={styles.liveBadge}>
-              <View style={[styles.liveDot, { backgroundColor: colors.background }]} />
-              <Text style={styles.liveBadgeText}>LIVE</Text>
-            </View>
-          </Badge>
+          <View style={[styles.liveBadgeWrapper, { backgroundColor: colors.error }]}>
+            <View style={[styles.liveDot, { backgroundColor: colors.background }]} />
+            <Text style={[styles.liveBadgeText, { color: colors.background }]}>LIVE</Text>
+          </View>
         </View>
 
         {/* Image/Icon */}
@@ -174,10 +171,13 @@ const styles = StyleSheet.create({
     right: spacing.sm,
     zIndex: 10,
   },
-  liveBadge: {
+  liveBadgeWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
   },
   liveDot: {
     width: 6,

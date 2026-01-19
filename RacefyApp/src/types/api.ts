@@ -1377,3 +1377,141 @@ export interface BoostCommentaryResponse {
   message: string;
   boosts_count: number;
 }
+
+// ============ HOME CONFIG (Dynamic Home Screen) ============
+
+export type HomeCtaAction =
+  | 'start_activity'
+  | 'view_events'
+  | 'view_feed'
+  | 'register';
+
+export interface HomePrimaryCta {
+  action: HomeCtaAction;
+  label: string;
+  subtitle?: string;
+}
+
+export type HomeSectionType =
+  // Original types
+  | 'weather_insight'
+  | 'friend_activity'
+  | 'live_activity'
+  | 'upcoming_event'
+  | 'last_activity_summary'
+  | 'weekly_insight'
+  | 'motivation_banner'
+  // New event-related types
+  | 'live_event'
+  | 'event_results'
+  | 'nearby_events'
+  | 'friend_events'
+  // UI-only types (not from backend config)
+  | 'upcoming_events'
+  | 'auth_prompt'
+  | 'quick_actions';
+
+export interface HomeSectionEvent {
+  id: number;
+  title: string;
+  start_date?: string;
+  end_date?: string;
+  location?: string;
+  sport_type?: string;
+  participants_count?: number;
+  cover_image_url?: string;
+  status?: 'upcoming' | 'ongoing' | 'completed';
+}
+
+export interface HomeSectionFriend {
+  id: number;
+  name: string;
+  username: string;
+  avatar_url?: string;
+}
+
+export interface HomeSectionActivity {
+  id: number;
+  title?: string;
+  distance_km?: number;
+  duration_minutes?: number;
+  sport_type?: string;
+  date?: string;
+  user?: HomeSectionFriend;
+}
+
+export interface HomeSection {
+  type: HomeSectionType;
+  priority: number;
+  title: string;
+  message?: string;
+  cta?: string | null;
+
+  /** Additional data for weather_insight section */
+  weather?: {
+    temperature: number;
+    feels_like: number;
+    condition: string;
+    icon?: string;
+    is_good_for_outdoor?: boolean;
+    recommendation?: string;
+  };
+
+  /** Additional data for last_activity_summary section */
+  activity?: {
+    id?: number;
+    distance_km?: number;
+    duration_minutes?: number;
+    sport_type?: string;
+    date?: string;
+  };
+
+  /** Additional data for weekly_insight section */
+  stats?: {
+    activities_count?: number;
+    total_distance_km?: number;
+    total_duration_minutes?: number;
+    streak_days?: number;
+  };
+
+  /** Additional data for live_activity section */
+  live?: {
+    active_users_count?: number;
+    users?: HomeSectionFriend[];
+  };
+
+  /** Additional data for friend_activity section */
+  friend_activities?: HomeSectionActivity[];
+
+  /** Additional data for upcoming_event, live_event sections */
+  event?: HomeSectionEvent;
+
+  /** Additional data for event_results section */
+  results?: {
+    event: HomeSectionEvent;
+    top_participants?: Array<{
+      user: HomeSectionFriend;
+      position: number;
+      distance_km?: number;
+      duration_minutes?: number;
+    }>;
+  };
+
+  /** Additional data for nearby_events, friend_events sections */
+  events?: HomeSectionEvent[];
+}
+
+export interface HomeConfigMeta {
+  ai_generated: boolean;
+  language: CommentaryLanguage;
+}
+
+export interface HomeConfigData {
+  primary_cta: HomePrimaryCta;
+  sections: HomeSection[];
+}
+
+export interface HomeConfigResponse {
+  data: HomeConfigData;
+  meta: HomeConfigMeta;
+}

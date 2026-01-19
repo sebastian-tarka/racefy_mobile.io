@@ -26,3 +26,4 @@ export * from './useMilestoneTracking';
 export * from './useEventCommentaryFeed';
 export * from './useCommentarySettings';
 export * from './useGenerateCommentary';
+export * from './useHomeConfig';

@@ -1554,16 +1554,18 @@ class ApiService {
     const query = new URLSearchParams();
     if (params?.language) query.append('language', params.language);
     if (params?.per_page) query.append('per_page', String(params.per_page));
+    // Laravel expects "1" or "0" for boolean values in query params
     if (params?.include_activities !== undefined) {
-      query.append('include_activities', String(params.include_activities));
+      query.append('include_activities', params.include_activities ? '1' : '0');
     }
     if (params?.include_upcoming !== undefined) {
-      query.append('include_upcoming', String(params.include_upcoming));
+      query.append('include_upcoming', params.include_upcoming ? '1' : '0');
     }
     const queryString = query.toString();
-    return this.request<Types.HomeData>(
+    const response = await this.request<{ data: Types.HomeData }>(
       `/home${queryString ? `?${queryString}` : ''}`
     );
+    return response.data;
   }
 
   // ============ EVENT COMMENTARY ============
@@ -1692,6 +1694,17 @@ class ApiService {
         method: 'POST',
       }
     );
+  }
+
+  // ============ HOME CONFIG (Dynamic Home Screen) ============
+
+  /**
+   * Get home screen configuration
+   * Returns primary CTA and sections to render based on backend logic
+   * Mobile should render exactly what the backend returns - no business logic
+   */
+  async getHomeConfig(): Promise<Types.HomeConfigResponse> {
+    return this.request<Types.HomeConfigResponse>('/home/config');
   }
 }
 

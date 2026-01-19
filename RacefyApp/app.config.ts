@@ -118,6 +118,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     logMaxEntries: parseInt(process.env.LOG_MAX_ENTRIES || '2000', 10),
     logCategories: process.env.LOG_CATEGORIES || 'all',
     logConsoleOutput: process.env.LOG_CONSOLE_OUTPUT !== 'false',
+    // Feature flags
+    useDynamicHome: process.env.USE_DYNAMIC_HOME === 'true',
     eas: {
       projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
     },
