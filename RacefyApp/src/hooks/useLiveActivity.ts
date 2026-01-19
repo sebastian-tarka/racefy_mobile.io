@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, createContext, useContext } from 'react';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform, AppState, AppStateStatus, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
 import {
@@ -1331,6 +1331,176 @@ function useLiveActivityInternal() {
     }
   }, [state.activity]);
 
+  // Helper: Finish activity using GPS timestamp duration (when timer ran after GPS stopped)
+  const finishWithGpsDuration = async (
+    data?: {
+      title?: string;
+      description?: string;
+      calories?: number;
+      skip_auto_post?: boolean;
+    }
+  ): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
+    if (!state.activity) return null;
+
+    isFinishingOrDiscardingRef.current = true;
+
+    try {
+      logger.activity('Finishing with GPS duration', { id: state.activity.id });
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      // Stop GPS
+      await stopGpsTracking();
+
+      // Sync remaining points
+      await syncPoints(state.activity.id);
+
+      // Use last GPS timestamp as ended_at (instead of current time)
+      const endedAt = lastPosition.current?.timestamp
+        ? new Date(lastPosition.current.timestamp).toISOString()
+        : new Date().toISOString();
+
+      logger.activity('Using GPS timestamp for ended_at', {
+        endedAt,
+        difference: Date.now() - (lastPosition.current?.timestamp || Date.now()),
+      });
+
+      // Finish on server with GPS timestamp
+      const response = await api.finishActivity(state.activity.id, {
+        ...data,
+        ended_at: endedAt,
+        location: activityLocationRef.current ?? undefined,
+      });
+
+      const activity = response.data;
+
+      logger.activity('Activity finished with GPS duration', {
+        id: activity.id,
+        distance: activity.distance,
+        duration: activity.duration,
+        hasGpsTrack: activity.has_gps_track,
+      });
+
+      // Reset state and pace tracking
+      localStatsRef.current = { ...initialStats };
+      lastPosition.current = null;
+      pointsBuffer.current = [];
+      pausedDuration.current = 0;
+      trackingStartTime.current = null;
+      activityLocationRef.current = null;
+      paceSegments.current = [];
+      smoothedPaceRef.current = null;
+
+      setState({
+        activity: null,
+        isTracking: false,
+        isPaused: false,
+        isLoading: false,
+        error: null,
+        currentStats: { ...initialStats },
+        hasExistingActivity: false,
+        trackingStatus: {
+          gpsSignal: 'good',
+          isOnline: true,
+          pendingPoints: 0,
+          lastSyncTime: null,
+          syncError: null,
+        },
+      });
+
+      return { activity, post: response.post };
+    } catch (error: any) {
+      logger.error('activity', 'Failed to finish with GPS duration', { id: state.activity.id, error: error.message });
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Failed to finish activity',
+      }));
+      throw error;
+    } finally {
+      isFinishingOrDiscardingRef.current = false;
+    }
+  };
+
+  // Helper: Finish activity using full timer duration (normal finish)
+  const finishWithFullDuration = async (
+    data?: {
+      title?: string;
+      description?: string;
+      calories?: number;
+      skip_auto_post?: boolean;
+    }
+  ): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
+    if (!state.activity) return null;
+
+    isFinishingOrDiscardingRef.current = true;
+
+    try {
+      logger.activity('Finishing with full timer duration', { id: state.activity.id });
+      setState((prev) => ({ ...prev, isLoading: true }));
+
+      // Stop GPS
+      await stopGpsTracking();
+
+      // Sync remaining points
+      await syncPoints(state.activity.id);
+
+      // Finish on server with current time (full timer duration)
+      const response = await api.finishActivity(state.activity.id, {
+        ...data,
+        ended_at: new Date().toISOString(),
+        location: activityLocationRef.current ?? undefined,
+      });
+
+      const activity = response.data;
+
+      logger.activity('Activity finished with full duration', {
+        id: activity.id,
+        distance: activity.distance,
+        duration: activity.duration,
+        hasGpsTrack: activity.has_gps_track,
+      });
+
+      // Reset state and pace tracking
+      localStatsRef.current = { ...initialStats };
+      lastPosition.current = null;
+      pointsBuffer.current = [];
+      pausedDuration.current = 0;
+      trackingStartTime.current = null;
+      activityLocationRef.current = null;
+      paceSegments.current = [];
+      smoothedPaceRef.current = null;
+
+      setState({
+        activity: null,
+        isTracking: false,
+        isPaused: false,
+        isLoading: false,
+        error: null,
+        currentStats: { ...initialStats },
+        hasExistingActivity: false,
+        trackingStatus: {
+          gpsSignal: 'good',
+          isOnline: true,
+          pendingPoints: 0,
+          lastSyncTime: null,
+          syncError: null,
+        },
+      });
+
+      return { activity, post: response.post };
+    } catch (error: any) {
+      logger.error('activity', 'Failed to finish with full duration', { id: state.activity.id, error: error.message });
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Failed to finish activity',
+      }));
+      throw error;
+    } finally {
+      isFinishingOrDiscardingRef.current = false;
+    }
+  };
+
   const finishTracking = useCallback(
     async (data?: {
       title?: string;
@@ -1350,6 +1520,63 @@ function useLiveActivityInternal() {
 
       try {
         logger.activity('Finishing activity', { id: state.activity.id });
+
+        // Check if GPS stopped a long time ago (> 2 minutes)
+        const lastGpsTimestamp = lastPosition.current?.timestamp;
+        const now = Date.now();
+
+        if (lastGpsTimestamp && (now - lastGpsTimestamp) > 120000) {
+          const gapMinutes = Math.floor((now - lastGpsTimestamp) / 60000);
+
+          logger.activity('GPS stopped significantly before finish', {
+            gapMinutes,
+            lastGpsTime: new Date(lastGpsTimestamp).toISOString(),
+            finishTime: new Date(now).toISOString(),
+          });
+
+          // Reset the guard flag before showing alert (user might cancel)
+          isFinishingOrDiscardingRef.current = false;
+
+          // Show warning dialog to user
+          return new Promise<{ activity: Activity; post?: AutoCreatedPost } | null>((resolve) => {
+            Alert.alert(
+              'GPS Tracking Stopped',
+              `GPS tracking stopped ${gapMinutes} minute${gapMinutes > 1 ? 's' : ''} ago. The timer kept running after GPS stopped.\n\nWhich duration should be used?`,
+              [
+                {
+                  text: 'Use GPS Time (Recommended)',
+                  onPress: async () => {
+                    try {
+                      const result = await finishWithGpsDuration(data);
+                      resolve(result);
+                    } catch (error) {
+                      resolve(null);
+                      throw error;
+                    }
+                  },
+                },
+                {
+                  text: 'Use Full Timer',
+                  onPress: async () => {
+                    try {
+                      const result = await finishWithFullDuration(data);
+                      resolve(result);
+                    } catch (error) {
+                      resolve(null);
+                      throw error;
+                    }
+                  },
+                },
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                  onPress: () => resolve(null),
+                },
+              ]
+            );
+          });
+        }
+
         setState((prev) => ({ ...prev, isLoading: true }));
 
         // Stop GPS
