@@ -1706,6 +1706,36 @@ class ApiService {
   async getHomeConfig(): Promise<Types.HomeConfigResponse> {
     return this.request<Types.HomeConfigResponse>('/home/config');
   }
+
+  // ============ DEVICE REGISTRATION (Push Notifications) ============
+
+  /**
+   * Register device for push notifications
+   * @param fcmToken - FCM/APNs token from Expo
+   * @param deviceType - 'ios' or 'android'
+   */
+  async registerDevice(
+    fcmToken: string,
+    deviceType: Types.DeviceType
+  ): Promise<Types.DeviceRegistrationResponse> {
+    return this.request<Types.DeviceRegistrationResponse>('/device/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        fcm_token: fcmToken,
+        device_type: deviceType,
+      }),
+    });
+  }
+
+  /**
+   * Unregister device from push notifications
+   * Called on logout to remove the device token
+   */
+  async unregisterDevice(): Promise<Types.DeviceUnregisterResponse> {
+    return this.request<Types.DeviceUnregisterResponse>('/device/unregister', {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiService();

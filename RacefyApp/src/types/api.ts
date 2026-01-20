@@ -1520,3 +1520,44 @@ export interface HomeConfigResponse {
   data: HomeConfigData;
   meta: HomeConfigMeta;
 }
+
+// ============ DEVICE REGISTRATION (Push Notifications) ============
+
+export type DeviceType = 'ios' | 'android';
+
+export interface DeviceRegistrationRequest {
+  fcm_token: string;
+  device_type: DeviceType;
+}
+
+export interface DeviceRegistrationResponse {
+  message: string;
+  device_id: number;
+}
+
+export interface DeviceUnregisterResponse {
+  message: string;
+}
+
+// Push notification payload received from FCM/APNs via Expo
+export interface PushNotificationData {
+  type: NotificationType;
+  title?: string;
+  body?: string;
+  // Navigation data
+  post_id?: number;
+  activity_id?: number;
+  event_id?: number;
+  user_id?: number;
+  conversation_id?: number;
+  comment_id?: number;
+  // Type-specific data
+  likeable_type?: 'post' | 'activity' | 'comment';
+  likeable_id?: number;
+  commentable_type?: 'post' | 'activity' | 'event';
+  commentable_id?: number;
+  // Actor info
+  actor_id?: number;
+  actor_name?: string;
+  actor_username?: string;
+}

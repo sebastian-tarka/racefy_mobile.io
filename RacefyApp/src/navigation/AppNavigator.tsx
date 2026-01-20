@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
+import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { Animated, View } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Loading, ImpersonationBanner } from '../components';
 
 // Screens
@@ -40,6 +41,9 @@ import type {
   AuthStackParamList,
   MainTabParamList,
 } from './types';
+
+// Create navigation ref for use outside of React components (e.g., push notification handlers)
+export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -239,6 +243,9 @@ export function AppNavigator() {
   const { isLoading, isAuthenticated, requiresConsent } = useAuth();
   const { colors, isDark } = useTheme();
 
+  // Initialize push notifications with navigation ref for deep linking
+  usePushNotifications({ navigationRef });
+
   if (isLoading) {
     return <Loading fullScreen message="Loading..." />;
   }
@@ -264,7 +271,7 @@ export function AppNavigator() {
   const authStateKey = showConsentModal ? 'consent' : isAuthenticated ? 'auth' : 'guest';
 
   return (
-    <NavigationContainer theme={navigationTheme} key={authStateKey}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,

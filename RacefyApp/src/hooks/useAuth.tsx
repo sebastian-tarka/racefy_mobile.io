@@ -8,6 +8,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
 import { secureStorage } from '../services/secureStorage';
+import { pushNotificationService } from '../services/pushNotifications';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
 import { logger } from '../services/logger';
@@ -137,6 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check consent status for existing authenticated users
         const status = await getConsentStatus();
         setRequiresConsent(!status.accepted);
+        // Register for push notifications (non-blocking)
+        pushNotificationService.registerWithBackend().catch((error) => {
+          logger.warn('auth', 'Failed to register for push notifications during init', { error });
+        });
       } else {
         logger.auth('No token found, user not authenticated');
       }
@@ -159,6 +164,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check consent status after login
     const status = await getConsentStatus();
     setRequiresConsent(!status.accepted);
+    // Register for push notifications (non-blocking)
+    pushNotificationService.registerWithBackend().catch((error) => {
+      logger.warn('auth', 'Failed to register for push notifications after login', { error });
+    });
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
@@ -168,11 +177,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logger.auth('Registration successful', { userId: response.user.id });
     // New users always need to accept consents
     setRequiresConsent(true);
+    // Register for push notifications (non-blocking)
+    pushNotificationService.registerWithBackend().catch((error) => {
+      logger.warn('auth', 'Failed to register for push notifications after register', { error });
+    });
   }, []);
 
   const logout = useCallback(async () => {
     logger.auth('Logout');
+    // Unregister from push notifications before logout (non-blocking, but wait)
+    try {
+      await pushNotificationService.unregisterFromBackend();
+    } catch (error) {
+      logger.warn('auth', 'Failed to unregister from push notifications during logout', { error });
+    }
     await api.logout();
+    // Reset push notification service state
+    pushNotificationService.reset();
     setUser(null);
     setRequiresConsent(false);
     logger.auth('User logged out');

@@ -41,8 +41,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Racefy needs camera access to take photos for your activities and posts.',
       NSPhotoLibraryUsageDescription:
         'Racefy needs photo library access to add photos to your activities and posts.',
-      // Required for background location tracking
-      UIBackgroundModes: ['location', 'fetch'],
+      // Required for background location tracking and push notifications
+      UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
     },
     config: {
       usesNonExemptEncryption: false,
@@ -65,6 +65,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'READ_EXTERNAL_STORAGE',
       'WRITE_EXTERNAL_STORAGE',
       'VIBRATE',
+      'POST_NOTIFICATIONS',
     ],
   },
   web: {
@@ -100,6 +101,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-video',
     'expo-secure-store',
     '@rnmapbox/maps',
+    [
+      'expo-notifications',
+      {
+        color: '#10b981',
+        defaultChannel: 'default',
+      },
+    ],
   ],
   extra: {
     appEnv: process.env.APP_ENV || 'production',
