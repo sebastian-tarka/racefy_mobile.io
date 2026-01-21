@@ -11,7 +11,7 @@
       "env": {
         "APP_ENV": "development"
       },
-      "prebuildCommand": "./scripts/select-google-services.sh"
+      "prebuildCommand": "node scripts/select-google-services.js"
     },
     "staging": {
       "environment": "preview",
@@ -32,7 +32,7 @@
         "LOG_CONSOLE_OUTPUT": "true",
         "MAPBOX_ENABLED": "true"
       },
-      "prebuildCommand": "./scripts/select-google-services.sh"
+      "prebuildCommand": "node scripts/select-google-services.js"
     },
     "production": {
       "environment": "production",
@@ -53,7 +53,7 @@
         "LOG_CONSOLE_OUTPUT": "true",
         "MAPBOX_ENABLED": "true"
       },
-      "prebuildCommand": "./scripts/select-google-services.sh"
+      "prebuildCommand": "node scripts/select-google-services.js"
     }
   },
   "submit": {
