@@ -6,7 +6,12 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "environment": "development",
+      "env": {
+        "APP_ENV": "development"
+      },
+      "prebuildCommand": "./scripts/select-google-services.sh"
     },
     "staging": {
       "environment": "preview",
@@ -26,10 +31,11 @@
         "LOG_CATEGORIES": "all",
         "LOG_CONSOLE_OUTPUT": "true",
         "MAPBOX_ENABLED": "true"
-      }
+      },
+      "prebuildCommand": "./scripts/select-google-services.sh"
     },
     "production": {
-      "environment": "preview",
+      "environment": "production",
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
@@ -39,14 +45,15 @@
       },
       "distribution": "store",
       "env": {
-        "APP_ENV": "staging",
+        "APP_ENV": "production",
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "debug",
         "LOG_PERSIST": "true",
         "LOG_CATEGORIES": "all",
         "LOG_CONSOLE_OUTPUT": "true",
         "MAPBOX_ENABLED": "true"
-      }
+      },
+      "prebuildCommand": "./scripts/select-google-services.sh"
     }
   },
   "submit": {
