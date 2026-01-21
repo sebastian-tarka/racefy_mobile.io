@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "349474719163",
+    "project_id": "racefy-prod",
+    "storage_bucket": "racefy-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:349474719163:android:ee708001ea1a59871ff09e",
+        "android_client_info": {
+          "package_name": "com.racefy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOanj4Cs7gibOTJp3Es5yRqe3k6divAQA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
