@@ -151,11 +151,23 @@ class PushNotificationService {
       return null;
     }
 
-    const token = await Notifications.getExpoPushTokenAsync({
-      projectId,
-    });
+    try {
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
 
-    return token.data;
+      return token.data;
+    } catch (error: any) {
+      // Check if it's a Firebase not initialized error
+      if (error?.message?.includes('FirebaseApp')) {
+        logger.warn('general', 'Firebase not configured - push notifications disabled', {
+          hint: 'Add google-services.json to enable push notifications',
+        });
+      } else {
+        logger.error('general', 'Failed to get Expo push token', { error });
+      }
+      return null;
+    }
   }
 
   /**
