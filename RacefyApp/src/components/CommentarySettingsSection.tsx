@@ -141,7 +141,7 @@ export function CommentarySettingsSection({
 
       {/* Expanded Settings */}
       {isExpanded && (
-        <Card style={[styles.settingsCard, disabled && { opacity: 0.6 }]}>
+        <Card style={disabled ? [styles.settingsCard, { opacity: 0.6 }] : styles.settingsCard}>
           {/* Enable/Disable */}
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>

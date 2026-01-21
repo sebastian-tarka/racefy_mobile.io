@@ -538,14 +538,12 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                   onPress={() => handleGenerateCommentary('live')}
                   disabled={isGenerating || isSaving || isReadOnly}
                   variant="secondary"
-                  size="small"
                 />
                 <Button
                   title={t('commentary.generateSummary', 'Generate Summary')}
                   onPress={() => handleGenerateCommentary('summary')}
                   disabled={isGenerating || isSaving || isReadOnly}
                   variant="secondary"
-                  size="small"
                 />
               </View>
             </Card>
