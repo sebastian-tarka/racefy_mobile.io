@@ -96,6 +96,13 @@ export function usePushNotifications(
       }
 
       const { type } = data;
+
+      // Skip navigation if type is undefined or null
+      if (!type) {
+        logger.warn('general', 'Notification has no type, skipping navigation', { data });
+        return;
+      }
+
       logger.info('general', 'Handling notification navigation', { type, data });
 
       switch (type as NotificationType) {
@@ -163,8 +170,8 @@ export function usePushNotifications(
 
         default:
           logger.warn('general', 'Unhandled notification type', { type });
-          // Navigate to notifications list as fallback
-          navigation.navigate('Notifications');
+          // Don't navigate for unhandled types - just log the warning
+          // Navigation to Notifications screen removed as fallback
       }
     },
     [navigationRef]
