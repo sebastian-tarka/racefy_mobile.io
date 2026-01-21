@@ -428,7 +428,67 @@ function useLiveActivityInternal() {
         }));
         pointsBuffer.current.push(...points);
 
-        // 5. Clear buffer and state after successful addition to foreground buffer
+        // 5. Calculate local stats from background points IMMEDIATELY (UX improvement)
+        // This shows distance/elevation updates instantly when returning to foreground
+        // instead of waiting 30s for next sync interval
+        const profile = currentGpsProfile.current;
+        let additionalDistance = 0;
+        let additionalElevation = 0;
+
+        // Start from last known position (or first background point)
+        let prevPoint = lastPosition.current || (unsyncedPoints.length > 0 ? {
+          lat: unsyncedPoints[0].lat,
+          lng: unsyncedPoints[0].lng,
+          ele: unsyncedPoints[0].ele,
+        } : null);
+
+        for (const point of unsyncedPoints) {
+          if (prevPoint) {
+            // Calculate distance
+            const dist = calculateDistance(
+              prevPoint.lat,
+              prevPoint.lng,
+              point.lat,
+              point.lng
+            );
+
+            // Only count if moved more than threshold
+            if (dist > profile.minDistanceThreshold) {
+              additionalDistance += dist;
+
+              // Calculate elevation gain
+              if (point.ele && prevPoint.ele) {
+                const elevDiff = point.ele - prevPoint.ele;
+                if (elevDiff > profile.minElevationChange) {
+                  additionalElevation += elevDiff;
+                }
+              }
+            }
+          }
+
+          prevPoint = { lat: point.lat, lng: point.lng, ele: point.ele };
+        }
+
+        // Update local stats immediately
+        if (additionalDistance > 0) {
+          localStatsRef.current.distance += additionalDistance;
+          localStatsRef.current.elevation_gain += additionalElevation;
+
+          logger.gps('Updated local stats from background points', {
+            additionalDistance: additionalDistance.toFixed(1),
+            additionalElevation: additionalElevation.toFixed(1),
+            totalDistance: localStatsRef.current.distance.toFixed(1),
+            totalElevation: localStatsRef.current.elevation_gain.toFixed(1),
+          });
+
+          // Update UI state immediately - user sees distance instantly!
+          setState((prev) => ({
+            ...prev,
+            currentStats: { ...localStatsRef.current },
+          }));
+        }
+
+        // 6. Clear buffer and state after successful addition to foreground buffer
         await clearLocationBuffer();
         await clearBackgroundSyncState();
         logger.gps('Foreground: Cleared background buffer and sync state');
@@ -700,6 +760,13 @@ function useLiveActivityInternal() {
 
       // 3. Sync background points BEFORE starting foreground
       await syncBackgroundPoints(activityId);
+
+      // 3b. Immediately sync to server for accurate stats (don't wait 30s)
+      // This updates the server and gets server-calculated distance/elevation
+      if (pointsBuffer.current.length > 0) {
+        logger.gps('Triggering immediate sync to server after background points');
+        await syncPoints(activityId);
+      }
 
       // 4. Recover last position from background for distance continuity
       const lastBgPosition = await getLastBackgroundPosition();
