@@ -380,5 +380,5 @@ adb logcat | grep -i firebase
 ## Related Documentation
 
 - [LOCAL_BUILD_SETUP.md](./LOCAL_BUILD_SETUP.md) - Android SDK setup
-- [BUILD_INSTRUCTIONS.md](../BUILD_INSTRUCTIONS.md) - Build commands reference
+- [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md) - Build commands reference
 - [CLAUDE.md](../CLAUDE.md) - Project overview

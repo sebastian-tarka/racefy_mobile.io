@@ -502,7 +502,7 @@ const calculateDistance = (
 ## Resources
 
 ### Documentation
-- Mobile: [RacefyApp/docs/MAPBOX_SETUP.md](RacefyApp/docs/MAPBOX_SETUP.md)
+- Mobile: [RacefyApp/docs/MAPBOX_SETUP.md](MAPBOX_SETUP.md)
 - Web: [MAPBOX_SPA_IMPLEMENTATION_GUIDE.md](MAPBOX_SPA_IMPLEMENTATION_GUIDE.md)
 - API: [RacefyApp/docs/api/API_SPEC.md](RacefyApp/docs/api/API_SPEC.md)
 
@@ -512,8 +512,8 @@ const calculateDistance = (
 - React Map GL: https://visgl.github.io/react-map-gl/
 
 ### Backend Implementation
-- Usage tracking: [RacefyApp/docs/api/MAP_USAGE_ENDPOINT.md](RacefyApp/docs/api/MAP_USAGE_ENDPOINT.md)
-- Cost analysis: [RacefyApp/docs/MAP_USAGE_TRACKING.md](RacefyApp/docs/MAP_USAGE_TRACKING.md)
+- Usage tracking: [RacefyApp/docs/api/MAP_USAGE_ENDPOINT.md](api/MAP_USAGE_ENDPOINT.md)
+- Cost analysis: [RacefyApp/docs/MAP_USAGE_TRACKING.md](MAP_USAGE_TRACKING.md)
 
 ---
 
