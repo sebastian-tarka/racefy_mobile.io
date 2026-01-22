@@ -1156,11 +1156,12 @@ export type NotificationType =
   | 'comments'
   | 'follows'
   | 'mentions'
-  | 'boosts'
   | 'activity_reactions'
   | 'messages'
   | 'event_reminders'
-  | 'ai_post_ready';
+  | 'ai_post_ready'
+  | 'points_awarded'
+  | 'weekly_summary';
 
 export interface NotificationData {
   type: NotificationType;
@@ -1571,6 +1572,12 @@ export interface PushNotificationData {
   likeable_id?: number;
   commentable_type?: 'post' | 'activity' | 'event';
   commentable_id?: number;
+  // Points awarded data
+  place?: number;
+  points?: number;
+  event_title?: string;
+  // Message data (FCM uses app_ prefix for reserved keys)
+  app_message_type?: string;
   // Actor info
   actor_id?: number;
   actor_name?: string;

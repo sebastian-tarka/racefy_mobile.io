@@ -158,7 +158,6 @@ export function usePushNotifications(
           }
           break;
 
-        case 'boosts':
         case 'activity_reactions':
           // Navigate to the activity
           if (data.activity_id) {
@@ -168,10 +167,23 @@ export function usePushNotifications(
           }
           break;
 
+        case 'points_awarded':
+          // Navigate to the event where points were awarded
+          if (data.event_id) {
+            navigation.navigate('EventDetail', {
+              eventId: data.event_id,
+            });
+          }
+          break;
+
+        case 'weekly_summary':
+          // Navigate to user's own profile/stats
+          navigation.navigate('Profile');
+          break;
+
         default:
           logger.warn('general', 'Unhandled notification type', { type });
           // Don't navigate for unhandled types - just log the warning
-          // Navigation to Notifications screen removed as fallback
       }
     },
     [navigationRef]
