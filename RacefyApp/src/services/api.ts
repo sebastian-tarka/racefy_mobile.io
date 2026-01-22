@@ -1707,11 +1707,22 @@ class ApiService {
     return this.request<Types.HomeConfigResponse>('/home/config');
   }
 
+  // ============ APP CONFIG (Public) ============
+
+  /**
+   * Get app configuration from server
+   * Used to determine which push notification provider to use
+   * No authentication required
+   */
+  async getAppConfig(): Promise<Types.AppConfigResponse> {
+    return this.request<Types.AppConfigResponse>('/config/app');
+  }
+
   // ============ DEVICE REGISTRATION (Push Notifications) ============
 
   /**
    * Register device for push notifications
-   * @param fcmToken - FCM/APNs token from Expo
+   * @param fcmToken - Push token (Expo or FCM)
    * @param deviceType - 'ios' or 'android'
    */
   async registerDevice(

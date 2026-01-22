@@ -1521,6 +1521,21 @@ export interface HomeConfigResponse {
   meta: HomeConfigMeta;
 }
 
+// ============ APP CONFIG (Public) ============
+
+export type PushProvider = 'expo' | 'fcm';
+
+export interface AppConfigPush {
+  /** Which push provider the server expects: 'expo' or 'fcm' */
+  provider: PushProvider;
+  /** Which Expo method to use: 'getExpoPushTokenAsync' or 'getDevicePushTokenAsync' */
+  token_method: 'getExpoPushTokenAsync' | 'getDevicePushTokenAsync';
+}
+
+export interface AppConfigResponse {
+  push: AppConfigPush;
+}
+
 // ============ DEVICE REGISTRATION (Push Notifications) ============
 
 export type DeviceType = 'ios' | 'android';

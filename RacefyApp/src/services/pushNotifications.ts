@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { api } from './api';
 import { logger } from './logger';
-import type { DeviceType } from '../types/api';
+import type { DeviceType, PushProvider } from '../types/api';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -18,17 +18,22 @@ Notifications.setNotificationHandler({
 });
 
 class PushNotificationService {
-  private expoPushToken: string | null = null;
+  private pushToken: string | null = null;
+  private pushProvider: PushProvider = 'expo'; // Default to expo
   private isRegistered = false;
 
   /**
    * Initialize push notifications
+   * - Fetches server config to determine provider
    * - Creates Android notification channel
    * - Requests permissions
-   * - Gets Expo push token
+   * - Gets push token (Expo or FCM based on config)
    */
   async initialize(): Promise<string | null> {
     logger.info('general', 'Initializing push notifications');
+
+    // Fetch server config to determine which provider to use
+    await this.fetchServerConfig();
 
     // Create Android notification channel
     if (Platform.OS === 'android') {
@@ -48,14 +53,65 @@ class PushNotificationService {
       return null;
     }
 
-    // Get Expo push token
+    // Get push token based on server config
     try {
-      const token = await this.getExpoPushToken();
-      this.expoPushToken = token;
-      logger.info('general', 'Got Expo push token', { token: token?.substring(0, 20) + '...' });
+      const token = await this.getPushToken();
+      this.pushToken = token;
+      logger.info('general', `Got ${this.pushProvider.toUpperCase()} push token`, {
+        provider: this.pushProvider,
+        token: token?.substring(0, 25) + '...'
+      });
       return token;
     } catch (error) {
-      logger.error('general', 'Failed to get Expo push token', { error });
+      logger.error('general', 'Failed to get push token', { error, provider: this.pushProvider });
+      return null;
+    }
+  }
+
+  /**
+   * Fetch server config to determine push provider
+   * Falls back to 'expo' if config fetch fails
+   */
+  private async fetchServerConfig(): Promise<void> {
+    try {
+      const config = await api.getAppConfig();
+      this.pushProvider = config.push.provider;
+      logger.info('general', 'Fetched push config from server', {
+        provider: this.pushProvider,
+        tokenMethod: config.push.token_method
+      });
+    } catch (error) {
+      // Default to expo if config fetch fails
+      logger.warn('general', 'Failed to fetch push config, defaulting to Expo', { error });
+      this.pushProvider = 'expo';
+    }
+  }
+
+  /**
+   * Get push token based on configured provider
+   * - expo: uses getExpoPushTokenAsync (returns ExponentPushToken[...])
+   * - fcm: uses getDevicePushTokenAsync (returns native FCM token)
+   */
+  private async getPushToken(): Promise<string | null> {
+    if (this.pushProvider === 'fcm') {
+      return this.getFcmToken();
+    }
+    return this.getExpoPushToken();
+  }
+
+  /**
+   * Get native FCM/APNs token (for Firebase)
+   */
+  private async getFcmToken(): Promise<string | null> {
+    try {
+      const tokenData = await Notifications.getDevicePushTokenAsync();
+      logger.debug('general', 'Got FCM token', {
+        type: tokenData.type,
+        tokenPrefix: tokenData.data.substring(0, 20)
+      });
+      return tokenData.data;
+    } catch (error: any) {
+      logger.error('general', 'Failed to get FCM token', { error });
       return null;
     }
   }
@@ -175,7 +231,7 @@ class PushNotificationService {
    * Should be called after user logs in
    */
   async registerWithBackend(): Promise<boolean> {
-    if (!this.expoPushToken) {
+    if (!this.pushToken) {
       // Try to get token if not already available
       const token = await this.initialize();
       if (!token) {
@@ -192,7 +248,7 @@ class PushNotificationService {
     try {
       const deviceType: DeviceType = Platform.OS === 'ios' ? 'ios' : 'android';
 
-      const response = await api.registerDevice(this.expoPushToken!, deviceType);
+      const response = await api.registerDevice(this.pushToken!, deviceType);
       this.isRegistered = true;
 
       logger.info('general', 'Device registered for push notifications', {
@@ -232,10 +288,17 @@ class PushNotificationService {
   }
 
   /**
-   * Get the current Expo push token
+   * Get the current push token (Expo or FCM based on config)
    */
   getToken(): string | null {
-    return this.expoPushToken;
+    return this.pushToken;
+  }
+
+  /**
+   * Get the current push provider ('expo' or 'fcm')
+   */
+  getProvider(): PushProvider {
+    return this.pushProvider;
   }
 
   /**
@@ -249,8 +312,9 @@ class PushNotificationService {
    * Reset service state (for testing or logout)
    */
   reset(): void {
-    this.expoPushToken = null;
+    this.pushToken = null;
     this.isRegistered = false;
+    this.pushProvider = 'expo';
   }
 
   /**
