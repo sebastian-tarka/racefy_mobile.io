@@ -27,6 +27,22 @@ const getGoogleServicesFile = (): string => {
   }
 };
 
+// Determine iOS Firebase config file based on APP_ENV
+const getGoogleServicesFileiOS = (): string => {
+  const env = process.env.APP_ENV || 'production';
+
+  switch (env) {
+    case 'development':
+      return './GoogleService-Info-dev.plist';
+    case 'staging':
+      return './GoogleService-Info-staging.plist';
+    case 'production':
+      return './GoogleService-Info-production.plist';
+    default:
+      return './GoogleService-Info-production.plist';
+  }
+};
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
@@ -44,6 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
+    googleServicesFile: getGoogleServicesFileiOS(),
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Racefy needs access to your location to track your activities and show your route on the map.',
