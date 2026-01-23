@@ -403,13 +403,15 @@ export function UserProfileScreen({ navigation, route }: Props) {
                 onClose={() => setShowActionSheet(false)}
                 options={[
                   {
-                    label: t('reporting.reportUser'),
+                    id: 'report',
+                    title: t('reporting.reportUser'),
                     icon: 'flag-outline',
                     onPress: handleReportUser,
                     color: colors.warning,
                   },
                   {
-                    label: t('blocking.blockAction'),
+                    id: 'block',
+                    title: t('blocking.blockAction'),
                     icon: 'ban-outline',
                     onPress: handleBlockUser,
                     color: colors.error,
