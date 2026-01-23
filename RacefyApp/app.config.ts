@@ -11,6 +11,22 @@ const getApiUrl = (): string => {
   return process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api';
 };
 
+// Determine Firebase config file based on APP_ENV
+const getGoogleServicesFile = (): string => {
+  const env = process.env.APP_ENV || 'production';
+
+  switch (env) {
+    case 'development':
+      return './google-services-dev.json';
+    case 'staging':
+      return './google-services-staging.json';
+    case 'production':
+      return './google-services-production.json';
+    default:
+      return './google-services-production.json';
+  }
+};
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
@@ -55,6 +71,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
+    googleServicesFile: getGoogleServicesFile(),
     permissions: [
       'ACCESS_FINE_LOCATION',
       'ACCESS_COARSE_LOCATION',
