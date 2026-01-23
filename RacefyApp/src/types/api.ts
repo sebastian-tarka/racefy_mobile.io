@@ -832,6 +832,58 @@ export interface UserWithFollowCounts extends User {
   following_count: number;
 }
 
+// ============ USER BLOCKING ============
+
+export interface BlockedUser {
+  id: number;
+  name: string;
+  username: string;
+  avatar: string | null;
+  blocked_at: string; // ISO datetime
+}
+
+export interface BlockStatus {
+  is_blocking: boolean;      // You blocked them
+  is_blocked_by: boolean;    // They blocked you
+  has_relationship: boolean; // Either direction
+}
+
+export interface BlockedUsersResponse {
+  data: BlockedUser[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+// ============ CONTENT REPORTING ============
+
+export type ReportableType = 'post' | 'comment' | 'activity' | 'user' | 'message';
+
+export type ReportReason =
+  | 'spam'
+  | 'harassment'
+  | 'hate_speech'
+  | 'violence'
+  | 'nudity'
+  | 'misinformation'
+  | 'impersonation'
+  | 'copyright'
+  | 'other';
+
+export interface CreateReportRequest {
+  reportable_type: ReportableType;
+  reportable_id: number;
+  reason: ReportReason;
+  description?: string; // Optional, max 500 chars
+}
+
+export interface ReportResponse {
+  message: string;
+}
+
 // ============ STATISTICS ============
 
 export interface UserStats {

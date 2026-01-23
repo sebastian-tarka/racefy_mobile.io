@@ -27,6 +27,7 @@ export type RootStackParamList = {
   ActivityDetail: { activityId: number };
   UserProfile: { username: string };
   Settings: undefined;
+  BlockedUsers: undefined;
   EditProfile: undefined;
   ImpersonateUser: undefined;
   Notifications: undefined;

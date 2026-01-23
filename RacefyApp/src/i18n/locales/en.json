@@ -708,6 +708,10 @@
     "private": "Private",
     "everyone": "Everyone",
     "noOne": "No One",
+    "privacySafety": {
+      "title": "Privacy & Safety",
+      "blockedUsers": "Blocked Users"
+    },
     "updateFailed": "Failed to update settings",
     "aiPostsUpdated": "AI posts preference updated",
     "aiPostsFailed": "Failed to update AI posts preference",
@@ -999,5 +1003,42 @@
       "fri": "Fri",
       "sat": "Sat"
     }
+  },
+  "blocking": {
+    "title": "Blocked Users",
+    "blockAction": "Block",
+    "unblockAction": "Unblock",
+    "confirmTitle": "Block User?",
+    "confirmMessage": "Are you sure you want to block @{{username}}? You won't be able to see each other's content.",
+    "blockedTitle": "User Blocked",
+    "blockedMessage": "@{{username}} has been blocked. You won't see each other's posts or activities.",
+    "blockError": "Failed to block user",
+    "unblockError": "Failed to unblock user",
+    "noBlockedUsers": "No Blocked Users",
+    "noBlockedUsersMessage": "You haven't blocked anyone yet.",
+    "blockedCount_one": "{{count}} blocked user",
+    "blockedCount_other": "{{count}} blocked users"
+  },
+  "reporting": {
+    "title": "Report Content",
+    "reportUser": "Report User",
+    "selectReason": "Select a reason",
+    "reasons": {
+      "spam": "Spam",
+      "harassment": "Harassment",
+      "hate_speech": "Hate Speech",
+      "violence": "Violence",
+      "nudity": "Nudity",
+      "misinformation": "Misinformation",
+      "impersonation": "Impersonation",
+      "copyright": "Copyright",
+      "other": "Other"
+    },
+    "additionalDetails": "Additional Details (Optional)",
+    "descriptionPlaceholder": "Provide more context about your report...",
+    "submitReport": "Submit Report",
+    "reportedTitle": "Report Submitted",
+    "reportedMessage": "Thank you for your report. We'll review it and take appropriate action.",
+    "reportError": "Failed to submit report"
   }
 }

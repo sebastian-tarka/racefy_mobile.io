@@ -42,6 +42,7 @@ export * from './PointHistoryList';
 export * from './PointsCard';
 export * from './PostCard';
 export * from './PrivacyConsentsSection';
+export * from './ReportModal';
 export * from './ScreenHeader';
 export * from './SettingsSection';
 export * from './SportStatsChart';

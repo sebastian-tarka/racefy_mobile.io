@@ -5,9 +5,11 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import {
   EmptyState,
   PostCard,
@@ -17,6 +19,8 @@ import {
   UserProfileHeader,
   ScreenHeader,
   PointsCard,
+  BottomSheet,
+  ReportModal,
 } from '../../components';
 import type { TabType } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,6 +28,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useUserProfile } from '../../hooks/useUserProfile';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
+import { useBlockUser } from '../../hooks/useBlockUser';
 import { api } from '../../services/api';
 import {
   canViewFollowersList,
@@ -63,6 +68,11 @@ export function UserProfileScreen({ navigation, route }: Props) {
   // Modal state
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  // Block user hook
+  const { blockUser } = useBlockUser();
 
   // Paginated data for each tab
   const postsData = usePaginatedTabData<Post>({
@@ -147,6 +157,21 @@ export function UserProfileScreen({ navigation, route }: Props) {
     navigation.push('UserProfile', { username: user.username });
   };
 
+  const handleBlockUser = async () => {
+    setShowActionSheet(false);
+    if (!profile) return;
+
+    await blockUser(profile.id, profile.username, () => {
+      // Navigate back after successful block
+      navigation.goBack();
+    });
+  };
+
+  const handleReportUser = () => {
+    setShowActionSheet(false);
+    setShowReportModal(true);
+  };
+
   // Privacy checks
   const canViewFollowers = profile
     ? canViewFollowersList(profile, currentUser ?? null, isFollowing)
@@ -198,6 +223,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           onFollowToggle={handleFollowToggle}
           onMessagePress={handleMessagePress}
           onTabChange={setActiveTab}
+          onMenuPress={() => setShowActionSheet(true)}
         />
         {activeTab === 'stats' && (
           <View style={styles.statsTabContent}>
@@ -369,6 +395,35 @@ export function UserProfileScreen({ navigation, route }: Props) {
             onUserPress={handleUserNavigation}
             isRestricted={!canViewFollowing}
           />
+
+          {!isOwnProfile && isAuthenticated && (
+            <>
+              <BottomSheet
+                visible={showActionSheet}
+                onClose={() => setShowActionSheet(false)}
+                options={[
+                  {
+                    label: t('reporting.reportUser'),
+                    icon: 'flag-outline',
+                    onPress: handleReportUser,
+                    color: colors.warning,
+                  },
+                  {
+                    label: t('blocking.blockAction'),
+                    icon: 'ban-outline',
+                    onPress: handleBlockUser,
+                    color: colors.error,
+                  },
+                ]}
+              />
+              <ReportModal
+                visible={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                reportableType="user"
+                reportableId={profile.id}
+              />
+            </>
+          )}
         </>
       )}
     </SafeAreaView>

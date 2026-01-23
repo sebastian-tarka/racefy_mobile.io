@@ -200,6 +200,7 @@ export function SettingsScreen({ navigation }: Props) {
     preferences: false,
     notifications: false,
     privacy: false,
+    privacySafety: false,
     activityDefaults: false,
     aiPosts: false,
     app: true,
@@ -775,6 +776,19 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.allowMessages')}
             value={getMessagesLabel(preferences.privacy.allow_messages)}
             onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
+          />
+        </SettingsSection>
+
+        {/* Privacy & Safety */}
+        <SettingsSection
+          title={t('settings.privacySafety.title')}
+          isExpanded={expandedSections.privacySafety}
+          onToggle={() => toggleSection('privacySafety')}
+        >
+          <SettingsRow
+            icon="shield-outline"
+            label={t('settings.privacySafety.blockedUsers')}
+            onPress={() => navigation.navigate('BlockedUsers')}
           />
         </SettingsSection>
 

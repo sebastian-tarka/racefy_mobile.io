@@ -1043,6 +1043,49 @@ class ApiService {
     return response.data;
   }
 
+  // ============ USER BLOCKING ============
+
+  async blockUser(userId: number): Promise<void> {
+    await this.request(`/users/${userId}/block`, { method: 'POST' });
+  }
+
+  async unblockUser(userId: number): Promise<void> {
+    await this.request(`/users/${userId}/block`, { method: 'DELETE' });
+  }
+
+  async getBlockedUsers(params?: {
+    page?: number;
+    per_page?: number;
+  }): Promise<Types.BlockedUsersResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.per_page) query.append('per_page', String(params.per_page));
+    const queryString = query.toString();
+    return this.request<Types.BlockedUsersResponse>(
+      `/blocks${queryString ? `?${queryString}` : ''}`
+    );
+  }
+
+  async getBlockStatus(userId: number): Promise<Types.BlockStatus> {
+    const response = await this.request<Types.ApiResponse<Types.BlockStatus>>(
+      `/users/${userId}/block-status`
+    );
+    return response.data;
+  }
+
+  // ============ CONTENT REPORTING ============
+
+  async createReport(data: Types.CreateReportRequest): Promise<Types.ReportResponse> {
+    const response = await this.request<Types.ReportResponse>(
+      '/reports',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response;
+  }
+
   async getUserByUsername(username: string): Promise<Types.UserProfile> {
     const response = await this.request<Types.ApiResponse<Types.UserProfile>>(
       `/users/username/${username}`

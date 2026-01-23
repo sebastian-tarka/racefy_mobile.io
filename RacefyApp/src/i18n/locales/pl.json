@@ -704,6 +704,10 @@
     "private": "Prywatny",
     "everyone": "Wszyscy",
     "noOne": "Nikt",
+    "privacySafety": {
+      "title": "Prywatność i Bezpieczeństwo",
+      "blockedUsers": "Zablokowani użytkownicy"
+    },
     "updateFailed": "Nie udało się zaktualizować ustawień",
     "aiPostsUpdated": "Preferencja postów AI zaktualizowana",
     "aiPostsFailed": "Nie udało się zaktualizować preferencji postów AI",
@@ -995,5 +999,44 @@
       "fri": "Pt",
       "sat": "Sb"
     }
+  },
+  "blocking": {
+    "title": "Zablokowani użytkownicy",
+    "blockAction": "Zablokuj",
+    "unblockAction": "Odblokuj",
+    "confirmTitle": "Zablokować użytkownika?",
+    "confirmMessage": "Czy na pewno chcesz zablokować @{{username}}? Nie będziecie widzieć nawzajem swoich treści.",
+    "blockedTitle": "Użytkownik zablokowany",
+    "blockedMessage": "@{{username}} został zablokowany. Nie będziecie widzieć nawzajem swoich postów i aktywności.",
+    "blockError": "Nie udało się zablokować użytkownika",
+    "unblockError": "Nie udało się odblokować użytkownika",
+    "noBlockedUsers": "Brak zablokowanych użytkowników",
+    "noBlockedUsersMessage": "Nie zablokowałeś jeszcze nikogo.",
+    "blockedCount_one": "{{count}} zablokowany użytkownik",
+    "blockedCount_few": "{{count}} zablokowani użytkownicy",
+    "blockedCount_many": "{{count}} zablokowanych użytkowników",
+    "blockedCount_other": "{{count}} zablokowanych użytkowników"
+  },
+  "reporting": {
+    "title": "Zgłoś treść",
+    "reportUser": "Zgłoś użytkownika",
+    "selectReason": "Wybierz powód",
+    "reasons": {
+      "spam": "Spam",
+      "harassment": "Nękanie",
+      "hate_speech": "Mowa nienawiści",
+      "violence": "Przemoc",
+      "nudity": "Nagość",
+      "misinformation": "Dezinformacja",
+      "impersonation": "Podszywanie się",
+      "copyright": "Prawa autorskie",
+      "other": "Inne"
+    },
+    "additionalDetails": "Dodatkowe szczegóły (opcjonalnie)",
+    "descriptionPlaceholder": "Podaj więcej szczegółów dotyczących zgłoszenia...",
+    "submitReport": "Wyślij zgłoszenie",
+    "reportedTitle": "Zgłoszenie wysłane",
+    "reportedMessage": "Dziękujemy za zgłoszenie. Przeanalizujemy je i podejmiemy odpowiednie działania.",
+    "reportError": "Nie udało się wysłać zgłoszenia"
   }
 }

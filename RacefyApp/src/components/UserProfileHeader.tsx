@@ -26,6 +26,7 @@ interface UserProfileHeaderProps {
   onFollowToggle: () => void;
   onMessagePress: () => void;
   onTabChange: (tab: TabType) => void;
+  onMenuPress?: () => void;
 }
 
 export function UserProfileHeader({
@@ -44,6 +45,7 @@ export function UserProfileHeader({
   onFollowToggle,
   onMessagePress,
   onTabChange,
+  onMenuPress,
 }: UserProfileHeaderProps) {
   const { colors } = useTheme();
 
@@ -54,6 +56,11 @@ export function UserProfileHeader({
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>@{profile.username}</Text>
+        {!isOwnProfile && isAuthenticated && onMenuPress && (
+          <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
+            <Ionicons name="ellipsis-horizontal" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {profile.background_image_url ? (
@@ -116,8 +123,13 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   headerTitle: {
+    flex: 1,
     fontSize: fontSize.lg,
     fontWeight: '600',
+  },
+  menuButton: {
+    padding: spacing.xs,
+    marginLeft: spacing.sm,
   },
   coverImage: {
     height: 120,
