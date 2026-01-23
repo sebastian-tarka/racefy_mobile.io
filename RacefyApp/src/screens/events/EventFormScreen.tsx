@@ -89,6 +89,9 @@ interface FormData {
   difficulty: DifficultyLevel;
   distance: string;
   entry_fee: string;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points: boolean;
+  start_finish_note: string;
 }
 
 const initialFormData: FormData = {
@@ -106,6 +109,9 @@ const initialFormData: FormData = {
   difficulty: 'all_levels',
   distance: '',
   entry_fee: '',
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points: false,
+  start_finish_note: '',
 };
 
 type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
@@ -225,6 +231,9 @@ export function EventFormScreen({ navigation, route }: Props) {
       // Convert from meters (API) to km (form display)
       distance: event.distance ? (event.distance / 1000).toString() : '',
       entry_fee: event.entry_fee?.toString() || '',
+      // GPS Privacy (new in 2026-01)
+      show_start_finish_points: event.show_start_finish_points ?? false,
+      start_finish_note: event.start_finish_note || '',
     });
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
 
@@ -310,6 +319,9 @@ export function EventFormScreen({ navigation, route }: Props) {
           // Convert from km (form) to meters (API)
           distance: formData.distance ? parseFloat(formData.distance) * 1000 : null,
           entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : null,
+          // GPS Privacy (new in 2026-01)
+          show_start_finish_points: formData.show_start_finish_points,
+          start_finish_note: formData.start_finish_note || undefined,
         };
 
         await api.updateEvent(eventId, updateData);
@@ -333,6 +345,9 @@ export function EventFormScreen({ navigation, route }: Props) {
           // Convert from km (form) to meters (API)
           distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
           entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : undefined,
+          // GPS Privacy (new in 2026-01)
+          show_start_finish_points: formData.show_start_finish_points,
+          start_finish_note: formData.start_finish_note || undefined,
         };
 
         const createdEvent = await api.createEvent(createData);
@@ -671,6 +686,55 @@ export function EventFormScreen({ navigation, route }: Props) {
                 leftIcon="cash-outline"
                 editable={!isLimitedEdit}
               />
+
+              {/* GPS Privacy Section */}
+              <View style={[styles.gpsPrivacySection, { borderTopColor: colors.border }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('eventForm.gpsPrivacy')}
+                </Text>
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                  {t('eventForm.gpsPrivacyDescription')}
+                </Text>
+
+                <View style={[styles.checkboxRow, { marginTop: spacing.md }]}>
+                  <TouchableOpacity
+                    style={[
+                      styles.checkbox,
+                      formData.show_start_finish_points && styles.checkboxChecked,
+                      { borderColor: colors.border, backgroundColor: formData.show_start_finish_points ? colors.primary : 'transparent' }
+                    ]}
+                    onPress={() => updateField('show_start_finish_points', !formData.show_start_finish_points)}
+                    disabled={isLimitedEdit}
+                    activeOpacity={0.7}
+                  >
+                    {formData.show_start_finish_points && (
+                      <Ionicons name="checkmark" size={18} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                  <View style={styles.checkboxTextContainer}>
+                    <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
+                      {t('eventForm.showStartFinishMarkers')}
+                    </Text>
+                    <Text style={[styles.checkboxDescription, { color: colors.textSecondary }]}>
+                      {t('eventForm.showStartFinishMarkersDescription')}
+                    </Text>
+                  </View>
+                </View>
+
+                {formData.show_start_finish_points && (
+                  <Input
+                    label={t('eventForm.startFinishNote')}
+                    placeholder={t('eventForm.startFinishNotePlaceholder')}
+                    value={formData.start_finish_note}
+                    onChangeText={(text) => updateField('start_finish_note', text)}
+                    multiline
+                    numberOfLines={2}
+                    leftIcon="information-circle-outline"
+                    editable={!isLimitedEdit}
+                    style={{ marginTop: spacing.md }}
+                  />
+                )}
+              </View>
             </Card>
             </View>
           )}
@@ -772,5 +836,47 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
+  },
+  gpsPrivacySection: {
+    borderTopWidth: 1,
+    paddingTop: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  sectionDescription: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: 'transparent',
+  },
+  checkboxTextContainer: {
+    flex: 1,
+  },
+  checkboxLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
+  checkboxDescription: {
+    fontSize: fontSize.sm,
+    lineHeight: 18,
   },
 });

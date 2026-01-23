@@ -323,6 +323,9 @@ export interface Event {
   ai_commentary_next_window?: string | null;
   ai_commentary_last_paused_at?: string | null;
   ai_commentary_last_resumed_at?: string | null;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
+  start_finish_note?: string | null;   // Explanation why markers are shown
   // Point rewards
   point_rewards?: EventPointRewards;
   // Registration status
@@ -383,6 +386,9 @@ export interface CreateEventRequest {
   ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
+  start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -429,6 +435,9 @@ export interface UpdateEventRequest {
   ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
+  start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -491,6 +500,13 @@ export interface Activity {
   max_heart_rate: number | null;
   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
   is_private: boolean;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points: boolean;  // Activity-level privacy override
+  can_view_start_finish: boolean;     // Whether current viewer can see markers
+  privacy_settings?: {                // Only for activity owner
+    show_start_finish_points: boolean;
+    has_privacy_zones: boolean;
+  };
   // Live tracking fields
   status: 'in_progress' | 'paused' | 'completed';
   is_active: boolean;
@@ -629,7 +645,7 @@ export interface FinishActivityResponse {
 export interface GpsTrack {
   id: number;
   activity_id: number;
-  track_data: GeoJSONLineString;
+  track_data: GeoJSONLineString;       // Privacy-aware: trimmed if viewer is not owner
   points_count: number;
   bounds: {
     min_lat: number;
@@ -637,11 +653,16 @@ export interface GpsTrack {
     min_lng: number;
     max_lng: number;
   };
-  simplified_track: GeoJSONLineString;
+  simplified_track: GeoJSONLineString; // Privacy-aware: trimmed if viewer is not owner
   route_svg: string | null;
   route_map_url: string | null;
   svg_generated_at: string | null;
   map_generated_at: string | null;
+  // GPS Privacy (new in 2026-01)
+  show_start_marker: boolean;          // Whether viewer can see start marker
+  show_finish_marker: boolean;         // Whether viewer can see finish marker
+  start_point: [number, number, number?] | null;  // Start coords [lng, lat, ele?] or null if hidden
+  finish_point: [number, number, number?] | null; // Finish coords [lng, lat, ele?] or null if hidden
 }
 
 export interface GeoJSONLineString {

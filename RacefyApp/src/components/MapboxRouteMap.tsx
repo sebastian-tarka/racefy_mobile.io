@@ -36,6 +36,11 @@ interface MapboxRouteMapProps {
   height?: number;
   backgroundColor?: string;
   initialZoom?: number;
+  // GPS Privacy (new in 2026-01)
+  showStartMarker?: boolean;
+  showFinishMarker?: boolean;
+  startPoint?: [number, number, number?] | null;
+  finishPoint?: [number, number, number?] | null;
 }
 
 /**
@@ -49,6 +54,10 @@ export function MapboxRouteMap({
   height = 250,
   backgroundColor,
   initialZoom = 13,
+  showStartMarker = true,
+  showFinishMarker = true,
+  startPoint = null,
+  finishPoint = null,
 }: MapboxRouteMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -194,15 +203,15 @@ export function MapboxRouteMap({
           />
         </MapboxGL.ShapeSource>
 
-        {/* Start marker - using ShapeSource + SymbolLayer for better performance */}
-        {trackData.coordinates.length > 0 && (
+        {/* Start marker - only show if privacy allows */}
+        {showStartMarker && startPoint && (
           <MapboxGL.ShapeSource
             id="startPointSource"
             shape={{
               type: 'Feature',
               geometry: {
                 type: 'Point',
-                coordinates: trackData.coordinates[0],
+                coordinates: startPoint,
               },
               properties: {},
             }}
@@ -219,15 +228,15 @@ export function MapboxRouteMap({
           </MapboxGL.ShapeSource>
         )}
 
-        {/* End marker */}
-        {trackData.coordinates.length > 1 && (
+        {/* Finish marker - only show if privacy allows */}
+        {showFinishMarker && finishPoint && (
           <MapboxGL.ShapeSource
             id="endPointSource"
             shape={{
               type: 'Feature',
               geometry: {
                 type: 'Point',
-                coordinates: trackData.coordinates[trackData.coordinates.length - 1],
+                coordinates: finishPoint,
               },
               properties: {},
             }}

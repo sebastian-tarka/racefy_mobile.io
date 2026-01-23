@@ -653,6 +653,20 @@ class ApiService {
     await this.request(`/activities/${id}`, { method: 'DELETE' });
   }
 
+  async updateActivityGpsPrivacy(
+    id: number,
+    showStartFinishPoints: boolean
+  ): Promise<Types.Activity> {
+    const response = await this.request<Types.ApiResponse<Types.Activity>>(
+      `/activities/${id}/gps-privacy`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ show_start_finish_points: showStartFinishPoints }),
+      }
+    );
+    return response.data;
+  }
+
   async getActivityTrack(id: number): Promise<Types.GpsTrack> {
     const response = await this.request<Types.ApiResponse<Types.GpsTrack>>(
       `/activities/${id}/track`

@@ -45,6 +45,10 @@ export function ActivityFormScreen({ navigation, route }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
 
+  // GPS Privacy (new in 2026-01)
+  const [hasGpsTrack, setHasGpsTrack] = useState(false);
+  const [showStartFinishPoints, setShowStartFinishPoints] = useState(false);
+
   // Photo management
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
   const [newPhotos, setNewPhotos] = useState<MediaItem[]>([]);
@@ -76,6 +80,28 @@ export function ActivityFormScreen({ navigation, route }: Props) {
     setDescription(activity.description || '');
     setIsPrivate(activity.is_private || false);
     setExistingPhotos(activity.photos || []);
+    // GPS Privacy
+    setHasGpsTrack(activity.has_gps_track || false);
+    setShowStartFinishPoints(activity.show_start_finish_points || false);
+  };
+
+  // GPS Privacy handler
+  const handleGpsPrivacyToggle = async (value: boolean) => {
+    if (!activityId) return;
+
+    try {
+      await api.updateActivityGpsPrivacy(activityId, value);
+      setShowStartFinishPoints(value);
+      Alert.alert(
+        t('common.success'),
+        value
+          ? t('activityForm.gpsPrivacyEnabled')
+          : t('activityForm.gpsPrivacyDisabled')
+      );
+    } catch (error) {
+      logger.error('api', 'Failed to update GPS privacy', { error });
+      Alert.alert(t('common.error'), t('activityForm.gpsPrivacyFailed'));
+    }
   };
 
   // Photo management functions
@@ -331,6 +357,29 @@ export function ActivityFormScreen({ navigation, route }: Props) {
               thumbColor={colors.white}
             />
           </View>
+
+          {/* GPS Privacy Toggle (only show if activity has GPS track) */}
+          {hasGpsTrack && (
+            <View style={[styles.switchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+              <View style={styles.switchContent}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="location-outline" size={20} color={colors.primary} />
+                  <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>
+                    {t('activityForm.gpsPrivacy')}
+                  </Text>
+                </View>
+                <Text style={[styles.switchDescription, { color: colors.textSecondary }]}>
+                  {t('activityForm.gpsPrivacyDescription')}
+                </Text>
+              </View>
+              <Switch
+                value={showStartFinishPoints}
+                onValueChange={handleGpsPrivacyToggle}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={colors.white}
+              />
+            </View>
+          )}
 
           {/* Photos Section */}
           <View style={styles.sectionContainer}>

@@ -140,8 +140,14 @@ export function PostCard({
             <RoutePreview
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
+              trackData={activity.gps_track?.track_data}
+              activityId={activity.id}
               height={150}
               backgroundColor={colors.background}
+              showStartMarker={activity.gps_track?.show_start_marker ?? true}
+              showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
+              startPoint={activity.gps_track?.start_point ?? null}
+              finishPoint={activity.gps_track?.finish_point ?? null}
             />
           </View>
         )}

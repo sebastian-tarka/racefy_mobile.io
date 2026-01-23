@@ -286,6 +286,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
               activityId={activity.id}
               height={isMapExpanded ? 500 : 250}
               enableZoom={isMapExpanded}
+              showStartMarker={gpsTrack?.show_start_marker ?? true}
+              showFinishMarker={gpsTrack?.show_finish_marker ?? true}
+              startPoint={gpsTrack?.start_point ?? null}
+              finishPoint={gpsTrack?.finish_point ?? null}
             />
             {/* Map Expand/Collapse Toggle Button */}
             <TouchableOpacity
@@ -302,6 +306,25 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 {isMapExpanded ? t('activityDetail.collapseMap') : t('activityDetail.expandMap')}
               </Text>
             </TouchableOpacity>
+
+            {/* GPS Privacy Indicator */}
+            <View style={[styles.privacyIndicator, { backgroundColor: colors.cardBackground + '80', borderColor: colors.borderLight }]}>
+              <Ionicons
+                name={activity.can_view_start_finish ? "eye-outline" : "shield-outline"}
+                size={16}
+                color={activity.is_owner ? colors.primary : colors.textSecondary}
+              />
+              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
+                {activity.is_owner
+                  ? (activity.show_start_finish_points
+                      ? t('activityDetail.gpsPrivacyVisible')
+                      : t('activityDetail.gpsPrivacyHidden'))
+                  : (!activity.can_view_start_finish
+                      ? t('activityDetail.gpsPrivacyViewerHidden')
+                      : null)
+                }
+              </Text>
+            </View>
           </Animated.View>
         )}
 
@@ -862,6 +885,27 @@ const styles = StyleSheet.create({
   },
   mapToggleText: {
     fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  privacyIndicator: {
+    position: 'absolute',
+    bottom: spacing.md,
+    left: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  privacyText: {
+    fontSize: fontSize.xs,
     fontWeight: '500',
   },
 });

@@ -31,6 +31,11 @@ interface RoutePreviewProps {
   height?: number;
   backgroundColor?: string;
   enableZoom?: boolean;
+  // GPS Privacy (new in 2026-01)
+  showStartMarker?: boolean;
+  showFinishMarker?: boolean;
+  startPoint?: [number, number, number?] | null;
+  finishPoint?: [number, number, number?] | null;
 }
 
 /**
@@ -47,6 +52,10 @@ export function RoutePreview({
   height = 250,
   backgroundColor,
   enableZoom = false,
+  showStartMarker = true,
+  showFinishMarker = true,
+  startPoint = null,
+  finishPoint = null,
 }: RoutePreviewProps) {
   const { colors } = useTheme();
 
@@ -68,6 +77,10 @@ export function RoutePreview({
         activityId={activityId}
         height={height}
         backgroundColor={bgColor}
+        showStartMarker={showStartMarker}
+        showFinishMarker={showFinishMarker}
+        startPoint={startPoint}
+        finishPoint={finishPoint}
       />
     );
   }
@@ -336,7 +349,7 @@ export function RoutePreview({
 
 // Backwards compatible alias
 export function LeafletMap(props: RoutePreviewProps & { coordinates?: unknown; bounds?: unknown; strokeColor?: string; strokeWidth?: number }) {
-  return <RoutePreview routeMapUrl={props.routeMapUrl} routeSvg={props.routeSvg} trackData={props.trackData} activityId={props.activityId} height={props.height} backgroundColor={props.backgroundColor} enableZoom={props.enableZoom} />;
+  return <RoutePreview {...props} />;
 }
 
 const styles = StyleSheet.create({
