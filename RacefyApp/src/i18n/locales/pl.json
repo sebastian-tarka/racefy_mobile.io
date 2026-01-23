@@ -439,8 +439,8 @@
     "pacePerKm": "Czasy kilometrowe",
     "elevationPerKm": "Przewyższenie na kilometr",
     "heartRatePerKm": "Tętno na kilometr",
-    "gpsPrivacyVisible": "Punkty start/meta widoczne dla innych",
-    "gpsPrivacyHidden": "Punkty start/meta ukryte dla prywatności",
+    "gpsPrivacyVisible": "Start/meta widoczne dla innych",
+    "gpsPrivacyHidden": "Start/meta ukryte przed innymi",
     "gpsPrivacyViewerHidden": "Lokalizacja startu/mety ukryta",
     "sources": {
       "app": "Aplikacja Racefy",

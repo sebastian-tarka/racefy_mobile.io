@@ -439,8 +439,8 @@
     "pacePerKm": "Kilometer Splits",
     "elevationPerKm": "Elevation per Kilometer",
     "heartRatePerKm": "Heart Rate per Kilometer",
-    "gpsPrivacyVisible": "Start/finish markers visible to others",
-    "gpsPrivacyHidden": "Start/finish markers hidden for privacy",
+    "gpsPrivacyVisible": "Start/finish visible to others",
+    "gpsPrivacyHidden": "Start/finish hidden from others",
     "gpsPrivacyViewerHidden": "Start/finish location hidden",
     "sources": {
       "app": "Racefy App",
