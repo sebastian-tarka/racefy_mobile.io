@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1',
+    buildNumber: '2',
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Racefy needs access to your location to track your activities and show your route on the map.',
