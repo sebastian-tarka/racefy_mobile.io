@@ -240,8 +240,12 @@ export interface DraftsResponse {
 
 export type EventRankingMode = 'fastest_time' | 'most_distance' | 'most_elevation' | 'first_finish';
 export type EventTeamScoring = 'sum' | 'average' | 'best_n';
-export type EventAiPostsStyle = 'achievement' | 'statistical' | 'comparison';
 export type EventVisibility = 'public' | 'followers' | 'private';
+
+export interface AiFeaturesResponse {
+  ai_features_enabled: boolean;
+  ai_commentary_enabled: boolean;
+}
 
 // Registration eligibility reason codes
 export type RegistrationEligibilityReason =
@@ -304,11 +308,21 @@ export interface Event {
   team_size_min?: number;
   team_size_max?: number;
   team_scoring?: EventTeamScoring;
-  // AI Posts for participants
-  ai_posts_enabled?: boolean;
-  ai_posts_force_participants?: boolean;
-  ai_posts_style?: EventAiPostsStyle;
-  auto_publish?: boolean;
+  // AI Commentary settings
+  ai_commentary_enabled?: boolean;
+  ai_commentary_style?: CommentaryStyle;
+  ai_commentary_languages?: CommentaryLanguage[];
+  ai_commentary_interval_minutes?: number;
+  ai_commentary_token_limit?: number | null;
+  ai_commentary_auto_publish?: boolean;
+  ai_commentary_force_participants?: boolean;
+  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_days_of_week?: number[] | null;
+  ai_commentary_pause_summary_enabled?: boolean;
+  ai_commentary_active_now?: boolean;
+  ai_commentary_next_window?: string | null;
+  ai_commentary_last_paused_at?: string | null;
+  ai_commentary_last_resumed_at?: string | null;
   // Point rewards
   point_rewards?: EventPointRewards;
   // Registration status
@@ -358,11 +372,17 @@ export interface CreateEventRequest {
   team_size_min?: number;
   team_size_max?: number;
   team_scoring?: EventTeamScoring;
-  // AI Posts for participants
-  ai_posts_enabled?: boolean;
-  ai_posts_force_participants?: boolean;
-  ai_posts_style?: EventAiPostsStyle;
-  auto_publish?: boolean;
+  // AI Commentary settings
+  ai_commentary_enabled?: boolean;
+  ai_commentary_style?: CommentaryStyle;
+  ai_commentary_languages?: CommentaryLanguage[];
+  ai_commentary_interval_minutes?: number;
+  ai_commentary_token_limit?: number | null;
+  ai_commentary_auto_publish?: boolean;
+  ai_commentary_force_participants?: boolean;
+  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_days_of_week?: number[] | null;
+  ai_commentary_pause_summary_enabled?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -398,11 +418,17 @@ export interface UpdateEventRequest {
   team_size_min?: number;
   team_size_max?: number;
   team_scoring?: EventTeamScoring;
-  // AI Posts for participants
-  ai_posts_enabled?: boolean;
-  ai_posts_force_participants?: boolean;
-  ai_posts_style?: EventAiPostsStyle;
-  auto_publish?: boolean;
+  // AI Commentary settings
+  ai_commentary_enabled?: boolean;
+  ai_commentary_style?: CommentaryStyle;
+  ai_commentary_languages?: CommentaryLanguage[];
+  ai_commentary_interval_minutes?: number;
+  ai_commentary_token_limit?: number | null;
+  ai_commentary_auto_publish?: boolean;
+  ai_commentary_force_participants?: boolean;
+  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_days_of_week?: number[] | null;
+  ai_commentary_pause_summary_enabled?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -1304,6 +1330,10 @@ export interface CommentarySettings {
   auto_publish: boolean;
   tokens_used: number;
   languages: CommentaryLanguage[];
+  force_participants?: boolean;
+  time_windows?: Array<{ start: string; end: string }> | null;
+  days_of_week?: number[] | null;
+  pause_summary_enabled?: boolean;
   available_styles: Record<CommentaryStyle, { name: string; description: string }>;
   available_languages: Record<CommentaryLanguage, string>;
 }
@@ -1315,6 +1345,10 @@ export interface UpdateCommentarySettingsRequest {
   interval_minutes?: number;
   auto_publish?: boolean;
   languages?: CommentaryLanguage[] | null;
+  force_participants?: boolean;
+  time_windows?: Array<{ start: string; end: string }> | null;
+  days_of_week?: number[] | null;
+  pause_summary_enabled?: boolean;
 }
 
 export interface GenerateCommentaryRequest {

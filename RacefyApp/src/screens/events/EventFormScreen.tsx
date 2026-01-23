@@ -55,15 +55,23 @@ interface CommentarySettingsData {
   interval_minutes: number;
   auto_publish: boolean;
   languages: CommentaryLanguage[];
+  force_participants: boolean;
+  time_windows: Array<{ start: string; end: string }>;
+  days_of_week: number[];
+  pause_summary_enabled: boolean;
 }
 
 const defaultCommentarySettings: CommentarySettingsData = {
   enabled: false,
   style: 'exciting',
-  token_limit: 5000,
+  token_limit: null,
   interval_minutes: 15,
   auto_publish: true,
   languages: ['en', 'pl'],
+  force_participants: false,
+  time_windows: [],
+  days_of_week: [],
+  pause_summary_enabled: true,
 };
 
 interface FormData {
@@ -124,12 +132,27 @@ export function EventFormScreen({ navigation, route }: Props) {
   } | null>(null);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [eventStatus, setEventStatus] = useState<string | null>(null);
+  const [hasAiFeatures, setHasAiFeatures] = useState(false);
 
   // Limited edit mode for ongoing/completed/cancelled events - only media, title, description can be edited
   const isLimitedEdit = isEditMode && (eventStatus === 'ongoing' || eventStatus === 'completed' || eventStatus === 'cancelled');
 
   // AI commentary is read-only for completed/cancelled events
   const isCommentaryReadOnly = isEditMode && (eventStatus === 'completed' || eventStatus === 'cancelled');
+
+  // Check if user has AI features enabled
+  useEffect(() => {
+    const checkAiFeatures = async () => {
+      try {
+        const features = await api.getAiFeatures();
+        setHasAiFeatures(features.ai_features_enabled && features.ai_commentary_enabled);
+      } catch (error) {
+        logger.debug('api', 'Failed to check AI features', { error });
+        setHasAiFeatures(false);
+      }
+    };
+    checkAiFeatures();
+  }, []);
 
   useEffect(() => {
     if (isEditMode && eventId) {
@@ -163,6 +186,10 @@ export function EventFormScreen({ navigation, route }: Props) {
           interval_minutes: settings.interval_minutes,
           auto_publish: settings.auto_publish,
           languages: settings.languages,
+          force_participants: settings.force_participants || false,
+          time_windows: settings.time_windows || [],
+          days_of_week: settings.days_of_week || [],
+          pause_summary_enabled: settings.pause_summary_enabled !== false,
         });
       }
     } catch (error) {
@@ -330,20 +357,26 @@ export function EventFormScreen({ navigation, route }: Props) {
         }
       }
 
-      // Save AI commentary settings (via separate API endpoint)
-      try {
-        await api.updateCommentarySettings(savedEventId, {
-          enabled: commentarySettings.enabled,
-          style: commentarySettings.style,
-          token_limit: commentarySettings.token_limit,
-          interval_minutes: commentarySettings.interval_minutes,
-          auto_publish: commentarySettings.auto_publish,
-          languages: commentarySettings.languages,
-        });
-        logger.debug('api', 'Commentary settings saved', { eventId: savedEventId });
-      } catch (commentaryError) {
-        logger.error('api', 'Failed to save commentary settings', { error: commentaryError });
-        // Don't fail the whole operation for commentary settings
+      // Save AI commentary settings (via separate API endpoint) - only if user has AI features
+      if (hasAiFeatures) {
+        try {
+          await api.updateCommentarySettings(savedEventId, {
+            enabled: commentarySettings.enabled,
+            style: commentarySettings.style,
+            token_limit: commentarySettings.token_limit,
+            interval_minutes: commentarySettings.interval_minutes,
+            auto_publish: commentarySettings.auto_publish,
+            languages: commentarySettings.languages,
+            force_participants: commentarySettings.force_participants,
+            time_windows: commentarySettings.time_windows.length > 0 ? commentarySettings.time_windows : null,
+            days_of_week: commentarySettings.days_of_week.length > 0 ? commentarySettings.days_of_week : null,
+            pause_summary_enabled: commentarySettings.pause_summary_enabled,
+          });
+          logger.debug('api', 'Commentary settings saved', { eventId: savedEventId });
+        } catch (commentaryError) {
+          logger.error('api', 'Failed to save commentary settings', { error: commentaryError });
+          // Don't fail the whole operation for commentary settings
+        }
       }
 
       Alert.alert(
@@ -642,12 +675,14 @@ export function EventFormScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          {/* AI Commentary Settings */}
-          <CommentarySettingsSection
-            value={commentarySettings}
-            onChange={setCommentarySettings}
-            disabled={isLoading || isCommentaryReadOnly}
-          />
+          {/* AI Commentary Settings - only shown if user has AI features enabled */}
+          {hasAiFeatures && (
+            <CommentarySettingsSection
+              value={commentarySettings}
+              onChange={setCommentarySettings}
+              disabled={isLoading || isCommentaryReadOnly}
+            />
+          )}
 
           {/* Submit Button */}
           <Button

@@ -977,6 +977,27 @@
         "name": "Motivational",
         "description": "Encouraging and supportive"
       }
+    },
+    "forceParticipants": "Force Participants",
+    "forceParticipantsDescription": "Override participant AI preferences for this event",
+    "advancedSettings": "Advanced Settings",
+    "timeWindows": "Time Windows",
+    "timeWindowsHint": "Restrict commentary to specific hours. Leave empty for always active.",
+    "timeWindowStart": "Start",
+    "timeWindowEnd": "End",
+    "addTimeWindow": "Add Time Window",
+    "daysOfWeek": "Days of Week",
+    "daysOfWeekHint": "Select active days. Leave empty for all days.",
+    "pauseSummary": "Pause Summary",
+    "pauseSummaryDescription": "Generate a summary when commentary pauses",
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
     }
   }
 }

@@ -1277,6 +1277,15 @@ class ApiService {
     await this.clearToken();
   }
 
+  // ============ AI FEATURES ============
+
+  /**
+   * Check if current user has access to AI features
+   */
+  async getAiFeatures(): Promise<Types.AiFeaturesResponse> {
+    return this.request<Types.AiFeaturesResponse>('/profile/ai-features');
+  }
+
   // ============ PREFERENCES ============
 
   async getPreferences(): Promise<Types.UserPreferences> {

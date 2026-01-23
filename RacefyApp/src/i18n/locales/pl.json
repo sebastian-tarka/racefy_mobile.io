@@ -973,6 +973,27 @@
         "name": "Motywujący",
         "description": "Zachęcający i wspierający"
       }
+    },
+    "forceParticipants": "Wymuś na uczestnikach",
+    "forceParticipantsDescription": "Nadpisz preferencje AI uczestników dla tego wydarzenia",
+    "advancedSettings": "Ustawienia zaawansowane",
+    "timeWindows": "Okna czasowe",
+    "timeWindowsHint": "Ogranicz komentarz do określonych godzin. Pozostaw puste dla ciągłej aktywności.",
+    "timeWindowStart": "Start",
+    "timeWindowEnd": "Koniec",
+    "addTimeWindow": "Dodaj okno czasowe",
+    "daysOfWeek": "Dni tygodnia",
+    "daysOfWeekHint": "Wybierz aktywne dni. Pozostaw puste dla wszystkich dni.",
+    "pauseSummary": "Podsumowanie pauzy",
+    "pauseSummaryDescription": "Generuj podsumowanie gdy komentarz jest wstrzymany",
+    "days": {
+      "sun": "Nd",
+      "mon": "Pn",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Cz",
+      "fri": "Pt",
+      "sat": "Sb"
     }
   }
 }
