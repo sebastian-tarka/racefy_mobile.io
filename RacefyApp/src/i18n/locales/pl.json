@@ -1059,5 +1059,17 @@
     "reportedTitle": "Zgłoszenie wysłane",
     "reportedMessage": "Dziękujemy za zgłoszenie. Przeanalizujemy je i podejmiemy odpowiednie działania.",
     "reportError": "Nie udało się wysłać zgłoszenia"
+  },
+  "share": {
+    "title": "Udostępnij",
+    "loading": "Ładowanie linku...",
+    "shareVia": "Udostępnij przez...",
+    "shareOn": "Udostępnij w mediach społecznościowych",
+    "copyLink": "Lub skopiuj link",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano!",
+    "fetchError": "Nie udało się wygenerować linku. Spróbuj ponownie.",
+    "copyError": "Nie udało się skopiować linku. Spróbuj ponownie.",
+    "defaultTitle": "Zobacz to na Racefy"
   }
 }

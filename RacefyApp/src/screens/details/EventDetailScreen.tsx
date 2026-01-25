@@ -16,7 +16,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection, CountdownTimer, EventTabs, CommentaryTabContent } from '../../components';
+import { Card, Button, Loading, Badge, ScreenHeader, Avatar, CommentSection, CountdownTimer, EventTabs, CommentaryTabContent, SocialShareModal } from '../../components';
 import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -55,6 +55,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<EventTabType>('details');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   // Keyboard event listeners
   useEffect(() => {
@@ -371,25 +372,35 @@ export function EventDetailScreen({ route, navigation }: Props) {
         title={t('eventDetail.title')}
         showBack
         onBack={() => navigation.goBack()}
-        rightAction={canEdit ? (
+        rightAction={
           <View style={styles.headerActions}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
+              onPress={() => setShareModalVisible(true)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
+              <Ionicons name="share-social-outline" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
-            {canDelete && (
-              <TouchableOpacity
-                onPress={handleDeleteEvent}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.deleteButton}
-              >
-                <Ionicons name="trash-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
+            {canEdit && (
+              <>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
+                {canDelete && (
+                  <TouchableOpacity
+                    onPress={handleDeleteEvent}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.deleteButton}
+                  >
+                    <Ionicons name="trash-outline" size={24} color={colors.error} />
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
-        ) : undefined}
+        }
       />
 
       {/* Event Image/Header - Shared across all tabs */}
@@ -940,6 +951,16 @@ export function EventDetailScreen({ route, navigation }: Props) {
           )}
         </View>
       )}
+
+      {/* Social Share Modal */}
+      <SocialShareModal
+        visible={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        type="event"
+        id={eventId}
+        title={event?.post?.title}
+        description={event?.post?.content}
+      />
     </SafeAreaView>
   );
 }

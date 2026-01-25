@@ -24,6 +24,7 @@ import {
   MediaGallery,
   CommentSection,
   RoutePreview,
+  SocialShareModal,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -90,6 +91,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [commentsY, setCommentsY] = useState(0);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -350,23 +352,32 @@ export function PostDetailScreen({ route, navigation }: Props) {
         showBack
         onBack={() => navigation.goBack()}
         rightAction={
-          isOwner ? (
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('PostForm', { postId })}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.headerActionButton}
-              >
-                <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleDelete}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="trash-outline" size={22} color={colors.error} />
-              </TouchableOpacity>
-            </View>
-          ) : undefined
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={() => setShareModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.headerActionButton}
+            >
+              <Ionicons name="share-social-outline" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
+            {isOwner && (
+              <>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PostForm', { postId })}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={styles.headerActionButton}
+                >
+                  <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleDelete}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="trash-outline" size={22} color={colors.error} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         }
       />
 
@@ -467,6 +478,16 @@ export function PostDetailScreen({ route, navigation }: Props) {
           <View style={{ height: spacing.xl }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Social Share Modal */}
+      <SocialShareModal
+        visible={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        type="post"
+        id={postId}
+        title={post?.title}
+        description={post?.content}
+      />
     </SafeAreaView>
   );
 }

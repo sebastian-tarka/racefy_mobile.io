@@ -46,6 +46,7 @@ export * from './PrivacyConsentsSection';
 export * from './ReportModal';
 export * from './ScreenHeader';
 export * from './SettingsSection';
+export * from './SocialShareModal';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './UserListModal';

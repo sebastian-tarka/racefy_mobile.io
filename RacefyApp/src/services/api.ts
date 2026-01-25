@@ -1504,6 +1504,52 @@ class ApiService {
     return this.request<Types.SearchUsersResponse>(`/search/users?q=${encodeURIComponent(query)}`);
   }
 
+  // ============ SOCIAL SHARING ============
+
+  /**
+   * Get shareable link for an activity
+   * Generates a secure share token and returns platform-specific share URLs
+   */
+  async getActivityShareLink(id: number): Promise<Types.ShareLinkResponse> {
+    const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
+      `/activities/${id}/share-link`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get shareable link for a post
+   * Generates a secure share token and returns platform-specific share URLs
+   */
+  async getPostShareLink(id: number): Promise<Types.ShareLinkResponse> {
+    const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
+      `/posts/${id}/share-link`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get shareable link for an event
+   * Events use slugs for public URLs
+   */
+  async getEventShareLink(id: number): Promise<Types.ShareLinkResponse> {
+    const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
+      `/events/${id}/share-link`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get shareable link for a comment
+   * Note: This endpoint may need to be added to the backend API
+   */
+  async getCommentShareLink(id: number): Promise<Types.ShareLinkResponse> {
+    const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
+      `/comments/${id}/share-link`
+    );
+    return response.data;
+  }
+
   // ============ ADMIN - IMPERSONATION ============
 
   /**

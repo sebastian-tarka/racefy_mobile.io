@@ -1061,5 +1061,17 @@
     "reportedTitle": "Report Submitted",
     "reportedMessage": "Thank you for your report. We'll review it and take appropriate action.",
     "reportError": "Failed to submit report"
+  },
+  "share": {
+    "title": "Share",
+    "loading": "Loading share link...",
+    "shareVia": "Share via...",
+    "shareOn": "Share on social media",
+    "copyLink": "Or copy link",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "fetchError": "Failed to generate share link. Please try again.",
+    "copyError": "Failed to copy link. Please try again.",
+    "defaultTitle": "Check this out on Racefy"
   }
 }
