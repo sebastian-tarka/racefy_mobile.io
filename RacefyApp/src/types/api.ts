@@ -239,6 +239,7 @@ export interface DraftsResponse {
 // ============ EVENTS ============
 
 export type EventRankingMode = 'fastest_time' | 'most_distance' | 'most_elevation' | 'first_finish';
+export type RankingModeOption = {description?: string; value: EventRankingMode, name: string};
 export type EventTeamScoring = 'sum' | 'average' | 'best_n';
 export type EventVisibility = 'public' | 'followers' | 'private';
 

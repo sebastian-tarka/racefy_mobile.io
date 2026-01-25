@@ -22,6 +22,7 @@ export * from './CompareUserSelector';
 export * from './CountdownTimer';
 export * from './DebugLogsSection';
 export * from './DifficultySelector';
+export * from './OptionSelector';
 export * from './DraftPostCard';
 export * from './DraftsTab';
 export * from './EmptyState';
@@ -55,4 +56,5 @@ export * from './ProfileStats';
 export * from './ProfileActions';
 export * from './ProfileTabs';
 export * from './UserProfileHeader';
+export * from './EventRankingModeSelector'
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';

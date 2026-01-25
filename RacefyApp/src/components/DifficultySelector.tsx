@@ -1,15 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { OptionSelector, OptionItem } from './OptionSelector';
 
-type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 
-interface DifficultySelectorProps {
+export interface DifficultySelectorProps {
   value: DifficultyLevel;
   onChange: (difficulty: DifficultyLevel) => void;
   disabled?: boolean;
+  label?: string;
+  showLabel?: boolean;
+  containerStyle?: ViewStyle;
+  testID?: string;
 }
 
 const DIFFICULTY_OPTIONS: DifficultyLevel[] = [
@@ -19,72 +22,32 @@ const DIFFICULTY_OPTIONS: DifficultyLevel[] = [
   'advanced',
 ];
 
-export function DifficultySelector({ value, onChange, disabled }: DifficultySelectorProps) {
+export function DifficultySelector({
+  value,
+  onChange,
+  disabled,
+  label,
+  showLabel = true,
+  containerStyle,
+  testID,
+}: DifficultySelectorProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+
+  const options: OptionItem<DifficultyLevel>[] = DIFFICULTY_OPTIONS.map((difficulty) => ({
+    value: difficulty,
+    label: t(`difficulty.${difficulty}`),
+  }));
 
   return (
-    <View style={[styles.container, disabled && { opacity: 0.6 }]}>
-      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.difficulty')}</Text>
-      <View style={styles.optionsRow}>
-        {DIFFICULTY_OPTIONS.map((option) => {
-          const isSelected = value === option;
-          return (
-            <TouchableOpacity
-              key={option}
-              style={[
-                styles.option,
-                { backgroundColor: colors.background, borderColor: colors.border },
-                isSelected && { backgroundColor: disabled ? colors.textMuted : colors.primary, borderColor: disabled ? colors.textMuted : colors.primary },
-              ]}
-              onPress={() => !disabled && onChange(option)}
-              disabled={disabled}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  { color: colors.textSecondary },
-                  isSelected && styles.optionTextSelected,
-                ]}
-              >
-                {t(`difficulty.${option}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
+    <OptionSelector
+      value={value}
+      onChange={onChange}
+      options={options}
+      disabled={disabled}
+      label={label || t('eventForm.difficulty')}
+      showLabel={showLabel}
+      containerStyle={containerStyle}
+      testID={testID}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-    marginBottom: spacing.sm,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  option: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-  },
-  optionSelected: {
-    // styles applied inline
-  },
-  optionText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  optionTextSelected: {
-    color: '#FFFFFF',
-  },
-});

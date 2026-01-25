@@ -581,6 +581,12 @@
     "advanced": "Advanced",
     "all_levels": "All Levels"
   },
+  "rankingModes": {
+    "fastest_time": "Fastest Time",
+    "most_distance": "Most Distance",
+    "most_elevation": "Most Elevation Gain",
+    "first_finish": "First to Finish"
+  },
   "status": {
     "upcoming": "Upcoming",
     "ongoing": "Ongoing",
@@ -617,6 +623,7 @@
     "selectSportType": "Select sport type",
     "selectDate": "Select date",
     "difficulty": "Difficulty Level",
+    "rankingMode": "Ranking Mode",
     "location": "Location",
     "locationPlaceholder": "Event location",
     "startDate": "Start Date & Time",

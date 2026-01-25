@@ -479,6 +479,13 @@ class ApiService {
     return response.data;
   }
 
+  async getEventRankingModes(): Promise<Types.RankingModeOption[]> {
+    const response =
+        await this.request<Types.ApiResponse<Types.RankingModeOption[]>>('/events/ranking-modes');
+
+    return response.data;
+  }
+
   async createEvent(data: Types.CreateEventRequest): Promise<Types.Event> {
     const response = await this.request<Types.ApiResponse<Types.Event>>(
       '/events',

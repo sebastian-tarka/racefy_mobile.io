@@ -577,6 +577,12 @@
     "advanced": "Zaawansowany",
     "all_levels": "Wszystkie poziomy"
   },
+  "rankingModes": {
+    "fastest_time": "Najszybszy czas",
+    "most_distance": "Największy dystans",
+    "most_elevation": "Największa suma wzniesień",
+    "first_finish": "Pierwszy na mecie"
+  },
   "status": {
     "upcoming": "Nadchodzące",
     "ongoing": "Trwające",
@@ -612,6 +618,7 @@
     "selectSportType": "Wybierz rodzaj sportu",
     "selectDate": "Wybierz datę",
     "difficulty": "Poziom trudności",
+    "rankingMode": "Sposób klasyfikacji",
     "location": "Lokalizacja",
     "locationPlaceholder": "Miejsce wydarzenia",
     "startDate": "Data i godzina rozpoczęcia",
