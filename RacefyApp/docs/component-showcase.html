@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Racefy Component Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 32px;
+            background: #10b981;
+            border-radius: 2px;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+        }
+
+        .component-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .component-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .component-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .component-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+
+        .component-description {
+            font-size: 14px;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .component-preview {
+            padding: 24px;
+            background: #ffffff;
+        }
+
+        .component-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: #e7f5ff;
+            color: #1971c2;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag.new {
+            background: #d3f9d8;
+            color: #2f9e44;
+        }
+
+        .tag.updated {
+            background: #fff3bf;
+            color: #f59f00;
+        }
+
+        /* Mobile Phone Mockup */
+        .phone-mockup {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: #000;
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 28px;
+            background: #1a1a1a;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+
+        .phone-content {
+            background: #f5f5f5;
+            min-height: 600px;
+            padding-top: 40px;
+        }
+
+        /* Feed Card Preview */
+        .feed-card-preview {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 16px;
+        }
+
+        .feed-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .feed-user-info {
+            flex: 1;
+        }
+
+        .feed-username {
+            font-weight: 700;
+            font-size: 15px;
+            color: #1a1a1a;
+        }
+
+        .feed-meta {
+            font-size: 12px;
+            color: #8e8e93;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: #d3f9d8;
+            color: #2f9e44;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .feed-media {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea33 0%, #764ba233 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .feed-media.with-gradient::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+        }
+
+        .expand-indicator {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            z-index: 5;
+        }
+
+        .toggle-indicator {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 32px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            z-index: 5;
+        }
+
+        .feed-content {
+            padding: 16px;
+        }
+
+        .feed-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .feed-text {
+            font-size: 14px;
+            color: #3a3a3c;
+            line-height: 1.5;
+        }
+
+        .feed-actions {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #8e8e93;
+            font-weight: 600;
+        }
+
+        /* Image Gallery Preview */
+        .gallery-preview {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-image {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .gallery-counter {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .gallery-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .gallery-indicators {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .indicator {
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+        }
+
+        .indicator.active {
+            width: 20px;
+            background: white;
+            border-radius: 3px;
+        }
+
+        /* Video Player Preview */
+        .video-preview {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-content {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .play-indicator {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .mute-indicator {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-tag {
+            color: #4ec9b0;
+        }
+
+        .code-attr {
+            color: #9cdcfe;
+        }
+
+        .code-value {
+            color: #ce9178;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .component-card {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .component-card:nth-child(1) { animation-delay: 0.1s; }
+        .component-card:nth-child(2) { animation-delay: 0.2s; }
+        .component-card:nth-child(3) { animation-delay: 0.3s; }
+        .component-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .components-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎨 Racefy Component Showcase</h1>
+            <p>Interactive design board for feed components</p>
+        </div>
+
+        <!-- Feed Components Section -->
+        <div class="section">
+            <h2 class="section-title">Feed Components</h2>
+            <div class="components-grid">
+                <!-- FeedCard Component -->
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">FeedCard</div>
+                        <div class="component-description">
+                            Main feed card component with support for general posts, activities, events, and sponsored content.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag updated">Updated</span>
+                            <span class="tag">Core</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div class="phone-mockup">
+                            <div class="phone-screen">
+                                <div class="phone-notch"></div>
+                                <div class="phone-content">
+                                    <div class="feed-card-preview">
+                                        <div class="feed-header">
+                                            <div class="avatar">JD</div>
+                                            <div class="feed-user-info">
+                                                <div class="feed-username">John Doe</div>
+                                                <div class="feed-meta">
+                                                    <span class="badge">🏃 Activity</span>
+                                                    <span>2h ago</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="feed-media with-gradient">
+                                            📸 Image with gradient fade
+                                            <div class="expand-indicator">⤢</div>
+                                            <div class="toggle-indicator">⌄</div>
+                                        </div>
+                                        <div class="feed-content">
+                                            <div class="feed-title">Morning Run</div>
+                                            <div class="feed-text">Beautiful morning run through the park...</div>
+                                        </div>
+                                        <div class="feed-actions">
+                                            <div class="action-btn">♥ 24</div>
+                                            <div class="action-btn">💬 5</div>
+                                            <div class="action-btn">↗ Share</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="feature-list">
+                            <li>Type-specific borders (activity = emerald, event = blue)</li>
+                            <li>Center-weighted image cropping</li>
+                            <li>Gradient overlay on cropped content</li>
+                            <li>Smooth spring animations</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- AutoDisplayImage Component -->
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">AutoDisplayImage</div>
+                        <div class="component-description">
+                            Smart image component with adaptive height, center-weighted cropping, and dual expansion modes.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                            <span class="tag">Media</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div class="feed-media with-gradient" style="height: 300px; border-radius: 12px;">
+                            🖼️ Portrait Image<br>
+                            <small style="opacity: 0.7; font-size: 12px;">Cropped from 25% down</small>
+                            <div class="expand-indicator">⤢</div>
+                            <div class="toggle-indicator">⌄</div>
+                        </div>
+                        <ul class="feature-list">
+                            <li>Portrait detection (aspect > 1.3)</li>
+                            <li>Center-weighted cropping for subjects</li>
+                            <li>Bottom gradient fade when cropped</li>
+                            <li>Spring animations (300ms, damping: 20)</li>
+                            <li>Dual expansion: in-feed + fullscreen</li>
+                        </ul>
+                        <div class="code-block">
+<span class="code-comment">// Usage</span>
+<span class="code-tag">&lt;AutoDisplayImage</span>
+  <span class="code-attr">imageUrl</span>=<span class="code-value">{url}</span>
+  <span class="code-attr">onExpand</span>=<span class="code-value">{() => openGallery(0)}</span>
+  <span class="code-attr">previewHeight</span>=<span class="code-value">{300}</span>
+<span class="code-tag">/&gt;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ImageGallery Component -->
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">ImageGallery</div>
+                        <div class="component-description">
+                            Fullscreen swipeable gallery with pinch-to-zoom, pan gestures, and page indicators.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                            <span class="tag">Modal</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div class="gallery-preview">
+                            <div class="gallery-image">
+                                🎨 Gallery View<br>
+                                <small style="opacity: 0.8;">Swipe to navigate</small>
+                            </div>
+                            <div class="gallery-counter">
+                                🖼️ 1 / 5
+                            </div>
+                            <div class="gallery-close">×</div>
+                            <div class="gallery-indicators">
+                                <div class="indicator active"></div>
+                                <div class="indicator"></div>
+                                <div class="indicator"></div>
+                                <div class="indicator"></div>
+                                <div class="indicator"></div>
+                            </div>
+                        </div>
+                        <ul class="feature-list">
+                            <li>Horizontal swipe navigation</li>
+                            <li>Pinch-to-zoom (1x - 4x)</li>
+                            <li>Pan when zoomed</li>
+                            <li>Page indicators (dots)</li>
+                            <li>Image counter badge</li>
+                            <li>Close button with safe area</li>
+                        </ul>
+                        <div class="code-block">
+<span class="code-comment">// All images now open gallery</span>
+<span class="code-tag">&lt;ImageGallery</span>
+  <span class="code-attr">images</span>=<span class="code-value">{imageUrls}</span>
+  <span class="code-attr">initialIndex</span>=<span class="code-value">{index}</span>
+  <span class="code-attr">visible</span>=<span class="code-value">{visible}</span>
+  <span class="code-attr">onClose</span>=<span class="code-value">{close}</span>
+<span class="code-tag">/&gt;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AutoPlayVideo Component -->
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">AutoPlayVideo</div>
+                        <div class="component-description">
+                            Auto-playing video with visibility detection, adaptive height, and mute controls.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag updated">Updated</span>
+                            <span class="tag">Media</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div class="video-preview">
+                            <div class="video-content">
+                                📹 Video Player<br>
+                                <small style="opacity: 0.5;">16:9 aspect</small>
+                            </div>
+                            <div class="play-indicator">▶</div>
+                            <div class="mute-indicator">🔇</div>
+                        </div>
+                        <ul class="feature-list">
+                            <li>Auto-play at 50% visibility</li>
+                            <li>Muted by default</li>
+                            <li>Adaptive height (width / aspectRatio)</li>
+                            <li>Tap to pause, long-press to mute</li>
+                            <li>Play/pause icon shows 800ms</li>
+                            <li>Full-width display</li>
+                        </ul>
+                        <div class="code-block">
+<span class="code-comment">// Adaptive height calculation</span>
+<span class="code-value">height = screenWidth / aspectRatio</span>
+
+<span class="code-comment">// Auto-play threshold</span>
+<span class="code-value">threshold: 50% visibility</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- UX Improvements Section -->
+        <div class="section">
+            <h2 class="section-title">UX Improvements</h2>
+            <div class="components-grid">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">Center-Weighted Cropping</div>
+                        <div class="component-description">
+                            Smart crop positioning based on aspect ratio to show subjects instead of empty space.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-weight: 700; margin-bottom: 8px; color: #dc3545;">❌ Before</div>
+                                <div class="feed-media" style="height: 200px; border-radius: 8px; background: linear-gradient(to bottom, #87CEEB 50%, #90EE90 50%);">
+                                    <div style="position: absolute; top: 10%; font-size: 12px;">☀️ Sky (wasted)</div>
+                                    <div style="position: absolute; top: 60%; font-size: 18px;">😊 Face (cut off)</div>
+                                </div>
+                                <p style="font-size: 12px; color: #6c757d; margin-top: 8px;">Top-left crop cuts off subject</p>
+                            </div>
+                            <div>
+                                <div style="font-weight: 700; margin-bottom: 8px; color: #10b981;">✓ After</div>
+                                <div class="feed-media" style="height: 200px; border-radius: 8px; background: linear-gradient(to bottom, #87CEEB 25%, #FFD700 25%, #FFD700 75%, #90EE90 75%);">
+                                    <div style="position: absolute; top: 15%; font-size: 18px;">😊 Face (visible)</div>
+                                </div>
+                                <p style="font-size: 12px; color: #6c757d; margin-top: 8px;">Center-weighted shows subject</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">Gradient Affordance</div>
+                        <div class="component-description">
+                            Visual indicator that signals hidden content below the fold.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div class="feed-media with-gradient" style="height: 250px; border-radius: 12px; background: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 600%22><rect fill=%22%23667eea%22 width=%22400%22 height=%22600%22/><text x=%2250%25%22 y=%2230%25%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2224%22 font-weight=%22bold%22>Full Image Content</text><text x=%2250%25%22 y=%2270%25%22 text-anchor=%22middle%22 fill=%22rgba(255,255,255,0.5)%22 font-size=%2218%22>More content below...</text></svg>') center/cover;">
+                            <div style="position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); color: white; font-size: 14px; text-align: center; z-index: 6;">
+                                Gradient signals<br>"there's more below"
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; color: #495057; margin-top: 16px;">
+                            <strong>Psychology:</strong> Users see the fade and instinctively know to tap/expand for full content.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">Spring Animations</div>
+                        <div class="component-description">
+                            Smooth, native-feeling transitions using spring physics.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center;">
+                            <div style="font-weight: 700; margin-bottom: 16px;">Animation Parameters</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left;">
+                                <div style="padding: 12px; background: white; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #6c757d;">Duration</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #10b981;">300ms</div>
+                                </div>
+                                <div style="padding: 12px; background: white; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #6c757d;">Damping</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #10b981;">20</div>
+                                </div>
+                                <div style="padding: 12px; background: white; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #6c757d;">Stiffness</div>
+                                    <div style="font-size: 20px; font-weight: 700; color: #10b981;">300</div>
+                                </div>
+                                <div style="padding: 12px; background: white; border-radius: 8px;">
+                                    <div style="font-size: 12px; color: #6c757d;">Easing</div>
+                                    <div style="font-size: 16px; font-weight: 700; color: #10b981;">Spring</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; color: #495057; margin-top: 16px;">
+                            <strong>iOS Standard:</strong> Matches native iOS animation feel for professional quality.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">All Images Clickable</div>
+                        <div class="component-description">
+                            Consistent behavior - every image in grids opens gallery at correct index.
+                        </div>
+                        <div class="component-tags">
+                            <span class="tag new">New</span>
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="aspect-ratio: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; cursor: pointer; position: relative;">
+                                #1
+                                <div style="position: absolute; top: 4px; right: 4px; font-size: 12px;">👆</div>
+                            </div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; cursor: pointer; position: relative;">
+                                #2
+                                <div style="position: absolute; top: 4px; right: 4px; font-size: 12px;">👆</div>
+                            </div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; cursor: pointer; position: relative;">
+                                #3
+                                <div style="position: absolute; top: 4px; right: 4px; font-size: 12px;">👆</div>
+                            </div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; cursor: pointer; position: relative;">
+                                +2
+                                <div style="position: absolute; top: 4px; right: 4px; font-size: 12px;">👆</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; color: #495057; margin-top: 16px;">
+                            <strong>Before:</strong> ❌ Only first image clickable<br>
+                            <strong>After:</strong> ✓ Every image opens gallery at correct position
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pattern Reference Section -->
+        <div class="section">
+            <h2 class="section-title">Industry Patterns Used</h2>
+            <div class="components-grid">
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">📱 Instagram Pattern</div>
+                        <div class="component-description">
+                            Hero image + tap to expand to original aspect ratio
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <ul class="feature-list">
+                            <li>Posts expand to original aspect ratio</li>
+                            <li>Videos auto-play at ~4:5 aspect</li>
+                            <li>Carousels with swipe + dots</li>
+                            <li>Double-tap to like</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">🐦 Twitter/X Pattern</div>
+                        <div class="component-description">
+                            Adaptive height with "Show more" for tall images
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <ul class="feature-list">
+                            <li>Max height ~400px preview</li>
+                            <li>Adaptive to content</li>
+                            <li>2x2 grid for multi-image</li>
+                            <li>Tap opens gallery</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">📸 iOS Photos Pattern</div>
+                        <div class="component-description">
+                            Zoom-from-thumbnail transition
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <ul class="feature-list">
+                            <li>Spatial context maintained</li>
+                            <li>350ms zoom animation</li>
+                            <li>Black background fade</li>
+                            <li>Pinch to zoom</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component-card">
+                    <div class="component-header">
+                        <div class="component-name">🎵 TikTok Pattern</div>
+                        <div class="component-description">
+                            Strong haptic feedback + fullscreen engagement
+                        </div>
+                    </div>
+                    <div class="component-preview">
+                        <ul class="feature-list">
+                            <li>Fullscreen vertical videos</li>
+                            <li>Tap to pause</li>
+                            <li>Double-tap to like</li>
+                            <li>Swipe up/down navigation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; color: white; margin-top: 60px; padding: 40px 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size: 18px; margin-bottom: 8px;">🚀 Ready to Ship</p>
+            <p style="opacity: 0.8; font-size: 14px;">All UX improvements applied • Matches industry standards</p>
+            <p style="opacity: 0.6; font-size: 12px; margin-top: 16px;">Generated by Claude Sonnet 4.5 • 2026-01-28</p>
+        </div>
+    </div>
+
+    <script>
+        // Add interactivity
+        console.log('🎨 Racefy Component Showcase loaded!');
+
+        // Log component stats
+        const components = document.querySelectorAll('.component-card');
+        console.log(`📦 ${components.length} components documented`);
+
+        // Add hover effects
+        components.forEach(card => {
+            card.addEventListener('click', () => {
+                console.log('Component clicked:', card.querySelector('.component-name').textContent);
+            });
+        });
+    </script>
+</body>
+</html>
