@@ -184,8 +184,25 @@
     "deleteConfirm": "Czy na pewno chcesz usunąć ten post?",
     "postTypes": {
       "activity": "Aktywność",
-      "event": "Wydarzenie"
-    }
+      "event": "Wydarzenie",
+      "sponsored": "Sponsorowane"
+    },
+    "showMore": "Pokaż więcej",
+    "viewDetails": "Szczegóły →",
+    "visibility": {
+      "public": "Publiczny",
+      "followers": "Obserwujący",
+      "private": "Prywatny"
+    },
+    "report": "Zgłoś zawartość",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "participants": "{{count}} uczestników",
+    "reportPost": "Zgłoś post",
+    "reportConfirm": "Czy na pewno chcesz zgłosić ten post?",
+    "reportSuccess": "Post został zgłoszony",
+    "reportFailed": "Nie udało się zgłosić postu",
+    "editNotImplemented": "Funkcja edycji postów wkrótce"
   },
   "postForm": {
     "editTitle": "Edytuj post",

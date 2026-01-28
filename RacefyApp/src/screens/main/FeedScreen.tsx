@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
-  PostCard,
+  FeedCard,
   Card,
   Avatar,
   Loading,
@@ -213,6 +213,33 @@ export function FeedScreen({ navigation, route }: Props) {
         },
       ]
     );
+  };
+
+  const handleReportPost = (postId: number) => {
+    Alert.alert(
+      t('feed.reportPost'),
+      t('feed.reportConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('feed.report'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.reportPost(postId, 'Inappropriate content');
+              Alert.alert(t('common.success'), t('feed.reportSuccess'));
+            } catch (error) {
+              Alert.alert(t('common.error'), t('feed.reportFailed'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditPost = (postId: number) => {
+    // TODO: Navigate to edit post screen or show edit modal
+    Alert.alert(t('common.info'), t('feed.editNotImplemented'));
   };
 
   const renderSearchResults = () => {
@@ -476,9 +503,9 @@ export function FeedScreen({ navigation, route }: Props) {
           data={posts}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <PostCard
+            <FeedCard
               post={item}
-              onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
+              isOwner={item.user_id === user?.id}
               onLike={() => toggleLike(item)}
               onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
               onUserPress={() => {
@@ -496,8 +523,11 @@ export function FeedScreen({ navigation, route }: Props) {
                   ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
                   : undefined
               }
-              onMenuPress={() => handleDeletePost(item.id)}
-              isOwner={item.user_id === user?.id}
+              onMenu={(action) => {
+                if (action === 'delete') handleDeletePost(item.id);
+                else if (action === 'report') handleReportPost(item.id);
+                else if (action === 'edit') handleEditPost(item.id);
+              }}
             />
           )}
           ListHeaderComponent={

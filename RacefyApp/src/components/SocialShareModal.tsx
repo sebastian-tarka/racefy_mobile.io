@@ -29,8 +29,8 @@ interface SocialShareModalProps {
   onClose: () => void;
   type: ShareableType;
   id: number;
-  title?: string;
-  description?: string;
+  title?: string | null
+  description?: string | null;
 }
 
 interface SharePlatform {

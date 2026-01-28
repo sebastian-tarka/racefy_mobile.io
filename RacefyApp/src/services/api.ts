@@ -301,6 +301,14 @@ class ApiService {
     await this.request(`/posts/${id}`, { method: 'DELETE' });
   }
 
+  async reportPost(id: number, reason: string): Promise<void> {
+    await this.request(`/posts/${id}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+  }
+
   async likePost(id: number): Promise<void> {
     await this.request(`/posts/${id}/like`, { method: 'POST' });
   }
