@@ -23,6 +23,7 @@ import {
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh } from '../../services/refreshEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
@@ -185,6 +186,7 @@ export function PostFormScreen({ navigation, route }: Props) {
 
         Alert.alert(t('common.success'), t('postForm.updateSuccess'));
       }
+      emitRefresh('feed');
       navigation.goBack();
     } catch (error) {
       logger.error('api', 'Failed to save post', { error });

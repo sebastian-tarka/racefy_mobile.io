@@ -23,6 +23,7 @@ import {
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh } from '../../services/refreshEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -302,6 +303,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
         Alert.alert(t('common.success'), t('activityForm.updateSuccess'));
       }
+      emitRefresh('activities');
       navigation.goBack();
     } catch (error) {
       logger.error('api', 'Failed to save activity', { error });

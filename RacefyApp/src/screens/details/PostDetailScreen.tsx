@@ -28,6 +28,7 @@ import {
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -143,6 +144,8 @@ export function PostDetailScreen({ route, navigation }: Props) {
     fetchPost();
   }, [fetchPost]);
 
+  useRefreshOn('feed', fetchPost);
+
   const handleLike = async () => {
     if (!isAuthenticated) {
       navigation.navigate('Auth', { screen: 'Login' });
@@ -177,6 +180,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
           onPress: async () => {
             try {
               await api.deletePost(postId);
+              emitRefresh('feed');
               navigation.goBack();
             } catch {
               Alert.alert(t('common.error'), t('feed.failedToDelete'));

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, SocialShareModal } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -110,6 +111,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     fetchActivity();
   }, [fetchActivity]);
 
+  useRefreshOn('activities', fetchActivity);
+
   const handleDelete = useCallback(() => {
     Alert.alert(
       t('activityDetail.deleteActivity'),
@@ -122,6 +125,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           onPress: async () => {
             try {
               await api.deleteActivity(activityId);
+              emitRefresh('activities');
               navigation.goBack();
             } catch (error) {
               Alert.alert(t('common.error'), t('activityDetail.deleteFailed'));

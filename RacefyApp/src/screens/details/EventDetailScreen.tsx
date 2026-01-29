@@ -21,6 +21,7 @@ import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -129,6 +130,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
     fetchEvent();
   }, [fetchEvent]);
 
+  useRefreshOn('events', fetchEvent);
+
   const handleRegister = async () => {
     if (!isAuthenticated) {
       navigation.navigate('Auth', { screen: 'Login' });
@@ -222,6 +225,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           onPress: async () => {
             try {
               await api.deleteEvent(event.id);
+              emitRefresh('events');
               navigation.goBack();
             } catch (error) {
               Alert.alert(t('common.error'), t('eventDetail.deleteEventFailed'));

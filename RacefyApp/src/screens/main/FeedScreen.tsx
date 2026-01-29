@@ -31,6 +31,7 @@ import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
@@ -72,6 +73,8 @@ export function FeedScreen({ navigation, route }: Props) {
     createPost,
     deletePost,
   } = useFeed();
+
+  useRefreshOn('feed', refresh);
 
   const [newPostContent, setNewPostContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);

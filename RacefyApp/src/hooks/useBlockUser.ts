@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { emitRefresh } from '../services/refreshEvents';
 import { useTranslation } from 'react-i18next';
 
 interface UseBlockUserReturn {
@@ -54,6 +55,7 @@ export function useBlockUser(): UseBlockUserReturn {
                 await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
                 logger.auth('User blocked', { userId, username });
+                emitRefresh('feed');
 
                 // Show success message
                 Alert.alert(

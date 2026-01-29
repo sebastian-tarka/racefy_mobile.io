@@ -27,6 +27,7 @@ import {
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
+import {emitRefresh} from '../../services/refreshEvents';
 import {fixStorageUrl} from '../../config/api';
 import {useTheme} from '../../hooks/useTheme';
 import {useSportTypes} from '../../hooks/useSportTypes';
@@ -300,6 +301,7 @@ export function EventFormScreen({navigation, route}: Props) {
                             ? t('eventForm.updateSuccess') + '\n' + t('eventForm.coverImageUploadFailed')
                             : t('eventForm.createSuccess') + '\n' + t('eventForm.coverImageUploadFailed')
                     );
+                    emitRefresh('events');
                     navigation.goBack();
                     return;
                 }
@@ -331,6 +333,7 @@ export function EventFormScreen({navigation, route}: Props) {
                 t('common.success'),
                 isEditMode ? t('eventForm.updateSuccess') : t('eventForm.createSuccess')
             );
+            emitRefresh('events');
             navigation.goBack();
         } catch (error) {
             logger.error('api', 'Failed to save event', {error});

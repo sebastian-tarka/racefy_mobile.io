@@ -36,6 +36,7 @@ import { useFollowing } from '../../hooks/useFollowing';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -210,6 +211,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
     setIsRefreshing(false);
   };
+
+  // Auto-refresh on mutations from other screens
+  useRefreshOn('feed', postsData.refresh);
+  useRefreshOn('activities', activitiesData.refresh);
+  useRefreshOn('events', eventsData.refresh);
+  useRefreshOn('profile', handleRefresh);
 
   const handleLogout = () => {
     Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [

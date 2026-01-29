@@ -17,6 +17,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { emitRefresh } from '../services/refreshEvents';
 import { spacing, fontSize } from '../theme';
 import type { Comment, CommentableType, User, MediaItem } from '../types/api';
 
@@ -132,6 +133,7 @@ export function CommentSection({
 
     setLocalCommentsCount((prev) => prev + 1);
     setReplyingTo(null);
+    emitRefresh('feed');
   };
 
   const handleLikeComment = async (commentId: number) => {
@@ -154,6 +156,7 @@ export function CommentSection({
       }));
     });
     setLocalCommentsCount((prev) => prev - 1);
+    emitRefresh('feed');
   };
 
   const handleEditComment = async (

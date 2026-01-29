@@ -21,6 +21,7 @@ import { useEvents } from '../../hooks/useEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -50,6 +51,8 @@ export function EventsScreen({ navigation, route }: Props) {
     loadMore,
     changeFilter,
   } = useEvents();
+
+  useRefreshOn('events', refresh);
 
   const filters: { label: string; value: FilterOption }[] = [
     { label: t('events.filters.all'), value: 'all' },
