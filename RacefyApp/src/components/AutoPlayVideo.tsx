@@ -33,6 +33,16 @@ export function AutoPlayVideo({
     player.volume = 0;
   });
 
+  // Reset player when URL changes
+  useEffect(() => {
+    player.pause();
+    player.currentTime = 0;
+
+    return () => {
+      player.pause();
+    };
+  }, [videoUrl, player]);
+
   // Handle viewability changes - auto play/pause
   useEffect(() => {
     if (isViewable) {

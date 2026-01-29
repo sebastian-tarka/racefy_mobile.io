@@ -502,6 +502,7 @@ export function FeedScreen({ navigation, route }: Props) {
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id.toString()}
+          removeClippedSubviews={false}
           renderItem={({ item }) => (
             <FeedCard
               post={item}
