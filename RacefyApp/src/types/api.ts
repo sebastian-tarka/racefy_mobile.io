@@ -1256,6 +1256,7 @@ export type NotificationType =
   | 'comments'
   | 'follows'
   | 'mentions'
+  | 'boosts'
   | 'activity_reactions'
   | 'messages'
   | 'event_reminders'
@@ -1668,7 +1669,10 @@ export interface PushNotificationData {
   type: NotificationType;
   title?: string;
   body?: string;
-  // Navigation data
+  // Backend-provided URL for navigation (priority source)
+  url?: string;
+  timestamp?: string;
+  // Navigation data (fallback if URL not provided)
   post_id?: number;
   activity_id?: number;
   event_id?: number;
@@ -1690,6 +1694,7 @@ export interface PushNotificationData {
   actor_id?: number;
   actor_name?: string;
   actor_username?: string;
+  actor_avatar?: string;
 }
 
 // ============ SOCIAL SHARING ============

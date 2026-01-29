@@ -95,7 +95,7 @@ export function usePushNotifications(
         return;
       }
 
-      const { type } = data;
+      const { type, url } = data;
 
       // Skip navigation if type is undefined or null
       if (!type) {
@@ -103,22 +103,39 @@ export function usePushNotifications(
         return;
       }
 
-      logger.info('general', 'Handling notification navigation', { type, data });
+      logger.info('general', 'Handling notification navigation', { type, url, data });
 
+      // PRIORITY 1: Use backend-provided URL if available
+      if (url) {
+        const navigated = navigateFromUrl(url, navigation);
+        if (navigated) {
+          return;
+        }
+        // If URL navigation failed, fall through to type-based navigation
+        logger.warn('general', 'Failed to navigate from URL, trying type-based navigation', { url });
+      }
+
+      // PRIORITY 2: Fallback to type-based navigation
       switch (type as NotificationType) {
         case 'likes':
         case 'comments':
         case 'mentions':
           // Navigate to the liked/commented item
-          if (data.post_id) {
-            navigation.navigate('PostDetail', {
-              postId: data.post_id,
-              focusComments: type === 'comments' || type === 'mentions',
-            });
-          } else if (data.activity_id) {
-            navigation.navigate('ActivityDetail', {
-              activityId: data.activity_id,
-            });
+          if (data.likeable_type === 'post' || data.commentable_type === 'post' || data.post_id) {
+            const postId = data.post_id || data.likeable_id || data.commentable_id;
+            if (postId) {
+              navigation.navigate('PostDetail', {
+                postId: postId,
+                focusComments: type === 'comments' || type === 'mentions',
+              });
+            }
+          } else if (data.likeable_type === 'activity' || data.commentable_type === 'activity' || data.activity_id) {
+            const activityId = data.activity_id || data.likeable_id || data.commentable_id;
+            if (activityId) {
+              navigation.navigate('ActivityDetail', {
+                activityId: activityId,
+              });
+            }
           }
           break;
 
@@ -128,16 +145,16 @@ export function usePushNotifications(
             navigation.navigate('UserProfile', {
               username: data.actor_username,
             });
+          } else {
+            logger.warn('general', 'Follow notification missing actor_username', { data });
           }
           break;
 
         case 'messages':
-          // Navigate to the conversation
-          if (data.conversation_id) {
-            // We need to navigate to ConversationsList first, then to Chat
-            // Or we could navigate directly to Chat if we have participant data
-            navigation.navigate('ConversationsList');
-          }
+          // Navigate to conversations list - Chat screen requires participant data
+          // which we don't have in the push notification payload
+          // The ConversationsList screen will show the conversation at the top
+          navigation.navigate('ConversationsList');
           break;
 
         case 'event_reminders':
@@ -159,6 +176,7 @@ export function usePushNotifications(
           break;
 
         case 'activity_reactions':
+        case 'boosts':
           // Navigate to the activity
           if (data.activity_id) {
             navigation.navigate('ActivityDetail', {
@@ -188,6 +206,55 @@ export function usePushNotifications(
     },
     [navigationRef]
   );
+
+  /**
+   * Navigate based on backend-provided URL
+   * Returns true if navigation succeeded, false otherwise
+   */
+  const navigateFromUrl = (url: string, navigation: any): boolean => {
+    try {
+      // Profile: /@username
+      if (url.match(/^\/@[\w-]+$/)) {
+        const username = url.substring(2);
+        navigation.navigate('UserProfile', { username });
+        return true;
+      }
+
+      // Post: /posts/{id}
+      const postMatch = url.match(/^\/posts\/(\d+)$/);
+      if (postMatch) {
+        navigation.navigate('PostDetail', { postId: parseInt(postMatch[1]) });
+        return true;
+      }
+
+      // Activity: /activities/{id}
+      const activityMatch = url.match(/^\/activities\/(\d+)$/);
+      if (activityMatch) {
+        navigation.navigate('ActivityDetail', { activityId: parseInt(activityMatch[1]) });
+        return true;
+      }
+
+      // Event: /events/{id}
+      const eventMatch = url.match(/^\/events\/(\d+)$/);
+      if (eventMatch) {
+        navigation.navigate('EventDetail', { eventId: parseInt(eventMatch[1]) });
+        return true;
+      }
+
+      // Messages: /messages?conversation={id}
+      // Note: We navigate to ConversationsList because Chat screen requires participant data
+      if (url.startsWith('/messages')) {
+        navigation.navigate('ConversationsList');
+        return true;
+      }
+
+      logger.warn('general', 'Unknown URL pattern', { url });
+      return false;
+    } catch (error) {
+      logger.error('general', 'Error parsing notification URL', { url, error });
+      return false;
+    }
+  };
 
   // Set up notification listeners
   useEffect(() => {
