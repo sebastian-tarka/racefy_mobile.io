@@ -36,6 +36,7 @@ export * from './LeafletMap';
 export * from './Loading';
 export * from './MediaGallery';
 export * from './MediaPicker';
+export * from './MediaSlider';
 export * from './MediaThumbnail';
 export * from './NotificationItem';
 export * from './NotificationBadge';

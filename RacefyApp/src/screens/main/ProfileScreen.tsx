@@ -634,6 +634,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
+    marginHorizontal:0
   },
   title: {
     fontSize: fontSize.xl,
@@ -650,6 +651,7 @@ const styles = StyleSheet.create({
   coverImage: {
     height: 120,
     position: 'relative',
+    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
   },
   settingsButton: {
     position: 'absolute',
@@ -668,6 +670,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
     borderBottomWidth: 1,
+    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
   },
   avatarContainer: {
     marginTop: -40,
@@ -716,6 +719,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
+    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
   },
   tab: {
     flex: 1,

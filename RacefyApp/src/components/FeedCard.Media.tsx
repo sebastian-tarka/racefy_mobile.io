@@ -6,6 +6,7 @@ import { AutoPlayVideo } from './AutoPlayVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
+import { MediaSlider } from './MediaSlider';
 import { useTheme } from '../hooks/useTheme';
 import type { Post } from '../types/api';
 import {
@@ -88,77 +89,41 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
 
   const imageUrls = items.filter(item => item.type === 'image').map(item => item.url);
 
-  if (heroMode) {
-    const hero = items[0];
-    const rest = items.slice(1);
-
+  // Use slider for multiple media items
+  if (items.length > 1) {
     return (
       <View>
-        {hero.type === 'video' ? (
-          <AutoPlayVideo key={`post-${post.id}-video-${hero.id}`} videoUrl={hero.url} thumbnailUrl={hero.thumbnailUrl} aspectRatio={16 / 9} />
-        ) : (
-          <View style={styles.heroMediaContainer}>
-            <AutoDisplayImage
-              imageUrl={hero.thumbnailUrl || hero.url}
-              onExpand={() => imageUrls.length > 1 ? openGallery(0) : setExpandedImage(hero.thumbnailUrl || hero.url)}
-              previewHeight={300}
-            />
-          </View>
-        )}
-
-        {rest.length > 0 && (
-          <View style={styles.mediaGrid}>
-            {rest.map((item, i) => {
-              const imageIndex = items.slice(0, i + 2).filter(it => it.type === 'image').length - 1;
-              return <MediaGridItem key={item.id} item={item} index={i} onPress={() => item.type === 'image' && openGallery(imageIndex)} />;
-            })}
-          </View>
-        )}
-
-        <ImageIndicator count={imageUrls.length} />
+        <MediaSlider
+          items={items}
+          onImagePress={(index) => {
+            // Find the corresponding image index (excluding videos)
+            const imageIndex = items.slice(0, index + 1).filter(it => it.type === 'image').length - 1;
+            if (imageIndex >= 0) {
+              imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(items[index].url);
+            }
+          }}
+          aspectRatio={16 / 9}
+          previewHeight={300}
+        />
         <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
       </View>
     );
   }
 
-  // Non-hero mode
-  if (items.length === 1) {
-    const item = items[0];
-    if (item.type === 'video') {
-      return <AutoPlayVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={16 / 9} />;
-    }
-    return (
-      <>
-        <View style={styles.supplementaryMediaContainer}>
-          <AutoDisplayImage
-            imageUrl={item.thumbnailUrl || item.url}
-            onExpand={() => imageUrls.length > 1 ? openGallery(0) : setExpandedImage(item.thumbnailUrl || item.url)}
-            previewHeight={300}
-          />
-        </View>
-        <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
-      </>
-    );
+  // Single media item
+  const item = items[0];
+  if (item.type === 'video') {
+    return <AutoPlayVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={16 / 9} />;
   }
-
-  const visible = items.slice(0, 4);
-  const remaining = items.length - 4;
 
   return (
     <>
-      <View style={styles.mediaGrid}>
-        {visible.map((item, i) => {
-          const imageIndex = items.slice(0, i + 1).filter(it => it.type === 'image').length - 1;
-          return <MediaGridItem key={item.id} item={item} index={i} onPress={() => item.type === 'image' && imageUrls.length > 0 && openGallery(imageIndex)} />;
-        })}
-        {remaining > 0 && (
-          <TouchableOpacity style={styles.mediaGridItem} activeOpacity={0.9} onPress={() => imageUrls.length > 0 && openGallery(Math.min(3, imageUrls.length - 1))}>
-            <View style={[styles.mediaGridImage, styles.moreBadge]}>
-              <Text style={styles.moreBadgeText}>+{remaining}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        <ImageIndicator count={imageUrls.length} />
+      <View style={heroMode ? styles.heroMediaContainer : styles.supplementaryMediaContainer}>
+        <AutoDisplayImage
+          imageUrl={item.thumbnailUrl || item.url}
+          onExpand={() => setExpandedImage(item.thumbnailUrl || item.url)}
+          previewHeight={300}
+        />
       </View>
       <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
     </>

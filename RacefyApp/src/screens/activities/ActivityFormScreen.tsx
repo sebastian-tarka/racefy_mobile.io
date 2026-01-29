@@ -28,7 +28,7 @@ import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Activity, Photo, MediaItem } from '../../types/api';
+import type { Activity, Photo, Video, MediaItem } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityForm'>;
 
@@ -49,11 +49,13 @@ export function ActivityFormScreen({ navigation, route }: Props) {
   const [hasGpsTrack, setHasGpsTrack] = useState(false);
   const [showStartFinishPoints, setShowStartFinishPoints] = useState(false);
 
-  // Photo management
+  // Media management (photos + videos)
   const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
+  const [existingVideos, setExistingVideos] = useState<Video[]>([]);
   const [newPhotos, setNewPhotos] = useState<MediaItem[]>([]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const MAX_PHOTOS = 10;
+  const MAX_VIDEOS = 5;
 
   useEffect(() => {
     if (isEditMode && activityId) {
@@ -66,6 +68,17 @@ export function ActivityFormScreen({ navigation, route }: Props) {
     try {
       const activity = await api.getActivity(id);
       populateForm(activity);
+
+      // If activity has a post, fetch it to get videos
+      if (activity.post_id) {
+        try {
+          const post = await api.getPost(activity.post_id);
+          setExistingVideos(post.videos || []);
+        } catch (postError) {
+          logger.debug('api', 'Failed to fetch activity post', { postError });
+          // Continue without videos if post fetch fails
+        }
+      }
     } catch (error) {
       logger.error('api', 'Failed to fetch activity', { error });
       Alert.alert(t('common.error'), t('activityForm.failedToLoad'));
@@ -80,6 +93,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
     setDescription(activity.description || '');
     setIsPrivate(activity.is_private || false);
     setExistingPhotos(activity.photos || []);
+    // Note: Videos are fetched separately from the post
     // GPS Privacy
     setHasGpsTrack(activity.has_gps_track || false);
     setShowStartFinishPoints(activity.show_start_finish_points || false);
@@ -104,8 +118,10 @@ export function ActivityFormScreen({ navigation, route }: Props) {
     }
   };
 
-  // Photo management functions
+  // Media management functions
   const totalPhotos = existingPhotos.length + newPhotos.length;
+  const totalVideos = existingVideos.length;
+  const totalMedia = totalPhotos + totalVideos;
   const canAddMorePhotos = totalPhotos < MAX_PHOTOS;
 
   const pickPhotos = async () => {
@@ -193,6 +209,29 @@ export function ActivityFormScreen({ navigation, route }: Props) {
             } catch (error) {
               logger.error('api', 'Failed to delete photo', { error });
               Alert.alert(t('common.error'), t('activityForm.deletePhotoFailed'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteExistingVideo = (video: Video) => {
+    Alert.alert(
+      t('activityForm.deleteVideo'),
+      t('activityForm.deleteVideoConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteVideo(video.id);
+              setExistingVideos((prev) => prev.filter((v) => v.id !== video.id));
+            } catch (error) {
+              logger.error('api', 'Failed to delete video', { error });
+              Alert.alert(t('common.error'), t('activityForm.deleteVideoFailed'));
             }
           },
         },
@@ -381,22 +420,41 @@ export function ActivityFormScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          {/* Photos Section */}
+          {/* Media Section (Photos & Videos) */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('activityForm.photos')}
+                {t('activityForm.media')}
               </Text>
               <Text style={[styles.photoCount, { color: colors.textMuted }]}>
-                {totalPhotos}/{MAX_PHOTOS}
+                {totalMedia} {t('activityForm.items')}
               </Text>
             </View>
 
-            {/* Photo Grid */}
+            {/* Media Grid */}
             <View style={styles.photoGrid}>
+              {/* Existing Videos */}
+              {existingVideos.map((video) => (
+                <View key={`existing-video-${video.id}`} style={styles.photoItem}>
+                  <Image
+                    source={{ uri: fixStorageUrl(video.thumbnail_url || video.url) || '' }}
+                    style={styles.photoImage}
+                  />
+                  <View style={styles.videoOverlay}>
+                    <Ionicons name="play-circle" size={32} color="rgba(255,255,255,0.9)" />
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.deleteButton, { backgroundColor: colors.error }]}
+                    onPress={() => handleDeleteExistingVideo(video)}
+                  >
+                    <Ionicons name="close" size={16} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+
               {/* Existing Photos */}
               {existingPhotos.map((photo) => (
-                <View key={`existing-${photo.id}`} style={styles.photoItem}>
+                <View key={`existing-photo-${photo.id}`} style={styles.photoItem}>
                   <Image
                     source={{ uri: fixStorageUrl(photo.url) || '' }}
                     style={styles.photoImage}
@@ -550,6 +608,16 @@ const styles = StyleSheet.create({
   photoImage: {
     width: '100%',
     height: '100%',
+  },
+  videoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   deleteButton: {
     position: 'absolute',

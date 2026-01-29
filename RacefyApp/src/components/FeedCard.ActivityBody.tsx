@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { RoutePreview } from './LeafletMap';
 import { AutoPlayVideo } from './AutoPlayVideo';
@@ -7,6 +7,7 @@ import { AutoDisplayImage } from './AutoDisplayImage';
 import { ExpandableContent } from './FeedCard.Media';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
+import { MediaSlider } from './MediaSlider';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import type { Post, Activity } from '../types/api';
@@ -21,6 +22,8 @@ import {
   useImageGallery,
   styles,
 } from './FeedCard.utils';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 function ActivityBadges({ activity, pace }: { activity: Activity; pace: string }) {
   const { colors } = useTheme();
@@ -92,6 +95,165 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
   );
 }
 
+interface ActivityMediaSliderProps {
+  activity: Activity;
+  mediaItems: PostMediaItem[];
+  imageUrls: string[];
+  onActivityPress?: () => void;
+  openGallery: (index: number) => void;
+  setExpandedImage: (uri: string) => void;
+}
+
+function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress, openGallery, setExpandedImage }: ActivityMediaSliderProps) {
+  const { colors } = useTheme();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+  const hasRouteMap = activity.route_map_url || activity.route_svg;
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index || 0);
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50
+  }).current;
+
+  const renderItem = ({ item, index }: { item: PostMediaItem | { type: 'route' }; index: number }) => {
+    // First slide is the route map
+    if (item.type === 'route' && hasRouteMap) {
+      return (
+        <View style={activitySliderStyles.slide}>
+          <TouchableOpacity
+            style={[activitySliderStyles.routeContainer]}
+            onPress={onActivityPress}
+            activeOpacity={0.8}
+            disabled={!onActivityPress}
+          >
+            <RoutePreview
+              routeMapUrl={fixStorageUrl(activity.route_map_url)}
+              routeSvg={activity.route_svg}
+              trackData={undefined}
+              activityId={activity.id}
+              height={300}
+              backgroundColor={colors.background}
+              showStartMarker={activity.gps_track?.show_start_marker ?? true}
+              showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
+              startPoint={activity.gps_track?.start_point ?? null}
+              finishPoint={activity.gps_track?.finish_point ?? null}
+            />
+            {onActivityPress && (
+              <View style={styles.heroVisualOverlay}>
+                <Ionicons name="expand" size={18} color="#fff" />
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // Media items (videos and photos)
+    const mediaItem = item as PostMediaItem;
+    if (mediaItem.type === 'video') {
+      return (
+        <View style={activitySliderStyles.slide}>
+          <AutoPlayVideo
+            videoUrl={mediaItem.url}
+            thumbnailUrl={mediaItem.thumbnailUrl}
+            aspectRatio={16 / 9}
+          />
+        </View>
+      );
+    }
+
+    // Image
+    const imageIndex = mediaItems.slice(0, index).filter(it => it.type === 'image').length;
+    return (
+      <View style={activitySliderStyles.slide}>
+        <AutoDisplayImage
+          imageUrl={mediaItem.url}
+          onExpand={() => imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(mediaItem.url)}
+          previewHeight={300}
+        />
+      </View>
+    );
+  };
+
+  // Build slides array: route map first (if exists), then media items
+  const slides = hasRouteMap
+    ? [{ type: 'route' as const }, ...mediaItems]
+    : mediaItems;
+
+  return (
+    <View style={activitySliderStyles.container}>
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => item.type === 'route' ? 'route-map' : `${(item as PostMediaItem).id}-${index}`}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        decelerationRate="fast"
+        snapToInterval={SCREEN_WIDTH}
+        snapToAlignment="center"
+      />
+
+      {/* Pagination dots */}
+      {slides.length > 1 && (
+        <View style={activitySliderStyles.pagination}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                activitySliderStyles.dot,
+                index === activeIndex && activitySliderStyles.dotActive
+              ]}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const activitySliderStyles = StyleSheet.create({
+  container: {
+    position: 'relative',
+  },
+  slide: {
+    width: SCREEN_WIDTH,
+  },
+  routeContainer: {
+    height: 300,
+  },
+  pagination: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  dotActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+});
+
 export function ActivityBody({ post, onActivityPress }: { post: Post; onActivityPress?: () => void }) {
   const { colors } = useTheme();
   const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
@@ -105,19 +267,27 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
   const postPhotos = post.photos || [];
   const imageUrls = postPhotos.map(p => fixStorageUrl(p.url) || '');
 
-  const secondaryItems: PostMediaItem[] = [];
-  if (hasRouteMap) {
-    postVideos.forEach((v) => secondaryItems.push({ id: v.id, type: 'video', url: fixStorageUrl(v.url) || '', thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null }));
-    postPhotos.forEach((p) => secondaryItems.push({ id: p.id, type: 'image', url: fixStorageUrl(p.url) || '' }));
-  } else if (postVideos.length > 0) {
-    postVideos.slice(1).forEach((v) => secondaryItems.push({ id: v.id, type: 'video', url: fixStorageUrl(v.url) || '', thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null }));
-    postPhotos.forEach((p) => secondaryItems.push({ id: p.id, type: 'image', url: fixStorageUrl(p.url) || '' }));
-  } else if (postPhotos.length > 1) {
-    postPhotos.slice(1).forEach((p) => secondaryItems.push({ id: p.id, type: 'image', url: fixStorageUrl(p.url) || '' }));
-  }
+  // Build media items for slider (photos and videos combined)
+  const mediaItems: PostMediaItem[] = [];
+  postVideos.forEach((v) => mediaItems.push({
+    id: v.id,
+    type: 'video',
+    url: fixStorageUrl(v.url) || '',
+    thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null
+  }));
+  postPhotos.forEach((p) => mediaItems.push({
+    id: p.id,
+    type: 'image',
+    url: fixStorageUrl(p.url) || ''
+  }));
+
+  const hasMedia = mediaItems.length > 0;
+  const hasMultipleItems = hasRouteMap && hasMedia ? true : mediaItems.length > 1;
 
   return (
     <>
+      <GalleryModals galleryVisible={galleryVisible} setGalleryVisible={setGalleryVisible} galleryIndex={galleryIndex} imageUrls={imageUrls} expandedImage={expandedImage} setExpandedImage={setExpandedImage} />
+
       {/* Title, description, and badges with padding */}
       <View style={styles.bodyPadding}>
         {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
@@ -126,14 +296,25 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
       </View>
 
       {/* Full-bleed hero media */}
-      {hasRouteMap ? (
-        <TouchableOpacity style={[styles.heroVisual, styles.fullBleedMedia, { borderRadius: 0, height: 220 }]} onPress={onActivityPress} activeOpacity={0.8} disabled={!onActivityPress}>
+      {hasRouteMap && hasMedia ? (
+        <View style={styles.fullBleedMedia}>
+          <ActivityMediaSlider
+            activity={activity}
+            mediaItems={mediaItems}
+            imageUrls={imageUrls}
+            onActivityPress={onActivityPress}
+            openGallery={openGallery}
+            setExpandedImage={setExpandedImage}
+          />
+        </View>
+      ) : hasRouteMap ? (
+        <TouchableOpacity style={[styles.heroVisual, styles.fullBleedMedia, { borderRadius: 0, height: 300 }]} onPress={onActivityPress} activeOpacity={0.8} disabled={!onActivityPress}>
           <RoutePreview
             routeMapUrl={fixStorageUrl(activity.route_map_url)}
             routeSvg={activity.route_svg}
             trackData={undefined}
             activityId={activity.id}
-            height={220}
+            height={300}
             backgroundColor={colors.background}
             showStartMarker={activity.gps_track?.show_start_marker ?? true}
             showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
@@ -146,40 +327,44 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
             </View>
           )}
         </TouchableOpacity>
-      ) : postVideos.length > 0 ? (
+      ) : mediaItems.length > 1 ? (
         <View style={styles.fullBleedMedia}>
-          <AutoPlayVideo key={`post-${post.id}-activity-video-${postVideos[0].id}`} videoUrl={fixStorageUrl(postVideos[0].url) || ''} thumbnailUrl={postVideos[0].thumbnail_url ? fixStorageUrl(postVideos[0].thumbnail_url) : null} aspectRatio={16 / 9} />
+          <MediaSlider
+            items={mediaItems}
+            onImagePress={(index) => {
+              const item = mediaItems[index];
+              if (item.type === 'image') {
+                const imageIndex = mediaItems.slice(0, index + 1).filter(it => it.type === 'image').length - 1;
+                imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(item.url);
+              }
+            }}
+            aspectRatio={16 / 9}
+            previewHeight={300}
+          />
         </View>
-      ) : postPhotos.length > 0 ? (
-        <View style={[styles.heroVisualContainer, styles.fullBleedMedia]}>
-          <AutoDisplayImage imageUrl={fixStorageUrl(postPhotos[0].url) || ''} onExpand={() => imageUrls.length > 1 ? openGallery(0) : setExpandedImage(fixStorageUrl(postPhotos[0].url) || '')} previewHeight={300} />
-        </View>
+      ) : mediaItems.length === 1 ? (
+        mediaItems[0].type === 'video' ? (
+          <View style={styles.fullBleedMedia}>
+            <AutoPlayVideo
+              key={`post-${post.id}-activity-video-${mediaItems[0].id}`}
+              videoUrl={mediaItems[0].url}
+              thumbnailUrl={mediaItems[0].thumbnailUrl}
+              aspectRatio={16 / 9}
+            />
+          </View>
+        ) : (
+          <View style={[styles.heroVisualContainer, styles.fullBleedMedia]}>
+            <AutoDisplayImage
+              imageUrl={mediaItems[0].url}
+              onExpand={() => setExpandedImage(mediaItems[0].url)}
+              previewHeight={300}
+            />
+          </View>
+        )
       ) : null}
 
-      {/* Secondary media and stats with padding */}
+      {/* Stats with padding */}
       <View style={styles.bodyPadding}>
-        {secondaryItems.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.secondaryStrip}>
-            {secondaryItems.slice(0, 4).map((item, i) => (
-              <TouchableOpacity key={item.id + '-' + i} style={styles.secondaryThumb} activeOpacity={0.9}>
-                <Image source={{ uri: item.thumbnailUrl || item.url }} style={styles.secondaryThumbImage} resizeMode="cover" />
-                {item.type === 'video' && (
-                  <View style={styles.playOverlaySmall}>
-                    <Ionicons name="play" size={12} color="#FFFFFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-            {secondaryItems.length > 4 && (
-              <View style={styles.secondaryThumb}>
-                <View style={[styles.secondaryThumbImage, styles.moreBadge]}>
-                  <Text style={styles.moreBadgeText}>+{secondaryItems.length - 4}</Text>
-                </View>
-              </View>
-            )}
-          </ScrollView>
-        )}
-
         <ActivityStats activity={activity} heroStat={heroStat} />
       </View>
     </>
