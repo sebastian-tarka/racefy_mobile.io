@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
-  PostCard,
+  FeedCard,
   Card,
   Avatar,
   Loading,
@@ -31,19 +31,19 @@ import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import type { MediaItem, User, Event, Post } from '../../types/api';
+import {useRefreshOn} from "../../services/refreshEvents";
 
 type PostVisibility = 'public' | 'followers' | 'private';
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
-    BottomTabNavigationProp<MainTabParamList, 'Feed'>,
-    NativeStackNavigationProp<RootStackParamList>
+  BottomTabNavigationProp<MainTabParamList, 'Feed'>,
+  NativeStackNavigationProp<RootStackParamList>
 >;
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Feed'> & {
@@ -199,23 +199,50 @@ export function FeedScreen({ navigation, route }: Props) {
 
   const handleDeletePost = (postId: number) => {
     Alert.alert(
-        t('feed.deletePost'),
-        t('feed.deleteConfirm'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.delete'),
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deletePost(postId);
-              } catch (error) {
-                Alert.alert(t('common.error'), t('feed.failedToDelete'));
-              }
-            },
+      t('feed.deletePost'),
+      t('feed.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePost(postId);
+            } catch (error) {
+              Alert.alert(t('common.error'), t('feed.failedToDelete'));
+            }
           },
-        ]
+        },
+      ]
     );
+  };
+
+  const handleReportPost = (postId: number) => {
+    Alert.alert(
+      t('feed.reportPost'),
+      t('feed.reportConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('feed.report'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.reportPost(postId, 'Inappropriate content');
+              Alert.alert(t('common.success'), t('feed.reportSuccess'));
+            } catch (error) {
+              Alert.alert(t('common.error'), t('feed.reportFailed'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditPost = (postId: number) => {
+    // TODO: Navigate to edit post screen or show edit modal
+    Alert.alert(t('common.info'), t('feed.editNotImplemented'));
   };
 
   const renderSearchResults = () => {
@@ -227,29 +254,29 @@ export function FeedScreen({ navigation, route }: Props) {
     });
 
     return (
-        <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
-          <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
-              <Ionicons name="search" size={20} color={colors.textMuted} />
-              <TextInput
-                  ref={searchInputRef}
-                  style={[styles.searchInput, { color: colors.textPrimary }]}
-                  placeholder={t('search.placeholder')}
-                  placeholderTextColor={colors.textMuted}
-                  value={searchQuery}
-                  onChangeText={handleSearchChange}
-                  returnKeyType="search"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-              />
-              {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => handleSearchChange('')}>
-                    <Ionicons name="close-circle" size={20} color={colors.textMuted} />
-                  </TouchableOpacity>
-              )}
-            </View>
+      <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
+        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
+            <Ionicons name="search" size={20} color={colors.textMuted} />
+            <TextInput
+              ref={searchInputRef}
+              style={[styles.searchInput, { color: colors.textPrimary }]}
+              placeholder={t('search.placeholder')}
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => handleSearchChange('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
-        </Animated.View>
+        </View>
+      </Animated.View>
     );
   };
 
@@ -258,163 +285,163 @@ export function FeedScreen({ navigation, route }: Props) {
 
     if (searchQuery.length < 2) {
       return (
-          <View style={styles.searchResultsContainer}>
-            <Text style={[styles.searchHint, { color: colors.textMuted }]}>
-              {t('search.minChars')}
-            </Text>
-          </View>
+        <View style={styles.searchResultsContainer}>
+          <Text style={[styles.searchHint, { color: colors.textMuted }]}>
+            {t('search.minChars')}
+          </Text>
+        </View>
       );
     }
 
     if (isSearching) {
       return (
-          <View style={styles.searchResultsContainer}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.searchingText, { color: colors.textMuted }]}>
-              {t('search.searching')}
-            </Text>
-          </View>
+        <View style={styles.searchResultsContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={[styles.searchingText, { color: colors.textMuted }]}>
+            {t('search.searching')}
+          </Text>
+        </View>
       );
     }
 
     if (!searchResults) return null;
 
     const hasResults =
-        searchResults.users.length > 0 ||
-        searchResults.events.length > 0 ||
-        searchResults.posts.length > 0;
+      searchResults.users.length > 0 ||
+      searchResults.events.length > 0 ||
+      searchResults.posts.length > 0;
 
     if (!hasResults) {
       return (
-          <View style={styles.searchResultsContainer}>
-            <EmptyState
-                icon="search-outline"
-                title={t('search.noResults')}
-                message={t('search.noResultsFor', { query: searchQuery })}
-            />
-          </View>
+        <View style={styles.searchResultsContainer}>
+          <EmptyState
+            icon="search-outline"
+            title={t('search.noResults')}
+            message={t('search.noResultsFor', { query: searchQuery })}
+          />
+        </View>
       );
     }
 
     return (
-        <ScrollView
-            style={styles.searchResultsScroll}
-            keyboardShouldPersistTaps="handled"
-        >
-          {/* Users */}
-          {searchResults.users.length > 0 && (
-              <View style={styles.searchSection}>
-                <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
-                  {t('search.users')}
-                </Text>
-                {searchResults.users.map((searchUser) => (
-                    <TouchableOpacity
-                        key={`user-${searchUser.id}`}
-                        style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
-                        onPress={() => {
-                          setIsSearchVisible(false);
-                          setSearchQuery('');
-                          setSearchResults(null);
-                          navigation.navigate('UserProfile', { username: searchUser.username });
-                        }}
-                    >
-                      <Avatar uri={searchUser.avatar_url} name={searchUser.name} size="sm" />
-                      <View style={styles.searchResultInfo}>
-                        <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
-                          {searchUser.name}
-                        </Text>
-                        <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
-                          @{searchUser.username}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                ))}
-              </View>
-          )}
+      <ScrollView
+        style={styles.searchResultsScroll}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Users */}
+        {searchResults.users.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.users')}
+            </Text>
+            {searchResults.users.map((searchUser) => (
+              <TouchableOpacity
+                key={`user-${searchUser.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('UserProfile', { username: searchUser.username });
+                }}
+              >
+                <Avatar uri={searchUser.avatar_url} name={searchUser.name} size="sm" />
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
+                    {searchUser.name}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    @{searchUser.username}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-          {/* Events */}
-          {searchResults.events.length > 0 && (
-              <View style={styles.searchSection}>
-                <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
-                  {t('search.events')}
-                </Text>
-                {searchResults.events.map((event) => (
-                    <TouchableOpacity
-                        key={`event-${event.id}`}
-                        style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
-                        onPress={() => {
-                          setIsSearchVisible(false);
-                          setSearchQuery('');
-                          setSearchResults(null);
-                          navigation.navigate('EventDetail', { eventId: event.id });
-                        }}
-                    >
-                      <View style={[styles.searchResultIcon, { backgroundColor: colors.primaryLight }]}>
-                        <Ionicons name="calendar" size={20} color={colors.primary} />
-                      </View>
-                      <View style={styles.searchResultInfo}>
-                        <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
-                          {event.post?.title || t('eventDetail.untitled')}
-                        </Text>
-                        <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
-                          {event.location_name}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                ))}
-              </View>
-          )}
+        {/* Events */}
+        {searchResults.events.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.events')}
+            </Text>
+            {searchResults.events.map((event) => (
+              <TouchableOpacity
+                key={`event-${event.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('EventDetail', { eventId: event.id });
+                }}
+              >
+                <View style={[styles.searchResultIcon, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="calendar" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
+                    {event.post?.title || t('eventDetail.untitled')}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    {event.location_name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
-          {/* Posts */}
-          {searchResults.posts.length > 0 && (
-              <View style={styles.searchSection}>
-                <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
-                  {t('search.posts')}
-                </Text>
-                {searchResults.posts.map((post) => (
-                    <TouchableOpacity
-                        key={`post-${post.id}`}
-                        style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
-                        onPress={() => {
-                          setIsSearchVisible(false);
-                          setSearchQuery('');
-                          setSearchResults(null);
-                          navigation.navigate('PostDetail', { postId: post.id });
-                        }}
-                    >
-                      <Avatar uri={post.user?.avatar_url} name={post.user?.name} size="sm" />
-                      <View style={styles.searchResultInfo}>
-                        <Text style={[styles.searchResultName, { color: colors.textPrimary }]} numberOfLines={1}>
-                          {post.title || post.content}
-                        </Text>
-                        <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
-                          {post.user?.name}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                ))}
-              </View>
-          )}
-        </ScrollView>
+        {/* Posts */}
+        {searchResults.posts.length > 0 && (
+          <View style={styles.searchSection}>
+            <Text style={[styles.searchSectionTitle, { color: colors.textSecondary }]}>
+              {t('search.posts')}
+            </Text>
+            {searchResults.posts.map((post) => (
+              <TouchableOpacity
+                key={`post-${post.id}`}
+                style={[styles.searchResultItem, { backgroundColor: colors.cardBackground }]}
+                onPress={() => {
+                  setIsSearchVisible(false);
+                  setSearchQuery('');
+                  setSearchResults(null);
+                  navigation.navigate('PostDetail', { postId: post.id });
+                }}
+              >
+                <Avatar uri={post.user?.avatar_url} name={post.user?.name} size="sm" />
+                <View style={styles.searchResultInfo}>
+                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {post.title || post.content}
+                  </Text>
+                  <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
+                    {post.user?.name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
     );
   };
 
   if (!isAuthenticated) {
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-          <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
-          </View>
-          <EmptyState
-              icon="lock-closed-outline"
-              title={t('feed.signInRequired')}
-              message={t('feed.signInDescription')}
-              actionLabel={t('common.signIn')}
-              onAction={() =>
-                  navigation.getParent()?.navigate('Auth', { screen: 'Login' })
-              }
-          />
-        </SafeAreaView>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
+        </View>
+        <EmptyState
+          icon="lock-closed-outline"
+          title={t('feed.signInRequired')}
+          message={t('feed.signInDescription')}
+          actionLabel={t('common.signIn')}
+          onAction={() =>
+            navigation.getParent()?.navigate('Auth', { screen: 'Login' })
+          }
+        />
+      </SafeAreaView>
     );
   }
 
@@ -423,212 +450,216 @@ export function FeedScreen({ navigation, route }: Props) {
   }
 
   return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-                style={styles.headerButton}
-                onPress={toggleSearch}
-            >
-              <Ionicons
-                  name={isSearchVisible ? 'close' : 'search'}
-                  size={24}
-                  color={isSearchVisible ? colors.error : colors.textPrimary}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.headerButton}
-                onPress={() => {
-                  setIsComposerVisible(!isComposerVisible);
-                  if (isSearchVisible) {
-                    setIsSearchVisible(false);
-                    setSearchQuery('');
-                    setSearchResults(null);
-                  }
-                }}
-            >
-              <Ionicons
-                  name={isComposerVisible ? 'close-circle-outline' : 'add-circle-outline'}
-                  size={26}
-                  color={isComposerVisible ? colors.error : colors.primary}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.headerButton}
-                onPress={() => navigation.navigate('ConversationsList')}
-            >
-              <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
-              {unreadCount > 0 && (
-                  <View style={[styles.unreadBadge, { backgroundColor: colors.error }]}>
-                    <Text style={[styles.unreadBadgeText, { color: colors.white }]}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </Text>
-                  </View>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {renderSearchResults()}
-
-        {isSearchVisible && searchQuery.length > 0 ? (
-            renderSearchResultsContent()
-        ) : (
-            <FlatList
-                data={posts}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <PostCard
-                        post={item}
-                        onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
-                        onLike={() => toggleLike(item)}
-                        onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
-                        onUserPress={() => {
-                          if (item.user?.username) {
-                            navigation.navigate('UserProfile', { username: item.user.username });
-                          }
-                        }}
-                        onActivityPress={
-                          item.type === 'activity' && item.activity
-                              ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
-                              : undefined
-                        }
-                        onEventPress={
-                          item.type === 'event' && item.event
-                              ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
-                              : undefined
-                        }
-                        onMenuPress={() => handleDeletePost(item.id)}
-                        isOwner={item.user_id === user?.id}
-                    />
-                )}
-                ListHeaderComponent={
-                  isComposerVisible ? (
-                      <View style={[styles.composer, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
-                        <View style={[styles.composerHeader, { borderBottomColor: colors.borderLight }]}>
-                          <View style={[styles.composerIcon, { backgroundColor: colors.primary + '15' }]}>
-                            <Ionicons name="create-outline" size={18} color={colors.primary} />
-                          </View>
-                          <Text style={[styles.composerTitle, { color: colors.textPrimary }]}>
-                            {t('feed.createPost')}
-                          </Text>
-                          <TouchableOpacity
-                              onPress={() => setIsComposerVisible(false)}
-                              style={styles.composerClose}
-                          >
-                            <Ionicons name="close" size={22} color={colors.textSecondary} />
-                          </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.composerBody}>
-                          <Avatar uri={user?.avatar} name={user?.name} size="md" />
-                          <View style={styles.composerInputContainer}>
-                            <Text style={[styles.composerUserName, { color: colors.textPrimary }]}>
-                              {user?.name}
-                            </Text>
-                            <TextInput
-                                style={[styles.composerInput, { color: colors.textPrimary }]}
-                                placeholder={t('feed.placeholder')}
-                                placeholderTextColor={colors.textMuted}
-                                value={newPostContent}
-                                onChangeText={setNewPostContent}
-                                multiline
-                                autoFocus
-                            />
-                          </View>
-                        </View>
-
-                        <MediaPicker
-                            media={selectedMedia}
-                            onChange={setSelectedMedia}
-                            maxItems={10}
-                            allowVideo
-                        />
-
-                        <View style={[styles.composerFooter, { borderTopColor: colors.borderLight }]}>
-                          <View style={styles.composerOptions}>
-                            <View style={styles.visibilitySelector}>
-                              {visibilityOptions.map((option) => (
-                                  <TouchableOpacity
-                                      key={option.value}
-                                      style={[
-                                        styles.visibilityOption,
-                                        {
-                                          backgroundColor: visibility === option.value
-                                              ? colors.primary
-                                              : colors.background,
-                                          borderColor: visibility === option.value
-                                              ? colors.primary
-                                              : colors.border,
-                                        },
-                                      ]}
-                                      onPress={() => setVisibility(option.value)}
-                                  >
-                                    <Ionicons
-                                        name={option.icon as any}
-                                        size={16}
-                                        color={visibility === option.value ? '#fff' : colors.textSecondary}
-                                    />
-                                  </TouchableOpacity>
-                              ))}
-                            </View>
-                            {selectedMedia.length > 0 && (
-                                <View style={styles.mediaInfoContainer}>
-                                  <Ionicons name="images" size={16} color={colors.primary} />
-                                  <Text style={[styles.mediaCount, { color: colors.primary }]}>
-                                    {selectedMedia.length}
-                                  </Text>
-                                </View>
-                            )}
-                          </View>
-                          <Button
-                              title={t('feed.post')}
-                              onPress={handleCreatePost}
-                              loading={isPosting}
-                              disabled={!newPostContent.trim() && selectedMedia.length === 0}
-                              style={styles.postButton}
-                          />
-                        </View>
-                      </View>
-                  ) : null
-                }
-                ListEmptyComponent={
-                  error ? (
-                      <EmptyState
-                          icon="alert-circle-outline"
-                          title={t('feed.failedToLoad')}
-                          message={error}
-                          actionLabel={t('common.tryAgain')}
-                          onAction={refresh}
-                      />
-                  ) : (
-                      <EmptyState
-                          icon="newspaper-outline"
-                          title={t('feed.noPosts')}
-                          message={t('feed.beFirst')}
-                      />
-                  )
-                }
-                ListFooterComponent={
-                  isLoading && posts.length > 0 ? (
-                      <Loading message={t('feed.loadingMore')} />
-                  ) : null
-                }
-                refreshControl={
-                  <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={refresh}
-                      colors={[colors.primary]}
-                      tintColor={colors.primary}
-                  />
-                }
-                onEndReached={loadMore}
-                onEndReachedThreshold={0.5}
-                contentContainerStyle={styles.listContent}
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={toggleSearch}
+          >
+            <Ionicons
+              name={isSearchVisible ? 'close' : 'search'}
+              size={24}
+              color={isSearchVisible ? colors.error : colors.textPrimary}
             />
-        )}
-      </SafeAreaView>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => {
+              setIsComposerVisible(!isComposerVisible);
+              if (isSearchVisible) {
+                setIsSearchVisible(false);
+                setSearchQuery('');
+                setSearchResults(null);
+              }
+            }}
+          >
+            <Ionicons
+              name={isComposerVisible ? 'close-circle-outline' : 'add-circle-outline'}
+              size={26}
+              color={isComposerVisible ? colors.error : colors.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('ConversationsList')}
+          >
+            <Ionicons name="chatbubbles-outline" size={24} color={colors.textPrimary} />
+            {unreadCount > 0 && (
+              <View style={[styles.unreadBadge, { backgroundColor: colors.error }]}>
+                <Text style={[styles.unreadBadgeText, { color: colors.white }]}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {renderSearchResults()}
+
+      {isSearchVisible && searchQuery.length > 0 ? (
+        renderSearchResultsContent()
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          removeClippedSubviews={false}
+          renderItem={({ item }) => (
+            <FeedCard
+              post={item}
+              isOwner={item.user_id === user?.id}
+              onLike={() => toggleLike(item)}
+              onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
+              onUserPress={() => {
+                if (item.user?.username) {
+                  navigation.navigate('UserProfile', { username: item.user.username });
+                }
+              }}
+              onActivityPress={
+                item.type === 'activity' && item.activity
+                  ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
+                  : undefined
+              }
+              onEventPress={
+                item.type === 'event' && item.event
+                  ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
+                  : undefined
+              }
+              onMenu={(action) => {
+                if (action === 'delete') handleDeletePost(item.id);
+                else if (action === 'report') handleReportPost(item.id);
+                else if (action === 'edit') handleEditPost(item.id);
+              }}
+            />
+          )}
+          ListHeaderComponent={
+            isComposerVisible ? (
+              <View style={[styles.composer, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
+                <View style={[styles.composerHeader, { borderBottomColor: colors.borderLight }]}>
+                  <View style={[styles.composerIcon, { backgroundColor: colors.primary + '15' }]}>
+                    <Ionicons name="create-outline" size={18} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.composerTitle, { color: colors.textPrimary }]}>
+                    {t('feed.createPost')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setIsComposerVisible(false)}
+                    style={styles.composerClose}
+                  >
+                    <Ionicons name="close" size={22} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.composerBody}>
+                  <Avatar uri={user?.avatar} name={user?.name} size="md" />
+                  <View style={styles.composerInputContainer}>
+                    <Text style={[styles.composerUserName, { color: colors.textPrimary }]}>
+                      {user?.name}
+                    </Text>
+                    <TextInput
+                      style={[styles.composerInput, { color: colors.textPrimary }]}
+                      placeholder={t('feed.placeholder')}
+                      placeholderTextColor={colors.textMuted}
+                      value={newPostContent}
+                      onChangeText={setNewPostContent}
+                      multiline
+                      autoFocus
+                    />
+                  </View>
+                </View>
+
+                <MediaPicker
+                  media={selectedMedia}
+                  onChange={setSelectedMedia}
+                  maxItems={10}
+                  allowVideo
+                />
+
+                <View style={[styles.composerFooter, { borderTopColor: colors.borderLight }]}>
+                  <View style={styles.composerOptions}>
+                    <View style={styles.visibilitySelector}>
+                      {visibilityOptions.map((option) => (
+                        <TouchableOpacity
+                          key={option.value}
+                          style={[
+                            styles.visibilityOption,
+                            {
+                              backgroundColor: visibility === option.value
+                                ? colors.primary
+                                : colors.background,
+                              borderColor: visibility === option.value
+                                ? colors.primary
+                                : colors.border,
+                            },
+                          ]}
+                          onPress={() => setVisibility(option.value)}
+                        >
+                          <Ionicons
+                            name={option.icon as any}
+                            size={16}
+                            color={visibility === option.value ? '#fff' : colors.textSecondary}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    {selectedMedia.length > 0 && (
+                      <View style={styles.mediaInfoContainer}>
+                        <Ionicons name="images" size={16} color={colors.primary} />
+                        <Text style={[styles.mediaCount, { color: colors.primary }]}>
+                          {selectedMedia.length}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <Button
+                    title={t('feed.post')}
+                    onPress={handleCreatePost}
+                    loading={isPosting}
+                    disabled={!newPostContent.trim() && selectedMedia.length === 0}
+                    style={styles.postButton}
+                  />
+                </View>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            error ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title={t('feed.failedToLoad')}
+                message={error}
+                actionLabel={t('common.tryAgain')}
+                onAction={refresh}
+              />
+            ) : (
+              <EmptyState
+                icon="newspaper-outline"
+                title={t('feed.noPosts')}
+                message={t('feed.beFirst')}
+              />
+            )
+          }
+          ListFooterComponent={
+            isLoading && posts.length > 0 ? (
+              <Loading message={t('feed.loadingMore')} />
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 

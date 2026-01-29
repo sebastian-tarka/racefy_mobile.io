@@ -15,7 +15,7 @@ import { Loading, ImpersonationBanner } from '../components';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
-import { FeedScreen } from '../screens/main/FeedScreen';
+import { FeedScreenOld } from '../screens/main/FeedScreen-old';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
@@ -41,6 +41,7 @@ import type {
   AuthStackParamList,
   MainTabParamList,
 } from './types';
+import {FeedScreen} from "../screens/main/FeedScreen";
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
