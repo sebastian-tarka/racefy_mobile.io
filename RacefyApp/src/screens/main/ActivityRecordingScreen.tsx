@@ -1,22 +1,23 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
   Modal,
   FlatList,
   Switch,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
+import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
 import type { Event, MilestoneSingle } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
@@ -32,7 +33,7 @@ import { logger } from '../../services/logger';
 import { formatPaceDisplay, calculateAveragePace } from '../../utils/paceCalculator';
 import { formatTime, formatDistance, formatTotalDistance, formatTotalTime, formatAvgPace } from '../../utils/formatters';
 
-// Mapping from API milestone types to display labels and thresholds
+// Milestone labels for display
 const MILESTONE_LABELS: Record<string, string> = {
   first_5km: '5 km',
   first_10km: '10 km',
@@ -44,7 +45,6 @@ const MILESTONE_LABELS: Record<string, string> = {
   first_100km: '100 km',
 };
 
-// Order of milestones to display (filtering only relevant distance milestones)
 const MILESTONE_ORDER = [
   'first_5km',
   'first_10km',
@@ -54,20 +54,42 @@ const MILESTONE_ORDER = [
   'first_marathon',
 ];
 
-// Number of sports to show initially before "Show more"
-const INITIAL_SPORTS_COUNT = 4;
-
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MainTabParamList, 'Record'>>();
+
+  // Bottom sheets & modals
   const [showAddOptions, setShowAddOptions] = useState(false);
+  const [sportModalVisible, setSportModalVisible] = useState(false);
+  const [eventSheetVisible, setEventSheetVisible] = useState(false);
+
+  // Activity options
+  const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [skipAutoPost, setSkipAutoPost] = useState(false);
+  const preselectedEventHandled = useRef(false);
+  const isFinishingRef = useRef(false);
+
+  // Animation for start button
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Data hooks
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
+  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
+  const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
+    isAuthenticated && selectedSport ? selectedSport.id : undefined
+  );
+  const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
+    isAuthenticated && selectedSport ? selectedSport.id : undefined
+  );
+
+  // Live activity context
   const {
     activity,
     isTracking,
@@ -86,71 +108,14 @@ export function ActivityRecordingScreen() {
     clearError,
   } = useLiveActivityContext();
 
-  const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
-  const [showAllSports, setShowAllSports] = useState(false);
-  const [sportModalVisible, setSportModalVisible] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [eventSheetVisible, setEventSheetVisible] = useState(false);
-  const [skipAutoPost, setSkipAutoPost] = useState(false);
-  const preselectedEventHandled = useRef(false);
-
-  // Fetch ongoing events where user is registered
-  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
-
-  // Fetch stats for selected sport type (only when authenticated)
-  const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
-    isAuthenticated && selectedSport ? selectedSport.id : undefined
-  );
-
-  // Fetch milestones for selected sport type (only when authenticated)
-  const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
-    isAuthenticated && selectedSport ? selectedSport.id : undefined
-  );
-
-  // Get ordered distance milestones from API data (memoized to prevent re-render loops)
+  // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
     return milestonesData?.distance_single
       ?.filter((m) => MILESTONE_ORDER.includes(m.type))
       ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
   }, [milestonesData?.distance_single]);
 
-  // Set default sport when sports are loaded
-  useEffect(() => {
-    if (sportTypes.length > 0 && !selectedSport) {
-      setSelectedSport(sportTypes[0]);
-    }
-  }, [sportTypes, selectedSport]);
-
-  // Handle preselected event from navigation params
-  useEffect(() => {
-    const preselectedEvent = route.params?.preselectedEvent;
-    if (preselectedEvent && !preselectedEventHandled.current) {
-      // Set the event immediately
-      setSelectedEvent(preselectedEvent);
-
-      // Get sport type ID - fallback to sport_type.id if sport_type_id is undefined
-      const eventSportTypeId = preselectedEvent.sport_type_id ?? preselectedEvent.sport_type?.id;
-
-      // Only mark as fully handled when we've also set the sport type
-      // This allows the effect to run again when sportTypes load
-      if (eventSportTypeId && sportTypes.length > 0 && !sportsLoading) {
-        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
-        if (matchingSport) {
-          setSelectedSport(matchingSport);
-          preselectedEventHandled.current = true;
-        }
-      }
-    }
-  }, [route.params?.preselectedEvent, sportTypes, sportsLoading]);
-
-  // Sports to display (first N or all) - memoized to prevent re-renders
-  const displayedSports = useMemo(() => {
-    return showAllSports ? sportTypes : sportTypes.slice(0, INITIAL_SPORTS_COUNT);
-  }, [showAllSports, sportTypes]);
-
-  const hasMoreSports = sportTypes.length > INITIAL_SPORTS_COUNT;
-
-  // Derive status from live activity state
+  // Derive status
   const getStatus = (): RecordingStatus => {
     if (!activity) return 'idle';
     if (activity.status === 'completed') return 'finished';
@@ -162,18 +127,60 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
-  // Custom hooks for timer and milestone tracking
+  // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
   const { passedMilestones, resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
 
-  // Show error alerts
+  // Find next milestone
+  const nextMilestone = useMemo(() => {
+    return distanceMilestones.find(m => !m.achieved && !passedMilestones.includes(m.threshold));
+  }, [distanceMilestones, passedMilestones]);
+
+  // Set default sport
+  useEffect(() => {
+    if (sportTypes.length > 0 && !selectedSport) {
+      setSelectedSport(sportTypes[0]);
+    }
+  }, [sportTypes, selectedSport]);
+
+  // Handle preselected event
+  useEffect(() => {
+    const preselectedEvent = route.params?.preselectedEvent;
+    if (preselectedEvent && !preselectedEventHandled.current) {
+      setSelectedEvent(preselectedEvent);
+      const eventSportTypeId = preselectedEvent.sport_type_id ?? preselectedEvent.sport_type?.id;
+      if (eventSportTypeId && sportTypes.length > 0 && !sportsLoading) {
+        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
+        if (matchingSport) {
+          setSelectedSport(matchingSport);
+          preselectedEventHandled.current = true;
+        }
+      }
+    }
+  }, [route.params?.preselectedEvent, sportTypes, sportsLoading]);
+
+  // Pulse animation for start button
+  useEffect(() => {
+    if (status === 'idle') {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        ])
+      );
+      pulse.start();
+      return () => pulse.stop();
+    }
+  }, [status, pulseAnim]);
+
+  // Error handling
   useEffect(() => {
     if (error) {
       Alert.alert(t('common.error'), error, [{ text: t('common.ok'), onPress: clearError }]);
     }
   }, [error, clearError, t]);
 
-  // Show dialog when there's an existing unfinished activity
+  // Existing activity dialog
   useEffect(() => {
     if (hasExistingActivity && activity) {
       const isInProgress = activity.status === 'in_progress';
@@ -205,11 +212,7 @@ export function ActivityRecordingScreen() {
           {
             text: t('recording.existingActivity.finish'),
             onPress: async () => {
-              // Debounce: prevent duplicate finish calls
-              if (isFinishingRef.current) {
-                logger.debug('activity', 'Finish already in progress (existing activity dialog), ignoring duplicate call');
-                return;
-              }
+              if (isFinishingRef.current) return;
               isFinishingRef.current = true;
               try {
                 await finishTracking();
@@ -238,32 +241,22 @@ export function ActivityRecordingScreen() {
     }
   }, [hasExistingActivity, activity]);
 
-  // Format current pace (from GPS segments, smoothed)
+  // Format pace helpers
   const formatCurrentPace = (): string => {
     const { currentPace } = currentStats;
     const minDistance = gpsProfile?.minDistanceForPace ?? 50;
-
-    // Don't show pace until minimum distance traveled
-    if (currentStats.distance < minDistance) {
-      return '--:--';
-    }
-
+    if (currentStats.distance < minDistance) return '--:--';
     return formatPaceDisplay(currentPace);
   };
 
-  // Format average pace from total duration and distance
   const formatAvgPaceFromStats = (): string => {
     const minDistance = gpsProfile?.minDistanceForPace ?? 50;
-
-    // Don't show pace until minimum distance traveled
-    if (currentStats.distance < minDistance) {
-      return '--:--';
-    }
-
+    if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
     return formatPaceDisplay(avgPace);
   };
 
+  // Action handlers
   const handleStart = async () => {
     logger.debug('activity', 'Start button pressed');
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -273,22 +266,16 @@ export function ActivityRecordingScreen() {
       return;
     }
 
-    // Request permissions first
     try {
       await requestActivityTrackingPermissions();
     } catch (err) {
       logger.error('activity', 'Permission error', { error: err });
     }
 
-    // Start live activity with API
     try {
-      await startTracking(
-        selectedSport.id,
-        `${selectedSport.name} Activity`,
-        selectedEvent?.id
-      );
+      await startTracking(selectedSport.id, `${selectedSport.name} Activity`, selectedEvent?.id);
       resetMilestones();
-      setSelectedEvent(null); // Reset event selection after starting
+      setSelectedEvent(null);
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
     } catch (err) {
       logger.error('activity', 'Failed to start activity from UI', { error: err });
@@ -317,25 +304,14 @@ export function ActivityRecordingScreen() {
 
   const handleStop = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
-    // First pause, then user can save or discard
     if (isTracking) {
       await handlePause();
     }
-    // Keep activity in paused state so user can see final stats
-    // They'll use Save or Discard buttons to finish
   };
-
-  // Ref to prevent double-taps on finish button
-  const isFinishingRef = useRef(false);
 
   const handleSave = async () => {
     if (!activity || !selectedSport) return;
-
-    // Debounce: prevent duplicate finish calls
-    if (isFinishingRef.current) {
-      logger.debug('activity', 'Finish already in progress (handleSave), ignoring duplicate call');
-      return;
-    }
+    if (isFinishingRef.current) return;
 
     isFinishingRef.current = true;
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -350,23 +326,15 @@ export function ActivityRecordingScreen() {
       logger.activity('Activity saved from UI', {
         activityId: result?.activity?.id,
         hasPost: !!result?.post,
-        postStatus: result?.post?.status,
       });
 
       resetMilestones();
-      setSkipAutoPost(false); // Reset for next activity
+      setSkipAutoPost(false);
 
-      // Handle post response with appropriate UX
       if (result?.post) {
         if (result.post.status === 'published') {
-          // Published post - show subtle success message
-          Alert.alert(
-            t('common.success'),
-            t('recording.activityShared'),
-            [{ text: t('common.ok') }]
-          );
+          Alert.alert(t('common.success'), t('recording.activityShared'));
         } else if (result.post.status === 'draft') {
-          // Draft post - offer to review
           Alert.alert(
             t('recording.activitySaved'),
             t('recording.draftCreated'),
@@ -374,22 +342,17 @@ export function ActivityRecordingScreen() {
               { text: t('recording.later'), style: 'cancel' },
               {
                 text: t('recording.viewDraft'),
-                onPress: () => {
-                  // Navigate to the post detail (draft mode)
-                  navigation.navigate('PostDetail', { postId: result.post!.id });
-                },
+                onPress: () => navigation.navigate('PostDetail', { postId: result.post!.id }),
               },
             ]
           );
         }
       } else {
-        // No post created (skip_auto_post or preference disabled)
         Alert.alert(t('common.success'), t('recording.activitySaved'));
       }
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
     } finally {
-      // Reset the flag after completion or error
       isFinishingRef.current = false;
     }
   };
@@ -418,33 +381,14 @@ export function ActivityRecordingScreen() {
     );
   };
 
-  // Get milestone status for display - combines API achievement data with during-activity tracking
-  const getMilestoneStatus = (milestone: MilestoneSingle) => {
-    const justPassedInActivity = passedMilestones.includes(milestone.threshold);
-
-    if (justPassedInActivity) {
-      // User just passed this milestone in current activity
-      if (!milestone.achieved) {
-        // First time achieving this distance!
-        return { status: 'record', color: colors.primary, label: t('recording.firstTime') };
-      }
-      return { status: 'normal', color: colors.success, label: t('recording.completed') };
-    }
-
-    // Not passed in current activity yet
-    return { status: 'upcoming', color: colors.textMuted };
-  };
-
-  // Bottom sheet options for adding activity (memoized to prevent re-renders)
+  // Bottom sheet options
   const addActivityOptions: BottomSheetOption[] = useMemo(() => [
     {
       id: 'record',
       icon: 'navigate-circle-outline',
       title: t('recording.addOptions.recordActivity'),
       description: t('recording.addOptions.recordDescription'),
-      onPress: () => {
-        // Just close sheet, user will see sport selector
-      },
+      onPress: () => {},
       color: colors.primary,
     },
     {
@@ -452,14 +396,435 @@ export function ActivityRecordingScreen() {
       icon: 'cloud-upload-outline',
       title: t('recording.addOptions.importGpx'),
       description: t('recording.addOptions.importDescription'),
-      onPress: () => {
-        navigation.navigate('GpxImport');
-      },
+      onPress: () => navigation.navigate('GpxImport'),
       color: colors.success,
     },
   ], [t, colors.primary, colors.success, navigation]);
 
-  // Show loading overlay
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Sport Chip Selector
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderSportChip = () => (
+    <TouchableOpacity
+      style={[styles.sportChip, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
+      onPress={() => setSportModalVisible(true)}
+      disabled={isLoading || sportsLoading}
+      activeOpacity={0.7}
+    >
+      {sportsLoading ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : selectedSport ? (
+        <>
+          <View style={[styles.sportChipIcon, { backgroundColor: colors.primary }]}>
+            <Ionicons name={selectedSport.icon} size={18} color={colors.white} />
+          </View>
+          <Text style={[styles.sportChipText, { color: colors.textPrimary }]}>
+            {selectedSport.name}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+        </>
+      ) : (
+        <>
+          <Ionicons name="bicycle-outline" size={20} color={colors.textMuted} />
+          <Text style={[styles.sportChipText, { color: colors.textSecondary }]}>
+            {t('recording.selectSport')}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+        </>
+      )}
+    </TouchableOpacity>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Compact Header (during recording/paused)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderCompactHeader = () => (
+    <View style={[styles.compactHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View style={styles.compactHeaderLeft}>
+        {selectedSport && (
+          <>
+            <View style={[styles.compactSportIcon, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name={selectedSport.icon} size={16} color={colors.primary} />
+            </View>
+            <Text style={[styles.compactSportName, { color: colors.textPrimary }]}>
+              {selectedSport.name}
+            </Text>
+          </>
+        )}
+      </View>
+      <View style={styles.compactHeaderRight}>
+        <Badge
+          label={status === 'recording' ? t('recording.status.recording') : t('recording.status.paused')}
+          variant={status === 'recording' ? 'ongoing' : 'upcoming'}
+        />
+        {trackingStatus && (
+          <View style={[styles.gpsIndicator, {
+            backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
+                            trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
+                            colors.error + '20'
+          }]}>
+            <Ionicons
+              name="locate"
+              size={14}
+              color={trackingStatus.gpsSignal === 'good' ? colors.success :
+                     trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error}
+            />
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Hero Timer
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderHeroTimer = () => (
+    <View style={styles.heroTimerContainer}>
+      <Text style={[styles.heroTimer, { color: colors.textPrimary }]}>
+        {formatTime(localDuration)}
+      </Text>
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Live Stats Row
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderLiveStats = () => (
+    <View style={[styles.liveStatsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View style={styles.liveStatItem}>
+        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
+          {formatDistance(distance)}
+        </Text>
+        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
+          {t('recording.distance')}
+        </Text>
+      </View>
+      <View style={[styles.liveStatDivider, { backgroundColor: colors.border }]} />
+      <View style={styles.liveStatItem}>
+        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
+          {formatCurrentPace()}
+        </Text>
+        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
+          {t('recording.currentPace')}
+        </Text>
+      </View>
+      <View style={[styles.liveStatDivider, { backgroundColor: colors.border }]} />
+      <View style={styles.liveStatItem}>
+        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
+          {formatAvgPaceFromStats()}
+        </Text>
+        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
+          {t('recording.avgPace')}
+        </Text>
+      </View>
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Next Milestone Indicator
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderNextMilestone = () => {
+    if (!isAuthenticated || !nextMilestone) return null;
+
+    const progressPercent = Math.min(100, Math.round((distance / nextMilestone.threshold) * 100));
+    const remaining = Math.max(0, nextMilestone.threshold - distance);
+
+    return (
+      <View style={[styles.milestoneIndicator, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View style={styles.milestoneIndicatorLeft}>
+          <Ionicons name="flag" size={16} color={colors.primary} />
+          <Text style={[styles.milestoneIndicatorText, { color: colors.textSecondary }]}>
+            {t('recording.nextMilestone')}: {MILESTONE_LABELS[nextMilestone.type]}
+          </Text>
+        </View>
+        <View style={styles.milestoneIndicatorRight}>
+          <Text style={[styles.milestoneIndicatorProgress, { color: colors.primary }]}>
+            {formatDistance(remaining)} {t('recording.toGo')}
+          </Text>
+        </View>
+        <View style={[styles.milestoneProgressBar, { backgroundColor: colors.border }]}>
+          <View style={[styles.milestoneProgressFill, { width: `${progressPercent}%`, backgroundColor: colors.primary }]} />
+        </View>
+      </View>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Idle Layout
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderIdleLayout = () => (
+    <View style={styles.idleContainer}>
+      {/* Sport Selector */}
+      <View style={styles.idleSportSection}>
+        {renderSportChip()}
+      </View>
+
+      {/* Start Button - Hero */}
+      <View style={styles.startSection}>
+        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <TouchableOpacity
+            style={[styles.startButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+            onPress={handleStart}
+            disabled={isLoading || !selectedSport}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} size="large" />
+            ) : (
+              <>
+                <Ionicons name="play" size={48} color={colors.white} />
+                <Text style={styles.startButtonText}>{t('recording.start')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+
+      {/* Event Link (Collapsed) */}
+      {isAuthenticated && (
+        <TouchableOpacity
+          style={[styles.eventLinkRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+          onPress={() => {
+            refreshEvents();
+            setEventSheetVisible(true);
+          }}
+          disabled={isLoading}
+          activeOpacity={0.7}
+        >
+          <View style={styles.eventLinkLeft}>
+            <Ionicons
+              name={selectedEvent ? 'calendar' : 'calendar-outline'}
+              size={20}
+              color={selectedEvent ? colors.primary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.eventLinkText,
+                { color: selectedEvent ? colors.textPrimary : colors.textSecondary }
+              ]}
+              numberOfLines={1}
+            >
+              {selectedEvent
+                ? selectedEvent.post?.title || t('eventDetail.untitled')
+                : t('recording.linkToEvent')}
+            </Text>
+          </View>
+          <View style={styles.eventLinkRight}>
+            {selectedEvent ? (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setSelectedEvent(null);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : (
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            )}
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Quick Stats Preview */}
+      {isAuthenticated && (
+        <View style={[styles.quickStatsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          {statsLoading || milestonesLoading ? (
+            <ActivityIndicator size="small" color={colors.primary} style={styles.quickStatsLoading} />
+          ) : (
+            <>
+              <View style={styles.quickStatsHeader}>
+                <Text style={[styles.quickStatsTitle, { color: colors.textPrimary }]}>
+                  {t('recording.yourStats', { sport: selectedSport?.name || '' })}
+                </Text>
+              </View>
+
+              {activityStats && activityStats.count > 0 ? (
+                <>
+                  <View style={styles.quickStatsRow}>
+                    <View style={styles.quickStatItem}>
+                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
+                        {activityStats.count}
+                      </Text>
+                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
+                        {t('recording.activities')}
+                      </Text>
+                    </View>
+                    <View style={styles.quickStatItem}>
+                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
+                        {formatTotalDistance(activityStats.totals.distance)}
+                      </Text>
+                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
+                        {t('recording.totalDistance')}
+                      </Text>
+                    </View>
+                    <View style={styles.quickStatItem}>
+                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
+                        {formatTotalTime(activityStats.totals.duration)}
+                      </Text>
+                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
+                        {t('recording.totalTime')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Next Milestone Preview */}
+                  {nextMilestone && (
+                    <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
+                      <Ionicons name="flag-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
+                        {t('recording.nextMilestone')}: {MILESTONE_LABELS[nextMilestone.type]} ({Math.round(nextMilestone.progress * 100)}%)
+                      </Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <View style={styles.noStatsPreview}>
+                  <Ionicons name="rocket-outline" size={24} color={colors.textMuted} />
+                  <Text style={[styles.noStatsPreviewText, { color: colors.textSecondary }]}>
+                    {t('recording.noStats', { sport: selectedSport?.name?.toLowerCase() || '' })}
+                  </Text>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      )}
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Recording Layout
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderRecordingLayout = () => (
+    <View style={styles.recordingContainer}>
+      {renderCompactHeader()}
+
+      <View style={styles.recordingContent}>
+        {renderHeroTimer()}
+        {renderLiveStats()}
+
+        {/* Elevation (if available) */}
+        {currentStats.elevation_gain > 0 && (
+          <View style={[styles.elevationRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Ionicons name="trending-up" size={16} color={colors.primary} />
+            <Text style={[styles.elevationText, { color: colors.textSecondary }]}>
+              {Math.round(currentStats.elevation_gain)}m {t('recording.elevationGain')}
+            </Text>
+          </View>
+        )}
+
+        {/* Control Buttons */}
+        <View style={styles.recordingControls}>
+          <TouchableOpacity
+            style={[styles.controlButton, styles.pauseButton, { backgroundColor: colors.primary }]}
+            onPress={handlePause}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="pause" size={32} color={colors.white} />
+            <Text style={styles.controlButtonText}>{t('recording.pause')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.controlButton, styles.stopButton, { backgroundColor: colors.error }]}
+            onPress={handleStop}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="stop" size={32} color={colors.white} />
+            <Text style={styles.controlButtonText}>{t('recording.stop')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {renderNextMilestone()}
+      </View>
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Paused Layout
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderPausedLayout = () => (
+    <View style={styles.pausedContainer}>
+      {renderCompactHeader()}
+
+      <View style={styles.pausedContent}>
+        {renderHeroTimer()}
+        {renderLiveStats()}
+
+        {/* Resume Button */}
+        <TouchableOpacity
+          style={[styles.resumeButton, { backgroundColor: colors.primary }]}
+          onPress={handleResume}
+          disabled={isLoading}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="play" size={28} color={colors.white} />
+          <Text style={styles.resumeButtonText}>{t('recording.resume')}</Text>
+        </TouchableOpacity>
+
+        {/* Divider */}
+        <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
+
+        {/* Save Options */}
+        <View style={styles.saveSection}>
+          {isAuthenticated && (
+            <TouchableOpacity
+              style={styles.skipPostRow}
+              onPress={() => setSkipAutoPost(!skipAutoPost)}
+              disabled={isLoading}
+              activeOpacity={0.7}
+            >
+              <Switch
+                value={skipAutoPost}
+                onValueChange={setSkipAutoPost}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={skipAutoPost ? colors.primary : colors.white}
+                disabled={isLoading}
+              />
+              <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
+                {t('recording.skipAutoPost')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.success }]}
+            onPress={handleSave}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={24} color={colors.white} />
+                <Text style={styles.saveButtonText}>{t('recording.saveActivity')}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.discardButton}
+            onPress={handleDiscard}
+            disabled={isLoading}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={18} color={colors.error} />
+            <Text style={[styles.discardButtonText, { color: colors.error }]}>
+              {t('recording.discard')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Loading Overlay
+  // ═══════════════════════════════════════════════════════════════════════════
   const renderLoadingOverlay = () => {
     if (!isLoading) return null;
     return (
@@ -470,501 +835,29 @@ export function ActivityRecordingScreen() {
     );
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MAIN RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('recording.title')}</Text>
-        <View style={styles.headerRight}>
-          {activity && (
-            <Text style={[styles.activityId, { color: colors.textMuted }]}>ID: {activity.id}</Text>
-          )}
-          {/* GPS Signal Indicator */}
-          {(isTracking || isPaused) && trackingStatus && (
-            <View style={[styles.gpsIndicator, {
-              backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
-                                trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
-                                colors.error + '20'
-            }]}>
-              <Ionicons
-                name={trackingStatus.gpsSignal === 'good' ? 'locate' :
-                      trackingStatus.gpsSignal === 'weak' ? 'locate-outline' :
-                      'locate-outline'}
-                size={16}
-                color={trackingStatus.gpsSignal === 'good' ? colors.success :
-                       trackingStatus.gpsSignal === 'weak' ? colors.warning :
-                       colors.error}
-              />
-            </View>
-          )}
-          {status === 'idle' && (
-            <TouchableOpacity
-              onPress={() => setShowAddOptions(true)}
-              style={[styles.addButton, { backgroundColor: colors.primary }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="add" size={20} color={colors.white} />
-            </TouchableOpacity>
-          )}
+      {/* Idle Header */}
+      {status === 'idle' && (
+        <View style={[styles.idleHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <Text style={[styles.idleTitle, { color: colors.textPrimary }]}>{t('recording.title')}</Text>
+          <TouchableOpacity
+            onPress={() => setShowAddOptions(true)}
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="add" size={20} color={colors.white} />
+          </TouchableOpacity>
         </View>
-      </View>
+      )}
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Sport Type Selector */}
-        {status === 'idle' && (
-          <Card style={styles.sportSelector}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
-            {sportsLoading ? (
-              <View style={styles.sportsLoading}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            ) : (
-              <>
-                <View style={styles.sportGrid}>
-                  {displayedSports.map((sport) => (
-                    <TouchableOpacity
-                      key={sport.id}
-                      style={[
-                        styles.sportButton,
-                        { backgroundColor: colors.primary + '20' },
-                        selectedSport?.id === sport.id && [styles.sportButtonActive, { backgroundColor: colors.primary, borderColor: colors.primaryDark }],
-                      ]}
-                      onPress={() => setSelectedSport(sport)}
-                      disabled={isLoading}
-                    >
-                      <Ionicons
-                        name={sport.icon}
-                        size={28}
-                        color={
-                          selectedSport?.id === sport.id
-                            ? colors.white
-                            : colors.primary
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.sportLabel,
-                          { color: colors.primary },
-                          selectedSport?.id === sport.id && styles.sportLabelActive,
-                        ]}
-                      >
-                        {sport.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {hasMoreSports && (
-                  <TouchableOpacity
-                    style={styles.showMoreButton}
-                    onPress={() => setSportModalVisible(true)}
-                  >
-                    <Text style={[styles.showMoreText, { color: colors.primary }]}>
-                      {t('recording.showMoreSports', { count: sportTypes.length - INITIAL_SPORTS_COUNT })}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </Card>
-        )}
-
-        {/* Event Selection (only when idle and authenticated) */}
-        {status === 'idle' && isAuthenticated && (
-          <Card style={styles.eventSelector}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('recording.linkToEvent')}
-            </Text>
-            <View
-              style={[
-                styles.eventSelectorButton,
-                { backgroundColor: colors.background, borderColor: colors.border },
-                selectedEvent && { borderColor: colors.primary },
-              ]}
-            >
-              {selectedEvent ? (
-                <>
-                  <TouchableOpacity
-                    style={styles.eventSelectorTouchable}
-                    onPress={() => {
-                      refreshEvents();
-                      setEventSheetVisible(true);
-                    }}
-                    disabled={isLoading}
-                  >
-                    <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
-                      <Ionicons
-                        name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
-                        size={20}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={styles.eventSelectorContent}>
-                      <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {selectedEvent.post?.title || t('eventDetail.untitled')}
-                      </Text>
-                      <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-                        {selectedEvent.location_name}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setSelectedEvent(null)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={styles.eventClearButton}
-                  >
-                    <Ionicons name="close-circle" size={22} color={colors.textMuted} />
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <TouchableOpacity
-                  style={styles.eventSelectorTouchable}
-                  onPress={() => {
-                    refreshEvents();
-                    setEventSheetVisible(true);
-                  }}
-                  disabled={isLoading}
-                >
-                  <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
-                    <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
-                  </View>
-                  <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>
-                    {t('recording.selectEvent')}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
-            </View>
-          </Card>
-        )}
-
-        {/* Current Activity Display */}
-        {status !== 'idle' && selectedSport && (
-          <View style={styles.currentSport}>
-            <Ionicons
-              name={selectedSport.icon}
-              size={24}
-              color={colors.primary}
-            />
-            <Text style={[styles.currentSportText, { color: colors.textPrimary }]}>{selectedSport.name}</Text>
-            <Badge
-              label={
-                status === 'recording'
-                  ? t('recording.status.recording')
-                  : status === 'paused'
-                    ? t('recording.status.paused')
-                    : t('recording.status.finished')
-              }
-              variant={
-                status === 'recording'
-                  ? 'ongoing'
-                  : status === 'paused'
-                    ? 'upcoming'
-                    : 'completed'
-              }
-            />
-          </View>
-        )}
-
-        {/* Timer Display */}
-        <Card style={styles.timerCard}>
-          <Text style={[styles.timerLabel, { color: colors.textSecondary }]}>{t('recording.duration')}</Text>
-          <Text style={[styles.timer, { color: colors.textPrimary }]}>{formatTime(localDuration)}</Text>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Ionicons
-                name="navigate-outline"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(distance)}</Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.distance')}</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Ionicons
-                name="speedometer-outline"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatCurrentPace()}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.currentPace')}</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Ionicons
-                name="analytics-outline"
-                size={20}
-                color={colors.primary}
-              />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatAvgPaceFromStats()}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.avgPace')}</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Ionicons name="flame-outline" size={20} color={colors.primary} />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {Math.floor(localDuration * 0.15)}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('recording.calories')}</Text>
-            </View>
-          </View>
-
-          {/* Elevation gain */}
-          {currentStats.elevation_gain > 0 && (
-            <View style={styles.elevationRow}>
-              <Ionicons name="trending-up" size={16} color={colors.primary} />
-              <Text style={[styles.elevationText, { color: colors.textSecondary }]}>
-                {Math.round(currentStats.elevation_gain)} {t('recording.elevationGain')}
-              </Text>
-            </View>
-          )}
-        </Card>
-
-        {/* Control Buttons */}
-        <View style={styles.controls}>
-          {status === 'idle' && (
-            <TouchableOpacity
-              style={[styles.startButton, { backgroundColor: colors.primary, shadowColor: colors.primary }, isLoading && styles.buttonDisabled]}
-              onPress={handleStart}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color={colors.white} size="large" />
-              ) : (
-                <>
-                  <Ionicons name="play" size={40} color={colors.white} />
-                  <Text style={styles.startButtonText}>{t('recording.start')}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {status === 'recording' && (
-            <View style={styles.recordingControls}>
-              <TouchableOpacity
-                style={[styles.controlButton, { backgroundColor: colors.primary }, isLoading && styles.buttonDisabled]}
-                onPress={handlePause}
-                disabled={isLoading}
-              >
-                <Ionicons name="pause" size={32} color={colors.white} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.controlButton,
-                  { backgroundColor: colors.error },
-                  isLoading && styles.buttonDisabled,
-                ]}
-                onPress={handleStop}
-                disabled={isLoading}
-              >
-                <Ionicons name="stop" size={32} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {status === 'paused' && (
-            <View style={styles.pausedControls}>
-              <View style={styles.recordingControls}>
-                <TouchableOpacity
-                  style={[styles.controlButton, { backgroundColor: colors.primary }, isLoading && styles.buttonDisabled]}
-                  onPress={handleResume}
-                  disabled={isLoading}
-                >
-                  <Ionicons name="play" size={32} color={colors.white} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.finishedControls}>
-                {/* Skip auto-post option - only show for authenticated users */}
-                {isAuthenticated && (
-                  <TouchableOpacity
-                    style={styles.skipPostRow}
-                    onPress={() => setSkipAutoPost(!skipAutoPost)}
-                    disabled={isLoading}
-                    activeOpacity={0.7}
-                  >
-                    <Switch
-                      value={skipAutoPost}
-                      onValueChange={setSkipAutoPost}
-                      trackColor={{ false: colors.border, true: colors.primaryLight }}
-                      thumbColor={skipAutoPost ? colors.primary : colors.white}
-                      disabled={isLoading}
-                    />
-                    <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
-                      {t('recording.skipAutoPost')}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                <Button
-                  title={isLoading ? t('recording.saving') : t('recording.saveActivity')}
-                  onPress={handleSave}
-                  variant="primary"
-                  style={styles.saveButton}
-                  disabled={isLoading}
-                />
-                <Button
-                  title={t('recording.discard')}
-                  onPress={handleDiscard}
-                  variant="ghost"
-                  disabled={isLoading}
-                />
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Milestones */}
-        {isAuthenticated && (
-          <Card style={styles.milestonesCard}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('recording.milestones')}</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-              {t('recording.milestonesSubtitle', { sport: selectedSport?.name?.toLowerCase() || '' })}
-            </Text>
-
-            {milestonesLoading ? (
-              <View style={styles.statsLoading}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            ) : distanceMilestones.length > 0 ? (
-              distanceMilestones.map((milestone) => {
-                const milestoneStatus = getMilestoneStatus(milestone);
-                const isPassed = passedMilestones.includes(milestone.threshold);
-                const progressPercent = Math.round(milestone.progress * 100);
-
-                return (
-                  <View
-                    key={milestone.type}
-                    style={[
-                      styles.milestoneRow,
-                      { borderBottomColor: colors.border },
-                      isPassed && [styles.milestoneRowPassed, { backgroundColor: colors.success + '15' }],
-                    ]}
-                  >
-                    <View style={styles.milestoneLeft}>
-                      <View
-                        style={[
-                          styles.milestoneIcon,
-                          { backgroundColor: milestone.achieved ? colors.success + '30' : colors.border },
-                          isPassed && { backgroundColor: colors.primary },
-                        ]}
-                      >
-                        <Ionicons
-                          name={isPassed ? 'checkmark' : milestone.achieved ? 'trophy-outline' : 'flag-outline'}
-                          size={16}
-                          color={isPassed ? colors.white : milestone.achieved ? colors.success : colors.textMuted}
-                        />
-                      </View>
-                      <View>
-                        <Text
-                          style={[
-                            styles.milestoneLabel,
-                            { color: milestone.achieved ? colors.textPrimary : colors.textSecondary },
-                            isPassed && { color: colors.textPrimary },
-                          ]}
-                        >
-                          {MILESTONE_LABELS[milestone.type] || milestone.type}
-                        </Text>
-                        {isPassed && milestoneStatus.label && (
-                          <Text
-                            style={[
-                              styles.milestoneStatus,
-                              { color: milestoneStatus.color },
-                            ]}
-                          >
-                            {milestoneStatus.label}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-
-                    <View style={styles.milestoneRight}>
-                      {milestone.achieved ? (
-                        <Text style={[styles.milestoneTime, { color: colors.success }]}>
-                          {t('recording.achieved')}
-                        </Text>
-                      ) : (
-                        <Text style={[styles.milestoneTime, { color: colors.textSecondary }]}>
-                          {progressPercent}%
-                        </Text>
-                      )}
-                      {milestone.first_date && (
-                        <Text style={[styles.milestoneTimeAvg, { color: colors.textMuted }]}>
-                          {new Date(milestone.first_date).toLocaleDateString()}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                );
-              })
-            ) : (
-              <View style={styles.noStatsContainer}>
-                <Text style={[styles.noStatsText, { color: colors.textMuted }]}>
-                  {t('recording.noMilestones')}
-                </Text>
-              </View>
-            )}
-          </Card>
-        )}
-
-        {/* Previous Activities Summary */}
-        {isAuthenticated && (
-          <Card style={styles.previousCard}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('recording.yourStats', { sport: selectedSport?.name || '' })}
-            </Text>
-            {statsLoading ? (
-              <View style={styles.statsLoading}>
-                <ActivityIndicator size="small" color={colors.primary} />
-              </View>
-            ) : activityStats ? (
-              <View style={styles.prevStatsGrid}>
-                <View style={styles.prevStatItem}>
-                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
-                    {activityStats.count}
-                  </Text>
-                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
-                    {t('recording.activities')}
-                  </Text>
-                </View>
-                <View style={styles.prevStatItem}>
-                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
-                    {formatTotalDistance(activityStats.totals.distance)}
-                  </Text>
-                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
-                    {t('recording.totalDistance')}
-                  </Text>
-                </View>
-                <View style={styles.prevStatItem}>
-                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
-                    {formatTotalTime(activityStats.totals.duration)}
-                  </Text>
-                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
-                    {t('recording.totalTime')}
-                  </Text>
-                </View>
-                <View style={styles.prevStatItem}>
-                  <Text style={[styles.prevStatValue, { color: colors.primary }]}>
-                    {formatAvgPace(activityStats.averages.speed)}
-                  </Text>
-                  <Text style={[styles.prevStatLabel, { color: colors.textSecondary }]}>
-                    {t('recording.avgPace')}
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.noStatsContainer}>
-                <Text style={[styles.noStatsText, { color: colors.textMuted }]}>
-                  {t('recording.noStats', { sport: selectedSport?.name?.toLowerCase() || '' })}
-                </Text>
-              </View>
-            )}
-          </Card>
-        )}
-      </ScrollView>
+      {/* Main Content Based on Status */}
+      {status === 'idle' && renderIdleLayout()}
+      {status === 'recording' && renderRecordingLayout()}
+      {status === 'paused' && renderPausedLayout()}
 
       {renderLoadingOverlay()}
 
@@ -978,10 +871,7 @@ export function ActivityRecordingScreen() {
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
-            <TouchableOpacity
-              onPress={() => setSportModalVisible(false)}
-              style={styles.modalCloseButton}
-            >
+            <TouchableOpacity onPress={() => setSportModalVisible(false)} style={styles.modalCloseButton}>
               <Ionicons name="close" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
@@ -1004,18 +894,12 @@ export function ActivityRecordingScreen() {
                   }}
                 >
                   <View style={[styles.modalSportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
-                    <Ionicons
-                      name={sport.icon}
-                      size={24}
-                      color={isSelected ? colors.primary : colors.textSecondary}
-                    />
+                    <Ionicons name={sport.icon} size={24} color={isSelected ? colors.primary : colors.textSecondary} />
                   </View>
                   <Text style={[styles.modalSportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
                     {sport.name}
                   </Text>
-                  {isSelected && (
-                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  )}
+                  {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
                 </TouchableOpacity>
               );
             }}
@@ -1023,7 +907,7 @@ export function ActivityRecordingScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Add Activity Options Bottom Sheet */}
+      {/* Bottom Sheets */}
       <BottomSheet
         visible={showAddOptions}
         onClose={() => setShowAddOptions(false)}
@@ -1031,7 +915,6 @@ export function ActivityRecordingScreen() {
         options={addActivityOptions}
       />
 
-      {/* Event Selection Sheet */}
       <EventSelectionSheet
         visible={eventSheetVisible}
         onClose={() => setEventSheetVisible(false)}
@@ -1044,36 +927,28 @@ export function ActivityRecordingScreen() {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════════════════════════════════════
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Idle Header
+  // ─────────────────────────────────────────────────────────────────────────
+  idleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  title: {
+  idleTitle: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-  },
-  activityId: {
-    fontSize: fontSize.xs,
-  },
-  gpsIndicator: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   addButton: {
     width: 32,
@@ -1082,156 +957,96 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: {
-    padding: spacing.md,
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Compact Header (Recording/Paused)
+  // ─────────────────────────────────────────────────────────────────────────
+  compactHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
   },
-  sportSelector: {
-    marginBottom: spacing.md,
-  },
-  eventSelector: {
-    marginBottom: spacing.md,
-  },
-  eventSelectorButton: {
+  compactHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+  },
+  compactHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  compactSportIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compactSportName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  gpsIndicator: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Sport Chip Selector
+  // ─────────────────────────────────────────────────────────────────────────
+  sportChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
+    gap: spacing.sm,
   },
-  eventIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
+  sportChipIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
   },
-  eventSelectorContent: {
-    flex: 1,
-  },
-  eventSelectorTitle: {
+  sportChipText: {
     fontSize: fontSize.md,
     fontWeight: '500',
   },
-  eventSelectorSubtitle: {
-    fontSize: fontSize.sm,
-    marginTop: 2,
-  },
-  eventSelectorPlaceholder: {
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Idle Layout
+  // ─────────────────────────────────────────────────────────────────────────
+  idleContainer: {
     flex: 1,
-    fontSize: fontSize.md,
+    paddingHorizontal: spacing.lg,
   },
-  eventSelectorTouchable: {
-    flex: 1,
-    flexDirection: 'row',
+  idleSportSection: {
     alignItems: 'center',
+    paddingVertical: spacing.xl,
   },
-  eventClearButton: {
-    padding: spacing.xs,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  sectionSubtitle: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.md,
-  },
-  sportGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  sportButton: {
-    flex: 1,
-    minWidth: '45%',
+  startSection: {
     alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  sportButtonActive: {
-    // backgroundColor and borderColor applied inline
-  },
-  sportLabel: {
-    marginTop: spacing.xs,
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  sportLabelActive: {
-    color: '#ffffff',
-  },
-  currentSport: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  currentSportText: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-  },
-  timerCard: {
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  timerLabel: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.xs,
-  },
-  timer: {
-    fontSize: 56,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginTop: spacing.xl,
-    width: '100%',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    marginVertical: spacing.xs,
-  },
-  statValue: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    marginTop: spacing.xs,
-  },
-  statLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  elevationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.md,
-    gap: spacing.xs,
-  },
-  elevationText: {
-    fontSize: fontSize.sm,
-  },
-  controls: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
+    paddingVertical: spacing.xl,
   },
   startButton: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   startButtonText: {
     color: '#ffffff',
@@ -1239,134 +1054,291 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: spacing.xs,
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Event Link Row
+  // ─────────────────────────────────────────────────────────────────────────
+  eventLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  eventLinkLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  eventLinkText: {
+    fontSize: fontSize.md,
+    flex: 1,
+  },
+  eventLinkRight: {
+    marginLeft: spacing.sm,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Quick Stats Card
+  // ─────────────────────────────────────────────────────────────────────────
+  quickStatsCard: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  quickStatsLoading: {
+    padding: spacing.lg,
+  },
+  quickStatsHeader: {
+    marginBottom: spacing.md,
+  },
+  quickStatsTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  quickStatsRow: {
+    flexDirection: 'row',
+  },
+  quickStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  quickStatValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+  },
+  quickStatLabel: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  nextMilestonePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  nextMilestoneText: {
+    fontSize: fontSize.sm,
+  },
+  noStatsPreview: {
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  noStatsPreviewText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Hero Timer
+  // ─────────────────────────────────────────────────────────────────────────
+  heroTimerContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  heroTimer: {
+    fontSize: 72,
+    fontWeight: '200',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -2,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Live Stats
+  // ─────────────────────────────────────────────────────────────────────────
+  liveStatsContainer: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginHorizontal: spacing.lg,
+  },
+  liveStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  liveStatValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  liveStatLabel: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
+  },
+  liveStatDivider: {
+    width: 1,
+    marginVertical: spacing.xs,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Elevation Row
+  // ─────────────────────────────────────────────────────────────────────────
+  elevationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    marginHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+  },
+  elevationText: {
+    fontSize: fontSize.sm,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Milestone Indicator
+  // ─────────────────────────────────────────────────────────────────────────
+  milestoneIndicator: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  milestoneIndicatorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  milestoneIndicatorRight: {
+    position: 'absolute',
+    right: spacing.md,
+    top: spacing.md,
+  },
+  milestoneIndicatorText: {
+    fontSize: fontSize.sm,
+  },
+  milestoneIndicatorProgress: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  milestoneProgressBar: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: spacing.sm,
+    overflow: 'hidden',
+  },
+  milestoneProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Recording Layout
+  // ─────────────────────────────────────────────────────────────────────────
+  recordingContainer: {
+    flex: 1,
+  },
+  recordingContent: {
+    flex: 1,
+  },
   recordingControls: {
     flexDirection: 'row',
-    gap: spacing.xl,
     justifyContent: 'center',
-  },
-  pausedControls: {
-    width: '100%',
-    alignItems: 'center',
-    gap: spacing.lg,
+    gap: spacing.xl,
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
   controlButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  stopButton: {
-    // backgroundColor applied inline
+  pauseButton: {},
+  stopButton: {},
+  controlButtonText: {
+    color: '#ffffff',
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    marginTop: 4,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Paused Layout
+  // ─────────────────────────────────────────────────────────────────────────
+  pausedContainer: {
+    flex: 1,
   },
-  finishedControls: {
-    width: '100%',
+  pausedContent: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  resumeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.xl,
+  },
+  resumeButtonText: {
+    color: '#ffffff',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  sectionDivider: {
+    height: 1,
+    marginVertical: spacing.xl,
+  },
+  saveSection: {
     gap: spacing.md,
   },
   skipPostRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.xs,
   },
   skipPostText: {
     fontSize: fontSize.sm,
   },
   saveButton: {
-    width: '100%',
-  },
-  milestonesCard: {
-    marginBottom: spacing.md,
-  },
-  milestoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  milestoneRowPassed: {
-    marginHorizontal: -spacing.lg,
-    paddingHorizontal: spacing.lg,
-  },
-  milestoneLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  milestoneIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  milestoneIconPassed: {
-    // backgroundColor applied inline
-  },
-  milestoneLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  milestoneLabelPassed: {
-    // color applied inline
-  },
-  milestoneStatus: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  milestoneRight: {
-    alignItems: 'flex-end',
-  },
-  milestoneTime: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  milestoneTimeAvg: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  previousCard: {
-    marginBottom: spacing.xl,
-  },
-  prevStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  prevStatItem: {
-    width: '50%',
+    gap: spacing.sm,
     paddingVertical: spacing.md,
-    alignItems: 'center',
+    borderRadius: borderRadius.lg,
   },
-  prevStatValue: {
-    fontSize: fontSize.xl,
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  prevStatLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  statsLoading: {
-    padding: spacing.xl,
+  discardButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
   },
-  noStatsContainer: {
-    padding: spacing.lg,
-    alignItems: 'center',
+  discardButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
   },
-  noStatsText: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Loading Overlay
+  // ─────────────────────────────────────────────────────────────────────────
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -1377,22 +1349,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
   },
-  sportsLoading: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  showMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  showMoreText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Modal
+  // ─────────────────────────────────────────────────────────────────────────
   modalContainer: {
     flex: 1,
   },
@@ -1421,9 +1381,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
   },
-  modalSportItemSelected: {
-    // styles applied inline
-  },
   modalSportIcon: {
     width: 44,
     height: 44,
@@ -1432,14 +1389,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: spacing.md,
   },
-  modalSportIconSelected: {
-    // styles applied inline
-  },
   modalSportName: {
     flex: 1,
     fontSize: fontSize.md,
-  },
-  modalSportNameSelected: {
-    // styles applied inline
   },
 });
