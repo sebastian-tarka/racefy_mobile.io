@@ -12,7 +12,8 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, appendXdebugTrigger } from '../config/api';
+import { API_BASE_URL } from '../config/api';
+import { appendXdebugTrigger } from './api';
 import { logger } from './logger';
 import { getCurrentLanguage } from '../i18n';
 import type { BufferedLocation } from './backgroundLocation';

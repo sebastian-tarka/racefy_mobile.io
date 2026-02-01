@@ -29,8 +29,8 @@ export function ProgramLoadingScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [error, setError] = useState<string | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout>();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const pollIntervalRef = useRef<NodeJS.Timeout>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
     let isMounted = true;

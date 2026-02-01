@@ -87,8 +87,11 @@ export function useBrandAssets(): UseBrandAssetsResult {
       // Fix URL for current platform (with caching to prevent spam)
       let fixedUrl = urlCache.get(asset.url);
       if (!fixedUrl) {
-        fixedUrl = fixStorageUrl(asset.url);
-        urlCache.set(asset.url, fixedUrl);
+        const fixed = fixStorageUrl(asset.url);
+        if (fixed) {
+          fixedUrl = fixed;
+          urlCache.set(asset.url, fixed);
+        }
       }
 
       return {
