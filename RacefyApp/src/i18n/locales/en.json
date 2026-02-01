@@ -24,7 +24,10 @@
     "discard": "Discard",
     "pleaseWait": "Please wait...",
     "goBack": "Go Back",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "optional": "Optional",
+    "done": "Done",
+    "confirm": "Confirm"
   },
   "sports": {
     "running": "Running",
@@ -575,7 +578,9 @@
       "recordDescription": "Track with GPS in real-time",
       "importGpx": "Import GPX File",
       "importDescription": "From Garmin, Strava, Polar..."
-    }
+    },
+    "plannedThisWeek": "Planned This Week",
+    "session": "Session"
   },
   "gpxImport": {
     "title": "Import GPX",
@@ -1101,5 +1106,157 @@
     "fetchError": "Failed to generate share link. Please try again.",
     "copyError": "Failed to copy link. Please try again.",
     "defaultTitle": "Check this out on Racefy"
+  },
+  "training": {
+    "title": "Training Plans",
+    "subtitle": "AI-powered personalized training programs",
+    "creatingProgram": "Creating your personalized training program...",
+    "calibration": {
+      "title": "Training Calibration",
+      "trainingGoal": "Training Goal",
+      "loadingGoals": "Loading training goals...",
+      "experienceLevel": "Experience Level",
+      "sessionsPerWeek": "Training Frequency",
+      "sessionsPerWeekLabel": "sessions/week",
+      "guidanceLevel": "Guidance Level",
+      "recoveryProfile": "Recovery Profile",
+      "injuryHistory": "I have a history of injuries",
+      "injuryHistoryDescription": "Check this if you want the program to be more cautious",
+      "targetDistance": "Target Distance (meters)",
+      "targetDistancePlaceholder": "e.g., 5000 for 5km",
+      "targetDate": "Target Event Date",
+      "selectDate": "Select a date",
+      "suggestedDate": "Suggested: {{weeks}} weeks from today (you can change this)",
+      "createProgram": "Create Training Program",
+      "existingProgramTitle": "Active Program Exists",
+      "existingProgramMessage": "You already have an active training program. What would you like to do?",
+      "viewExisting": "View Current Program",
+      "replaceProgram": "Replace with New Program",
+      "autoLinkActivities": "Auto-link recorded activities",
+      "autoLinkActivitiesDescription": "Automatically match your recorded activities to planned training sessions",
+      "crossTrainingSports": "Cross-Training Sports",
+      "crossTrainingSportsDescription": "Select additional sport types that can be linked to training activities",
+      "primarySportOnly": "Primary sport only",
+      "crossTrainingSelected": "{{count}} sport(s) selected",
+      "selectCrossTrainingSports": "Select Cross-Training Sports"
+    },
+    "loading": {
+      "title": "Generating Your Plan",
+      "subtitle": "Our AI is creating a personalized training program just for you. This usually takes 5-10 seconds."
+    },
+    "weeksList": {
+      "title": "Training Weeks",
+      "weekNumber": "Week {{number}}",
+      "current": "Current",
+      "progress": "Progress",
+      "programName": "Program",
+      "weekProgress": "Week Progress",
+      "status": {
+        "upcoming": "Upcoming",
+        "current": "Current",
+        "active": "Current",
+        "completed": "Completed",
+        "skipped": "Skipped"
+      },
+      "abandonProgram": "Abandon Program",
+      "confirmAbandon": "Abandon Training Program?",
+      "confirmAbandonMessage": "This will permanently end your current training program. You can create a new one afterwards.",
+      "pauseProgram": "Pause Program",
+      "resumeProgram": "Resume Program",
+      "confirmPause": "Pause Training Program?",
+      "confirmPauseMessage": "Your program will be paused. You can resume it at any time.",
+      "pauseReasonTitle": "Why are you pausing?",
+      "pauseReasons": {
+        "injury": "Injury",
+        "vacation": "Vacation",
+        "burnout": "Burnout",
+        "other": "Other"
+      },
+      "programAbandoned": "Program abandoned",
+      "programPaused": "Program paused",
+      "programResumed": "Program resumed",
+      "empty": {
+        "title": "No Training Weeks",
+        "message": "Your training program is being generated."
+      },
+      "settings": "Program Settings",
+      "autoLinkTitle": "Activity Auto-Linking",
+      "autoLinkEnabled": "Auto-link enabled",
+      "autoLinkDisabled": "Auto-link disabled",
+      "settingsUpdated": "Settings updated successfully"
+    },
+    "weekDetail": {
+      "title": "Week {{number}}",
+      "progress": "Progress",
+      "completed": "completed",
+      "activities": "Training Activities",
+      "plannedSessions": "Planned Training Sessions",
+      "sessionNumber": "Session {{number}}",
+      "targetDuration": "Target Duration",
+      "targetDistance": "Target Distance",
+      "activityCompleted": "Completed",
+      "activitySkipped": "Skipped",
+      "completeWeek": "Complete Week",
+      "skipWeek": "Skip Week",
+      "confirmComplete": "Complete Week?",
+      "confirmCompleteMessage": "Mark this week as completed? This action cannot be undone.",
+      "confirmSkip": "Skip Week?",
+      "confirmSkipMessage": "Skip this week's training? This will move you to the next week.",
+      "weekCompleted": "Week Completed!",
+      "weekCompletedMessage": "Congratulations! You've completed this week's training. Keep up the great work!",
+      "linkedActivity": "Linked Activity",
+      "linkExistingActivity": "Link Existing Activity",
+      "confirmUnlink": "Unlink Activity?",
+      "confirmUnlinkMessage": "Remove the link between this training activity and the recorded activity?",
+      "activityLinked": "Activity linked successfully",
+      "activityUnlinked": "Activity unlinked successfully"
+    },
+    "errors": {
+      "title": "Something Went Wrong",
+      "sportTypeRequired": "Please select a sport type",
+      "trainingGoalRequired": "Please select a training goal",
+      "experienceLevelRequired": "Please select your experience level",
+      "guidanceLevelRequired": "Please select a guidance level",
+      "recoveryProfileRequired": "Please select a recovery profile",
+      "targetDistanceRequired": "Please enter a target distance",
+      "targetDateRequired": "Please select a target date",
+      "loadGoalsFailed": "Failed to load training goals",
+      "creationFailed": "Failed to create training calibration",
+      "generationFailed": "Training program generation failed. Please try again.",
+      "loadingFailed": "Failed to load training data",
+      "timeout": "Program generation is taking longer than expected. Please check back in a few minutes.",
+      "programNotFound": "Training program not found",
+      "weekNotFound": "Week not found",
+      "completeFailed": "Failed to complete week",
+      "skipFailed": "Failed to skip week",
+      "checkProgramFailed": "Failed to check for existing program. Please try again.",
+      "linkFailed": "Failed to link activity",
+      "unlinkFailed": "Failed to unlink activity"
+    },
+    "tips": {
+      "sectionTitle": "Tip for You",
+      "readMore": "Read More",
+      "wasHelpful": "Was this helpful?",
+      "helpful": "Yes",
+      "notHelpful": "No",
+      "thanksFeedback": "Thanks for the feedback!",
+      "emotionalLoad": "Mental load",
+      "categories": {
+        "mindset": "Mindset",
+        "recovery": "Recovery",
+        "technique": "Technique",
+        "nutrition": "Nutrition",
+        "sleep": "Sleep",
+        "pacing": "Pacing"
+      },
+      "settings": {
+        "title": "Training Tips",
+        "frequency": "How often would you like tips?",
+        "silent": "Silent (No tips)",
+        "reactive": "Reactive (Tips on request)",
+        "proactive": "Proactive (Regular tips)",
+        "usage": "This week: {{delivered}}/{{max}} tips delivered"
+      }
+    }
   }
 }

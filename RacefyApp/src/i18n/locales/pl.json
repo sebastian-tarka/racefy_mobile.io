@@ -24,7 +24,10 @@
     "discard": "Odrzuć",
     "pleaseWait": "Proszę czekać...",
     "goBack": "Wróć",
-    "viewAll": "Zobacz wszystkie"
+    "viewAll": "Zobacz wszystkie",
+    "optional": "Opcjonalne",
+    "done": "Gotowe",
+    "confirm": "Potwierdź"
   },
   "sports": {
     "running": "Bieganie",
@@ -575,7 +578,9 @@
       "recordDescription": "Śledź z GPS w czasie rzeczywistym",
       "importGpx": "Importuj plik GPX",
       "importDescription": "Z Garmin, Strava, Polar..."
-    }
+    },
+    "plannedThisWeek": "Zaplanowane w tym tygodniu",
+    "session": "Sesja"
   },
   "gpxImport": {
     "title": "Importuj GPX",
@@ -1103,5 +1108,157 @@
     "fetchError": "Nie udało się wygenerować linku. Spróbuj ponownie.",
     "copyError": "Nie udało się skopiować linku. Spróbuj ponownie.",
     "defaultTitle": "Zobacz to na Racefy"
+  },
+  "training": {
+    "title": "Plany Treningowe",
+    "subtitle": "Spersonalizowane plany treningowe oparte na AI",
+    "creatingProgram": "Tworzenie spersonalizowanego planu treningowego...",
+    "calibration": {
+      "title": "Kalibracja Treningowa",
+      "trainingGoal": "Cel Treningowy",
+      "loadingGoals": "Ładowanie celów treningowych...",
+      "experienceLevel": "Poziom Doświadczenia",
+      "sessionsPerWeek": "Częstotliwość Treningów",
+      "sessionsPerWeekLabel": "sesji/tydzień",
+      "guidanceLevel": "Poziom Wytycznych",
+      "recoveryProfile": "Profil Regeneracji",
+      "injuryHistory": "Mam historię kontuzji",
+      "injuryHistoryDescription": "Zaznacz, jeśli chcesz, aby program był bardziej ostrożny",
+      "targetDistance": "Docelowy Dystans (metry)",
+      "targetDistancePlaceholder": "np. 5000 dla 5km",
+      "targetDate": "Data Docelowego Wydarzenia",
+      "selectDate": "Wybierz datę",
+      "suggestedDate": "Sugerowana: {{weeks}} tygodni od dziś (możesz zmienić)",
+      "createProgram": "Utwórz Plan Treningowy",
+      "existingProgramTitle": "Aktywny Program Istnieje",
+      "existingProgramMessage": "Masz już aktywny plan treningowy. Co chcesz zrobić?",
+      "viewExisting": "Zobacz Aktualny Program",
+      "replaceProgram": "Zastąp Nowym Programem",
+      "autoLinkActivities": "Automatyczne łączenie aktywności",
+      "autoLinkActivitiesDescription": "Automatycznie dopasuj zarejestrowane aktywności do zaplanowanych sesji treningowych",
+      "crossTrainingSports": "Sporty dodatkowe",
+      "crossTrainingSportsDescription": "Wybierz dodatkowe dyscypliny sportowe, które mogą być łączone z aktywnościami treningowymi",
+      "primarySportOnly": "Tylko sport główny",
+      "crossTrainingSelected": "{{count}} sport(ów) wybranych",
+      "selectCrossTrainingSports": "Wybierz Sporty Dodatkowe"
+    },
+    "loading": {
+      "title": "Generowanie Twojego Planu",
+      "subtitle": "Nasza AI tworzy spersonalizowany plan treningowy specjalnie dla Ciebie. Zwykle trwa to 5-10 sekund."
+    },
+    "weeksList": {
+      "title": "Tygodnie Treningowe",
+      "weekNumber": "Tydzień {{number}}",
+      "current": "Aktualny",
+      "progress": "Postęp",
+      "programName": "Program",
+      "weekProgress": "Postęp Tygodni",
+      "status": {
+        "upcoming": "Nadchodzący",
+        "current": "Bieżący",
+        "active": "Bieżący",
+        "completed": "Ukończony",
+        "skipped": "Pominięty"
+      },
+      "abandonProgram": "Porzuć Program",
+      "confirmAbandon": "Porzucić Program Treningowy?",
+      "confirmAbandonMessage": "To trwale zakończy Twój obecny program treningowy. Możesz potem utworzyć nowy.",
+      "pauseProgram": "Wstrzymaj Program",
+      "resumeProgram": "Wznów Program",
+      "confirmPause": "Wstrzymać Program Treningowy?",
+      "confirmPauseMessage": "Twój program zostanie wstrzymany. Możesz go wznowić w dowolnym momencie.",
+      "pauseReasonTitle": "Dlaczego wstrzymujesz?",
+      "pauseReasons": {
+        "injury": "Kontuzja",
+        "vacation": "Urlop",
+        "burnout": "Wypalenie",
+        "other": "Inny powód"
+      },
+      "programAbandoned": "Program porzucony",
+      "programPaused": "Program wstrzymany",
+      "programResumed": "Program wznowiony",
+      "empty": {
+        "title": "Brak Tygodni Treningowych",
+        "message": "Twój plan treningowy jest generowany."
+      },
+      "settings": "Ustawienia Programu",
+      "autoLinkTitle": "Auto-Łączenie Aktywności",
+      "autoLinkEnabled": "Auto-łączenie włączone",
+      "autoLinkDisabled": "Auto-łączenie wyłączone",
+      "settingsUpdated": "Ustawienia zaktualizowane pomyślnie"
+    },
+    "weekDetail": {
+      "title": "Tydzień {{number}}",
+      "progress": "Postęp",
+      "completed": "ukończono",
+      "activities": "Aktywności Treningowe",
+      "plannedSessions": "Zaplanowane Sesje Treningowe",
+      "sessionNumber": "Sesja {{number}}",
+      "targetDuration": "Docelowy Czas",
+      "targetDistance": "Docelowy Dystans",
+      "activityCompleted": "Ukończono",
+      "activitySkipped": "Pominięto",
+      "completeWeek": "Ukończ Tydzień",
+      "skipWeek": "Pomiń Tydzień",
+      "confirmComplete": "Ukończyć Tydzień?",
+      "confirmCompleteMessage": "Oznaczyć ten tydzień jako ukończony? Ta akcja nie może być cofnięta.",
+      "confirmSkip": "Pominąć Tydzień?",
+      "confirmSkipMessage": "Pominąć treningi tego tygodnia? Przejdziesz do następnego tygodnia.",
+      "weekCompleted": "Tydzień Ukończony!",
+      "weekCompletedMessage": "Gratulacje! Ukończyłeś treningi tego tygodnia. Tak trzymaj!",
+      "linkedActivity": "Powiązana Aktywność",
+      "linkExistingActivity": "Powiąż Istniejącą Aktywność",
+      "confirmUnlink": "Odłączyć Aktywność?",
+      "confirmUnlinkMessage": "Usunąć powiązanie między tą aktywnością treningową a zarejestrowaną aktywnością?",
+      "activityLinked": "Aktywność powiązana pomyślnie",
+      "activityUnlinked": "Aktywność odłączona pomyślnie"
+    },
+    "errors": {
+      "title": "Coś Poszło Nie Tak",
+      "sportTypeRequired": "Wybierz rodzaj sportu",
+      "trainingGoalRequired": "Wybierz cel treningowy",
+      "experienceLevelRequired": "Wybierz swój poziom doświadczenia",
+      "guidanceLevelRequired": "Wybierz poziom wytycznych",
+      "recoveryProfileRequired": "Wybierz profil regeneracji",
+      "targetDistanceRequired": "Wprowadź docelowy dystans",
+      "targetDateRequired": "Wybierz docelową datę",
+      "loadGoalsFailed": "Nie udało się załadować celów treningowych",
+      "creationFailed": "Nie udało się utworzyć kalibracji treningowej",
+      "generationFailed": "Generowanie planu treningowego nie powiodło się. Spróbuj ponownie.",
+      "loadingFailed": "Nie udało się załadować danych treningowych",
+      "timeout": "Generowanie programu trwa dłużej niż oczekiwano. Sprawdź ponownie za kilka minut.",
+      "programNotFound": "Nie znaleziono programu treningowego",
+      "weekNotFound": "Nie znaleziono tygodnia",
+      "completeFailed": "Nie udało się ukończyć tygodnia",
+      "skipFailed": "Nie udało się pominąć tygodnia",
+      "checkProgramFailed": "Nie udało się sprawdzić istniejącego programu. Spróbuj ponownie.",
+      "linkFailed": "Nie udało się powiązać aktywności",
+      "unlinkFailed": "Nie udało się odłączyć aktywności"
+    },
+    "tips": {
+      "sectionTitle": "Wskazówka dla Ciebie",
+      "readMore": "Czytaj więcej",
+      "wasHelpful": "Czy to było pomocne?",
+      "helpful": "Tak",
+      "notHelpful": "Nie",
+      "thanksFeedback": "Dziękujemy za opinię!",
+      "emotionalLoad": "Obciążenie mentalne",
+      "categories": {
+        "mindset": "Nastawienie",
+        "recovery": "Regeneracja",
+        "technique": "Technika",
+        "nutrition": "Odżywianie",
+        "sleep": "Sen",
+        "pacing": "Tempo"
+      },
+      "settings": {
+        "title": "Wskazówki Treningowe",
+        "frequency": "Jak często chcesz otrzymywać wskazówki?",
+        "silent": "Cicho (Brak wskazówek)",
+        "reactive": "Reaktywny (Wskazówki na żądanie)",
+        "proactive": "Proaktywny (Regularne wskazówki)",
+        "usage": "W tym tygodniu: {{delivered}}/{{max}} wskazówek dostarczonych"
+      }
+    }
   }
 }

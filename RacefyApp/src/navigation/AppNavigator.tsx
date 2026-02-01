@@ -34,6 +34,13 @@ import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
 import { LandingScreen } from '../screens/landing';
 import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
+import {
+  CalibrationFormScreen,
+  ProgramLoadingScreen,
+  WeeksListScreen,
+  WeekDetailScreen,
+  TipDetailScreen,
+} from '../screens/training';
 
 // Types
 import type {
@@ -406,6 +413,29 @@ export function AppNavigator() {
             <RootStack.Screen
               name="PointHistory"
               component={PointHistoryScreen}
+            />
+            <RootStack.Screen
+              name="TrainingCalibration"
+              component={CalibrationFormScreen}
+            />
+            <RootStack.Screen
+              name="ProgramLoading"
+              component={ProgramLoadingScreen}
+              options={{
+                gestureEnabled: false,
+              }}
+            />
+            <RootStack.Screen
+              name="TrainingWeeksList"
+              component={WeeksListScreen}
+            />
+            <RootStack.Screen
+              name="TrainingWeekDetail"
+              component={WeekDetailScreen}
+            />
+            <RootStack.Screen
+              name="TipDetail"
+              component={TipDetailScreen}
             />
           </>
         )}

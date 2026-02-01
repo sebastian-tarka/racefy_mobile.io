@@ -41,6 +41,12 @@ export type RootStackParamList = {
   GpxImport: undefined;
   Leaderboard: undefined;
   PointHistory: undefined;
+  // Training Plans
+  TrainingCalibration: undefined;
+  ProgramLoading: { programId: number };
+  TrainingWeeksList: undefined;
+  TrainingWeekDetail: { weekId: number };
+  TipDetail: { tipId: number };
 };
 
 declare global {

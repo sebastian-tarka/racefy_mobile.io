@@ -19,7 +19,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
-import type { Event, MilestoneSingle } from '../../types/api';
+import type { Event, MilestoneSingle, TrainingProgram, TrainingWeek, SuggestedActivity } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,6 +30,7 @@ import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 import { logger } from '../../services/logger';
+import { api } from '../../services/api';
 import { formatPaceDisplay, calculateAveragePace } from '../../utils/paceCalculator';
 import { formatTime, formatDistance, formatTotalDistance, formatTotalTime, formatAvgPace } from '../../utils/formatters';
 
@@ -75,6 +76,11 @@ export function ActivityRecordingScreen() {
   const [skipAutoPost, setSkipAutoPost] = useState(false);
   const preselectedEventHandled = useRef(false);
   const isFinishingRef = useRef(false);
+
+  // Training program state
+  const [trainingProgram, setTrainingProgram] = useState<TrainingProgram | null>(null);
+  const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
+  const [loadingProgram, setLoadingProgram] = useState(false);
 
   // Animation for start button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -142,6 +148,47 @@ export function ActivityRecordingScreen() {
       setSelectedSport(sportTypes[0]);
     }
   }, [sportTypes, selectedSport]);
+
+  // Load training program and active week
+  useEffect(() => {
+    const loadTrainingProgram = async () => {
+      if (!isAuthenticated || !selectedSport) {
+        setTrainingProgram(null);
+        setActiveWeek(null);
+        return;
+      }
+
+      try {
+        setLoadingProgram(true);
+        const program = await api.getCurrentProgram();
+
+        if (!program) {
+          setTrainingProgram(null);
+          setActiveWeek(null);
+          return;
+        }
+
+        setTrainingProgram(program);
+
+        // Only fetch active week if sport types match
+        if (program.sport_type_id === selectedSport.id) {
+          const weeks = await api.getWeeks();
+          const currentWeek = weeks.find(w => w.status === 'current' || w.status === 'active');
+          setActiveWeek(currentWeek || null);
+        } else {
+          setActiveWeek(null);
+        }
+      } catch (err: any) {
+        logger.error('activity', 'Failed to load training program', { error: err });
+        setTrainingProgram(null);
+        setActiveWeek(null);
+      } finally {
+        setLoadingProgram(false);
+      }
+    };
+
+    loadTrainingProgram();
+  }, [isAuthenticated, selectedSport]);
 
   // Handle preselected event
   useEffect(() => {
@@ -254,6 +301,16 @@ export function ActivityRecordingScreen() {
     if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
     return formatPaceDisplay(avgPace);
+  };
+
+  const formatSuggestedDuration = (minutes: number | null): string => {
+    if (!minutes) return '';
+    return minutes < 60 ? `${minutes}min` : `${Math.floor(minutes / 60)}h ${minutes % 60}min`;
+  };
+
+  const formatSuggestedDistance = (meters: number | null): string => {
+    if (!meters) return '';
+    return (meters / 1000).toFixed(1) + ' km';
   };
 
   // Action handlers
@@ -521,6 +578,88 @@ export function ActivityRecordingScreen() {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Suggested Activities Slider
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderSuggestedActivitiesSlider = () => {
+    if (!activeWeek?.suggested_activities || activeWeek.suggested_activities.length === 0) {
+      return null;
+    }
+
+    const suggestedActivities = activeWeek.suggested_activities;
+
+    return (
+      <View style={styles.suggestedActivitiesSection}>
+        <View style={styles.suggestedActivitiesHeader}>
+          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+          <Text style={[styles.suggestedActivitiesTitle, { color: colors.textPrimary }]}>
+            {t('recording.plannedThisWeek')}
+          </Text>
+        </View>
+
+        <FlatList
+          horizontal
+          data={suggestedActivities}
+          keyExtractor={(item) => `suggested-${item.id}`}
+          renderItem={({ item }: { item: SuggestedActivity }) => (
+            <View
+              style={[
+                styles.suggestedActivityCard,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <View style={[styles.suggestedActivityHeader, { backgroundColor: colors.primary + '15' }]}>
+                <Text style={[styles.suggestedActivityOrder, { color: colors.primary }]}>
+                  {t('recording.session')} {item.session_order}
+                </Text>
+              </View>
+
+              <View style={styles.suggestedActivityBody}>
+                <Text style={[styles.suggestedActivityType, { color: colors.textPrimary }]}>
+                  {item.activity_type}
+                </Text>
+
+                {item.intensity_description && (
+                  <View style={[styles.suggestedActivityIntensity, { backgroundColor: colors.warning + '10' }]}>
+                    <Ionicons name="pulse-outline" size={14} color={colors.warning} />
+                    <Text style={[styles.suggestedActivityIntensityText, { color: colors.textSecondary }]}>
+                      {item.intensity_description}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.suggestedActivityMetrics}>
+                  {item.target_duration_minutes && (
+                    <View style={styles.suggestedActivityMetric}>
+                      <Ionicons name="time-outline" size={16} color={colors.success} />
+                      <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
+                        {formatSuggestedDuration(item.target_duration_minutes)}
+                      </Text>
+                    </View>
+                  )}
+
+                  {item.target_distance_meters && (
+                    <View style={styles.suggestedActivityMetric}>
+                      <Ionicons name="navigate-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
+                        {formatSuggestedDistance(item.target_distance_meters)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.suggestedActivitiesList}
+        />
+      </View>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Next Milestone Indicator
   // ═══════════════════════════════════════════════════════════════════════════
   const renderNextMilestone = () => {
@@ -626,6 +765,9 @@ export function ActivityRecordingScreen() {
           </View>
         </TouchableOpacity>
       )}
+
+      {/* Suggested Activities from Training Plan */}
+      {renderSuggestedActivitiesSlider()}
 
       {/* Quick Stats Preview */}
       {isAuthenticated && (
@@ -1392,5 +1534,76 @@ const styles = StyleSheet.create({
   modalSportName: {
     flex: 1,
     fontSize: fontSize.md,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Suggested Activities Slider
+  // ─────────────────────────────────────────────────────────────────────────
+  suggestedActivitiesSection: {
+    marginBottom: spacing.lg,
+  },
+  suggestedActivitiesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  suggestedActivitiesTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  suggestedActivitiesList: {
+    paddingRight: spacing.lg,
+  },
+  suggestedActivityCard: {
+    width: 200,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    marginRight: spacing.md,
+    overflow: 'hidden',
+  },
+  suggestedActivityHeader: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+  },
+  suggestedActivityOrder: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  suggestedActivityBody: {
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  suggestedActivityType: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  suggestedActivityIntensity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.sm,
+  },
+  suggestedActivityIntensityText: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+  },
+  suggestedActivityMetrics: {
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  suggestedActivityMetric: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  suggestedActivityMetricText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });

@@ -11,6 +11,7 @@ import { api } from '../../services/api';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
+import type { TrainingTip } from '../../types/api';
 
 import {
   ConnectionErrorBanner,
@@ -27,6 +28,7 @@ import {
   LiveEventCard,
   EmptyState,
   Loading,
+  TipCard,
 } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -67,6 +69,26 @@ export function HomeScreen({ navigation }: Props) {
     connected: true,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
+  const [loadingTips, setLoadingTips] = useState(false);
+
+  const loadAvailableTips = useCallback(async () => {
+    if (!isAuthenticated) {
+      setAvailableTips([]);
+      return;
+    }
+
+    try {
+      setLoadingTips(true);
+      const tips = await api.getAvailableTips();
+      setAvailableTips(tips);
+    } catch (error) {
+      // Silently fail - tips are optional feature
+      setAvailableTips([]);
+    } finally {
+      setLoadingTips(false);
+    }
+  }, [isAuthenticated]);
 
   const checkConnection = useCallback(async () => {
     const result = await api.checkHealth();
@@ -82,13 +104,17 @@ export function HomeScreen({ navigation }: Props) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await checkConnection();
-    await refetch(); // Refetch home data
+    await Promise.all([refetch(), loadAvailableTips()]);
     setRefreshing(false);
-  }, [checkConnection, refetch]);
+  }, [checkConnection, refetch, loadAvailableTips]);
 
   useEffect(() => {
     checkConnection();
   }, [checkConnection]);
+
+  useEffect(() => {
+    loadAvailableTips();
+  }, [loadAvailableTips]);
 
   const navigateToAuth = (screen: 'Login' | 'Register') => {
     navigation.getParent()?.navigate('Auth', { screen });
@@ -139,6 +165,24 @@ export function HomeScreen({ navigation }: Props) {
           userName={user?.name}
           isAuthenticated={isAuthenticated}
         />
+
+        {/* Training Tips - shown when available */}
+        {isAuthenticated && availableTips.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('training.tips.sectionTitle')}
+            </Text>
+            {availableTips.slice(0, 1).map((tip) => (
+              <TipCard
+                key={tip.id}
+                tip={tip}
+                onPress={() => {
+                  navigation.getParent()?.navigate('TipDetail', { tipId: tip.id });
+                }}
+              />
+            ))}
+          </View>
+        )}
 
         {/* Auth Card for non-authenticated users */}
         {!isAuthenticated && (

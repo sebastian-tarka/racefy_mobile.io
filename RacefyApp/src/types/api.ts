@@ -1718,3 +1718,286 @@ export interface  ShareLinkResponse {
     telegram: ShareLinkPlatform;
   };
 }
+
+// ============ TRAINING PLANS ============
+
+export type ExperienceLevel = 'beginner' | 'recreational' | 'regular';
+export type GuidanceLevel = 'minimal' | 'standard' | 'coach_like';
+export type RecoveryProfile = 'low' | 'medium' | 'high';
+export type ProgramStatus = 'pending' | 'processing' | 'active' | 'paused' | 'abandoned' | 'completed' | 'failed';
+export type PausedReason = 'injury' | 'vacation' | 'burnout' | 'other';
+export type WeekStatus = 'upcoming' | 'current' | 'active' | 'completed' | 'skipped';
+export type ActivityStatus = 'pending' | 'completed' | 'skipped';
+
+export interface TrainingGoal {
+  id: number;
+  key: string;
+  name: string;
+  description: string;
+  sport_type_id: number;
+  is_active: boolean;
+  requires_target_distance: boolean;
+  requires_target_date: boolean;
+  default_duration_weeks: number;
+}
+
+export interface CalibrationData {
+  sport_type_id: number;
+  training_goal_id: number;
+  experience_level: ExperienceLevel;
+  sessions_per_week: number; // 1-7
+  guidance_level: GuidanceLevel;
+  recovery_profile: RecoveryProfile;
+  injury_history?: boolean;
+  target_distance?: number; // meters
+  target_date?: string; // ISO date
+}
+
+export interface TrainingCalibration {
+  id: number;
+  sport_type_id: number;
+  training_goal_id: number;
+  experience_level: ExperienceLevel;
+  sessions_per_week: number;
+  guidance_level: GuidanceLevel;
+  recovery_profile: RecoveryProfile;
+  injury_history: boolean;
+  target_distance: number | null;
+  target_date: string | null;
+  is_current: boolean;
+  calibrated_at: string;
+  created_at: string;
+  sport_type: {
+    id: number;
+    name: string;
+  };
+  training_goal: TrainingGoal;
+}
+
+export interface TrainingProgram {
+  id: number;
+  name: string;
+  sport_type_id: number;
+  training_goal_id: number;
+  status: ProgramStatus;
+  start_date: string;
+  planned_end_date: string | null;
+  total_weeks: number;
+  current_week_number: number | null;
+  weeks_added: number;
+  weeks_skipped: number;
+  current_guidance_level: string;
+  auto_link_activities: boolean;
+  allowed_sport_types: number[] | null;
+  paused_at: string | null;
+  pause_reason: string | null;
+  template?: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  current_week?: TrainingWeek | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrainingActivity {
+  id: number;
+  week_id: number;
+  day_of_week: number; // 1=Monday, 7=Sunday
+  activity_type: string;
+  duration_minutes: number | null;
+  distance_meters: number | null;
+  pace_target: string | null;
+  intensity: string | null;
+  description: string;
+  notes: string | null;
+  status: ActivityStatus;
+  completed_at: string | null;
+  linked_activity_id?: number | null;
+}
+
+export interface SuggestedActivity {
+  id: number;
+  session_order: number;
+  activity_type: string;
+  intensity_description: string;
+  target_distance_meters: number | null;
+  target_duration_minutes: number | null;
+  notes: string | null;
+}
+
+export interface TrainingWeek {
+  id: number;
+  program_id?: number;
+  week_number: number;
+  phase_name: string;
+  start_date: string;
+  end_date: string;
+  status: WeekStatus;
+  focus_description: string;
+  educational_notes: string | null;
+  progress: {
+    activities_count: number;
+    sessions_per_week: number; // 1-7
+    total_distance: number;
+    total_duration: number;
+  };
+  notes: string | null;
+  activities?: TrainingActivity[];
+  suggested_activities?: SuggestedActivity[];
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// API Response types
+export interface CreateCalibrationResponse {
+  data: TrainingCalibration;
+}
+
+export interface InitProgramResponse {
+  program?: TrainingProgram;
+  data?: TrainingProgram;
+  message?: string;
+}
+
+export interface GetProgramResponse {
+  program?: TrainingProgram;
+  data?: TrainingProgram;
+}
+
+export interface GetCurrentProgramResponse {
+  program?: TrainingProgram | null;
+  data?: TrainingProgram | null;
+}
+
+export interface GetWeeksResponse {
+  data: TrainingWeek[];
+}
+
+export interface GetWeekResponse {
+  data: TrainingWeek;
+}
+
+export interface CompleteWeekResponse {
+  data: TrainingWeek;
+  message: string;
+}
+
+export interface SkipWeekResponse {
+  data: TrainingWeek;
+  message: string;
+}
+
+export interface UpdateWeekNotesRequest {
+  notes: string;
+}
+
+export interface UpdateWeekNotesResponse {
+  data: TrainingWeek;
+  message: string;
+}
+
+export interface PauseProgramRequest {
+  reason: PausedReason;
+}
+
+export interface PauseProgramResponse {
+  message: string;
+}
+
+export interface ResumeProgramResponse {
+  message: string;
+}
+
+export interface AbandonProgramResponse {
+  message: string;
+}
+
+export interface InitProgramRequest {
+  auto_link_activities?: boolean;
+  allowed_sport_types?: number[];
+}
+
+export interface UpdateProgramSettingsRequest {
+  guidance_level?: GuidanceLevel;
+  auto_link_activities?: boolean;
+  allowed_sport_types?: number[];
+}
+
+export interface UpdateProgramSettingsResponse {
+  message: string;
+}
+
+export interface LinkActivityToWeekResponse {
+  data: TrainingWeek;
+  message: string;
+}
+
+export interface UnlinkActivityFromWeekResponse {
+  data: TrainingWeek;
+  message: string;
+}
+
+// ============ TRAINING TIPS ============
+
+export type TipCategory = 'mindset' | 'recovery' | 'technique' | 'nutrition' | 'sleep' | 'pacing';
+export type TipStatus = 'draft' | 'active' | 'archived';
+export type AiMode = 'silent' | 'reactive' | 'proactive';
+
+export interface TrainingTip {
+  id: number;
+  title: string;
+  content: string | null; // Null in list view, full content in detail view
+  category: TipCategory;
+  emotional_load: number; // 1-3
+  priority: number;
+  status: TipStatus;
+  translated_title?: string; // Present if Accept-Language header sent
+  translated_content?: string; // Present if Accept-Language header sent
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AvailableTipsResponse {
+  data: TrainingTip[];
+}
+
+export interface TipDetailResponse {
+  data: TrainingTip;
+}
+
+export interface MarkTipHelpfulRequest {
+  helpful: boolean;
+}
+
+export interface MarkTipHelpfulResponse {
+  message: string;
+}
+
+export interface MentalBudget {
+  max_tips_per_week: number;
+  tips_delivered_this_week: number;
+  remaining_tips: number;
+  max_emotional_load_per_week: number;
+  emotional_load_used: number;
+  remaining_load: number;
+  ai_mode: AiMode;
+  week_start_date: string;
+  week_end_date: string;
+}
+
+export interface MentalBudgetResponse {
+  data: MentalBudget;
+}
+
+export interface UpdateMentalBudgetRequest {
+  max_tips_per_week?: number; // 0-10
+  ai_mode?: AiMode;
+}
+
+export interface UpdateMentalBudgetResponse {
+  data: MentalBudget;
+  message: string;
+}

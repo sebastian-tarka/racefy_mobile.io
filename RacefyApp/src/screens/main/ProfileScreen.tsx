@@ -38,7 +38,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
-import { spacing, fontSize } from '../../theme';
+import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -65,6 +65,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadingTraining, setLoadingTraining] = useState(false);
 
   // Modal state
   const [showFollowersModal, setShowFollowersModal] = useState(false);
@@ -252,6 +253,26 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
 
+  const handleTrainingPress = async () => {
+    setLoadingTraining(true);
+    try {
+      const program = await api.getCurrentProgram();
+      if (program) {
+        // User has active program - go to weeks list
+        navigation.navigate('TrainingWeeksList');
+      } else {
+        // No active program - go to calibration to create one
+        navigation.navigate('TrainingCalibration');
+      }
+    } catch (error: any) {
+      // Unexpected error - log it and navigate to calibration
+      logger.error('training', 'Failed to check training program', { error });
+      navigation.navigate('TrainingCalibration');
+    } finally {
+      setLoadingTraining(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -357,6 +378,31 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             style={styles.actionButton}
           />
         </View>
+
+        {/* Training Plans Card */}
+        <TouchableOpacity
+          style={[styles.trainingCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+          onPress={handleTrainingPress}
+          disabled={loadingTraining}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.trainingIconContainer, { backgroundColor: colors.primary }]}>
+            <Ionicons name="fitness" size={28} color={colors.white} />
+          </View>
+          <View style={styles.trainingContent}>
+            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
+              {t('training.title')}
+            </Text>
+            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
+              {t('training.subtitle')}
+            </Text>
+          </View>
+          {loadingTraining ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -767,5 +813,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 16,
+  },
+  trainingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    borderRadius: borderRadius.xl,
+    borderWidth: 2,
+    gap: spacing.md,
+    marginHorizontal: spacing.lg,
+  },
+  trainingIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trainingContent: {
+    flex: 1,
+  },
+  trainingTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  trainingSubtitle: {
+    fontSize: fontSize.sm,
+    lineHeight: 18,
   },
 });

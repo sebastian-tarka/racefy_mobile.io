@@ -65,3 +65,4 @@ export * from './ProfileTabs';
 export * from './UserProfileHeader';
 export * from './EventRankingModeSelector'
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
+export * from './TipCard';

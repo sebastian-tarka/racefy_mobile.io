@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, View } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
+import type { TrainingTip } from '../../types/api';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';
@@ -30,7 +31,7 @@ import {
   PrimaryCTA,
   SectionRenderer,
 } from './home/components';
-import { Loading } from '../../components';
+import { Loading, TipCard } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -90,6 +91,8 @@ export function DynamicHomeScreen({ navigation }: Props) {
     connected: true,
   });
   const [refreshing, setRefreshing] = useState(false);
+  const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
+  const [loadingTips, setLoadingTips] = useState(false);
 
   // Update analytics meta when config changes
   useEffect(() => {
@@ -103,6 +106,24 @@ export function DynamicHomeScreen({ navigation }: Props) {
       homeAnalytics.homeLoaded(sectionTypes);
     }
   }, [config, sortedSections]);
+
+  const loadAvailableTips = useCallback(async () => {
+    if (!isAuthenticated) {
+      setAvailableTips([]);
+      return;
+    }
+
+    try {
+      setLoadingTips(true);
+      const tips = await api.getAvailableTips();
+      setAvailableTips(tips);
+    } catch (error) {
+      // Silently fail - tips are optional feature
+      setAvailableTips([]);
+    } finally {
+      setLoadingTips(false);
+    }
+  }, [isAuthenticated]);
 
   const checkConnection = useCallback(async () => {
     const result = await api.checkHealth();
@@ -118,13 +139,17 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await checkConnection();
-    await Promise.all([refetchConfig(), refetchData()]);
+    await Promise.all([refetchConfig(), refetchData(), loadAvailableTips()]);
     setRefreshing(false);
-  }, [checkConnection, refetchConfig, refetchData]);
+  }, [checkConnection, refetchConfig, refetchData, loadAvailableTips]);
 
   useEffect(() => {
     checkConnection();
   }, [checkConnection]);
+
+  useEffect(() => {
+    loadAvailableTips();
+  }, [loadAvailableTips]);
 
   // Navigation helpers
   const navigateToAuth = useCallback(
@@ -261,6 +286,24 @@ export function DynamicHomeScreen({ navigation }: Props) {
           isAuthenticated={isAuthenticated}
         />
 
+        {/* Training Tips - shown when available */}
+        {isAuthenticated && availableTips.length > 0 && (
+          <View style={styles.tipsSection}>
+            <Text style={[styles.tipsSectionTitle, { color: colors.textPrimary }]}>
+              {t('training.tips.sectionTitle')}
+            </Text>
+            {availableTips.slice(0, 1).map((tip) => (
+              <TipCard
+                key={tip.id}
+                tip={tip}
+                onPress={() => {
+                  navigation.getParent()?.navigate('TipDetail', { tipId: tip.id });
+                }}
+              />
+            ))}
+          </View>
+        )}
+
         {/* Loading State */}
         {isLoading && <Loading />}
 
@@ -292,5 +335,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
+  },
+  tipsSection: {
+    marginBottom: spacing.lg,
+  },
+  tipsSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: spacing.md,
   },
 });
