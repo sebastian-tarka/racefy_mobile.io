@@ -21,6 +21,7 @@ import {
   WeeklyStatsCard,
   QuickActionsBar,
   LiveActivityBanner,
+  ActivitiesFeedPreview,
 } from './home/components';
 import {
   ActivityCard,
@@ -266,27 +267,17 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         )}
 
-        {/* Recent Activities */}
-        {recentActivities.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('home.activities')}
-              </Text>
-            </View>
-            {recentActivities.slice(0, 3).map((activity) => (
-              <ActivityCard
-                key={activity.id}
-                activity={activity}
-                onPress={() => {
-                  navigation.getParent()?.navigate('ActivityDetail', {
-                    activityId: activity.id,
-                  });
-                }}
-              />
-            ))}
-          </View>
-        )}
+        {/* Recent Activities Feed Preview */}
+        <ActivitiesFeedPreview
+          onActivityPress={(activityId) => {
+            navigation.getParent()?.navigate('ActivityDetail', { activityId });
+          }}
+          onViewAllPress={() => {
+            navigation.navigate('Feed');
+          }}
+          onLoginPress={() => navigateToAuth('Login')}
+          limit={5}
+        />
       </ScrollView>
     </SafeAreaView>
   );
