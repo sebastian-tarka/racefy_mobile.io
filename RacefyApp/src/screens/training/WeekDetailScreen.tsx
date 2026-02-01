@@ -14,12 +14,13 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Loading, Card, Button } from '../../components';
+import { ScreenHeader, Loading, Card, Button, ActivitySelectionSheet } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
-import type { TrainingWeek, TrainingActivity, SuggestedActivity } from '../../types/api';
+import type { TrainingWeek, TrainingActivity, SuggestedActivity, Activity } from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeekDetail'>;
@@ -35,9 +36,13 @@ export function WeekDetailScreen({ navigation, route }: Props) {
   const { weekId } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [week, setWeek] = useState<TrainingWeek | null>(null);
   const [processingAction, setProcessingAction] = useState(false);
+  const [activitySheetVisible, setActivitySheetVisible] = useState(false);
+  const [userActivities, setUserActivities] = useState<Activity[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
 
   const loadWeekData = useCallback(async () => {
     try {
@@ -141,12 +146,66 @@ export function WeekDetailScreen({ navigation, route }: Props) {
     );
   };
 
-  const handleLinkActivity = () => {
-    Alert.alert(
-      t('training.weekDetail.linkExistingActivity'),
-      'Activity picker coming soon. Activities will be auto-linked when you record them.',
-      [{ text: t('common.ok') }]
-    );
+  const handleLinkActivity = async () => {
+    setActivitiesLoading(true);
+    setActivitySheetVisible(true);
+    try {
+      const program = await api.getCurrentProgram();
+      const allowedTypes: number[] = program?.allowed_sport_types?.length
+        ? program.allowed_sport_types
+        : program?.sport_type_id
+          ? [program.sport_type_id]
+          : [];
+
+      const response = await api.getActivities(user?.id ? { user_id: user.id } : undefined);
+      const allActivities = response.data || [];
+
+      const filtered = allActivities.filter(a => {
+        const sportTypeId = a.sport_type_id ?? a.sport_type?.id;
+        return (
+          a.status === 'completed' &&
+          (allowedTypes.length === 0 || (sportTypeId != null && allowedTypes.includes(sportTypeId)))
+        );
+      });
+
+      setUserActivities(filtered);
+    } catch (err: any) {
+      logger.error('training', 'Failed to load activities for linking', { error: err });
+      Alert.alert(t('common.error'), err.message || t('training.errors.loadingFailed'));
+      setActivitySheetVisible(false);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
+
+  const handleSelectActivity = (activity: Activity) => {
+    const linkActivity = async () => {
+      setProcessingAction(true);
+      try {
+        const updatedWeek = await api.linkActivityToWeek(weekId, activity.id);
+        setWeek(updatedWeek);
+        logger.info('training', 'Activity linked to week', { weekId, activityId: activity.id });
+        Alert.alert(t('common.success'), t('training.weekDetail.activityLinked'));
+      } catch (err: any) {
+        logger.error('training', 'Failed to link activity', { error: err });
+        Alert.alert(t('common.error'), err.message || t('training.errors.linkFailed'));
+      } finally {
+        setProcessingAction(false);
+      }
+    };
+
+    if (activity.training_week_id != null && activity.training_week_id !== weekId) {
+      Alert.alert(
+        t('training.weekDetail.confirmReassign'),
+        t('training.weekDetail.confirmReassignMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('common.confirm'), onPress: linkActivity },
+        ]
+      );
+    } else {
+      linkActivity();
+    }
   };
 
   const formatDistance = (meters: number | null): string => {
@@ -465,7 +524,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
         ))}
 
         {/* Link Existing Activity Button */}
-        {!isCompleted && !isSkipped && (
+        {week.status === 'current' && (
           <TouchableOpacity
             style={[styles.linkActivityButton, { borderColor: colors.border }]}
             onPress={handleLinkActivity}
@@ -502,6 +561,15 @@ export function WeekDetailScreen({ navigation, route }: Props) {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      <ActivitySelectionSheet
+        visible={activitySheetVisible}
+        onClose={() => setActivitySheetVisible(false)}
+        onSelect={handleSelectActivity}
+        activities={userActivities}
+        isLoading={activitiesLoading}
+        currentWeekId={weekId}
+      />
     </SafeAreaView>
   );
 }

@@ -59,6 +59,7 @@ export * from './ImageViewer';
 export * from './ImageGallery';
 export * from './BottomSheet';
 export * from './EventSelectionSheet';
+export * from './ActivitySelectionSheet';
 export * from './ProfileStats';
 export * from './ProfileActions';
 export * from './ProfileTabs';

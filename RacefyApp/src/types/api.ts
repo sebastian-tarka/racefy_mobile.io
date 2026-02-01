@@ -327,6 +327,8 @@ export interface Event {
   // GPS Privacy (new in 2026-01)
   show_start_finish_points?: boolean;  // Override GPS privacy for all participants
   start_finish_note?: string | null;   // Explanation why markers are shown
+  // Activity aggregation
+  allow_multiple_activities?: boolean;  // Allow multiple activities to be aggregated
   // Point rewards
   point_rewards?: EventPointRewards;
   // Registration status
@@ -390,6 +392,8 @@ export interface CreateEventRequest {
   // GPS Privacy (new in 2026-01)
   show_start_finish_points?: boolean;  // Override GPS privacy for all participants
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
+  // Activity aggregation
+  allow_multiple_activities?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -439,6 +443,8 @@ export interface UpdateEventRequest {
   // GPS Privacy (new in 2026-01)
   show_start_finish_points?: boolean;  // Override GPS privacy for all participants
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
+  // Activity aggregation
+  allow_multiple_activities?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -532,6 +538,8 @@ export interface Activity {
   comments_count?: number;
   is_liked?: boolean;
   is_boosted?: boolean;
+  // Training link
+  training_week_id?: number | null;
   // GPS profile used during tracking (returned by API after activity is finished)
   gps_profile_used?: GpsProfileApiResponse | null;
 }
@@ -1840,6 +1848,7 @@ export interface TrainingWeek {
   progress: {
     activities_count: number;
     sessions_per_week: number; // 1-7
+    suggested_activities_count: number;
     total_distance: number;
     total_duration: number;
   };

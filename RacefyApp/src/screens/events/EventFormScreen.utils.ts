@@ -53,6 +53,8 @@ export interface FormData {
     // GPS Privacy (new in 2026-01)
     show_start_finish_points: boolean;
     start_finish_note: string;
+    // Activity aggregation
+    allow_multiple_activities: boolean;
 }
 
 export const initialFormData: FormData = {
@@ -74,6 +76,8 @@ export const initialFormData: FormData = {
     // GPS Privacy (new in 2026-01)
     show_start_finish_points: false,
     start_finish_note: '',
+    // Activity aggregation
+    allow_multiple_activities: false,
 };
 export type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
 export const styles = StyleSheet.create({

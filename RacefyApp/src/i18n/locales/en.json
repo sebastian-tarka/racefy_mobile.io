@@ -686,6 +686,9 @@
     "showStartFinishMarkersDescription": "Enable for races where everyone needs to know start/finish location",
     "startFinishNote": "Explanation (optional)",
     "startFinishNotePlaceholder": "e.g., Race starts at City Hall",
+    "allowMultipleActivities": "Activity Aggregation",
+    "allowMultipleActivitiesDescription": "Allow participants to submit multiple activities that will be aggregated for this event",
+    "allowMultipleActivitiesToggle": "Allow multiple activities",
     "validation": {
       "titleRequired": "Title is required",
       "sportTypeRequired": "Please select a sport type",
@@ -1209,7 +1212,14 @@
       "confirmUnlink": "Unlink Activity?",
       "confirmUnlinkMessage": "Remove the link between this training activity and the recorded activity?",
       "activityLinked": "Activity linked successfully",
-      "activityUnlinked": "Activity unlinked successfully"
+      "activityUnlinked": "Activity unlinked successfully",
+      "selectActivity": "Select Activity",
+      "selectActivitySubtitle": "Choose a completed activity to link to this training week",
+      "noActivities": "No Activities",
+      "noActivitiesHint": "Complete an activity first to link it here",
+      "alreadyLinked": "Already linked to another week",
+      "confirmReassign": "Reassign Activity?",
+      "confirmReassignMessage": "This activity is already linked to another training week. It will be moved to this week instead."
     },
     "errors": {
       "title": "Something Went Wrong",

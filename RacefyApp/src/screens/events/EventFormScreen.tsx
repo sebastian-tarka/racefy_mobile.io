@@ -5,6 +5,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Switch,
     Text,
     TouchableOpacity,
     View,
@@ -164,6 +165,8 @@ export function EventFormScreen({navigation, route}: Props) {
             // GPS Privacy (new in 2026-01)
             show_start_finish_points: event.show_start_finish_points ?? false,
             start_finish_note: event.start_finish_note || '',
+            // Activity aggregation
+            allow_multiple_activities: event.allow_multiple_activities ?? false,
         });
         setCoverImage(fixStorageUrl(event.cover_image_url) || null);
 
@@ -255,6 +258,8 @@ export function EventFormScreen({navigation, route}: Props) {
                     // GPS Privacy (new in 2026-01)
                     show_start_finish_points: formData.show_start_finish_points,
                     start_finish_note: formData.start_finish_note || undefined,
+                    // Activity aggregation
+                    allow_multiple_activities: formData.allow_multiple_activities,
                 };
 
                 await api.updateEvent(eventId, updateData);
@@ -282,6 +287,8 @@ export function EventFormScreen({navigation, route}: Props) {
                     // GPS Privacy (new in 2026-01)
                     show_start_finish_points: formData.show_start_finish_points,
                     start_finish_note: formData.start_finish_note || undefined,
+                    // Activity aggregation
+                    allow_multiple_activities: formData.allow_multiple_activities,
                 };
 
                 const createdEvent = await api.createEvent(createData);
@@ -693,6 +700,28 @@ export function EventFormScreen({navigation, route}: Props) {
                                             style={{marginTop: spacing.md}}
                                         />
                                     )}
+                                </View>
+
+                                {/* Allow Multiple Activities */}
+                                <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>
+                                    <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                        {t('eventForm.allowMultipleActivities')}
+                                    </Text>
+                                    <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
+                                        {t('eventForm.allowMultipleActivitiesDescription')}
+                                    </Text>
+                                    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md}}>
+                                        <Text style={[styles.checkboxLabel, {color: colors.textPrimary}]}>
+                                            {t('eventForm.allowMultipleActivitiesToggle')}
+                                        </Text>
+                                        <Switch
+                                            value={formData.allow_multiple_activities}
+                                            onValueChange={(value) => updateField('allow_multiple_activities', value)}
+                                            disabled={isLimitedEdit}
+                                            trackColor={{true: colors.primary, false: colors.border}}
+                                            thumbColor="#fff"
+                                        />
+                                    </View>
                                 </View>
                             </Card>
                         </View>

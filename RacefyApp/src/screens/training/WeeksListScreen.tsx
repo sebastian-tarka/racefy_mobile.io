@@ -237,12 +237,13 @@ export function WeeksListScreen({ navigation }: Props) {
     // Use week.progress if activities are not loaded in list view
     const completedActivities = activities.length > 0
       ? activities.filter(a => a.status === 'completed').length
-      : 0;
+      : week.progress?.activities_count || 0;
     const totalActivities = activities.length > 0
       ? activities.length
-      : week.progress?.activities_count || 0;
+      : week.progress?.suggested_activities_count || week.progress?.sessions_per_week || 0;
     const completionPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
 
+    // @ts-ignore
     return (
       <TouchableOpacity
         onPress={() => handleWeekPress(week)}
@@ -250,6 +251,7 @@ export function WeeksListScreen({ navigation }: Props) {
       >
         <Card style={[
           styles.weekCard,
+          // @ts-ignore
           isCurrentWeek && { borderColor: colors.primary, borderWidth: 2 },
         ]}>
           <View style={styles.weekHeader}>
@@ -346,13 +348,13 @@ export function WeeksListScreen({ navigation }: Props) {
                   />
                 ))
               ) : (
-                // Show placeholder dots when activities not loaded
+                // Show dots based on progress when activities not loaded
                 Array.from({ length: totalActivities }).map((_, idx) => (
                   <View
                     key={`dot-${idx}`}
                     style={[
                       styles.sessionDot,
-                      { backgroundColor: colors.border },
+                      { backgroundColor: idx < completedActivities ? colors.success : colors.border },
                     ]}
                   />
                 ))

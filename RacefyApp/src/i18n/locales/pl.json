@@ -686,6 +686,9 @@
     "showStartFinishMarkersDescription": "Włącz dla wyścigów, gdzie wszyscy muszą znać lokalizację startu/mety",
     "startFinishNote": "Wyjaśnienie (opcjonalne)",
     "startFinishNotePlaceholder": "np. Wyścig zaczyna się w Ratuszu",
+    "allowMultipleActivities": "Agregacja aktywności",
+    "allowMultipleActivitiesDescription": "Pozwól uczestnikom na przesyłanie wielu aktywności, które zostaną zagregowane dla tego wydarzenia",
+    "allowMultipleActivitiesToggle": "Zezwól na wiele aktywności",
     "validation": {
       "titleRequired": "Tytuł jest wymagany",
       "sportTypeRequired": "Wybierz rodzaj sportu",
@@ -1211,7 +1214,14 @@
       "confirmUnlink": "Odłączyć Aktywność?",
       "confirmUnlinkMessage": "Usunąć powiązanie między tą aktywnością treningową a zarejestrowaną aktywnością?",
       "activityLinked": "Aktywność powiązana pomyślnie",
-      "activityUnlinked": "Aktywność odłączona pomyślnie"
+      "activityUnlinked": "Aktywność odłączona pomyślnie",
+      "selectActivity": "Wybierz Aktywność",
+      "selectActivitySubtitle": "Wybierz ukończoną aktywność, aby powiązać ją z tym tygodniem treningowym",
+      "noActivities": "Brak Aktywności",
+      "noActivitiesHint": "Najpierw ukończ aktywność, aby ją tutaj powiązać",
+      "alreadyLinked": "Już powiązana z innym tygodniem",
+      "confirmReassign": "Przypisać Ponownie?",
+      "confirmReassignMessage": "Ta aktywność jest już powiązana z innym tygodniem treningowym. Zostanie przeniesiona do tego tygodnia."
     },
     "errors": {
       "title": "Coś Poszło Nie Tak",
