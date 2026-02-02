@@ -245,8 +245,7 @@ export function FeedScreen({ navigation, route }: Props) {
   };
 
   const handleEditPost = (postId: number) => {
-    // TODO: Navigate to edit post screen or show edit modal
-    Alert.alert(t('common.info'), t('feed.editNotImplemented'));
+    navigation.navigate('PostForm', { postId });
   };
 
   const renderSearchResults = () => {
@@ -513,7 +512,7 @@ export function FeedScreen({ navigation, route }: Props) {
           renderItem={({ item }) => (
             <FeedCard
               post={item}
-              isOwner={item.user_id === user?.id}
+              isOwner={item.is_owner ?? item.user_id === user?.id}
               onLike={() => toggleLike(item)}
               onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
               onUserPress={() => {

@@ -51,22 +51,34 @@ export function AutoPlayVideo({
 
   // Reset player when URL changes
   useEffect(() => {
-    player.pause();
-    player.currentTime = 0;
+    try {
+      player.pause();
+      player.currentTime = 0;
+    } catch (error) {
+      // Player already released, ignore
+    }
 
     return () => {
-      player.pause();
+      try {
+        player.pause();
+      } catch (error) {
+        // Player already released, ignore
+      }
     };
   }, [videoUrl, player]);
 
   // Handle viewability changes - auto play/pause
   useEffect(() => {
-    if (isViewable) {
-      // Start playing when 50% visible
-      player.play();
-    } else {
-      // Pause when not visible
-      player.pause();
+    try {
+      if (isViewable) {
+        // Start playing when 50% visible
+        player.play();
+      } else {
+        // Pause when not visible
+        player.pause();
+      }
+    } catch (error) {
+      // Player already released, ignore
     }
   }, [isViewable, player]);
 
@@ -85,14 +97,18 @@ export function AutoPlayVideo({
 
   // Toggle play/pause
   const togglePlayPause = useCallback(() => {
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
+    try {
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+      setShowControls(true);
+      // Hide controls after 800ms (feedback duration from UX analysis)
+      setTimeout(() => setShowControls(false), 800);
+    } catch (error) {
+      // Player already released, ignore
     }
-    setShowControls(true);
-    // Hide controls after 800ms (feedback duration from UX analysis)
-    setTimeout(() => setShowControls(false), 800);
   }, [player]);
 
   return (

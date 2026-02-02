@@ -185,7 +185,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
           </View>
           {onMenu && (
             <TouchableOpacity onPress={onToggleMenu} style={styles.menuButton}>
-              <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
+              <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -220,7 +220,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
         </TouchableOpacity>
         {onMenu && (
           <TouchableOpacity onPress={onToggleMenu} style={styles.menuButton}>
-            <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>

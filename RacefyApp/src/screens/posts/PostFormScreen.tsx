@@ -69,6 +69,15 @@ export function PostFormScreen({ navigation, route }: Props) {
     setIsFetching(true);
     try {
       const post = await api.getPost(id);
+      logger.info('api', 'Fetched post for editing', {
+        postId: id,
+        hasPhotos: !!post.photos,
+        photosCount: post.photos?.length || 0,
+        hasVideos: !!post.videos,
+        videosCount: post.videos?.length || 0,
+        hasMedia: !!post.media,
+        mediaCount: post.media?.length || 0,
+      });
       populateForm(post);
     } catch (error) {
       logger.error('api', 'Failed to fetch post', { error });
@@ -134,6 +143,10 @@ export function PostFormScreen({ navigation, route }: Props) {
       });
     }
 
+    logger.info('api', 'Populated form with media', {
+      existingMediaCount: mediaItems.length,
+      mediaItems: mediaItems.map(m => ({ id: m.id, type: m.type, hasUrl: !!m.url })),
+    });
     setExistingMedia(mediaItems);
   };
 

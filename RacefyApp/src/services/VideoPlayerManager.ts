@@ -33,7 +33,13 @@ class VideoPlayerManagerClass {
   unregister(id: string) {
     const player = this.players.get(id);
     if (player) {
-      player.pause();
+      try {
+        // Only pause if player is still valid
+        player.pause();
+      } catch (error) {
+        // Player already released, just log and continue
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} already released during unregister`);
+      }
       this.players.delete(id);
       logger.activity(`[VideoPlayerManager] Unregistered player: ${id}`, {
         totalPlayers: this.players.size,
@@ -49,13 +55,26 @@ class VideoPlayerManagerClass {
       totalPlayers: this.players.size,
     });
 
+    const invalidPlayers: string[] = [];
+
     this.players.forEach((player, id) => {
       try {
         player.pause();
       } catch (error) {
-        logger.error('activity', `[VideoPlayerManager] Error pausing player ${id}`, { error });
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, { error });
+        invalidPlayers.push(id);
       }
     });
+
+    // Clean up invalid players
+    invalidPlayers.forEach(id => this.players.delete(id));
+
+    if (invalidPlayers.length > 0) {
+      logger.activity('[VideoPlayerManager] Cleaned up released players', {
+        removed: invalidPlayers.length,
+        remaining: this.players.size,
+      });
+    }
   }
 
   /**
@@ -67,13 +86,26 @@ class VideoPlayerManagerClass {
       totalPlayers: this.players.size,
     });
 
+    const invalidPlayers: string[] = [];
+
     this.players.forEach((player, id) => {
       try {
         player.play();
       } catch (error) {
-        logger.error('activity', `[VideoPlayerManager] Error resuming player ${id}`, { error });
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, { error });
+        invalidPlayers.push(id);
       }
     });
+
+    // Clean up invalid players
+    invalidPlayers.forEach(id => this.players.delete(id));
+
+    if (invalidPlayers.length > 0) {
+      logger.activity('[VideoPlayerManager] Cleaned up released players', {
+        removed: invalidPlayers.length,
+        remaining: this.players.size,
+      });
+    }
   }
 
   /**
@@ -83,8 +115,13 @@ class VideoPlayerManagerClass {
   pause(id: string) {
     const player = this.players.get(id);
     if (player) {
-      player.pause();
-      logger.activity(`[VideoPlayerManager] Paused player: ${id}`);
+      try {
+        player.pause();
+        logger.activity(`[VideoPlayerManager] Paused player: ${id}`);
+      } catch (error) {
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`);
+        this.players.delete(id);
+      }
     }
   }
 
@@ -95,8 +132,13 @@ class VideoPlayerManagerClass {
   resume(id: string) {
     const player = this.players.get(id);
     if (player) {
-      player.play();
-      logger.activity(`[VideoPlayerManager] Resumed player: ${id}`);
+      try {
+        player.play();
+        logger.activity(`[VideoPlayerManager] Resumed player: ${id}`);
+      } catch (error) {
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`);
+        this.players.delete(id);
+      }
     }
   }
 

@@ -24,20 +24,20 @@ export function QuickActionsBar({ onStartActivity, onCreatePost, onFindEvents }:
 
   const actions: QuickAction[] = [
     {
-      icon: 'play-circle',
-      labelKey: 'home.quickActions.startActivity',
-      color: '#10b981',
-      onPress: onStartActivity,
-    },
-    {
       icon: 'add-circle',
       labelKey: 'home.quickActions.createPost',
       color: '#3b82f6',
       onPress: onCreatePost,
     },
     {
+      icon: 'play-circle',
+      labelKey: 'home.quickActions.startActivity',
+      color: '#10b981',
+      onPress: onStartActivity,
+    },
+    {
       icon: 'calendar',
-      labelKey: 'home.quickActions.findEvents',
+      labelKey: 'events.createEvent',
       color: '#f59e0b',
       onPress: onFindEvents,
     },
