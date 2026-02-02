@@ -945,53 +945,13 @@ class ApiService {
   }
 
   // ============ ACTIVITY COMMENTS ============
-
-  async getActivityComments(activityId: number): Promise<Types.Comment[]> {
-    const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
-      `/activities/${activityId}/comments`
-    );
-    return response.data;
-  }
-
-  async createActivityComment(
-    activityId: number,
-    data: Types.CreateCommentRequest
-  ): Promise<Types.Comment> {
-    // Use FormData if photo is included
-    if (data.photo) {
-      const formData = new FormData();
-      formData.append('content', data.content);
-      if (data.parent_id) {
-        formData.append('parent_id', String(data.parent_id));
-      }
-
-      const filename = data.photo.uri.split('/').pop() || 'photo.jpg';
-      const match = /\.(\w+)$/.exec(filename);
-      const ext = match ? match[1].toLowerCase() : 'jpg';
-      const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
-
-      formData.append('photo', {
-        uri: data.photo.uri,
-        name: filename,
-        type: mimeType,
-      } as any);
-
-      const result = await this.request<Types.ApiResponse<Types.Comment>>(
-        `/activities/${activityId}/comments`,
-        { method: 'POST', body: formData }
-      );
-      return result.data;
-    }
-
-    const response = await this.request<Types.ApiResponse<Types.Comment>>(
-      `/activities/${activityId}/comments`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    );
-    return response.data;
-  }
+  // DEPRECATED: Activity comments now use post endpoints.
+  // Use activity.post_id with getComments() and createComment() instead.
+  //
+  // Migration guide:
+  // 1. Get activity to retrieve post_id
+  // 2. Use api.getComments(activity.post_id) instead of api.getActivityComments(activityId)
+  // 3. Use api.createComment(activity.post_id, data) instead of api.createActivityComment(activityId, data)
 
   // ============ EVENT COMMENTS ============
 

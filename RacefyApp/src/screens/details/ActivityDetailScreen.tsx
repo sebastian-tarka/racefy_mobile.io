@@ -670,8 +670,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {/* Comments Section */}
         <View style={styles.commentsSection}>
           <CommentSection
-            commentableType="activity"
-            commentableId={activityId}
+            commentableType="post"
+            commentableId={activity.post_id!}
             onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
             onInputFocus={scrollToBottom}
           />

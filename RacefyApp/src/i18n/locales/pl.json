@@ -831,6 +831,7 @@
     "signInToComment": "Zaloguj się, aby dodać komentarz",
     "signInRequired": "Wymagane logowanie",
     "signInToViewComments": "Zaloguj się lub utwórz konto, aby zobaczyć i dodać komentarze",
+    "unavailable": "Komentarze nie są dostępne dla tej aktywności",
     "failedToLoad": "Nie udało się załadować komentarzy",
     "failedToCreate": "Nie udało się dodać komentarza",
     "failedToDelete": "Nie udało się usunąć komentarza",

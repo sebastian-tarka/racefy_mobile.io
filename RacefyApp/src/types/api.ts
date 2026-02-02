@@ -769,7 +769,8 @@ export interface ActivityStats {
 
 // ============ COMMENTS ============
 
-export type CommentableType = 'post' | 'activity' | 'event';
+// Note: Activity comments now use 'post' type via activity.post_id
+export type CommentableType = 'post' | 'event';
 
 export interface Comment {
   id: number;

@@ -831,6 +831,7 @@
     "signInToComment": "Sign in to leave a comment",
     "signInRequired": "Sign in required",
     "signInToViewComments": "Sign in or create an account to view and post comments",
+    "unavailable": "Comments are not available for this activity",
     "failedToLoad": "Failed to load comments",
     "failedToCreate": "Failed to post comment",
     "failedToDelete": "Failed to delete comment",
