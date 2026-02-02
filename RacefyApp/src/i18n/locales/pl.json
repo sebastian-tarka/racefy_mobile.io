@@ -473,7 +473,11 @@
     },
     "deleteActivity": "Usuń aktywność",
     "deleteConfirm": "Czy na pewno chcesz usunąć tę aktywność? Tej operacji nie można cofnąć.",
-    "deleteFailed": "Nie udało się usunąć aktywności"
+    "deleteFailed": "Nie udało się usunąć aktywności",
+    "trainingPlan": "Plan treningowy",
+    "linkedToTrainingPlan": "Powiązane z planem treningowym",
+    "linkedToTrainingPlanMessage": "Ta aktywność jest powiązana z Twoim planem treningowym. Usunięcie jej zaktualizuje statystyki tygodnia treningowego. Czy na pewno chcesz ją usunąć?",
+    "forceDelete": "Usuń i zaktualizuj statystyki"
   },
   "activityForm": {
     "editTitle": "Edytuj aktywność",

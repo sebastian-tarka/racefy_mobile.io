@@ -113,7 +113,33 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   useRefreshOn('activities', fetchActivity);
 
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async (force: boolean = false) => {
+    try {
+      await api.deleteActivity(activityId, force);
+      emitRefresh('activities');
+      navigation.goBack();
+    } catch (error: any) {
+      // Check if activity is linked to training plan (422 error)
+      if (error.training_week_id) {
+        Alert.alert(
+          t('activityDetail.linkedToTrainingPlan'),
+          t('activityDetail.linkedToTrainingPlanMessage'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('activityDetail.forceDelete'),
+              style: 'destructive',
+              onPress: () => handleDelete(true),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(t('common.error'), error.message || t('activityDetail.deleteFailed'));
+      }
+    }
+  }, [activityId, navigation, t]);
+
+  const confirmDelete = useCallback(() => {
     Alert.alert(
       t('activityDetail.deleteActivity'),
       t('activityDetail.deleteConfirm'),
@@ -122,19 +148,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {
           text: t('common.delete'),
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deleteActivity(activityId);
-              emitRefresh('activities');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert(t('common.error'), t('activityDetail.deleteFailed'));
-            }
-          },
+          onPress: () => handleDelete(false),
         },
       ]
     );
-  }, [activityId, navigation, t]);
+  }, [handleDelete, t]);
 
   const formatDuration = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -258,7 +276,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleDelete}
+                onPress={confirmDelete}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={styles.deleteButton}
               >
@@ -356,9 +374,19 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             <Ionicons name={getSportIcon()} size={24} color={colors.primary} style={styles.sportIcon} />
             <View style={styles.titleContent}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
-              <Text style={[styles.sportType, { color: colors.textSecondary }]}>
-                {activity.sport_type?.name || t('activityDetail.activity')}
-              </Text>
+              <View style={styles.sportTypeRow}>
+                <Text style={[styles.sportType, { color: colors.textSecondary }]}>
+                  {activity.sport_type?.name || t('activityDetail.activity')}
+                </Text>
+                {activity.training_week_id && (
+                  <View style={[styles.trainingBadge, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}>
+                    <Ionicons name="school-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.trainingBadgeText, { color: colors.primary }]}>
+                      {t('activityDetail.trainingPlan')}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
 
@@ -724,6 +752,25 @@ const styles = StyleSheet.create({
   sportType: {
     fontSize: fontSize.md,
     marginTop: 2,
+  },
+  sportTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 2,
+  },
+  trainingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    gap: 4,
+  },
+  trainingBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
   locationRow: {
     flexDirection: 'row',

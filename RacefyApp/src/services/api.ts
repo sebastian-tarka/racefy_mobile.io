@@ -664,8 +664,9 @@ class ApiService {
     return response.data;
   }
 
-  async deleteActivity(id: number): Promise<void> {
-    await this.request(`/activities/${id}`, { method: 'DELETE' });
+  async deleteActivity(id: number, force: boolean = false): Promise<void> {
+    const endpoint = force ? `/activities/${id}?force=true` : `/activities/${id}`;
+    await this.request(endpoint, { method: 'DELETE' });
   }
 
   async updateActivityGpsPrivacy(

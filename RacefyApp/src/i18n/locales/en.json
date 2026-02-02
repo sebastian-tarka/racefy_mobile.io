@@ -473,7 +473,11 @@
     },
     "deleteActivity": "Delete Activity",
     "deleteConfirm": "Are you sure you want to delete this activity? This action cannot be undone.",
-    "deleteFailed": "Failed to delete activity"
+    "deleteFailed": "Failed to delete activity",
+    "trainingPlan": "Training Plan",
+    "linkedToTrainingPlan": "Linked to Training Plan",
+    "linkedToTrainingPlanMessage": "This activity is linked to your training plan. Deleting it will update your training week statistics. Are you sure you want to delete it?",
+    "forceDelete": "Delete & Update Stats"
   },
   "activityForm": {
     "editTitle": "Edit Activity",

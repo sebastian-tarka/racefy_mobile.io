@@ -1199,6 +1199,8 @@ export interface ApiResponse<T> {
 export interface ApiError {
   message: string;
   errors?: Record<string, string[]>;
+  training_week_id?: number; // Present when trying to delete activity linked to training plan
+  hint?: string; // Hint message for force deletion
 }
 
 // ============ DEBUG LOGS ============
