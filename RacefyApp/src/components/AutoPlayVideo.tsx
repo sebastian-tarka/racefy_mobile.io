@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewability } from '../hooks/useViewability';
+import { VideoPlayerManager } from '../services/VideoPlayerManager';
 
 interface AutoPlayVideoProps {
   videoUrl: string;
@@ -12,6 +13,9 @@ interface AutoPlayVideoProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// Counter for generating unique player IDs
+let playerIdCounter = 0;
 
 export function AutoPlayVideo({
   videoUrl,
@@ -23,6 +27,9 @@ export function AutoPlayVideo({
   const [showControls, setShowControls] = useState(false);
   const { viewRef, isViewable, checkViewability } = useViewability({ threshold: 50, delay: 100 });
 
+  // Generate unique ID for this player instance
+  const playerIdRef = useRef<string>(`video-player-${++playerIdCounter}-${Date.now()}`);
+
   // Calculate height based on full screen width and aspect ratio
   const videoHeight = screenWidth / aspectRatio;
 
@@ -32,6 +39,15 @@ export function AutoPlayVideo({
     player.muted = true;
     player.volume = 0;
   });
+
+  // Register player with VideoPlayerManager on mount
+  useEffect(() => {
+    VideoPlayerManager.register(playerIdRef.current, player);
+
+    return () => {
+      VideoPlayerManager.unregister(playerIdRef.current);
+    };
+  }, [player]);
 
   // Reset player when URL changes
   useEffect(() => {

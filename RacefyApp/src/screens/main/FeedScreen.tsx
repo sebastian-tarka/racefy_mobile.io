@@ -29,6 +29,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useTheme } from '../../hooks/useTheme';
+import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -75,6 +76,9 @@ export function FeedScreen({ navigation, route }: Props) {
   } = useFeed();
 
   useRefreshOn('feed', refresh);
+
+  // Pause all videos when navigating away from this screen
+  useVideoPauseOnBlur();
 
   const [newPostContent, setNewPostContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);
