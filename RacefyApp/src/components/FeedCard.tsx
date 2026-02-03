@@ -25,7 +25,7 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, 
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 4, borderLeft borderLeftColor: typeColors.border }] : [])]}>
+    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 4, borderLeftColor: typeColors.border }] : [])]}>
       <FeedCardHeader
         post={post}
         type={type}
