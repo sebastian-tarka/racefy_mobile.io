@@ -32,6 +32,7 @@ import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -82,6 +83,9 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { user: currentUser, isAuthenticated } = useAuth();
   const { postId, focusComments } = route.params;
+
+  // Pause all videos when navigating away from this screen
+  useVideoPauseOnBlur();
   const scrollViewRef = useRef<ScrollView>(null);
   const commentsRef = useRef<View>(null);
   const [post, setPost] = useState<Post | null>(null);

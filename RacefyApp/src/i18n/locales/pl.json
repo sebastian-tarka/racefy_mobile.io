@@ -473,7 +473,11 @@
     },
     "deleteActivity": "Usuń aktywność",
     "deleteConfirm": "Czy na pewno chcesz usunąć tę aktywność? Tej operacji nie można cofnąć.",
-    "deleteFailed": "Nie udało się usunąć aktywności"
+    "deleteFailed": "Nie udało się usunąć aktywności",
+    "trainingPlan": "Plan treningowy",
+    "linkedToTrainingPlan": "Powiązane z planem treningowym",
+    "linkedToTrainingPlanMessage": "Ta aktywność jest powiązana z Twoim planem treningowym. Usunięcie jej zaktualizuje statystyki tygodnia treningowego. Czy na pewno chcesz ją usunąć?",
+    "forceDelete": "Usuń i zaktualizuj statystyki"
   },
   "activityForm": {
     "editTitle": "Edytuj aktywność",
@@ -827,6 +831,7 @@
     "signInToComment": "Zaloguj się, aby dodać komentarz",
     "signInRequired": "Wymagane logowanie",
     "signInToViewComments": "Zaloguj się lub utwórz konto, aby zobaczyć i dodać komentarze",
+    "unavailable": "Komentarze nie są dostępne dla tej aktywności",
     "failedToLoad": "Nie udało się załadować komentarzy",
     "failedToCreate": "Nie udało się dodać komentarza",
     "failedToDelete": "Nie udało się usunąć komentarza",

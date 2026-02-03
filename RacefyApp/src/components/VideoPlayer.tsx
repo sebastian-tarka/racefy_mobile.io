@@ -92,10 +92,15 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
 
   const togglePlayPause = () => {
     if (!player) return;
-    if (isPlaying) {
-      player.pause();
-    } else {
-      player.play();
+    try {
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    } catch (error) {
+      // Player already released, ignore
+      logger.debug('general', 'VideoPlayer: player already released in togglePlayPause');
     }
   };
 
@@ -113,7 +118,12 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
 
   const handleClose = () => {
     if (player) {
-      player.pause();
+      try {
+        player.pause();
+      } catch (error) {
+        // Player already released, ignore
+        logger.debug('general', 'VideoPlayer: player already released in handleClose');
+      }
     }
     onClose();
   };

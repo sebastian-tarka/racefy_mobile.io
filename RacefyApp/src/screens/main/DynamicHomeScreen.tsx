@@ -32,6 +32,7 @@ import {
   SectionRenderer,
 } from './home/components';
 import { Loading, TipCard } from '../../components';
+import {t} from "i18next";
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 

@@ -203,7 +203,7 @@ export function HomeScreen({ navigation }: Props) {
               navigation.navigate('Feed', { openComposer: true });
             }}
             onFindEvents={() => {
-              navigation.navigate('Events');
+              navigation.getParent()?.navigate('EventForm', {});
             }}
           />
         )}

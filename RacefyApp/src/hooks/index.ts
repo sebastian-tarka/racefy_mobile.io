@@ -28,3 +28,4 @@ export * from './useCommentarySettings';
 export * from './useGenerateCommentary';
 export * from './useHomeConfig';
 export * from './usePushNotifications';
+export * from './useVideoPauseOnBlur';

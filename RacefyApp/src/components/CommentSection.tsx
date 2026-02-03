@@ -60,9 +60,6 @@ export function CommentSection({
         case 'post':
           fetchedComments = await api.getComments(commentableId);
           break;
-        case 'activity':
-          fetchedComments = await api.getActivityComments(commentableId);
-          break;
         case 'event':
           fetchedComments = await api.getEventComments(commentableId);
           break;
@@ -101,9 +98,6 @@ export function CommentSection({
     switch (commentableType) {
       case 'post':
         newComment = await api.createComment(commentableId, data);
-        break;
-      case 'activity':
-        newComment = await api.createActivityComment(commentableId, data);
         break;
       case 'event':
         newComment = await api.createEventComment(commentableId, data);

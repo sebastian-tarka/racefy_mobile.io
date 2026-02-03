@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewability } from '../hooks/useViewability';
+import { VideoPlayerManager } from '../services/VideoPlayerManager';
 
 interface AutoPlayVideoProps {
   videoUrl: string;
@@ -12,6 +13,9 @@ interface AutoPlayVideoProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// Counter for generating unique player IDs
+let playerIdCounter = 0;
 
 export function AutoPlayVideo({
   videoUrl,
@@ -23,6 +27,9 @@ export function AutoPlayVideo({
   const [showControls, setShowControls] = useState(false);
   const { viewRef, isViewable, checkViewability } = useViewability({ threshold: 50, delay: 100 });
 
+  // Generate unique ID for this player instance
+  const playerIdRef = useRef<string>(`video-player-${++playerIdCounter}-${Date.now()}`);
+
   // Calculate height based on full screen width and aspect ratio
   const videoHeight = screenWidth / aspectRatio;
 
@@ -33,24 +40,45 @@ export function AutoPlayVideo({
     player.volume = 0;
   });
 
-  // Reset player when URL changes
+  // Register player with VideoPlayerManager on mount
   useEffect(() => {
-    player.pause();
-    player.currentTime = 0;
+    VideoPlayerManager.register(playerIdRef.current, player);
 
     return () => {
+      VideoPlayerManager.unregister(playerIdRef.current);
+    };
+  }, [player]);
+
+  // Reset player when URL changes
+  useEffect(() => {
+    try {
       player.pause();
+      player.currentTime = 0;
+    } catch (error) {
+      // Player already released, ignore
+    }
+
+    return () => {
+      try {
+        player.pause();
+      } catch (error) {
+        // Player already released, ignore
+      }
     };
   }, [videoUrl, player]);
 
   // Handle viewability changes - auto play/pause
   useEffect(() => {
-    if (isViewable) {
-      // Start playing when 50% visible
-      player.play();
-    } else {
-      // Pause when not visible
-      player.pause();
+    try {
+      if (isViewable) {
+        // Start playing when 50% visible
+        player.play();
+      } else {
+        // Pause when not visible
+        player.pause();
+      }
+    } catch (error) {
+      // Player already released, ignore
     }
   }, [isViewable, player]);
 
@@ -69,14 +97,18 @@ export function AutoPlayVideo({
 
   // Toggle play/pause
   const togglePlayPause = useCallback(() => {
-    if (player.playing) {
-      player.pause();
-    } else {
-      player.play();
+    try {
+      if (player.playing) {
+        player.pause();
+      } else {
+        player.play();
+      }
+      setShowControls(true);
+      // Hide controls after 800ms (feedback duration from UX analysis)
+      setTimeout(() => setShowControls(false), 800);
+    } catch (error) {
+      // Player already released, ignore
     }
-    setShowControls(true);
-    // Hide controls after 800ms (feedback duration from UX analysis)
-    setTimeout(() => setShowControls(false), 800);
   }, [player]);
 
   return (
