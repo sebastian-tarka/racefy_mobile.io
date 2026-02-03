@@ -115,8 +115,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const handleDelete = useCallback(async (force: boolean = false) => {
     try {
       await api.deleteActivity(activityId, force);
-      emitRefresh('activities');
+      // Navigate back first to unmount this screen and cleanup listeners
       navigation.goBack();
+      // Then emit refresh to update other screens (feed, profile, etc.)
+      emitRefresh('activities');
     } catch (error: any) {
       // Check if activity is linked to training plan (422 error)
       if (error.training_week_id) {

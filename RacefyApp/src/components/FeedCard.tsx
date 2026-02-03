@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { FeedCardHeader } from './FeedCard.Header';
 import { FeedCardActions } from './FeedCard.Actions';
 import { GeneralBody, ActivityBody, EventBody, SponsoredBody } from './FeedCard.Bodies';
-import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors } from './FeedCard.utils';
+import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles } from './FeedCard.utils';
 
 // Re-export types for backward compatibility
 export type { FeedCardProps } from './FeedCard.utils';
@@ -25,7 +26,10 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, 
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 4, borderLeftColor: typeColors.border }] : [])]}>
+    <Card style={{ marginBottom, position: 'relative', overflow: 'hidden' }}>
+      {typeColors.accent && (
+        <View style={[styles.accentBar, { backgroundColor: typeColors.accent, opacity: 0.8 }]} />
+      )}
       <FeedCardHeader
         post={post}
         type={type}

@@ -55,10 +55,20 @@ export function getTypeColors(type: FeedPostType, colors: any) {
     sponsored: colors.warning,
   };
   return {
-    border: type === 'general' ? null : colorMap[type],
+    accent: type === 'general' ? null : colorMap[type],
     badge: colorMap[type],
     expand: colorMap[type],
   };
+}
+
+export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap | null {
+  const iconMap: Record<FeedPostType, keyof typeof Ionicons.glyphMap | null> = {
+    general: null,
+    activity: 'fitness-outline',
+    event: 'calendar-outline',
+    sponsored: 'megaphone-outline',
+  };
+  return iconMap[type];
 }
 
 export function truncateText(text: string, maxLength: number, maxSentences: number): { truncated: string; isTruncated: boolean } {
@@ -315,5 +325,25 @@ export const styles = StyleSheet.create({
   statLabel: {
     fontSize: fontSize.xs,
     textAlign: 'center',
+  },
+  accentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 4,
+    width: 40,
+    borderTopLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.md,
+    zIndex: 1,
+  },
+  typeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  typeLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });
