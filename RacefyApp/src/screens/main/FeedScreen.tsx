@@ -515,6 +515,11 @@ export function FeedScreen({ navigation, route }: Props) {
               isOwner={item.is_owner ?? item.user_id === user?.id}
               onLike={() => toggleLike(item)}
               onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
+              onShareActivity={
+                item.type === 'activity' && item.activity
+                  ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id })
+                  : undefined
+              }
               onUserPress={() => {
                 if (item.user?.username) {
                   navigation.navigate('UserProfile', { username: item.user.username });

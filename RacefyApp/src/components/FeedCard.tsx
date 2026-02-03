@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { View } from 'react-native';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { FeedCardHeader } from './FeedCard.Header';
 import { FeedCardActions } from './FeedCard.Actions';
 import { GeneralBody, ActivityBody, EventBody, SponsoredBody } from './FeedCard.Bodies';
-import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors } from './FeedCard.utils';
+import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles } from './FeedCard.utils';
 
 // Re-export types for backward compatibility
 export type { FeedCardProps } from './FeedCard.utils';
@@ -16,7 +17,7 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   sponsored: SponsoredBody,
 };
 
-export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
+export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
@@ -25,7 +26,10 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 1, borderRightWidth:1, borderLeftColor: typeColors.border, borderRightColor: typeColors.border }] : [])]}>
+    <Card style={{ marginBottom, position: 'relative', overflow: 'hidden' }}>
+      {typeColors.accent && (
+        <View style={[styles.accentBar, { backgroundColor: typeColors.accent, opacity: 0.8 }]} />
+      )}
       <FeedCardHeader
         post={post}
         type={type}
@@ -36,7 +40,7 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment
         onMenu={onMenu}
       />
       <Body post={post} onActivityPress={onActivityPress} onEventPress={onEventPress} />
-      <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onComment={onComment} />
+      <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onBoost={onBoost} onComment={onComment} onShareActivity={onShareActivity} />
     </Card>
   );
 }

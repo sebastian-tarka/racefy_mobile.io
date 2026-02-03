@@ -42,6 +42,18 @@
     "basketball": "Koszykówka",
     "other": "Inne"
   },
+  "timeOfDay": {
+    "morning": "Rano",
+    "afternoon": "Popołudnie",
+    "evening": "Wieczór"
+  },
+  "activity": {
+    "stats": {
+      "distance": "Dystans",
+      "duration": "Czas trwania",
+      "elevationGain": "Przewyższenie"
+    }
+  },
   "app": {
     "name": "Racefy",
     "tagline": "Społeczność sportowa i fitness"
@@ -191,7 +203,7 @@
       "sponsored": "Sponsorowane"
     },
     "showMore": "Pokaż więcej",
-    "viewDetails": "Szczegóły →",
+    "viewDetails": "Pokaż szczegóły",
     "visibility": {
       "public": "Publiczny",
       "followers": "Obserwujący",
@@ -1115,7 +1127,22 @@
     "copied": "Skopiowano!",
     "fetchError": "Nie udało się wygenerować linku. Spróbuj ponownie.",
     "copyError": "Nie udało się skopiować linku. Spróbuj ponownie.",
-    "defaultTitle": "Zobacz to na Racefy"
+    "defaultTitle": "Zobacz to na Racefy",
+    "selectFormat": "Wybierz format obrazu",
+    "preview": "Podgląd",
+    "format": {
+      "social": "Social",
+      "story": "Story",
+      "square": "Kwadrat"
+    },
+    "generatingImage": "Generowanie obrazu...",
+    "generating": "Generowanie...",
+    "imageError": "Nie udało się wygenerować obrazu",
+    "noImage": "Brak obrazu",
+    "retry": "Ponów",
+    "shareImage": "Udostępnij z obrazem",
+    "shareTextOnly": "Udostępnij tylko tekst",
+    "selectFormatFirst": "Najpierw wybierz format obrazu"
   },
   "training": {
     "title": "Plany Treningowe",

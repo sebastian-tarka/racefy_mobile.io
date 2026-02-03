@@ -20,6 +20,8 @@ import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { ShareFormatSelector } from './ShareFormatSelector';
+import { shareActivityWithImage } from '../utils/share';
 import type { ShareLinkResponse } from '../types/api';
 
 type ShareableType = 'activity' | 'post' | 'event' | 'comment';
@@ -60,6 +62,7 @@ function SocialShareModalComponent({
   const [isLoading, setIsLoading] = useState(false);
   const [shareData, setShareData] = useState<ShareLinkResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showFormatSelector, setShowFormatSelector] = useState(false);
 
   // Fetch share link from API when modal opens
   useEffect(() => {
@@ -155,6 +158,13 @@ function SocialShareModalComponent({
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
+      // For activities, show format selector first
+      if (type === 'activity') {
+        setShowFormatSelector(true);
+        return;
+      }
+
+      // For other types (posts, events, comments), use standard share
       const result = await Share.share({
         title: shareData.title,
         message: `${shareData.title}\n\n${shareData.description}\n\n${shareData.url}`,
@@ -171,6 +181,32 @@ function SocialShareModalComponent({
     } catch (err: any) {
       if (err.message !== 'User did not share') {
         logger.error('general', 'Native share failed', { error: err });
+      }
+    }
+  };
+
+  const handleShareWithImage = async (imageUrl: string | null, shareDataWithImage: ShareLinkResponse) => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      await shareActivityWithImage({
+        activityId: id,
+        imageUrl,
+        shareData: shareDataWithImage,
+      });
+
+      logger.info('general', 'Activity shared with image', {
+        activityId: id,
+        hasImage: !!imageUrl,
+      });
+
+      // Close both modals after successful share
+      setShowFormatSelector(false);
+      onClose();
+    } catch (err: any) {
+      if (err.message !== 'User did not share') {
+        logger.error('general', 'Share with image failed', { error: err });
+        Alert.alert(t('common.error'), t('share.fetchError'));
       }
     }
   };
@@ -195,6 +231,7 @@ function SocialShareModalComponent({
   const handleClose = () => {
     setShareData(null);
     setCopied(false);
+    setShowFormatSelector(false);
     onClose();
   };
 
@@ -221,8 +258,17 @@ function SocialShareModalComponent({
               <View
                 style={[styles.modalHeader, { borderBottomColor: colors.border }]}
               >
+                {showFormatSelector && (
+                  <TouchableOpacity
+                    onPress={() => setShowFormatSelector(false)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.backButton}
+                  >
+                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+                  </TouchableOpacity>
+                )}
                 <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {t('share.title')}
+                  {showFormatSelector ? t('share.selectFormat') : t('share.title')}
                 </Text>
                 <TouchableOpacity
                   onPress={handleClose}
@@ -240,6 +286,18 @@ function SocialShareModalComponent({
                     {t('share.loading')}
                   </Text>
                 </View>
+              ) : showFormatSelector && type === 'activity' ? (
+                <ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  <ShareFormatSelector
+                    activityId={id}
+                    onShare={handleShareWithImage}
+                    onClose={() => setShowFormatSelector(false)}
+                  />
+                </ScrollView>
               ) : (
                 <ScrollView
                   style={styles.scrollView}
@@ -393,6 +451,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    flex: 1,
+  },
+  backButton: {
+    marginRight: spacing.sm,
   },
   scrollView: {
     flex: 1,

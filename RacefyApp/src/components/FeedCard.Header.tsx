@@ -7,7 +7,7 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post } from '../types/api';
-import { type FeedPostType, getTypeColors, styles } from './FeedCard.utils';
+import { type FeedPostType, getTypeColors, getTypeIcon, styles } from './FeedCard.utils';
 
 interface MenuBottomSheetProps {
   isOwner: boolean;
@@ -162,23 +162,28 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
     private: { icon: 'lock-closed-outline', label: t('feed.visibility.private') },
   };
 
+  const typeIcon = getTypeIcon(type);
+  const campaignName = isSponsored ? ((post as any).campaign_name || post.title || t('feed.postTypes.sponsored')) : null;
+
   if (isSponsored) {
     return (
       <>
         <View style={styles.headerRow}>
-          <View style={styles.headerSponsoredIcon}>
-            <View style={[styles.sponsoredCircle, { backgroundColor: '#f59e0b' }]}>
-              <Ionicons name="star" size={16} color="#fff" />
-            </View>
+          <View style={styles.headerUserBlock}>
             <View style={styles.headerTextBlock}>
               <Text style={[styles.headerName, { color: colors.textPrimary }]}>
-                {(post as any).campaign_name || post.title || t('feed.postTypes.sponsored')}
+                {campaignName}
               </Text>
               <View style={styles.headerMetaRow}>
-                <View style={[styles.typeBadge, { backgroundColor: typeColors.badge + '15' }]}>
-                  <Ionicons name="star" size={10} color={typeColors.badge} />
-                  <Text style={[styles.typeBadgeText, { color: typeColors.badge }]}>{t('feed.postTypes.sponsored')}</Text>
-                </View>
+                {typeIcon && (
+                  <View style={styles.typeIndicator}>
+                    <Ionicons name={typeIcon} size={14} color={typeColors.badge} />
+                    <Text style={[styles.typeLabel, { color: typeColors.badge }]}>
+                      {t('feed.postTypes.sponsored')}
+                    </Text>
+                  </View>
+                )}
+                <Text style={[styles.headerTime, { color: colors.textMuted }]}>•</Text>
                 <Text style={[styles.headerTime, { color: colors.textMuted }]}>{timeAgo}</Text>
               </View>
             </View>
@@ -202,19 +207,27 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
           <View style={styles.headerTextBlock}>
             <Text style={[styles.headerName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
             <View style={styles.headerMetaRow}>
-              {type !== 'general' && (
-                <View style={[styles.typeBadge, { backgroundColor: typeColors.badge + '15' }]}>
-                  <Ionicons name={type === 'activity' ? 'fitness-outline' : 'calendar-outline'} size={10} color={typeColors.badge} />
-                  <Text style={[styles.typeBadgeText, { color: typeColors.badge }]}>{t(`feed.postTypes.${type}`)}</Text>
-                </View>
+              {type !== 'general' && typeIcon && (
+                <>
+                  <View style={styles.typeIndicator}>
+                    <Ionicons name={typeIcon} size={14} color={typeColors.badge} />
+                    <Text style={[styles.typeLabel, { color: typeColors.badge }]}>
+                      {t(`feed.postTypes.${type}`)}
+                    </Text>
+                  </View>
+                  <Text style={[styles.headerTime, { color: colors.textMuted }]}>•</Text>
+                </>
               )}
+
+              <Text style={[styles.headerTime, { color: colors.textMuted }]}>{timeAgo}</Text>
               {isOwner && post.visibility && visibilityConfig[post.visibility] && (
-                <View style={styles.visibilityPill}>
-                  <Ionicons name={visibilityConfig[post.visibility].icon} size={10} color={colors.textMuted} />
-                  <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>{visibilityConfig[post.visibility].label}</Text>
-                </View>
+                  <>
+                    <View style={styles.visibilityPill}>
+                      <Ionicons name={visibilityConfig[post.visibility].icon} size={10} color={colors.textMuted} />
+                      <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>{visibilityConfig[post.visibility].label}</Text>
+                    </View>
+                  </>
               )}
-              <Text style={[styles.headerTime, { color: colors.textMuted }]}>@{post.user?.username} · {timeAgo}</Text>
             </View>
           </View>
         </TouchableOpacity>

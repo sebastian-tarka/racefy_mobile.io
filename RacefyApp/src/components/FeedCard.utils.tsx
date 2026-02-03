@@ -21,7 +21,9 @@ export interface FeedCardProps {
   isOwner?: boolean;
   onUserPress?: () => void;
   onLike?: () => void;
+  onBoost?: () => void;
   onComment?: () => void;
+  onShareActivity?: () => void;
   onActivityPress?: () => void;
   onEventPress?: () => void;
   onMenu?: (action: 'edit' | 'delete' | 'report') => void;
@@ -53,10 +55,20 @@ export function getTypeColors(type: FeedPostType, colors: any) {
     sponsored: colors.warning,
   };
   return {
-    border: type === 'general' ? null : colorMap[type],
+    accent: type === 'general' ? null : colorMap[type],
     badge: colorMap[type],
     expand: colorMap[type],
   };
+}
+
+export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap | null {
+  const iconMap: Record<FeedPostType, keyof typeof Ionicons.glyphMap | null> = {
+    general: null,
+    activity: 'fitness-outline',
+    event: 'calendar-outline',
+    sponsored: 'megaphone-outline',
+  };
+  return iconMap[type];
 }
 
 export function truncateText(text: string, maxLength: number, maxSentences: number): { truncated: string; isTruncated: boolean } {
@@ -148,6 +160,32 @@ export function getHeroStat(activity: Activity): 'distance' | 'duration' | 'elev
   return 'distance';
 }
 
+export function getTimeOfDay(timestamp: string): 'morning' | 'afternoon' | 'evening' {
+  const date = new Date(timestamp);
+  const hour = date.getHours();
+
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 18) return 'afternoon';
+  return 'evening';
+}
+
+export function truncateDescription(
+  text: string,
+  maxLength: number = 120
+): { text: string; isTruncated: boolean } {
+  if (text.length <= maxLength) {
+    return { text, isTruncated: false };
+  }
+
+  const truncated = text.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  const finalText = lastSpace > 0
+    ? truncated.substring(0, lastSpace) + '...'
+    : truncated + '...';
+
+  return { text: finalText, isTruncated: true };
+}
+
 // ============ HOOKS ============
 
 export function useImageGallery() {
@@ -233,4 +271,79 @@ export const styles = StyleSheet.create({
   imageIndicatorBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xs, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.5)', gap: 4 },
   imageIndicatorText: { flexDirection: 'row', alignItems: 'center' },
   fullBleedMedia: { marginHorizontal: -spacing.lg },
+  viewDetailsButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  viewDetailsText: {
+    color: '#fff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  showMoreLink: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginTop: spacing.xs,
+  },
+  tagPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  tagPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    gap: 4,
+    minHeight: 28,
+  },
+  statsRowNew: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  statColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statValue: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
+  accentBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: 4,
+    width: 40,
+    borderTopLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.md,
+    zIndex: 1,
+  },
+  typeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  typeLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
 });

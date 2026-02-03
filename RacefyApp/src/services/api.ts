@@ -1478,10 +1478,17 @@ class ApiService {
   /**
    * Get shareable link for an activity
    * Generates a secure share token and returns platform-specific share URLs
+   * @param id - Activity ID
+   * @param options - Optional configuration
+   * @param options.format - Image format: 'social' (1200x630), 'story' (1080x1920), or 'square' (1080x1080)
    */
-  async getActivityShareLink(id: number): Promise<Types.ShareLinkResponse> {
+  async getActivityShareLink(
+    id: number,
+    options?: { format?: 'social' | 'story' | 'square' }
+  ): Promise<Types.ShareLinkResponse> {
+    const queryParams = options?.format ? `?format=${options.format}` : '';
     const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-      `/activities/${id}/share-link`
+      `/activities/${id}/share-link${queryParams}`
     );
     return response.data;
   }

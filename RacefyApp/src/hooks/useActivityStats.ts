@@ -28,9 +28,20 @@ export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
     setError(null);
 
     try {
-      const data = await api.getActivityStats(
-        sportTypeId ? { sport_type_id: sportTypeId } : undefined
-      );
+      // Calculate date range for last 7 days
+      const today = new Date();
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 7);
+
+      // Format dates as YYYY-MM-DD
+      const to = today.toISOString().split('T')[0];
+      const from = sevenDaysAgo.toISOString().split('T')[0];
+
+      const data = await api.getActivityStats({
+        from,
+        to,
+        ...(sportTypeId && { sport_type_id: sportTypeId }),
+      });
       setStats(data);
     } catch (err: any) {
       logger.error('activity', 'Failed to fetch activity stats', { error: err });

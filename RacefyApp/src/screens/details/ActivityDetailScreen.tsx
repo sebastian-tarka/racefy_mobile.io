@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, SocialShareModal } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -48,7 +48,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
   const mapHeightAnim = useRef(new Animated.Value(250)).current;
 
   const scrollToBottom = useCallback(() => {
@@ -116,8 +115,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const handleDelete = useCallback(async (force: boolean = false) => {
     try {
       await api.deleteActivity(activityId, force);
-      emitRefresh('activities');
+      // Navigate back first to unmount this screen and cleanup listeners
       navigation.goBack();
+      // Then emit refresh to update other screens (feed, profile, etc.)
+      emitRefresh('activities');
     } catch (error: any) {
       // Check if activity is linked to training plan (422 error)
       if (error.training_week_id) {
@@ -452,7 +453,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             {/* Share */}
             <TouchableOpacity
               style={styles.engagementItem}
-              onPress={() => setShareModalVisible(true)}
+              onPress={() => navigation.navigate('ActivityShare', { activityId })}
               activeOpacity={0.7}
             >
               <Ionicons name="share-social-outline" size={28} color={colors.textMuted} />
@@ -680,16 +681,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         <View style={{ height: spacing.xl }} />
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Social Share Modal */}
-      <SocialShareModal
-        visible={shareModalVisible}
-        onClose={() => setShareModalVisible(false)}
-        type="activity"
-        id={activityId}
-        title={activity?.title}
-        description={activity?.description}
-      />
     </SafeAreaView>
   );
 }
