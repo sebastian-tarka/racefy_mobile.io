@@ -42,6 +42,18 @@
     "basketball": "Basketball",
     "other": "Other"
   },
+  "timeOfDay": {
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening"
+  },
+  "activity": {
+    "stats": {
+      "distance": "Distance",
+      "duration": "Duration",
+      "elevationGain": "Elevation Gain"
+    }
+  },
   "app": {
     "name": "Racefy",
     "tagline": "Sports & Fitness Community"
@@ -191,7 +203,7 @@
       "sponsored": "Sponsored"
     },
     "showMore": "Show more",
-    "viewDetails": "View details →",
+    "viewDetails": "View Details",
     "visibility": {
       "public": "Public",
       "followers": "Followers",
@@ -1113,7 +1125,22 @@
     "copied": "Copied!",
     "fetchError": "Failed to generate share link. Please try again.",
     "copyError": "Failed to copy link. Please try again.",
-    "defaultTitle": "Check this out on Racefy"
+    "defaultTitle": "Check this out on Racefy",
+    "selectFormat": "Select Image Format",
+    "preview": "Preview",
+    "format": {
+      "social": "Social",
+      "story": "Story",
+      "square": "Square"
+    },
+    "generatingImage": "Generating image...",
+    "generating": "Generating...",
+    "imageError": "Failed to generate image",
+    "noImage": "No image available",
+    "retry": "Retry",
+    "shareImage": "Share with Image",
+    "shareTextOnly": "Share Text Only",
+    "selectFormatFirst": "Please select an image format first"
   },
   "training": {
     "title": "Training Plans",

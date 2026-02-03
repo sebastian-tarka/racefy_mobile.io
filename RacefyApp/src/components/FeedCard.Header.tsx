@@ -214,7 +214,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
                   <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>{visibilityConfig[post.visibility].label}</Text>
                 </View>
               )}
-              <Text style={[styles.headerTime, { color: colors.textMuted }]}>@{post.user?.username} · {timeAgo}</Text>
+              <Text style={[styles.headerTime, { color: colors.textMuted }]}>{timeAgo}</Text>
             </View>
           </View>
         </TouchableOpacity>

@@ -16,7 +16,7 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   sponsored: SponsoredBody,
 };
 
-export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
+export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
@@ -25,7 +25,7 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 1, borderRightWidth:1, borderLeftColor: typeColors.border, borderRightColor: typeColors.border }] : [])]}>
+    <Card style={[{ marginBottom }, ...(typeColors.border ? [{ borderLeftWidth: 4, borderLeft borderLeftColor: typeColors.border }] : [])]}>
       <FeedCardHeader
         post={post}
         type={type}
@@ -36,7 +36,7 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onComment
         onMenu={onMenu}
       />
       <Body post={post} onActivityPress={onActivityPress} onEventPress={onEventPress} />
-      <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onComment={onComment} />
+      <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onBoost={onBoost} onComment={onComment} onShareActivity={onShareActivity} />
     </Card>
   );
 }

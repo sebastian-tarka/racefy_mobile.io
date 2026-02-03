@@ -25,6 +25,7 @@ export type RootStackParamList = {
   PostDetail: { postId: number; focusComments?: boolean };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };
+  ActivityShare: { activityId: number };
   UserProfile: { username: string };
   Settings: undefined;
   BlockedUsers: undefined;

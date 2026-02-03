@@ -49,6 +49,7 @@ export * from './ReportModal';
 export * from './ScreenHeader';
 export * from './SettingsSection';
 export * from './SocialShareModal';
+export * from './ShareFormatSelector';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './UserListModal';

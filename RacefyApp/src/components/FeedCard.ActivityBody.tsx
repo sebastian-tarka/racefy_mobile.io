@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { RoutePreview } from './LeafletMap';
 import { AutoPlayVideo } from './AutoPlayVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
@@ -19,64 +20,104 @@ import {
   getEffortLevel,
   getSportIcon,
   getHeroStat,
+  getTimeOfDay,
+  truncateDescription,
   useImageGallery,
   styles,
 } from './FeedCard.utils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-function ActivityBadges({ activity, pace }: { activity: Activity; pace: string }) {
+function ActivityTagPills({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+
+  const duration = formatDuration(activity.duration);
   const effort = getEffortLevel(activity.sport_type?.name, activity.distance, activity.duration);
+  const timeOfDay = activity.started_at ? getTimeOfDay(activity.started_at) : null;
+
+  // Difficulty badge colors
+  const difficultyColors = {
+    Easy: { bg: colors.success + '20', text: colors.success },
+    Moderate: { bg: colors.warning + '20', text: colors.warning },
+    Hard: { bg: colors.error + '20', text: colors.error },
+  };
+
+  const effortColors = effort ? difficultyColors[effort.label as keyof typeof difficultyColors] : null;
 
   return (
-    <>
-      <View style={styles.badgeRow}>
-        <View style={[styles.badge, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name={getSportIcon(activity.sport_type?.name)} size={14} color={colors.primary} />
-          <Text style={[styles.badgeText, { color: colors.primary }]}>{activity.sport_type?.name || 'Activity'}</Text>
-        </View>
-        <View style={[styles.badge, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="speedometer-outline" size={14} color={colors.primary} />
-          <Text style={[styles.badgeText, { color: colors.primary }]}>{pace}</Text>
-        </View>
-        {effort && (
-            <View style={styles.badgeRow}>
-              <View style={[styles.badgeSecondary, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Text style={[styles.badgeText, { color: colors.textSecondary }]}>{effort.emoji} {effort.label}</Text>
-              </View>
-            </View>
-        )}
+    <View style={styles.tagPillsRow}>
+      {/* Sport Type */}
+      <View style={[styles.tagPill, { backgroundColor: colors.primary + '15' }]}>
+        <Ionicons name={getSportIcon(activity.sport_type?.name)} size={14} color={colors.primary} />
+        <Text style={[styles.badgeText, { color: colors.primary }]}>
+          {activity.sport_type?.name || t('sports.other')}
+        </Text>
       </View>
-    </>
+
+      {/* Difficulty */}
+      {effort && effortColors && (
+        <View style={[styles.tagPill, { backgroundColor: effortColors.bg }]}>
+          <Text style={[styles.badgeText, { color: effortColors.text }]}>{effort.label}</Text>
+        </View>
+      )}
+
+      {/* Time of Day */}
+      {timeOfDay && (
+        <View style={[styles.tagPill, { backgroundColor: colors.info + '15' }]}>
+          <Ionicons
+            name={
+              timeOfDay === 'morning' ? 'sunny-outline' :
+              timeOfDay === 'afternoon' ? 'partly-sunny-outline' :
+              'moon-outline'
+            }
+            size={14}
+            color={colors.info}
+          />
+          <Text style={[styles.badgeText, { color: colors.info }]}>
+            {t(`timeOfDay.${timeOfDay}`)}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
 
-function ActivityStats({ activity, heroStat }: { activity: Activity; heroStat: 'distance' | 'duration' | 'elevation' }) {
+function ActivityStatsNew({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
-  const stats = {
-    distance: { icon: 'navigate-outline', value: formatDistance(activity.distance), label: 'Distance' },
-    duration: { icon: 'time-outline', value: formatDuration(activity.duration), label: 'Duration' },
-    elevation: { icon: 'trending-up', value: `${activity.elevation_gain}m`, label: 'Elevation' },
-  };
+  const { t } = useTranslation();
 
-  const hero = stats[heroStat];
-  const secondary = Object.entries(stats).filter(([key]) => key !== heroStat);
+  const stats = [
+    {
+      icon: 'navigate-outline',
+      value: formatDistance(activity.distance),
+      label: t('activity.stats.distance')
+    },
+    {
+      icon: 'time-outline',
+      value: formatDuration(activity.duration),
+      label: t('activity.stats.duration')
+    },
+    {
+      icon: 'trending-up',
+      value: `${activity.elevation_gain || 0}m`,
+      label: t('activity.stats.elevationGain'),
+      show: true // Always show, even if 0
+    },
+  ];
 
   return (
-    <View style={styles.statsRow}>
-      <View style={[styles.heroStatCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}>
-        <Ionicons name={hero.icon as any} size={16} color={colors.primary} />
-        <Text style={[styles.heroStatValue, { color: colors.primary }]}>{hero.value}</Text>
-        {/*<Text style={[styles.heroStatLabel, { color: colors.primary }]}>{hero.label}</Text>*/}
-      </View>
-      {secondary.slice(0, 2).map(([key, stat]) => (
-        activity.elevation_gain || key !== 'elevation' ? (
-          <View key={key} style={[styles.secondaryStatBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <Ionicons name={stat.icon as any} size={12} color={colors.textSecondary} />
-            <Text style={[styles.secondaryStatText, { color: colors.textSecondary }]}>{stat.value}</Text>
-          </View>
-        ) : null
+    <View style={styles.statsRowNew}>
+      {stats.map((stat, index) => (
+        <View key={index} style={styles.statColumn}>
+          <Ionicons name={stat.icon as any} size={20} color={colors.textSecondary} />
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {stat.value}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            {stat.label}
+          </Text>
+        </View>
       ))}
     </View>
   );
@@ -106,6 +147,7 @@ interface ActivityMediaSliderProps {
 
 function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress, openGallery, setExpandedImage }: ActivityMediaSliderProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const hasRouteMap = activity.route_map_url || activity.route_svg;
@@ -144,9 +186,14 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
               finishPoint={activity.gps_track?.finish_point ?? null}
             />
             {onActivityPress && (
-              <View style={styles.heroVisualOverlay}>
-                <Ionicons name="expand" size={18} color="#fff" />
-              </View>
+              <TouchableOpacity
+                style={styles.viewDetailsButton}
+                onPress={onActivityPress}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.viewDetailsText}>{t('feed.viewDetails')}</Text>
+                <Ionicons name="arrow-forward" size={16} color="#fff" />
+              </TouchableOpacity>
             )}
           </TouchableOpacity>
         </View>
@@ -256,13 +303,17 @@ const activitySliderStyles = StyleSheet.create({
 
 export function ActivityBody({ post, onActivityPress }: { post: Post; onActivityPress?: () => void }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
   const activity = post.activity;
   if (!activity) return null;
 
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const truncatedDescription = activity.description
+    ? truncateDescription(activity.description, 120)
+    : { text: '', isTruncated: false };
+
   const hasRouteMap = activity.route_map_url || activity.route_svg;
-  const heroStat = getHeroStat(activity);
-  const pace = formatPace(activity.distance, activity.duration);
   const postVideos = post.videos || [];
   const postPhotos = post.photos || [];
   const imageUrls = postPhotos.map(p => fixStorageUrl(p.url) || '');
@@ -291,8 +342,21 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
       {/* Title, description, and badges with padding */}
       <View style={styles.bodyPadding}>
         {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-        {activity.description && <ExpandableContent text={activity.description} type="activity" />}
-        <ActivityBadges activity={activity} pace={pace} />
+        {activity.description && (
+          <View>
+            <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
+              {showFullDescription ? activity.description : truncatedDescription.text}
+            </Text>
+            {truncatedDescription.isTruncated && !showFullDescription && (
+              <TouchableOpacity onPress={() => setShowFullDescription(true)}>
+                <Text style={[styles.showMoreLink, { color: colors.primary }]}>
+                  {t('feed.showMore')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+        <ActivityTagPills activity={activity} />
       </View>
 
       {/* Full-bleed hero media */}
@@ -322,9 +386,14 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
             finishPoint={activity.gps_track?.finish_point ?? null}
           />
           {onActivityPress && (
-            <View style={styles.heroVisualOverlay}>
-              <Ionicons name="expand" size={18} color="#fff" />
-            </View>
+            <TouchableOpacity
+              style={styles.viewDetailsButton}
+              onPress={onActivityPress}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.viewDetailsText}>{t('feed.viewDetails')}</Text>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
           )}
         </TouchableOpacity>
       ) : mediaItems.length > 1 ? (
@@ -365,7 +434,7 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
 
       {/* Stats with padding */}
       <View style={styles.bodyPadding}>
-        <ActivityStats activity={activity} heroStat={heroStat} />
+        <ActivityStatsNew activity={activity} />
       </View>
     </>
   );
