@@ -635,7 +635,9 @@
     "clearShadowTrack": "Usuń trasę porównawczą",
     "selectRoute": "Dotknij, aby wybrać jako trasę porównawczą",
     "routeSelected": "Wybrano trasę",
-    "locationPermissionDenied": "Uprawnienie do lokalizacji jest wymagane, aby wyświetlić trasy w pobliżu"
+    "locationPermissionDenied": "Uprawnienie do lokalizacji jest wymagane, aby wyświetlić trasy w pobliżu",
+    "mapError": "Nie można załadować widoku mapy",
+    "backToStats": "Powrót do statystyk"
   },
   "gpxImport": {
     "title": "Importuj GPX",

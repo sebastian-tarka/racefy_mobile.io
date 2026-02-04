@@ -635,7 +635,9 @@
     "clearShadowTrack": "Clear Shadow Track",
     "selectRoute": "Tap to select as shadow track",
     "routeSelected": "Route selected",
-    "locationPermissionDenied": "Location permission is required to view nearby routes"
+    "locationPermissionDenied": "Location permission is required to view nearby routes",
+    "mapError": "Unable to load map view",
+    "backToStats": "Back to Stats"
   },
   "gpxImport": {
     "title": "Import GPX",

@@ -791,11 +791,14 @@ export function ActivityRecordingScreen() {
       livePointsCount: livePoints.length,
       hasCurrentPosition: !!currentPosition,
       nearbyRoutesCount: nearbyRoutes.length,
+      hasNearbyRoutes: nearbyRoutes.length > 0,
+      hasShadowTrack: !!selectedShadowTrack,
     });
 
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <MapboxLiveMap
+    try {
+      return (
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <MapboxLiveMap
           livePoints={livePoints}
           currentPosition={currentPosition}
           gpsSignalQuality={trackingStatus.gpsSignal}
@@ -809,10 +812,6 @@ export function ActivityRecordingScreen() {
               ? selectedShadowTrack.id
               : null
           }
-          onRouteSelect={(routeId) => {
-            const route = nearbyRoutes.find((r: any) => r.id === routeId);
-            if (route) handleRouteSelect(route);
-          }}
         />
         {showNearbyRoutes && (
           <NearbyRoutesList
@@ -838,8 +837,29 @@ export function ActivityRecordingScreen() {
             onClearShadowTrack={handleClearShadowTrack}
           />
         )}
-      </View>
-    );
+        </View>
+      );
+    } catch (error: any) {
+      logger.error('activity', 'Map view render error', { error: error.message });
+      // Fallback to stats view if map fails
+      return (
+        <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+          <Ionicons name="warning-outline" size={48} color={colors.error} />
+          <Text style={{ color: colors.error, marginTop: spacing.md, textAlign: 'center' }}>
+            {t('recording.mapError')}
+          </Text>
+          <Text style={{ color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center', fontSize: 12 }}>
+            {error.message}
+          </Text>
+          <TouchableOpacity
+            style={{ marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.primary, borderRadius: borderRadius.md }}
+            onPress={() => setViewMode('stats')}
+          >
+            <Text style={{ color: '#fff' }}>{t('recording.backToStats')}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
   };
 
   // ═══════════════════════════════════════════════════════════════════════════

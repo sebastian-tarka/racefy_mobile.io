@@ -68,7 +68,6 @@ interface MapboxLiveMapProps {
   nearbyRoutes?: NearbyRoute[];
   shadowTrack?: GeoJSONLineString | null;
   selectedRouteId?: number | null;
-  onRouteSelect?: (routeId: number) => void;
 }
 
 /**
@@ -241,7 +240,13 @@ export function MapboxLiveMap({
         )}
 
         {/* Nearby routes polylines (idle state only) */}
-        {nearbyRoutes?.map(route => (
+        {nearbyRoutes?.filter(route => {
+          // Validate route has proper track_data structure
+          return route.track_data &&
+                 route.track_data.type === 'LineString' &&
+                 route.track_data.coordinates &&
+                 route.track_data.coordinates.length > 0;
+        }).map(route => (
           <MapboxGL.ShapeSource
             key={`nearby-${route.id}`}
             id={`nearby-route-${route.id}`}
@@ -250,7 +255,6 @@ export function MapboxLiveMap({
               properties: {},
               geometry: route.track_data,
             }}
-            onPress={() => onRouteSelect && onRouteSelect(route.id)}
           >
             <MapboxGL.LineLayer
               id={`nearby-line-${route.id}`}
@@ -266,7 +270,11 @@ export function MapboxLiveMap({
         ))}
 
         {/* Shadow track polyline (recording/paused state only) */}
-        {shadowTrack && livePoints.length > 0 && (
+        {shadowTrack &&
+         shadowTrack.type === 'LineString' &&
+         shadowTrack.coordinates &&
+         shadowTrack.coordinates.length > 0 &&
+         livePoints.length > 0 && (
           <MapboxGL.ShapeSource
             id="shadow-track"
             shape={{
