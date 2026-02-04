@@ -634,7 +634,8 @@
     "shadowTrack": "Shadow Track",
     "clearShadowTrack": "Clear Shadow Track",
     "selectRoute": "Tap to select as shadow track",
-    "routeSelected": "Route selected"
+    "routeSelected": "Route selected",
+    "locationPermissionDenied": "Location permission is required to view nearby routes"
   },
   "gpxImport": {
     "title": "Import GPX",

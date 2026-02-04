@@ -21,7 +21,7 @@ import * as Location from 'expo-location';
 import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, MapboxLiveMap, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Event, MilestoneSingle, TrainingProgram, TrainingWeek, SuggestedActivity } from '../../types/api';
+import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -82,11 +82,6 @@ export function ActivityRecordingScreen() {
   // View mode state (stats vs map)
   const [viewMode, setViewMode] = useState<'stats' | 'map'>('stats');
 
-  // Debug: Log view mode changes
-  useEffect(() => {
-    logger.debug('activity', 'View mode changed', { viewMode, status, gpsEnabled: gpsProfile?.enabled });
-  }, [viewMode, status, gpsProfile?.enabled]);
-
   // Shadow track and nearby routes state
   const [nearbyRoutes, setNearbyRoutes] = useState<Array<any>>([]);
   const [selectedShadowTrack, setSelectedShadowTrack] = useState<any | null>(null);
@@ -94,9 +89,7 @@ export function ActivityRecordingScreen() {
   const [routesError, setRoutesError] = useState<string | null>(null);
 
   // Training program state
-  const [trainingProgram, setTrainingProgram] = useState<TrainingProgram | null>(null);
   const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
-  const [loadingProgram, setLoadingProgram] = useState(false);
 
   // Animation for start button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -167,26 +160,21 @@ export function ActivityRecordingScreen() {
     }
   }, [sportTypes, selectedSport]);
 
-  // Load training program and active week
+  // Load active week for suggested activities
   useEffect(() => {
-    const loadTrainingProgram = async () => {
+    const loadActiveWeek = async () => {
       if (!isAuthenticated || !selectedSport) {
-        setTrainingProgram(null);
         setActiveWeek(null);
         return;
       }
 
       try {
-        setLoadingProgram(true);
         const program = await api.getCurrentProgram();
 
         if (!program) {
-          setTrainingProgram(null);
           setActiveWeek(null);
           return;
         }
-
-        setTrainingProgram(program);
 
         // Only fetch active week if sport types match
         if (program.sport_type_id === selectedSport.id) {
@@ -197,15 +185,12 @@ export function ActivityRecordingScreen() {
           setActiveWeek(null);
         }
       } catch (err: any) {
-        logger.error('activity', 'Failed to load training program', { error: err });
-        setTrainingProgram(null);
+        logger.error('activity', 'Failed to load active week', { error: err });
         setActiveWeek(null);
-      } finally {
-        setLoadingProgram(false);
       }
     };
 
-    loadTrainingProgram();
+    loadActiveWeek();
   }, [isAuthenticated, selectedSport]);
 
   // Handle preselected event
@@ -284,6 +269,17 @@ export function ActivityRecordingScreen() {
             logger.debug('activity', 'Using current tracking position for nearby routes', { lat, lng });
           } else {
             // Fetch current location using expo-location (idle state)
+            // First, check and request location permissions
+            logger.debug('activity', 'Requesting location permissions for nearby routes');
+            const hasPermissions = await requestActivityTrackingPermissions();
+
+            if (!hasPermissions) {
+              setRoutesError(t('recording.locationPermissionDenied'));
+              logger.warn('activity', 'Location permissions denied for nearby routes');
+              setLoadingRoutes(false);
+              return;
+            }
+
             logger.debug('activity', 'Fetching current location for nearby routes');
             const location = await Location.getCurrentPositionAsync({
               accuracy: Location.Accuracy.Balanced,
@@ -306,7 +302,7 @@ export function ActivityRecordingScreen() {
     };
 
     fetchNearbyRoutes();
-  }, [viewMode, isTracking, isPaused, currentPosition, selectedSport, t]);
+  }, [viewMode, isTracking, isPaused, currentPosition, selectedSport, t, requestActivityTrackingPermissions]);
 
   // Existing activity dialog
   useEffect(() => {

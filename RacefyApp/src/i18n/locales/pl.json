@@ -634,7 +634,8 @@
     "shadowTrack": "Trasa porównawcza",
     "clearShadowTrack": "Usuń trasę porównawczą",
     "selectRoute": "Dotknij, aby wybrać jako trasę porównawczą",
-    "routeSelected": "Wybrano trasę"
+    "routeSelected": "Wybrano trasę",
+    "locationPermissionDenied": "Uprawnienie do lokalizacji jest wymagane, aby wyświetlić trasy w pobliżu"
   },
   "gpxImport": {
     "title": "Importuj GPX",
