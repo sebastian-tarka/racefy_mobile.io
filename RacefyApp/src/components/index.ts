@@ -68,3 +68,6 @@ export * from './UserProfileHeader';
 export * from './EventRankingModeSelector'
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
 export * from './TipCard';
+export { AnimatedNumber } from './AnimatedNumber';
+export { FadeInView } from './FadeInView';
+export { ActionButton } from './ActionButton';

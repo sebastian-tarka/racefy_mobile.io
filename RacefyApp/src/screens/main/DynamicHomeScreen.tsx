@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
 import type { TrainingTip } from '../../types/api';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../../navigation/AppNavigator';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';
@@ -13,6 +14,8 @@ import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
+import { useNavigationStyle } from '../../contexts/NavigationStyleContext';
 
 // Services
 import { api } from '../../services/api';
@@ -26,13 +29,16 @@ import { spacing } from '../../theme';
 import {
   ConnectionErrorBanner,
   HomeHeader,
-  DynamicGreeting,
   LiveActivityBanner,
   PrimaryCTA,
   SectionRenderer,
+  WeeklyStatsCardV2,
+  WeeklyStreakCard,
+  QuickActionsBarV2,
+  CollapsibleTipCard,
+  LiveEventsCard,
 } from './home/components';
-import { Loading, TipCard } from '../../components';
-import {t} from "i18next";
+import { Loading, FadeInView } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -62,9 +68,16 @@ type ConnectionStatus = {
 export function DynamicHomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount } = useNotifications();
+  const weeklyStreakData = useWeeklyStreak();
+  const insets = useSafeAreaInsets();
+  const { setStyle } = useNavigationStyle();
+
+  // Calculate padding to prevent content from being hidden under floating tab bar
+  const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;
+  const scrollPaddingBottom = tabBarTotalHeight + spacing.lg; // Tab bar height + extra spacing
 
   // Config from /home/config endpoint
   const {
@@ -75,10 +88,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
     refetch: refetchConfig,
   } = useHomeConfig();
 
-  // Data for sections from /home endpoint (only for upcoming_events section)
+  // Data for sections from /home endpoint
   const {
     refetch: refetchData,
     upcomingEvents,
+    recentActivities,
+    liveEvents,
   } = useHomeData({
     language: (i18n.language || 'en') as 'en' | 'pl',
     perPage: 15,
@@ -94,6 +109,23 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
+
+  // Get greeting based on time of day
+  const getGreeting = useCallback(() => {
+    const hour = new Date().getHours();
+    if (hour >= 21 || hour < 5) return t('home.greeting.night');
+    if (hour >= 17) return t('home.greeting.evening');
+    if (hour >= 12) return t('home.greeting.afternoon');
+    return t('home.greeting.morning');
+  }, [t]);
+
+  // Set navigation style to dynamic when this screen is mounted
+  useEffect(() => {
+    setStyle('dynamic');
+    return () => {
+      setStyle('classic');
+    };
+  }, [setStyle]);
 
   // Update analytics meta when config changes
   useEffect(() => {
@@ -207,6 +239,23 @@ export function DynamicHomeScreen({ navigation }: Props) {
     [navigation]
   );
 
+  // Quick actions callbacks
+  const handleStartTraining = useCallback(() => {
+    navigation.navigate('Record');
+  }, [navigation]);
+
+  const handleCreatePost = useCallback(() => {
+    navigation.navigate('Feed', { openComposer: true });
+  }, [navigation]);
+
+  const handleFindEvents = useCallback(() => {
+    navigation.navigate('Events');
+  }, [navigation]);
+
+  const handleStatsDetails = useCallback(() => {
+    navigation.navigate('Profile', { initialTab: 'stats' });
+  }, [navigation]);
+
   // Section callbacks - memoized to prevent re-renders
   const sectionCallbacks = useMemo(
     () => ({
@@ -218,12 +267,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
       },
       onSignIn: () => navigateToAuth('Login'),
       onSignUp: () => navigateToAuth('Register'),
-      onStartActivity: () => navigation.navigate('Record'),
-      onCreatePost: () => navigation.navigate('Feed', { openComposer: true }),
-      onFindEvents: () => navigation.navigate('Events'),
+      onStartActivity: handleStartTraining,
+      onCreatePost: handleCreatePost,
+      onFindEvents: handleFindEvents,
       onSectionCtaPress: handleSectionCtaPress,
     }),
-    [navigation, navigateToAuth, handleSectionCtaPress]
+    [navigation, navigateToAuth, handleSectionCtaPress, handleStartTraining, handleCreatePost, handleFindEvents]
   );
 
   // Section data - memoized to prevent re-renders
@@ -242,12 +291,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
       edges={['top']}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Connection Error Banner */}
+        {/* Connection Error Banner - no animation, always visible */}
         {connectionStatus.checked && !connectionStatus.connected && (
           <ConnectionErrorBanner
             error={connectionStatus.error}
@@ -256,21 +305,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
           />
         )}
 
-        {/* Header - always shown */}
-        <HomeHeader
-          userName={user?.name}
-          userAvatar={user?.avatar}
-          isAuthenticated={isAuthenticated}
-          unreadCount={unreadCount}
-          onNotificationPress={() => {
-            navigation.getParent()?.navigate('Notifications');
-          }}
-          onAvatarPress={() => {
-            navigation.navigate('Profile');
-          }}
-        />
-
-        {/* Live Activity Banner - shows when recording */}
+        {/* Live Activity Banner - no animation, shows when recording */}
         <LiveActivityBanner
           isActive={isTracking}
           isPaused={isPaused}
@@ -281,49 +316,99 @@ export function DynamicHomeScreen({ navigation }: Props) {
           }}
         />
 
-        {/* Dynamic Greeting - client-side time-based */}
-        <DynamicGreeting
-          userName={user?.name}
-          isAuthenticated={isAuthenticated}
-        />
-
-        {/* Training Tips - shown when available */}
-        {isAuthenticated && availableTips.length > 0 && (
-          <View style={styles.tipsSection}>
-            <Text style={[styles.tipsSectionTitle, { color: colors.textPrimary }]}>
-              {t('training.tips.sectionTitle')}
-            </Text>
-            {availableTips.slice(0, 1).map((tip) => (
-              <TipCard
-                key={tip.id}
-                tip={tip}
-                onPress={() => {
-                  navigation.getParent()?.navigate('TipDetail', { tipId: tip.id });
-                }}
-              />
-            ))}
-          </View>
-        )}
+        {/* Header - with staggered fade-in */}
+        <FadeInView delay={50}>
+          <HomeHeader
+            userName={user?.name}
+            userAvatar={user?.avatar}
+            greeting={getGreeting()}
+            isAuthenticated={isAuthenticated}
+            unreadCount={unreadCount}
+            onNotificationPress={() => {
+              navigation.getParent()?.navigate('Notifications');
+            }}
+            onAvatarPress={() => {
+              navigation.navigate('Profile');
+            }}
+          />
+        </FadeInView>
 
         {/* Loading State */}
         {isLoading && <Loading />}
 
-        {/* Primary CTA - from config */}
-        {config?.primary_cta && (
-          <PrimaryCTA
-            cta={config.primary_cta}
-            onPress={handlePrimaryCtaPress}
-          />
+        {/* Primary CTA - prominent "Start Training" button (hidden when recording) */}
+        {!isTracking && (
+          <FadeInView delay={120}>
+            {config?.primary_cta && (
+              <PrimaryCTA
+                cta={config.primary_cta}
+                onPress={handlePrimaryCtaPress}
+              />
+            )}
+          </FadeInView>
+        )}
+
+        {/* Weekly Streak - authenticated users only */}
+        {isAuthenticated && !weeklyStreakData.isLoading && (
+          <FadeInView delay={200}>
+            <WeeklyStreakCard
+              activeDays={weeklyStreakData.weekActivity}
+              todayIndex={weeklyStreakData.todayIndex}
+              goalDays={weeklyStreakData.goalDays}
+              completedDays={weeklyStreakData.completedDays}
+            />
+          </FadeInView>
+        )}
+
+        {/* Weekly Stats - authenticated users only */}
+        {isAuthenticated && (
+          <FadeInView delay={300}>
+            <WeeklyStatsCardV2 onPress={handleStatsDetails} />
+          </FadeInView>
+        )}
+
+        {/* Training Tips - collapsible, shown when available */}
+        {isAuthenticated && availableTips.length > 0 && (
+          <FadeInView delay={400}>
+            <CollapsibleTipCard
+              tip={availableTips[0]}
+              defaultExpanded={false}
+            />
+          </FadeInView>
+        )}
+
+        {/* Quick Actions - authenticated users only */}
+        {isAuthenticated && (
+          <FadeInView delay={480}>
+            <QuickActionsBarV2
+              onCreatePost={handleCreatePost}
+              onFindEvents={handleFindEvents}
+            />
+          </FadeInView>
+        )}
+
+        {/* Live Events - compact card */}
+        {liveEvents.length > 0 && (
+          <FadeInView delay={540}>
+            <LiveEventsCard
+              events={liveEvents}
+              onPress={(eventId) => {
+                navigation.getParent()?.navigate('EventDetail', { eventId });
+              }}
+            />
+          </FadeInView>
         )}
 
         {/* Sections - rendered based on config, sorted by priority */}
         {!isLoading && sortedSections.length > 0 && (
-          <SectionRenderer
-            sections={sortedSections}
-            data={sectionData}
-            callbacks={sectionCallbacks}
-            isAuthenticated={isAuthenticated}
-          />
+          <FadeInView delay={560}>
+            <SectionRenderer
+              sections={sortedSections}
+              data={sectionData}
+              callbacks={sectionCallbacks}
+              isAuthenticated={isAuthenticated}
+            />
+          </FadeInView>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -336,13 +421,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
-  },
-  tipsSection: {
-    marginBottom: spacing.lg,
-  },
-  tipsSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: spacing.md,
+    // paddingBottom calculated dynamically in component to account for tab bar + safe area
   },
 });

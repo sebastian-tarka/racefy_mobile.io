@@ -698,8 +698,8 @@ class ApiService {
     return response;
   }
 
-  async getActivityAnalysis(id: number): Promise<Types.ActivityStats> {
-    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
+  async getActivityAnalysis(id: number): Promise<Types.SingleActivityStats> {
+    const response = await this.request<Types.ApiResponse<Types.SingleActivityStats>>(
       `/activities/${id}/stats`
     );
     return response.data;

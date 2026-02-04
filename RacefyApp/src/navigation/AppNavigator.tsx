@@ -4,11 +4,14 @@ import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-na
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Animated, View } from 'react-native';
+import { Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
 import { Loading, ImpersonationBanner } from '../components';
 
 // Screens
@@ -58,7 +61,29 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-// Pulsing Record Icon Component
+// Custom Tab Bar Background with blur effect
+function TabBarBackground({ colors }: { colors: any }) {
+  return (
+    <BlurView
+      intensity={95}
+      tint="dark"
+      style={StyleSheet.absoluteFill}
+    >
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(17, 24, 39, 0.98)', // More opaque to hide content underneath
+            borderWidth: 1,
+            borderColor: colors.border,
+          },
+        ]}
+      />
+    </BlurView>
+  );
+}
+
+// Pulsing Record Icon Component with gradient background
 function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
   focused: boolean;
   size: number;
@@ -95,30 +120,45 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     }
   }, [shouldPulse, pulseAnim]);
 
-  // When focused (on Record tab): always show green add-circle (normal focused state)
+  // When focused (on Record tab): show gradient background with + icon
   // When not focused but has recording: show recording indicator
-  // When not focused and no recording: show gray outline
-  let iconName: keyof typeof Ionicons.glyphMap;
-  let color: string;
+  // When not focused and no recording: show gray +
 
   if (focused) {
-    // On Record tab - always green, normal icon
-    iconName = 'add-circle';
-    color = '#10b981'; // green
-  } else if (hasActiveRecording) {
-    // Not on Record tab, but has active recording - show indicator
-    iconName = 'radio-button-on';
-    color = isActivelyTracking ? '#ef4444' : '#f97316'; // red if tracking, orange if paused
-  } else {
-    // Not on Record tab, no recording - normal inactive state
-    iconName = 'add-circle-outline';
-    color = '#9ca3af'; // gray
+    // On Record tab - gradient background with white + icon
+    return (
+      <LinearGradient
+        colors={['#10b981', '#059669']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          width: 52,
+          height: 42,
+          borderRadius: 18,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 20, color: '#ffffff', fontWeight: 'bold', lineHeight: 20 }}>+</Text>
+      </LinearGradient>
+    );
   }
 
+  if (hasActiveRecording) {
+    // Not on Record tab, but has active recording - show pulsing indicator
+    const color = isActivelyTracking ? '#ef4444' : '#f97316';
+    return (
+      <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+        <Ionicons name="radio-button-on" size={size} color={color} />
+      </Animated.View>
+    );
+  }
+
+  // Not on Record tab, no recording - show gray +
   return (
-    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-      <Ionicons name={iconName} size={size} color={color} />
-    </Animated.View>
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontSize: 16, color: '#9ca3af', lineHeight: 16 }}>+</Text>
+    </View>
   );
 }
 
@@ -135,6 +175,42 @@ function AuthNavigator() {
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="LegalDocuments" component={LegalDocumentsScreen} />
     </AuthStack.Navigator>
+  );
+}
+
+// Tab bar constants for layout calculations
+export const TAB_BAR_HEIGHT = 58;
+export const TAB_BAR_BOTTOM_MARGIN = 16;
+
+// Custom Tab Button with background for active state (only for dynamic home)
+function CustomTabButton({ children, onPress, accessibilityState, style, ...props }: any) {
+  const { colors } = useTheme();
+  const { style: navStyle } = useNavigationStyle();
+  const focused = accessibilityState?.selected;
+
+  // Only apply custom styling for dynamic navigation
+  const useDynamicStyle = navStyle === 'dynamic';
+
+  return (
+    <TouchableOpacity
+      {...props}
+      onPress={onPress}
+      style={[
+        style,
+        useDynamicStyle && {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 8,
+          borderRadius: 14,
+          backgroundColor: focused ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+          marginHorizontal: 4,
+        }
+      ]}
+    >
+      {children}
+    </TouchableOpacity>
   );
 }
 
@@ -155,7 +231,7 @@ function MainNavigator() {
     },
   };
 
-  // Calculate tab bar height based on safe area insets
+  // Calculate tab bar height
   const tabBarHeight = 60 + insets.bottom;
   const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
@@ -163,43 +239,56 @@ function MainNavigator() {
     <MainTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarButton: (props) => <CustomTabButton {...props} />,
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+          let icon: string;
 
+          // Use emoji/unicode icons from mockup
           switch (route.name) {
             case 'Home':
-              iconName = focused ? 'home' : 'home-outline';
+              icon = '⌂';
               break;
             case 'Feed':
-              iconName = focused ? 'newspaper' : 'newspaper-outline';
+              icon = '☰';
               break;
             case 'Record':
-              iconName = focused ? 'add-circle' : 'add-circle-outline';
+              icon = '+';
               break;
             case 'Events':
-              iconName = focused ? 'calendar' : 'calendar-outline';
+              icon = '📅';
               break;
             case 'Profile':
-              iconName = focused ? 'person' : 'person-outline';
+              icon = '◉';
               break;
             default:
-              iconName = 'help-outline';
+              icon = '?';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          // Use custom gradient icon for Record tab
+          if (route.name === 'Record') {
+            return null; // Will be rendered in tabBarIcon option for Record screen
+          }
+
+          // Icon stays same color (not colored)
+          const iconColor = colors.textPrimary;
+
+          return (
+            <Text style={{ fontSize: 16, color: iconColor, lineHeight: 16 }}>{icon}</Text>
+          );
         },
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.cardBackground,
-          borderTopColor: colors.border,
-          paddingTop: 4,
           height: tabBarHeight,
+          paddingTop: 8,
           paddingBottom: tabBarPaddingBottom,
+          borderTopWidth: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 9,
           fontWeight: '500',
+          letterSpacing: 0.3,
         },
       })}
     >
@@ -220,7 +309,7 @@ function MainNavigator() {
         name="Record"
         component={ActivityRecordingScreen}
         options={{
-          tabBarLabel: 'Record',
+          tabBarLabel: '', // No label for Record button in floating pill style
           tabBarIcon: ({ focused, size }) => (
             <RecordIcon
               focused={focused}
@@ -280,13 +369,14 @@ export function AppNavigator() {
   const authStateKey = showConsentModal ? 'consent' : isAuthenticated ? 'auth' : 'guest';
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
+    <NavigationStyleProvider>
+      <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
+        <RootStack.Navigator
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
         {showConsentModal ? (
           // Consent required - show blocking consent modal
           <>
@@ -444,8 +534,9 @@ export function AppNavigator() {
             />
           </>
         )}
-      </RootStack.Navigator>
-      <ImpersonationBanner />
-    </NavigationContainer>
+        </RootStack.Navigator>
+        <ImpersonationBanner />
+      </NavigationContainer>
+    </NavigationStyleProvider>
   );
 }

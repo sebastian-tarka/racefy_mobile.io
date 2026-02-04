@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../../../theme';
+import { spacing, fontSize, borderRadius, fontWeight } from '../../../../theme';
 import type { HomePrimaryCta, HomeCtaAction } from '../../../../types/api';
 
 interface PrimaryCtaProps {
@@ -47,61 +48,68 @@ export function PrimaryCTA({ cta, onPress }: PrimaryCtaProps) {
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.primary }]}
+      style={[styles.container, { shadowColor: colors.primary }]}
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <View style={styles.content}>
-        <View style={styles.textContainer}>
-          <Text style={styles.label} numberOfLines={1}>
-            {cta.label}
-          </Text>
-          {cta.subtitle && (
-            <Text style={styles.subtitle} numberOfLines={2}>
-              {cta.subtitle}
+      <LinearGradient
+        colors={[colors.primary, colors.primaryDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
+          <Ionicons name={icon} size={22} color="#ffffff" style={styles.leadingIcon} />
+          <View style={styles.textContainer}>
+            <Text style={styles.label} numberOfLines={1}>
+              {cta.label}
             </Text>
-          )}
+            {cta.subtitle && (
+              <Text style={styles.subtitle} numberOfLines={2}>
+                {cta.subtitle}
+              </Text>
+            )}
+          </View>
         </View>
-        <View style={styles.iconContainer}>
-          <Ionicons name={icon} size={32} color="#ffffff" />
-        </View>
-      </View>
+      </LinearGradient>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.xl,
     marginBottom: spacing.lg,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 32,
+    elevation: 8,
+  },
+  gradient: {
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xl,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: spacing.md,
+  },
+  leadingIcon: {
+    marginRight: spacing.xs,
   },
   textContainer: {
-    flex: 1,
-    marginRight: spacing.md,
+    alignItems: 'center',
   },
   label: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontSize: fontSize.xxl,
+    fontWeight: fontWeight.bold,
     color: '#ffffff',
   },
   subtitle: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
     color: 'rgba(255, 255, 255, 0.85)',
     marginTop: spacing.xs,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

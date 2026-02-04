@@ -737,7 +737,7 @@ export interface SplitsSummary {
 }
 
 // Activity stats from /activities/{id}/stats endpoint
-export interface ActivityStats {
+export interface SingleActivityStats {
   primary: {
     distance: number;           // meters
     duration: number;           // seconds
