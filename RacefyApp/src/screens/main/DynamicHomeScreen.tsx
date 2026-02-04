@@ -15,7 +15,6 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { useNavigationStyle } from '../../contexts/NavigationStyleContext';
 
 // Services
 import { api } from '../../services/api';
@@ -73,7 +72,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const { unreadCount } = useNotifications();
   const weeklyStreakData = useWeeklyStreak();
   const insets = useSafeAreaInsets();
-  const { setStyle } = useNavigationStyle();
 
   // Calculate padding to prevent content from being hidden under floating tab bar
   const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;
@@ -118,14 +116,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
     if (hour >= 12) return t('home.greeting.afternoon');
     return t('home.greeting.morning');
   }, [t]);
-
-  // Set navigation style to dynamic when this screen is mounted
-  useEffect(() => {
-    setStyle('dynamic');
-    return () => {
-      setStyle('classic');
-    };
-  }, [setStyle]);
 
   // Update analytics meta when config changes
   useEffect(() => {

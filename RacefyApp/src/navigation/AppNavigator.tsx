@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useHomeConfig } from '../hooks/useHomeConfig';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
 import { Loading, ImpersonationBanner } from '../components';
 
@@ -18,6 +19,8 @@ import { Loading, ImpersonationBanner } from '../components';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
+import { HomeScreen } from '../screens/main/HomeScreen';
+import { DynamicHomeScreen } from '../screens/main/DynamicHomeScreen';
 import { FeedScreenOld } from '../screens/main/FeedScreen-old';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
@@ -182,14 +185,10 @@ function AuthNavigator() {
 export const TAB_BAR_HEIGHT = 58;
 export const TAB_BAR_BOTTOM_MARGIN = 16;
 
-// Custom Tab Button with background for active state (only for dynamic home)
+// Custom Tab Button with background for active state (used only in MainNavigatorDynamic)
 function CustomTabButton({ children, onPress, accessibilityState, style, ...props }: any) {
   const { colors } = useTheme();
-  const { style: navStyle } = useNavigationStyle();
   const focused = accessibilityState?.selected;
-
-  // Only apply custom styling for dynamic navigation
-  const useDynamicStyle = navStyle === 'dynamic';
 
   return (
     <TouchableOpacity
@@ -197,7 +196,7 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
       onPress={onPress}
       style={[
         style,
-        useDynamicStyle && {
+        {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
@@ -214,7 +213,111 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
   );
 }
 
+// Classic Navigator - Original styling with Ionicons
 function MainNavigator() {
+  const { isAuthenticated } = useAuth();
+  const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+  const { isTracking, activity } = useLiveActivityContext();
+
+  // Auth guard listener - redirects to Auth screen if not authenticated
+  const authGuardListener = {
+    tabPress: (e: { preventDefault: () => void }) => {
+      if (!isAuthenticated) {
+        e.preventDefault();
+        navigation.navigate('Auth', { screen: 'Login' });
+      }
+    },
+  };
+
+  return (
+    <MainTab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
+          let iconColor = color;
+
+          // Use Ionicons for classic navigation
+          switch (route.name) {
+            case 'Home':
+              iconName = focused ? 'home' : 'home-outline';
+              break;
+            case 'Feed':
+              iconName = focused ? 'list' : 'list-outline';
+              break;
+            case 'Record':
+              // Show recording status with simple color changes
+              if (activity) {
+                // Recording exists - show status
+                iconName = 'radio-button-on';
+                iconColor = isTracking ? '#ef4444' : '#f97316'; // red when tracking, orange when paused
+              } else {
+                // No recording - normal icon
+                iconName = 'add-circle';
+              }
+              break;
+            case 'Events':
+              iconName = focused ? 'calendar' : 'calendar-outline';
+              break;
+            case 'Profile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            default:
+              iconName = 'help-circle-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={iconColor} />;
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: colors.cardBackground,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
+      })}
+    >
+      <MainTab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ tabBarLabel: 'Home' }}
+      />
+      <MainTab.Screen
+        name="Feed"
+        component={FeedScreen}
+        options={{
+          tabBarLabel: 'Feed',
+        }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Record"
+        component={ActivityRecordingScreen}
+        options={{
+          tabBarLabel: 'Record',
+        }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Events"
+        component={EventsScreen}
+        options={{ tabBarLabel: 'Events' }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+        listeners={authGuardListener}
+      />
+    </MainTab.Navigator>
+  );
+}
+
+// Dynamic Navigator - Modern styling with emoji icons and custom button
+function MainNavigatorDynamic() {
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -294,7 +397,7 @@ function MainNavigator() {
     >
       <MainTab.Screen
         name="Home"
-        component={HomeScreenWrapper}
+        component={DynamicHomeScreen}
         options={{ tabBarLabel: 'Home' }}
       />
       <MainTab.Screen
@@ -309,7 +412,7 @@ function MainNavigator() {
         name="Record"
         component={ActivityRecordingScreen}
         options={{
-          tabBarLabel: '', // No label for Record button in floating pill style
+          tabBarLabel: '', // No label for Record button
           tabBarIcon: ({ focused, size }) => (
             <RecordIcon
               focused={focused}
@@ -335,6 +438,31 @@ function MainNavigator() {
       />
     </MainTab.Navigator>
   );
+}
+
+// Wrapper that decides which navigator to use based on navigation style from API
+function MainNavigatorWrapper() {
+  const { style } = useNavigationStyle();
+
+  // Use dynamic navigator when style is 'dynamic', otherwise use legacy/classic
+  if (style === 'dynamic') {
+    return <MainNavigatorDynamic />;
+  }
+
+  return <MainNavigator />;
+}
+
+// Component that loads home config and sets navigation style
+function NavigationStyleSetter({ children }: { children: React.ReactNode }) {
+  const { homeVersion } = useHomeConfig();
+  const { setStyle } = useNavigationStyle();
+
+  useEffect(() => {
+    // Update navigation style based on API config
+    setStyle(homeVersion);
+  }, [homeVersion, setStyle]);
+
+  return <>{children}</>;
 }
 
 export function AppNavigator() {
@@ -370,13 +498,14 @@ export function AppNavigator() {
 
   return (
     <NavigationStyleProvider>
-      <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
-        <RootStack.Navigator
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-          }}
-        >
+      <NavigationStyleSetter>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
+          <RootStack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          >
         {showConsentModal ? (
           // Consent required - show blocking consent modal
           <>
@@ -418,7 +547,7 @@ export function AppNavigator() {
         ) : (
           // Authenticated - normal app flow
           <>
-            <RootStack.Screen name="Main" component={MainNavigator} />
+            <RootStack.Screen name="Main" component={MainNavigatorWrapper} />
             <RootStack.Screen
               name="Auth"
               component={AuthNavigator}
@@ -534,9 +663,10 @@ export function AppNavigator() {
             />
           </>
         )}
-        </RootStack.Navigator>
-        <ImpersonationBanner />
-      </NavigationContainer>
+          </RootStack.Navigator>
+          <ImpersonationBanner />
+        </NavigationContainer>
+      </NavigationStyleSetter>
     </NavigationStyleProvider>
   );
 }
