@@ -1792,6 +1792,12 @@ function useLiveActivityInternal() {
     checkExistingActivity,
     // Expose GPS profile for UI to access pace settings (minDistanceForPace, etc.)
     gpsProfile: currentGpsProfile.current,
+    // NEW: Expose for map view
+    livePoints: pointsBuffer.current,
+    currentPosition: lastPosition.current ? {
+      lat: lastPosition.current.lat,
+      lng: lastPosition.current.lng,
+    } : null,
   };
 }
 
@@ -1818,6 +1824,9 @@ interface LiveActivityContextType {
   discardTracking: () => Promise<void>;
   clearError: () => void;
   checkExistingActivity: () => Promise<void>;
+  // NEW: Expose for map view
+  livePoints: GpsPoint[];
+  currentPosition: { lat: number; lng: number } | null;
 }
 
 // Create Context

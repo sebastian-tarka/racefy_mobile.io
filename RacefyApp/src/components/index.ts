@@ -34,6 +34,10 @@ export * from './LeaderboardList';
 export * from './LeafletMap';
 // MapboxRouteMap is lazy-loaded by LeafletMap when @rnmapbox/maps is available
 export * from './Loading';
+export * from './MapboxLiveMap';
+export * from './RecordingMapControls';
+export * from './ViewToggleButton';
+export * from './NearbyRoutesList';
 export * from './MediaGallery';
 export * from './MediaPicker';
 export * from './MediaSlider';

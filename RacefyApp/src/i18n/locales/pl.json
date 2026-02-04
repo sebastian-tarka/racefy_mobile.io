@@ -620,7 +620,21 @@
       "importDescription": "Z Garmin, Strava, Polar..."
     },
     "plannedThisWeek": "Zaplanowane w tym tygodniu",
-    "session": "Sesja"
+    "session": "Sesja",
+    "viewMap": "Widok mapy",
+    "viewStats": "Widok statystyk",
+    "toggleView": "Przełącz widok",
+    "nearbyRoutes": "Trasy w pobliżu",
+    "routesFound": "Znaleziono tras: {{count}}",
+    "noRoutesFound": "Nie znaleziono tras w pobliżu",
+    "noRoutesDescription": "Rozpocznij nagrywanie, aby stworzyć trasę!",
+    "loadingRoutes": "Ładowanie tras...",
+    "routesError": "Nie udało się załadować tras",
+    "retryLoadRoutes": "Spróbuj ponownie",
+    "shadowTrack": "Trasa porównawcza",
+    "clearShadowTrack": "Usuń trasę porównawczą",
+    "selectRoute": "Dotknij, aby wybrać jako trasę porównawczą",
+    "routeSelected": "Wybrano trasę"
   },
   "gpxImport": {
     "title": "Importuj GPX",
