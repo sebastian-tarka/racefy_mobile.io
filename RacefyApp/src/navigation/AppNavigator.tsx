@@ -94,6 +94,7 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
   isActivelyTracking: boolean;  // true when GPS is actively tracking
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
 
   // Only pulse when actively tracking AND not on the Record tab
   const shouldPulse = isActivelyTracking && !focused;
@@ -123,6 +124,35 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     }
   }, [shouldPulse, pulseAnim]);
 
+  // Animate scale based on focused state
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.25,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
   // When focused (on Record tab): show gradient background with + icon
   // When not focused but has recording: show recording indicator
   // When not focused and no recording: show gray +
@@ -130,20 +160,22 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
   if (focused) {
     // On Record tab - gradient background with white + icon
     return (
-      <LinearGradient
-        colors={['#10b981', '#059669']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          width: 52,
-          height: 42,
-          borderRadius: 18,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 20, color: '#ffffff', fontWeight: 'bold', lineHeight: 20 }}>+</Text>
-      </LinearGradient>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <LinearGradient
+          colors={['#10b981', '#059669']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            width: 56,
+            height: 46,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 24, color: '#ffffff', fontWeight: 'bold', lineHeight: 24 }}>+</Text>
+        </LinearGradient>
+      </Animated.View>
     );
   }
 
@@ -151,17 +183,17 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     // Not on Record tab, but has active recording - show pulsing indicator
     const color = isActivelyTracking ? '#ef4444' : '#f97316';
     return (
-      <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-        <Ionicons name="radio-button-on" size={size} color={color} />
+      <Animated.View style={{ transform: [{ scale: Animated.multiply(pulseAnim, scaleAnim) }] }}>
+        <Ionicons name="radio-button-on" size={size + 4} color={color} />
       </Animated.View>
     );
   }
 
   // Not on Record tab, no recording - show gray +
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ fontSize: 16, color: '#9ca3af', lineHeight: 16 }}>+</Text>
-    </View>
+    <Animated.View style={{ alignItems: 'center', justifyContent: 'center', transform: [{ scale: scaleAnim }] }}>
+      <Text style={{ fontSize: 20, color: '#9ca3af', lineHeight: 20 }}>+</Text>
+    </Animated.View>
   );
 }
 
@@ -185,10 +217,144 @@ function AuthNavigator() {
 export const TAB_BAR_HEIGHT = 58;
 export const TAB_BAR_BOTTOM_MARGIN = 16;
 
+// Animated Tab Icon wrapper for smooth transitions (Classic Nav)
+function AnimatedTabIcon({ iconName, focused, size, color }: {
+  iconName: keyof typeof Ionicons.glyphMap;
+  focused: boolean;
+  size: number;
+  color: string;
+}) {
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.3,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Ionicons name={iconName} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
+// Animated Text Icon wrapper for smooth transitions (Dynamic Nav)
+function AnimatedTextIcon({ icon, focused, size }: {
+  icon: string;
+  focused: boolean;
+  size: number;
+}) {
+  const { colors } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.15 : 1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.4,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.15,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  const iconColor = colors.textPrimary;
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Text style={{ fontSize: size, color: iconColor, lineHeight: size }}>{icon}</Text>
+    </Animated.View>
+  );
+}
+
 // Custom Tab Button with background for active state (used only in MainNavigatorDynamic)
 function CustomTabButton({ children, onPress, accessibilityState, style, ...props }: any) {
   const { colors } = useTheme();
   const focused = accessibilityState?.selected;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1 : 0.92)).current;
+  const bgOpacityAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect with background fade
+      Animated.parallel([
+        Animated.sequence([
+          Animated.spring(scaleAnim, {
+            toValue: 1.08,
+            useNativeDriver: true,
+            tension: 180,
+            friction: 5,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }),
+        ]),
+        Animated.timing(bgOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Shrink with fade out
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0.92,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(bgOpacityAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [focused, scaleAnim, bgOpacityAnim]);
 
   return (
     <TouchableOpacity
@@ -202,13 +368,30 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
           justifyContent: 'center',
           paddingHorizontal: 20,
           paddingVertical: 8,
-          borderRadius: 14,
-          backgroundColor: focused ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-          marginHorizontal: 4,
         }
       ]}
     >
-      {children}
+      <Animated.View
+        style={{
+          width: '100%',
+          height: '100%',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale: scaleAnim }],
+        }}
+      >
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            borderRadius: 14,
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            opacity: bgOpacityAnim,
+          }}
+        />
+        {children}
+      </Animated.View>
     </TouchableOpacity>
   );
 }
@@ -268,7 +451,7 @@ function MainNavigator() {
               iconName = 'help-circle-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={iconColor} />;
+          return <AnimatedTabIcon iconName={iconName} focused={focused} size={size} color={iconColor} />;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
@@ -372,12 +555,8 @@ function MainNavigatorDynamic() {
             return null; // Will be rendered in tabBarIcon option for Record screen
           }
 
-          // Icon stays same color (not colored)
-          const iconColor = colors.textPrimary;
-
-          return (
-            <Text style={{ fontSize: 16, color: iconColor, lineHeight: 16 }}>{icon}</Text>
-          );
+          // Use AnimatedTextIcon for smooth transitions
+          return <AnimatedTextIcon icon={icon} focused={focused} size={20} />;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
@@ -389,7 +568,7 @@ function MainNavigatorDynamic() {
           borderTopWidth: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 9,
+          fontSize: 11,
           fontWeight: '500',
           letterSpacing: 0.3,
         },
