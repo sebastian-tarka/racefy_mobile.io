@@ -569,6 +569,29 @@ export interface GpsPoint {
   cadence?: number;
 }
 
+// Nearby route for shadow track feature
+export interface NearbyRoute {
+  id: number;
+  title: string;
+  distance: number;  // meters
+  elevation_gain: number;  // meters
+  duration: number;  // seconds
+  sport_type_id: number;
+  user: {
+    id: number;
+    name: string;
+    username: string;  // @username
+    avatar: string;  // Backend uses 'avatar' not 'avatar_url'
+  };
+  stats: {
+    likes_count: number;
+    boosts_count: number;  // Backend uses boosts instead of completions
+  };
+  track_data: GeoJSONLineString;
+  distance_from_user: number;  // meters from search location
+  created_at: string;
+}
+
 // Request for adding GPS points to live activity
 export interface AddActivityPointsRequest {
   points: GpsPoint[];

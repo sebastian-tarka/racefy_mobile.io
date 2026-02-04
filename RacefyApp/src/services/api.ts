@@ -823,6 +823,39 @@ class ApiService {
   }
 
   /**
+   * Get nearby activities/routes for shadow track feature
+   * @param lat User's current latitude
+   * @param lng User's current longitude
+   * @param radius Search radius in meters (default: 5000m)
+   * @param sportTypeId Filter by sport type (optional)
+   * @param limit Max number of routes to return (default: 10)
+   */
+  async getNearbyRoutes(
+    lat: number,
+    lng: number,
+    radius: number = 5000,
+    sportTypeId?: number,
+    limit: number = 10
+  ): Promise<Types.NearbyRoute[]> {
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lng: lng.toString(),
+      radius: radius.toString(),
+      limit: limit.toString(),
+    });
+
+    if (sportTypeId) {
+      params.append('sport_type_id', sportTypeId.toString());
+    }
+
+    const response = await this.request<Types.ApiResponse<Types.NearbyRoute[]>>(
+      `/activities/nearby?${params.toString()}`
+    );
+
+    return response.data;
+  }
+
+  /**
    * Import a GPX file as an activity
    * FormData should contain:
    * - file: GPX file

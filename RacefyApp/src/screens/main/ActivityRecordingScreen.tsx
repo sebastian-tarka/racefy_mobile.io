@@ -17,9 +17,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption } from '../../components';
+import * as Location from 'expo-location';
+import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, MapboxLiveMap, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
-import type { Event, MilestoneSingle, TrainingProgram, TrainingWeek, SuggestedActivity } from '../../types/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
@@ -77,10 +79,17 @@ export function ActivityRecordingScreen() {
   const preselectedEventHandled = useRef(false);
   const isFinishingRef = useRef(false);
 
+  // View mode state (stats vs map)
+  const [viewMode, setViewMode] = useState<'stats' | 'map'>('stats');
+
+  // Shadow track and nearby routes state
+  const [nearbyRoutes, setNearbyRoutes] = useState<Array<any>>([]);
+  const [selectedShadowTrack, setSelectedShadowTrack] = useState<any | null>(null);
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
+  const [routesError, setRoutesError] = useState<string | null>(null);
+
   // Training program state
-  const [trainingProgram, setTrainingProgram] = useState<TrainingProgram | null>(null);
   const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
-  const [loadingProgram, setLoadingProgram] = useState(false);
 
   // Animation for start button
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -89,7 +98,7 @@ export function ActivityRecordingScreen() {
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
   const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
-    isAuthenticated && selectedSport ? selectedSport.id : undefined
+    isAuthenticated && selectedSport ? { sportTypeId: selectedSport.id } : undefined
   );
   const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
     isAuthenticated && selectedSport ? selectedSport.id : undefined
@@ -112,6 +121,8 @@ export function ActivityRecordingScreen() {
     finishTracking,
     discardTracking,
     clearError,
+    livePoints,
+    currentPosition,
   } = useLiveActivityContext();
 
   // Get ordered distance milestones
@@ -149,26 +160,21 @@ export function ActivityRecordingScreen() {
     }
   }, [sportTypes, selectedSport]);
 
-  // Load training program and active week
+  // Load active week for suggested activities
   useEffect(() => {
-    const loadTrainingProgram = async () => {
+    const loadActiveWeek = async () => {
       if (!isAuthenticated || !selectedSport) {
-        setTrainingProgram(null);
         setActiveWeek(null);
         return;
       }
 
       try {
-        setLoadingProgram(true);
         const program = await api.getCurrentProgram();
 
         if (!program) {
-          setTrainingProgram(null);
           setActiveWeek(null);
           return;
         }
-
-        setTrainingProgram(program);
 
         // Only fetch active week if sport types match
         if (program.sport_type_id === selectedSport.id) {
@@ -179,15 +185,12 @@ export function ActivityRecordingScreen() {
           setActiveWeek(null);
         }
       } catch (err: any) {
-        logger.error('activity', 'Failed to load training program', { error: err });
-        setTrainingProgram(null);
+        logger.error('activity', 'Failed to load active week', { error: err });
         setActiveWeek(null);
-      } finally {
-        setLoadingProgram(false);
       }
     };
 
-    loadTrainingProgram();
+    loadActiveWeek();
   }, [isAuthenticated, selectedSport]);
 
   // Handle preselected event
@@ -226,6 +229,80 @@ export function ActivityRecordingScreen() {
       Alert.alert(t('common.error'), error, [{ text: t('common.ok'), onPress: clearError }]);
     }
   }, [error, clearError, t]);
+
+  // Load view preference from AsyncStorage
+  useEffect(() => {
+    AsyncStorage.getItem('@racefy_recording_view_mode')
+      .then(saved => {
+        if (saved === 'map' || saved === 'stats') {
+          setViewMode(saved);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Save view preference when changed
+  useEffect(() => {
+    if (isTracking || isPaused) {
+      AsyncStorage.setItem('@racefy_recording_view_mode', viewMode)
+        .catch(() => {});
+    }
+  }, [viewMode, isTracking, isPaused]);
+
+  // Fetch nearby routes when in map view + idle state
+  useEffect(() => {
+    const fetchNearbyRoutes = async () => {
+      // Only fetch in map view, idle state (not tracking/paused), and when sport is selected
+      if (viewMode === 'map' && !isTracking && !isPaused && selectedSport) {
+        setLoadingRoutes(true);
+        setRoutesError(null);
+
+        try {
+          // Get current position (might be null if tracking hasn't started)
+          let lat: number;
+          let lng: number;
+
+          if (currentPosition) {
+            // Use tracking position if available
+            lat = currentPosition.lat;
+            lng = currentPosition.lng;
+            logger.debug('activity', 'Using current tracking position for nearby routes', { lat, lng });
+          } else {
+            // Fetch current location using expo-location (idle state)
+            // First, check and request location permissions
+            logger.debug('activity', 'Requesting location permissions for nearby routes');
+            const hasPermissions = await requestActivityTrackingPermissions();
+
+            if (!hasPermissions) {
+              setRoutesError(t('recording.locationPermissionDenied'));
+              logger.warn('activity', 'Location permissions denied for nearby routes');
+              setLoadingRoutes(false);
+              return;
+            }
+
+            logger.debug('activity', 'Fetching current location for nearby routes');
+            const location = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            lat = location.coords.latitude;
+            lng = location.coords.longitude;
+            logger.debug('activity', 'Got current location for nearby routes', { lat, lng });
+          }
+
+          const routes = await api.getNearbyRoutes(lat, lng, 5000, selectedSport.id, 10);
+          setNearbyRoutes(routes);
+          logger.info('activity', 'Nearby routes fetched successfully', { count: routes.length });
+        } catch (error: any) {
+          setRoutesError(error.message || t('recording.routesError'));
+          logger.error('activity', 'Failed to fetch nearby routes', { error });
+        } finally {
+          setLoadingRoutes(false);
+        }
+      }
+    };
+
+    fetchNearbyRoutes();
+  }, [viewMode, isTracking, isPaused, currentPosition, selectedSport, t, requestActivityTrackingPermissions]);
 
   // Existing activity dialog
   useEffect(() => {
@@ -436,6 +513,18 @@ export function ActivityRecordingScreen() {
         },
       ]
     );
+  };
+
+  // Handle route selection for shadow track
+  const handleRouteSelect = (route: any) => {
+    setSelectedShadowTrack(route);
+    logger.activity('Shadow track selected', { routeId: route.id, title: route.title });
+  };
+
+  // Handle clearing shadow track
+  const handleClearShadowTrack = () => {
+    setSelectedShadowTrack(null);
+    logger.activity('Shadow track cleared');
   };
 
   // Bottom sheet options
@@ -684,6 +773,71 @@ export function ActivityRecordingScreen() {
         <View style={[styles.milestoneProgressBar, { backgroundColor: colors.border }]}>
           <View style={[styles.milestoneProgressFill, { width: `${progressPercent}%`, backgroundColor: colors.primary }]} />
         </View>
+      </View>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Map View (Idle, Recording, or Paused)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderMapView = () => {
+    // Show controls only during recording/paused (not in idle preview)
+    const showControls = isTracking || isPaused;
+    const showNearbyRoutes = !isTracking && !isPaused;
+
+    logger.debug('activity', 'Rendering map view', {
+      showControls,
+      showNearbyRoutes,
+      livePointsCount: livePoints.length,
+      hasCurrentPosition: !!currentPosition,
+      nearbyRoutesCount: nearbyRoutes.length,
+    });
+
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <MapboxLiveMap
+          livePoints={livePoints}
+          currentPosition={currentPosition}
+          gpsSignalQuality={trackingStatus.gpsSignal}
+          height={showNearbyRoutes ? 400 : undefined}
+          followUser={true}
+          // Shadow track & nearby routes props
+          nearbyRoutes={showNearbyRoutes ? nearbyRoutes : undefined}
+          shadowTrack={selectedShadowTrack?.track_data || null}
+          selectedRouteId={
+            showNearbyRoutes && selectedShadowTrack
+              ? selectedShadowTrack.id
+              : null
+          }
+          onRouteSelect={(routeId) => {
+            const route = nearbyRoutes.find((r: any) => r.id === routeId);
+            if (route) handleRouteSelect(route);
+          }}
+        />
+        {showNearbyRoutes && (
+          <NearbyRoutesList
+            routes={nearbyRoutes}
+            selectedRouteId={selectedShadowTrack?.id || null}
+            onRouteSelect={handleRouteSelect}
+            isLoading={loadingRoutes}
+            error={routesError}
+          />
+        )}
+        {showControls && (
+          <RecordingMapControls
+            duration={localDuration}
+            distance={currentStats.distance}
+            currentPace={currentStats.currentPace}
+            isPaused={isPaused}
+            isLoading={isLoading}
+            onPause={handlePause}
+            onStop={handleStop}
+            onResume={handleResume}
+            // Shadow track props
+            shadowTrackTitle={selectedShadowTrack?.title || null}
+            onClearShadowTrack={handleClearShadowTrack}
+          />
+        )}
       </View>
     );
   };
@@ -996,12 +1150,31 @@ export function ActivityRecordingScreen() {
         </View>
       )}
 
-      {/* Main Content Based on Status */}
-      {status === 'idle' && renderIdleLayout()}
-      {status === 'recording' && renderRecordingLayout()}
-      {status === 'paused' && renderPausedLayout()}
+      {/* Main Content Based on Status and View Mode */}
+      {viewMode === 'map' ? (
+        renderMapView()
+      ) : (
+        <>
+          {status === 'idle' && renderIdleLayout()}
+          {status === 'recording' && renderRecordingLayout()}
+          {status === 'paused' && renderPausedLayout()}
+        </>
+      )}
 
       {renderLoadingOverlay()}
+
+      {/* View toggle button - visible for GPS-enabled activities only */}
+      {/* Show in idle state (preview), recording, and paused */}
+      {gpsProfile?.enabled && (
+        <ViewToggleButton
+          currentView={viewMode}
+          onToggle={() => {
+            const newMode = viewMode === 'stats' ? 'map' : 'stats';
+            logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
+            setViewMode(newMode);
+          }}
+        />
+      )}
 
       {/* Sport Selection Modal */}
       <Modal

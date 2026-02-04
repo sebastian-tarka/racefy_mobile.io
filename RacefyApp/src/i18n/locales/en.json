@@ -620,7 +620,22 @@
       "importDescription": "From Garmin, Strava, Polar..."
     },
     "plannedThisWeek": "Planned This Week",
-    "session": "Session"
+    "session": "Session",
+    "viewMap": "Map View",
+    "viewStats": "Stats View",
+    "toggleView": "Toggle View",
+    "nearbyRoutes": "Nearby Routes",
+    "routesFound": "{{count}} routes found",
+    "noRoutesFound": "No routes found nearby",
+    "noRoutesDescription": "Start recording to create one!",
+    "loadingRoutes": "Loading nearby routes...",
+    "routesError": "Failed to load nearby routes",
+    "retryLoadRoutes": "Retry",
+    "shadowTrack": "Shadow Track",
+    "clearShadowTrack": "Clear Shadow Track",
+    "selectRoute": "Tap to select as shadow track",
+    "routeSelected": "Route selected",
+    "locationPermissionDenied": "Location permission is required to view nearby routes"
   },
   "gpxImport": {
     "title": "Import GPX",
