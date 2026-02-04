@@ -1,26 +1,56 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BrandLogo, Avatar, NotificationBadge } from '../../../../components';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Avatar, NotificationBadge } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
-import { spacing, borderRadius } from '../../../../theme';
+import { spacing, borderRadius, fontSize, fontWeight } from '../../../../theme';
 
 interface HomeHeaderProps {
   userName?: string;
   userAvatar?: string | null;
+  greeting?: string;
   isAuthenticated: boolean;
   unreadCount?: number;
   onNotificationPress?: () => void;
   onAvatarPress?: () => void;
 }
 
-export function HomeHeader({ userName, userAvatar, isAuthenticated, unreadCount = 0, onNotificationPress, onAvatarPress }: HomeHeaderProps) {
-  const { colors, isDark } = useTheme();
+export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, unreadCount = 0, onNotificationPress, onAvatarPress }: HomeHeaderProps) {
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
-        <BrandLogo category="logo-full" variant={isDark ? 'light' : 'dark'} width={140} height={40} />
+        {isAuthenticated ? (
+          <View style={styles.leftContent}>
+            <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.7}>
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarGradient}
+              >
+                <Avatar uri={userAvatar} name={userName} size="lg" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <View style={styles.greetingContainer}>
+              <Text style={[styles.greetingText, { color: colors.textSecondary }]}>
+                {greeting || 'Hello'}
+              </Text>
+              <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {userName || 'User'}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.leftContent}>
+            <Text style={[styles.userName, { color: colors.textPrimary }]}>
+              Racefy
+            </Text>
+          </View>
+        )}
+
         <View style={styles.rightActions}>
           <View style={styles.notificationContainer}>
             <TouchableOpacity
@@ -36,14 +66,6 @@ export function HomeHeader({ userName, userAvatar, isAuthenticated, unreadCount 
               </View>
             )}
           </View>
-          {isAuthenticated && (
-            <TouchableOpacity
-              onPress={onAvatarPress}
-              activeOpacity={0.7}
-            >
-              <Avatar uri={userAvatar} name={userName} size="sm" />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </View>
@@ -58,6 +80,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  leftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  avatarGradient: {
+    borderRadius: borderRadius.full,
+    padding: 2,
+  },
+  greetingContainer: {
+    flex: 1,
+  },
+  greetingText: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.medium,
+  },
+  userName: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
   },
   rightActions: {
     flexDirection: 'row',

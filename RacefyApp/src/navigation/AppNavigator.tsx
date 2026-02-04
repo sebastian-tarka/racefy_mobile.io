@@ -4,17 +4,23 @@ import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-na
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Animated, View } from 'react-native';
+import { Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useHomeConfig } from '../hooks/useHomeConfig';
+import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
 import { Loading, ImpersonationBanner } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
+import { HomeScreen } from '../screens/main/HomeScreen';
+import { DynamicHomeScreen } from '../screens/main/DynamicHomeScreen';
 import { FeedScreenOld } from '../screens/main/FeedScreen-old';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
@@ -58,7 +64,29 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-// Pulsing Record Icon Component
+// Custom Tab Bar Background with blur effect
+function TabBarBackground({ colors }: { colors: any }) {
+  return (
+    <BlurView
+      intensity={95}
+      tint="dark"
+      style={StyleSheet.absoluteFill}
+    >
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: 'rgba(17, 24, 39, 0.98)', // More opaque to hide content underneath
+            borderWidth: 1,
+            borderColor: colors.border,
+          },
+        ]}
+      />
+    </BlurView>
+  );
+}
+
+// Pulsing Record Icon Component with gradient background
 function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
   focused: boolean;
   size: number;
@@ -66,6 +94,7 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
   isActivelyTracking: boolean;  // true when GPS is actively tracking
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
 
   // Only pulse when actively tracking AND not on the Record tab
   const shouldPulse = isActivelyTracking && !focused;
@@ -95,29 +124,75 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     }
   }, [shouldPulse, pulseAnim]);
 
-  // When focused (on Record tab): always show green add-circle (normal focused state)
+  // Animate scale based on focused state
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.25,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  // When focused (on Record tab): show gradient background with + icon
   // When not focused but has recording: show recording indicator
-  // When not focused and no recording: show gray outline
-  let iconName: keyof typeof Ionicons.glyphMap;
-  let color: string;
+  // When not focused and no recording: show gray +
 
   if (focused) {
-    // On Record tab - always green, normal icon
-    iconName = 'add-circle';
-    color = '#10b981'; // green
-  } else if (hasActiveRecording) {
-    // Not on Record tab, but has active recording - show indicator
-    iconName = 'radio-button-on';
-    color = isActivelyTracking ? '#ef4444' : '#f97316'; // red if tracking, orange if paused
-  } else {
-    // Not on Record tab, no recording - normal inactive state
-    iconName = 'add-circle-outline';
-    color = '#9ca3af'; // gray
+    // On Record tab - gradient background with white + icon
+    return (
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <LinearGradient
+          colors={['#10b981', '#059669']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            width: 56,
+            height: 46,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 24, color: '#ffffff', fontWeight: 'bold', lineHeight: 24 }}>+</Text>
+        </LinearGradient>
+      </Animated.View>
+    );
   }
 
+  if (hasActiveRecording) {
+    // Not on Record tab, but has active recording - show pulsing indicator
+    const color = isActivelyTracking ? '#ef4444' : '#f97316';
+    return (
+      <Animated.View style={{ transform: [{ scale: Animated.multiply(pulseAnim, scaleAnim) }] }}>
+        <Ionicons name="radio-button-on" size={size + 4} color={color} />
+      </Animated.View>
+    );
+  }
+
+  // Not on Record tab, no recording - show gray +
   return (
-    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-      <Ionicons name={iconName} size={size} color={color} />
+    <Animated.View style={{ alignItems: 'center', justifyContent: 'center', transform: [{ scale: scaleAnim }] }}>
+      <Text style={{ fontSize: 20, color: '#9ca3af', lineHeight: 20 }}>+</Text>
     </Animated.View>
   );
 }
@@ -138,6 +213,190 @@ function AuthNavigator() {
   );
 }
 
+// Tab bar constants for layout calculations
+export const TAB_BAR_HEIGHT = 58;
+export const TAB_BAR_BOTTOM_MARGIN = 16;
+
+// Animated Tab Icon wrapper for smooth transitions (Classic Nav)
+function AnimatedTabIcon({ iconName, focused, size, color }: {
+  iconName: keyof typeof Ionicons.glyphMap;
+  focused: boolean;
+  size: number;
+  color: string;
+}) {
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.3,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.1,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Ionicons name={iconName} size={size} color={color} />
+    </Animated.View>
+  );
+}
+
+// Animated Text Icon wrapper for smooth transitions (Dynamic Nav)
+function AnimatedTextIcon({ icon, focused, size }: {
+  icon: string;
+  focused: boolean;
+  size: number;
+}) {
+  const { colors } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(focused ? 1.15 : 1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect: grow bigger, then settle
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1.4,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 5,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1.15,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+      ]).start();
+    } else {
+      // Shrink back to normal
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  const iconColor = colors.textPrimary;
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Text style={{ fontSize: size, color: iconColor, lineHeight: size }}>{icon}</Text>
+    </Animated.View>
+  );
+}
+
+// Custom Tab Button with background for active state (used only in MainNavigatorDynamic)
+function CustomTabButton({ children, onPress, accessibilityState, style, ...props }: any) {
+  const { colors } = useTheme();
+  const focused = accessibilityState?.selected;
+  const scaleAnim = useRef(new Animated.Value(focused ? 1 : 0.92)).current;
+  const bgOpacityAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (focused) {
+      // Pop in effect with background fade
+      Animated.parallel([
+        Animated.sequence([
+          Animated.spring(scaleAnim, {
+            toValue: 1.08,
+            useNativeDriver: true,
+            tension: 180,
+            friction: 5,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }),
+        ]),
+        Animated.timing(bgOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Shrink with fade out
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0.92,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(bgOpacityAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [focused, scaleAnim, bgOpacityAnim]);
+
+  return (
+    <TouchableOpacity
+      {...props}
+      onPress={onPress}
+      style={[
+        style,
+        {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          paddingVertical: 8,
+        }
+      ]}
+    >
+      <Animated.View
+        style={{
+          width: '100%',
+          height: '100%',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: [{ scale: scaleAnim }],
+        }}
+      >
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            borderRadius: 14,
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            opacity: bgOpacityAnim,
+          }}
+        />
+        {children}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+// Classic Navigator - Original styling with Ionicons
 function MainNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
@@ -155,26 +414,32 @@ function MainNavigator() {
     },
   };
 
-  // Calculate tab bar height based on safe area insets
-  const tabBarHeight = 60 + insets.bottom;
-  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
-
   return (
     <MainTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
+          let iconColor = color;
 
+          // Use Ionicons for classic navigation
           switch (route.name) {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
               break;
             case 'Feed':
-              iconName = focused ? 'newspaper' : 'newspaper-outline';
+              iconName = focused ? 'list' : 'list-outline';
               break;
             case 'Record':
-              iconName = focused ? 'add-circle' : 'add-circle-outline';
+              // Show recording status with simple color changes
+              if (activity) {
+                // Recording exists - show status
+                iconName = 'radio-button-on';
+                iconColor = isTracking ? '#ef4444' : '#f97316'; // red when tracking, orange when paused
+              } else {
+                // No recording - normal icon
+                iconName = 'add-circle';
+              }
               break;
             case 'Events':
               iconName = focused ? 'calendar' : 'calendar-outline';
@@ -183,29 +448,23 @@ function MainNavigator() {
               iconName = focused ? 'person' : 'person-outline';
               break;
             default:
-              iconName = 'help-outline';
+              iconName = 'help-circle-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <AnimatedTabIcon iconName={iconName} focused={focused} size={size} color={iconColor} />;
         },
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.cardBackground,
           borderTopColor: colors.border,
-          paddingTop: 4,
-          height: tabBarHeight,
-          paddingBottom: tabBarPaddingBottom,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
+          borderTopWidth: 1,
         },
       })}
     >
       <MainTab.Screen
         name="Home"
-        component={HomeScreenWrapper}
+        component={HomeScreen}
         options={{ tabBarLabel: 'Home' }}
       />
       <MainTab.Screen
@@ -221,6 +480,118 @@ function MainNavigator() {
         component={ActivityRecordingScreen}
         options={{
           tabBarLabel: 'Record',
+        }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Events"
+        component={EventsScreen}
+        options={{ tabBarLabel: 'Events' }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+        listeners={authGuardListener}
+      />
+    </MainTab.Navigator>
+  );
+}
+
+// Dynamic Navigator - Modern styling with emoji icons and custom button
+function MainNavigatorDynamic() {
+  const { isAuthenticated } = useAuth();
+  const { colors } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+  const { isTracking, activity } = useLiveActivityContext();
+
+  // Auth guard listener - redirects to Auth screen if not authenticated
+  const authGuardListener = {
+    tabPress: (e: { preventDefault: () => void }) => {
+      if (!isAuthenticated) {
+        e.preventDefault();
+        navigation.navigate('Auth', { screen: 'Login' });
+      }
+    },
+  };
+
+  // Calculate tab bar height
+  const tabBarHeight = 60 + insets.bottom;
+  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
+
+  return (
+    <MainTab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarButton: (props) => <CustomTabButton {...props} />,
+        tabBarIcon: ({ focused, color, size }) => {
+          let icon: string;
+
+          // Use emoji/unicode icons from mockup
+          switch (route.name) {
+            case 'Home':
+              icon = '⌂';
+              break;
+            case 'Feed':
+              icon = '☰';
+              break;
+            case 'Record':
+              icon = '+';
+              break;
+            case 'Events':
+              icon = '📅';
+              break;
+            case 'Profile':
+              icon = '◉';
+              break;
+            default:
+              icon = '?';
+          }
+
+          // Use custom gradient icon for Record tab
+          if (route.name === 'Record') {
+            return null; // Will be rendered in tabBarIcon option for Record screen
+          }
+
+          // Use AnimatedTextIcon for smooth transitions
+          return <AnimatedTextIcon icon={icon} focused={focused} size={20} />;
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          backgroundColor: colors.cardBackground,
+          height: tabBarHeight,
+          paddingTop: 8,
+          paddingBottom: tabBarPaddingBottom,
+          borderTopWidth: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          letterSpacing: 0.3,
+        },
+      })}
+    >
+      <MainTab.Screen
+        name="Home"
+        component={DynamicHomeScreen}
+        options={{ tabBarLabel: 'Home' }}
+      />
+      <MainTab.Screen
+        name="Feed"
+        component={FeedScreen}
+        options={{
+          tabBarLabel: 'Feed',
+        }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Record"
+        component={ActivityRecordingScreen}
+        options={{
+          tabBarLabel: '', // No label for Record button
           tabBarIcon: ({ focused, size }) => (
             <RecordIcon
               focused={focused}
@@ -246,6 +617,31 @@ function MainNavigator() {
       />
     </MainTab.Navigator>
   );
+}
+
+// Wrapper that decides which navigator to use based on navigation style from API
+function MainNavigatorWrapper() {
+  const { style } = useNavigationStyle();
+
+  // Use dynamic navigator when style is 'dynamic', otherwise use legacy/classic
+  if (style === 'dynamic') {
+    return <MainNavigatorDynamic />;
+  }
+
+  return <MainNavigator />;
+}
+
+// Component that loads home config and sets navigation style
+function NavigationStyleSetter({ children }: { children: React.ReactNode }) {
+  const { homeVersion } = useHomeConfig();
+  const { setStyle } = useNavigationStyle();
+
+  useEffect(() => {
+    // Update navigation style based on API config
+    setStyle(homeVersion);
+  }, [homeVersion, setStyle]);
+
+  return <>{children}</>;
 }
 
 export function AppNavigator() {
@@ -280,13 +676,15 @@ export function AppNavigator() {
   const authStateKey = showConsentModal ? 'consent' : isAuthenticated ? 'auth' : 'guest';
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
-      <RootStack.Navigator
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
+    <NavigationStyleProvider>
+      <NavigationStyleSetter>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
+          <RootStack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+            }}
+          >
         {showConsentModal ? (
           // Consent required - show blocking consent modal
           <>
@@ -328,7 +726,7 @@ export function AppNavigator() {
         ) : (
           // Authenticated - normal app flow
           <>
-            <RootStack.Screen name="Main" component={MainNavigator} />
+            <RootStack.Screen name="Main" component={MainNavigatorWrapper} />
             <RootStack.Screen
               name="Auth"
               component={AuthNavigator}
@@ -444,8 +842,10 @@ export function AppNavigator() {
             />
           </>
         )}
-      </RootStack.Navigator>
-      <ImpersonationBanner />
-    </NavigationContainer>
+          </RootStack.Navigator>
+          <ImpersonationBanner />
+        </NavigationContainer>
+      </NavigationStyleSetter>
+    </NavigationStyleProvider>
   );
 }

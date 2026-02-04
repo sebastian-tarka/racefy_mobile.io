@@ -129,15 +129,29 @@
     },
     "quickActions": {
       "startActivity": "Start Activity",
-      "createPost": "Create Post",
-      "findEvents": "Find Events"
+      "createPost": "Add Post",
+      "findEvents": "Events"
     },
     "weeklyStats": {
       "title": "Your Stats",
+      "details": "Details →",
       "activities": "Activities",
       "distance": "Distance",
       "time": "Time",
       "calories": "Calories"
+    },
+    "weeklyStreak": {
+      "title": "Weekly Streak",
+      "progress": "{{completed}} / {{goal}} days",
+      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    },
+    "primaryCta": {
+      "startTraining": "Start Training"
+    },
+    "liveEvents": {
+      "happeningNow": "Happening now",
+      "title": "Record your ski activities!",
+      "participants": "{{count}} participants online"
     },
     "liveActivity": {
       "recording": "Recording Activity",
@@ -289,7 +303,14 @@
       "clearComparison": "Clear comparison",
       "noFollowing": "You're not following anyone yet",
       "you": "You",
-      "compareUser": "Other user"
+      "compareUser": "Other user",
+      "allSports": "All",
+      "timeRange": {
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "allTime": "All Time"
+      }
     },
     "empty": {
       "noPosts": "No posts yet",

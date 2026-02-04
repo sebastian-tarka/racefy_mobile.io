@@ -52,6 +52,8 @@ export * from './SocialShareModal';
 export * from './ShareFormatSelector';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
+export * from './SportTypeFilter';
+export * from './TimeRangeFilter';
 export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './AutoPlayVideo';
@@ -68,3 +70,6 @@ export * from './UserProfileHeader';
 export * from './EventRankingModeSelector'
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
 export * from './TipCard';
+export { AnimatedNumber } from './AnimatedNumber';
+export { FadeInView } from './FadeInView';
+export { ActionButton } from './ActionButton';

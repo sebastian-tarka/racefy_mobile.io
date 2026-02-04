@@ -134,10 +134,24 @@
     },
     "weeklyStats": {
       "title": "Twoje statystyki",
+      "details": "Szczegóły →",
       "activities": "Aktywności",
       "distance": "Dystans",
       "time": "Czas",
       "calories": "Kalorie"
+    },
+    "weeklyStreak": {
+      "title": "Seria tygodniowa",
+      "progress": "{{completed}} / {{goal}} dni",
+      "days": ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]
+    },
+    "primaryCta": {
+      "startTraining": "Rozpocznij trening"
+    },
+    "liveEvents": {
+      "happeningNow": "Trwają teraz",
+      "title": "Rejestruj swoje narciarskie aktywności!",
+      "participants": "{{count}} uczestników online"
     },
     "liveActivity": {
       "recording": "Nagrywanie aktywności",
@@ -289,7 +303,14 @@
       "clearComparison": "Usuń porównanie",
       "noFollowing": "Nie obserwujesz jeszcze nikogo",
       "you": "Ty",
-      "compareUser": "Inny użytkownik"
+      "compareUser": "Inny użytkownik",
+      "allSports": "Wszystkie",
+      "timeRange": {
+        "week": "Tydzień",
+        "month": "Miesiąc",
+        "year": "Rok",
+        "allTime": "Cały czas"
+      }
     },
     "empty": {
       "noPosts": "Brak postów",

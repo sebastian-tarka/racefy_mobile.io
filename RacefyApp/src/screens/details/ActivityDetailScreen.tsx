@@ -27,7 +27,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Activity, GpsTrack, User, ActivityStats } from '../../types/api';
+import type { Activity, GpsTrack, User, SingleActivityStats } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -40,7 +40,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
-  const [activityStats, setActivityStats] = useState<ActivityStats | null>(null);
+  const [activityStats, setActivityStats] = useState<SingleActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);

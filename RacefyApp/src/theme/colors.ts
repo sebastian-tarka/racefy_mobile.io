@@ -59,6 +59,7 @@ export const lightColors = {
   black: '#000000',
   transparent: 'transparent',
   overlay: 'rgba(0, 0, 0, 0.5)',
+  orange: '#f59e0b',
 };
 
 // Dark theme colors
@@ -122,6 +123,7 @@ export const darkColors = {
   black: '#000000',
   transparent: 'transparent',
   overlay: 'rgba(0, 0, 0, 0.7)',
+  orange: '#f59e0b',
 };
 
 // Default export for backward compatibility

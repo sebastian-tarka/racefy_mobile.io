@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader, LeaderboardList, EmptyState } from '../../components';
+import { ScreenHeader, LeaderboardList, EmptyState, TimeRangeFilter, type PeriodOption } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { useLeaderboard, LeaderboardType } from '../../hooks/useLeaderboard';
@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Leaderboard'>;
 
 type TabType = 'global' | 'following';
 
-const PERIOD_OPTIONS: { value: LeaderboardPeriod; labelKey: string }[] = [
+const PERIOD_OPTIONS: PeriodOption<LeaderboardPeriod>[] = [
   { value: 'all_time', labelKey: 'leaderboard.periods.allTime' },
   { value: 'monthly', labelKey: 'leaderboard.periods.monthly' },
   { value: 'weekly', labelKey: 'leaderboard.periods.weekly' },
@@ -114,38 +114,12 @@ export function LeaderboardScreen({ navigation }: Props) {
       </View>
 
       {/* Period Selector */}
-      <View style={styles.periodContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.periodScrollContent}
-        >
-          {PERIOD_OPTIONS.map((option) => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.periodButton,
-                { backgroundColor: colors.background, borderColor: colors.border },
-                currentLeaderboard.period === option.value && {
-                  backgroundColor: colors.primary + '15',
-                  borderColor: colors.primary,
-                },
-              ]}
-              onPress={() => handlePeriodChange(option.value)}
-            >
-              <Text
-                style={[
-                  styles.periodText,
-                  { color: colors.textSecondary },
-                  currentLeaderboard.period === option.value && { color: colors.primary },
-                ]}
-              >
-                {t(option.labelKey)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      <TimeRangeFilter
+        options={PERIOD_OPTIONS}
+        selectedValue={currentLeaderboard.period}
+        onSelectValue={handlePeriodChange}
+        isLoading={currentLeaderboard.isLoading}
+      />
     </View>
   );
 
@@ -236,22 +210,5 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  periodContainer: {
-    marginTop: spacing.md,
-  },
-  periodScrollContent: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  periodButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-  },
-  periodText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
   },
 });
