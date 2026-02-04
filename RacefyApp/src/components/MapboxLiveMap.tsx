@@ -72,19 +72,18 @@ interface MapboxLiveMapProps {
 
 /**
  * MapboxLiveMap - Real-time GPS tracking map
- * Shows live route, user location with pulse animation, GPS signal indicator, and optional shadow track
+ * Shows live route, user location, GPS signal indicator, and optional shadow track
  */
 export function MapboxLiveMap({
   livePoints,
   currentPosition,
-  height = 400,
+  height,
   gpsSignalQuality,
   onMapReady,
   followUser = true,
   nearbyRoutes,
   shadowTrack,
   selectedRouteId,
-  onRouteSelect,
 }: MapboxLiveMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -92,15 +91,12 @@ export function MapboxLiveMap({
   const [isLoading, setIsLoading] = useState(true);
   const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // If MapboxGL is not available, return null
-  if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
-    return null;
-  }
+  const mapboxAvailable = !!MapboxGL && !!MAPBOX_ACCESS_TOKEN;
 
   // Fetch current location for preview when currentPosition is null (idle state)
   useEffect(() => {
+    if (!mapboxAvailable) return;
     if (!currentPosition && !previewLocation) {
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
         .then(loc => {
@@ -111,17 +107,17 @@ export function MapboxLiveMap({
           logger.debug('gps', 'Preview location acquired', { lat: loc.coords.latitude, lng: loc.coords.longitude });
         })
         .catch(err => {
-          logger.warn('gps', 'Failed to get preview location', { error: err.message });
+          logger.warn('gps', 'Failed to get preview location', { error: err?.message });
         });
     }
-  }, [currentPosition, previewLocation]);
+  }, [currentPosition, previewLocation, mapboxAvailable]);
 
   // Use preview location if tracking hasn't started, otherwise use live position
   const displayPosition = currentPosition || previewLocation;
 
   // Build GeoJSON LineString from livePoints (only update when length changes for performance)
   const routeGeoJSON = useMemo(() => {
-    if (livePoints.length === 0) return null;
+    if (livePoints.length < 2) return null;
 
     return {
       type: 'Feature' as const,
@@ -133,39 +129,43 @@ export function MapboxLiveMap({
     };
   }, [livePoints.length]);
 
-  // Start pulse animation for user location marker
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.5,
-          duration: 1000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, []);
-
   // Track map load for analytics
   useEffect(() => {
-    if (displayPosition) {
-      mapboxAnalytics.trackMapLoad(0); // Use 0 for live tracking (no activity ID yet)
+    if (displayPosition && mapboxAvailable) {
+      mapboxAnalytics.trackMapLoad(0);
     }
-  }, [displayPosition]);
+  }, [!!displayPosition, mapboxAvailable]);
+
+  // Validate nearby routes have proper track_data
+  const validNearbyRoutes = useMemo(() => {
+    if (!nearbyRoutes) return [];
+    return nearbyRoutes.filter(route =>
+      route?.track_data &&
+      route.track_data.type === 'LineString' &&
+      Array.isArray(route.track_data.coordinates) &&
+      route.track_data.coordinates.length >= 2
+    );
+  }, [nearbyRoutes]);
+
+  // Validate shadow track
+  const validShadowTrack = useMemo(() => {
+    if (!shadowTrack) return null;
+    if (shadowTrack.type !== 'LineString') return null;
+    if (!Array.isArray(shadowTrack.coordinates)) return null;
+    if (shadowTrack.coordinates.length < 2) return null;
+    return shadowTrack;
+  }, [shadowTrack]);
+
+  // If MapboxGL is not available, return null (after all hooks)
+  if (!mapboxAvailable) {
+    return null;
+  }
 
   // Handle map ready callback
   const onMapReadyInternal = () => {
     logger.debug('gps', 'Live map finished loading');
     mapReadyRef.current = true;
 
-    // Fade out the loading overlay
     Animated.timing(fadeAnim, {
       toValue: 0,
       duration: 300,
@@ -174,9 +174,7 @@ export function MapboxLiveMap({
       setIsLoading(false);
     });
 
-    if (onMapReady) {
-      onMapReady();
-    }
+    onMapReady?.();
   };
 
   // Select map style based on theme
@@ -185,7 +183,7 @@ export function MapboxLiveMap({
     : MapboxGL.StyleURL.Outdoors;
 
   // GPS signal indicator color
-  const getSignalColor = () => {
+  const getSignalColor = (): string => {
     switch (gpsSignalQuality) {
       case 'good': return '#22c55e';
       case 'weak': return '#eab308';
@@ -204,7 +202,7 @@ export function MapboxLiveMap({
   // Show loading state while waiting for location
   if (!displayPosition) {
     return (
-      <View style={[styles.container, { height, backgroundColor: colors.cardBackground }]}>
+      <View style={[styles.container, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
@@ -216,7 +214,7 @@ export function MapboxLiveMap({
   }
 
   return (
-    <View style={[styles.container, { height, backgroundColor: colors.cardBackground }]}>
+    <View style={[styles.container, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
       <MapboxGL.MapView
         key={`mapbox-live-${isDark ? 'dark' : 'light'}`}
         style={styles.map}
@@ -229,7 +227,7 @@ export function MapboxLiveMap({
         onDidFinishLoadingMap={onMapReadyInternal}
       >
         {/* Camera follows user position */}
-        {displayPosition && followUser && (
+        {followUser && (
           <MapboxGL.Camera
             ref={cameraRef}
             centerCoordinate={[displayPosition.lng, displayPosition.lat]}
@@ -240,20 +238,17 @@ export function MapboxLiveMap({
         )}
 
         {/* Nearby routes polylines (idle state only) */}
-        {nearbyRoutes?.filter(route => {
-          // Validate route has proper track_data structure
-          return route.track_data &&
-                 route.track_data.type === 'LineString' &&
-                 route.track_data.coordinates &&
-                 route.track_data.coordinates.length > 0;
-        }).map(route => (
+        {validNearbyRoutes.map(route => (
           <MapboxGL.ShapeSource
             key={`nearby-${route.id}`}
             id={`nearby-route-${route.id}`}
             shape={{
               type: 'Feature',
               properties: {},
-              geometry: route.track_data,
+              geometry: {
+                type: 'LineString',
+                coordinates: route.track_data.coordinates,
+              },
             }}
           >
             <MapboxGL.LineLayer
@@ -270,17 +265,16 @@ export function MapboxLiveMap({
         ))}
 
         {/* Shadow track polyline (recording/paused state only) */}
-        {shadowTrack &&
-         shadowTrack.type === 'LineString' &&
-         shadowTrack.coordinates &&
-         shadowTrack.coordinates.length > 0 &&
-         livePoints.length > 0 && (
+        {validShadowTrack && livePoints.length > 0 && (
           <MapboxGL.ShapeSource
             id="shadow-track"
             shape={{
               type: 'Feature',
               properties: {},
-              geometry: shadowTrack,
+              geometry: {
+                type: 'LineString',
+                coordinates: validShadowTrack.coordinates,
+              },
             }}
           >
             <MapboxGL.LineLayer
@@ -297,7 +291,7 @@ export function MapboxLiveMap({
           </MapboxGL.ShapeSource>
         )}
 
-        {/* Live route polyline (only show when we have points) */}
+        {/* Live route polyline (only show when we have 2+ points) */}
         {routeGeoJSON && (
           <MapboxGL.ShapeSource id="liveRoute" shape={routeGeoJSON}>
             <MapboxGL.LineLayer
@@ -313,46 +307,38 @@ export function MapboxLiveMap({
           </MapboxGL.ShapeSource>
         )}
 
-        {/* User location marker with pulse animation and GPS signal indicator */}
-        {displayPosition && (
-          <MapboxGL.ShapeSource
-            id="userLocation"
-            shape={{
-              type: 'Feature',
-              geometry: {
-                type: 'Point',
-                coordinates: [displayPosition.lng, displayPosition.lat],
-              },
-              properties: {},
+        {/* User location marker - static circle (no animations via bridge) */}
+        <MapboxGL.ShapeSource
+          id="userLocation"
+          shape={{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [displayPosition.lng, displayPosition.lat],
+            },
+            properties: {},
+          }}
+        >
+          {/* GPS signal ring - static radius based on signal quality */}
+          <MapboxGL.CircleLayer
+            id="gpsSignalRing"
+            style={{
+              circleRadius: 18,
+              circleColor: signalColor,
+              circleOpacity: 0.25,
             }}
-          >
-            {/* GPS signal ring (pulsing) */}
-            <MapboxGL.CircleLayer
-              id="gpsSignalRing"
-              style={{
-                circleRadius: pulseAnim.interpolate({
-                  inputRange: [1, 1.5],
-                  outputRange: [15, 25],
-                }),
-                circleColor: signalColor,
-                circleOpacity: pulseAnim.interpolate({
-                  inputRange: [1, 1.5],
-                  outputRange: [0.4, 0.1],
-                }),
-              }}
-            />
-            {/* User position marker */}
-            <MapboxGL.CircleLayer
-              id="userCircle"
-              style={{
-                circleRadius: 10,
-                circleColor: colors.primary,
-                circleStrokeWidth: 3,
-                circleStrokeColor: '#ffffff',
-              }}
-            />
-          </MapboxGL.ShapeSource>
-        )}
+          />
+          {/* User position dot */}
+          <MapboxGL.CircleLayer
+            id="userCircle"
+            style={{
+              circleRadius: 10,
+              circleColor: colors.primary,
+              circleStrokeWidth: 3,
+              circleStrokeColor: '#ffffff',
+            }}
+          />
+        </MapboxGL.ShapeSource>
       </MapboxGL.MapView>
 
       {/* Loading overlay with spinner */}
