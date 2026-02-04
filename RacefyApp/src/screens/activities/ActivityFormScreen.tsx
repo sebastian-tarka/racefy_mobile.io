@@ -303,7 +303,10 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
         Alert.alert(t('common.success'), t('activityForm.updateSuccess'));
       }
+      // Refresh activities, feed, and posts (activity may have an associated post)
       emitRefresh('activities');
+      emitRefresh('feed');
+      emitRefresh('posts');
       navigation.goBack();
     } catch (error) {
       logger.error('api', 'Failed to save activity', { error });

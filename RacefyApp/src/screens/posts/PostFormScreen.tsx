@@ -23,7 +23,7 @@ import {
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { emitRefresh } from '../../services/refreshEvents';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
@@ -49,6 +49,7 @@ export function PostFormScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
+  const [post, setPost] = useState<Post | null>(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
@@ -59,11 +60,22 @@ export function PostFormScreen({ navigation, route }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
 
+  // Detect if this is an activity post
+  const isActivityPost = post?.type === 'activity';
+
   useEffect(() => {
     if (isEditMode && postId) {
       fetchPost(postId);
     }
   }, [postId]);
+
+  // Refresh post data when activity is updated
+  useRefreshOn('activities', () => {
+    if (isEditMode && postId) {
+      logger.info('api', 'Refreshing post after activity update', { postId });
+      fetchPost(postId);
+    }
+  });
 
   const fetchPost = async (id: number) => {
     setIsFetching(true);
@@ -88,17 +100,18 @@ export function PostFormScreen({ navigation, route }: Props) {
     }
   };
 
-  const populateForm = (post: Post) => {
-    setContent(post.content || '');
-    setTitle(post.title || '');
-    setVisibility(post.visibility || 'public');
+  const populateForm = (fetchedPost: Post) => {
+    setPost(fetchedPost);
+    setContent(fetchedPost.content || '');
+    setTitle(fetchedPost.title || '');
+    setVisibility(fetchedPost.visibility || 'public');
 
     // Convert all media sources to unified format
     const mediaItems: ExistingMedia[] = [];
 
     // Add photos
-    if (post.photos && post.photos.length > 0) {
-      post.photos.forEach((photo: Photo) => {
+    if (fetchedPost.photos && fetchedPost.photos.length > 0) {
+      fetchedPost.photos.forEach((photo: Photo) => {
         const url = fixStorageUrl(photo.url);
         if (url) {
           mediaItems.push({
@@ -111,8 +124,8 @@ export function PostFormScreen({ navigation, route }: Props) {
     }
 
     // Add videos
-    if (post.videos && post.videos.length > 0) {
-      post.videos.forEach((video: Video) => {
+    if (fetchedPost.videos && fetchedPost.videos.length > 0) {
+      fetchedPost.videos.forEach((video: Video) => {
         const url = fixStorageUrl(video.url);
         if (url) {
           mediaItems.push({
@@ -126,8 +139,8 @@ export function PostFormScreen({ navigation, route }: Props) {
     }
 
     // Add unified media array
-    if (post.media && post.media.length > 0) {
-      post.media.forEach((media: Media) => {
+    if (fetchedPost.media && fetchedPost.media.length > 0) {
+      fetchedPost.media.forEach((media: Media) => {
         // Avoid duplicates if both arrays are present
         if (!mediaItems.some(m => m.id === media.id)) {
           const url = fixStorageUrl(media.url);
@@ -153,7 +166,8 @@ export function PostFormScreen({ navigation, route }: Props) {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!content.trim()) {
+    // Skip content validation for activity posts (content is read-only)
+    if (!isActivityPost && !content.trim()) {
       newErrors.content = t('postForm.validation.contentRequired');
     }
 
@@ -172,12 +186,18 @@ export function PostFormScreen({ navigation, route }: Props) {
     setIsLoading(true);
     try {
       if (isEditMode && postId) {
-        // Update post content and visibility
-        await api.updatePost(postId, {
-          content: content.trim(),
-          title: title.trim() || undefined,
-          visibility,
-        });
+        // Update post
+        // For activity posts, only send visibility (title/content are read-only)
+        // For regular posts, send all fields
+        const updateData = isActivityPost
+          ? { visibility }
+          : {
+              content: content.trim(),
+              title: title.trim() || undefined,
+              visibility,
+            };
+
+        await api.updatePost(postId, updateData);
 
         // Delete removed media
         for (const media of mediaToDelete) {
@@ -199,14 +219,23 @@ export function PostFormScreen({ navigation, route }: Props) {
 
         Alert.alert(t('common.success'), t('postForm.updateSuccess'));
       }
+      // Refresh feed and posts list
       emitRefresh('feed');
+      emitRefresh('posts');
       navigation.goBack();
-    } catch (error) {
+    } catch (error: any) {
       logger.error('api', 'Failed to save post', { error });
-      Alert.alert(
-        t('common.error'),
-        t('postForm.updateFailed')
-      );
+
+      // Check if it's a 422 error about activity post content
+      const isActivityContentError =
+        error?.response?.status === 422 &&
+        error?.response?.data?.message?.toLowerCase().includes('activity');
+
+      const errorMessage = isActivityContentError
+        ? t('postForm.activityContentError')
+        : t('postForm.updateFailed');
+
+      Alert.alert(t('common.error'), errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -254,12 +283,34 @@ export function PostFormScreen({ navigation, route }: Props) {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Info banner for activity posts */}
+          {isActivityPost && (
+            <View style={[styles.infoBanner, { backgroundColor: colors.infoLight, borderColor: colors.info }]}>
+              <Ionicons name="information-circle-outline" size={20} color={colors.info} style={styles.infoBannerIcon} />
+              <View style={styles.infoBannerContent}>
+                <Text style={[styles.infoBannerText, { color: colors.textPrimary }]}>
+                  {t('postForm.activityPostInfo')}
+                </Text>
+                {post?.activity?.id && (
+                  <TouchableOpacity
+                    style={[styles.editActivityButton, { backgroundColor: colors.primary }]}
+                    onPress={() => navigation.navigate('ActivityForm', { activityId: post.activity!.id })}
+                  >
+                    <Ionicons name="pencil" size={14} color="#fff" />
+                    <Text style={styles.editActivityButtonText}>{t('postForm.editActivity')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Title (optional) */}
           <Input
             label={t('postForm.title')}
             placeholder={t('postForm.titlePlaceholder')}
             value={title}
             onChangeText={setTitle}
+            editable={!isActivityPost}
           />
 
           {/* Content */}
@@ -284,6 +335,7 @@ export function PostFormScreen({ navigation, route }: Props) {
               numberOfLines={6}
               style={styles.textArea}
               error={errors.content}
+              editable={!isActivityPost}
             />
           </View>
 
@@ -500,5 +552,38 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginBottom: spacing.md,
+  },
+  infoBannerIcon: {
+    marginRight: spacing.sm,
+    marginTop: 2,
+  },
+  infoBannerContent: {
+    flex: 1,
+  },
+  infoBannerText: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  editActivityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.sm,
+    gap: spacing.xs,
+  },
+  editActivityButtonText: {
+    color: '#fff',
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
 });

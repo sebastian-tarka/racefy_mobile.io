@@ -234,6 +234,9 @@
     "updateSuccess": "Post został zaktualizowany!",
     "updateFailed": "Nie udało się zaktualizować postu",
     "failedToLoad": "Nie udało się załadować postu",
+    "activityPostInfo": "To jest post aktywności. Tytuł i treść są zarządzane przez aktywność.",
+    "editActivity": "Edytuj aktywność",
+    "activityContentError": "Edytuj aktywność bezpośrednio, aby zmienić tytuł lub opis.",
     "validation": {
       "contentRequired": "Treść jest wymagana"
     }

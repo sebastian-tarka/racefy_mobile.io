@@ -234,6 +234,9 @@
     "updateSuccess": "Post updated successfully!",
     "updateFailed": "Failed to update post",
     "failedToLoad": "Failed to load post",
+    "activityPostInfo": "This is an activity post. Title and content are managed by the activity.",
+    "editActivity": "Edit Activity",
+    "activityContentError": "Please edit the activity directly to change title or description.",
     "validation": {
       "contentRequired": "Content is required"
     }
