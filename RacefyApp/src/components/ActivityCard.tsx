@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { BoostButton } from './BoostButton';
 import { useTheme } from '../hooks/useTheme';
+import { useSportTypes } from '../hooks/useSportTypes';
+import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
 
@@ -24,19 +26,81 @@ export function ActivityCard({
   showEngagement = false,
 }: ActivityCardProps) {
   const { colors } = useTheme();
+  const { getSportById } = useSportTypes();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
 
   // Engagement state
   const [boostsCount, setBoostsCount] = useState(activity.boosts_count || 0);
   const [isBoosted, setIsBoosted] = useState(activity.is_boosted || false);
+  const [showAdditionalStats, setShowAdditionalStats] = useState(false);
+
+  // Animation values
+  const animatedHeight = useRef(new Animated.Value(0)).current;
+  const animatedOpacity = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Check if there are additional stats to show
+  const hasAdditionalStats =
+    (activity.elevation_gain != null && activity.elevation_gain > 0) ||
+    (activity.calories != null && activity.calories > 0);
+
+  // Animate expansion/collapse
+  useEffect(() => {
+    if (showAdditionalStats) {
+      // Expand
+      Animated.parallel([
+        Animated.spring(animatedHeight, {
+          toValue: 1,
+          useNativeDriver: false,
+          tension: 50,
+          friction: 7,
+        }),
+        Animated.timing(animatedOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      // Collapse
+      Animated.parallel([
+        Animated.timing(animatedHeight, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animatedOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    }
+  }, [showAdditionalStats]);
+
+  const chevronRotation = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
 
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
-    const sportName = activity.sport_type?.name?.toLowerCase() || '';
-    if (sportName.includes('run')) return 'walk-outline';
-    if (sportName.includes('cycling') || sportName.includes('bike')) return 'bicycle-outline';
-    if (sportName.includes('swim')) return 'water-outline';
-    if (sportName.includes('gym') || sportName.includes('fitness')) return 'barbell-outline';
-    if (sportName.includes('yoga')) return 'body-outline';
+    if (activity.sport_type?.id) {
+      const sportType = getSportById(activity.sport_type.id);
+      if (sportType?.icon) {
+        return sportType.icon;
+      }
+    }
+    // Fallback to default if sport type not found
     return 'fitness-outline';
   };
 
@@ -84,15 +148,44 @@ export function ActivityCard({
             <Ionicons name={getSportIcon()} size={20} color={colors.primary} />
           </View>
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-              {activity.title}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+                {activity.title}
+              </Text>
+              {/* Privacy Indicator */}
+              <View style={[
+                styles.privacyBadge,
+                { backgroundColor: activity.is_private ? colors.textMuted + '15' : colors.primary + '15' }
+              ]}>
+                <Ionicons
+                  name={activity.is_private ? 'lock-closed' : 'globe-outline'}
+                  size={12}
+                  color={activity.is_private ? colors.textMuted : colors.primary}
+                />
+              </View>
+            </View>
             <Text style={[styles.sportName, { color: colors.textSecondary }]}>
               {activity.sport_type?.name || 'Activity'}{!showUser ? ` · ${formattedDate}` : ''}
             </Text>
           </View>
         </View>
 
+        {/* Route Map Preview */}
+        {activity.route_map_url && (
+          <View style={styles.mapContainer}>
+            <Image
+              source={{ uri: fixStorageUrl(activity.route_map_url) }}
+              style={styles.mapImage}
+              resizeMode="cover"
+            />
+            <View style={[styles.mapOverlay, { backgroundColor: colors.primary + '10' }]}>
+              <Ionicons name="map-outline" size={16} color={colors.primary} />
+              <Text style={[styles.mapText, { color: colors.primary }]}>View Route</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Main Stats Row (Max 3) */}
         <View style={[styles.statsContainer, { borderTopColor: colors.borderLight }]}>
           <View style={styles.statItem}>
             <Ionicons name="navigate-outline" size={18} color={colors.textSecondary} />
@@ -119,23 +212,64 @@ export function ActivityCard({
           </View>
         </View>
 
-        {(activity.elevation_gain != null && activity.elevation_gain > 0) ||
-        (activity.calories != null && activity.calories > 0) ? (
-          <View style={styles.secondaryStats}>
-            {activity.elevation_gain != null && activity.elevation_gain > 0 ? (
-              <View style={styles.secondaryStatItem}>
-                <Ionicons name="trending-up" size={14} color={colors.textMuted} />
-                <Text style={[styles.secondaryStatText, { color: colors.textMuted }]}>{activity.elevation_gain}m</Text>
-              </View>
-            ) : null}
-            {activity.calories != null && activity.calories > 0 ? (
-              <View style={styles.secondaryStatItem}>
-                <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.secondaryStatText, { color: colors.textMuted }]}>{activity.calories} kcal</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
+        {/* Toggle Button for Additional Stats */}
+        {hasAdditionalStats && (
+          <TouchableOpacity
+            style={styles.toggleButton}
+            onPress={() => setShowAdditionalStats(!showAdditionalStats)}
+            activeOpacity={0.7}
+          >
+            <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+              <Ionicons
+                name="chevron-down"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
+
+        {/* Additional Stats Row (Collapsible with Animation) */}
+        {hasAdditionalStats && (
+          <Animated.View
+            style={[
+              styles.additionalStatsWrapper,
+              {
+                maxHeight: animatedHeight.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 100],
+                }),
+                opacity: animatedOpacity,
+              },
+            ]}
+          >
+            <View style={[styles.additionalStatsContainer, { borderTopColor: colors.borderLight }]}>
+              {activity.elevation_gain != null && activity.elevation_gain > 0 && (
+                <View style={styles.statItem}>
+                  <Ionicons name="trending-up" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{activity.elevation_gain}m</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Elevation</Text>
+                </View>
+              )}
+
+              {activity.elevation_gain != null && activity.elevation_gain > 0 &&
+               activity.calories != null && activity.calories > 0 && (
+                <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
+              )}
+
+              {activity.calories != null && activity.calories > 0 && (
+                <View style={styles.statItem}>
+                  <Ionicons name="flame-outline" size={18} color={colors.textSecondary} />
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Calories</Text>
+                </View>
+              )}
+
+              {/* Empty placeholder to center-align when only 1 or 2 stats */}
+              <View style={styles.statItem} />
+            </View>
+          </Animated.View>
+        )}
 
         {/* Engagement bar */}
         {showEngagement && (
@@ -215,13 +349,52 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    flex: 1,
+  },
+  privacyBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: borderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sportName: {
     fontSize: fontSize.sm,
     marginTop: 2,
+  },
+  mapContainer: {
+    marginTop: spacing.md,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  mapImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#f0f0f0',
+  },
+  mapOverlay: {
+    position: 'absolute',
+    bottom: spacing.xs,
+    right: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs / 2,
+  },
+  mapText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -235,6 +408,7 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
+    alignSelf: 'stretch',
   },
   statValue: {
     fontSize: fontSize.md,
@@ -245,18 +419,20 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: 2,
   },
-  secondaryStats: {
-    flexDirection: 'row',
-    marginTop: spacing.md,
-    gap: spacing.lg,
-  },
-  secondaryStatItem: {
-    flexDirection: 'row',
+  toggleButton: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+    marginTop: spacing.xs,
   },
-  secondaryStatText: {
-    fontSize: fontSize.sm,
-    marginLeft: spacing.xs,
+  additionalStatsWrapper: {
+    overflow: 'hidden',
+  },
+  additionalStatsContainer: {
+    flexDirection: 'row',
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    marginTop: spacing.sm,
   },
   engagementBar: {
     flexDirection: 'row',

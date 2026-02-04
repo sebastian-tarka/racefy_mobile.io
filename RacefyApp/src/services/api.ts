@@ -1152,10 +1152,26 @@ class ApiService {
     return response.data;
   }
 
-  async getUserActiveActivityStats(userId: number): Promise<Types.ActivityStats> {
-    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
-      `/users/${userId}/stats/activities/active`
-    );
+  async getUserActiveActivityStats(
+    userId: number,
+    params?: {
+      from?: string;
+      to?: string;
+      sport_type_id?: number;
+    }
+  ): Promise<Types.ActivityStats> {
+    const query = new URLSearchParams();
+    if (params?.from) query.append('from', params.from);
+    if (params?.to) query.append('to', params.to);
+    if (params?.sport_type_id)
+      query.append('sport_type_id', String(params.sport_type_id));
+
+    const queryString = query.toString();
+    const endpoint = queryString
+      ? `/users/${userId}/stats/activities/active?${queryString}`
+      : `/users/${userId}/stats/activities/active`;
+
+    const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(endpoint);
     return response.data;
   }
 

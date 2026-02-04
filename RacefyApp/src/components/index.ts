@@ -52,6 +52,8 @@ export * from './SocialShareModal';
 export * from './ShareFormatSelector';
 export * from './SportStatsChart';
 export * from './SportTypeSelector';
+export * from './SportTypeFilter';
+export * from './TimeRangeFilter';
 export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './AutoPlayVideo';

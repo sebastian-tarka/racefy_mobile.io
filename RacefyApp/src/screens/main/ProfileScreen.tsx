@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,10 @@ import {
   PointsCard,
   CompareUserSelector,
   UserListModal,
+  SportTypeFilter,
+  TimeRangeFilter,
+  type TimeRange,
+  type PeriodOption,
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -39,6 +43,7 @@ import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import { getDateRangeForTimeRange } from '../../utils/dateRanges';
 import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -57,6 +62,13 @@ type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
 const INITIAL_PAGE = 1;
 const SETTINGS_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
+const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
+  { value: 'all_time', labelKey: 'profile.stats.timeRange.allTime' },
+  { value: 'year', labelKey: 'profile.stats.timeRange.year' },
+  { value: 'month', labelKey: 'profile.stats.timeRange.month' },
+  { value: 'week', labelKey: 'profile.stats.timeRange.week' },
+];
+
 export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
@@ -71,6 +83,15 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
 
+  // Filter state - MUST be declared before dateRange and hooks that use them
+  const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('all_time');
+
+  // Comparison state
+  const [compareUser, setCompareUser] = useState<User | null>(null);
+  const [compareStats, setCompareStats] = useState<ActivityStats | null>(null);
+  const [isLoadingCompareStats, setIsLoadingCompareStats] = useState(false);
+
   // Update active tab when navigating with initialTab param
   useEffect(() => {
     if (route.params?.initialTab) {
@@ -78,18 +99,37 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     }
   }, [route.params?.initialTab]);
 
+  // Calculate date range based on selected time range (memoized to prevent unnecessary re-renders)
+  const dateRange = useMemo(() => {
+    const result = getDateRangeForTimeRange(selectedTimeRange);
+    logger.debug('profile', 'Date range calculated', {
+      selectedTimeRange,
+      result,
+    });
+    return result;
+  }, [selectedTimeRange]);
+
   // Activity stats and points hooks
-  const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats();
+  const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats({
+    sportTypeId: selectedSportTypeId,
+    from: dateRange?.from ?? undefined,
+    to: dateRange?.to ?? undefined,
+  });
   const { stats: pointStats, isLoading: isLoadingPointStats, refetch: refetchPointStats } = usePointStats();
   const { sportTypes } = useSportTypes();
   const { following, isLoading: isLoadingFollowing } = useFollowing();
 
-  // Comparison state
-  const [compareUser, setCompareUser] = useState<User | null>(null);
-  const [compareStats, setCompareStats] = useState<ActivityStats | null>(null);
-  const [isLoadingCompareStats, setIsLoadingCompareStats] = useState(false);
+  // Debug: Log filter changes
+  useEffect(() => {
+    logger.info('profile', 'Filters changed', {
+      selectedSportTypeId,
+      selectedTimeRange,
+      dateRangeFrom: dateRange?.from,
+      dateRangeTo: dateRange?.to,
+    });
+  }, [selectedSportTypeId, selectedTimeRange, dateRange]);
 
-  // Fetch comparison user stats when selected
+  // Fetch comparison user stats when selected or filters change
   useEffect(() => {
     const fetchCompareStats = async () => {
       if (!compareUser) {
@@ -99,7 +139,11 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
       setIsLoadingCompareStats(true);
       try {
-        const stats = await api.getUserActiveActivityStats(compareUser.id);
+        const stats = await api.getUserActiveActivityStats(compareUser.id, {
+          from: dateRange?.from ?? undefined,
+          to: dateRange?.to ?? undefined,
+          sport_type_id: selectedSportTypeId || undefined,
+        });
         setCompareStats(stats);
       } catch (error) {
         logger.error('api', 'Failed to fetch compare user stats', { error, userId: compareUser.id });
@@ -110,7 +154,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     };
 
     fetchCompareStats();
-  }, [compareUser]);
+  }, [compareUser, selectedSportTypeId, dateRange]);
 
   // Wrapper functions for usePaginatedTabData
   const fetchPostsWrapper = useCallback((userId: number, page: number) => {
@@ -118,8 +162,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   }, []);
 
   const fetchActivitiesWrapper = useCallback((userId: number, page: number) => {
-    return api.getActivities({ user_id: userId, page });
-  }, []);
+    return api.getActivities({
+      user_id: userId,
+      page,
+      ...(selectedSportTypeId && { sport_type_id: selectedSportTypeId }),
+    });
+  }, [selectedSportTypeId]);
 
   const fetchEventsWrapper = useCallback((userId: number, page: number) => {
     return api.getEvents({ user_id: userId, page });
@@ -165,33 +213,52 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   useFocusEffect(
     useCallback(() => {
       if (isAuthenticated) {
+        // Only fetch stats once when screen is focused
         fetchStats();
-        // Load initial data for current tab
-        if (activeTab === 'posts' && postsData.data.length === 0) {
-          postsData.fetchData(INITIAL_PAGE, true);
-        } else if (activeTab === 'activities' && activitiesData.data.length === 0) {
-          activitiesData.fetchData(INITIAL_PAGE, true);
-        } else if (activeTab === 'events' && eventsData.data.length === 0) {
-          eventsData.fetchData(INITIAL_PAGE, true);
-        }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, activeTab])
+    }, [isAuthenticated])
   );
 
-  // Load data when tab changes
+  // Load data when tab changes - ALWAYS refresh when switching tabs
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    if (activeTab === 'posts' && postsData.data.length === 0) {
-      postsData.fetchData(INITIAL_PAGE, true);
-    } else if (activeTab === 'activities' && activitiesData.data.length === 0) {
-      activitiesData.fetchData(INITIAL_PAGE, true);
-    } else if (activeTab === 'events' && eventsData.data.length === 0) {
-      eventsData.fetchData(INITIAL_PAGE, true);
+    logger.debug('profile', 'Tab changed, loading fresh data', { activeTab });
+
+    if (activeTab === 'posts') {
+      if (!postsData.isLoading) {
+        logger.info('profile', 'Refreshing posts data');
+        postsData.refresh();
+      }
+    } else if (activeTab === 'activities') {
+      if (!activitiesData.isLoading) {
+        logger.info('profile', 'Refreshing activities data');
+        activitiesData.refresh();
+      }
+    } else if (activeTab === 'events') {
+      if (!eventsData.isLoading) {
+        logger.info('profile', 'Refreshing events data');
+        eventsData.refresh();
+      }
+    } else if (activeTab === 'stats') {
+      // Refresh activity stats and point stats
+      if (!isLoadingActivityStats) {
+        logger.info('profile', 'Refreshing stats data');
+        refetchActivityStats();
+        refetchPointStats();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, isAuthenticated]);
+
+  // Refresh activities when sport type filter changes
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'activities') {
+      activitiesData.refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSportTypeId]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -427,6 +494,18 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       </View>
       <View style={styles.tabSpacer} />
 
+      {/* Activities Tab Content - Sport Filter */}
+      {activeTab === 'activities' && (
+        <View style={styles.activitiesFilterContent}>
+          <SportTypeFilter
+            sportTypes={sportTypes}
+            selectedSportTypeId={selectedSportTypeId}
+            onSelectSportType={setSelectedSportTypeId}
+            isLoading={activitiesData.isLoading}
+          />
+        </View>
+      )}
+
       {/* Stats Tab Content */}
       {activeTab === 'stats' && (
         <View style={styles.statsTabContent}>
@@ -436,6 +515,22 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             selectedUser={compareUser}
             onSelectUser={setCompareUser}
             isLoading={isLoadingFollowing}
+          />
+
+          {/* Time Range Filter */}
+          <TimeRangeFilter
+            options={TIME_RANGE_OPTIONS}
+            selectedValue={selectedTimeRange}
+            onSelectValue={setSelectedTimeRange}
+            isLoading={isLoadingActivityStats || isLoadingCompareStats}
+          />
+
+          {/* Sport Type Filter */}
+          <SportTypeFilter
+            sportTypes={sportTypes}
+            selectedSportTypeId={selectedSportTypeId}
+            onSelectSportType={setSelectedSportTypeId}
+            isLoading={isLoadingActivityStats || isLoadingCompareStats}
           />
 
           {/* Bar Chart */}
@@ -794,6 +889,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statsTabContent: {
+    marginTop: spacing.sm,
+  },
+  activitiesFilterContent: {
     marginTop: spacing.sm,
   },
   chartCard: {

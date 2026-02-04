@@ -11,11 +11,22 @@ interface UseActivityStatsResult {
   refetch: () => Promise<void>;
 }
 
-export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
+interface UseActivityStatsParams {
+  sportTypeId?: number | null;
+  from?: string | null;
+  to?: string | null;
+}
+
+export function useActivityStats(params?: UseActivityStatsParams): UseActivityStatsResult {
   const { isAuthenticated } = useAuth();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Extract values for dependencies
+  const sportTypeId = params?.sportTypeId ?? null;
+  const from = params?.from ?? null;
+  const to = params?.to ?? null;
 
   const fetchStats = useCallback(async () => {
     if (!isAuthenticated) {
@@ -28,21 +39,20 @@ export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
     setError(null);
 
     try {
-      // Calculate date range for last 7 days
-      const today = new Date();
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(today.getDate() - 7);
+      const apiParams: { from?: string; to?: string; sport_type_id?: number } = {};
+      if (from) apiParams.from = from;
+      if (to) apiParams.to = to;
+      if (sportTypeId) apiParams.sport_type_id = sportTypeId;
 
-      // Format dates as YYYY-MM-DD
-      const to = today.toISOString().split('T')[0];
-      const from = sevenDaysAgo.toISOString().split('T')[0];
+      logger.info('activity', 'Fetching activity stats', apiParams);
 
-      const data = await api.getActivityStats({
-        from,
-        to,
-        ...(sportTypeId && { sport_type_id: sportTypeId }),
-      });
+      const data = await api.getActivityStats(apiParams);
       setStats(data);
+
+      logger.info('activity', 'Activity stats fetched successfully', {
+        hasBySportType: !!data.by_sport_type,
+        count: data.count,
+      });
     } catch (err: any) {
       logger.error('activity', 'Failed to fetch activity stats', { error: err });
       setError(err.message || 'Failed to load statistics');
@@ -50,9 +60,10 @@ export function useActivityStats(sportTypeId?: number): UseActivityStatsResult {
     } finally {
       setIsLoading(false);
     }
-  }, [sportTypeId, isAuthenticated]);
+  }, [sportTypeId, from, to, isAuthenticated]);
 
   useEffect(() => {
+    logger.debug('activity', 'useActivityStats effect triggered', { sportTypeId, from, to });
     fetchStats();
   }, [fetchStats]);
 

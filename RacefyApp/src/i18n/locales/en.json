@@ -303,7 +303,14 @@
       "clearComparison": "Clear comparison",
       "noFollowing": "You're not following anyone yet",
       "you": "You",
-      "compareUser": "Other user"
+      "compareUser": "Other user",
+      "allSports": "All",
+      "timeRange": {
+        "week": "Week",
+        "month": "Month",
+        "year": "Year",
+        "allTime": "All Time"
+      }
     },
     "empty": {
       "noPosts": "No posts yet",
