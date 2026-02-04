@@ -180,7 +180,7 @@ export function MapboxLiveMap({
   // Select map style based on theme
   const mapStyle = isDark
     ? 'mapbox://styles/mapbox/navigation-night-v1'
-    : MapboxGL.StyleURL.Outdoors;
+    : (MapboxGL.StyleURL?.Outdoors || 'mapbox://styles/mapbox/outdoors-v12');
 
   // GPS signal indicator color
   const getSignalColor = (): string => {
@@ -254,7 +254,7 @@ export function MapboxLiveMap({
             <MapboxGL.LineLayer
               id={`nearby-line-${route.id}`}
               style={{
-                lineColor: selectedRouteId === route.id ? colors.primary : colors.textMuted,
+                lineColor: selectedRouteId === route.id ? (colors.primary || '#10b981') : (colors.textMuted || '#9ca3af'),
                 lineWidth: selectedRouteId === route.id ? 3 : 2,
                 lineOpacity: selectedRouteId === route.id ? 0.7 : 0.3,
                 lineCap: 'round',
@@ -282,8 +282,7 @@ export function MapboxLiveMap({
               style={{
                 lineColor: shadowTrackColor,
                 lineWidth: 3,
-                lineOpacity: 0.4,
-                lineDasharray: [1, 1],
+                lineOpacity: 0.35,
                 lineCap: 'round',
                 lineJoin: 'round',
               }}
@@ -297,7 +296,7 @@ export function MapboxLiveMap({
             <MapboxGL.LineLayer
               id="liveRouteLine"
               style={{
-                lineColor: routeColor,
+                lineColor: routeColor || '#10b981',
                 lineWidth: 4,
                 lineCap: 'round',
                 lineJoin: 'round',
@@ -307,7 +306,29 @@ export function MapboxLiveMap({
           </MapboxGL.ShapeSource>
         )}
 
-        {/* User location marker - static circle (no animations via bridge) */}
+        {/* GPS signal ring - separate ShapeSource to avoid bridge issues with multiple CircleLayers */}
+        <MapboxGL.ShapeSource
+          id="gpsSignalSource"
+          shape={{
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [displayPosition.lng, displayPosition.lat],
+            },
+            properties: {},
+          }}
+        >
+          <MapboxGL.CircleLayer
+            id="gpsSignalRing"
+            style={{
+              circleRadius: 18,
+              circleColor: signalColor || '#22c55e',
+              circleOpacity: 0.25,
+            }}
+          />
+        </MapboxGL.ShapeSource>
+
+        {/* User position dot - separate ShapeSource */}
         <MapboxGL.ShapeSource
           id="userLocation"
           shape={{
@@ -319,21 +340,11 @@ export function MapboxLiveMap({
             properties: {},
           }}
         >
-          {/* GPS signal ring - static radius based on signal quality */}
-          <MapboxGL.CircleLayer
-            id="gpsSignalRing"
-            style={{
-              circleRadius: 18,
-              circleColor: signalColor,
-              circleOpacity: 0.25,
-            }}
-          />
-          {/* User position dot */}
           <MapboxGL.CircleLayer
             id="userCircle"
             style={{
               circleRadius: 10,
-              circleColor: colors.primary,
+              circleColor: colors.primary || '#10b981',
               circleStrokeWidth: 3,
               circleStrokeColor: '#ffffff',
             }}
