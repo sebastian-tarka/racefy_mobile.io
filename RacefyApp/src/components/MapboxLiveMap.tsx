@@ -223,9 +223,7 @@ export function MapboxLiveMap({
         styleURL={mapStyle}
         logoEnabled={false}
         attributionEnabled={false}
-        compassEnabled={true}
-        compassViewPosition={3}
-        compassViewMargins={{ x: 16, y: 60 }}
+        compassEnabled={false}
         onDidFinishLoadingMap={onMapReadyInternal}
       >
         {/* Camera follows user position */}

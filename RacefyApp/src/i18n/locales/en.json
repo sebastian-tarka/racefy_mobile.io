@@ -633,11 +633,15 @@
     "retryLoadRoutes": "Retry",
     "shadowTrack": "Shadow Track",
     "clearShadowTrack": "Clear Shadow Track",
+    "selectShadowTrack": "Select Shadow Track",
+    "changeShadowTrack": "Change Shadow Track",
     "selectRoute": "Tap to select as shadow track",
     "routeSelected": "Route selected",
     "locationPermissionDenied": "Location permission is required to view nearby routes",
     "mapError": "Unable to load map view",
-    "backToStats": "Back to Stats"
+    "backToStats": "Back to Stats",
+    "fetchingLocation": "Getting your location...",
+    "waitingForGPS": "Waiting for GPS..."
   },
   "gpxImport": {
     "title": "Import GPX",

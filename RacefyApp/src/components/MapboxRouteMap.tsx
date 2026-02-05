@@ -177,9 +177,7 @@ export function MapboxRouteMap({
         styleURL={mapStyle}
         logoEnabled={false}
         attributionEnabled={false}
-        compassEnabled={true}
-        compassViewPosition={3} // Top right
-        compassViewMargins={{ x: 16, y: 60 }}
+        compassEnabled={false}
         onDidFinishLoadingMap={onMapReady}
       >
         <MapboxGL.Camera

@@ -633,11 +633,15 @@
     "retryLoadRoutes": "Spróbuj ponownie",
     "shadowTrack": "Trasa porównawcza",
     "clearShadowTrack": "Usuń trasę porównawczą",
+    "selectShadowTrack": "Wybierz trasę porównawczą",
+    "changeShadowTrack": "Zmień trasę porównawczą",
     "selectRoute": "Dotknij, aby wybrać jako trasę porównawczą",
     "routeSelected": "Wybrano trasę",
     "locationPermissionDenied": "Uprawnienie do lokalizacji jest wymagane, aby wyświetlić trasy w pobliżu",
     "mapError": "Nie można załadować widoku mapy",
-    "backToStats": "Powrót do statystyk"
+    "backToStats": "Powrót do statystyk",
+    "fetchingLocation": "Pobieranie lokalizacji...",
+    "waitingForGPS": "Oczekiwanie na GPS..."
   },
   "gpxImport": {
     "title": "Importuj GPX",

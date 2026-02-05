@@ -18,7 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
-import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, MapboxLiveMap, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
+import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
+import { MapboxRouteMap } from '../../components/MapboxRouteMap';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
@@ -71,6 +72,7 @@ export function ActivityRecordingScreen() {
   const [showAddOptions, setShowAddOptions] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
+  const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
 
   // Activity options
   const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
@@ -87,6 +89,10 @@ export function ActivityRecordingScreen() {
   const [selectedShadowTrack, setSelectedShadowTrack] = useState<any | null>(null);
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [routesError, setRoutesError] = useState<string | null>(null);
+
+  // Preview location for map view when not tracking
+  const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [fetchingPreviewLocation, setFetchingPreviewLocation] = useState(false);
 
   // Training program state
   const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
@@ -248,6 +254,56 @@ export function ActivityRecordingScreen() {
         .catch(() => {});
     }
   }, [viewMode, isTracking, isPaused]);
+
+  // Fetch preview location BEFORE showing map view (to avoid zoom effect)
+  useEffect(() => {
+    const fetchPreviewLocation = async () => {
+      // Fetch location when switching to map view (even before map renders)
+      // This caches the location so the map renders already centered
+      if (viewMode === 'map' && !isTracking && !isPaused && !currentPosition && !previewLocation && !fetchingPreviewLocation) {
+        setFetchingPreviewLocation(true);
+        logger.debug('activity', 'Pre-fetching location before showing map');
+
+        try {
+          // Request permissions first
+          const hasPermissions = await requestActivityTrackingPermissions();
+          if (!hasPermissions) {
+            logger.warn('activity', 'Location permissions denied for map preview');
+            setFetchingPreviewLocation(false);
+            return;
+          }
+
+          // Get current position
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+
+          setPreviewLocation({
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+          });
+
+          logger.info('activity', 'Preview location cached for map view', {
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+          });
+        } catch (error: any) {
+          logger.error('activity', 'Failed to fetch preview location', { error: error.message });
+        } finally {
+          setFetchingPreviewLocation(false);
+        }
+      }
+    };
+
+    fetchPreviewLocation();
+  }, [viewMode, isTracking, isPaused, currentPosition, previewLocation, fetchingPreviewLocation, requestActivityTrackingPermissions]);
+
+  // Clear preview location when starting to track
+  useEffect(() => {
+    if (isTracking || isPaused) {
+      setPreviewLocation(null);
+    }
+  }, [isTracking, isPaused]);
 
   // Fetch nearby routes when in map view + idle state
   useEffect(() => {
@@ -785,43 +841,79 @@ export function ActivityRecordingScreen() {
     const showControls = isTracking || isPaused;
     const showNearbyRoutes = !isTracking && !isPaused;
 
+    // Use tracking position if available, otherwise use preview location
+    const displayPosition = currentPosition || previewLocation;
+
     logger.debug('activity', 'Rendering map view', {
       showControls,
       showNearbyRoutes,
       livePointsCount: livePoints.length,
       hasCurrentPosition: !!currentPosition,
+      hasPreviewLocation: !!previewLocation,
+      hasDisplayPosition: !!displayPosition,
       nearbyRoutesCount: nearbyRoutes.length,
       hasNearbyRoutes: nearbyRoutes.length > 0,
       hasShadowTrack: !!selectedShadowTrack,
     });
 
     try {
+      // Import MapboxGL dynamically
+      let MapboxGL: any = null;
+      try {
+        MapboxGL = require('@rnmapbox/maps').default;
+      } catch (e) {
+        // Mapbox not available
+      }
+
+      // Don't render map until we have a position (avoids zoom effect)
+      if (!displayPosition) {
+        return (
+          <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={{ color: colors.textMuted, marginTop: spacing.md, fontSize: fontSize.lg }}>
+              {fetchingPreviewLocation ? t('recording.fetchingLocation') : t('recording.waitingForGPS')}
+            </Text>
+          </View>
+        );
+      }
+
+      if (!MapboxGL) {
+        return (
+          <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+            <Ionicons name="map-outline" size={64} color={colors.textMuted} />
+            <Text style={{ color: colors.textMuted, marginTop: spacing.md, fontSize: fontSize.lg }}>
+              {t('recording.mapError')}
+            </Text>
+          </View>
+        );
+      }
+
       return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
-          <MapboxLiveMap
-          livePoints={livePoints}
-          currentPosition={currentPosition}
-          gpsSignalQuality={trackingStatus.gpsSignal}
-          height={showNearbyRoutes ? 400 : undefined}
-          followUser={true}
-          // Shadow track & nearby routes props
-          nearbyRoutes={showNearbyRoutes ? nearbyRoutes : undefined}
-          shadowTrack={selectedShadowTrack?.track_data || null}
-          selectedRouteId={
-            showNearbyRoutes && selectedShadowTrack
-              ? selectedShadowTrack.id
-              : null
-          }
-        />
-        {showNearbyRoutes && (
-          <NearbyRoutesList
-            routes={nearbyRoutes}
-            selectedRouteId={selectedShadowTrack?.id || null}
-            onRouteSelect={handleRouteSelect}
-            isLoading={loadingRoutes}
-            error={routesError}
-          />
-        )}
+          {/* Map - already centered on cached position (no animation) */}
+          <MapboxGL.MapView
+            style={{ flex: 1 }}
+            styleURL={isDark ? 'mapbox://styles/mapbox/navigation-night-v1' : MapboxGL.StyleURL.Outdoors}
+            logoEnabled={false}
+            attributionEnabled={false}
+          >
+            <MapboxGL.Camera
+              defaultSettings={{
+                centerCoordinate: [displayPosition.lng, displayPosition.lat],
+                zoomLevel: 15,
+              }}
+              animationMode="none"
+            />
+            <MapboxGL.PointAnnotation
+              id="currentPosition"
+              coordinate={[displayPosition.lng, displayPosition.lat]}
+            >
+              <View style={styles.mapMarker}>
+                <View style={[styles.mapMarkerInner, { backgroundColor: colors.primary }]} />
+              </View>
+            </MapboxGL.PointAnnotation>
+          </MapboxGL.MapView>
+
         {showControls && (
           <RecordingMapControls
             duration={localDuration}
@@ -1258,6 +1350,39 @@ export function ActivityRecordingScreen() {
         selectedEvent={selectedEvent}
         isLoading={eventsLoading}
       />
+
+      {/* Route Selection Modal */}
+      <Modal
+        visible={routeSelectionModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setRouteSelectionModalVisible(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('recording.selectShadowTrack')}
+            </Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setRouteSelectionModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          <NearbyRoutesList
+            routes={nearbyRoutes}
+            selectedRouteId={selectedShadowTrack?.id || null}
+            onRouteSelect={(route) => {
+              handleRouteSelect(route);
+              setRouteSelectionModalVisible(false);
+            }}
+            isLoading={loadingRoutes}
+            error={routesError}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1727,6 +1852,55 @@ const styles = StyleSheet.create({
   modalSportName: {
     flex: 1,
     fontSize: fontSize.md,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Floating Route Selection Button
+  // ─────────────────────────────────────────────────────────────────────────
+  floatingRouteButton: {
+    position: 'absolute',
+    bottom: spacing.xl,
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  floatingRouteButtonText: {
+    color: '#fff',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Map View
+  // ─────────────────────────────────────────────────────────────────────────
+  mapMarker: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  mapMarkerInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
