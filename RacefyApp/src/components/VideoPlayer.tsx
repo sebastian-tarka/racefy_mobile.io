@@ -8,6 +8,7 @@ import {
   StatusBar,
   ActivityIndicator,
   Text,
+  Platform,
 } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,10 +37,16 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
   const [duration, setDuration] = useState(0);
 
   // Debug: Log video player initialization
+  const isHttps = uri?.startsWith('https://');
+  const fileExtension = uri?.split('.').pop()?.split('?')[0]?.toLowerCase();
+
   logger.debug('general', 'VideoPlayer initializing', {
     uri,
     visible,
     thumbnailUrl,
+    isHttps,
+    fileExtension,
+    platform: Platform.OS,
   });
 
   const player = useVideoPlayer(uri, (player) => {
@@ -59,9 +66,25 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
         setIsLoading(false);
         setError(null);
       } else if (status === 'error') {
-        logger.error('general', 'VideoPlayer error', { error: payload.error, uri });
+        let errorMessage = payload.error?.message || 'Failed to load video';
+
+        // Add helpful message for common iOS issues
+        if (Platform.OS === 'ios' && !isHttps) {
+          errorMessage += ' (iOS requires HTTPS)';
+        }
+        if (Platform.OS === 'ios' && fileExtension === 'webm') {
+          errorMessage += ' (WebM not supported on iOS, use MP4)';
+        }
+
+        logger.error('general', 'VideoPlayer error', {
+          error: payload.error,
+          uri,
+          isHttps,
+          fileExtension,
+          platform: Platform.OS,
+        });
         setIsLoading(false);
-        setError(payload.error?.message || 'Failed to load video');
+        setError(errorMessage);
       } else if (status === 'loading') {
         logger.debug('general', 'VideoPlayer loading');
         setIsLoading(true);

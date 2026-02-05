@@ -262,11 +262,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const isOwner = activity?.is_owner ?? false;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
       <ScreenHeader
         title={t('activityDetail.title')}
         showBack
-        onBack={() => navigation.goBack()}
+        onBack={() => {
+          logger.debug('navigation', 'Activity detail back pressed');
+          navigation.goBack();
+        }}
         rightAction={
           isOwner ? (
             <View style={styles.headerActions}>
