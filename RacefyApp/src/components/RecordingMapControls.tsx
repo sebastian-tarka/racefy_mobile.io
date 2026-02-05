@@ -25,6 +25,7 @@ interface RecordingMapControlsProps {
   // Shadow track feature
   shadowTrackTitle?: string | null;
   onClearShadowTrack?: () => void;
+  onSelectShadowTrack?: () => void;
 }
 
 export function RecordingMapControls({
@@ -38,24 +39,38 @@ export function RecordingMapControls({
   onResume,
   shadowTrackTitle,
   onClearShadowTrack,
+  onSelectShadowTrack,
 }: RecordingMapControlsProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+
+  // Shadow track blue color (same as map)
+  const shadowTrackColor = isDark ? '#60A5FA' : '#3B82F6';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.cardBackground + 'F0' }]}>
-      {/* Shadow track indicator chip */}
-      {shadowTrackTitle && onClearShadowTrack && (
-        <View style={[styles.shadowTrackChip, { backgroundColor: colors.primary + '20' }]}>
-          <Ionicons name="map-outline" size={14} color={colors.textMuted} />
-          <Text style={[styles.shadowTrackText, { color: colors.textMuted }]} numberOfLines={1}>
+      {/* Shadow track selection/indicator */}
+      {shadowTrackTitle && onClearShadowTrack ? (
+        <View style={[styles.shadowTrackChip, { backgroundColor: shadowTrackColor + '20', borderColor: shadowTrackColor }]}>
+          <Ionicons name="map" size={14} color={shadowTrackColor} />
+          <Text style={[styles.shadowTrackText, { color: colors.textPrimary }]} numberOfLines={1}>
             {shadowTrackTitle}
           </Text>
           <TouchableOpacity onPress={onClearShadowTrack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            <Ionicons name="close-circle" size={18} color={shadowTrackColor} />
           </TouchableOpacity>
         </View>
-      )}
+      ) : onSelectShadowTrack ? (
+        <TouchableOpacity
+          style={[styles.shadowTrackSelectButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+          onPress={onSelectShadowTrack}
+        >
+          <Ionicons name="map-outline" size={16} color={colors.textMuted} />
+          <Text style={[styles.shadowTrackSelectText, { color: colors.textSecondary }]}>
+            {t('recording.selectShadowTrack')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Timer display (large, centered) */}
       <Text style={[styles.timer, { color: colors.textPrimary }]}>{formatTime(duration)}</Text>
@@ -135,12 +150,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.md,
+    borderWidth: 1,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
   shadowTrackText: {
     flex: 1,
     fontSize: 12,
+    fontWeight: '500',
+  },
+  shadowTrackSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  shadowTrackSelectText: {
+    fontSize: 13,
     fontWeight: '500',
   },
   timer: {

@@ -12,6 +12,7 @@ import {
   Animated,
   Pressable,
 } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -93,6 +94,9 @@ export function ActivityRecordingScreen() {
   // Preview location for map view when not tracking
   const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [fetchingPreviewLocation, setFetchingPreviewLocation] = useState(false);
+
+  // Ref to prevent re-fetching routes
+  const routesFetchedRef = useRef(false);
 
   // Training program state
   const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
@@ -305,60 +309,65 @@ export function ActivityRecordingScreen() {
     }
   }, [isTracking, isPaused]);
 
-  // Fetch nearby routes when in map view + idle state
+  // Fetch nearby routes when sport is selected and we have position
+  // Routes should be available in both idle and recording/paused states
   useEffect(() => {
     const fetchNearbyRoutes = async () => {
-      // Only fetch in map view, idle state (not tracking/paused), and when sport is selected
-      if (viewMode === 'map' && !isTracking && !isPaused && selectedSport) {
+      const position = currentPosition || previewLocation;
+
+      logger.debug('activity', 'Routes fetch check', {
+        alreadyFetched: routesFetchedRef.current,
+        isLoading: loadingRoutes,
+        hasSelectedSport: !!selectedSport,
+        hasPosition: !!position,
+        hasCurrent: !!currentPosition,
+        hasPreview: !!previewLocation,
+      });
+
+      // Skip if already fetched or currently fetching
+      if (routesFetchedRef.current || loadingRoutes) {
+        logger.debug('activity', 'Skipping routes fetch - already fetched or loading');
+        return;
+      }
+
+      // Fetch when sport is selected AND we have a position
+      if (selectedSport && position) {
+        routesFetchedRef.current = true; // Mark as fetched BEFORE starting
         setLoadingRoutes(true);
         setRoutesError(null);
 
         try {
-          // Get current position (might be null if tracking hasn't started)
-          let lat: number;
-          let lng: number;
-
-          if (currentPosition) {
-            // Use tracking position if available
-            lat = currentPosition.lat;
-            lng = currentPosition.lng;
-            logger.debug('activity', 'Using current tracking position for nearby routes', { lat, lng });
-          } else {
-            // Fetch current location using expo-location (idle state)
-            // First, check and request location permissions
-            logger.debug('activity', 'Requesting location permissions for nearby routes');
-            const hasPermissions = await requestActivityTrackingPermissions();
-
-            if (!hasPermissions) {
-              setRoutesError(t('recording.locationPermissionDenied'));
-              logger.warn('activity', 'Location permissions denied for nearby routes');
-              setLoadingRoutes(false);
-              return;
-            }
-
-            logger.debug('activity', 'Fetching current location for nearby routes');
-            const location = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            });
-            lat = location.coords.latitude;
-            lng = location.coords.longitude;
-            logger.debug('activity', 'Got current location for nearby routes', { lat, lng });
-          }
-
-          const routes = await api.getNearbyRoutes(lat, lng, 5000, selectedSport.id, 10);
+          logger.debug('activity', 'Fetching nearby routes', { lat: position.lat, lng: position.lng, sportId: selectedSport.id });
+          const routes = await api.getNearbyRoutes(position.lat, position.lng, 5000, selectedSport.id, 10);
           setNearbyRoutes(routes);
           logger.info('activity', 'Nearby routes fetched successfully', { count: routes.length });
         } catch (error: any) {
           setRoutesError(error.message || t('recording.routesError'));
           logger.error('activity', 'Failed to fetch nearby routes', { error });
+          // Don't reset routesFetchedRef on error to prevent infinite retry loop
         } finally {
           setLoadingRoutes(false);
         }
+      } else {
+        logger.debug('activity', 'Not fetching routes - missing sport or position');
       }
     };
 
     fetchNearbyRoutes();
-  }, [viewMode, isTracking, isPaused, currentPosition, selectedSport, t, requestActivityTrackingPermissions]);
+  }, [selectedSport, currentPosition, previewLocation, loadingRoutes]);
+
+  // Reset routes when sport changes
+  useEffect(() => {
+    setNearbyRoutes([]);
+    routesFetchedRef.current = false;
+  }, [selectedSport?.id]);
+
+  // Reset fetch flag when entering map view
+  useEffect(() => {
+    if (viewMode === 'map') {
+      routesFetchedRef.current = false;
+    }
+  }, [viewMode]);
 
   // Existing activity dialog
   useEffect(() => {
@@ -582,6 +591,21 @@ export function ActivityRecordingScreen() {
     setSelectedShadowTrack(null);
     logger.activity('Shadow track cleared');
   };
+
+  // Pan gesture for modal drag-to-close
+  const modalDragGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Only respond to downward drags
+      if (event.translationY > 0) {
+        // Could add visual feedback here (translate modal down)
+      }
+    })
+    .onEnd((event) => {
+      // Close modal if dragged down more than 100px with reasonable velocity
+      if (event.translationY > 100 || event.velocityY > 500) {
+        setRouteSelectionModalVisible(false);
+      }
+    });
 
   // Bottom sheet options
   const addActivityOptions: BottomSheetOption[] = useMemo(() => [
@@ -888,10 +912,14 @@ export function ActivityRecordingScreen() {
         );
       }
 
+      // Create stable key for map view to prevent layer conflicts
+      const mapKey = `map-${showControls ? 'recording' : 'idle'}-${isDark ? 'dark' : 'light'}`;
+
       return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
           {/* Map - already centered on cached position (no animation) */}
           <MapboxGL.MapView
+            key={mapKey}
             style={{ flex: 1 }}
             styleURL={isDark ? 'mapbox://styles/mapbox/navigation-night-v1' : MapboxGL.StyleURL.Outdoors}
             logoEnabled={false}
@@ -904,6 +932,142 @@ export function ActivityRecordingScreen() {
               }}
               animationMode="none"
             />
+
+            {/* Shadow track (when recording/paused and track is selected) */}
+            {showControls && selectedShadowTrack && selectedShadowTrack.track_data && (
+              <MapboxGL.ShapeSource
+                id="shadow-track"
+                shape={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: selectedShadowTrack.track_data,
+                }}
+              >
+                {/* Border/outline layer for shadow track */}
+                <MapboxGL.LineLayer
+                  id="shadow-border"
+                  style={{
+                    lineColor: isDark ? '#1E3A8A' : '#1E40AF',
+                    lineWidth: 8,
+                    lineOpacity: 0.4,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+                {/* Main shadow track line */}
+                <MapboxGL.LineLayer
+                  id="shadow-line"
+                  style={{
+                    lineColor: isDark ? '#60A5FA' : '#3B82F6',
+                    lineWidth: 5,
+                    lineOpacity: 0.7,
+                    lineDasharray: [3, 2],
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              </MapboxGL.ShapeSource>
+            )}
+
+            {/* Live tracking route (when recording/paused) */}
+            {showControls && livePoints.length > 0 && (
+              <MapboxGL.ShapeSource
+                id="live-route"
+                shape={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: livePoints.map(p => [p.lng, p.lat]),
+                  },
+                }}
+              >
+                <MapboxGL.LineLayer
+                  id="live-route-line"
+                  style={{
+                    lineColor: colors.primary,
+                    lineWidth: 4,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    lineOpacity: 1,
+                  }}
+                />
+              </MapboxGL.ShapeSource>
+            )}
+
+            {/* All nearby routes as gray base layer (idle state only) */}
+            {showNearbyRoutes && nearbyRoutes
+              .filter(route => {
+                // Validate route has proper track_data structure
+                return route.track_data &&
+                       route.track_data.type === 'LineString' &&
+                       route.track_data.coordinates &&
+                       Array.isArray(route.track_data.coordinates) &&
+                       route.track_data.coordinates.length > 0;
+              })
+              .map((route, index) => {
+                const unselectedColor = isDark ? '#9CA3AF' : '#6B7280'; // Gray for all routes
+
+                return (
+                  <MapboxGL.ShapeSource
+                    key={`nearby-base-${route.id}`}
+                    id={`nearby-base-source-${route.id}`}
+                    shape={{
+                      type: 'Feature',
+                      properties: {},
+                      geometry: route.track_data,
+                    }}
+                  >
+                    <MapboxGL.LineLayer
+                      id={`nearby-base-line-${route.id}`}
+                      style={{
+                        lineColor: unselectedColor,
+                        lineWidth: 2.5,
+                        lineOpacity: 0.6,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                      }}
+                    />
+                  </MapboxGL.ShapeSource>
+                );
+              })}
+
+            {/* Selected route overlay (blue with border) - rendered on top */}
+            {showNearbyRoutes && selectedShadowTrack && selectedShadowTrack.track_data && (
+              <MapboxGL.ShapeSource
+                id="selected-route-overlay"
+                shape={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: selectedShadowTrack.track_data,
+                }}
+              >
+                {/* Border layer */}
+                <MapboxGL.LineLayer
+                  id="selected-route-border"
+                  style={{
+                    lineColor: isDark ? '#1E3A8A' : '#1E40AF',
+                    lineWidth: 8,
+                    lineOpacity: 0.6,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+                {/* Main line layer */}
+                <MapboxGL.LineLayer
+                  id="selected-route-line"
+                  style={{
+                    lineColor: isDark ? '#60A5FA' : '#3B82F6',
+                    lineWidth: 5,
+                    lineOpacity: 1,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              </MapboxGL.ShapeSource>
+            )}
+
+            {/* User position marker */}
             <MapboxGL.PointAnnotation
               id="currentPosition"
               coordinate={[displayPosition.lng, displayPosition.lat]}
@@ -913,6 +1077,106 @@ export function ActivityRecordingScreen() {
               </View>
             </MapboxGL.PointAnnotation>
           </MapboxGL.MapView>
+
+          {/* Nearby routes list (idle state only) */}
+          {showNearbyRoutes && (
+            <View style={[styles.nearbyRoutesPanel, { backgroundColor: colors.cardBackground }]}>
+              {loadingRoutes ? (
+                <View style={styles.nearbyRoutesLoading}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.nearbyRoutesLoadingText, { color: colors.textMuted }]}>
+                    {t('recording.loadingRoutes')}
+                  </Text>
+                </View>
+              ) : routesError ? (
+                <View style={styles.nearbyRoutesError}>
+                  <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
+                  <Text style={[styles.nearbyRoutesErrorText, { color: colors.error }]}>
+                    {routesError}
+                  </Text>
+                </View>
+              ) : nearbyRoutes.length === 0 ? (
+                <View style={styles.nearbyRoutesEmpty}>
+                  <Ionicons name="map-outline" size={32} color={colors.textMuted} />
+                  <Text style={[styles.nearbyRoutesEmptyText, { color: colors.textMuted }]}>
+                    {t('recording.noRoutesFound')}
+                  </Text>
+                  <Text style={[styles.nearbyRoutesEmptyDesc, { color: colors.textMuted }]}>
+                    {t('recording.noRoutesDescription')}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.nearbyRoutesHeader}>
+                    <Ionicons name="map" size={20} color={colors.primary} />
+                    <Text style={[styles.nearbyRoutesTitle, { color: colors.textPrimary }]}>
+                      {t('recording.nearbyRoutes')}
+                    </Text>
+                    <Text style={[styles.nearbyRoutesCount, { color: colors.textMuted }]}>
+                      {t('recording.routesFound', { count: nearbyRoutes.length })}
+                    </Text>
+                  </View>
+                  <FlatList
+                    horizontal
+                    data={nearbyRoutes}
+                    keyExtractor={(item) => `route-${item.id}`}
+                    renderItem={({ item: route }) => {
+                      const isSelected = selectedShadowTrack?.id === route.id;
+                      const selectedColor = isDark ? '#60A5FA' : '#3B82F6'; // Blue - same as map
+                      const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
+
+                      return (
+                        <TouchableOpacity
+                          style={[
+                            styles.nearbyRouteCard,
+                            { backgroundColor: colors.background, borderColor: colors.border },
+                            isSelected && {
+                              borderColor: selectedBorderColor,
+                              borderWidth: 2,
+                              backgroundColor: isDark ? '#1E3A8A15' : '#EFF6FF',
+                            },
+                          ]}
+                          onPress={() => {
+                            if (isSelected) {
+                              handleClearShadowTrack();
+                            } else {
+                              handleRouteSelect(route);
+                            }
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          {isSelected && (
+                            <View style={[styles.selectedBadge, { backgroundColor: selectedColor }]}>
+                              <Ionicons name="checkmark" size={14} color="#fff" />
+                            </View>
+                          )}
+                          <Text style={[styles.nearbyRouteTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                            {route.title}
+                          </Text>
+                          <View style={styles.nearbyRouteStats}>
+                            <View style={styles.nearbyRouteStat}>
+                              <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
+                              <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
+                                {(route.distance / 1000).toFixed(1)} km
+                              </Text>
+                            </View>
+                            <View style={styles.nearbyRouteStat}>
+                              <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                              <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
+                                {Math.round(route.distance_from_user)}m
+                              </Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.nearbyRoutesList}
+                  />
+                </>
+              )}
+            </View>
+          )}
 
         {showControls && (
           <RecordingMapControls
@@ -927,6 +1191,7 @@ export function ActivityRecordingScreen() {
             // Shadow track props
             shadowTrackTitle={selectedShadowTrack?.title || null}
             onClearShadowTrack={handleClearShadowTrack}
+            onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
           />
         )}
         </View>
@@ -1357,8 +1622,21 @@ export function ActivityRecordingScreen() {
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setRouteSelectionModalVisible(false)}
+        transparent={false}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+          {/* Drag handle bar (Android/iOS) - swipe down to close */}
+          <GestureDetector gesture={modalDragGesture}>
+            <TouchableOpacity
+              style={[styles.modalDragHandle, { backgroundColor: colors.cardBackground }]}
+              onPress={() => setRouteSelectionModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.modalDragIndicator, { backgroundColor: colors.border }]} />
+            </TouchableOpacity>
+          </GestureDetector>
+
+          {/* Header with close button */}
           <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {t('recording.selectShadowTrack')}
@@ -1366,11 +1644,13 @@ export function ActivityRecordingScreen() {
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setRouteSelectionModalVisible(false)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="close" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
+          {/* Routes list */}
           <NearbyRoutesList
             routes={nearbyRoutes}
             selectedRouteId={selectedShadowTrack?.id || null}
@@ -1381,6 +1661,19 @@ export function ActivityRecordingScreen() {
             isLoading={loadingRoutes}
             error={routesError}
           />
+
+          {/* Cancel button at bottom (optional, for better UX) */}
+          <View style={[styles.modalFooter, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.modalCancelButton, { backgroundColor: colors.background }]}
+              onPress={() => setRouteSelectionModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.modalCancelButtonText, { color: colors.textSecondary }]}>
+                {t('common.cancel')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1816,6 +2109,16 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
   },
+  modalDragHandle: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  modalDragIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1833,6 +2136,20 @@ const styles = StyleSheet.create({
   },
   modalList: {
     padding: spacing.md,
+  },
+  modalFooter: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+  },
+  modalCancelButton: {
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
   modalSportItem: {
     flexDirection: 'row',
@@ -1901,6 +2218,111 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Nearby Routes Panel (Map View - Idle State)
+  // ─────────────────────────────────────────────────────────────────────────
+  nearbyRoutesPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    maxHeight: 200,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  nearbyRoutesLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  nearbyRoutesLoadingText: {
+    fontSize: fontSize.sm,
+  },
+  nearbyRoutesError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  nearbyRoutesErrorText: {
+    fontSize: fontSize.sm,
+  },
+  nearbyRoutesEmpty: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  nearbyRoutesEmptyText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  nearbyRoutesEmptyDesc: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+  nearbyRoutesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  nearbyRoutesTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    flex: 1,
+  },
+  nearbyRoutesCount: {
+    fontSize: fontSize.xs,
+  },
+  nearbyRoutesList: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  nearbyRouteCard: {
+    width: 180,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginRight: spacing.md,
+    position: 'relative',
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nearbyRouteTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  nearbyRouteStats: {
+    gap: spacing.xs,
+  },
+  nearbyRouteStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  nearbyRouteStatText: {
+    fontSize: fontSize.xs,
   },
 
   // ─────────────────────────────────────────────────────────────────────────

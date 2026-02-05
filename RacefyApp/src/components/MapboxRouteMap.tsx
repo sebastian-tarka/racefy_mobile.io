@@ -96,12 +96,13 @@ export function MapboxRouteMap({
 
   const bounds = getBounds();
 
-  // Fit camera to bounds when map is ready
+  // Fit camera to bounds when map is ready (no animation)
   const fitMapBounds = () => {
     if (bounds && cameraRef.current) {
       logger.debug('gps', 'Fitting map bounds', { bounds });
       setTimeout(() => {
-        cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [40, 40, 40, 40], 500);
+        // Duration = 0 means no animation, instant fit
+        cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [40, 40, 40, 40], 0);
       }, 100);
     }
   };
@@ -183,8 +184,7 @@ export function MapboxRouteMap({
         <MapboxGL.Camera
           ref={cameraRef}
           zoomLevel={initialZoom}
-          animationMode="flyTo"
-          animationDuration={1000}
+          animationMode="none"
         />
 
          {/* Route line - must be rendered first to appear below markers */}

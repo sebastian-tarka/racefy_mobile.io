@@ -68,6 +68,7 @@ interface MapboxLiveMapProps {
   nearbyRoutes?: NearbyRoute[];
   shadowTrack?: GeoJSONLineString | null;
   selectedRouteId?: number | null;
+  onRouteSelect?: (route: NearbyRoute) => void;
 }
 
 /**
@@ -232,8 +233,7 @@ export function MapboxLiveMap({
             ref={cameraRef}
             centerCoordinate={[displayPosition.lng, displayPosition.lat]}
             zoomLevel={15}
-            animationDuration={2000}
-            animationMode="flyTo"
+            animationMode="none"
           />
         )}
 
