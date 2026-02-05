@@ -72,9 +72,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSMotionUsageDescription:
         'Racefy uses motion data to improve activity tracking accuracy.',
       NSCameraUsageDescription:
-        'Racefy needs camera access to take photos for your activities and posts.',
+        'Racefy needs camera access to take photos and videos for your activities and posts.',
+      NSMicrophoneUsageDescription:
+        'Racefy needs microphone access to record audio with videos.',
       NSPhotoLibraryUsageDescription:
-        'Racefy needs photo library access to add photos to your activities and posts.',
+        'Racefy needs photo library access to select photos and videos from your gallery.',
+      NSPhotoLibraryAddUsageDescription:
+        'Racefy needs permission to save photos and videos to your photo library.',
       // Required for background location tracking and push notifications
       UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
     },

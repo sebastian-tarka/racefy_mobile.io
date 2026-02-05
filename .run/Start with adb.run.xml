@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Start with adb" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/RacefyApp/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="start:adb" />
+    </scripts>
+    <node-interpreter value="$USER_HOME$/.nvm/versions/node/v20.19.5/bin/node" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

@@ -34,8 +34,14 @@ const getBaseUrl = (): string => {
       return API_STAGING_URL;
     }
 
-    // Physical device (Expo Go or dev build) - use local IP from .env
+    // Physical device (Expo Go or dev build)
     if (Device.isDevice) {
+      // If LOCAL_IP is 'localhost', use adb reverse mode (requires: adb reverse tcp:PORT tcp:PORT)
+      if (LOCAL_IP === 'localhost') {
+        logger.debug('api', 'Using adb reverse mode for physical device', { port: LOCAL_PORT });
+        return `http://localhost:${LOCAL_PORT}/api`;
+      }
+      // Otherwise use the configured IP from .env
       return `http://${LOCAL_IP}:${LOCAL_PORT}/api`;
     }
     // Emulator/Simulator
@@ -61,6 +67,10 @@ const getStorageBaseUrl = (): string => {
     }
 
     if (Device.isDevice) {
+      // If using adb reverse mode (localhost), use localhost
+      if (LOCAL_IP === 'localhost') {
+        return `http://localhost:${LOCAL_PORT}`;
+      }
       return `http://${LOCAL_IP}:${LOCAL_PORT}`;
     }
     if (Platform.OS === 'android') {

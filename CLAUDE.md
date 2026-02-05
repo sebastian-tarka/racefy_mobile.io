@@ -8,10 +8,13 @@ Racefy Mobile is a React Native/Expo fitness and sports community app. It connec
 
 ## Quick Reference & Shortcuts
 
+**NEW: PHPStorm Users** → See `RacefyApp/QUICKSTART_PHPSTORM.md` for 2-minute setup guide!
+
 ### Most Used Commands
 ```bash
 # Development
-cd RacefyApp && npx expo start          # Start dev server
+cd RacefyApp && npm run start:adb       # Start with adb reverse (recommended for USB devices)
+cd RacefyApp && npx expo start          # Start dev server (standard)
 cd RacefyApp && npm run android         # Run on Android
 
 # Building
@@ -33,6 +36,9 @@ eas env:create --name NAME --value "VALUE" --scope project --type string --visib
 - Theme: `RacefyApp/src/theme/`
 - Translations: `RacefyApp/src/i18n/locales/`
 - UI Patterns: `RacefyApp/docs/UI_PATTERNS.md`
+- Local Dev Network: `RacefyApp/docs/LOCAL_DEV_NETWORK.md`
+- PHPStorm Setup: `RacefyApp/docs/PHPSTORM_SETUP.md`
+- iOS Video Crash Fix: `RacefyApp/docs/IOS_VIDEO_CRASH_FIX.md`
 - Local Build Guide: `RacefyApp/docs/LOCAL_BUILD_SETUP.md`
 - iOS Build Guide: `RacefyApp/docs/IOS_BUILD_GUIDE.md`
 
@@ -50,6 +56,7 @@ Email: demo@racefy.test / Password: password
 
 ```bash
 # Development
+cd RacefyApp && npm run start:adb       # Start with adb reverse (for USB-connected devices)
 cd RacefyApp && npx expo start          # Start Expo dev server
 cd RacefyApp && npx expo start --clear  # Start with cache cleared
 cd RacefyApp && npm run android         # Run on Android emulator
@@ -95,7 +102,8 @@ cd RacefyApp && npx expo install <package>
 **API Configuration**: Platform-aware URL detection in `config/api.ts`:
 - Android Emulator: `http://10.0.2.2:8080/api`
 - iOS Simulator: `http://localhost:8080/api`
-- Physical device: Uses `API_LOCAL_IP` from `.env`
+- Physical device with adb reverse: `http://localhost:8080/api` (when `API_LOCAL_IP=localhost`)
+- Physical device via WiFi: Uses `API_LOCAL_IP` from `.env` (e.g., `http://192.168.1.100:8080/api`)
 
 **API Service** (`services/api.ts`): Single `request<T>(endpoint, options)` method for all API calls:
 - Auto-detects FormData and skips Content-Type header (browser sets it with boundary)
@@ -201,15 +209,31 @@ const { t } = useTranslation();
 
 ## Environment Setup
 
-Copy `.env.example` to `.env` in RacefyApp/ and set your local IP:
-```
-API_LOCAL_IP=your.local.ip
-API_LOCAL_PORT=8080
+Copy `.env.example` to `.env` in RacefyApp/ and configure local API access:
+
+```bash
+# For USB-connected devices (recommended - uses adb reverse)
+API_LOCAL_IP=localhost
+API_LOCAL_PORT=8070
+
+# OR for WiFi-connected devices (use your actual local IP)
+API_LOCAL_IP=192.168.1.100
+API_LOCAL_PORT=8070
+
+# API URLs
 API_STAGING_URL=https://app.dev.racefy.io/api
 API_PRODUCTION_URL=https://api.racefy.app/api
 ```
 
-The Laravel API backend runs via Sail on port 8080.
+**Recommended setup for development:**
+1. Set `API_LOCAL_IP=localhost` in `.env`
+2. Connect device via USB with USB debugging enabled
+3. Run `npm run start:adb` (automatically sets up adb reverse)
+4. Device can now access your local API without network issues
+
+See `docs/LOCAL_DEV_NETWORK.md` for detailed network setup guide.
+
+The Laravel API backend runs via Sail on port 8070.
 
 ## EAS Build & Deployment
 
