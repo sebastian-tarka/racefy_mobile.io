@@ -167,7 +167,7 @@ The app now has a smart fallback system:
 <RoutePreview
   routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}  // Fallback static image
   routeSvg={gpsTrack.route_svg}                         // Fallback SVG
-  trackData={gpsTrack?.track_data}                      // GeoJSON for Mapbox
+  trackData={gpsTrack?.simplified_track}                // Optimized GeoJSON for Mapbox rendering
   height={500}
   enableZoom={true}
 />

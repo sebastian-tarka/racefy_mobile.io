@@ -1205,7 +1205,7 @@ export function ActivityDetailPage() {
         <RoutePreview
           routeMapUrl={fixStorageUrl(activity.gps_track.route_map_url)}
           routeSvg={activity.gps_track.route_svg}
-          trackData={activity.gps_track.track_data}
+          trackData={activity.gps_track.simplified_track}
           activityId={activity.id}
           height={400}
         />

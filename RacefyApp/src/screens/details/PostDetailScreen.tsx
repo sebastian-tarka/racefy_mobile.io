@@ -226,7 +226,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
             <RoutePreview
               routeMapUrl={fixStorageUrl(routeMapUrl)}
               routeSvg={routeSvg}
-              trackData={gpsTrack?.track_data}
+              trackData={gpsTrack?.simplified_track}
               activityId={activity.id}
               height={180}
               backgroundColor={colors.background}

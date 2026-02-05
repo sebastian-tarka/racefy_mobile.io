@@ -309,7 +309,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             <RoutePreview
               routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
               routeSvg={gpsTrack.route_svg}
-              trackData={gpsTrack?.track_data}
+              trackData={gpsTrack?.simplified_track}
               activityId={activity.id}
               height={isMapExpanded ? 500 : 250}
               enableZoom={isMapExpanded}

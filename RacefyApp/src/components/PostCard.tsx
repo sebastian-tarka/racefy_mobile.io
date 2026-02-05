@@ -140,7 +140,7 @@ export function PostCard({
             <RoutePreview
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
-              trackData={activity.gps_track?.track_data}
+              trackData={activity.gps_track?.simplified_track}
               activityId={activity.id}
               height={150}
               backgroundColor={colors.background}
