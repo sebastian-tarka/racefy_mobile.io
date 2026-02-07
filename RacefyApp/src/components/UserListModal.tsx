@@ -14,17 +14,20 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { Avatar } from './Avatar';
 import { EmptyState } from './EmptyState';
+import { Button } from './Button';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
-import type { User } from '../types/api';
+import type { User, FollowRequest } from '../types/api';
+
+type TabType = 'followers' | 'following' | 'requests';
 
 interface UserListModalProps {
   visible: boolean;
   onClose: () => void;
-  title: string;
   userId: number;
-  listType: 'followers' | 'following';
+  initialTab?: TabType;
+  isOwnProfile: boolean;
   onUserPress: (user: User) => void;
   isRestricted?: boolean;
 }
@@ -32,40 +35,116 @@ interface UserListModalProps {
 function UserListModalComponent({
   visible,
   onClose,
-  title,
   userId,
-  listType,
+  initialTab = 'followers',
+  isOwnProfile,
   onUserPress,
   isRestricted = false,
 }: UserListModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [users, setUsers] = useState<User[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [followers, setFollowers] = useState<User[]>([]);
+  const [following, setFollowing] = useState<User[]>([]);
+  const [requests, setRequests] = useState<FollowRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
 
-  const fetchUsers = useCallback(async () => {
+  // Reset to initial tab when modal is opened
+  useEffect(() => {
+    if (visible) {
+      setActiveTab(initialTab);
+    }
+  }, [visible, initialTab]);
+
+  const fetchFollowers = useCallback(async () => {
+    try {
+      const data = await api.getFollowers(userId);
+      setFollowers(data);
+    } catch (err) {
+      logger.error('api', 'Failed to fetch followers', { error: err });
+      throw err;
+    }
+  }, [userId]);
+
+  const fetchFollowing = useCallback(async () => {
+    try {
+      const data = await api.getFollowing(userId);
+      setFollowing(data);
+    } catch (err) {
+      logger.error('api', 'Failed to fetch following', { error: err });
+      throw err;
+    }
+  }, [userId]);
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      const response = await api.getFollowRequests(1);
+      setRequests(response.data);
+    } catch (err) {
+      logger.error('api', 'Failed to fetch follow requests', { error: err });
+      throw err;
+    }
+  }, []);
+
+  const fetchTabData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data =
-        listType === 'followers'
-          ? await api.getFollowers(userId)
-          : await api.getFollowing(userId);
-      setUsers(data);
+      if (activeTab === 'followers') {
+        await fetchFollowers();
+      } else if (activeTab === 'following') {
+        await fetchFollowing();
+      } else if (activeTab === 'requests') {
+        await fetchRequests();
+      }
     } catch (err) {
-      logger.error('api', `Failed to fetch ${listType}`, { error: err });
       setError(t('common.error'));
     } finally {
       setIsLoading(false);
     }
-  }, [userId, listType, t]);
+  }, [activeTab, fetchFollowers, fetchFollowing, fetchRequests, t]);
 
   useEffect(() => {
     if (visible && !isRestricted) {
-      fetchUsers();
+      fetchTabData();
     }
-  }, [visible, isRestricted, fetchUsers]);
+  }, [visible, isRestricted, activeTab, fetchTabData]);
+
+  const handleAcceptRequest = async (request: FollowRequest) => {
+    setProcessingRequestId(request.id);
+    try {
+      await api.acceptFollowRequest(request.id);
+      // Remove from requests list optimistically
+      setRequests(prev => prev.filter(r => r.id !== request.id));
+      logger.info('general', 'Follow request accepted', { requestId: request.id });
+    } catch (err) {
+      logger.error('api', 'Failed to accept follow request', { error: err, requestId: request.id });
+      setError(t('common.error'));
+      // Refetch to restore correct state
+      await fetchRequests();
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
+
+  const handleRejectRequest = async (request: FollowRequest) => {
+    setProcessingRequestId(request.id);
+    try {
+      await api.rejectFollowRequest(request.id);
+      // Remove from requests list optimistically
+      setRequests(prev => prev.filter(r => r.id !== request.id));
+      logger.info('general', 'Follow request rejected', { requestId: request.id });
+    } catch (err) {
+      logger.error('api', 'Failed to reject follow request', { error: err, requestId: request.id });
+      setError(t('common.error'));
+      // Refetch to restore correct state
+      await fetchRequests();
+    } finally {
+      setProcessingRequestId(null);
+    }
+  };
 
   const handleUserPress = (user: User) => {
     onUserPress(user);
@@ -91,19 +170,76 @@ function UserListModalComponent({
     </TouchableOpacity>
   );
 
+  const renderRequestItem = ({ item }: { item: FollowRequest }) => (
+    <View style={[styles.requestItem, { backgroundColor: colors.cardBackground }]}>
+      <TouchableOpacity
+        style={styles.requestUserInfo}
+        onPress={() => handleUserPress(item.follower)}
+        activeOpacity={0.7}
+      >
+        <Avatar uri={item.follower.avatar} name={item.follower.name} size="sm" />
+        <View style={styles.userInfo}>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>
+            {item.follower.name}
+          </Text>
+          <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
+            @{item.follower.username}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      <View style={styles.requestActions}>
+        <Button
+          title={t('profile.accept')}
+          onPress={() => handleAcceptRequest(item)}
+          variant="primary"
+          loading={processingRequestId === item.id}
+          disabled={!!processingRequestId}
+          style={styles.acceptButton}
+        />
+        <Button
+          title={t('profile.reject')}
+          onPress={() => handleRejectRequest(item)}
+          variant="ghost"
+          loading={processingRequestId === item.id}
+          disabled={!!processingRequestId}
+          style={styles.rejectButton}
+        />
+      </View>
+    </View>
+  );
+
   const getEmptyConfig = () => {
-    if (listType === 'followers') {
+    if (activeTab === 'followers') {
       return {
         icon: 'people-outline' as const,
         title: t('profile.followersList.noFollowers'),
         message: t('profile.followersList.noFollowersMessage'),
       };
     }
+    if (activeTab === 'following') {
+      return {
+        icon: 'person-add-outline' as const,
+        title: t('profile.followingList.noFollowing'),
+        message: t('profile.followingList.noFollowingMessage'),
+      };
+    }
     return {
-      icon: 'person-add-outline' as const,
-      title: t('profile.followingList.noFollowing'),
-      message: t('profile.followingList.noFollowingMessage'),
+      icon: 'notifications-outline' as const,
+      title: t('profile.noFollowRequestsYet'),
+      message: '',
     };
+  };
+
+  const getCurrentTabData = () => {
+    if (activeTab === 'followers') return followers;
+    if (activeTab === 'following') return following;
+    return [];
+  };
+
+  const getTitle = () => {
+    if (activeTab === 'followers') return t('profile.followersList.title');
+    if (activeTab === 'following') return t('profile.followingList.title');
+    return t('profile.followRequests');
   };
 
   const renderContent = () => {
@@ -131,20 +267,35 @@ function UserListModalComponent({
           icon="alert-circle-outline"
           title={t('common.error')}
           message={error}
-          actionLabel={t('common.retry')}
-          onAction={fetchUsers}
+          actionLabel={t('common.tryAgain')}
+          onAction={fetchTabData}
         />
       );
     }
 
-    if (users.length === 0) {
+    const currentData = getCurrentTabData();
+    const isEmpty = activeTab === 'requests' ? requests.length === 0 : currentData.length === 0;
+
+    if (isEmpty) {
       const emptyConfig = getEmptyConfig();
       return <EmptyState {...emptyConfig} />;
     }
 
+    if (activeTab === 'requests') {
+      return (
+        <FlatList
+          data={requests}
+          keyExtractor={(item) => `request-${item.id}`}
+          renderItem={renderRequestItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      );
+    }
+
     return (
       <FlatList
-        data={users}
+        data={currentData}
         keyExtractor={(item) => `user-${item.id}`}
         renderItem={renderUserItem}
         contentContainerStyle={styles.listContent}
@@ -152,6 +303,12 @@ function UserListModalComponent({
       />
     );
   };
+
+  const tabs: { value: TabType; label: string }[] = [
+    { value: 'followers', label: t('profile.stats.followers') },
+    { value: 'following', label: t('profile.stats.following') },
+    ...(isOwnProfile ? [{ value: 'requests' as TabType, label: t('profile.requests') }] : []),
+  ];
 
   return (
     <Modal
@@ -174,7 +331,7 @@ function UserListModalComponent({
                 style={[styles.modalHeader, { borderBottomColor: colors.border }]}
               >
                 <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {title}
+                  {getTitle()}
                 </Text>
                 <TouchableOpacity
                   onPress={onClose}
@@ -182,6 +339,37 @@ function UserListModalComponent({
                 >
                   <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
+              </View>
+
+              {/* Tabs */}
+              <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+                {tabs.map((tab) => (
+                  <TouchableOpacity
+                    key={tab.value}
+                    style={[
+                      styles.tab,
+                      activeTab === tab.value && [
+                        styles.activeTab,
+                        { borderBottomColor: colors.primary },
+                      ],
+                    ]}
+                    onPress={() => setActiveTab(tab.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.tabText,
+                        {
+                          color:
+                            activeTab === tab.value
+                              ? colors.primary
+                              : colors.textSecondary,
+                        },
+                      ]}
+                    >
+                      {tab.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
               {renderContent()}
@@ -202,8 +390,8 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '70%',
-    minHeight: 300,
+    maxHeight: '80%',
+    minHeight: 400,
   },
   handleContainer: {
     alignItems: 'center',
@@ -226,6 +414,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '600',
   },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    paddingHorizontal: spacing.md,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+  },
+  tabText: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
   loadingContainer: {
     padding: spacing.xxl,
     alignItems: 'center',
@@ -240,6 +447,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: spacing.xs,
   },
+  requestItem: {
+    flexDirection: 'column',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+  },
+  requestUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
   userInfo: {
     flex: 1,
     marginLeft: spacing.sm,
@@ -250,6 +468,17 @@ const styles = StyleSheet.create({
   },
   userUsername: {
     fontSize: fontSize.sm,
+  },
+  requestActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginLeft: 52, // Avatar width + margin
+  },
+  acceptButton: {
+    flex: 1,
+  },
+  rejectButton: {
+    flex: 1,
   },
 });
 

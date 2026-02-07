@@ -876,14 +876,41 @@ export interface MediaItem {
 
 // ============ FOLLOWS ============
 
+// Follow status value type
+export type FollowStatusValue = 'pending' | 'accepted' | 'rejected' | null;
+
+// Follow request resource
+export interface FollowRequest {
+  id: number;
+  follower: User;
+  following: User;
+  status: 'pending' | 'accepted' | 'rejected';
+  requested_at: string;
+  accepted_at: string | null;
+  rejected_at: string | null;
+}
+
 export interface FollowStatus {
   is_following: boolean;
   is_followed_by: boolean;
+  follow_status: FollowStatusValue;  // New field
+  followed_by_status: FollowStatusValue;  // New field
 }
 
 export interface UserWithFollowCounts extends User {
   followers_count: number;
   following_count: number;
+}
+
+// API list response for follow requests (paginated)
+export interface ApiListResponse<T> {
+  data: T[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 }
 
 // ============ USER BLOCKING ============

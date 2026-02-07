@@ -54,6 +54,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
     isLoading,
     error,
     isFollowing,
+    followStatus,
     isFollowLoading,
     isMessageLoading,
     fetchProfile,
@@ -66,8 +67,8 @@ export function UserProfileScreen({ navigation, route }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Modal state
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -152,9 +153,18 @@ export function UserProfileScreen({ navigation, route }: Props) {
   };
 
   const handleUserNavigation = (user: User) => {
-    setShowFollowersModal(false);
-    setShowFollowingModal(false);
+    setShowFollowModal(false);
     navigation.push('UserProfile', { username: user.username });
+  };
+
+  const handleFollowersPress = () => {
+    setFollowModalTab('followers');
+    setShowFollowModal(true);
+  };
+
+  const handleFollowingPress = () => {
+    setFollowModalTab('following');
+    setShowFollowModal(true);
   };
 
   const handleBlockUser = async () => {
@@ -212,14 +222,15 @@ export function UserProfileScreen({ navigation, route }: Props) {
           isOwnProfile={isOwnProfile}
           isAuthenticated={isAuthenticated}
           isFollowing={isFollowing}
+          followStatus={followStatus}
           isFollowLoading={isFollowLoading}
           isMessageLoading={isMessageLoading}
           canMessage={canMessageUser}
           activeTab={activeTab}
           tabs={tabs}
           onBackPress={() => navigation.goBack()}
-          onFollowersPress={() => setShowFollowersModal(true)}
-          onFollowingPress={() => setShowFollowingModal(true)}
+          onFollowersPress={handleFollowersPress}
+          onFollowingPress={handleFollowingPress}
           onFollowToggle={handleFollowToggle}
           onMessagePress={handleMessagePress}
           onTabChange={setActiveTab}
@@ -378,22 +389,13 @@ export function UserProfileScreen({ navigation, route }: Props) {
       {profile && (
         <>
           <UserListModal
-            visible={showFollowersModal}
-            onClose={() => setShowFollowersModal(false)}
-            title={t('profile.followersList.title')}
+            visible={showFollowModal}
+            onClose={() => setShowFollowModal(false)}
             userId={profile.id}
-            listType="followers"
+            initialTab={followModalTab}
+            isOwnProfile={isOwnProfile}
             onUserPress={handleUserNavigation}
-            isRestricted={!canViewFollowers}
-          />
-          <UserListModal
-            visible={showFollowingModal}
-            onClose={() => setShowFollowingModal(false)}
-            title={t('profile.followingList.title')}
-            userId={profile.id}
-            listType="following"
-            onUserPress={handleUserNavigation}
-            isRestricted={!canViewFollowing}
+            isRestricted={!canViewFollowers && !canViewFollowing}
           />
 
           {!isOwnProfile && isAuthenticated && (

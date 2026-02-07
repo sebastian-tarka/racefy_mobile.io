@@ -8,13 +8,14 @@ import { ProfileStats } from './ProfileStats';
 import { ProfileActions } from './ProfileActions';
 import { ProfileTabs, TabType } from './ProfileTabs';
 import { spacing, fontSize } from '../theme';
-import type { UserProfile } from '../types/api';
+import type { UserProfile, FollowStatusValue } from '../types/api';
 
 interface UserProfileHeaderProps {
   profile: UserProfile;
   isOwnProfile: boolean;
   isAuthenticated: boolean;
   isFollowing: boolean;
+  followStatus?: FollowStatusValue;
   isFollowLoading: boolean;
   isMessageLoading: boolean;
   canMessage: boolean;
@@ -34,6 +35,7 @@ export function UserProfileHeader({
   isOwnProfile,
   isAuthenticated,
   isFollowing,
+  followStatus,
   isFollowLoading,
   isMessageLoading,
   canMessage,
@@ -94,6 +96,7 @@ export function UserProfileHeader({
         {!isOwnProfile && isAuthenticated && (
           <ProfileActions
             isFollowing={isFollowing}
+            followStatus={followStatus}
             isFollowLoading={isFollowLoading}
             isMessageLoading={isMessageLoading}
             canMessage={canMessage}

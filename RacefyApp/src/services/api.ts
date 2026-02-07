@@ -1066,6 +1066,32 @@ class ApiService {
     return response.data;
   }
 
+  async getFollowRequests(page: number = 1): Promise<Types.ApiListResponse<Types.FollowRequest>> {
+    const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
+      `/follow-requests?page=${page}`
+    );
+    return response;
+  }
+
+  async getSentFollowRequests(page: number = 1): Promise<Types.ApiListResponse<Types.FollowRequest>> {
+    const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
+      `/follow-requests/sent?page=${page}`
+    );
+    return response;
+  }
+
+  async acceptFollowRequest(followId: number): Promise<void> {
+    await this.request<void>(`/follow-requests/${followId}/accept`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectFollowRequest(followId: number): Promise<void> {
+    await this.request<void>(`/follow-requests/${followId}/reject`, {
+      method: 'POST',
+    });
+  }
+
   // ============ USER BLOCKING ============
 
   async blockUser(userId: number): Promise<void> {

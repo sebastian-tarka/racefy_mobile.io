@@ -10,8 +10,10 @@ import Constants from 'expo-constants';
 // Get config from app.config.ts extra field
 const extra = Constants.expoConfig?.extra ?? {};
 
+
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-export type LogCategory = 'gps' | 'api' | 'auth' | 'activity' | 'navigation' | 'general' | 'home' | 'training'| 'commentary' | 'media';
+export type LogCategory = 'gps' | 'api' | 'auth' | 'activity' | 'navigation' | 'general' | 'home' | 'training'| 'commentary' | 'media' | 'profile';
 
 // Log level priority (lower = more verbose)
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {

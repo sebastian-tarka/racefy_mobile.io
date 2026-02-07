@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
-import type { UserProfile, ConversationParticipant } from '../types/api';
+import type { UserProfile, ConversationParticipant, FollowStatusValue } from '../types/api';
 
 interface UseUserProfileOptions {
   username: string;
@@ -12,6 +12,7 @@ interface UseUserProfileReturn {
   isLoading: boolean;
   error: string | null;
   isFollowing: boolean;
+  followStatus: FollowStatusValue;
   isFollowLoading: boolean;
   isMessageLoading: boolean;
   fetchProfile: () => Promise<UserProfile | null>;
@@ -24,6 +25,7 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followStatus, setFollowStatus] = useState<FollowStatusValue>(null);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
 
@@ -32,7 +34,19 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
       setError(null);
       const data = await api.getUserByUsername(username);
       setProfile(data);
-      setIsFollowing(data.is_following ?? false);
+
+      // Fetch follow status to get detailed status info
+      try {
+        const status = await api.getFollowStatus(data.id);
+        setIsFollowing(status.is_following);
+        setFollowStatus(status.follow_status ?? null);
+      } catch (statusErr) {
+        // Fallback to is_following from profile if getFollowStatus fails
+        logger.warn('api', 'Failed to fetch follow status, using profile data', { error: statusErr });
+        setIsFollowing(data.is_following ?? false);
+        setFollowStatus(data.is_following ? 'accepted' : null);
+      }
+
       return data;
     } catch (err) {
       logger.error('api', 'Failed to fetch profile:', { err });
@@ -46,25 +60,31 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
 
     setIsFollowLoading(true);
     try {
-      if (isFollowing) {
+      if (followStatus === 'pending') {
+        // Cancel pending request
         await api.unfollowUser(profile.id);
         setIsFollowing(false);
+        setFollowStatus(null);
+      } else if (followStatus === 'accepted' || isFollowing) {
+        // Unfollow accepted follow
+        await api.unfollowUser(profile.id);
+        setIsFollowing(false);
+        setFollowStatus(null);
         setProfile((prev) =>
           prev ? { ...prev, followers_count: prev.followers_count - 1 } : prev
         );
       } else {
+        // Send new follow request
         await api.followUser(profile.id);
-        setIsFollowing(true);
-        setProfile((prev) =>
-          prev ? { ...prev, followers_count: prev.followers_count + 1 } : prev
-        );
+        setFollowStatus('pending');
+        // Don't increment follower count until request is accepted
       }
     } catch (err) {
       logger.error('api', 'Failed to toggle follow:', { err });
     } finally {
       setIsFollowLoading(false);
     }
-  }, [profile, isFollowing]);
+  }, [profile, isFollowing, followStatus]);
 
   const handleStartConversation = useCallback(async () => {
     if (!profile) return null;
@@ -104,6 +124,7 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
     isLoading,
     error,
     isFollowing,
+    followStatus,
     isFollowLoading,
     isMessageLoading,
     fetchProfile,

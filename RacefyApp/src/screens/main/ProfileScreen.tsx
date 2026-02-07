@@ -80,8 +80,8 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [loadingTraining, setLoadingTraining] = useState(false);
 
   // Modal state
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
 
   // Filter state - MUST be declared before dateRange and hooks that use them
   const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
@@ -307,16 +307,17 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   };
 
   const handleFollowersPress = () => {
-    setShowFollowersModal(true);
+    setFollowModalTab('followers');
+    setShowFollowModal(true);
   };
 
   const handleFollowingPress = () => {
-    setShowFollowingModal(true);
+    setFollowModalTab('following');
+    setShowFollowModal(true);
   };
 
   const handleUserNavigation = (selectedUser: User) => {
-    setShowFollowersModal(false);
-    setShowFollowingModal(false);
+    setShowFollowModal(false);
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
 
@@ -738,24 +739,14 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       </View>
 
       {user && (
-        <>
-          <UserListModal
-            visible={showFollowersModal}
-            onClose={() => setShowFollowersModal(false)}
-            title={t('profile.followersList.title')}
-            userId={user.id}
-            listType="followers"
-            onUserPress={handleUserNavigation}
-          />
-          <UserListModal
-            visible={showFollowingModal}
-            onClose={() => setShowFollowingModal(false)}
-            title={t('profile.followingList.title')}
-            userId={user.id}
-            listType="following"
-            onUserPress={handleUserNavigation}
-          />
-        </>
+        <UserListModal
+          visible={showFollowModal}
+          onClose={() => setShowFollowModal(false)}
+          userId={user.id}
+          initialTab={followModalTab}
+          isOwnProfile={true}
+          onUserPress={handleUserNavigation}
+        />
       )}
     </SafeAreaView>
   );

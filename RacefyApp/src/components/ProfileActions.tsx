@@ -3,9 +3,11 @@ import { View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { spacing } from '../theme';
+import type { FollowStatusValue } from '../types/api';
 
 interface ProfileActionsProps {
   isFollowing: boolean;
+  followStatus?: FollowStatusValue;
   isFollowLoading: boolean;
   isMessageLoading: boolean;
   canMessage: boolean;
@@ -15,6 +17,7 @@ interface ProfileActionsProps {
 
 export function ProfileActions({
   isFollowing,
+  followStatus,
   isFollowLoading,
   isMessageLoading,
   canMessage,
@@ -23,12 +26,25 @@ export function ProfileActions({
 }: ProfileActionsProps) {
   const { t } = useTranslation();
 
+  // Determine button state based on follow_status
+  const getFollowButtonState = () => {
+    if (followStatus === 'pending') {
+      return { title: t('profile.requested'), variant: 'outline' as const };
+    }
+    if (followStatus === 'accepted' || isFollowing) {
+      return { title: t('profile.unfollow'), variant: 'outline' as const };
+    }
+    return { title: t('profile.follow'), variant: 'primary' as const };
+  };
+
+  const followButtonState = getFollowButtonState();
+
   return (
     <View style={styles.actions}>
       <Button
-        title={isFollowing ? t('profile.unfollow') : t('profile.follow')}
+        title={followButtonState.title}
         onPress={onFollowToggle}
-        variant={isFollowing ? 'outline' : 'primary'}
+        variant={followButtonState.variant}
         loading={isFollowLoading}
         style={styles.followButton}
       />
