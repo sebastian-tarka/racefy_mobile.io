@@ -213,9 +213,8 @@ function AuthNavigator() {
   );
 }
 
-// Tab bar constants for layout calculations
-export const TAB_BAR_HEIGHT = 58;
-export const TAB_BAR_BOTTOM_MARGIN = 16;
+// Tab bar constants for layout calculations (imported from constants.ts to avoid circular deps)
+export { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from './constants';
 
 // Animated Tab Icon wrapper for smooth transitions (Classic Nav)
 function AnimatedTabIcon({ iconName, focused, size, color }: {

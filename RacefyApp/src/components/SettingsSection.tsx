@@ -6,18 +6,11 @@ import {
   StyleSheet,
   Animated,
   LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { spacing, fontSize } from '../theme';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface SettingsSectionProps {
   title: string;

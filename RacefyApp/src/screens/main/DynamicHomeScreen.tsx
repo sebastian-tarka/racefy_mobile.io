@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
 import type { TrainingTip } from '../../types/api';
-import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../../navigation/AppNavigator';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../../navigation/constants';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';

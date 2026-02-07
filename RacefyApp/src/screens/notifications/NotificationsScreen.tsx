@@ -89,8 +89,8 @@ export function NotificationsScreen({ navigation }: Props) {
   }, [hasMore, loading, loadNotifications]);
 
   const navigateToUrl = useCallback(
-    (url: string) => {
-      logger.nav('Navigating from notification', { url });
+    (url: string, fallbackData?: Notification['data']['data']) => {
+      logger.nav('Navigating from notification', { url, fallbackData });
       try {
         // Profile: /@username
         if (url.startsWith('/@')) {
@@ -101,8 +101,9 @@ export function NotificationsScreen({ navigation }: Props) {
         // Post detail: /posts/{id}
         else if (url.startsWith('/posts/')) {
           const postId = parseInt(url.split('/')[2]);
-          logger.nav('Opening post detail', { postId });
-          navigation.navigate('PostDetail', { postId });
+          const focusComments = url.includes('#comments') || url.includes('?comments=true');
+          logger.nav('Opening post detail', { postId, focusComments });
+          navigation.navigate('PostDetail', { postId, focusComments });
         }
         // Activity detail: /activities/{id}
         else if (url.startsWith('/activities/')) {
@@ -129,6 +130,49 @@ export function NotificationsScreen({ navigation }: Props) {
         }
       } catch (error) {
         logger.error('navigation', 'Failed to navigate from notification', { error, url });
+
+        // Try fallback navigation using notification data
+        if (fallbackData) {
+          logger.info('navigation', 'Attempting fallback navigation', { fallbackData });
+          try {
+            // Handle likes, comments, and other reactions
+            if (fallbackData.likeable_type === 'post' && fallbackData.likeable_id) {
+              navigation.navigate('PostDetail', { postId: fallbackData.likeable_id });
+              return;
+            }
+            if (fallbackData.likeable_type === 'activity' && fallbackData.likeable_id) {
+              navigation.navigate('ActivityDetail', { activityId: fallbackData.likeable_id });
+              return;
+            }
+            if (fallbackData.likeable_type === 'comment' && fallbackData.post_id) {
+              navigation.navigate('PostDetail', { postId: fallbackData.post_id, focusComments: true });
+              return;
+            }
+            if (fallbackData.commentable_type === 'post' && fallbackData.commentable_id) {
+              navigation.navigate('PostDetail', { postId: fallbackData.commentable_id, focusComments: true });
+              return;
+            }
+            if (fallbackData.commentable_type === 'activity' && fallbackData.commentable_id) {
+              navigation.navigate('ActivityDetail', { activityId: fallbackData.commentable_id });
+              return;
+            }
+            if (fallbackData.post_id) {
+              navigation.navigate('PostDetail', { postId: fallbackData.post_id });
+              return;
+            }
+            if (fallbackData.activity_id) {
+              navigation.navigate('ActivityDetail', { activityId: fallbackData.activity_id });
+              return;
+            }
+            if (fallbackData.event_id) {
+              navigation.navigate('EventDetail', { eventId: fallbackData.event_id });
+              return;
+            }
+          } catch (fallbackError) {
+            logger.error('navigation', 'Fallback navigation also failed', { error: fallbackError });
+          }
+        }
+
         Alert.alert(t('common.error'), t('notifications.navigationError'));
       }
     },
@@ -140,8 +184,10 @@ export function NotificationsScreen({ navigation }: Props) {
       logger.info('navigation', 'Notification pressed', {
         id: notification.id,
         type: notification.type,
+        data: notification.data?.data,
       });
       const url = notification.data?.data?.url;
+      const notificationData = notification.data?.data;
 
       // Mark as read
       if (!notification.read_at) {
@@ -165,14 +211,19 @@ export function NotificationsScreen({ navigation }: Props) {
         }
       }
 
-      // Navigate if URL exists
+      // Navigate if URL exists, pass notification data for fallback
       if (url) {
-        navigateToUrl(url);
+        navigateToUrl(url, notificationData);
       } else {
-        logger.warn('navigation', 'Notification has no URL', {
+        logger.warn('navigation', 'Notification has no URL, attempting fallback navigation', {
           notificationId: notification.id,
           type: notification.type,
+          data: notificationData,
         });
+        // Try fallback navigation even without URL
+        if (notificationData) {
+          navigateToUrl('', notificationData);
+        }
       }
     },
     [markAsRead, navigateToUrl]
