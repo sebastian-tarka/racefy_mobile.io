@@ -122,8 +122,8 @@ export function AutoPlayVideo({
         style={styles.video}
         nativeControls={false}
         contentFit="cover"
-        allowsFullscreen={false}
         allowsPictureInPicture={false}
+        fullscreenOptions={{ enable: false }}
       />
 
       {/* Overlay controls */}
