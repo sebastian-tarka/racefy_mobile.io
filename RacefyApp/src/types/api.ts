@@ -124,6 +124,7 @@ export interface UserPreferences {
   activity_defaults: {
     visibility: 'public' | 'followers' | 'private';
     auto_share: boolean;
+    favorite_sport_id: number | null;
   };
   ai_posts: AiPostsPreferences;
 }

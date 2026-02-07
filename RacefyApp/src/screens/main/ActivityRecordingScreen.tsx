@@ -175,12 +175,35 @@ export function ActivityRecordingScreen() {
     return distanceMilestones.find(m => !m.achieved && !passedMilestones.includes(m.threshold));
   }, [distanceMilestones, passedMilestones]);
 
-  // Set default sport
+  // Set default sport from user preferences or fallback to first sport
   useEffect(() => {
-    if (sportTypes.length > 0 && !selectedSport) {
-      setSelectedSport(sportTypes[0]);
-    }
-  }, [sportTypes, selectedSport]);
+    const setDefaultSport = async () => {
+      if (sportTypes.length > 0 && !selectedSport && !sportsLoading) {
+        try {
+          // Try to get favorite sport from user preferences if authenticated
+          if (isAuthenticated) {
+            const preferences = await api.getPreferences();
+            const favoriteSportId = preferences.activity_defaults.favorite_sport_id;
+
+            if (favoriteSportId) {
+              const favoriteSport = sportTypes.find(s => s.id === favoriteSportId);
+              if (favoriteSport) {
+                setSelectedSport(favoriteSport);
+                return;
+              }
+            }
+          }
+        } catch (error) {
+          logger.debug('activity', 'Failed to load favorite sport preference, using fallback', { error });
+        }
+
+        // Fallback to first sport if no favorite or not authenticated
+        setSelectedSport(sportTypes[0]);
+      }
+    };
+
+    setDefaultSport();
+  }, [sportTypes, selectedSport, sportsLoading, isAuthenticated]);
 
   // Load active week for suggested activities
   useEffect(() => {

@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Modal,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +21,7 @@ import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, D
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
+import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { changeLanguage } from '../../i18n';
@@ -155,6 +159,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   activity_defaults: {
     visibility: 'public',
     auto_share: true,
+    favorite_sport_id: null,
   },
   ai_posts: {
     enabled: false,
@@ -191,6 +196,10 @@ export function SettingsScreen({ navigation }: Props) {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Sport types and favorite sport modal
+  const { sportTypes, isLoading: sportsLoading } = useSportTypes();
+  const [showSportModal, setShowSportModal] = useState(false);
 
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
@@ -510,6 +519,22 @@ export function SettingsScreen({ navigation }: Props) {
     return order[(currentIndex + 1) % order.length];
   };
 
+  const getFavoriteSportLabel = () => {
+    const sportId = preferences.activity_defaults.favorite_sport_id;
+    if (!sportId) return t('settings.noSportSelected');
+    const sport = sportTypes.find(s => s.id === sportId);
+    return sport?.name || t('settings.noSportSelected');
+  };
+
+  const handleSelectFavoriteSport = async (sport: SportTypeWithIcon | null) => {
+    try {
+      await updateNestedPreference('activity_defaults', 'favorite_sport_id', sport?.id || null);
+      setShowSportModal(false);
+      triggerHaptic();
+    } catch (error) {
+      logger.error('general', 'Failed to update favorite sport', { error });
+    }
+  };
 
   logger.debug('auth', 'Current user role', { role: user?.role });
 
@@ -799,6 +824,12 @@ export function SettingsScreen({ navigation }: Props) {
           onToggle={() => toggleSection('activityDefaults')}
         >
           <SettingsRow
+            icon="fitness-outline"
+            label={t('settings.favoriteSport')}
+            value={sportsLoading ? t('common.loading') : getFavoriteSportLabel()}
+            onPress={() => !sportsLoading && setShowSportModal(true)}
+          />
+          <SettingsRow
             icon="globe-outline"
             label={t('settings.defaultVisibility')}
             value={getVisibilityLabel(preferences.activity_defaults.visibility)}
@@ -893,6 +924,64 @@ export function SettingsScreen({ navigation }: Props) {
           )}
         </SettingsSection>
       </ScrollView>
+
+      {/* Sport Selection Modal */}
+      <Modal
+        visible={showSportModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowSportModal(false)}
+      >
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => setShowSportModal(false)} style={styles.modalCloseButton}>
+              <Ionicons name="close" size={28} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.selectFavoriteSport')}</Text>
+            <View style={styles.modalHeaderSpacer} />
+          </View>
+          {sportsLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                {t('common.loading')}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={[{ id: null, name: t('settings.noSportSelected'), slug: 'none', icon: 'close-circle-outline' as keyof typeof Ionicons.glyphMap, is_active: true }, ...sportTypes]}
+              keyExtractor={(item) => item.id?.toString() || 'none'}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.sportItem,
+                    { borderBottomColor: colors.border },
+                    preferences.activity_defaults.favorite_sport_id === item.id && { backgroundColor: colors.primaryLight }
+                  ]}
+                  onPress={() => handleSelectFavoriteSport(item.id ? item as SportTypeWithIcon : null)}
+                >
+                  <Ionicons
+                    name={item.icon}
+                    size={24}
+                    color={preferences.activity_defaults.favorite_sport_id === item.id ? colors.primary : colors.textSecondary}
+                    style={styles.sportIcon}
+                  />
+                  <Text style={[
+                    styles.sportName,
+                    { color: preferences.activity_defaults.favorite_sport_id === item.id ? colors.primary : colors.textPrimary }
+                  ]}>
+                    {item.name}
+                  </Text>
+                  {preferences.activity_defaults.favorite_sport_id === item.id && (
+                    <Ionicons name="checkmark" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.sportList}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1014,5 +1103,58 @@ const styles = StyleSheet.create({
   copyrightText: {
     fontSize: fontSize.xs,
     marginTop: spacing.xs,
+  },
+  // Sport selection modal styles
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  },
+  modalCloseButton: {
+    padding: spacing.xs,
+    width: 44,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+  },
+  modalHeaderSpacer: {
+    width: 44,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxxl,
+  },
+  loadingText: {
+    fontSize: fontSize.md,
+    marginTop: spacing.md,
+  },
+  sportList: {
+    paddingBottom: spacing.xl,
+  },
+  sportItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+  },
+  sportIcon: {
+    marginRight: spacing.md,
+  },
+  sportName: {
+    flex: 1,
+    fontSize: fontSize.md,
+    fontWeight: '500',
   },
 });
