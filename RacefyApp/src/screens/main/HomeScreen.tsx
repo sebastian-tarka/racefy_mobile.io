@@ -8,6 +8,7 @@ import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { api } from '../../services/api';
+import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
@@ -46,7 +47,10 @@ export function HomeScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refresh: refreshNotifications } = useNotifications();
+
+  // Listen for notification refresh events
+  useRefreshOn('notifications', refreshNotifications);
 
   // Use new unified home data hook
   const {

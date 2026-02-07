@@ -20,6 +20,7 @@ import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import { api } from '../../services/api';
 import { homeAnalytics } from '../../services/homeAnalytics';
 import { navigateForCtaActionFromTab } from '../../utils/homeNavigation';
+import { useRefreshOn } from '../../services/refreshEvents';
 
 // Theme
 import { spacing } from '../../theme';
@@ -69,9 +70,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refresh: refreshNotifications } = useNotifications();
   const weeklyStreakData = useWeeklyStreak();
   const insets = useSafeAreaInsets();
+
+  // Listen for notification refresh events
+  useRefreshOn('notifications', refreshNotifications);
 
   // Calculate padding to prevent content from being hidden under floating tab bar
   const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;

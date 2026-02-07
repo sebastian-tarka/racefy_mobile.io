@@ -19,6 +19,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useNotifications } from '../../hooks/useNotifications';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh } from '../../services/refreshEvents';
 import { spacing } from '../../theme';
 import type { Notification } from '../../types/api';
 
@@ -154,6 +155,8 @@ export function NotificationsScreen({ navigation }: Props) {
                 : n
             )
           );
+          // Emit refresh event so badge updates immediately
+          emitRefresh('notifications');
         } catch (error) {
           logger.error('navigation', 'Failed to mark notification as read', {
             error,
@@ -192,6 +195,8 @@ export function NotificationsScreen({ navigation }: Props) {
                 prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
               );
               refreshUnreadCount();
+              // Emit refresh event so badge updates immediately
+              emitRefresh('notifications');
               logger.info('navigation', 'Marked all notifications as read');
             } catch (error) {
               logger.error('navigation', 'Failed to mark all notifications as read', { error });
