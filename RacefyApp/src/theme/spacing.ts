@@ -1,11 +1,13 @@
+import { ms } from './scale';
+
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
+  xs: ms(4),
+  sm: ms(8),
+  md: ms(12),
+  lg: ms(16),
+  xl: ms(20),
+  xxl: ms(24),
+  xxxl: ms(32),
 };
 
 export const borderRadius = {
@@ -17,14 +19,14 @@ export const borderRadius = {
 };
 
 export const fontSize = {
-  xs: 10,
-  sm: 12,
-  md: 14,
-  lg: 16,
-  xl: 18,
-  xxl: 20,
-  xxxl: 24,
-  title: 28,
+  xs: ms(10),
+  sm: ms(12),
+  md: ms(14),
+  lg: ms(16),
+  xl: ms(18),
+  xxl: ms(20),
+  xxxl: ms(24),
+  title: ms(28),
 };
 
 export const fontWeight = {
@@ -35,9 +37,9 @@ export const fontWeight = {
 };
 
 export const avatarSizes = {
-  sm: 32,
-  md: 40,
-  lg: 48,
-  xl: 64,
-  xxl: 80,
+  sm: ms(32),
+  md: ms(40),
+  lg: ms(48),
+  xl: ms(64),
+  xxl: ms(80),
 };

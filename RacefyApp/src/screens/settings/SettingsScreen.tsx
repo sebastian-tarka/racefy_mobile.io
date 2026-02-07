@@ -956,7 +956,7 @@ export function SettingsScreen({ navigation }: Props) {
                   style={[
                     styles.sportItem,
                     { borderBottomColor: colors.border },
-                    preferences.activity_defaults.favorite_sport_id === item.id && { backgroundColor: colors.primaryLight }
+                    preferences.activity_defaults.favorite_sport_id === item.id && { backgroundColor: colors.successLight }
                   ]}
                   onPress={() => handleSelectFavoriteSport(item.id ? item as SportTypeWithIcon : null)}
                 >
