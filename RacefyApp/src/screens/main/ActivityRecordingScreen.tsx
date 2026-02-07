@@ -85,6 +85,18 @@ export function ActivityRecordingScreen() {
   // View mode state (stats vs map)
   const [viewMode, setViewMode] = useState<'stats' | 'map'>('stats');
 
+  // Nearby routes visibility toggle (default hidden)
+  const [showNearbyRoutesToggle, setShowNearbyRoutesToggle] = useState(false);
+
+  // Map style selection
+  type MapStyleType = 'outdoors' | 'streets' | 'satellite';
+  const [mapStyle, setMapStyle] = useState<MapStyleType>('outdoors');
+  const [showStyleToast, setShowStyleToast] = useState(false);
+  const styleToastOpacity = useRef(new Animated.Value(0)).current;
+
+  // Animation for toggle buttons position
+  const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
+
   // Shadow track and nearby routes state
   const [nearbyRoutes, setNearbyRoutes] = useState<Array<any>>([]);
   const [selectedShadowTrack, setSelectedShadowTrack] = useState<any | null>(null);
@@ -258,6 +270,69 @@ export function ActivityRecordingScreen() {
         .catch(() => {});
     }
   }, [viewMode, isTracking, isPaused]);
+
+  // Reset routes toggle when leaving idle map view
+  useEffect(() => {
+    const isIdleMapView = !isTracking && !isPaused && viewMode === 'map';
+
+    if (!isIdleMapView && showNearbyRoutesToggle) {
+      // Hide routes panel when switching away from idle map view
+      setShowNearbyRoutesToggle(false);
+    }
+  }, [isTracking, isPaused, viewMode, showNearbyRoutesToggle]);
+
+  // Animate toggle buttons position when routes panel visibility changes
+  useEffect(() => {
+    // Only animate when in idle map view
+    const isIdleMapView = !isTracking && !isPaused && viewMode === 'map';
+
+    if (isIdleMapView) {
+      // When routes panel is visible, move buttons up above it
+      // Just enough to clear the panel with spacing.lg margin
+      const targetPosition = showNearbyRoutesToggle ? -140 : 0;
+
+      Animated.spring(toggleButtonsPosition, {
+        toValue: targetPosition,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+    } else {
+      // Reset to 0 immediately when leaving idle map view
+      Animated.timing(toggleButtonsPosition, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isTracking, isPaused, showNearbyRoutesToggle, viewMode, toggleButtonsPosition]);
+
+  // Show toast when map style changes
+  useEffect(() => {
+    if (viewMode === 'map') {
+      setShowStyleToast(true);
+
+      // Fade in
+      Animated.timing(styleToastOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+
+      // Auto-hide after 2 seconds
+      const timer = setTimeout(() => {
+        Animated.timing(styleToastOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowStyleToast(false);
+        });
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [mapStyle, viewMode, styleToastOpacity]);
 
   // Fetch preview location BEFORE showing map view (to avoid zoom effect)
   useEffect(() => {
@@ -554,6 +629,17 @@ export function ActivityRecordingScreen() {
     } finally {
       isFinishingRef.current = false;
     }
+  };
+
+  const handleMapStyleToggle = () => {
+    const styles: MapStyleType[] = ['outdoors', 'streets', 'satellite'];
+    const currentIndex = styles.indexOf(mapStyle);
+    const nextIndex = (currentIndex + 1) % styles.length;
+    const nextStyle = styles[nextIndex];
+
+    setMapStyle(nextStyle);
+    triggerHaptic();
+    logger.info('activity', 'Map style changed', { from: mapStyle, to: nextStyle });
   };
 
   const handleDiscard = async () => {
@@ -863,7 +949,8 @@ export function ActivityRecordingScreen() {
   const renderMapView = () => {
     // Show controls only during recording/paused (not in idle preview)
     const showControls = isTracking || isPaused;
-    const showNearbyRoutes = !isTracking && !isPaused;
+    // Show nearby routes in idle state AND if toggle is enabled
+    const showNearbyRoutes = !isTracking && !isPaused && showNearbyRoutesToggle;
 
     // Use tracking position if available, otherwise use preview location
     const displayPosition = currentPosition || previewLocation;
@@ -913,7 +1000,8 @@ export function ActivityRecordingScreen() {
       }
 
       // Create stable key for map view to prevent layer conflicts
-      const mapKey = `map-${showControls ? 'recording' : 'idle'}-${isDark ? 'dark' : 'light'}`;
+      // Include mapStyle so map re-renders when style changes
+      const mapKey = `map-${showControls ? 'recording' : 'idle'}-${isDark ? 'dark' : 'light'}-${mapStyle}`;
 
       return (
         <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -921,7 +1009,17 @@ export function ActivityRecordingScreen() {
           <MapboxGL.MapView
             key={mapKey}
             style={{ flex: 1 }}
-            styleURL={isDark ? 'mapbox://styles/mapbox/navigation-night-v1' : MapboxGL.StyleURL.Outdoors}
+            styleURL={
+              mapStyle === 'satellite'
+                ? MapboxGL.StyleURL.Satellite
+                : mapStyle === 'streets'
+                ? isDark
+                  ? 'mapbox://styles/mapbox/navigation-night-v1'
+                  : MapboxGL.StyleURL.Street
+                : isDark
+                ? 'mapbox://styles/mapbox/dark-v11'
+                : MapboxGL.StyleURL.Outdoors
+            }
             logoEnabled={false}
             attributionEnabled={false}
           >
@@ -1540,17 +1638,108 @@ export function ActivityRecordingScreen() {
 
       {renderLoadingOverlay()}
 
-      {/* View toggle button - visible for GPS-enabled activities only */}
-      {/* Show in idle state (preview), recording, and paused */}
+      {/* View toggle buttons - visible for GPS-enabled activities only */}
+      {/* Animated container to move buttons above routes panel */}
       {gpsProfile?.enabled && (
-        <ViewToggleButton
-          currentView={viewMode}
-          onToggle={() => {
-            const newMode = viewMode === 'stats' ? 'map' : 'stats';
-            logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
-            setViewMode(newMode);
+        <Animated.View
+          style={{
+            transform: [{ translateY: toggleButtonsPosition }],
           }}
-        />
+        >
+          <ViewToggleButton
+            currentView={viewMode}
+            onToggle={() => {
+              const newMode = viewMode === 'stats' ? 'map' : 'stats';
+              logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
+              setViewMode(newMode);
+            }}
+          />
+
+          {/* Nearby routes toggle - only visible in idle state and map view */}
+          {!isTracking && !isPaused && viewMode === 'map' && (
+            <View style={styles.routesToggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.routesToggleButton,
+                  {
+                    backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground,
+                  },
+                ]}
+                onPress={() => {
+                  const newValue = !showNearbyRoutesToggle;
+                  logger.info('activity', 'Toggling nearby routes', { show: newValue });
+                  setShowNearbyRoutesToggle(newValue);
+                  triggerHaptic();
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel={t('recording.routes')}
+              >
+                <Ionicons
+                  name={showNearbyRoutesToggle ? 'map' : 'map-outline'}
+                  size={28}
+                  color={showNearbyRoutesToggle ? '#fff' : colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Map style toggle - only visible in map view */}
+          {viewMode === 'map' && (
+            <View style={styles.mapStyleToggleContainer}>
+              <TouchableOpacity
+                style={[styles.mapStyleToggleButton, { backgroundColor: colors.cardBackground }]}
+                onPress={handleMapStyleToggle}
+                activeOpacity={0.7}
+                accessibilityLabel={t('recording.mapStyle')}
+              >
+                <Ionicons
+                  name={
+                    mapStyle === 'satellite'
+                      ? 'globe-outline'
+                      : mapStyle === 'streets'
+                      ? 'car-outline'
+                      : 'trail-sign-outline'
+                  }
+                  size={28}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </Animated.View>
+      )}
+
+      {/* Map style toast notification */}
+      {showStyleToast && viewMode === 'map' && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.border,
+              opacity: styleToastOpacity,
+            },
+          ]}
+        >
+          <Ionicons
+            name={
+              mapStyle === 'satellite'
+                ? 'globe'
+                : mapStyle === 'streets'
+                ? 'car'
+                : 'trail-sign'
+            }
+            size={20}
+            color={colors.primary}
+          />
+          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
+            {mapStyle === 'satellite'
+              ? t('recording.mapStyleSatellite')
+              : mapStyle === 'streets'
+              ? t('recording.mapStyleStreets')
+              : t('recording.mapStyleOutdoors')}
+          </Text>
+        </Animated.View>
       )}
 
       {/* Sport Selection Modal */}
@@ -2393,6 +2582,70 @@ const styles = StyleSheet.create({
   },
   suggestedActivityMetricText: {
     fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+
+  // Nearby routes toggle container and button (matching ViewToggleButton style)
+  routesToggleContainer: {
+    position: 'absolute',
+    bottom: spacing.xxl + 70, // Position above ViewToggleButton
+    right: spacing.lg,
+  },
+  routesToggleButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+
+  // Map style toggle container and button
+  mapStyleToggleContainer: {
+    position: 'absolute',
+    bottom: spacing.xxl + 140, // Position above routes toggle
+    right: spacing.lg,
+  },
+  mapStyleToggleButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+
+  // Map style toast notification
+  mapStyleToast: {
+    position: 'absolute',
+    top: 100,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 2000,
+  },
+  mapStyleToastText: {
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 });
