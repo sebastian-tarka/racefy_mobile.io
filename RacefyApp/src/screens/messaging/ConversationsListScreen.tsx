@@ -15,6 +15,7 @@ import { Avatar, EmptyState, Loading, ScreenHeader } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -36,6 +37,9 @@ export function ConversationsListScreen({ navigation }: Props) {
     loadMore,
     deleteConversation,
   } = useConversations();
+
+  // Listen for message refresh events to update conversation list
+  useRefreshOn('messages', refresh);
 
   useEffect(() => {
     if (isAuthenticated) {

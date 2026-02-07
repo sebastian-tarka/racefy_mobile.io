@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { emitRefresh } from '../services/refreshEvents';
 import type { Message } from '../types/api';
 
 export function useMessages(conversationId: number) {
@@ -26,6 +27,8 @@ export function useMessages(conversationId: number) {
       api.markConversationAsRead(conversationId).catch(() => {
         // Ignore errors for marking as read
       });
+      // Emit refresh event so badge updates immediately
+      emitRefresh('messages');
     } catch (err) {
       logger.error('api', 'Failed to fetch messages', { error: err });
       setError('Failed to load messages');
@@ -76,6 +79,8 @@ export function useMessages(conversationId: number) {
           );
           if (hasNewFromOthers) {
             api.markConversationAsRead(conversationId).catch(() => {});
+            // Emit refresh event so badge updates immediately
+            emitRefresh('messages');
           }
         }
       }

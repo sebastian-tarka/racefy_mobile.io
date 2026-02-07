@@ -61,7 +61,7 @@ export function FeedScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { user, isAuthenticated } = useAuth();
-  const { count: unreadCount } = useUnreadCount();
+  const { count: unreadCount, refresh: refreshUnreadCount } = useUnreadCount();
   const {
     posts,
     isLoading,
@@ -76,6 +76,7 @@ export function FeedScreen({ navigation, route }: Props) {
   } = useFeed();
 
   useRefreshOn('feed', refresh);
+  useRefreshOn('messages', refreshUnreadCount);
 
   // Pause all videos when navigating away from this screen
   useVideoPauseOnBlur();
