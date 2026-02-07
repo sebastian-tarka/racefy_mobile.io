@@ -9,7 +9,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-native';
 import * as Location from 'expo-location';
-import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
 import type { GpsPoint, GeoJSONLineString } from '../types/api';
@@ -53,7 +52,10 @@ export interface NearbyRoute {
   created_at: string;
 }
 
-interface MapboxLiveMapProps {
+/** Map style options for Mapbox */
+export type MapStyleType = 'outdoors' | 'streets' | 'satellite';
+
+export interface MapboxLiveMapProps {
   livePoints: GpsPoint[];
   currentPosition: {
     lat: number;
@@ -63,6 +65,9 @@ interface MapboxLiveMapProps {
   gpsSignalQuality: 'good' | 'weak' | 'lost' | 'disabled';
   onMapReady?: () => void;
   followUser?: boolean;
+
+  // Map style (outdoors/streets/satellite)
+  mapStyle?: MapStyleType;
 
   // Shadow track feature
   nearbyRoutes?: NearbyRoute[];
@@ -82,6 +87,7 @@ export function MapboxLiveMap({
   gpsSignalQuality,
   onMapReady,
   followUser = true,
+  mapStyle: mapStyleProp = 'outdoors',
   nearbyRoutes,
   shadowTrack,
   selectedRouteId,
@@ -130,12 +136,8 @@ export function MapboxLiveMap({
     };
   }, [livePoints.length]);
 
-  // Track map load for analytics
-  useEffect(() => {
-    if (displayPosition && mapboxAvailable) {
-      mapboxAnalytics.trackMapLoad(0);
-    }
-  }, [!!displayPosition, mapboxAvailable]);
+  // Note: Map load analytics tracked by parent when activityId is available
+  // No trackMapLoad(0) call here - activityId 0 is invalid and API rejects it
 
   // Validate nearby routes have proper track_data
   const validNearbyRoutes = useMemo(() => {
@@ -178,10 +180,23 @@ export function MapboxLiveMap({
     onMapReady?.();
   };
 
-  // Select map style based on theme
-  const mapStyle = isDark
-    ? 'mapbox://styles/mapbox/navigation-night-v1'
-    : (MapboxGL.StyleURL?.Outdoors || 'mapbox://styles/mapbox/outdoors-v12');
+  // Select map style URL based on prop and theme
+  const getStyleURL = (): string => {
+    if (mapStyleProp === 'satellite') {
+      return MapboxGL.StyleURL?.Satellite || 'mapbox://styles/mapbox/satellite-v9';
+    }
+    if (mapStyleProp === 'streets') {
+      return isDark
+        ? 'mapbox://styles/mapbox/navigation-night-v1'
+        : (MapboxGL.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v12');
+    }
+    // outdoors (default)
+    return isDark
+      ? 'mapbox://styles/mapbox/dark-v11'
+      : (MapboxGL.StyleURL?.Outdoors || 'mapbox://styles/mapbox/outdoors-v12');
+  };
+
+  const mapStyleURL = getStyleURL();
 
   // GPS signal indicator color
   const getSignalColor = (): string => {
@@ -198,7 +213,8 @@ export function MapboxLiveMap({
 
   // Theme-aware colors
   const routeColor = isDark ? '#34d399' : colors.primary;
-  const shadowTrackColor = isDark ? '#FFFFFF' : '#999999';
+  const shadowTrackBorderColor = isDark ? '#1E3A8A' : '#1E40AF';
+  const shadowTrackMainColor = isDark ? '#60A5FA' : '#3B82F6';
 
   // Show loading state while waiting for location
   if (!displayPosition) {
@@ -217,9 +233,9 @@ export function MapboxLiveMap({
   return (
     <View style={[styles.container, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
       <MapboxGL.MapView
-        key={`mapbox-live-${isDark ? 'dark' : 'light'}`}
+        key={`mapbox-live-${isDark ? 'dark' : 'light'}-${mapStyleProp}`}
         style={styles.map}
-        styleURL={mapStyle}
+        styleURL={mapStyleURL}
         logoEnabled={false}
         attributionEnabled={false}
         compassEnabled={false}
@@ -235,34 +251,76 @@ export function MapboxLiveMap({
           />
         )}
 
-        {/* Nearby routes polylines (idle state only) */}
-        {validNearbyRoutes.map(route => (
-          <MapboxGL.ShapeSource
-            key={`nearby-${route.id}`}
-            id={`nearby-route-${route.id}`}
-            shape={{
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: route.track_data.coordinates,
-              },
-            }}
-          >
-            <MapboxGL.LineLayer
-              id={`nearby-line-${route.id}`}
-              style={{
-                lineColor: selectedRouteId === route.id ? (colors.primary || '#10b981') : (colors.textMuted || '#9ca3af'),
-                lineWidth: selectedRouteId === route.id ? 3 : 2,
-                lineOpacity: selectedRouteId === route.id ? 0.7 : 0.3,
-                lineCap: 'round',
-                lineJoin: 'round',
+        {/* All nearby routes as gray base layer */}
+        {validNearbyRoutes.map(route => {
+          const unselectedColor = isDark ? '#9CA3AF' : '#6B7280';
+          return (
+            <MapboxGL.ShapeSource
+              key={`nearby-base-${route.id}`}
+              id={`nearby-base-${route.id}`}
+              shape={{
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: route.track_data.coordinates,
+                },
               }}
-            />
-          </MapboxGL.ShapeSource>
-        ))}
+            >
+              <MapboxGL.LineLayer
+                id={`nearby-base-line-${route.id}`}
+                style={{
+                  lineColor: unselectedColor,
+                  lineWidth: 2.5,
+                  lineOpacity: 0.6,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+            </MapboxGL.ShapeSource>
+          );
+        })}
 
-        {/* Shadow track polyline (recording/paused state only) */}
+        {/* Selected route overlay (blue with border) - rendered on top */}
+        {selectedRouteId && validNearbyRoutes.find(r => r.id === selectedRouteId) && (() => {
+          const selected = validNearbyRoutes.find(r => r.id === selectedRouteId)!;
+          return (
+            <MapboxGL.ShapeSource
+              id="selected-route-overlay"
+              shape={{
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: selected.track_data.coordinates,
+                },
+              }}
+            >
+              <MapboxGL.LineLayer
+                id="selected-route-border"
+                style={{
+                  lineColor: shadowTrackBorderColor,
+                  lineWidth: 8,
+                  lineOpacity: 0.6,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+              <MapboxGL.LineLayer
+                id="selected-route-line"
+                style={{
+                  lineColor: shadowTrackMainColor,
+                  lineWidth: 5,
+                  lineOpacity: 1,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
+            </MapboxGL.ShapeSource>
+          );
+        })()}
+
+        {/* Shadow track polyline with border (recording/paused state only) */}
         {validShadowTrack && livePoints.length > 0 && (
           <MapboxGL.ShapeSource
             id="shadow-track"
@@ -275,12 +333,25 @@ export function MapboxLiveMap({
               },
             }}
           >
+            {/* Border/outline layer */}
+            <MapboxGL.LineLayer
+              id="shadow-border"
+              style={{
+                lineColor: shadowTrackBorderColor,
+                lineWidth: 8,
+                lineOpacity: 0.4,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            {/* Main shadow track line (dashed) */}
             <MapboxGL.LineLayer
               id="shadow-line"
               style={{
-                lineColor: shadowTrackColor,
-                lineWidth: 3,
-                lineOpacity: 0.35,
+                lineColor: shadowTrackMainColor,
+                lineWidth: 5,
+                lineOpacity: 0.7,
+                lineDasharray: [3, 2],
                 lineCap: 'round',
                 lineJoin: 'round',
               }}

@@ -42,6 +42,11 @@ class MapboxAnalytics {
    * Track when a Mapbox map is loaded (interactive SDK)
    */
   trackMapLoad(activityId: number) {
+    if (!activityId || activityId <= 0) {
+      logger.debug('api', 'Skipping map load tracking - no valid activityId', { activityId });
+      return;
+    }
+
     const report = {
       activityId,
       timestamp: formatMySQLDateTime(new Date()),
@@ -62,6 +67,11 @@ class MapboxAnalytics {
    * (Backend already tracks generation, but this helps with client-side analytics)
    */
   trackStaticMapView(activityId: number) {
+    if (!activityId || activityId <= 0) {
+      logger.debug('api', 'Skipping static map tracking - no valid activityId', { activityId });
+      return;
+    }
+
     const report = {
       activityId,
       timestamp: formatMySQLDateTime(new Date()),

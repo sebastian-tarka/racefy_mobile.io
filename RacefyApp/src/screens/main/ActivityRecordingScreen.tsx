@@ -21,6 +21,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
 import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
 import { MapboxRouteMap } from '../../components/MapboxRouteMap';
+import { MapboxLiveMap } from '../../components/MapboxLiveMap';
 import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
@@ -87,6 +88,10 @@ export function ActivityRecordingScreen() {
 
   // Nearby routes visibility toggle (default hidden)
   const [showNearbyRoutesToggle, setShowNearbyRoutesToggle] = useState(false);
+
+  // Toggle between inline map and MapboxLiveMap component
+  // Production/staging always uses LiveMap; dev mode allows switching for comparison
+  const [useLiveMapComponent, setUseLiveMapComponent] = useState(true);
 
   // Map style selection
   type MapStyleType = 'outdoors' | 'streets' | 'satellite';
@@ -1650,7 +1655,140 @@ export function ActivityRecordingScreen() {
 
       {/* Main Content Based on Status and View Mode */}
       {viewMode === 'map' ? (
-        renderMapView()
+        useLiveMapComponent ? (
+          <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <MapboxLiveMap
+              livePoints={livePoints}
+              currentPosition={currentPosition || previewLocation}
+              gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
+              followUser={true}
+              mapStyle={mapStyle}
+              nearbyRoutes={!isTracking && !isPaused && showNearbyRoutesToggle ? nearbyRoutes : undefined}
+              shadowTrack={selectedShadowTrack?.track_data || null}
+              selectedRouteId={selectedShadowTrack?.id || null}
+              onRouteSelect={handleRouteSelect}
+            />
+
+            {/* Nearby routes list (idle state only) */}
+            {!isTracking && !isPaused && showNearbyRoutesToggle && (
+              <View style={[styles.nearbyRoutesPanel, { backgroundColor: colors.cardBackground }]}>
+                {loadingRoutes ? (
+                  <View style={styles.nearbyRoutesLoading}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={[styles.nearbyRoutesLoadingText, { color: colors.textMuted }]}>
+                      {t('recording.loadingRoutes')}
+                    </Text>
+                  </View>
+                ) : routesError ? (
+                  <View style={styles.nearbyRoutesError}>
+                    <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
+                    <Text style={[styles.nearbyRoutesErrorText, { color: colors.error }]}>
+                      {routesError}
+                    </Text>
+                  </View>
+                ) : nearbyRoutes.length === 0 ? (
+                  <View style={styles.nearbyRoutesEmpty}>
+                    <Ionicons name="map-outline" size={32} color={colors.textMuted} />
+                    <Text style={[styles.nearbyRoutesEmptyText, { color: colors.textMuted }]}>
+                      {t('recording.noRoutesFound')}
+                    </Text>
+                    <Text style={[styles.nearbyRoutesEmptyDesc, { color: colors.textMuted }]}>
+                      {t('recording.noRoutesDescription')}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.nearbyRoutesHeader}>
+                      <Ionicons name="map" size={20} color={colors.primary} />
+                      <Text style={[styles.nearbyRoutesTitle, { color: colors.textPrimary }]}>
+                        {t('recording.nearbyRoutes')}
+                      </Text>
+                      <Text style={[styles.nearbyRoutesCount, { color: colors.textMuted }]}>
+                        {t('recording.routesFound', { count: nearbyRoutes.length })}
+                      </Text>
+                    </View>
+                    <FlatList
+                      horizontal
+                      data={nearbyRoutes}
+                      keyExtractor={(item) => `route-live-${item.id}`}
+                      renderItem={({ item: route }) => {
+                        const isSelected = selectedShadowTrack?.id === route.id;
+                        const selectedColor = isDark ? '#60A5FA' : '#3B82F6';
+                        const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
+
+                        return (
+                          <TouchableOpacity
+                            style={[
+                              styles.nearbyRouteCard,
+                              { backgroundColor: colors.background, borderColor: colors.border },
+                              isSelected && {
+                                borderColor: selectedBorderColor,
+                                borderWidth: 2,
+                                backgroundColor: isDark ? '#1E3A8A15' : '#EFF6FF',
+                              },
+                            ]}
+                            onPress={() => {
+                              if (isSelected) {
+                                handleClearShadowTrack();
+                              } else {
+                                handleRouteSelect(route);
+                              }
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            {isSelected && (
+                              <View style={[styles.selectedBadge, { backgroundColor: selectedColor }]}>
+                                <Ionicons name="checkmark" size={14} color="#fff" />
+                              </View>
+                            )}
+                            <Text style={[styles.nearbyRouteTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                              {route.title}
+                            </Text>
+                            <View style={styles.nearbyRouteStats}>
+                              <View style={styles.nearbyRouteStat}>
+                                <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
+                                <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
+                                  {(route.distance / 1000).toFixed(1)} km
+                                </Text>
+                              </View>
+                              <View style={styles.nearbyRouteStat}>
+                                <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                                <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
+                                  {Math.round(route.distance_from_user)}m
+                                </Text>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      }}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.nearbyRoutesList}
+                    />
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Recording controls (recording/paused state) */}
+            {(isTracking || isPaused) && (
+              <RecordingMapControls
+                duration={localDuration}
+                distance={currentStats.distance}
+                currentPace={currentStats.currentPace}
+                isPaused={isPaused}
+                isLoading={isLoading}
+                onPause={handlePause}
+                onStop={handleStop}
+                onResume={handleResume}
+                shadowTrackTitle={selectedShadowTrack?.title || null}
+                onClearShadowTrack={handleClearShadowTrack}
+                onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
+              />
+            )}
+          </View>
+        ) : (
+          renderMapView()
+        )
       ) : (
         <>
           {status === 'idle' && renderIdleLayout()}
@@ -1727,6 +1865,34 @@ export function ActivityRecordingScreen() {
                   color={colors.textSecondary}
                 />
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* DEV ONLY: Toggle between inline map and MapboxLiveMap component */}
+          {__DEV__ && viewMode === 'map' && (
+            <View style={styles.devMapToggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.mapStyleToggleButton,
+                  {
+                    backgroundColor: useLiveMapComponent ? colors.primary : colors.cardBackground,
+                  },
+                ]}
+                onPress={() => {
+                  setUseLiveMapComponent(prev => !prev);
+                  triggerHaptic();
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={useLiveMapComponent ? 'layers' : 'layers-outline'}
+                  size={28}
+                  color={useLiveMapComponent ? '#fff' : colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <Text style={{ color: colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 2 }}>
+                {useLiveMapComponent ? 'LiveMap' : 'Inline'}
+              </Text>
             </View>
           )}
         </Animated.View>
@@ -2632,6 +2798,12 @@ const styles = StyleSheet.create({
   mapStyleToggleContainer: {
     position: 'absolute',
     bottom: spacing.xxl + 140, // Position above routes toggle
+    right: spacing.lg,
+  },
+  // DEV: Map component toggle (above map style toggle)
+  devMapToggleContainer: {
+    position: 'absolute',
+    bottom: spacing.xxl + 210, // Position above map style toggle
     right: spacing.lg,
   },
   mapStyleToggleButton: {
