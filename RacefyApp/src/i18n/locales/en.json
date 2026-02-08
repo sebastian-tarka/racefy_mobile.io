@@ -27,7 +27,14 @@
     "viewAll": "View All",
     "optional": "Optional",
     "done": "Done",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   },
   "sports": {
     "running": "Running",

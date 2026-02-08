@@ -724,14 +724,6 @@ export function ActivityRecordingScreen() {
   // Bottom sheet options
   const addActivityOptions: BottomSheetOption[] = useMemo(() => [
     {
-      id: 'record',
-      icon: 'navigate-circle-outline',
-      title: t('recording.addOptions.recordActivity'),
-      description: t('recording.addOptions.recordDescription'),
-      onPress: () => {},
-      color: colors.primary,
-    },
-    {
       id: 'import',
       icon: 'cloud-upload-outline',
       title: t('recording.addOptions.importGpx'),
@@ -739,7 +731,7 @@ export function ActivityRecordingScreen() {
       onPress: () => navigation.navigate('GpxImport'),
       color: colors.success,
     },
-  ], [t, colors.primary, colors.success, navigation]);
+  ], [t, colors.success, navigation]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Sport Chip Selector
@@ -869,6 +861,10 @@ export function ActivityRecordingScreen() {
     }
 
     const suggestedActivities = activeWeek.suggested_activities;
+    const progress = activeWeek.progress;
+    const completedCount = progress?.activities_count ?? 0;
+    const totalSessions = progress?.sessions_per_week ?? suggestedActivities.length;
+    const isWeekComplete = completedCount >= totalSessions;
 
     return (
       <View style={styles.suggestedActivitiesSection}>
@@ -877,64 +873,86 @@ export function ActivityRecordingScreen() {
           <Text style={[styles.suggestedActivitiesTitle, { color: colors.textPrimary }]}>
             {t('recording.plannedThisWeek')}
           </Text>
+          <View style={[styles.weekProgressBadge, { backgroundColor: isWeekComplete ? colors.success + '15' : colors.primary + '15' }]}>
+            <Ionicons
+              name={isWeekComplete ? 'checkmark-circle' : 'ellipse-outline'}
+              size={14}
+              color={isWeekComplete ? colors.success : colors.primary}
+            />
+            <Text style={[styles.weekProgressText, { color: isWeekComplete ? colors.success : colors.primary }]}>
+              {completedCount}/{totalSessions}
+            </Text>
+          </View>
         </View>
 
         <FlatList
           horizontal
           data={suggestedActivities}
           keyExtractor={(item) => `suggested-${item.id}`}
-          renderItem={({ item }: { item: SuggestedActivity }) => (
-            <View
-              style={[
-                styles.suggestedActivityCard,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <View style={[styles.suggestedActivityHeader, { backgroundColor: colors.primary + '15' }]}>
-                <Text style={[styles.suggestedActivityOrder, { color: colors.primary }]}>
-                  {t('recording.session')} {item.session_order}
-                </Text>
-              </View>
-
-              <View style={styles.suggestedActivityBody}>
-                <Text style={[styles.suggestedActivityType, { color: colors.textPrimary }]}>
-                  {item.activity_type}
-                </Text>
-
-                {item.intensity_description && (
-                  <View style={[styles.suggestedActivityIntensity, { backgroundColor: colors.warning + '10' }]}>
-                    <Ionicons name="pulse-outline" size={14} color={colors.warning} />
-                    <Text style={[styles.suggestedActivityIntensityText, { color: colors.textSecondary }]}>
-                      {item.intensity_description}
+          renderItem={({ item, index }: { item: SuggestedActivity; index: number }) => {
+            const isDone = index < completedCount;
+            return (
+              <View
+                style={[
+                  styles.suggestedActivityCard,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: isDone ? colors.success + '40' : colors.border,
+                  },
+                ]}
+              >
+                <View style={[styles.suggestedActivityHeader, { backgroundColor: isDone ? colors.success + '15' : colors.primary + '15' }]}>
+                  <View style={styles.activityHeaderRow}>
+                    <Text style={[styles.suggestedActivityOrder, { color: isDone ? colors.success : colors.primary }]}>
+                      {t('recording.session')} {item.session_order}
                     </Text>
+                    {isDone && (
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                    )}
                   </View>
-                )}
+                </View>
 
-                <View style={styles.suggestedActivityMetrics}>
-                  {item.target_duration_minutes && (
-                    <View style={styles.suggestedActivityMetric}>
-                      <Ionicons name="time-outline" size={16} color={colors.success} />
-                      <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
-                        {formatSuggestedDuration(item.target_duration_minutes)}
+                <View style={styles.suggestedActivityBody}>
+                  <Text style={[
+                    styles.suggestedActivityType,
+                    { color: isDone ? colors.textSecondary : colors.textPrimary },
+                    isDone && styles.completedText,
+                  ]}>
+                    {item.activity_type}
+                  </Text>
+
+                  {item.intensity_description && (
+                    <View style={[styles.suggestedActivityIntensity, { backgroundColor: colors.warning + '10' }]}>
+                      <Ionicons name="pulse-outline" size={14} color={colors.warning} />
+                      <Text style={[styles.suggestedActivityIntensityText, { color: colors.textSecondary }]}>
+                        {item.intensity_description}
                       </Text>
                     </View>
                   )}
 
-                  {item.target_distance_meters && (
-                    <View style={styles.suggestedActivityMetric}>
-                      <Ionicons name="navigate-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
-                        {formatSuggestedDistance(item.target_distance_meters)}
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.suggestedActivityMetrics}>
+                    {item.target_duration_minutes && (
+                      <View style={styles.suggestedActivityMetric}>
+                        <Ionicons name="time-outline" size={16} color={colors.success} />
+                        <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
+                          {formatSuggestedDuration(item.target_duration_minutes)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {item.target_distance_meters && (
+                      <View style={styles.suggestedActivityMetric}>
+                        <Ionicons name="navigate-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
+                          {formatSuggestedDistance(item.target_distance_meters)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
+            );
+          }}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.suggestedActivitiesList}
         />
@@ -2718,6 +2736,19 @@ const styles = StyleSheet.create({
   suggestedActivitiesTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    flex: 1,
+  },
+  weekProgressBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: borderRadius.full,
+  },
+  weekProgressText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
   suggestedActivitiesList: {
     paddingRight: spacing.lg,
@@ -2732,12 +2763,19 @@ const styles = StyleSheet.create({
   suggestedActivityHeader: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
+  },
+  activityHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   suggestedActivityOrder: {
     fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
   },
   suggestedActivityBody: {
     padding: spacing.md,

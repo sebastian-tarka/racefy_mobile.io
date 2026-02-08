@@ -27,7 +27,14 @@
     "viewAll": "Zobacz wszystkie",
     "optional": "Opcjonalne",
     "done": "Gotowe",
-    "confirm": "Potwierdź"
+    "confirm": "Potwierdź",
+    "mon": "Pon",
+    "tue": "Wt",
+    "wed": "Śr",
+    "thu": "Czw",
+    "fri": "Pt",
+    "sat": "Sob",
+    "sun": "Ndz"
   },
   "sports": {
     "running": "Bieganie",

@@ -8,12 +8,14 @@
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
+      "node": "22.22.0",
       "env": {
         "APP_ENV": "development"
       }
     },
     "staging": {
       "environment": "preview",
+      "node": "22.22.0",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
@@ -34,6 +36,7 @@
     },
     "production": {
       "environment": "production",
+      "node": "22.22.0",
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
