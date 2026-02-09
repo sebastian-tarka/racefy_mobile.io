@@ -1372,6 +1372,57 @@
         "proactive": "Proaktywny (Regularne wskazówki)",
         "usage": "W tym tygodniu: {{delivered}}/{{max}} wskazówek dostarczonych"
       }
+    },
+    "feedback": {
+      "title": "Podsumowanie tygodnia {{number}}",
+      "summaryHeader": {
+        "excellent": "Doskonale",
+        "good": "Dobrze",
+        "needs_improvement": "Do poprawy",
+        "poor": "Słabo"
+      },
+      "compliance": {
+        "sectionTitle": "Realizacja",
+        "sessions": "Sesje",
+        "distance": "Dystans",
+        "duration": "Czas",
+        "of": "z"
+      },
+      "coachMessages": {
+        "sectionTitle": "Notatki trenera"
+      },
+      "activityMatching": {
+        "sectionTitle": "Dopasowanie aktywności",
+        "completed": "Ukończone",
+        "partial": "Częściowe",
+        "missed": "Pominięte",
+        "noMatch": "Brak pasującej aktywności",
+        "pace": "Tempo"
+      },
+      "highlights": {
+        "sectionTitle": "Najważniejsze",
+        "longestDistance": "Najdłuższy dystans",
+        "longestDuration": "Najdłuższy czas",
+        "elevation": "Przewyższenie",
+        "calories": "Kalorie",
+        "avgPace": "Śr. tempo",
+        "consistency": "Regularność"
+      },
+      "trends": {
+        "sectionTitle": "Trendy",
+        "vsLastWeek": "vs ostatni tydzień",
+        "distance": "Dystans",
+        "duration": "Czas",
+        "improving": "Poprawa",
+        "declining": "Spadek",
+        "maintaining": "Stabilnie",
+        "firstWeek": "Pierwszy tydzień — brak danych porównawczych"
+      },
+      "midWeekCheck": "Przegląd przebiegu tygodnia",
+      "viewFeedback": "Zobacz podsumowanie",
+      "retry": "Ponów",
+      "loadError": "Nie udało się załadować podsumowania",
+      "weekOf": "Tydzień {{number}} z {{total}}"
     }
   }
 }

@@ -48,6 +48,7 @@ export type RootStackParamList = {
   TrainingWeeksList: undefined;
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
+  WeekFeedback: { weekId: number };
 };
 
 declare global {

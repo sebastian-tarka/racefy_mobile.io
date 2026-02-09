@@ -2003,6 +2003,82 @@ export interface UnlinkActivityFromWeekResponse {
   message: string;
 }
 
+// ============ WEEK FEEDBACK ============
+
+export type OverallRating = 'excellent' | 'good' | 'needs_improvement' | 'poor';
+export type MatchStatus = 'completed' | 'partial' | 'missed';
+export type TrendDirection = 'improving' | 'declining' | 'maintaining';
+
+export interface ComplianceData {
+  sessions: {
+    completed: number;
+    suggested: number;
+    percentage: number;
+  };
+  distance: {
+    completed_km: number;
+    suggested_km: number;
+    completed_meters: number;
+    suggested_meters: number;
+    percentage: number;
+  };
+  duration: {
+    completed_seconds: number;
+    suggested_seconds: number;
+    completed_formatted: string;
+    suggested_formatted: string;
+    percentage: number;
+  };
+}
+
+export interface ActivityMatch {
+  suggested: {
+    activity_type: string;
+    target_distance_meters: number | null;
+    target_duration_minutes: number | null;
+  };
+  matched_activity_id: number | null;
+  matched_distance_km: number | null;
+  matched_duration_formatted: string | null;
+  matched_pace: number | null;
+  status: MatchStatus;
+}
+
+export interface Highlights {
+  longest_activity_distance_km: number | null;
+  longest_activity_duration_formatted: string | null;
+  total_elevation_gain: number;
+  total_calories: number;
+  avg_pace: number | null;
+}
+
+export interface TrendData {
+  vs_previous_week: TrendDirection | null;
+  distance_change_pct: number | null;
+  duration_change_pct: number | null;
+}
+
+export interface CoachMessage {
+  key: string;
+  message: string;
+}
+
+export interface WeekFeedback {
+  week_id: number;
+  week_number: number;
+  program_name: string;
+  program_goal: string | null;
+  compliance: ComplianceData;
+  activity_matching: ActivityMatch[];
+  highlights: Highlights;
+  trends: TrendData;
+  consistency_score: number;
+  coach_messages: CoachMessage[];
+  overall_rating: OverallRating;
+}
+
+export interface WeekFeedbackResponse extends ApiResponse<WeekFeedback> {}
+
 // ============ TRAINING TIPS ============
 
 export type TipCategory = 'mindset' | 'recovery' | 'technique' | 'nutrition' | 'sleep' | 'pacing';

@@ -1370,6 +1370,57 @@
         "proactive": "Proactive (Regular tips)",
         "usage": "This week: {{delivered}}/{{max}} tips delivered"
       }
+    },
+    "feedback": {
+      "title": "Week {{number}} Feedback",
+      "summaryHeader": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "needs_improvement": "Needs Work",
+        "poor": "Poor"
+      },
+      "compliance": {
+        "sectionTitle": "Compliance",
+        "sessions": "Sessions",
+        "distance": "Distance",
+        "duration": "Duration",
+        "of": "of"
+      },
+      "coachMessages": {
+        "sectionTitle": "Coach Notes"
+      },
+      "activityMatching": {
+        "sectionTitle": "Activity Matching",
+        "completed": "Completed",
+        "partial": "Partial",
+        "missed": "Missed",
+        "noMatch": "No matching activity",
+        "pace": "Pace"
+      },
+      "highlights": {
+        "sectionTitle": "Highlights",
+        "longestDistance": "Longest Distance",
+        "longestDuration": "Longest Duration",
+        "elevation": "Elevation Gain",
+        "calories": "Calories",
+        "avgPace": "Avg Pace",
+        "consistency": "Consistency"
+      },
+      "trends": {
+        "sectionTitle": "Trends",
+        "vsLastWeek": "vs Last Week",
+        "distance": "Distance",
+        "duration": "Duration",
+        "improving": "Improving",
+        "declining": "Declining",
+        "maintaining": "Stable",
+        "firstWeek": "First week — no comparison data"
+      },
+      "midWeekCheck": "Mid-Week Check",
+      "viewFeedback": "View Feedback",
+      "retry": "Retry",
+      "loadError": "Failed to load feedback",
+      "weekOf": "Week {{number}} of {{total}}"
     }
   }
 }

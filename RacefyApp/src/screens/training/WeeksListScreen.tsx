@@ -328,6 +328,25 @@ export function WeeksListScreen({ navigation }: Props) {
             </View>
           )}
 
+          {/* View Feedback Button */}
+          {(week.status === 'completed' || week.status === 'skipped' || isCurrentWeek) && (
+            <TouchableOpacity
+              style={[styles.feedbackLink, { backgroundColor: colors.primary + '10' }]}
+              onPress={(e) => {
+                e.stopPropagation();
+                navigation.navigate('WeekFeedback', { weekId: week.id });
+              }}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            >
+              <Ionicons name="bar-chart-outline" size={14} color={colors.primary} />
+              <Text style={[styles.feedbackLinkText, { color: colors.primary }]}>
+                {isCurrentWeek
+                  ? t('training.feedback.midWeekCheck')
+                  : t('training.feedback.viewFeedback')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Activities Preview */}
           {(activities.length > 0 || totalActivities > 0) && (
             <View style={styles.sessionsPreview}>
@@ -779,6 +798,20 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     borderRadius: borderRadius.sm,
+  },
+  feedbackLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.sm,
+  },
+  feedbackLinkText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   sessionsPreview: {
     flexDirection: 'row',

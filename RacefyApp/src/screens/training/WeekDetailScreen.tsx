@@ -77,7 +77,9 @@ export function WeekDetailScreen({ navigation, route }: Props) {
               Alert.alert(
                 t('training.weekDetail.weekCompleted'),
                 t('training.weekDetail.weekCompletedMessage'),
-                [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
+                [{ text: t('common.ok'), onPress: () => {
+                  navigation.replace('WeekFeedback', { weekId });
+                }}]
               );
             } catch (err: any) {
               logger.error('training', 'Failed to complete week', { error: err });
@@ -523,6 +525,25 @@ export function WeekDetailScreen({ navigation, route }: Props) {
           </Card>
         ))}
 
+        {/* View Feedback / Mid-Week Check Button */}
+        {(week.status === 'current' || week.status === 'active' || week.status === 'completed' || week.status === 'skipped') && (
+          <TouchableOpacity
+            style={[styles.feedbackButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
+            onPress={() => navigation.navigate('WeekFeedback', { weekId: week.id })}
+          >
+            <Ionicons
+              name={week.status === 'completed' || week.status === 'skipped' ? 'bar-chart-outline' : 'pulse-outline'}
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={[styles.feedbackButtonText, { color: colors.primary }]}>
+              {week.status === 'completed' || week.status === 'skipped'
+                ? t('training.feedback.viewFeedback')
+                : t('training.feedback.midWeekCheck')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Link Existing Activity Button */}
         {week.status === 'current' && (
           <TouchableOpacity
@@ -751,6 +772,20 @@ const styles = StyleSheet.create({
   actionsContainer: {
     gap: spacing.md,
     marginTop: spacing.lg,
+  },
+  feedbackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  feedbackButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
   bottomSpacing: {
     height: spacing.xl,

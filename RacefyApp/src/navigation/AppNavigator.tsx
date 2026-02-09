@@ -47,6 +47,7 @@ import {
   WeeksListScreen,
   WeekDetailScreen,
   TipDetailScreen,
+  WeekFeedbackScreen,
 } from '../screens/training';
 
 // Types
@@ -838,6 +839,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="TipDetail"
               component={TipDetailScreen}
+            />
+            <RootStack.Screen
+              name="WeekFeedback"
+              component={WeekFeedbackScreen}
             />
           </>
         )}

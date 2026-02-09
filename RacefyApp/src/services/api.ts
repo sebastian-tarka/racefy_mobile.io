@@ -2154,6 +2154,19 @@ class ApiService {
     return response.data;
   }
 
+  // ============ WEEK FEEDBACK ============
+
+  /**
+   * Get feedback/analysis for a training week
+   * Available for active, completed, and skipped weeks
+   */
+  async getWeekFeedback(weekId: number): Promise<Types.WeekFeedback> {
+    const response = await this.request<Types.WeekFeedbackResponse>(
+      `/training/weeks/${weekId}/feedback`
+    );
+    return response.data;
+  }
+
   // ============ TRAINING TIPS ============
 
   /**
