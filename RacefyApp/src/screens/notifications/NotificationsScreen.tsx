@@ -179,6 +179,35 @@ export function NotificationsScreen({ navigation }: Props) {
     [navigation, t]
   );
 
+  const handleTrainingWeekFeedbackNavigation = useCallback(
+    async (data: Notification['data']['data']) => {
+      // If week_id is provided, navigate directly
+      if (data.week_id) {
+        navigation.navigate('WeekFeedback', { weekId: data.week_id });
+        return;
+      }
+
+      // Otherwise resolve week_id from week_number via the weeks list
+      if (data.week_number) {
+        try {
+          const weeks = await api.getWeeks();
+          const week = weeks.find(w => w.week_number === data.week_number);
+          if (week) {
+            navigation.navigate('WeekFeedback', { weekId: week.id });
+            return;
+          }
+          logger.warn('navigation', 'Week not found for notification', { weekNumber: data.week_number });
+        } catch (error) {
+          logger.error('navigation', 'Failed to resolve week for notification', { error });
+        }
+      }
+
+      // Fallback: go to weeks list
+      navigation.navigate('TrainingWeeksList');
+    },
+    [navigation]
+  );
+
   const handleNotificationPress = useCallback(
     async (notification: Notification) => {
       logger.info('navigation', 'Notification pressed', {
@@ -209,6 +238,18 @@ export function NotificationsScreen({ navigation }: Props) {
             notificationId: notification.id,
           });
         }
+      }
+
+      // Handle training_week_feedback directly (has no URL, needs week resolution)
+      if (notification.type === 'training_week_feedback' && notificationData) {
+        handleTrainingWeekFeedbackNavigation(notificationData);
+        return;
+      }
+
+      // Handle weekly_summary - navigate to Profile with stats tab
+      if (notification.type === 'weekly_summary') {
+        navigation.navigate('Main', { screen: 'Profile', params: { initialTab: 'stats' } });
+        return;
       }
 
       // Navigate if URL exists, pass notification data for fallback

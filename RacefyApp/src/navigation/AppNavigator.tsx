@@ -12,6 +12,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
+import { triggerHaptic } from '../hooks/useHaptics';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
 import { Loading, ImpersonationBanner } from '../components';
 
@@ -359,7 +360,7 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
   return (
     <TouchableOpacity
       {...props}
-      onPress={onPress}
+      onPress={(e: any) => { triggerHaptic(); onPress?.(e); }}
       style={[
         style,
         {
@@ -404,9 +405,17 @@ function MainNavigator() {
   const insets = useSafeAreaInsets();
   const { isTracking, activity } = useLiveActivityContext();
 
+  // Haptic-only listener for tabs without auth guard
+  const hapticListener = {
+    tabPress: () => {
+      triggerHaptic();
+    },
+  };
+
   // Auth guard listener - redirects to Auth screen if not authenticated
   const authGuardListener = {
     tabPress: (e: { preventDefault: () => void }) => {
+      triggerHaptic();
       if (!isAuthenticated) {
         e.preventDefault();
         navigation.navigate('Auth', { screen: 'Login' });
@@ -466,6 +475,7 @@ function MainNavigator() {
         name="Home"
         component={HomeScreen}
         options={{ tabBarLabel: 'Home' }}
+        listeners={hapticListener}
       />
       <MainTab.Screen
         name="Feed"
@@ -508,6 +518,7 @@ function MainNavigatorDynamic() {
   const { isTracking, activity } = useLiveActivityContext();
 
   // Auth guard listener - redirects to Auth screen if not authenticated
+  // Note: haptic is handled by CustomTabButton's onPress wrapper
   const authGuardListener = {
     tabPress: (e: { preventDefault: () => void }) => {
       if (!isAuthenticated) {

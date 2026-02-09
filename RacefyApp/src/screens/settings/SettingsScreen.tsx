@@ -149,6 +149,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     weekly_summary: { ...DEFAULT_CHANNEL_SETTINGS },
     activity_reactions: { ...DEFAULT_CHANNEL_SETTINGS },
     mentions: { ...DEFAULT_CHANNEL_SETTINGS },
+    training_week_feedback: { ...DEFAULT_CHANNEL_SETTINGS },
   },
   privacy: {
     profile_visibility: 'public',
@@ -757,6 +758,14 @@ export function SettingsScreen({ navigation }: Props) {
             settings={preferences.notifications.mentions}
             onEmailChange={(value) => updateNotificationChannel('mentions', 'email', value)}
             onPushChange={(value) => updateNotificationChannel('mentions', 'push', value)}
+          />
+          <NotificationRow
+            icon="bar-chart-outline"
+            label={t('settings.notif_training_week_feedback')}
+            description={t('settings.notif_training_week_feedback_desc')}
+            settings={preferences.notifications.training_week_feedback}
+            onEmailChange={(value) => updateNotificationChannel('training_week_feedback', 'email', value)}
+            onPushChange={(value) => updateNotificationChannel('training_week_feedback', 'push', value)}
           />
         </SettingsSection>
 

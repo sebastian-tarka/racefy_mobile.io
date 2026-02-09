@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { triggerHaptic } from '../../hooks/useHaptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { ActivityMatch, MatchStatus } from '../../types/api';
 
@@ -42,7 +43,7 @@ export function ActivityMatchCard({ match, onPress }: Props) {
 
   const Wrapper = isTappable ? TouchableOpacity : View;
   const wrapperProps = isTappable
-    ? { onPress: () => onPress(match.matched_activity_id!), activeOpacity: 0.7 }
+    ? { onPress: () => { triggerHaptic(); onPress(match.matched_activity_id!); }, activeOpacity: 0.7 }
     : {};
 
   return (

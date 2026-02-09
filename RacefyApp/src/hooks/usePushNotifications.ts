@@ -195,8 +195,17 @@ export function usePushNotifications(
           break;
 
         case 'weekly_summary':
-          // Navigate to user's own profile/stats
-          navigation.navigate('Profile');
+          // Navigate to user's own profile with stats tab
+          navigation.navigate('Main', { screen: 'Profile', params: { initialTab: 'stats' } });
+          break;
+
+        case 'training_week_feedback':
+          // Navigate to week feedback if week_id available, otherwise to weeks list
+          if (data.week_id) {
+            navigation.navigate('WeekFeedback', { weekId: data.week_id });
+          } else {
+            navigation.navigate('TrainingWeeksList');
+          }
           break;
 
         default:

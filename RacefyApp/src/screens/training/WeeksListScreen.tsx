@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useSportTypes } from '../../hooks/useSportTypes';
+import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -334,6 +335,7 @@ export function WeeksListScreen({ navigation }: Props) {
               style={[styles.feedbackLink, { backgroundColor: colors.primary + '10' }]}
               onPress={(e) => {
                 e.stopPropagation();
+                triggerHaptic();
                 navigation.navigate('WeekFeedback', { weekId: week.id });
               }}
               hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}

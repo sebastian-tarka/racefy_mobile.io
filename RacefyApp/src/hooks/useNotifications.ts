@@ -140,6 +140,8 @@ export function getNotificationIcon(type: Notification['type']): string {
       return 'calendar';
     case 'ai_post_ready':
       return 'document-text';
+    case 'training_week_feedback':
+      return 'bar-chart';
     default:
       return 'notifications';
   }
@@ -168,6 +170,8 @@ export function getNotificationIconColor(type: Notification['type']): string {
       return '#10b981'; // emerald
     case 'ai_post_ready':
       return '#3b82f6'; // blue
+    case 'training_week_feedback':
+      return '#10b981'; // emerald
     default:
       return '#6b7280'; // gray
   }

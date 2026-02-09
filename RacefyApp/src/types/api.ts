@@ -114,6 +114,7 @@ export interface UserPreferences {
     weekly_summary: NotificationChannelSettings;
     activity_reactions: NotificationChannelSettings;
     mentions: NotificationChannelSettings;
+    training_week_feedback: NotificationChannelSettings;
   };
   privacy: {
     profile_visibility: 'public' | 'followers' | 'private';
@@ -1324,7 +1325,8 @@ export type NotificationType =
   | 'event_reminders'
   | 'ai_post_ready'
   | 'points_awarded'
-  | 'weekly_summary';
+  | 'weekly_summary'
+  | 'training_week_feedback';
 
 export interface NotificationData {
   type: NotificationType;
@@ -1344,6 +1346,11 @@ export interface NotificationData {
   likeable_id?: number;
   commentable_type?: 'post' | 'activity';
   commentable_id?: number;
+  // Training week feedback fields
+  week_id?: number;
+  week_number?: number;
+  program_name?: string;
+  overall_rating?: string;
 }
 
 export interface Notification {
@@ -1757,6 +1764,11 @@ export interface PushNotificationData {
   actor_name?: string;
   actor_username?: string;
   actor_avatar?: string;
+  // Training week feedback data
+  week_id?: number;
+  week_number?: number;
+  program_name?: string;
+  overall_rating?: string;
 }
 
 // ============ SOCIAL SHARING ============

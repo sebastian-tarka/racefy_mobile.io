@@ -829,6 +829,8 @@
     "notif_activity_reactions_desc": "Gdy ktoś zareaguje na Twoją aktywność",
     "notif_mentions": "Wzmianki",
     "notif_mentions_desc": "Gdy ktoś Cię wspomni",
+    "notif_training_week_feedback": "Podsumowanie tygodnia",
+    "notif_training_week_feedback_desc": "Gdy podsumowanie tygodnia treningowego jest gotowe",
     "privacy": "Prywatność",
     "profileVisibility": "Widoczność profilu",
     "profileVisibilityDesc": "Kto może widzieć Twój profil",

@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
+import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -529,7 +530,10 @@ export function WeekDetailScreen({ navigation, route }: Props) {
         {(week.status === 'current' || week.status === 'active' || week.status === 'completed' || week.status === 'skipped') && (
           <TouchableOpacity
             style={[styles.feedbackButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
-            onPress={() => navigation.navigate('WeekFeedback', { weekId: week.id })}
+            onPress={() => {
+              triggerHaptic();
+              navigation.navigate('WeekFeedback', { weekId: week.id });
+            }}
           >
             <Ionicons
               name={week.status === 'completed' || week.status === 'skipped' ? 'bar-chart-outline' : 'pulse-outline'}
