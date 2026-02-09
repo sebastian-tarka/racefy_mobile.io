@@ -20,6 +20,7 @@ import {
   ScreenHeader,
   MediaPicker,
   MediaThumbnail,
+  MentionInput,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -27,6 +28,7 @@ import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { fixStorageUrl } from '../../config/api';
+import { stripMentionsForApi, apiTokensToLibraryFormat } from '../../utils/mentions';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Post, Media, Photo, Video, MediaItem } from '../../types/api';
@@ -102,7 +104,7 @@ export function PostFormScreen({ navigation, route }: Props) {
 
   const populateForm = (fetchedPost: Post) => {
     setPost(fetchedPost);
-    setContent(fetchedPost.content || '');
+    setContent(apiTokensToLibraryFormat(fetchedPost.content || '', fetchedPost.mentions));
     setTitle(fetchedPost.title || '');
     setVisibility(fetchedPost.visibility || 'public');
 
@@ -192,7 +194,7 @@ export function PostFormScreen({ navigation, route }: Props) {
         const updateData = isActivityPost
           ? { visibility }
           : {
-              content: content.trim(),
+              content: stripMentionsForApi(content.trim()),
               title: title.trim() || undefined,
               visibility,
             };
@@ -318,25 +320,46 @@ export function PostFormScreen({ navigation, route }: Props) {
             <Text style={[styles.label, { color: colors.textPrimary }]}>
               {t('postForm.content')}
             </Text>
-            <Input
-              placeholder={t('postForm.contentPlaceholder')}
-              value={content}
-              onChangeText={(text) => {
-                setContent(text);
-                if (errors.content) {
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.content;
-                    return newErrors;
-                  });
-                }
-              }}
-              multiline
-              numberOfLines={6}
-              style={styles.textArea}
-              error={errors.content}
-              editable={!isActivityPost}
-            />
+            {isActivityPost ? (
+              <Input
+                placeholder={t('postForm.contentPlaceholder')}
+                value={content}
+                onChangeText={(text) => {
+                  setContent(text);
+                  if (errors.content) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.content;
+                      return newErrors;
+                    });
+                  }
+                }}
+                multiline
+                numberOfLines={6}
+                style={styles.textArea}
+                error={errors.content}
+                editable={false}
+              />
+            ) : (
+              <MentionInput
+                placeholder={t('postForm.contentPlaceholder')}
+                value={content}
+                onChange={(text) => {
+                  setContent(text);
+                  if (errors.content) {
+                    setErrors((prev) => {
+                      const newErrors = { ...prev };
+                      delete newErrors.content;
+                      return newErrors;
+                    });
+                  }
+                }}
+                multiline
+                numberOfLines={6}
+                inputStyle={styles.textArea}
+                error={errors.content}
+              />
+            )}
           </View>
 
           {/* Visibility Selector */}

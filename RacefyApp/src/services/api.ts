@@ -1548,6 +1548,26 @@ class ApiService {
     return this.request<Types.SearchUsersResponse>(`/search/users?q=${encodeURIComponent(query)}`);
   }
 
+  // ============ MENTIONS ============
+
+  async searchMentionUsers(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchUser[]>> {
+    return this.request<Types.ApiResponse<Types.MentionSearchUser[]>>(
+      `/mentions/search/users?q=${encodeURIComponent(query)}&limit=${limit}`
+    );
+  }
+
+  async searchMentionEvents(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchEvent[]>> {
+    return this.request<Types.ApiResponse<Types.MentionSearchEvent[]>>(
+      `/mentions/search/events?q=${encodeURIComponent(query)}&limit=${limit}`
+    );
+  }
+
+  async searchMentionActivities(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchActivity[]>> {
+    return this.request<Types.ApiResponse<Types.MentionSearchActivity[]>>(
+      `/mentions/search/activities?q=${encodeURIComponent(query)}&limit=${limit}`
+    );
+  }
+
   // ============ SOCIAL SHARING ============
 
   /**

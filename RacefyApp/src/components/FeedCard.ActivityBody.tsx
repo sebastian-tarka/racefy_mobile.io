@@ -6,6 +6,7 @@ import { RoutePreview } from './LeafletMap';
 import { AutoPlayVideo } from './AutoPlayVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ExpandableContent } from './FeedCard.Media';
+import { MentionText } from './MentionText';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { MediaSlider } from './MediaSlider';
@@ -344,9 +345,17 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
         {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
         {activity.description && (
           <View>
-            <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
-              {showFullDescription ? activity.description : truncatedDescription.text}
-            </Text>
+            {activity.mentions ? (
+              <MentionText
+                text={showFullDescription ? activity.description : truncatedDescription.text}
+                mentions={activity.mentions}
+                style={[styles.expandableText, { color: colors.textPrimary }]}
+              />
+            ) : (
+              <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
+                {showFullDescription ? activity.description : truncatedDescription.text}
+              </Text>
+            )}
             {truncatedDescription.isTruncated && !showFullDescription && (
               <TouchableOpacity onPress={() => setShowFullDescription(true)}>
                 <Text style={[styles.showMoreLink, { color: colors.primary }]}>

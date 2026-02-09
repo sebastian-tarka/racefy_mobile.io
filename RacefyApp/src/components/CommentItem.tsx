@@ -15,8 +15,11 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import { Avatar } from './Avatar';
 import { MediaGallery } from './MediaGallery';
+import { MentionText } from './MentionText';
+import { MentionInput as MentionInputComponent } from './MentionInput';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
+import { stripMentionsForApi, apiTokensToLibraryFormat } from '../utils/mentions';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Comment, User, MediaItem, Photo } from '../types/api';
 
@@ -128,7 +131,7 @@ export function CommentItem({
   };
 
   const handleStartEdit = () => {
-    setEditContent(localContent);
+    setEditContent(apiTokensToLibraryFormat(localContent, comment.mentions));
     setMediaEdit({
       existingMedia: currentPhoto,
       newMedia: null,
@@ -200,7 +203,7 @@ export function CommentItem({
     setIsSubmittingEdit(true);
     try {
       const editData: CommentEditData = {
-        content: editContent.trim(),
+        content: stripMentionsForApi(editContent.trim()),
       };
 
       // If we should delete existing media
@@ -258,20 +261,12 @@ export function CommentItem({
         {/* Comment text or edit input */}
         {isEditing ? (
           <View style={styles.editContainer}>
-            <TextInput
-              style={[
-                styles.editInput,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.textPrimary,
-                  borderColor: colors.border,
-                },
-              ]}
+            <MentionInputComponent
               value={editContent}
-              onChangeText={setEditContent}
-              multiline
+              onChange={setEditContent}
               autoFocus
               maxLength={2000}
+              inputStyle={styles.editInput}
             />
 
             {/* Media editing section */}
@@ -344,9 +339,11 @@ export function CommentItem({
             </View>
           </View>
         ) : (
-          <Text style={[styles.text, { color: colors.textSecondary }]}>
-            {localContent}
-          </Text>
+          <MentionText
+            text={localContent}
+            mentions={comment.mentions}
+            style={[styles.text, { color: colors.textSecondary }]}
+          />
         )}
 
         {/* Media (only show when not editing) */}

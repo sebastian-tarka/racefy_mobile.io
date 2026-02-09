@@ -203,6 +203,7 @@ export interface Post {
   activity?: Activity;
   is_liked?: boolean;
   is_owner?: boolean;
+  mentions?: MentionMap;
 }
 
 export interface CreatePostRequest {
@@ -544,6 +545,8 @@ export interface Activity {
   training_week_id?: number | null;
   // GPS profile used during tracking (returned by API after activity is finished)
   gps_profile_used?: GpsProfileApiResponse | null;
+  // Mentions
+  mentions?: MentionMap;
 }
 
 // ============ ACTIVITY BOOSTS ============
@@ -813,6 +816,7 @@ export interface Comment {
   videos?: Video[];
   media?: Media[];
   is_liked?: boolean;
+  mentions?: MentionMap;
 }
 
 export interface CreateCommentRequest {
@@ -1149,6 +1153,39 @@ export interface PointHistoryPagination {
 export interface PointHistoryResponse {
   transactions: PointTransaction[];
   pagination: PointHistoryPagination;
+}
+
+// ============ MENTIONS ============
+
+export interface MentionEntity {
+  type: 'user' | 'event' | 'activity';
+  id: number;
+  name: string;
+  username?: string;
+  avatar?: string;
+  url: string;
+}
+
+export type MentionMap = Record<string, MentionEntity>;
+
+export interface MentionSearchUser {
+  id: number;
+  name: string;
+  username: string;
+  avatar: string | null;
+}
+
+export interface MentionSearchEvent {
+  id: number;
+  title?: string;
+  name?: string;
+  location: string | null;
+}
+
+export interface MentionSearchActivity {
+  id: number;
+  title?: string;
+  name?: string;
 }
 
 // ============ PAGINATION ============

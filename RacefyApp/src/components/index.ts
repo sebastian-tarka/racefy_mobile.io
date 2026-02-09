@@ -39,6 +39,8 @@ export * from './RecordingMapControls';
 export * from './ViewToggleButton';
 export * from './NearbyRoutesList';
 export * from './MediaGallery';
+export * from './MentionText';
+export * from './MentionInput';
 export * from './MediaPicker';
 export * from './MediaSlider';
 export * from './MediaThumbnail';

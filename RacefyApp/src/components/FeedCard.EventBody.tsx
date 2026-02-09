@@ -56,7 +56,7 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
 
       {/* Content, info box, and supplementary media with padding */}
       <View style={styles.bodyPadding}>
-        {post.content && <ExpandableContent text={post.content} type="event" />}
+        {post.content && <ExpandableContent text={post.content} type="event" mentions={post.mentions} />}
         <View style={[styles.infoBox, { backgroundColor: colors.infoLight, borderColor: colors.info + '30' }]}>
           <View style={styles.infoBoxRow}>
             <Ionicons name="calendar-outline" size={16} color={colors.info} />

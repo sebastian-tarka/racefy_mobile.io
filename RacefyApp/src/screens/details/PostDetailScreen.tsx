@@ -25,6 +25,7 @@ import {
   CommentSection,
   RoutePreview,
   SocialShareModal,
+  MentionText,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -419,7 +420,11 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
             {/* Content */}
             {post.content && (
-              <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>
+              <MentionText
+                text={post.content}
+                mentions={post.mentions}
+                style={[styles.content, { color: colors.textPrimary }]}
+              />
             )}
 
             {/* Activity/Event Preview */}

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,23 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
   Image,
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
+import { useMentions } from 'react-native-controlled-mentions';
+import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
+import { stripMentionsForApi } from '../utils/mentions';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
-import type { Comment, MediaItem } from '../types/api';
+import type { Comment, MediaItem, MentionSearchUser, MentionSearchEvent, MentionSearchActivity } from '../types/api';
+
+const DEBOUNCE_MS = 300;
 
 interface CommentInputProps {
   onSubmit: (content: string, photo?: MediaItem) => Promise<void>;
@@ -39,6 +47,78 @@ export function CommentInput({
   const [content, setContent] = useState('');
   const [photo, setPhoto] = useState<MediaItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Mention search state
+  const [userResults, setUserResults] = useState<MentionSearchUser[]>([]);
+  const [eventResults, setEventResults] = useState<MentionSearchEvent[]>([]);
+  const [activityResults, setActivityResults] = useState<MentionSearchActivity[]>([]);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { textInputProps, triggers } = useMentions({
+    value: content,
+    onChange: setContent,
+    triggersConfig: {
+      mention: {
+        trigger: '@',
+        textStyle: { fontWeight: '600', color: colors.primary },
+        isInsertSpaceAfterMention: true,
+      },
+      event: {
+        trigger: '#',
+        textStyle: { fontWeight: '600', color: colors.info },
+        isInsertSpaceAfterMention: true,
+      },
+      activity: {
+        trigger: '!',
+        textStyle: { fontWeight: '600', color: colors.ai || '#A855F7' },
+        isInsertSpaceAfterMention: true,
+      },
+    },
+  });
+
+  // Debounced search for users
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const kw = triggers.mention.keyword?.trim();
+    if (!kw || kw.length === 0) { setUserResults([]); return; }
+    timerRef.current = setTimeout(async () => {
+      try {
+        const resp = await api.searchMentionUsers(kw);
+        setUserResults(resp.data);
+      } catch { setUserResults([]); }
+    }, DEBOUNCE_MS);
+  }, [triggers.mention.keyword]);
+
+  // Debounced search for events
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const kw = triggers.event.keyword?.trim();
+    if (!kw || kw.length === 0) { setEventResults([]); return; }
+    timerRef.current = setTimeout(async () => {
+      try {
+        const resp = await api.searchMentionEvents(kw);
+        setEventResults(resp.data);
+      } catch { setEventResults([]); }
+    }, DEBOUNCE_MS);
+  }, [triggers.event.keyword]);
+
+  // Debounced search for activities
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const kw = triggers.activity.keyword?.trim();
+    if (!kw || kw.length === 0) { setActivityResults([]); return; }
+    timerRef.current = setTimeout(async () => {
+      try {
+        const resp = await api.searchMentionActivities(kw);
+        setActivityResults(resp.data);
+      } catch { setActivityResults([]); }
+    }, DEBOUNCE_MS);
+  }, [triggers.activity.keyword]);
+
+  const showUsers = triggers.mention.keyword !== undefined && userResults.length > 0;
+  const showEvents = triggers.event.keyword !== undefined && eventResults.length > 0;
+  const showActivities = triggers.activity.keyword !== undefined && activityResults.length > 0;
+  const showSuggestions = showUsers || showEvents || showActivities;
 
   const canSubmit = (content.trim().length > 0 || photo !== null) && !isSubmitting && !disabled;
 
@@ -76,7 +156,7 @@ export function CommentInput({
     Keyboard.dismiss();
 
     try {
-      await onSubmit(content.trim(), photo || undefined);
+      await onSubmit(stripMentionsForApi(content.trim()), photo || undefined);
       setContent('');
       setPhoto(null);
       onCancelReply?.();
@@ -87,6 +167,66 @@ export function CommentInput({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+      {/* Mention suggestions */}
+      {showSuggestions && (
+        <View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          {showUsers && (
+            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+              {userResults.map((item) => (
+                <TouchableOpacity
+                  key={`user-${item.id}`}
+                  style={styles.suggestionItem}
+                  onPress={() => { triggers.mention.onSelect({ id: String(item.id), name: item.name }); setUserResults([]); }}
+                >
+                  <Avatar uri={item.avatar} name={item.name} size="sm" />
+                  <View style={styles.suggestionText}>
+                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.name}</Text>
+                    <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>@{item.username}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          {showEvents && (
+            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+              {eventResults.map((item) => (
+                <TouchableOpacity
+                  key={`event-${item.id}`}
+                  style={styles.suggestionItem}
+                  onPress={() => { triggers.event.onSelect({ id: String(item.id), name: item.title || item.name || '' }); setEventResults([]); }}
+                >
+                  <View style={[styles.triggerIcon, { backgroundColor: colors.info + '18' }]}>
+                    <Text style={[styles.triggerIconText, { color: colors.info }]}>#</Text>
+                  </View>
+                  <View style={styles.suggestionText}>
+                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
+                    {item.location && <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>{item.location}</Text>}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          {showActivities && (
+            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+              {activityResults.map((item) => (
+                <TouchableOpacity
+                  key={`activity-${item.id}`}
+                  style={styles.suggestionItem}
+                  onPress={() => { triggers.activity.onSelect({ id: String(item.id), name: item.title || item.name || '' }); setActivityResults([]); }}
+                >
+                  <View style={[styles.triggerIcon, { backgroundColor: (colors.ai || '#A855F7') + '18' }]}>
+                    <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>!</Text>
+                  </View>
+                  <View style={styles.suggestionText}>
+                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      )}
+
       {/* Reply indicator */}
       {replyingTo && (
         <View style={[styles.replyIndicator, { backgroundColor: colors.primaryLight + '20' }]}>
@@ -129,6 +269,7 @@ export function CommentInput({
 
         <TextInput
           ref={inputRef}
+          {...textInputProps}
           style={[
             styles.input,
             {
@@ -139,8 +280,6 @@ export function CommentInput({
           ]}
           placeholder={placeholder || t('comments.placeholder')}
           placeholderTextColor={colors.textMuted}
-          value={content}
-          onChangeText={setContent}
           onFocus={onFocus}
           multiline
           maxLength={2000}
@@ -173,6 +312,45 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  suggestionsContainer: {
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+    maxHeight: 200,
+    overflow: 'hidden',
+  },
+  suggestionList: {
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  suggestionText: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  suggestionName: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  suggestionMeta: {
+    fontSize: fontSize.xs,
+    marginTop: 1,
+  },
+  triggerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  triggerIconText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   replyIndicator: {
     flexDirection: 'row',

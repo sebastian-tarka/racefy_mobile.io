@@ -32,7 +32,7 @@ export function SponsoredBody({ post }: { post: Post }) {
 
       {/* Content and CTA with padding */}
       <View style={styles.bodyPadding}>
-        {post.content && <ExpandableContent text={post.content} type="sponsored" />}
+        {post.content && <ExpandableContent text={post.content} type="sponsored" mentions={post.mentions} />}
         {(post as any).sponsored_data?.cta_url && (post as any).sponsored_data?.cta_text && (
           <TouchableOpacity
             style={[styles.ctaButton, { backgroundColor: '#f59e0b' }]}

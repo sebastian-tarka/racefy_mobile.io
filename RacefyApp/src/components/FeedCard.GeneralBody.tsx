@@ -17,7 +17,7 @@ export function GeneralBody({ post }: { post: Post }) {
     return (
       <View style={styles.bodyPadding}>
         {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-        {post.content && <ExpandableContent text={post.content} type="general" />}
+        {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
       </View>
     );
   }
@@ -28,7 +28,7 @@ export function GeneralBody({ post }: { post: Post }) {
       {(post.title || post.content) && (
         <View style={styles.bodyPadding}>
           {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-          {post.content && <ExpandableContent text={post.content} type="general" />}
+          {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
         </View>
       )}
       <View style={styles.fullBleedMedia}>

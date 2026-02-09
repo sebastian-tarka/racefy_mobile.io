@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -492,7 +492,11 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {/* Description - Story comes before technical details */}
         {activity.description && (
           <Card style={styles.section}>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>{activity.description}</Text>
+            <MentionText
+              text={activity.description}
+              mentions={activity.mentions}
+              style={[styles.description, { color: colors.textSecondary }]}
+            />
           </Card>
         )}
 

@@ -8,7 +8,8 @@ import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { MediaSlider } from './MediaSlider';
 import { useTheme } from '../hooks/useTheme';
-import type { Post } from '../types/api';
+import type { Post, MentionMap } from '../types/api';
+import { MentionText } from './MentionText';
 import {
   type FeedPostType,
   type PostMediaItem,
@@ -20,7 +21,7 @@ import {
   styles,
 } from './FeedCard.utils';
 
-export function ExpandableContent({ text, type }: { text: string; type: FeedPostType }) {
+export function ExpandableContent({ text, type, mentions }: { text: string; type: FeedPostType; mentions?: MentionMap }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
@@ -28,9 +29,15 @@ export function ExpandableContent({ text, type }: { text: string; type: FeedPost
   const { truncated, isTruncated } = truncateText(text, rules.maxLength, rules.maxSentences);
   const typeColors = getTypeColors(type, colors);
 
+  const displayText = expanded ? text : truncated;
+
   return (
     <View>
-      <Text style={[styles.expandableText, { color: colors.textPrimary }]}>{expanded ? text : truncated}</Text>
+      {mentions ? (
+        <MentionText text={displayText} mentions={mentions} style={[styles.expandableText, { color: colors.textPrimary }]} />
+      ) : (
+        <Text style={[styles.expandableText, { color: colors.textPrimary }]}>{displayText}</Text>
+      )}
       {isTruncated && !expanded && (
         <TouchableOpacity onPress={() => setExpanded(true)}>
           <Text style={[styles.expandableToggle, { color: typeColors.expand }]}>{t('feed.showMore')}</Text>

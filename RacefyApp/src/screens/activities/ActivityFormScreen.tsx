@@ -20,12 +20,14 @@ import {
   Input,
   Button,
   ScreenHeader,
+  MentionInput,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
 import { useTheme } from '../../hooks/useTheme';
 import { fixStorageUrl } from '../../config/api';
+import { stripMentionsForApi, apiTokensToLibraryFormat } from '../../utils/mentions';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -91,7 +93,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
   const populateForm = (activity: Activity) => {
     setTitle(activity.title || '');
-    setDescription(activity.description || '');
+    setDescription(apiTokensToLibraryFormat(activity.description || '', activity.mentions));
     setIsPrivate(activity.is_private || false);
     setExistingPhotos(activity.photos || []);
     // Note: Videos are fetched separately from the post
@@ -292,7 +294,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
         // Update activity details
         await api.updateActivity(activityId, {
           title: title.trim(),
-          description: description.trim() || undefined,
+          description: stripMentionsForApi(description.trim()) || undefined,
           is_private: isPrivate,
         });
 
@@ -374,13 +376,13 @@ export function ActivityFormScreen({ navigation, route }: Props) {
             <Text style={[styles.label, { color: colors.textPrimary }]}>
               {t('activityForm.description')}
             </Text>
-            <Input
+            <MentionInput
               placeholder={t('activityForm.descriptionPlaceholder')}
               value={description}
-              onChangeText={setDescription}
+              onChange={setDescription}
               multiline
               numberOfLines={4}
-              style={styles.textArea}
+              inputStyle={styles.textArea}
             />
           </View>
 
