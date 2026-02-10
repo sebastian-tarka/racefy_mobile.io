@@ -9,6 +9,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface MediaSliderProps {
   items: PostMediaItem[];
   onImagePress?: (index: number) => void;
+  onVideoPress?: (index: number) => void;
   aspectRatio?: number;
   previewHeight?: number;
 }
@@ -16,6 +17,7 @@ interface MediaSliderProps {
 export function MediaSlider({
   items,
   onImagePress,
+  onVideoPress,
   aspectRatio = 16 / 9,
   previewHeight = 300
 }: MediaSliderProps) {
@@ -40,6 +42,7 @@ export function MediaSlider({
             videoUrl={item.url}
             thumbnailUrl={item.thumbnailUrl}
             aspectRatio={aspectRatio}
+            onExpand={() => onVideoPress?.(index)}
           />
         </View>
       );

@@ -6,6 +6,7 @@ import { AutoPlayVideo } from './AutoPlayVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
+import { VideoPlayer } from './VideoPlayer';
 import { MediaSlider } from './MediaSlider';
 import { useTheme } from '../hooks/useTheme';
 import type { Post, MentionMap } from '../types/api';
@@ -91,6 +92,7 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
 
 export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: boolean }) {
   const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const items = buildMediaItems(post);
   if (items.length === 0) return null;
 
@@ -109,10 +111,14 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
               imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(items[index].url);
             }
           }}
+          onVideoPress={(index) => setExpandedVideo(items[index].url)}
           aspectRatio={16 / 9}
           previewHeight={300}
         />
         <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
+        {expandedVideo && (
+          <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
+        )}
       </View>
     );
   }
@@ -120,7 +126,14 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   // Single media item
   const item = items[0];
   if (item.type === 'video') {
-    return <AutoPlayVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={16 / 9} />;
+    return (
+      <View>
+        <AutoPlayVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={16 / 9} previewHeight={300} onExpand={() => setExpandedVideo(item.url)} />
+        {expandedVideo && (
+          <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
+        )}
+      </View>
+    );
   }
 
   return (

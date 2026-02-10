@@ -129,17 +129,14 @@ export const fixStorageUrl = (url: string | null | undefined): string | null => 
     logger.debug('api', 'fixStorageUrl: port mismatch fixed', { result });
     return result;
   }
-
-  // In dev mode, replace any private IP address with the correct storage base
+  // Replace any private IP address with the correct storage base
   // This handles cases where the API returns URLs with the server's actual IP
-  if (__DEV__) {
-    // Match common private IP ranges: 10.x.x.x, 192.168.x.x, 172.16-31.x.x
-    const privateIpPattern = /http:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+):\d+/;
-    if (privateIpPattern.test(url)) {
-      const result = url.replace(privateIpPattern, storageBase);
-      logger.debug('api', 'fixStorageUrl: private IP replaced', { result });
-      return result;
-    }
+  // (e.g., http://10.x.x.x:8080/storage/... which iOS ATS blocks)
+  const privateIpPattern = /http:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+):\d+/;
+  if (privateIpPattern.test(url)) {
+    const result = url.replace(privateIpPattern, storageBase);
+    logger.debug('api', 'fixStorageUrl: private IP replaced', { result });
+    return result;
   }
 
   logger.debug('api', 'fixStorageUrl: no transformation needed', { url });
