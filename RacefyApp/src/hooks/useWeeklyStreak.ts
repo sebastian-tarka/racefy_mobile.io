@@ -77,7 +77,7 @@ export function useWeeklyStreak(): WeeklyStreakData {
   };
 
   const completedDays = weekActivity.filter(Boolean).length;
-  const goalDays = 5; // Hardcoded for now, can be user preference later
+  const goalDays = 7;
 
   return {
     weekActivity,

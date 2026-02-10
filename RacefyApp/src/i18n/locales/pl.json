@@ -1420,6 +1420,12 @@
         "maintaining": "Stabilnie",
         "firstWeek": "Pierwszy tydzień — brak danych porównawczych"
       },
+      "myNotes": "Moje notatki",
+      "addNote": "Dodaj notatkę o tym tygodniu",
+      "notePlaceholder": "Jak się czułeś w tym tygodniu? Obserwacje...",
+      "saveNote": "Zapisz notatkę",
+      "noteSaved": "Notatka zapisana",
+      "noteSaveFailed": "Nie udało się zapisać notatki",
       "midWeekCheck": "Przegląd przebiegu tygodnia",
       "viewFeedback": "Zobacz podsumowanie",
       "retry": "Ponów",

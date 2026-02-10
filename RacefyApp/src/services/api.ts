@@ -2082,7 +2082,7 @@ class ApiService {
     const response = await this.request<Types.UpdateWeekNotesResponse>(
       `/training/weeks/${weekId}/notes`,
       {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify({ notes }),
       }
     );
