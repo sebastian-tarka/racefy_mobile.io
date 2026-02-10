@@ -12,7 +12,7 @@ import { pushNotificationService } from '../services/pushNotifications';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
 import { logger } from '../services/logger';
-import { configureGoogleSignIn, signInWithGoogle } from '../services/googleSignIn';
+import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
 import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
 
 interface AuthContextType {
@@ -217,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.warn('auth', 'Failed to unregister from push notifications during logout', { error });
     }
     await api.logout();
+    await signOutFromGoogle();
     // Reset push notification service state
     pushNotificationService.reset();
     setUser(null);

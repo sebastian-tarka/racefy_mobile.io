@@ -51,6 +51,18 @@ export async function signInWithGoogle(): Promise<string> {
 }
 
 /**
+ * Sign out from Google to clear cached session.
+ * Should be called during app logout.
+ */
+export async function signOutFromGoogle(): Promise<void> {
+  try {
+    await GoogleSignin.signOut();
+  } catch (error) {
+    logger.warn('auth', 'Google Sign-Out failed', { error });
+  }
+}
+
+/**
  * Check if Google Sign-In is available (configured with client IDs).
  */
 export function isGoogleSignInAvailable(): boolean {
