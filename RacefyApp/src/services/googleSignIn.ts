@@ -1,6 +1,19 @@
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import Constants from 'expo-constants';
 import { logger } from './logger';
+
+// Dynamically load Google Sign-In - not available in Expo Go
+let GoogleSignin: any = null;
+let nativeStatusCodes: any = {};
+let isNativeAvailable = false;
+
+try {
+  const module = require('@react-native-google-signin/google-signin');
+  GoogleSignin = module.GoogleSignin;
+  nativeStatusCodes = module.statusCodes;
+  isNativeAvailable = true;
+} catch {
+  logger.info('auth', 'Google Sign-In native module not available (Expo Go)');
+}
 
 let isConfigured = false;
 
@@ -9,7 +22,7 @@ let isConfigured = false;
  * Should be called once at app startup.
  */
 export function configureGoogleSignIn(): void {
-  if (isConfigured) return;
+  if (isConfigured || !isNativeAvailable) return;
 
   const extra = Constants.expoConfig?.extra;
   const webClientId = extra?.googleWebClientId || '';
@@ -35,6 +48,10 @@ export function configureGoogleSignIn(): void {
  * Throws if sign-in fails or is cancelled.
  */
 export async function signInWithGoogle(): Promise<string> {
+  if (!isNativeAvailable) {
+    throw new Error('Google Sign-In is not available in Expo Go');
+  }
+
   if (!isConfigured) {
     configureGoogleSignIn();
   }
@@ -55,6 +72,7 @@ export async function signInWithGoogle(): Promise<string> {
  * Should be called during app logout.
  */
 export async function signOutFromGoogle(): Promise<void> {
+  if (!isNativeAvailable) return;
   try {
     await GoogleSignin.signOut();
   } catch (error) {
@@ -63,11 +81,12 @@ export async function signOutFromGoogle(): Promise<void> {
 }
 
 /**
- * Check if Google Sign-In is available (configured with client IDs).
+ * Check if Google Sign-In is available (native module present + client IDs configured).
  */
 export function isGoogleSignInAvailable(): boolean {
+  if (!isNativeAvailable) return false;
   const extra = Constants.expoConfig?.extra;
   return !!extra?.googleWebClientId;
 }
 
-export { statusCodes };
+export const statusCodes = nativeStatusCodes;
