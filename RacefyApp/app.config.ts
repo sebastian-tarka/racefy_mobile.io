@@ -81,6 +81,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Racefy needs permission to save photos and videos to your photo library.',
       // Required for background location tracking and push notifications
       UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
+      // Google Sign-In iOS URL scheme (reversed client ID)
+      ...(process.env.GOOGLE_IOS_CLIENT_ID ? {
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: [
+              process.env.GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.'),
+            ],
+          },
+        ],
+      } : {}),
     },
     config: {
       usesNonExemptEncryption: false,
@@ -141,6 +151,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-video',
     'expo-secure-store',
     '@rnmapbox/maps',
+    '@react-native-google-signin/google-signin',
     [
       'expo-notifications',
       {
@@ -167,6 +178,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     logMaxEntries: parseInt(process.env.LOG_MAX_ENTRIES || '2000', 10),
     logCategories: process.env.LOG_CATEGORIES || 'all',
     logConsoleOutput: process.env.LOG_CONSOLE_OUTPUT !== 'false',
+    // Google Sign-In
+    googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
+    googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
     // Feature flags
     useDynamicHome: process.env.USE_DYNAMIC_HOME === 'true',
     eas: {

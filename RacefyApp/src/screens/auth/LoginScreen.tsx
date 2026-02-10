@@ -15,6 +15,7 @@ import { Input, Button, BrandLogo } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { logger } from '../../services/logger';
+import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
@@ -28,13 +29,14 @@ type Props = CompositeScreenProps<
 export function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { login } = useAuth();
+  const { login, googleSignIn } = useAuth();
 
   // Note: Navigation after login is handled automatically by AppNavigator's
   // conditional rendering based on isAuthenticated state. No manual navigation needed.
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -70,6 +72,23 @@ export function LoginScreen({ navigation }: Props) {
       Alert.alert(t('auth.loginFailed'), message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await googleSignIn();
+    } catch (error: any) {
+      logger.error('auth', 'Google Sign-In error', { error });
+      if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled - no alert needed
+        return;
+      }
+      const message = error?.message || t('auth.googleSignInFailedMessage');
+      Alert.alert(t('auth.googleSignInFailed'), message);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -121,6 +140,26 @@ export function LoginScreen({ navigation }: Props) {
               fullWidth
               style={styles.button}
             />
+
+            {isGoogleSignInAvailable() && (
+              <>
+                <View style={styles.dividerContainer}>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                  <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
+                    {t('auth.orContinueWith')}
+                  </Text>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                <Button
+                  title={t('auth.continueWithGoogle')}
+                  onPress={handleGoogleSignIn}
+                  variant="secondary"
+                  loading={isGoogleLoading}
+                  fullWidth
+                />
+              </>
+            )}
 
             <View style={styles.footer}>
               <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.noAccount')} </Text>
@@ -180,6 +219,20 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.md,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: spacing.md,
+    fontSize: fontSize.sm,
   },
   footer: {
     flexDirection: 'row',

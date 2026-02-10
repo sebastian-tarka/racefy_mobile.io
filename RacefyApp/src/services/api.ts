@@ -228,6 +228,30 @@ class ApiService {
     return { user: authData.user, access_token: token, token_type: 'Bearer' };
   }
 
+  async googleAuth(idToken: string): Promise<Types.GoogleAuthResponse> {
+    const response = await this.request<any>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ id_token: idToken }),
+    });
+    logger.auth('Google auth response received', { response });
+
+    // Handle both { user, access_token } and { data: { user, access_token } }
+    const authData = response.data || response;
+    const token = authData.access_token || authData.token;
+
+    if (!token) {
+      throw new Error('No access token in response');
+    }
+
+    await this.setToken(token);
+    return {
+      user: authData.user,
+      access_token: token,
+      token_type: 'Bearer',
+      is_new_user: !!authData.is_new_user,
+    };
+  }
+
   async logout(): Promise<void> {
     try {
       await this.request('/logout', { method: 'POST' });

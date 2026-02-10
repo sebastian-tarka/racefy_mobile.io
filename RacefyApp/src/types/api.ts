@@ -37,6 +37,17 @@ export interface AuthResponse {
   token_type: 'Bearer';
 }
 
+export interface GoogleAuthRequest {
+  id_token: string;
+}
+
+export interface GoogleAuthResponse {
+  user: User;
+  access_token: string;
+  token_type: 'Bearer';
+  is_new_user: boolean;
+}
+
 export interface RegisterRequest {
   name: string;
   email: string;

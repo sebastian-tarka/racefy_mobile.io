@@ -9,6 +9,8 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { logger } from '../../services/logger';
+import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, BrandLogo } from '../../components';
@@ -27,12 +29,13 @@ type Props = CompositeScreenProps<
 export function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { register } = useAuth();
+  const { register, googleSignIn } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -82,6 +85,22 @@ export function RegisterScreen({ navigation }: Props) {
       Alert.alert(t('auth.registerFailed'), message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await googleSignIn();
+    } catch (error: any) {
+      logger.error('auth', 'Google Sign-In error', { error });
+      if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
+        return;
+      }
+      const message = error?.message || t('auth.googleSignInFailedMessage');
+      Alert.alert(t('auth.googleSignInFailed'), message);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -156,6 +175,26 @@ export function RegisterScreen({ navigation }: Props) {
               style={styles.button}
             />
 
+            {isGoogleSignInAvailable() && (
+              <>
+                <View style={styles.dividerContainer}>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                  <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
+                    {t('auth.orContinueWith')}
+                  </Text>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                <Button
+                  title={t('auth.continueWithGoogle')}
+                  onPress={handleGoogleSignIn}
+                  variant="secondary"
+                  loading={isGoogleLoading}
+                  fullWidth
+                />
+              </>
+            )}
+
             <View style={styles.footer}>
               <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.haveAccount')} </Text>
               <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -217,6 +256,20 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.md,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: spacing.md,
+    fontSize: fontSize.sm,
   },
   footer: {
     flexDirection: 'row',

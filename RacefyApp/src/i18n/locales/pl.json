@@ -110,6 +110,11 @@
     "loginFailedMessage": "Logowanie nie powiodło się. Sprawdź swoje dane.",
     "registerFailed": "Rejestracja nie powiodła się",
     "registerFailedMessage": "Rejestracja nie powiodła się. Spróbuj ponownie.",
+    "orContinueWith": "lub kontynuuj przez",
+    "continueWithGoogle": "Kontynuuj z Google",
+    "googleSignInFailed": "Logowanie Google nie powiodło się",
+    "googleSignInFailedMessage": "Logowanie Google nie powiodło się. Spróbuj ponownie.",
+    "googleSignInCancelled": "Logowanie Google zostało anulowane.",
     "validation": {
       "emailRequired": "Email jest wymagany",
       "emailInvalid": "Wprowadź poprawny adres email",

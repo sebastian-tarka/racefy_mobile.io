@@ -110,6 +110,11 @@
     "loginFailedMessage": "Login failed. Please check your credentials.",
     "registerFailed": "Registration Failed",
     "registerFailedMessage": "Registration failed. Please try again.",
+    "orContinueWith": "or continue with",
+    "continueWithGoogle": "Continue with Google",
+    "googleSignInFailed": "Google Sign-In Failed",
+    "googleSignInFailedMessage": "Google Sign-In failed. Please try again.",
+    "googleSignInCancelled": "Google Sign-In was cancelled.",
     "validation": {
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email",

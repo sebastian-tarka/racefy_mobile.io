@@ -12,6 +12,7 @@ import { pushNotificationService } from '../services/pushNotifications';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
 import { logger } from '../services/logger';
+import { configureGoogleSignIn, signInWithGoogle } from '../services/googleSignIn';
 import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ interface AuthContextType {
   impersonationSession: ImpersonationSession | null;
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
+  googleSignIn: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   checkConsentStatus: () => Promise<void>;
@@ -96,6 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function initAuth() {
     logger.auth('Initializing authentication');
     try {
+      // Configure Google Sign-In early so it's ready when needed
+      configureGoogleSignIn();
       await api.init(); // Loads token from secure storage (could be impersonation or admin token)
 
       // Check if we have impersonation state (tokens in secure storage, session metadata in AsyncStorage)
@@ -180,6 +184,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Register for push notifications (non-blocking)
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after register', { error });
+    });
+  }, []);
+
+  const googleSignIn = useCallback(async () => {
+    logger.auth('Google Sign-In attempt');
+    const idToken = await signInWithGoogle();
+    const response = await api.googleAuth(idToken);
+    setUser(response.user);
+    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
+    // Sync language preference after login
+    syncLanguagePreference();
+    // New users need to accept consents; existing users: check status
+    if (response.is_new_user) {
+      setRequiresConsent(true);
+    } else {
+      const status = await getConsentStatus();
+      setRequiresConsent(!status.accepted);
+    }
+    // Register for push notifications (non-blocking)
+    pushNotificationService.registerWithBackend().catch((error) => {
+      logger.warn('auth', 'Failed to register for push notifications after Google sign-in', { error });
     });
   }, []);
 
@@ -311,6 +336,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         impersonationSession,
         login,
         register,
+        googleSignIn,
         logout,
         refreshUser,
         checkConsentStatus,
