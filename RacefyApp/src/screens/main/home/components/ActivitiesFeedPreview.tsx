@@ -22,7 +22,7 @@ const CARD_WIDTH = SCREEN_WIDTH * 0.85;
 
 interface ActivitiesFeedPreviewProps {
   onActivityPress: (activityId: number) => void;
-  onViewAllPress: () => void;
+  onViewAllPress?: () => void;
   onLoginPress: () => void;
   limit?: number;
 }
@@ -87,7 +87,7 @@ export function ActivitiesFeedPreview({
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('home.recentActivities')}
         </Text>
-        {isAuthenticated && (
+        {isAuthenticated && onViewAllPress && (
           <TouchableOpacity onPress={onViewAllPress}>
             <Text style={[styles.viewAll, { color: colors.primary }]}>
               {t('common.viewAll')}

@@ -25,6 +25,7 @@ import {
   Button,
   MediaPicker,
 } from '../../components';
+import { ActivitiesFeedPreview } from './home/components';
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
@@ -544,7 +545,13 @@ export function FeedScreen({ navigation, route }: Props) {
             />
           )}
           ListHeaderComponent={
-            isComposerVisible ? (
+            <>
+              <ActivitiesFeedPreview
+                onActivityPress={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
+                onLoginPress={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
+                limit={5}
+              />
+              {isComposerVisible ? (
               <View style={[styles.composer, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
                 <View style={[styles.composerHeader, { borderBottomColor: colors.borderLight }]}>
                   <View style={[styles.composerIcon, { backgroundColor: colors.primary + '15' }]}>
@@ -631,7 +638,8 @@ export function FeedScreen({ navigation, route }: Props) {
                   />
                 </View>
               </View>
-            ) : null
+              ) : null}
+            </>
           }
           ListEmptyComponent={
             error ? (
