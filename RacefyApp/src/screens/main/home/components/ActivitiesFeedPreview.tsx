@@ -9,6 +9,8 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Animated,
+  LayoutAnimation,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +24,7 @@ import { spacing, fontSize, borderRadius } from '../../../../theme';
 import type { Activity } from '../../../../types/api';
 
 const STORAGE_KEY = '@racefy_activities_display_mode';
+const COLLAPSED_STORAGE_KEY = '@racefy_activities_collapsed';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
@@ -52,6 +55,8 @@ export function ActivitiesFeedPreview({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [displayMode, setDisplayMode] = useState<ActivitiesDisplayMode>(initialDisplayMode);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const collapseAnim = useRef(new Animated.Value(1)).current; // 1 = expanded, 0 = collapsed
 
   // Auto-scroll state
   const flatListRef = useRef<FlatList<Activity>>(null);
@@ -59,11 +64,17 @@ export function ActivitiesFeedPreview({
   const autoScrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userHasInteracted = useRef(false);
 
-  // Load saved display mode from AsyncStorage on mount
+  // Load saved display mode and collapsed state from AsyncStorage on mount
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((saved) => {
       if (saved === 'slider' || saved === 'compact') {
         setDisplayMode(saved);
+      }
+    });
+    AsyncStorage.getItem(COLLAPSED_STORAGE_KEY).then((saved) => {
+      if (saved === 'true') {
+        setIsCollapsed(true);
+        collapseAnim.setValue(0);
       }
     });
   }, []);
@@ -83,6 +94,25 @@ export function ActivitiesFeedPreview({
       return next;
     });
   }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      AsyncStorage.setItem(COLLAPSED_STORAGE_KEY, String(next));
+      Animated.timing(collapseAnim, {
+        toValue: next ? 0 : 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      return next;
+    });
+  }, []);
+
+  const chevronRotation = collapseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
 
   // Start auto-scroll interval for slider mode
   const startAutoScroll = useCallback(() => {
@@ -117,13 +147,13 @@ export function ActivitiesFeedPreview({
 
   // Manage auto-scroll lifecycle
   useEffect(() => {
-    if (displayMode === 'slider' && activities.length > 1 && !userHasInteracted.current) {
+    if (displayMode === 'slider' && activities.length > 1 && !userHasInteracted.current && !isCollapsed) {
       startAutoScroll();
     } else {
       stopAutoScroll();
     }
     return stopAutoScroll;
-  }, [displayMode, activities.length, startAutoScroll, stopAutoScroll]);
+  }, [displayMode, activities.length, startAutoScroll, stopAutoScroll, isCollapsed]);
 
   // When user starts dragging, stop auto-scroll permanently
   const onScrollBeginDrag = useCallback(() => {
@@ -181,63 +211,84 @@ export function ActivitiesFeedPreview({
           {t('home.recentActivities')}
         </Text>
         <View style={styles.headerActions}>
-          {/* Display mode toggle */}
+          {!isCollapsed && (
+            <>
+              {/* Display mode toggle */}
+              <TouchableOpacity
+                onPress={toggleDisplayMode}
+                style={[styles.toggleButton, { backgroundColor: colors.borderLight }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={displayMode === 'slider' ? 'list' : 'albums-outline'}
+                  size={16}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {isAuthenticated && onViewAllPress && (
+                <TouchableOpacity onPress={onViewAllPress}>
+                  <Text style={[styles.viewAll, { color: colors.primary }]}>
+                    {t('common.viewAll')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+
+          {/* Collapse/expand toggle */}
           <TouchableOpacity
-            onPress={toggleDisplayMode}
+            onPress={toggleCollapsed}
             style={[styles.toggleButton, { backgroundColor: colors.borderLight }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons
-              name={displayMode === 'slider' ? 'list' : 'albums-outline'}
-              size={16}
-              color={colors.textSecondary}
-            />
+            <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
+              <Ionicons
+                name="chevron-up"
+                size={16}
+                color={colors.textSecondary}
+              />
+            </Animated.View>
           </TouchableOpacity>
-
-          {isAuthenticated && onViewAllPress && (
-            <TouchableOpacity onPress={onViewAllPress}>
-              <Text style={[styles.viewAll, { color: colors.primary }]}>
-                {t('common.viewAll')}
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
-      {displayMode === 'slider' ? (
-        <FlatList
-          ref={flatListRef}
-          data={activities}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          snapToInterval={CARD_TOTAL_WIDTH}
-          decelerationRate="fast"
-          onScrollBeginDrag={onScrollBeginDrag}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          renderItem={({ item }) => (
-            <View style={styles.cardWrapper}>
-              <ActivitySliderCard
-                activity={item}
-                onPress={() => handleActivityPress(item.id)}
-                isAuthenticated={isAuthenticated}
-              />
-            </View>
-          )}
-        />
-      ) : (
-        <View style={styles.compactList}>
-          {activities.map((item) => (
-            <View key={item.id} style={styles.compactCardWrapper}>
-              <ActivityCompactCard
-                activity={item}
-                onPress={() => handleActivityPress(item.id)}
-                isAuthenticated={isAuthenticated}
-              />
-            </View>
-          ))}
-        </View>
+      {!isCollapsed && (
+        displayMode === 'slider' ? (
+          <FlatList
+            ref={flatListRef}
+            data={activities}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            snapToInterval={CARD_TOTAL_WIDTH}
+            decelerationRate="fast"
+            onScrollBeginDrag={onScrollBeginDrag}
+            onMomentumScrollEnd={onMomentumScrollEnd}
+            renderItem={({ item }) => (
+              <View style={styles.cardWrapper}>
+                <ActivitySliderCard
+                  activity={item}
+                  onPress={() => handleActivityPress(item.id)}
+                  isAuthenticated={isAuthenticated}
+                />
+              </View>
+            )}
+          />
+        ) : (
+          <View style={styles.compactList}>
+            {activities.map((item) => (
+              <View key={item.id} style={styles.compactCardWrapper}>
+                <ActivityCompactCard
+                  activity={item}
+                  onPress={() => handleActivityPress(item.id)}
+                  isAuthenticated={isAuthenticated}
+                />
+              </View>
+            ))}
+          </View>
+        )
       )}
     </View>
   );
