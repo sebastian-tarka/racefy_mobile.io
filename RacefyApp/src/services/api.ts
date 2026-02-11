@@ -117,11 +117,12 @@ class ApiService {
       return data;
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      if (shouldLog && !error.message) {
-        // Network error (not API error)
+      if (shouldLog && !error.status) {
+        // Network error (not API error which has .status)
         logger.error('api', `${method} ${endpoint} network error`, {
           duration,
-          error: error.toString(),
+          error: error.message || error.toString(),
+          url: this.buildUrl(endpoint),
         });
       }
       throw error;
