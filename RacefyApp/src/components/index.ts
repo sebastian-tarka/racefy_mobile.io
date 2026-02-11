@@ -1,5 +1,6 @@
 export * from './ActivityCard';
 export { PaceChart, ElevationChart, HeartRateChart } from './ActivityCharts';
+export * from './ActivityCompactCard';
 export * from './ActivitySliderCard';
 export * from './AiPostsSettings';
 export * from './BoostButton';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,36 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ActivitySliderCard } from '../../../../components';
+import { ActivitySliderCard, ActivityCompactCard } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useAuth } from '../../../../hooks/useAuth';
 import { api } from '../../../../services/api';
 import { logger } from '../../../../services/logger';
-import { spacing, fontSize } from '../../../../theme';
+import { spacing, fontSize, borderRadius } from '../../../../theme';
 import type { Activity } from '../../../../types/api';
+
+const STORAGE_KEY = '@racefy_activities_display_mode';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+const CARD_TOTAL_WIDTH = CARD_WIDTH + spacing.md; // card + marginRight
+const AUTO_SCROLL_INTERVAL = 6000; // ms between slides
+
+export type ActivitiesDisplayMode = 'slider' | 'compact';
 
 interface ActivitiesFeedPreviewProps {
   onActivityPress: (activityId: number) => void;
   onViewAllPress?: () => void;
   onLoginPress: () => void;
   limit?: number;
+  /** Display mode: 'slider' for horizontal carousel, 'compact' for vertical list */
+  displayMode?: ActivitiesDisplayMode;
 }
 
 export function ActivitiesFeedPreview({
@@ -32,12 +44,29 @@ export function ActivitiesFeedPreview({
   onViewAllPress,
   onLoginPress,
   limit = 3,
+  displayMode: initialDisplayMode = 'slider',
 }: ActivitiesFeedPreviewProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [displayMode, setDisplayMode] = useState<ActivitiesDisplayMode>(initialDisplayMode);
+
+  // Auto-scroll state
+  const flatListRef = useRef<FlatList<Activity>>(null);
+  const currentIndexRef = useRef(0);
+  const autoScrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userHasInteracted = useRef(false);
+
+  // Load saved display mode from AsyncStorage on mount
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((saved) => {
+      if (saved === 'slider' || saved === 'compact') {
+        setDisplayMode(saved);
+      }
+    });
+  }, []);
 
   const handleActivityPress = (activityId: number) => {
     if (isAuthenticated) {
@@ -46,6 +75,70 @@ export function ActivitiesFeedPreview({
       onLoginPress();
     }
   };
+
+  const toggleDisplayMode = useCallback(() => {
+    setDisplayMode((prev) => {
+      const next = prev === 'slider' ? 'compact' : 'slider';
+      AsyncStorage.setItem(STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
+
+  // Start auto-scroll interval for slider mode
+  const startAutoScroll = useCallback(() => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+    }
+    autoScrollTimerRef.current = setInterval(() => {
+      if (!flatListRef.current || activities.length <= 1) return;
+
+      const nextIndex = currentIndexRef.current + 1;
+
+      // Stop at the last card instead of looping back
+      if (nextIndex >= activities.length) {
+        stopAutoScroll();
+        return;
+      }
+
+      flatListRef.current.scrollToOffset({
+        offset: nextIndex * CARD_TOTAL_WIDTH,
+        animated: true,
+      });
+      currentIndexRef.current = nextIndex;
+    }, AUTO_SCROLL_INTERVAL);
+  }, [activities.length]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollTimerRef.current) {
+      clearInterval(autoScrollTimerRef.current);
+      autoScrollTimerRef.current = null;
+    }
+  }, []);
+
+  // Manage auto-scroll lifecycle
+  useEffect(() => {
+    if (displayMode === 'slider' && activities.length > 1 && !userHasInteracted.current) {
+      startAutoScroll();
+    } else {
+      stopAutoScroll();
+    }
+    return stopAutoScroll;
+  }, [displayMode, activities.length, startAutoScroll, stopAutoScroll]);
+
+  // When user starts dragging, stop auto-scroll permanently
+  const onScrollBeginDrag = useCallback(() => {
+    userHasInteracted.current = true;
+    stopAutoScroll();
+  }, [stopAutoScroll]);
+
+  // Track current index from manual scroll position
+  const onMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = e.nativeEvent.contentOffset.x;
+      currentIndexRef.current = Math.round(offsetX / CARD_TOTAL_WIDTH);
+    },
+    [],
+  );
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -87,31 +180,65 @@ export function ActivitiesFeedPreview({
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
           {t('home.recentActivities')}
         </Text>
-        {isAuthenticated && onViewAllPress && (
-          <TouchableOpacity onPress={onViewAllPress}>
-            <Text style={[styles.viewAll, { color: colors.primary }]}>
-              {t('common.viewAll')}
-            </Text>
+        <View style={styles.headerActions}>
+          {/* Display mode toggle */}
+          <TouchableOpacity
+            onPress={toggleDisplayMode}
+            style={[styles.toggleButton, { backgroundColor: colors.borderLight }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={displayMode === 'slider' ? 'list' : 'albums-outline'}
+              size={16}
+              color={colors.textSecondary}
+            />
           </TouchableOpacity>
-        )}
+
+          {isAuthenticated && onViewAllPress && (
+            <TouchableOpacity onPress={onViewAllPress}>
+              <Text style={[styles.viewAll, { color: colors.primary }]}>
+                {t('common.viewAll')}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      <FlatList
-        data={activities}
-        keyExtractor={(item) => item.id.toString()}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View style={styles.cardWrapper}>
-            <ActivitySliderCard
-              activity={item}
-              onPress={() => handleActivityPress(item.id)}
-              isAuthenticated={isAuthenticated}
-            />
-          </View>
-        )}
-      />
+      {displayMode === 'slider' ? (
+        <FlatList
+          ref={flatListRef}
+          data={activities}
+          keyExtractor={(item) => item.id.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          snapToInterval={CARD_TOTAL_WIDTH}
+          decelerationRate="fast"
+          onScrollBeginDrag={onScrollBeginDrag}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          renderItem={({ item }) => (
+            <View style={styles.cardWrapper}>
+              <ActivitySliderCard
+                activity={item}
+                onPress={() => handleActivityPress(item.id)}
+                isAuthenticated={isAuthenticated}
+              />
+            </View>
+          )}
+        />
+      ) : (
+        <View style={styles.compactList}>
+          {activities.map((item) => (
+            <View key={item.id} style={styles.compactCardWrapper}>
+              <ActivityCompactCard
+                activity={item}
+                onPress={() => handleActivityPress(item.id)}
+                isAuthenticated={isAuthenticated}
+              />
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -126,6 +253,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
@@ -133,6 +265,13 @@ const styles = StyleSheet.create({
   viewAll: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+  },
+  toggleButton: {
+    width: 30,
+    height: 30,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingContainer: {
     padding: spacing.xl,
@@ -144,5 +283,11 @@ const styles = StyleSheet.create({
   cardWrapper: {
     width: CARD_WIDTH,
     marginRight: spacing.md,
+  },
+  compactList: {
+    gap: spacing.sm,
+  },
+  compactCardWrapper: {
+    // compact cards are full width
   },
 });
