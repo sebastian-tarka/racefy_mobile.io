@@ -1440,5 +1440,49 @@
       "loadError": "Nie udało się załadować podsumowania",
       "weekOf": "Tydzień {{number}} z {{total}}"
     }
+  },
+  "rewards": {
+    "title": "Nagrody",
+    "subtitle": "Twoje osiągnięcia i nagrody",
+    "reward": "nagroda",
+    "rewards": "nagrody",
+    "tabs": {
+      "events": "Wydarzenia",
+      "rewards": "Nagrody"
+    },
+    "points": "punktów",
+    "off": "ZNIŻKI",
+    "code": "Kod",
+    "expiresAt": "Wygasa",
+    "new": "NOWE",
+    "position": {
+      "1": "1. miejsce",
+      "2": "2. miejsce",
+      "3": "3. miejsce"
+    },
+    "rarity": {
+      "common": "Pospolity",
+      "rare": "Rzadki",
+      "epic": "Epicki",
+      "legendary": "Legendarny"
+    },
+    "stats": {
+      "totalPoints": "Łącznie punktów",
+      "totalCoupons": "Aktywne kupony",
+      "totalBadges": "Zdobyte odznaki"
+    },
+    "filters": {
+      "all": "Wszystkie",
+      "points": "Punkty",
+      "coupons": "Kupony",
+      "badges": "Odznaki",
+      "prizes": "Nagrody"
+    },
+    "cancelled": "Anulowano",
+    "sent": "Wysłano",
+    "noRewards": "Brak nagród",
+    "noRewardsMessage": "Ukończ wydarzenia, aby zdobywać nagrody, punkty i ekskluzywne prezenty!",
+    "loadingRewards": "Ładowanie nagród...",
+    "failedToLoad": "Nie udało się załadować nagród"
   }
 }

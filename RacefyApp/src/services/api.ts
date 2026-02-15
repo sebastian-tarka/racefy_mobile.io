@@ -2299,6 +2299,25 @@ class ApiService {
     );
     return response.data;
   }
+
+  /**
+   * Get user rewards
+   * @param filters - Optional filters (type, event_id)
+   */
+  async getUserRewards(
+    filters?: Types.RewardsQueryParams
+  ): Promise<Types.RewardsResponse> {
+    const params = new URLSearchParams();
+    if (filters?.type) params.append('type', filters.type);
+    if (filters?.event_id) params.append('event_id', filters.event_id.toString());
+
+    const endpoint = `/user/rewards${params.toString() ? `?${params.toString()}` : ''}`;
+
+    console.log('[API] getUserRewards endpoint:', endpoint);
+    console.log('[API] getUserRewards filters:', filters);
+
+    return await this.request<Types.RewardsResponse>(endpoint);
+  }
 }
 
 export const api = new ApiService();

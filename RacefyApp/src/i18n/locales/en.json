@@ -1438,5 +1438,49 @@
       "loadError": "Failed to load feedback",
       "weekOf": "Week {{number}} of {{total}}"
     }
+  },
+  "rewards": {
+    "title": "Rewards",
+    "subtitle": "Your achievements and prizes",
+    "reward": "reward",
+    "rewards": "rewards",
+    "tabs": {
+      "events": "Events",
+      "rewards": "Rewards"
+    },
+    "points": "points",
+    "off": "OFF",
+    "code": "Code",
+    "expiresAt": "Expires",
+    "new": "NEW",
+    "position": {
+      "1": "1st Place",
+      "2": "2nd Place",
+      "3": "3rd Place"
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "stats": {
+      "totalPoints": "Total Points",
+      "totalCoupons": "Active Coupons",
+      "totalBadges": "Badges Earned"
+    },
+    "filters": {
+      "all": "All",
+      "points": "Points",
+      "coupons": "Coupons",
+      "badges": "Badges",
+      "prizes": "Prizes"
+    },
+    "cancelled": "Cancelled",
+    "sent": "Sent",
+    "noRewards": "No rewards yet",
+    "noRewardsMessage": "Complete events to earn rewards, points, and exclusive prizes!",
+    "loadingRewards": "Loading rewards...",
+    "failedToLoad": "Failed to load rewards"
   }
 }

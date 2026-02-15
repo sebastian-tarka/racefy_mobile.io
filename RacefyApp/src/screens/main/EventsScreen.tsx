@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EventCard, Loading, EmptyState, Button } from '../../components';
+import { EventCard, Loading, EmptyState, Button, RewardCard } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useTheme } from '../../hooks/useTheme';
@@ -27,7 +27,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { Event } from '../../types/api';
+import type { Event, Reward, RewardType } from '../../types/api';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Events'>,
@@ -35,6 +35,8 @@ type Props = CompositeScreenProps<
 >;
 
 type FilterOption = 'all' | 'upcoming' | 'ongoing' | 'completed';
+type TabOption = 'events' | 'rewards';
+type RewardFilterOption = 'all' | 'points' | 'coupon' | 'badge' | 'prize';
 
 export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
@@ -62,6 +64,19 @@ export function EventsScreen({ navigation, route }: Props) {
   ];
 
   const [activeFilter, setActiveFilter] = useState<FilterOption>(route.params?.initialFilter || 'all');
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabOption>('events');
+
+  // Rewards state
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [rewardsLoading, setRewardsLoading] = useState(false);
+  const [rewardsRefreshing, setRewardsRefreshing] = useState(false);
+  const [rewardFilter, setRewardFilter] = useState<RewardFilterOption>('all');
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalCoupons, setTotalCoupons] = useState(0);
+  const [totalBadges, setTotalBadges] = useState(0);
+  const [rewardsError, setRewardsError] = useState<string | null>(null);
 
   // Search state
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -151,6 +166,103 @@ export function EventsScreen({ navigation, route }: Props) {
     navigation.navigate('EventDetail', { eventId });
   };
 
+  // Load rewards from API
+  const loadRewards = useCallback(async (isRefreshing = false) => {
+    if (!isAuthenticated) return;
+
+    if (isRefreshing) {
+      setRewardsRefreshing(true);
+    } else {
+      setRewardsLoading(true);
+    }
+
+    setRewardsError(null);
+
+    try {
+      const filters = rewardFilter !== 'all' ? { type: rewardFilter } : undefined;
+      logger.info('api', 'Loading rewards', { filters, rewardFilter });
+
+      const response = await api.getUserRewards(filters);
+
+      logger.info('api', 'Rewards loaded', {
+        count: response.data.length,
+        total_points: response.total_points,
+        filter: rewardFilter,
+        types: response.data.map(r => r.reward_type)
+      });
+
+      setRewards(response.data);
+      setTotalPoints(response.total_points);
+      setTotalCoupons(response.total_coupons);
+      setTotalBadges(response.total_badges);
+    } catch (error) {
+      logger.error('api', 'Failed to load rewards', { error });
+      setRewardsError('Failed to load rewards');
+    } finally {
+      setRewardsLoading(false);
+      setRewardsRefreshing(false);
+    }
+  }, [isAuthenticated, rewardFilter]);
+
+  // Load rewards when switching to rewards tab or when filter changes
+  useEffect(() => {
+    if (activeTab === 'rewards') {
+      loadRewards();
+    }
+  }, [activeTab, rewardFilter, loadRewards]);
+
+  const renderTabs = () => {
+    return (
+      <View style={[styles.tabsContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'events' && [styles.activeTab, { borderBottomColor: colors.primary }],
+          ]}
+          onPress={() => setActiveTab('events')}
+        >
+          <Ionicons
+            name="calendar-outline"
+            size={20}
+            color={activeTab === 'events' ? colors.primary : colors.textSecondary}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: colors.textSecondary },
+              activeTab === 'events' && { color: colors.primary, fontWeight: '600' },
+            ]}
+          >
+            {t('rewards.tabs.events')}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            activeTab === 'rewards' && [styles.activeTab, { borderBottomColor: colors.primary }],
+          ]}
+          onPress={() => setActiveTab('rewards')}
+        >
+          <Ionicons
+            name="gift-outline"
+            size={20}
+            color={activeTab === 'rewards' ? colors.primary : colors.textSecondary}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: colors.textSecondary },
+              activeTab === 'rewards' && { color: colors.primary, fontWeight: '600' },
+            ]}
+          >
+            {t('rewards.tabs.rewards')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderSearchBar = () => {
     if (!isSearchVisible) return null;
 
@@ -183,6 +295,141 @@ export function EventsScreen({ navigation, route }: Props) {
           </View>
         </View>
       </Animated.View>
+    );
+  };
+
+  const renderRewardsTab = () => {
+    if (rewardsLoading && rewards.length === 0) {
+      return <Loading fullScreen message={t('rewards.loadingRewards')} />;
+    }
+
+    const rewardFilters: { label: string; value: RewardFilterOption }[] = [
+      { label: t('rewards.filters.all'), value: 'all' },
+      { label: t('rewards.filters.points'), value: 'points' },
+      { label: t('rewards.filters.coupons'), value: 'coupon' },
+      { label: t('rewards.filters.badges'), value: 'badge' },
+      { label: t('rewards.filters.prizes'), value: 'prize' },
+    ];
+
+    // Calculate filtered stats
+    const filteredPointsSum = rewards
+      .filter(r => r.reward_type === 'points')
+      .reduce((sum, r) => sum + (r as any).points, 0);
+
+    const filteredCouponsCount = rewards.filter(r => r.reward_type === 'coupon').length;
+    const filteredBadgesCount = rewards.filter(r => r.reward_type === 'badge').length;
+
+    // Show filtered or total stats
+    const displayPoints = rewardFilter === 'points' ? filteredPointsSum : totalPoints;
+    const displayCoupons = rewardFilter === 'coupon' ? filteredCouponsCount : totalCoupons;
+    const displayBadges = rewardFilter === 'badge' ? filteredBadgesCount : totalBadges;
+
+    return (
+      <>
+        {/* Stats Summary - Only show when filter is 'all' */}
+        {rewardFilter === 'all' && (
+          <View style={[styles.statsContainer, { backgroundColor: colors.cardBackground }]}>
+            <View style={styles.statItem}>
+              <Ionicons name="star" size={20} color={colors.warning} />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{displayPoints}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('rewards.stats.totalPoints')}
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Ionicons name="ticket" size={20} color={colors.success} />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{displayCoupons}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('rewards.stats.totalCoupons')}
+              </Text>
+            </View>
+            <View style={styles.statItem}>
+              <Ionicons name="medal" size={20} color={colors.primary} />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{displayBadges}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('rewards.stats.totalBadges')}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Reward Filters */}
+        <View style={[styles.filterContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          {rewardFilters.map((filter) => (
+            <TouchableOpacity
+              key={filter.value}
+              style={[
+                styles.filterButton,
+                { backgroundColor: colors.borderLight },
+                rewardFilter === filter.value && { backgroundColor: colors.primary },
+              ]}
+              onPress={() => setRewardFilter(filter.value)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  { color: colors.textSecondary },
+                  rewardFilter === filter.value && { color: colors.white },
+                ]}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Results count */}
+        {!rewardsLoading && rewards.length > 0 && (
+          <View style={styles.resultsCount}>
+            <Text style={[styles.resultsCountText, { color: colors.textMuted }]}>
+              {rewards.length} {rewards.length === 1 ? t('rewards.reward') : t('rewards.rewards')}
+              {rewardFilter !== 'all' && ` • ${t('rewards.stats.totalPoints')}: ${totalPoints}`}
+            </Text>
+          </View>
+        )}
+
+        {/* Rewards List */}
+        <FlatList
+          data={rewards}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <RewardCard
+              reward={item}
+              onPress={() => {
+                if ('event_id' in item && item.event_id) {
+                  navigation.navigate('EventDetail', { eventId: item.event_id });
+                }
+              }}
+            />
+          )}
+          ListEmptyComponent={
+            rewardsError ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title={t('rewards.failedToLoad')}
+                message={rewardsError}
+                actionLabel={t('common.tryAgain')}
+                onAction={() => loadRewards()}
+              />
+            ) : (
+              <EmptyState
+                icon="gift-outline"
+                title={t('rewards.noRewards')}
+                message={t('rewards.noRewardsMessage')}
+              />
+            )
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={rewardsRefreshing}
+              onRefresh={() => loadRewards(true)}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          contentContainerStyle={styles.listContent}
+        />
+      </>
     );
   };
 
@@ -251,8 +498,12 @@ export function EventsScreen({ navigation, route }: Props) {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('events.title')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('events.subtitle')}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {activeTab === 'rewards' ? t('rewards.title') : t('events.title')}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {activeTab === 'rewards' ? t('rewards.subtitle') : t('events.subtitle')}
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
@@ -276,10 +527,13 @@ export function EventsScreen({ navigation, route }: Props) {
         </View>
       </View>
 
+      {renderTabs()}
       {renderSearchBar()}
 
       {isSearchVisible && searchQuery.length > 0 ? (
         renderSearchResults()
+      ) : activeTab === 'rewards' ? (
+        renderRewardsTab()
       ) : (
         <>
           <View style={[styles.filterContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -390,6 +644,48 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: spacing.xs,
   },
+  // Tabs styles
+  tabsContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomWidth: 3,
+  },
+  tabText: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+  },
+  // Stats styles
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
   // Search styles
   searchContainer: {
     paddingHorizontal: spacing.md,
@@ -439,6 +735,14 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+  },
+  resultsCount: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  resultsCountText: {
+    fontSize: fontSize.sm,
   },
   listContent: {
     padding: spacing.md,
