@@ -122,7 +122,7 @@ export function MapboxLiveMap({
   // Use preview location if tracking hasn't started, otherwise use live position
   const displayPosition = currentPosition || previewLocation;
 
-  // Build GeoJSON LineString from livePoints (only update when length changes for performance)
+  // Build GeoJSON LineString from livePoints
   const routeGeoJSON = useMemo(() => {
     if (livePoints.length < 2) return null;
 
@@ -134,7 +134,7 @@ export function MapboxLiveMap({
         coordinates: livePoints.map(p => [p.lng, p.lat]),
       },
     };
-  }, [livePoints.length]);
+  }, [livePoints]);
 
   // Note: Map load analytics tracked by parent when activityId is available
   // No trackMapLoad(0) call here - activityId 0 is invalid and API rejects it
