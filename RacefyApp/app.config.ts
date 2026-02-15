@@ -52,6 +52,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
+  scheme: 'racefy',
   splash: {
     image: './assets/splash-icon.png',
     resizeMode: 'contain',
@@ -62,6 +63,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: 'com.racefy.app',
     buildNumber: '7',
     googleServicesFile: getGoogleServicesFileiOS(),
+    associatedDomains: [
+      'applinks:racefy.app',
+      'applinks:app.dev.racefy.io',
+    ],
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Racefy needs access to your location to track your activities and show your route on the map.',
@@ -116,6 +121,23 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'WRITE_EXTERNAL_STORAGE',
       'VIBRATE',
       'POST_NOTIFICATIONS',
+    ],
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [
+          {
+            scheme: 'https',
+            host: 'racefy.app',
+          },
+          {
+            scheme: 'https',
+            host: 'app.dev.racefy.io',
+          },
+        ],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
     ],
   },
   web: {
