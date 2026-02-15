@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
 import { useEventCommentaryFeed } from '../hooks/useEventCommentaryFeed';
 import { useTranslation } from 'react-i18next';
 import { CommentaryItem } from './CommentaryItem';
@@ -34,6 +35,8 @@ export function CommentaryFeed({
 }: CommentaryFeedProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
 
   const {
     commentaries,
@@ -49,6 +52,7 @@ export function CommentaryFeed({
     tokenLimit,
     isPollingActive,
     secondsUntilRefresh,
+    handleBoostChange,
   } = useEventCommentaryFeed({
     eventId,
     language,
@@ -198,7 +202,14 @@ export function CommentaryFeed({
     <FlatList
       data={commentaries}
       keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => <CommentaryItem commentary={item} />}
+      renderItem={({ item }) => (
+        <CommentaryItem
+          commentary={item}
+          eventId={eventId}
+          isAuthenticated={isAuthenticated}
+          onBoostChange={handleBoostChange}
+        />
+      )}
       contentContainerStyle={styles.listContent}
       ListHeaderComponent={renderHeader()}
       ListEmptyComponent={renderEmpty()}

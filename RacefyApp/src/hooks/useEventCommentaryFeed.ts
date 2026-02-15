@@ -173,6 +173,29 @@ export function useEventCommentaryFeed({
     };
   }, [autoRefresh, refreshInterval, meta, silentRefresh]);
 
+  // Handle boost change with cross-item constraint (one boost per event)
+  const handleBoostChange = useCallback(
+    (commentaryId: number, isBoosted: boolean, newBoostsCount: number) => {
+      setCommentaries((prev) =>
+        prev.map((c) => {
+          if (c.id === commentaryId) {
+            return { ...c, boosts_count: newBoostsCount, user_boosted: isBoosted };
+          }
+          // If boosting a new one, auto-unboost the previously boosted one
+          if (isBoosted && c.user_boosted) {
+            return {
+              ...c,
+              boosts_count: Math.max(0, (c.boosts_count ?? 0) - 1),
+              user_boosted: false,
+            };
+          }
+          return c;
+        })
+      );
+    },
+    []
+  );
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -205,5 +228,7 @@ export function useEventCommentaryFeed({
     // Polling status
     isPollingActive,
     secondsUntilRefresh,
+    // Boost
+    handleBoostChange,
   };
 }

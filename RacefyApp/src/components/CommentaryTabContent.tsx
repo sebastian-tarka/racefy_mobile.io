@@ -28,8 +28,13 @@ export function CommentaryTabContent({
   const isOrganizer = user?.id === event.created_by;
   const isOngoing = event.status === 'ongoing';
 
-  // Fetch commentary settings to get the interval_minutes
+  // Fetch commentary settings only for organizers (endpoint requires authorization)
   useEffect(() => {
+    if (!isOrganizer) {
+      setIsLoadingSettings(false);
+      return;
+    }
+
     let isMounted = true;
 
     const fetchSettings = async () => {
@@ -53,7 +58,7 @@ export function CommentaryTabContent({
     return () => {
       isMounted = false;
     };
-  }, [event.id]);
+  }, [event.id, isOrganizer]);
 
   // Convert interval_minutes to milliseconds (default to 30 seconds if not available)
   const refreshInterval = commentarySettings?.interval_minutes

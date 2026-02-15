@@ -1154,7 +1154,10 @@
       "thu": "Cz",
       "fri": "Pt",
       "sat": "Sb"
-    }
+    },
+    "boostCommentary": "Doceń komentarz",
+    "removeCommentaryBoost": "Usuń docenienie komentarza",
+    "boostFailed": "Nie udało się docenić komentarza. Spróbuj ponownie."
   },
   "blocking": {
     "title": "Zablokowani użytkownicy",

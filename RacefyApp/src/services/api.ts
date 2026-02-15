@@ -1911,6 +1911,23 @@ class ApiService {
     );
   }
 
+  /**
+   * Remove boost from a commentary (authenticated)
+   * @param eventId - Event ID
+   * @param commentaryId - Commentary ID
+   */
+  async unboostCommentary(
+    eventId: number,
+    commentaryId: number
+  ): Promise<Types.BoostCommentaryResponse> {
+    return this.request<Types.BoostCommentaryResponse>(
+      `/events/${eventId}/commentary/${commentaryId}/boost`,
+      {
+        method: 'DELETE',
+      }
+    );
+  }
+
   // ============ HOME CONFIG (Dynamic Home Screen) ============
 
   /**

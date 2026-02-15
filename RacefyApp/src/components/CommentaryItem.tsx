@@ -5,13 +5,22 @@ import { spacing, borderRadius } from '../theme';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, pl } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { CommentaryBoostButton } from './CommentaryBoostButton';
 import type { EventCommentary, CommentaryType } from '../types/api';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
+  eventId?: number;
+  isAuthenticated?: boolean;
+  onBoostChange?: (commentaryId: number, isBoosted: boolean, newBoostsCount: number) => void;
 }
 
-export function CommentaryItem({ commentary }: CommentaryItemProps) {
+export function CommentaryItem({
+  commentary,
+  eventId,
+  isAuthenticated,
+  onBoostChange,
+}: CommentaryItemProps) {
   const { colors } = useTheme();
   const { i18n } = useTranslation();
 
@@ -68,6 +77,11 @@ export function CommentaryItem({ commentary }: CommentaryItemProps) {
 
   const typeColor = getTypeColor(commentary.type);
   const typeBackground = getTypeBackground(commentary.type);
+
+  const showBoostButton =
+    eventId != null &&
+    isAuthenticated &&
+    commentary.status === 'published';
 
   return (
     <View
@@ -141,6 +155,21 @@ export function CommentaryItem({ commentary }: CommentaryItemProps) {
           )}
         </View>
       )}
+
+      {/* Boost button footer */}
+      {showBoostButton && (
+        <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
+          <CommentaryBoostButton
+            eventId={eventId}
+            commentaryId={commentary.id}
+            boostsCount={commentary.boosts_count ?? 0}
+            userBoosted={commentary.user_boosted ?? false}
+            onBoostChange={(isBoosted, newBoostsCount) =>
+              onBoostChange?.(commentary.id, isBoosted, newBoostsCount)
+            }
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -203,5 +232,12 @@ const styles = StyleSheet.create({
   errorMessage: {
     fontSize: 12,
     marginTop: spacing.xs,
+  },
+  footer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
 });

@@ -1154,7 +1154,10 @@
       "thu": "Thu",
       "fri": "Fri",
       "sat": "Sat"
-    }
+    },
+    "boostCommentary": "Boost commentary",
+    "removeCommentaryBoost": "Remove commentary boost",
+    "boostFailed": "Failed to boost commentary. Please try again."
   },
   "blocking": {
     "title": "Blocked Users",

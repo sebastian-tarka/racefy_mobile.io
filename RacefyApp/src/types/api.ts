@@ -1497,6 +1497,8 @@ export interface EventCommentary {
   error_message?: string;
   published_at: string | null;
   created_at: string;
+  boosts_count?: number;
+  user_boosted?: boolean;
 }
 
 export interface CommentaryListResponse {
