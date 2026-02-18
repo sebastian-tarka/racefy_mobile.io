@@ -15,6 +15,8 @@ import type { TrainingTip, TipCategory } from '../../../../types/api';
 interface CollapsibleTipCardProps {
   tip: TrainingTip;
   defaultExpanded?: boolean;
+  onPress?: () => void;
+  onMarkHelpful?: (helpful: boolean) => void;
 }
 
 // Category colors and emojis
@@ -30,6 +32,8 @@ const CATEGORY_CONFIG: Record<TipCategory, { color: string; emoji: string }> = {
 export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
   tip,
   defaultExpanded = false,
+  onPress,
+  onMarkHelpful,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -126,7 +130,42 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
           </Text>
           <View style={styles.footer}>
             {renderEmotionalLoad()}
+            {onPress && (
+              <TouchableOpacity onPress={onPress} style={styles.readMoreButton} activeOpacity={0.7}>
+                <Text style={[styles.readMoreText, { color: colors.primary }]}>
+                  {t('training.tips.readMore')}
+                </Text>
+                <Ionicons name="arrow-forward" size={14} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
+          {onMarkHelpful && (
+            <View style={styles.feedbackRow}>
+              <Text style={[styles.feedbackLabel, { color: colors.textSecondary }]}>
+                {t('training.tips.wasHelpful')}
+              </Text>
+              <View style={styles.feedbackButtons}>
+                <TouchableOpacity
+                  style={[styles.feedbackButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+                  onPress={() => onMarkHelpful(true)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.feedbackButtonText, { color: colors.success }]}>
+                    👍 {t('training.tips.helpful')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.feedbackButton, { backgroundColor: colors.error + '15', borderColor: colors.error }]}
+                  onPress={() => onMarkHelpful(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.feedbackButtonText, { color: colors.error }]}>
+                    👎 {t('training.tips.notHelpful')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       </Animated.View>
     </View>
@@ -179,10 +218,44 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   emotionalLoadContainer: {
     flexDirection: 'row',
     gap: 2,
+  },
+  readMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  readMoreText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  feedbackRow: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  feedbackLabel: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+  feedbackButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  feedbackButton: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feedbackButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
 });

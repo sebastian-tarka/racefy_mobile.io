@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -152,6 +153,26 @@ export function DynamicHomeScreen({ navigation }: Props) {
     }
   }, [isAuthenticated]);
 
+  const handleTipMarkHelpful = useCallback(
+    async (tipId: number, helpful: boolean) => {
+      try {
+        await api.markTipHelpful(tipId, helpful);
+        // Remove the tip from the list so the next one shows (or card disappears)
+        setAvailableTips((prev) => prev.filter((t) => t.id !== tipId));
+      } catch {
+        // Silently fail
+      }
+    },
+    []
+  );
+
+  // Reload tips when screen comes back into focus (e.g. after returning from TipDetail)
+  useFocusEffect(
+    useCallback(() => {
+      loadAvailableTips();
+    }, [loadAvailableTips])
+  );
+
   const checkConnection = useCallback(async () => {
     const result = await api.checkHealth();
     setConnectionStatus({
@@ -173,10 +194,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
   useEffect(() => {
     checkConnection();
   }, [checkConnection]);
-
-  useEffect(() => {
-    loadAvailableTips();
-  }, [loadAvailableTips]);
 
   // Navigation helpers
   const navigateToAuth = useCallback(
@@ -367,6 +384,10 @@ export function DynamicHomeScreen({ navigation }: Props) {
             <CollapsibleTipCard
               tip={availableTips[0]}
               defaultExpanded={false}
+              onPress={() => {
+                navigation.getParent()?.navigate('TipDetail', { tipId: availableTips[0].id });
+              }}
+              onMarkHelpful={(helpful) => handleTipMarkHelpful(availableTips[0].id, helpful)}
             />
           </FadeInView>
         )}
