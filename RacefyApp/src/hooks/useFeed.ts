@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { Post, MediaItem } from '../types/api';
@@ -7,60 +7,54 @@ export function useFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFeed = useCallback(
-    async (reset = false) => {
-      if (isLoading) return;
+  // Refs break the dependency cycle — page/isLoading used only inside fetchFeed
+  const pageRef = useRef(1);
+  const isLoadingRef = useRef(false);
 
-      if (reset) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
+  const fetchFeed = useCallback(async (reset = false) => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
 
-      try {
-        const currentPage = reset ? 1 : page;
-        const response = await api.getFeed(currentPage);
+    if (reset) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+    setError(null);
 
-        // Handle different API response structures
-        const responseAny = response as any;
-        const postsData: Post[] = responseAny?.data ?? responseAny ?? [];
-        const meta = responseAny?.meta ?? { current_page: 1, last_page: 1 };
+    try {
+      const currentPage = reset ? 1 : pageRef.current;
+      const response = await api.getFeed(currentPage);
+      const postsData = response.data;
+      const meta = response.meta;
 
-        if (!Array.isArray(postsData)) {
-          logger.error('api', 'Invalid feed response - data is not an array', { postsData });
-          setError('Failed to load feed');
-          return;
-        }
-
-        setPosts((prev) => {
-          if (reset) return postsData;
-          // Deduplicate by post ID when loading more
-          const existingIds = new Set(prev.map((p) => p.id));
-          const newPosts = postsData.filter((p) => !existingIds.has(p.id));
-          return [...prev, ...newPosts];
-        });
-        setHasMore(meta.current_page < meta.last_page);
-        setPage(currentPage + 1);
-      } catch (err) {
-        logger.error('api', 'Failed to fetch posts', { error: err });
-        setError('Failed to load feed');
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
-    },
-    [page, isLoading]
-  );
+      setPosts((prev) => {
+        if (reset) return postsData;
+        // Deduplicate by post ID when loading more
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newPosts = postsData.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...newPosts];
+      });
+      setHasMore(meta.current_page < meta.last_page);
+      pageRef.current = currentPage + 1;
+    } catch (err) {
+      logger.error('api', 'Failed to fetch posts', { error: err });
+      setError('Failed to load feed');
+    } finally {
+      isLoadingRef.current = false;
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);  // stable — no deps needed thanks to refs
 
   const refresh = useCallback(() => fetchFeed(true), [fetchFeed]);
+  // isLoadingRef.current guards against concurrent calls inside fetchFeed
   const loadMore = useCallback(
-    () => hasMore && !isLoading && fetchFeed(false),
-    [hasMore, isLoading, fetchFeed]
+    () => hasMore && fetchFeed(false),
+    [hasMore, fetchFeed]
   );
 
   const likePost = useCallback(async (postId: number) => {
@@ -74,7 +68,7 @@ export function useFeed() {
         )
       );
     } catch (err) {
-      // Handle error
+      logger.error('api', 'Failed to like post', { postId, error: err });
     }
   }, []);
 
@@ -89,7 +83,7 @@ export function useFeed() {
         )
       );
     } catch (err) {
-      // Handle error
+      logger.error('api', 'Failed to unlike post', { postId, error: err });
     }
   }, []);
 

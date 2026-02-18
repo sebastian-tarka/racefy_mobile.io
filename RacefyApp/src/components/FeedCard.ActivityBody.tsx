@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -315,23 +315,25 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
     : { text: '', isTruncated: false };
 
   const hasRouteMap = activity.route_map_url || activity.route_svg;
-  const postVideos = post.videos || [];
-  const postPhotos = post.photos || [];
-  const imageUrls = postPhotos.map(p => fixStorageUrl(p.url) || '');
 
-  // Build media items for slider (photos and videos combined)
-  const mediaItems: PostMediaItem[] = [];
-  postVideos.forEach((v) => mediaItems.push({
-    id: v.id,
-    type: 'video',
-    url: fixStorageUrl(v.url) || '',
-    thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null
-  }));
-  postPhotos.forEach((p) => mediaItems.push({
-    id: p.id,
-    type: 'image',
-    url: fixStorageUrl(p.url) || ''
-  }));
+  const { imageUrls, mediaItems } = useMemo(() => {
+    const postVideos = post.videos || [];
+    const postPhotos = post.photos || [];
+    const urls = postPhotos.map(p => fixStorageUrl(p.url) || '');
+    const items: PostMediaItem[] = [];
+    postVideos.forEach((v) => items.push({
+      id: v.id,
+      type: 'video' as const,
+      url: fixStorageUrl(v.url) || '',
+      thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
+    }));
+    postPhotos.forEach((p) => items.push({
+      id: p.id,
+      type: 'image' as const,
+      url: fixStorageUrl(p.url) || '',
+    }));
+    return { imageUrls: urls, mediaItems: items };
+  }, [post.videos, post.photos]);
 
   const hasMedia = mediaItems.length > 0;
   const hasMultipleItems = hasRouteMap && hasMedia ? true : mediaItems.length > 1;

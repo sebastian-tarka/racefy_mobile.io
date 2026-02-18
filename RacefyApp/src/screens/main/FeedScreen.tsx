@@ -43,6 +43,12 @@ import {useRefreshOn} from "../../services/refreshEvents";
 
 type PostVisibility = 'public' | 'followers' | 'private';
 
+const VISIBILITY_OPTIONS: { value: PostVisibility; icon: string }[] = [
+  { value: 'public', icon: 'globe-outline' },
+  { value: 'followers', icon: 'people-outline' },
+  { value: 'private', icon: 'lock-closed-outline' },
+];
+
 type FeedScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Feed'>,
   NativeStackNavigationProp<RootStackParamList>
@@ -97,17 +103,11 @@ export function FeedScreen({ navigation, route }: Props) {
   const searchAnimValue = useRef(new Animated.Value(0)).current;
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const visibilityOptions: { value: PostVisibility; icon: string }[] = [
-    { value: 'public', icon: 'globe-outline' },
-    { value: 'followers', icon: 'people-outline' },
-    { value: 'private', icon: 'lock-closed-outline' },
-  ];
-
   useEffect(() => {
     if (isAuthenticated) {
       refresh();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, refresh]);
 
   // Handle openComposer param from navigation
   useEffect(() => {
@@ -117,6 +117,15 @@ export function FeedScreen({ navigation, route }: Props) {
       navigation.setParams({ openComposer: undefined });
     }
   }, [route.params?.openComposer, navigation]);
+
+  // Cleanup search debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
 
   // Animate search visibility
   useEffect(() => {
@@ -129,7 +138,7 @@ export function FeedScreen({ navigation, route }: Props) {
         searchInputRef.current?.focus();
       }
     });
-  }, [isSearchVisible]);
+  }, [isSearchVisible, searchAnimValue]);
 
   // Handle search
   const performSearch = useCallback(async (query: string) => {
@@ -249,6 +258,40 @@ export function FeedScreen({ navigation, route }: Props) {
   const handleEditPost = (postId: number) => {
     navigation.navigate('PostForm', { postId });
   };
+
+  const renderFeedItem = useCallback(({ item }: { item: Post }) => (
+    <FeedCard
+      post={item}
+      isOwner={item.is_owner ?? item.user_id === user?.id}
+      onLike={() => toggleLike(item)}
+      onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
+      onShareActivity={
+        item.type === 'activity' && item.activity
+          ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id })
+          : undefined
+      }
+      onUserPress={() => {
+        if (item.user?.username) {
+          navigation.navigate('UserProfile', { username: item.user.username });
+        }
+      }}
+      onActivityPress={
+        item.type === 'activity' && item.activity
+          ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
+          : undefined
+      }
+      onEventPress={
+        item.type === 'event' && item.event
+          ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
+          : undefined
+      }
+      onMenu={(action) => {
+        if (action === 'delete') handleDeletePost(item.id);
+        else if (action === 'report') handleReportPost(item.id);
+        else if (action === 'edit') handleEditPost(item.id);
+      }}
+    />
+  ), [user?.id, toggleLike, navigation, handleDeletePost, handleReportPost]);
 
   const renderSearchResults = () => {
     if (!isSearchVisible) return null;
@@ -511,39 +554,7 @@ export function FeedScreen({ navigation, route }: Props) {
           data={posts}
           keyExtractor={(item) => item.id.toString()}
           removeClippedSubviews={false}
-          renderItem={({ item }) => (
-            <FeedCard
-              post={item}
-              isOwner={item.is_owner ?? item.user_id === user?.id}
-              onLike={() => toggleLike(item)}
-              onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
-              onShareActivity={
-                item.type === 'activity' && item.activity
-                  ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id })
-                  : undefined
-              }
-              onUserPress={() => {
-                if (item.user?.username) {
-                  navigation.navigate('UserProfile', { username: item.user.username });
-                }
-              }}
-              onActivityPress={
-                item.type === 'activity' && item.activity
-                  ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
-                  : undefined
-              }
-              onEventPress={
-                item.type === 'event' && item.event
-                  ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
-                  : undefined
-              }
-              onMenu={(action) => {
-                if (action === 'delete') handleDeletePost(item.id);
-                else if (action === 'report') handleReportPost(item.id);
-                else if (action === 'edit') handleEditPost(item.id);
-              }}
-            />
-          )}
+          renderItem={renderFeedItem}
           ListHeaderComponent={
             <>
               <ActivitiesFeedPreview
@@ -596,7 +607,7 @@ export function FeedScreen({ navigation, route }: Props) {
                 <View style={[styles.composerFooter, { borderTopColor: colors.borderLight }]}>
                   <View style={styles.composerOptions}>
                     <View style={styles.visibilitySelector}>
-                      {visibilityOptions.map((option) => (
+                      {VISIBILITY_OPTIONS.map((option) => (
                         <TouchableOpacity
                           key={option.value}
                           style={[

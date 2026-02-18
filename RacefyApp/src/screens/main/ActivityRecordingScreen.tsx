@@ -11,6 +11,7 @@ import {
   Switch,
   Animated,
   Pressable,
+  AccessibilityInfo,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -170,6 +171,33 @@ export function ActivityRecordingScreen() {
 
   const status = getStatus();
   const distance = currentStats.distance;
+
+  // Accessibility: announce key recording state changes for screen readers
+  const prevStatusRef = useRef<RecordingStatus | null>(null);
+  useEffect(() => {
+    if (prevStatusRef.current === null) {
+      prevStatusRef.current = status;
+      return;
+    }
+    if (prevStatusRef.current === status) return;
+    prevStatusRef.current = status;
+    if (status === 'recording' || status === 'paused' || status === 'finished') {
+      AccessibilityInfo.announceForAccessibility(t(`recording.status.${status}`));
+    }
+  }, [status, t]);
+
+  // Accessibility: announce GPS signal quality changes during active tracking
+  const prevGpsSignalRef = useRef<string | null>(null);
+  useEffect(() => {
+    const signal = trackingStatus?.gpsSignal;
+    if (!signal) return;
+    if (prevGpsSignalRef.current === signal) return;
+    const wasTracking = prevGpsSignalRef.current !== null;
+    prevGpsSignalRef.current = signal;
+    if (wasTracking && (status === 'recording' || status === 'paused')) {
+      AccessibilityInfo.announceForAccessibility(t(`recording.gpsSignal.${signal}`));
+    }
+  }, [trackingStatus?.gpsSignal, status, t]);
 
   // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
@@ -794,13 +822,21 @@ export function ActivityRecordingScreen() {
             backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
                             trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
                             colors.error + '20'
-          }]}>
+          }]}
+            accessibilityLabel={t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
+          >
             <Ionicons
               name="locate"
               size={14}
               color={trackingStatus.gpsSignal === 'good' ? colors.success :
                      trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error}
             />
+            <Text style={[styles.gpsSignalText, {
+              color: trackingStatus.gpsSignal === 'good' ? colors.success :
+                     trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error
+            }]}>
+              {t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
+            </Text>
           </View>
         )}
       </View>
@@ -2140,11 +2176,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   gpsIndicator: {
-    width: 28,
     height: 28,
     borderRadius: 14,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 4,
+  },
+  gpsSignalText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 
   // ─────────────────────────────────────────────────────────────────────────

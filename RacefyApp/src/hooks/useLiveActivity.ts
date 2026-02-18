@@ -51,6 +51,15 @@ import {
   smoothPace,
   addPaceSegment,
 } from "../utils/paceCalculator";
+import {
+  SYNC_INTERVAL_MS,
+  PERSIST_INTERVAL_MS,
+  MAX_BACKOFF_MS,
+  GPS_GOOD_THRESHOLD_MS,
+  GPS_WEAK_THRESHOLD_MS,
+  MAX_PACE_SEGMENTS,
+  CALORIES_PER_SECOND,
+} from "../constants/tracking";
 
 const isWeb = Platform.OS === "web";
 
@@ -101,10 +110,6 @@ const initialStats: LiveActivityStats = {
   calories: 0,
   currentPace: null,
 };
-
-// Simple calorie estimation based on activity type and duration
-// MET values: Running ~10, Cycling ~8, Swimming ~8, Gym ~5
-const CALORIES_PER_SECOND = 0.15; // Rough average for moderate activity
 
 // Internal hook implementation (not exported directly)
 function useLiveActivityInternal() {
@@ -722,7 +727,7 @@ function useLiveActivityInternal() {
                 timestamp: location.timestamp,
                 distance: localStatsRef.current.distance,
               },
-              30, // Keep max 30 segments
+              MAX_PACE_SEGMENTS,
             );
 
             // Update current pace based on recent segments
@@ -1031,8 +1036,8 @@ function useLiveActivityInternal() {
         // Check if we're in a backoff period from previous failures
         if (syncRetryCount.current > 0) {
           const backoffMs = Math.min(
-            30000 * Math.pow(2, syncRetryCount.current - 1),
-            300000,
+            SYNC_INTERVAL_MS * Math.pow(2, syncRetryCount.current - 1),
+            MAX_BACKOFF_MS,
           );
           const timeSinceLastAttempt = Date.now() - lastSyncAttempt.current;
           if (timeSinceLastAttempt < backoffMs) {
@@ -1041,7 +1046,7 @@ function useLiveActivityInternal() {
           }
         }
         syncPoints(activityId);
-      }, 30000);
+      }, SYNC_INTERVAL_MS);
 
       // Persist foreground buffer to AsyncStorage every 10 seconds (crash protection)
       persistInterval.current = setInterval(async () => {
@@ -1060,7 +1065,7 @@ function useLiveActivityInternal() {
             count: pointsToSave.length,
           });
         }
-      }, 10000);
+      }, PERSIST_INTERVAL_MS);
 
       // Check GPS signal quality every 5 seconds
       lastGpsTime.current = Date.now();
@@ -1068,9 +1073,9 @@ function useLiveActivityInternal() {
         const timeSinceLastGps = Date.now() - lastGpsTime.current;
         let gpsSignal: "good" | "weak" | "lost";
 
-        if (timeSinceLastGps < 10000) {
+        if (timeSinceLastGps < GPS_GOOD_THRESHOLD_MS) {
           gpsSignal = "good";
-        } else if (timeSinceLastGps < 30000) {
+        } else if (timeSinceLastGps < GPS_WEAK_THRESHOLD_MS) {
           gpsSignal = "weak";
         } else {
           gpsSignal = "lost";

@@ -17,7 +17,7 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   sponsored: SponsoredBody,
 };
 
-export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
+export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
@@ -43,4 +43,4 @@ export function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, 
       <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onBoost={onBoost} onComment={onComment} onShareActivity={onShareActivity} />
     </Card>
   );
-}
+});

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
@@ -32,13 +32,16 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
   const event = post.event;
   if (!event) return null;
 
-  const coverUrl = event.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
-  const imageUrls: string[] = [];
-  if (coverUrl) imageUrls.push(coverUrl);
-  (post.photos || []).forEach(p => {
-    const url = fixStorageUrl(p.url);
-    if (url) imageUrls.push(url);
-  });
+  const { coverUrl, imageUrls } = useMemo(() => {
+    const cover = event.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
+    const urls: string[] = [];
+    if (cover) urls.push(cover);
+    (post.photos || []).forEach(p => {
+      const url = fixStorageUrl(p.url);
+      if (url) urls.push(url);
+    });
+    return { coverUrl: cover, imageUrls: urls };
+  }, [event.cover_image_url, post.photos]);
 
   return (
     <>

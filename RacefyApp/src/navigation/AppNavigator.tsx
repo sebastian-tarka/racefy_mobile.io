@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { AccessibilityInfo, Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
@@ -14,15 +14,12 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
-import { Loading, ImpersonationBanner } from '../components';
+import { Loading, ImpersonationBanner, ErrorBoundary } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
-import { HomeScreen } from '../screens/main/HomeScreen';
-import { DynamicHomeScreen } from '../screens/main/DynamicHomeScreen';
-import { FeedScreenOld } from '../screens/main/FeedScreen-old';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
 import { ProfileScreen } from '../screens/main/ProfileScreen';
@@ -97,9 +94,16 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
 }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-  // Only pulse when actively tracking AND not on the Record tab
-  const shouldPulse = isActivelyTracking && !focused;
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => sub.remove();
+  }, []);
+
+  // Only pulse when actively tracking, not on the Record tab, and user allows motion
+  const shouldPulse = isActivelyTracking && !focused && !reduceMotion;
 
   useEffect(() => {
     if (shouldPulse) {
@@ -397,25 +401,36 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
   );
 }
 
-// Classic Navigator - Original styling with Ionicons
-function MainNavigator() {
+/**
+ * Single tab navigator that adapts its visual style based on the API-driven navigation style.
+ *
+ * Previously this was split into MainNavigator (legacy) + MainNavigatorDynamic (dynamic) + a
+ * conditional wrapper that switched between them. That caused React to unmount/remount the entire
+ * tab tree whenever the style changed (on startup cache-load, every 60s API poll, or app foreground),
+ * losing all scroll positions.
+ *
+ * Now there is ONE navigator component. When `style` changes, the component re-renders (updates
+ * screenOptions/tabBarStyle) without unmounting any screens — scroll positions are preserved.
+ */
+function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const { style } = useNavigationStyle();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { isTracking, activity } = useLiveActivityContext();
 
-  // Haptic-only listener for tabs without auth guard
+  const isDynamic = style === 'dynamic';
+
+  // Haptic-only listener for Home tab in legacy mode (no auth guard needed for Home)
   const hapticListener = {
-    tabPress: () => {
-      triggerHaptic();
-    },
+    tabPress: () => { triggerHaptic(); },
   };
 
-  // Auth guard listener - redirects to Auth screen if not authenticated
+  // Auth guard listener — also triggers haptic in legacy; CustomTabButton handles haptic in dynamic
   const authGuardListener = {
     tabPress: (e: { preventDefault: () => void }) => {
-      triggerHaptic();
+      if (!isDynamic) triggerHaptic();
       if (!isAuthenticated) {
         e.preventDefault();
         navigation.navigate('Auth', { screen: 'Login' });
@@ -423,15 +438,37 @@ function MainNavigator() {
     },
   };
 
+  const tabBarHeight = 60 + insets.bottom;
+  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
+
+  const DYNAMIC_ICONS: Record<string, string> = {
+    Home: '⌂',
+    Feed: '☰',
+    Events: '📅',
+    Profile: '◉',
+  };
+
   return (
     <MainTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        ...(isDynamic && { tabBarButton: (props: any) => <CustomTabButton {...props} /> }),
         tabBarIcon: ({ focused, color, size }) => {
+          if (isDynamic) {
+            // Dynamic: emoji icons; Record tab icon is overridden at screen level
+            if (route.name === 'Record') return null;
+            return (
+              <AnimatedTextIcon
+                icon={DYNAMIC_ICONS[route.name] ?? '?'}
+                focused={focused}
+                size={20}
+              />
+            );
+          }
+
+          // Legacy: Ionicons
           let iconName: keyof typeof Ionicons.glyphMap;
           let iconColor = color;
-
-          // Use Ionicons for classic navigation
           switch (route.name) {
             case 'Home':
               iconName = focused ? 'home' : 'home-outline';
@@ -440,15 +477,10 @@ function MainNavigator() {
               iconName = focused ? 'list' : 'list-outline';
               break;
             case 'Record':
-              // Show recording status with simple color changes
-              if (activity) {
-                // Recording exists - show status
-                iconName = 'radio-button-on';
-                iconColor = isTracking ? '#ef4444' : '#f97316'; // red when tracking, orange when paused
-              } else {
-                // No recording - normal icon
-                iconName = 'add-circle';
-              }
+              iconName = activity ? 'radio-button-on' : 'add-circle';
+              iconColor = activity
+                ? (isTracking ? '#ef4444' : '#f97316')
+                : color;
               break;
             case 'Events':
               iconName = focused ? 'calendar' : 'calendar-outline';
@@ -459,187 +491,77 @@ function MainNavigator() {
             default:
               iconName = 'help-circle-outline';
           }
-
           return <AnimatedTabIcon iconName={iconName} focused={focused} size={size} color={iconColor} />;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.cardBackground,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-        },
+        tabBarStyle: isDynamic
+          ? {
+              backgroundColor: colors.cardBackground,
+              height: tabBarHeight,
+              paddingTop: 8,
+              paddingBottom: tabBarPaddingBottom,
+              borderTopWidth: 0,
+            }
+          : {
+              backgroundColor: colors.cardBackground,
+              borderTopColor: colors.border,
+              borderTopWidth: 1,
+            },
+        ...(isDynamic && {
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '500' as const,
+            letterSpacing: 0.3,
+          },
+        }),
       })}
     >
       <MainTab.Screen
         name="Home"
-        component={HomeScreen}
-        options={{ tabBarLabel: 'Home' }}
-        listeners={hapticListener}
+        component={HomeScreenWrapper}
+        options={{ tabBarLabel: 'Home', tabBarAccessibilityLabel: 'Strona główna' }}
+        listeners={isDynamic ? undefined : hapticListener}
       />
       <MainTab.Screen
         name="Feed"
         component={FeedScreen}
-        options={{
-          tabBarLabel: 'Feed',
-        }}
+        options={{ tabBarLabel: 'Feed', tabBarAccessibilityLabel: 'Aktywności znajomych' }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Record"
         component={ActivityRecordingScreen}
         options={{
-          tabBarLabel: 'Record',
+          tabBarLabel: isDynamic ? '' : 'Record',
+          tabBarAccessibilityLabel: 'Nagraj aktywność',
+          ...(isDynamic && {
+            tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) => (
+              <RecordIcon
+                focused={focused}
+                size={size}
+                hasActiveRecording={!!activity}
+                isActivelyTracking={isTracking}
+              />
+            ),
+          }),
         }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Events"
         component={EventsScreen}
-        options={{ tabBarLabel: 'Events' }}
+        options={{ tabBarLabel: 'Events', tabBarAccessibilityLabel: 'Wydarzenia' }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
+        options={{ tabBarLabel: 'Profile', tabBarAccessibilityLabel: 'Profil użytkownika' }}
         listeners={authGuardListener}
       />
     </MainTab.Navigator>
   );
-}
-
-// Dynamic Navigator - Modern styling with emoji icons and custom button
-function MainNavigatorDynamic() {
-  const { isAuthenticated } = useAuth();
-  const { colors } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const insets = useSafeAreaInsets();
-  const { isTracking, activity } = useLiveActivityContext();
-
-  // Auth guard listener - redirects to Auth screen if not authenticated
-  // Note: haptic is handled by CustomTabButton's onPress wrapper
-  const authGuardListener = {
-    tabPress: (e: { preventDefault: () => void }) => {
-      if (!isAuthenticated) {
-        e.preventDefault();
-        navigation.navigate('Auth', { screen: 'Login' });
-      }
-    },
-  };
-
-  // Calculate tab bar height
-  const tabBarHeight = 60 + insets.bottom;
-  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
-
-  return (
-    <MainTab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarButton: (props) => <CustomTabButton {...props} />,
-        tabBarIcon: ({ focused, color, size }) => {
-          let icon: string;
-
-          // Use emoji/unicode icons from mockup
-          switch (route.name) {
-            case 'Home':
-              icon = '⌂';
-              break;
-            case 'Feed':
-              icon = '☰';
-              break;
-            case 'Record':
-              icon = '+';
-              break;
-            case 'Events':
-              icon = '📅';
-              break;
-            case 'Profile':
-              icon = '◉';
-              break;
-            default:
-              icon = '?';
-          }
-
-          // Use custom gradient icon for Record tab
-          if (route.name === 'Record') {
-            return null; // Will be rendered in tabBarIcon option for Record screen
-          }
-
-          // Use AnimatedTextIcon for smooth transitions
-          return <AnimatedTextIcon icon={icon} focused={focused} size={20} />;
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.cardBackground,
-          height: tabBarHeight,
-          paddingTop: 8,
-          paddingBottom: tabBarPaddingBottom,
-          borderTopWidth: 0,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-          letterSpacing: 0.3,
-        },
-      })}
-    >
-      <MainTab.Screen
-        name="Home"
-        component={DynamicHomeScreen}
-        options={{ tabBarLabel: 'Home' }}
-      />
-      <MainTab.Screen
-        name="Feed"
-        component={FeedScreen}
-        options={{
-          tabBarLabel: 'Feed',
-        }}
-        listeners={authGuardListener}
-      />
-      <MainTab.Screen
-        name="Record"
-        component={ActivityRecordingScreen}
-        options={{
-          tabBarLabel: '', // No label for Record button
-          tabBarIcon: ({ focused, size }) => (
-            <RecordIcon
-              focused={focused}
-              size={size}
-              hasActiveRecording={!!activity}
-              isActivelyTracking={isTracking}
-            />
-          ),
-        }}
-        listeners={authGuardListener}
-      />
-      <MainTab.Screen
-        name="Events"
-        component={EventsScreen}
-        options={{ tabBarLabel: 'Events' }}
-        listeners={authGuardListener}
-      />
-      <MainTab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
-        listeners={authGuardListener}
-      />
-    </MainTab.Navigator>
-  );
-}
-
-// Wrapper that decides which navigator to use based on navigation style from API
-function MainNavigatorWrapper() {
-  const { style } = useNavigationStyle();
-
-  // Use dynamic navigator when style is 'dynamic', otherwise use legacy/classic
-  if (style === 'dynamic') {
-    return <MainNavigatorDynamic />;
-  }
-
-  return <MainNavigator />;
 }
 
 // Component that loads home config and sets navigation style
@@ -687,6 +609,7 @@ export function AppNavigator() {
   const authStateKey = showConsentModal ? 'consent' : isAuthenticated ? 'auth' : 'guest';
 
   return (
+    <ErrorBoundary>
     <NavigationStyleProvider>
       <NavigationStyleSetter>
         <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
@@ -737,7 +660,7 @@ export function AppNavigator() {
         ) : (
           // Authenticated - normal app flow
           <>
-            <RootStack.Screen name="Main" component={MainNavigatorWrapper} />
+            <RootStack.Screen name="Main" component={MainTabNavigator} />
             <RootStack.Screen
               name="Auth"
               component={AuthNavigator}
@@ -862,5 +785,6 @@ export function AppNavigator() {
         </NavigationContainer>
       </NavigationStyleSetter>
     </NavigationStyleProvider>
+    </ErrorBoundary>
   );
 }

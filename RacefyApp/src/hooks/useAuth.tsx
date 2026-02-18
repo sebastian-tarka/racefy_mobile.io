@@ -5,7 +5,6 @@ import React, {
   useContext,
   useCallback,
 } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
 import { secureStorage } from '../services/secureStorage';
 import { pushNotificationService } from '../services/pushNotifications';
@@ -13,7 +12,9 @@ import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
 import { logger } from '../services/logger';
 import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
+import { useImpersonationActions, IMPERSONATION_SESSION_KEY } from './useImpersonationActions';
 import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
   user: User | null;
@@ -36,9 +37,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// AsyncStorage key for non-sensitive session metadata
-const IMPERSONATION_SESSION_KEY = '@racefy_impersonation_session';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
   const [impersonationSession, setImpersonationSession] = useState<ImpersonationSession | null>(null);
   const [originalAdminToken, setOriginalAdminToken] = useState<string | null>(null);
+
+  const { startImpersonation, stopImpersonation, restoreAdminToken, clearImpersonationState } =
+    useImpersonationActions(
+      { user, originalAdminToken },
+      { setUser, setIsImpersonating, setImpersonatedUser, setImpersonationSession, setOriginalAdminToken }
+    );
 
   // Check if user has accepted all required consents
   const checkConsentStatus = useCallback(async () => {
@@ -233,97 +237,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore errors
     }
   }, []);
-
-  // Helper function to clear impersonation state (secure tokens + session metadata)
-  async function clearImpersonationState() {
-    await secureStorage.clearImpersonationToken();
-    await secureStorage.clearAdminToken();
-    await AsyncStorage.removeItem(IMPERSONATION_SESSION_KEY);
-    setIsImpersonating(false);
-    setImpersonatedUser(null);
-    setImpersonationSession(null);
-    setOriginalAdminToken(null);
-  }
-
-  // Helper function to restore admin token
-  async function restoreAdminToken(adminToken: string) {
-    await api.setToken(adminToken);
-    const adminData = await api.getUser();
-    setUser(adminData);
-    await clearImpersonationState();
-  }
-
-  const startImpersonation = useCallback(async (userId: number) => {
-    logger.auth('Starting impersonation', { userId });
-    try {
-      // Store original admin token
-      const adminToken = api.getToken();
-      if (!adminToken) throw new Error('Not authenticated');
-
-      // Call API to start impersonation
-      const response = await api.startImpersonation(userId);
-
-      // Store tokens securely and session metadata in AsyncStorage
-      await secureStorage.setAdminToken(adminToken);
-      await secureStorage.setImpersonationToken(response.impersonation_token);
-      await AsyncStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(response));
-
-      // Switch to impersonation token
-      await api.setToken(response.impersonation_token);
-
-      // Update state
-      setImpersonatedUser(response.impersonated_user);
-      setUser(response.impersonated_user);
-      setIsImpersonating(true);
-      setImpersonationSession({
-        id: response.session_id,
-        admin_id: user!.id,
-        impersonated_user_id: response.impersonated_user.id,
-        started_at: response.expires_at,
-        expires_at: response.expires_at,
-        ended_at: null,
-      });
-      setOriginalAdminToken(adminToken);
-      logger.auth('Impersonation started', {
-        impersonatedUserId: response.impersonated_user.id,
-        impersonatedUsername: response.impersonated_user.username
-      });
-    } catch (error) {
-      logger.error('auth', 'Failed to start impersonation', { error });
-      throw error;
-    }
-  }, [user]);
-
-  const stopImpersonation = useCallback(async () => {
-    logger.auth('Stopping impersonation');
-    try {
-      // Call API to end impersonation (uses impersonation token)
-      const response = await api.stopImpersonation();
-
-      // Restore admin token
-      if (originalAdminToken) {
-        await api.setToken(originalAdminToken);
-        setUser(response.admin_user); // Set admin user from response
-        logger.auth('Impersonation stopped, restored to admin', {
-          adminUserId: response.admin_user.id,
-          adminUsername: response.admin_user.username
-        });
-      }
-
-      // Clear impersonation state
-      await clearImpersonationState();
-    } catch (error) {
-      logger.error('auth', 'Failed to stop impersonation', { error });
-      // On error, attempt to restore admin token anyway
-      if (originalAdminToken) {
-        await api.setToken(originalAdminToken);
-        const adminData = await api.getUser();
-        setUser(adminData);
-      }
-      await clearImpersonationState();
-      throw error;
-    }
-  }, [originalAdminToken]);
 
   return (
     <AuthContext.Provider

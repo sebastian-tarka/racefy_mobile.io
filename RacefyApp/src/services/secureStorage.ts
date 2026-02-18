@@ -5,7 +5,12 @@ import { logger } from './logger';
 /**
  * Secure storage service for sensitive data like authentication tokens.
  * Uses expo-secure-store for encrypted storage on iOS (Keychain) and Android (Keystore).
- * Falls back to AsyncStorage if SecureStore is unavailable.
+ *
+ * Fallback policy:
+ * - AsyncStorage is used ONLY when SecureStore reports itself as unavailable (e.g., some emulators).
+ * - If SecureStore is available but throws an error, we do NOT fall back — we return false so the
+ *   caller can handle the failure. Silently writing tokens to unencrypted storage when the secure
+ *   store claims to be available would be a security regression.
  */
 
 const TOKEN_KEY = 'racefy_auth_token';
@@ -32,30 +37,28 @@ async function isSecureStoreAvailable(): Promise<boolean> {
  * Store a value securely
  */
 async function setSecure(key: string, value: string): Promise<boolean> {
-  try {
-    const isAvailable = await isSecureStoreAvailable();
+  const isAvailable = await isSecureStoreAvailable();
 
-    if (isAvailable) {
-      await SecureStore.setItemAsync(key, value);
-      logger.debug('auth', `Securely stored: ${key}`);
-      return true;
-    } else {
-      // Fallback to AsyncStorage (less secure but functional for dev)
+  if (!isAvailable) {
+    // SecureStore not available on this device (e.g., emulator) — use AsyncStorage as fallback
+    try {
       await AsyncStorage.setItem(`@secure_${key}`, value);
       logger.warn('auth', `SecureStore unavailable, fell back to AsyncStorage for: ${key}`);
       return true;
-    }
-  } catch (error) {
-    logger.error('auth', `Failed to store securely: ${key}`, { error });
-    // Try AsyncStorage as last resort
-    try {
-      await AsyncStorage.setItem(`@secure_${key}`, value);
-      logger.warn('auth', `Fell back to AsyncStorage for: ${key}`);
-      return true;
-    } catch (fallbackError) {
-      logger.error('auth', `Fallback storage also failed: ${key}`, { error: fallbackError });
+    } catch (error) {
+      logger.error('auth', `AsyncStorage fallback write failed: ${key}`, { error });
       return false;
     }
+  }
+
+  // SecureStore is available — use it exclusively, never fall back on error
+  try {
+    await SecureStore.setItemAsync(key, value);
+    logger.debug('auth', `Securely stored: ${key}`);
+    return true;
+  } catch (error) {
+    logger.error('auth', `SecureStore write failed: ${key}`, { error });
+    return false;  // Do not fall back — caller must handle this
   }
 }
 
