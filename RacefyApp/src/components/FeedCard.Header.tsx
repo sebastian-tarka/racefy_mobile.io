@@ -163,7 +163,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
   };
 
   const typeIcon = getTypeIcon(type);
-  const campaignName = isSponsored ? ((post as any).campaign_name || post.title || t('feed.postTypes.sponsored')) : null;
+  const campaignName = isSponsored ? ((post as any).sponsored_data?.campaign_name || t('feed.postTypes.sponsored')) : null;
 
   if (isSponsored) {
     return (
