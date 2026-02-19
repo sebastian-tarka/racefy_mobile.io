@@ -1,4 +1,4 @@
-import {CommentaryLanguage, CommentaryStyle, EventRankingMode} from "../../types/api";
+import {CommentaryLanguage, CommentaryStyle, EventRankingMode, EventTeamScoring, EventVisibility} from "../../types/api";
 import type {NativeStackScreenProps} from "@react-navigation/native-stack";
 import type {RootStackParamList} from "../../navigation";
 import {StyleSheet} from "react-native";
@@ -55,6 +55,21 @@ export interface FormData {
     start_finish_note: string;
     // Activity aggregation
     allow_multiple_activities: boolean;
+    // Visibility
+    visibility: EventVisibility;
+    // Ranking mode config
+    target_distance: string;   // km in UI → meters to API
+    time_limit: string;        // minutes in UI → seconds to API
+    // Team event
+    is_team_event: boolean;
+    team_size_min: string;
+    team_size_max: string;
+    team_scoring: EventTeamScoring;
+    // Point rewards
+    point_rewards_first: string;
+    point_rewards_second: string;
+    point_rewards_third: string;
+    point_rewards_finisher: string;
 }
 
 export const initialFormData: FormData = {
@@ -78,6 +93,21 @@ export const initialFormData: FormData = {
     start_finish_note: '',
     // Activity aggregation
     allow_multiple_activities: false,
+    // Visibility
+    visibility: 'public',
+    // Ranking mode config
+    target_distance: '',
+    time_limit: '',
+    // Team event
+    is_team_event: false,
+    team_size_min: '',
+    team_size_max: '',
+    team_scoring: 'sum',
+    // Point rewards
+    point_rewards_first: '',
+    point_rewards_second: '',
+    point_rewards_third: '',
+    point_rewards_finisher: '',
 };
 export type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
 export const styles = StyleSheet.create({
