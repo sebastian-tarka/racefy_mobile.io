@@ -9,11 +9,10 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
-import { ScreenHeader, Button, Card, EventSelectionSheet } from '../../components';
+import { ScreenHeader, Button, Card, EventSelectionSheet, ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useTheme } from '../../hooks/useTheme';
@@ -139,7 +138,7 @@ export function GpxImportScreen({ navigation }: Props) {
   const canImport = selectedFile && selectedSport && !isImporting;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('gpxImport.title')}
         showBack
@@ -342,7 +341,7 @@ export function GpxImportScreen({ navigation }: Props) {
         selectedEvent={selectedEvent}
         isLoading={eventsLoading}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

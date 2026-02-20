@@ -931,6 +931,22 @@
       "autoPublish": "Auto-publish",
       "autoPublishDescription": "Publish posts automatically without review (not recommended)"
     },
+    "healthSync": {
+      "title": "Heart Rate Sync",
+      "description": "Automatically enrich activities with heart rate data from your smartwatch.",
+      "enable": "Enable Heart Rate Sync",
+      "status": "Status",
+      "statusAvailable": "Available",
+      "statusNotAvailable": "Not Available",
+      "statusNotInstalled": "Health Connect not installed",
+      "sourceHealthConnect": "Health Connect",
+      "sourceAppleHealth": "Apple Health",
+      "grantPermission": "Grant Permission",
+      "permissionGranted": "Permission Granted",
+      "permissionDenied": "Permission not granted. Please enable in system settings.",
+      "hrFromHealthConnect": "HR from Health Connect",
+      "hrFromAppleHealth": "HR from Apple Health"
+    },
     "app": "App",
     "version": "Version",
     "allRightsReserved": "All rights reserved",

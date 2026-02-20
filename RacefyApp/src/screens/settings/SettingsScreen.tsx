@@ -10,18 +10,19 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
+import { useHealthSync } from '../../hooks/useHealthSync';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { changeLanguage } from '../../i18n';
@@ -198,6 +199,16 @@ export function SettingsScreen({ navigation }: Props) {
   const [deletePassword, setDeletePassword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Health sync
+  const {
+    isEnabled: healthSyncEnabled,
+    status: healthStatus,
+    toggle: toggleHealthSync,
+    requestPermission: requestHealthPermission,
+    hasPermission: hasHealthPermission,
+    isLoading: healthSyncLoading,
+  } = useHealthSync();
+
   // Sport types and favorite sport modal
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const [showSportModal, setShowSportModal] = useState(false);
@@ -212,6 +223,7 @@ export function SettingsScreen({ navigation }: Props) {
     privacy: false,
     privacySafety: false,
     activityDefaults: false,
+    healthSync: false,
     aiPosts: false,
     app: true,
     dangerZone: false,
@@ -540,7 +552,7 @@ export function SettingsScreen({ navigation }: Props) {
   logger.debug('auth', 'Current user role', { role: user?.role });
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('settings.title')}
         showBack
@@ -858,6 +870,64 @@ export function SettingsScreen({ navigation }: Props) {
           />
         </SettingsSection>
 
+        {/* Heart Rate Sync */}
+        <SettingsSection
+          title={t('settings.healthSync.title')}
+          isExpanded={expandedSections.healthSync}
+          onToggle={() => toggleSection('healthSync')}
+        >
+          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.healthSyncDescription, { color: colors.textSecondary }]}>
+              {t('settings.healthSync.description')}
+            </Text>
+          </View>
+          <SettingsRow
+            icon="heart-outline"
+            label={t('settings.healthSync.enable')}
+            rightElement={
+              <Switch
+                value={healthSyncEnabled}
+                onValueChange={() => {
+                  triggerHaptic();
+                  toggleHealthSync();
+                }}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={healthSyncEnabled ? colors.primary : colors.white}
+                disabled={healthSyncLoading || healthStatus === 'not_available'}
+              />
+            }
+          />
+          <SettingsRow
+            icon="pulse-outline"
+            label={t('settings.healthSync.status')}
+            value={
+              healthStatus === 'available'
+                ? (Platform.OS === 'ios'
+                    ? t('settings.healthSync.sourceAppleHealth')
+                    : t('settings.healthSync.sourceHealthConnect'))
+                : healthStatus === 'not_installed'
+                  ? t('settings.healthSync.statusNotInstalled')
+                  : t('settings.healthSync.statusNotAvailable')
+            }
+          />
+          {healthSyncEnabled && healthStatus === 'available' && !hasHealthPermission && (
+            <SettingsRow
+              icon="key-outline"
+              label={t('settings.healthSync.grantPermission')}
+              onPress={() => {
+                triggerHaptic();
+                requestHealthPermission();
+              }}
+            />
+          )}
+          {healthSyncEnabled && hasHealthPermission && (
+            <SettingsRow
+              icon="checkmark-circle-outline"
+              label={t('settings.healthSync.permissionGranted')}
+            />
+          )}
+        </SettingsSection>
+
         {/* AI Posts Settings */}
         <SettingsSection
           title={t('settings.aiPosts.title')}
@@ -941,7 +1011,7 @@ export function SettingsScreen({ navigation }: Props) {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowSportModal(false)}
       >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <ScreenContainer style={styles.modalContainer}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setShowSportModal(false)} style={styles.modalCloseButton}>
               <Ionicons name="close" size={28} color={colors.textPrimary} />
@@ -989,9 +1059,9 @@ export function SettingsScreen({ navigation }: Props) {
               contentContainerStyle={styles.sportList}
             />
           )}
-        </SafeAreaView>
+        </ScreenContainer>
       </Modal>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -1165,5 +1235,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.md,
     fontWeight: '500',
+  },
+  healthSyncDescription: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
   },
 });

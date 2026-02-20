@@ -13,7 +13,7 @@ import {
   Keyboard,
   Animated,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +30,7 @@ import {
   CommentaryTabContent,
   SocialShareModal,
   ParticipantAvatarsStack,
+  ScreenContainer,
 } from '../../components';
 import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
@@ -865,10 +866,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   if (error || !event) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top']}
-      >
+      <ScreenContainer>
         <ScreenHeader
           title={t('eventDetail.title')}
           showBack
@@ -881,7 +879,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           </Text>
           <Button title={t('common.tryAgain')} onPress={fetchEvent} variant="primary" />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -939,7 +937,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('eventDetail.title')}
         showBack
@@ -1136,7 +1134,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
         title={event?.post?.title}
         description={event?.post?.content}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

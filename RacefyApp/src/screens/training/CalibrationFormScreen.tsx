@@ -11,7 +11,6 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +22,7 @@ import { useSportTypes } from '../../hooks/useSportTypes';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Button, Loading, Input, SportTypeSelector } from '../../components';
+import { ScreenHeader, Button, Loading, Input, SportTypeSelector, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ExperienceLevel, GuidanceLevel, RecoveryProfile, TrainingGoal } from '../../types/api';
 
@@ -257,7 +256,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('training.calibration.title')}
         showBack
@@ -639,7 +638,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowCrossTrainingModal(false)}
       >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top']}>
+        <ScreenContainer style={styles.modalContainer}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setShowCrossTrainingModal(false)}>
               <Ionicons name="close" size={24} color={colors.textPrimary} />
@@ -692,9 +691,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
               );
             }}
           />
-        </SafeAreaView>
+        </ScreenContainer>
       </Modal>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

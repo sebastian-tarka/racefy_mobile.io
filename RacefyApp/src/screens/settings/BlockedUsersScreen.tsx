@@ -8,14 +8,13 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { useBlockUser } from '../../hooks/useBlockUser';
-import { ScreenHeader, Avatar, EmptyState } from '../../components';
+import { ScreenHeader, Avatar, EmptyState, ScreenContainer } from '../../components';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { BlockedUser } from '../../types/api';
 
@@ -123,10 +122,7 @@ export function BlockedUsersScreen() {
   };
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <ScreenContainer>
       <ScreenHeader
         title={t('blocking.title')}
         showBack
@@ -162,7 +158,7 @@ export function BlockedUsersScreen() {
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

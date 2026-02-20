@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +16,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { Loading } from '../../components';
+import { Loading, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingTip, TipCategory } from '../../types/api';
 
@@ -108,10 +107,7 @@ export function TipDetailScreen({ navigation, route }: Props) {
   const content = tip.translated_content || tip.content || '';
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
+    <ScreenContainer>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
@@ -182,7 +178,7 @@ export function TipDetailScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

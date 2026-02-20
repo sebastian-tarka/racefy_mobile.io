@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { Button } from '../../components';
+import { Button, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -126,7 +125,7 @@ export function ProgramLoadingScreen({ navigation, route }: Props) {
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <View style={styles.content}>
           <View style={[styles.errorIconContainer, { backgroundColor: colors.error + '15' }]}>
             <Ionicons name="alert-circle" size={64} color={colors.error} />
@@ -154,12 +153,12 @@ export function ProgramLoadingScreen({ navigation, route }: Props) {
             />
           </View>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <View style={styles.content}>
         <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
           <Ionicons name="fitness" size={64} color={colors.primary} />
@@ -181,7 +180,7 @@ export function ProgramLoadingScreen({ navigation, route }: Props) {
           <View style={[styles.dot, { backgroundColor: colors.primary }]} />
         </View>
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

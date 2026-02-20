@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +18,7 @@ import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Loading, Card, Button, ActivitySelectionSheet } from '../../components';
+import { ScreenHeader, Loading, Card, Button, ActivitySelectionSheet, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, TrainingActivity, SuggestedActivity, Activity } from '../../types/api';
 
@@ -233,7 +232,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
 
   if (!week) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('training.weekDetail.title', { number: '...' })}
           showBack
@@ -244,7 +243,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
             {t('training.errors.weekNotFound')}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -260,7 +259,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
   const useSuggestedActivities = suggestedActivities.length > 0;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('training.weekDetail.title', { number: week.week_number })}
         showBack
@@ -595,7 +594,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
         isLoading={activitiesLoading}
         currentWeekId={weekId}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

@@ -8,10 +8,9 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { CommonActions } from '@react-navigation/native';
-import { Input, Avatar, ScreenHeader } from '../../components';
+import { Input, Avatar, ScreenHeader, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -91,7 +90,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('admin.impersonate.title')}
         showBack
@@ -150,7 +149,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
           </Text>
         </View>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

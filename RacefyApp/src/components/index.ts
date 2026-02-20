@@ -55,6 +55,7 @@ export * from './PostCard';
 export * from './PrivacyConsentsSection';
 export * from './ReportModal';
 export * from './RewardCard';
+export * from './ScreenContainer';
 export * from './ScreenHeader';
 export * from './SettingsSection';
 export * from './SocialShareModal';

@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ImageBackground,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
@@ -28,6 +27,7 @@ import {
   UserListModal,
   SportTypeFilter,
   TimeRangeFilter,
+  ScreenContainer,
   type TimeRange,
   type PeriodOption,
 } from '../../components';
@@ -343,7 +343,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
         </View>
@@ -356,7 +356,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             navigation.getParent()?.navigate('Auth', { screen: 'Login' })
           }
         />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -698,7 +698,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       {/* Keep DraftsTab mounted but hidden to prevent blinking on tab switch */}
       <View style={[styles.tabContent, activeTab !== 'drafts' && styles.hiddenTab]}>
         <DraftsTab
@@ -748,7 +748,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onUserPress={handleUserNavigation}
         />
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

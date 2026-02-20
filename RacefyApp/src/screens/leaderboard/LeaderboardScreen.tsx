@@ -7,10 +7,9 @@ import {
   RefreshControl,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader, LeaderboardList, EmptyState, TimeRangeFilter, type PeriodOption } from '../../components';
+import { ScreenHeader, LeaderboardList, EmptyState, TimeRangeFilter, type PeriodOption, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { useLeaderboard, LeaderboardType } from '../../hooks/useLeaderboard';
@@ -126,7 +125,7 @@ export function LeaderboardScreen({ navigation }: Props) {
   // Show auth required message for following tab
   if (activeTab === 'following' && !isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('leaderboard.title')}
           showBack
@@ -151,12 +150,12 @@ export function LeaderboardScreen({ navigation }: Props) {
             onAction={() => navigation.navigate('Auth', { screen: 'Login' })}
           />
         </ScrollView>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('leaderboard.title')}
         showBack
@@ -180,7 +179,7 @@ export function LeaderboardScreen({ navigation }: Props) {
             : t('leaderboard.noEntries')
         }
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

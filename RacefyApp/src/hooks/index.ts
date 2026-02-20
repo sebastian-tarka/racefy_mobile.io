@@ -29,3 +29,5 @@ export * from './useGenerateCommentary';
 export * from './useHomeConfig';
 export * from './usePushNotifications';
 export * from './useVideoPauseOnBlur';
+export * from './useHealthEnrichment';
+export * from './useHealthSync';

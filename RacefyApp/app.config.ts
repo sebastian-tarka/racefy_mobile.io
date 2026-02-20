@@ -84,6 +84,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Racefy needs photo library access to select photos and videos from your gallery.',
       NSPhotoLibraryAddUsageDescription:
         'Racefy needs permission to save photos and videos to your photo library.',
+      NSHealthShareUsageDescription:
+        'Racefy reads heart rate data from your smartwatch to enrich your activities.',
       // Required for background location tracking and push notifications
       UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
       // Google Sign-In iOS URL scheme (reversed client ID)
@@ -121,6 +123,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'WRITE_EXTERNAL_STORAGE',
       'VIBRATE',
       'POST_NOTIFICATIONS',
+      'android.permission.health.READ_HEART_RATE',
     ],
     intentFilters: [
       {
@@ -173,6 +176,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-video',
     'expo-secure-store',
     '@rnmapbox/maps',
+    [
+      'react-native-health-connect',
+      { requestPermissionsActivity: false },
+    ],
+    [
+      'react-native-health',
+      {
+        healthSharePermission:
+          'Racefy reads heart rate data from your smartwatch to enrich your activities.',
+      },
+    ],
     '@react-native-google-signin/google-signin',
     [
       'expo-notifications',

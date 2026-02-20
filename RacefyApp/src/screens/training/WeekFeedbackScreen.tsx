@@ -13,7 +13,6 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +22,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Loading } from '../../components';
+import { ScreenHeader, Loading, ScreenContainer } from '../../components';
 import { FeedbackSummaryHeader } from '../../components/Training/FeedbackSummaryHeader';
 import { ComplianceRings } from '../../components/Training/ComplianceRings';
 import { CoachMessageCard } from '../../components/Training/CoachMessageCard';
@@ -124,7 +123,7 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
 
   if (error || !feedback) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('training.feedback.title', { number: '...' })}
           showBack
@@ -144,12 +143,12 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
             </Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('training.feedback.title', { number: feedback.week_number })}
         showBack
@@ -346,7 +345,7 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -31,6 +30,7 @@ import {
   EmptyState,
   Loading,
   TipCard,
+  ScreenContainer,
 } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -126,7 +126,7 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
@@ -283,7 +283,7 @@ export function HomeScreen({ navigation }: Props) {
           limit={5}
         />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

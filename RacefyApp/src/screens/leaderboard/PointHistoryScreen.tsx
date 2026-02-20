@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader, PointHistoryList } from '../../components';
+import { ScreenHeader, PointHistoryList, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { usePointHistory } from '../../hooks/usePointHistory';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -29,7 +28,7 @@ export function PointHistoryScreen({ navigation }: Props) {
   }, [refetch]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('leaderboard.history.title')}
         showBack
@@ -43,7 +42,7 @@ export function PointHistoryScreen({ navigation }: Props) {
         hasMore={hasMore}
         onLoadMore={loadMore}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

@@ -9,12 +9,11 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { NotificationItem, ScreenHeader, EmptyState } from '../../components';
+import { NotificationItem, ScreenHeader, EmptyState, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotifications } from '../../hooks/useNotifications';
 import { api } from '../../services/api';
@@ -305,10 +304,7 @@ export function NotificationsScreen({ navigation }: Props) {
   const unreadCount = notifications.filter(n => !n.read_at).length;
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
+    <ScreenContainer>
       <ScreenHeader title={t('notifications.title')} />
 
       {unreadCount > 0 && (
@@ -373,7 +369,7 @@ export function NotificationsScreen({ navigation }: Props) {
           ) : null
         }
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

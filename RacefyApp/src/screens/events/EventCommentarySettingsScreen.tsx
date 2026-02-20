@@ -9,7 +9,6 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useCommentarySettings } from '../../hooks/useCommentarySettings';
@@ -19,6 +18,7 @@ import { spacing, borderRadius, fontSize } from '../../theme';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type {
@@ -221,10 +221,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
 
   if (isLoading) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top']}
-      >
+      <ScreenContainer>
         <ScreenHeader
           title={t('commentary.settings', 'Commentary Settings')}
           showBack
@@ -233,16 +230,13 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (error || !settings) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={['top']}
-      >
+      <ScreenContainer>
         <ScreenHeader
           title={t('commentary.settings', 'Commentary Settings')}
           showBack
@@ -253,15 +247,12 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
             {error || t('commentary.loadFailed', 'Failed to load settings')}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
+    <ScreenContainer>
       <ScreenHeader
         title={t('commentary.settings', 'Commentary Settings')}
         showBack
@@ -550,7 +541,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

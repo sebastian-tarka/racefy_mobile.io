@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button, BrandLogo } from '../../components';
+import { Button, BrandLogo, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -93,7 +93,7 @@ export function LandingScreen({ navigation }: Props) {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing.xxxl + insets.bottom }]}
         showsVerticalScrollIndicator={false}
@@ -207,7 +207,7 @@ export function LandingScreen({ navigation }: Props) {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

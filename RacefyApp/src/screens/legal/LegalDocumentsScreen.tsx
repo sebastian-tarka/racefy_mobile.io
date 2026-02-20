@@ -7,9 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader } from '../../components';
+import { ScreenHeader, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { logger } from '../../services/logger';
 import { getCurrentLanguage } from '../../i18n';
@@ -96,7 +95,7 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('legal.documentsTitle')}
           showBack
@@ -105,13 +104,13 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('legal.documentsTitle')}
           showBack
@@ -123,13 +122,13 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
             <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.tryAgain')}</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (!documents || documents.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('legal.documentsTitle')}
           showBack
@@ -140,12 +139,12 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
             {t('legal.noDocuments')}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('legal.documentsTitle')}
         showBack
@@ -241,7 +240,7 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

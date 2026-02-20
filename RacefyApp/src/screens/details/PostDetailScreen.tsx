@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +25,7 @@ import {
   RoutePreview,
   SocialShareModal,
   MentionText,
+  ScreenContainer,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -335,7 +335,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
   if (error || !post) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('feed.title')}
           showBack
@@ -348,14 +348,14 @@ export function PostDetailScreen({ route, navigation }: Props) {
           </Text>
           <Button title={t('common.tryAgain')} onPress={fetchPost} variant="primary" />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   const mediaWidth = screenWidth - spacing.md * 2;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('feed.title')}
         showBack
@@ -501,7 +501,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
         title={post?.title}
         description={post?.content}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

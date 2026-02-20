@@ -8,10 +8,9 @@ import {
   Switch,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../components';
+import { Button, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { logger } from '../../services/logger';
@@ -125,19 +124,19 @@ export function ConsentModalScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+      <ScreenContainer>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
             {t('common.loading')}
           </Text>
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+    <ScreenContainer>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {t('legal.consentTitle')}
@@ -235,7 +234,7 @@ export function ConsentModalScreen() {
           style={styles.submitButton}
         />
       </View>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

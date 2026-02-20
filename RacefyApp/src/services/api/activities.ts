@@ -293,6 +293,26 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       return result.data;
     }
 
+    // ============ HEALTH DATA ============
+
+    /**
+     * Send heart rate data from Health Connect / Apple HealthKit to enrich an activity.
+     * Returns updated activity with HR stats.
+     */
+    async sendHealthData(
+      activityId: number,
+      data: Types.SendHealthDataRequest
+    ): Promise<Types.Activity> {
+      const response = await this.request<Types.ApiResponse<Types.Activity>>(
+        `/activities/${activityId}/health-data`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }
+      );
+      return response.data;
+    }
+
     // ============ ACTIVITY BOOSTS ============
 
     async boostActivity(activityId: number): Promise<Types.BoostResponse> {

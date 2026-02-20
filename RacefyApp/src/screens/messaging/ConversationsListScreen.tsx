@@ -8,10 +8,9 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
-import { Avatar, EmptyState, Loading, ScreenHeader } from '../../components';
+import { Avatar, EmptyState, Loading, ScreenHeader, ScreenContainer } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -128,7 +127,7 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('messaging.title')}
           showBack
@@ -141,25 +140,25 @@ export function ConversationsListScreen({ navigation }: Props) {
           actionLabel={t('common.signIn')}
           onAction={() => navigation.navigate('Auth', { screen: 'Login' })}
         />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   if (isLoading && conversations.length === 0) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('messaging.title')}
           showBack
           onBack={() => navigation.goBack()}
         />
         <Loading fullScreen message={t('common.loading')} />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('messaging.title')}
         showBack
@@ -204,7 +203,7 @@ export function ConversationsListScreen({ navigation }: Props) {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
       />
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

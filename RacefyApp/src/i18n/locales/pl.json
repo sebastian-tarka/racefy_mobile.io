@@ -931,6 +931,22 @@
       "autoPublish": "Auto-publikuj",
       "autoPublishDescription": "Publikuj posty automatycznie bez sprawdzania (niezalecane)"
     },
+    "healthSync": {
+      "title": "Synchronizacja tętna",
+      "description": "Automatycznie wzbogacaj aktywności o dane tętna z zegarka sportowego.",
+      "enable": "Włącz synchronizację tętna",
+      "status": "Status",
+      "statusAvailable": "Dostępne",
+      "statusNotAvailable": "Niedostępne",
+      "statusNotInstalled": "Health Connect nie zainstalowany",
+      "sourceHealthConnect": "Health Connect",
+      "sourceAppleHealth": "Apple Health",
+      "grantPermission": "Przyznaj uprawnienie",
+      "permissionGranted": "Uprawnienie przyznane",
+      "permissionDenied": "Uprawnienie nie przyznane. Włącz w ustawieniach systemu.",
+      "hrFromHealthConnect": "Tętno z Health Connect",
+      "hrFromAppleHealth": "Tętno z Apple Health"
+    },
     "app": "Aplikacja",
     "version": "Wersja",
     "allRightsReserved": "Wszelkie prawa zastrzeżone",

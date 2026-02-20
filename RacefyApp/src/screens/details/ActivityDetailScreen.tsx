@@ -14,11 +14,10 @@ import {
   Modal,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -244,7 +243,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   if (error || !activity) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('activityDetail.title')}
           showBack
@@ -255,14 +254,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('activityDetail.notFound')}</Text>
           <Button title={t('common.tryAgain')} onPress={fetchActivity} variant="primary" />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   const isOwner = activity?.is_owner ?? false;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+    <ScreenContainer>
       <ScreenHeader
         title={t('activityDetail.title')}
         showBack
@@ -548,6 +547,16 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 </View>
               )}
             </View>
+            {activity.hr_data_source && (
+              <View style={styles.hrSourceBadge}>
+                <Ionicons name="watch-outline" size={14} color={colors.primary} />
+                <Text style={[styles.hrSourceText, { color: colors.primary }]}>
+                  {activity.hr_data_source === 'health_connect'
+                    ? t('settings.healthSync.hrFromHealthConnect')
+                    : t('settings.healthSync.hrFromAppleHealth')}
+                </Text>
+              </View>
+            )}
           </Card>
         )}
 
@@ -688,7 +697,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         <View style={{ height: spacing.xl }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
@@ -831,6 +840,18 @@ const styles = StyleSheet.create({
   statGridLabel: {
     fontSize: fontSize.xs,
     marginTop: 2,
+  },
+  hrSourceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: 4,
+  },
+  hrSourceText: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
   },
   description: {
     fontSize: fontSize.md,

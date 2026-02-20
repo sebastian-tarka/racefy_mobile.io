@@ -10,7 +10,6 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {useTranslation} from 'react-i18next';
@@ -26,6 +25,7 @@ import {
     OptionSelector,
     ScreenHeader,
     SportTypeSelector,
+    ScreenContainer,
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
@@ -488,7 +488,7 @@ export function EventFormScreen({navigation, route}: Props) {
     // Show loading while fetching event data, sport types are loading, or sport type doesn't exist yet
     if (isFetching || (isEditMode && (isSportTypesLoading || (formData.sport_type_id && !sportTypeExists)))) {
         return (
-            <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]} edges={['top']}>
+            <ScreenContainer>
                 <ScreenHeader
                     title={isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
                     showBack
@@ -497,12 +497,12 @@ export function EventFormScreen({navigation, route}: Props) {
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={colors.primary}/>
                 </View>
-            </SafeAreaView>
+            </ScreenContainer>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, {backgroundColor: colors.background}]} edges={['top']}>
+        <ScreenContainer>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -987,7 +987,7 @@ export function EventFormScreen({navigation, route}: Props) {
                     />
                 )}
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 }
 

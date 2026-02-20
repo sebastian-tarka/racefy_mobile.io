@@ -13,7 +13,6 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
@@ -24,6 +23,7 @@ import {
   EmptyState,
   Button,
   MediaPicker,
+  ScreenContainer,
 } from '../../components';
 import { ActivitiesFeedPreview } from './home/components';
 import { useAuth } from '../../hooks/useAuth';
@@ -476,7 +476,7 @@ export function FeedScreen({ navigation, route }: Props) {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         </View>
@@ -489,7 +489,7 @@ export function FeedScreen({ navigation, route }: Props) {
             navigation.getParent()?.navigate('Auth', { screen: 'Login' })
           }
         />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
@@ -498,7 +498,7 @@ export function FeedScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         <View style={styles.headerActions}>
@@ -687,7 +687,7 @@ export function FeedScreen({ navigation, route }: Props) {
           contentContainerStyle={styles.listContent}
         />
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

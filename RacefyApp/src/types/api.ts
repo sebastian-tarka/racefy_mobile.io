@@ -519,6 +519,7 @@ export interface Activity {
   max_speed: number | null;
   avg_heart_rate: number | null;
   max_heart_rate: number | null;
+  hr_data_source: HealthDataSource | null;
   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
   is_private: boolean;
   // GPS Privacy (new in 2026-01)
@@ -572,6 +573,20 @@ export interface ActivityBoost {
 export interface BoostResponse {
   message: string;
   boosts_count: number;
+}
+
+// ============ HEALTH DATA ============
+
+export interface HeartRateSample {
+  timestamp: string;
+  bpm: number;
+}
+
+export type HealthDataSource = 'health_connect' | 'apple_health';
+
+export interface SendHealthDataRequest {
+  heart_rate_samples: HeartRateSample[];
+  source: HealthDataSource;
 }
 
 // GPS Point for live tracking

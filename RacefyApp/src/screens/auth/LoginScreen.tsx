@@ -9,9 +9,8 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Input, Button, BrandLogo } from '../../components';
+import { Input, Button, BrandLogo, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { logger } from '../../services/logger';
@@ -93,7 +92,7 @@ export function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenContainer>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -180,7 +179,7 @@ export function LoginScreen({ navigation }: Props) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

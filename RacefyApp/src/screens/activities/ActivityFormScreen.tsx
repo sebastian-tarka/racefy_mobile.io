@@ -12,7 +12,6 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +20,7 @@ import {
   Button,
   ScreenHeader,
   MentionInput,
+  ScreenContainer,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -323,7 +323,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
   if (isFetching) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader
           title={t('activityForm.editTitle')}
           showBack
@@ -332,12 +332,12 @@ export function ActivityFormScreen({ navigation, route }: Props) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -524,7 +524,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
           />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

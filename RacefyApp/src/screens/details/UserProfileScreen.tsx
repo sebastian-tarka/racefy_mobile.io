@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -21,6 +20,7 @@ import {
   PointsCard,
   BottomSheet,
   ReportModal,
+  ScreenContainer,
 } from '../../components';
 import type { TabType } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
@@ -339,19 +339,19 @@ export function UserProfileScreen({ navigation, route }: Props) {
   // Loading state
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader title={t('profile.title')} showBack onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   // Error state
   if (error || !profile) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScreenContainer>
         <ScreenHeader title={t('profile.title')} showBack onBack={() => navigation.goBack()} />
         <EmptyState
           icon="alert-circle-outline"
@@ -360,12 +360,12 @@ export function UserProfileScreen({ navigation, route }: Props) {
           actionLabel={t('common.goBack')}
           onAction={() => navigation.goBack()}
         />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <FlatList
         data={currentTabData.data}
         keyExtractor={getKeyExtractor}
@@ -430,7 +430,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           )}
         </>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

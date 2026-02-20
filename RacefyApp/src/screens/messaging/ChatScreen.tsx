@@ -10,11 +10,11 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
-import { Avatar, Loading } from '../../components';
+import { Avatar, Loading, ScreenContainer } from '../../components';
 import { useMessages } from '../../hooks/useMessages';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -104,7 +104,7 @@ export function ChatScreen({ navigation, route }: Props) {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, themedStyles.container]} edges={['top']}>
+      <ScreenContainer>
         <View style={[styles.header, themedStyles.header]}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
@@ -129,12 +129,12 @@ export function ChatScreen({ navigation, route }: Props) {
           <View style={styles.headerRight} />
         </View>
         <Loading fullScreen message={t('common.loading')} />
-      </SafeAreaView>
+      </ScreenContainer>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, themedStyles.container]} edges={['top']}>
+    <ScreenContainer>
       <View style={[styles.header, themedStyles.header]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -202,7 +202,7 @@ export function ChatScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

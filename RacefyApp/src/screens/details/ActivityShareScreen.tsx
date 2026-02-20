@@ -7,12 +7,11 @@ import {
   Text,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader, ShareFormatSelector } from '../../components';
+import { ScreenHeader, ShareFormatSelector, ScreenContainer } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { shareActivityWithImage, shareToApp } from '../../utils/share';
@@ -145,10 +144,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
+    <ScreenContainer>
       <ScreenHeader
         title={t('share.title')}
         showBack
@@ -259,7 +255,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
         {/* Bottom padding for better scrolling */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

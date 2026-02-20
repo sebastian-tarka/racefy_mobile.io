@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
@@ -39,7 +39,7 @@ import {
   CollapsibleTipCard,
   LiveEventsCard,
 } from './home/components';
-import { Loading, FadeInView } from '../../components';
+import { Loading, FadeInView, ScreenContainer } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -297,10 +297,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const isLoading = configLoading && !config;
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={['top']}
-    >
+    <ScreenContainer>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
         refreshControl={
@@ -426,7 +423,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

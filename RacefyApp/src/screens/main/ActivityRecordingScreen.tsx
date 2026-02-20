@@ -14,16 +14,15 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Location from 'expo-location';
-import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls, ViewToggleButton, NearbyRoutesList } from '../../components';
+import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls, ViewToggleButton, NearbyRoutesList, ScreenContainer } from '../../components';
 import { MapboxRouteMap } from '../../components/MapboxRouteMap';
 import { MapboxLiveMap } from '../../components/MapboxLiveMap';
-import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones } from '../../hooks';
+import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment } from '../../hooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
@@ -202,6 +201,7 @@ export function ActivityRecordingScreen() {
   // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
   const { passedMilestones, resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
+  const { enrichActivityWithHeartRate } = useHealthEnrichment();
 
   // Find next milestone
   const nextMilestone = useMemo(() => {
@@ -657,6 +657,13 @@ export function ActivityRecordingScreen() {
         activityId: result?.activity?.id,
         hasPost: !!result?.post,
       });
+
+      // Fire-and-forget: enrich activity with HR data from Health Connect / HealthKit
+      if (result?.activity) {
+        enrichActivityWithHeartRate(result.activity).catch(() => {
+          // Silently ignore — enrichment is non-blocking
+        });
+      }
 
       resetMilestones();
       setSkipAutoPost(false);
@@ -1692,7 +1699,7 @@ export function ActivityRecordingScreen() {
   // MAIN RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       {/* Idle Header */}
       {status === 'idle' && (
         <View style={[styles.idleHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -1992,7 +1999,7 @@ export function ActivityRecordingScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setSportModalVisible(false)}
       >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <ScreenContainer style={styles.modalContainer}>
           <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
             <TouchableOpacity onPress={() => setSportModalVisible(false)} style={styles.modalCloseButton}>
@@ -2028,7 +2035,7 @@ export function ActivityRecordingScreen() {
               );
             }}
           />
-        </SafeAreaView>
+        </ScreenContainer>
       </Modal>
 
       {/* Bottom Sheets */}
@@ -2056,7 +2063,7 @@ export function ActivityRecordingScreen() {
         onRequestClose={() => setRouteSelectionModalVisible(false)}
         transparent={false}
       >
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top']}>
+        <ScreenContainer>
           {/* Drag handle bar (Android/iOS) - swipe down to close */}
           <GestureDetector gesture={modalDragGesture}>
             <TouchableOpacity
@@ -2106,9 +2113,9 @@ export function ActivityRecordingScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </ScreenContainer>
       </Modal>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 

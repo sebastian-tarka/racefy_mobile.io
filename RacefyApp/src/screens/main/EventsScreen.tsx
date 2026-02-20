@@ -12,10 +12,9 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EventCard, Loading, EmptyState, Button, RewardCard } from '../../components';
+import { EventCard, Loading, EmptyState, Button, RewardCard, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useTheme } from '../../hooks/useTheme';
@@ -495,7 +494,7 @@ export function EventsScreen({ navigation, route }: Props) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+    <ScreenContainer>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -612,7 +611,7 @@ export function EventsScreen({ navigation, route }: Props) {
           />
         </>
       )}
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
