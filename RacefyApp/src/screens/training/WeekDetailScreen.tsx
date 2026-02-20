@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../hooks/useAuth';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
@@ -36,6 +37,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
   const { weekId } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort, getPaceUnit } = useUnits();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [week, setWeek] = useState<TrainingWeek | null>(null);
@@ -212,8 +214,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
 
   const formatDistance = (meters: number | null): string => {
     if (!meters) return '';
-    const km = meters / 1000;
-    return `${km.toFixed(1)} km`;
+    return formatDistanceShort(meters);
   };
 
   const formatDuration = (minutes: number | null): string => {
@@ -456,7 +457,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
                 <View style={styles.sessionDetailRow}>
                   <Ionicons name="speedometer-outline" size={16} color={colors.textSecondary} />
                   <Text style={[styles.sessionDetailText, { color: colors.textSecondary }]}>
-                    {activity.pace_target} /km
+                    {activity.pace_target} {getPaceUnit()}
                   </Text>
                 </View>
               )}

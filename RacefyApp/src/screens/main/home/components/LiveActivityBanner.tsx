@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
+import { useUnits } from '../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
 
 interface LiveActivityBannerProps {
@@ -24,12 +25,6 @@ const formatDuration = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
-const formatDistance = (meters: number): string => {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(2)} km`;
-  }
-  return `${Math.round(meters)} m`;
-};
 
 export function LiveActivityBanner({
   isActive,
@@ -40,6 +35,7 @@ export function LiveActivityBanner({
 }: LiveActivityBannerProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistance } = useUnits();
   const [pulseAnim] = useState(new Animated.Value(1));
 
   // Pulse animation for the recording indicator

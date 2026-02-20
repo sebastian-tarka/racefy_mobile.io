@@ -27,6 +27,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../hooks/useAuth';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { useActivityTimer } from '../../hooks/useActivityTimer';
@@ -36,19 +37,19 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
 import { logger } from '../../services/logger';
 import { api } from '../../services/api';
-import { formatPaceDisplay, calculateAveragePace } from '../../utils/paceCalculator';
-import { formatTime, formatDistance, formatTotalDistance, formatTotalTime, formatAvgPace } from '../../utils/formatters';
+import { calculateAveragePace } from '../../utils/paceCalculator';
+import { formatTime, formatTotalTime } from '../../utils/formatters';
 
-// Milestone labels for display
-const MILESTONE_LABELS: Record<string, string> = {
-  first_5km: '5 km',
-  first_10km: '10 km',
-  first_15km: '15 km',
-  first_half_marathon: '21.1 km',
-  first_30km: '30 km',
-  first_marathon: '42.2 km',
-  first_50km: '50 km',
-  first_100km: '100 km',
+// Milestone key-to-km mapping for dynamic label generation
+const MILESTONE_KM: Record<string, string> = {
+  first_5km: '5',
+  first_10km: '10',
+  first_15km: '15',
+  first_half_marathon: '21.1',
+  first_30km: '30',
+  first_marathon: '42.2',
+  first_50km: '50',
+  first_100km: '100',
 };
 
 const MILESTONE_ORDER = [
@@ -65,6 +66,10 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const {
+    units, formatDistance: fmtDistance, formatDistanceShort, formatTotalDistance, formatElevation,
+    formatPaceFromSecPerKm, formatPaceFromSpeed, getPaceUnit, getMilestoneLabel,
+  } = useUnits();
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -515,7 +520,7 @@ export function ActivityRecordingScreen() {
         t('recording.existingActivity.title'),
         t(messageKey, {
           duration: formatTime(activity.duration),
-          distance: formatDistance(activity.distance),
+          distance: fmtDistance(activity.distance),
         }),
         [
           {
@@ -566,14 +571,14 @@ export function ActivityRecordingScreen() {
     const { currentPace } = currentStats;
     const minDistance = gpsProfile?.minDistanceForPace ?? 50;
     if (currentStats.distance < minDistance) return '--:--';
-    return formatPaceDisplay(currentPace);
+    return formatPaceFromSecPerKm(currentPace);
   };
 
   const formatAvgPaceFromStats = (): string => {
     const minDistance = gpsProfile?.minDistanceForPace ?? 50;
     if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
-    return formatPaceDisplay(avgPace);
+    return formatPaceFromSecPerKm(avgPace);
   };
 
   const formatSuggestedDuration = (minutes: number | null): string => {
@@ -583,7 +588,7 @@ export function ActivityRecordingScreen() {
 
   const formatSuggestedDistance = (meters: number | null): string => {
     if (!meters) return '';
-    return (meters / 1000).toFixed(1) + ' km';
+    return formatDistanceShort(meters);
   };
 
   // Action handlers
@@ -868,7 +873,7 @@ export function ActivityRecordingScreen() {
     <View style={[styles.liveStatsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
       <View style={styles.liveStatItem}>
         <Text style={[styles.liveStatValue, { color: colors.primary }]}>
-          {formatDistance(distance)}
+          {fmtDistance(distance)}
         </Text>
         <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
           {t('recording.distance')}
@@ -889,7 +894,7 @@ export function ActivityRecordingScreen() {
           {formatAvgPaceFromStats()}
         </Text>
         <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
-          {t('recording.avgPace')}
+          {t('recording.avgPace')} {getPaceUnit()}
         </Text>
       </View>
     </View>
@@ -1017,12 +1022,12 @@ export function ActivityRecordingScreen() {
         <View style={styles.milestoneIndicatorLeft}>
           <Ionicons name="flag" size={16} color={colors.primary} />
           <Text style={[styles.milestoneIndicatorText, { color: colors.textSecondary }]}>
-            {t('recording.nextMilestone')}: {MILESTONE_LABELS[nextMilestone.type]}
+            {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)}
           </Text>
         </View>
         <View style={styles.milestoneIndicatorRight}>
           <Text style={[styles.milestoneIndicatorProgress, { color: colors.primary }]}>
-            {formatDistance(remaining)} {t('recording.toGo')}
+            {fmtDistance(remaining)} {t('recording.toGo')}
           </Text>
         </View>
         <View style={[styles.milestoneProgressBar, { backgroundColor: colors.border }]}>
@@ -1344,7 +1349,7 @@ export function ActivityRecordingScreen() {
                             <View style={styles.nearbyRouteStat}>
                               <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
                               <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                {(route.distance / 1000).toFixed(1)} km
+                                {formatDistanceShort(route.distance)}
                               </Text>
                             </View>
                             <View style={styles.nearbyRouteStat}>
@@ -1534,7 +1539,7 @@ export function ActivityRecordingScreen() {
                     <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
                       <Ionicons name="flag-outline" size={16} color={colors.primary} />
                       <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
-                        {t('recording.nextMilestone')}: {MILESTONE_LABELS[nextMilestone.type]} ({Math.round(nextMilestone.progress * 100)}%)
+                        {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
                       </Text>
                     </View>
                   )}
@@ -1570,7 +1575,7 @@ export function ActivityRecordingScreen() {
           <View style={[styles.elevationRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <Ionicons name="trending-up" size={16} color={colors.primary} />
             <Text style={[styles.elevationText, { color: colors.textSecondary }]}>
-              {Math.round(currentStats.elevation_gain)}m {t('recording.elevationGain')}
+              {formatElevation(currentStats.elevation_gain)} {t('recording.elevationGain')}
             </Text>
           </View>
         )}
@@ -1809,7 +1814,7 @@ export function ActivityRecordingScreen() {
                               <View style={styles.nearbyRouteStat}>
                                 <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
                                 <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                  {(route.distance / 1000).toFixed(1)} km
+                                  {formatDistanceShort(route.distance)}
                                 </Text>
                               </View>
                               <View style={styles.nearbyRouteStat}>

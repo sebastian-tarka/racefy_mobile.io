@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
 
@@ -55,12 +56,6 @@ const formatDuration = (seconds: number): string => {
   return `${minutes} min`;
 };
 
-const formatDistance = (meters: number): string => {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`;
-  }
-  return `${meters} m`;
-};
 
 export function ActivityCompactCard({
   activity,
@@ -68,6 +63,7 @@ export function ActivityCompactCard({
   isAuthenticated = true,
 }: ActivityCompactCardProps) {
   const { colors } = useTheme();
+  const { formatDistanceShort } = useUnits();
   const sportColor = getSportColor(activity.sport_type?.name);
 
   return (
@@ -100,7 +96,7 @@ export function ActivityCompactCard({
           <View style={styles.stat}>
             <Ionicons name="navigate-outline" size={12} color={colors.textSecondary} />
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {formatDistance(activity.distance)}
+              {formatDistanceShort(activity.distance)}
             </Text>
           </View>
           <View style={[styles.statDot, { backgroundColor: colors.textMuted }]} />

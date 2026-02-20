@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
+import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -16,6 +17,7 @@ interface LastActivitySummarySectionProps {
  */
 export function LastActivitySummarySection({ section, onPress }: LastActivitySummarySectionProps) {
   const { colors } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   const activity = section.activity;
 
@@ -45,7 +47,7 @@ export function LastActivitySummarySection({ section, onPress }: LastActivitySum
                 <View style={styles.stat}>
                   <Ionicons name="navigate" size={14} color={colors.textSecondary} />
                   <Text style={[styles.statText, { color: colors.textSecondary }]}>
-                    {activity.distance_km.toFixed(2)} km
+                    {formatDistanceFromKm(activity.distance_km)}
                   </Text>
                 </View>
               )}

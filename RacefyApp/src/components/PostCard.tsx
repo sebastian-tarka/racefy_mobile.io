@@ -15,6 +15,7 @@ import { MediaGallery } from './MediaGallery';
 import { RoutePreview } from './LeafletMap';
 import { BoostButton } from './BoostButton';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { logger } from '../services/logger';
@@ -45,20 +46,6 @@ const formatDuration = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
-const formatDistance = (meters: number): string => {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(2)} km`;
-  }
-  return `${meters} m`;
-};
-
-const formatPace = (meters: number, seconds: number): string => {
-  if (meters === 0) return '-';
-  const paceSecondsPerKm = (seconds / meters) * 1000;
-  const paceMinutes = Math.floor(paceSecondsPerKm / 60);
-  const paceSeconds = Math.floor(paceSecondsPerKm % 60);
-  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')} /km`;
-};
 
 const getSportIcon = (sportName?: string): keyof typeof Ionicons.glyphMap => {
   const name = sportName?.toLowerCase() || '';
@@ -83,6 +70,7 @@ export function PostCard({
 }: PostCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistance, formatPaceWithUnit } = useUnits();
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: false,
   });
@@ -197,7 +185,7 @@ export function PostCard({
           <View style={styles.activityStatItem}>
             <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-              {formatPace(activity.distance, activity.duration)}
+              {formatPaceWithUnit(activity.distance, activity.duration)}
             </Text>
           </View>
         </View>

@@ -23,6 +23,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { useHealthSync } from '../../hooks/useHealthSync';
+import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { changeLanguage } from '../../i18n';
@@ -181,6 +182,7 @@ export function SettingsScreen({ navigation }: Props) {
   const { user, logout } = useAuth();
   const { colors, isDark, themePreference, setThemePreference } = useTheme();
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
+  const { setUnits } = useUnits();
 
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
@@ -653,7 +655,11 @@ export function SettingsScreen({ navigation }: Props) {
             rightElement={
               <Switch
                 value={preferences.units === 'imperial'}
-                onValueChange={(value) => updatePreference('units', value ? 'imperial' : 'metric')}
+                onValueChange={(value) => {
+                  const newUnits = value ? 'imperial' : 'metric';
+                  setUnits(newUnits);
+                  updatePreference('units', newUnits);
+                }}
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
                 thumbColor={preferences.units === 'imperial' ? colors.primary : colors.white}
                 disabled={isLoading}

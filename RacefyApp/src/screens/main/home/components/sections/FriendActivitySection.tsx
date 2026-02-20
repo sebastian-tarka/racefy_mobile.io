@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
+import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -17,6 +18,7 @@ interface FriendActivitySectionProps {
  */
 export function FriendActivitySection({ section, onPress, onActivityPress }: FriendActivitySectionProps) {
   const { colors } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   const activities = section.friend_activities || [];
 
@@ -71,7 +73,7 @@ export function FriendActivitySection({ section, onPress, onActivityPress }: Fri
               </Text>
               <Text style={[styles.activityStats, { color: colors.textSecondary }]} numberOfLines={1}>
                 {activity.sport_type && `${activity.sport_type} • `}
-                {activity.distance_km && `${activity.distance_km.toFixed(1)} km`}
+                {activity.distance_km && formatDistanceFromKm(activity.distance_km)}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />

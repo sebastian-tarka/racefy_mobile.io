@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { Card } from '../../components';
 import type { Highlights } from '../../types/api';
@@ -22,13 +23,14 @@ interface StatItem {
 export function HighlightsGrid({ highlights, consistencyScore }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceFromKm, formatElevation, getPaceUnit } = useUnits();
 
   const stats: StatItem[] = [
     {
       icon: 'map-outline',
       label: t('training.feedback.highlights.longestDistance'),
       value: highlights.longest_activity_distance_km != null
-        ? `${highlights.longest_activity_distance_km.toFixed(1)} km`
+        ? formatDistanceFromKm(highlights.longest_activity_distance_km)
         : null,
     },
     {
@@ -40,7 +42,7 @@ export function HighlightsGrid({ highlights, consistencyScore }: Props) {
       icon: 'trending-up-outline',
       label: t('training.feedback.highlights.elevation'),
       value: highlights.total_elevation_gain > 0
-        ? `${highlights.total_elevation_gain} m`
+        ? formatElevation(highlights.total_elevation_gain)
         : null,
     },
     {
@@ -54,7 +56,7 @@ export function HighlightsGrid({ highlights, consistencyScore }: Props) {
       icon: 'speedometer-outline',
       label: t('training.feedback.highlights.avgPace'),
       value: highlights.avg_pace != null
-        ? `${highlights.avg_pace.toFixed(2)} /km`
+        ? `${highlights.avg_pace.toFixed(2)} ${getPaceUnit()}`
         : null,
     },
   ];

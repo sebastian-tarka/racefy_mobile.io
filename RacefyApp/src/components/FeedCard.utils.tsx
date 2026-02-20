@@ -3,6 +3,11 @@ import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { fixStorageUrl } from '../config/api';
+import type { UnitSystem } from '../utils/unitConversions';
+import {
+  formatDistance as ucFormatDistance,
+  formatPaceWithUnit as ucFormatPaceWithUnit,
+} from '../utils/unitConversions';
 import type { Post, Activity } from '../types/api';
 
 // ============ TYPES & INTERFACES ============
@@ -117,17 +122,13 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function formatDistance(meters: number): string {
-  if (meters >= 1000) return `${(meters / 1000).toFixed(2)} km`;
-  return `${meters} m`;
+export function formatDistance(meters: number, units: UnitSystem = 'metric'): string {
+  return ucFormatDistance(meters, units);
 }
 
-export function formatPace(meters: number, seconds: number): string {
+export function formatPace(meters: number, seconds: number, units: UnitSystem = 'metric'): string {
   if (meters === 0) return '-';
-  const paceSecondsPerKm = (seconds / meters) * 1000;
-  const paceMinutes = Math.floor(paceSecondsPerKm / 60);
-  const paceSeconds = Math.floor(paceSecondsPerKm % 60);
-  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}/km`;
+  return ucFormatPaceWithUnit(meters, seconds, units);
 }
 
 export function getEffortLevel(sportName: string | undefined, meters: number, seconds: number): { label: string; emoji: string } | null {

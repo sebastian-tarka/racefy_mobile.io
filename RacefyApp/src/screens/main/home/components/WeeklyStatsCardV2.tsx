@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
+import { useUnits } from '../../../../hooks/useUnits';
 import { useActivityStats } from '../../../../hooks/useActivityStats';
 import { spacing, fontSize, borderRadius, fontWeight } from '../../../../theme';
 import { StatCard } from './StatCard';
@@ -12,12 +13,6 @@ interface WeeklyStatsCardV2Props {
   onPress?: () => void;
 }
 
-const formatDistance = (meters: number): { value: number; suffix: string; decimals: number } => {
-  if (meters >= 1000) {
-    return { value: meters / 1000, suffix: ' km', decimals: 1 };
-  }
-  return { value: Math.round(meters), suffix: ' m', decimals: 0 };
-};
 
 const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
@@ -41,6 +36,14 @@ const formatDuration = (seconds: number): string => {
 export function WeeklyStatsCardV2({ stats: statsFromProps, onPress }: WeeklyStatsCardV2Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { getDistanceValue, getDistanceUnit, getSmallDistanceUnit } = useUnits();
+
+  const formatDistance = (meters: number): { value: number; suffix: string; decimals: number } => {
+    if (meters >= 1000) {
+      return { value: getDistanceValue(meters), suffix: ` ${getDistanceUnit()}`, decimals: 1 };
+    }
+    return { value: Math.round(meters), suffix: ` ${getSmallDistanceUnit()}`, decimals: 0 };
+  };
 
   // Użyj stats z propa lub pobierz z API
   const { stats: statsFromApi, isLoading: isLoadingApi } = useActivityStats();

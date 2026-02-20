@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
+import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -29,6 +30,7 @@ function getMedalColor(position: number): string {
  */
 export function EventResultsSection({ section, onPress, onEventPress }: EventResultsSectionProps) {
   const { colors } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   const results = section.results;
 
@@ -86,7 +88,7 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
               </Text>
               {participant.distance_km && (
                 <Text style={[styles.stats, { color: colors.textSecondary }]}>
-                  {participant.distance_km.toFixed(1)} km
+                  {formatDistanceFromKm(participant.distance_km)}
                 </Text>
               )}
             </View>

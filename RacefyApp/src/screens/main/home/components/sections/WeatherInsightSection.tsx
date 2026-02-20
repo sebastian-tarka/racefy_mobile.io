@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
+import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -63,6 +64,7 @@ function getWeatherColor(colors: any, isGoodForOutdoor?: boolean): string {
  */
 export function WeatherInsightSection({ section, onPress }: WeatherInsightSectionProps) {
   const { colors } = useTheme();
+  const { formatTemperature } = useUnits();
 
   const weather = section.weather;
   const bgColor = getWeatherColor(colors, weather?.is_good_for_outdoor);
@@ -94,11 +96,11 @@ export function WeatherInsightSection({ section, onPress }: WeatherInsightSectio
           {weather && (
             <View style={styles.tempRow}>
               <Text style={[styles.temperature, { color: colors.textPrimary }]}>
-                {Math.round(weather.temperature)}°C
+                {formatTemperature(weather.temperature)}
               </Text>
               {weather.feels_like !== weather.temperature && (
                 <Text style={[styles.feelsLike, { color: colors.textSecondary }]}>
-                  (odczuwalna {Math.round(weather.feels_like)}°C)
+                  (odczuwalna {formatTemperature(weather.feels_like)})
                 </Text>
               )}
             </View>

@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
@@ -84,20 +85,6 @@ const formatDuration = (seconds: number): string => {
   return `${minutes} min`;
 };
 
-const formatDistance = (meters: number): string => {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)}`;
-  }
-  return `${meters}`;
-};
-
-const formatPace = (meters: number, seconds: number): string => {
-  if (meters === 0) return '-';
-  const paceSecondsPerKm = (seconds / meters) * 1000;
-  const paceMinutes = Math.floor(paceSecondsPerKm / 60);
-  const paceSeconds = Math.floor(paceSecondsPerKm % 60);
-  return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}`;
-};
 
 export function ActivitySliderCard({
   activity,
@@ -105,6 +92,7 @@ export function ActivitySliderCard({
   isAuthenticated = true,
 }: ActivitySliderCardProps) {
   const { colors, isDark } = useTheme();
+  const { getDistanceValue, getDistanceUnit, getSmallDistanceUnit, formatPaceFromDistanceTime, getPaceUnit } = useUnits();
   const sportTheme = getSportTheme(activity.sport_type?.name);
 
   // Get background image: prioritize first photo, then route map
@@ -139,10 +127,10 @@ export function ActivitySliderCard({
       <View style={styles.heroStats}>
         <View style={styles.mainStat}>
           <Text style={styles.mainStatValue}>
-            {formatDistance(activity.distance)}
+            {activity.distance >= 1000 ? getDistanceValue(activity.distance).toFixed(1) : Math.round(activity.distance).toString()}
           </Text>
           <Text style={styles.mainStatUnit}>
-            {activity.distance >= 1000 ? 'km' : 'm'}
+            {activity.distance >= 1000 ? getDistanceUnit() : getSmallDistanceUnit()}
           </Text>
         </View>
       </View>
@@ -156,7 +144,7 @@ export function ActivitySliderCard({
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
           <Ionicons name="speedometer-outline" size={14} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.statText}>{formatPace(activity.distance, activity.duration)} /km</Text>
+          <Text style={styles.statText}>{formatPaceFromDistanceTime(activity.distance, activity.duration)} {getPaceUnit()}</Text>
         </View>
       </View>
 

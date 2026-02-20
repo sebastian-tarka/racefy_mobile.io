@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { Card } from '../../components';
 import type { ComplianceData } from '../../types/api';
@@ -84,6 +85,7 @@ function ComplianceRing({
 
 export function ComplianceRings({ compliance }: Props) {
   const { t } = useTranslation();
+  const { formatDistanceFromKmRounded, getDistanceValueFromKm } = useUnits();
 
   return (
     <Card style={styles.card}>
@@ -99,8 +101,8 @@ export function ComplianceRings({ compliance }: Props) {
         />
         <ComplianceRing
           percentage={compliance.distance.percentage}
-          completedLabel={`${compliance.distance.completed_km.toFixed(1)}`}
-          suggestedLabel={`${compliance.distance.suggested_km.toFixed(1)} km`}
+          completedLabel={`${getDistanceValueFromKm(compliance.distance.completed_km).toFixed(1)}`}
+          suggestedLabel={formatDistanceFromKmRounded(compliance.distance.suggested_km)}
           title={t('training.feedback.compliance.distance')}
         />
         <ComplianceRing

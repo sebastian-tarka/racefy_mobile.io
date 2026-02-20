@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
+import { useUnits } from '../../../../hooks/useUnits';
 import { useActivityStats } from '../../../../hooks/useActivityStats';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
 
@@ -11,12 +12,6 @@ interface WeeklyStatsCardProps {
   onPress?: () => void;
 }
 
-const formatDistance = (meters: number): string => {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`;
-  }
-  return `${Math.round(meters)} m`;
-};
 
 const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
@@ -31,6 +26,7 @@ const formatDuration = (seconds: number): string => {
 export function WeeklyStatsCard({ onPress }: WeeklyStatsCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort: formatDistance } = useUnits();
   const { stats, isLoading } = useActivityStats();
 
   if (isLoading) {

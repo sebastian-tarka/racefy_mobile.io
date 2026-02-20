@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
+import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -16,6 +17,7 @@ interface WeeklyInsightSectionProps {
  */
 export function WeeklyInsightSection({ section, onPress }: WeeklyInsightSectionProps) {
   const { colors } = useTheme();
+  const { getDistanceUnit } = useUnits();
 
   const stats = section.stats;
 
@@ -63,7 +65,7 @@ export function WeeklyInsightSection({ section, onPress }: WeeklyInsightSectionP
                 {stats.total_distance_km.toFixed(1)}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                km
+                {getDistanceUnit()}
               </Text>
             </View>
           )}

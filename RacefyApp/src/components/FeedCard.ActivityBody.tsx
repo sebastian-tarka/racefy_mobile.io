@@ -11,6 +11,7 @@ import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { MediaSlider } from './MediaSlider';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import type { Post, Activity } from '../types/api';
 import {
@@ -87,11 +88,12 @@ function ActivityTagPills({ activity }: { activity: Activity }) {
 function ActivityStatsNew({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { formatDistance: fmtDistance, formatElevation } = useUnits();
 
   const stats = [
     {
       icon: 'navigate-outline',
-      value: formatDistance(activity.distance),
+      value: fmtDistance(activity.distance),
       label: t('activity.stats.distance')
     },
     {
@@ -101,7 +103,7 @@ function ActivityStatsNew({ activity }: { activity: Activity }) {
     },
     {
       icon: 'trending-up',
-      value: `${activity.elevation_gain || 0}m`,
+      value: formatElevation(activity.elevation_gain || 0),
       label: t('activity.stats.elevationGain'),
       show: true // Always show, even if 0
     },

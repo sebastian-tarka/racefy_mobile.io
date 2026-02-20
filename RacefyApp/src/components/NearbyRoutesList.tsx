@@ -8,8 +8,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator }
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { spacing, borderRadius } from '../theme/spacing';
-import { formatDistance } from '../utils/formatters';
 import type { NearbyRoute } from './MapboxLiveMap';
 
 interface NearbyRoutesListProps {
@@ -29,6 +29,7 @@ export function NearbyRoutesList({
 }: NearbyRoutesListProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistance, formatElevation } = useUnits();
 
   // Get sport icon based on sport_type_id (simplified mapping)
   const getSportIcon = (sportTypeId: number): any => {
@@ -122,7 +123,7 @@ export function NearbyRoutesList({
               <View style={styles.elevationBadge}>
                 <Ionicons name="arrow-up" size={12} color={colors.textMuted} />
                 <Text style={[styles.elevationText, { color: colors.textMuted }]}>
-                  {Math.round(item.elevation_gain)}m
+                  {formatElevation(item.elevation_gain)}
                 </Text>
               </View>
             )}

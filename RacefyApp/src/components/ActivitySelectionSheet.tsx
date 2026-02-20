@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
 
@@ -35,6 +36,7 @@ export function ActivitySelectionSheet({
 }: ActivitySelectionSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort } = useUnits();
   const insets = useSafeAreaInsets();
 
   const formatDate = (dateString: string) => {
@@ -47,10 +49,9 @@ export function ActivitySelectionSheet({
     });
   };
 
-  const formatDistance = (meters: number | null | undefined): string => {
+  const formatActivityDistance = (meters: number | null | undefined): string => {
     if (!meters) return '';
-    const km = meters / 1000;
-    return `${km.toFixed(1)} km`;
+    return formatDistanceShort(meters);
   };
 
   const formatDuration = (seconds: number | null | undefined): string => {
@@ -162,7 +163,7 @@ export function ActivitySelectionSheet({
                           <View style={styles.activityMeta}>
                             {activity.distance > 0 && (
                               <Text style={[styles.metricText, { color: colors.textMuted }]}>
-                                {formatDistance(activity.distance)}
+                                {formatActivityDistance(activity.distance)}
                               </Text>
                             )}
                             {activity.distance > 0 && activity.duration > 0 && (

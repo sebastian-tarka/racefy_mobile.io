@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize } from '../theme';
 import type { ActivitySplit } from '../types/api';
 
@@ -23,6 +24,7 @@ const CHART_HEIGHT = 220;
  */
 export function PaceChart({ splits, title }: PaceChartProps) {
   const { colors } = useTheme();
+  const { getSplitLabel, getDistanceUnit } = useUnits();
 
   if (!splits || splits.length === 0) {
     return null;
@@ -103,7 +105,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
         segments={5}
         formatYLabel={formatYLabel}
       />
-      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>{getSplitLabel()}</Text>
 
       {/* Show actual pace values below chart for clarity */}
       <View style={styles.paceValuesContainer}>
@@ -114,10 +116,10 @@ export function PaceChart({ splits, title }: PaceChartProps) {
           {splits.map((split) => (
             <View key={split.kilometer} style={styles.paceValueItem}>
               <Text style={[styles.paceKm, { color: colors.textMuted }]}>
-                {split.kilometer} km
+                {split.kilometer} {getDistanceUnit()}
               </Text>
               <Text style={[styles.paceValue, { color: colors.textPrimary }]}>
-                {split.pace}
+                {split.formatted?.pace?.value || split.pace}
               </Text>
             </View>
           ))}
@@ -153,6 +155,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
  */
 export function ElevationChart({ splits, title }: ElevationChartProps) {
   const { colors } = useTheme();
+  const { getSplitLabel, getElevationUnit, formatElevation } = useUnits();
 
   if (!splits || splits.length === 0) {
     return null;
@@ -211,28 +214,28 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
         withHorizontalLines
         withVerticalLabels
         withHorizontalLabels
-        yAxisSuffix=" m"
+        yAxisSuffix={` ${getElevationUnit()}`}
         xAxisLabel=""
         fromZero
       />
-      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>{getSplitLabel()}</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Gain</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(totalElevationGain)} m
+            {formatElevation(totalElevationGain)}
           </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Loss</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(totalElevationLoss)} m
+            {formatElevation(totalElevationLoss)}
           </Text>
         </View>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Net</Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {Math.round(totalElevationGain - totalElevationLoss)} m
+            {formatElevation(totalElevationGain - totalElevationLoss)}
           </Text>
         </View>
       </View>
@@ -245,6 +248,7 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
  */
 export function HeartRateChart({ splits, title }: HeartRateChartProps) {
   const { colors } = useTheme();
+  const { getSplitLabel } = useUnits();
 
   if (!splits || splits.length === 0) {
     return null;
@@ -308,7 +312,7 @@ export function HeartRateChart({ splits, title }: HeartRateChartProps) {
         xAxisLabel=""
         fromZero={false}
       />
-      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>Kilometer</Text>
+      <Text style={[styles.axisLabel, { color: colors.textMuted }]}>{getSplitLabel()}</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>

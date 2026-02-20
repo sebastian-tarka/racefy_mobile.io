@@ -23,6 +23,7 @@ import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -35,6 +36,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -165,25 +167,13 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatDistance = (meters: number): string => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
-    }
-    return `${Math.round(meters)} m`;
-  };
-
   const formatPace = (seconds: number, meters: number): string => {
-    if (meters === 0) return '--:--';
-    const paceSeconds = (seconds / meters) * 1000;
-    const mins = Math.floor(paceSeconds / 60);
-    const secs = Math.floor(paceSeconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')} /km`;
+    return formatPaceWithUnit(meters, seconds);
   };
 
-  const formatSpeed = (metersPerSecond: number | null): string => {
+  const fmtSpeed = (metersPerSecond: number | null): string => {
     if (!metersPerSecond) return '--';
-    const kmh = metersPerSecond * 3.6;
-    return `${kmh.toFixed(1)} km/h`;
+    return formatSpeed(metersPerSecond);
   };
 
   const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
@@ -514,21 +504,21 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
               {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
                 <View style={styles.statGridItem}>
                   <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{Math.round(activity.elevation_gain)} m</Text>
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain)}</Text>
                   <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
                 </View>
               )}
               {activity.avg_speed !== null && (
                 <View style={styles.statGridItem}>
                   <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.avg_speed)}</Text>
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.avg_speed)}</Text>
                   <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
                 </View>
               )}
               {activity.max_speed !== null && (
                 <View style={styles.statGridItem}>
                   <Ionicons name="flash-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatSpeed(activity.max_speed)}</Text>
+                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.max_speed)}</Text>
                   <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
                 </View>
               )}

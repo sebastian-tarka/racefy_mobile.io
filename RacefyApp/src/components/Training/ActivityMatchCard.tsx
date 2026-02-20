@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { ActivityMatch, MatchStatus } from '../../types/api';
@@ -22,12 +23,13 @@ const STATUS_CONFIG: Record<MatchStatus, { color: string; icon: 'checkmark-circl
 export function ActivityMatchCard({ match, onPress }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort, formatDistanceFromKm, getPaceUnit } = useUnits();
   const config = STATUS_CONFIG[match.status];
   const isTappable = match.matched_activity_id != null && onPress != null;
 
-  const formatDistance = (meters: number | null) => {
+  const formatMatchDistance = (meters: number | null) => {
     if (!meters) return null;
-    return `${(meters / 1000).toFixed(1)} km`;
+    return formatDistanceShort(meters);
   };
 
   const formatDuration = (minutes: number | null) => {
@@ -38,7 +40,7 @@ export function ActivityMatchCard({ match, onPress }: Props) {
     return m > 0 ? `${h}h ${m}min` : `${h}h`;
   };
 
-  const targetDistance = formatDistance(match.suggested.target_distance_meters);
+  const targetDistance = formatMatchDistance(match.suggested.target_distance_meters);
   const targetDuration = formatDuration(match.suggested.target_duration_minutes);
 
   const Wrapper = isTappable ? TouchableOpacity : View;
@@ -82,7 +84,7 @@ export function ActivityMatchCard({ match, onPress }: Props) {
         <View style={styles.actualRow}>
           {match.matched_distance_km != null && (
             <Text style={[styles.actualText, { color: colors.textPrimary }]}>
-              {match.matched_distance_km.toFixed(1)} km
+              {formatDistanceFromKm(match.matched_distance_km)}
             </Text>
           )}
           {match.matched_duration_formatted && (
@@ -92,7 +94,7 @@ export function ActivityMatchCard({ match, onPress }: Props) {
           )}
           {match.matched_pace != null && (
             <Text style={[styles.actualText, { color: colors.textSecondary }]}>
-              {t('training.feedback.activityMatching.pace')}: {match.matched_pace.toFixed(2)} /km
+              {t('training.feedback.activityMatching.pace')}: {match.matched_pace.toFixed(2)} {getPaceUnit()}
             </Text>
           )}
           {isTappable && (
