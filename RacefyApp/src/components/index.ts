@@ -29,6 +29,7 @@ export * from './DraftsTab';
 export * from './EmptyState';
 export * from './EventCard';
 export * from './EventTabs';
+export * from './ParticipantAvatarsStack';
 export * from './ImagePickerButton';
 export * from './Input';
 export * from './LeaderboardList';

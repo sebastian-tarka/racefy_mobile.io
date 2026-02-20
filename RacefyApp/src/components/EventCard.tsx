@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
 import { Badge } from './Badge';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { fixStorageUrl } from '../config/api';
+import { getSportIcon } from '../utils/sportIcon';
 import type { Event } from '../types/api';
 
 interface EventCardProps {
@@ -14,31 +16,13 @@ interface EventCardProps {
   onPress?: () => void;
 }
 
-const difficultyLabels: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-  all_levels: 'All Levels',
-};
-
 export function EventCard({ event, onPress }: EventCardProps) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
 
   // Use cover_image_url as primary, fallback to first photo
   const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
-
-  const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
-    const sportName = event.sport_type?.name?.toLowerCase() || '';
-    if (sportName.includes('run')) return 'walk-outline';
-    if (sportName.includes('cycling') || sportName.includes('bike'))
-      return 'bicycle-outline';
-    if (sportName.includes('swim')) return 'water-outline';
-    if (sportName.includes('gym') || sportName.includes('fitness'))
-      return 'barbell-outline';
-    if (sportName.includes('yoga')) return 'body-outline';
-    return 'fitness-outline';
-  };
 
   const spotsText =
     event.max_participants !== null
@@ -63,7 +47,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
             ) : (
               <View style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
                 <Ionicons
-                  name={getSportIcon()}
+                  name={getSportIcon(event.sport_type?.name)}
                   size={32}
                   color={colors.primary}
                 />
@@ -73,7 +57,7 @@ export function EventCard({ event, onPress }: EventCardProps) {
 
           <View style={styles.info}>
             <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
-              {event.post?.title || 'Untitled Event'}
+              {event.post?.title || t('eventDetail.untitled')}
             </Text>
 
             <View style={styles.detailRow}>
@@ -83,11 +67,11 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 color={colors.textSecondary}
               />
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {event.sport_type?.name || 'Sport'}
+                {event.sport_type?.name || t('eventDetail.sport')}
               </Text>
               <Text style={[styles.separator, { color: colors.textSecondary }]}>·</Text>
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {difficultyLabels[event.difficulty]}
+                {t(`difficulty.${event.difficulty}`)}
               </Text>
             </View>
 
@@ -117,7 +101,9 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>{spotsText} participants</Text>
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {spotsText} {t('eventDetail.participants').toLowerCase()}
+              </Text>
             </View>
           </View>
         </View>
@@ -131,7 +117,9 @@ export function EventCard({ event, onPress }: EventCardProps) {
                 size={16}
                 color={colors.primary}
               />
-              <Text style={[styles.registeredText, { color: colors.primary }]}>Registered</Text>
+              <Text style={[styles.registeredText, { color: colors.primary }]}>
+                {t('eventDetail.registered')}
+              </Text>
             </View>
           )}
         </View>
