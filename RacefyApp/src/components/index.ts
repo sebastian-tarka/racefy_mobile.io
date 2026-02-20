@@ -84,3 +84,6 @@ export { AnimatedNumber } from './AnimatedNumber';
 export { FadeInView } from './FadeInView';
 export { ActionButton } from './ActionButton';
 export { ErrorBoundary } from './ErrorBoundary';
+export * from './EventDetailsTabContent';
+export * from './EventParticipantsTabContent';
+export * from './EventLeaderboardTabContent';
