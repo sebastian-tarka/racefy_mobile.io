@@ -161,6 +161,7 @@ function DetailsTabContent({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   const startDate = new Date(event.starts_at);
   const endDate = new Date(event.ends_at);
@@ -441,7 +442,7 @@ function DetailsTabContent({
           />
         </View>
 
-        <View style={{ height: 80 }} />
+        <View style={{ height: 100 + bottomInset }} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -467,6 +468,7 @@ function ParticipantsTabContent({
 }: ParticipantsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   return (
     <ScrollView
@@ -514,7 +516,7 @@ function ParticipantsTabContent({
           </TouchableOpacity>
         ))}
       </Card>
-      <View style={{ height: 80 }} />
+      <View style={{ height: 100 + bottomInset }} />
     </ScrollView>
   );
 }
@@ -541,6 +543,7 @@ function LeaderboardTabContent({
 }: LeaderboardTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { bottom: bottomInset } = useSafeAreaInsets();
 
   return (
     <ScrollView
@@ -571,7 +574,7 @@ function LeaderboardTabContent({
           />
         ))}
       </Card>
-      <View style={{ height: 80 }} />
+      <View style={{ height: 100 + bottomInset }} />
     </ScrollView>
   );
 }
@@ -770,9 +773,27 @@ export function EventDetailScreen({ route, navigation }: Props) {
   );
 
   const handleTabScroll = useCallback(
-    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    (event: {
+      nativeEvent: {
+        contentOffset: { y: number };
+        contentSize: { height: number };
+        layoutMeasurement: { height: number };
+      };
+    }) => {
       const y = event.nativeEvent.contentOffset.y;
-      if (y > COLLAPSE_THRESHOLD && !isHeaderCollapsed.current) {
+      // scrollable = how many px of content extend beyond the current viewport
+      const scrollable =
+        event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height;
+
+      // Only collapse when there's enough content that after collapsing (viewport grows by
+      // COLLAPSIBLE_HEIGHT) the current scroll position Y still fits within the new maxScroll.
+      // Math: new_max = scrollable - COLLAPSIBLE_HEIGHT; no jump if Y <= new_max
+      // At Y = COLLAPSE_THRESHOLD this holds when: scrollable > COLLAPSIBLE_HEIGHT + COLLAPSE_THRESHOLD
+      if (
+        y > COLLAPSE_THRESHOLD &&
+        scrollable > COLLAPSIBLE_HEIGHT + COLLAPSE_THRESHOLD &&
+        !isHeaderCollapsed.current
+      ) {
         isHeaderCollapsed.current = true;
         Animated.timing(headerAnim, {
           toValue: 0,
