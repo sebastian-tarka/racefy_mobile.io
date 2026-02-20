@@ -31,3 +31,4 @@ export * from './usePushNotifications';
 export * from './useVideoPauseOnBlur';
 export * from './useHealthEnrichment';
 export * from './useHealthSync';
+export * from './useUnits';

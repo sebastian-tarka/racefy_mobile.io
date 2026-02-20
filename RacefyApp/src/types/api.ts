@@ -771,6 +771,13 @@ export interface ActivitySplit {
   avg_speed: number | null;            // m/s average for this km
   max_speed: number | null;            // m/s max for this km
   avg_cadence: number | null;          // steps per minute
+  formatted?: {
+    pace: { value: string; unit: string };
+    elevation_gain: { value: number; unit: string };
+    elevation_loss: { value: number; unit: string };
+    avg_speed: { value: number; unit: string };
+    max_speed: { value: number; unit: string };
+  };
 }
 
 // Splits summary from /activities/{id}/splits or /activities/{id}/stats

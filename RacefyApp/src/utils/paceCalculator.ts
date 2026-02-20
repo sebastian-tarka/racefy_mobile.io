@@ -128,11 +128,13 @@ export function smoothPace(
  *
  * @param secondsPerKm - Pace in seconds per kilometer, or null
  * @param placeholder - String to show when pace is null (default: "--:--")
+ * @param units - Unit system for display conversion (default: 'metric')
  * @returns Formatted pace string (e.g., "5:42" or "--:--")
  */
 export function formatPaceDisplay(
   secondsPerKm: number | null,
-  placeholder: string = '--:--'
+  placeholder: string = '--:--',
+  units: 'metric' | 'imperial' = 'metric'
 ): string {
   if (secondsPerKm === null || !isFinite(secondsPerKm)) {
     return placeholder;
@@ -143,8 +145,14 @@ export function formatPaceDisplay(
     return placeholder;
   }
 
-  const minutes = Math.floor(secondsPerKm / 60);
-  const seconds = Math.floor(secondsPerKm % 60);
+  let displaySeconds = secondsPerKm;
+  if (units === 'imperial') {
+    // Convert sec/km to sec/mi (1 mi ≈ 1.60934 km)
+    displaySeconds = secondsPerKm / 0.621371;
+  }
+
+  const minutes = Math.floor(displaySeconds / 60);
+  const seconds = Math.floor(displaySeconds % 60);
 
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }

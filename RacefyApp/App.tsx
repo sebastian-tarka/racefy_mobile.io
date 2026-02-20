@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 import { LiveActivityProvider } from './src/hooks/useLiveActivity';
+import { UnitsProvider } from './src/hooks/useUnits';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { AppNavigator } from './src/navigation';
 
@@ -32,11 +33,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <LiveActivityProvider>
-            <AppContent />
-          </LiveActivityProvider>
-        </AuthProvider>
+        <UnitsProvider>
+          <AuthProvider>
+            <LiveActivityProvider>
+              <AppContent />
+            </LiveActivityProvider>
+          </AuthProvider>
+        </UnitsProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

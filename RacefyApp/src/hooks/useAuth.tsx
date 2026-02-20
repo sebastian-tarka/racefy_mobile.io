@@ -10,6 +10,7 @@ import { secureStorage } from '../services/secureStorage';
 import { pushNotificationService } from '../services/pushNotifications';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
+import { syncUnitsPreference } from './useUnits';
 import { logger } from '../services/logger';
 import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
 import { useImpersonationActions, IMPERSONATION_SESSION_KEY } from './useImpersonationActions';
@@ -69,16 +70,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRequiresConsent(false);
   }, []);
 
-  // Sync language preference from server to local i18n
-  async function syncLanguagePreference() {
+  // Sync language and units preferences from server
+  async function syncPreferences() {
     try {
       const prefs = await api.getPreferences();
       if (prefs.language) {
         await changeLanguage(prefs.language);
       }
+      if (prefs.units) {
+        await syncUnitsPreference(prefs.units);
+      }
     } catch (error) {
-      // Ignore errors - local language preference will be used
-      logger.warn('auth', 'Failed to sync language preference', { error });
+      // Ignore errors - local preferences will be used
+      logger.warn('auth', 'Failed to sync preferences', { error });
     }
   }
 
@@ -142,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
         logger.auth('User authenticated', { userId: userData.id, username: userData.username });
         // Sync language preference from server after auth
-        syncLanguagePreference();
+        syncPreferences();
         // Check consent status for existing authenticated users
         const status = await getConsentStatus();
         setRequiresConsent(!status.accepted);
@@ -168,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(response.user);
     logger.auth('Login successful', { userId: response.user.id, username: response.user.username });
     // Sync language preference after login
-    syncLanguagePreference();
+    syncPreferences();
     // Check consent status after login
     const status = await getConsentStatus();
     setRequiresConsent(!status.accepted);
@@ -198,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(response.user);
     logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
     // Sync language preference after login
-    syncLanguagePreference();
+    syncPreferences();
     // New users need to accept consents; existing users: check status
     if (response.is_new_user) {
       setRequiresConsent(true);
