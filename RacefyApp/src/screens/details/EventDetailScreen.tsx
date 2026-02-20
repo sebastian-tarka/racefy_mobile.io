@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +45,10 @@ import type { Event, EventRegistration, User, Activity, LeaderboardEntry } from 
 import type { ThemeColors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
+
+const COLLAPSE_THRESHOLD = 80;
+const EXPAND_THRESHOLD = 20;
+const COLLAPSIBLE_HEIGHT = 290; // image (200) + title section (~90)
 
 const getDifficultyColors = (colors: ThemeColors): Record<string, string> => ({
   beginner: colors.success,
@@ -131,6 +136,7 @@ interface DetailsTabContentProps {
   fetchEvent: () => void;
   onUserPress?: (username: string) => void;
   onActivityPress: (activityId: number) => void;
+  onScroll?: (event: any) => void;
 }
 
 function DetailsTabContent({
@@ -150,6 +156,7 @@ function DetailsTabContent({
   fetchEvent,
   onUserPress,
   onActivityPress,
+  onScroll,
 }: DetailsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -169,6 +176,8 @@ function DetailsTabContent({
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
         keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         {/* About */}
         {event.post?.content && (
@@ -446,6 +455,7 @@ interface ParticipantsTabContentProps {
   isRefreshing: boolean;
   onRefresh: () => void;
   onParticipantPress?: (username: string) => void;
+  onScroll?: (event: any) => void;
 }
 
 function ParticipantsTabContent({
@@ -453,6 +463,7 @@ function ParticipantsTabContent({
   isRefreshing,
   onRefresh,
   onParticipantPress,
+  onScroll,
 }: ParticipantsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -461,6 +472,8 @@ function ParticipantsTabContent({
     <ScrollView
       contentContainerStyle={styles.scrollContent}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       <Card style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -515,6 +528,7 @@ interface LeaderboardTabContentProps {
   onRefresh: () => void;
   onUserPress?: (username: string) => void;
   isAuthenticated: boolean;
+  onScroll?: (event: any) => void;
 }
 
 function LeaderboardTabContent({
@@ -523,6 +537,7 @@ function LeaderboardTabContent({
   onRefresh,
   onUserPress,
   isAuthenticated,
+  onScroll,
 }: LeaderboardTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -531,6 +546,8 @@ function LeaderboardTabContent({
     <ScrollView
       contentContainerStyle={styles.scrollContent}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
     >
       <Card style={styles.section}>
         <View style={styles.leaderboardHeader}>
@@ -570,6 +587,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
   const { isAuthenticated, user } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
+  const headerAnim = useRef(new Animated.Value(1)).current;
+  const isHeaderCollapsed = useRef(false);
   const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<EventRegistration[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -750,6 +769,41 @@ export function EventDetailScreen({ route, navigation }: Props) {
     [isAuthenticated, navigation]
   );
 
+  const handleTabScroll = useCallback(
+    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+      const y = event.nativeEvent.contentOffset.y;
+      if (y > COLLAPSE_THRESHOLD && !isHeaderCollapsed.current) {
+        isHeaderCollapsed.current = true;
+        Animated.timing(headerAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      } else if (y < EXPAND_THRESHOLD && isHeaderCollapsed.current) {
+        isHeaderCollapsed.current = false;
+        Animated.timing(headerAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      }
+    },
+    [headerAnim]
+  );
+
+  const handleTabChange = useCallback(
+    (tab: EventTabType) => {
+      setActiveTab(tab);
+      isHeaderCollapsed.current = false;
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }).start();
+    },
+    [headerAnim]
+  );
+
   const tabs = useMemo(() => {
     const tabConfig = [
       {
@@ -900,43 +954,58 @@ export function EventDetailScreen({ route, navigation }: Props) {
         }
       />
 
-      {/* Event Image / Header — shared across all tabs */}
-      <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
-        {event.cover_image_url || event.post?.photos?.[0]?.url ? (
-          <Image
-            source={{
-              uri:
-                fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined,
-            }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
-            <Ionicons name={getSportIcon(event.sport_type?.name)} size={64} color={colors.primary} />
+      {/* Collapsible Event Image + Title — collapses on scroll */}
+      <Animated.View
+        style={[
+          styles.collapsibleHeader,
+          {
+            height: headerAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, COLLAPSIBLE_HEIGHT],
+            }),
+            opacity: headerAnim.interpolate({
+              inputRange: [0, 0.6],
+              outputRange: [0, 1],
+            }),
+          },
+        ]}
+      >
+        <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
+          {event.cover_image_url || event.post?.photos?.[0]?.url ? (
+            <Image
+              source={{
+                uri:
+                  fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined,
+              }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
+              <Ionicons name={getSportIcon(event.sport_type?.name)} size={64} color={colors.primary} />
+            </View>
+          )}
+          <View style={styles.badgeContainer}>
+            <Badge label={event.status} variant={event.status} />
           </View>
-        )}
-        <View style={styles.badgeContainer}>
-          <Badge label={event.status} variant={event.status} />
         </View>
-      </View>
 
-      {/* Title — shared across all tabs */}
-      <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {event.post?.title || t('eventDetail.untitled')}
-        </Text>
-        {event.is_registered && (
-          <View style={styles.registeredTag}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-            <Text style={[styles.registeredText, { color: colors.primary }]}>
-              {t('eventDetail.registered')}
-            </Text>
-          </View>
-        )}
-      </View>
+        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {event.post?.title || t('eventDetail.untitled')}
+          </Text>
+          {event.is_registered && (
+            <View style={styles.registeredTag}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+              <Text style={[styles.registeredText, { color: colors.primary }]}>
+                {t('eventDetail.registered')}
+              </Text>
+            </View>
+          )}
+        </View>
+      </Animated.View>
 
-      <EventTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <EventTabs tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'details' && (
         <DetailsTabContent
@@ -956,6 +1025,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           fetchEvent={fetchEvent}
           onUserPress={handleUserPress}
           onActivityPress={(id) => navigation.navigate('ActivityDetail', { activityId: id })}
+          onScroll={handleTabScroll}
         />
       )}
 
@@ -972,6 +1042,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           isRefreshing={isRefreshing}
           onRefresh={onRefresh}
           onParticipantPress={isAuthenticated ? handleUserPress : undefined}
+          onScroll={handleTabScroll}
         />
       )}
 
@@ -982,6 +1053,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           onRefresh={onRefresh}
           onUserPress={handleUserPress}
           isAuthenticated={isAuthenticated}
+          onScroll={handleTabScroll}
         />
       )}
 
@@ -1064,6 +1136,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing.lg,
+  },
+  collapsibleHeader: {
+    overflow: 'hidden',
   },
   imageContainer: {
     height: 200,
