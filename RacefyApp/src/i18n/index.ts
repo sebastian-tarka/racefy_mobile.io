@@ -23,7 +23,7 @@ i18n.use(initReactI18next).init({
   resources,
   lng: 'en', // Default language
   fallbackLng: 'en',
-  compatibilityJSON: 'v3',
+  compatibilityJSON: 'v4',
   interpolation: {
     escapeValue: false, // React already escapes values
   },

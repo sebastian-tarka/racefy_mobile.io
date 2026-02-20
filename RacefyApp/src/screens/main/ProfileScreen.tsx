@@ -78,6 +78,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadingTraining, setLoadingTraining] = useState(false);
+  const [draftsCount, setDraftsCount] = useState(0);
 
   // Modal state
   const [showFollowModal, setShowFollowModal] = useState(false);
@@ -193,6 +194,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   useEffect(() => {
     if (!isAuthenticated) {
       setStats(null);
+      setDraftsCount(0);
       postsData.reset();
       activitiesData.reset();
       eventsData.reset();
@@ -210,11 +212,22 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     }
   }, [isAuthenticated]);
 
+  const fetchDraftsCount = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await api.getDrafts({ page: 1, per_page: 1 });
+      setDraftsCount(response.meta.total);
+    } catch (error) {
+      logger.error('api', 'Failed to fetch drafts count', { error });
+    }
+  }, [isAuthenticated]);
+
   useFocusEffect(
     useCallback(() => {
       if (isAuthenticated) {
         // Only fetch stats once when screen is focused
         fetchStats();
+        fetchDraftsCount();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAuthenticated])
@@ -480,11 +493,20 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             style={[styles.tab, activeTab === tab.value && { borderBottomColor: colors.primary }]}
             onPress={() => setActiveTab(tab.value)}
           >
-            <Ionicons
-              name={tab.icon}
-              size={20}
-              color={activeTab === tab.value ? colors.primary : colors.textSecondary}
-            />
+            <View style={styles.tabIconContainer}>
+              <Ionicons
+                name={tab.icon}
+                size={20}
+                color={activeTab === tab.value ? colors.primary : colors.textSecondary}
+              />
+              {tab.value === 'drafts' && draftsCount > 0 && (
+                <View style={[styles.draftsBadge, { backgroundColor: colors.error }]}>
+                  <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
+                    {draftsCount > 99 ? '99+' : draftsCount}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text
               style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}
             >
@@ -707,8 +729,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           onPublishSuccess={() => {
             // Refresh posts tab after successful publish
             postsData.refresh();
+            fetchDraftsCount();
             // Switch to posts tab
             setActiveTab('posts');
+          }}
+          onDeleteSuccess={() => {
+            fetchDraftsCount();
           }}
           onEditDraft={(draft) => {
             // Navigate to PostForm for editing
@@ -869,6 +895,25 @@ const styles = StyleSheet.create({
     gap: 2,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+  },
+  tabIconContainer: {
+    position: 'relative',
+  },
+  draftsBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  draftsBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   tabText: {
     fontSize: fontSize.xs,

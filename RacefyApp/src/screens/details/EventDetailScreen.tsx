@@ -35,6 +35,7 @@ import {
 import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -161,6 +162,7 @@ function DetailsTabContent({
 }: DetailsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort, formatDistance } = useUnits();
   const { isAuthenticated } = useAuth();
   const { bottom: bottomInset } = useSafeAreaInsets();
 
@@ -269,7 +271,7 @@ function DetailsTabContent({
                   {t('eventDetail.distance')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                  {(event.distance / 1000).toFixed(1)} km
+                  {formatDistanceShort(event.distance)}
                 </Text>
               </View>
             )}
@@ -387,7 +389,7 @@ function DetailsTabContent({
                 </View>
                 <View style={styles.activityStats}>
                   <Text style={[styles.activityDistance, { color: colors.primary }]}>
-                    {(activity.distance / 1000).toFixed(2)} km
+                    {formatDistance(activity.distance)}
                   </Text>
                   <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                 </View>
@@ -604,6 +606,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [activeTab, setActiveTab] = useState<EventTabType>('details');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [commentaryCount, setCommentaryCount] = useState(0);
 
   // Keyboard listeners
   useEffect(() => {
@@ -665,14 +668,25 @@ export function EventDetailScreen({ route, navigation }: Props) {
     }
   }, [eventId, t]);
 
+  const fetchCommentaryCount = useCallback(async () => {
+    try {
+      const response = await api.getEventCommentary(eventId, { page: 1, per_page: 1 });
+      setCommentaryCount(response.meta.total);
+    } catch {
+      // Silently fail — count is supplementary
+    }
+  }, [eventId]);
+
   useEffect(() => {
     fetchEvent();
-  }, [fetchEvent]);
+    fetchCommentaryCount();
+  }, [fetchEvent, fetchCommentaryCount]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
     fetchEvent();
-  }, [fetchEvent]);
+    fetchCommentaryCount();
+  }, [fetchEvent, fetchCommentaryCount]);
 
   useRefreshOn('events', fetchEvent);
 
@@ -837,6 +851,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
         label: t('eventDetail.tabs.commentary', 'Commentary'),
         value: 'commentary' as EventTabType,
         icon: 'mic-outline' as keyof typeof Ionicons.glyphMap,
+        badge: commentaryCount,
       },
     ];
 
@@ -846,7 +861,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
         value: 'participants' as EventTabType,
         icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
         badge: participants.length,
-      } as any);
+      });
     }
 
     if (leaderboard.length > 0) {
@@ -858,7 +873,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
     }
 
     return tabConfig;
-  }, [t, participants.length, leaderboard.length]);
+  }, [t, participants.length, leaderboard.length, commentaryCount]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('eventDetail.loading')} />;

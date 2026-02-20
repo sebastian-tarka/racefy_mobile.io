@@ -6,6 +6,7 @@ import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { BoostButton } from './BoostButton';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { useSportTypes } from '../hooks/useSportTypes';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
@@ -26,6 +27,7 @@ export function ActivityCard({
   showEngagement = false,
 }: ActivityCardProps) {
   const { colors } = useTheme();
+  const { formatDistance, formatPaceWithUnit, formatElevation } = useUnits();
   const { getSportById } = useSportTypes();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
 
@@ -115,20 +117,6 @@ export function ActivityCard({
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatDistance = (meters: number): string => {
-    if (meters >= 1000) {
-      return `${(meters / 1000).toFixed(2)} km`;
-    }
-    return `${meters} m`;
-  };
-
-  const formatPace = (meters: number, seconds: number): string => {
-    if (meters === 0) return '-';
-    const paceSecondsPerKm = (seconds / meters) * 1000;
-    const paceMinutes = Math.floor(paceSecondsPerKm / 60);
-    const paceSeconds = Math.floor(paceSecondsPerKm % 60);
-    return `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')} /km`;
-  };
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
@@ -174,7 +162,7 @@ export function ActivityCard({
         {activity.route_map_url && (
           <View style={styles.mapContainer}>
             <Image
-              source={{ uri: fixStorageUrl(activity.route_map_url) }}
+              source={{ uri: fixStorageUrl(activity.route_map_url) ?? undefined }}
               style={styles.mapImage}
               resizeMode="cover"
             />
@@ -206,7 +194,7 @@ export function ActivityCard({
           <View style={styles.statItem}>
             <Ionicons name="speedometer-outline" size={18} color={colors.textSecondary} />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {formatPace(activity.distance, activity.duration)}
+              {formatPaceWithUnit(activity.distance, activity.duration)}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pace</Text>
           </View>
@@ -247,7 +235,7 @@ export function ActivityCard({
               {activity.elevation_gain != null && activity.elevation_gain > 0 && (
                 <View style={styles.statItem}>
                   <Ionicons name="trending-up" size={18} color={colors.textSecondary} />
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{activity.elevation_gain}m</Text>
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain!)}</Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Elevation</Text>
                 </View>
               )}

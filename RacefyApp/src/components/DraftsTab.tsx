@@ -19,6 +19,7 @@ import type { DraftPost } from '../types/api';
 interface DraftsTabProps {
   isOwnProfile: boolean;
   onPublishSuccess?: () => void;
+  onDeleteSuccess?: () => void;
   onEditDraft?: (draft: DraftPost) => void;
   ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
 }
@@ -26,6 +27,7 @@ interface DraftsTabProps {
 export function DraftsTab({
   isOwnProfile,
   onPublishSuccess,
+  onDeleteSuccess,
   onEditDraft,
   ListHeaderComponent,
 }: DraftsTabProps) {
@@ -101,7 +103,7 @@ export function DraftsTab({
           onPress: async () => {
             try {
               await deleteDraft(draft.id);
-              // Silently succeed - item removed from list is feedback enough
+              onDeleteSuccess?.();
             } catch (error) {
               Alert.alert(t('common.error'), t('drafts.deleteFailed'));
               logger.error('api', 'DraftsTab delete error', { error });
