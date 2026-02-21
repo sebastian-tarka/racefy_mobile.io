@@ -63,7 +63,7 @@ import {
 
 const isWeb = Platform.OS === "web";
 
-interface LiveActivityStats {
+export interface LiveActivityStats {
   distance: number;
   duration: number;
   elevation_gain: number;

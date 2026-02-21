@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,7 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
-  Switch,
   Animated,
-  Pressable,
   AccessibilityInfo,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -18,39 +16,37 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as Location from 'expo-location';
-import { Button, Badge, BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls, ViewToggleButton, NearbyRoutesList, ScreenContainer } from '../../components';
-import { MapboxRouteMap } from '../../components/MapboxRouteMap';
-import { MapboxLiveMap } from '../../components/MapboxLiveMap';
-import { useLiveActivityContext, usePermissions, useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment } from '../../hooks';
+import {
+  usePreviewLocation, useNearbyRoutes, useLiveActivityContext, usePermissions,
+  useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment,
+  useSportTypes, type SportTypeWithIcon, useTheme, useUnits, useAuth,
+  triggerHaptic, useActivityTimer, useMilestoneTracking,
+} from '../../hooks';
+import {
+  BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
+  ViewToggleButton, NearbyRoutesList, NearbyRoutesHorizontalPanel, ScreenContainer,
+  MapboxLiveMap,
+} from '../../components';
+import { IdleView } from './recording/IdleView';
+import { RecordingView } from './recording/RecordingView';
+import { PausedView } from './recording/PausedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Event, TrainingWeek, SuggestedActivity } from '../../types/api';
-import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
-import { useTheme } from '../../hooks/useTheme';
-import { useUnits } from '../../hooks/useUnits';
-import { useAuth } from '../../hooks/useAuth';
-import { triggerHaptic } from '../../hooks/useHaptics';
-import { useActivityTimer } from '../../hooks/useActivityTimer';
-import { useMilestoneTracking } from '../../hooks/useMilestoneTracking';
+import type { Event, TrainingWeek } from '../../types/api';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import type { RootStackParamList, MainTabParamList } from '../../navigation/types';
+import type { RootStackParamList, MainTabParamList } from '../../navigation';
 import { logger } from '../../services/logger';
 import { api } from '../../services/api';
-import { calculateAveragePace } from '../../utils/paceCalculator';
-import { formatTime, formatTotalTime } from '../../utils/formatters';
+import { formatTime } from '../../utils/formatters';
 
-// Milestone key-to-km mapping for dynamic label generation
-const MILESTONE_KM: Record<string, string> = {
-  first_5km: '5',
-  first_10km: '10',
-  first_15km: '15',
-  first_half_marathon: '21.1',
-  first_30km: '30',
-  first_marathon: '42.2',
-  first_50km: '50',
-  first_100km: '100',
-};
+// Conditional import - only loads if @rnmapbox/maps is installed
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+let MapboxGL: any = null;
+try {
+  MapboxGL = require('@rnmapbox/maps').default;
+} catch {
+  // Mapbox not available
+}
 
 const MILESTONE_ORDER = [
   'first_5km',
@@ -66,10 +62,7 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
-  const {
-    units, formatDistance: fmtDistance, formatDistanceShort, formatTotalDistance, formatElevation,
-    formatPaceFromSecPerKm, formatPaceFromSpeed, getPaceUnit, getMilestoneLabel,
-  } = useUnits();
+  const { formatDistance: fmtDistance } = useUnits();
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -107,19 +100,6 @@ export function ActivityRecordingScreen() {
   // Animation for toggle buttons position
   const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
 
-  // Shadow track and nearby routes state
-  const [nearbyRoutes, setNearbyRoutes] = useState<Array<any>>([]);
-  const [selectedShadowTrack, setSelectedShadowTrack] = useState<any | null>(null);
-  const [loadingRoutes, setLoadingRoutes] = useState(false);
-  const [routesError, setRoutesError] = useState<string | null>(null);
-
-  // Preview location for map view when not tracking
-  const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [fetchingPreviewLocation, setFetchingPreviewLocation] = useState(false);
-
-  // Ref to prevent re-fetching routes
-  const routesFetchedRef = useRef(false);
-
   // Training program state
   const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
 
@@ -156,6 +136,17 @@ export function ActivityRecordingScreen() {
     livePoints,
     currentPosition,
   } = useLiveActivityContext();
+
+  const isIdle = !isTracking && !isPaused;
+
+  // Preview location for map view (before tracking starts)
+  const { previewLocation, fetchingPreviewLocation } = usePreviewLocation(viewMode, isTracking, isPaused, currentPosition);
+
+  // Nearby routes and shadow track
+  const {
+    nearbyRoutes, selectedShadowTrack, loadingRoutes, routesError,
+    handleRouteSelect, handleClearShadowTrack,
+  } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
   // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
@@ -267,7 +258,7 @@ export function ActivityRecordingScreen() {
         } else {
           setActiveWeek(null);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('activity', 'Failed to load active week', { error: err });
         setActiveWeek(null);
       }
@@ -334,7 +325,7 @@ export function ActivityRecordingScreen() {
 
   // Reset routes toggle when leaving idle map view
   useEffect(() => {
-    const isIdleMapView = !isTracking && !isPaused && viewMode === 'map';
+    const isIdleMapView = isIdle && viewMode === 'map';
 
     if (!isIdleMapView && showNearbyRoutesToggle) {
       // Hide routes panel when switching away from idle map view
@@ -345,7 +336,7 @@ export function ActivityRecordingScreen() {
   // Animate toggle buttons position when routes panel visibility changes
   useEffect(() => {
     // Only animate when in idle map view
-    const isIdleMapView = !isTracking && !isPaused && viewMode === 'map';
+    const isIdleMapView = isIdle && viewMode === 'map';
 
     if (isIdleMapView) {
       // When routes panel is visible, move buttons up above it
@@ -394,116 +385,6 @@ export function ActivityRecordingScreen() {
       return () => clearTimeout(timer);
     }
   }, [mapStyle, viewMode, styleToastOpacity]);
-
-  // Fetch preview location BEFORE showing map view (to avoid zoom effect)
-  useEffect(() => {
-    const fetchPreviewLocation = async () => {
-      // Fetch location when switching to map view (even before map renders)
-      // This caches the location so the map renders already centered
-      if (viewMode === 'map' && !isTracking && !isPaused && !currentPosition && !previewLocation && !fetchingPreviewLocation) {
-        setFetchingPreviewLocation(true);
-        logger.debug('activity', 'Pre-fetching location before showing map');
-
-        try {
-          // Request permissions first
-          const hasPermissions = await requestActivityTrackingPermissions();
-          if (!hasPermissions) {
-            logger.warn('activity', 'Location permissions denied for map preview');
-            setFetchingPreviewLocation(false);
-            return;
-          }
-
-          // Get current position
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-
-          setPreviewLocation({
-            lat: location.coords.latitude,
-            lng: location.coords.longitude,
-          });
-
-          logger.info('activity', 'Preview location cached for map view', {
-            lat: location.coords.latitude,
-            lng: location.coords.longitude,
-          });
-        } catch (error: any) {
-          logger.error('activity', 'Failed to fetch preview location', { error: error.message });
-        } finally {
-          setFetchingPreviewLocation(false);
-        }
-      }
-    };
-
-    fetchPreviewLocation();
-  }, [viewMode, isTracking, isPaused, currentPosition, previewLocation, fetchingPreviewLocation, requestActivityTrackingPermissions]);
-
-  // Clear preview location when starting to track
-  useEffect(() => {
-    if (isTracking || isPaused) {
-      setPreviewLocation(null);
-    }
-  }, [isTracking, isPaused]);
-
-  // Fetch nearby routes when sport is selected and we have position
-  // Routes should be available in both idle and recording/paused states
-  useEffect(() => {
-    const fetchNearbyRoutes = async () => {
-      const position = currentPosition || previewLocation;
-
-      logger.debug('activity', 'Routes fetch check', {
-        alreadyFetched: routesFetchedRef.current,
-        isLoading: loadingRoutes,
-        hasSelectedSport: !!selectedSport,
-        hasPosition: !!position,
-        hasCurrent: !!currentPosition,
-        hasPreview: !!previewLocation,
-      });
-
-      // Skip if already fetched or currently fetching
-      if (routesFetchedRef.current || loadingRoutes) {
-        logger.debug('activity', 'Skipping routes fetch - already fetched or loading');
-        return;
-      }
-
-      // Fetch when sport is selected AND we have a position
-      if (selectedSport && position) {
-        routesFetchedRef.current = true; // Mark as fetched BEFORE starting
-        setLoadingRoutes(true);
-        setRoutesError(null);
-
-        try {
-          logger.debug('activity', 'Fetching nearby routes', { lat: position.lat, lng: position.lng, sportId: selectedSport.id });
-          const routes = await api.getNearbyRoutes(position.lat, position.lng, 5000, selectedSport.id, 10);
-          setNearbyRoutes(routes);
-          logger.info('activity', 'Nearby routes fetched successfully', { count: routes.length });
-        } catch (error: any) {
-          setRoutesError(error.message || t('recording.routesError'));
-          logger.error('activity', 'Failed to fetch nearby routes', { error });
-          // Don't reset routesFetchedRef on error to prevent infinite retry loop
-        } finally {
-          setLoadingRoutes(false);
-        }
-      } else {
-        logger.debug('activity', 'Not fetching routes - missing sport or position');
-      }
-    };
-
-    fetchNearbyRoutes();
-  }, [selectedSport, currentPosition, previewLocation, loadingRoutes]);
-
-  // Reset routes when sport changes
-  useEffect(() => {
-    setNearbyRoutes([]);
-    routesFetchedRef.current = false;
-  }, [selectedSport?.id]);
-
-  // Reset fetch flag when entering map view
-  useEffect(() => {
-    if (viewMode === 'map') {
-      routesFetchedRef.current = false;
-    }
-  }, [viewMode]);
 
   // Existing activity dialog
   useEffect(() => {
@@ -565,31 +446,6 @@ export function ActivityRecordingScreen() {
       );
     }
   }, [hasExistingActivity, activity]);
-
-  // Format pace helpers
-  const formatCurrentPace = (): string => {
-    const { currentPace } = currentStats;
-    const minDistance = gpsProfile?.minDistanceForPace ?? 50;
-    if (currentStats.distance < minDistance) return '--:--';
-    return formatPaceFromSecPerKm(currentPace);
-  };
-
-  const formatAvgPaceFromStats = (): string => {
-    const minDistance = gpsProfile?.minDistanceForPace ?? 50;
-    if (currentStats.distance < minDistance) return '--:--';
-    const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
-    return formatPaceFromSecPerKm(avgPace);
-  };
-
-  const formatSuggestedDuration = (minutes: number | null): string => {
-    if (!minutes) return '';
-    return minutes < 60 ? `${minutes}min` : `${Math.floor(minutes / 60)}h ${minutes % 60}min`;
-  };
-
-  const formatSuggestedDistance = (meters: number | null): string => {
-    if (!meters) return '';
-    return formatDistanceShort(meters);
-  };
 
   // Action handlers
   const handleStart = async () => {
@@ -734,18 +590,6 @@ export function ActivityRecordingScreen() {
     );
   };
 
-  // Handle route selection for shadow track
-  const handleRouteSelect = (route: any) => {
-    setSelectedShadowTrack(route);
-    logger.activity('Shadow track selected', { routeId: route.id, title: route.title });
-  };
-
-  // Handle clearing shadow track
-  const handleClearShadowTrack = () => {
-    setSelectedShadowTrack(null);
-    logger.activity('Shadow track cleared');
-  };
-
   // Pan gesture for modal drag-to-close
   const modalDragGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -774,268 +618,8 @@ export function ActivityRecordingScreen() {
   ], [t, colors.success, navigation]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Sport Chip Selector
+  // RENDER: Layout Delegates (IdleView, RecordingView, PausedView are in recording/)
   // ═══════════════════════════════════════════════════════════════════════════
-  const renderSportChip = () => (
-    <TouchableOpacity
-      style={[styles.sportChip, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
-      onPress={() => setSportModalVisible(true)}
-      disabled={isLoading || sportsLoading}
-      activeOpacity={0.7}
-    >
-      {sportsLoading ? (
-        <ActivityIndicator size="small" color={colors.primary} />
-      ) : selectedSport ? (
-        <>
-          <View style={[styles.sportChipIcon, { backgroundColor: colors.primary }]}>
-            <Ionicons name={selectedSport.icon} size={18} color={colors.white} />
-          </View>
-          <Text style={[styles.sportChipText, { color: colors.textPrimary }]}>
-            {selectedSport.name}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-        </>
-      ) : (
-        <>
-          <Ionicons name="bicycle-outline" size={20} color={colors.textMuted} />
-          <Text style={[styles.sportChipText, { color: colors.textSecondary }]}>
-            {t('recording.selectSport')}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-        </>
-      )}
-    </TouchableOpacity>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Compact Header (during recording/paused)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderCompactHeader = () => (
-    <View style={[styles.compactHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-      <View style={styles.compactHeaderLeft}>
-        {selectedSport && (
-          <>
-            <View style={[styles.compactSportIcon, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name={selectedSport.icon} size={16} color={colors.primary} />
-            </View>
-            <Text style={[styles.compactSportName, { color: colors.textPrimary }]}>
-              {selectedSport.name}
-            </Text>
-          </>
-        )}
-      </View>
-      <View style={styles.compactHeaderRight}>
-        <Badge
-          label={status === 'recording' ? t('recording.status.recording') : t('recording.status.paused')}
-          variant={status === 'recording' ? 'ongoing' : 'upcoming'}
-        />
-        {trackingStatus && (
-          <View style={[styles.gpsIndicator, {
-            backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
-                            trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
-                            colors.error + '20'
-          }]}
-            accessibilityLabel={t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
-          >
-            <Ionicons
-              name="locate"
-              size={14}
-              color={trackingStatus.gpsSignal === 'good' ? colors.success :
-                     trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error}
-            />
-            <Text style={[styles.gpsSignalText, {
-              color: trackingStatus.gpsSignal === 'good' ? colors.success :
-                     trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error
-            }]}>
-              {t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Hero Timer
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderHeroTimer = () => (
-    <View style={styles.heroTimerContainer}>
-      <Text style={[styles.heroTimer, { color: colors.textPrimary }]}>
-        {formatTime(localDuration)}
-      </Text>
-    </View>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Live Stats Row
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderLiveStats = () => (
-    <View style={[styles.liveStatsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-      <View style={styles.liveStatItem}>
-        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
-          {fmtDistance(distance)}
-        </Text>
-        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
-          {t('recording.distance')}
-        </Text>
-      </View>
-      <View style={[styles.liveStatDivider, { backgroundColor: colors.border }]} />
-      <View style={styles.liveStatItem}>
-        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
-          {formatCurrentPace()}
-        </Text>
-        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
-          {t('recording.currentPace')}
-        </Text>
-      </View>
-      <View style={[styles.liveStatDivider, { backgroundColor: colors.border }]} />
-      <View style={styles.liveStatItem}>
-        <Text style={[styles.liveStatValue, { color: colors.primary }]}>
-          {formatAvgPaceFromStats()}
-        </Text>
-        <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
-          {t('recording.avgPace')} {getPaceUnit()}
-        </Text>
-      </View>
-    </View>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Suggested Activities Slider
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderSuggestedActivitiesSlider = () => {
-    if (!activeWeek?.suggested_activities || activeWeek.suggested_activities.length === 0) {
-      return null;
-    }
-
-    const suggestedActivities = activeWeek.suggested_activities;
-    const progress = activeWeek.progress;
-    const completedCount = progress?.activities_count ?? 0;
-    const totalSessions = progress?.sessions_per_week ?? suggestedActivities.length;
-    const isWeekComplete = completedCount >= totalSessions;
-
-    return (
-      <View style={styles.suggestedActivitiesSection}>
-        <View style={styles.suggestedActivitiesHeader}>
-          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-          <Text style={[styles.suggestedActivitiesTitle, { color: colors.textPrimary }]}>
-            {t('recording.plannedThisWeek')}
-          </Text>
-          <View style={[styles.weekProgressBadge, { backgroundColor: isWeekComplete ? colors.success + '15' : colors.primary + '15' }]}>
-            <Ionicons
-              name={isWeekComplete ? 'checkmark-circle' : 'ellipse-outline'}
-              size={14}
-              color={isWeekComplete ? colors.success : colors.primary}
-            />
-            <Text style={[styles.weekProgressText, { color: isWeekComplete ? colors.success : colors.primary }]}>
-              {completedCount}/{totalSessions}
-            </Text>
-          </View>
-        </View>
-
-        <FlatList
-          horizontal
-          data={suggestedActivities}
-          keyExtractor={(item) => `suggested-${item.id}`}
-          renderItem={({ item, index }: { item: SuggestedActivity; index: number }) => {
-            const isDone = index < completedCount;
-            return (
-              <View
-                style={[
-                  styles.suggestedActivityCard,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: isDone ? colors.success + '40' : colors.border,
-                  },
-                ]}
-              >
-                <View style={[styles.suggestedActivityHeader, { backgroundColor: isDone ? colors.success + '15' : colors.primary + '15' }]}>
-                  <View style={styles.activityHeaderRow}>
-                    <Text style={[styles.suggestedActivityOrder, { color: isDone ? colors.success : colors.primary }]}>
-                      {t('recording.session')} {item.session_order}
-                    </Text>
-                    {isDone && (
-                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.suggestedActivityBody}>
-                  <Text style={[
-                    styles.suggestedActivityType,
-                    { color: isDone ? colors.textSecondary : colors.textPrimary },
-                    isDone && styles.completedText,
-                  ]}>
-                    {item.activity_type}
-                  </Text>
-
-                  {item.intensity_description && (
-                    <View style={[styles.suggestedActivityIntensity, { backgroundColor: colors.warning + '10' }]}>
-                      <Ionicons name="pulse-outline" size={14} color={colors.warning} />
-                      <Text style={[styles.suggestedActivityIntensityText, { color: colors.textSecondary }]}>
-                        {item.intensity_description}
-                      </Text>
-                    </View>
-                  )}
-
-                  <View style={styles.suggestedActivityMetrics}>
-                    {item.target_duration_minutes && (
-                      <View style={styles.suggestedActivityMetric}>
-                        <Ionicons name="time-outline" size={16} color={colors.success} />
-                        <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
-                          {formatSuggestedDuration(item.target_duration_minutes)}
-                        </Text>
-                      </View>
-                    )}
-
-                    {item.target_distance_meters && (
-                      <View style={styles.suggestedActivityMetric}>
-                        <Ionicons name="navigate-outline" size={16} color={colors.primary} />
-                        <Text style={[styles.suggestedActivityMetricText, { color: colors.textPrimary }]}>
-                          {formatSuggestedDistance(item.target_distance_meters)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </View>
-            );
-          }}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestedActivitiesList}
-        />
-      </View>
-    );
-  };
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Next Milestone Indicator
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderNextMilestone = () => {
-    if (!isAuthenticated || !nextMilestone) return null;
-
-    const progressPercent = Math.min(100, Math.round((distance / nextMilestone.threshold) * 100));
-    const remaining = Math.max(0, nextMilestone.threshold - distance);
-
-    return (
-      <View style={[styles.milestoneIndicator, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-        <View style={styles.milestoneIndicatorLeft}>
-          <Ionicons name="flag" size={16} color={colors.primary} />
-          <Text style={[styles.milestoneIndicatorText, { color: colors.textSecondary }]}>
-            {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)}
-          </Text>
-        </View>
-        <View style={styles.milestoneIndicatorRight}>
-          <Text style={[styles.milestoneIndicatorProgress, { color: colors.primary }]}>
-            {fmtDistance(remaining)} {t('recording.toGo')}
-          </Text>
-        </View>
-        <View style={[styles.milestoneProgressBar, { backgroundColor: colors.border }]}>
-          <View style={[styles.milestoneProgressFill, { width: `${progressPercent}%`, backgroundColor: colors.primary }]} />
-        </View>
-      </View>
-    );
-  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Map View (Idle, Recording, or Paused)
@@ -1044,38 +628,18 @@ export function ActivityRecordingScreen() {
     // Show controls only during recording/paused (not in idle preview)
     const showControls = isTracking || isPaused;
     // Show nearby routes in idle state AND if toggle is enabled
-    const showNearbyRoutes = !isTracking && !isPaused && showNearbyRoutesToggle;
+    const showNearbyRoutes = isIdle && showNearbyRoutesToggle;
 
     // Use tracking position if available, otherwise use preview location
     const displayPosition = currentPosition || previewLocation;
 
-    logger.debug('activity', 'Rendering map view', {
-      showControls,
-      showNearbyRoutes,
-      livePointsCount: livePoints.length,
-      hasCurrentPosition: !!currentPosition,
-      hasPreviewLocation: !!previewLocation,
-      hasDisplayPosition: !!displayPosition,
-      nearbyRoutesCount: nearbyRoutes.length,
-      hasNearbyRoutes: nearbyRoutes.length > 0,
-      hasShadowTrack: !!selectedShadowTrack,
-    });
-
     try {
-      // Import MapboxGL dynamically
-      let MapboxGL: any = null;
-      try {
-        MapboxGL = require('@rnmapbox/maps').default;
-      } catch (e) {
-        // Mapbox not available
-      }
-
       // Don't render map until we have a position (avoids zoom effect)
       if (!displayPosition) {
         return (
-          <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+          <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ color: colors.textMuted, marginTop: spacing.md, fontSize: fontSize.lg }}>
+            <Text style={[styles.mapFallbackText, { color: colors.textMuted }]}>
               {fetchingPreviewLocation ? t('recording.fetchingLocation') : t('recording.waitingForGPS')}
             </Text>
           </View>
@@ -1084,9 +648,9 @@ export function ActivityRecordingScreen() {
 
       if (!MapboxGL) {
         return (
-          <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+          <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
             <Ionicons name="map-outline" size={64} color={colors.textMuted} />
-            <Text style={{ color: colors.textMuted, marginTop: spacing.md, fontSize: fontSize.lg }}>
+            <Text style={[styles.mapFallbackText, { color: colors.textMuted }]}>
               {t('recording.mapError')}
             </Text>
           </View>
@@ -1098,7 +662,7 @@ export function ActivityRecordingScreen() {
       const mapKey = `map-${showControls ? 'recording' : 'idle'}-${isDark ? 'dark' : 'light'}-${mapStyle}`;
 
       return (
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
           {/* Map - already centered on cached position (no animation) */}
           <MapboxGL.MapView
             key={mapKey}
@@ -1197,7 +761,7 @@ export function ActivityRecordingScreen() {
                        Array.isArray(route.track_data.coordinates) &&
                        route.track_data.coordinates.length > 0;
               })
-              .map((route, index) => {
+              .map((route) => {
                 const unselectedColor = isDark ? '#9CA3AF' : '#6B7280'; // Gray for all routes
 
                 return (
@@ -1272,102 +836,14 @@ export function ActivityRecordingScreen() {
 
           {/* Nearby routes list (idle state only) */}
           {showNearbyRoutes && (
-            <View style={[styles.nearbyRoutesPanel, { backgroundColor: colors.cardBackground }]}>
-              {loadingRoutes ? (
-                <View style={styles.nearbyRoutesLoading}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={[styles.nearbyRoutesLoadingText, { color: colors.textMuted }]}>
-                    {t('recording.loadingRoutes')}
-                  </Text>
-                </View>
-              ) : routesError ? (
-                <View style={styles.nearbyRoutesError}>
-                  <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
-                  <Text style={[styles.nearbyRoutesErrorText, { color: colors.error }]}>
-                    {routesError}
-                  </Text>
-                </View>
-              ) : nearbyRoutes.length === 0 ? (
-                <View style={styles.nearbyRoutesEmpty}>
-                  <Ionicons name="map-outline" size={32} color={colors.textMuted} />
-                  <Text style={[styles.nearbyRoutesEmptyText, { color: colors.textMuted }]}>
-                    {t('recording.noRoutesFound')}
-                  </Text>
-                  <Text style={[styles.nearbyRoutesEmptyDesc, { color: colors.textMuted }]}>
-                    {t('recording.noRoutesDescription')}
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.nearbyRoutesHeader}>
-                    <Ionicons name="map" size={20} color={colors.primary} />
-                    <Text style={[styles.nearbyRoutesTitle, { color: colors.textPrimary }]}>
-                      {t('recording.nearbyRoutes')}
-                    </Text>
-                    <Text style={[styles.nearbyRoutesCount, { color: colors.textMuted }]}>
-                      {t('recording.routesFound', { count: nearbyRoutes.length })}
-                    </Text>
-                  </View>
-                  <FlatList
-                    horizontal
-                    data={nearbyRoutes}
-                    keyExtractor={(item) => `route-${item.id}`}
-                    renderItem={({ item: route }) => {
-                      const isSelected = selectedShadowTrack?.id === route.id;
-                      const selectedColor = isDark ? '#60A5FA' : '#3B82F6'; // Blue - same as map
-                      const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
-
-                      return (
-                        <TouchableOpacity
-                          style={[
-                            styles.nearbyRouteCard,
-                            { backgroundColor: colors.background, borderColor: colors.border },
-                            isSelected && {
-                              borderColor: selectedBorderColor,
-                              borderWidth: 2,
-                              backgroundColor: isDark ? '#1E3A8A15' : '#EFF6FF',
-                            },
-                          ]}
-                          onPress={() => {
-                            if (isSelected) {
-                              handleClearShadowTrack();
-                            } else {
-                              handleRouteSelect(route);
-                            }
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          {isSelected && (
-                            <View style={[styles.selectedBadge, { backgroundColor: selectedColor }]}>
-                              <Ionicons name="checkmark" size={14} color="#fff" />
-                            </View>
-                          )}
-                          <Text style={[styles.nearbyRouteTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                            {route.title}
-                          </Text>
-                          <View style={styles.nearbyRouteStats}>
-                            <View style={styles.nearbyRouteStat}>
-                              <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
-                              <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                {formatDistanceShort(route.distance)}
-                              </Text>
-                            </View>
-                            <View style={styles.nearbyRouteStat}>
-                              <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-                              <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                {Math.round(route.distance_from_user)}m
-                              </Text>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    }}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.nearbyRoutesList}
-                  />
-                </>
-              )}
-            </View>
+            <NearbyRoutesHorizontalPanel
+              routes={nearbyRoutes}
+              selectedRouteId={selectedShadowTrack?.id ?? null}
+              onRouteSelect={handleRouteSelect}
+              onClearRoute={handleClearShadowTrack}
+              isLoading={loadingRoutes}
+              error={routesError}
+            />
           )}
 
         {showControls && (
@@ -1388,20 +864,20 @@ export function ActivityRecordingScreen() {
         )}
         </View>
       );
-    } catch (error: any) {
-      logger.error('activity', 'Map view render error', { error: error.message });
+    } catch (error: unknown) {
+      logger.error('activity', 'Map view render error', { error: error instanceof Error ? error.message : String(error) });
       // Fallback to stats view if map fails
       return (
-        <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+        <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
           <Ionicons name="warning-outline" size={48} color={colors.error} />
-          <Text style={{ color: colors.error, marginTop: spacing.md, textAlign: 'center' }}>
+          <Text style={[styles.mapErrorText, { color: colors.error }]}>
             {t('recording.mapError')}
           </Text>
-          <Text style={{ color: colors.textMuted, marginTop: spacing.sm, textAlign: 'center', fontSize: 12 }}>
-            {error.message}
+          <Text style={[styles.mapErrorDetail, { color: colors.textMuted }]}>
+            {error instanceof Error ? error.message : String(error)}
           </Text>
           <TouchableOpacity
-            style={{ marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.primary, borderRadius: borderRadius.md }}
+            style={[styles.mapErrorButton, { backgroundColor: colors.primary }]}
             onPress={() => setViewMode('stats')}
           >
             <Text style={{ color: '#fff' }}>{t('recording.backToStats')}</Text>
@@ -1415,276 +891,66 @@ export function ActivityRecordingScreen() {
   // RENDER: Idle Layout
   // ═══════════════════════════════════════════════════════════════════════════
   const renderIdleLayout = () => (
-    <View style={styles.idleContainer}>
-      {/* Sport Selector */}
-      <View style={styles.idleSportSection}>
-        {renderSportChip()}
-      </View>
-
-      {/* Start Button - Hero */}
-      <View style={styles.startSection}>
-        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-          <TouchableOpacity
-            style={[styles.startButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-            onPress={handleStart}
-            disabled={isLoading || !selectedSport}
-            activeOpacity={0.8}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={colors.white} size="large" />
-            ) : (
-              <>
-                <Ionicons name="play" size={48} color={colors.white} />
-                <Text style={styles.startButtonText}>{t('recording.start')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-
-      {/* Event Link (Collapsed) */}
-      {isAuthenticated && (
-        <TouchableOpacity
-          style={[styles.eventLinkRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
-          onPress={() => {
-            refreshEvents();
-            setEventSheetVisible(true);
-          }}
-          disabled={isLoading}
-          activeOpacity={0.7}
-        >
-          <View style={styles.eventLinkLeft}>
-            <Ionicons
-              name={selectedEvent ? 'calendar' : 'calendar-outline'}
-              size={20}
-              color={selectedEvent ? colors.primary : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.eventLinkText,
-                { color: selectedEvent ? colors.textPrimary : colors.textSecondary }
-              ]}
-              numberOfLines={1}
-            >
-              {selectedEvent
-                ? selectedEvent.post?.title || t('eventDetail.untitled')
-                : t('recording.linkToEvent')}
-            </Text>
-          </View>
-          <View style={styles.eventLinkRight}>
-            {selectedEvent ? (
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setSelectedEvent(null);
-                }}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            ) : (
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            )}
-          </View>
-        </TouchableOpacity>
-      )}
-
-      {/* Suggested Activities from Training Plan */}
-      {renderSuggestedActivitiesSlider()}
-
-      {/* Quick Stats Preview */}
-      {isAuthenticated && (
-        <View style={[styles.quickStatsCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-          {statsLoading || milestonesLoading ? (
-            <ActivityIndicator size="small" color={colors.primary} style={styles.quickStatsLoading} />
-          ) : (
-            <>
-              <View style={styles.quickStatsHeader}>
-                <Text style={[styles.quickStatsTitle, { color: colors.textPrimary }]}>
-                  {t('recording.yourStats', { sport: selectedSport?.name || '' })}
-                </Text>
-              </View>
-
-              {activityStats && activityStats.count > 0 ? (
-                <>
-                  <View style={styles.quickStatsRow}>
-                    <View style={styles.quickStatItem}>
-                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
-                        {activityStats.count}
-                      </Text>
-                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                        {t('recording.activities')}
-                      </Text>
-                    </View>
-                    <View style={styles.quickStatItem}>
-                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
-                        {formatTotalDistance(activityStats.totals.distance)}
-                      </Text>
-                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                        {t('recording.totalDistance')}
-                      </Text>
-                    </View>
-                    <View style={styles.quickStatItem}>
-                      <Text style={[styles.quickStatValue, { color: colors.primary }]}>
-                        {formatTotalTime(activityStats.totals.duration)}
-                      </Text>
-                      <Text style={[styles.quickStatLabel, { color: colors.textMuted }]}>
-                        {t('recording.totalTime')}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Next Milestone Preview */}
-                  {nextMilestone && (
-                    <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
-                      <Ionicons name="flag-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
-                        {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
-                      </Text>
-                    </View>
-                  )}
-                </>
-              ) : (
-                <View style={styles.noStatsPreview}>
-                  <Ionicons name="rocket-outline" size={24} color={colors.textMuted} />
-                  <Text style={[styles.noStatsPreviewText, { color: colors.textSecondary }]}>
-                    {t('recording.noStats', { sport: selectedSport?.name?.toLowerCase() || '' })}
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
-        </View>
-      )}
-    </View>
+    <IdleView
+      selectedSport={selectedSport}
+      sportsLoading={sportsLoading}
+      isLoading={isLoading}
+      isAuthenticated={isAuthenticated}
+      pulseAnim={pulseAnim}
+      selectedEvent={selectedEvent}
+      activeWeek={activeWeek}
+      activityStats={activityStats}
+      statsLoading={statsLoading}
+      milestonesLoading={milestonesLoading}
+      nextMilestone={nextMilestone}
+      onStart={handleStart}
+      onOpenSportModal={() => setSportModalVisible(true)}
+      onOpenEventSheet={() => setEventSheetVisible(true)}
+      onClearEvent={() => setSelectedEvent(null)}
+      onRefreshEvents={refreshEvents}
+    />
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Recording Layout
   // ═══════════════════════════════════════════════════════════════════════════
   const renderRecordingLayout = () => (
-    <View style={styles.recordingContainer}>
-      {renderCompactHeader()}
-
-      <View style={styles.recordingContent}>
-        {renderHeroTimer()}
-        {renderLiveStats()}
-
-        {/* Elevation (if available) */}
-        {currentStats.elevation_gain > 0 && (
-          <View style={[styles.elevationRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Ionicons name="trending-up" size={16} color={colors.primary} />
-            <Text style={[styles.elevationText, { color: colors.textSecondary }]}>
-              {formatElevation(currentStats.elevation_gain)} {t('recording.elevationGain')}
-            </Text>
-          </View>
-        )}
-
-        {/* Control Buttons */}
-        <View style={styles.recordingControls}>
-          <TouchableOpacity
-            style={[styles.controlButton, styles.pauseButton, { backgroundColor: colors.primary }]}
-            onPress={handlePause}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="pause" size={32} color={colors.white} />
-            <Text style={styles.controlButtonText}>{t('recording.pause')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.controlButton, styles.stopButton, { backgroundColor: colors.error }]}
-            onPress={handleStop}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="stop" size={32} color={colors.white} />
-            <Text style={styles.controlButtonText}>{t('recording.stop')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {renderNextMilestone()}
-      </View>
-    </View>
+    <RecordingView
+      selectedSport={selectedSport}
+      status={status}
+      trackingStatus={trackingStatus}
+      localDuration={localDuration}
+      currentStats={currentStats}
+      distance={distance}
+      isLoading={isLoading}
+      isAuthenticated={isAuthenticated}
+      nextMilestone={nextMilestone}
+      gpsProfile={gpsProfile}
+      onPause={handlePause}
+      onStop={handleStop}
+    />
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Paused Layout
   // ═══════════════════════════════════════════════════════════════════════════
   const renderPausedLayout = () => (
-    <View style={styles.pausedContainer}>
-      {renderCompactHeader()}
-
-      <View style={styles.pausedContent}>
-        {renderHeroTimer()}
-        {renderLiveStats()}
-
-        {/* Resume Button */}
-        <TouchableOpacity
-          style={[styles.resumeButton, { backgroundColor: colors.primary }]}
-          onPress={handleResume}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="play" size={28} color={colors.white} />
-          <Text style={styles.resumeButtonText}>{t('recording.resume')}</Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
-
-        {/* Save Options */}
-        <View style={styles.saveSection}>
-          {isAuthenticated && (
-            <TouchableOpacity
-              style={styles.skipPostRow}
-              onPress={() => setSkipAutoPost(!skipAutoPost)}
-              disabled={isLoading}
-              activeOpacity={0.7}
-            >
-              <Switch
-                value={skipAutoPost}
-                onValueChange={setSkipAutoPost}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={skipAutoPost ? colors.primary : colors.white}
-                disabled={isLoading}
-              />
-              <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
-                {t('recording.skipAutoPost')}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.success }]}
-            onPress={handleSave}
-            disabled={isLoading}
-            activeOpacity={0.8}
-          >
-            {isLoading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={24} color={colors.white} />
-                <Text style={styles.saveButtonText}>{t('recording.saveActivity')}</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.discardButton}
-            onPress={handleDiscard}
-            disabled={isLoading}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={18} color={colors.error} />
-            <Text style={[styles.discardButtonText, { color: colors.error }]}>
-              {t('recording.discard')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+    <PausedView
+      selectedSport={selectedSport}
+      status={status}
+      trackingStatus={trackingStatus}
+      localDuration={localDuration}
+      currentStats={currentStats}
+      distance={distance}
+      isLoading={isLoading}
+      isAuthenticated={isAuthenticated}
+      skipAutoPost={skipAutoPost}
+      gpsProfile={gpsProfile}
+      onResume={handleResume}
+      onSave={handleSave}
+      onDiscard={handleDiscard}
+      onSkipAutoPostChange={setSkipAutoPost}
+    />
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1722,117 +988,29 @@ export function ActivityRecordingScreen() {
       {/* Main Content Based on Status and View Mode */}
       {viewMode === 'map' ? (
         useLiveMapComponent ? (
-          <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
             <MapboxLiveMap
               livePoints={livePoints}
               currentPosition={currentPosition || previewLocation}
               gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
               followUser={true}
               mapStyle={mapStyle}
-              nearbyRoutes={!isTracking && !isPaused && showNearbyRoutesToggle ? nearbyRoutes : undefined}
+              nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
               shadowTrack={selectedShadowTrack?.track_data || null}
               selectedRouteId={selectedShadowTrack?.id || null}
               onRouteSelect={handleRouteSelect}
             />
 
             {/* Nearby routes list (idle state only) */}
-            {!isTracking && !isPaused && showNearbyRoutesToggle && (
-              <View style={[styles.nearbyRoutesPanel, { backgroundColor: colors.cardBackground }]}>
-                {loadingRoutes ? (
-                  <View style={styles.nearbyRoutesLoading}>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={[styles.nearbyRoutesLoadingText, { color: colors.textMuted }]}>
-                      {t('recording.loadingRoutes')}
-                    </Text>
-                  </View>
-                ) : routesError ? (
-                  <View style={styles.nearbyRoutesError}>
-                    <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
-                    <Text style={[styles.nearbyRoutesErrorText, { color: colors.error }]}>
-                      {routesError}
-                    </Text>
-                  </View>
-                ) : nearbyRoutes.length === 0 ? (
-                  <View style={styles.nearbyRoutesEmpty}>
-                    <Ionicons name="map-outline" size={32} color={colors.textMuted} />
-                    <Text style={[styles.nearbyRoutesEmptyText, { color: colors.textMuted }]}>
-                      {t('recording.noRoutesFound')}
-                    </Text>
-                    <Text style={[styles.nearbyRoutesEmptyDesc, { color: colors.textMuted }]}>
-                      {t('recording.noRoutesDescription')}
-                    </Text>
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.nearbyRoutesHeader}>
-                      <Ionicons name="map" size={20} color={colors.primary} />
-                      <Text style={[styles.nearbyRoutesTitle, { color: colors.textPrimary }]}>
-                        {t('recording.nearbyRoutes')}
-                      </Text>
-                      <Text style={[styles.nearbyRoutesCount, { color: colors.textMuted }]}>
-                        {t('recording.routesFound', { count: nearbyRoutes.length })}
-                      </Text>
-                    </View>
-                    <FlatList
-                      horizontal
-                      data={nearbyRoutes}
-                      keyExtractor={(item) => `route-live-${item.id}`}
-                      renderItem={({ item: route }) => {
-                        const isSelected = selectedShadowTrack?.id === route.id;
-                        const selectedColor = isDark ? '#60A5FA' : '#3B82F6';
-                        const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
-
-                        return (
-                          <TouchableOpacity
-                            style={[
-                              styles.nearbyRouteCard,
-                              { backgroundColor: colors.background, borderColor: colors.border },
-                              isSelected && {
-                                borderColor: selectedBorderColor,
-                                borderWidth: 2,
-                                backgroundColor: isDark ? '#1E3A8A15' : '#EFF6FF',
-                              },
-                            ]}
-                            onPress={() => {
-                              if (isSelected) {
-                                handleClearShadowTrack();
-                              } else {
-                                handleRouteSelect(route);
-                              }
-                            }}
-                            activeOpacity={0.7}
-                          >
-                            {isSelected && (
-                              <View style={[styles.selectedBadge, { backgroundColor: selectedColor }]}>
-                                <Ionicons name="checkmark" size={14} color="#fff" />
-                              </View>
-                            )}
-                            <Text style={[styles.nearbyRouteTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                              {route.title}
-                            </Text>
-                            <View style={styles.nearbyRouteStats}>
-                              <View style={styles.nearbyRouteStat}>
-                                <Ionicons name="navigate-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                  {formatDistanceShort(route.distance)}
-                                </Text>
-                              </View>
-                              <View style={styles.nearbyRouteStat}>
-                                <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-                                <Text style={[styles.nearbyRouteStatText, { color: colors.textSecondary }]}>
-                                  {Math.round(route.distance_from_user)}m
-                                </Text>
-                              </View>
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      }}
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.nearbyRoutesList}
-                    />
-                  </>
-                )}
-              </View>
+            {isIdle && showNearbyRoutesToggle && (
+              <NearbyRoutesHorizontalPanel
+                routes={nearbyRoutes}
+                selectedRouteId={selectedShadowTrack?.id ?? null}
+                onRouteSelect={handleRouteSelect}
+                onClearRoute={handleClearShadowTrack}
+                isLoading={loadingRoutes}
+                error={routesError}
+              />
             )}
 
             {/* Recording controls (recording/paused state) */}
@@ -1883,7 +1061,7 @@ export function ActivityRecordingScreen() {
           />
 
           {/* Nearby routes toggle - only visible in idle state and map view */}
-          {!isTracking && !isPaused && viewMode === 'map' && (
+          {isIdle && viewMode === 'map' && (
             <View style={styles.routesToggleContainer}>
               <TouchableOpacity
                 style={[
@@ -2156,390 +1334,6 @@ const styles = StyleSheet.create({
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Compact Header (Recording/Paused)
-  // ─────────────────────────────────────────────────────────────────────────
-  compactHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  compactHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  compactHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  compactSportIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  compactSportName: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  gpsIndicator: {
-    height: 28,
-    borderRadius: 14,
-    paddingHorizontal: 8,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-  },
-  gpsSignalText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Sport Chip Selector
-  // ─────────────────────────────────────────────────────────────────────────
-  sportChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    gap: spacing.sm,
-  },
-  sportChipIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sportChipText: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Idle Layout
-  // ─────────────────────────────────────────────────────────────────────────
-  idleContainer: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  idleSportSection: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  startSection: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  startButton: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  startButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    marginTop: spacing.xs,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Event Link Row
-  // ─────────────────────────────────────────────────────────────────────────
-  eventLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    marginBottom: spacing.md,
-  },
-  eventLinkLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-  },
-  eventLinkText: {
-    fontSize: fontSize.md,
-    flex: 1,
-  },
-  eventLinkRight: {
-    marginLeft: spacing.sm,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Quick Stats Card
-  // ─────────────────────────────────────────────────────────────────────────
-  quickStatsCard: {
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  quickStatsLoading: {
-    padding: spacing.lg,
-  },
-  quickStatsHeader: {
-    marginBottom: spacing.md,
-  },
-  quickStatsTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  quickStatsRow: {
-    flexDirection: 'row',
-  },
-  quickStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  quickStatValue: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
-  quickStatLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  nextMilestonePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-  },
-  nextMilestoneText: {
-    fontSize: fontSize.sm,
-  },
-  noStatsPreview: {
-    alignItems: 'center',
-    paddingVertical: spacing.lg,
-    gap: spacing.sm,
-  },
-  noStatsPreviewText: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Hero Timer
-  // ─────────────────────────────────────────────────────────────────────────
-  heroTimerContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  heroTimer: {
-    fontSize: 72,
-    fontWeight: '200',
-    fontVariant: ['tabular-nums'],
-    letterSpacing: -2,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Live Stats
-  // ─────────────────────────────────────────────────────────────────────────
-  liveStatsContainer: {
-    flexDirection: 'row',
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    padding: spacing.md,
-    marginHorizontal: spacing.lg,
-  },
-  liveStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  liveStatValue: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  liveStatLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  liveStatDivider: {
-    width: 1,
-    marginVertical: spacing.xs,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Elevation Row
-  // ─────────────────────────────────────────────────────────────────────────
-  elevationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-  },
-  elevationText: {
-    fontSize: fontSize.sm,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Milestone Indicator
-  // ─────────────────────────────────────────────────────────────────────────
-  milestoneIndicator: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  milestoneIndicatorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  milestoneIndicatorRight: {
-    position: 'absolute',
-    right: spacing.md,
-    top: spacing.md,
-  },
-  milestoneIndicatorText: {
-    fontSize: fontSize.sm,
-  },
-  milestoneIndicatorProgress: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  milestoneProgressBar: {
-    height: 4,
-    borderRadius: 2,
-    marginTop: spacing.sm,
-    overflow: 'hidden',
-  },
-  milestoneProgressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Recording Layout
-  // ─────────────────────────────────────────────────────────────────────────
-  recordingContainer: {
-    flex: 1,
-  },
-  recordingContent: {
-    flex: 1,
-  },
-  recordingControls: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xl,
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  controlButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  pauseButton: {},
-  stopButton: {},
-  controlButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Paused Layout
-  // ─────────────────────────────────────────────────────────────────────────
-  pausedContainer: {
-    flex: 1,
-  },
-  pausedContent: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  resumeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginTop: spacing.xl,
-  },
-  resumeButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  sectionDivider: {
-    height: 1,
-    marginVertical: spacing.xl,
-  },
-  saveSection: {
-    gap: spacing.md,
-  },
-  skipPostRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  skipPostText: {
-    fontSize: fontSize.sm,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  discardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
-  },
-  discardButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Loading Overlay
   // ─────────────────────────────────────────────────────────────────────────
   loadingOverlay: {
@@ -2622,35 +1416,35 @@ const styles = StyleSheet.create({
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Floating Route Selection Button
-  // ─────────────────────────────────────────────────────────────────────────
-  floatingRouteButton: {
-    position: 'absolute',
-    bottom: spacing.xl,
-    left: spacing.lg,
-    right: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.lg,
-    gap: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  floatingRouteButtonText: {
-    color: '#fff',
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Map View
   // ─────────────────────────────────────────────────────────────────────────
+  mapFallbackContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  mapFallbackText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.lg,
+  },
+  mapContainer: {
+    flex: 1,
+  },
+  mapErrorText: {
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  mapErrorDetail: {
+    marginTop: spacing.sm,
+    textAlign: 'center',
+    fontSize: 12,
+  },
+  mapErrorButton: {
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+  },
   mapMarker: {
     width: 20,
     height: 20,
@@ -2668,202 +1462,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Nearby Routes Panel (Map View - Idle State)
-  // ─────────────────────────────────────────────────────────────────────────
-  nearbyRoutesPanel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    maxHeight: 200,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  nearbyRoutesLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.md,
-  },
-  nearbyRoutesLoadingText: {
-    fontSize: fontSize.sm,
-  },
-  nearbyRoutesError: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
-  },
-  nearbyRoutesErrorText: {
-    fontSize: fontSize.sm,
-  },
-  nearbyRoutesEmpty: {
-    alignItems: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
-  },
-  nearbyRoutesEmptyText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  nearbyRoutesEmptyDesc: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-  nearbyRoutesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  nearbyRoutesTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    flex: 1,
-  },
-  nearbyRoutesCount: {
-    fontSize: fontSize.xs,
-  },
-  nearbyRoutesList: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  nearbyRouteCard: {
-    width: 180,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    padding: spacing.md,
-    marginRight: spacing.md,
-    position: 'relative',
-  },
-  selectedBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nearbyRouteTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  nearbyRouteStats: {
-    gap: spacing.xs,
-  },
-  nearbyRouteStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  nearbyRouteStatText: {
-    fontSize: fontSize.xs,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Suggested Activities Slider
-  // ─────────────────────────────────────────────────────────────────────────
-  suggestedActivitiesSection: {
-    marginBottom: spacing.lg,
-  },
-  suggestedActivitiesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  suggestedActivitiesTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    flex: 1,
-  },
-  weekProgressBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: borderRadius.full,
-  },
-  weekProgressText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  suggestedActivitiesList: {
-    paddingRight: spacing.lg,
-  },
-  suggestedActivityCard: {
-    width: 200,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    marginRight: spacing.md,
-    overflow: 'hidden',
-  },
-  suggestedActivityHeader: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  activityHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  suggestedActivityOrder: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  completedText: {
-    textDecorationLine: 'line-through',
-  },
-  suggestedActivityBody: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  suggestedActivityType: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  suggestedActivityIntensity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.sm,
-  },
-  suggestedActivityIntensityText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
-  suggestedActivityMetrics: {
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  suggestedActivityMetric: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  suggestedActivityMetricText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
 
   // Nearby routes toggle container and button (matching ViewToggleButton style)
