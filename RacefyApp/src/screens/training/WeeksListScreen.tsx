@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -50,6 +50,11 @@ export function WeeksListScreen({ navigation }: Props) {
   const [mentalBudget, setMentalBudget] = useState<MentalBudget | null>(null);
   const [aiMode, setAiMode] = useState<AiMode>('reactive');
   const [loadingMentalBudget, setLoadingMentalBudget] = useState(false);
+
+  // Coaching hints state
+  const [generatingHints, setGeneratingHints] = useState(false);
+  const [hintsProgress, setHintsProgress] = useState({ done: 0, total: 0 });
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = useCallback(async (isRefresh = false) => {
     try {
@@ -230,6 +235,72 @@ export function WeeksListScreen({ navigation }: Props) {
     }
   };
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleGenerateHints = async () => {
+    if (!program) return;
+
+    // Check if all weeks already have hints
+    if (weeks.every(w => w.coaching_hint)) {
+      Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.allGenerated'));
+      return;
+    }
+
+    setGeneratingHints(true);
+    try {
+      const response = await api.generateAllHints(program.id);
+
+      if (response.status === 'completed') {
+        // All done immediately
+        await loadData(true);
+        setGeneratingHints(false);
+        triggerHaptic();
+        Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.generationComplete'));
+        return;
+      }
+
+      // Processing - start polling
+      const totalWeeks = response.total_weeks || program.total_weeks;
+      const weeksPending = response.weeks_pending || 0;
+      setHintsProgress({ done: totalWeeks - weeksPending, total: totalWeeks });
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const updatedWeeks = await api.getWeeks();
+          setWeeks(updatedWeeks);
+
+          const remaining = updatedWeeks.filter(w => !w.coaching_hint).length;
+          setHintsProgress({ done: totalWeeks - remaining, total: totalWeeks });
+
+          if (remaining === 0) {
+            // All done
+            if (pollRef.current) {
+              clearInterval(pollRef.current);
+              pollRef.current = null;
+            }
+            setGeneratingHints(false);
+            triggerHaptic();
+            Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.generationComplete'));
+          }
+        } catch (pollErr) {
+          logger.error('training', 'Polling hints progress failed', { error: pollErr });
+        }
+      }, 5000);
+    } catch (err: any) {
+      setGeneratingHints(false);
+      logger.error('training', 'Failed to generate coaching hints', { error: err });
+      Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
+    }
+  };
+
   const renderWeekItem = ({ item: week }: { item: TrainingWeek }) => {
     const isCurrentWeek = week.status === 'current' || week.status === 'active';
     const activities = week.activities || [];
@@ -265,6 +336,9 @@ export function WeeksListScreen({ navigation }: Props) {
                     {t('training.weeksList.current')}
                   </Text>
                 </View>
+              )}
+              {week.coaching_hint && (
+                <Ionicons name="bulb-outline" size={16} color={colors.primary} />
               )}
             </View>
 
@@ -503,6 +577,33 @@ export function WeeksListScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
         </View>
+      )}
+
+      {/* Generate Coaching Hints Button */}
+      {program && weeks.some(w => !w.coaching_hint) && (
+        <TouchableOpacity
+          style={[styles.generateHintsButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
+          onPress={handleGenerateHints}
+          disabled={generatingHints}
+        >
+          {generatingHints ? (
+            <>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                {hintsProgress.total > 0
+                  ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
+                  : t('training.coachingHints.generating')}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="bulb-outline" size={20} color={colors.primary} />
+              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                {t('training.coachingHints.generateButton')}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
       )}
 
       <FlatList
@@ -954,5 +1055,21 @@ const styles = StyleSheet.create({
   usageText: {
     flex: 1,
     fontSize: fontSize.sm,
+  },
+  generateHintsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  generateHintsText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
 });

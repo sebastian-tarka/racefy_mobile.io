@@ -20,6 +20,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { ScreenHeader, Loading, Card, Button, ActivitySelectionSheet, ScreenContainer } from '../../components';
+import { CoachingHintPanel } from '../../components/Training/CoachingHintPanel';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, TrainingActivity, SuggestedActivity, Activity } from '../../types/api';
 
@@ -312,6 +313,18 @@ export function WeekDetailScreen({ navigation, route }: Props) {
             </Text>
           </View>
         </Card>
+
+        {/* Coaching Hints */}
+        {week.coaching_hint ? (
+          <CoachingHintPanel coachingHint={week.coaching_hint} />
+        ) : (
+          <View style={styles.noHintsContainer}>
+            <Ionicons name="bulb-outline" size={24} color={colors.textMuted} />
+            <Text style={[styles.noHintsText, { color: colors.textMuted }]}>
+              {t('training.coachingHints.noHints')}
+            </Text>
+          </View>
+        )}
 
         {/* Activities List */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -838,5 +851,16 @@ const styles = StyleSheet.create({
   targetMetricValue: {
     fontSize: fontSize.lg,
     fontWeight: '700',
+  },
+  noHintsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  noHintsText: {
+    fontSize: fontSize.sm,
   },
 });

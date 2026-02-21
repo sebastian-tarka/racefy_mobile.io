@@ -1408,6 +1408,20 @@
       "linkFailed": "Failed to link activity",
       "unlinkFailed": "Failed to unlink activity"
     },
+    "coachingHints": {
+      "sectionTitle": "Coaching Hints",
+      "weekOverview": "Week Overview",
+      "warmUp": "Warm-Up",
+      "mainFocus": "Main Focus",
+      "coolDown": "Cool-Down",
+      "generateButton": "Generate Coaching Hints",
+      "generating": "Generating hints...",
+      "generatingProgress": "Generating hints ({{done}}/{{total}})...",
+      "generationComplete": "All coaching hints generated!",
+      "generationFailed": "Failed to generate coaching hints",
+      "noHints": "No coaching hints available for this week yet.",
+      "allGenerated": "All weeks already have coaching hints."
+    },
     "tips": {
       "sectionTitle": "Tip for You",
       "readMore": "Read More",

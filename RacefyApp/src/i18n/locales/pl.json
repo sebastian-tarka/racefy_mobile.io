@@ -1410,6 +1410,20 @@
       "linkFailed": "Nie udało się powiązać aktywności",
       "unlinkFailed": "Nie udało się odłączyć aktywności"
     },
+    "coachingHints": {
+      "sectionTitle": "Wskazówki Treningowe",
+      "weekOverview": "Przegląd Tygodnia",
+      "warmUp": "Rozgrzewka",
+      "mainFocus": "Główny Cel",
+      "coolDown": "Schładzanie",
+      "generateButton": "Generuj Wskazówki Treningowe",
+      "generating": "Generowanie wskazówek...",
+      "generatingProgress": "Generowanie wskazówek ({{done}}/{{total}})...",
+      "generationComplete": "Wszystkie wskazówki treningowe wygenerowane!",
+      "generationFailed": "Nie udało się wygenerować wskazówek treningowych",
+      "noHints": "Brak wskazówek treningowych dla tego tygodnia.",
+      "allGenerated": "Wszystkie tygodnie mają już wskazówki treningowe."
+    },
     "tips": {
       "sectionTitle": "Wskazówka dla Ciebie",
       "readMore": "Czytaj więcej",

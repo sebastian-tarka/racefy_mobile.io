@@ -1993,9 +1993,31 @@ export interface TrainingWeek {
   notes: string | null;
   activities?: TrainingActivity[];
   suggested_activities?: SuggestedActivity[];
+  coaching_hint?: CoachingHint | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SessionHint {
+  session_order: number;
+  title: string;
+  description: string;
+  warm_up: string;
+  main_focus: string;
+  cool_down: string;
+}
+
+export interface CoachingHint {
+  week_overview: string;
+  session_hints: SessionHint[];
+}
+
+export interface GenerateHintsResponse {
+  message: string;
+  status: 'processing' | 'completed';
+  weeks_pending?: number;
+  total_weeks?: number;
 }
 
 // API Response types

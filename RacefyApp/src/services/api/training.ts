@@ -242,6 +242,19 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       return response.data;
     }
 
+    // ============ COACHING HINTS ============
+
+    /**
+     * Generate coaching hints for all weeks in a program
+     * Returns processing status - poll getWeeks() to track progress
+     */
+    async generateAllHints(programId: number): Promise<Types.GenerateHintsResponse> {
+      return this.request<Types.GenerateHintsResponse>(
+        `/training/programs/${programId}/generate-hints`,
+        { method: 'POST' }
+      );
+    }
+
     // ============ WEEK FEEDBACK ============
 
     /**
