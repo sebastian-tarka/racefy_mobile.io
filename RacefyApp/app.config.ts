@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.5.0',
+  version: '1.6.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '7',
+    buildNumber: '8',
     googleServicesFile: getGoogleServicesFileiOS(),
     associatedDomains: [
       'applinks:racefy.app',
@@ -110,12 +110,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 7,
+    versionCode: 8,
     googleServicesFile: getGoogleServicesFile(),
     permissions: [
       'ACCESS_FINE_LOCATION',
       'ACCESS_COARSE_LOCATION',
-      'ACCESS_BACKGROUND_LOCATION',
       'FOREGROUND_SERVICE',
       'FOREGROUND_SERVICE_LOCATION',
       'CAMERA',
@@ -165,8 +164,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Racefy needs background location access to track activities even when the app is in the background.',
         locationWhenInUsePermission:
           'Racefy needs location access to track your activities and show your route.',
-        // Enable background location for Android
-        isAndroidBackgroundLocationEnabled: true,
+        // Android tracking uses foreground service (persistent notification) - no background permission needed
+        isAndroidBackgroundLocationEnabled: false,
         // Enable background location for iOS
         isIosBackgroundLocationEnabled: true,
       },

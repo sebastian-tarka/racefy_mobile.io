@@ -10,7 +10,6 @@ export type PermissionStatus = 'undetermined' | 'granted' | 'denied';
 
 interface PermissionsState {
   location: PermissionStatus;
-  locationBackground: PermissionStatus;
   camera: PermissionStatus;
   mediaLibrary: PermissionStatus;
 }
@@ -18,7 +17,6 @@ interface PermissionsState {
 export function usePermissions() {
   const [permissions, setPermissions] = useState<PermissionsState>({
     location: 'undetermined',
-    locationBackground: 'undetermined',
     camera: 'undetermined',
     mediaLibrary: 'undetermined',
   });
@@ -39,14 +37,8 @@ export function usePermissions() {
         ImagePicker.getMediaLibraryPermissionsAsync(),
       ]);
 
-      let backgroundStatus: Location.PermissionResponse | null = null;
-      if (locationStatus.status === 'granted') {
-        backgroundStatus = await Location.getBackgroundPermissionsAsync();
-      }
-
       setPermissions({
         location: locationStatus.status as PermissionStatus,
-        locationBackground: (backgroundStatus?.status || 'undetermined') as PermissionStatus,
         camera: cameraStatus.status as PermissionStatus,
         mediaLibrary: mediaStatus.status as PermissionStatus,
       });
@@ -85,70 +77,6 @@ export function usePermissions() {
       return false;
     }
   }, []);
-
-  // Request background location permission (requires foreground first)
-  const requestBackgroundLocationPermission = useCallback(async (): Promise<boolean> => {
-    try {
-      // First ensure we have foreground permission
-      if (permissions.location !== 'granted') {
-        const foregroundGranted = await requestLocationPermission();
-        if (!foregroundGranted) return false;
-      }
-
-      // On iOS, show explanation before requesting
-      if (Platform.OS === 'ios') {
-        return new Promise((resolve) => {
-          Alert.alert(
-            'Background Location',
-            'Racefy needs background location access to continue tracking your activity when the app is in the background. This helps ensure accurate distance and route tracking.',
-            [
-              {
-                text: 'Cancel',
-                style: 'cancel',
-                onPress: () => {
-                  setPermissions((prev) => ({ ...prev, locationBackground: 'denied' }));
-                  resolve(false);
-                },
-              },
-              {
-                text: 'Continue',
-                onPress: async () => {
-                  const { status } = await Location.requestBackgroundPermissionsAsync();
-                  setPermissions((prev) => ({
-                    ...prev,
-                    locationBackground: status as PermissionStatus,
-                  }));
-                  resolve(status === 'granted');
-                },
-              },
-            ],
-            { cancelable: false }
-          );
-        });
-      }
-
-      // Android
-      const { status, canAskAgain } = await Location.requestBackgroundPermissionsAsync();
-
-      if (status === 'granted') {
-        setPermissions((prev) => ({ ...prev, locationBackground: 'granted' }));
-        return true;
-      }
-
-      if (!canAskAgain) {
-        showSettingsAlert(
-          'Background Location Required',
-          'For accurate activity tracking, please enable "Allow all the time" location access in settings.'
-        );
-      }
-
-      setPermissions((prev) => ({ ...prev, locationBackground: 'denied' }));
-      return false;
-    } catch (error) {
-      logger.error('gps', 'Error requesting background location permission', { error });
-      return false;
-    }
-  }, [permissions.location, requestLocationPermission]);
 
   // Request camera permission
   const requestCameraPermission = useCallback(async (): Promise<boolean> => {
@@ -251,6 +179,8 @@ export function usePermissions() {
   }, []);
 
   // Request all permissions needed for activity tracking
+  // Android: foreground location only - background tracking is handled by foreground service (persistent notification)
+  // iOS: foreground location only - background tracking uses blue status bar indicator
   const requestActivityTrackingPermissions = useCallback(async (): Promise<boolean> => {
     // On web, just return false (will use simulated)
     if (isWeb) {
@@ -259,52 +189,27 @@ export function usePermissions() {
     }
 
     try {
-      // First check if location services are enabled
+      // Check if location services are enabled
       const servicesEnabled = await checkLocationServices();
       if (!servicesEnabled) return false;
 
-      // Request foreground location
+      // Request foreground location - this is all we need
+      // Background tracking continues via the foreground service notification
       const locationGranted = await requestLocationPermission();
       if (!locationGranted) return false;
 
-      // Request background location - REQUIRED for activity tracking
-      // We need to await this to ensure background tracking works
-      const backgroundGranted = await requestBackgroundLocationPermission();
-
-      if (!backgroundGranted) {
-        // Show warning but allow to continue with foreground only
-        Alert.alert(
-          'Background Location',
-          'Without background location permission, tracking may stop when you switch apps. For best results, please allow "Always" location access in Settings.',
-          [
-            { text: 'Continue Anyway', style: 'cancel' },
-            {
-              text: 'Open Settings',
-              onPress: () => {
-                if (Platform.OS === 'ios') {
-                  Linking.openURL('app-settings:');
-                } else {
-                  Linking.openSettings();
-                }
-              },
-            },
-          ]
-        );
-      }
-
-      return true; // Allow starting even without background permission
+      return true;
     } catch (error) {
       logger.error('activity', 'Error requesting activity permissions', { error });
       return false;
     }
-  }, [checkLocationServices, requestLocationPermission, requestBackgroundLocationPermission]);
+  }, [checkLocationServices, requestLocationPermission]);
 
   return {
     permissions,
     isChecking,
     checkPermissions,
     requestLocationPermission,
-    requestBackgroundLocationPermission,
     requestCameraPermission,
     requestMediaLibraryPermission,
     requestActivityTrackingPermissions,
