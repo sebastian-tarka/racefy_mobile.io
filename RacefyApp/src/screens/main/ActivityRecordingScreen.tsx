@@ -606,6 +606,19 @@ export function ActivityRecordingScreen() {
     });
 
   // Bottom sheet options
+  const handleEventSelect = (event: Event | null) => {
+    setSelectedEvent(event);
+    if (event) {
+      const eventSportTypeId = event.sport_type_id ?? event.sport_type?.id;
+      if (eventSportTypeId && sportTypes.length > 0) {
+        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
+        if (matchingSport) {
+          setSelectedSport(matchingSport);
+        }
+      }
+    }
+  };
+
   const addActivityOptions: BottomSheetOption[] = useMemo(() => [
     {
       id: 'import',
@@ -1232,7 +1245,7 @@ export function ActivityRecordingScreen() {
       <EventSelectionSheet
         visible={eventSheetVisible}
         onClose={() => setEventSheetVisible(false)}
-        onSelect={setSelectedEvent}
+        onSelect={handleEventSelect}
         events={ongoingEvents}
         selectedEvent={selectedEvent}
         isLoading={eventsLoading}
