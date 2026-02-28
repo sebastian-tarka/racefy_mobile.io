@@ -137,6 +137,8 @@ function useLiveActivityInternal() {
     null,
   );
   const pointsBuffer = useRef<GpsPoint[]>([]);
+  // Accumulates ALL route points for map visualization (never cleared on sync)
+  const allRoutePoints = useRef<GpsPoint[]>([]);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
   const backgroundSyncInterval = useRef<NodeJS.Timeout | null>(null);
@@ -486,6 +488,7 @@ function useLiveActivityInternal() {
           speed: p.speed,
         }));
         pointsBuffer.current.push(...points);
+        allRoutePoints.current.push(...points);
 
         // 5. Calculate local stats from background points IMMEDIATELY (UX improvement)
         // This shows distance/elevation updates instantly when returning to foreground
@@ -736,6 +739,7 @@ function useLiveActivityInternal() {
             // Store original (non-smoothed) validated point for server sync
             // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
             pointsBuffer.current.push(point);
+            allRoutePoints.current.push(point);
 
             setState((prev) => ({
               ...prev,
@@ -998,6 +1002,7 @@ function useLiveActivityInternal() {
           speed: p.speed,
         }));
         pointsBuffer.current.push(...recoveredGpsPoints);
+        allRoutePoints.current.push(...recoveredGpsPoints);
         await clearAllPersistedPoints();
       }
 
@@ -1432,6 +1437,7 @@ function useLiveActivityInternal() {
         localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
+        allRoutePoints.current = [];
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         paceSegments.current = [];
@@ -1637,6 +1643,7 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
+        allRoutePoints.current = [];
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -1720,6 +1727,7 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
+        allRoutePoints.current = [];
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -1871,6 +1879,7 @@ function useLiveActivityInternal() {
         localStatsRef.current = { ...initialStats };
         lastPosition.current = null;
         pointsBuffer.current = [];
+        allRoutePoints.current = [];
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         activityLocationRef.current = null;
@@ -1943,6 +1952,7 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
+        allRoutePoints.current = [];
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -1997,8 +2007,8 @@ function useLiveActivityInternal() {
     checkExistingActivity,
     // Expose GPS profile for UI to access pace settings (minDistanceForPace, etc.)
     gpsProfile: currentGpsProfile.current,
-    // NEW: Expose for map view
-    livePoints: pointsBuffer.current,
+    // NEW: Expose for map view (all accumulated route points, never cleared on sync)
+    livePoints: allRoutePoints.current,
     currentPosition: lastPosition.current
       ? {
           lat: lastPosition.current.lat,
