@@ -26,7 +26,7 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={{ marginBottom, position: 'relative', overflow: 'hidden' }}>
+    <Card style={{ marginBottom, position: 'relative' }}>
       {typeColors.accent && (
         <View style={[styles.accentBar, { backgroundColor: typeColors.accent, opacity: 0.8 }]} />
       )}

@@ -204,7 +204,7 @@ export function HomeScreen({ navigation }: Props) {
               navigation.navigate('Record');
             }}
             onCreatePost={() => {
-              navigation.navigate('Feed', { openComposer: true });
+              navigation.getParent()?.navigate('PostForm', {});
             }}
             onFindEvents={() => {
               navigation.getParent()?.navigate('EventForm', {});

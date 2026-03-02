@@ -256,7 +256,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
   }, [navigation]);
 
   const handleCreatePost = useCallback(() => {
-    navigation.navigate('Feed', { openComposer: true });
+    navigation.getParent()?.navigate('PostForm', {});
   }, [navigation]);
 
   const handleFindEvents = useCallback(() => {

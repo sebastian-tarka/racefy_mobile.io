@@ -10,7 +10,7 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  Feed: { openComposer?: boolean } | undefined;
+  Feed: undefined;
   Record: { preselectedEvent?: Event } | undefined;
   Events: { initialFilter?: 'all' | 'upcoming' | 'ongoing' | 'completed' } | undefined;
   Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;

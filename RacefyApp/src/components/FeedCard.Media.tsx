@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
+import { VideoPlayerManager } from '../services/VideoPlayerManager';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { VideoPlayer } from './VideoPlayer';
@@ -93,7 +94,11 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
 
 export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: boolean }) {
   const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
-  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+  const [expandedVideo, setExpandedVideoRaw] = useState<string | null>(null);
+  const setExpandedVideo = (url: string | null) => {
+    if (url) VideoPlayerManager.pauseAll();
+    setExpandedVideoRaw(url);
+  };
   const items = buildMediaItems(post);
   if (items.length === 0) return null;
 
@@ -106,14 +111,12 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
         <MediaSlider
           items={items}
           onImagePress={(index) => {
-            // Find the corresponding image index (excluding videos)
             const imageIndex = items.slice(0, index + 1).filter(it => it.type === 'image').length - 1;
             if (imageIndex >= 0) {
               imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(items[index].url);
             }
           }}
           onVideoPress={(index) => setExpandedVideo(items[index].url)}
-          previewHeight={300}
         />
         <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
         {expandedVideo && (
@@ -128,7 +131,7 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   if (item.type === 'video') {
     return (
       <View>
-        <FeedVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={item.aspectRatio || 16 / 9} previewHeight={300} onExpand={() => setExpandedVideo(item.url)} />
+        <FeedVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={item.aspectRatio || 16 / 9} onExpand={() => setExpandedVideo(item.url)} />
         {expandedVideo && (
           <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
         )}

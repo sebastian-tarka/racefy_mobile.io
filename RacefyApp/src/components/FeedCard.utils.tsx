@@ -274,7 +274,7 @@ export const styles = StyleSheet.create({
   imageIndicator: { position: 'absolute', top: spacing.sm, left: spacing.sm, zIndex: 5 },
   imageIndicatorBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.xs, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.5)', gap: 4 },
   imageIndicatorText: { flexDirection: 'row', alignItems: 'center' },
-  fullBleedMedia: { marginHorizontal: -spacing.lg },
+  fullBleedMedia: { marginHorizontal: -spacing.lg, marginTop: spacing.sm },
   viewDetailsButton: {
     position: 'absolute',
     top: spacing.md,

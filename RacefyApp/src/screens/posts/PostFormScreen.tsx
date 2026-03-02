@@ -61,6 +61,7 @@ export function PostFormScreen({ navigation, route }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
+  const screenTitle = isEditMode ? t('postForm.editTitle') : t('postForm.createTitle');
 
   // Detect if this is an activity post
   const isActivityPost = post?.type === 'activity';
@@ -169,7 +170,9 @@ export function PostFormScreen({ navigation, route }: Props) {
     const newErrors: Record<string, string> = {};
 
     // Skip content validation for activity posts (content is read-only)
-    if (!isActivityPost && !content.trim()) {
+    // In create mode, allow media-only posts (no content required if media attached)
+    const hasMedia = newMedia.length > 0 || existingMedia.length > 0;
+    if (!isActivityPost && !content.trim() && !((!isEditMode) && hasMedia)) {
       newErrors.content = t('postForm.validation.contentRequired');
     }
 
@@ -220,6 +223,22 @@ export function PostFormScreen({ navigation, route }: Props) {
         }
 
         Alert.alert(t('common.success'), t('postForm.updateSuccess'));
+      } else {
+        // Create post
+        const newPost = await api.createPost({
+          content: stripMentionsForApi(content.trim()) || ' ',
+          title: title.trim() || undefined,
+          visibility,
+        });
+
+        // Upload media
+        for (const mediaItem of newMedia) {
+          try {
+            await api.uploadPostMedia(newPost.id, mediaItem);
+          } catch (error) {
+            logger.error('api', 'Failed to upload media', { error });
+          }
+        }
       }
       // Refresh feed and posts list
       emitRefresh('feed');
@@ -235,7 +254,9 @@ export function PostFormScreen({ navigation, route }: Props) {
 
       const errorMessage = isActivityContentError
         ? t('postForm.activityContentError')
-        : t('postForm.updateFailed');
+        : isEditMode
+          ? t('postForm.updateFailed')
+          : t('postForm.createFailed');
 
       Alert.alert(t('common.error'), errorMessage);
     } finally {
@@ -257,7 +278,7 @@ export function PostFormScreen({ navigation, route }: Props) {
     return (
       <ScreenContainer>
         <ScreenHeader
-          title={t('postForm.editTitle')}
+          title={screenTitle}
           showBack
           onBack={() => navigation.goBack()}
         />
@@ -275,7 +296,7 @@ export function PostFormScreen({ navigation, route }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScreenHeader
-          title={t('postForm.editTitle')}
+          title={screenTitle}
           showBack
           onBack={() => navigation.goBack()}
         />
@@ -467,7 +488,7 @@ export function PostFormScreen({ navigation, route }: Props) {
 
           {/* Submit Button */}
           <Button
-            title={t('postForm.updateButton')}
+            title={isEditMode ? t('postForm.updateButton') : t('postForm.createButton')}
             onPress={handleSubmit}
             loading={isLoading}
             style={styles.submitButton}

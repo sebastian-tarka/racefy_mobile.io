@@ -17,12 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
   FeedCard,
-  Card,
   Avatar,
   Loading,
   EmptyState,
-  Button,
-  MediaPicker,
   ScreenContainer,
 } from '../../components';
 import { ActivitiesFeedPreview } from './home/components';
@@ -38,16 +35,8 @@ import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navig
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { MediaItem, User, Event, Post } from '../../types/api';
+import type { User, Event, Post } from '../../types/api';
 import {useRefreshOn} from "../../services/refreshEvents";
-
-type PostVisibility = 'public' | 'followers' | 'private';
-
-const VISIBILITY_OPTIONS: { value: PostVisibility; icon: string }[] = [
-  { value: 'public', icon: 'globe-outline' },
-  { value: 'followers', icon: 'people-outline' },
-  { value: 'private', icon: 'lock-closed-outline' },
-];
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Feed'>,
@@ -78,7 +67,6 @@ export function FeedScreen({ navigation, route }: Props) {
     refresh,
     loadMore,
     toggleLike,
-    createPost,
     deletePost,
   } = useFeed();
 
@@ -87,12 +75,6 @@ export function FeedScreen({ navigation, route }: Props) {
 
   // Pause all videos when navigating away from this screen
   useVideoPauseOnBlur();
-
-  const [newPostContent, setNewPostContent] = useState('');
-  const [isPosting, setIsPosting] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
-  const [isComposerVisible, setIsComposerVisible] = useState(false);
-  const [visibility, setVisibility] = useState<PostVisibility>('public');
 
   // Search state
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -108,15 +90,6 @@ export function FeedScreen({ navigation, route }: Props) {
       refresh();
     }
   }, [isAuthenticated, refresh]);
-
-  // Handle openComposer param from navigation
-  useEffect(() => {
-    if (route.params?.openComposer) {
-      setIsComposerVisible(true);
-      // Reset the param to avoid reopening on re-focus
-      navigation.setParams({ openComposer: undefined });
-    }
-  }, [route.params?.openComposer, navigation]);
 
   // Cleanup search debounce on unmount
   useEffect(() => {
@@ -190,27 +163,7 @@ export function FeedScreen({ navigation, route }: Props) {
       Keyboard.dismiss();
     }
     setIsSearchVisible(!isSearchVisible);
-    if (isComposerVisible) {
-      setIsComposerVisible(false);
-    }
-  }, [isSearchVisible, isComposerVisible]);
-
-  const handleCreatePost = async () => {
-    if (!newPostContent.trim() && selectedMedia.length === 0) return;
-
-    setIsPosting(true);
-    try {
-      await createPost(newPostContent.trim(), selectedMedia, visibility);
-      setNewPostContent('');
-      setSelectedMedia([]);
-      setVisibility('public');
-      setIsComposerVisible(false);
-    } catch (error) {
-      Alert.alert(t('common.error'), t('feed.failedToCreate'));
-    } finally {
-      setIsPosting(false);
-    }
-  };
+  }, [isSearchVisible]);
 
   const handleDeletePost = (postId: number) => {
     Alert.alert(
@@ -514,19 +467,12 @@ export function FeedScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => {
-              setIsComposerVisible(!isComposerVisible);
-              if (isSearchVisible) {
-                setIsSearchVisible(false);
-                setSearchQuery('');
-                setSearchResults(null);
-              }
-            }}
+            onPress={() => navigation.navigate('PostForm', {})}
           >
             <Ionicons
-              name={isComposerVisible ? 'close-circle-outline' : 'add-circle-outline'}
+              name="add-circle-outline"
               size={26}
-              color={isComposerVisible ? colors.error : colors.primary}
+              color={colors.primary}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -559,101 +505,11 @@ export function FeedScreen({ navigation, route }: Props) {
           initialNumToRender={2}
           renderItem={renderFeedItem}
           ListHeaderComponent={
-            <>
-              <ActivitiesFeedPreview
-                onActivityPress={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
-                onLoginPress={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
-                limit={3}
-              />
-              {isComposerVisible ? (
-              <View style={[styles.composer, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
-                <View style={[styles.composerHeader, { borderBottomColor: colors.borderLight }]}>
-                  <View style={[styles.composerIcon, { backgroundColor: colors.primary + '15' }]}>
-                    <Ionicons name="create-outline" size={18} color={colors.primary} />
-                  </View>
-                  <Text style={[styles.composerTitle, { color: colors.textPrimary }]}>
-                    {t('feed.createPost')}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setIsComposerVisible(false)}
-                    style={styles.composerClose}
-                  >
-                    <Ionicons name="close" size={22} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.composerBody}>
-                  <Avatar uri={user?.avatar} name={user?.name} size="md" />
-                  <View style={styles.composerInputContainer}>
-                    <Text style={[styles.composerUserName, { color: colors.textPrimary }]}>
-                      {user?.name}
-                    </Text>
-                    <TextInput
-                      style={[styles.composerInput, { color: colors.textPrimary }]}
-                      placeholder={t('feed.placeholder')}
-                      placeholderTextColor={colors.textMuted}
-                      value={newPostContent}
-                      onChangeText={setNewPostContent}
-                      multiline
-                      autoFocus
-                    />
-                  </View>
-                </View>
-
-                <MediaPicker
-                  media={selectedMedia}
-                  onChange={setSelectedMedia}
-                  maxItems={10}
-                  allowVideo
-                />
-
-                <View style={[styles.composerFooter, { borderTopColor: colors.borderLight }]}>
-                  <View style={styles.composerOptions}>
-                    <View style={styles.visibilitySelector}>
-                      {VISIBILITY_OPTIONS.map((option) => (
-                        <TouchableOpacity
-                          key={option.value}
-                          style={[
-                            styles.visibilityOption,
-                            {
-                              backgroundColor: visibility === option.value
-                                ? colors.primary
-                                : colors.background,
-                              borderColor: visibility === option.value
-                                ? colors.primary
-                                : colors.border,
-                            },
-                          ]}
-                          onPress={() => setVisibility(option.value)}
-                        >
-                          <Ionicons
-                            name={option.icon as any}
-                            size={16}
-                            color={visibility === option.value ? '#fff' : colors.textSecondary}
-                          />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                    {selectedMedia.length > 0 && (
-                      <View style={styles.mediaInfoContainer}>
-                        <Ionicons name="images" size={16} color={colors.primary} />
-                        <Text style={[styles.mediaCount, { color: colors.primary }]}>
-                          {selectedMedia.length}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Button
-                    title={t('feed.post')}
-                    onPress={handleCreatePost}
-                    loading={isPosting}
-                    disabled={!newPostContent.trim() && selectedMedia.length === 0}
-                    style={styles.postButton}
-                  />
-                </View>
-              </View>
-              ) : null}
-            </>
+            <ActivitiesFeedPreview
+              onActivityPress={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
+              onLoginPress={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
+              limit={3}
+            />
           }
           ListEmptyComponent={
             error ? (
@@ -811,90 +667,5 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.md,
     flexGrow: 1,
-  },
-  // Composer styles
-  composer: {
-    marginBottom: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderLeftWidth: 3,
-    overflow: 'hidden',
-  },
-  composerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  composerIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  composerTitle: {
-    flex: 1,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginLeft: spacing.sm,
-  },
-  composerClose: {
-    padding: spacing.xs,
-  },
-  composerBody: {
-    flexDirection: 'row',
-    padding: spacing.md,
-  },
-  composerInputContainer: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  composerUserName: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  composerInput: {
-    fontSize: fontSize.md,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  composerFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-  },
-  composerOptions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  mediaInfoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  mediaCount: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  visibilitySelector: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  visibilityOption: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  postButton: {
-    paddingHorizontal: spacing.xl,
   },
 });
