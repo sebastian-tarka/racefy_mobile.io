@@ -68,6 +68,7 @@ export * from './TimeRangeFilter';
 export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './AutoPlayVideo';
+export * from './FeedVideo';
 export * from './AutoDisplayImage';
 export * from './ImageViewer';
 export * from './ImageGallery';

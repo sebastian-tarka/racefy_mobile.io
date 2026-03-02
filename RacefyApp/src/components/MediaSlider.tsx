@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, FlatList, Dimensions, StyleSheet, ViewToken } from 'react-native';
-import { AutoPlayVideo } from './AutoPlayVideo';
+import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import type { PostMediaItem } from './FeedCard.utils';
 
@@ -38,10 +38,10 @@ export function MediaSlider({
     if (item.type === 'video') {
       return (
         <View style={styles.slide}>
-          <AutoPlayVideo
+          <FeedVideo
             videoUrl={item.url}
             thumbnailUrl={item.thumbnailUrl}
-            aspectRatio={aspectRatio}
+            aspectRatio={item.aspectRatio || aspectRatio}
             onExpand={() => onVideoPress?.(index)}
           />
         </View>

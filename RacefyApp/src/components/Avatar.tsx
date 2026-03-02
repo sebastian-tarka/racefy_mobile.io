@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '../hooks/useTheme';
 import { avatarSizes } from '../theme';
 
@@ -23,6 +24,8 @@ export function Avatar({ uri, name, size = 'md' }: AvatarProps) {
     return (
       <Image
         source={{ uri }}
+        recyclingKey={uri}
+        cachePolicy="memory-disk"
         style={[
           styles.image,
           {

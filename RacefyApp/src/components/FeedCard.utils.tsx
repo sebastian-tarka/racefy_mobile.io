@@ -19,6 +19,7 @@ export interface PostMediaItem {
   type: 'image' | 'video';
   url: string;
   thumbnailUrl?: string | null;
+  aspectRatio?: number; // width/height from API
 }
 
 export interface FeedCardProps {
@@ -93,6 +94,7 @@ export function buildMediaItems(post: Post): PostMediaItem[] {
     type: 'video' as const,
     url: fixStorageUrl(v.url) || '',
     thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
+    aspectRatio: v.width && v.height ? v.width / v.height : undefined,
   }));
 
   const photos: PostMediaItem[] = (post.photos || []).map((p) => ({
@@ -108,6 +110,7 @@ export function buildMediaItems(post: Post): PostMediaItem[] {
       type: (isVideo ? 'video' : 'image') as 'video' | 'image',
       url: fixStorageUrl(m.url) || '',
       thumbnailUrl: m.thumbnail_url ? fixStorageUrl(m.thumbnail_url) : null,
+      aspectRatio: (m as any).width && (m as any).height ? (m as any).width / (m as any).height : undefined,
     };
   });
 

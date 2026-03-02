@@ -554,16 +554,16 @@ export function FeedScreen({ navigation, route }: Props) {
           data={posts}
           keyExtractor={(item) => item.id.toString()}
           removeClippedSubviews={true}
-          windowSize={5}
-          maxToRenderPerBatch={3}
-          initialNumToRender={3}
+          windowSize={3}
+          maxToRenderPerBatch={2}
+          initialNumToRender={2}
           renderItem={renderFeedItem}
           ListHeaderComponent={
             <>
               <ActivitiesFeedPreview
                 onActivityPress={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
                 onLoginPress={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
-                limit={5}
+                limit={3}
               />
               {isComposerVisible ? (
               <View style={[styles.composer, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>

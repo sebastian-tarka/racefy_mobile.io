@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ImageBackground,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -206,13 +206,15 @@ export function ActivitySliderCard({
 
   // Card with or without background image
   const cardContent = hasBackgroundImage ? (
-    <ImageBackground
-      source={{ uri: backgroundImage }}
-      style={styles.imageBackground}
-      imageStyle={styles.imageBackgroundImage}
-    >
+    <View style={styles.imageBackground}>
+      <ExpoImage
+        source={{ uri: backgroundImage }}
+        style={styles.imageBackgroundImage}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
       {renderCardInner()}
-    </ImageBackground>
+    </View>
   ) : (
     renderCardInner()
   );
@@ -254,6 +256,7 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   imageBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: borderRadius.xl,
   },
   gradient: {

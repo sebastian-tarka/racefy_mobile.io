@@ -55,8 +55,8 @@ export function ActivitiesFeedPreview({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [displayMode, setDisplayMode] = useState<ActivitiesDisplayMode>(initialDisplayMode);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const collapseAnim = useRef(new Animated.Value(1)).current; // 1 = expanded, 0 = collapsed
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const collapseAnim = useRef(new Animated.Value(0)).current; // 0 = collapsed by default to save memory
 
   // Auto-scroll state
   const flatListRef = useRef<FlatList<Activity>>(null);

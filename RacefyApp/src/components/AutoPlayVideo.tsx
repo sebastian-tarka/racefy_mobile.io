@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { useViewability } from '../hooks/useViewability';
 import { VideoPlayerManager } from '../services/VideoPlayerManager';
 
 interface AutoPlayVideoProps {
@@ -16,175 +14,130 @@ interface AutoPlayVideoProps {
   onExpand?: () => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const MAX_VIDEO_HEIGHT = screenHeight * 0.7;
 
-// Counter for generating unique player IDs
 let playerIdCounter = 0;
 
+/**
+ * AutoPlayVideo - Renders and plays a video.
+ *
+ * Visibility is managed by FeedVideo wrapper which mounts/unmounts this component.
+ * When mounted → always shows VideoView and auto-plays exclusively.
+ * When unmounted → player is released, memory freed.
+ */
 export function AutoPlayVideo({
   videoUrl,
   thumbnailUrl,
   aspectRatio = 16 / 9,
   previewHeight,
-  onScroll,
   onExpand,
 }: AutoPlayVideoProps) {
   const [isMuted, setIsMuted] = useState(true);
-  const [showControls, setShowControls] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const { viewRef, isViewable, checkViewability } = useViewability({ threshold: 50, delay: 100 });
+  const [showPlayIcon, setShowPlayIcon] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Generate unique ID for this player instance
   const playerIdRef = useRef<string>(`video-player-${++playerIdCounter}-${Date.now()}`);
 
-  // Calculate height based on full screen width and aspect ratio
-  const videoHeight = screenWidth / aspectRatio;
+  const isPortrait = aspectRatio < 1;
+  const rawVideoHeight = screenWidth / aspectRatio;
+  // Container matches video's natural height (capped for portrait).
+  // No previewHeight clamp - avoids letterboxing for landscape videos.
+  const displayHeight = Math.min(rawVideoHeight, MAX_VIDEO_HEIGHT);
 
-  // Expand/collapse support when previewHeight is set and video is taller
-  const showToggle = previewHeight != null && videoHeight > previewHeight;
-  const isCropped = showToggle && !expanded;
-  const displayHeight = showToggle ? (expanded ? videoHeight : previewHeight) : videoHeight;
-
-  // Animated height with spring physics
-  const animatedHeight = useSharedValue(displayHeight);
-
-  useEffect(() => {
-    animatedHeight.value = withSpring(displayHeight, { damping: 20, stiffness: 300 });
-  }, [displayHeight]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: animatedHeight.value,
-  }));
-
-  // Create video player instance
-  const player = useVideoPlayer(videoUrl, (player) => {
-    player.loop = true;
-    player.muted = true;
-    player.volume = 0;
+  // Create video player
+  const player = useVideoPlayer(videoUrl, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.volume = 0;
   });
 
-  // Register player with VideoPlayerManager on mount
+  // Track playing state
+  useEffect(() => {
+    const sub = player.addListener('playingChange', (event) => {
+      setIsPlaying(event.isPlaying);
+    });
+    return () => sub.remove();
+  }, [player]);
+
+  // On mount: register and auto-play exclusively. On unmount: cleanup.
   useEffect(() => {
     VideoPlayerManager.register(playerIdRef.current, player);
+
+    // Auto-play exclusively - pause all others, play this one
+    try {
+      player.currentTime = 0;
+      VideoPlayerManager.playExclusive(playerIdRef.current);
+    } catch {
+      // Player not ready yet
+    }
 
     return () => {
       VideoPlayerManager.unregister(playerIdRef.current);
     };
   }, [player]);
 
-  // Reset player when URL changes
-  useEffect(() => {
-    try {
-      player.pause();
-      player.currentTime = 0;
-    } catch (error) {
-      // Player already released, ignore
-    }
-
-    return () => {
-      try {
-        player.pause();
-      } catch (error) {
-        // Player already released, ignore
-      }
-    };
-  }, [videoUrl, player]);
-
-  // Handle viewability changes - auto play/pause
-  useEffect(() => {
-    try {
-      if (isViewable) {
-        // Start playing when 50% visible
-        player.play();
-      } else {
-        // Pause when not visible
-        player.pause();
-      }
-    } catch (error) {
-      // Player already released, ignore
-    }
-  }, [isViewable, player]);
-
-  // Check viewability on mount and when scroll happens
-  useEffect(() => {
-    checkViewability();
-  }, [checkViewability, onScroll]);
-
-  // Toggle mute
   const toggleMute = useCallback(() => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    player.muted = newMutedState;
-    player.volume = newMutedState ? 0 : 1;
+    const next = !isMuted;
+    setIsMuted(next);
+    player.muted = next;
+    player.volume = next ? 0 : 1;
   }, [isMuted, player]);
 
-  // Toggle play/pause
   const togglePlayPause = useCallback(() => {
     try {
       if (player.playing) {
         player.pause();
       } else {
-        player.play();
+        VideoPlayerManager.playExclusive(playerIdRef.current);
       }
-      setShowControls(true);
-      // Hide controls after 800ms (feedback duration from UX analysis)
-      setTimeout(() => setShowControls(false), 800);
-    } catch (error) {
-      // Player already released, ignore
+      setShowPlayIcon(true);
+      setTimeout(() => setShowPlayIcon(false), 800);
+    } catch {
+      // Player released
     }
   }, [player]);
 
   return (
-    <Animated.View
-      ref={viewRef}
-      style={[styles.container, showToggle ? animatedStyle : { height: videoHeight }]}
-      onLayout={checkViewability}
-    >
+    <View style={[styles.container, { height: displayHeight }]}>
+      {/* Thumbnail behind video - visible while video loads */}
+      {thumbnailUrl && (
+        <Image
+          source={{ uri: thumbnailUrl }}
+          style={styles.thumbnail}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+        />
+      )}
+
+      {/* Video layer - contain ensures video never overflows container bounds */}
       <VideoView
         player={player}
         style={styles.video}
         nativeControls={false}
-        contentFit="cover"
+        contentFit="contain"
         allowsPictureInPicture={false}
-        fullscreenOptions={{ enable: false }}
       />
 
-      {/* Gradient fade when cropped - signals "there's more" */}
-      {isCropped && (
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.4)']}
-          style={styles.gradientOverlay}
-          pointerEvents="none"
-        />
-      )}
-
-      {/* Overlay controls */}
+      {/* Controls overlay */}
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={0.9}
         onPress={togglePlayPause}
       >
-        {/* Expand button - top right */}
         {onExpand && (
           <TouchableOpacity
-            style={[styles.expandButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-            onPress={(e) => {
-              e.stopPropagation();
-              onExpand();
-            }}
+            style={styles.expandButton}
+            onPress={(e) => { e.stopPropagation(); onExpand(); }}
             activeOpacity={0.8}
           >
             <Ionicons name="expand" size={20} color="#fff" />
           </TouchableOpacity>
         )}
 
-        {/* Mute/Unmute button */}
         <TouchableOpacity
-          style={[styles.muteButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-          onPress={(e) => {
-            e.stopPropagation();
-            toggleMute();
-          }}
+          style={styles.muteButton}
+          onPress={(e) => { e.stopPropagation(); toggleMute(); }}
           activeOpacity={0.8}
         >
           <Ionicons
@@ -194,30 +147,11 @@ export function AutoPlayVideo({
           />
         </TouchableOpacity>
 
-        {/* Toggle expand/collapse button - bottom center */}
-        {showToggle && (
-          <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-            onPress={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name={expanded ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        )}
-
-        {/* Play/Pause icon (shown briefly) */}
-        {showControls && (
+        {showPlayIcon && (
           <View style={styles.playPauseOverlay}>
             <View style={styles.playIconCircle}>
               <Ionicons
-                name={player.playing ? 'pause' : 'play'}
+                name={isPlaying ? 'pause' : 'play'}
                 size={24}
                 color="#FFFFFF"
               />
@@ -225,7 +159,7 @@ export function AutoPlayVideo({
           </View>
         )}
       </TouchableOpacity>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -234,17 +168,17 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     overflow: 'hidden',
+    backgroundColor: '#000',
+  },
+  thumbnail: {
+    ...StyleSheet.absoluteFillObject,
   },
   video: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
   },
   expandButton: {
     position: 'absolute',
@@ -253,9 +187,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
   },
   muteButton: {
     position: 'absolute',
@@ -264,36 +198,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-  },
-  toggleButton: {
-    position: 'absolute',
-    bottom: 12,
-    alignSelf: 'center',
-    left: '50%',
-    marginLeft: -18,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
   },
   playPauseOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.2)',

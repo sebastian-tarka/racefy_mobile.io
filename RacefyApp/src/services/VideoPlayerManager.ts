@@ -8,9 +8,7 @@ import { logger } from './logger';
  */
 class VideoPlayerManagerClass {
   private players: Map<string, VideoPlayer> = new Map();
-  private playerOrder: string[] = []; // Track insertion order for eviction
   private appStateSubscription: any = null;
-  private maxConcurrentPlayers = 3;
 
   constructor() {
     this.setupAppStateListener();
@@ -24,32 +22,7 @@ class VideoPlayerManagerClass {
    * @param player - The VideoPlayer instance
    */
   register(id: string, player: VideoPlayer) {
-    // If re-registering the same id, remove old entry from order tracking
-    if (this.players.has(id)) {
-      this.playerOrder = this.playerOrder.filter(pid => pid !== id);
-    }
-
     this.players.set(id, player);
-    this.playerOrder.push(id);
-
-    // Evict oldest players when over the limit
-    while (this.playerOrder.length > this.maxConcurrentPlayers) {
-      const oldestId = this.playerOrder.shift();
-      if (oldestId && oldestId !== id) {
-        const oldPlayer = this.players.get(oldestId);
-        if (oldPlayer) {
-          try {
-            oldPlayer.pause();
-          } catch {
-            // Player already released
-          }
-          this.players.delete(oldestId);
-          logger.debug('activity', `[VideoPlayerManager] Evicted oldest player: ${oldestId}`, {
-            totalPlayers: this.players.size,
-          });
-        }
-      }
-    }
 
     logger.activity(`[VideoPlayerManager] Registered player: ${id}`, {
       totalPlayers: this.players.size,
@@ -69,7 +42,6 @@ class VideoPlayerManagerClass {
         logger.debug('activity', `[VideoPlayerManager] Player ${id} already released during unregister`);
       }
       this.players.delete(id);
-      this.playerOrder = this.playerOrder.filter(pid => pid !== id);
       logger.activity(`[VideoPlayerManager] Unregistered player: ${id}`, {
         totalPlayers: this.players.size,
       });
@@ -134,6 +106,33 @@ class VideoPlayerManagerClass {
         removed: invalidPlayers.length,
         remaining: this.players.size,
       });
+    }
+  }
+
+  /**
+   * Play a specific player exclusively - pauses ALL other players first.
+   * This ensures only one video plays at any time in the feed.
+   */
+  playExclusive(id: string) {
+    // Pause every other player
+    this.players.forEach((player, playerId) => {
+      if (playerId !== id) {
+        try {
+          player.pause();
+        } catch {
+          // Player released
+        }
+      }
+    });
+
+    // Play the requested one
+    const player = this.players.get(id);
+    if (player) {
+      try {
+        player.play();
+      } catch {
+        // Player released
+      }
     }
   }
 
@@ -212,7 +211,6 @@ class VideoPlayerManagerClass {
   cleanup() {
     this.pauseAll();
     this.players.clear();
-    this.playerOrder = [];
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
     }

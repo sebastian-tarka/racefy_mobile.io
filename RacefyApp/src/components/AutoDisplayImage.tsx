@@ -1,149 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-
-// In-memory cache for image dimensions to avoid repeated Image.getSize() calls
-const imageSizeCache = new Map<string, number>();
+import { useViewability } from '../hooks/useViewability';
 
 interface AutoDisplayImageProps {
   imageUrl: string;
   onExpand?: () => void;
-  previewHeight?: number; // Max height for preview mode
+  previewHeight?: number;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 
+/**
+ * AutoDisplayImage - Memory-safe image component for feeds.
+ *
+ * Uses expo-image (Glide on Android) for automatic memory management:
+ * - LRU memory/disk cache with automatic eviction
+ * - Decodes images at display size (not full resolution)
+ * - Lazy loading: only renders when visible on screen
+ */
 export function AutoDisplayImage({
   imageUrl,
   onExpand,
   previewHeight = 300,
 }: AutoDisplayImageProps) {
+  const { viewRef, isViewable } = useViewability({ threshold: 5, delay: 150 });
   const [expanded, setExpanded] = useState(false);
-  const cachedRatio = imageSizeCache.get(imageUrl);
-  const [aspectRatio, setAspectRatio] = useState<number | null>(cachedRatio ?? null);
-  const [loading, setLoading] = useState(!cachedRatio);
 
-  // Get image dimensions with cache
-  useEffect(() => {
-    if (imageSizeCache.has(imageUrl)) {
-      setAspectRatio(imageSizeCache.get(imageUrl)!);
-      setLoading(false);
-      return;
-    }
+  const displayHeight = expanded ? screenWidth * 1.5 : previewHeight;
 
-    let cancelled = false;
-    Image.getSize(
-      imageUrl,
-      (width, height) => {
-        if (cancelled) return;
-        const ratio = width / height;
-        imageSizeCache.set(imageUrl, ratio);
-        // Limit cache size to prevent memory leak
-        if (imageSizeCache.size > 200) {
-          const firstKey = imageSizeCache.keys().next().value;
-          if (firstKey) imageSizeCache.delete(firstKey);
-        }
-        setAspectRatio(ratio);
-        setLoading(false);
-      },
-      () => {
-        if (cancelled) return;
-        setAspectRatio(16 / 9);
-        setLoading(false);
-      }
-    );
-
-    return () => { cancelled = true; };
-  }, [imageUrl]);
-
-  // Calculate full height based on screen width and aspect ratio
-  const fullHeight = aspectRatio ? screenWidth / aspectRatio : previewHeight;
-
-  // Animated height with spring physics
-  const animatedHeight = useSharedValue(Math.min(fullHeight, previewHeight));
-
-  // Update animated height when expanded state changes
-  useEffect(() => {
-    if (!loading && aspectRatio) {
-      animatedHeight.value = withSpring(
-        expanded ? fullHeight : Math.min(fullHeight, previewHeight),
-        {
-          damping: 20,
-          stiffness: 300,
-        }
-      );
-    }
-  }, [expanded, loading, aspectRatio, fullHeight, previewHeight]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: animatedHeight.value,
-  }));
-
-  if (loading || !aspectRatio) {
+  // Placeholder when not visible - no Image loaded, minimal memory
+  if (!isViewable) {
     return (
-      <View style={[styles.container, { height: previewHeight }]}>
-        <ActivityIndicator size="large" color="#10b981" />
-      </View>
+      <View ref={viewRef} style={[styles.container, { height: previewHeight }]} />
     );
   }
 
-  // Show expand/collapse button if image is taller than preview height
-  const showToggle = fullHeight > previewHeight;
-
-  const toggleExpanded = () => {
-    setExpanded(!expanded);
-  };
-
-  // Determine if we're in cropped preview mode
-  const isCropped = !expanded && fullHeight > previewHeight;
-
-  // Determine if portrait (aspect ratio > 1.3)
-  const isPortrait = aspectRatio > 1.3;
-
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      {isCropped ? (
-        // Cropped mode: center-weighted crop
-        // For portraits, show from 25% down (catches faces in upper-middle)
-        // For landscapes, center crop
-        <View style={styles.cropContainer}>
-          <Image
-            source={{ uri: imageUrl }}
-            style={[
-              styles.croppedImage,
-              {
-                width: screenWidth,
-                height: fullHeight,
-                top: isPortrait ? '-25%' : '50%',
-                transform: [
-                  { translateY: isPortrait ? 0 : -fullHeight / 2 },
-                ],
-              },
-            ]}
-          />
-        </View>
-      ) : (
-        // Full display mode: show entire image
-        <Image
-          source={{ uri: imageUrl }}
-          style={[styles.image, { width: screenWidth, height: fullHeight }]}
-        />
-      )}
+    <View ref={viewRef} style={[styles.container, { height: displayHeight }]}>
+      <Image
+        source={{ uri: imageUrl }}
+        style={styles.image}
+        contentFit="cover"
+        recyclingKey={imageUrl}
+        cachePolicy="memory-disk"
+      />
 
-      {/* Gradient fade when content is cropped - signals "there's more" */}
-      {isCropped && (
+      {!expanded && (
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.4)']}
+          colors={['transparent', 'rgba(0,0,0,0.3)']}
           style={styles.gradientOverlay}
           pointerEvents="none"
         />
       )}
 
-      {/* Overlay controls */}
       <View style={styles.overlay}>
-        {/* Expand/Modal button - top right */}
         {onExpand && (
           <TouchableOpacity
             style={[styles.expandButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
@@ -154,22 +67,19 @@ export function AutoDisplayImage({
           </TouchableOpacity>
         )}
 
-        {/* Toggle expand/collapse button - bottom center */}
-        {showToggle && (
-          <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-            onPress={toggleExpanded}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name={expanded ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.toggleButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
+          onPress={() => setExpanded(!expanded)}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color="#fff"
+          />
+        </TouchableOpacity>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -178,29 +88,18 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     overflow: 'hidden',
-    backgroundColor: '#000',
+    backgroundColor: '#1a1a1a',
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  cropContainer: {
-    width: '100%',
-    height: '100%',
-    overflow: 'hidden',
-  },
-  croppedImage: {
-    width: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
   },
   gradientOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 80,
+    height: 60,
   },
   overlay: {
     position: 'absolute',
@@ -208,7 +107,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    pointerEvents: 'box-none', // Allow touch events to pass through to children
+    pointerEvents: 'box-none',
   },
   expandButton: {
     position: 'absolute',

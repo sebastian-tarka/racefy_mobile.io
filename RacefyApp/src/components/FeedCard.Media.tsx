@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { AutoPlayVideo } from './AutoPlayVideo';
+import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
@@ -51,7 +52,7 @@ export function ExpandableContent({ text, type, mentions }: { text: string; type
 function MediaGridItem({ item, index, onPress }: { item: PostMediaItem; index: number; onPress: () => void }) {
   return (
     <TouchableOpacity key={item.id + '-' + index} style={styles.mediaGridItem} activeOpacity={0.9} onPress={onPress}>
-      <Image source={{ uri: item.thumbnailUrl || item.url }} style={styles.mediaGridImage} resizeMode="cover" />
+      <Image source={{ uri: item.thumbnailUrl || item.url }} style={styles.mediaGridImage} contentFit="cover" cachePolicy="memory-disk" />
       {item.type === 'video' && (
         <View style={styles.playOverlaySmall}>
           <Ionicons name="play" size={16} color="#FFFFFF" />
@@ -112,7 +113,6 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
             }
           }}
           onVideoPress={(index) => setExpandedVideo(items[index].url)}
-          aspectRatio={16 / 9}
           previewHeight={300}
         />
         <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
@@ -128,7 +128,7 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   if (item.type === 'video') {
     return (
       <View>
-        <AutoPlayVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={16 / 9} previewHeight={300} onExpand={() => setExpandedVideo(item.url)} />
+        <FeedVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={item.aspectRatio || 16 / 9} previewHeight={300} onExpand={() => setExpandedVideo(item.url)} />
         {expandedVideo && (
           <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
         )}

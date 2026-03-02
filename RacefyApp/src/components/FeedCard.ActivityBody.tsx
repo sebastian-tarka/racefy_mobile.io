@@ -2,8 +2,8 @@ import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { RoutePreview } from './LeafletMap';
-import { AutoPlayVideo } from './AutoPlayVideo';
+import { LazyRoutePreview as RoutePreview } from './LeafletMap';
+import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ExpandableContent } from './FeedCard.Media';
 import { MentionText } from './MentionText';
@@ -208,10 +208,10 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
     if (mediaItem.type === 'video') {
       return (
         <View style={activitySliderStyles.slide}>
-          <AutoPlayVideo
+          <FeedVideo
             videoUrl={mediaItem.url}
             thumbnailUrl={mediaItem.thumbnailUrl}
-            aspectRatio={16 / 9}
+            aspectRatio={mediaItem.aspectRatio || 16 / 9}
           />
         </View>
       );
@@ -329,6 +329,7 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
       type: 'video' as const,
       url: fixStorageUrl(v.url) || '',
       thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
+      aspectRatio: v.width && v.height ? v.width / v.height : undefined,
     }));
     postPhotos.forEach((p) => items.push({
       id: p.id,
@@ -421,18 +422,17 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
                 imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(item.url);
               }
             }}
-            aspectRatio={16 / 9}
             previewHeight={300}
           />
         </View>
       ) : mediaItems.length === 1 ? (
         mediaItems[0].type === 'video' ? (
           <View style={styles.fullBleedMedia}>
-            <AutoPlayVideo
+            <FeedVideo
               key={`post-${post.id}-activity-video-${mediaItems[0].id}`}
               videoUrl={mediaItems[0].url}
               thumbnailUrl={mediaItems[0].thumbnailUrl}
-              aspectRatio={16 / 9}
+              aspectRatio={mediaItems[0].aspectRatio || 16 / 9}
             />
           </View>
         ) : (

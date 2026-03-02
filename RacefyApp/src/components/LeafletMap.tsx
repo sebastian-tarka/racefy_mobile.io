@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import {
   PinchGestureHandler,
   PanGestureHandler,
@@ -13,6 +14,7 @@ import { spacing, borderRadius } from '../theme';
 import { MAPBOX_ACCESS_TOKEN } from '../config/api';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { useTheme } from '../hooks/useTheme';
+import { useViewability } from '../hooks/useViewability';
 import type { GeoJSONLineString } from '../types/api';
 
 // Lazy load MapboxRouteMap to avoid import errors if @rnmapbox/maps is not installed
@@ -220,7 +222,8 @@ export function RoutePreview({
         <Image
           source={{ uri: routeMapUrl }}
           style={styles.mapImage}
-          resizeMode={enableZoom ? "contain" : "cover"}
+          contentFit={enableZoom ? "contain" : "cover"}
+          cachePolicy="memory-disk"
         />
       </Animated.View>
     );
@@ -347,6 +350,28 @@ export function RoutePreview({
   return null;
 }
 
+/**
+ * LazyRoutePreview - Only renders the actual map/image when visible on screen.
+ * Off-screen instances show a lightweight placeholder to prevent OOM.
+ */
+export function LazyRoutePreview(props: RoutePreviewProps) {
+  const { colors } = useTheme();
+  const { viewRef, isViewable } = useViewability({ threshold: 5, delay: 200 });
+  const bgColor = props.backgroundColor || colors.cardBackground;
+
+  if (!isViewable) {
+    return (
+      <View ref={viewRef} style={[styles.container, { height: props.height || 250, backgroundColor: bgColor }]}>
+        <View style={styles.mapPlaceholder}>
+          <Ionicons name="map-outline" size={32} color={colors.textMuted || '#888'} />
+        </View>
+      </View>
+    );
+  }
+
+  return <RoutePreview {...props} />;
+}
+
 // Backwards compatible alias
 export function LeafletMap(props: RoutePreviewProps & { coordinates?: unknown; bounds?: unknown; strokeColor?: string; strokeWidth?: number }) {
   return <RoutePreview {...props} />;
@@ -389,5 +414,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
