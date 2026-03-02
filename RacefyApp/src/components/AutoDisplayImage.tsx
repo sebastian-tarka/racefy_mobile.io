@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+// In-memory cache for image dimensions to avoid repeated Image.getSize() calls
+const imageSizeCache = new Map<string, number>();
+
 interface AutoDisplayImageProps {
   imageUrl: string;
   onExpand?: () => void;
@@ -18,23 +21,41 @@ export function AutoDisplayImage({
   previewHeight = 300,
 }: AutoDisplayImageProps) {
   const [expanded, setExpanded] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cachedRatio = imageSizeCache.get(imageUrl);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(cachedRatio ?? null);
+  const [loading, setLoading] = useState(!cachedRatio);
 
-  // Get image dimensions and calculate aspect ratio
+  // Get image dimensions with cache
   useEffect(() => {
+    if (imageSizeCache.has(imageUrl)) {
+      setAspectRatio(imageSizeCache.get(imageUrl)!);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
     Image.getSize(
       imageUrl,
       (width, height) => {
-        setAspectRatio(width / height);
+        if (cancelled) return;
+        const ratio = width / height;
+        imageSizeCache.set(imageUrl, ratio);
+        // Limit cache size to prevent memory leak
+        if (imageSizeCache.size > 200) {
+          const firstKey = imageSizeCache.keys().next().value;
+          if (firstKey) imageSizeCache.delete(firstKey);
+        }
+        setAspectRatio(ratio);
         setLoading(false);
       },
-      (error) => {
-        console.error('Failed to get image size:', error);
-        setAspectRatio(16 / 9); // Fallback aspect ratio
+      () => {
+        if (cancelled) return;
+        setAspectRatio(16 / 9);
         setLoading(false);
       }
     );
+
+    return () => { cancelled = true; };
   }, [imageUrl]);
 
   // Calculate full height based on screen width and aspect ratio

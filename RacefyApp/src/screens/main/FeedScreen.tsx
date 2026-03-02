@@ -553,7 +553,10 @@ export function FeedScreen({ navigation, route }: Props) {
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id.toString()}
-          removeClippedSubviews={false}
+          removeClippedSubviews={true}
+          windowSize={5}
+          maxToRenderPerBatch={3}
+          initialNumToRender={3}
           renderItem={renderFeedItem}
           ListHeaderComponent={
             <>

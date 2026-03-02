@@ -250,6 +250,7 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
         decelerationRate="fast"
         snapToInterval={SCREEN_WIDTH}
         snapToAlignment="center"
+        removeClippedSubviews={true}
       />
 
       {/* Pagination dots */}

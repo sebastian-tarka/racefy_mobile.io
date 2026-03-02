@@ -74,6 +74,7 @@ export function MediaSlider({
         decelerationRate="fast"
         snapToInterval={SCREEN_WIDTH}
         snapToAlignment="center"
+        removeClippedSubviews={true}
       />
 
       {/* Pagination dots */}

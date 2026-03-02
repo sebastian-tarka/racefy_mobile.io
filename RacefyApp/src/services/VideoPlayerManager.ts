@@ -8,19 +8,49 @@ import { logger } from './logger';
  */
 class VideoPlayerManagerClass {
   private players: Map<string, VideoPlayer> = new Map();
+  private playerOrder: string[] = []; // Track insertion order for eviction
   private appStateSubscription: any = null;
+  private maxConcurrentPlayers = 3;
 
   constructor() {
     this.setupAppStateListener();
   }
 
   /**
-   * Register a video player instance
+   * Register a video player instance.
+   * If the number of players exceeds maxConcurrentPlayers, the oldest player
+   * is paused and evicted to prevent OutOfMemory on Android.
    * @param id - Unique identifier for this player
    * @param player - The VideoPlayer instance
    */
   register(id: string, player: VideoPlayer) {
+    // If re-registering the same id, remove old entry from order tracking
+    if (this.players.has(id)) {
+      this.playerOrder = this.playerOrder.filter(pid => pid !== id);
+    }
+
     this.players.set(id, player);
+    this.playerOrder.push(id);
+
+    // Evict oldest players when over the limit
+    while (this.playerOrder.length > this.maxConcurrentPlayers) {
+      const oldestId = this.playerOrder.shift();
+      if (oldestId && oldestId !== id) {
+        const oldPlayer = this.players.get(oldestId);
+        if (oldPlayer) {
+          try {
+            oldPlayer.pause();
+          } catch {
+            // Player already released
+          }
+          this.players.delete(oldestId);
+          logger.debug('activity', `[VideoPlayerManager] Evicted oldest player: ${oldestId}`, {
+            totalPlayers: this.players.size,
+          });
+        }
+      }
+    }
+
     logger.activity(`[VideoPlayerManager] Registered player: ${id}`, {
       totalPlayers: this.players.size,
     });
@@ -34,13 +64,12 @@ class VideoPlayerManagerClass {
     const player = this.players.get(id);
     if (player) {
       try {
-        // Only pause if player is still valid
         player.pause();
       } catch (error) {
-        // Player already released, just log and continue
         logger.debug('activity', `[VideoPlayerManager] Player ${id} already released during unregister`);
       }
       this.players.delete(id);
+      this.playerOrder = this.playerOrder.filter(pid => pid !== id);
       logger.activity(`[VideoPlayerManager] Unregistered player: ${id}`, {
         totalPlayers: this.players.size,
       });
@@ -183,6 +212,7 @@ class VideoPlayerManagerClass {
   cleanup() {
     this.pauseAll();
     this.players.clear();
+    this.playerOrder = [];
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
     }
