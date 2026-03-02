@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,21 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
-import { Avatar, EmptyState, Loading, ScreenHeader, ScreenContainer } from '../../components';
+import { Avatar, EmptyState, Loading, ScreenHeader, ScreenContainer, Input } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useRefreshOn } from '../../services/refreshEvents';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Conversation } from '../../types/api';
+import type { Conversation, MentionSearchUser } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConversationsList'>;
 
@@ -35,7 +38,14 @@ export function ConversationsListScreen({ navigation }: Props) {
     refresh,
     loadMore,
     deleteConversation,
+    startConversation,
   } = useConversations();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MentionSearchUser[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isStartingChat, setIsStartingChat] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Listen for message refresh events to update conversation list
   useRefreshOn('messages', refresh);
@@ -45,6 +55,61 @@ export function ConversationsListScreen({ navigation }: Props) {
       refresh();
     }
   }, [isAuthenticated]);
+
+  const handleSearch = useCallback((text: string) => {
+    setSearchQuery(text);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (text.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await api.searchMentionUsers(text);
+        setSearchResults(response.data);
+      } catch (err) {
+        logger.error('api', 'Failed to search users', { error: err });
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearching(false);
+  }, []);
+
+  const handleUserSelect = useCallback(async (user: MentionSearchUser) => {
+    setIsStartingChat(true);
+    try {
+      const conversation = await startConversation(user.id);
+      handleClearSearch();
+      navigation.navigate('Chat', {
+        conversationId: conversation.id,
+        participant: {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          avatar: user.avatar,
+        },
+      });
+    } catch (err) {
+      logger.error('api', 'Failed to start conversation', { error: err });
+      Alert.alert(t('common.error'), t('messaging.failedToLoad'));
+    } finally {
+      setIsStartingChat(false);
+    }
+  }, [startConversation, navigation, t, handleClearSearch]);
 
   const handleConversationPress = (conversation: Conversation) => {
     navigation.navigate('Chat', {
@@ -165,44 +230,99 @@ export function ConversationsListScreen({ navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      <FlatList
-        data={conversations}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderConversation}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          error ? (
-            <EmptyState
-              icon="alert-circle-outline"
-              title={t('messaging.failedToLoad')}
-              message={error}
-              actionLabel={t('common.tryAgain')}
-              onAction={refresh}
+      <View style={styles.searchContainer}>
+        <Input
+          value={searchQuery}
+          onChangeText={handleSearch}
+          placeholder={t('messaging.searchUsers')}
+          leftIcon="search-outline"
+          rightIcon={searchQuery.length > 0 ? 'close-circle' : undefined}
+          onRightIconPress={searchQuery.length > 0 ? handleClearSearch : undefined}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
+
+      {searchQuery.length >= 2 ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.searchResultItem, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}
+              onPress={() => handleUserSelect(item)}
+              disabled={isStartingChat}
+              activeOpacity={0.7}
+            >
+              <Avatar uri={item.avatar} name={item.name} size="md" />
+              <View style={styles.searchUserInfo}>
+                <Text style={[styles.participantName, { color: colors.textPrimary }]}>{item.name}</Text>
+                <Text style={[styles.username, { color: colors.textSecondary }]}>@{item.username}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            isSearching ? (
+              <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.primary} />
+            ) : (
+              <EmptyState
+                icon="person-outline"
+                title={t('messaging.noSearchResults')}
+              />
+            )
+          }
+          keyboardShouldPersistTaps="handled"
+        />
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderConversation}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            error ? (
+              <EmptyState
+                icon="alert-circle-outline"
+                title={t('messaging.failedToLoad')}
+                message={error}
+                actionLabel={t('common.tryAgain')}
+                onAction={refresh}
+              />
+            ) : (
+              <EmptyState
+                icon="chatbubbles-outline"
+                title={t('messaging.noConversations')}
+                message={t('messaging.noConversationsMessage')}
+              />
+            )
+          }
+          ListFooterComponent={
+            isLoading && conversations.length > 0 ? (
+              <Loading message={t('common.loadingMore')} />
+            ) : null
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={refresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
-          ) : (
-            <EmptyState
-              icon="chatbubbles-outline"
-              title={t('messaging.noConversations')}
-              message={t('messaging.noConversationsMessage')}
-            />
-          )
-        }
-        ListFooterComponent={
-          isLoading && conversations.length > 0 ? (
-            <Loading message={t('common.loadingMore')} />
-          ) : null
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={refresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-      />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+        />
+      )}
+
+      {isStartingChat && (
+        <View style={styles.overlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.overlayText, { color: colors.white }]}>
+            {t('messaging.startingConversation')}
+          </Text>
+        </View>
+      )}
     </ScreenContainer>
   );
 }
@@ -258,5 +378,29 @@ const styles = StyleSheet.create({
   unreadCount: {
     fontSize: fontSize.xs,
     fontWeight: '700',
+  },
+  searchContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+  },
+  searchUserInfo: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overlayText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
   },
 });

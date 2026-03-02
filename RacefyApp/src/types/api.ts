@@ -522,6 +522,7 @@ export interface Activity {
   hr_data_source: HealthDataSource | null;
   source: 'app' | 'garmin' | 'amazfit' | 'strava' | 'gpx_import' | 'manual';
   is_private: boolean;
+  visibility: 'public' | 'followers' | 'private';
   // GPS Privacy (new in 2026-01)
   show_start_finish_points: boolean;  // Activity-level privacy override
   can_view_start_finish: boolean;     // Whether current viewer can see markers
@@ -663,6 +664,7 @@ export interface CreateActivityRequest {
   max_heart_rate?: number;
   source: 'app' | 'manual';
   is_private?: boolean;
+  visibility?: 'public' | 'followers' | 'private';
   track_data?: GeoJSONLineString;
 }
 

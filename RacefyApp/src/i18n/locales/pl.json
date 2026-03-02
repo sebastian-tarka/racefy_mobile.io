@@ -547,6 +547,7 @@
     "titlePlaceholder": "Tytuł aktywności",
     "description": "Opis",
     "descriptionPlaceholder": "Dodaj notatki o aktywności...",
+    "visibility": "Widoczność",
     "privateActivity": "Prywatna aktywność",
     "privateDescription": "Tylko Ty możesz zobaczyć tę aktywność",
     "gpsPrivacy": "Pokaż punkty start/meta innym",
@@ -734,7 +735,10 @@
     "failedToLoad": "Nie udało się załadować wiadomości",
     "failedToSend": "Nie udało się wysłać wiadomości",
     "deleteConversation": "Usuń konwersację",
-    "deleteConfirm": "Czy na pewno chcesz usunąć tę konwersację?"
+    "deleteConfirm": "Czy na pewno chcesz usunąć tę konwersację?",
+    "searchUsers": "Szukaj użytkowników...",
+    "noSearchResults": "Nie znaleziono użytkowników",
+    "startingConversation": "Rozpoczynanie rozmowy..."
   },
   "eventForm": {
     "createTitle": "Utwórz wydarzenie",

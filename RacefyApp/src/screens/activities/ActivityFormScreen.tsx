@@ -33,6 +33,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, Photo, Video, MediaItem } from '../../types/api';
 
+type ActivityVisibility = 'public' | 'followers' | 'private';
+
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityForm'>;
 
 export function ActivityFormScreen({ navigation, route }: Props) {
@@ -43,7 +45,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [visibility, setVisibility] = useState<ActivityVisibility>('public');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
@@ -94,7 +96,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
   const populateForm = (activity: Activity) => {
     setTitle(activity.title || '');
     setDescription(apiTokensToLibraryFormat(activity.description || '', activity.mentions));
-    setIsPrivate(activity.is_private || false);
+    setVisibility(activity.visibility || (activity.is_private ? 'private' : 'public'));
     setExistingPhotos(activity.photos || []);
     // Note: Videos are fetched separately from the post
     // GPS Privacy
@@ -295,7 +297,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
         await api.updateActivity(activityId, {
           title: title.trim(),
           description: stripMentionsForApi(description.trim()) || undefined,
-          is_private: isPrivate,
+          visibility,
         });
 
         // Upload any new photos
@@ -386,22 +388,50 @@ export function ActivityFormScreen({ navigation, route }: Props) {
             />
           </View>
 
-          {/* Privacy Toggle */}
-          <View style={[styles.switchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <View style={styles.switchContent}>
-              <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>
-                {t('activityForm.privateActivity')}
-              </Text>
-              <Text style={[styles.switchDescription, { color: colors.textSecondary }]}>
-                {t('activityForm.privateDescription')}
-              </Text>
+          {/* Visibility Selector */}
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {t('activityForm.visibility')}
+            </Text>
+            <View style={styles.visibilityContainer}>
+              {([
+                { value: 'public' as ActivityVisibility, label: t('settings.public'), icon: 'globe-outline' },
+                { value: 'followers' as ActivityVisibility, label: t('settings.followersOnly'), icon: 'people-outline' },
+                { value: 'private' as ActivityVisibility, label: t('settings.private'), icon: 'lock-closed-outline' },
+              ]).map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.visibilityOption,
+                    {
+                      backgroundColor: visibility === option.value
+                        ? colors.primary
+                        : colors.cardBackground,
+                      borderColor: visibility === option.value
+                        ? colors.primary
+                        : colors.border,
+                    },
+                  ]}
+                  onPress={() => setVisibility(option.value)}
+                >
+                  <Ionicons
+                    name={option.icon as any}
+                    size={18}
+                    color={visibility === option.value ? '#fff' : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.visibilityLabel,
+                      {
+                        color: visibility === option.value ? '#fff' : colors.textPrimary,
+                      },
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <Switch
-              value={isPrivate}
-              onValueChange={setIsPrivate}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.white}
-            />
           </View>
 
           {/* GPS Privacy Toggle (only show if activity has GPS track) */}
@@ -557,6 +587,25 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  visibilityContainer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  visibilityOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    gap: spacing.xs,
+  },
+  visibilityLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
   },
   switchContainer: {
     flexDirection: 'row',
