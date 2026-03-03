@@ -12,7 +12,7 @@ import type { Post, Activity } from '../types/api';
 
 // ============ TYPES & INTERFACES ============
 
-export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored';
+export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare';
 
 export interface PostMediaItem {
   id: number;
@@ -33,6 +33,9 @@ export interface FeedCardProps {
   onActivityPress?: () => void;
   onEventPress?: () => void;
   onMenu?: (action: 'edit' | 'delete' | 'report') => void;
+  onReshare?: (content?: string, visibility?: string) => void;
+  onUnreshare?: () => void;
+  onOriginalPostUserPress?: (username: string) => void;
 }
 
 // ============ CONSTANTS ============
@@ -42,12 +45,14 @@ export const TEXT_TRUNCATION: Record<FeedPostType, { maxLength: number; maxSente
   activity: { maxLength: 100, maxSentences: 2 },
   event: { maxLength: 200, maxSentences: 2 },
   sponsored: { maxLength: 200, maxSentences: 2 },
+  reshare: { maxLength: 200, maxSentences: 2 },
 };
 
 // ============ UTILITY FUNCTIONS ============
 
 export function getEffectiveType(post: Post): FeedPostType {
   if ((post as any).is_sponsored) return 'sponsored';
+  if (post.shared_post || post.shared_post_deleted) return 'reshare';
   if (post.type === 'activity') return 'activity';
   if (post.type === 'event') return 'event';
   return 'general';
@@ -59,6 +64,7 @@ export function getTypeColors(type: FeedPostType, colors: any) {
     activity: colors.primary,
     event: colors.info,
     sponsored: colors.warning,
+    reshare: '#06b6d4',
   };
   return {
     accent: type === 'general' ? null : colorMap[type],
@@ -73,6 +79,7 @@ export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap 
     activity: 'fitness-outline',
     event: 'calendar-outline',
     sponsored: 'megaphone-outline',
+    reshare: 'repeat-outline',
   };
   return iconMap[type];
 }

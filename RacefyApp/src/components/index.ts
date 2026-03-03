@@ -89,3 +89,6 @@ export { ErrorBoundary } from './ErrorBoundary';
 export * from './EventDetailsTabContent';
 export * from './EventParticipantsTabContent';
 export * from './EventLeaderboardTabContent';
+export * from './SharedPostBlock';
+export * from './SharedPostDeletedBlock';
+export * from './ReshareModal';

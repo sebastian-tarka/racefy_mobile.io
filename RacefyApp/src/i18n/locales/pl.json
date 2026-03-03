@@ -226,7 +226,8 @@
     "postTypes": {
       "activity": "Aktywność",
       "event": "Wydarzenie",
-      "sponsored": "Sponsorowane"
+      "sponsored": "Sponsorowane",
+      "reshare": "Udostępnienie"
     },
     "showMore": "Pokaż więcej",
     "viewDetails": "Pokaż szczegóły",
@@ -1558,5 +1559,23 @@
     "noRewardsMessage": "Ukończ wydarzenia, aby zdobywać nagrody, punkty i ekskluzywne prezenty!",
     "loadingRewards": "Ładowanie nagród...",
     "failedToLoad": "Nie udało się załadować nagród"
+  },
+  "reshare": {
+    "title": "Udostępnij post",
+    "addComment": "Dodaj komentarz (opcjonalnie)",
+    "reshareButton": "Udostępnij",
+    "reshareSuccess": "Post udostępniony pomyślnie",
+    "reshareError": "Nie udało się udostępnić posta",
+    "unreshareSuccess": "Udostępnienie usunięte",
+    "unreshareError": "Nie udało się usunąć udostępnienia",
+    "originalDeleted": "Oryginalny post został usunięty",
+    "alreadyReshared": "Już udostępniłeś ten post",
+    "cannotReshare": "Nie możesz udostępnić tego posta",
+    "resharedPost": "Udostępniony post",
+    "visibility": {
+      "public": "Publiczny",
+      "followers": "Obserwujący",
+      "private": "Prywatny"
+    }
   }
 }

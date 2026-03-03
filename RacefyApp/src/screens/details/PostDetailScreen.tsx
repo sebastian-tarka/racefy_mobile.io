@@ -26,6 +26,9 @@ import {
   SocialShareModal,
   MentionText,
   ScreenContainer,
+  SharedPostBlock,
+  SharedPostDeletedBlock,
+  ReshareModal,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -86,6 +89,9 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const [likesCount, setLikesCount] = useState(0);
   const [commentsY, setCommentsY] = useState(0);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [reshareModalVisible, setReshareModalVisible] = useState(false);
+  const [isReshared, setIsReshared] = useState(false);
+  const [resharesCount, setResharesCount] = useState(0);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -100,6 +106,8 @@ export function PostDetailScreen({ route, navigation }: Props) {
       setPost(data);
       setIsLiked(data.is_liked || false);
       setLikesCount(data.likes_count);
+      setIsReshared(data.is_reshared || false);
+      setResharesCount(data.reshares_count || 0);
 
       // Fetch GPS track if this is an activity post with GPS data
       if (data.type === 'activity' && data.activity?.has_gps_track) {
@@ -158,6 +166,24 @@ export function PostDetailScreen({ route, navigation }: Props) {
     } catch {
       setIsLiked(wasLiked);
       setLikesCount((prev) => (wasLiked ? prev + 1 : prev - 1));
+    }
+  };
+
+  const handleReshareSubmit = async (content?: string, visibility?: string) => {
+    await api.resharePost(postId, { content, visibility: visibility as any });
+    setIsReshared(true);
+    setResharesCount((prev) => prev + 1);
+    emitRefresh('feed');
+  };
+
+  const handleUnreshare = async () => {
+    try {
+      await api.unresharePost(postId);
+      setIsReshared(false);
+      setResharesCount((prev) => Math.max(prev - 1, 0));
+      emitRefresh('feed');
+    } catch {
+      Alert.alert(t('common.error'), t('reshare.unreshareError'));
     }
   };
 
@@ -419,6 +445,16 @@ export function PostDetailScreen({ route, navigation }: Props) {
             {renderActivityPreview()}
             {renderEventPreview()}
 
+            {/* Shared Post */}
+            {post.shared_post_deleted && !post.shared_post && <SharedPostDeletedBlock />}
+            {post.shared_post && (
+              <SharedPostBlock
+                sharedPost={post.shared_post}
+                onPress={() => navigation.navigate('PostDetail', { postId: post.shared_post!.id })}
+                onUserPress={(username) => navigation.navigate('UserProfile', { username })}
+              />
+            )}
+
             {/* Media */}
             {((post.media && post.media.length > 0) ||
               (post.photos && post.photos.length > 0) ||
@@ -457,6 +493,22 @@ export function PostDetailScreen({ route, navigation }: Props) {
                   {post.comments_count}
                 </Text>
               </View>
+
+              {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={isReshared ? handleUnreshare : () => setReshareModalVisible(true)}
+                >
+                  <Ionicons
+                    name={isReshared ? 'repeat' : 'repeat-outline'}
+                    size={20}
+                    color={isReshared ? '#06b6d4' : colors.textSecondary}
+                  />
+                  <Text style={[styles.actionText, { color: isReshared ? '#06b6d4' : colors.textSecondary }]}>
+                    {resharesCount}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Card>
 
@@ -488,6 +540,14 @@ export function PostDetailScreen({ route, navigation }: Props) {
         id={postId}
         title={post?.title}
         description={post?.content}
+      />
+
+      {/* Reshare Modal */}
+      <ReshareModal
+        visible={reshareModalVisible}
+        onClose={() => setReshareModalVisible(false)}
+        post={post}
+        onSubmit={handleReshareSubmit}
       />
     </ScreenContainer>
   );

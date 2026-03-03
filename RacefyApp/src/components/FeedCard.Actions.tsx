@@ -14,9 +14,11 @@ interface FeedCardActionsProps {
   onBoost?: () => void;
   onComment?: () => void;
   onShareActivity?: () => void;
+  onResharePress?: () => void;
+  onUnreshare?: () => void;
 }
 
-export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onShareActivity }: FeedCardActionsProps) {
+export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onShareActivity, onResharePress, onUnreshare }: FeedCardActionsProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [shareVisible, setShareVisible] = useState(false);
@@ -63,6 +65,23 @@ export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onS
         <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
         <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.comments_count}</Text>
       </TouchableOpacity>
+
+      {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={post.is_reshared ? onUnreshare : onResharePress}
+        >
+          <Ionicons
+            name={post.is_reshared ? 'repeat' : 'repeat-outline'}
+            size={20}
+            color={post.is_reshared ? '#06b6d4' : colors.textSecondary}
+          />
+          <Text style={[styles.actionText, { color: post.is_reshared ? '#06b6d4' : colors.textSecondary }]}>
+            {post.reshares_count || 0}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={styles.actionButtonShare} onPress={handleSharePress}>
         <Ionicons name="share-outline" size={20} color={colors.textSecondary} />
         <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('common.share')}</Text>

@@ -68,6 +68,8 @@ export function FeedScreen({ navigation, route }: Props) {
     loadMore,
     toggleLike,
     deletePost,
+    resharePost,
+    unresharePost,
   } = useFeed();
 
   useRefreshOn('feed', refresh);
@@ -238,13 +240,16 @@ export function FeedScreen({ navigation, route }: Props) {
           ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
           : undefined
       }
+      onReshare={(content, visibility) => resharePost(item.id, { content, visibility: visibility as any })}
+      onUnreshare={() => unresharePost(item.id)}
+      onOriginalPostUserPress={(username) => navigation.navigate('UserProfile', { username })}
       onMenu={(action) => {
         if (action === 'delete') handleDeletePost(item.id);
         else if (action === 'report') handleReportPost(item.id);
         else if (action === 'edit') handleEditPost(item.id);
       }}
     />
-  ), [user?.id, toggleLike, navigation, handleDeletePost, handleReportPost]);
+  ), [user?.id, toggleLike, navigation, handleDeletePost, handleReportPost, resharePost, unresharePost]);
 
   const renderSearchResults = () => {
     if (!isSearchVisible) return null;

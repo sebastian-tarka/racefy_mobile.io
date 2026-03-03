@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View } from 'react-native';
 import { Card } from './Card';
+import { ReshareModal } from './ReshareModal';
 import { useTheme } from '../hooks/useTheme';
 import { FeedCardHeader } from './FeedCard.Header';
 import { FeedCardActions } from './FeedCard.Actions';
@@ -15,15 +16,30 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   activity: ActivityBody,
   event: EventBody,
   sponsored: SponsoredBody,
+  reshare: GeneralBody,
 };
 
-export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu }: FeedCardProps) {
+export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
   const Body = BODY_COMPONENTS[type];
   const marginBottom = type === 'general' ? 12 : 20;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reshareModalVisible, setReshareModalVisible] = useState(false);
+
+  const handleReshareSubmit = useCallback(async (content?: string, visibility?: string) => {
+    if (onReshare) {
+      await onReshare(content, visibility);
+    }
+  }, [onReshare]);
+
+  const handleOriginalPostPress = useCallback(() => {
+    if (post.shared_post) {
+      // Navigate to the original post's detail - use the shared post ID
+      // This is handled by onComment-style navigation in parent
+    }
+  }, [post.shared_post]);
 
   return (
     <Card style={{ marginBottom, position: 'relative' }}>
@@ -39,8 +55,29 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
         onUserPress={onUserPress}
         onMenu={onMenu}
       />
-      <Body post={post} onActivityPress={onActivityPress} onEventPress={onEventPress} />
-      <FeedCardActions post={post} isOwner={isOwner} onLike={onLike} onBoost={onBoost} onComment={onComment} onShareActivity={onShareActivity} />
+      <Body
+        post={post}
+        onActivityPress={onActivityPress}
+        onEventPress={onEventPress}
+        onOriginalPostPress={handleOriginalPostPress}
+        onOriginalPostUserPress={onOriginalPostUserPress}
+      />
+      <FeedCardActions
+        post={post}
+        isOwner={isOwner}
+        onLike={onLike}
+        onBoost={onBoost}
+        onComment={onComment}
+        onShareActivity={onShareActivity}
+        onResharePress={() => setReshareModalVisible(true)}
+        onUnreshare={onUnreshare}
+      />
+      <ReshareModal
+        visible={reshareModalVisible}
+        onClose={() => setReshareModalVisible(false)}
+        post={post}
+        onSubmit={handleReshareSubmit}
+      />
     </Card>
   );
 });

@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
+import { Alert } from 'react-native';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
-import type { Post, MediaItem } from '../types/api';
+import type { Post, MediaItem, ReshareRequest } from '../types/api';
 
 export function useFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -137,6 +138,32 @@ export function useFeed() {
     }
   }, []);
 
+  const resharePost = useCallback(async (originalPostId: number, data: ReshareRequest = {}) => {
+    const resharedPost = await api.resharePost(originalPostId, data);
+    setPosts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === originalPostId
+          ? { ...p, reshares_count: (p.reshares_count || 0) + 1, is_reshared: true }
+          : p
+      );
+      return [resharedPost, ...updated];
+    });
+  }, []);
+
+  const unresharePost = useCallback(async (originalPostId: number) => {
+    await api.unresharePost(originalPostId);
+    setPosts((prev) => {
+      const filtered = prev.filter(
+        (p) => !(p.shared_post?.id === originalPostId && p.is_owner)
+      );
+      return filtered.map((p) =>
+        p.id === originalPostId
+          ? { ...p, reshares_count: Math.max((p.reshares_count || 0) - 1, 0), is_reshared: false }
+          : p
+      );
+    });
+  }, []);
+
   return {
     posts,
     isLoading,
@@ -150,5 +177,7 @@ export function useFeed() {
     toggleLike,
     createPost,
     deletePost,
+    resharePost,
+    unresharePost,
   };
 }

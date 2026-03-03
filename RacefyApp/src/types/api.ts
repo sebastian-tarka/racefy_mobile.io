@@ -215,6 +215,32 @@ export interface Post {
   is_liked?: boolean;
   is_owner?: boolean;
   mentions?: MentionMap;
+  reshares_count?: number;
+  shared_post?: SharedPost | null;
+  shared_post_deleted?: boolean;
+  is_reshared?: boolean;
+}
+
+export interface SharedPost {
+  id: number;
+  type: 'general' | 'event' | 'activity';
+  title: string | null;
+  content: string;
+  visibility: 'public' | 'followers' | 'private';
+  created_at: string;
+  user?: User;
+  photos?: Photo[];
+  media?: Media[];
+  videos?: Video[];
+  activity?: Activity;
+  event?: Event;
+  likes_count: number;
+  comments_count: number;
+}
+
+export interface ReshareRequest {
+  content?: string;
+  visibility?: 'public' | 'followers' | 'private';
 }
 
 export interface CreatePostRequest {
@@ -1398,7 +1424,8 @@ export type NotificationType =
   | 'ai_post_ready'
   | 'points_awarded'
   | 'weekly_summary'
-  | 'training_week_feedback';
+  | 'training_week_feedback'
+  | 'reshares';
 
 export interface NotificationData {
   type: NotificationType;

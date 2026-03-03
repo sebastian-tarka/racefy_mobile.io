@@ -226,7 +226,8 @@
     "postTypes": {
       "activity": "Activity",
       "event": "Event",
-      "sponsored": "Sponsored"
+      "sponsored": "Sponsored",
+      "reshare": "Reshare"
     },
     "showMore": "Show more",
     "viewDetails": "View Details",
@@ -1556,5 +1557,23 @@
     "noRewardsMessage": "Complete events to earn rewards, points, and exclusive prizes!",
     "loadingRewards": "Loading rewards...",
     "failedToLoad": "Failed to load rewards"
+  },
+  "reshare": {
+    "title": "Reshare Post",
+    "addComment": "Add a comment (optional)",
+    "reshareButton": "Reshare",
+    "reshareSuccess": "Post reshared successfully",
+    "reshareError": "Failed to reshare post",
+    "unreshareSuccess": "Reshare removed",
+    "unreshareError": "Failed to remove reshare",
+    "originalDeleted": "The original post has been deleted",
+    "alreadyReshared": "You have already reshared this post",
+    "cannotReshare": "You cannot reshare this post",
+    "resharedPost": "Reshared post",
+    "visibility": {
+      "public": "Public",
+      "followers": "Followers",
+      "private": "Private"
+    }
   }
 }

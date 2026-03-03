@@ -208,6 +208,12 @@ export function usePushNotifications(
           }
           break;
 
+        case 'reshares':
+          if (data.post_id) {
+            navigation.navigate('PostDetail', { postId: data.post_id });
+          }
+          break;
+
         default:
           logger.warn('general', 'Unhandled notification type', { type });
           // Don't navigate for unhandled types - just log the warning

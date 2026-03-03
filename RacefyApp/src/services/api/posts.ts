@@ -73,6 +73,21 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/posts/${id}/like`, { method: 'DELETE' });
     }
 
+    async resharePost(id: number, data: Types.ReshareRequest = {}): Promise<Types.Post> {
+      const response = await this.request<Types.ApiResponse<Types.Post>>(
+        `/posts/${id}/reshare`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }
+      );
+      return response.data;
+    }
+
+    async unresharePost(id: number): Promise<void> {
+      await this.request(`/posts/${id}/reshare`, { method: 'DELETE' });
+    }
+
     // ============ DRAFTS ============
 
     async getDrafts(params?: {
