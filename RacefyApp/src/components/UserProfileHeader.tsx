@@ -20,7 +20,8 @@ interface UserProfileHeaderProps {
   isMessageLoading: boolean;
   canMessage: boolean;
   activeTab: TabType;
-  tabs: Array<{ label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }>;
+  tabs: Array<{ label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap; emoji?: string }>;
+  useEmojiTabs?: boolean;
   onBackPress: () => void;
   onFollowersPress: () => void;
   onFollowingPress: () => void;
@@ -41,6 +42,7 @@ export function UserProfileHeader({
   canMessage,
   activeTab,
   tabs,
+  useEmojiTabs = false,
   onBackPress,
   onFollowersPress,
   onFollowingPress,
@@ -106,7 +108,7 @@ export function UserProfileHeader({
         )}
       </View>
 
-      <ProfileTabs tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
+      <ProfileTabs tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} useEmoji={useEmojiTabs} />
 
       <View style={styles.tabSpacer} />
     </>

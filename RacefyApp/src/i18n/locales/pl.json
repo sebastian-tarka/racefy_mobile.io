@@ -387,7 +387,12 @@
       "restrictedStats": "Statystyki są ukryte",
       "restrictedActivities": "Aktywności są ukryte",
       "restrictedPosts": "Posty są ukryte"
-    }
+    },
+    "streak": "Seria",
+    "streakDays": "seria dni",
+    "totalKm": "KM ŁĄCZNIE",
+    "totalActivities": "AKTYWNOŚCI",
+    "totalTime": "CZAS"
   },
   "editProfile": {
     "title": "Edytuj profil",

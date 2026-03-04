@@ -10,15 +10,17 @@ interface TabConfig {
   label: string;
   value: TabType;
   icon: keyof typeof Ionicons.glyphMap;
+  emoji?: string;
 }
 
 interface ProfileTabsProps {
   tabs: TabConfig[];
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  useEmoji?: boolean;
 }
 
-export function ProfileTabs({ tabs, activeTab, onTabChange }: ProfileTabsProps) {
+export function ProfileTabs({ tabs, activeTab, onTabChange, useEmoji = false }: ProfileTabsProps) {
   const { colors } = useTheme();
 
   return (
@@ -29,11 +31,15 @@ export function ProfileTabs({ tabs, activeTab, onTabChange }: ProfileTabsProps) 
           style={[styles.tab, activeTab === tab.value && { borderBottomColor: colors.primary }]}
           onPress={() => onTabChange(tab.value)}
         >
-          <Ionicons
-            name={tab.icon}
-            size={20}
-            color={activeTab === tab.value ? colors.primary : colors.textSecondary}
-          />
+          {useEmoji && tab.emoji ? (
+            <Text style={styles.tabEmoji}>{tab.emoji}</Text>
+          ) : (
+            <Ionicons
+              name={tab.icon}
+              size={20}
+              color={activeTab === tab.value ? colors.primary : colors.textSecondary}
+            />
+          )}
           <Text
             style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}
           >
@@ -59,6 +65,10 @@ const styles = StyleSheet.create({
     gap: 2,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+  },
+  tabEmoji: {
+    fontSize: 18,
+    lineHeight: 22,
   },
   tabText: {
     fontSize: fontSize.xs,

@@ -29,6 +29,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
 import { useBlockUser } from '../../hooks/useBlockUser';
+import { useNavigationStyle } from '../../contexts/NavigationStyleContext';
 import { api } from '../../services/api';
 import {
   canViewFollowersList,
@@ -194,11 +195,14 @@ export function UserProfileScreen({ navigation, route }: Props) {
     : false;
 
   // Tab configuration
+  const { style: navStyle } = useNavigationStyle();
+  const isDynamic = navStyle === 'dynamic';
+
   const tabs = [
-    { label: t('profile.tabs.posts'), value: 'posts' as TabType, icon: 'newspaper-outline' as const },
-    { label: t('profile.tabs.stats'), value: 'stats' as TabType, icon: 'stats-chart' as const },
-    { label: t('profile.tabs.activities'), value: 'activities' as TabType, icon: 'fitness-outline' as const },
-    { label: t('profile.tabs.events'), value: 'events' as TabType, icon: 'calendar-outline' as const },
+    { label: t('profile.tabs.posts'), value: 'posts' as TabType, icon: 'newspaper-outline' as const, emoji: '📝' },
+    { label: t('profile.tabs.stats'), value: 'stats' as TabType, icon: 'stats-chart' as const, emoji: '📊' },
+    { label: t('profile.tabs.activities'), value: 'activities' as TabType, icon: 'fitness-outline' as const, emoji: '💪' },
+    { label: t('profile.tabs.events'), value: 'events' as TabType, icon: 'calendar-outline' as const, emoji: '📅' },
   ];
 
   // Get current tab data
@@ -228,6 +232,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           canMessage={canMessageUser}
           activeTab={activeTab}
           tabs={tabs}
+          useEmojiTabs={isDynamic}
           onBackPress={() => navigation.goBack()}
           onFollowersPress={handleFollowersPress}
           onFollowingPress={handleFollowingPress}

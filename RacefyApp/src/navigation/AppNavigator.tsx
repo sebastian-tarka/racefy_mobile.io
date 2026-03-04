@@ -22,7 +22,7 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
-import { ProfileScreen } from '../screens/main/ProfileScreen';
+import { ProfileScreenWrapper } from '../screens/main/ProfileScreenWrapper';
 import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
@@ -442,10 +442,10 @@ function MainTabNavigator() {
   const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
   const DYNAMIC_ICONS: Record<string, string> = {
-    Home: '⌂',
-    Feed: '☰',
+    Home: '🏠',
+    Feed: '📋',
     Events: '📅',
-    Profile: '◉',
+    Profile: '👤',
   };
 
   return (
@@ -556,7 +556,7 @@ function MainTabNavigator() {
       />
       <MainTab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileScreenWrapper}
         options={{ tabBarLabel: 'Profile', tabBarAccessibilityLabel: 'Profil użytkownika' }}
         listeners={authGuardListener}
       />

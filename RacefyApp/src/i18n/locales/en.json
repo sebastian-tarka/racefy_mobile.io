@@ -387,7 +387,12 @@
       "restrictedStats": "Stats are hidden",
       "restrictedActivities": "Activities are hidden",
       "restrictedPosts": "Posts are hidden"
-    }
+    },
+    "streak": "Streak",
+    "streakDays": "day streak",
+    "totalKm": "TOTAL KM",
+    "totalActivities": "ACTIVITIES",
+    "totalTime": "TIME"
   },
   "editProfile": {
     "title": "Edit Profile",
