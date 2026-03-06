@@ -271,7 +271,32 @@ export function usePushNotifications(
     }
   };
 
-  // Set up notification listeners
+  // Stable ref to the latest handleNotificationNavigation — avoids recreating listeners
+  // when the callback identity changes (e.g. after auth state update)
+  const handleNotificationNavigationRef = useRef(handleNotificationNavigation);
+  useEffect(() => {
+    handleNotificationNavigationRef.current = handleNotificationNavigation;
+  }, [handleNotificationNavigation]);
+
+  // Navigate when navigation is ready — with retry if not ready yet
+  const navigateWhenReady = useCallback((data: PushNotificationData) => {
+    if (navigationRef?.current?.isReady()) {
+      handleNotificationNavigationRef.current(data);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (navigationRef?.current?.isReady()) {
+        clearInterval(interval);
+        handleNotificationNavigationRef.current(data);
+      }
+    }, 100);
+
+    // Give up after 5 seconds
+    setTimeout(() => clearInterval(interval), 5000);
+  }, [navigationRef]);
+
+  // Set up notification listeners — stable, never recreated
   useEffect(() => {
     // Listener for notifications received while app is in foreground
     notificationListener.current = Notifications.addNotificationReceivedListener(
@@ -285,12 +310,12 @@ export function usePushNotifications(
       }
     );
 
-    // Listener for when user taps on a notification
+    // Listener for when user taps on a notification (app in foreground or background)
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data as unknown as PushNotificationData;
         logger.info('general', 'Notification tapped', { data });
-        handleNotificationNavigation(data);
+        navigateWhenReady(data);
       }
     );
 
@@ -302,38 +327,27 @@ export function usePushNotifications(
         responseListener.current.remove();
       }
     };
-  }, [handleNotificationNavigation]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigateWhenReady]);
 
-  // Handle cold start (app opened from notification when not running)
+  // Handle cold start (app opened from notification when fully killed)
+  // useRef guards against running twice if navigateWhenReady identity changes
+  const coldStartHandled = useRef(false);
   useEffect(() => {
+    if (coldStartHandled.current) return;
+
     const handleColdStart = async () => {
-      // Get the notification that opened the app (if any)
       const response = await Notifications.getLastNotificationResponseAsync();
+      if (!response) return;
 
-      if (response) {
-        const data = response.notification.request.content.data as unknown as PushNotificationData;
-        logger.info('general', 'Cold start from notification', { data });
-
-        // Wait for navigation to be ready
-        if (navigationRef?.current?.isReady()) {
-          handleNotificationNavigation(data);
-        } else {
-          // If navigation isn't ready yet, wait a bit and retry
-          const checkNavigation = setInterval(() => {
-            if (navigationRef?.current?.isReady()) {
-              clearInterval(checkNavigation);
-              handleNotificationNavigation(data);
-            }
-          }, 100);
-
-          // Give up after 5 seconds
-          setTimeout(() => clearInterval(checkNavigation), 5000);
-        }
-      }
+      coldStartHandled.current = true;
+      const data = response.notification.request.content.data as unknown as PushNotificationData;
+      logger.info('general', 'Cold start from notification', { data });
+      navigateWhenReady(data);
     };
 
     handleColdStart();
-  }, [navigationRef, handleNotificationNavigation]);
+  }, [navigateWhenReady]);
 
   return {
     hasPermission,
