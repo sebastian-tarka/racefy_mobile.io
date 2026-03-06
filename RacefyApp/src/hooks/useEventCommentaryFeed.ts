@@ -32,12 +32,24 @@ export function useEventCommentaryFeed({
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(0);
   const [isPollingActive, setIsPollingActive] = useState(false);
 
+  // Language management
+  const [selectedLanguage, setSelectedLanguageState] = useState<CommentaryLanguage>(
+    language || (getCurrentLanguage() as CommentaryLanguage)
+  );
+  const [fallbackLanguage, setFallbackLanguage] = useState<CommentaryLanguage | null>(null);
+  const [languagesWithContent, setLanguagesWithContent] = useState<CommentaryLanguage[]>([]);
+
+  // Active language: fallback takes precedence over selected (when auto-detected)
+  const activeLanguage = fallbackLanguage ?? selectedLanguage;
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
-  // Use user's language preference if not explicitly set
-  const effectiveLanguage = language || (getCurrentLanguage() as CommentaryLanguage);
+  const changeLanguage = useCallback((lang: CommentaryLanguage) => {
+    setSelectedLanguageState(lang);
+    setFallbackLanguage(null);
+  }, []);
 
   const fetchCommentary = useCallback(
     async (reset = false, silent = false) => {
@@ -54,13 +66,49 @@ export function useEventCommentaryFeed({
 
       try {
         const currentPage = reset ? 1 : page;
+        // On reset, always probe with the user-selected language to detect fallback need.
+        // On pagination, use the active language (which may be the fallback).
+        const langToFetch = reset ? selectedLanguage : activeLanguage;
         const response = await api.getEventCommentary(eventId, {
           per_page: perPage,
           page: currentPage,
-          language: effectiveLanguage,
+          language: langToFetch,
         });
 
         if (!isMountedRef.current) return;
+
+        const lwc: CommentaryLanguage[] = response.meta.languages_with_content ?? [];
+
+        if (reset) {
+          setLanguagesWithContent(lwc);
+        }
+
+        // Auto-fallback: only on initial/reset load when the result is empty and
+        // the user's language has no published content but another language does.
+        if (
+          reset &&
+          response.data.length === 0 &&
+          lwc.length > 0 &&
+          !lwc.includes(selectedLanguage)
+        ) {
+          const fallbackLang = lwc[0];
+          setFallbackLanguage(fallbackLang);
+
+          // Second fetch with the fallback language
+          const fbResponse = await api.getEventCommentary(eventId, {
+            per_page: perPage,
+            page: 1,
+            language: fallbackLang,
+          });
+
+          if (!isMountedRef.current) return;
+
+          setCommentaries(fbResponse.data);
+          setMeta(fbResponse.meta);
+          setHasMore(fbResponse.meta.current_page < fbResponse.meta.last_page);
+          setPage(2);
+          return;
+        }
 
         setCommentaries((prev) => {
           if (reset) return response.data;
@@ -89,10 +137,11 @@ export function useEventCommentaryFeed({
         }
       }
     },
-    [eventId, page, perPage, effectiveLanguage, isLoading]
+    [eventId, page, perPage, selectedLanguage, activeLanguage, isLoading]
   );
 
   const refresh = useCallback(() => {
+    setFallbackLanguage(null);
     setPage(1);
     setHasMore(true);
     fetchCommentary(true, false);
@@ -110,7 +159,7 @@ export function useEventCommentaryFeed({
       .getEventCommentary(eventId, {
         per_page: perPage,
         page: 1,
-        language: effectiveLanguage,
+        language: activeLanguage,
       })
       .then((response) => {
         if (!isMountedRef.current) return;
@@ -129,12 +178,13 @@ export function useEventCommentaryFeed({
       .catch(() => {
         // Silently fail on background refresh
       });
-  }, [eventId, perPage, effectiveLanguage, commentaries]);
+  }, [eventId, perPage, activeLanguage, commentaries]);
 
-  // Initial load
+  // Initial load — re-run when eventId or user-selected language changes.
+  // Deliberately excludes fallbackLanguage to avoid re-triggering on auto-fallback.
   useEffect(() => {
     fetchCommentary(true, false);
-  }, [eventId, effectiveLanguage]);
+  }, [eventId, selectedLanguage]);
 
   // Auto-refresh polling for ongoing events
   useEffect(() => {
@@ -223,8 +273,14 @@ export function useEventCommentaryFeed({
     isCommentaryEnabled: meta?.commentary_enabled ?? false,
     tokensUsed: meta?.tokens_used ?? 0,
     tokenLimit: meta?.token_limit ?? 0,
-    availableLanguages: meta?.available_languages ?? {},
+    availableLanguages: (meta?.available_languages ?? {}) as Record<CommentaryLanguage, string>,
     eventLanguages: meta?.event_languages ?? [],
+    // Language management
+    selectedLanguage,
+    activeLanguage,
+    fallbackLanguage,
+    languagesWithContent,
+    changeLanguage,
     // Polling status
     isPollingActive,
     secondsUntilRefresh,

@@ -1133,6 +1133,7 @@
     "liveActive": "Komentarz na żywo aktywny",
     "nextUpdate": "Następna aktualizacja za",
     "loading": "Ładowanie komentarza...",
+    "fallbackNotice": "Komentarz niedostępny w Twoim języku. Wyświetlam w języku: {{language}}",
     "emptyTitle": "Brak komentarzy",
     "emptyMessage": "Komentarze pojawią się w miarę postępu wydarzenia",
     "disabledTitle": "Komentarz jest wyłączony",

@@ -1133,6 +1133,7 @@
     "liveActive": "Live Commentary Active",
     "nextUpdate": "Next update in",
     "loading": "Loading commentary...",
+    "fallbackNotice": "Commentary not available in your language. Showing in: {{language}}",
     "emptyTitle": "No commentary yet",
     "emptyMessage": "Commentary will appear as the event progresses",
     "disabledTitle": "Commentary is disabled",

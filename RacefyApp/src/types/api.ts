@@ -1565,6 +1565,7 @@ export interface CommentaryListResponse {
     commentary_enabled: boolean;
     available_languages: Record<CommentaryLanguage, string>;
     event_languages: CommentaryLanguage[];
+    languages_with_content: CommentaryLanguage[];
   };
 }
 
