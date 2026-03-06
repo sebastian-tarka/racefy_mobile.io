@@ -92,3 +92,4 @@ export * from './EventLeaderboardTabContent';
 export * from './SharedPostBlock';
 export * from './SharedPostDeletedBlock';
 export * from './ReshareModal';
+export * from './YouTubeEmbed';

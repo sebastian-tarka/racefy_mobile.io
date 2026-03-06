@@ -219,6 +219,7 @@ export interface Post {
   shared_post?: SharedPost | null;
   shared_post_deleted?: boolean;
   is_reshared?: boolean;
+  youtube_embed_id?: string | null;
 }
 
 export interface SharedPost {

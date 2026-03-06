@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme';
 import { ExpandableContent, PostMedia } from './FeedCard.Media';
 import { SharedPostBlock } from './SharedPostBlock';
 import { SharedPostDeletedBlock } from './SharedPostDeletedBlock';
+import { YouTubeEmbed } from './YouTubeEmbed';
 import { styles } from './FeedCard.utils';
 import type { Post } from '../types/api';
 
@@ -50,6 +51,11 @@ export function GeneralBody({ post, onOriginalPostPress, onOriginalPostUserPress
           {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
           {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
         </View>
+        {post.youtube_embed_id && (
+          <View style={[styles.fullBleedMedia, { marginTop: 8 }]}>
+            <YouTubeEmbed embedId={post.youtube_embed_id} />
+          </View>
+        )}
         {sharedPostContent()}
       </>
     );
@@ -62,6 +68,11 @@ export function GeneralBody({ post, onOriginalPostPress, onOriginalPostUserPress
         <View style={styles.bodyPadding}>
           {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
           {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
+        </View>
+      )}
+      {post.youtube_embed_id && (
+        <View style={[styles.fullBleedMedia, { marginTop: 8 }]}>
+          <YouTubeEmbed embedId={post.youtube_embed_id} />
         </View>
       )}
       <View style={styles.fullBleedMedia}>
