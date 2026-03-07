@@ -59,6 +59,7 @@ import {
   GPS_WEAK_THRESHOLD_MS,
   MAX_PACE_SEGMENTS,
   CALORIES_PER_SECOND,
+  GPS_GAP_THRESHOLD_MS,
 } from "../constants/tracking";
 
 const isWeb = Platform.OS === "web";
@@ -171,6 +172,11 @@ function useLiveActivityInternal() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const skipNextGpsPoint = useRef<boolean>(false);
   const appStateSubscription = useRef<any>(null);
+
+  // Timestamp (ms) of the last GPS point actually added to pointsBuffer.
+  // Used for gap detection: if the gap since this point exceeds GPS_GAP_THRESHOLD_MS
+  // the next arriving point is treated as a route-segment break and discarded.
+  const lastBufferedPointTime = useRef<number | null>(null);
 
   // Network status tracking
   const networkSubscription = useRef<any>(null);
@@ -479,16 +485,49 @@ function useLiveActivityInternal() {
           unsyncedCount: unsyncedPoints.length,
         });
 
-        // 4. Convert to GpsPoint format and add to foreground buffer
-        const points: GpsPoint[] = unsyncedPoints.map((p) => ({
-          lat: p.lat,
-          lng: p.lng,
-          ele: p.ele,
-          time: p.time,
-          speed: p.speed,
-        }));
-        pointsBuffer.current.push(...points);
-        allRoutePoints.current.push(...points);
+        // 4. Convert to GpsPoint format, applying gap detection, and add to foreground buffer.
+        // The first point that arrives after a gap > GPS_GAP_THRESHOLD_MS is discarded
+        // (it would create a visible jump on the route map).  The gap clock is reset so
+        // the next point is accepted as the new segment start.
+        const points: GpsPoint[] = [];
+        let prevBufTime = lastBufferedPointTime.current;
+
+        for (const p of unsyncedPoints) {
+          const pointTime = new Date(p.time).getTime();
+          if (
+            prevBufTime !== null &&
+            pointTime - prevBufTime > GPS_GAP_THRESHOLD_MS
+          ) {
+            logger.gps(
+              "Background point discarded: route segment break (large time gap)",
+              {
+                gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
+                thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+              },
+            );
+            // Advance clock: next point is accepted as new segment start
+            prevBufTime = pointTime;
+            continue;
+          }
+          points.push({
+            lat: p.lat,
+            lng: p.lng,
+            ele: p.ele,
+            time: p.time,
+            speed: p.speed,
+          });
+          prevBufTime = pointTime;
+        }
+
+        if (points.length > 0) {
+          pointsBuffer.current.push(...points);
+          allRoutePoints.current.push(...points);
+          // Update the gap-detection clock to the last accepted background point
+          const lastPoint = points[points.length - 1];
+          if (lastPoint.time) {
+            lastBufferedPointTime.current = new Date(lastPoint.time).getTime();
+          }
+        }
 
         // 5. Calculate local stats from background points IMMEDIATELY (UX improvement)
         // This shows distance/elevation updates instantly when returning to foreground
@@ -497,18 +536,19 @@ function useLiveActivityInternal() {
         let additionalDistance = 0;
         let additionalElevation = 0;
 
-        // Start from last known position (or first background point)
+        // Start from last known position (or first gap-filtered background point)
         let prevPoint =
           lastPosition.current ||
-          (unsyncedPoints.length > 0
+          (points.length > 0
             ? {
-                lat: unsyncedPoints[0].lat,
-                lng: unsyncedPoints[0].lng,
-                ele: unsyncedPoints[0].ele,
+                lat: points[0].lat,
+                lng: points[0].lng,
+                ele: points[0].ele,
               }
             : null);
 
-        for (const point of unsyncedPoints) {
+        // Iterate only gap-filtered points so no jump distances are counted
+        for (const point of points) {
           if (prevPoint) {
             // Calculate distance
             const dist = calculateDistance(
@@ -712,39 +752,67 @@ function useLiveActivityInternal() {
             impliedSpeed < gpsProfile.maxRealisticSpeed
           ) {
             // Only count if moved more than threshold AND speed is realistic
-            localStatsRef.current.distance += dist;
 
-            // Calculate elevation gain with noise filter
-            if (smoothedPoint.ele && lastPosition.current.ele) {
-              const elevDiff = smoothedPoint.ele - lastPosition.current.ele;
-              // Only count significant elevation changes to filter GPS altitude noise
-              if (elevDiff > gpsProfile.minElevationChange) {
-                localStatsRef.current.elevation_gain += elevDiff;
+            // Gap detection: if the gap since the last buffered point exceeds the
+            // threshold the GPS route has a discontinuity (app was in background,
+            // GPS signal was lost, etc.).  Discard this first "jump" point and
+            // reset the gap clock so the very next point is accepted normally.
+            const isGapPoint =
+              lastBufferedPointTime.current !== null &&
+              location.timestamp - lastBufferedPointTime.current >
+                GPS_GAP_THRESHOLD_MS;
+
+            if (isGapPoint) {
+              logger.gps(
+                "GPS point discarded: route segment break (large time gap)",
+                {
+                  gapSeconds: (
+                    (location.timestamp - lastBufferedPointTime.current!) /
+                    1000
+                  ).toFixed(0),
+                  thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+                  lat: point.lat,
+                  lng: point.lng,
+                },
+              );
+              // Advance the clock so the next point is accepted
+              lastBufferedPointTime.current = location.timestamp;
+            } else {
+              localStatsRef.current.distance += dist;
+
+              // Calculate elevation gain with noise filter
+              if (smoothedPoint.ele && lastPosition.current.ele) {
+                const elevDiff = smoothedPoint.ele - lastPosition.current.ele;
+                // Only count significant elevation changes to filter GPS altitude noise
+                if (elevDiff > gpsProfile.minElevationChange) {
+                  localStatsRef.current.elevation_gain += elevDiff;
+                }
               }
+
+              // Track pace segment for current pace calculation
+              paceSegments.current = addPaceSegment(
+                paceSegments.current,
+                {
+                  timestamp: location.timestamp,
+                  distance: localStatsRef.current.distance,
+                },
+                MAX_PACE_SEGMENTS,
+              );
+
+              // Update current pace based on recent segments
+              updateCurrentPace();
+
+              // Store original (non-smoothed) validated point for server sync
+              // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
+              pointsBuffer.current.push(point);
+              allRoutePoints.current.push(point);
+              lastBufferedPointTime.current = location.timestamp;
+
+              setState((prev) => ({
+                ...prev,
+                currentStats: { ...localStatsRef.current },
+              }));
             }
-
-            // Track pace segment for current pace calculation
-            paceSegments.current = addPaceSegment(
-              paceSegments.current,
-              {
-                timestamp: location.timestamp,
-                distance: localStatsRef.current.distance,
-              },
-              MAX_PACE_SEGMENTS,
-            );
-
-            // Update current pace based on recent segments
-            updateCurrentPace();
-
-            // Store original (non-smoothed) validated point for server sync
-            // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
-            pointsBuffer.current.push(point);
-            allRoutePoints.current.push(point);
-
-            setState((prev) => ({
-              ...prev,
-              currentStats: { ...localStatsRef.current },
-            }));
           } else if (
             dist > effectiveMinDistance &&
             impliedSpeed >= gpsProfile.maxRealisticSpeed
@@ -1184,6 +1252,7 @@ function useLiveActivityInternal() {
 
     // Reset app state tracking
     skipNextGpsPoint.current = false;
+    lastBufferedPointTime.current = null;
 
     currentActivityId.current = null;
     stopDurationTimer();
