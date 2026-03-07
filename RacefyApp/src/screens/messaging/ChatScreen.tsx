@@ -13,7 +13,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, isSameDay, isToday, isYesterday, isThisYear } from 'date-fns';
+import { pl, enUS } from 'date-fns/locale';
 import { Avatar, Loading, ScreenContainer } from '../../components';
 import { useMessages } from '../../hooks/useMessages';
 import { useTheme } from '../../hooks/useTheme';
@@ -27,12 +28,21 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export function ChatScreen({ navigation, route }: Props) {
   const { conversationId, participant } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { messages, isLoading, isSending, sendMessage } = useMessages(conversationId);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
+
+  const dateLocale = i18n.language.startsWith('pl') ? pl : enUS;
+
+  const formatDateSeparator = (date: Date): string => {
+    if (isToday(date)) return t('messaging.today');
+    if (isYesterday(date)) return t('messaging.yesterday');
+    if (isThisYear(date)) return format(date, 'd MMMM', { locale: dateLocale });
+    return format(date, 'd MMMM yyyy', { locale: dateLocale });
+  };
 
   const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
 
@@ -59,46 +69,61 @@ export function ChatScreen({ navigation, route }: Props) {
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isOwn = item.is_own;
+    const prevMessage = index > 0 ? messages[index - 1] : null;
     const showAvatar =
       !isOwn && (index === 0 || messages[index - 1]?.is_own !== item.is_own);
     const time = format(new Date(item.created_at), 'HH:mm');
+    const showDateSeparator =
+      !prevMessage ||
+      !isSameDay(new Date(item.created_at), new Date(prevMessage.created_at));
 
     return (
-      <View
-        style={[
-          styles.messageContainer,
-          isOwn ? styles.ownMessageContainer : styles.otherMessageContainer,
-        ]}
-      >
-        {!isOwn && (
-          <View style={styles.avatarContainer}>
-            {showAvatar ? (
-              <Avatar
-                uri={participant.avatar}
-                name={participant.name}
-                size="sm"
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder} />
-            )}
+      <>
+        {showDateSeparator && (
+          <View style={styles.dateSeparator}>
+            <View style={[styles.dateSeparatorLine, { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor }]} />
+            <Text style={[styles.dateSeparatorText, { color: themedStyles.dateSeparatorText.color }]}>
+              {formatDateSeparator(new Date(item.created_at))}
+            </Text>
+            <View style={[styles.dateSeparatorLine, { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor }]} />
           </View>
         )}
         <View
           style={[
-            styles.messageBubble,
-            isOwn ? themedStyles.ownBubble : themedStyles.otherBubble,
+            styles.messageContainer,
+            isOwn ? styles.ownMessageContainer : styles.otherMessageContainer,
           ]}
         >
-          <Text
-            style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}
+          {!isOwn && (
+            <View style={styles.avatarContainer}>
+              {showAvatar ? (
+                <Avatar
+                  uri={participant.avatar}
+                  name={participant.name}
+                  size="sm"
+                />
+              ) : (
+                <View style={styles.avatarPlaceholder} />
+              )}
+            </View>
+          )}
+          <View
+            style={[
+              styles.messageBubble,
+              isOwn ? themedStyles.ownBubble : themedStyles.otherBubble,
+            ]}
           >
-            {item.content}
-          </Text>
-          <Text style={[themedStyles.messageTime, isOwn && themedStyles.ownMessageTime]}>
-            {time}
-          </Text>
+            <Text
+              style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}
+            >
+              {item.content}
+            </Text>
+            <Text style={[themedStyles.messageTime, isOwn && themedStyles.ownMessageTime]}>
+              {time}
+            </Text>
+          </View>
         </View>
-      </View>
+      </>
     );
   };
 
@@ -294,6 +319,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: spacing.sm,
   },
+  dateSeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  dateSeparatorLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  dateSeparatorText: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginHorizontal: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
 });
 
 const createThemedStyles = (colors: ThemeColors) =>
@@ -352,5 +394,11 @@ const createThemedStyles = (colors: ThemeColors) =>
     },
     sendButtonDisabled: {
       backgroundColor: colors.textMuted,
+    },
+    dateSeparatorLine: {
+      backgroundColor: colors.borderLight,
+    },
+    dateSeparatorText: {
+      color: colors.textMuted,
     },
   });

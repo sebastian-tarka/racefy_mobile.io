@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { formatDistanceToNow } from 'date-fns';
+import { format, isToday, isYesterday, isThisWeek, isThisYear } from 'date-fns';
+import { pl, enUS } from 'date-fns/locale';
 import { Avatar, EmptyState, Loading, ScreenHeader, ScreenContainer, Input } from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
@@ -26,7 +27,7 @@ import type { Conversation, MentionSearchUser } from '../../types/api';
 type Props = NativeStackScreenProps<RootStackParamList, 'ConversationsList'>;
 
 export function ConversationsListScreen({ navigation }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const {
@@ -139,10 +140,18 @@ export function ConversationsListScreen({ navigation }: Props) {
     );
   };
 
+  const formatConversationTime = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const dateLocale = i18n.language.startsWith('pl') ? pl : enUS;
+    if (isToday(date)) return format(date, 'HH:mm');
+    if (isYesterday(date)) return t('messaging.yesterday');
+    if (isThisWeek(date, { weekStartsOn: 1 })) return format(date, 'EEE', { locale: dateLocale });
+    if (isThisYear(date)) return format(date, 'd MMM', { locale: dateLocale });
+    return format(date, 'd MMM yyyy', { locale: dateLocale });
+  };
+
   const renderConversation = ({ item }: { item: Conversation }) => {
-    const timeAgo = item.last_message_at
-      ? formatDistanceToNow(new Date(item.last_message_at), { addSuffix: false })
-      : '';
+    const timeAgo = item.last_message_at ? formatConversationTime(item.last_message_at) : '';
 
     const lastMessagePreview = item.last_message
       ? item.last_message.type === 'activity'
