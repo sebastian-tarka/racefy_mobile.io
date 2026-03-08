@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -58,12 +58,22 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
     return () => pulse.stop();
   }, [pulseAnim]);
 
-  // Randomly select one event to display
-  const selectedEvent = useMemo(() => {
-    if (events.length === 0) return null;
-    const randomIndex = Math.floor(Math.random() * events.length);
-    return events[randomIndex];
+  // Rotate through events every 5 seconds
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    setCurrentIndex(0);
   }, [events]);
+
+  useEffect(() => {
+    if (events.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % events.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [events.length]);
+
+  const selectedEvent = events[currentIndex] ?? null;
 
   // Don't render if no events
   if (!selectedEvent) return null;

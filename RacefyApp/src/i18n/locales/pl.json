@@ -227,7 +227,16 @@
       "activity": "Aktywność",
       "event": "Wydarzenie",
       "sponsored": "Sponsorowane",
-      "reshare": "Udostępnienie"
+      "reshare": "Udostępnienie",
+      "achievement": "Osiągnięcie"
+    },
+    "achievement": {
+      "rarity": {
+        "legendary": "Legendarny",
+        "epic": "Epicki",
+        "rare": "Rzadki",
+        "common": "Zwykły"
+      }
     },
     "showMore": "Pokaż więcej",
     "watchAgain": "Obejrzyj ponownie",
@@ -740,7 +749,9 @@
     "deleteConfirm": "Czy na pewno chcesz usunąć tę konwersację?",
     "searchUsers": "Szukaj użytkowników...",
     "noSearchResults": "Nie znaleziono użytkowników",
-    "startingConversation": "Rozpoczynanie rozmowy..."
+    "startingConversation": "Rozpoczynanie rozmowy...",
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj"
   },
   "eventForm": {
     "createTitle": "Utwórz wydarzenie",
@@ -891,6 +902,8 @@
     "showStatsDesc": "Wyświetlaj statystyki na profilu",
     "allowMessages": "Zezwalaj na wiadomości",
     "allowMessagesDesc": "Kto może wysyłać Ci wiadomości",
+    "shareAchievements": "Udostępniaj osiągnięcia w feedzie",
+    "shareAchievementsDesc": "Gdy zdobędziesz odznakę, post pojawi się automatycznie w feedzie",
     "activityDefaults": "Domyślne ustawienia aktywności",
     "favoriteSport": "Ulubiony sport",
     "favoriteSportDesc": "Domyślny typ sportu dla nowych aktywności",

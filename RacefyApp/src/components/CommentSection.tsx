@@ -180,6 +180,7 @@ export function CommentSection({
           return {
             ...c,
             content: updatedComment.content,
+            mentions: updatedComment.mentions ?? c.mentions,
             photos: updatedComment.photos || [],
           };
         }
@@ -192,6 +193,7 @@ export function CommentSection({
                 return {
                   ...r,
                   content: updatedComment.content,
+                  mentions: updatedComment.mentions ?? r.mentions,
                   photos: updatedComment.photos || [],
                 };
               }

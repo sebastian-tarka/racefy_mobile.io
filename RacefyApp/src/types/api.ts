@@ -21,6 +21,23 @@ export interface UserProfilePrivacy {
   show_activities: boolean;
   show_stats: boolean;
   allow_messages: 'everyone' | 'followers' | 'none';
+  share_achievements?: boolean;
+}
+
+export interface BadgeData {
+  id: number;
+  name: string;
+  description: string;
+  icon: string | null;
+  icon_url: string | null;
+  rarity: 'legendary' | 'epic' | 'rare' | 'common';
+  rarity_color: string;
+}
+
+export interface AchievementData {
+  user_badge_id: number;
+  earned_at: string;
+  badge: BadgeData;
 }
 
 export interface UserProfile extends User {
@@ -132,6 +149,7 @@ export interface UserPreferences {
     show_activities: boolean;
     show_stats: boolean;
     allow_messages: 'everyone' | 'followers' | 'none';
+    share_achievements?: boolean;
   };
   activity_defaults: {
     visibility: 'public' | 'followers' | 'private';
@@ -197,7 +215,7 @@ export interface SportType {
 export interface Post {
   id: number;
   user_id: number;
-  type: 'general' | 'event' | 'activity';
+  type: 'general' | 'event' | 'activity' | 'achievement';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';
@@ -212,6 +230,7 @@ export interface Post {
   videos?: Video[];
   event?: Event;
   activity?: Activity;
+  achievement?: AchievementData;
   is_liked?: boolean;
   is_owner?: boolean;
   mentions?: MentionMap;

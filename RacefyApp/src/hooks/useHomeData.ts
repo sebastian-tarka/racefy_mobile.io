@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
@@ -116,11 +116,14 @@ export function useHomeData(options: UseHomeDataOptions = {}) {
 
   // Handle AppState changes (pause polling in background)
   useEffect(() => {
+    const prevAppState = { current: AppState.currentState };
+
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active') {
+      if (prevAppState.current !== 'active' && nextAppState === 'active') {
         logger.debug('home', 'App became active, refreshing home data');
         fetchHome(); // Refresh when app returns to foreground
       }
+      prevAppState.current = nextAppState;
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);

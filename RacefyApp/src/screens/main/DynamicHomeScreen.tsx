@@ -166,6 +166,15 @@ export function DynamicHomeScreen({ navigation }: Props) {
     []
   );
 
+  // Register tip delivery when a new tip appears (fire-and-forget)
+  useEffect(() => {
+    const tip = availableTips[0];
+    if (!tip) return;
+    api.getTip(tip.id).catch(() => {
+      // Ignore errors (403 = already delivered, network issues, etc.)
+    });
+  }, [availableTips[0]?.id]);
+
   // Reload tips when screen comes back into focus (e.g. after returning from TipDetail)
   useFocusEffect(
     useCallback(() => {

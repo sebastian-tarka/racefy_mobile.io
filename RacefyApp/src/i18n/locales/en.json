@@ -227,7 +227,16 @@
       "activity": "Activity",
       "event": "Event",
       "sponsored": "Sponsored",
-      "reshare": "Reshare"
+      "reshare": "Reshare",
+      "achievement": "Achievement"
+    },
+    "achievement": {
+      "rarity": {
+        "legendary": "Legendary",
+        "epic": "Epic",
+        "rare": "Rare",
+        "common": "Common"
+      }
     },
     "showMore": "Show more",
     "watchAgain": "Watch again",
@@ -740,7 +749,9 @@
     "deleteConfirm": "Are you sure you want to delete this conversation?",
     "searchUsers": "Search users...",
     "noSearchResults": "No users found",
-    "startingConversation": "Starting conversation..."
+    "startingConversation": "Starting conversation...",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "eventForm": {
     "createTitle": "Create Event",
@@ -891,6 +902,8 @@
     "showStatsDesc": "Display your stats on profile",
     "allowMessages": "Allow Messages",
     "allowMessagesDesc": "Who can send you messages",
+    "shareAchievements": "Share Achievements in Feed",
+    "shareAchievementsDesc": "When you earn a badge, a post will appear automatically in the feed",
     "activityDefaults": "Activity Defaults",
     "favoriteSport": "Favorite Sport",
     "favoriteSportDesc": "Default sport type for new activities",

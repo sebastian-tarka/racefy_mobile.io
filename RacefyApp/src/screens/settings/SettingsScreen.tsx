@@ -158,6 +158,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     show_activities: true,
     show_stats: true,
     allow_messages: 'everyone',
+    share_achievements: true,
   },
   activity_defaults: {
     visibility: 'public',
@@ -828,6 +829,18 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.allowMessages')}
             value={getMessagesLabel(preferences.privacy.allow_messages)}
             onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
+          />
+          <SettingsRow
+            icon="trophy-outline"
+            label={t('settings.shareAchievements')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.share_achievements ?? true}
+                onValueChange={(value) => updateNestedPreference('privacy', 'share_achievements', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={(preferences.privacy.share_achievements ?? true) ? colors.primary : colors.white}
+              />
+            }
           />
         </SettingsSection>
 

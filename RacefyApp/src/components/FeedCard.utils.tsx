@@ -12,7 +12,7 @@ import type { Post, Activity } from '../types/api';
 
 // ============ TYPES & INTERFACES ============
 
-export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare';
+export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare' | 'achievement';
 
 export interface PostMediaItem {
   id: number;
@@ -46,6 +46,7 @@ export const TEXT_TRUNCATION: Record<FeedPostType, { maxLength: number; maxSente
   event: { maxLength: 200, maxSentences: 2 },
   sponsored: { maxLength: 200, maxSentences: 2 },
   reshare: { maxLength: 200, maxSentences: 2 },
+  achievement: { maxLength: 200, maxSentences: 2 },
 };
 
 // ============ UTILITY FUNCTIONS ============
@@ -55,6 +56,7 @@ export function getEffectiveType(post: Post): FeedPostType {
   if (post.shared_post || post.shared_post_deleted) return 'reshare';
   if (post.type === 'activity') return 'activity';
   if (post.type === 'event') return 'event';
+  if (post.type === 'achievement') return 'achievement';
   return 'general';
 }
 
@@ -65,6 +67,7 @@ export function getTypeColors(type: FeedPostType, colors: any) {
     event: colors.info,
     sponsored: colors.warning,
     reshare: '#06b6d4',
+    achievement: '#EAB308',
   };
   return {
     accent: type === 'general' ? null : colorMap[type],
@@ -80,6 +83,7 @@ export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap 
     event: 'calendar-outline',
     sponsored: 'megaphone-outline',
     reshare: 'repeat-outline',
+    achievement: 'trophy-outline',
   };
   return iconMap[type];
 }

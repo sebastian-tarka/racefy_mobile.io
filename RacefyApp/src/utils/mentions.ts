@@ -44,7 +44,8 @@ export function apiTokensToLibraryFormat(text: string, mentions?: MentionMap): s
   return text.replace(MENTION_TOKEN_REGEX, (match, trigger, id) => {
     const entity = mentions[`<${trigger}${id}>`] || mentions[`${trigger}${id}`];
     if (entity) {
-      return `${trigger}[${entity.name}](${id})`;
+      // Library v3 internal format: {trigger}[name](id)  — curly braces required
+      return `{${trigger}}[${entity.name}](${id})`;
     }
     return match;
   });
