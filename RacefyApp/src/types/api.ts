@@ -724,6 +724,7 @@ export interface FinishActivityRequest {
   max_heart_rate?: number;
   location?: ActivityLocation;
   skip_auto_post?: boolean;
+  final_points?: GpsPoint[];
 }
 
 // Auto-created post info returned when finishing an activity

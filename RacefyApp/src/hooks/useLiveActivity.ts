@@ -1675,11 +1675,12 @@ function useLiveActivityInternal() {
       logger.activity("Finishing with GPS duration", { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Stop GPS
+      // Stop GPS first — no new points arrive after this
       await stopGpsTracking();
 
-      // Sync remaining points
-      await syncPoints(state.activity.id);
+      // Flush buffer and send remaining points atomically with finish
+      const finalPoints = deduplicatePoints(pointsBuffer.current);
+      pointsBuffer.current = [];
 
       // Use last GPS timestamp as ended_at (instead of current time)
       const endedAt = lastPosition.current?.timestamp
@@ -1690,13 +1691,15 @@ function useLiveActivityInternal() {
         endedAt,
         difference:
           Date.now() - (lastPosition.current?.timestamp || Date.now()),
+        finalPointsCount: finalPoints.length,
       });
 
-      // Finish on server with GPS timestamp
+      // Finish on server with GPS timestamp + remaining buffered points
       const response = await api.finishActivity(state.activity.id, {
         ...data,
         ended_at: endedAt,
         location: activityLocationRef.current ?? undefined,
+        final_points: finalPoints.length > 0 ? finalPoints : undefined,
       });
 
       const activity = response.data;
@@ -1770,17 +1773,24 @@ function useLiveActivityInternal() {
       });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Stop GPS
+      // Stop GPS first — no new points arrive after this
       await stopGpsTracking();
 
-      // Sync remaining points
-      await syncPoints(state.activity.id);
+      // Flush buffer and send remaining points atomically with finish
+      const finalPoints = deduplicatePoints(pointsBuffer.current);
+      pointsBuffer.current = [];
 
-      // Finish on server with current time (full timer duration)
+      logger.activity("Flushing GPS buffer for finish", {
+        id: state.activity.id,
+        finalPointsCount: finalPoints.length,
+      });
+
+      // Finish on server with current time + remaining buffered points
       const response = await api.finishActivity(state.activity.id, {
         ...data,
         ended_at: new Date().toISOString(),
         location: activityLocationRef.current ?? undefined,
+        final_points: finalPoints.length > 0 ? finalPoints : undefined,
       });
 
       const activity = response.data;
@@ -1920,17 +1930,24 @@ function useLiveActivityInternal() {
 
         setState((prev) => ({ ...prev, isLoading: true }));
 
-        // Stop GPS
+        // Stop GPS first — no new points arrive after this
         await stopGpsTracking();
 
-        // Sync remaining points
-        await syncPoints(state.activity.id);
+        // Flush buffer and send remaining points atomically with finish
+        const finalPoints = deduplicatePoints(pointsBuffer.current);
+        pointsBuffer.current = [];
 
-        // Finish on server - include location captured at start
+        logger.activity("Flushing GPS buffer for finish", {
+          id: state.activity.id,
+          finalPointsCount: finalPoints.length,
+        });
+
+        // Finish on server - include location and remaining buffered points
         const response = await api.finishActivity(state.activity.id, {
           ...data,
           ended_at: new Date().toISOString(),
           location: activityLocationRef.current ?? undefined,
+          final_points: finalPoints.length > 0 ? finalPoints : undefined,
         });
 
         const activity = response.data;
@@ -2077,7 +2094,9 @@ function useLiveActivityInternal() {
     // Expose GPS profile for UI to access pace settings (minDistanceForPace, etc.)
     gpsProfile: currentGpsProfile.current,
     // NEW: Expose for map view (all accumulated route points, never cleared on sync)
-    livePoints: allRoutePoints.current,
+    // Spread to create a new reference on each render — required so useMemo in MapboxLiveMap
+    // detects the change and recomputes routeGeoJSON (mutating a ref in-place doesn't change reference)
+    livePoints: [...allRoutePoints.current],
     currentPosition: lastPosition.current
       ? {
           lat: lastPosition.current.lat,
