@@ -28,7 +28,6 @@ import { spacing } from '../../theme';
 
 // Components
 import {
-  ConnectionErrorBanner,
   HomeHeader,
   LiveActivityBanner,
   PrimaryCTA,
@@ -43,12 +42,6 @@ import { Loading, FadeInView, ScreenContainer } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
-type ConnectionStatus = {
-  checked: boolean;
-  connected: boolean;
-  latency?: number;
-  error?: string;
-};
 
 /**
  * DynamicHomeScreen - Config-driven Home screen implementation.
@@ -105,10 +98,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
     enableAutoRefresh: true,
   });
 
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
-    checked: false,
-    connected: true,
-  });
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
@@ -182,27 +171,11 @@ export function DynamicHomeScreen({ navigation }: Props) {
     }, [loadAvailableTips])
   );
 
-  const checkConnection = useCallback(async () => {
-    const result = await api.checkHealth();
-    setConnectionStatus({
-      checked: true,
-      connected: result.connected,
-      latency: result.latency,
-      error: result.error,
-    });
-    return result.connected;
-  }, []);
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await checkConnection();
     await Promise.all([refetchConfig(), refetchData(), loadAvailableTips()]);
     setRefreshing(false);
-  }, [checkConnection, refetchConfig, refetchData, loadAvailableTips]);
-
-  useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+  }, [refetchConfig, refetchData, loadAvailableTips]);
 
   // Navigation helpers
   const navigateToAuth = useCallback(
@@ -313,15 +286,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Connection Error Banner - no animation, always visible */}
-        {connectionStatus.checked && !connectionStatus.connected && (
-          <ConnectionErrorBanner
-            error={connectionStatus.error}
-            apiUrl={api.getBaseUrl()}
-            onRetry={checkConnection}
-          />
-        )}
-
         {/* Live Activity Banner - no animation, shows when recording */}
         <LiveActivityBanner
           isActive={isTracking}

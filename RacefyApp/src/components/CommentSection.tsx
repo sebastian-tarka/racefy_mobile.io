@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -130,30 +128,30 @@ export function CommentSection({
     emitRefresh('feed');
   };
 
-  const handleLikeComment = async (commentId: number) => {
+  const handleLikeComment = useCallback(async (commentId: number) => {
     await api.likeComment(commentId);
-  };
+  }, []);
 
-  const handleUnlikeComment = async (commentId: number) => {
+  const handleUnlikeComment = useCallback(async (commentId: number) => {
     await api.unlikeComment(commentId);
-  };
+  }, []);
 
-  const handleDeleteComment = async (commentId: number) => {
+  const handleDeleteComment = useCallback(async (commentId: number) => {
     await api.deleteComment(commentId);
     setComments((prev) => {
       // Remove from top-level
       const filtered = prev.filter((c) => c.id !== commentId);
-      // Remove from replies
-      return filtered.map((c) => ({
-        ...c,
-        replies: c.replies?.filter((r) => r.id !== commentId),
-      }));
+      // Only recreate comment objects that actually have the deleted reply
+      return filtered.map((c) => {
+        if (!c.replies?.some((r) => r.id === commentId)) return c;
+        return { ...c, replies: c.replies!.filter((r) => r.id !== commentId) };
+      });
     });
     setLocalCommentsCount((prev) => prev - 1);
     emitRefresh('feed');
-  };
+  }, []);
 
-  const handleEditComment = async (
+  const handleEditComment = useCallback(async (
     commentId: number,
     data: { content: string; deleteMediaId?: number; newMedia?: MediaItem }
   ) => {
@@ -204,21 +202,21 @@ export function CommentSection({
         return c;
       })
     );
-  };
+  }, []);
 
-  const handleReply = (comment: Comment) => {
+  const handleReply = useCallback((comment: Comment) => {
     setReplyingTo(comment);
-  };
+  }, []);
 
-  const handleCancelReply = () => {
+  const handleCancelReply = useCallback(() => {
     setReplyingTo(null);
-  };
+  }, []);
 
   const toggleExpanded = () => {
     setIsExpanded((prev) => !prev);
   };
 
-  const renderComment = ({ item }: { item: Comment }) => (
+  const renderComment = useCallback(({ item }: { item: Comment }) => (
     <CommentItem
       comment={item}
       onLike={handleLikeComment}
@@ -228,7 +226,7 @@ export function CommentSection({
       onReply={handleReply}
       onUserPress={onUserPress}
     />
-  );
+  ), [handleLikeComment, handleUnlikeComment, handleDeleteComment, handleEditComment, handleReply, onUserPress]);
 
   const renderEmpty = () => {
     if (isLoading) {
@@ -290,18 +288,17 @@ export function CommentSection({
         <>
           {isAuthenticated ? (
             <>
-              {/* Comments list */}
-              <FlatList
-                data={comments}
-                renderItem={renderComment}
-                keyExtractor={(item) => String(item.id)}
-                ListEmptyComponent={renderEmpty}
-                scrollEnabled={false}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                  <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-                }
-              />
+              {/* Comments list - using View+map instead of FlatList to avoid
+                  the two-pass height measurement that causes newly added items to flicker */}
+              <View style={styles.listContent}>
+                {comments.length === 0
+                  ? renderEmpty()
+                  : comments.map((item) => (
+                      <React.Fragment key={String(item.id)}>
+                        {renderComment({ item })}
+                      </React.Fragment>
+                    ))}
+              </View>
 
               {/* Comment input */}
               <CommentInput

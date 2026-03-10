@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -222,11 +222,16 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     }
   }, [isAuthenticated]);
 
+  // Fetch stats once on mount / auth change (not on every tab focus to avoid header flicker)
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchStats();
+    }
+  }, [isAuthenticated, fetchStats]);
+
   useFocusEffect(
     useCallback(() => {
       if (isAuthenticated) {
-        // Only fetch stats once when screen is focused
-        fetchStats();
         fetchDraftsCount();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -585,6 +590,13 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     </>
   );
 
+  // Stable ref pattern: FlatList/DraftsTab always receive the same function reference,
+  // preventing header unmount/remount (and avatar flicker) on every re-render.
+  // The ref is updated each render so the content inside is always fresh.
+  const profileHeaderRef = useRef(renderProfileHeader);
+  profileHeaderRef.current = renderProfileHeader;
+  const stableProfileHeader = useRef(() => profileHeaderRef.current()).current;
+
   const renderFooter = () => {
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading) ||
@@ -725,7 +737,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       <View style={[styles.tabContent, activeTab !== 'drafts' && styles.hiddenTab]}>
         <DraftsTab
           isOwnProfile={true}
-          ListHeaderComponent={renderProfileHeader}
+          ListHeaderComponent={stableProfileHeader}
           onPublishSuccess={() => {
             // Refresh posts tab after successful publish
             postsData.refresh();
@@ -747,7 +759,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           data={getData()}
           keyExtractor={getKeyExtractor}
           renderItem={renderItem}
-          ListHeaderComponent={renderProfileHeader}
+          ListHeaderComponent={stableProfileHeader}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.listContent}

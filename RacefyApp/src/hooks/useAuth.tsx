@@ -169,14 +169,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
     const response = await api.login(data);
+    // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
+    const status = await getConsentStatus();
+    // Set both atomically - React 18 batches these (no await between them)
+    setRequiresConsent(!status.accepted);
     setUser(response.user);
     logger.auth('Login successful', { userId: response.user.id, username: response.user.username });
-    // Sync language preference after login
     syncPreferences();
-    // Check consent status after login
-    const status = await getConsentStatus();
-    setRequiresConsent(!status.accepted);
-    // Register for push notifications (non-blocking)
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after login', { error });
     });
@@ -199,18 +198,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logger.auth('Google Sign-In attempt');
     const idToken = await signInWithGoogle();
     const response = await api.googleAuth(idToken);
-    setUser(response.user);
-    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
-    // Sync language preference after login
-    syncPreferences();
-    // New users need to accept consents; existing users: check status
+    // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
+    let needsConsent = false;
     if (response.is_new_user) {
-      setRequiresConsent(true);
+      needsConsent = true;
     } else {
       const status = await getConsentStatus();
-      setRequiresConsent(!status.accepted);
+      needsConsent = !status.accepted;
     }
-    // Register for push notifications (non-blocking)
+    // Set both atomically - React 18 batches these (no await between them)
+    setRequiresConsent(needsConsent);
+    setUser(response.user);
+    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
+    syncPreferences();
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after Google sign-in', { error });
     });

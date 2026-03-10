@@ -14,7 +14,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
-import { Loading, ImpersonationBanner, ErrorBoundary } from '../components';
+import { Loading, ImpersonationBanner, NetworkStatusBar, ErrorBoundary } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -782,6 +782,7 @@ export function AppNavigator() {
         )}
           </RootStack.Navigator>
           <ImpersonationBanner />
+          <NetworkStatusBar />
         </NavigationContainer>
       </NavigationStyleSetter>
     </NavigationStyleProvider>

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EventCard, Loading, EmptyState, Button, RewardCard, ScreenContainer } from '../../components';
+import { EventCard, Loading, EmptyState, RewardCard, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useTheme } from '../../hooks/useTheme';
@@ -299,7 +299,11 @@ export function EventsScreen({ navigation, route }: Props) {
 
   const renderRewardsTab = () => {
     if (rewardsLoading && rewards.length === 0) {
-      return <Loading fullScreen message={t('rewards.loadingRewards')} />;
+      return (
+        <View style={styles.inlineLoading}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      );
     }
 
     const rewardFilters: { label: string; value: RewardFilterOption }[] = [
@@ -489,10 +493,6 @@ export function EventsScreen({ navigation, route }: Props) {
     );
   };
 
-  if (isLoading && events.length === 0) {
-    return <Loading fullScreen message={t('events.loadingEvents')} />;
-  }
-
   return (
     <ScreenContainer>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -566,7 +566,11 @@ export function EventsScreen({ navigation, route }: Props) {
               <EventCard event={item} onPress={() => handleEventPress(item.id)} />
             )}
             ListEmptyComponent={
-              error ? (
+              isLoading ? (
+                <View style={styles.inlineLoading}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : error ? (
                 <EmptyState
                   icon="alert-circle-outline"
                   title={t('events.failedToLoad')}
@@ -746,5 +750,11 @@ const styles = StyleSheet.create({
   listContent: {
     padding: spacing.md,
     flexGrow: 1,
+  },
+  inlineLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxxl,
   },
 });

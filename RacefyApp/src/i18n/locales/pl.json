@@ -198,6 +198,10 @@
     "live": "NA ŻYWO",
     "recentActivities": "Ostatnie aktywności"
   },
+  "network": {
+    "offline": "Brak połączenia z internetem",
+    "backOnline": "Połączono ponownie"
+  },
   "feed": {
     "title": "Aktualności",
     "createPost": "Utwórz post",

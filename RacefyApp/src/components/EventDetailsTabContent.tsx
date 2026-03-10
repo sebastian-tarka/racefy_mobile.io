@@ -83,7 +83,7 @@ export function EventDetailsTabContent({
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoid}
-      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'position' : undefined}
       keyboardVerticalOffset={0}
     >
       <ScrollView

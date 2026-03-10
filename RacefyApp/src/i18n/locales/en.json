@@ -198,6 +198,10 @@
     "recentActivities": "Recent Activities",
     "checkConnection": "Check your internet connection"
   },
+  "network": {
+    "offline": "No internet connection",
+    "backOnline": "Back online"
+  },
   "feed": {
     "title": "Feed",
     "createPost": "Create Post",
