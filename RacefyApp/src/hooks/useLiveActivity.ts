@@ -157,6 +157,10 @@ function useLiveActivityInternal() {
   // Guard to prevent concurrent finish/discard calls
   const isFinishingOrDiscardingRef = useRef<boolean>(false);
 
+  // Version counter for allRoutePoints — incremented on every push/reset
+  // so consumers (MapboxLiveMap) can cheaply detect changes without array copy
+  const pointsVersionRef = useRef<number>(0);
+
   // Location captured at activity start (for sending with finish request)
   const activityLocationRef = useRef<ActivityLocation | null>(null);
 
@@ -522,6 +526,7 @@ function useLiveActivityInternal() {
         if (points.length > 0) {
           pointsBuffer.current.push(...points);
           allRoutePoints.current.push(...points);
+          pointsVersionRef.current++;
           // Update the gap-detection clock to the last accepted background point
           const lastPoint = points[points.length - 1];
           if (lastPoint.time) {
@@ -806,6 +811,7 @@ function useLiveActivityInternal() {
               // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
               pointsBuffer.current.push(point);
               allRoutePoints.current.push(point);
+              pointsVersionRef.current++;
               lastBufferedPointTime.current = location.timestamp;
 
               setState((prev) => ({
@@ -1071,6 +1077,7 @@ function useLiveActivityInternal() {
         }));
         pointsBuffer.current.push(...recoveredGpsPoints);
         allRoutePoints.current.push(...recoveredGpsPoints);
+        pointsVersionRef.current++;
         await clearAllPersistedPoints();
       }
 
@@ -1244,8 +1251,8 @@ function useLiveActivityInternal() {
     await setActiveActivityId(null);
     await clearLocationBuffer();
 
-    // Clear persisted buffers (activity is ending, points will be synced)
-    await clearAllPersistedPoints();
+    // NOTE: Do NOT clearAllPersistedPoints() here — caller decides when to clear
+    // (after successful finish/discard). This prevents data loss if finish API fails.
 
     // Clear GPS smoothing buffer
     gpsBuffer.current = [];
@@ -1507,6 +1514,7 @@ function useLiveActivityInternal() {
         lastPosition.current = null;
         pointsBuffer.current = [];
         allRoutePoints.current = [];
+        pointsVersionRef.current++;
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         paceSegments.current = [];
@@ -1555,7 +1563,11 @@ function useLiveActivityInternal() {
       logger.activity("Pausing activity", { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Persist in-memory buffer before stopping GPS (crash protection during pause)
+      // Stop GPS (no longer clears persisted data — we control that here)
+      await stopGpsTracking();
+
+      // Re-persist buffer AFTER stop (crash protection: if syncPoints below fails,
+      // points are still recoverable from AsyncStorage)
       if (pointsBuffer.current.length > 0) {
         const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
           (p) => ({
@@ -1567,13 +1579,10 @@ function useLiveActivityInternal() {
           }),
         );
         await saveForegroundBuffer(pointsToSave);
-        logger.gps("Persisted buffer before pause", {
+        logger.gps("Persisted buffer after stop (before sync)", {
           count: pointsToSave.length,
         });
       }
-
-      // Stop GPS
-      await stopGpsTracking();
 
       // Sync remaining points
       await syncPoints(state.activity.id);
@@ -1644,6 +1653,11 @@ function useLiveActivityInternal() {
         hasExistingActivity: false, // Clear the flag - user chose to resume
       }));
 
+      // Clear GPS smoothing buffer and skip first point after resume
+      // to avoid false distance from pre-pause position
+      gpsBuffer.current = [];
+      skipNextGpsPoint.current = true;
+
       // Restart GPS tracking with sport-specific profile
       await startGpsTracking(activity.id, activity.sport_type_id);
     } catch (error: any) {
@@ -1675,12 +1689,16 @@ function useLiveActivityInternal() {
       logger.activity("Finishing with GPS duration", { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Stop GPS first — no new points arrive after this
+      // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
+      if (pointsBuffer.current.length > 0 && state.activity) {
+        await syncPoints(state.activity.id);
+      }
+
+      // Stop GPS — no new points arrive after this
       await stopGpsTracking();
 
-      // Flush buffer and send remaining points atomically with finish
+      // Prepare remaining points for atomic finish (do NOT clear buffer yet)
       const finalPoints = deduplicatePoints(pointsBuffer.current);
-      pointsBuffer.current = [];
 
       // Use last GPS timestamp as ended_at (instead of current time)
       const endedAt = lastPosition.current?.timestamp
@@ -1704,6 +1722,10 @@ function useLiveActivityInternal() {
 
       const activity = response.data;
 
+      // Success: now safe to clear buffer and persisted data
+      pointsBuffer.current = [];
+      await clearAllPersistedPoints();
+
       logger.activity("Activity finished with GPS duration", {
         id: activity.id,
         distance: activity.distance,
@@ -1715,7 +1737,8 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
-        allRoutePoints.current = [];
+      allRoutePoints.current = [];
+      pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -1745,6 +1768,21 @@ function useLiveActivityInternal() {
         id: state.activity.id,
         error: error.message,
       });
+
+      // Re-persist buffer for crash recovery (points still in memory)
+      if (pointsBuffer.current.length > 0) {
+        const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
+          (p) => ({
+            lat: p.lat,
+            lng: p.lng,
+            ele: p.ele,
+            time: p.time || new Date().toISOString(),
+            speed: p.speed,
+          }),
+        );
+        await saveForegroundBuffer(pointsToSave).catch(() => {});
+      }
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -1773,12 +1811,16 @@ function useLiveActivityInternal() {
       });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Stop GPS first — no new points arrive after this
+      // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
+      if (pointsBuffer.current.length > 0 && state.activity) {
+        await syncPoints(state.activity.id);
+      }
+
+      // Stop GPS — no new points arrive after this
       await stopGpsTracking();
 
-      // Flush buffer and send remaining points atomically with finish
+      // Prepare remaining points for atomic finish (do NOT clear buffer yet)
       const finalPoints = deduplicatePoints(pointsBuffer.current);
-      pointsBuffer.current = [];
 
       logger.activity("Flushing GPS buffer for finish", {
         id: state.activity.id,
@@ -1795,6 +1837,10 @@ function useLiveActivityInternal() {
 
       const activity = response.data;
 
+      // Success: now safe to clear buffer and persisted data
+      pointsBuffer.current = [];
+      await clearAllPersistedPoints();
+
       logger.activity("Activity finished with full duration", {
         id: activity.id,
         distance: activity.distance,
@@ -1806,7 +1852,8 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
-        allRoutePoints.current = [];
+      allRoutePoints.current = [];
+      pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -1836,6 +1883,21 @@ function useLiveActivityInternal() {
         id: state.activity.id,
         error: error.message,
       });
+
+      // Re-persist buffer for crash recovery (points still in memory)
+      if (pointsBuffer.current.length > 0) {
+        const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
+          (p) => ({
+            lat: p.lat,
+            lng: p.lng,
+            ele: p.ele,
+            time: p.time || new Date().toISOString(),
+            speed: p.speed,
+          }),
+        );
+        await saveForegroundBuffer(pointsToSave).catch(() => {});
+      }
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -1930,12 +1992,16 @@ function useLiveActivityInternal() {
 
         setState((prev) => ({ ...prev, isLoading: true }));
 
-        // Stop GPS first — no new points arrive after this
+        // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
+        if (pointsBuffer.current.length > 0 && state.activity) {
+          await syncPoints(state.activity.id);
+        }
+
+        // Stop GPS — no new points arrive after this
         await stopGpsTracking();
 
-        // Flush buffer and send remaining points atomically with finish
+        // Prepare remaining points for atomic finish (do NOT clear buffer yet)
         const finalPoints = deduplicatePoints(pointsBuffer.current);
-        pointsBuffer.current = [];
 
         logger.activity("Flushing GPS buffer for finish", {
           id: state.activity.id,
@@ -1952,6 +2018,10 @@ function useLiveActivityInternal() {
 
         const activity = response.data;
 
+        // Success: now safe to clear buffer and persisted data
+        pointsBuffer.current = [];
+        await clearAllPersistedPoints();
+
         logger.activity("Activity finished successfully", {
           id: activity.id,
           distance: activity.distance,
@@ -1966,6 +2036,7 @@ function useLiveActivityInternal() {
         lastPosition.current = null;
         pointsBuffer.current = [];
         allRoutePoints.current = [];
+        pointsVersionRef.current++;
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         activityLocationRef.current = null;
@@ -1995,6 +2066,21 @@ function useLiveActivityInternal() {
           id: state.activity.id,
           error: error.message,
         });
+
+        // Re-persist buffer for crash recovery (points still in memory)
+        if (pointsBuffer.current.length > 0) {
+          const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
+            (p) => ({
+              lat: p.lat,
+              lng: p.lng,
+              ele: p.ele,
+              time: p.time || new Date().toISOString(),
+              speed: p.speed,
+            }),
+          );
+          await saveForegroundBuffer(pointsToSave).catch(() => {});
+        }
+
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -2029,6 +2115,9 @@ function useLiveActivityInternal() {
       // Stop GPS
       await stopGpsTracking();
 
+      // Clear persisted data (discarding — no need to keep anything)
+      await clearAllPersistedPoints();
+
       // Discard on server
       await api.discardActivity(state.activity.id);
 
@@ -2038,7 +2127,8 @@ function useLiveActivityInternal() {
       localStatsRef.current = { ...initialStats };
       lastPosition.current = null;
       pointsBuffer.current = [];
-        allRoutePoints.current = [];
+      allRoutePoints.current = [];
+      pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
@@ -2093,10 +2183,11 @@ function useLiveActivityInternal() {
     checkExistingActivity,
     // Expose GPS profile for UI to access pace settings (minDistanceForPace, etc.)
     gpsProfile: currentGpsProfile.current,
-    // NEW: Expose for map view (all accumulated route points, never cleared on sync)
-    // Spread to create a new reference on each render — required so useMemo in MapboxLiveMap
-    // detects the change and recomputes routeGeoJSON (mutating a ref in-place doesn't change reference)
-    livePoints: [...allRoutePoints.current],
+    // Expose for map view (all accumulated route points, never cleared on sync)
+    // Return ref directly — consumers use livePointsVersion to detect changes
+    // (avoids O(n) array copy on every render from duration timer)
+    livePoints: allRoutePoints.current,
+    livePointsVersion: pointsVersionRef.current,
     currentPosition: lastPosition.current
       ? {
           lat: lastPosition.current.lat,
@@ -2133,8 +2224,9 @@ interface LiveActivityContextType {
   discardTracking: () => Promise<void>;
   clearError: () => void;
   checkExistingActivity: () => Promise<void>;
-  // NEW: Expose for map view
+  // Expose for map view
   livePoints: GpsPoint[];
+  livePointsVersion: number;
   currentPosition: { lat: number; lng: number } | null;
 }
 

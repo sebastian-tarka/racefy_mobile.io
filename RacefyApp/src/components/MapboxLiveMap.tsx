@@ -57,6 +57,8 @@ export type MapStyleType = 'outdoors' | 'streets' | 'satellite';
 
 export interface MapboxLiveMapProps {
   livePoints: GpsPoint[];
+  /** Version counter for livePoints — triggers useMemo recompute without array reference change */
+  livePointsVersion?: number;
   currentPosition: {
     lat: number;
     lng: number;
@@ -82,6 +84,7 @@ export interface MapboxLiveMapProps {
  */
 export function MapboxLiveMap({
   livePoints,
+  livePointsVersion,
   currentPosition,
   height,
   gpsSignalQuality,
@@ -123,6 +126,8 @@ export function MapboxLiveMap({
   const displayPosition = currentPosition || previewLocation;
 
   // Build GeoJSON LineString from livePoints
+  // Depends on livePointsVersion (cheap number comparison) instead of array reference
+  // to avoid O(n) copy on every render from duration timer
   const routeGeoJSON = useMemo(() => {
     if (livePoints.length < 2) return null;
 
@@ -134,7 +139,8 @@ export function MapboxLiveMap({
         coordinates: livePoints.map(p => [p.lng, p.lat]),
       },
     };
-  }, [livePoints]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [livePointsVersion]);
 
   // Note: Map load analytics tracked by parent when activityId is available
   // No trackMapLoad(0) call here - activityId 0 is invalid and API rejects it

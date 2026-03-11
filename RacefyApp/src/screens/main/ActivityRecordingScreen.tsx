@@ -134,6 +134,7 @@ export function ActivityRecordingScreen() {
     discardTracking,
     clearError,
     livePoints,
+    livePointsVersion,
     currentPosition,
   } = useLiveActivityContext();
 
@@ -1004,6 +1005,7 @@ export function ActivityRecordingScreen() {
           <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
             <MapboxLiveMap
               livePoints={livePoints}
+              livePointsVersion={livePointsVersion}
               currentPosition={currentPosition || previewLocation}
               gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
               followUser={true}
