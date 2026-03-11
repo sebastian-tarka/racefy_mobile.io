@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.7.0',
+  version: '1.7.1',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '9',
+    buildNumber: '1-',
     googleServicesFile: getGoogleServicesFileiOS(),
     associatedDomains: [
       'applinks:racefy.app',
@@ -217,7 +217,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     mapboxEnabled: process.env.MAPBOX_ENABLED !== 'false', // Default to true
     // Debug logging configuration
     logEnabled: process.env.LOG_ENABLED === 'true',
-    logLevel: process.env.LOG_LEVEL || 'debug',
+    logLevel: process.env.LOG_LEVEL || 'error',
     logPersist: process.env.LOG_PERSIST !== 'false',
     logMaxEntries: parseInt(process.env.LOG_MAX_ENTRIES || '2000', 10),
     logCategories: process.env.LOG_CATEGORIES || 'all',
