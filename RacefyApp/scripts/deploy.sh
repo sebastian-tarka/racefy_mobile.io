@@ -103,11 +103,56 @@ check_git_status() {
     fi
 }
 
+show_app_config() {
+    print_step "Konfiguracja aplikacji"
+
+    # Parse from app.config.ts
+    local version=$(grep -oP "version:\s*'[^']*'" app.config.ts | head -1 | grep -oP "'[^']*'" | tr -d "'")
+    local build_number=$(grep -oP "buildNumber:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
+    local version_code=$(grep -oP "versionCode:\s*\d+" app.config.ts | grep -oP "\d+")
+    local bundle_id=$(grep -oP "bundleIdentifier:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
+    local package_name=$(grep -oP "package:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
+
+    echo -e "  ${BOLD}Version:${NC}         ${version:-?}"
+    echo -e "  ${BOLD}iOS Build:${NC}       ${build_number:-?}"
+    echo -e "  ${BOLD}Android Code:${NC}    ${version_code:-?}"
+    echo -e "  ${BOLD}iOS Bundle:${NC}      ${bundle_id:-?}"
+    echo -e "  ${BOLD}Android Pkg:${NC}     ${package_name:-?}"
+
+    # EAS env from eas.json per profile
+    echo ""
+    echo -e "  ${BOLD}${DIM}eas.json env:${NC}"
+
+    local staging_env=$(python3 -c "
+import json
+with open('eas.json') as f:
+    d = json.load(f)
+env = d.get('build',{}).get('staging',{}).get('env',{})
+for k,v in sorted(env.items()):
+    print(f'    {k}={v}')
+" 2>/dev/null || echo "    (nie można odczytać)")
+
+    local prod_env=$(python3 -c "
+import json
+with open('eas.json') as f:
+    d = json.load(f)
+env = d.get('build',{}).get('production',{}).get('env',{})
+for k,v in sorted(env.items()):
+    print(f'    {k}={v}')
+" 2>/dev/null || echo "    (nie można odczytać)")
+
+    echo -e "  ${CYAN}staging:${NC}"
+    echo -e "$staging_env"
+    echo -e "  ${CYAN}production:${NC}"
+    echo -e "$prod_env"
+}
+
 run_checks() {
     print_step "Sprawdzam środowisko..."
     check_eas_cli
     check_eas_login
     check_git_status
+    show_app_config
 }
 
 # ── Build Functions ──────────────────────────────────────────
