@@ -490,6 +490,13 @@
     "activities": "Activities",
     "moreActivities": "+{{count}} more",
     "leaderboard": "Leaderboard",
+    "rewards": "Rewards",
+    "rewardsDescription": "Complete this event to earn points for the ranking!",
+    "firstPlace": "1st Place",
+    "secondPlace": "2nd Place",
+    "thirdPlace": "3rd Place",
+    "finisher": "Finisher",
+    "pts": "pts",
     "tabs": {
       "details": "Details",
       "commentary": "Commentary",

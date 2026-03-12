@@ -490,6 +490,13 @@
     "activities": "Aktywności",
     "moreActivities": "+{{count}} więcej",
     "leaderboard": "Ranking",
+    "rewards": "Nagrody",
+    "rewardsDescription": "Ukończ to wydarzenie i zdobądź punkty do rankingu!",
+    "firstPlace": "1. miejsce",
+    "secondPlace": "2. miejsce",
+    "thirdPlace": "3. miejsce",
+    "finisher": "Ukończenie",
+    "pts": "pkt",
     "tabs": {
       "details": "Szczegóły",
       "commentary": "Komentarz",

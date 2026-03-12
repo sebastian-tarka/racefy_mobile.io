@@ -22,7 +22,7 @@ import { LeaderboardEntryRow } from './EventLeaderboardTabContent';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { useAuth } from '../hooks/useAuth';
-import { spacing, fontSize } from '../theme';
+import { spacing, fontSize, borderRadius } from '../theme';
 import type { Event, EventRegistration, Activity, LeaderboardEntry, User } from '../types/api';
 import type { ThemeColors } from '../theme/colors';
 
@@ -83,8 +83,8 @@ export function EventDetailsTabContent({
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoid}
-      behavior={Platform.OS === 'ios' ? 'position' : undefined}
-      keyboardVerticalOffset={0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 80}
     >
       <ScrollView
         ref={scrollViewRef}
@@ -217,6 +217,72 @@ export function EventDetailsTabContent({
             )}
           </View>
         </Card>
+
+        {/* Rewards */}
+        {event.point_rewards && (
+          event.point_rewards.first_place ||
+          event.point_rewards.second_place ||
+          event.point_rewards.third_place ||
+          event.point_rewards.finisher
+        ) && (
+          <Card style={styles.section}>
+            <View style={styles.rewardsHeader}>
+              <Ionicons name="gift-outline" size={22} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0, marginLeft: spacing.sm }]}>
+                {t('eventDetail.rewards')}
+              </Text>
+            </View>
+            <Text style={[styles.rewardsSubtitle, { color: colors.textSecondary }]}>
+              {t('eventDetail.rewardsDescription')}
+            </Text>
+            <View style={styles.rewardsGrid}>
+              {event.point_rewards.first_place != null && event.point_rewards.first_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#FFD70015', borderColor: '#FFD700' }]}>
+                  <Text style={styles.rewardMedal}>🥇</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.firstPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.first_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.second_place != null && event.point_rewards.second_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#C0C0C015', borderColor: '#C0C0C0' }]}>
+                  <Text style={styles.rewardMedal}>🥈</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.secondPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.second_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.third_place != null && event.point_rewards.third_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#CD7F3215', borderColor: '#CD7F32' }]}>
+                  <Text style={styles.rewardMedal}>🥉</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.thirdPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.third_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.finisher != null && event.point_rewards.finisher > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: colors.primaryLight + '15', borderColor: colors.primary }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.finisher')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.finisher} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
 
         {/* Registration Info */}
         {(event.registration_opens_at || event.registration_closes_at) && (
@@ -471,6 +537,42 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'center',
     paddingTop: spacing.sm,
+  },
+  rewardsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  rewardsSubtitle: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
+  },
+  rewardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  rewardItem: {
+    flex: 1,
+    minWidth: '45%',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  rewardMedal: {
+    fontSize: 28,
+  },
+  rewardPlace: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginTop: spacing.xs,
+  },
+  rewardPoints: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    marginTop: spacing.xs,
   },
   leaderboardHeader: {
     flexDirection: 'row',
