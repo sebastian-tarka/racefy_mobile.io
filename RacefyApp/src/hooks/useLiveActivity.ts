@@ -1659,7 +1659,9 @@ function useLiveActivityInternal() {
       skipNextGpsPoint.current = true;
 
       // Restart GPS tracking with sport-specific profile
-      await startGpsTracking(activity.id, activity.sport_type_id);
+      // Fallback to pre-resume state in case API response omits sport_type_id
+      const resumeSportTypeId = activity.sport_type_id ?? state.activity.sport_type_id;
+      await startGpsTracking(activity.id, resumeSportTypeId);
     } catch (error: any) {
       logger.error("activity", "Failed to resume activity", {
         id: state.activity.id,

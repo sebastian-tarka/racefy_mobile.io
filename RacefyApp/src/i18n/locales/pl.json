@@ -155,7 +155,15 @@
     "weeklyStreak": {
       "title": "Seria tygodniowa",
       "progress": "{{completed}} / {{goal}} dni",
-      "days": ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]
+      "days": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "Sb",
+        "Nd"
+      ]
     },
     "primaryCta": {
       "startTraining": "Rozpocznij trening"
@@ -1603,5 +1611,15 @@
       "followers": "Obserwujący",
       "private": "Prywatny"
     }
+  },
+  "batteryOptimization": {
+    "title": "Włącz nieograniczone śledzenie GPS",
+    "subtitle": "Aby aktywność była śledzona dokładnie, wyłącz optymalizację baterii dla Racefy. Inaczej Android może wstrzymać GPS w tle.",
+    "step1": "Naciśnij \"Otwórz ustawienia\" poniżej",
+    "step2": "Wybierz \"Bateria\"",
+    "step3": "Wybierz \"Optymalizacja baterii\" lub \"Optymalizuj użycie baterii\"",
+    "step4": "Znajdź Racefy i ustaw \"Nie optymalizuj\" lub \"Brak ograniczeń\"",
+    "openSettings": "Otwórz ustawienia aplikacji",
+    "dismiss": "Zrobię to później"
   }
 }

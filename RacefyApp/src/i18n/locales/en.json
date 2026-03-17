@@ -155,7 +155,15 @@
     "weeklyStreak": {
       "title": "Weekly Streak",
       "progress": "{{completed}} / {{goal}} days",
-      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ]
     },
     "primaryCta": {
       "startTraining": "Start Training"
@@ -1601,5 +1609,15 @@
       "followers": "Followers",
       "private": "Private"
     }
+  },
+  "batteryOptimization": {
+    "title": "Enable Unrestricted GPS",
+    "subtitle": "For accurate activity tracking, disable battery optimization for Racefy. Otherwise Android may pause GPS in the background.",
+    "step1": "Tap \"Open App Settings\" below",
+    "step2": "Tap \"Battery\"",
+    "step3": "Tap \"Battery optimization\" or \"Optimize battery usage\"",
+    "step4": "Find Racefy and select \"Don't optimize\" or \"No restrictions\"",
+    "openSettings": "Open App Settings",
+    "dismiss": "I'll do it later"
   }
 }

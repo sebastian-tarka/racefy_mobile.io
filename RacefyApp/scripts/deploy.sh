@@ -353,6 +353,62 @@ build_android_local() {
     fi
 }
 
+# ── Dev Install ──────────────────────────────────────────────
+
+install_android_dev() {
+    print_step "Instalacja na telefonie (tryb development)"
+    print_info "Buduje debug APK i instaluje na podłączonym urządzeniu"
+    echo ""
+
+    # Check for connected devices
+    local devices
+    devices=$(adb devices 2>/dev/null | grep -v "List of devices" | grep "device$" | wc -l)
+    if [[ "$devices" -eq 0 ]]; then
+        print_error "Brak podłączonych urządzeń! Podłącz telefon przez USB i włącz USB debugging."
+        return 1
+    fi
+    print_success "Wykryto $devices urządzenie(a)"
+    adb devices | grep -v "List of devices" | grep "device$"
+    echo ""
+
+    echo -e "  ${BOLD}Metoda instalacji:${NC}"
+    echo -e "  ${CYAN}1)${NC} expo run:android ${DIM}— automatyczny build + install (zalecane)${NC}"
+    echo -e "  ${CYAN}2)${NC} Lokalny debug APK ${DIM}— gradlew assembleDebug + adb install${NC}"
+    echo -e -n "\n  Wybierz [1/2]: "
+    read -r choice
+
+    echo ""
+    case "$choice" in
+        2)
+            print_step "1/3 Generuję native project..."
+            npx expo prebuild --platform android
+
+            print_step "2/3 Buduję debug APK..."
+            local java_home="${JAVA_HOME:-$HOME/android-studio/jbr}"
+            local android_home="${ANDROID_HOME:-$HOME/Android/Sdk}"
+
+            JAVA_HOME="$java_home" \
+            ANDROID_HOME="$android_home" \
+            ./android/gradlew app:assembleDebug
+
+            local apk_path="android/app/build/outputs/apk/debug/app-debug.apk"
+            if [[ -f "$apk_path" ]]; then
+                print_step "3/3 Instaluję na urządzeniu..."
+                adb install -r "$apk_path"
+                print_success "Zainstalowano! Uruchom 'npm run start:adb' aby połączyć z dev serverem."
+            else
+                print_error "APK nie znaleziony: $apk_path"
+            fi
+            ;;
+        *)
+            print_info "Komenda: npx expo run:android"
+            print_warn "To polecenie samo buduje i instaluje app na urządzeniu."
+            echo ""
+            npx expo run:android
+            ;;
+    esac
+}
+
 # ── Dev Server ───────────────────────────────────────────────
 
 start_dev_server() {
@@ -402,6 +458,7 @@ show_menu() {
     echo ""
     echo -e " ${BOLD}${GREEN}🛠  DEV & STATUS${NC}"
     echo -e "  ${CYAN}7)${NC}  Start dev server ${DIM}— uruchom Expo (USB/standard/clear)${NC}"
+    echo -e "  ${CYAN}d)${NC}  Zainstaluj na telefonie ${DIM}— debug build na podłączone urządzenie${NC}"
     echo -e "  ${CYAN}8)${NC}  Historia buildów ${DIM}— lista ostatnich buildów${NC}"
     echo -e "  ${CYAN}9)${NC}  Zmienne środowiskowe ${DIM}— pokaż EAS env vars${NC}"
     echo ""
@@ -426,6 +483,7 @@ main() {
             5) build_ios_staging ;;
             6) submit_ios_testflight ;;
             7) start_dev_server ;;
+            d|D) install_android_dev ;;
             8) show_build_history ;;
             9) show_env_vars ;;
             0)

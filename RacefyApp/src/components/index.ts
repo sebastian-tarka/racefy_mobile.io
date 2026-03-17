@@ -6,6 +6,7 @@ export * from './AiPostsSettings';
 export * from './BoostButton';
 export * from './Avatar';
 export * from './Badge';
+export { BatteryOptimizationModal } from './BatteryOptimizationModal/BatteryOptimizationModal';
 export * from './BrandLogo';
 export * from './Button';
 export * from './Card';
