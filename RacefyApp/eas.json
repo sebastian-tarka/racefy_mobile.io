@@ -31,7 +31,8 @@
         "LOG_PERSIST": "true",
         "LOG_CATEGORIES": "gps,activity",
         "LOG_CONSOLE_OUTPUT": "true",
-        "MAPBOX_ENABLED": "true"
+        "MAPBOX_ENABLED": "true",
+        "GOOGLE_WEB_CLIENT_ID": "663721589252-3bvrjsrr3v55vnerbgu2a2n9t7s1i1vj.apps.googleusercontent.com"
       }
     },
     "production": {

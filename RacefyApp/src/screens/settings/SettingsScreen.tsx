@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
@@ -228,6 +229,7 @@ export function SettingsScreen({ navigation }: Props) {
     activityDefaults: false,
     healthSync: false,
     aiPosts: false,
+    notifDebug: false,
     app: true,
     dangerZone: false,
   });
@@ -963,6 +965,92 @@ export function SettingsScreen({ navigation }: Props) {
 
         {/* Debug Logs (only visible in dev mode when enabled) */}
         <DebugLogsSection />
+
+        {/* Notification Debug - test if local notification tap opens app */}
+        {__DEV__ && (
+          <SettingsSection
+            title="Notification Debug"
+            isExpanded={expandedSections.notifDebug}
+            onToggle={() => toggleSection('notifDebug')}
+          >
+            <View style={{ padding: spacing.md }}>
+              <Button
+                title="Send test notification (5s delay)"
+                onPress={async () => {
+                  try {
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: 'Test Notification',
+                        body: 'Tap this to test if the app opens! Sent at ' + new Date().toLocaleTimeString(),
+                        data: { type: 'test', post_id: 1 },
+                        sound: 'default',
+                      },
+                      trigger: {
+                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                        seconds: 5,
+                      },
+                    });
+                    Alert.alert('Scheduled', 'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.');
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title="Send immediate notification"
+                onPress={async () => {
+                  try {
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: 'Immediate Test',
+                        body: 'Tap to test app opening. ' + new Date().toLocaleTimeString(),
+                        data: { type: 'test' },
+                        sound: 'default',
+                      },
+                      trigger: null,
+                    });
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title="Show Push Token"
+                onPress={async () => {
+                  try {
+                    const token = await Notifications.getExpoPushTokenAsync({
+                      projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
+                    });
+                    Alert.alert('Expo Push Token', token.data, [
+                      { text: 'Copy', onPress: () => {
+                        const Clipboard = require('react-native').Clipboard || require('@react-native-clipboard/clipboard')?.default;
+                        Clipboard?.setString?.(token.data);
+                      }},
+                      { text: 'OK' },
+                    ]);
+                  } catch (e: any) {
+                    Alert.alert('Error getting token', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.md }} />
+              <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
+                Test 1 - Lokalna notyfikacja:{'\n'}
+                1. "Send test notification (5s delay)"{'\n'}
+                2. Zminimalizuj appkę{'\n'}
+                3. Tapnij powiadomienie{'\n'}
+                {'\n'}
+                Test 2 - Push via Expo Tool:{'\n'}
+                1. "Show Push Token" → skopiuj token{'\n'}
+                2. Wejdź na expo.dev/notifications{'\n'}
+                3. Wklej token i wyślij{'\n'}
+                4. Tapnij powiadomienie
+              </Text>
+            </View>
+          </SettingsSection>
+        )}
 
         {/* App Section */}
         <SettingsSection

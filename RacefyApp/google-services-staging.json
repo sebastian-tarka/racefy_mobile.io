@@ -12,7 +12,12 @@
           "package_name": "com.racefy.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "663721589252-3bvrjsrr3v55vnerbgu2a2n9t7s1i1vj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDfJ4KarakLrmtpqnE4A_fmDeBT711oGVM"
