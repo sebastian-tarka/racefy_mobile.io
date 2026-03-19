@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Image, StyleSheet, ActivityIndicator } from 'react-native';
-import { SvgUri } from 'react-native-svg';
+import { SvgUri, SvgXml } from 'react-native-svg';
 import { useBrandAssets } from '../hooks/useBrandAssets';
 import { useTheme } from '../hooks/useTheme';
+import { getFallbackSvg } from './brandLogoFallbacks';
 import type { BrandAssetCategory, BrandAssetVariant } from '../types/api';
 
 interface BrandLogoProps {
@@ -47,8 +48,8 @@ export function BrandLogo({
   style,
   showLoading = true,
 }: BrandLogoProps) {
-  const { colors } = useTheme();
-  const { getAsset, isLoading } = useBrandAssets();
+  const { colors, isDark } = useTheme();
+  const { getAsset, isLoading, error } = useBrandAssets();
 
   const asset = getAsset(category, variant);
   const defaultSize = DEFAULT_SIZES[category];
@@ -66,6 +67,19 @@ export function BrandLogo({
   }
 
   if (!asset?.url) {
+    // Fallback to local SVG when API is unavailable
+    const fallbackSvg = getFallbackSvg(category, variant, isDark);
+    if (fallbackSvg) {
+      return (
+        <View style={[styles.container, style]}>
+          <SvgXml
+            xml={fallbackSvg}
+            width={logoWidth}
+            height={logoHeight}
+          />
+        </View>
+      );
+    }
     // Return empty view with same dimensions to prevent layout shift
     return <View style={[styles.container, { width: logoWidth, height: logoHeight }, style]} />;
   }

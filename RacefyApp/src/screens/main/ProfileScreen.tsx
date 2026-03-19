@@ -31,6 +31,7 @@ import {
   type TimeRange,
   type PeriodOption,
 } from '../../components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useActivityStats } from '../../hooks/useActivityStats';
@@ -73,6 +74,8 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -762,7 +765,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           ListHeaderComponent={stableProfileHeader}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

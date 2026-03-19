@@ -12,6 +12,7 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -62,7 +63,12 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { formatDistance: fmtDistance } = useUnits();
+
+  // Bottom offset for floating buttons to clear the tab bar (60px + safe area)
+  const tabBarHeight = 60 + insets.bottom;
+  const fabBottom = tabBarHeight + spacing.md;
   const { isAuthenticated } = useAuth();
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -1066,7 +1072,9 @@ export function ActivityRecordingScreen() {
       {/* Animated container to move buttons above routes panel */}
       {gpsProfile?.enabled && (
         <Animated.View
+          pointerEvents="box-none"
           style={{
+            ...StyleSheet.absoluteFillObject,
             transform: [{ translateY: toggleButtonsPosition }],
           }}
         >
@@ -1081,7 +1089,7 @@ export function ActivityRecordingScreen() {
 
           {/* Nearby routes toggle - only visible in idle state and map view */}
           {isIdle && viewMode === 'map' && (
-            <View style={styles.routesToggleContainer}>
+            <View style={[styles.routesToggleContainer, { bottom: fabBottom + 70 }]}>
               <TouchableOpacity
                 style={[
                   styles.routesToggleButton,
@@ -1109,7 +1117,7 @@ export function ActivityRecordingScreen() {
 
           {/* Re-center button - visible when user has panned away in map view */}
           {viewMode === 'map' && !followUser && (
-            <View style={styles.recenterContainer}>
+            <View style={[styles.recenterContainer, { bottom: fabBottom + 210 }]}>
               <TouchableOpacity
                 style={[styles.recenterButton, { backgroundColor: colors.primary }]}
                 onPress={() => {
@@ -1126,7 +1134,7 @@ export function ActivityRecordingScreen() {
 
           {/* Map style toggle - only visible in map view */}
           {viewMode === 'map' && (
-            <View style={styles.mapStyleToggleContainer}>
+            <View style={[styles.mapStyleToggleContainer, { bottom: fabBottom + 140 }]}>
               <TouchableOpacity
                 style={[styles.mapStyleToggleButton, { backgroundColor: colors.cardBackground }]}
                 onPress={handleMapStyleToggle}
@@ -1150,7 +1158,7 @@ export function ActivityRecordingScreen() {
 
           {/* DEV ONLY: Toggle between inline map and MapboxLiveMap component */}
           {__DEV__ && viewMode === 'map' && (
-            <View style={styles.devMapToggleContainer}>
+            <View style={[styles.devMapToggleContainer, { bottom: fabBottom + 280 }]}>
               <TouchableOpacity
                 style={[
                   styles.mapStyleToggleButton,
@@ -1503,7 +1511,6 @@ const styles = StyleSheet.create({
   // Nearby routes toggle container and button (matching ViewToggleButton style)
   routesToggleContainer: {
     position: 'absolute',
-    bottom: spacing.xxl + 70, // Position above ViewToggleButton
     right: spacing.lg,
   },
   routesToggleButton: {
@@ -1523,7 +1530,6 @@ const styles = StyleSheet.create({
   // Re-center button container and button
   recenterContainer: {
     position: 'absolute',
-    bottom: spacing.xxl + 210, // Position above map style toggle
     right: spacing.lg,
   },
   recenterButton: {
@@ -1542,13 +1548,11 @@ const styles = StyleSheet.create({
   // Map style toggle container and button
   mapStyleToggleContainer: {
     position: 'absolute',
-    bottom: spacing.xxl + 140, // Position above routes toggle
     right: spacing.lg,
   },
   // DEV: Map component toggle (above re-center button)
   devMapToggleContainer: {
     position: 'absolute',
-    bottom: spacing.xxl + 280, // Position above re-center button
     right: spacing.lg,
   },
   mapStyleToggleButton: {

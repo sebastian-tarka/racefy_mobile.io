@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivityContext } from '../../hooks/useLiveActivity';
@@ -47,6 +48,8 @@ type ConnectionStatus = {
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
@@ -156,7 +159,7 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarPaddingBottom }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

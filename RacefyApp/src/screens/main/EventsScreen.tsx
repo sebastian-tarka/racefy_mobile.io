@@ -14,9 +14,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EventCard, Loading, EmptyState, RewardCard, ScreenContainer } from '../../components';
+import { EventCard, Loading, EmptyState, RewardCard, ScreenContainer, AnimatedListItem } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -40,6 +41,8 @@ type RewardFilterOption = 'all' | 'points' | 'coupon' | 'badge' | 'prize';
 export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const { isAuthenticated } = useAuth();
   const {
     events,
@@ -430,7 +433,7 @@ export function EventsScreen({ navigation, route }: Props) {
               tintColor={colors.primary}
             />
           }
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
         />
       </>
     );
@@ -487,7 +490,7 @@ export function EventsScreen({ navigation, route }: Props) {
             }}
           />
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
         keyboardShouldPersistTaps="handled"
       />
     );
@@ -562,8 +565,10 @@ export function EventsScreen({ navigation, route }: Props) {
           <FlatList
             data={events}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <EventCard event={item} onPress={() => handleEventPress(item.id)} />
+            renderItem={({ item, index }) => (
+              <AnimatedListItem index={index}>
+                <EventCard event={item} onPress={() => handleEventPress(item.id)} />
+              </AnimatedListItem>
             )}
             ListEmptyComponent={
               isLoading ? (
@@ -611,7 +616,7 @@ export function EventsScreen({ navigation, route }: Props) {
             }
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
           />
         </>
       )}

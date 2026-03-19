@@ -21,11 +21,13 @@ import {
   Loading,
   EmptyState,
   ScreenContainer,
+  AnimatedListItem,
 } from '../../components';
 import { ActivitiesFeedPreview } from './home/components';
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
 import { api } from '../../services/api';
@@ -55,7 +57,9 @@ interface SearchResults {
 
 export function FeedScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const { user, isAuthenticated } = useAuth();
   const { count: unreadCount, refresh: refreshUnreadCount } = useUnreadCount();
   const {
@@ -214,7 +218,8 @@ export function FeedScreen({ navigation, route }: Props) {
     navigation.navigate('PostForm', { postId });
   };
 
-  const renderFeedItem = useCallback(({ item }: { item: Post }) => (
+  const renderFeedItem = useCallback(({ item, index }: { item: Post; index: number }) => (
+    <AnimatedListItem index={index}>
     <FeedCard
       post={item}
       isOwner={item.is_owner ?? item.user_id === user?.id}
@@ -249,6 +254,7 @@ export function FeedScreen({ navigation, route }: Props) {
         else if (action === 'edit') handleEditPost(item.id);
       }}
     />
+    </AnimatedListItem>
   ), [user?.id, toggleLike, navigation, handleDeletePost, handleReportPost, resharePost, unresharePost]);
 
   const renderSearchResults = () => {
@@ -548,7 +554,7 @@ export function FeedScreen({ navigation, route }: Props) {
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
         />
       )}
     </ScreenContainer>
