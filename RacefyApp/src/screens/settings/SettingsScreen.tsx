@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
@@ -1025,8 +1026,7 @@ export function SettingsScreen({ navigation }: Props) {
                     });
                     Alert.alert('Expo Push Token', token.data, [
                       { text: 'Copy', onPress: () => {
-                        const Clipboard = require('react-native').Clipboard || require('@react-native-clipboard/clipboard')?.default;
-                        Clipboard?.setString?.(token.data);
+                        Clipboard.setStringAsync(token.data);
                       }},
                       { text: 'OK' },
                     ]);

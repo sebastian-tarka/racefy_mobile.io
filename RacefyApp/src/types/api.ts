@@ -1834,8 +1834,15 @@ export interface AppConfigPush {
   token_method: 'getExpoPushTokenAsync' | 'getDevicePushTokenAsync';
 }
 
+export interface AppConfigMaintenance {
+  enabled: boolean;
+  message: string | null;
+  estimated_end: string | null;
+}
+
 export interface AppConfigResponse {
   push: AppConfigPush;
+  maintenance: AppConfigMaintenance;
 }
 
 // ============ DEVICE REGISTRATION (Push Notifications) ============

@@ -91,6 +91,9 @@ export function ActivityRecordingScreen() {
   // Production/staging always uses LiveMap; dev mode allows switching for comparison
   const [useLiveMapComponent, setUseLiveMapComponent] = useState(true);
 
+  // Map follow user state (false when user pans/zooms the map)
+  const [followUser, setFollowUser] = useState(true);
+
   // Map style selection
   type MapStyleType = 'outdoors' | 'streets' | 'satellite';
   const [mapStyle, setMapStyle] = useState<MapStyleType>('outdoors');
@@ -984,7 +987,7 @@ export function ActivityRecordingScreen() {
   // MAIN RENDER
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <ScreenContainer>
+    <ScreenContainer edges={['top']}>
       {/* Idle Header */}
       {status === 'idle' && (
         <View style={[styles.idleHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -1008,12 +1011,13 @@ export function ActivityRecordingScreen() {
               livePointsVersion={livePointsVersion}
               currentPosition={currentPosition || previewLocation}
               gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
-              followUser={true}
+              followUser={followUser}
               mapStyle={mapStyle}
               nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
               shadowTrack={selectedShadowTrack?.track_data || null}
               selectedRouteId={selectedShadowTrack?.id || null}
               onRouteSelect={handleRouteSelect}
+              onFollowUserChanged={setFollowUser}
             />
 
             {/* Nearby routes list (idle state only) */}
@@ -1099,6 +1103,23 @@ export function ActivityRecordingScreen() {
                   size={28}
                   color={showNearbyRoutesToggle ? '#fff' : colors.textSecondary}
                 />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Re-center button - visible when user has panned away in map view */}
+          {viewMode === 'map' && !followUser && (
+            <View style={styles.recenterContainer}>
+              <TouchableOpacity
+                style={[styles.recenterButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setFollowUser(true);
+                  triggerHaptic();
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel={t('recording.recenter')}
+              >
+                <Ionicons name="navigate" size={24} color="#fff" />
               </TouchableOpacity>
             </View>
           )}
@@ -1499,16 +1520,35 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
 
+  // Re-center button container and button
+  recenterContainer: {
+    position: 'absolute',
+    bottom: spacing.xxl + 210, // Position above map style toggle
+    right: spacing.lg,
+  },
+  recenterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+
   // Map style toggle container and button
   mapStyleToggleContainer: {
     position: 'absolute',
     bottom: spacing.xxl + 140, // Position above routes toggle
     right: spacing.lg,
   },
-  // DEV: Map component toggle (above map style toggle)
+  // DEV: Map component toggle (above re-center button)
   devMapToggleContainer: {
     position: 'absolute',
-    bottom: spacing.xxl + 210, // Position above map style toggle
+    bottom: spacing.xxl + 280, // Position above re-center button
     right: spacing.lg,
   },
   mapStyleToggleButton: {

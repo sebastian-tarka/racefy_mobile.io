@@ -6,6 +6,7 @@ import { AuthProvider } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 import { LiveActivityProvider } from './src/hooks/useLiveActivity';
 import { UnitsProvider } from './src/hooks/useUnits';
+import { MaintenanceProvider } from './src/hooks/useMaintenance';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { AppNavigator } from './src/navigation';
 
@@ -34,11 +35,13 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <UnitsProvider>
-          <AuthProvider>
-            <LiveActivityProvider>
-              <AppContent />
-            </LiveActivityProvider>
-          </AuthProvider>
+          <MaintenanceProvider>
+            <AuthProvider>
+              <LiveActivityProvider>
+                <AppContent />
+              </LiveActivityProvider>
+            </AuthProvider>
+          </MaintenanceProvider>
         </UnitsProvider>
       </ThemeProvider>
     </SafeAreaProvider>

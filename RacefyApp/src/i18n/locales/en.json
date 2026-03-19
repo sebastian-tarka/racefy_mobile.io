@@ -66,21 +66,33 @@
     "tagline": "Sports & Fitness Community"
   },
   "landing": {
-    "heroTitle": "Your Fitness Journey Starts Here",
-    "heroSubtitle": "Track your activities, connect with athletes, and join exciting sports events in your community",
-    "whyRacefy": "Why Choose Racefy?",
+    "heroTitlePart1": "Your Sports & Fitness",
+    "heroTitleHighlight": "Community",
+    "heroSubtitle": "Connect with athletes, share your activities, join events, and track your fitness journey together.",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "getStartedFree": "Get Started Free",
+    "exploreEvents": "Explore Events",
     "features": {
-      "track": {
-        "title": "Track Activities",
-        "description": "Record your workouts with GPS tracking, monitor your progress, and analyze your performance over time"
-      },
       "connect": {
-        "title": "Connect with Athletes",
-        "description": "Join a vibrant community of fitness enthusiasts, share achievements, and motivate each other"
+        "title": "Connect",
+        "description": "Follow athletes, share posts, and build your fitness community."
       },
       "events": {
-        "title": "Join Events",
-        "description": "Discover local sports events, register for competitions, and challenge yourself with new goals"
+        "title": "Events",
+        "description": "Create and join local sports events, races, and group activities."
+      },
+      "track": {
+        "title": "Track",
+        "description": "Log your activities, track progress, and celebrate achievements."
+      },
+      "liveCommentary": {
+        "title": "Live Commentary",
+        "description": "Follow events in real time with live chat and comments from participants and spectators."
+      },
+      "trainingPlans": {
+        "title": "Training Plans",
+        "description": "Get personalized AI-powered training programs tailored to your goals and fitness level."
       }
     },
     "ctaTitle": "Ready to Get Moving?",
@@ -687,6 +699,7 @@
     "viewStats": "Stats View",
     "toggleView": "Toggle View",
     "routes": "Routes",
+    "recenter": "Re-center map",
     "mapStyle": "Map Style",
     "mapStyleOutdoors": "Outdoors",
     "mapStyleStreets": "Streets",
@@ -1619,5 +1632,12 @@
     "step4": "Find Racefy and select \"Don't optimize\" or \"No restrictions\"",
     "openSettings": "Open App Settings",
     "dismiss": "I'll do it later"
+  },
+  "maintenance": {
+    "title": "Maintenance in Progress",
+    "defaultMessage": "We're performing scheduled maintenance. The app will be back shortly.",
+    "estimatedEnd": "Estimated completion:",
+    "retry": "Check Again",
+    "today": "today"
   }
 }

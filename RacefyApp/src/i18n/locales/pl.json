@@ -66,21 +66,33 @@
     "tagline": "Społeczność sportowa i fitness"
   },
   "landing": {
-    "heroTitle": "Twoja przygoda z fitnessem zaczyna się tutaj",
-    "heroSubtitle": "Śledź aktywności, łącz się ze sportowcami i dołączaj do ekscytujących wydarzeń sportowych w Twojej okolicy",
-    "whyRacefy": "Dlaczego Racefy?",
+    "heroTitlePart1": "Twoja Sportowa",
+    "heroTitleHighlight": "Społeczność",
+    "heroSubtitle": "Łącz się ze sportowcami, dziel się aktywnościami, dołączaj do wydarzeń i śledź swoją drogę fitness razem.",
+    "login": "Zaloguj",
+    "signUp": "Rejestracja",
+    "getStartedFree": "Zacznij za darmo",
+    "exploreEvents": "Zobacz wydarzenia",
     "features": {
-      "track": {
-        "title": "Śledź aktywności",
-        "description": "Nagrywaj treningi z GPS, monitoruj postępy i analizuj swoje wyniki w czasie"
-      },
       "connect": {
-        "title": "Łącz się ze sportowcami",
-        "description": "Dołącz do aktywnej społeczności miłośników fitnessu, dziel się osiągnięciami i motywujcie się nawzajem"
+        "title": "Społeczność",
+        "description": "Obserwuj sportowców, udostępniaj posty i buduj swoją społeczność fitness."
       },
       "events": {
-        "title": "Dołączaj do wydarzeń",
-        "description": "Odkrywaj lokalne wydarzenia sportowe, rejestruj się na zawody i stawiaj sobie nowe cele"
+        "title": "Wydarzenia",
+        "description": "Twórz i dołączaj do lokalnych wydarzeń sportowych, wyścigów i aktywności grupowych."
+      },
+      "track": {
+        "title": "Śledzenie",
+        "description": "Rejestruj aktywności, śledź postępy i świętuj osiągnięcia."
+      },
+      "liveCommentary": {
+        "title": "Komentarz na żywo",
+        "description": "Śledź wydarzenia w czasie rzeczywistym z czatem i komentarzami uczestników i widzów."
+      },
+      "trainingPlans": {
+        "title": "Plany treningowe",
+        "description": "Otrzymuj spersonalizowane plany treningowe AI dopasowane do Twoich celów i poziomu fitness."
       }
     },
     "ctaTitle": "Gotowy do działania?",
@@ -687,6 +699,7 @@
     "viewStats": "Widok statystyk",
     "toggleView": "Przełącz widok",
     "routes": "Trasy",
+    "recenter": "Wyśrodkuj mapę",
     "mapStyle": "Styl mapy",
     "mapStyleOutdoors": "Terenowa",
     "mapStyleStreets": "Ulice",
@@ -1621,5 +1634,12 @@
     "step4": "Znajdź Racefy i ustaw \"Nie optymalizuj\" lub \"Brak ograniczeń\"",
     "openSettings": "Otwórz ustawienia aplikacji",
     "dismiss": "Zrobię to później"
+  },
+  "maintenance": {
+    "title": "Prace serwisowe",
+    "defaultMessage": "Trwają zaplanowane prace serwisowe. Aplikacja wróci wkrótce.",
+    "estimatedEnd": "Przewidywane zakończenie:",
+    "retry": "Sprawdź ponownie",
+    "today": "dziś"
   }
 }

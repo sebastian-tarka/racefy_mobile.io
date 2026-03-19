@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
+import { useMaintenance } from '../hooks/useMaintenance';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
 import { triggerHaptic } from '../hooks/useHaptics';
@@ -47,6 +48,7 @@ import {
   TipDetailScreen,
   WeekFeedbackScreen,
 } from '../screens/training';
+import { MaintenanceScreen } from '../screens/maintenance/MaintenanceScreen';
 
 // Types
 import type {
@@ -580,12 +582,18 @@ function NavigationStyleSetter({ children }: { children: React.ReactNode }) {
 export function AppNavigator() {
   const { isLoading, isAuthenticated, requiresConsent } = useAuth();
   const { colors, isDark } = useTheme();
+  const { isMaintenanceMode } = useMaintenance();
 
   // Initialize push notifications with navigation ref for deep linking
   usePushNotifications({ navigationRef });
 
   if (isLoading) {
     return <Loading fullScreen message="Loading..." />;
+  }
+
+  // Show maintenance screen when server is in maintenance mode
+  if (isMaintenanceMode) {
+    return <MaintenanceScreen />;
   }
 
   // Create custom theme for React Navigation

@@ -17,6 +17,7 @@ export const appendXdebugTrigger = (url: string): string => {
 export class ApiBase {
   private token: string | null = null;
   private onUnauthorizedCallback: (() => void) | null = null;
+  private onMaintenanceModeCallback: ((data: { message?: string; estimated_end?: string }) => void) | null = null;
   /** In-flight GET requests — concurrent identical calls share the same Promise */
   private readonly inflightRequests = new Map<string, Promise<unknown>>();
 
@@ -34,6 +35,13 @@ export class ApiBase {
    */
   setOnUnauthorized(callback: () => void) {
     this.onUnauthorizedCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 503 maintenance mode response is received.
+   */
+  setOnMaintenanceMode(callback: ((data: { message?: string; estimated_end?: string }) => void) | null) {
+    this.onMaintenanceModeCallback = callback;
   }
 
   /**
@@ -118,6 +126,14 @@ export class ApiBase {
             duration,
             error: (data as Types.ApiError).message,
           });
+        }
+
+        // Handle 503 Maintenance Mode
+        if (response.status === 503 && (data as any).maintenance) {
+          logger.warn('api', 'Server in maintenance mode', { endpoint });
+          if (this.onMaintenanceModeCallback) {
+            this.onMaintenanceModeCallback(data as any);
+          }
         }
 
         // Handle 401 Unauthorized - token expired or invalid

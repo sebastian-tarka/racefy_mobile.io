@@ -6,7 +6,7 @@
  * Shows live route polyline, user location marker, GPS signal indicator, and optional shadow track.
  */
 
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-native';
 import * as Location from 'expo-location';
 import { logger } from '../services/logger';
@@ -76,6 +76,7 @@ export interface MapboxLiveMapProps {
   shadowTrack?: GeoJSONLineString | null;
   selectedRouteId?: number | null;
   onRouteSelect?: (route: NearbyRoute) => void;
+  onFollowUserChanged?: (following: boolean) => void;
 }
 
 /**
@@ -94,6 +95,7 @@ export function MapboxLiveMap({
   nearbyRoutes,
   shadowTrack,
   selectedRouteId,
+  onFollowUserChanged,
 }: MapboxLiveMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -102,7 +104,26 @@ export function MapboxLiveMap({
   const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  const [isFollowing, setIsFollowing] = useState(followUser);
+  const prevFollowUserRef = useRef(followUser);
+
   const mapboxAvailable = !!MapboxGL && !!MAPBOX_ACCESS_TOKEN;
+
+  // Sync isFollowing when parent explicitly changes followUser (e.g. re-center button)
+  useEffect(() => {
+    if (followUser !== prevFollowUserRef.current) {
+      setIsFollowing(followUser);
+      prevFollowUserRef.current = followUser;
+    }
+  }, [followUser]);
+
+  // Handle user interaction with the map (pan/zoom) — stop following
+  const handleUserInteraction = useCallback(() => {
+    if (isFollowing) {
+      setIsFollowing(false);
+      onFollowUserChanged?.(false);
+    }
+  }, [isFollowing, onFollowUserChanged]);
 
   // Fetch current location for preview when currentPosition is null (idle state)
   useEffect(() => {
@@ -246,16 +267,16 @@ export function MapboxLiveMap({
         attributionEnabled={false}
         compassEnabled={false}
         onDidFinishLoadingMap={onMapReadyInternal}
+        onTouchStart={handleUserInteraction}
       >
-        {/* Camera follows user position */}
-        {followUser && (
-          <MapboxGL.Camera
-            ref={cameraRef}
-            centerCoordinate={[displayPosition.lng, displayPosition.lat]}
-            zoomLevel={15}
-            animationMode="none"
-          />
-        )}
+        {/* Camera follows user position — stops when user pans/zooms */}
+        <MapboxGL.Camera
+          ref={cameraRef}
+          centerCoordinate={isFollowing ? [displayPosition.lng, displayPosition.lat] : undefined}
+          zoomLevel={isFollowing ? 15 : undefined}
+          animationMode={isFollowing ? 'easeTo' : 'none'}
+          animationDuration={isFollowing ? 500 : 0}
+        />
 
         {/* All nearby routes as gray base layer */}
         {validNearbyRoutes.map(route => {
