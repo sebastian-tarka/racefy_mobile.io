@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 
 // Services
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { homeAnalytics } from '../../services/homeAnalytics';
 import { navigateForCtaActionFromTab } from '../../utils/homeNavigation';
 import { useRefreshOn } from '../../services/refreshEvents';
@@ -38,7 +39,7 @@ import {
   CollapsibleTipCard,
   LiveEventsCard,
 } from './home/components';
-import { Loading, FadeInView, ScreenContainer } from '../../components';
+import { Loading, FadeInView, ScreenContainer, DraftsReminderModal } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -101,6 +102,11 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
+
+  // Drafts reminder modal — once per app session
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
+  const [reminderDrafts, setReminderDrafts] = useState<import('../../types/api').DraftPost[]>([]);
+  const draftsReminderShown = useRef(false);
 
   // Get greeting based on time of day
   const getGreeting = useCallback(() => {
@@ -170,6 +176,27 @@ export function DynamicHomeScreen({ navigation }: Props) {
       loadAvailableTips();
     }, [loadAvailableTips])
   );
+
+  // Check for pending drafts once per session
+  useEffect(() => {
+    if (!isAuthenticated || draftsReminderShown.current) return;
+
+    const checkDrafts = async () => {
+      try {
+        const response = await api.getDrafts({ page: 1, per_page: 5 });
+        logger.debug('general', 'Drafts reminder check', { count: response.data.length });
+        if (response.data.length > 0) {
+          setReminderDrafts(response.data);
+          setShowDraftsModal(true);
+          draftsReminderShown.current = true;
+        }
+      } catch (err) {
+        logger.debug('general', 'Failed to check drafts for reminder', { error: err });
+      }
+    };
+
+    checkDrafts();
+  }, [isAuthenticated]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -396,6 +423,28 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
       </ScrollView>
+
+      {isAuthenticated && (
+        <DraftsReminderModal
+          visible={showDraftsModal}
+          onClose={() => setShowDraftsModal(false)}
+          drafts={reminderDrafts}
+          onPublish={async (postId) => {
+            await api.publishDraft(postId);
+            const remaining = reminderDrafts.filter((d) => d.id !== postId);
+            setReminderDrafts(remaining);
+            if (remaining.length === 0) {
+              setShowDraftsModal(false);
+            }
+          }}
+          onEdit={(draft) => {
+            navigation.getParent()?.navigate('PostForm', { postId: draft.id });
+          }}
+          onViewAll={() => {
+            navigation.navigate('Profile', { initialTab: 'drafts' });
+          }}
+        />
+      )}
     </ScreenContainer>
   );
 }

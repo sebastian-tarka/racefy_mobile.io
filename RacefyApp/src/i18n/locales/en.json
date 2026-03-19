@@ -323,7 +323,11 @@
     "aiGenerated": "AI Generated",
     "draftBanner": "This is a draft and only visible to you",
     "loadingDrafts": "Loading drafts...",
-    "refreshing": "Refreshing..."
+    "refreshing": "Refreshing...",
+    "reminderTitle": "You have unpublished drafts",
+    "reminderSubtitle": "Review and publish your drafts",
+    "viewAll": "View all drafts",
+    "dismissReminder": "Later"
   },
   "profile": {
     "title": "Profile",

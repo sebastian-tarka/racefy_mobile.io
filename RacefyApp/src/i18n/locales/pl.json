@@ -323,7 +323,11 @@
     "aiGenerated": "Wygenerowane przez AI",
     "draftBanner": "Ten post jest wersją roboczą i jest widoczny tylko dla Ciebie",
     "loadingDrafts": "Ładowanie wersji roboczych...",
-    "refreshing": "Odświeżanie..."
+    "refreshing": "Odświeżanie...",
+    "reminderTitle": "Masz nieopublikowane wersje robocze",
+    "reminderSubtitle": "Przejrzyj i opublikuj swoje wersje robocze",
+    "viewAll": "Zobacz wszystkie wersje robocze",
+    "dismissReminder": "Później"
   },
   "profile": {
     "title": "Profil",

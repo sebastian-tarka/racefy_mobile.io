@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
@@ -7,6 +7,7 @@ import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -31,6 +32,7 @@ import {
   Loading,
   TipCard,
   ScreenContainer,
+  DraftsReminderModal,
 } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -77,6 +79,11 @@ export function HomeScreen({ navigation }: Props) {
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
 
+  // Drafts reminder modal — once per app session
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
+  const [reminderDrafts, setReminderDrafts] = useState<import('../../types/api').DraftPost[]>([]);
+  const draftsReminderShown = useRef(false);
+
   const loadAvailableTips = useCallback(async () => {
     if (!isAuthenticated) {
       setAvailableTips([]);
@@ -120,6 +127,27 @@ export function HomeScreen({ navigation }: Props) {
   useEffect(() => {
     loadAvailableTips();
   }, [loadAvailableTips]);
+
+  // Check for pending drafts once per session
+  useEffect(() => {
+    if (!isAuthenticated || draftsReminderShown.current) return;
+
+    const checkDrafts = async () => {
+      try {
+        const response = await api.getDrafts({ page: 1, per_page: 5 });
+        logger.debug('general', 'Drafts reminder check', { count: response.data.length });
+        if (response.data.length > 0) {
+          setReminderDrafts(response.data);
+          setShowDraftsModal(true);
+          draftsReminderShown.current = true;
+        }
+      } catch (err) {
+        logger.debug('general', 'Failed to check drafts for reminder', { error: err });
+      }
+    };
+
+    checkDrafts();
+  }, [isAuthenticated]);
 
   const navigateToAuth = (screen: 'Login' | 'Register') => {
     navigation.getParent()?.navigate('Auth', { screen });
@@ -283,6 +311,28 @@ export function HomeScreen({ navigation }: Props) {
           limit={5}
         />
       </ScrollView>
+
+      {isAuthenticated && (
+        <DraftsReminderModal
+          visible={showDraftsModal}
+          onClose={() => setShowDraftsModal(false)}
+          drafts={reminderDrafts}
+          onPublish={async (postId) => {
+            await api.publishDraft(postId);
+            const remaining = reminderDrafts.filter((d) => d.id !== postId);
+            setReminderDrafts(remaining);
+            if (remaining.length === 0) {
+              setShowDraftsModal(false);
+            }
+          }}
+          onEdit={(draft) => {
+            navigation.getParent()?.navigate('PostForm', { postId: draft.id });
+          }}
+          onViewAll={() => {
+            navigation.navigate('Profile', { initialTab: 'drafts' });
+          }}
+        />
+      )}
     </ScreenContainer>
   );
 }

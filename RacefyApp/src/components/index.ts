@@ -26,6 +26,7 @@ export * from './DebugLogsSection';
 export * from './DifficultySelector';
 export * from './OptionSelector';
 export * from './DraftPostCard';
+export * from './DraftsReminderModal';
 export * from './DraftsTab';
 export * from './EmptyState';
 export * from './EventCard';
