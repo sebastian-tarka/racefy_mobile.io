@@ -87,6 +87,7 @@ export { NetworkStatusBar } from './NetworkStatusBar/NetworkStatusBar';
 export * from './TipCard';
 export { AnimatedNumber } from './AnimatedNumber';
 export { FadeInView } from './FadeInView';
+export { AnimatedListItem } from './AnimatedListItem';
 export { ActionButton } from './ActionButton';
 export { ErrorBoundary } from './ErrorBoundary';
 export * from './EventDetailsTabContent';

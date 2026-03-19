@@ -6,7 +6,7 @@ export const lightColors = {
   primaryLight: '#34d399',
 
   // Background colors
-  background: '#f9fafb',
+  background: '#f8fafb',
   cardBackground: '#ffffff',
   cardBackgroundHighlight: '#f0fdf4', // Light emerald tint for unread notifications
 
@@ -16,8 +16,8 @@ export const lightColors = {
   textMuted: '#9ca3af',
 
   // Border colors
-  border: '#e5e7eb',
-  borderLight: '#f3f4f6',
+  border: 'rgba(0, 0, 0, 0.06)',
+  borderLight: 'rgba(0, 0, 0, 0.04)',
 
   // Status colors
   error: '#ef4444',
@@ -62,36 +62,36 @@ export const lightColors = {
   orange: '#f59e0b',
 };
 
-// Dark theme colors
+// Dark theme colors — deep navy palette (not gray)
 export const darkColors = {
   // Primary colors (same vibrant primary)
   primary: '#10b981',
   primaryDark: '#059669',
   primaryLight: '#34d399',
 
-  // Background colors
-  background: '#111827',
-  cardBackground: '#1f2937',
+  // Background colors — deep navy tones
+  background: '#0f1729',
+  cardBackground: '#162032',
   cardBackgroundHighlight: '#14532d', // Dark emerald tint for unread notifications
 
-  // Text colors
-  textPrimary: '#f9fafb',
-  textSecondary: '#d1d5db',
-  textMuted: '#9ca3af',
+  // Text colors — brighter for navy backgrounds
+  textPrimary: '#f1f5f9',
+  textSecondary: '#cbd5e1',
+  textMuted: '#94a3b8',
 
-  // Border colors
-  border: '#374151',
-  borderLight: '#1f2937',
+  // Border colors — subtle white borders for glass effect
+  border: 'rgba(255, 255, 255, 0.06)',
+  borderLight: 'rgba(255, 255, 255, 0.04)',
 
   // Status colors
   error: '#f87171',
-  errorLight: '#7f1d1d',
+  errorLight: '#3b1520',
   success: '#34d399',
-  successLight: '#064e3b',
+  successLight: '#0a2e1f',
   warning: '#fbbf24',
-  warningLight: '#78350f',
+  warningLight: '#2e2008',
   info: '#60a5fa',
-  infoLight: '#1e3a5f',
+  infoLight: '#0f2340',
 
   // AI/Draft badge colors
   ai: '#A855F7',
@@ -110,8 +110,8 @@ export const darkColors = {
     text: '#93c5fd',
   },
   completed: {
-    bg: '#374151',
-    text: '#d1d5db',
+    bg: '#1e2d42',
+    text: '#cbd5e1',
   },
   cancelled: {
     bg: '#7f1d1d',
@@ -122,7 +122,7 @@ export const darkColors = {
   white: '#ffffff',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.7)',
+  overlay: 'rgba(0, 0, 0, 0.75)',
   orange: '#f59e0b',
 };
 

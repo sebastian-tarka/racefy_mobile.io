@@ -65,21 +65,21 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-// Custom Tab Bar Background with blur effect
-function TabBarBackground({ colors }: { colors: any }) {
+// Custom Tab Bar Background with glass blur effect
+function TabBarBackground({ colors, isDark }: { colors: any; isDark: boolean }) {
   return (
     <BlurView
-      intensity={95}
-      tint="dark"
+      intensity={isDark ? 80 : 90}
+      tint={isDark ? 'dark' : 'light'}
       style={StyleSheet.absoluteFill}
     >
       <View
         style={[
           StyleSheet.absoluteFill,
           {
-            backgroundColor: 'rgba(17, 24, 39, 0.98)', // More opaque to hide content underneath
-            borderWidth: 1,
-            borderColor: colors.border,
+            backgroundColor: isDark
+              ? 'rgba(11, 18, 32, 0.8)'
+              : 'rgba(255, 255, 255, 0.95)',
           },
         ]}
       />
@@ -416,7 +416,7 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
  */
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { style } = useNavigationStyle();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -497,18 +497,22 @@ function MainTabNavigator() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarBackground: () => <TabBarBackground colors={colors} isDark={isDark} />,
         tabBarStyle: isDynamic
           ? {
-              backgroundColor: colors.cardBackground,
+              backgroundColor: 'transparent',
               height: tabBarHeight,
               paddingTop: 8,
               paddingBottom: tabBarPaddingBottom,
-              borderTopWidth: 0,
+              borderTopWidth: 1,
+              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+              position: 'absolute' as const,
             }
           : {
-              backgroundColor: colors.cardBackground,
-              borderTopColor: colors.border,
+              backgroundColor: 'transparent',
+              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               borderTopWidth: 1,
+              position: 'absolute' as const,
             },
         ...(isDynamic && {
           tabBarLabelStyle: {
