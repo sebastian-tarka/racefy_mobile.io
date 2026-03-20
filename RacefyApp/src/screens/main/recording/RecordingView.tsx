@@ -11,7 +11,7 @@ import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
-import { spacing, fontSize, borderRadius } from '../../../theme';
+import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
@@ -173,7 +173,7 @@ export function RecordingView({
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Ionicons name="pause" size={32} color={colors.white} />
+            <Ionicons name="pause" size={iconSize.xl} color={colors.white} />
             <Text style={styles.controlButtonText}>{t('recording.pause')}</Text>
           </TouchableOpacity>
 
@@ -183,7 +183,7 @@ export function RecordingView({
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Ionicons name="stop" size={32} color={colors.white} />
+            <Ionicons name="stop" size={iconSize.xl} color={colors.white} />
             <Text style={styles.controlButtonText}>{t('recording.stop')}</Text>
           </TouchableOpacity>
         </View>
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
   },
   heroTimer: {
-    fontSize: 72,
+    fontSize: componentSize.heroTimerFont,
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
     letterSpacing: -2,
@@ -322,9 +322,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   controlButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: componentSize.controlButton,
+    height: componentSize.controlButton,
+    borderRadius: componentSize.controlButton / 2,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',

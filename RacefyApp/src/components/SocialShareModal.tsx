@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../theme';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { ShareFormatSelector } from './ShareFormatSelector';
@@ -316,7 +316,7 @@ function SocialShareModalComponent({
                     onPress={handleNativeShare}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="share-outline" size={20} color={colors.white} />
+                    <Ionicons name="share-outline" size={iconSize.md} color={colors.white} />
                     <Text style={[styles.nativeShareText, { color: colors.white }]}>
                       {t('share.shareVia')}
                     </Text>
@@ -347,7 +347,7 @@ function SocialShareModalComponent({
                             { backgroundColor: platform.color },
                           ]}
                         >
-                          <Ionicons name={platform.icon} size={24} color="#FFFFFF" />
+                          <Ionicons name={platform.icon} size={iconSize.lg} color="#FFFFFF" />
                         </View>
                         <Text
                           style={[styles.platformName, { color: colors.textPrimary }]}
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '85%',
-    minHeight: 400,
+    minHeight: '40%',
   },
   handleContainer: {
     alignItems: 'center',
@@ -509,8 +509,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   platformIconContainer: {
-    width: 40,
-    height: 40,
+    width: componentSize.platformIcon,
+    height: componentSize.platformIcon,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',

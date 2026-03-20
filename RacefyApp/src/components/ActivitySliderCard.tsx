@@ -13,7 +13,7 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, componentSize } from '../theme';
 import type { Activity } from '../types/api';
 
 interface ActivitySliderCardProps {
@@ -276,9 +276,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sportBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: componentSize.sportBadge,
+    height: componentSize.sportBadge,
+    borderRadius: componentSize.sportBadge / 2,
     backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   mainStatValue: {
-    fontSize: 48,
+    fontSize: componentSize.heroStatFont,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: -1,

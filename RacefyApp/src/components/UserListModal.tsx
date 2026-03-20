@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
-    minHeight: 400,
+    minHeight: '40%',
   },
   handleContainer: {
     alignItems: 'center',

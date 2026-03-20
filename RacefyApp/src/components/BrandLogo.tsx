@@ -4,6 +4,7 @@ import { SvgUri, SvgXml } from 'react-native-svg';
 import { useBrandAssets } from '../hooks/useBrandAssets';
 import { useTheme } from '../hooks/useTheme';
 import { getFallbackSvg } from './brandLogoFallbacks';
+import { ms } from '../theme/scale';
 import type { BrandAssetCategory, BrandAssetVariant } from '../types/api';
 
 interface BrandLogoProps {
@@ -35,9 +36,9 @@ interface BrandLogoProps {
 
 // Default sizes for each category
 const DEFAULT_SIZES: Record<BrandAssetCategory, { width: number; height: number }> = {
-  'logo-full': { width: 180, height: 50 },
-  'logo-icon': { width: 48, height: 48 },
-  'logo-text': { width: 120, height: 32 },
+  'logo-full': { width: ms(180), height: ms(50) },
+  'logo-icon': { width: ms(48), height: ms(48) },
+  'logo-text': { width: ms(120), height: ms(32) },
 };
 
 export function BrandLogo({

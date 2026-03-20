@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccessibilityInfo, Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ms } from '../theme/scale';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
@@ -175,9 +176,9 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
-            width: 56,
-            height: 46,
-            borderRadius: 20,
+            width: ms(56),
+            height: ms(46),
+            borderRadius: ms(20),
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -441,7 +442,7 @@ function MainTabNavigator() {
     },
   };
 
-  const tabBarHeight = 60 + insets.bottom;
+  const tabBarHeight = ms(60) + insets.bottom;
   const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
   const DYNAMIC_ICONS: Record<string, string> = {
@@ -517,7 +518,7 @@ function MainTabNavigator() {
             },
         ...(isDynamic && {
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: ms(11),
             fontWeight: '500' as const,
             letterSpacing: 0.3,
           },

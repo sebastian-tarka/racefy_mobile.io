@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../../../theme';
+import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../../../theme';
 import { formatTotalTime } from '../../../utils/formatters';
 import type { Event, TrainingWeek, SuggestedActivity, ActivityStats, MilestoneSingle } from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
@@ -228,7 +228,7 @@ export function IdleView({
               <ActivityIndicator color={colors.white} size="large" />
             ) : (
               <>
-                <Ionicons name="play" size={48} color={colors.white} />
+                <Ionicons name="play" size={iconSize.xxl} color={colors.white} />
                 <Text style={styles.startButtonText}>{t('recording.start')}</Text>
               </>
             )}
@@ -399,9 +399,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
   },
   startButton: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: componentSize.startButton,
+    height: componentSize.startButton,
+    borderRadius: componentSize.startButton / 2,
     justifyContent: 'center',
     alignItems: 'center',
     shadowOffset: { width: 0, height: 8 },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.lg,
   },
   suggestedActivityCard: {
-    width: 200,
+    width: componentSize.cardWidth,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     marginRight: spacing.md,

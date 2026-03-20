@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../../../../theme';
+import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
 import type { HomeSection, HomeSectionEvent } from '../../../../../types/api';
 
 interface FriendEventsSectionProps {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.lg,
   },
   eventCard: {
-    width: 200,
+    width: componentSize.cardWidth,
     marginRight: spacing.md,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
