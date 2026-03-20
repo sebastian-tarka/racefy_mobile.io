@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.7.2',
+  version: '1.8.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1.7.2',
+    buildNumber: '1.8.0',
     googleServicesFile: getGoogleServicesFileiOS(),
     associatedDomains: [
       'applinks:racefy.app',
@@ -87,7 +87,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSHealthShareUsageDescription:
         'Racefy reads heart rate data from your smartwatch to enrich your activities.',
       // Required for background location tracking and push notifications
-      UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
+      UIBackgroundModes: ['location', 'fetch', 'remote-notification', 'audio'],
       // Google Sign-In iOS URL scheme (reversed client ID)
       ...(process.env.GOOGLE_IOS_CLIENT_ID ? {
         CFBundleURLTypes: [
@@ -110,7 +110,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 8,
+    versionCode: 9,
     googleServicesFile: getGoogleServicesFile(),
     permissions: [
       'ACCESS_FINE_LOCATION',
