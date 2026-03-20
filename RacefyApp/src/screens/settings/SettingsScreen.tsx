@@ -19,7 +19,7 @@ import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer, PremiumTeaser } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, AudioCoachSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer, PremiumTeaser } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
@@ -233,6 +233,7 @@ export function SettingsScreen({ navigation }: Props) {
     activityDefaults: false,
     healthSync: false,
     aiPosts: false,
+    audioCoach: false,
     notifDebug: false,
     app: true,
     dangerZone: false,
@@ -1025,6 +1026,15 @@ export function SettingsScreen({ navigation }: Props) {
               />
             </PremiumTeaser>
           )}
+        </SettingsSection>
+
+        {/* Audio Coach Settings */}
+        <SettingsSection
+          title={t('settings.audioCoach.title')}
+          isExpanded={expandedSections.audioCoach}
+          onToggle={() => toggleSection('audioCoach')}
+        >
+          <AudioCoachSettings embedded />
         </SettingsSection>
 
         {/* Debug Logs (only visible in dev mode when enabled) */}

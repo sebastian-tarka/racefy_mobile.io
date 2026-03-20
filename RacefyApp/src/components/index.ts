@@ -3,6 +3,8 @@ export { PaceChart, ElevationChart, HeartRateChart } from './ActivityCharts';
 export * from './ActivityCompactCard';
 export * from './ActivitySliderCard';
 export * from './AiPostsSettings';
+export * from './AudioCoachSettings';
+export * from './TierBadge';
 export * from './BoostButton';
 export * from './Avatar';
 export * from './Badge';

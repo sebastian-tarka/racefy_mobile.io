@@ -332,6 +332,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
             greeting={getGreeting()}
             isAuthenticated={isAuthenticated}
             unreadCount={unreadCount}
+            userTier={user?.subscription?.tier}
             onNotificationPress={() => {
               navigation.getParent()?.navigate('Notifications');
             }}

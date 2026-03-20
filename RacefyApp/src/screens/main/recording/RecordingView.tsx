@@ -36,6 +36,8 @@ interface RecordingViewProps {
   isAuthenticated: boolean;
   nextMilestone: MilestoneSingle | undefined;
   gpsProfile: GpsProfile | null;
+  audioCoachActive?: boolean;
+  onToggleAudioCoach?: () => void;
   onPause: () => void;
   onStop: () => void;
 }
@@ -51,6 +53,8 @@ export function RecordingView({
   isAuthenticated,
   nextMilestone,
   gpsProfile,
+  audioCoachActive,
+  onToggleAudioCoach,
   onPause,
   onStop,
 }: RecordingViewProps) {
@@ -88,6 +92,24 @@ export function RecordingView({
           )}
         </View>
         <View style={styles.compactHeaderRight}>
+          {onToggleAudioCoach !== undefined && (
+            <TouchableOpacity
+              style={[styles.audioCoachToggle, {
+                backgroundColor: audioCoachActive ? colors.primary + '20' : colors.border + '40',
+              }]}
+              onPress={onToggleAudioCoach}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.audioCoach')}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: audioCoachActive }}
+            >
+              <Ionicons
+                name={audioCoachActive ? 'volume-high' : 'volume-mute'}
+                size={14}
+                color={audioCoachActive ? colors.primary : colors.textMuted}
+              />
+            </TouchableOpacity>
+          )}
           <Badge
             label={status === 'recording' ? t('recording.status.recording') : t('recording.status.paused')}
             variant={status === 'recording' ? 'ongoing' : 'upcoming'}
@@ -251,6 +273,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  audioCoachToggle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   gpsIndicator: {
     height: 28,

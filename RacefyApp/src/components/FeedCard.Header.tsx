@@ -206,7 +206,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
     <>
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.headerUserBlock} onPress={onUserPress} disabled={!onUserPress}>
-          <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+          <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" showTierBadge={!!post.user?.subscription?.tier && post.user.subscription.tier !== 'free'} tier={post.user?.subscription?.tier} />
           <View style={styles.headerTextBlock}>
             <Text style={[styles.headerName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
             <View style={styles.headerMetaRow}>

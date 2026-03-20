@@ -177,6 +177,7 @@ export function HomeScreen({ navigation }: Props) {
           userAvatar={user?.avatar}
           isAuthenticated={isAuthenticated}
           unreadCount={unreadCount}
+          userTier={user?.subscription?.tier}
           onNotificationPress={() => {
             navigation.getParent()?.navigate('Notifications');
           }}

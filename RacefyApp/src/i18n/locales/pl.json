@@ -626,6 +626,7 @@
   "recording": {
     "title": "Zapisz aktywność",
     "selectSport": "Wybierz sport",
+    "audioCoach": "Trener głosowy",
     "status": {
       "recording": "Nagrywanie",
       "paused": "Wstrzymano",
@@ -990,6 +991,28 @@
       "triggerEventResults": "Wyniki wydarzenia są opublikowane",
       "autoPublish": "Auto-publikuj",
       "autoPublishDescription": "Publikuj posty automatycznie bez sprawdzania (niezalecane)"
+    },
+    "audioCoach": {
+      "title": "Trener głosowy",
+      "description": "Otrzymuj komunikaty głosowe o tempie, dystansie i statystykach podczas aktywności.",
+      "enable": "Włącz trenera głosowego",
+      "enableHint": "Komunikaty głosowe co określony dystans",
+      "language": "Język",
+      "interval": "Komunikat co",
+      "style": "Styl trenera",
+      "styles": {
+        "neutral": "Neutralny",
+        "motivational": "Motywacyjny",
+        "coach": "Trener",
+        "minimal": "Minimalny"
+      },
+      "speechRate": "Szybkość mowy",
+      "aiVoice": "Głos AI",
+      "aiVoiceHint": "Użyj naturalnych głosów AI zamiast syntezatora urządzenia",
+      "heartRate": "Ogłaszaj tętno",
+      "splitDelta": "Ogłaszaj porównanie odcinków",
+      "usage": "{{used}} / {{total}} znaków wykorzystanych w tym miesiącu",
+      "preview": "Podgląd"
     },
     "healthSync": {
       "title": "Synchronizacja tętna",

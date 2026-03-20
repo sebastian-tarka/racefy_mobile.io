@@ -38,3 +38,5 @@ export * from './useEventDetail';
 export * from './usePreviewLocation';
 export * from './useNearbyRoutes';
 export * from './useSubscription';
+export * from './useAudioCoach';
+export * from './useAudioCoachSettings';

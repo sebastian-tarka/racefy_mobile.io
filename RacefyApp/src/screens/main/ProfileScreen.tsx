@@ -76,7 +76,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
-  const { canUse } = useSubscription();
+  const { canUse, tier } = useSubscription();
   const insets = useSafeAreaInsets();
   const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
@@ -432,7 +432,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
       <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-          <Avatar uri={user?.avatar} name={user?.name} size="xxl" />
+          <Avatar uri={user?.avatar} name={user?.name} size="xxl" showTierBadge={tier !== 'free'} tier={tier} />
         </View>
 
         <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>

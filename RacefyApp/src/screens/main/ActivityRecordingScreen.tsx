@@ -22,6 +22,7 @@ import {
   useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment,
   useSportTypes, type SportTypeWithIcon, useTheme, useUnits, useAuth,
   triggerHaptic, useActivityTimer, useMilestoneTracking, useSubscription,
+  useAudioCoach, useAudioCoachSettings,
 } from '../../hooks';
 import {
   BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
@@ -70,7 +71,7 @@ export function ActivityRecordingScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const fabBottom = tabBarHeight + spacing.md;
   const { isAuthenticated } = useAuth();
-  const { canUse } = useSubscription();
+  const { canUse, tier } = useSubscription();
   const canUseAdvancedStats = canUse('advanced_stats');
   const canUseAiPostOnFinish = canUse('ai_post_on_finish');
   const { requestActivityTrackingPermissions } = usePermissions();
@@ -151,6 +152,20 @@ export function ActivityRecordingScreen() {
   } = useLiveActivityContext();
 
   const isIdle = !isTracking && !isPaused;
+
+  // Audio Coach — session-level toggle (overrides settings.enabled for this session only)
+  const { settings: audioCoachSettings, loadSettings: loadAudioCoachSettings } = useAudioCoachSettings();
+  useEffect(() => { loadAudioCoachSettings(); }, [loadAudioCoachSettings]);
+  const [audioCoachSessionEnabled, setAudioCoachSessionEnabled] = useState<boolean | null>(null);
+  const isAudioCoachActive = audioCoachSessionEnabled ?? audioCoachSettings.enabled;
+  useAudioCoach({
+    settings: { ...audioCoachSettings, enabled: isAudioCoachActive },
+    totalDistanceKm: currentStats.distance / 1000,
+    currentPaceMinPerKm: currentStats.currentPace ? currentStats.currentPace / 60 : 0,
+    heartRate: currentStats.avg_heart_rate,
+    previousKmPace: undefined,
+    userTier: tier as any,
+  });
 
   // Preview location for map view (before tracking starts)
   const { previewLocation, fetchingPreviewLocation } = usePreviewLocation(viewMode, isTracking, isPaused, currentPosition);
@@ -930,6 +945,11 @@ export function ActivityRecordingScreen() {
       milestonesLoading={milestonesLoading}
       nextMilestone={nextMilestone}
       canUseAdvancedStats={canUseAdvancedStats}
+      audioCoachActive={isAudioCoachActive}
+      onToggleAudioCoach={() => {
+        triggerHaptic();
+        setAudioCoachSessionEnabled(prev => !(prev ?? audioCoachSettings.enabled));
+      }}
       onStart={handleStart}
       onOpenSportModal={() => setSportModalVisible(true)}
       onOpenEventSheet={() => setEventSheetVisible(true)}
@@ -953,6 +973,11 @@ export function ActivityRecordingScreen() {
       isAuthenticated={isAuthenticated}
       nextMilestone={nextMilestone}
       gpsProfile={gpsProfile}
+      audioCoachActive={isAudioCoachActive}
+      onToggleAudioCoach={() => {
+        triggerHaptic();
+        setAudioCoachSessionEnabled(prev => !(prev ?? audioCoachSettings.enabled));
+      }}
       onPause={handlePause}
       onStop={handleStop}
     />

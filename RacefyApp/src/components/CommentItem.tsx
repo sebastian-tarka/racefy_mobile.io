@@ -249,6 +249,8 @@ export function CommentItem({
           uri={comment.user?.avatar}
           name={comment.user?.name || '?'}
           size={isReply ? 'sm' : 'md'}
+          showTierBadge={!!comment.user?.subscription?.tier && comment.user.subscription.tier !== 'free'}
+          tier={comment.user?.subscription?.tier}
         />
       </TouchableOpacity>
 

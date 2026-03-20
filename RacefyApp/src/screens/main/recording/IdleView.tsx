@@ -41,6 +41,8 @@ interface IdleViewProps {
   milestonesLoading: boolean;
   nextMilestone: MilestoneSingle | undefined;
   canUseAdvancedStats: boolean;
+  audioCoachActive?: boolean;
+  onToggleAudioCoach?: () => void;
   onStart: () => void;
   onOpenSportModal: () => void;
   onOpenEventSheet: () => void;
@@ -61,6 +63,8 @@ export function IdleView({
   milestonesLoading,
   nextMilestone,
   canUseAdvancedStats,
+  audioCoachActive,
+  onToggleAudioCoach,
   onStart,
   onOpenSportModal,
   onOpenEventSheet,
@@ -234,6 +238,29 @@ export function IdleView({
             )}
           </TouchableOpacity>
         </Animated.View>
+
+        {/* Audio Coach quick toggle */}
+        {onToggleAudioCoach !== undefined && (
+          <TouchableOpacity
+            style={[styles.audioCoachChip, {
+              backgroundColor: audioCoachActive ? colors.primary + '15' : colors.cardBackground,
+              borderColor: audioCoachActive ? colors.primary : colors.border,
+            }]}
+            onPress={onToggleAudioCoach}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={audioCoachActive ? 'volume-high' : 'volume-mute'}
+              size={14}
+              color={audioCoachActive ? colors.primary : colors.textMuted}
+            />
+            <Text style={[styles.audioCoachChipText, {
+              color: audioCoachActive ? colors.primary : colors.textMuted,
+            }]}>
+              {t('recording.audioCoach')}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Event Link (Collapsed) */}
@@ -397,6 +424,20 @@ const styles = StyleSheet.create({
   startSection: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
+  },
+  audioCoachChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  audioCoachChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
   },
   startButton: {
     width: componentSize.startButton,
