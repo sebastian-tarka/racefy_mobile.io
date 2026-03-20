@@ -225,6 +225,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // Google Sign-In
     googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
     googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
+    // RevenueCat
+    revenueCatAppleApiKey: process.env.REVENUECAT_APPLE_API_KEY || '',
+    revenueCatGoogleApiKey: process.env.REVENUECAT_GOOGLE_API_KEY || '',
     // Feature flags
     useDynamicHome: process.env.USE_DYNAMIC_HOME === 'true',
     eas: {

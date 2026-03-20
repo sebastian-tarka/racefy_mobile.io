@@ -8,6 +8,7 @@
  * function gracefully no-ops when Purchases is unavailable.
  */
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { logger } from './logger';
 
 // Lazy-load — native module is missing in Expo Go
@@ -28,12 +29,20 @@ export type {
   PurchasesPackage,
 } from 'react-native-purchases';
 
+// Environment detection
+const APP_ENV = Constants.expoConfig?.extra?.appEnv || 'production';
+
 // RevenueCat API keys per platform
-const REVENUECAT_API_KEY = Platform.select({
-  ios: 'test_imuKPattskGISWCnJMolGWUNmzI',
-  android: 'test_imuKPattskGISWCnJMolGWUNmzI',
-  default: 'test_imuKPattskGISWCnJMolGWUNmzI',
+// Use production keys when available, fall back to test keys
+const REVENUECAT_PROD_KEY = Platform.select({
+  ios: Constants.expoConfig?.extra?.revenueCatAppleApiKey || '',
+  android: Constants.expoConfig?.extra?.revenueCatGoogleApiKey || '',
+  default: '',
 });
+
+const REVENUECAT_TEST_KEY = 'test_imuKPattskGISWCnJMolGWUNmzI';
+
+const REVENUECAT_API_KEY = REVENUECAT_PROD_KEY || REVENUECAT_TEST_KEY;
 
 // Entitlement identifiers (must match RevenueCat dashboard)
 export const ENTITLEMENTS = {
@@ -49,6 +58,11 @@ let isConfigured = false;
 export async function configureRevenueCat(): Promise<void> {
   if (isConfigured || !Purchases) return;
 
+  if (!REVENUECAT_API_KEY || REVENUECAT_API_KEY === REVENUECAT_TEST_KEY && !__DEV__) {
+    logger.info('general', 'RevenueCat skipped — no API key configured', { env: APP_ENV });
+    return;
+  }
+
   try {
     if (__DEV__) {
       Purchases.setLogLevel(LOG_LEVEL.DEBUG);
@@ -59,9 +73,9 @@ export async function configureRevenueCat(): Promise<void> {
     });
 
     isConfigured = true;
-    logger.info('general', 'RevenueCat configured', { platform: Platform.OS });
+    logger.info('general', 'RevenueCat configured', { platform: Platform.OS, env: APP_ENV });
   } catch (error) {
-    logger.error('general', 'Failed to configure RevenueCat', { error });
+    logger.warn('general', 'Failed to configure RevenueCat — purchases disabled', { error });
   }
 }
 
