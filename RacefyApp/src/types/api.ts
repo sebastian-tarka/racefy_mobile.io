@@ -14,6 +14,72 @@ export interface User {
   role: 'user' | 'moderator' | 'admin';
   created_at: string;
   updated_at: string;
+  subscription?: SubscriptionStatus;
+}
+
+// ============ SUBSCRIPTIONS ============
+
+export type SubscriptionTier = 'free' | 'plus' | 'pro';
+
+export interface SubscriptionFeatures {
+  ai_posts_monthly: number;
+  ai_post_on_finish: boolean;
+  events_monthly: number;
+  event_prizes: boolean;
+  event_ai_commentary: boolean;
+  privacy_zones: number;
+  training_programs: number;
+  training_summaries: boolean;
+  advanced_stats: boolean;
+  share_link_permanent: boolean;
+  points_multiplier: number;
+  gpx_export: boolean;
+  exclusive_badges: boolean;
+}
+
+export interface SubscriptionUsage {
+  ai_posts_monthly: number;
+  events_monthly: number;
+  privacy_zones: number;
+  training_programs: number;
+}
+
+export interface SubscriptionStatus {
+  tier: SubscriptionTier;
+  is_premium: boolean;
+  is_active: boolean;
+  is_trial: boolean;
+  trial_ends_at: string | null;
+  expires_at: string | null;
+  remaining_days: number | null;
+  provider: string | null;
+  features: SubscriptionFeatures;
+  usage: SubscriptionUsage;
+}
+
+export interface SubscriptionPlan {
+  id: number;
+  slug: string;
+  name: string;
+  tier: SubscriptionTier;
+  price_monthly: number | null;
+  price_yearly: number | null;
+  currency: string;
+  features: SubscriptionFeatures;
+  is_popular: boolean;
+}
+
+export interface PremiumErrorResponse {
+  message: string;
+  feature?: string;
+  limit?: {
+    feature: string;
+    limit: number;
+    current_usage: number;
+    remaining: number;
+  };
+  current_tier: SubscriptionTier;
+  upgrade_required: true;
 }
 
 export interface UserProfilePrivacy {
@@ -1921,6 +1987,16 @@ export interface  ShareLinkResponse {
     whatsapp: ShareLinkPlatform;
     telegram: ShareLinkPlatform;
   };
+}
+
+// ============ PHOTO OVERLAY SHARE ============
+
+export type PhotoOverlayFormat = 'photo_social' | 'photo_story' | 'photo_square';
+
+export interface PhotoOverlayResponse {
+  image: string;
+  format: string;
+  photo_id: number;
 }
 
 // ============ TRAINING PLANS ============

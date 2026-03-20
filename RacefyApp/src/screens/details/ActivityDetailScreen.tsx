@@ -17,12 +17,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer, PremiumTeaser } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -36,6 +37,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { canUse } = useSubscription();
   const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -76,8 +78,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           });
           setGpsTrack(track);
 
-          // Fetch activity stats for charts (includes splits)
-          try {
+          // Fetch activity stats for charts (includes splits) — only for premium users
+          if (!canUse('advanced_stats')) {
+            logger.debug('gps', 'Skipping activity analysis — advanced_stats not available');
+          } else try {
             const stats = await api.getActivityAnalysis(activityId);
             setActivityStats(stats);
             logger.debug('gps', 'Activity stats loaded', {
@@ -445,7 +449,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             {/* Share */}
             <TouchableOpacity
               style={styles.engagementItem}
-              onPress={() => navigation.navigate('ActivityShare', { activityId })}
+              onPress={() => navigation.navigate('ActivityShare', { activityId, hasGpsTrack: activity.has_gps_track, photos: activity.photos })}
               activeOpacity={0.7}
             >
               <Ionicons name="share-social-outline" size={28} color={colors.textMuted} />
@@ -490,79 +494,87 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         )}
 
         {/* Secondary Stats - Detailed Metrics */}
-        {(activity.calories || activity.elevation_gain || activity.avg_speed || activity.max_speed || activity.avg_heart_rate || activity.max_heart_rate) && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.detailedStats')}</Text>
-            <View style={styles.statsGrid}>
-              {activity.calories !== null && activity.calories > 0 && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="flame-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
-                </View>
-              )}
-              {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain)}</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
-                </View>
-              )}
-              {activity.avg_speed !== null && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.avg_speed)}</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
-                </View>
-              )}
-              {activity.max_speed !== null && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="flash-outline" size={22} color={colors.primary} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.max_speed)}</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
-                </View>
-              )}
-              {activity.avg_heart_rate !== null && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="heart-outline" size={22} color={colors.error} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
-                </View>
-              )}
-              {activity.max_heart_rate !== null && (
-                <View style={styles.statGridItem}>
-                  <Ionicons name="heart" size={22} color={colors.error} />
-                  <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
-                  <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
-                </View>
-              )}
-            </View>
-            {activity.hr_data_source && (
-              <View style={styles.hrSourceBadge}>
-                <Ionicons name="watch-outline" size={14} color={colors.primary} />
-                <Text style={[styles.hrSourceText, { color: colors.primary }]}>
-                  {activity.hr_data_source === 'health_connect'
-                    ? t('settings.healthSync.hrFromHealthConnect')
-                    : t('settings.healthSync.hrFromAppleHealth')}
-                </Text>
+        {canUse('advanced_stats') ? (
+          (activity.calories || activity.elevation_gain || activity.avg_speed || activity.max_speed || activity.avg_heart_rate || activity.max_heart_rate) && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.detailedStats')}</Text>
+              <View style={styles.statsGrid}>
+                {activity.calories !== null && activity.calories > 0 && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="flame-outline" size={22} color={colors.primary} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
+                  </View>
+                )}
+                {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain)}</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
+                  </View>
+                )}
+                {activity.avg_speed !== null && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.avg_speed)}</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
+                  </View>
+                )}
+                {activity.max_speed !== null && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="flash-outline" size={22} color={colors.primary} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.max_speed)}</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
+                  </View>
+                )}
+                {activity.avg_heart_rate !== null && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="heart-outline" size={22} color={colors.error} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
+                  </View>
+                )}
+                {activity.max_heart_rate !== null && (
+                  <View style={styles.statGridItem}>
+                    <Ionicons name="heart" size={22} color={colors.error} />
+                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
+                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </Card>
+              {activity.hr_data_source && (
+                <View style={styles.hrSourceBadge}>
+                  <Ionicons name="watch-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.hrSourceText, { color: colors.primary }]}>
+                    {activity.hr_data_source === 'health_connect'
+                      ? t('settings.healthSync.hrFromHealthConnect')
+                      : t('settings.healthSync.hrFromAppleHealth')}
+                  </Text>
+                </View>
+              )}
+            </Card>
+          )
+        ) : (
+          <PremiumTeaser feature="advanced_stats" style={styles.section} />
         )}
 
         {/* Charts Section - Performance Analysis */}
-        {activityStats?.splits && activityStats.splits.splits.length > 0 && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.performanceAnalysis')}</Text>
-            <PaceChart splits={activityStats.splits.splits} title={t('activityDetail.pacePerKm')} />
-            {activityStats.has_data.elevation && (
-              <ElevationChart splits={activityStats.splits.splits} title={t('activityDetail.elevationPerKm')} />
-            )}
-            {activityStats.has_data.heart_rate && (
-              <HeartRateChart splits={activityStats.splits.splits} title={t('activityDetail.heartRatePerKm')} />
-            )}
-          </Card>
-        )}
+        {canUse('advanced_stats') ? (
+          activityStats?.splits && activityStats.splits.splits.length > 0 && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.performanceAnalysis')}</Text>
+              <PaceChart splits={activityStats.splits.splits} title={t('activityDetail.pacePerKm')} />
+              {activityStats.has_data.elevation && (
+                <ElevationChart splits={activityStats.splits.splits} title={t('activityDetail.elevationPerKm')} />
+              )}
+              {activityStats.has_data.heart_rate && (
+                <HeartRateChart splits={activityStats.splits.splits} title={t('activityDetail.heartRatePerKm')} />
+              )}
+            </Card>
+          )
+        ) : activity.has_gps_track ? (
+          <PremiumTeaser feature="advanced_stats" style={styles.section} />
+        ) : null}
 
         {/* Photo Gallery */}
         {activity.photos && activity.photos.length > 0 && (

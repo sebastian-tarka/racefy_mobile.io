@@ -18,6 +18,7 @@ export class ApiBase {
   private token: string | null = null;
   private onUnauthorizedCallback: (() => void) | null = null;
   private onMaintenanceModeCallback: ((data: { message?: string; estimated_end?: string }) => void) | null = null;
+  private onUpgradeRequiredCallback: ((data: { feature?: string; currentTier: Types.SubscriptionTier; limit?: { feature: string; limit: number; current_usage: number; remaining: number } }) => void) | null = null;
   /** In-flight GET requests — concurrent identical calls share the same Promise */
   private readonly inflightRequests = new Map<string, Promise<unknown>>();
 
@@ -42,6 +43,13 @@ export class ApiBase {
    */
   setOnMaintenanceMode(callback: ((data: { message?: string; estimated_end?: string }) => void) | null) {
     this.onMaintenanceModeCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 403 response with upgrade_required is received.
+   */
+  setOnUpgradeRequired(callback: ((data: { feature?: string; currentTier: string; limit?: any }) => void) | null) {
+    this.onUpgradeRequiredCallback = callback;
   }
 
   /**
@@ -142,6 +150,23 @@ export class ApiBase {
           await this.clearToken();
           if (this.onUnauthorizedCallback) {
             this.onUnauthorizedCallback();
+          }
+        }
+
+        // Handle 403 with upgrade_required - premium feature access denied
+        if (response.status === 403 && (data as any).upgrade_required === true) {
+          const premiumData = data as Types.PremiumErrorResponse;
+          logger.warn('api', 'Premium feature access denied', {
+            endpoint,
+            feature: premiumData.feature,
+            currentTier: premiumData.current_tier,
+          });
+          if (this.onUpgradeRequiredCallback) {
+            this.onUpgradeRequiredCallback({
+              feature: premiumData.feature,
+              currentTier: premiumData.current_tier,
+              limit: premiumData.limit,
+            });
           }
         }
 

@@ -15,7 +15,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
-import { Loading, ImpersonationBanner, NetworkStatusBar, ErrorBoundary, BatteryOptimizationModal } from '../components';
+import { Loading, ImpersonationBanner, NetworkStatusBar, ErrorBoundary, BatteryOptimizationModal, UpgradePromptModal } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -33,6 +33,7 @@ import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen, EventCommentarySettingsScreen } from '../screens/events';
 import { PostFormScreen } from '../screens/posts';
 import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
+import { PaywallScreen } from '../screens/PaywallScreen';
 import { EditProfileScreen } from '../screens/profile';
 import { SettingsScreen, BlockedUsersScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
@@ -729,6 +730,10 @@ export function AppNavigator() {
               component={GpxImportScreen}
             />
             <RootStack.Screen
+              name="Paywall"
+              component={PaywallScreen}
+            />
+            <RootStack.Screen
               name="EditProfile"
               component={EditProfileScreen}
             />
@@ -796,6 +801,7 @@ export function AppNavigator() {
           <ImpersonationBanner />
           <NetworkStatusBar />
           <BatteryOptimizationModal />
+          <UpgradePromptModal />
         </NavigationContainer>
       </NavigationStyleSetter>
     </NavigationStyleProvider>

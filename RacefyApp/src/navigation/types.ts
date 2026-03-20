@@ -25,7 +25,7 @@ export type RootStackParamList = {
   PostDetail: { postId: number; focusComments?: boolean };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };
-  ActivityShare: { activityId: number };
+  ActivityShare: { activityId: number; hasGpsTrack?: boolean; photos?: import('../types/api').Photo[] };
   UserProfile: { username: string };
   Settings: undefined;
   BlockedUsers: undefined;
@@ -40,6 +40,7 @@ export type RootStackParamList = {
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;
+  Paywall: { feature?: string } | undefined;
   Leaderboard: undefined;
   PointHistory: undefined;
   // Training Plans

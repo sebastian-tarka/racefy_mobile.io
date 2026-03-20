@@ -8,6 +8,7 @@ import { LiveActivityProvider } from './src/hooks/useLiveActivity';
 import { UnitsProvider } from './src/hooks/useUnits';
 import { MaintenanceProvider } from './src/hooks/useMaintenance';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
+import { configureRevenueCat } from './src/services/revenuecat';
 import { AppNavigator } from './src/navigation';
 
 // Initialize i18n
@@ -20,6 +21,7 @@ function AppContent() {
   useEffect(() => {
     loadSavedLanguage();
     loadGlobalHapticsPreference();
+    configureRevenueCat();
   }, []);
 
   return (

@@ -26,12 +26,14 @@ import {
     ScreenHeader,
     SportTypeSelector,
     ScreenContainer,
+    PremiumTeaser,
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
 import {emitRefresh} from '../../services/refreshEvents';
 import {fixStorageUrl} from '../../config/api';
 import {useTheme} from '../../hooks/useTheme';
+import {useSubscription} from '../../hooks/useSubscription';
 import {useSportTypes} from '../../hooks/useSportTypes';
 import {spacing} from '../../theme';
 import {CreateEventRequest, Event, EventRankingMode, EventTeamScoring, EventVisibility, MediaItem, UpdateEventRequest,} from '../../types/api';
@@ -51,6 +53,7 @@ export function EventFormScreen({navigation, route}: Props) {
     const isEditMode = !!eventId;
     const {t} = useTranslation();
     const {colors} = useTheme();
+    const {canUse} = useSubscription();
     const {sportTypes, isLoading: isSportTypesLoading} = useSportTypes();
 
     const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -907,65 +910,75 @@ export function EventFormScreen({navigation, route}: Props) {
                                 </View>
 
                                 {/* Point Rewards Section */}
-                                <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>
-                                    <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
-                                        {t('eventForm.pointRewards')}
-                                    </Text>
-                                    <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
-                                        {t('eventForm.pointRewardsDescription')}
-                                    </Text>
-                                    <View style={{marginTop: spacing.md}}>
-                                        <Input
-                                            label={t('eventForm.pointRewardsFirstPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_first}
-                                            onChangeText={(v) => updateField('point_rewards_first', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="trophy-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsSecondPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_second}
-                                            onChangeText={(v) => updateField('point_rewards_second', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="medal-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsThirdPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_third}
-                                            onChangeText={(v) => updateField('point_rewards_third', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="ribbon-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsFinisher')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_finisher}
-                                            onChangeText={(v) => updateField('point_rewards_finisher', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="checkmark-circle-outline"
-                                            editable={!isLimitedEdit}
-                                        />
+                                <PremiumTeaser feature="event_prizes">
+                                    <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>
+                                        <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                            {t('eventForm.pointRewards')}
+                                        </Text>
+                                        <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
+                                            {t('eventForm.pointRewardsDescription')}
+                                        </Text>
+                                        <View style={{marginTop: spacing.md}}>
+                                            <Input
+                                                label={t('eventForm.pointRewardsFirstPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_first}
+                                                onChangeText={(v) => updateField('point_rewards_first', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="trophy-outline"
+                                                editable={!isLimitedEdit}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsSecondPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_second}
+                                                onChangeText={(v) => updateField('point_rewards_second', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="medal-outline"
+                                                editable={!isLimitedEdit}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsThirdPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_third}
+                                                onChangeText={(v) => updateField('point_rewards_third', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="ribbon-outline"
+                                                editable={!isLimitedEdit}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsFinisher')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_finisher}
+                                                onChangeText={(v) => updateField('point_rewards_finisher', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="checkmark-circle-outline"
+                                                editable={!isLimitedEdit}
+                                            />
+                                        </View>
                                     </View>
-                                </View>
+                                </PremiumTeaser>
 
                             </Card>
                         </View>
                     )}
 
-                    {/* AI Commentary Settings - only shown if user has AI features enabled */}
-                    {hasAiFeatures && (
+                    {/* AI Commentary Settings */}
+                    {hasAiFeatures && canUse('event_ai_commentary') ? (
                         <CommentarySettingsSection
                             value={commentarySettings}
                             onChange={setCommentarySettings}
                             disabled={isLoading || isCommentaryReadOnly}
                         />
-                    )}
+                    ) : hasAiFeatures ? (
+                        <PremiumTeaser feature="event_ai_commentary">
+                            <CommentarySettingsSection
+                                value={defaultCommentarySettings}
+                                onChange={() => {}}
+                                disabled
+                            />
+                        </PremiumTeaser>
+                    ) : null}
 
                     {/* Submit Button */}
                     <Button

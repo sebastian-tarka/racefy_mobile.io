@@ -14,6 +14,7 @@ import { syncUnitsPreference } from './useUnits';
 import { logger } from '../services/logger';
 import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
 import { useImpersonationActions, IMPERSONATION_SESSION_KEY } from './useImpersonationActions';
+import { revenueCatLogIn, revenueCatLogOut } from '../services/revenuecat';
 import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -100,6 +101,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Set up the unauthorized callback before initializing
     api.setOnUnauthorized(handleUnauthorized);
+    api.setOnUpgradeRequired((data) => {
+      // Lazy import to avoid circular dependency
+      const { upgradePromptEmitter } = require('../services/upgradePromptEmitter');
+      upgradePromptEmitter.emit('show', {
+        feature: data.feature,
+        currentTier: data.currentTier,
+      });
+    });
     initAuth();
   }, [handleUnauthorized]);
 
@@ -145,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await api.getUser();
         setUser(userData);
         logger.auth('User authenticated', { userId: userData.id, username: userData.username });
+        revenueCatLogIn(userData.id).catch(() => {});
         // Sync language preference from server after auth
         syncPreferences();
         // Check consent status for existing authenticated users
@@ -176,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(response.user);
     logger.auth('Login successful', { userId: response.user.id, username: response.user.username });
     syncPreferences();
+    revenueCatLogIn(response.user.id).catch(() => {});
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after login', { error });
     });
@@ -186,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.register(data);
     setUser(response.user);
     logger.auth('Registration successful', { userId: response.user.id });
+    revenueCatLogIn(response.user.id).catch(() => {});
     // New users always need to accept consents
     setRequiresConsent(true);
     // Register for push notifications (non-blocking)
@@ -210,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setRequiresConsent(needsConsent);
     setUser(response.user);
     logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
+    revenueCatLogIn(response.user.id).catch(() => {});
     syncPreferences();
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after Google sign-in', { error });
@@ -226,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     await api.logout();
     await signOutFromGoogle();
+    await revenueCatLogOut();
     // Reset push notification service state
     pushNotificationService.reset();
     setUser(null);

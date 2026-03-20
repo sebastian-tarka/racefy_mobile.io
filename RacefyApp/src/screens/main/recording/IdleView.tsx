@@ -16,6 +16,7 @@ import { spacing, fontSize, borderRadius } from '../../../theme';
 import { formatTotalTime } from '../../../utils/formatters';
 import type { Event, TrainingWeek, SuggestedActivity, ActivityStats, MilestoneSingle } from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
+import { PremiumTeaser } from '../../../components';
 
 // Milestone key-to-km mapping (shared with parent)
 const MILESTONE_KM: Record<string, string> = {
@@ -39,6 +40,7 @@ interface IdleViewProps {
   statsLoading: boolean;
   milestonesLoading: boolean;
   nextMilestone: MilestoneSingle | undefined;
+  canUseAdvancedStats: boolean;
   onStart: () => void;
   onOpenSportModal: () => void;
   onOpenEventSheet: () => void;
@@ -58,6 +60,7 @@ export function IdleView({
   statsLoading,
   milestonesLoading,
   nextMilestone,
+  canUseAdvancedStats,
   onStart,
   onOpenSportModal,
   onOpenEventSheet,
@@ -326,13 +329,24 @@ export function IdleView({
                   </View>
 
                   {/* Next Milestone Preview */}
-                  {nextMilestone && (
-                    <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
-                      <Ionicons name="flag-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
-                        {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
-                      </Text>
-                    </View>
+                  {canUseAdvancedStats ? (
+                    nextMilestone && (
+                      <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
+                        <Ionicons name="flag-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
+                          {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
+                        </Text>
+                      </View>
+                    )
+                  ) : (
+                    <PremiumTeaser feature="advanced_stats">
+                      <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
+                        <Ionicons name="flag-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
+                          {t('recording.nextMilestone')}: 5 km (0%)
+                        </Text>
+                      </View>
+                    </PremiumTeaser>
                   )}
                 </>
               ) : (

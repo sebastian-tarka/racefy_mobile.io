@@ -21,7 +21,7 @@ import {
   usePreviewLocation, useNearbyRoutes, useLiveActivityContext, usePermissions,
   useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment,
   useSportTypes, type SportTypeWithIcon, useTheme, useUnits, useAuth,
-  triggerHaptic, useActivityTimer, useMilestoneTracking,
+  triggerHaptic, useActivityTimer, useMilestoneTracking, useSubscription,
 } from '../../hooks';
 import {
   BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
@@ -70,6 +70,9 @@ export function ActivityRecordingScreen() {
   const tabBarHeight = 60 + insets.bottom;
   const fabBottom = tabBarHeight + spacing.md;
   const { isAuthenticated } = useAuth();
+  const { canUse } = useSubscription();
+  const canUseAdvancedStats = canUse('advanced_stats');
+  const canUseAiPostOnFinish = canUse('ai_post_on_finish');
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MainTabParamList, 'Record'>>();
@@ -122,7 +125,7 @@ export function ActivityRecordingScreen() {
     isAuthenticated && selectedSport ? { sportTypeId: selectedSport.id } : undefined
   );
   const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
-    isAuthenticated && selectedSport ? selectedSport.id : undefined
+    isAuthenticated && canUseAdvancedStats && selectedSport ? selectedSport.id : undefined
   );
 
   // Live activity context
@@ -926,6 +929,7 @@ export function ActivityRecordingScreen() {
       statsLoading={statsLoading}
       milestonesLoading={milestonesLoading}
       nextMilestone={nextMilestone}
+      canUseAdvancedStats={canUseAdvancedStats}
       onStart={handleStart}
       onOpenSportModal={() => setSportModalVisible(true)}
       onOpenEventSheet={() => setEventSheetVisible(true)}
@@ -968,6 +972,7 @@ export function ActivityRecordingScreen() {
       isLoading={isLoading}
       isAuthenticated={isAuthenticated}
       skipAutoPost={skipAutoPost}
+      canUseAiPostOnFinish={canUseAiPostOnFinish}
       gpsProfile={gpsProfile}
       onResume={handleResume}
       onSave={handleSave}

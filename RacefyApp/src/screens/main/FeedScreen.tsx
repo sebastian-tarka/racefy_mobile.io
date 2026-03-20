@@ -227,7 +227,7 @@ export function FeedScreen({ navigation, route }: Props) {
       onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
       onShareActivity={
         item.type === 'activity' && item.activity
-          ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id })
+          ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id, hasGpsTrack: item.activity!.has_gps_track, photos: item.activity!.photos })
           : undefined
       }
       onUserPress={() => {

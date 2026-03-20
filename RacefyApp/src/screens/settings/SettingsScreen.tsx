@@ -19,8 +19,9 @@ import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer, PremiumTeaser } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
@@ -183,6 +184,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { tier, isPremium, isTrial, remainingDays, expiresAt, canUse } = useSubscription();
   const { colors, isDark, themePreference, setThemePreference } = useTheme();
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
   const { setUnits } = useUnits();
@@ -221,6 +223,7 @@ export function SettingsScreen({ navigation }: Props) {
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
     account: true,
+    subscription: false,
     adminTools: false,
     consents: false,
     preferences: false,
@@ -622,6 +625,55 @@ export function SettingsScreen({ navigation }: Props) {
           )}
         </SettingsSection>
 
+        {/* Subscription */}
+        <SettingsSection
+          title={t('settings.subscriptionSection')}
+          isExpanded={expandedSections.subscription}
+          onToggle={() => toggleSection('subscription')}
+        >
+          <View style={[styles.subscriptionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <View style={styles.subscriptionRow}>
+              <Text style={[styles.subscriptionLabel, { color: colors.textSecondary }]}>
+                {t('settings.currentPlan')}
+              </Text>
+              <View style={styles.subscriptionPlanRow}>
+                <Text style={[styles.subscriptionPlanValue, { color: isPremium ? colors.primary : colors.textPrimary }]}>
+                  {t(`settings.plan${tier.charAt(0).toUpperCase() + tier.slice(1)}`)}
+                </Text>
+                {isTrial && (
+                  <View style={[styles.subscriptionTrialBadge, { backgroundColor: colors.primary + '20' }]}>
+                    <Text style={[styles.subscriptionTrialBadgeText, { color: colors.primary }]}>
+                      {t('settings.trialBadge')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {isTrial && remainingDays !== null && (
+              <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
+                {t('settings.trialEndsOn', { date: remainingDays + 'd' })}
+              </Text>
+            )}
+            {!isTrial && isPremium && expiresAt && (
+              <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
+                {t('settings.expiresOn', { date: new Date(expiresAt).toLocaleDateString() })}
+              </Text>
+            )}
+          </View>
+          <SettingsRow
+            icon={isPremium ? 'swap-horizontal-outline' : 'diamond-outline'}
+            label={isPremium ? t('settings.changePlan') : t('settings.upgradePlan')}
+            onPress={() => navigation.navigate('Paywall', {})}
+          />
+          {isPremium && (
+            <SettingsRow
+              icon="card-outline"
+              label={t('subscription.manageSub')}
+              onPress={() => navigation.navigate('Paywall', {})}
+            />
+          )}
+        </SettingsSection>
+
         {/* Admin Tools (only visible to admins) */}
         {user?.role === 'admin' && (
           <SettingsSection
@@ -956,12 +1008,23 @@ export function SettingsScreen({ navigation }: Props) {
           isExpanded={expandedSections.aiPosts}
           onToggle={() => toggleSection('aiPosts')}
         >
-          <AiPostsSettings
-            preferences={preferences.ai_posts}
-            onPreferenceChange={updateAiPostsPreference}
-            isUpdating={isUpdatingAiPosts}
-            embedded
-          />
+          {canUse('ai_posts_monthly') ? (
+            <AiPostsSettings
+              preferences={preferences.ai_posts}
+              onPreferenceChange={updateAiPostsPreference}
+              isUpdating={isUpdatingAiPosts}
+              embedded
+            />
+          ) : (
+            <PremiumTeaser feature="ai_posts_monthly">
+              <AiPostsSettings
+                preferences={preferences.ai_posts}
+                onPreferenceChange={async () => {}}
+                isUpdating={false}
+                embedded
+              />
+            </PremiumTeaser>
+          )}
         </SettingsSection>
 
         {/* Debug Logs (only visible in dev mode when enabled) */}
@@ -1346,5 +1409,40 @@ const styles = StyleSheet.create({
   healthSyncDescription: {
     fontSize: fontSize.sm,
     lineHeight: 20,
+  },
+  subscriptionCard: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subscriptionLabel: {
+    fontSize: fontSize.sm,
+  },
+  subscriptionPlanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  subscriptionPlanValue: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  subscriptionTrialBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  subscriptionTrialBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  subscriptionExpiry: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
   },
 });

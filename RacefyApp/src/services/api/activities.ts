@@ -360,5 +360,39 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       );
       return response.data;
     }
+
+    async generatePhotoOverlay(
+      id: number,
+      photoId: number,
+      format: Types.PhotoOverlayFormat = 'photo_story'
+    ): Promise<Types.PhotoOverlayResponse> {
+      const response = await this.request<Types.ApiResponse<Types.PhotoOverlayResponse>>(
+        `/activities/${id}/share-photo-overlay`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ photo_id: photoId, format }),
+        }
+      );
+      return response.data;
+    }
+
+    async generatePhotoOverlayFromFile(
+      id: number,
+      file: { uri: string; type: string; name: string },
+      format: Types.PhotoOverlayFormat = 'photo_story'
+    ): Promise<Types.PhotoOverlayResponse> {
+      const formData = new FormData();
+      formData.append('photo', {
+        uri: file.uri,
+        type: file.type,
+        name: file.name,
+      } as any);
+      formData.append('format', format);
+      const response = await this.request<Types.ApiResponse<Types.PhotoOverlayResponse>>(
+        `/activities/${id}/share-photo-overlay`,
+        { method: 'POST', body: formData }
+      );
+      return response.data;
+    }
   };
 }

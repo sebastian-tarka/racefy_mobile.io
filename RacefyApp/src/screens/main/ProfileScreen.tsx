@@ -28,11 +28,13 @@ import {
   SportTypeFilter,
   TimeRangeFilter,
   ScreenContainer,
+  PremiumTeaser,
   type TimeRange,
   type PeriodOption,
 } from '../../components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useActivityStats } from '../../hooks/useActivityStats';
 import { usePointStats } from '../../hooks/usePointStats';
@@ -74,6 +76,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
+  const { canUse } = useSubscription();
   const insets = useSafeAreaInsets();
   const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
@@ -541,12 +544,23 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       {activeTab === 'stats' && (
         <View style={styles.statsTabContent}>
           {/* User Comparison Selector */}
-          <CompareUserSelector
-            following={following}
-            selectedUser={compareUser}
-            onSelectUser={setCompareUser}
-            isLoading={isLoadingFollowing}
-          />
+          {canUse('advanced_stats') ? (
+            <CompareUserSelector
+              following={following}
+              selectedUser={compareUser}
+              onSelectUser={setCompareUser}
+              isLoading={isLoadingFollowing}
+            />
+          ) : (
+            <PremiumTeaser feature="advanced_stats" style={{ marginBottom: spacing.md }}>
+              <CompareUserSelector
+                following={following}
+                selectedUser={null}
+                onSelectUser={() => {}}
+                isLoading={false}
+              />
+            </PremiumTeaser>
+          )}
 
           {/* Time Range Filter */}
           <TimeRangeFilter
