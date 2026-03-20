@@ -13,6 +13,7 @@ export type MainTabParamList = {
   Feed: undefined;
   Record: { preselectedEvent?: Event } | undefined;
   Events: { initialFilter?: 'all' | 'upcoming' | 'ongoing' | 'completed' } | undefined;
+  Insights: undefined;
   Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;
 };
 

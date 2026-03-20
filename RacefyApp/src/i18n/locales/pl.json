@@ -1751,5 +1751,104 @@
       "points_multiplier": "Zdobywaj punkty szybciej dzięki bonusowi mnożnika."
     },
     "tapToUpgrade": "Kliknij, aby ulepszyć"
+  },
+  "insights": {
+    "title": "Profil treningowy",
+    "subtitle": "Twoje statystyki i analiza treningów",
+    "updatedAt": "Zaktualizowano: {{date}}",
+    "empty": {
+      "title": "Brak danych",
+      "message": "Ukończ pierwszą aktywność, aby zobaczyć profil treningowy"
+    },
+    "locked": {
+      "availableIn": "Dostępne w planie {{tier}}",
+      "upgrade": "Ulepsz plan"
+    },
+    "summary": {
+      "title": "Podsumowanie aktywności",
+      "activities": "Aktywności",
+      "distance": "Dystans",
+      "duration": "Czas",
+      "elevation": "Przewyższenie",
+      "calories": "Kalorie",
+      "bySport": "Według dyscypliny"
+    },
+    "comparison": {
+      "title": "Porównania",
+      "vsLastWeek": "vs poprzedni tydzień",
+      "vsLastMonth": "vs poprzedni miesiąc",
+      "vs3Months": "vs 3 miesiące temu",
+      "activities": "Aktywności",
+      "distance": "Dystans",
+      "streak": "Seria",
+      "rank": "Ranking"
+    },
+    "streak": {
+      "title": "Serie i regularność",
+      "current": "Aktualna seria",
+      "longest": "Najdłuższa seria",
+      "thisWeek": "Ten tydzień",
+      "thisMonth": "Ten miesiąc",
+      "days": "d",
+      "consistency": "Regularność tygodniowa",
+      "weeks": "tygodnie",
+      "totalActiveDays": "{{count}} aktywnych dni łącznie"
+    },
+    "trends": {
+      "title": "Trendy",
+      "weeklyDistance": "Dystans tygodniowy",
+      "monthlyDistance": "Dystans miesięczny",
+      "weeklyBreakdown": "Podział tygodniowy"
+    },
+    "timePatterns": {
+      "title": "Wzorce czasowe",
+      "preferredTime": "Preferowana pora",
+      "preferredDay": "Preferowany dzień",
+      "hourDistribution": "Rozkład godzinowy",
+      "dayDistribution": "Rozkład dzienny",
+      "weekend": "{{pct}}% w weekendy",
+      "earlyMorning": "Wczesny ranek",
+      "morning": "Rano",
+      "midday": "Południe",
+      "afternoon": "Popołudnie",
+      "evening": "Wieczór",
+      "night": "Noc"
+    },
+    "milestones": {
+      "title": "Kamienie milowe",
+      "upcoming": "Następne cele",
+      "achieved": "Ostatnio osiągnięte"
+    },
+    "weather": {
+      "title": "Profil pogodowy",
+      "preferredTemp": "Preferowana temperatura",
+      "tempDistribution": "Rozkład temperatur",
+      "conditions": "Warunki pogodowe",
+      "temp": {
+        "cold": "Zimno",
+        "cool": "Chłodno",
+        "moderate": "Umiarkowanie",
+        "warm": "Ciepło",
+        "hot": "Gorąco"
+      },
+      "condition": {
+        "clear": "Słonecznie",
+        "cloudy": "Pochmurnie",
+        "rain": "Deszcz",
+        "snow": "Śnieg",
+        "fog": "Mgła",
+        "wind": "Wiatr"
+      }
+    },
+    "routes": {
+      "title": "Ulubione trasy",
+      "fingerprints": "Odciski tras",
+      "uniqueCities": "Unikalne miasta",
+      "topLocations": "Najczęstsze lokalizacje",
+      "avgDistance": "śr. {{km}} km",
+      "repeatedRoutes": "Powtarzane trasy",
+      "loop": "Pętla",
+      "outAndBack": "Tam i z powrotem"
+    }
   }
 }

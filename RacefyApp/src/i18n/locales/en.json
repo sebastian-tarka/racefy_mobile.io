@@ -1749,5 +1749,104 @@
       "points_multiplier": "Earn points faster with a multiplier bonus."
     },
     "tapToUpgrade": "Tap to upgrade"
+  },
+  "insights": {
+    "title": "Training Profile",
+    "subtitle": "Your training insights and statistics",
+    "updatedAt": "Updated: {{date}}",
+    "empty": {
+      "title": "No data yet",
+      "message": "Complete your first activity to see your training profile"
+    },
+    "locked": {
+      "availableIn": "Available in {{tier}} plan",
+      "upgrade": "Upgrade"
+    },
+    "summary": {
+      "title": "Activity Summary",
+      "activities": "Activities",
+      "distance": "Distance",
+      "duration": "Duration",
+      "elevation": "Elevation",
+      "calories": "Calories",
+      "bySport": "By sport type"
+    },
+    "comparison": {
+      "title": "Comparisons",
+      "vsLastWeek": "vs last week",
+      "vsLastMonth": "vs last month",
+      "vs3Months": "vs 3 months ago",
+      "activities": "Activities",
+      "distance": "Distance",
+      "streak": "Streak",
+      "rank": "Rank"
+    },
+    "streak": {
+      "title": "Streak & Consistency",
+      "current": "Current streak",
+      "longest": "Longest streak",
+      "thisWeek": "This week",
+      "thisMonth": "This month",
+      "days": "d",
+      "consistency": "Weekly consistency",
+      "weeks": "weeks",
+      "totalActiveDays": "{{count}} total active days"
+    },
+    "trends": {
+      "title": "Trends",
+      "weeklyDistance": "Weekly distance",
+      "monthlyDistance": "Monthly distance",
+      "weeklyBreakdown": "Weekly breakdown"
+    },
+    "timePatterns": {
+      "title": "Time Patterns",
+      "preferredTime": "Preferred time",
+      "preferredDay": "Preferred day",
+      "hourDistribution": "Hour distribution",
+      "dayDistribution": "Day distribution",
+      "weekend": "{{pct}}% on weekends",
+      "earlyMorning": "Early morning",
+      "morning": "Morning",
+      "midday": "Midday",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "night": "Night"
+    },
+    "milestones": {
+      "title": "Milestones",
+      "upcoming": "Next milestones",
+      "achieved": "Recently achieved"
+    },
+    "weather": {
+      "title": "Weather Profile",
+      "preferredTemp": "Preferred temperature",
+      "tempDistribution": "Temperature distribution",
+      "conditions": "Weather conditions",
+      "temp": {
+        "cold": "Cold",
+        "cool": "Cool",
+        "moderate": "Moderate",
+        "warm": "Warm",
+        "hot": "Hot"
+      },
+      "condition": {
+        "clear": "Clear",
+        "cloudy": "Cloudy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "fog": "Fog",
+        "wind": "Wind"
+      }
+    },
+    "routes": {
+      "title": "Favorite Routes",
+      "fingerprints": "Route Fingerprints",
+      "uniqueCities": "Unique cities",
+      "topLocations": "Top locations",
+      "avgDistance": "avg {{km}} km",
+      "repeatedRoutes": "Repeated routes",
+      "loop": "Loop",
+      "outAndBack": "Out & Back"
+    }
   }
 }

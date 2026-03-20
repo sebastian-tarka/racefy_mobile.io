@@ -8,7 +8,8 @@ import { TrainingMixin } from './training';
 import { MessagingMixin } from './messaging';
 import { MiscMixin } from './misc';
 import { SubscriptionMixin } from './subscription';
+import { InsightsMixin } from './insights';
 
-class ApiService extends AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase))))))))) {}
+class ApiService extends InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))))))))) {}
 
 export const api = new ApiService();

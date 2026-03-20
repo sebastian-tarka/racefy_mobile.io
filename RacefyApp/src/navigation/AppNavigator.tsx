@@ -58,7 +58,8 @@ import type {
   AuthStackParamList,
   MainTabParamList,
 } from './types';
-import {FeedScreen} from "../screens/main/FeedScreen";
+import { FeedScreen } from '../screens/main/FeedScreen';
+import { InsightsScreen } from '../screens/main/InsightsScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -449,6 +450,7 @@ function MainTabNavigator() {
     Home: '⌂',
     Feed: '☰',
     Events: '📅',
+    Insights: '📊',
     Profile: '◉',
   };
 
@@ -488,6 +490,9 @@ function MainTabNavigator() {
               break;
             case 'Events':
               iconName = focused ? 'calendar' : 'calendar-outline';
+              break;
+            case 'Insights':
+              iconName = focused ? 'bar-chart' : 'bar-chart-outline';
               break;
             case 'Profile':
               iconName = focused ? 'person' : 'person-outline';
@@ -560,6 +565,12 @@ function MainTabNavigator() {
         name="Events"
         component={EventsScreen}
         options={{ tabBarLabel: 'Events', tabBarAccessibilityLabel: 'Wydarzenia' }}
+        listeners={authGuardListener}
+      />
+      <MainTab.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{ tabBarLabel: 'Insights', tabBarAccessibilityLabel: 'Profil treningowy' }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
