@@ -1,35 +1,105 @@
 import type { AnnouncementData, AudioCoachLanguage, AudioCoachStyle } from '../../types/audioCoach';
 
+// ─── Pluralization helpers ───────────────────────────────────────────────────
+
+type PluralForms = {
+  one: string;   // nominative singular (n = 1)
+  few?: string;  // 2–4 (Slavic languages)
+  many: string;  // 5+ (also used as simple plural for non-Slavic)
+};
+
 /**
- * Format decimal pace (e.g. 5.5) to "5:30" string
+ * Returns the correct plural form for a given count.
+ * Handles both simple (one/many) and Slavic (one/few/many) grammars.
  */
-function formatPace(paceDecimal: number): string {
+function plur(n: number, f: PluralForms): string {
+  if (f.few !== undefined) {
+    // Polish plural rule: 1 → one; 2-4 (not 12-14) → few; rest → many
+    if (n === 1) return f.one;
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return f.few;
+    return f.many;
+  }
+  return n === 1 ? f.one : f.many;
+}
+
+type LangTimeForms = { min: PluralForms; sec: PluralForms };
+
+/** Genitive forms — used for "X minutes Y seconds" in pace context */
+const PACE_FORMS: Record<AudioCoachLanguage, LangTimeForms> = {
+  en: { min: { one: 'minute',  many: 'minutes'  }, sec: { one: 'second',  many: 'seconds'  } },
+  pl: { min: { one: 'minuta',  few: 'minuty',  many: 'minut'  }, sec: { one: 'sekunda',  few: 'sekundy',  many: 'sekund'  } },
+  de: { min: { one: 'Minute',  many: 'Minuten' }, sec: { one: 'Sekunde', many: 'Sekunden' } },
+  fr: { min: { one: 'minute',  many: 'minutes'  }, sec: { one: 'seconde', many: 'secondes' } },
+  es: { min: { one: 'minuto',  many: 'minutos'  }, sec: { one: 'segundo', many: 'segundos' } },
+  it: { min: { one: 'minuto',  many: 'minuti'   }, sec: { one: 'secondo', many: 'secondi'  } },
+  pt: { min: { one: 'minuto',  many: 'minutos'  }, sec: { one: 'segundo', many: 'segundos' } },
+};
+
+/** Accusative/object forms — used for "X minutes faster" in delta context (Polish differs here) */
+const DELTA_FORMS: Record<AudioCoachLanguage, LangTimeForms> = {
+  ...PACE_FORMS,
+  pl: { min: { one: 'minutę', few: 'minuty', many: 'minut' }, sec: PACE_FORMS.pl.sec },
+};
+
+// ─── Formatters ──────────────────────────────────────────────────────────────
+
+/**
+ * Format decimal pace (e.g. 5.5) to spoken text per language.
+ * Avoids "5:30" which TTS reads as a clock time (e.g. "piąta trzydzieści" in Polish).
+ *
+ * Examples:
+ *   pl, 5.5  → "5 minut 30 sekund"
+ *   pl, 6.0  → "6 minut"
+ *   en, 5.5  → "5 minutes 30 seconds"
+ *   en, 1.25 → "1 minute 15 seconds"
+ */
+function formatPace(paceDecimal: number, language: AudioCoachLanguage = 'en'): string {
   const minutes = Math.floor(paceDecimal);
   const seconds = Math.round((paceDecimal - minutes) * 60);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const f = PACE_FORMS[language] ?? PACE_FORMS.en;
+
+  if (seconds === 0) {
+    return `${minutes} ${plur(minutes, f.min)}`;
+  }
+  return `${minutes} ${plur(minutes, f.min)} ${seconds} ${plur(seconds, f.sec)}`;
 }
 
 /**
- * Format split delta in seconds to human-readable string
+ * Format split delta in seconds to spoken text per language.
+ * Avoids "1:30" which TTS reads as a clock time.
+ *
+ * Examples:
+ *   pl, -90s → "1 minutę 30 sekund szybciej"
+ *   en, +45s → "45 seconds slower"
  */
 function formatDelta(deltaSeconds: number, language: AudioCoachLanguage): string {
   const absDelta = Math.abs(deltaSeconds);
   const mins = Math.floor(absDelta / 60);
   const secs = absDelta % 60;
+  const f = DELTA_FORMS[language] ?? DELTA_FORMS.en;
 
-  const timeStr = mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}`;
+  let timeStr: string;
+  if (mins > 0 && secs > 0) {
+    timeStr = `${mins} ${plur(mins, f.min)} ${secs} ${plur(secs, f.sec)}`;
+  } else if (mins > 0) {
+    timeStr = `${mins} ${plur(mins, f.min)}`;
+  } else {
+    timeStr = `${secs} ${plur(secs, f.sec)}`;
+  }
 
-  const labels: Record<AudioCoachLanguage, { faster: string; slower: string }> = {
-    en: { faster: 'faster', slower: 'slower' },
-    pl: { faster: 'szybciej', slower: 'wolniej' },
-    de: { faster: 'schneller', slower: 'langsamer' },
-    fr: { faster: 'plus vite', slower: 'plus lent' },
-    es: { faster: 'más rápido', slower: 'más lento' },
-    it: { faster: 'più veloce', slower: 'più lento' },
-    pt: { faster: 'mais rápido', slower: 'mais lento' },
+  const dirLabels: Record<AudioCoachLanguage, { faster: string; slower: string }> = {
+    en: { faster: 'faster',      slower: 'slower'       },
+    pl: { faster: 'szybciej',    slower: 'wolniej'      },
+    de: { faster: 'schneller',   slower: 'langsamer'    },
+    fr: { faster: 'plus vite',   slower: 'plus lent'    },
+    es: { faster: 'más rápido',  slower: 'más lento'    },
+    it: { faster: 'più veloce',  slower: 'più lento'    },
+    pt: { faster: 'mais rápido', slower: 'mais lento'   },
   };
 
-  const label = deltaSeconds < 0 ? labels[language].faster : labels[language].slower;
+  const label = deltaSeconds < 0 ? dirLabels[language].faster : dirLabels[language].slower;
   return `${timeStr} ${label}`;
 }
 
@@ -38,13 +108,13 @@ type TemplateBuilder = (data: AnnouncementData) => string;
 const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuilder>> = {
   en: {
     neutral: (d) => {
-      let text = `${d.km} kilometers. Pace ${formatPace(d.pace)} per kilometer.`;
+      let text = `${d.km} kilometers. Pace ${formatPace(d.pace, d.language)} per kilometer.`;
       if (d.heartRate) text += ` Heart rate ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'en')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} K done! You're running ${formatPace(d.pace)} pace. Keep pushing!`;
+      let text = `${d.km} K done! You're running ${formatPace(d.pace, d.language)} pace. Keep pushing!`;
       if (d.heartRate) text += ` Heart at ${d.heartRate} BPM.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -54,7 +124,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Kilometer ${d.km}. Current pace is ${formatPace(d.pace)}.`;
+      let text = `Kilometer ${d.km}. Current pace is ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Heart rate ${d.heartRate} beats per minute.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -64,20 +134,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} K. ${formatPace(d.pace)}.`;
+      let text = `${d.km} K. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate} BPM.`;
       return text;
     },
   },
   pl: {
     neutral: (d) => {
-      let text = `${d.km} kilometrów. Tempo ${formatPace(d.pace)} na kilometr.`;
+      let text = `${d.km} kilometrów. Tempo ${formatPace(d.pace, d.language)} na kilometr.`;
       if (d.heartRate) text += ` Tętno ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'pl')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km za tobą! Tempo ${formatPace(d.pace)}. Tak trzymaj!`;
+      let text = `${d.km} km za tobą! Tempo ${formatPace(d.pace, d.language)}. Tak trzymaj!`;
       if (d.heartRate) text += ` Tętno ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -87,7 +157,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Kilometr ${d.km}. Aktualne tempo ${formatPace(d.pace)}.`;
+      let text = `Kilometr ${d.km}. Aktualne tempo ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Tętno ${d.heartRate} uderzeń na minutę.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -97,20 +167,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
   },
   de: {
     neutral: (d) => {
-      let text = `${d.km} Kilometer. Tempo ${formatPace(d.pace)} pro Kilometer.`;
+      let text = `${d.km} Kilometer. Tempo ${formatPace(d.pace, d.language)} pro Kilometer.`;
       if (d.heartRate) text += ` Herzfrequenz ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'de')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km geschafft! Tempo ${formatPace(d.pace)}. Weiter so!`;
+      let text = `${d.km} km geschafft! Tempo ${formatPace(d.pace, d.language)}. Weiter so!`;
       if (d.heartRate) text += ` Puls ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -120,7 +190,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Kilometer ${d.km}. Aktuelles Tempo ${formatPace(d.pace)}.`;
+      let text = `Kilometer ${d.km}. Aktuelles Tempo ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Herzfrequenz ${d.heartRate} Schläge pro Minute.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -130,20 +200,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
   },
   fr: {
     neutral: (d) => {
-      let text = `${d.km} kilomètres. Allure ${formatPace(d.pace)} par kilomètre.`;
+      let text = `${d.km} kilomètres. Allure ${formatPace(d.pace, d.language)} par kilomètre.`;
       if (d.heartRate) text += ` Fréquence cardiaque ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'fr')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km! Allure ${formatPace(d.pace)}. Continue comme ça!`;
+      let text = `${d.km} km! Allure ${formatPace(d.pace, d.language)}. Continue comme ça!`;
       if (d.heartRate) text += ` Cœur à ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -153,7 +223,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Kilomètre ${d.km}. Allure actuelle ${formatPace(d.pace)}.`;
+      let text = `Kilomètre ${d.km}. Allure actuelle ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Fréquence cardiaque ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -163,20 +233,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
   },
   es: {
     neutral: (d) => {
-      let text = `${d.km} kilómetros. Ritmo ${formatPace(d.pace)} por kilómetro.`;
+      let text = `${d.km} kilómetros. Ritmo ${formatPace(d.pace, d.language)} por kilómetro.`;
       if (d.heartRate) text += ` Frecuencia cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'es')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km! Ritmo ${formatPace(d.pace)}. ¡Sigue así!`;
+      let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. ¡Sigue así!`;
       if (d.heartRate) text += ` Corazón a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -186,7 +256,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Kilómetro ${d.km}. Ritmo actual ${formatPace(d.pace)}.`;
+      let text = `Kilómetro ${d.km}. Ritmo actual ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frecuencia cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -196,20 +266,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
   },
   it: {
     neutral: (d) => {
-      let text = `${d.km} chilometri. Ritmo ${formatPace(d.pace)} per chilometro.`;
+      let text = `${d.km} chilometri. Ritmo ${formatPace(d.pace, d.language)} per chilometro.`;
       if (d.heartRate) text += ` Frequenza cardiaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'it')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km! Ritmo ${formatPace(d.pace)}. Continua così!`;
+      let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. Continua così!`;
       if (d.heartRate) text += ` Cuore a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -219,7 +289,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Chilometro ${d.km}. Ritmo attuale ${formatPace(d.pace)}.`;
+      let text = `Chilometro ${d.km}. Ritmo attuale ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frequenza cardiaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -229,20 +299,20 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
   },
   pt: {
     neutral: (d) => {
-      let text = `${d.km} quilómetros. Ritmo ${formatPace(d.pace)} por quilómetro.`;
+      let text = `${d.km} quilómetros. Ritmo ${formatPace(d.pace, d.language)} por quilómetro.`;
       if (d.heartRate) text += ` Frequência cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'pt')}.`;
       return text;
     },
     motivational: (d) => {
-      let text = `${d.km} km! Ritmo ${formatPace(d.pace)}. Continue assim!`;
+      let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. Continue assim!`;
       if (d.heartRate) text += ` Coração a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -252,7 +322,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     coach: (d) => {
-      let text = `Quilómetro ${d.km}. Ritmo atual ${formatPace(d.pace)}.`;
+      let text = `Quilómetro ${d.km}. Ritmo atual ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frequência cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
         text += d.splitDelta < 0
@@ -262,7 +332,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       return text;
     },
     minimal: (d) => {
-      let text = `${d.km} km. ${formatPace(d.pace)}.`;
+      let text = `${d.km} km. ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` ${d.heartRate}.`;
       return text;
     },
