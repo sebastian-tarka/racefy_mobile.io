@@ -495,6 +495,26 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             <Ionicons name="chevron-forward" size={24} color={colors.primary} />
           )}
         </TouchableOpacity>
+
+        {/* Activity Report Card */}
+        <TouchableOpacity
+          style={[styles.trainingCard, { backgroundColor: colors.info + '18', borderColor: colors.info }]}
+          onPress={() => navigation.navigate('Insights')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.trainingIconContainer, { backgroundColor: colors.info }]}>
+            <Ionicons name="bar-chart" size={28} color={colors.white} />
+          </View>
+          <View style={styles.trainingContent}>
+            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
+              {t('insights.title')}
+            </Text>
+            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
+              {t('insights.subtitle')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.info} />
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, ScreenHeader, Loading, EmptyState } from '../../components';
 import {
   SummaryCard,
@@ -19,11 +19,11 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, fontWeight } from '../../theme';
-import type { MainTabParamList } from '../../navigation/types';
+import type { RootStackParamList } from '../../navigation/types';
 import type { InsightsResponse, LockedSection } from '../../types/insights';
 import type { SubscriptionTier } from '../../types/api';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'Insights'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Insights'>;
 
 const SECTION_CONFIG: {
   key: string;

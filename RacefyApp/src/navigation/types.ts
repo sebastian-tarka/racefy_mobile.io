@@ -13,7 +13,6 @@ export type MainTabParamList = {
   Feed: undefined;
   Record: { preselectedEvent?: Event } | undefined;
   Events: { initialFilter?: 'all' | 'upcoming' | 'ongoing' | 'completed' } | undefined;
-  Insights: undefined;
   Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;
 };
 
@@ -44,6 +43,7 @@ export type RootStackParamList = {
   Paywall: { feature?: string } | undefined;
   Leaderboard: undefined;
   PointHistory: undefined;
+  Insights: undefined;
   // Training Plans
   TrainingCalibration: undefined;
   ProgramLoading: { programId: number };
