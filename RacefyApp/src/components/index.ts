@@ -105,3 +105,5 @@ export { PremiumTeaser } from './PremiumTeaser';
 export { TrialBanner } from './TrialBanner';
 export { FeatureGate } from './FeatureGate';
 export { UpgradePromptModal } from './UpgradePromptModal';
+export * from './EventTeamsTabContent';
+export * from './TeamCard';

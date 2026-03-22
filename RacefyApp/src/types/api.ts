@@ -35,6 +35,8 @@ export interface SubscriptionFeatures {
   points_multiplier: number;
   gpx_export: boolean;
   exclusive_badges: boolean;
+  teams_max: number;          // -1 = unlimited
+  team_members_max: number;   // -1 = unlimited
 }
 
 export interface SubscriptionUsage {
@@ -42,6 +44,7 @@ export interface SubscriptionUsage {
   events_monthly: number;
   privacy_zones: number;
   training_programs: number;
+  teams_max: number;
 }
 
 export interface SubscriptionStatus {
@@ -2482,4 +2485,62 @@ export interface RewardsResponse {
 export interface RewardsQueryParams {
   type?: 'points' | 'coupon' | 'badge' | 'prize';
   event_id?: number;
+}
+
+// ============ STANDALONE TEAMS ============
+
+export interface Team {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  avatar: string | null;
+  visibility: 'public' | 'private';
+  captain: User;
+  members_count: number;
+  is_captain: boolean;
+  is_member: boolean;
+  has_pending_invitation?: boolean;
+  has_pending_request?: boolean;
+  members?: TeamMember[];
+  invitations?: TeamMember[];
+  join_requests?: TeamMember[];
+  created_at: string;
+}
+
+export interface TeamMember {
+  id: number;
+  user: User;
+  role: 'captain' | 'member';
+  status: 'active' | 'invited' | 'pending_request' | 'declined';
+  invited_by: User | null;
+  responded_at: string | null;
+  joined_at: string;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+  visibility?: 'public' | 'private';
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+  description?: string;
+  visibility?: 'public' | 'private';
+}
+
+// ============ EVENT TEAMS ============
+
+export interface EventTeam {
+  id: number;
+  name: string;
+  code?: string;
+  captain: User;
+  members_count: number;
+  is_full: boolean;
+  is_captain?: boolean;
+  is_member?: boolean;
+  members?: EventRegistration[];
+  created_at: string;
 }

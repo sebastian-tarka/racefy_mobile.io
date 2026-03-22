@@ -7,6 +7,22 @@ import type { AudioCoachSettings } from '../../types/audioCoach';
 
 const SYNTH_TIMEOUT_MS = 8000;
 
+/** Ensure audio session is configured for background playback (locked screen, silent mode) */
+let audioModeConfigured = false;
+async function ensureAudioMode() {
+  if (audioModeConfigured) return;
+  try {
+    await Audio.setAudioModeAsync({
+      staysActiveInBackground: true,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+    });
+    audioModeConfigured = true;
+  } catch (err) {
+    logger.warn('audioCoach', 'Failed to set audio mode', { error: err });
+  }
+}
+
 /** Simple queue to prevent overlapping announcements */
 let isSpeaking = false;
 const queue: Array<() => Promise<void>> = [];
@@ -14,6 +30,7 @@ const queue: Array<() => Promise<void>> = [];
 async function processQueue() {
   if (isSpeaking || queue.length === 0) return;
   isSpeaking = true;
+  logger.debug('audioCoach', 'processQueue: starting task', { queueLength: queue.length });
 
   const task = queue.shift()!;
   try {
@@ -22,12 +39,14 @@ async function processQueue() {
     logger.error('audioCoach', 'Queue task failed', { error: err });
   } finally {
     isSpeaking = false;
+    logger.debug('audioCoach', 'processQueue: task done');
     processQueue();
   }
 }
 
 function enqueue(task: () => Promise<void>) {
   queue.push(task);
+  logger.debug('audioCoach', 'enqueue: added task', { queueLength: queue.length, isSpeaking });
   processQueue();
 }
 
@@ -47,16 +66,32 @@ const SPEECH_LANG_MAP: Record<string, string> = {
 /**
  * Speak text using offline expo-speech as fallback
  */
-function speakOffline(text: string, settings: AudioCoachSettings): Promise<void> {
-  return new Promise((resolve, reject) => {
+async function speakOffline(text: string, settings: AudioCoachSettings): Promise<void> {
+  await ensureAudioMode();
+  logger.debug('audioCoach', 'speakOffline: starting', {
+    text: text.substring(0, 80),
+    language: settings.language,
+  });
+  return new Promise((resolve) => {
+    // Safety timeout — some Android TTS engines never fire onDone
+    const safetyTimeout = setTimeout(() => {
+      logger.warn('audioCoach', 'speakOffline: safety timeout (15s), resolving');
+      resolve();
+    }, 15_000);
+
     Speech.speak(text, {
       language: SPEECH_LANG_MAP[settings.language] || 'en-US',
       rate: settings.speechRate,
       pitch: settings.speechPitch,
-      onDone: resolve,
+      onDone: () => {
+        clearTimeout(safetyTimeout);
+        logger.debug('audioCoach', 'speakOffline: done');
+        resolve();
+      },
       onError: (err) => {
+        clearTimeout(safetyTimeout);
         logger.error('audioCoach', 'Offline speech failed', { error: err });
-        reject(err);
+        resolve(); // resolve instead of reject to not block queue
       },
     });
   });
@@ -70,6 +105,7 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
   const timeout = setTimeout(() => controller.abort(), SYNTH_TIMEOUT_MS);
 
   try {
+    await ensureAudioMode();
     const result = await synthesize(text, settings.aiVoice, settings.language);
     clearTimeout(timeout);
 

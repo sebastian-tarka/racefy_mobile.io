@@ -16,6 +16,8 @@ const DEFAULT_FREE_FEATURES: SubscriptionFeatures = {
   points_multiplier: 1,
   gpx_export: false,
   exclusive_badges: false,
+  teams_max: 1,
+  team_members_max: 5,
 };
 
 export function useSubscription() {
@@ -32,7 +34,7 @@ export function useSubscription() {
     remainingDays: sub?.remaining_days ?? null,
     provider: sub?.provider ?? null,
     features: sub?.features ?? DEFAULT_FREE_FEATURES,
-    usage: sub?.usage ?? { ai_posts_monthly: 0, events_monthly: 0, privacy_zones: 0, training_programs: 0 },
+    usage: sub?.usage ?? { ai_posts_monthly: 0, events_monthly: 0, privacy_zones: 0, training_programs: 0, teams_max: 0 },
     canUse: (feature: keyof SubscriptionFeatures): boolean => {
       const val = sub?.features?.[feature];
       if (val === undefined) return false;

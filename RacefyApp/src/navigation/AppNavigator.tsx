@@ -51,6 +51,10 @@ import {
   WeekFeedbackScreen,
 } from '../screens/training';
 import { MaintenanceScreen } from '../screens/maintenance/MaintenanceScreen';
+import { TeamsListScreen } from '../screens/teams/TeamsListScreen';
+import { TeamDetailScreen } from '../screens/teams/TeamDetailScreen';
+import { TeamFormScreen } from '../screens/teams/TeamFormScreen';
+import { InviteMemberScreen } from '../screens/teams/InviteMemberScreen';
 
 // Types
 import type {
@@ -801,6 +805,11 @@ export function AppNavigator() {
               name="WeekFeedback"
               component={WeekFeedbackScreen}
             />
+            {/* Teams */}
+            <RootStack.Screen name="TeamsList" component={TeamsListScreen} />
+            <RootStack.Screen name="TeamDetail" component={TeamDetailScreen} />
+            <RootStack.Screen name="TeamForm" component={TeamFormScreen} />
+            <RootStack.Screen name="InviteMember" component={InviteMemberScreen} />
           </>
         )}
           </RootStack.Navigator>

@@ -40,3 +40,6 @@ export * from './useNearbyRoutes';
 export * from './useSubscription';
 export * from './useAudioCoach';
 export * from './useAudioCoachSettings';
+export * from './useTeams';
+export * from './useTeamDetail';
+export * from './useEventTeams';

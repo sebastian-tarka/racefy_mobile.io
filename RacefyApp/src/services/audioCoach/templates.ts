@@ -43,6 +43,28 @@ const DELTA_FORMS: Record<AudioCoachLanguage, LangTimeForms> = {
   pl: { min: { one: 'minutę', few: 'minuty', many: 'minut' }, sec: PACE_FORMS.pl.sec },
 };
 
+// ─── Kilometer forms per language ────────────────────────────────────────────
+
+const KM_FORMS: Record<AudioCoachLanguage, PluralForms> = {
+  en: { one: 'kilometer',   many: 'kilometers'   },
+  pl: { one: 'kilometr',    few: 'kilometry',    many: 'kilometrów' },
+  de: { one: 'Kilometer',   many: 'Kilometer'    },
+  fr: { one: 'kilomètre',   many: 'kilomètres'   },
+  es: { one: 'kilómetro',   many: 'kilómetros'   },
+  it: { one: 'chilometro',  many: 'chilometri'   },
+  pt: { one: 'quilómetro',  many: 'quilómetros'  },
+};
+
+/**
+ * Format km value with correct plural form per language.
+ * Non-integers (0.5, 1.5, …) always use plural (many) form.
+ */
+function formatKm(km: number, language: AudioCoachLanguage): string {
+  const f = KM_FORMS[language] ?? KM_FORMS.en;
+  if (km % 1 !== 0) return `${km} ${f.many}`;
+  return `${km} ${plur(km, f)}`;
+}
+
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
 /**
@@ -108,7 +130,7 @@ type TemplateBuilder = (data: AnnouncementData) => string;
 const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuilder>> = {
   en: {
     neutral: (d) => {
-      let text = `${d.km} kilometers. Pace ${formatPace(d.pace, d.language)} per kilometer.`;
+      let text = `${formatKm(d.km, 'en')}. Pace ${formatPace(d.pace, d.language)} per kilometer.`;
       if (d.heartRate) text += ` Heart rate ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'en')}.`;
       return text;
@@ -141,7 +163,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   pl: {
     neutral: (d) => {
-      let text = `${d.km} kilometrów. Tempo ${formatPace(d.pace, d.language)} na kilometr.`;
+      let text = `${formatKm(d.km, 'pl')}. Tempo ${formatPace(d.pace, d.language)} na kilometr.`;
       if (d.heartRate) text += ` Tętno ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'pl')}.`;
       return text;
@@ -174,7 +196,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   de: {
     neutral: (d) => {
-      let text = `${d.km} Kilometer. Tempo ${formatPace(d.pace, d.language)} pro Kilometer.`;
+      let text = `${formatKm(d.km, 'de')}. Tempo ${formatPace(d.pace, d.language)} pro Kilometer.`;
       if (d.heartRate) text += ` Herzfrequenz ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'de')}.`;
       return text;
@@ -207,7 +229,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   fr: {
     neutral: (d) => {
-      let text = `${d.km} kilomètres. Allure ${formatPace(d.pace, d.language)} par kilomètre.`;
+      let text = `${formatKm(d.km, 'fr')}. Allure ${formatPace(d.pace, d.language)} par kilomètre.`;
       if (d.heartRate) text += ` Fréquence cardiaque ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'fr')}.`;
       return text;
@@ -240,7 +262,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   es: {
     neutral: (d) => {
-      let text = `${d.km} kilómetros. Ritmo ${formatPace(d.pace, d.language)} por kilómetro.`;
+      let text = `${formatKm(d.km, 'es')}. Ritmo ${formatPace(d.pace, d.language)} por kilómetro.`;
       if (d.heartRate) text += ` Frecuencia cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'es')}.`;
       return text;
@@ -273,7 +295,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   it: {
     neutral: (d) => {
-      let text = `${d.km} chilometri. Ritmo ${formatPace(d.pace, d.language)} per chilometro.`;
+      let text = `${formatKm(d.km, 'it')}. Ritmo ${formatPace(d.pace, d.language)} per chilometro.`;
       if (d.heartRate) text += ` Frequenza cardiaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'it')}.`;
       return text;
@@ -306,7 +328,7 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
   },
   pt: {
     neutral: (d) => {
-      let text = `${d.km} quilómetros. Ritmo ${formatPace(d.pace, d.language)} por quilómetro.`;
+      let text = `${formatKm(d.km, 'pt')}. Ritmo ${formatPace(d.pace, d.language)} por quilómetro.`;
       if (d.heartRate) text += ` Frequência cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) text += ` ${formatDelta(d.splitDelta, 'pt')}.`;
       return text;
@@ -347,4 +369,82 @@ export function buildAnnouncementText(data: AnnouncementData): string {
   const langTemplates = templates[data.language] || templates.en;
   const builder = langTemplates[data.style] || langTemplates.neutral;
   return builder(data);
+}
+
+// ─── Start / End / Milestone announcements ──────────────────────────────────
+
+const startTemplates: Record<AudioCoachLanguage, string> = {
+  en: 'Run started. Good luck!',
+  pl: 'Bieg rozpoczęty. Powodzenia!',
+  de: 'Lauf gestartet. Viel Erfolg!',
+  fr: 'Course démarrée. Bonne chance!',
+  es: '¡Carrera iniciada! ¡Buena suerte!',
+  it: 'Corsa iniziata. Buona fortuna!',
+  pt: 'Corrida iniciada. Boa sorte!',
+};
+
+export function buildStartAnnouncement(language: AudioCoachLanguage): string {
+  return startTemplates[language] || startTemplates.en;
+}
+
+const endTemplates: Record<AudioCoachLanguage, (km: number, pace: number, lang: AudioCoachLanguage) => string> = {
+  en: (km, pace, lang) =>
+    `Run complete. ${formatKm(km, 'en')} in ${formatPace(pace, lang)}. Great job!`,
+  pl: (km, pace, lang) =>
+    `Bieg zakończony. ${formatKm(km, 'pl')}, tempo średnie ${formatPace(pace, lang)} na kilometr. Dobra robota!`,
+  de: (km, pace, lang) =>
+    `Lauf beendet. ${formatKm(km, 'de')} in ${formatPace(pace, lang)}. Gut gemacht!`,
+  fr: (km, pace, lang) =>
+    `Course terminée. ${formatKm(km, 'fr')} en ${formatPace(pace, lang)}. Bien joué!`,
+  es: (km, pace, lang) =>
+    `¡Carrera completada! ${formatKm(km, 'es')} en ${formatPace(pace, lang)}. ¡Buen trabajo!`,
+  it: (km, pace, lang) =>
+    `Corsa completata. ${formatKm(km, 'it')} in ${formatPace(pace, lang)}. Ottimo lavoro!`,
+  pt: (km, pace, lang) =>
+    `Corrida concluída. ${formatKm(km, 'pt')} em ${formatPace(pace, lang)}. Bom trabalho!`,
+};
+
+export function buildEndAnnouncement(
+  language: AudioCoachLanguage,
+  totalKm: number,
+  avgPaceMinPerKm: number,
+): string {
+  const builder = endTemplates[language] || endTemplates.en;
+  // Round km to 1 decimal
+  const km = Math.round(totalKm * 10) / 10;
+  return builder(km, avgPaceMinPerKm, language);
+}
+
+// Milestone threshold labels (km value → spoken name per language)
+const MILESTONE_NAMES: Record<number, Record<AudioCoachLanguage, string>> = {
+  5:    { en: '5 K',            pl: '5 kilometrów',         de: '5 Kilometer',       fr: '5 kilomètres',       es: '5 kilómetros',       it: '5 chilometri',       pt: '5 quilómetros' },
+  10:   { en: '10 K',           pl: '10 kilometrów',        de: '10 Kilometer',      fr: '10 kilomètres',      es: '10 kilómetros',      it: '10 chilometri',      pt: '10 quilómetros' },
+  15:   { en: '15 K',           pl: '15 kilometrów',        de: '15 Kilometer',      fr: '15 kilomètres',      es: '15 kilómetros',      it: '15 chilometri',      pt: '15 quilómetros' },
+  21.1: { en: 'half marathon',  pl: 'półmaraton',           de: 'Halbmarathon',      fr: 'semi-marathon',      es: 'media maratón',      it: 'mezza maratona',     pt: 'meia maratona' },
+  30:   { en: '30 K',           pl: '30 kilometrów',        de: '30 Kilometer',      fr: '30 kilomètres',      es: '30 kilómetros',      it: '30 chilometri',      pt: '30 quilómetros' },
+  42.2: { en: 'marathon',       pl: 'maraton',              de: 'Marathon',          fr: 'marathon',           es: 'maratón',            it: 'maratona',           pt: 'maratona' },
+};
+
+const milestoneTemplates: Record<AudioCoachLanguage, (name: string) => string> = {
+  en: (name) => `Congratulations! You just completed your first ${name}!`,
+  pl: (name) => `Gratulacje! Właśnie ukończyłeś swój pierwszy ${name}!`,
+  de: (name) => `Herzlichen Glückwunsch! Du hast deinen ersten ${name} geschafft!`,
+  fr: (name) => `Félicitations! Vous venez de compléter votre premier ${name}!`,
+  es: (name) => `¡Felicidades! ¡Acabas de completar tu primer ${name}!`,
+  it: (name) => `Congratulazioni! Hai appena completato la tua prima ${name}!`,
+  pt: (name) => `Parabéns! Você acabou de completar sua primeira ${name}!`,
+};
+
+/**
+ * Build milestone announcement. Returns null if threshold is not a known milestone.
+ */
+export function buildMilestoneAnnouncement(
+  language: AudioCoachLanguage,
+  thresholdKm: number,
+): string | null {
+  const names = MILESTONE_NAMES[thresholdKm];
+  if (!names) return null;
+  const name = names[language] || names.en;
+  const builder = milestoneTemplates[language] || milestoneTemplates.en;
+  return builder(name);
 }

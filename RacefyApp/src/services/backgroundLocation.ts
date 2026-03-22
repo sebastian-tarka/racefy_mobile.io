@@ -1,7 +1,9 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
+import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
+import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
 import type { GpsProfile } from '../config/gpsProfiles';
 import { syncPointsToServer } from './backgroundApiClient';
 
@@ -169,6 +171,174 @@ async function performBackgroundSync(): Promise<void> {
   }
 }
 
+// ============================================
+// AUDIO COACH — BACKGROUND ANNOUNCEMENTS
+// Runs inside the headless JS task, independent of React.
+// Tracks accumulated distance and speaks at km thresholds.
+// ============================================
+
+const BG_AUDIO_DISTANCE_KEY = '@racefy:audioCoach:bgDistance';
+const BG_AUDIO_THRESHOLD_KEY = '@racefy:audioCoach:bgLastThreshold';
+const BG_AUDIO_START_TIME_KEY = '@racefy:audioCoach:bgStartTime';
+const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
+const BG_AUDIO_SIM_KEY = '@racefy:audioCoach:bgSimStartTime'; // DEV sim mode
+const BG_AUDIO_MILESTONES_KEY = '@racefy:audioCoach:bgMilestones'; // JSON array of unachieved thresholds (km)
+const BG_AUDIO_PASSED_MILESTONES_KEY = '@racefy:audioCoach:bgPassedMilestones'; // JSON array of already announced
+
+const SPEECH_LANG_MAP: Record<string, string> = {
+  en: 'en-US', pl: 'pl-PL', de: 'de-DE', fr: 'fr-FR',
+  es: 'es-ES', it: 'it-IT', pt: 'pt-PT',
+};
+
+/**
+ * Called from the background task on every GPS event (even filtered ones).
+ * In normal mode: accumulates real GPS distance.
+ * In sim mode (DEV): calculates distance from elapsed time (~350m/10s).
+ *
+ * Key: this runs in a headless JS context — no React, no hooks, no component tree.
+ * Speech.speak() works here because expo-speech uses native TTS directly.
+ */
+async function handleAudioCoachBackground(distanceAddedM: number): Promise<void> {
+  try {
+    // Check sim mode first — sim bypasses settings.enabled check
+    const simStartStr = await AsyncStorage.getItem(BG_AUDIO_SIM_KEY);
+    const isSimMode = !!simStartStr;
+
+    // Read settings (language, style, interval, etc.)
+    const settingsJson = await AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY);
+    const settings = settingsJson ? JSON.parse(settingsJson) : null;
+
+    // In real mode, require settings.enabled. In sim mode, skip this check.
+    if (!isSimMode) {
+      if (!settings || !settings.enabled) return;
+    }
+
+    // Use defaults if settings not available (sim mode without configured settings)
+    const language = settings?.language || 'pl';
+    const style = settings?.style || 'neutral';
+    const intervalKm = settings?.intervalKm || 1;
+    const speechRate = settings?.speechRate || 1.0;
+    const speechPitch = settings?.speechPitch || 1.0;
+
+    // Calculate distance
+    let totalDistM: number;
+    if (isSimMode) {
+      // Sim mode: ~350m every 10s from sim start time
+      const simStart = parseInt(simStartStr!, 10);
+      totalDistM = Math.floor((Date.now() - simStart) / 10000) * 350;
+    } else {
+      // Real mode: accumulate GPS distance
+      const prevDistStr = await AsyncStorage.getItem(BG_AUDIO_DISTANCE_KEY);
+      totalDistM = (prevDistStr ? parseFloat(prevDistStr) : 0) + distanceAddedM;
+    }
+    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistM.toString());
+
+    // Check threshold
+    const lastThresholdStr = await AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY);
+    const lastThreshold = lastThresholdStr ? parseFloat(lastThresholdStr) : 0;
+
+    const totalDistKm = totalDistM / 1000;
+    const currentThreshold = Math.floor(totalDistKm / intervalKm) * intervalKm;
+
+    if (currentThreshold <= 0 || currentThreshold <= lastThreshold) return;
+
+    // Threshold crossed!
+    await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, currentThreshold.toString());
+
+    // Calculate average pace (min/km) from elapsed time
+    const startTimeStr = await AsyncStorage.getItem(BG_AUDIO_START_TIME_KEY);
+    const startTime = startTimeStr ? parseInt(startTimeStr, 10) : Date.now();
+    const elapsedMin = (Date.now() - startTime) / 60000;
+    const paceMinPerKm = totalDistKm > 0 ? elapsedMin / totalDistKm : 0;
+
+    const text = buildAnnouncementText({
+      language,
+      style,
+      km: currentThreshold,
+      pace: isSimMode ? 5.5 : paceMinPerKm, // Sim uses fixed pace
+      heartRate: undefined,
+      splitDelta: undefined,
+    });
+
+    logger.info('audioCoach', 'BG threshold crossed, speaking', {
+      km: currentThreshold,
+      totalDistM: Math.round(totalDistM),
+      pace: isSimMode ? '5.50 (sim)' : paceMinPerKm.toFixed(2),
+      sim: isSimMode,
+    });
+
+    // expo-speech uses native TTS — works in headless JS context.
+    // Android TTS automatically requests AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+    // which ducks (quiets) music instead of pausing it.
+    Speech.speak(text, {
+      language: SPEECH_LANG_MAP[language] || 'en-US',
+      rate: speechRate,
+      pitch: speechPitch,
+    });
+
+    // Check milestone announcements (premium feature — thresholds stored by UI)
+    try {
+      const milestonesJson = await AsyncStorage.getItem(BG_AUDIO_MILESTONES_KEY);
+      const passedJson = await AsyncStorage.getItem(BG_AUDIO_PASSED_MILESTONES_KEY);
+      if (milestonesJson) {
+        const thresholds: number[] = JSON.parse(milestonesJson);
+        const passed: number[] = passedJson ? JSON.parse(passedJson) : [];
+
+        for (const threshold of thresholds) {
+          if (totalDistKm >= threshold && !passed.includes(threshold)) {
+            const milestoneText = buildMilestoneAnnouncement(language, threshold);
+            if (milestoneText) {
+              passed.push(threshold);
+              await AsyncStorage.setItem(BG_AUDIO_PASSED_MILESTONES_KEY, JSON.stringify(passed));
+              logger.info('audioCoach', 'BG milestone reached!', { threshold, totalDistKm: totalDistKm.toFixed(2) });
+              // Speak milestone after a short delay (so km announcement finishes first)
+              setTimeout(() => {
+                Speech.speak(milestoneText, {
+                  language: SPEECH_LANG_MAP[language] || 'en-US',
+                  rate: speechRate,
+                  pitch: speechPitch,
+                });
+              }, 4000);
+            }
+          }
+        }
+      }
+    } catch {
+      // Silent — milestones are optional
+    }
+  } catch (err) {
+    // Silent fail — never break GPS tracking for audio
+    logger.error('audioCoach', 'BG audio coach error', { error: err });
+  }
+}
+
+/** Clear background audio coach state (called on tracking start/stop) */
+export async function clearAudioCoachBackgroundState(): Promise<void> {
+  await Promise.all([
+    AsyncStorage.removeItem(BG_AUDIO_DISTANCE_KEY),
+    AsyncStorage.removeItem(BG_AUDIO_THRESHOLD_KEY),
+    AsyncStorage.removeItem(BG_AUDIO_START_TIME_KEY),
+    AsyncStorage.removeItem(BG_AUDIO_MILESTONES_KEY),
+    AsyncStorage.removeItem(BG_AUDIO_PASSED_MILESTONES_KEY),
+  ]);
+}
+
+/**
+ * Store milestone thresholds for background audio coach.
+ * Called from UI when tracking starts and milestones are available.
+ */
+export async function setAudioCoachMilestones(thresholdsKm: number[]): Promise<void> {
+  await AsyncStorage.setItem(BG_AUDIO_MILESTONES_KEY, JSON.stringify(thresholdsKm));
+  await AsyncStorage.setItem(BG_AUDIO_PASSED_MILESTONES_KEY, JSON.stringify([]));
+}
+
+/** Initialize background audio coach state (called on tracking start) */
+export async function initAudioCoachBackgroundState(): Promise<void> {
+  await AsyncStorage.setItem(BG_AUDIO_START_TIME_KEY, Date.now().toString());
+  await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, '0');
+  await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
+}
+
 // Define the background task - this must be at module level
 // IMPORTANT: This code runs in a separate JS context when in background
 // It must be defined at module level BEFORE React Native initializes
@@ -202,6 +372,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
         let filteredByAccuracy = 0;
         let filteredByDistance = 0;
         let filteredBySpeed = 0;
+        let audioCoachDistAdded = 0; // Track distance for audio coach
 
         for (const location of locations) {
           // Filter by accuracy
@@ -251,6 +422,13 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             }
           }
 
+          // Track distance for audio coach (before updating lastPosition)
+          if (lastPosition) {
+            audioCoachDistAdded += calculateDistanceBetweenCoords(
+              lastPosition.lat, lastPosition.lng, lat, lng,
+            );
+          }
+
           // Point passed all filters, add it
           newPoints.push({
             lat,
@@ -295,6 +473,13 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
           logger.gps(`Background: All ${locations.length} points filtered`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
         }
+
+        // Audio coach: always check (works for both real GPS and sim mode)
+        logger.debug('audioCoach', 'BG task: checking audio coach', {
+          distAdded: Math.round(audioCoachDistAdded),
+          newPts: newPoints.length,
+        });
+        await handleAudioCoachBackground(audioCoachDistAdded);
       } catch (err) {
         logger.error('gps', 'Failed to save background location', { error: err });
       }
@@ -378,6 +563,9 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
     // Store the profile for the background task to access
     await storeGpsProfile(profile);
 
+    // Initialize audio coach background state for this session
+    await initAudioCoachBackgroundState();
+
     // Start background location updates with profile-specific settings
     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.BestForNavigation,
@@ -403,6 +591,48 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
   }
 }
 
+/**
+ * DEV ONLY: Start a lightweight background location task for audio coach sim.
+ * Uses lowest accuracy — just keeps the foreground service alive so the task
+ * fires periodically and can run TTS in background.
+ */
+export async function startSimBackgroundTracking(): Promise<boolean> {
+  try {
+    const isRunning = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+    if (isRunning) {
+      logger.gps('Sim: Background tracking already running');
+      return true;
+    }
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      logger.warn('gps', 'Sim: Location permission not granted');
+      return false;
+    }
+
+    await initAudioCoachBackgroundState();
+
+    await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
+      accuracy: Location.Accuracy.Lowest,
+      timeInterval: 10000,     // every 10s
+      distanceInterval: 0,     // fire even when stationary
+      showsBackgroundLocationIndicator: true,
+      foregroundService: {
+        notificationTitle: 'Racefy',
+        notificationBody: 'Audio coach sim running...',
+        notificationColor: '#ef4444',
+      },
+      pausesUpdatesAutomatically: false,
+    });
+
+    logger.gps('Sim: Lightweight background tracking started');
+    return true;
+  } catch (error) {
+    logger.error('gps', 'Sim: Failed to start background tracking', { error });
+    return false;
+  }
+}
+
 // Stop background location tracking
 export async function stopBackgroundLocationTracking(): Promise<void> {
   try {
@@ -417,9 +647,10 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
       backgroundSyncTimer = null;
       logger.gps('Background sync timer cleared');
     }
-    // Clear stored profile and last position
+    // Clear stored profile, last position, and audio coach state
     await clearGpsProfile();
     await clearLastBackgroundPosition();
+    await clearAudioCoachBackgroundState();
   } catch (error) {
     logger.error('gps', 'Failed to stop background location tracking', { error });
   }

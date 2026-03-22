@@ -515,6 +515,26 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           </View>
           <Ionicons name="chevron-forward" size={24} color={colors.info} />
         </TouchableOpacity>
+
+        {/* Teams Card */}
+        <TouchableOpacity
+          style={[styles.trainingCard, { backgroundColor: '#8b5cf6' + '18', borderColor: '#8b5cf6' }]}
+          onPress={() => navigation.navigate('TeamsList')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.trainingIconContainer, { backgroundColor: '#8b5cf6' }]}>
+            <Ionicons name="shield" size={28} color={colors.white} />
+          </View>
+          <View style={styles.trainingContent}>
+            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
+              {t('teams.teams')}
+            </Text>
+            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
+              {t('teams.profileSubtitle')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#8b5cf6" />
+        </TouchableOpacity>
       </View>
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>

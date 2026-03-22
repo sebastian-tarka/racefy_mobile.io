@@ -22,7 +22,7 @@ import {
   useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment,
   useSportTypes, type SportTypeWithIcon, useTheme, useUnits, useAuth,
   triggerHaptic, useActivityTimer, useMilestoneTracking, useSubscription,
-  useAudioCoach, useAudioCoachSettings,
+  useAudioCoach, useAudioCoachSettings, announceStart, announceEnd,
 } from '../../hooks';
 import {
   BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
@@ -158,10 +158,76 @@ export function ActivityRecordingScreen() {
   useEffect(() => { loadAudioCoachSettings(); }, [loadAudioCoachSettings]);
   const [audioCoachSessionEnabled, setAudioCoachSessionEnabled] = useState<boolean | null>(null);
   const isAudioCoachActive = audioCoachSessionEnabled ?? audioCoachSettings.enabled;
+
+  // ── DEV ONLY: Simulated run for testing audio coach ──
+  // Time-based distance: recalculated on every render from elapsed time.
+  // Foreground: setInterval triggers re-renders every 10s.
+  // Background: real GPS tracking triggers re-renders → distance recalculates.
+  //   → Press Start first (real GPS), then SimRun, then lock screen.
+  const [devSimRunning, setDevSimRunning] = useState(false);
+  const devSimStartRef = useRef(0);
+  const [, setDevSimTick] = useState(0);
+  const devSimPace = 5.5; // simulated pace: 5:30 min/km
+  // Distance from elapsed time — correct on every render, even after background resume
+  const devSimDistanceM = devSimRunning && devSimStartRef.current > 0
+    ? Math.floor((Date.now() - devSimStartRef.current) / 10000) * 350
+    : 0;
+  const devSimBgStartedRef = useRef(false);
+  useEffect(() => {
+    if (!__DEV__ || !devSimRunning) return;
+    const startTime = Date.now();
+    devSimStartRef.current = startTime;
+    devSimBgStartedRef.current = false;
+
+    logger.info('audioCoach', 'DEV SimRun: starting...');
+
+    // 1. Write sim flag to AsyncStorage — background task reads it
+    AsyncStorage.setItem('@racefy:audioCoach:bgSimStartTime', startTime.toString())
+      .then(() => logger.info('audioCoach', 'DEV SimRun: sim flag written'))
+      .catch(e => logger.error('audioCoach', 'DEV SimRun: failed to write sim flag', { error: e }));
+
+    // 2. Start lightweight background tracking (foreground service)
+    // Dynamic import — backgroundLocation.ts has TaskManager.defineTask at module level
+    // and cannot be statically imported from React components
+    import('../../services/backgroundLocation')
+      .then(m => m.startSimBackgroundTracking())
+      .then(ok => {
+        devSimBgStartedRef.current = ok;
+        logger.info('audioCoach', `DEV SimRun: bg tracking ${ok ? 'STARTED' : 'FAILED'}`);
+      })
+      .catch(e => logger.error('audioCoach', 'DEV SimRun: bg tracking error', { error: String(e) }));
+
+    // 3. Foreground re-render tick
+    const interval = setInterval(() => {
+      setDevSimTick(t => {
+        const elapsed = Date.now() - devSimStartRef.current;
+        const dist = Math.floor(elapsed / 10000) * 350;
+        logger.info('audioCoach', `DEV SimRun tick: ${dist}m (${(dist / 1000).toFixed(2)}km)`);
+        return t + 1;
+      });
+    }, 10_000);
+
+    return () => {
+      clearInterval(interval);
+      AsyncStorage.removeItem('@racefy:audioCoach:bgSimStartTime');
+      AsyncStorage.setItem('@racefy:audioCoach:bgLastThreshold', '0');
+      if (devSimBgStartedRef.current) {
+        import('../../services/backgroundLocation').then(m => m.stopBackgroundLocationTracking());
+      }
+    };
+  }, [devSimRunning]);
+
+  const audioCoachDistanceKm = __DEV__ && devSimRunning
+    ? devSimDistanceM / 1000
+    : currentStats.distance / 1000;
+  const audioCoachPace = __DEV__ && devSimRunning
+    ? devSimPace
+    : (currentStats.currentPace ? currentStats.currentPace / 60 : 0);
+
   useAudioCoach({
-    settings: { ...audioCoachSettings, enabled: isAudioCoachActive },
-    totalDistanceKm: currentStats.distance / 1000,
-    currentPaceMinPerKm: currentStats.currentPace ? currentStats.currentPace / 60 : 0,
+    settings: { ...audioCoachSettings, enabled: isAudioCoachActive || (__DEV__ && devSimRunning) },
+    totalDistanceKm: audioCoachDistanceKm,
+    currentPaceMinPerKm: audioCoachPace,
     heartRate: currentStats.avg_heart_rate,
     previousKmPace: undefined,
     userTier: tier as any,
@@ -496,6 +562,21 @@ export function ActivityRecordingScreen() {
       resetMilestones();
       setSelectedEvent(null);
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
+
+      // Audio coach: announce start
+      announceStart(audioCoachSettings, tier as any);
+
+      // Store milestone thresholds for background audio coach
+      if (distanceMilestones.length > 0) {
+        const thresholds = distanceMilestones
+          .filter(m => !m.achieved)
+          .map(m => m.threshold);
+        if (thresholds.length > 0) {
+          import('../../services/backgroundLocation')
+            .then(m => m.setAudioCoachMilestones(thresholds))
+            .catch(() => {});
+        }
+      }
     } catch (err) {
       logger.error('activity', 'Failed to start activity from UI', { error: err });
     }
@@ -546,6 +627,15 @@ export function ActivityRecordingScreen() {
         activityId: result?.activity?.id,
         hasPost: !!result?.post,
       });
+
+      // Audio coach: announce end with summary
+      const totalKm = currentStats.distance / 1000;
+      const avgPace = localDuration > 0 && totalKm > 0
+        ? (localDuration / 60) / totalKm  // min/km
+        : 0;
+      if (avgPace > 0) {
+        announceEnd(audioCoachSettings, totalKm, avgPace, tier as any);
+      }
 
       // Fire-and-forget: enrich activity with HR data from Health Connect / HealthKit
       if (result?.activity) {
@@ -1183,6 +1273,40 @@ export function ActivityRecordingScreen() {
                   color={colors.textSecondary}
                 />
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* DEV ONLY: Simulated run for testing audio coach */}
+          {__DEV__ && (
+            <View style={[styles.devMapToggleContainer, { bottom: fabBottom + 340 }]}>
+              <TouchableOpacity
+                style={[
+                  styles.mapStyleToggleButton,
+                  {
+                    backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground,
+                  },
+                ]}
+                onPress={() => {
+                  setDevSimRunning(prev => !prev);
+                  triggerHaptic();
+                }}
+                onLongPress={() => {
+                  Alert.alert(
+                    'Audio Coach Sim',
+                    `Distance: ${(devSimDistanceM / 1000).toFixed(2)} km\nPace: ${devSimPace} min/km\nInterval: ${audioCoachSettings.intervalKm} km\nEnabled: ${isAudioCoachActive || devSimRunning}\nLanguage: ${audioCoachSettings.language}\nStyle: ${audioCoachSettings.style}\n\n+350m every 10s → 1km every ~29s`,
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={devSimRunning ? 'stop' : 'walk'}
+                  size={28}
+                  color={devSimRunning ? '#fff' : colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <Text style={{ color: devSimRunning ? '#ef4444' : colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 2 }}>
+                {devSimRunning ? `${(devSimDistanceM / 1000).toFixed(1)}km` : 'SimRun'}
+              </Text>
             </View>
           )}
 

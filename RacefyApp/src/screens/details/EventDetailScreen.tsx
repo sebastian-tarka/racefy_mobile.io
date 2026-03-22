@@ -15,9 +15,11 @@ import {
   EventDetailsTabContent,
   EventParticipantsTabContent,
   EventLeaderboardTabContent,
+  EventTeamsTabContent,
 } from '../../components';
 import type { EventTabType } from '../../components/EventTabs';
 import { useAuth } from '../../hooks/useAuth';
+import { useEventTeams } from '../../hooks/useEventTeams';
 import { useTheme } from '../../hooks/useTheme';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 import { useCollapsibleHeader } from '../../hooks/useCollapsibleHeader';
@@ -75,6 +77,13 @@ export function EventDetailScreen({ route, navigation }: Props) {
     handleDeleteEvent,
     getRegistrationClosedMessage,
   } = useEventDetail({ eventId, isAuthenticated, navigateToAuth, navigateBack });
+
+  const eventTeams = useEventTeams({
+    eventId,
+    isTeamEvent: event?.is_team_event ?? false,
+    isAuthenticated,
+    isRegistered: event?.is_registered ?? false,
+  });
 
   const scrollToBottom = useCallback(() => {
     const delay = Platform.OS === 'ios' ? 300 : 150;
@@ -146,8 +155,16 @@ export function EventDetailScreen({ route, navigation }: Props) {
       });
     }
 
+    if (event?.is_team_event) {
+      tabConfig.push({
+        label: t('eventDetail.tabs.teams', 'Teams'),
+        value: 'teams' as EventTabType,
+        icon: 'shield-outline' as keyof typeof Ionicons.glyphMap,
+      });
+    }
+
     return tabConfig;
-  }, [t, participants.length, leaderboard.length, commentaryCount]);
+  }, [t, participants.length, leaderboard.length, commentaryCount, event?.is_team_event]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('eventDetail.loading')} />;
@@ -298,6 +315,31 @@ export function EventDetailScreen({ route, navigation }: Props) {
           onRefresh={onRefresh}
           onUserPress={handleUserPress}
           isAuthenticated={isAuthenticated}
+          onScroll={handleTabScroll}
+        />
+      )}
+
+      {activeTab === 'teams' && event?.is_team_event && (
+        <EventTeamsTabContent
+          teams={eventTeams.teams}
+          myTeam={eventTeams.myTeam}
+          isInTeam={eventTeams.isInTeam}
+          isCaptain={eventTeams.isCaptain}
+          isLoading={eventTeams.isLoading}
+          isActing={eventTeams.isActing}
+          isRefreshing={isRefreshing}
+          canCreateTeam={eventTeams.canCreateTeam}
+          canJoinTeam={eventTeams.canJoinTeam}
+          createdTeam={eventTeams.createdTeam}
+          onRefresh={() => { onRefresh(); eventTeams.fetchTeams(); }}
+          onCreateTeam={eventTeams.handleCreateTeam}
+          onJoinTeam={eventTeams.handleJoinTeam}
+          onLeaveTeam={eventTeams.handleLeaveTeam}
+          onDeleteTeam={eventTeams.handleDeleteTeam}
+          onKickMember={eventTeams.handleKickMember}
+          onTransferCaptain={eventTeams.handleTransferCaptain}
+          onClearCreatedTeam={eventTeams.clearCreatedTeam}
+          onUserPress={isAuthenticated ? handleUserPress : undefined}
           onScroll={handleTabScroll}
         />
       )}

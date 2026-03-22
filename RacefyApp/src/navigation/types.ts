@@ -51,6 +51,11 @@ export type RootStackParamList = {
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
   WeekFeedback: { weekId: number };
+  // Teams
+  TeamsList: undefined;
+  TeamDetail: { slug: string };
+  TeamForm: { teamId?: number };
+  InviteMember: { teamId: number };
 };
 
 declare global {
