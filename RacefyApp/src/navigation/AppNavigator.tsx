@@ -204,10 +204,23 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     );
   }
 
-  // Not on Record tab, no recording - show gray +
+  // Not on Record tab, no recording - subtle outlined pill with +
   return (
-    <Animated.View style={{ alignItems: 'center', justifyContent: 'center', transform: [{ scale: scaleAnim }] }}>
-      <Text style={{ fontSize: 20, color: '#9ca3af', lineHeight: 20 }}>+</Text>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <View
+        style={{
+          width: ms(48),
+          height: ms(38),
+          borderRadius: ms(16),
+          borderWidth: 1.5,
+          borderColor: 'rgba(16, 185, 129, 0.4)',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 22, color: '#10b981', fontWeight: '600', lineHeight: 24 }}>+</Text>
+      </View>
     </Animated.View>
   );
 }
