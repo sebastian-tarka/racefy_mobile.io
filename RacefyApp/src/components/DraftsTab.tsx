@@ -22,12 +22,14 @@ interface DraftsTabProps {
   onDeleteSuccess?: () => void;
   onEditDraft?: (draft: DraftPost) => void;
   ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+  contentPaddingBottom?: number;
 }
 
 export function DraftsTab({
   isOwnProfile,
   onPublishSuccess,
   onDeleteSuccess,
+  contentPaddingBottom,
   onEditDraft,
   ListHeaderComponent,
 }: DraftsTabProps) {
@@ -160,6 +162,7 @@ export function DraftsTab({
       contentContainerStyle={[
         styles.listContent,
         drafts.length === 0 && styles.emptyContent,
+        contentPaddingBottom != null && { paddingBottom: contentPaddingBottom },
       ]}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={renderEmpty}

@@ -361,6 +361,7 @@
     },
     "stats": {
       "posts": "Posty",
+      "totalDistance": "Łącznie",
       "followers": "Obserwujący",
       "following": "Obserwowani",
       "compareWith": "Porównaj z",

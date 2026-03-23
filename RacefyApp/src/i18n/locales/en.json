@@ -361,6 +361,7 @@
     },
     "stats": {
       "posts": "Posts",
+      "totalDistance": "Total",
       "followers": "Followers",
       "following": "Following",
       "compareWith": "Compare with",

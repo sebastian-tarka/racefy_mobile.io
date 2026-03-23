@@ -11,6 +11,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -75,7 +76,7 @@ const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
 export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { canUse, tier } = useSubscription();
   const insets = useSafeAreaInsets();
   const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
@@ -89,6 +90,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   // Modal state
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
+  const [pendingFollowCount, setPendingFollowCount] = useState(0);
 
   // Filter state - MUST be declared before dateRange and hooks that use them
   const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
@@ -218,6 +220,16 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     }
   }, [isAuthenticated]);
 
+  const fetchPendingFollowCount = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await api.getFollowRequests(1);
+      setPendingFollowCount(data.meta?.total ?? data.data?.length ?? 0);
+    } catch {
+      // Silent — not critical
+    }
+  }, [isAuthenticated]);
+
   const fetchDraftsCount = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -232,8 +244,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   useEffect(() => {
     if (isAuthenticated) {
       fetchStats();
+      fetchPendingFollowCount();
     }
-  }, [isAuthenticated, fetchStats]);
+  }, [isAuthenticated, fetchStats, fetchPendingFollowCount]);
 
   useFocusEffect(
     useCallback(() => {
@@ -406,6 +419,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const renderCoverImage = () => {
     const coverStyle = [styles.coverImage, { backgroundColor: colors.primary }];
+    const gradientOverlay = (
+      <LinearGradient
+        colors={['transparent', isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)']}
+        style={StyleSheet.absoluteFillObject}
+      />
+    );
 
     if (user?.background_image_url) {
       return (
@@ -414,15 +433,19 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           style={coverStyle}
           resizeMode="cover"
         >
+          {gradientOverlay}
           {renderSettingsButton()}
         </ImageBackground>
       );
     }
 
     return (
-      <View style={coverStyle}>
+      <LinearGradient
+        colors={isDark ? [colors.primary, '#0f1520'] : [colors.primary, colors.background]}
+        style={coverStyle}
+      >
         {renderSettingsButton()}
-      </View>
+      </LinearGradient>
     );
   };
 
@@ -440,15 +463,31 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
         {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{user.bio}</Text>}
 
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.posts.total ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.posts')}</Text>
           </View>
+          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {stats?.activities?.total_distance ? Math.round(stats.activities.total_distance / 1000) : 0} km
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.totalDistance', 'Total')}</Text>
+          </View>
+          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
           <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
+            <View style={styles.statValueRow}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
+              {pendingFollowCount > 0 && (
+                <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.statBadgeText}>{pendingFollowCount > 99 ? '99+' : pendingFollowCount}</Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
           </TouchableOpacity>
+          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
           <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
@@ -456,85 +495,81 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         </View>
 
         <View style={styles.actions}>
-          <Button
-            title={t('profile.editProfile')}
+          <TouchableOpacity
+            style={[styles.actionBtnPrimary, { backgroundColor: colors.primary }]}
             onPress={() => navigation.navigate('EditProfile')}
-            variant="outline"
-            style={styles.actionButton}
-          />
-          <Button
-            title={t('common.logout')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="pencil" size={14} color={isDark ? '#0f1729' : '#fff'} />
+            <Text style={[styles.actionBtnPrimaryText, { color: isDark ? '#0f1729' : '#fff' }]}>
+              {t('profile.editProfile')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtnGhost, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}
             onPress={handleLogout}
-            variant="ghost"
-            loading={isLoggingOut}
-            style={styles.actionButton}
-          />
+            activeOpacity={0.8}
+            disabled={isLoggingOut}
+          >
+            <Ionicons name="log-out-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.actionBtnGhostText, { color: colors.textSecondary }]}>
+              {t('common.logout')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Training Plans Card */}
-        <TouchableOpacity
-          style={[styles.trainingCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
-          onPress={handleTrainingPress}
-          disabled={loadingTraining}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.trainingIconContainer, { backgroundColor: colors.primary }]}>
-            <Ionicons name="fitness" size={28} color={colors.white} />
-          </View>
-          <View style={styles.trainingContent}>
-            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
-              {t('training.title')}
-            </Text>
-            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
-              {t('training.subtitle')}
-            </Text>
-          </View>
-          {loadingTraining ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
-          )}
-        </TouchableOpacity>
+        {/* Navigation Sections */}
+        <View style={styles.sectionGroup}>
+          <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: colors.primary, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={handleTrainingPress}
+            disabled={loadingTraining}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: colors.primary + '22' }]}>
+              <Ionicons name="fitness" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('training.title')}</Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('training.subtitle')}</Text>
+            </View>
+            {loadingTraining ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            )}
+          </TouchableOpacity>
 
-        {/* Activity Report Card */}
-        <TouchableOpacity
-          style={[styles.trainingCard, { backgroundColor: colors.info + '18', borderColor: colors.info }]}
-          onPress={() => navigation.navigate('Insights')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.trainingIconContainer, { backgroundColor: colors.info }]}>
-            <Ionicons name="bar-chart" size={28} color={colors.white} />
-          </View>
-          <View style={styles.trainingContent}>
-            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
-              {t('insights.title')}
-            </Text>
-            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
-              {t('insights.subtitle')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.info} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: colors.info, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={() => navigation.navigate('Insights')}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: colors.info + '22' }]}>
+              <Ionicons name="bar-chart" size={20} color={colors.info} />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('insights.title')}</Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('insights.subtitle')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
 
-        {/* Teams Card */}
-        <TouchableOpacity
-          style={[styles.trainingCard, { backgroundColor: '#8b5cf6' + '18', borderColor: '#8b5cf6' }]}
-          onPress={() => navigation.navigate('TeamsList')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.trainingIconContainer, { backgroundColor: '#8b5cf6' }]}>
-            <Ionicons name="shield" size={28} color={colors.white} />
-          </View>
-          <View style={styles.trainingContent}>
-            <Text style={[styles.trainingTitle, { color: colors.textPrimary }]}>
-              {t('teams.teams')}
-            </Text>
-            <Text style={[styles.trainingSubtitle, { color: colors.textSecondary }]}>
-              {t('teams.profileSubtitle')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#8b5cf6" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: '#8b5cf6', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={() => navigation.navigate('TeamsList')}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: '#8b5cf622' }]}>
+              <Ionicons name="shield" size={20} color="#8b5cf6" />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('teams.teams')}</Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('teams.profileSubtitle')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -568,9 +603,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       </View>
       <View style={styles.tabSpacer} />
 
-      {/* Activities Tab Content - Sport Filter */}
+      {/* Activities Tab Content - Sport Filter (inside section) */}
       {activeTab === 'activities' && (
         <View style={styles.activitiesFilterContent}>
+          <Text style={[styles.activitiesFilterTitle, { color: colors.textPrimary }]}>
+            {t('profile.tabs.activities')}
+          </Text>
           <SportTypeFilter
             sportTypes={sportTypes}
             selectedSportTypeId={selectedSportTypeId}
@@ -795,6 +833,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         <DraftsTab
           isOwnProfile={true}
           ListHeaderComponent={stableProfileHeader}
+          contentPaddingBottom={tabBarPaddingBottom}
           onPublishSuccess={() => {
             // Refresh posts tab after successful publish
             postsData.refresh();
@@ -836,11 +875,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       {user && (
         <UserListModal
           visible={showFollowModal}
-          onClose={() => setShowFollowModal(false)}
+          onClose={() => { setShowFollowModal(false); fetchPendingFollowCount(); }}
           userId={user.id}
           initialTab={followModalTab}
           isOwnProfile={true}
           onUserPress={handleUserNavigation}
+          pendingRequestsCount={pendingFollowCount}
         />
       )}
     </ScreenContainer>
@@ -883,7 +923,7 @@ const styles = StyleSheet.create({
     height: spacing.md,
   },
   coverImage: {
-    height: 120,
+    height: 160,
     position: 'relative',
     marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
   },
@@ -903,8 +943,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xl,
-    borderBottomWidth: 1,
-    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: -spacing.md,
   },
   avatarContainer: {
     marginTop: -40,
@@ -928,32 +968,86 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    marginTop: spacing.xl,
-    gap: spacing.xxxl,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.sm,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xs,
+  },
+  statsDivider: {
+    width: 1,
+    height: 28,
   },
   statItem: {
+    flex: 1,
     alignItems: 'center',
   },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
   statValue: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   statLabel: {
-    fontSize: fontSize.sm,
+    fontSize: 10,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
     marginTop: 2,
   },
   actions: {
     flexDirection: 'row',
-    marginTop: spacing.xl,
-    gap: spacing.md,
+    alignSelf: 'stretch',
+    marginTop: spacing.md,
+    marginHorizontal: spacing.sm, // same as sectionGroup
+    gap: 10,
   },
-  actionButton: {
-    minWidth: 120,
+  actionBtnPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 40,
+    borderRadius: 12,
+  },
+  actionBtnPrimaryText: {
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  actionBtnGhost: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 40,
+    borderRadius: 12,
+  },
+  actionBtnGhostText: {
+    fontWeight: '600',
+    fontSize: 14,
   },
   tabContainer: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: -spacing.md,
   },
   tab: {
     flex: 1,
@@ -998,10 +1092,15 @@ const styles = StyleSheet.create({
   },
   activitiesFilterContent: {
     marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  activitiesFilterTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   chartCard: {
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
     marginBottom: spacing.md,
     position: 'relative',
@@ -1017,33 +1116,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
   },
-  trainingCard: {
+  sectionGroup: {
+    alignSelf: 'stretch',
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.sm,
+    gap: 10,
+  },
+  sectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.lg,
-    marginTop: spacing.xl,
-    borderRadius: borderRadius.xl,
-    borderWidth: 2,
-    gap: spacing.md,
-    marginHorizontal: spacing.lg,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
   },
-  trainingIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+  sectionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  trainingContent: {
+  sectionText: {
     flex: 1,
+    marginRight: 8,
   },
-  trainingTitle: {
-    fontSize: fontSize.lg,
+  sectionLabel: {
+    fontSize: 14,
     fontWeight: '700',
-    marginBottom: 2,
   },
-  trainingSubtitle: {
-    fontSize: fontSize.sm,
-    lineHeight: 18,
+  sectionSub: {
+    fontSize: 11,
+    marginTop: 1,
   },
 });
