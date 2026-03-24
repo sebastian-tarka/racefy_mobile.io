@@ -8,7 +8,7 @@ const getApiUrl = (): string => {
     return process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api';
   }
 
-  return process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api';
+  return process.env.API_PRODUCTION_URL || 'https://racefy.iopage sie ds/api';
 };
 
 // Determine Firebase config file based on APP_ENV
@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.9.0',
+  version: '1.9.1',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1.9.0',
+    buildNumber: '1.9.1',
     googleServicesFile: getGoogleServicesFileiOS(),
     associatedDomains: [
       'applinks:racefy.app',
@@ -110,7 +110,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 12,
+    versionCode: 13,
     googleServicesFile: getGoogleServicesFile(),
     permissions: [
       'ACCESS_FINE_LOCATION',

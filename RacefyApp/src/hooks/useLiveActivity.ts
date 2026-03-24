@@ -1340,28 +1340,21 @@ function useLiveActivityInternal() {
     });
 
     try {
-      // Send points with current calories for crash recovery
+      // Send points with current calories and client distance for crash recovery
       const result = await api.addActivityPoints(activityId, pointsToSync, {
         calories: localStatsRef.current.calories,
+        client_distance: Math.round(localStatsRef.current.distance),
       });
 
-      // Update with server-calculated stats (more accurate)
-      const newStats: LiveActivityStats = {
-        distance: result.stats.distance,
-        duration: result.stats.duration,
-        elevation_gain: result.stats.elevation_gain,
+      // Strava-style: keep local stats during recording, server only stores points for backup.
+      // Local distance/elevation are the "live truth" — server recalculates final stats on finish.
+      // Only update metadata (points count) and server-only values (avg/max speed) from sync response.
+      localStatsRef.current = {
+        ...localStatsRef.current,
         points_count: result.total_points,
-        // Use server-calculated speed values (local values are never updated and stay at 0)
         avg_speed: result.stats.avg_speed ?? localStatsRef.current.avg_speed,
         max_speed: result.stats.max_speed ?? localStatsRef.current.max_speed,
-        avg_heart_rate: localStatsRef.current.avg_heart_rate,
-        max_heart_rate: localStatsRef.current.max_heart_rate,
-        // Use server calories if available, otherwise keep local
-        calories: result.stats.calories ?? localStatsRef.current.calories,
-        // Preserve locally calculated current pace (calculated from GPS segments)
-        currentPace: localStatsRef.current.currentPace,
       };
-      localStatsRef.current = newStats;
 
       // Clear only the successfully synced points from buffer (race condition fix)
       // Points that arrived during sync will be preserved
@@ -1375,7 +1368,7 @@ function useLiveActivityInternal() {
 
       setState((prev) => ({
         ...prev,
-        currentStats: newStats,
+        currentStats: { ...localStatsRef.current },
         trackingStatus: {
           ...prev.trackingStatus,
           pendingPoints: 0,
@@ -1390,8 +1383,8 @@ function useLiveActivityInternal() {
       logger.gps("GPS points synced successfully", {
         synced: result.points_count,
         total: result.total_points,
-        distance: result.stats.distance,
-        duration: result.stats.duration,
+        serverDistance: result.stats.distance,
+        localDistance: Math.round(localStatsRef.current.distance),
       });
     } catch (error: any) {
       // Increment retry count and calculate backoff
@@ -1691,6 +1684,9 @@ function useLiveActivityInternal() {
       logger.activity("Finishing with GPS duration", { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
+      // Capture client distance BEFORE sync (sync overwrites local distance with server value)
+      const clientDistance = Math.round(localStatsRef.current.distance);
+
       // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
       if (pointsBuffer.current.length > 0 && state.activity) {
         await syncPoints(state.activity.id);
@@ -1720,6 +1716,7 @@ function useLiveActivityInternal() {
         ended_at: endedAt,
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
+        client_distance: clientDistance,
       });
 
       const activity = response.data;
@@ -1731,6 +1728,7 @@ function useLiveActivityInternal() {
       logger.activity("Activity finished with GPS duration", {
         id: activity.id,
         distance: activity.distance,
+        client_distance: activity.client_distance,
         duration: activity.duration,
         hasGpsTrack: activity.has_gps_track,
       });
@@ -1813,6 +1811,9 @@ function useLiveActivityInternal() {
       });
       setState((prev) => ({ ...prev, isLoading: true }));
 
+      // Capture client distance BEFORE sync (sync overwrites local distance with server value)
+      const clientDistance = Math.round(localStatsRef.current.distance);
+
       // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
       if (pointsBuffer.current.length > 0 && state.activity) {
         await syncPoints(state.activity.id);
@@ -1835,6 +1836,7 @@ function useLiveActivityInternal() {
         ended_at: new Date().toISOString(),
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
+        client_distance: clientDistance,
       });
 
       const activity = response.data;
@@ -1846,6 +1848,7 @@ function useLiveActivityInternal() {
       logger.activity("Activity finished with full duration", {
         id: activity.id,
         distance: activity.distance,
+        client_distance: activity.client_distance,
         duration: activity.duration,
         hasGpsTrack: activity.has_gps_track,
       });
@@ -1994,6 +1997,9 @@ function useLiveActivityInternal() {
 
         setState((prev) => ({ ...prev, isLoading: true }));
 
+        // Capture client distance BEFORE sync (sync overwrites local distance with server value)
+        const clientDistance = Math.round(localStatsRef.current.distance);
+
         // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
         if (pointsBuffer.current.length > 0 && state.activity) {
           await syncPoints(state.activity.id);
@@ -2008,6 +2014,7 @@ function useLiveActivityInternal() {
         logger.activity("Flushing GPS buffer for finish", {
           id: state.activity.id,
           finalPointsCount: finalPoints.length,
+          clientDistance,
         });
 
         // Finish on server - include location and remaining buffered points
@@ -2016,6 +2023,7 @@ function useLiveActivityInternal() {
           ended_at: new Date().toISOString(),
           location: activityLocationRef.current ?? undefined,
           final_points: finalPoints.length > 0 ? finalPoints : undefined,
+          client_distance: clientDistance,
         });
 
         const activity = response.data;
@@ -2027,6 +2035,7 @@ function useLiveActivityInternal() {
         logger.activity("Activity finished successfully", {
           id: activity.id,
           distance: activity.distance,
+          client_distance: activity.client_distance,
           duration: activity.duration,
           hasGpsTrack: activity.has_gps_track,
           hasPost: !!response.post,

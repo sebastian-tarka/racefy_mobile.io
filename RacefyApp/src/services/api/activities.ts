@@ -170,6 +170,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
         calories?: number;
         avg_heart_rate?: number;
         max_heart_rate?: number;
+        client_distance?: number;
       }
     ): Promise<Types.AddActivityPointsResponse> {
       const body: Types.AddActivityPointsRequest = {

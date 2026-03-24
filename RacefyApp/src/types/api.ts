@@ -681,6 +681,7 @@ export interface Activity {
   ended_at: string | null;
   duration: number;
   distance: number;
+  client_distance: number | null;
   elevation_gain: number | null;
   calories: number | null;
   avg_speed: number | null;
@@ -800,6 +801,8 @@ export interface AddActivityPointsRequest {
   calories?: number;
   avg_heart_rate?: number;
   max_heart_rate?: number;
+  // Client-calculated distance (meters) - preserved alongside server-calculated distance
+  client_distance?: number;
 }
 
 // Response from adding GPS points to live activity
@@ -848,6 +851,8 @@ export interface FinishActivityRequest {
   location?: ActivityLocation;
   skip_auto_post?: boolean;
   final_points?: GpsPoint[];
+  // Client-calculated distance (meters) - preserved alongside server-calculated distance
+  client_distance?: number;
 }
 
 // Auto-created post info returned when finishing an activity
