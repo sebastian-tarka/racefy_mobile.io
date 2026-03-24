@@ -226,6 +226,11 @@ export interface UserPreferences {
     favorite_sport_id: number | null;
   };
   ai_posts: AiPostsPreferences;
+  training_reminders?: {
+    enabled: boolean;
+    days: (0 | 1 | 2 | 3 | 4 | 5 | 6)[];
+    time: string; // "HH:MM"
+  };
 }
 
 // ============ SPORT TYPES ============

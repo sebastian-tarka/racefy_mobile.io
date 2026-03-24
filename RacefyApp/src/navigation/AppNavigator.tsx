@@ -36,7 +36,7 @@ import { PostFormScreen } from '../screens/posts';
 import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
 import { PaywallScreen } from '../screens/PaywallScreen';
 import { EditProfileScreen } from '../screens/profile';
-import { SettingsScreen, BlockedUsersScreen } from '../screens/settings';
+import { SettingsScreen, BlockedUsersScreen, TrainingRemindersScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
 import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
@@ -763,6 +763,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="BlockedUsers"
               component={BlockedUsersScreen}
+            />
+            <RootStack.Screen
+              name="TrainingReminders"
+              component={TrainingRemindersScreen}
             />
             <RootStack.Screen
               name="ImpersonateUser"

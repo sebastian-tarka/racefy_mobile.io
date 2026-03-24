@@ -16,6 +16,7 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
+import { useTrainingReminders } from '../../hooks/useTrainingReminders';
 
 // Services
 import { api } from '../../services/api';
@@ -67,10 +68,35 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
   const weeklyStreakData = useWeeklyStreak();
+  const trainingReminders = useTrainingReminders();
+  const [plannedTrainingDays, setPlannedTrainingDays] = useState<number[]>([]);
   const insets = useSafeAreaInsets();
 
   // Listen for notification refresh events
   useRefreshOn('notifications', refreshNotifications);
+
+  // Reload training reminders when TrainingRemindersScreen emits refresh (on goBack)
+  useRefreshOn('training', trainingReminders.reload);
+
+  // Fetch planned training days from current program's active week
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    (async () => {
+      try {
+        const program = await api.getCurrentProgram();
+        const activities = program?.current_week?.activities;
+        if (activities && activities.length > 0) {
+          // day_of_week: 1=Monday(0 in our array), 7=Sunday(6)
+          const days = [...new Set(activities.map(a => a.day_of_week - 1))];
+          setPlannedTrainingDays(days);
+        } else {
+          setPlannedTrainingDays([]);
+        }
+      } catch {
+        // No program or error — no markers
+      }
+    })();
+  }, [isAuthenticated]);
 
   // Calculate padding to prevent content from being hidden under floating tab bar
   const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;
@@ -365,6 +391,10 @@ export function DynamicHomeScreen({ navigation }: Props) {
               todayIndex={weeklyStreakData.todayIndex}
               goalDays={weeklyStreakData.goalDays}
               completedDays={weeklyStreakData.completedDays}
+              trainingDays={trainingReminders.enabled ? trainingReminders.days : undefined}
+              plannedTrainingDays={plannedTrainingDays.length > 0 ? plannedTrainingDays : undefined}
+              onToggleTrainingDay={trainingReminders.enabled ? trainingReminders.toggleDay : undefined}
+              onSettingsPress={() => navigation.getParent()?.navigate('TrainingReminders')}
             />
           </FadeInView>
         )}

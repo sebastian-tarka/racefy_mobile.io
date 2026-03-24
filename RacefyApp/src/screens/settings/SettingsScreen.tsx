@@ -234,6 +234,7 @@ export function SettingsScreen({ navigation }: Props) {
     healthSync: false,
     aiPosts: false,
     audioCoach: false,
+    trainingReminders: false,
     notifDebug: false,
     app: true,
     dangerZone: false,
@@ -267,6 +268,19 @@ export function SettingsScreen({ navigation }: Props) {
   }, []);
 
   const appVersion = Application.nativeApplicationVersion || '1.0.0';
+
+  // Training reminders summary for settings row
+  const trainingRemindersSummary = (() => {
+    const tr = (preferences as any).training_reminders;
+    if (!tr?.enabled) return t('settings.trainingReminders.off', 'Off');
+    const dayLabelsEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayLabelsPl = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+    const isPl = (t('settings.language') === 'Język');
+    const labels = isPl ? dayLabelsPl : dayLabelsEn;
+    const selectedDays = (tr.days || []).map((d: number) => labels[d]).join(', ');
+    const time = tr.time || '08:00';
+    return selectedDays ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}` : (isPl ? 'Wł.' : 'On');
+  })();
 
   useEffect(() => {
     loadPreferences();
@@ -1124,6 +1138,20 @@ export function SettingsScreen({ navigation }: Props) {
             </View>
           </SettingsSection>
         )}
+
+        {/* Training Reminders */}
+        <SettingsSection
+          title={t('settings.trainingReminders.title')}
+          isExpanded={expandedSections.trainingReminders}
+          onToggle={() => toggleSection('trainingReminders')}
+        >
+          <SettingsRow
+            icon="notifications-outline"
+            label={t('settings.trainingReminders.title')}
+            value={trainingRemindersSummary}
+            onPress={() => navigation.navigate('TrainingReminders')}
+          />
+        </SettingsSection>
 
         {/* App Section */}
         <SettingsSection

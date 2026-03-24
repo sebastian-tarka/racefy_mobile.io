@@ -1070,6 +1070,16 @@
     "passwordRequiredForDelete": "Hasło jest wymagane do usunięcia konta",
     "confirmPassword": "Hasło",
     "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić",
+    "trainingReminders": {
+      "title": "Przypomnienia treningowe",
+      "remindMe": "Przypominaj o zaplanowanym treningu",
+      "trainingDays": "Dni treningowe",
+      "reminderTime": "Godzina przypomnienia",
+      "pushNotifications": "Powiadomienia push",
+      "pushInfo": "Włącz powiadomienia push, aby otrzymywać przypomnienia o treningu na urządzeniu",
+      "at": "o",
+      "off": "Wył."
+    },
     "adminTools": {
       "title": "Narzędzia administratora",
       "impersonate": "Podszywaj się pod użytkownika"

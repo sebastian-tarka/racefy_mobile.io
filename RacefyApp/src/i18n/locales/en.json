@@ -1070,6 +1070,16 @@
     "passwordRequiredForDelete": "Password is required to delete your account",
     "confirmPassword": "Password",
     "enterPasswordToDelete": "Enter your password to confirm",
+    "trainingReminders": {
+      "title": "Training Reminders",
+      "remindMe": "Remind me about planned training",
+      "trainingDays": "Training days",
+      "reminderTime": "Reminder time",
+      "pushNotifications": "Push notifications",
+      "pushInfo": "Enable push notifications to receive training reminders on your device",
+      "at": "at",
+      "off": "Off"
+    },
     "adminTools": {
       "title": "Admin Tools",
       "impersonate": "Impersonate User"

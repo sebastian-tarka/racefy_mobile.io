@@ -51,6 +51,8 @@ export type RootStackParamList = {
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
   WeekFeedback: { weekId: number };
+  // Training Reminders
+  TrainingReminders: undefined;
   // Teams
   TeamsList: undefined;
   TeamDetail: { slug: string };
