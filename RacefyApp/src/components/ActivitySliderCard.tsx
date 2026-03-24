@@ -97,7 +97,7 @@ export function ActivitySliderCard({
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
-  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_map_url || null;
+  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_preview_url || activity.route_map_url || null;
   const backgroundImage = fixStorageUrl(rawBackgroundImage);
   const hasBackgroundImage = !!backgroundImage;
 

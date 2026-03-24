@@ -463,11 +463,26 @@
     "createEvent": "Create Event",
     "failedToLoad": "Failed to load events",
     "filters": {
-      "all": "All",
+      "all": "General",
       "upcoming": "Upcoming",
       "ongoing": "Ongoing",
       "completed": "Completed"
-    }
+    },
+    "stats": {
+      "totalEvents": "Events",
+      "participants": "Participants",
+      "ongoing": "Ongoing",
+      "upcoming": "Upcoming",
+      "joined": "Joined",
+      "completed": "Completed",
+      "myCompleted": "Finished",
+      "organized": "Organized",
+      "podiums": "Podiums",
+      "distance": "Distance",
+      "finishes": "Finishes"
+    },
+    "happeningNow": "Happening Now",
+    "upcomingEvents": "Upcoming Events"
   },
   "eventDetail": {
     "title": "Event Details",

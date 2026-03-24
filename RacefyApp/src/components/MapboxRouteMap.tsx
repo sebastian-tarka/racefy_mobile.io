@@ -36,11 +36,72 @@ interface MapboxRouteMapProps {
   height?: number;
   backgroundColor?: string;
   initialZoom?: number;
+  showKmMarkers?: boolean;
   // GPS Privacy (new in 2026-01)
   showStartMarker?: boolean;
   showFinishMarker?: boolean;
   startPoint?: [number, number, number?] | null;
   finishPoint?: [number, number, number?] | null;
+}
+
+/**
+ * Calculate distance in meters between two [lng, lat] coordinates using Haversine formula
+ */
+function haversineDistance(coord1: number[], coord2: number[]): number {
+  const R = 6371000; // Earth radius in meters
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(coord2[1] - coord1[1]);
+  const dLon = toRad(coord2[0] - coord1[0]);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(coord1[1])) * Math.cos(toRad(coord2[1])) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Interpolate a point between two coordinates at a given fraction (0-1)
+ */
+function interpolateCoord(from: number[], to: number[], fraction: number): [number, number] {
+  return [
+    from[0] + (to[0] - from[0]) * fraction,
+    from[1] + (to[1] - from[1]) * fraction,
+  ];
+}
+
+/**
+ * Calculate points at each kilometer along the route
+ */
+function getKmMarkerPoints(coordinates: number[][]): GeoJSON.Feature[] {
+  if (coordinates.length < 2) return [];
+
+  const features: GeoJSON.Feature[] = [];
+  let accumulatedDistance = 0;
+  let nextKm = 1000; // first marker at 1km
+
+  for (let i = 1; i < coordinates.length; i++) {
+    const segmentDistance = haversineDistance(coordinates[i - 1], coordinates[i]);
+    const prevAccumulated = accumulatedDistance;
+    accumulatedDistance += segmentDistance;
+
+    while (accumulatedDistance >= nextKm) {
+      const overshoot = accumulatedDistance - nextKm;
+      const segmentFraction = 1 - (segmentDistance > 0 ? overshoot / segmentDistance : 0);
+      const point = interpolateCoord(coordinates[i - 1], coordinates[i], segmentFraction);
+      const km = Math.round(nextKm / 1000);
+
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: point },
+        properties: { km: String(km) },
+      });
+
+      nextKm += 1000;
+    }
+  }
+
+  return features;
 }
 
 /**
@@ -54,6 +115,7 @@ export function MapboxRouteMap({
   height = 250,
   backgroundColor,
   initialZoom = 13,
+  showKmMarkers = false,
   showStartMarker = true,
   showFinishMarker = true,
   startPoint = null,
@@ -169,6 +231,15 @@ export function MapboxRouteMap({
   const routeColor = isDark ? '#34d399' : colors.primary; // Brighter emerald in dark mode
   const startMarkerColor = isDark ? '#4ade80' : '#22c55e'; // Brighter green in dark mode
   const endMarkerColor = isDark ? '#fb7185' : '#ef4444'; // Warmer red in dark mode
+  const kmMarkerColor = isDark ? '#34d399' : '#10b981'; // Emerald for km markers
+
+  // Compute km marker points
+  const kmMarkersGeoJSON: GeoJSON.FeatureCollection | null = showKmMarkers
+    ? {
+        type: 'FeatureCollection',
+        features: getKmMarkerPoints(trackData.coordinates),
+      }
+    : null;
 
   return (
     <View style={[styles.container, { height, backgroundColor: bgColor }]}>
@@ -200,6 +271,32 @@ export function MapboxRouteMap({
             }}
           />
         </MapboxGL.ShapeSource>
+
+        {/* Km markers */}
+        {showKmMarkers && kmMarkersGeoJSON && kmMarkersGeoJSON.features.length > 0 && (
+          <MapboxGL.ShapeSource id="kmMarkersSource" shape={kmMarkersGeoJSON}>
+            <MapboxGL.CircleLayer
+              id="kmMarkerCircles"
+              style={{
+                circleRadius: 11,
+                circleColor: kmMarkerColor,
+                circleStrokeWidth: 2,
+                circleStrokeColor: '#ffffff',
+              }}
+            />
+            <MapboxGL.SymbolLayer
+              id="kmMarkerLabels"
+              style={{
+                textField: ['get', 'km'],
+                textSize: 10,
+                textColor: '#ffffff',
+                textFont: ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+                textAllowOverlap: true,
+                textIgnorePlacement: true,
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        )}
 
         {/* Start marker - only show if privacy allows */}
         {showStartMarker && startPoint && (

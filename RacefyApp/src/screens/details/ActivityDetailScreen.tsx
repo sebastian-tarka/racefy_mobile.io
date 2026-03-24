@@ -51,6 +51,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [showKmMarkers, setShowKmMarkers] = useState(false);
   const mapHeightAnim = useRef(new Animated.Value(250)).current;
 
   const scrollToBottom = useCallback(() => {
@@ -297,35 +298,53 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           scrollEnabled={!isMapExpanded}
         >
           {/* Map Section */}
-          {activity.has_gps_track && (gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
+          {activity.has_gps_track && (gpsTrack?.route_preview_url || gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
           <Animated.View style={{ height: mapHeightAnim }}>
             <RoutePreview
+              routePreviewUrl={fixStorageUrl(gpsTrack.route_preview_url)}
               routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
               routeSvg={gpsTrack.route_svg}
               trackData={gpsTrack?.simplified_track}
               activityId={activity.id}
               height={isMapExpanded ? 500 : 250}
               enableZoom={isMapExpanded}
+              showKmMarkers={showKmMarkers}
               showStartMarker={gpsTrack?.show_start_marker ?? true}
               showFinishMarker={gpsTrack?.show_finish_marker ?? true}
               startPoint={gpsTrack?.start_point ?? null}
               finishPoint={gpsTrack?.finish_point ?? null}
             />
-            {/* Map Expand/Collapse Toggle Button */}
-            <TouchableOpacity
-              style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
-              onPress={toggleMapExpand}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
-                size={20}
-                color={colors.textPrimary}
-              />
-              <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
-                {isMapExpanded ? t('activityDetail.collapseMap') : t('activityDetail.expandMap')}
-              </Text>
-            </TouchableOpacity>
+            {/* Map control buttons */}
+            <View style={styles.mapControlsRow}>
+              <TouchableOpacity
+                style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
+                onPress={toggleMapExpand}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
+                  size={20}
+                  color={colors.textPrimary}
+                />
+                <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
+                  {isMapExpanded ? t('activityDetail.collapseMap') : t('activityDetail.expandMap')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.mapKmButton, { backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground }]}
+                onPress={() => setShowKmMarkers(!showKmMarkers)}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="flag-outline"
+                  size={16}
+                  color={showKmMarkers ? '#ffffff' : colors.textSecondary}
+                />
+                <Text style={[styles.mapKmButtonText, { color: showKmMarkers ? '#ffffff' : colors.textSecondary }]}>
+                  km
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {/* GPS Privacy Indicator */}
             <View style={[styles.privacyIndicator, { backgroundColor: colors.cardBackground + '80', borderColor: colors.borderLight }]}>
@@ -962,10 +981,15 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   // Map toggle button styles
-  mapToggleButton: {
+  mapControlsRow: {
     position: 'absolute',
     bottom: spacing.md,
     right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  mapToggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.xs,
@@ -981,6 +1005,23 @@ const styles = StyleSheet.create({
   mapToggleText: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+  },
+  mapKmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    gap: 2,
+  },
+  mapKmButtonText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
   privacyIndicator: {
     position: 'absolute',

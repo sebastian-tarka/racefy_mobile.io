@@ -26,6 +26,7 @@ try {
 }
 
 interface RoutePreviewProps {
+  routePreviewUrl?: string | null;
   routeMapUrl?: string | null;
   routeSvg?: string | null;
   trackData?: GeoJSONLineString | null;
@@ -33,6 +34,7 @@ interface RoutePreviewProps {
   height?: number;
   backgroundColor?: string;
   enableZoom?: boolean;
+  showKmMarkers?: boolean;
   // GPS Privacy (new in 2026-01)
   showStartMarker?: boolean;
   showFinishMarker?: boolean;
@@ -43,10 +45,12 @@ interface RoutePreviewProps {
 /**
  * RoutePreview - Displays activity route using:
  * 1. Interactive Mapbox map (trackData) - best experience, requires @rnmapbox/maps and token
- * 2. Pre-generated map image (routeMapUrl) - fallback, static image from backend
- * 3. SVG route (routeSvg) - last fallback, just the route path
+ * 2. Route preview PNG (routePreviewUrl) - lightweight transparent PNG with route + km markers
+ * 3. Pre-generated map image (routeMapUrl) - static Mapbox JPEG from backend
+ * 4. SVG route (routeSvg) - last fallback, just the route path
  */
 export function RoutePreview({
+  routePreviewUrl,
   routeMapUrl,
   routeSvg,
   trackData,
@@ -54,6 +58,7 @@ export function RoutePreview({
   height = 250,
   backgroundColor,
   enableZoom = false,
+  showKmMarkers = false,
   showStartMarker = true,
   showFinishMarker = true,
   startPoint = null,
@@ -79,6 +84,7 @@ export function RoutePreview({
         activityId={activityId}
         height={height}
         backgroundColor={bgColor}
+        showKmMarkers={showKmMarkers}
         showStartMarker={showStartMarker}
         showFinishMarker={showFinishMarker}
         startPoint={startPoint}
@@ -215,7 +221,21 @@ export function RoutePreview({
     ],
   };
 
-  // Prefer map image URL over SVG
+  // Prefer route preview PNG (transparent, lightweight) over full map
+  if (routePreviewUrl) {
+    return (
+      <View style={[styles.container, { height, backgroundColor: bgColor }]}>
+        <Image
+          source={{ uri: routePreviewUrl }}
+          style={styles.mapImage}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+        />
+      </View>
+    );
+  }
+
+  // Full map image (Mapbox JPEG with map background)
   if (routeMapUrl) {
     const content = (
       <Animated.View style={[styles.imageWrapper, enableZoom && animatedStyle]}>

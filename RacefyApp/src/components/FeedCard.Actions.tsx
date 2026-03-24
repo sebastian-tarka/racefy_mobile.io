@@ -84,7 +84,6 @@ export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onS
 
       <TouchableOpacity style={styles.actionButtonShare} onPress={handleSharePress}>
         <Ionicons name="share-outline" size={20} color={colors.textSecondary} />
-        <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('common.share')}</Text>
       </TouchableOpacity>
 
       {/* Only show modal for non-activity posts */}

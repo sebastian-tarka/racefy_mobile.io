@@ -7,6 +7,16 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
   return class EventsMixin extends Base {
     // ============ EVENTS ============
 
+    async getEventStats(): Promise<Types.EventStats> {
+      const response = await this.request<Types.ApiResponse<Types.EventStats>>('/events/stats');
+      return response.data;
+    }
+
+    async getEventOverview(): Promise<Types.EventOverview> {
+      const response = await this.request<Types.ApiResponse<Types.EventOverview>>('/events/overview');
+      return response.data;
+    }
+
     async getEvents(params?: {
       user_id?: number;
       status?: 'upcoming' | 'ongoing' | 'completed';

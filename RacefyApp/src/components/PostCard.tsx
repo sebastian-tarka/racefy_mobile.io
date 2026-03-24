@@ -113,7 +113,7 @@ export function PostCard({
     const activity = post.activity;
 
     // Check if activity has route map or SVG
-    const hasRouteMap = activity.route_map_url || activity.route_svg;
+    const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
     return (
       <TouchableOpacity
@@ -126,6 +126,7 @@ export function PostCard({
         {hasRouteMap && (
           <View style={styles.activityMapContainer}>
             <RoutePreview
+              routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
               trackData={activity.gps_track?.simplified_track}

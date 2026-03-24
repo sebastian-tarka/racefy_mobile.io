@@ -110,8 +110,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 11
-    ,
+    versionCode: 11,
     googleServicesFile: getGoogleServicesFile(),
     permissions: [
       'ACCESS_FINE_LOCATION',

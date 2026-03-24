@@ -153,7 +153,7 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
   const { t } = useTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const hasRouteMap = activity.route_map_url || activity.route_svg;
+  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
@@ -177,6 +177,7 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
             disabled={!onActivityPress}
           >
             <RoutePreview
+              routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
               trackData={undefined}
@@ -317,7 +318,7 @@ export function ActivityBody({ post, onActivityPress }: { post: Post; onActivity
     ? truncateDescription(activity.description, 120)
     : { text: '', isTruncated: false };
 
-  const hasRouteMap = activity.route_map_url || activity.route_svg;
+  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
   const { imageUrls, mediaItems } = useMemo(() => {
     const postVideos = post.videos || [];

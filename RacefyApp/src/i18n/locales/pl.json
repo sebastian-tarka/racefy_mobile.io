@@ -463,11 +463,26 @@
     "createEvent": "Utwórz wydarzenie",
     "failedToLoad": "Nie udało się załadować wydarzeń",
     "filters": {
-      "all": "Wszystkie",
+      "all": "Ogólne",
       "upcoming": "Nadchodzące",
       "ongoing": "Trwające",
       "completed": "Zakończone"
-    }
+    },
+    "stats": {
+      "totalEvents": "Wydarzenia",
+      "participants": "Uczestnicy",
+      "ongoing": "Trwające",
+      "upcoming": "Nadchodzące",
+      "joined": "Dołączone",
+      "completed": "Zakończone",
+      "myCompleted": "Ukończone",
+      "organized": "Organizowane",
+      "podiums": "Podium",
+      "distance": "Dystans",
+      "finishes": "Ukończenia"
+    },
+    "happeningNow": "Trwają teraz",
+    "upcomingEvents": "Nadchodzące wydarzenia"
   },
   "eventDetail": {
     "title": "Szczegóły wydarzenia",

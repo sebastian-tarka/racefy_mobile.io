@@ -225,9 +225,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
     const activity = post.activity;
 
     // Check if we have route data from the fetched GPS track or embedded in activity
+    const routePreviewUrl = gpsTrack?.route_preview_url || activity.route_preview_url;
     const routeMapUrl = gpsTrack?.route_map_url || activity.route_map_url;
     const routeSvg = gpsTrack?.route_svg || activity.route_svg;
-    const hasRouteMap = routeMapUrl || routeSvg;
+    const hasRouteMap = routePreviewUrl || routeMapUrl || routeSvg;
 
     return (
       <TouchableOpacity
@@ -239,6 +240,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
         {hasRouteMap && (
           <View style={styles.activityMapContainer}>
             <RoutePreview
+              routePreviewUrl={fixStorageUrl(routePreviewUrl)}
               routeMapUrl={fixStorageUrl(routeMapUrl)}
               routeSvg={routeSvg}
               trackData={gpsTrack?.simplified_track}

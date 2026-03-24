@@ -409,6 +409,109 @@ install_android_dev() {
     esac
 }
 
+# ── Emulator ─────────────────────────────────────────────────
+
+run_android_emulator() {
+    print_step "Uruchom na emulatorze Android"
+    echo ""
+
+    local android_home="${ANDROID_HOME:-$HOME/Android/Sdk}"
+    local emulator_bin="$android_home/emulator/emulator"
+
+    if [[ ! -f "$emulator_bin" ]]; then
+        print_error "Emulator nie znaleziony: $emulator_bin"
+        print_info "Upewnij się, że ANDROID_HOME jest ustawiony i masz zainstalowany emulator."
+        return 1
+    fi
+
+    # List available AVDs
+    local avds
+    avds=$("$emulator_bin" -list-avds 2>/dev/null)
+
+    if [[ -z "$avds" ]]; then
+        print_error "Brak dostępnych emulatorów (AVD)!"
+        print_info "Utwórz emulator w Android Studio → Device Manager"
+        return 1
+    fi
+
+    echo -e "  ${BOLD}Dostępne emulatory:${NC}"
+    local i=1
+    local avd_array=()
+    while IFS= read -r avd; do
+        avd_array+=("$avd")
+        echo -e "  ${CYAN}${i})${NC} $avd"
+        ((i++))
+    done <<< "$avds"
+
+    if [[ ${#avd_array[@]} -eq 1 ]]; then
+        echo ""
+        print_info "Znaleziono 1 emulator, wybieram automatycznie: ${avd_array[0]}"
+        local selected="${avd_array[0]}"
+    else
+        echo -e -n "\n  Wybierz emulator [1-${#avd_array[@]}]: "
+        read -r choice
+        local idx=$((choice - 1))
+        if [[ $idx -lt 0 || $idx -ge ${#avd_array[@]} ]]; then
+            print_error "Nieprawidłowy wybór"
+            return 1
+        fi
+        local selected="${avd_array[$idx]}"
+    fi
+
+    echo ""
+    echo -e "  ${BOLD}Co zrobić:${NC}"
+    echo -e "  ${CYAN}1)${NC} Uruchom emulator + expo run:android ${DIM}(build + install + dev server)${NC}"
+    echo -e "  ${CYAN}2)${NC} Uruchom emulator + expo start ${DIM}(tylko dev server, app musi być zainstalowana)${NC}"
+    echo -e "  ${CYAN}3)${NC} Tylko uruchom emulator ${DIM}(bez budowania)${NC}"
+    echo -e -n "\n  Wybierz [1/2/3]: "
+    read -r action
+
+    # Check if emulator is already running
+    local running_emus
+    running_emus=$(adb devices 2>/dev/null | grep "emulator-" | wc -l)
+
+    if [[ "$running_emus" -eq 0 ]]; then
+        print_step "Uruchamiam emulator: $selected"
+        "$emulator_bin" -avd "$selected" &>/dev/null &
+        print_info "Czekam aż emulator się uruchomi..."
+        adb wait-for-device
+        # Wait for boot to complete
+        local boot_complete=""
+        for _ in $(seq 1 60); do
+            boot_complete=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            if [[ "$boot_complete" == "1" ]]; then
+                break
+            fi
+            sleep 2
+        done
+        if [[ "$boot_complete" != "1" ]]; then
+            print_warn "Emulator uruchomiony, ale boot trwa dłużej niż zwykle..."
+        else
+            print_success "Emulator uruchomiony!"
+        fi
+    else
+        print_success "Emulator już działa, pomijam uruchamianie."
+    fi
+
+    echo ""
+    case "$action" in
+        1)
+            print_step "Buduję i instaluję app na emulatorze..."
+            print_info "Komenda: npx expo run:android"
+            npx expo run:android
+            ;;
+        2)
+            print_step "Uruchamiam dev server..."
+            print_info "Komenda: npx expo start --android"
+            npx expo start --android
+            ;;
+        3)
+            print_success "Emulator uruchomiony. Możesz teraz ręcznie uruchomić app."
+            print_info "Np.: npx expo start --android"
+            ;;
+    esac
+}
+
 # ── Dev Server ───────────────────────────────────────────────
 
 start_dev_server() {
@@ -458,6 +561,7 @@ show_menu() {
     echo ""
     echo -e " ${BOLD}${GREEN}🛠  DEV & STATUS${NC}"
     echo -e "  ${CYAN}7)${NC}  Start dev server ${DIM}— uruchom Expo (USB/standard/clear)${NC}"
+    echo -e "  ${CYAN}e)${NC}  Emulator Android ${DIM}— uruchom app na emulatorze${NC}"
     echo -e "  ${CYAN}d)${NC}  Zainstaluj na telefonie ${DIM}— debug build na podłączone urządzenie${NC}"
     echo -e "  ${CYAN}8)${NC}  Historia buildów ${DIM}— lista ostatnich buildów${NC}"
     echo -e "  ${CYAN}9)${NC}  Zmienne środowiskowe ${DIM}— pokaż EAS env vars${NC}"
@@ -483,6 +587,7 @@ main() {
             5) build_ios_staging ;;
             6) submit_ios_testflight ;;
             7) start_dev_server ;;
+            e|E) run_android_emulator ;;
             d|D) install_android_dev ;;
             8) show_build_history ;;
             9) show_env_vars ;;

@@ -14,7 +14,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EventCard, Loading, EmptyState, RewardCard, ScreenContainer, AnimatedListItem } from '../../components';
+import { format } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EventCard, LiveEventCard, Loading, EmptyState, RewardCard, ScreenContainer, AnimatedListItem, Card } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,7 +29,10 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { Event, Reward, RewardType } from '../../types/api';
+import type { Event, EventWithLatestCommentary, EventStats, EventOverview, Reward, RewardType } from '../../types/api';
+
+const LIVE_VIEW_MODE_KEY = '@racefy_events_live_view_mode';
+type LiveViewMode = 'compact' | 'detailed';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Events'>,
@@ -55,8 +60,6 @@ export function EventsScreen({ navigation, route }: Props) {
     loadMore,
     changeFilter,
   } = useEvents();
-
-  useRefreshOn('events', refresh);
 
   const filters: { label: string; value: FilterOption }[] = [
     { label: t('events.filters.all'), value: 'all' },
@@ -89,8 +92,73 @@ export function EventsScreen({ navigation, route }: Props) {
   const searchAnimValue = useRef(new Animated.Value(0)).current;
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Overview stats & preview events
+  const [ongoingEvents, setOngoingEvents] = useState<Event[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [liveEventsDetailed, setLiveEventsDetailed] = useState<EventWithLatestCommentary[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [eventStats, setEventStats] = useState<EventStats | null>(null);
+  const [eventOverview, setEventOverview] = useState<EventOverview | null>(null);
+
+  // Live view mode (compact = default, detailed = with cover + AI commentary)
+  const [liveViewMode, setLiveViewMode] = useState<LiveViewMode>('compact');
+
   useEffect(() => {
+    AsyncStorage.getItem(LIVE_VIEW_MODE_KEY).then((val) => {
+      if (val === 'compact' || val === 'detailed') {
+        setLiveViewMode(val);
+      }
+    });
+  }, []);
+
+  const toggleLiveViewMode = useCallback(() => {
+    const newMode: LiveViewMode = liveViewMode === 'compact' ? 'detailed' : 'compact';
+    setLiveViewMode(newMode);
+    AsyncStorage.setItem(LIVE_VIEW_MODE_KEY, newMode);
+  }, [liveViewMode]);
+
+  const fetchOverviewData = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const [ongoingRes, upcomingRes, overview, stats] = await Promise.all([
+        api.getEvents({ status: 'ongoing', per_page: 3 }),
+        api.getEvents({ status: 'upcoming', per_page: 3 }),
+        api.getEventOverview(),
+        isAuthenticated ? api.getEventStats() : Promise.resolve(null),
+      ]);
+
+      setOngoingEvents(ongoingRes.data);
+      setUpcomingEvents(upcomingRes.data);
+      setEventOverview(overview);
+      setEventStats(stats);
+
+      // Fetch detailed live events (with commentary) for detailed mode
+      if (ongoingRes.data.length > 0) {
+        try {
+          const homeData = await api.getHome({ include_activities: false, include_upcoming: false });
+          setLiveEventsDetailed(homeData.live_events || []);
+        } catch {
+          setLiveEventsDetailed(ongoingRes.data as EventWithLatestCommentary[]);
+        }
+      } else {
+        setLiveEventsDetailed([]);
+      }
+    } catch (err) {
+      logger.debug('api', 'Failed to fetch overview data', { error: err });
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  const refreshAll = useCallback(() => {
     refresh();
+    fetchOverviewData();
+  }, [refresh, fetchOverviewData]);
+
+  useRefreshOn('events', refreshAll);
+
+  useEffect(() => {
+    refreshAll();
   }, []);
 
   useEffect(() => {
@@ -439,6 +507,210 @@ export function EventsScreen({ navigation, route }: Props) {
     );
   };
 
+   const getDifficultyColor = (difficulty: Event['difficulty']) => {
+    switch (difficulty) {
+      case 'beginner': return colors.success;
+      case 'intermediate': return colors.warning;
+      case 'advanced': return colors.error;
+      default: return colors.primary;
+    }
+  };
+
+  const formatDistance = (meters: number): string => {
+    if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+    return `${meters} m`;
+  };
+
+  type StatItem = { icon: keyof typeof Ionicons.glyphMap; color: string; value: number | string; label: string };
+
+  const getStatsForFilter = (filter: FilterOption): StatItem[] => {
+    const s = eventStats;
+    const o = eventOverview;
+
+    switch (filter) {
+      case 'all':
+        // General tab: personal overview
+        return [
+          { icon: 'checkbox', color: colors.success, value: s?.participated.joined ?? 0, label: t('events.stats.joined') },
+          { icon: 'trophy', color: colors.warning, value: s?.results.podiums ?? 0, label: t('events.stats.podiums') },
+          { icon: 'radio', color: colors.error, value: s?.participated.ongoing ?? o?.ongoing.event_count ?? 0, label: t('events.stats.ongoing') },
+          { icon: 'time', color: colors.primary, value: s?.participated.upcoming ?? o?.upcoming.event_count ?? 0, label: t('events.stats.upcoming') },
+        ];
+      case 'ongoing':
+        return [
+          { icon: 'radio', color: colors.error, value: o?.ongoing.event_count ?? 0, label: t('events.stats.ongoing') },
+          { icon: 'people', color: colors.info || '#3b82f6', value: o?.ongoing.total_participants ?? 0, label: t('events.stats.participants') },
+          { icon: 'flag', color: colors.success, value: s?.participated.ongoing ?? 0, label: t('events.stats.joined') },
+        ];
+      case 'upcoming':
+        return [
+          { icon: 'time', color: colors.warning, value: o?.upcoming.event_count ?? 0, label: t('events.stats.upcoming') },
+          { icon: 'people', color: colors.info || '#3b82f6', value: o?.upcoming.total_participants ?? 0, label: t('events.stats.participants') },
+          { icon: 'checkbox', color: colors.success, value: s?.participated.upcoming ?? 0, label: t('events.stats.joined') },
+        ];
+      case 'completed':
+        return [
+          { icon: 'checkmark-done', color: colors.primary, value: s?.participated.completed ?? 0, label: t('events.stats.myCompleted') },
+          { icon: 'trophy', color: colors.warning, value: s?.results.podiums ?? 0, label: t('events.stats.podiums') },
+          { icon: 'navigate', color: colors.success, value: s ? formatDistance(s.activity_totals.distance) : '0', label: t('events.stats.distance') },
+          { icon: 'ribbon', color: colors.error, value: s?.results.total_finishes ?? 0, label: t('events.stats.finishes') },
+        ];
+    }
+  };
+
+  const renderStats = () => {
+    const stats = getStatsForFilter(activeFilter);
+    return (
+      <View style={[styles.overviewStatsRow, { backgroundColor: colors.cardBackground }]}>
+        {stats.map((stat, index) => (
+          <React.Fragment key={stat.label}>
+            {index > 0 && <View style={[styles.overviewStatDivider, { backgroundColor: colors.border }]} />}
+            <View style={styles.overviewStatItem}>
+              <Ionicons name={stat.icon} size={20} color={stat.color} />
+              <Text style={[styles.overviewStatValue, { color: colors.textPrimary }]}>
+                {statsLoading ? '—' : stat.value}
+              </Text>
+              <Text style={[styles.overviewStatLabel, { color: colors.textSecondary }]}>
+                {stat.label}
+              </Text>
+            </View>
+          </React.Fragment>
+        ))}
+      </View>
+    );
+  };
+
+  const renderEventsOverview = () => {
+    return (
+      <View style={styles.overviewContainer}>
+
+        {/* Ongoing Events Section */}
+        {ongoingEvents.length > 0 && (
+          <View style={styles.overviewSection}>
+            <View style={styles.overviewSectionHeader}>
+              <Text style={[styles.overviewSectionTitle, { color: colors.textPrimary }]}>
+                {t('events.happeningNow')}
+              </Text>
+              <View style={styles.overviewSectionActions}>
+                <TouchableOpacity
+                  style={[styles.viewModeToggle, { backgroundColor: colors.borderLight }]}
+                  onPress={toggleLiveViewMode}
+                >
+                  <Ionicons
+                    name={liveViewMode === 'compact' ? 'expand-outline' : 'contract-outline'}
+                    size={16}
+                    color={liveViewMode === 'detailed' ? colors.primary : colors.textSecondary}
+                  />
+                </TouchableOpacity>
+                {(eventOverview?.ongoing.event_count ?? 0) > 3 && (
+                  <TouchableOpacity onPress={() => setActiveFilter('ongoing')}>
+                    <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {liveViewMode === 'detailed' ? (
+              // Detailed view with cover image + AI commentary (like Home screen)
+              liveEventsDetailed.map((event) => (
+                <LiveEventCard
+                  key={event.id}
+                  event={event}
+                  onPress={() => handleEventPress(event.id)}
+                  onBoostComplete={() => fetchOverviewData()}
+                />
+              ))
+            ) : (
+              // Compact view (default)
+              ongoingEvents.map((event) => (
+                <TouchableOpacity
+                  key={event.id}
+                  onPress={() => handleEventPress(event.id)}
+                  activeOpacity={0.8}
+                >
+                  <Card style={styles.overviewEventCard}>
+                    <View style={[styles.overviewLiveBadge, { backgroundColor: colors.error }]}>
+                      <Ionicons name="radio" size={18} color={colors.white} />
+                      <Text style={[styles.overviewLiveText, { color: colors.white }]}>
+                        {t('home.live')}
+                      </Text>
+                    </View>
+                    <View style={styles.overviewEventContent}>
+                      <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {event.post?.title || t('eventDetail.untitled')}
+                      </Text>
+                      <View style={styles.overviewEventMeta}>
+                        <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                        <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
+                          {event.participants_count}
+                        </Text>
+                        <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
+                        <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                          {event.location_name}
+                        </Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                  </Card>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        )}
+
+        {/* Upcoming Events Section */}
+        {upcomingEvents.length > 0 && (
+          <View style={styles.overviewSection}>
+            <View style={styles.overviewSectionHeader}>
+              <Text style={[styles.overviewSectionTitle, { color: colors.textPrimary }]}>
+                {t('events.upcomingEvents')}
+              </Text>
+              {(eventOverview?.upcoming.event_count ?? 0) > 3 && (
+                <TouchableOpacity onPress={() => setActiveFilter('upcoming')}>
+                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {upcomingEvents.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                onPress={() => handleEventPress(event.id)}
+                activeOpacity={0.8}
+              >
+                <Card style={styles.overviewEventCard}>
+                  <View style={[styles.overviewDateBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.overviewDateDay, { color: colors.white }]}>
+                      {format(new Date(event.starts_at), 'd')}
+                    </Text>
+                    <Text style={[styles.overviewDateMonth, { color: colors.white }]}>
+                      {format(new Date(event.starts_at), 'MMM')}
+                    </Text>
+                  </View>
+                  <View style={styles.overviewEventContent}>
+                    <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {event.post?.title || t('eventDetail.untitled')}
+                    </Text>
+                    <View style={styles.overviewEventMeta}>
+                      <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
+                        {event.participants_count}
+                      </Text>
+                      <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
+                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {event.location_name}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   const renderSearchResults = () => {
     if (!isSearchVisible || searchQuery.length === 0) return null;
 
@@ -570,6 +842,12 @@ export function EventsScreen({ navigation, route }: Props) {
                 <EventCard event={item} onPress={() => handleEventPress(item.id)} />
               </AnimatedListItem>
             )}
+            ListHeaderComponent={() => (
+              <>
+                {renderStats()}
+                {activeFilter === 'all' && renderEventsOverview()}
+              </>
+            )}
             ListEmptyComponent={
               isLoading ? (
                 <View style={styles.inlineLoading}>
@@ -609,7 +887,7 @@ export function EventsScreen({ navigation, route }: Props) {
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
-                onRefresh={refresh}
+                onRefresh={refreshAll}
                 colors={[colors.primary]}
                 tintColor={colors.primary}
               />
@@ -761,5 +1039,116 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: spacing.xxxl,
+  },
+  // Overview styles
+  overviewContainer: {
+    marginBottom: spacing.md,
+  },
+  overviewStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+  },
+  overviewStatItem: {
+    alignItems: 'center',
+    flex: 1,
+    gap: spacing.xs,
+  },
+  overviewStatValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+  },
+  overviewStatLabel: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
+  },
+  overviewStatDivider: {
+    width: 1,
+    height: 40,
+  },
+  overviewSection: {
+    marginBottom: spacing.md,
+  },
+  overviewSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  overviewSectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  viewModeToggle: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  overviewSectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+  },
+  overviewViewAll: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  overviewEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  overviewLiveBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  overviewLiveText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  overviewDateBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  overviewDateDay: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  overviewDateMonth: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  overviewEventContent: {
+    flex: 1,
+  },
+  overviewEventTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  overviewEventMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overviewEventMetaText: {
+    fontSize: fontSize.sm,
+    marginLeft: 4,
   },
 });

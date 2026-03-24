@@ -590,6 +590,59 @@ export interface EventRegistration {
   user?: User;
 }
 
+// ============ EVENT STATS ============
+
+export interface EventStats {
+  organized: {
+    total: number;
+    completed: number;
+    total_participants: number;
+  };
+  participated: {
+    joined: number;
+    completed: number;
+    ongoing: number;
+    upcoming: number;
+  };
+  results: {
+    total_finishes: number;
+    podiums: number;
+    gold: number;
+    silver: number;
+    bronze: number;
+    best_result: {
+      place: number;
+      place_label: string;
+      event_slug: string;
+      event_title: string;
+    } | null;
+  };
+  activity_totals: {
+    count: number;
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+  };
+}
+
+// ============ EVENT OVERVIEW (global platform stats) ============
+
+export interface EventStatusStats {
+  event_count: number;
+  total_participants: number;
+  total_activities: number;
+  total_distance: number;        // meters
+  total_elevation_gain: number;  // meters
+  total_duration: number;        // seconds
+}
+
+export interface EventOverview {
+  upcoming: EventStatusStats;
+  ongoing: EventStatusStats;
+  completed: EventStatusStats;
+  totals: EventStatusStats;
+}
+
 // ============ ACTIVITIES ============
 
 // Location data for activity (captured at start/finish)
@@ -653,6 +706,7 @@ export interface Activity {
   has_gps_track: boolean;
   route_svg?: string | null;
   route_map_url?: string | null;
+  route_preview_url?: string | null; // PNG, transparent bg, route + km markers
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
@@ -837,6 +891,7 @@ export interface GpsTrack {
   simplified_track: GeoJSONLineString; // Privacy-aware: trimmed if viewer is not owner
   route_svg: string | null;
   route_map_url: string | null;
+  route_preview_url: string | null; // PNG, transparent bg, route + km markers
   svg_generated_at: string | null;
   map_generated_at: string | null;
   // GPS Privacy (new in 2026-01)
