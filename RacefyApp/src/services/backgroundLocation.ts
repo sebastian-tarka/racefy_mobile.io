@@ -34,6 +34,7 @@ export interface BufferedLocation {
   ele?: number;
   time: string;
   speed?: number;
+  accuracy?: number;
 }
 
 // Helper to get stored GPS profile
@@ -436,6 +437,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             ele: location.coords.altitude ?? undefined,
             time: new Date(timestamp).toISOString(),
             speed: location.coords.speed ?? undefined,
+            accuracy: location.coords.accuracy ?? undefined,
           });
 
           // Update last position for next iteration

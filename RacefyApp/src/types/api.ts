@@ -240,6 +240,8 @@ export interface GpsProfileApiResponse {
   time_interval: number;
   distance_interval: number;
   smoothing_buffer_size: number;
+  // Stationary detection
+  stationary_speed_threshold?: number; // Speed in m/s below which user is considered stationary (0.1-3)
   // Pace display settings (optional - API may not provide these yet)
   pace_smoothing_factor?: number;     // EMA alpha for pace smoothing (0.1-0.9)
   pace_window_seconds?: number;       // Time window for current pace calculation (20-120s)
@@ -260,6 +262,8 @@ export interface GpsProfileRequest {
   time_interval?: number;
   distance_interval?: number;
   smoothing_buffer_size?: number;
+  // Stationary detection
+  stationary_speed_threshold?: number;
   // Pace display settings
   pace_smoothing_factor?: number;
   pace_window_seconds?: number;
@@ -769,6 +773,7 @@ export interface GpsPoint {
   hr?: number;
   speed?: number;
   cadence?: number;
+  accuracy?: number;
 }
 
 // Nearby route for shadow track feature

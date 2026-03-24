@@ -519,6 +519,7 @@ function useLiveActivityInternal() {
             ele: p.ele,
             time: p.time,
             speed: p.speed,
+            accuracy: p.accuracy,
           });
           prevBufTime = pointTime;
         }
@@ -723,6 +724,7 @@ function useLiveActivityInternal() {
           ele: location.coords.altitude ?? undefined,
           time: new Date(location.timestamp).toISOString(),
           speed: location.coords.speed ?? undefined,
+          accuracy: location.coords.accuracy ?? undefined,
         };
 
         // Apply GPS smoothing to reduce jitter/drift
@@ -1074,6 +1076,7 @@ function useLiveActivityInternal() {
           ele: p.ele,
           time: p.time,
           speed: p.speed,
+          accuracy: p.accuracy,
         }));
         pointsBuffer.current.push(...recoveredGpsPoints);
         allRoutePoints.current.push(...recoveredGpsPoints);
@@ -1138,6 +1141,7 @@ function useLiveActivityInternal() {
               ele: p.ele,
               time: p.time || new Date().toISOString(),
               speed: p.speed,
+              accuracy: p.accuracy,
             }),
           );
           await saveForegroundBuffer(pointsToSave);
@@ -2087,6 +2091,7 @@ function useLiveActivityInternal() {
               ele: p.ele,
               time: p.time || new Date().toISOString(),
               speed: p.speed,
+              accuracy: p.accuracy,
             }),
           );
           await saveForegroundBuffer(pointsToSave).catch(() => {});
