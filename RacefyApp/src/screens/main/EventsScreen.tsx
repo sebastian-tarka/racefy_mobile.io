@@ -95,6 +95,7 @@ export function EventsScreen({ navigation, route }: Props) {
   // Overview stats & preview events
   const [ongoingEvents, setOngoingEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [completedEvents, setCompletedEvents] = useState<Event[]>([]);
   const [liveEventsDetailed, setLiveEventsDetailed] = useState<EventWithLatestCommentary[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [eventStats, setEventStats] = useState<EventStats | null>(null);
@@ -120,15 +121,17 @@ export function EventsScreen({ navigation, route }: Props) {
   const fetchOverviewData = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const [ongoingRes, upcomingRes, overview, stats] = await Promise.all([
+      const [ongoingRes, upcomingRes, completedRes, overview, stats] = await Promise.all([
         api.getEvents({ status: 'ongoing', per_page: 3 }),
         api.getEvents({ status: 'upcoming', per_page: 3 }),
+        api.getEvents({ status: 'completed', per_page: 3 }),
         api.getEventOverview(),
         isAuthenticated ? api.getEventStats() : Promise.resolve(null),
       ]);
 
       setOngoingEvents(ongoingRes.data);
       setUpcomingEvents(upcomingRes.data);
+      setCompletedEvents(completedRes.data);
       setEventOverview(overview);
       setEventStats(stats);
 
@@ -707,6 +710,51 @@ export function EventsScreen({ navigation, route }: Props) {
             ))}
           </View>
         )}
+
+        {/* Completed Events Section */}
+        {completedEvents.length > 0 && (
+          <View style={styles.overviewSection}>
+            <View style={styles.overviewSectionHeader}>
+              <Text style={[styles.overviewSectionTitle, { color: colors.textPrimary }]}>
+                {t('events.completedEvents')}
+              </Text>
+              {(eventOverview?.completed.event_count ?? 0) > 3 && (
+                <TouchableOpacity onPress={() => setActiveFilter('completed')}>
+                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            {completedEvents.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                onPress={() => handleEventPress(event.id)}
+                activeOpacity={0.8}
+              >
+                <Card style={styles.overviewEventCard}>
+                  <View style={[styles.overviewDateBadge, { backgroundColor: colors.textMuted }]}>
+                    <Ionicons name="checkmark" size={22} color={colors.white} />
+                  </View>
+                  <View style={styles.overviewEventContent}>
+                    <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {event.post?.title || t('eventDetail.untitled')}
+                    </Text>
+                    <View style={styles.overviewEventMeta}>
+                      <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
+                        {event.participants_count}
+                      </Text>
+                      <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
+                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {event.location_name}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -834,68 +882,76 @@ export function EventsScreen({ navigation, route }: Props) {
             ))}
           </View>
 
-          <FlatList
-            data={events}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item, index }) => (
-              <AnimatedListItem index={index}>
-                <EventCard event={item} onPress={() => handleEventPress(item.id)} />
-              </AnimatedListItem>
-            )}
-            ListHeaderComponent={() => (
-              <>
-                {renderStats()}
-                {activeFilter === 'all' && renderEventsOverview()}
-              </>
-            )}
-            ListEmptyComponent={
-              isLoading ? (
-                <View style={styles.inlineLoading}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                </View>
-              ) : error ? (
-                <EmptyState
-                  icon="alert-circle-outline"
-                  title={t('events.failedToLoad')}
-                  message={error}
-                  actionLabel={t('common.tryAgain')}
-                  onAction={refresh}
+          {activeFilter === 'all' ? (
+            <ScrollView
+              contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={refreshAll}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
                 />
-              ) : (
-                <EmptyState
-                  icon="calendar-outline"
-                  title={t('events.noEvents')}
-                  message={
-                    activeFilter === 'all'
-                      ? t('events.noEventsMessage')
-                      : t('events.noEventsFiltered', { filter: filters.find(f => f.value === activeFilter)?.label })
-                  }
-                  actionLabel={isAuthenticated ? t('events.createEvent') : undefined}
-                  onAction={
-                    isAuthenticated
-                      ? () => navigation.navigate('EventForm', {})
-                      : undefined
-                  }
+              }
+            >
+              {renderStats()}
+              {renderEventsOverview()}
+            </ScrollView>
+          ) : (
+            <FlatList
+              data={events}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <AnimatedListItem index={index}>
+                  <EventCard event={item} onPress={() => handleEventPress(item.id)} />
+                </AnimatedListItem>
+              )}
+              ListHeaderComponent={() => renderStats()}
+              ListEmptyComponent={
+                isLoading ? (
+                  <View style={styles.inlineLoading}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                  </View>
+                ) : error ? (
+                  <EmptyState
+                    icon="alert-circle-outline"
+                    title={t('events.failedToLoad')}
+                    message={error}
+                    actionLabel={t('common.tryAgain')}
+                    onAction={refresh}
+                  />
+                ) : (
+                  <EmptyState
+                    icon="calendar-outline"
+                    title={t('events.noEvents')}
+                    message={t('events.noEventsFiltered', { filter: filters.find(f => f.value === activeFilter)?.label })}
+                    actionLabel={isAuthenticated ? t('events.createEvent') : undefined}
+                    onAction={
+                      isAuthenticated
+                        ? () => navigation.navigate('EventForm', {})
+                        : undefined
+                    }
+                  />
+                )
+              }
+              ListFooterComponent={
+                isLoading && events.length > 0 ? (
+                  <Loading message={t('common.loadingMore')} />
+                ) : null
+              }
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={refreshAll}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
                 />
-              )
-            }
-            ListFooterComponent={
-              isLoading && events.length > 0 ? (
-                <Loading message={t('common.loadingMore')} />
-              ) : null
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={refreshAll}
-                colors={[colors.primary]}
-                tintColor={colors.primary}
-              />
-            }
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.5}
-            contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
-          />
+              }
+              onEndReached={loadMore}
+              onEndReachedThreshold={0.5}
+              contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
+            />
+          )}
         </>
       )}
     </ScreenContainer>

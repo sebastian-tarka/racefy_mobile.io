@@ -34,7 +34,7 @@ export function InviteMemberScreen({ route, navigation }: Props) {
       setIsSearching(true);
       try {
         const response = await api.searchUsers(query);
-        setResults(response.results.users.items);
+        setResults(response.results.users.data);
       } catch {
         // Silent
       } finally {

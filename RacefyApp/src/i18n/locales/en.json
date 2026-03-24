@@ -482,7 +482,8 @@
       "finishes": "Finishes"
     },
     "happeningNow": "Happening Now",
-    "upcomingEvents": "Upcoming Events"
+    "upcomingEvents": "Upcoming Events",
+    "completedEvents": "Recently Completed"
   },
   "eventDetail": {
     "title": "Event Details",

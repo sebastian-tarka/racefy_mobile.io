@@ -312,7 +312,7 @@ export interface Post {
 
 export interface SharedPost {
   id: number;
-  type: 'general' | 'event' | 'activity';
+  type: 'general' | 'event' | 'activity' | 'achievement';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';
