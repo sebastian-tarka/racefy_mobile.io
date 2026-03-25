@@ -184,8 +184,8 @@ export function DebugLogsSection() {
             </View>
           </View>
           <View style={styles.rowRight}>
-            <View style={[styles.badge, { backgroundColor: colors.primaryLight }]}>
-              <Text style={[styles.badgeText, { color: colors.primary }]}>{logsCount}</Text>
+            <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.badgeText, { color: colors.white }]}>{logsCount}</Text>
             </View>
             <Ionicons
               name={isExpanded ? 'chevron-up' : 'chevron-down'}

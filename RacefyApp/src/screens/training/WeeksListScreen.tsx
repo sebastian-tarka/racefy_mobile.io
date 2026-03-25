@@ -554,131 +554,6 @@ export function WeeksListScreen({ navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      {showSelector && (
-        <ProgramSelector
-          programs={programs}
-          selectedId={selectedProgramId}
-          onSelect={handleSelectProgram}
-          canCreateNew={canCreateNew}
-          onCreateNew={handleCreateNewProgram}
-        />
-      )}
-
-      {program && (
-        <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="calendar" size={20} color={colors.textSecondary} />
-            <Text style={[styles.programInfoText, { color: colors.textSecondary }]}>
-              {new Date(program.start_date).toLocaleDateString()}
-              {program.planned_end_date && ` - ${new Date(program.planned_end_date).toLocaleDateString()}`}
-            </Text>
-          </View>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="fitness" size={20} color={colors.primary} />
-            <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-              {t('training.weeksList.programName')}: {program.name}
-            </Text>
-          </View>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="trending-up" size={20} color={colors.primary} />
-            <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-              {t('training.weeksList.weekProgress')}: {program.current_week_number || 0}/{program.total_weeks}
-            </Text>
-          </View>
-
-          {/* Settings Button */}
-          <TouchableOpacity
-            style={[styles.settingsRow, { borderTopColor: colors.border }]}
-            onPress={handleOpenSettings}
-          >
-            <View style={styles.settingsLabelRow}>
-              <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>
-                {t('training.weeksList.settings')}
-              </Text>
-            </View>
-            <View style={styles.settingsValueRow}>
-              <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>
-                {program.auto_link_activities
-                  ? t('training.weeksList.autoLinkEnabled')
-                  : t('training.weeksList.autoLinkDisabled')}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Program Actions */}
-          <View style={styles.programActions}>
-            {program.status === 'paused' ? (
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                onPress={handleResumeProgram}
-                disabled={actionLoading}
-              >
-                {actionLoading ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <>
-                    <Ionicons name="play" size={16} color={colors.white} />
-                    <Text style={[styles.actionButtonText, { color: colors.white }]}>
-                      {t('training.weeksList.resumeProgram')}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.warning + '20', borderColor: colors.warning, borderWidth: 1 }]}
-                onPress={handlePauseProgram}
-                disabled={actionLoading}
-              >
-                <Ionicons name="pause" size={16} color={colors.warning} />
-                <Text style={[styles.actionButtonText, { color: colors.warning }]}>
-                  {t('training.weeksList.pauseProgram')}
-                </Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
-              onPress={handleAbandonProgram}
-              disabled={actionLoading}
-            >
-              <Ionicons name="close-circle" size={16} color={colors.error} />
-              <Text style={[styles.actionButtonText, { color: colors.error }]}>
-                {t('training.weeksList.abandonProgram')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Generate Coaching Hints Button */}
-      {program && weeks.some(w => !w.coaching_hint) && (
-        <TouchableOpacity
-          style={[styles.generateHintsButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
-          onPress={handleGenerateHints}
-          disabled={generatingHints}
-        >
-          {generatingHints ? (
-            <>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                {hintsProgress.total > 0
-                  ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
-                  : t('training.coachingHints.generating')}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="bulb-outline" size={20} color={colors.primary} />
-              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                {t('training.coachingHints.generateButton')}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
       <FlatList
         data={weeks}
         renderItem={renderWeekItem}
@@ -690,6 +565,134 @@ export function WeeksListScreen({ navigation }: Props) {
             onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
+        }
+        ListHeaderComponent={
+          <>
+            {showSelector && (
+              <ProgramSelector
+                programs={programs}
+                selectedId={selectedProgramId}
+                onSelect={handleSelectProgram}
+                canCreateNew={canCreateNew}
+                onCreateNew={handleCreateNewProgram}
+              />
+            )}
+
+            {program && (
+              <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="calendar" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.programInfoText, { color: colors.textSecondary }]}>
+                    {new Date(program.start_date).toLocaleDateString()}
+                    {program.planned_end_date && ` - ${new Date(program.planned_end_date).toLocaleDateString()}`}
+                  </Text>
+                </View>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="fitness" size={20} color={colors.primary} />
+                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
+                    {t('training.weeksList.programName')}: {program.name}
+                  </Text>
+                </View>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="trending-up" size={20} color={colors.primary} />
+                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
+                    {t('training.weeksList.weekProgress')}: {program.current_week_number || 0}/{program.total_weeks}
+                  </Text>
+                </View>
+
+                {/* Settings Button */}
+                <TouchableOpacity
+                  style={[styles.settingsRow, { borderTopColor: colors.border }]}
+                  onPress={handleOpenSettings}
+                >
+                  <View style={styles.settingsLabelRow}>
+                    <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+                    <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>
+                      {t('training.weeksList.settings')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingsValueRow}>
+                    <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>
+                      {program.auto_link_activities
+                        ? t('training.weeksList.autoLinkEnabled')
+                        : t('training.weeksList.autoLinkDisabled')}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+
+                {/* Program Actions */}
+                <View style={styles.programActions}>
+                  {program.status === 'paused' ? (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                      onPress={handleResumeProgram}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color={colors.white} />
+                      ) : (
+                        <>
+                          <Ionicons name="play" size={16} color={colors.white} />
+                          <Text style={[styles.actionButtonText, { color: colors.white }]}>
+                            {t('training.weeksList.resumeProgram')}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.warning + '20', borderColor: colors.warning, borderWidth: 1 }]}
+                      onPress={handlePauseProgram}
+                      disabled={actionLoading}
+                    >
+                      <Ionicons name="pause" size={16} color={colors.warning} />
+                      <Text style={[styles.actionButtonText, { color: colors.warning }]}>
+                        {t('training.weeksList.pauseProgram')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
+                    onPress={handleAbandonProgram}
+                    disabled={actionLoading}
+                  >
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
+                    <Text style={[styles.actionButtonText, { color: colors.error }]}>
+                      {t('training.weeksList.abandonProgram')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Generate Coaching Hints Button */}
+            {program && weeks.some(w => !w.coaching_hint) && (
+              <TouchableOpacity
+                style={[styles.generateHintsButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
+                onPress={handleGenerateHints}
+                disabled={generatingHints}
+              >
+                {generatingHints ? (
+                  <>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                      {hintsProgress.total > 0
+                        ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
+                        : t('training.coachingHints.generating')}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons name="bulb-outline" size={20} color={colors.primary} />
+                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                      {t('training.coachingHints.generateButton')}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </>
         }
         ListEmptyComponent={
           <EmptyState
@@ -1138,6 +1141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
+    marginBottom: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
   },

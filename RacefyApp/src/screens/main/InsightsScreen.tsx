@@ -37,7 +37,7 @@ const SECTION_CONFIG: {
   { key: 'favorite_routes', icon: 'map', titleKey: 'insights.routes.title' },
 ];
 
-export function InsightsScreen(_props: Props) {
+export function InsightsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -99,7 +99,7 @@ export function InsightsScreen(_props: Props) {
   if (isLoading) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} />
+        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
         <Loading fullScreen message={t('common.loading')} />
       </ScreenContainer>
     );
@@ -108,7 +108,7 @@ export function InsightsScreen(_props: Props) {
   if (error) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} />
+        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
         <EmptyState
           icon="alert-circle-outline"
           title={t('common.error')}
@@ -123,7 +123,7 @@ export function InsightsScreen(_props: Props) {
   if (!data || !data.has_data) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} />
+        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
         <EmptyState
           icon="fitness-outline"
           title={t('insights.empty.title')}
@@ -137,7 +137,7 @@ export function InsightsScreen(_props: Props) {
 
   return (
     <ScreenContainer edges={['top']}>
-      <ScreenHeader title={t('insights.title')} />
+      <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

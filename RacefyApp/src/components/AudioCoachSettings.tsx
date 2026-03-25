@@ -138,7 +138,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.language === lang.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+                settings.language === lang.value && { borderColor: colors.primary, backgroundColor: colors.primary },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('language', lang.value)}
@@ -148,7 +148,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 style={[
                   styles.chipText,
                   { color: colors.textSecondary },
-                  settings.language === lang.value && { color: colors.primary },
+                  settings.language === lang.value && { color: colors.white },
                 ]}
               >
                 {lang.label}
@@ -170,7 +170,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.intervalKm === km && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+                settings.intervalKm === km && { borderColor: colors.primary, backgroundColor: colors.primary },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('intervalKm', km)}
@@ -180,7 +180,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 style={[
                   styles.chipText,
                   { color: colors.textSecondary },
-                  settings.intervalKm === km && { color: colors.primary },
+                  settings.intervalKm === km && { color: colors.white },
                 ]}
               >
                 {km} km
@@ -202,7 +202,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.style === style && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+                settings.style === style && { borderColor: colors.primary, backgroundColor: colors.primary },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('style', style)}
@@ -212,7 +212,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 style={[
                   styles.chipText,
                   { color: colors.textSecondary },
-                  settings.style === style && { color: colors.primary },
+                  settings.style === style && { color: colors.white },
                 ]}
               >
                 {t(`settings.audioCoach.styles.${style}`)}
@@ -255,8 +255,8 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 {t('settings.audioCoach.aiVoice')}
               </Text>
               {!isPlusOrPro && (
-                <View style={[styles.tierBadge, { backgroundColor: colors.primaryLight }]}>
-                  <Text style={[styles.tierBadgeText, { color: colors.primary }]}>PLUS</Text>
+                <View style={[styles.tierBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.tierBadgeText, { color: colors.white }]}>PLUS</Text>
                 </View>
               )}
             </View>
@@ -281,7 +281,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 style={[
                   styles.chip,
                   { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                  settings.aiVoice === voice.value && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+                  settings.aiVoice === voice.value && { borderColor: colors.primary, backgroundColor: colors.primary },
                   isDisabled && styles.chipDisabled,
                 ]}
                 onPress={() => handleToggle('aiVoice', voice.value)}
@@ -291,7 +291,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                   style={[
                     styles.chipText,
                     { color: colors.textSecondary },
-                    settings.aiVoice === voice.value && { color: colors.primary },
+                    settings.aiVoice === voice.value && { color: colors.white },
                   ]}
                 >
                   {voice.label}
