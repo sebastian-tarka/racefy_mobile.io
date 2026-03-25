@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -158,6 +158,24 @@ export function ActivityRecordingScreen() {
   useEffect(() => { loadAudioCoachSettings(); }, [loadAudioCoachSettings]);
   const [audioCoachSessionEnabled, setAudioCoachSessionEnabled] = useState<boolean | null>(null);
   const isAudioCoachActive = audioCoachSessionEnabled ?? audioCoachSettings.enabled;
+
+ // Persist audio coach session toggle to AsyncStorage so the background task respects it.
+  // On Android the background location task runs continuously (even in foreground)
+  // and reads settings from AsyncStorage — without this sync it ignores the toggle.
+  const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
+  const handleToggleAudioCoach = useCallback(() => {
+    triggerHaptic();
+    setAudioCoachSessionEnabled(prev => {
+      const newEnabled = !(prev ?? audioCoachSettings.enabled);
+      // Sync to AsyncStorage for background task
+      AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY).then(json => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = newEnabled;
+        AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      }).catch(() => {});
+      return newEnabled;
+    });
+  }, [audioCoachSettings]);
 
   // ── DEV ONLY: Simulated run for testing audio coach ──
   // Time-based distance: recalculated on every render from elapsed time.
@@ -647,6 +665,12 @@ export function ActivityRecordingScreen() {
       resetMilestones();
       setSkipAutoPost(false);
 
+      // Restore original audio coach settings in AsyncStorage (undo session toggle)
+      if (audioCoachSessionEnabled !== null) {
+        setAudioCoachSessionEnabled(null);
+        loadAudioCoachSettings();
+      }
+
       if (result?.post) {
         if (result.post.status === 'published') {
           Alert.alert(t('common.success'), t('recording.activityShared'));
@@ -698,6 +722,11 @@ export function ActivityRecordingScreen() {
             try {
               await discardTracking();
               resetMilestones();
+              // Restore original audio coach settings in AsyncStorage
+              if (audioCoachSessionEnabled !== null) {
+                setAudioCoachSessionEnabled(null);
+                loadAudioCoachSettings();
+              }
               logger.activity('Activity discarded from UI');
             } catch (err) {
               logger.error('activity', 'Failed to discard activity from UI', { error: err });
@@ -1036,10 +1065,7 @@ export function ActivityRecordingScreen() {
       nextMilestone={nextMilestone}
       canUseAdvancedStats={canUseAdvancedStats}
       audioCoachActive={isAudioCoachActive}
-      onToggleAudioCoach={() => {
-        triggerHaptic();
-        setAudioCoachSessionEnabled(prev => !(prev ?? audioCoachSettings.enabled));
-      }}
+      onToggleAudioCoach={handleToggleAudioCoach}
       onStart={handleStart}
       onOpenSportModal={() => setSportModalVisible(true)}
       onOpenEventSheet={() => setEventSheetVisible(true)}
@@ -1064,10 +1090,7 @@ export function ActivityRecordingScreen() {
       nextMilestone={nextMilestone}
       gpsProfile={gpsProfile}
       audioCoachActive={isAudioCoachActive}
-      onToggleAudioCoach={() => {
-        triggerHaptic();
-        setAudioCoachSessionEnabled(prev => !(prev ?? audioCoachSettings.enabled));
-      }}
+      onToggleAudioCoach={handleToggleAudioCoach}
       onPause={handlePause}
       onStop={handleStop}
     />

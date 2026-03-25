@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, borderRadius } from '../theme/spacing';
 import { formatTime, formatDistance } from '../utils/formatters';
-import { formatPaceDisplay } from '../utils/paceCalculator';
+import { formatPaceDisplay, calculateAveragePace } from '../utils/paceCalculator';
 
 interface RecordingMapControlsProps {
   duration: number;
@@ -75,7 +75,7 @@ export function RecordingMapControls({
       {/* Timer display (large, centered) */}
       <Text style={[styles.timer, { color: colors.textPrimary }]}>{formatTime(duration)}</Text>
 
-      {/* Stats row (distance and current pace) */}
+      {/* Stats row (distance, current pace, avg pace) */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
@@ -92,6 +92,15 @@ export function RecordingMapControls({
           </Text>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>
             {t('recording.currentPace')}
+          </Text>
+        </View>
+
+        <View style={styles.statItem}>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {formatPaceDisplay(calculateAveragePace(duration, distance))}
+          </Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('recording.avgPace')}
           </Text>
         </View>
       </View>

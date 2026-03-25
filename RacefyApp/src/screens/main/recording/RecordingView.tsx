@@ -11,6 +11,7 @@ import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
+import { logger } from '../../../services/logger';
 import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
@@ -72,7 +73,18 @@ export function RecordingView({
   const formatAvgPace = (): string => {
     if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
-    return formatPaceFromSecPerKm(avgPace);
+    const formatted = formatPaceFromSecPerKm(avgPace);
+    // Debug: log avg pace calculation every ~5km to diagnose display issues
+    if (Math.floor(currentStats.distance / 5000) !== Math.floor((currentStats.distance - 50) / 5000)) {
+      logger.debug('activity', 'formatAvgPace debug', {
+        localDuration,
+        distance: Math.round(currentStats.distance),
+        minDistance,
+        avgPaceRaw: avgPace,
+        formatted,
+      });
+    }
+    return formatted;
   };
 
   return (
