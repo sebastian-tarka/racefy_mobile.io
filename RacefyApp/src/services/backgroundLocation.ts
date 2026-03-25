@@ -340,6 +340,23 @@ export async function initAudioCoachBackgroundState(): Promise<void> {
   await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
 }
 
+/**
+ * Sync foreground distance to background audio coach state.
+ * Called when app transitions to background so that the background task
+ * continues accumulating from the correct total distance instead of
+ * only counting distance from previous background sessions.
+ */
+export async function syncAudioCoachForegroundDistance(totalDistanceM: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistanceM.toString());
+    logger.info('audioCoach', 'Synced foreground distance to background', {
+      totalDistanceM: Math.round(totalDistanceM),
+    });
+  } catch (err) {
+    logger.error('audioCoach', 'Failed to sync foreground distance', { error: err });
+  }
+}
+
 // Define the background task - this must be at module level
 // IMPORTANT: This code runs in a separate JS context when in background
 // It must be defined at module level BEFORE React Native initializes

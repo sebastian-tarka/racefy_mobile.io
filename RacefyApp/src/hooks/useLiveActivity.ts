@@ -26,6 +26,7 @@ import {
   getLocationBuffer,
   getBackgroundSyncState,
   clearBackgroundSyncState,
+  syncAudioCoachForegroundDistance,
   type BufferedLocation,
   type LastPosition,
 } from "../services/backgroundLocation";
@@ -910,6 +911,10 @@ function useLiveActivityInternal() {
       } else {
         logger.gps("Background tracking already running (continuing)");
       }
+
+      // Sync foreground distance to background audio coach so it continues
+      // from the correct total distance (not just previous background sessions)
+      await syncAudioCoachForegroundDistance(localStatsRef.current.distance);
 
       // Stop foreground tracking (background tracking should now be running)
       stopForegroundTracking();
