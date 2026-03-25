@@ -29,6 +29,7 @@ export interface SubscriptionFeatures {
   event_ai_commentary: boolean;
   privacy_zones: number;
   training_programs: number;
+  active_training_programs: number;  // concurrent active/paused limit (-1 = unlimited)
   training_summaries: boolean;
   advanced_stats: boolean;
   share_link_permanent: boolean;
@@ -2245,6 +2246,7 @@ export interface GetProgramResponse {
 
 export interface GetCurrentProgramResponse {
   program?: TrainingProgram | null;
+  programs?: TrainingProgram[];
   data?: TrainingProgram | null;
 }
 

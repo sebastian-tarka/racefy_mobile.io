@@ -1445,6 +1445,13 @@
       "title": "Generating Your Plan",
       "subtitle": "Our AI is creating a personalized training program just for you. This usually takes 5-10 seconds."
     },
+    "programSelector": {
+      "weekProgress": "Week {{current}}/{{total}}",
+      "active": "active",
+      "paused": "paused",
+      "newProgram": "+ New",
+      "upgrade": "Upgrade"
+    },
     "weeksList": {
       "title": "Training Weeks",
       "weekNumber": "Week {{number}}",
@@ -1758,6 +1765,7 @@
       "share_link_permanent": "Permanent Share Links",
       "privacy_zones": "Privacy Zones",
       "training_programs": "Training Programs",
+      "active_training_programs": "Active Training Programs",
       "exclusive_badges": "Exclusive Badges",
       "points_multiplier": "Points Multiplier"
     },
@@ -1773,6 +1781,7 @@
       "share_link_permanent": "Create permanent share links for your activities.",
       "privacy_zones": "Set up more privacy zones to hide your location.",
       "training_programs": "Access more training programs to reach your goals.",
+      "active_training_programs": "Run multiple training programs simultaneously.",
       "exclusive_badges": "Unlock exclusive achievement badges for your profile.",
       "points_multiplier": "Earn points faster with a multiplier bonus."
     },

@@ -105,6 +105,36 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     }
 
     /**
+     * Get all active/paused training programs for the user
+     * Returns the programs array from the current endpoint
+     */
+    async getCurrentPrograms(): Promise<Types.TrainingProgram[]> {
+      try {
+        const response = await this.request<Types.GetCurrentProgramResponse>(
+          '/training/programs/current'
+        );
+        // New API returns { programs: [...], program: ... (backwards compat) }
+        if (response?.programs && Array.isArray(response.programs)) {
+          return response.programs;
+        }
+        // Fallback for old API: wrap single program in array
+        const program = response?.program ?? response?.data;
+        return program ? [program] : [];
+      } catch (error: any) {
+        const msg = error.message?.toLowerCase() || '';
+        if (
+          msg.includes('no active training program') ||
+          msg.includes('not found') ||
+          msg.includes('404') ||
+          error.status === 404
+        ) {
+          return [];
+        }
+        throw error;
+      }
+    }
+
+    /**
      * Get all weeks for current training program
      * Includes activities for each week
      */

@@ -15,12 +15,15 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { ScreenHeader, Loading, Card, EmptyState, ScreenContainer } from '../../components';
+import { ProgramSelector } from '../../components/Training/ProgramSelector';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, TrainingProgram, PausedReason, MentalBudget, AiMode } from '../../types/api';
 
@@ -34,11 +37,22 @@ export function WeeksListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes } = useSportTypes();
+  const { features, tier } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [program, setProgram] = useState<TrainingProgram | null>(null);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const program = programs.find(p => p.id === selectedProgramId) ?? programs[0] ?? null;
+
+  const canCreateNew = (() => {
+    const limit = features.active_training_programs;
+    return limit === -1 || programs.length < limit;
+  })();
+
+  const showSelector = programs.length > 1 || (tier !== 'free' && canCreateNew);
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -61,18 +75,38 @@ export function WeeksListScreen({ navigation }: Props) {
       if (!isRefresh) setLoading(true);
       setError(null);
 
-      const [programData, weeksData] = await Promise.all([
-        api.getCurrentProgram(),
-        api.getWeeks(),
-      ]);
+      const allPrograms = await api.getCurrentPrograms();
+      setPrograms(allPrograms);
 
-      setProgram(programData);
+      // Set initial selection if not yet set
+      if (!selectedProgramId && allPrograms.length > 0) {
+        setSelectedProgramId(allPrograms[0].id);
+      }
+
+      // Load weeks for the selected (or first) program
+      const activeProgram = allPrograms.find(p => p.id === selectedProgramId) ?? allPrograms[0];
+      let weeksData: TrainingWeek[] = [];
+      if (activeProgram) {
+        // Use program-specific endpoint to get weeks for the selected program
+        const fullProgram = await api.getProgram(activeProgram.id);
+        weeksData = fullProgram.current_week ? [fullProgram.current_week] : [];
+        // If the program-specific endpoint doesn't return all weeks, fall back to getWeeks
+        // (which returns weeks for the most recent active program)
+        if (activeProgram.id === allPrograms[0]?.id) {
+          weeksData = await api.getWeeks();
+        } else {
+          // For non-primary programs, we still use getWeeks as it's program-scoped on the backend
+          // TODO: When backend supports GET /training/programs/{id}/weeks, use that instead
+          weeksData = await api.getWeeks();
+        }
+      }
+
       setWeeks(weeksData);
 
-      logger.info('training', 'Loaded training program', {
-        programId: programData?.id,
+      logger.info('training', 'Loaded training programs', {
+        programCount: allPrograms.length,
+        selectedId: activeProgram?.id,
         totalWeeks: weeksData.length,
-        currentWeekNumber: programData?.current_week_number,
       });
     } catch (err: any) {
       logger.error('training', 'Failed to load training weeks', { error: err });
@@ -81,7 +115,7 @@ export function WeeksListScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t]);
+  }, [t, selectedProgramId]);
 
   useEffect(() => {
     loadData();
@@ -98,6 +132,28 @@ export function WeeksListScreen({ navigation }: Props) {
   const handleRefresh = () => {
     setRefreshing(true);
     loadData(true);
+  };
+
+  const handleSelectProgram = (id: number) => {
+    setSelectedProgramId(id);
+  };
+
+  // Reload weeks when selected program changes
+  useEffect(() => {
+    if (selectedProgramId && !loading) {
+      loadData(true);
+    }
+  }, [selectedProgramId]);
+
+  const handleCreateNewProgram = () => {
+    if (!canCreateNew) {
+      upgradePromptEmitter.emit('show', {
+        feature: 'active_training_programs',
+        currentTier: tier,
+      });
+      return;
+    }
+    navigation.navigate('TrainingCalibration');
   };
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -123,7 +179,14 @@ export function WeeksListScreen({ navigation }: Props) {
             try {
               await api.abandonProgram(program.id);
               logger.info('training', 'Program abandoned', { programId: program.id });
-              navigation.goBack();
+              // If there are other programs, switch to one; otherwise go back
+              const remaining = programs.filter(p => p.id !== program.id);
+              if (remaining.length > 0) {
+                setSelectedProgramId(remaining[0].id);
+                loadData(true);
+              } else {
+                navigation.goBack();
+              }
             } catch (err: any) {
               logger.error('training', 'Failed to abandon program', { error: err });
               Alert.alert(t('training.errors.title'), err.message);
@@ -490,6 +553,16 @@ export function WeeksListScreen({ navigation }: Props) {
         showBack
         onBack={() => navigation.goBack()}
       />
+
+      {showSelector && (
+        <ProgramSelector
+          programs={programs}
+          selectedId={selectedProgramId}
+          onSelect={handleSelectProgram}
+          canCreateNew={canCreateNew}
+          onCreateNew={handleCreateNewProgram}
+        />
+      )}
 
       {program && (
         <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>

@@ -48,6 +48,7 @@ const FEATURE_ROWS = [
   { key: 'share_link_permanent', icon: 'link-outline', free: false, plus: true, pro: true },
   { key: 'privacy_zones', icon: 'shield-outline', free: '1', plus: '5', pro: '10' },
   { key: 'training_programs', icon: 'barbell-outline', free: '1', plus: '3', pro: 'Unlimited' },
+  { key: 'active_training_programs', icon: 'layers-outline', free: '1', plus: '2', pro: 'Unlimited' },
   { key: 'exclusive_badges', icon: 'ribbon-outline', free: false, plus: false, pro: true },
   { key: 'points_multiplier', icon: 'trending-up-outline', free: '1x', plus: '1.25x', pro: '1.5x' },
 ];

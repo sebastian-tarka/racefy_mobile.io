@@ -1447,6 +1447,13 @@
       "title": "Generowanie Twojego Planu",
       "subtitle": "Nasza AI tworzy spersonalizowany plan treningowy specjalnie dla Ciebie. Zwykle trwa to 5-10 sekund."
     },
+    "programSelector": {
+      "weekProgress": "Tydzień {{current}}/{{total}}",
+      "active": "aktywny",
+      "paused": "wstrzymany",
+      "newProgram": "+ Nowy",
+      "upgrade": "Ulepsz"
+    },
     "weeksList": {
       "title": "Tygodnie Treningowe",
       "weekNumber": "Tydzień {{number}}",
@@ -1760,6 +1767,7 @@
       "share_link_permanent": "Stałe linki udostępniania",
       "privacy_zones": "Strefy prywatności",
       "training_programs": "Plany treningowe",
+      "active_training_programs": "Aktywne plany treningowe",
       "exclusive_badges": "Ekskluzywne odznaki",
       "points_multiplier": "Mnożnik punktów"
     },
@@ -1775,6 +1783,7 @@
       "share_link_permanent": "Twórz stałe linki udostępniania aktywności.",
       "privacy_zones": "Ustaw więcej stref prywatności, aby ukryć lokalizację.",
       "training_programs": "Uzyskaj dostęp do większej liczby planów treningowych.",
+      "active_training_programs": "Prowadź kilka planów treningowych jednocześnie.",
       "exclusive_badges": "Odblokuj ekskluzywne odznaki na swoim profilu.",
       "points_multiplier": "Zdobywaj punkty szybciej dzięki bonusowi mnożnika."
     },

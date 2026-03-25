@@ -10,6 +10,7 @@ const DEFAULT_FREE_FEATURES: SubscriptionFeatures = {
   event_ai_commentary: false,
   privacy_zones: 1,
   training_programs: 1,
+  active_training_programs: 1,
   training_summaries: false,
   advanced_stats: false,
   share_link_permanent: false,
