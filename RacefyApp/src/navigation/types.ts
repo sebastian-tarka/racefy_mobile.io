@@ -29,6 +29,7 @@ export type RootStackParamList = {
   UserProfile: { username: string };
   Settings: undefined;
   BlockedUsers: undefined;
+  PrivacyZones: undefined;
   EditProfile: undefined;
   ImpersonateUser: undefined;
   Notifications: undefined;

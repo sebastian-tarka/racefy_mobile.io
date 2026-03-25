@@ -921,6 +921,11 @@ export function SettingsScreen({ navigation }: Props) {
           onToggle={() => toggleSection('privacySafety')}
         >
           <SettingsRow
+            icon="location-outline"
+            label={t('settings.privacySafety.privacyZones')}
+            onPress={() => navigation.navigate('PrivacyZones')}
+          />
+          <SettingsRow
             icon="shield-outline"
             label={t('settings.privacySafety.blockedUsers')}
             onPress={() => navigation.navigate('BlockedUsers')}

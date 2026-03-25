@@ -2617,3 +2617,40 @@ export interface EventTeam {
   members?: EventRegistration[];
   created_at: string;
 }
+
+// ============ PRIVACY ZONES ============
+
+export interface PrivacyZone {
+  id: number;
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrivacyZoneSuggestion {
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+  activity_count: number;
+  confidence: number;
+}
+
+export interface CreatePrivacyZoneRequest {
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+}
+
+export interface UpdatePrivacyZoneRequest {
+  name?: string;
+  type?: 'home' | 'work' | 'other';
+  latitude?: number;
+  longitude?: number;
+}
