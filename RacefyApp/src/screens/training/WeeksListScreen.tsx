@@ -37,7 +37,7 @@ export function WeeksListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes } = useSportTypes();
-  const { features, tier } = useSubscription();
+  const { features, tier, canUse } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
@@ -360,6 +360,11 @@ export function WeeksListScreen({ navigation }: Props) {
     } catch (err: any) {
       setGeneratingHints(false);
       logger.error('training', 'Failed to generate coaching hints', { error: err });
+      // Handle 403 — Pro subscription required
+      if (err?.status === 403 && err?.data?.required_tier) {
+        upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier });
+        return;
+      }
       Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
     }
   };
@@ -666,11 +671,15 @@ export function WeeksListScreen({ navigation }: Props) {
               </View>
             )}
 
-            {/* Generate Coaching Hints Button */}
+            {/* Generate Coaching Hints Button — Pro only */}
             {program && weeks.some(w => !w.coaching_hint) && (
               <TouchableOpacity
-                style={[styles.generateHintsButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
-                onPress={handleGenerateHints}
+                style={[
+                  styles.generateHintsButton,
+                  { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' },
+                  !canUse('coaching_hints_bulk') && { opacity: 0.7 },
+                ]}
+                onPress={canUse('coaching_hints_bulk') ? handleGenerateHints : () => upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })}
                 disabled={generatingHints}
               >
                 {generatingHints ? (
@@ -684,10 +693,16 @@ export function WeeksListScreen({ navigation }: Props) {
                   </>
                 ) : (
                   <>
+                    {!canUse('coaching_hints_bulk') && <Ionicons name="lock-closed" size={16} color={colors.primary} />}
                     <Ionicons name="bulb-outline" size={20} color={colors.primary} />
                     <Text style={[styles.generateHintsText, { color: colors.primary }]}>
                       {t('training.coachingHints.generateButton')}
                     </Text>
+                    {!canUse('coaching_hints_bulk') && (
+                      <View style={[styles.proBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.proBadgeText, { color: colors.white }]}>PRO</Text>
+                      </View>
+                    )}
                   </>
                 )}
               </TouchableOpacity>
@@ -1148,5 +1163,14 @@ const styles = StyleSheet.create({
   generateHintsText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  proBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  proBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
 });

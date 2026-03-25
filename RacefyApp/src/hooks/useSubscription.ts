@@ -19,6 +19,7 @@ const DEFAULT_FREE_FEATURES: SubscriptionFeatures = {
   exclusive_badges: false,
   teams_max: 1,
   team_members_max: 5,
+  coaching_hints_bulk: false,
 };
 
 export function useSubscription() {

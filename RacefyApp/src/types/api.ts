@@ -38,6 +38,7 @@ export interface SubscriptionFeatures {
   exclusive_badges: boolean;
   teams_max: number;          // -1 = unlimited
   team_members_max: number;   // -1 = unlimited
+  coaching_hints_bulk: boolean; // Pro only: generate all hints at once
 }
 
 export interface SubscriptionUsage {
