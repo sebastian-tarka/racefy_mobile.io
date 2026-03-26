@@ -36,7 +36,7 @@ export function AchievementBody({ post }: AchievementBodyProps) {
             {iconUrl ? (
               <Image source={{ uri: iconUrl }} style={styles.iconImage} resizeMode="contain" />
             ) : (
-              <Text style={styles.iconEmoji}>{badge.icon || '🏅'}</Text>
+              <Text style={styles.iconEmoji}>{badge.icon_emoji || '🏅'}</Text>
             )}
           </View>
 
