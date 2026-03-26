@@ -53,7 +53,7 @@ Authorization: Bearer {token}
       "user": {
         "id": 456,
         "name": "John Doe",
-        "avatar_url": "https://storage.racefy.app/avatars/456.jpg"
+        "avatar_url": "https://storage.racefy.io/avatars/456.jpg"
       },
       "stats": {
         "likes_count": 24,
@@ -315,7 +315,7 @@ $routes = Cache::remember($cacheKey, now()->addMinutes(30), function() {
       "user": {
         "id": 456,
         "name": "John Doe",
-        "avatar_url": "https://storage.racefy.app/avatars/456.jpg"
+        "avatar_url": "https://storage.racefy.io/avatars/456.jpg"
       },
       "stats": {
         "likes_count": 24,
@@ -342,7 +342,7 @@ $routes = Cache::remember($cacheKey, now()->addMinutes(30), function() {
       "user": {
         "id": 789,
         "name": "Jane Smith",
-        "avatar_url": "https://storage.racefy.app/avatars/789.jpg"
+        "avatar_url": "https://storage.racefy.io/avatars/789.jpg"
       },
       "stats": {
         "likes_count": 48,
@@ -384,7 +384,7 @@ $routes = Cache::remember($cacheKey, now()->addMinutes(30), function() {
       "user": {
         "id": 123,
         "name": "Bob Wilson",
-        "avatar_url": "https://storage.racefy.app/avatars/123.jpg"
+        "avatar_url": "https://storage.racefy.io/avatars/123.jpg"
       },
       "stats": {
         "likes_count": 5,

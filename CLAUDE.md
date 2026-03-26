@@ -222,7 +222,7 @@ API_LOCAL_PORT=8070
 
 # API URLs
 API_STAGING_URL=https://app.dev.racefy.io/api
-API_PRODUCTION_URL=https://api.racefy.app/api
+API_PRODUCTION_URL=https://racefy.io/api
 ```
 
 **Recommended setup for development:**
@@ -250,7 +250,7 @@ eas login
 | Profile | Platform | Output | API URL | Command |
 |---------|----------|--------|---------|---------|
 | `staging` | Android | APK | `https://app.dev.racefy.io/api` | `eas build --platform android --profile staging` |
-| `production` | Android | AAB | `https://api.racefy.app/api` | `eas build --platform android --profile production` |
+| `production` | Android | AAB | `https://racefy.io/api` | `eas build --platform android --profile production` |
 
 ### Build Commands
 ```bash

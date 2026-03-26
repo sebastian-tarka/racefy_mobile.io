@@ -19,7 +19,7 @@ limit        (optional)  Max results (default: 10, min: 1, max: 50)
 
 ## Example Request
 ```bash
-curl -X GET "https://api.racefy.app/api/activities/nearby?lat=52.2297&lng=21.0122&radius=5000&sport_type_id=1&limit=10" \
+curl -X GET "https://racefy.io/api/activities/nearby?lat=52.2297&lng=21.0122&radius=5000&sport_type_id=1&limit=10" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -127,22 +127,22 @@ if (coordinates.length > 100) {
 
 ### Test 1: Basic search (Warsaw)
 ```bash
-curl "https://api.racefy.app/api/activities/nearby?lat=52.2297&lng=21.0122&radius=5000"
+curl "https://racefy.io/api/activities/nearby?lat=52.2297&lng=21.0122&radius=5000"
 ```
 
 ### Test 2: Sport-specific (Running only)
 ```bash
-curl "https://api.racefy.app/api/activities/nearby?lat=52.2297&lng=21.0122&sport_type_id=1"
+curl "https://racefy.io/api/activities/nearby?lat=52.2297&lng=21.0122&sport_type_id=1"
 ```
 
 ### Test 3: Large radius (50km)
 ```bash
-curl "https://api.racefy.app/api/activities/nearby?lat=52.2297&lng=21.0122&radius=50000"
+curl "https://racefy.io/api/activities/nearby?lat=52.2297&lng=21.0122&radius=50000"
 ```
 
 ### Test 4: Invalid coordinates (should fail)
 ```bash
-curl "https://api.racefy.app/api/activities/nearby?lat=200&lng=300"
+curl "https://racefy.io/api/activities/nearby?lat=200&lng=300"
 # Expected: 400 Bad Request
 ```
 

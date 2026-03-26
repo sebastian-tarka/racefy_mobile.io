@@ -8,7 +8,7 @@ const getApiUrl = (): string => {
     return process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api';
   }
 
-  return process.env.API_PRODUCTION_URL || 'https://racefy.iopage sie ds/api';
+  return process.env.API_PRODUCTION_URL || 'https://racefy.io/api';
 };
 
 // Determine Firebase config file based on APP_ENV
@@ -64,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     buildNumber: '1.9.3',
     googleServicesFile: getGoogleServicesFileiOS(),
     associatedDomains: [
-      'applinks:racefy.app',
+      'applinks:racefy.io',
       'applinks:app.dev.racefy.io',
     ],
     infoPlist: {
@@ -131,7 +131,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         data: [
           {
             scheme: 'https',
-            host: 'racefy.app',
+            host: 'racefy.io',
           },
           {
             scheme: 'https',

@@ -192,13 +192,13 @@ These fields are **optional** and have sensible defaults:
 
 1. **Verify API Response:**
    ```bash
-   curl -X GET https://api.racefy.app/api/sport-types \
+   curl -X GET https://racefy.io/api/sport-types \
      -H "Accept: application/json" | jq '.data[].gps_profile'
    ```
 
 2. **Verify Activity Start:**
    ```bash
-   curl -X POST https://api.racefy.app/api/activities/start \
+   curl -X POST https://racefy.io/api/activities/start \
      -H "Content-Type: application/json" \
      -H "Authorization: Bearer TOKEN" \
      -d '{

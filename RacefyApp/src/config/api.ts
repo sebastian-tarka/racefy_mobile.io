@@ -7,7 +7,7 @@ import { logger } from '../services/logger';
 const extra = Constants.expoConfig?.extra ?? {};
 const LOCAL_IP = extra.apiLocalIp || '192.168.1.100';
 const LOCAL_PORT = extra.apiLocalPort || '8080';
-const API_URL = extra.apiUrl || 'https://api.racefy.app/api';
+const API_URL = extra.apiUrl || 'https://racefy.io/api';
 const API_STAGING_URL = extra.apiStagingUrl || 'https://app.dev.racefy.io/api';
 const APP_ENV = extra.appEnv || 'production';
 const USE_STAGING_IN_DEV = extra.useStagingInDev === true;
