@@ -977,7 +977,8 @@
     "privacySafety": {
       "title": "Prywatność i Bezpieczeństwo",
       "blockedUsers": "Zablokowani użytkownicy",
-      "privacyZones": "Strefy prywatności"
+      "privacyZones": "Strefy prywatności",
+      "feedbackAndBugs": "Opinie i zgłoszenia błędów"
     },
     "privacyZones": {
       "title": "Strefy prywatności",
@@ -1985,5 +1986,70 @@
     "avatarOptions": "Avatar zespołu",
     "changeAvatar": "Zmień avatar",
     "deleteAvatar": "Usuń avatar"
+  },
+  "feedback": {
+    "title": "Opinie i zgłoszenia błędów",
+    "myFeedback": "Moje zgłoszenia",
+    "newFeedback": "Zgłoś opinię",
+    "noFeedback": "Nie masz jeszcze żadnych zgłoszeń.",
+    "noFeedbackCta": "Daj nam znać, jak możemy się poprawić!",
+    "allStatuses": "Wszystkie",
+    "repliesCount": "{{count}} odpowiedzi",
+    "repliesCountOne": "1 odpowiedź",
+    "noRepliesShort": "Brak odpowiedzi",
+    "types": {
+      "bug": "Zgłoszenie błędu",
+      "feature_request": "Propozycja funkcji",
+      "feedback": "Ogólna opinia"
+    },
+    "statuses": {
+      "open": "Otwarte",
+      "in_progress": "W trakcie",
+      "waiting_for_user": "Oczekuje na odpowiedź",
+      "resolved": "Rozwiązane",
+      "closed": "Zamknięte"
+    },
+    "priorities": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "form": {
+      "title": "Wyślij zgłoszenie",
+      "type": "Jakiego rodzaju opinia?",
+      "subject": "Temat",
+      "subjectPlaceholder": "Krótkie podsumowanie problemu...",
+      "description": "Opis",
+      "descriptionPlaceholder": "Opisz problem lub sugestię szczegółowo...",
+      "priority": "Priorytet",
+      "attachments": "Zrzuty ekranu",
+      "addPhoto": "Dodaj zdjęcie",
+      "maxAttachments": "Maksymalnie 5 załączników",
+      "deviceInfoHint": "Informacje o urządzeniu są zbierane automatycznie, aby pomóc nam zdiagnozować problemy.",
+      "submit": "Wyślij zgłoszenie",
+      "submitting": "Wysyłanie...",
+      "subjectRequired": "Temat jest wymagany",
+      "descriptionRequired": "Opis jest wymagany"
+    },
+    "detail": {
+      "replies": "Odpowiedzi",
+      "noReplies": "Brak odpowiedzi. Nasz zespół odpowie wkrótce.",
+      "replyPlaceholder": "Napisz odpowiedź...",
+      "sendReply": "Wyślij",
+      "adminReply": "Zespół",
+      "you": "Ty",
+      "closedNotice": "To zgłoszenie jest zamknięte.",
+      "deviceInfo": "Informacje o urządzeniu",
+      "submittedFrom": "Wysłane z"
+    },
+    "messages": {
+      "submitted": "Zgłoszenie wysłane! Wkrótce je przejrzymy.",
+      "submitFailed": "Nie udało się wysłać zgłoszenia",
+      "replyAdded": "Odpowiedź wysłana",
+      "replyFailed": "Nie udało się wysłać odpowiedzi",
+      "rateLimited": "Poczekaj chwilę przed ponownym wysłaniem",
+      "loadFailed": "Nie udało się załadować zgłoszenia"
+    }
   }
 }

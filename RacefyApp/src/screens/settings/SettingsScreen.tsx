@@ -930,6 +930,11 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.privacySafety.blockedUsers')}
             onPress={() => navigation.navigate('BlockedUsers')}
           />
+          <SettingsRow
+            icon="chatbubbles-outline"
+            label={t('settings.privacySafety.feedbackAndBugs')}
+            onPress={() => navigation.navigate('FeedbackList')}
+          />
         </SettingsSection>
 
         {/* Activity Defaults */}

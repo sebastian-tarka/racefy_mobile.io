@@ -977,7 +977,8 @@
     "privacySafety": {
       "title": "Privacy & Safety",
       "blockedUsers": "Blocked Users",
-      "privacyZones": "Privacy Zones"
+      "privacyZones": "Privacy Zones",
+      "feedbackAndBugs": "Feedback & Bug Reports"
     },
     "privacyZones": {
       "title": "Privacy Zones",
@@ -1983,5 +1984,70 @@
     "avatarOptions": "Team Avatar",
     "changeAvatar": "Change Avatar",
     "deleteAvatar": "Delete Avatar"
+  },
+  "feedback": {
+    "title": "Feedback & Bug Reports",
+    "myFeedback": "My Feedback",
+    "newFeedback": "Submit Feedback",
+    "noFeedback": "You haven't submitted any feedback yet.",
+    "noFeedbackCta": "Let us know how we can improve!",
+    "allStatuses": "All",
+    "repliesCount": "{{count}} replies",
+    "repliesCountOne": "1 reply",
+    "noRepliesShort": "No replies",
+    "types": {
+      "bug": "Bug Report",
+      "feature_request": "Feature Request",
+      "feedback": "General Feedback"
+    },
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "waiting_for_user": "Waiting for Response",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "form": {
+      "title": "Submit Feedback",
+      "type": "What kind of feedback?",
+      "subject": "Subject",
+      "subjectPlaceholder": "Brief summary of the issue...",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the issue or suggestion in detail...",
+      "priority": "Priority",
+      "attachments": "Screenshots",
+      "addPhoto": "Add Photo",
+      "maxAttachments": "Maximum 5 attachments",
+      "deviceInfoHint": "Device information is automatically collected to help us diagnose issues.",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting...",
+      "subjectRequired": "Subject is required",
+      "descriptionRequired": "Description is required"
+    },
+    "detail": {
+      "replies": "Replies",
+      "noReplies": "No replies yet. Our team will respond soon.",
+      "replyPlaceholder": "Write a reply...",
+      "sendReply": "Send",
+      "adminReply": "Team",
+      "you": "You",
+      "closedNotice": "This feedback is closed.",
+      "deviceInfo": "Device Info",
+      "submittedFrom": "Submitted from"
+    },
+    "messages": {
+      "submitted": "Feedback submitted! We'll review it shortly.",
+      "submitFailed": "Failed to submit feedback",
+      "replyAdded": "Reply sent",
+      "replyFailed": "Failed to send reply",
+      "rateLimited": "Please wait before submitting again",
+      "loadFailed": "Failed to load feedback"
+    }
   }
 }

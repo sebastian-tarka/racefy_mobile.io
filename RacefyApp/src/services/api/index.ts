@@ -11,7 +11,8 @@ import { SubscriptionMixin } from './subscription';
 import { InsightsMixin } from './insights';
 import { TeamsMixin } from './teams';
 import { PrivacyZonesMixin } from './privacyZones';
+import { FeedbackMixin } from './feedback';
 
-class ApiService extends PrivacyZonesMixin(TeamsMixin(InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))))))))))) {}
+class ApiService extends FeedbackMixin(PrivacyZonesMixin(TeamsMixin(InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase))))))))))))) {}
 
 export const api = new ApiService();

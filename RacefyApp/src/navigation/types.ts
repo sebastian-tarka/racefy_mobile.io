@@ -59,6 +59,10 @@ export type RootStackParamList = {
   TeamDetail: { slug: string };
   TeamForm: { teamId?: number };
   InviteMember: { teamId: number };
+  // Feedback
+  FeedbackList: undefined;
+  FeedbackForm: undefined;
+  FeedbackDetail: { feedbackId: number };
 };
 
 declare global {

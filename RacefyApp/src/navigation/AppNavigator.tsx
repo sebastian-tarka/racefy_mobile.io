@@ -54,6 +54,9 @@ import { MaintenanceScreen } from '../screens/maintenance/MaintenanceScreen';
 import { TeamsListScreen } from '../screens/teams/TeamsListScreen';
 import { TeamDetailScreen } from '../screens/teams/TeamDetailScreen';
 import { TeamFormScreen } from '../screens/teams/TeamFormScreen';
+import { FeedbackListScreen } from '../screens/feedback/FeedbackListScreen';
+import { FeedbackFormScreen } from '../screens/feedback/FeedbackFormScreen';
+import { FeedbackDetailScreen } from '../screens/feedback/FeedbackDetailScreen';
 import { InviteMemberScreen } from '../screens/teams/InviteMemberScreen';
 
 // Types
@@ -831,6 +834,10 @@ export function AppNavigator() {
             <RootStack.Screen name="TeamDetail" component={TeamDetailScreen} />
             <RootStack.Screen name="TeamForm" component={TeamFormScreen} />
             <RootStack.Screen name="InviteMember" component={InviteMemberScreen} />
+            {/* Feedback */}
+            <RootStack.Screen name="FeedbackList" component={FeedbackListScreen} />
+            <RootStack.Screen name="FeedbackForm" component={FeedbackFormScreen} />
+            <RootStack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} />
           </>
         )}
           </RootStack.Navigator>
