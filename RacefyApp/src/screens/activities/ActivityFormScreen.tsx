@@ -5,13 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Switch,
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -342,7 +341,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
     <ScreenContainer>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScreenHeader
           title={t('activityForm.editTitle')}

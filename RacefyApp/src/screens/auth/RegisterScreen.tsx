@@ -5,10 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   Alert,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { logger } from '../../services/logger';
 import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
 import { useTranslation } from 'react-i18next';
@@ -106,7 +105,7 @@ export function RegisterScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.keyboardView}
       >
         <ScrollView

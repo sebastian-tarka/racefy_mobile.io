@@ -5,9 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,12 +13,14 @@ import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { CommentSection } from './CommentSection';
+import { KeyboardAwareScreenLayout } from './KeyboardAwareScreenLayout';
 import { CountdownTimer } from './CountdownTimer';
 import { ParticipantAvatarsStack } from './ParticipantAvatarsStack';
 import { LeaderboardEntryRow } from './EventLeaderboardTabContent';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { useAuth } from '../hooks/useAuth';
+import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Event, EventRegistration, Activity, LeaderboardEntry, User } from '../types/api';
 import type { ThemeColors } from '../theme/colors';
@@ -50,6 +49,7 @@ interface EventDetailsTabContentProps {
   onUserPress?: (username: string) => void;
   onActivityPress: (activityId: number) => void;
   onScroll?: (event: any) => void;
+  onCommentInputReady?: (commentInput: React.ReactNode) => void;
 }
 
 export function EventDetailsTabContent({
@@ -69,31 +69,37 @@ export function EventDetailsTabContent({
   onUserPress,
   onActivityPress,
   onScroll,
+  onCommentInputReady,
 }: EventDetailsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistanceShort, formatDistance } = useUnits();
   const { isAuthenticated } = useAuth();
   const { bottom: bottomInset } = useSafeAreaInsets();
+  const isKeyboardVisible = useKeyboardVisible();
   const difficultyColors = getDifficultyColors(colors);
 
   const startDate = new Date(event.starts_at);
   const endDate = new Date(event.ends_at);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoid}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 80}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-        keyboardShouldPersistTaps="handled"
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
+    <CommentSection
+      commentableType="event"
+      commentableId={eventId}
+      onUserPress={
+        isAuthenticated
+          ? (user: User) => onUserPress?.(user.username)
+          : undefined
+      }
+      onInputFocus={onScrollToBottom}
+      renderLayout={({ header, commentList, commentInput }) => (
+        <KeyboardAwareScreenLayout
+          scrollViewRef={scrollViewRef}
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          keyboardVerticalOffset={{ ios: 120, android: 0 }}
+          scrollViewProps={{ onScroll, scrollEventThrottle: 16 }}
+        >
         {/* About */}
         {event.post?.content && (
           <Card style={styles.section}>
@@ -410,28 +416,19 @@ export function EventDetailsTabContent({
 
         {/* Comments */}
         <View style={styles.section}>
-          <CommentSection
-            commentableType="event"
-            commentableId={eventId}
-            onUserPress={
-              isAuthenticated
-                ? (user: User) => onUserPress?.(user.username)
-                : undefined
-            }
-            onInputFocus={onScrollToBottom}
-          />
+          {header}
+          {commentList}
+          {commentInput}
         </View>
 
-        <View style={{ height: 100 + bottomInset }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        {!isKeyboardVisible && <View style={{ height: 100 + bottomInset }} />}
+        </KeyboardAwareScreenLayout>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
-    flex: 1,
-  },
   scrollContent: {
     paddingBottom: spacing.lg,
   },

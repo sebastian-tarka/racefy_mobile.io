@@ -5,11 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
   Alert,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -29,6 +26,7 @@ import {
   SharedPostBlock,
   SharedPostDeletedBlock,
   ReshareModal,
+  KeyboardAwareScreenLayout,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -93,11 +91,11 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const [isReshared, setIsReshared] = useState(false);
   const [resharesCount, setResharesCount] = useState(0);
 
-  const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, []);
+  const scrollToComments = useCallback(() => {
+    if (commentsY > 0) {
+      scrollViewRef.current?.scrollTo({ y: commentsY, animated: true });
+    }
+  }, [commentsY]);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -406,133 +404,129 @@ export function PostDetailScreen({ route, navigation }: Props) {
         }
       />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Post content */}
-          <Card style={styles.postCard}>
-            {/* Header */}
-            <TouchableOpacity
-              style={styles.header}
-              onPress={() => post.user && handleUserPress(post.user)}
-              disabled={!post.user}
-            >
-              <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
-              <View style={styles.userText}>
-                <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
-                <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
-                  @{post.user?.username} · {timeAgo}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Content */}
-            {post.content && (
-              <MentionText
-                text={post.content}
-                mentions={post.mentions}
-                style={[styles.content, { color: colors.textPrimary }]}
-              />
-            )}
-
-            {/* Activity/Event Preview */}
-            {renderActivityPreview()}
-            {renderEventPreview()}
-
-            {/* Shared Post */}
-            {post.shared_post_deleted && !post.shared_post && <SharedPostDeletedBlock />}
-            {post.shared_post && (
-              <SharedPostBlock
-                sharedPost={post.shared_post}
-                onPress={() => navigation.navigate('PostDetail', { postId: post.shared_post!.id })}
-                onUserPress={(username) => navigation.navigate('UserProfile', { username })}
-              />
-            )}
-
-            {/* Media */}
-            {((post.media && post.media.length > 0) ||
-              (post.photos && post.photos.length > 0) ||
-              (post.videos && post.videos.length > 0)) && (
-              <View style={styles.mediaContainer}>
-                <MediaGallery
-                  media={post.media}
-                  photos={post.photos}
-                  videos={post.videos}
-                  width={mediaWidth}
-                />
-              </View>
-            )}
-
-            {/* Actions */}
-            <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-                <Ionicons
-                  name={isLiked ? 'heart' : 'heart-outline'}
-                  size={22}
-                  color={isLiked ? colors.error : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.actionText,
-                    { color: isLiked ? colors.error : colors.textSecondary },
-                  ]}
-                >
-                  {likesCount}
-                </Text>
+      <CommentSection
+        commentableType="post"
+        commentableId={postId}
+        commentsCount={post.comments_count}
+        initialExpanded={true}
+        onUserPress={handleUserPress}
+        onInputFocus={scrollToComments}
+        renderLayout={({ header, commentList, commentInput }) => (
+          <KeyboardAwareScreenLayout
+            scrollViewRef={scrollViewRef}
+            bottomContent={commentInput}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+          >
+            {/* Post content */}
+            <Card style={styles.postCard}>
+              {/* Header */}
+              <TouchableOpacity
+                style={styles.header}
+                onPress={() => post.user && handleUserPress(post.user)}
+                disabled={!post.user}
+              >
+                <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+                <View style={styles.userText}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
+                  <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
+                    @{post.user?.username} · {timeAgo}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
-              <View style={styles.actionButton}>
-                <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
-                <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                  {post.comments_count}
-                </Text>
-              </View>
+              {/* Content */}
+              {post.content && (
+                <MentionText
+                  text={post.content}
+                  mentions={post.mentions}
+                  style={[styles.content, { color: colors.textPrimary }]}
+                />
+              )}
 
-              {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={isReshared ? handleUnreshare : () => setReshareModalVisible(true)}
-                >
-                  <Ionicons
-                    name={isReshared ? 'repeat' : 'repeat-outline'}
-                    size={20}
-                    color={isReshared ? '#06b6d4' : colors.textSecondary}
+              {/* Activity/Event Preview */}
+              {renderActivityPreview()}
+              {renderEventPreview()}
+
+              {/* Shared Post */}
+              {post.shared_post_deleted && !post.shared_post && <SharedPostDeletedBlock />}
+              {post.shared_post && (
+                <SharedPostBlock
+                  sharedPost={post.shared_post}
+                  onPress={() => navigation.navigate('PostDetail', { postId: post.shared_post!.id })}
+                  onUserPress={(username) => navigation.navigate('UserProfile', { username })}
+                />
+              )}
+
+              {/* Media */}
+              {((post.media && post.media.length > 0) ||
+                (post.photos && post.photos.length > 0) ||
+                (post.videos && post.videos.length > 0)) && (
+                <View style={styles.mediaContainer}>
+                  <MediaGallery
+                    media={post.media}
+                    photos={post.photos}
+                    videos={post.videos}
+                    width={mediaWidth}
                   />
-                  <Text style={[styles.actionText, { color: isReshared ? '#06b6d4' : colors.textSecondary }]}>
-                    {resharesCount}
+                </View>
+              )}
+
+              {/* Actions */}
+              <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
+                <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+                  <Ionicons
+                    name={isLiked ? 'heart' : 'heart-outline'}
+                    size={22}
+                    color={isLiked ? colors.error : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.actionText,
+                      { color: isLiked ? colors.error : colors.textSecondary },
+                    ]}
+                  >
+                    {likesCount}
                   </Text>
                 </TouchableOpacity>
-              )}
+
+                <View style={styles.actionButton}>
+                  <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.actionText, { color: colors.textSecondary }]}>
+                    {post.comments_count}
+                  </Text>
+                </View>
+
+                {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={isReshared ? handleUnreshare : () => setReshareModalVisible(true)}
+                  >
+                    <Ionicons
+                      name={isReshared ? 'repeat' : 'repeat-outline'}
+                      size={20}
+                      color={isReshared ? '#06b6d4' : colors.textSecondary}
+                    />
+                    <Text style={[styles.actionText, { color: isReshared ? '#06b6d4' : colors.textSecondary }]}>
+                      {resharesCount}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Card>
+
+            {/* Comments Section */}
+            <View
+              ref={commentsRef}
+              style={styles.commentsContainer}
+              onLayout={(event) => setCommentsY(event.nativeEvent.layout.y)}
+            >
+              {header}
+              {commentList}
             </View>
-          </Card>
-
-          {/* Comments Section */}
-          <View
-            ref={commentsRef}
-            style={styles.commentsContainer}
-            onLayout={(event) => setCommentsY(event.nativeEvent.layout.y)}
-          >
-            <CommentSection
-              commentableType="post"
-              commentableId={postId}
-              commentsCount={post.comments_count}
-              initialExpanded={true}
-              onUserPress={handleUserPress}
-              onInputFocus={scrollToBottom}
-            />
-          </View>
-
-          <View style={{ height: spacing.xl }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </KeyboardAwareScreenLayout>
+        )}
+      />
 
       {/* Social Share Modal */}
       <SocialShareModal
@@ -558,12 +552,6 @@ export function PostDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: spacing.lg,
   },
   postCard: {
     marginHorizontal: spacing.md,

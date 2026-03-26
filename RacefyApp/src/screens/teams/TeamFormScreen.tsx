@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, Switch, Text } from 'react-native';
+import { View, StyleSheet, Alert, Switch, Text, Platform, ScrollView } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -69,54 +70,61 @@ export function TeamFormScreen({ route, navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      <View style={styles.container}>
-        <Card style={styles.card}>
-          <Input
-            label={t('teams.teamName')}
-            placeholder={t('teams.teamNamePlaceholder')}
-            value={name}
-            onChangeText={setName}
-            maxLength={100}
-          />
-
-          <Input
-            label={t('teams.teamDescription')}
-            placeholder={t('teams.teamDescriptionPlaceholder')}
-            value={description}
-            onChangeText={setDescription}
-            maxLength={1000}
-            multiline
-            numberOfLines={4}
-          />
-
-          <View style={styles.switchRow}>
-            <View style={styles.switchInfo}>
-              <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>{t('teams.teamVisibility')}</Text>
-              <Text style={[styles.switchHint, { color: colors.textMuted }]}>
-                {isPublic ? t('teams.publicDescription') : t('teams.privateDescription')}
-              </Text>
-            </View>
-            <Switch
-              value={isPublic}
-              onValueChange={setIsPublic}
-              trackColor={{ false: colors.border, true: colors.primary + '80' }}
-              thumbColor={isPublic ? colors.primary : colors.textMuted}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+          <Card style={styles.card}>
+            <Input
+              label={t('teams.teamName')}
+              placeholder={t('teams.teamNamePlaceholder')}
+              value={name}
+              onChangeText={setName}
+              maxLength={100}
             />
-          </View>
-        </Card>
 
-        <Button
-          title={isEdit ? t('teams.editTeam') : t('teams.createTeam')}
-          onPress={handleSubmit}
-          loading={isLoading}
-          disabled={!name.trim()}
-        />
-      </View>
+            <Input
+              label={t('teams.teamDescription')}
+              placeholder={t('teams.teamDescriptionPlaceholder')}
+              value={description}
+              onChangeText={setDescription}
+              maxLength={1000}
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.switchRow}>
+              <View style={styles.switchInfo}>
+                <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>{t('teams.teamVisibility')}</Text>
+                <Text style={[styles.switchHint, { color: colors.textMuted }]}>
+                  {isPublic ? t('teams.publicDescription') : t('teams.privateDescription')}
+                </Text>
+              </View>
+              <Switch
+                value={isPublic}
+                onValueChange={setIsPublic}
+                trackColor={{ false: colors.border, true: colors.primary + '80' }}
+                thumbColor={isPublic ? colors.primary : colors.textMuted}
+              />
+            </View>
+          </Card>
+
+          <Button
+            title={isEdit ? t('teams.editTeam') : t('teams.createTeam')}
+            onPress={handleSubmit}
+            loading={isLoading}
+            disabled={!name.trim()}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { padding: spacing.md, gap: spacing.md },
   card: { gap: spacing.md },
   switchRow: {

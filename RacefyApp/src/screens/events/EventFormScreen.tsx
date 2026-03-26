@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
     ActivityIndicator,
     Alert,
-    KeyboardAvoidingView,
     Platform,
     ScrollView,
     Switch,
@@ -10,6 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import {Ionicons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {useTranslation} from 'react-i18next';
@@ -508,7 +508,7 @@ export function EventFormScreen({navigation, route}: Props) {
         <ScreenContainer>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior="padding"
             >
                 <ScreenHeader
                     title={isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}

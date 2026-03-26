@@ -5,10 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   Alert,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, BrandLogo, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
@@ -94,7 +93,7 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.keyboardView}
       >
         <ScrollView

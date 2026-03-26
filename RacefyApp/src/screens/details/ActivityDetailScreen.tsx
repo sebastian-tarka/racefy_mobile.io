@@ -5,9 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
   Alert,
   Image,
   Dimensions,
@@ -17,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer, PremiumTeaser } from '../../components';
+import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer, PremiumTeaser, KeyboardAwareScreenLayout } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -54,10 +51,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [showKmMarkers, setShowKmMarkers] = useState(false);
   const mapHeightAnim = useRef(new Animated.Value(250)).current;
 
-  const scrollToBottom = useCallback(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+  const scrollToComments = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   }, []);
   const fetchActivity = useCallback(async () => {
     try {
@@ -285,18 +280,19 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         }
       />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-          keyboardShouldPersistTaps="handled"
-          scrollEnabled={!isMapExpanded}
-        >
+      <CommentSection
+        commentableType="post"
+        commentableId={activity.post_id!}
+        onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+        onInputFocus={scrollToComments}
+        renderLayout={({ header, commentList, commentInput }) => (
+          <KeyboardAwareScreenLayout
+            scrollViewRef={scrollViewRef}
+            bottomContent={commentInput}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            scrollViewProps={{ scrollEnabled: !isMapExpanded }}
+          >
           {/* Map Section */}
           {activity.has_gps_track && (gpsTrack?.route_preview_url || gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
           <Animated.View style={{ height: mapHeightAnim }}>
@@ -443,7 +439,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             {/* Comments - Make it scrollable */}
             <TouchableOpacity
               style={styles.engagementItem}
-              onPress={scrollToBottom}
+              onPress={scrollToComments}
               activeOpacity={0.7}
             >
               <Ionicons name="chatbubble-outline" size={28} color={colors.textMuted} />
@@ -707,17 +703,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
         {/* Comments Section */}
         <View style={styles.commentsSection}>
-          <CommentSection
-            commentableType="post"
-            commentableId={activity.post_id!}
-            onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
-            onInputFocus={scrollToBottom}
-          />
+          {header}
+          {commentList}
         </View>
-
-        <View style={{ height: spacing.xl }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </KeyboardAwareScreenLayout>
+        )}
+      />
     </ScreenContainer>
   );
 }
@@ -733,12 +724,6 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginLeft: spacing.xs,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: spacing.lg,
   },
   headerSection: {
     padding: spacing.lg,

@@ -19,6 +19,12 @@ import { emitRefresh } from '../services/refreshEvents';
 import { spacing, fontSize } from '../theme';
 import type { Comment, CommentableType, User, MediaItem } from '../types/api';
 
+interface CommentSectionParts {
+  header: React.ReactNode;
+  commentList: React.ReactNode;
+  commentInput: React.ReactNode;
+}
+
 interface CommentSectionProps {
   commentableType: CommentableType;
   commentableId: number;
@@ -26,6 +32,7 @@ interface CommentSectionProps {
   initialExpanded?: boolean;
   commentsCount?: number;
   onInputFocus?: () => void;
+  renderLayout?: (parts: CommentSectionParts) => React.ReactNode;
 }
 
 export function CommentSection({
@@ -35,6 +42,7 @@ export function CommentSection({
   initialExpanded = false,
   commentsCount = 0,
   onInputFocus,
+  renderLayout,
 }: CommentSectionProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -261,71 +269,78 @@ export function CommentSection({
     );
   };
 
+  const headerNode = (
+    <TouchableOpacity style={styles.header} onPress={toggleExpanded}>
+      <View style={styles.headerLeft}>
+        <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} />
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          {t('comments.title')}
+        </Text>
+        {localCommentsCount > 0 && (
+          <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.countText}>{localCommentsCount}</Text>
+          </View>
+        )}
+      </View>
+      <Ionicons
+        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+        size={20}
+        color={colors.textMuted}
+      />
+    </TouchableOpacity>
+  );
+
+  const commentListNode = isExpanded ? (
+    isAuthenticated ? (
+      <View style={styles.listContent}>
+        {comments.length === 0
+          ? renderEmpty()
+          : comments.map((item) => (
+              <React.Fragment key={String(item.id)}>
+                {renderComment({ item })}
+              </React.Fragment>
+            ))}
+      </View>
+    ) : (
+      <View style={styles.authPrompt}>
+        <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
+        <Text style={[styles.authPromptTitle, { color: colors.textPrimary }]}>
+          {t('comments.signInRequired')}
+        </Text>
+        <Text style={[styles.authPromptText, { color: colors.textMuted }]}>
+          {t('comments.signInToViewComments')}
+        </Text>
+      </View>
+    )
+  ) : null;
+
+  const commentInputNode = isExpanded && isAuthenticated ? (
+    <CommentInput
+      onSubmit={handleCreateComment}
+      replyingTo={replyingTo}
+      onCancelReply={handleCancelReply}
+      onFocus={onInputFocus}
+      placeholder={
+        replyingTo
+          ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
+          : undefined
+      }
+    />
+  ) : null;
+
+  if (renderLayout) {
+    return renderLayout({
+      header: headerNode,
+      commentList: commentListNode,
+      commentInput: commentInputNode,
+    });
+  }
+
   return (
     <Card style={styles.container}>
-      {/* Header */}
-      <TouchableOpacity style={styles.header} onPress={toggleExpanded}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {t('comments.title')}
-          </Text>
-          {localCommentsCount > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.countText}>{localCommentsCount}</Text>
-            </View>
-          )}
-        </View>
-        <Ionicons
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.textMuted}
-        />
-      </TouchableOpacity>
-
-      {/* Expanded content */}
-      {isExpanded && (
-        <>
-          {isAuthenticated ? (
-            <>
-              {/* Comments list - using View+map instead of FlatList to avoid
-                  the two-pass height measurement that causes newly added items to flicker */}
-              <View style={styles.listContent}>
-                {comments.length === 0
-                  ? renderEmpty()
-                  : comments.map((item) => (
-                      <React.Fragment key={String(item.id)}>
-                        {renderComment({ item })}
-                      </React.Fragment>
-                    ))}
-              </View>
-
-              {/* Comment input */}
-              <CommentInput
-                onSubmit={handleCreateComment}
-                replyingTo={replyingTo}
-                onCancelReply={handleCancelReply}
-                onFocus={onInputFocus}
-                placeholder={
-                  replyingTo
-                    ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
-                    : undefined
-                }
-              />
-            </>
-          ) : (
-            <View style={styles.authPrompt}>
-              <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
-              <Text style={[styles.authPromptTitle, { color: colors.textPrimary }]}>
-                {t('comments.signInRequired')}
-              </Text>
-              <Text style={[styles.authPromptText, { color: colors.textMuted }]}>
-                {t('comments.signInToViewComments')}
-              </Text>
-            </View>
-          )}
-        </>
-      )}
+      {headerNode}
+      {commentListNode}
+      {commentInputNode}
     </Card>
   );
 }

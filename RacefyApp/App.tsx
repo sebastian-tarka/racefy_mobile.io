@@ -9,6 +9,7 @@ import { UnitsProvider } from './src/hooks/useUnits';
 import { MaintenanceProvider } from './src/hooks/useMaintenance';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { configureRevenueCat } from './src/services/revenuecat';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AppNavigator } from './src/navigation';
 
 // Initialize i18n
@@ -35,17 +36,19 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <UnitsProvider>
-          <MaintenanceProvider>
-            <AuthProvider>
-              <LiveActivityProvider>
-                <AppContent />
-              </LiveActivityProvider>
-            </AuthProvider>
-          </MaintenanceProvider>
-        </UnitsProvider>
-      </ThemeProvider>
+      <KeyboardProvider>
+        <ThemeProvider>
+          <UnitsProvider>
+            <MaintenanceProvider>
+              <AuthProvider>
+                <LiveActivityProvider>
+                  <AppContent />
+                </LiveActivityProvider>
+              </AuthProvider>
+            </MaintenanceProvider>
+          </UnitsProvider>
+        </ThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

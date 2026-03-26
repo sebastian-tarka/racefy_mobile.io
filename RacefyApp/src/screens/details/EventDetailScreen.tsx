@@ -288,6 +288,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
           onUserPress={handleUserPress}
           onActivityPress={handleActivityPress}
           onScroll={handleTabScroll}
+          onCommentInputReady={undefined}
         />
       )}
 

@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator, Alert, Platform,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -58,6 +59,11 @@ export function InviteMemberScreen({ route, navigation }: Props) {
     <ScreenContainer>
       <ScreenHeader title={t('teams.invitePlayer')} showBack onBack={() => navigation.goBack()} />
 
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
       <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground }]}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
         <TextInput
@@ -112,11 +118,13 @@ export function InviteMemberScreen({ route, navigation }: Props) {
           );
         }}
       />
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   searchContainer: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
     marginHorizontal: spacing.md, marginVertical: spacing.sm,
