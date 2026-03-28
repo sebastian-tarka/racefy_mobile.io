@@ -295,7 +295,7 @@ export interface SportType {
 export interface Post {
   id: number;
   user_id: number;
-  type: 'general' | 'event' | 'activity' | 'achievement';
+  type: 'general' | 'event' | 'activity' | 'achievement' | 'challenge' | 'digest' | 'milestone';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';
@@ -311,6 +311,7 @@ export interface Post {
   event?: Event;
   activity?: Activity;
   achievement?: AchievementData;
+  tagged_event?: TaggedEvent;
   is_liked?: boolean;
   is_owner?: boolean;
   mentions?: MentionMap;
@@ -321,9 +322,19 @@ export interface Post {
   youtube_embed_id?: string | null;
 }
 
+export interface TaggedEvent {
+  id: number;
+  slug?: string;
+  name: string;
+  sport_type?: string;
+  status?: string;
+  starts_at?: string;
+  ends_at?: string;
+}
+
 export interface SharedPost {
   id: number;
-  type: 'general' | 'event' | 'activity' | 'achievement';
+  type: 'general' | 'event' | 'activity' | 'achievement' | 'challenge' | 'digest' | 'milestone';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';

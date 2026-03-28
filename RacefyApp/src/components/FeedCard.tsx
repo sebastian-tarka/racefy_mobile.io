@@ -18,6 +18,9 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   sponsored: SponsoredBody,
   reshare: GeneralBody,
   achievement: AchievementBody,
+  challenge: GeneralBody,
+  digest: GeneralBody,
+  milestone: GeneralBody,
 };
 
 export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {

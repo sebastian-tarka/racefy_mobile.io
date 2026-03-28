@@ -12,7 +12,7 @@ import type { Post, Activity } from '../types/api';
 
 // ============ TYPES & INTERFACES ============
 
-export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare' | 'achievement';
+export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare' | 'achievement' | 'challenge' | 'digest' | 'milestone';
 
 export interface PostMediaItem {
   id: number;
@@ -47,6 +47,9 @@ export const TEXT_TRUNCATION: Record<FeedPostType, { maxLength: number; maxSente
   sponsored: { maxLength: 200, maxSentences: 2 },
   reshare: { maxLength: 200, maxSentences: 2 },
   achievement: { maxLength: 200, maxSentences: 2 },
+  challenge: { maxLength: 200, maxSentences: 2 },
+  digest: { maxLength: 200, maxSentences: 2 },
+  milestone: { maxLength: 200, maxSentences: 2 },
 };
 
 // ============ UTILITY FUNCTIONS ============
@@ -57,17 +60,23 @@ export function getEffectiveType(post: Post): FeedPostType {
   if (post.type === 'activity') return 'activity';
   if (post.type === 'event') return 'event';
   if (post.type === 'achievement') return 'achievement';
+  if (post.type === 'challenge') return 'challenge';
+  if (post.type === 'digest') return 'digest';
+  if (post.type === 'milestone') return 'milestone';
   return 'general';
 }
 
 export function getTypeColors(type: FeedPostType, colors: any) {
-  const colorMap = {
+  const colorMap: Record<FeedPostType, string> = {
     general: colors.primary,
     activity: colors.primary,
     event: colors.info,
     sponsored: colors.warning,
     reshare: '#06b6d4',
     achievement: '#EAB308',
+    challenge: '#F59E0B',  // amber-500
+    digest: '#10B981',     // emerald-500
+    milestone: '#8B5CF6',  // violet-500
   };
   return {
     accent: type === 'general' ? null : colorMap[type],
@@ -84,6 +93,9 @@ export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap 
     sponsored: 'megaphone-outline',
     reshare: 'repeat-outline',
     achievement: 'trophy-outline',
+    challenge: 'flame-outline',
+    digest: 'stats-chart-outline',
+    milestone: 'sparkles-outline',
   };
   return iconMap[type];
 }

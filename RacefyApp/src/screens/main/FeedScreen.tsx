@@ -243,7 +243,9 @@ export function FeedScreen({ navigation, route }: Props) {
       onEventPress={
         item.type === 'event' && item.event
           ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
-          : undefined
+          : (item as any).tagged_event
+            ? () => navigation.navigate('EventDetail', { eventId: (item as any).tagged_event!.id })
+            : undefined
       }
       onReshare={(content, visibility) => resharePost(item.id, { content, visibility: visibility as any })}
       onUnreshare={() => unresharePost(item.id)}

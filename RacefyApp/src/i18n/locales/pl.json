@@ -253,7 +253,10 @@
       "event": "Wydarzenie",
       "sponsored": "Sponsorowane",
       "reshare": "Udostępnienie",
-      "achievement": "Osiągnięcie"
+      "achievement": "Osiągnięcie",
+      "challenge": "Wyzwanie",
+      "digest": "Podsumowanie tygodnia",
+      "milestone": "Kamień milowy"
     },
     "achievement": {
       "rarity": {

@@ -253,7 +253,10 @@
       "event": "Event",
       "sponsored": "Sponsored",
       "reshare": "Reshare",
-      "achievement": "Achievement"
+      "achievement": "Achievement",
+      "challenge": "Challenge",
+      "digest": "Weekly Digest",
+      "milestone": "Milestone"
     },
     "achievement": {
       "rarity": {
