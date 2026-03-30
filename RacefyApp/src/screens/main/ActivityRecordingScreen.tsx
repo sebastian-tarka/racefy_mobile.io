@@ -1003,6 +1003,7 @@ export function ActivityRecordingScreen() {
               onClearRoute={handleClearShadowTrack}
               isLoading={loadingRoutes}
               error={routesError}
+              bottomOffset={tabBarHeight - spacing.md}
             />
           )}
 
@@ -1178,6 +1179,7 @@ export function ActivityRecordingScreen() {
                 onClearRoute={handleClearShadowTrack}
                 isLoading={loadingRoutes}
                 error={routesError}
+                bottomOffset={tabBarHeight - spacing.md}
               />
             )}
 

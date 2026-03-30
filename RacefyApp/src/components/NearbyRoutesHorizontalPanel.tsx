@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +21,10 @@ interface NearbyRoutesHorizontalPanelProps {
   onClearRoute: () => void;
   isLoading: boolean;
   error: string | null;
+  bottomOffset?: number;
 }
+
+const PANEL_MAX_HEIGHT = 200;
 
 export function NearbyRoutesHorizontalPanel({
   routes,
@@ -29,40 +33,56 @@ export function NearbyRoutesHorizontalPanel({
   onClearRoute,
   isLoading,
   error,
+  bottomOffset = 0,
 }: NearbyRoutesHorizontalPanelProps) {
   const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const { formatDistanceShort } = useUnits();
 
+  const slideAnim = useRef(new Animated.Value(PANEL_MAX_HEIGHT)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 200,
+    }).start();
+  }, [slideAnim]);
+
+  const animatedStyle = {
+    transform: [{ translateY: slideAnim }],
+  };
+
   if (isLoading) {
     return (
-      <View style={[styles.panel, { backgroundColor: colors.cardBackground }]}>
+      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
         <View style={styles.loading}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
             {t('recording.loadingRoutes')}
           </Text>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.panel, { backgroundColor: colors.cardBackground }]}>
+      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
         <View style={styles.error}>
           <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
           <Text style={[styles.errorText, { color: colors.error }]}>
             {error}
           </Text>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
   if (routes.length === 0) {
     return (
-      <View style={[styles.panel, { backgroundColor: colors.cardBackground }]}>
+      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
         <View style={styles.empty}>
           <Ionicons name="map-outline" size={32} color={colors.textMuted} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -72,7 +92,7 @@ export function NearbyRoutesHorizontalPanel({
             {t('recording.noRoutesDescription')}
           </Text>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
@@ -80,7 +100,7 @@ export function NearbyRoutesHorizontalPanel({
   const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
 
   return (
-    <View style={[styles.panel, { backgroundColor: colors.cardBackground }]}>
+    <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
       <View style={styles.header}>
         <Ionicons name="map" size={20} color={colors.primary} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -145,7 +165,7 @@ export function NearbyRoutesHorizontalPanel({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.routeList}
       />
-    </View>
+    </Animated.View>
   );
 }
 
