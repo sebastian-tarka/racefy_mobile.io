@@ -87,11 +87,21 @@ export function TeamsListScreen({ navigation }: Props) {
         title={t('teams.teams')}
         showBack
         onBack={() => navigation.goBack()}
-        rightAction={isAuthenticated ? (
-          <TouchableOpacity onPress={handleCreate} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
-          </TouchableOpacity>
-        ) : undefined}
+        rightAction={
+          <View style={{ flexDirection: 'row', gap: spacing.sm, alignItems: 'center' }}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TeamsLeaderboard')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="trophy-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            {isAuthenticated && (
+              <TouchableOpacity onPress={handleCreate} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        }
       />
 
       {/* Tabs */}

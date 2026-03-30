@@ -110,6 +110,65 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/teams/${teamId}/transfer-captain/${userId}`, { method: 'POST' });
     }
 
+    // ============ TEAM STATS ============
+
+    async getTeamStats(
+      slug: string,
+      period?: Types.StatsPeriod,
+    ): Promise<Types.TeamSummaryResponse> {
+      const query = new URLSearchParams();
+      if (period) query.append('period', period);
+      const qs = query.toString();
+      return this.request(`/teams/${slug}/stats${qs ? `?${qs}` : ''}`);
+    }
+
+    async getTeamRanking(
+      slug: string,
+      params?: {
+        sort_by?: Types.RankingSortBy;
+        period?: Types.StatsPeriod;
+        sport_type_id?: number;
+      },
+    ): Promise<Types.TeamRankingResponse> {
+      const query = new URLSearchParams();
+      if (params?.sort_by) query.append('sort_by', params.sort_by);
+      if (params?.period) query.append('period', params.period);
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
+      const qs = query.toString();
+      return this.request(`/teams/${slug}/stats/ranking${qs ? `?${qs}` : ''}`);
+    }
+
+    async getTeamTrends(
+      slug: string,
+      params?: {
+        granularity?: Types.TrendGranularity;
+        periods?: number;
+        sport_type_id?: number;
+      },
+    ): Promise<Types.TeamTrendsResponse> {
+      const query = new URLSearchParams();
+      if (params?.granularity) query.append('granularity', params.granularity);
+      if (params?.periods) query.append('periods', String(params.periods));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
+      const qs = query.toString();
+      return this.request(`/teams/${slug}/stats/trends${qs ? `?${qs}` : ''}`);
+    }
+
+    async getTeamsLeaderboard(params?: {
+      sort_by?: Types.LeaderboardSortBy;
+      period?: Types.StatsPeriod;
+      limit?: number;
+      offset?: number;
+    }): Promise<Types.TeamLeaderboardResponse> {
+      const query = new URLSearchParams();
+      if (params?.sort_by) query.append('sort_by', params.sort_by);
+      if (params?.period) query.append('period', params.period);
+      if (params?.limit) query.append('limit', String(params.limit));
+      if (params?.offset) query.append('offset', String(params.offset));
+      const qs = query.toString();
+      return this.request(`/teams/leaderboard${qs ? `?${qs}` : ''}`);
+    }
+
     // ============ REGISTER TEAM FOR EVENT ============
 
     async registerTeamForEvent(

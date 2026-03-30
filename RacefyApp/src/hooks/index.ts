@@ -42,4 +42,8 @@ export * from './useAudioCoach';
 export * from './useAudioCoachSettings';
 export * from './useTeams';
 export * from './useTeamDetail';
+export * from './useTeamStats';
+export * from './useTeamRanking';
+export * from './useTeamTrends';
+export * from './useTeamsLeaderboard';
 export * from './useEventTeams';

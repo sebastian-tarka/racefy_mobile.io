@@ -56,9 +56,10 @@ export type RootStackParamList = {
   TrainingReminders: undefined;
   // Teams
   TeamsList: undefined;
-  TeamDetail: { slug: string };
+  TeamDetail: { slug: string; initialTab?: 'members' | 'stats' | 'events' };
   TeamForm: { teamId?: number };
   InviteMember: { teamId: number };
+  TeamsLeaderboard: undefined;
   // Feedback
   FeedbackList: undefined;
   FeedbackForm: undefined;
