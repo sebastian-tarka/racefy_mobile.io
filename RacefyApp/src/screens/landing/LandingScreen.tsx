@@ -67,6 +67,7 @@ interface LanguageOption {
 const LANGUAGES: LanguageOption[] = [
   { code: 'en', label: 'EN' },
   { code: 'pl', label: 'PL' },
+  { code: 'es', label: 'ES' },
 ];
 
 // ---------- Main component ----------

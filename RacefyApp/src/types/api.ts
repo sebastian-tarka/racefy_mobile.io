@@ -202,7 +202,7 @@ export interface AiPostsPreferences {
 
 export interface UserPreferences {
   units: 'metric' | 'imperial';
-  language: 'en' | 'pl';
+  language: 'en' | 'pl' | 'es';
   theme: 'light' | 'dark' | 'system';
   notifications: {
     likes: NotificationChannelSettings;

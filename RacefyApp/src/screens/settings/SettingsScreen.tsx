@@ -29,7 +29,7 @@ import { useHealthSync } from '../../hooks/useHealthSync';
 import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { changeLanguage } from '../../i18n';
+import { changeLanguage, supportedLanguages } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
@@ -273,13 +273,16 @@ export function SettingsScreen({ navigation }: Props) {
   const trainingRemindersSummary = (() => {
     const tr = (preferences as any).training_reminders;
     if (!tr?.enabled) return t('settings.trainingReminders.off', 'Off');
-    const dayLabelsEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const dayLabelsPl = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
-    const isPl = (t('settings.language') === 'Język');
-    const labels = isPl ? dayLabelsPl : dayLabelsEn;
+    const dayLabels: Record<string, string[]> = {
+      en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      pl: ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'],
+      es: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    };
+    const lang = preferences.language || 'en';
+    const labels = dayLabels[lang] || dayLabels.en;
     const selectedDays = (tr.days || []).map((d: number) => labels[d]).join(', ');
     const time = tr.time || '08:00';
-    return selectedDays ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}` : (isPl ? 'Wł.' : 'On');
+    return selectedDays ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}` : t('settings.trainingReminders.on', 'On');
   })();
 
   useEffect(() => {
@@ -740,10 +743,13 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="language-outline"
             label={t('settings.language')}
-            value={preferences.language === 'en' ? 'English' : 'Polski'}
-            onPress={async () => {
-              const newLang = preferences.language === 'en' ? 'pl' : 'en';
-              await changeLanguage(newLang);
+            value={supportedLanguages.find(l => l.code === preferences.language)?.nativeName || 'English'}
+            onPress={() => {
+              const langs = supportedLanguages;
+              const currentIndex = langs.findIndex(l => l.code === preferences.language);
+              const nextIndex = (currentIndex + 1) % langs.length;
+              const newLang = langs[nextIndex].code as UserPreferences['language'];
+              changeLanguage(newLang);
               updatePreference('language', newLang);
             }}
           />
