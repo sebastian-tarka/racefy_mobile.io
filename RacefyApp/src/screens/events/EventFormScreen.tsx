@@ -1,15 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    ScrollView,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import {ActivityIndicator, Alert, Platform, ScrollView, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {Ionicons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {useTranslation} from 'react-i18next';
@@ -23,10 +14,10 @@ import {
     Input,
     MediaPicker,
     OptionSelector,
+    PremiumTeaser,
+    ScreenContainer,
     ScreenHeader,
     SportTypeSelector,
-    ScreenContainer,
-    PremiumTeaser,
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
@@ -36,7 +27,14 @@ import {useTheme} from '../../hooks/useTheme';
 import {useSubscription} from '../../hooks/useSubscription';
 import {useSportTypes} from '../../hooks/useSportTypes';
 import {spacing} from '../../theme';
-import {CreateEventRequest, Event, EventRankingMode, EventTeamScoring, EventVisibility, MediaItem, UpdateEventRequest,} from '../../types/api';
+import {
+    CreateEventRequest,
+    Event,
+    EventTeamScoring,
+    EventVisibility,
+    MediaItem,
+    UpdateEventRequest,
+} from '../../types/api';
 import {
     CommentarySettingsData,
     DatePickerField,
@@ -171,6 +169,7 @@ export function EventFormScreen({navigation, route}: Props) {
             start_finish_note: event.start_finish_note || '',
             // Activity aggregation
             allow_multiple_activities: event.allow_multiple_activities ?? false,
+            auto_finalize_results: event.auto_finalize_results !== false,
             // Visibility
             visibility: event.visibility || 'public',
             // Ranking mode config
@@ -289,6 +288,8 @@ export function EventFormScreen({navigation, route}: Props) {
                     start_finish_note: formData.start_finish_note || undefined,
                     // Activity aggregation
                     allow_multiple_activities: formData.allow_multiple_activities,
+                    // Auto-finalize results
+                    auto_finalize_results: formData.auto_finalize_results,
                     // Visibility
                     visibility: formData.visibility,
                     // Ranking mode config
@@ -338,6 +339,8 @@ export function EventFormScreen({navigation, route}: Props) {
                     start_finish_note: formData.start_finish_note || undefined,
                     // Activity aggregation
                     allow_multiple_activities: formData.allow_multiple_activities,
+                    // Auto-finalize results (only send when disabled, API defaults to true)
+                    ...(!formData.auto_finalize_results ? { auto_finalize_results: false } : {}),
                     // Visibility
                     visibility: formData.visibility,
                     // Ranking mode config
@@ -637,6 +640,30 @@ export function EventFormScreen({navigation, route}: Props) {
                                 <Switch
                                     value={formData.allow_multiple_activities}
                                     onValueChange={(value) => updateField('allow_multiple_activities', value)}
+                                    disabled={isLimitedEdit}
+                                    trackColor={{true: colors.primary, false: colors.border}}
+                                    thumbColor="#fff"
+                                />
+                            </View>
+                        </View>
+                    </Card>
+
+                    {/* Auto-finalize Results */}
+                    <Card style={styles.optionalCard}>
+                        <View style={[styles.gpsPrivacySection, {borderTopWidth: 0, paddingTop: 0}]}>
+                            <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                {t('eventForm.autoFinalizeResults')}
+                            </Text>
+                            <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
+                                {t('eventForm.autoFinalizeResultsDescription')}
+                            </Text>
+                            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md}}>
+                                <Text style={[styles.checkboxLabel, {color: colors.textPrimary}]}>
+                                    {t('eventForm.autoFinalizeResults')}
+                                </Text>
+                                <Switch
+                                    value={formData.auto_finalize_results}
+                                    onValueChange={(value) => updateField('auto_finalize_results', value)}
                                     disabled={isLimitedEdit}
                                     trackColor={{true: colors.primary, false: colors.border}}
                                     thumbColor="#fff"

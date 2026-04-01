@@ -862,6 +862,8 @@
     "allowMultipleActivities": "Agregación de actividades",
     "allowMultipleActivitiesDescription": "Permitir que los participantes envíen múltiples actividades que se agregarán para este evento",
     "allowMultipleActivitiesToggle": "Permitir múltiples actividades",
+    "autoFinalizeResults": "Finalización automática de resultados",
+    "autoFinalizeResultsDescription": "Calcular resultados y otorgar puntos automáticamente al finalizar el evento. Si está desactivado, el organizador debe finalizar manualmente.",
     "visibility": "Visibilidad",
     "visibilityPublic": "Público",
     "visibilityFollowers": "Solo seguidores",

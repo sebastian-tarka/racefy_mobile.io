@@ -455,6 +455,7 @@ export interface Event {
   target_elevation?: number;
   time_limit?: number;
   results_finalized?: boolean;
+  auto_finalize_results?: boolean;
   // Team event
   is_team_event?: boolean;
   team_size_min?: number;
@@ -545,6 +546,8 @@ export interface CreateEventRequest {
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Auto-finalize results
+  auto_finalize_results?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }
@@ -596,6 +599,8 @@ export interface UpdateEventRequest {
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Auto-finalize results
+  auto_finalize_results?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
 }

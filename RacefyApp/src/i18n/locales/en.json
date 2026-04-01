@@ -862,6 +862,8 @@
     "allowMultipleActivities": "Activity Aggregation",
     "allowMultipleActivitiesDescription": "Allow participants to submit multiple activities that will be aggregated for this event",
     "allowMultipleActivitiesToggle": "Allow multiple activities",
+    "autoFinalizeResults": "Auto-finalize Results",
+    "autoFinalizeResultsDescription": "Automatically calculate results and award points when the event ends. If disabled, the organizer must finalize manually.",
     "visibility": "Visibility",
     "visibilityPublic": "Public",
     "visibilityFollowers": "Followers Only",

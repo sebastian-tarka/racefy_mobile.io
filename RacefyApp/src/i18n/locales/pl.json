@@ -862,6 +862,8 @@
     "allowMultipleActivities": "Agregacja aktywności",
     "allowMultipleActivitiesDescription": "Pozwól uczestnikom na przesyłanie wielu aktywności, które zostaną zagregowane dla tego wydarzenia",
     "allowMultipleActivitiesToggle": "Zezwól na wiele aktywności",
+    "autoFinalizeResults": "Automatyczna finalizacja wyników",
+    "autoFinalizeResultsDescription": "Automatycznie oblicz wyniki i przyznaj punkty po zakończeniu wydarzenia. Jeśli wyłączone, organizator musi sfinalizować ręcznie.",
     "visibility": "Widoczność",
     "visibilityPublic": "Publiczne",
     "visibilityFollowers": "Tylko obserwujący",

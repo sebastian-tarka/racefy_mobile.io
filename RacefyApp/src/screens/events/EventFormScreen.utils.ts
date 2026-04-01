@@ -1,4 +1,10 @@
-import {CommentaryLanguage, CommentaryStyle, EventRankingMode, EventTeamScoring, EventVisibility} from "../../types/api";
+import {
+    CommentaryLanguage,
+    CommentaryStyle,
+    EventRankingMode,
+    EventTeamScoring,
+    EventVisibility
+} from "../../types/api";
 import type {NativeStackScreenProps} from "@react-navigation/native-stack";
 import type {RootStackParamList} from "../../navigation";
 import {StyleSheet} from "react-native";
@@ -55,6 +61,8 @@ export interface FormData {
     start_finish_note: string;
     // Activity aggregation
     allow_multiple_activities: boolean;
+    // Auto-finalize results
+    auto_finalize_results: boolean;
     // Visibility
     visibility: EventVisibility;
     // Ranking mode config
@@ -93,6 +101,8 @@ export const initialFormData: FormData = {
     start_finish_note: '',
     // Activity aggregation
     allow_multiple_activities: false,
+    // Auto-finalize results
+    auto_finalize_results: true,
     // Visibility
     visibility: 'public',
     // Ranking mode config
