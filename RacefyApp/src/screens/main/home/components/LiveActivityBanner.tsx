@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useUnits } from '../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
+import { formatDuration } from '../../../../utils/formatDuration';
 
 interface LiveActivityBannerProps {
   isActive: boolean;
@@ -13,17 +14,6 @@ interface LiveActivityBannerProps {
   distance: number;
   onPress: () => void;
 }
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
-};
 
 
 export function LiveActivityBanner({

@@ -10,6 +10,7 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
 import type { Activity } from '../types/api';
 
 interface ActivityCompactCardProps {
@@ -44,16 +45,6 @@ const getSportColor = (sportName?: string): string => {
   if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return '#84cc16';
 
   return '#6366f1';
-};
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes} min`;
 };
 
 
@@ -103,7 +94,7 @@ export function ActivityCompactCard({
           <View style={styles.stat}>
             <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {formatDuration(activity.duration)}
+              {formatDurationCompact(activity.duration)}
             </Text>
           </View>
         </View>

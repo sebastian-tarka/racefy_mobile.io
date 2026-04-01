@@ -10,6 +10,11 @@ import {
 } from '../utils/unitConversions';
 import type { Post, Activity } from '../types/api';
 
+// Re-export from canonical locations for backwards compatibility
+export { formatDuration } from '../utils/formatDuration';
+export { formatDurationCompact } from '../utils/formatDuration';
+export { getSportIcon } from '../utils/sportIcon';
+
 // ============ TYPES & INTERFACES ============
 
 export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare' | 'achievement' | 'challenge' | 'digest' | 'milestone';
@@ -140,13 +145,6 @@ export function buildMediaItems(post: Post): PostMediaItem[] {
   return [...videos, ...photos, ...media];
 }
 
-export function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
-}
 
 export function formatDistance(meters: number, units: UnitSystem = 'metric'): string {
   return ucFormatDistance(meters, units);
@@ -170,15 +168,6 @@ export function getEffortLevel(sportName: string | undefined, meters: number, se
   return { label: 'Hard', emoji: '😤' };
 }
 
-export function getSportIcon(sportName?: string): keyof typeof Ionicons.glyphMap {
-  const name = (sportName || '').toLowerCase();
-  if (name.includes('run')) return 'walk-outline';
-  if (name.includes('cycl') || name.includes('bike')) return 'bicycle-outline';
-  if (name.includes('swim')) return 'water-outline';
-  if (name.includes('gym') || name.includes('fitness')) return 'barbell-outline';
-  if (name.includes('yoga')) return 'body-outline';
-  return 'fitness-outline';
-}
 
 export function getHeroStat(activity: Activity): 'distance' | 'duration' | 'elevation' {
   const name = (activity.sport_type?.name || '').toLowerCase();

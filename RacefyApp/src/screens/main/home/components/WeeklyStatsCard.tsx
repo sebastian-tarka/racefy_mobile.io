@@ -7,21 +7,11 @@ import { useTheme } from '../../../../hooks/useTheme';
 import { useUnits } from '../../../../hooks/useUnits';
 import { useActivityStats } from '../../../../hooks/useActivityStats';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
+import { formatDurationCompact } from '../../../../utils/formatDuration';
 
 interface WeeklyStatsCardProps {
   onPress?: () => void;
 }
-
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes} min`;
-};
 
 export function WeeklyStatsCard({ onPress }: WeeklyStatsCardProps) {
   const { t } = useTranslation();
@@ -56,7 +46,7 @@ export function WeeklyStatsCard({ onPress }: WeeklyStatsCardProps) {
     },
     {
       icon: 'time-outline' as const,
-      value: formatDuration(stats.totals.duration),
+      value: formatDurationCompact(stats.totals.duration),
       label: t('home.weeklyStats.time', 'Time'),
       color: '#f59e0b',
     },

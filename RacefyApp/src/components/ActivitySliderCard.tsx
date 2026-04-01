@@ -14,6 +14,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius, componentSize } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
 import type { Activity } from '../types/api';
 
 interface ActivitySliderCardProps {
@@ -75,15 +76,6 @@ const getSportTheme = (sportName?: string) => {
   return sportThemes.default;
 };
 
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes} min`;
-};
 
 
 export function ActivitySliderCard({
@@ -139,7 +131,7 @@ export function ActivitySliderCard({
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.statText}>{formatDuration(activity.duration)}</Text>
+          <Text style={styles.statText}>{formatDurationCompact(activity.duration)}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
