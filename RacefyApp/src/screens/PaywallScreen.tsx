@@ -31,8 +31,11 @@ import {
   purchasePackage,
   restorePurchases,
 } from '../services/revenuecat';
+import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { formatPrice } from '../utils/formatters';
 import { spacing, fontSize, borderRadius } from '../theme';
+import type { SubscriptionPlan } from '../types/api';
 import type { RootStackParamList } from '../navigation/types';
 
 // Hardcoded feature list for comparison display (fallback when RevenueCat paywall unavailable)
@@ -62,6 +65,7 @@ export function PaywallScreen() {
   const { refreshUser } = useAuth();
 
   const [packages, setPackages] = useState<any[]>([]);
+  const [apiPlans, setApiPlans] = useState<Record<string, SubscriptionPlan>>({});
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -70,9 +74,20 @@ export function PaywallScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        const offering = await getOfferings();
+        // Load RevenueCat offerings and API plans in parallel
+        const [offering, plansResponse] = await Promise.all([
+          getOfferings().catch(() => null),
+          api.getSubscriptionPlans().catch(() => null),
+        ]);
         if (offering?.availablePackages) {
           setPackages(offering.availablePackages);
+        }
+        if (plansResponse?.plans) {
+          const byTier: Record<string, SubscriptionPlan> = {};
+          for (const plan of plansResponse.plans) {
+            byTier[plan.tier] = plan;
+          }
+          setApiPlans(byTier);
         }
       } catch (err) {
         logger.error('general', 'Failed to load offerings', { error: err });
@@ -230,21 +245,35 @@ export function PaywallScreen() {
           {/* Plan header row */}
           <View style={styles.planHeaderRow}>
             <View style={styles.featureLabelCol} />
-            {['free', 'plus', 'pro'].map((planTier) => (
-              <View key={planTier} style={styles.planCol}>
-                <Text style={[
-                  styles.planName,
-                  { color: planTier === tier ? colors.primary : colors.textPrimary },
-                ]}>
-                  {planTier.charAt(0).toUpperCase() + planTier.slice(1)}
-                </Text>
-                {planTier === tier && (
-                  <View style={[styles.currentBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.currentBadgeText}>{t('subscription.current')}</Text>
-                  </View>
-                )}
-              </View>
-            ))}
+            {['free', 'plus', 'pro'].map((planTier) => {
+              const plan = apiPlans[planTier];
+              return (
+                <View key={planTier} style={styles.planCol}>
+                  <Text style={[
+                    styles.planName,
+                    { color: planTier === tier ? colors.primary : colors.textPrimary },
+                  ]}>
+                    {planTier.charAt(0).toUpperCase() + planTier.slice(1)}
+                  </Text>
+                  {plan && plan.price_monthly != null && plan.price_monthly > 0 && (
+                    <Text style={[styles.planPrice, { color: colors.textSecondary }]}>
+                      {formatPrice(plan.price_monthly, plan.currency)}
+                      <Text style={styles.planPricePeriod}>/{t('subscription.month')}</Text>
+                    </Text>
+                  )}
+                  {plan && plan.price_monthly === 0 && (
+                    <Text style={[styles.planPrice, { color: colors.textSecondary }]}>
+                      {t('subscription.free')}
+                    </Text>
+                  )}
+                  {planTier === tier && (
+                    <View style={[styles.currentBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.currentBadgeText}>{t('subscription.current')}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
 
           {/* Feature rows */}
@@ -389,6 +418,14 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: fontSize.md,
     fontWeight: '700',
+  },
+  planPrice: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  planPricePeriod: {
+    fontWeight: '400',
   },
   currentBadge: {
     paddingHorizontal: 6,
