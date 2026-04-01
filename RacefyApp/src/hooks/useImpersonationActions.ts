@@ -109,7 +109,7 @@ export function useImpersonationActions(
   const stopImpersonation = useCallback(async () => {
     logger.auth('Stopping impersonation');
     try {
-      const response = await api.stopImpersonation();
+      await api.stopImpersonation();
 
       // Clear cached data so screens fetch fresh data for the admin user
       await AsyncStorage.multiRemove(USER_CACHE_KEYS);
