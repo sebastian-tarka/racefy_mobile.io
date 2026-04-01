@@ -7,6 +7,12 @@ import type { User, ImpersonationSession } from '../types/api';
 
 export const IMPERSONATION_SESSION_KEY = '@racefy_impersonation_session';
 
+// Cache keys that need clearing when switching user context
+const USER_CACHE_KEYS = [
+  '@racefy_home_data',
+  '@racefy_home_config',
+];
+
 interface ImpersonationState {
   user: User | null;
   originalAdminToken: string | null;
@@ -68,21 +74,31 @@ export function useImpersonationActions(
 
       await api.setToken(response.impersonation_token);
 
-      setImpersonatedUser(response.impersonated_user);
-      setUser(response.impersonated_user);
+      // Clear cached data so screens fetch fresh data for the impersonated user
+      await AsyncStorage.multiRemove(USER_CACHE_KEYS);
+
+      // Fetch full user data (with subscription/plan) using the impersonation token
+      const fullUserData = await api.getUser();
+      logger.auth('Fetched full impersonated user data', {
+        userId: fullUserData.id,
+        tier: fullUserData.subscription?.tier,
+      });
+
+      setImpersonatedUser(fullUserData);
+      setUser(fullUserData);
       setIsImpersonating(true);
       setImpersonationSession({
         id: response.session_id,
         admin_id: user!.id,
-        impersonated_user_id: response.impersonated_user.id,
+        impersonated_user_id: fullUserData.id,
         started_at: response.expires_at,
         expires_at: response.expires_at,
         ended_at: null,
       });
       setOriginalAdminToken(adminToken);
       logger.auth('Impersonation started', {
-        impersonatedUserId: response.impersonated_user.id,
-        impersonatedUsername: response.impersonated_user.username,
+        impersonatedUserId: fullUserData.id,
+        impersonatedUsername: fullUserData.username,
       });
     } catch (error) {
       logger.error('auth', 'Failed to start impersonation', { error });
@@ -95,18 +111,25 @@ export function useImpersonationActions(
     try {
       const response = await api.stopImpersonation();
 
+      // Clear cached data so screens fetch fresh data for the admin user
+      await AsyncStorage.multiRemove(USER_CACHE_KEYS);
+
       if (originalAdminToken) {
         await api.setToken(originalAdminToken);
-        setUser(response.admin_user);
+        // Fetch full admin user data (with subscription/plan)
+        const fullAdminData = await api.getUser();
+        setUser(fullAdminData);
         logger.auth('Impersonation stopped, restored to admin', {
-          adminUserId: response.admin_user.id,
-          adminUsername: response.admin_user.username,
+          adminUserId: fullAdminData.id,
+          adminUsername: fullAdminData.username,
         });
       }
 
       await clearImpersonationState();
     } catch (error) {
       logger.error('auth', 'Failed to stop impersonation', { error });
+      // Clear cached data even on error
+      await AsyncStorage.multiRemove(USER_CACHE_KEYS).catch(() => {});
       if (originalAdminToken) {
         await api.setToken(originalAdminToken);
         const adminData = await api.getUser();
