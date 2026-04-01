@@ -152,11 +152,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Normal authenticated user (not impersonating)
         logger.auth('Token found, fetching user');
         const userData = await api.getUser();
-        console.warn('🔍 SUBSCRIPTION DEBUG', JSON.stringify({
-          tier: userData.subscription?.tier,
-          is_premium: userData.subscription?.is_premium,
-          features: userData.subscription?.features,
-        }, null, 2));
         setUser(userData);
         logger.auth('User authenticated', { userId: userData.id, username: userData.username });
         revenueCatLogIn(userData.id).catch(() => {});
@@ -184,11 +179,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
     const response = await api.login(data);
-    console.warn('🔍 LOGIN SUBSCRIPTION DEBUG', JSON.stringify({
-      tier: response.user.subscription?.tier,
-      is_premium: response.user.subscription?.is_premium,
-      features: response.user.subscription?.features,
-    }, null, 2));
     // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
     const status = await getConsentStatus();
     // Set both atomically - React 18 batches these (no await between them)

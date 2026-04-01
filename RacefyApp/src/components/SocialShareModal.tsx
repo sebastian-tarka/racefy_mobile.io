@@ -93,8 +93,6 @@ function SocialShareModalComponent({
           throw new Error(`Unsupported share type: ${type}`);
       }
 
-      console.log('resp',response)
-
       // Validate response structure
       if (!response || !response.url) {
         logger.error('general', 'Invalid share link response', {

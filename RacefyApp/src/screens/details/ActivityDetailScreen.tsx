@@ -23,6 +23,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import { getSportIcon } from '../../utils/sportIcon';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, User, SingleActivityStats } from '../../types/api';
@@ -176,15 +177,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     return formatSpeed(metersPerSecond);
   };
 
-  const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
-    const sportName = activity?.sport_type?.name?.toLowerCase() || '';
-    if (sportName.includes('run')) return 'walk-outline';
-    if (sportName.includes('cycling') || sportName.includes('bike')) return 'bicycle-outline';
-    if (sportName.includes('swim')) return 'water-outline';
-    if (sportName.includes('gym') || sportName.includes('fitness')) return 'barbell-outline';
-    if (sportName.includes('yoga')) return 'body-outline';
-    return 'fitness-outline';
-  };
 
   const handleLike = useCallback(async () => {
     if (!activity || activity.is_owner) return;
@@ -383,7 +375,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
           {/* Title and Sport */}
           <View style={styles.titleRow}>
-            <Ionicons name={getSportIcon()} size={24} color={colors.primary} style={styles.sportIcon} />
+            <Ionicons name={getSportIcon(activity?.sport_type?.name)} size={24} color={colors.primary} style={styles.sportIcon} />
             <View style={styles.titleContent}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
               <View style={styles.sportTypeRow}>

@@ -264,8 +264,6 @@ export function EventFormScreen({navigation, route}: Props) {
         try {
             let savedEventId: number;
 
-            console.log(formData)
-
             if (isEditMode && eventId) {
                 const updateData: UpdateEventRequest = {
                     title: formData.title,

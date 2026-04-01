@@ -8,6 +8,7 @@ import { CommentaryBoostButton } from './CommentaryBoostButton';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { fixStorageUrl } from '../config/api';
+import { getSportIcon } from '../utils/sportIcon';
 import type { EventWithLatestCommentary } from '../types/api';
 
 interface LiveEventCardProps {
@@ -22,18 +23,6 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
 
   const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
-
-  const getSportIcon = (): keyof typeof Ionicons.glyphMap => {
-    const sportName = event.sport_type?.name?.toLowerCase() || '';
-    if (sportName.includes('run')) return 'walk-outline';
-    if (sportName.includes('cycling') || sportName.includes('bike'))
-      return 'bicycle-outline';
-    if (sportName.includes('swim')) return 'water-outline';
-    if (sportName.includes('gym') || sportName.includes('fitness'))
-      return 'barbell-outline';
-    if (sportName.includes('yoga')) return 'body-outline';
-    return 'fitness-outline';
-  };
 
   const activeParticipantsText =
     event.active_participants_count !== undefined
@@ -64,7 +53,7 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
                 { backgroundColor: colors.primaryLight + '20' },
               ]}
             >
-              <Ionicons name={getSportIcon()} size={48} color={colors.primary} />
+              <Ionicons name={getSportIcon(event.sport_type?.name)} size={48} color={colors.primary} />
             </View>
           )}
         </View>

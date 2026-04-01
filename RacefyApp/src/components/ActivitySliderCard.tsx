@@ -15,6 +15,7 @@ import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius, componentSize } from '../theme';
 import { formatDurationCompact } from '../utils/formatDuration';
+import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
 
 interface ActivitySliderCardProps {
@@ -22,59 +23,6 @@ interface ActivitySliderCardProps {
   onPress?: () => void;
   isAuthenticated?: boolean;
 }
-
-// Sport-themed color palettes
-const sportThemes: Record<string, { gradient: [string, string]; accent: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  running: {
-    gradient: ['#10b981', '#059669'],
-    accent: '#34d399',
-    icon: 'walk',
-  },
-  cycling: {
-    gradient: ['#3b82f6', '#1d4ed8'],
-    accent: '#60a5fa',
-    icon: 'bicycle',
-  },
-  swimming: {
-    gradient: ['#06b6d4', '#0891b2'],
-    accent: '#22d3ee',
-    icon: 'water',
-  },
-  gym: {
-    gradient: ['#f97316', '#ea580c'],
-    accent: '#fb923c',
-    icon: 'barbell',
-  },
-  yoga: {
-    gradient: ['#a855f7', '#7c3aed'],
-    accent: '#c084fc',
-    icon: 'body',
-  },
-  hiking: {
-    gradient: ['#84cc16', '#65a30d'],
-    accent: '#a3e635',
-    icon: 'trail-sign',
-  },
-  default: {
-    gradient: ['#6366f1', '#4f46e5'],
-    accent: '#818cf8',
-    icon: 'fitness',
-  },
-};
-
-const getSportTheme = (sportName?: string) => {
-  if (!sportName) return sportThemes.default;
-  const name = sportName.toLowerCase();
-
-  if (name.includes('run') || name.includes('jog')) return sportThemes.running;
-  if (name.includes('cycl') || name.includes('bike')) return sportThemes.cycling;
-  if (name.includes('swim')) return sportThemes.swimming;
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness')) return sportThemes.gym;
-  if (name.includes('yoga') || name.includes('pilates')) return sportThemes.yoga;
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return sportThemes.hiking;
-
-  return sportThemes.default;
-};
 
 
 
