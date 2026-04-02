@@ -53,8 +53,7 @@
         "LOG_PERSIST": "true",
         "LOG_CATEGORIES": "gps,activity",
         "LOG_CONSOLE_OUTPUT": "false",
-        "MAPBOX_ENABLED": "true",
-        "GOOGLE_WEB_CLIENT_ID": ""
+        "MAPBOX_ENABLED": "true"
       }
     }
   },
