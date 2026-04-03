@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -38,23 +39,62 @@ import { spacing, fontSize, borderRadius } from '../theme';
 import type { SubscriptionPlan } from '../types/api';
 import type { RootStackParamList } from '../navigation/types';
 
-// Hardcoded feature list for comparison display (fallback when RevenueCat paywall unavailable)
-const FEATURE_ROWS = [
-  { key: 'events_monthly', icon: 'calendar-outline', free: '2/mo', plus: '10/mo', pro: 'Unlimited' },
-  { key: 'ai_posts_monthly', icon: 'sparkles-outline', free: '-', plus: '20/mo', pro: 'Unlimited' },
-  { key: 'ai_post_on_finish', icon: 'flash-outline', free: false, plus: true, pro: true },
-  { key: 'event_prizes', icon: 'trophy-outline', free: false, plus: true, pro: true },
-  { key: 'event_ai_commentary', icon: 'chatbubbles-outline', free: false, plus: true, pro: true },
-  { key: 'training_summaries', icon: 'fitness-outline', free: false, plus: true, pro: true },
-  { key: 'advanced_stats', icon: 'stats-chart-outline', free: false, plus: true, pro: true },
-  { key: 'gpx_export', icon: 'download-outline', free: false, plus: true, pro: true },
-  { key: 'share_link_permanent', icon: 'link-outline', free: false, plus: true, pro: true },
-  { key: 'privacy_zones', icon: 'shield-outline', free: '1', plus: '5', pro: '10' },
-  { key: 'training_programs', icon: 'barbell-outline', free: '1', plus: '3', pro: 'Unlimited' },
-  { key: 'active_training_programs', icon: 'layers-outline', free: '1', plus: '2', pro: 'Unlimited' },
-  { key: 'exclusive_badges', icon: 'ribbon-outline', free: false, plus: false, pro: true },
-  { key: 'points_multiplier', icon: 'trending-up-outline', free: '1x', plus: '1.25x', pro: '1.5x' },
+// Feature icon mapping (keys match API response from /subscription/features)
+const FEATURE_ICONS: Record<string, string> = {
+  events_monthly: 'calendar-outline',
+  ai_posts_monthly: 'sparkles-outline',
+  ai_post_on_finish: 'flash-outline',
+  event_prizes: 'trophy-outline',
+  event_ai_commentary: 'chatbubbles-outline',
+  training_summaries: 'fitness-outline',
+  advanced_stats: 'stats-chart-outline',
+  gpx_export: 'download-outline',
+  share_link_permanent: 'link-outline',
+  privacy_zones: 'shield-outline',
+  training_programs: 'barbell-outline',
+  active_training_programs: 'layers-outline',
+  exclusive_badges: 'ribbon-outline',
+  points_multiplier: 'trending-up-outline',
+  teams_max: 'people-outline',
+  team_members_max: 'person-add-outline',
+  coaching_hints_bulk: 'megaphone-outline',
+  audio_coach_ai: 'headset-outline',
+  insights_advanced: 'analytics-outline',
+  ad_free: 'eye-off-outline',
+};
+
+// Order for feature comparison table
+const FEATURE_ORDER: string[] = [
+  'events_monthly',
+  'ai_posts_monthly',
+  'ai_post_on_finish',
+  'training_programs',
+  'active_training_programs',
+  'training_summaries',
+  'privacy_zones',
+  'advanced_stats',
+  'insights_advanced',
+  'audio_coach_ai',
+  'gpx_export',
+  'share_link_permanent',
+  'event_prizes',
+  'event_ai_commentary',
+  'exclusive_badges',
+  'coaching_hints_bulk',
+  'teams_max',
+  'team_members_max',
+  'points_multiplier',
 ];
+
+// Key features shown on plan cards (bullet points)
+const KEY_FEATURES_BY_TIER: Record<string, string[]> = {
+  free: ['events_monthly', 'training_programs', 'teams_max', 'privacy_zones'],
+  plus: ['ai_posts_monthly', 'events_monthly', 'training_summaries', 'advanced_stats', 'gpx_export', 'audio_coach_ai'],
+  pro: ['events_monthly', 'ai_posts_monthly', 'exclusive_badges', 'points_multiplier', 'coaching_hints_bulk', 'teams_max'],
+};
+
+// Features data from /subscription/features endpoint
+type FeaturesPerTier = Record<string, Record<string, boolean | number>>;
 
 export function PaywallScreen() {
   const { t } = useTranslation();
@@ -65,7 +105,9 @@ export function PaywallScreen() {
   const { refreshUser } = useAuth();
 
   const [packages, setPackages] = useState<any[]>([]);
-  const [apiPlans, setApiPlans] = useState<Record<string, SubscriptionPlan>>({});
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [featuresPerTier, setFeaturesPerTier] = useState<FeaturesPerTier>({});
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -74,20 +116,19 @@ export function PaywallScreen() {
   useEffect(() => {
     const load = async () => {
       try {
-        // Load RevenueCat offerings and API plans in parallel
-        const [offering, plansResponse] = await Promise.all([
+        const [offering, plansData, featuresData] = await Promise.all([
           getOfferings().catch(() => null),
           api.getSubscriptionPlans().catch(() => null),
+          api.getSubscriptionFeatures().catch(() => null),
         ]);
         if (offering?.availablePackages) {
           setPackages(offering.availablePackages);
         }
-        if (plansResponse?.plans) {
-          const byTier: Record<string, SubscriptionPlan> = {};
-          for (const plan of plansResponse.plans) {
-            byTier[plan.tier] = plan;
-          }
-          setApiPlans(byTier);
+        if (plansData?.plans) {
+          setPlans(plansData.plans);
+        }
+        if (featuresData?.features) {
+          setFeaturesPerTier(featuresData.features);
         }
       } catch (err) {
         logger.error('general', 'Failed to load offerings', { error: err });
@@ -97,6 +138,17 @@ export function PaywallScreen() {
     };
     load();
   }, []);
+
+  const findPackageForPlan = useCallback((planTier: string, cycle: 'monthly' | 'yearly') => {
+    return packages.find(pkg => {
+      const id = (pkg.identifier || '').toLowerCase();
+      const matchesTier = id.includes(planTier);
+      const matchesCycle = cycle === 'monthly'
+        ? (id.includes('month') || pkg.packageType === 'MONTHLY')
+        : (id.includes('annual') || id.includes('year') || pkg.packageType === 'ANNUAL');
+      return matchesTier && matchesCycle;
+    });
+  }, [packages]);
 
   const handlePurchase = useCallback(async (pkg: any) => {
     setPurchasing(true);
@@ -116,6 +168,17 @@ export function PaywallScreen() {
       setPurchasing(false);
     }
   }, [refreshUser, navigation, t]);
+
+  const handleSelectPlan = useCallback((plan: SubscriptionPlan) => {
+    if (plan.tier === 'free' || plan.tier === tier) return;
+    const pkg = findPackageForPlan(plan.tier, billingCycle);
+    if (pkg) {
+      handlePurchase(pkg);
+    } else {
+      logger.warn('general', 'No RevenueCat package found for plan', { tier: plan.tier, cycle: billingCycle });
+      Alert.alert(t('common.error'), t('subscription.purchaseFailed'));
+    }
+  }, [tier, billingCycle, findPackageForPlan, handlePurchase, t]);
 
   const handleRestore = useCallback(async () => {
     setRestoring(true);
@@ -143,7 +206,6 @@ export function PaywallScreen() {
 
   const nativePaywallAvailable = !!RevenueCatUI;
 
-  // Present RevenueCat's native paywall (only works in native builds)
   const handlePresentPaywall = useCallback(async () => {
     if (!RevenueCatUI) return;
     try {
@@ -160,16 +222,53 @@ export function PaywallScreen() {
     }
   }, [refreshUser, navigation]);
 
-  const renderFeatureValue = (value: boolean | string) => {
+  const renderFeatureValue = (value: boolean | number, featureKey: string) => {
     if (typeof value === 'boolean') {
       return value ? (
-        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+        <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
       ) : (
-        <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+        <Ionicons name="close-circle" size={18} color={colors.textMuted} />
       );
     }
-    return <Text style={[styles.featureValue, { color: colors.textPrimary }]}>{value}</Text>;
+    if (typeof value === 'number') {
+      if (value === -1) {
+        return <Text style={[styles.featureValueText, { color: colors.primary }]}>{t('subscription.unlimited')}</Text>;
+      }
+      if (value === 0) {
+        return <Ionicons name="close-circle" size={18} color={colors.textMuted} />;
+      }
+      const displayValue = featureKey === 'points_multiplier' ? `${value}x` : String(value);
+      return <Text style={[styles.featureValueText, { color: colors.primary }]}>{displayValue}</Text>;
+    }
+    return null;
   };
+
+  const renderKeyFeatureValue = (value: boolean | number, featureKey: string): string => {
+    if (typeof value === 'boolean') return '';
+    if (typeof value === 'number') {
+      if (value === -1) return t('subscription.unlimited');
+      if (value === 0) return '';
+      if (featureKey === 'points_multiplier') return `${value}x`;
+      return String(value);
+    }
+    return '';
+  };
+
+  const getPlanPrice = (plan: SubscriptionPlan): string => {
+    if (plan.tier === 'free') return t('subscription.free');
+    const rawPrice = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
+    const price = typeof rawPrice === 'string' ? parseFloat(rawPrice) : rawPrice;
+    if (price == null || price === 0) return t('subscription.free');
+    return formatPrice(price, plan.currency);
+  };
+
+  const getPlanPeriod = (): string => {
+    return billingCycle === 'monthly' ? t('subscription.perMonth') : t('subscription.perYear');
+  };
+
+  // Sort plans: free, plus, pro
+  const tierOrder = { free: 0, plus: 1, pro: 2 };
+  const sortedPlans = [...plans].sort((a, b) => (tierOrder[a.tier] ?? 0) - (tierOrder[b.tier] ?? 0));
 
   return (
     <ScreenContainer>
@@ -185,119 +284,231 @@ export function PaywallScreen() {
           </View>
         )}
 
-        {/* RevenueCat native paywall button (only in native builds) */}
-        {nativePaywallAvailable && packages.length > 0 && (
-          <TouchableOpacity
-            style={[styles.nativePaywallButton, { backgroundColor: colors.primary }]}
-            onPress={handlePresentPaywall}
-            disabled={purchasing}
-          >
-            <Ionicons name="diamond" size={22} color="#fff" />
-            <Text style={styles.nativePaywallButtonText}>
-              {t('subscription.viewPlans')}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* RevenueCat packages - manual purchase UI */}
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: spacing.xl }} />
-        ) : packages.length > 0 ? (
-          <View style={styles.packagesSection}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('subscription.availablePlans')}
-            </Text>
-            {packages.map((pkg) => (
-              <TouchableOpacity
-                key={pkg.identifier}
-                style={[styles.packageCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
-                onPress={() => handlePurchase(pkg)}
-                disabled={purchasing}
-                activeOpacity={0.7}
-              >
-                <View style={styles.packageInfo}>
-                  <Text style={[styles.packageTitle, { color: colors.textPrimary }]}>
-                    {pkg.product.title}
-                  </Text>
-                  <Text style={[styles.packageDesc, { color: colors.textSecondary }]}>
-                    {pkg.product.description}
-                  </Text>
-                </View>
-                <View style={styles.packagePrice}>
-                  <Text style={[styles.priceText, { color: colors.primary }]}>
-                    {pkg.product.priceString}
-                  </Text>
-                  <Text style={[styles.periodText, { color: colors.textMuted }]}>
-                    /{pkg.packageType === 'ANNUAL' ? t('subscription.year') : t('subscription.month')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-
-        {/* Feature comparison table */}
-        <View style={styles.comparisonSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('subscription.compareFeatures')}
-          </Text>
-
-          {/* Plan header row */}
-          <View style={styles.planHeaderRow}>
-            <View style={styles.featureLabelCol} />
-            {['free', 'plus', 'pro'].map((planTier) => {
-              const plan = apiPlans[planTier];
-              return (
-                <View key={planTier} style={styles.planCol}>
+        ) : (
+          <>
+            {/* Billing cycle toggle */}
+            {sortedPlans.length > 0 && (
+              <View style={[styles.toggleContainer, { backgroundColor: colors.border }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    billingCycle === 'monthly' && { backgroundColor: colors.cardBackground },
+                  ]}
+                  onPress={() => setBillingCycle('monthly')}
+                  activeOpacity={0.7}
+                >
                   <Text style={[
-                    styles.planName,
-                    { color: planTier === tier ? colors.primary : colors.textPrimary },
+                    styles.toggleText,
+                    { color: billingCycle === 'monthly' ? colors.textPrimary : colors.textSecondary },
+                    billingCycle === 'monthly' && styles.toggleTextActive,
                   ]}>
-                    {planTier.charAt(0).toUpperCase() + planTier.slice(1)}
+                    {t('subscription.monthly')}
                   </Text>
-                  {plan && plan.price_monthly != null && plan.price_monthly > 0 && (
-                    <Text style={[styles.planPrice, { color: colors.textSecondary }]}>
-                      {formatPrice(plan.price_monthly, plan.currency)}
-                      <Text style={styles.planPricePeriod}>/{t('subscription.month')}</Text>
-                    </Text>
-                  )}
-                  {plan && plan.price_monthly === 0 && (
-                    <Text style={[styles.planPrice, { color: colors.textSecondary }]}>
-                      {t('subscription.free')}
-                    </Text>
-                  )}
-                  {planTier === tier && (
-                    <View style={[styles.currentBadge, { backgroundColor: colors.primary }]}>
-                      <Text style={styles.currentBadgeText}>{t('subscription.current')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    billingCycle === 'yearly' && { backgroundColor: colors.cardBackground },
+                  ]}
+                  onPress={() => setBillingCycle('yearly')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[
+                    styles.toggleText,
+                    { color: billingCycle === 'yearly' ? colors.textPrimary : colors.textSecondary },
+                    billingCycle === 'yearly' && styles.toggleTextActive,
+                  ]}>
+                    {t('subscription.yearlyDiscount')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Plan cards */}
+            {sortedPlans.map((plan) => {
+              const isCurrentPlan = plan.tier === tier;
+              const isPopular = plan.is_popular || plan.tier === 'plus';
+              const keyFeatures = KEY_FEATURES_BY_TIER[plan.tier] || [];
+
+              return (
+                <View
+                  key={plan.id}
+                  style={[
+                    styles.planCard,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: isPopular ? colors.primary : colors.border,
+                      borderWidth: isPopular ? 2 : 1,
+                    },
+                  ]}
+                >
+                  {/* Popular badge */}
+                  {isPopular && (
+                    <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
+                      <Text style={styles.popularBadgeText}>{t('subscription.mostPopular')}</Text>
                     </View>
+                  )}
+
+                  {/* Plan name */}
+                  <Text style={[styles.planName, { color: colors.textSecondary }]}>
+                    {plan.name}
+                  </Text>
+
+                  {/* Price */}
+                  <View style={styles.priceRow}>
+                    <Text style={[
+                      styles.planPrice,
+                      { color: isPopular ? colors.primary : colors.textPrimary },
+                    ]}>
+                      {getPlanPrice(plan)}
+                    </Text>
+                    {plan.tier !== 'free' && (
+                      <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>
+                        {' '}{getPlanPeriod()}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Key features */}
+                  <View style={styles.keyFeatures}>
+                    {keyFeatures.map((featureKey) => {
+                      const tierFeatures = featuresPerTier[plan.tier] || plan.features || {};
+                      const value = tierFeatures[featureKey];
+                      if (value === undefined || value === false || value === 0) return null;
+                      const valueStr = renderKeyFeatureValue(value, featureKey);
+                      return (
+                        <View key={featureKey} style={styles.keyFeatureRow}>
+                          <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+                          <Text style={[styles.keyFeatureText, { color: colors.textPrimary }]}>
+                            {valueStr ? `${valueStr} ` : ''}{t(`subscription.features.${featureKey}`)}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* CTA button */}
+                  {isCurrentPlan ? (
+                    <View style={[styles.ctaButton, { backgroundColor: colors.border }]}>
+                      <Text style={[styles.ctaButtonText, { color: colors.textMuted }]}>
+                        {t('subscription.currentPlan')}
+                      </Text>
+                    </View>
+                  ) : plan.tier === 'free' ? (
+                    <View style={[styles.ctaButton, { backgroundColor: colors.border }]}>
+                      <Text style={[styles.ctaButtonText, { color: colors.textSecondary }]}>
+                        {t('subscription.free')}
+                      </Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.ctaButton, {
+                        backgroundColor: 'transparent',
+                        borderWidth: 1,
+                        borderColor: colors.primary,
+                      }]}
+                      onPress={() => handleSelectPlan(plan)}
+                      disabled={purchasing}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.ctaButtonText, { color: colors.primary }]}>
+                        {t('subscription.selectPlan')}
+                      </Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               );
             })}
-          </View>
 
-          {/* Feature rows */}
-          {FEATURE_ROWS.map((row) => (
-            <View
-              key={row.key}
-              style={[
-                styles.featureRow,
-                { borderBottomColor: colors.border },
-                highlightFeature === row.key && { backgroundColor: colors.primary + '08' },
-              ]}
-            >
-              <View style={styles.featureLabelCol}>
-                <Ionicons name={row.icon as any} size={18} color={colors.textSecondary} />
-                <Text style={[styles.featureLabel, { color: colors.textPrimary }]}>
-                  {t(`subscription.features.${row.key}`)}
+            {/* RevenueCat native paywall button (secondary) */}
+            {nativePaywallAvailable && packages.length > 0 && (
+              <TouchableOpacity
+                style={[styles.nativePaywallButton, { borderColor: colors.primary }]}
+                onPress={handlePresentPaywall}
+                disabled={purchasing}
+              >
+                <Ionicons name="diamond" size={20} color={colors.primary} />
+                <Text style={[styles.nativePaywallButtonText, { color: colors.primary }]}>
+                  {t('subscription.viewPlans')}
                 </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Feature comparison table */}
+            {(sortedPlans.length > 0 || Object.keys(featuresPerTier).length > 0) && (
+              <View style={styles.comparisonSection}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('subscription.compareFeatures')}
+                </Text>
+
+                {/* Plan header row */}
+                <View style={[styles.tableHeaderRow, { borderBottomColor: colors.border }]}>
+                  <View style={styles.featureLabelCol} />
+                  {['free', 'plus', 'pro'].map((planTier) => (
+                    <View key={planTier} style={styles.planCol}>
+                      <Text style={[
+                        styles.tableHeaderPlan,
+                        { color: planTier === tier ? colors.primary : colors.textPrimary },
+                      ]}>
+                        {planTier === 'free' ? t('subscription.free') : planTier.charAt(0).toUpperCase() + planTier.slice(1)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Feature rows */}
+                {FEATURE_ORDER.filter(key => {
+                  // Only show features that exist in API data
+                  const anyTier = featuresPerTier.free || featuresPerTier.plus || featuresPerTier.pro;
+                  return anyTier && key in anyTier;
+                }).map((featureKey) => (
+                  <View
+                    key={featureKey}
+                    style={[
+                      styles.featureRow,
+                      { borderBottomColor: colors.border },
+                      highlightFeature === featureKey && { backgroundColor: colors.primary + '08' },
+                    ]}
+                  >
+                    <View style={styles.featureLabelCol}>
+                      <Ionicons
+                        name={(FEATURE_ICONS[featureKey] || 'ellipse-outline') as any}
+                        size={16}
+                        color={colors.textSecondary}
+                      />
+                      <Text style={[styles.featureLabel, { color: colors.textPrimary }]}>
+                        {t(`subscription.features.${featureKey}`)}
+                      </Text>
+                    </View>
+                    {['free', 'plus', 'pro'].map((planTier) => {
+                      const tierData = featuresPerTier[planTier] || {};
+                      const value = tierData[featureKey];
+                      return (
+                        <View key={planTier} style={styles.planCol}>
+                          {value !== undefined ? renderFeatureValue(value, featureKey) : null}
+                        </View>
+                      );
+                    })}
+                  </View>
+                ))}
               </View>
-              <View style={styles.planCol}>{renderFeatureValue(row.free)}</View>
-              <View style={styles.planCol}>{renderFeatureValue(row.plus)}</View>
-              <View style={styles.planCol}>{renderFeatureValue(row.pro)}</View>
+            )}
+
+            {/* Support footer */}
+            <View style={styles.supportFooter}>
+              <Text style={[styles.supportText, { color: colors.textMuted }]}>
+                {t('subscription.contactSupport')}{' '}
+              </Text>
+              <TouchableOpacity onPress={() => Linking.openURL('mailto:support@racefy.io')}>
+                <Text style={[styles.supportLink, { color: colors.primary }]}>
+                  support@racefy.io
+                </Text>
+              </TouchableOpacity>
             </View>
-          ))}
-        </View>
+          </>
+        )}
 
         {/* Restore purchases */}
         <TouchableOpacity
@@ -328,7 +539,7 @@ export function PaywallScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.md,
-    paddingBottom: spacing.xxl * 3,
+    paddingBottom: spacing.xxxl * 3,
   },
   trialCard: {
     flexDirection: 'row',
@@ -343,70 +554,142 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
+
+  // Billing toggle
+  toggleContainer: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.lg,
+    padding: 3,
+    marginBottom: spacing.lg,
+    alignSelf: 'center',
+  },
+  toggleButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+  },
+  toggleText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
+  toggleTextActive: {
+    fontWeight: '700',
+  },
+
+  // Plan cards
+  planCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -12,
+    alignSelf: 'center',
+    left: '50%',
+    transform: [{ translateX: -60 }],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  popularBadgeText: {
+    color: '#fff',
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  planName: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  planPrice: {
+    fontSize: fontSize.xxxl,
+    fontWeight: '800',
+  },
+  planPeriod: {
+    fontSize: fontSize.sm,
+  },
+  keyFeatures: {
+    marginBottom: spacing.md,
+  },
+  keyFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 3,
+  },
+  keyFeatureText: {
+    fontSize: fontSize.sm,
+    flex: 1,
+  },
+  ctaButton: {
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+  },
+  ctaButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+
+  // Native paywall (secondary)
   nativePaywallButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.md + 4,
+    paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.xl,
+    borderWidth: 1,
   },
   nativePaywallButtonText: {
-    color: '#fff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
-  packagesSection: {
-    marginBottom: spacing.xl,
+
+  // Feature comparison
+  comparisonSection: {
+    marginTop: spacing.lg,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '700',
     marginBottom: spacing.md,
   },
-  packageCard: {
+  tableHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    marginBottom: spacing.xs,
   },
-  packageInfo: {
-    flex: 1,
-    marginRight: spacing.md,
+  tableHeaderLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
   },
-  packageTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  packageDesc: {
+  tableHeaderPlan: {
     fontSize: fontSize.sm,
-    marginTop: 2,
-  },
-  packagePrice: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  periodText: {
-    fontSize: fontSize.xs,
-  },
-  comparisonSection: {
-    marginTop: spacing.md,
-  },
-  planHeaderRow: {
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   featureLabelCol: {
-    flex: 2,
+    flex: 2.2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -415,51 +698,42 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  planName: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  planPrice: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  planPricePeriod: {
-    fontWeight: '400',
-  },
-  currentBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  currentBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
   featureLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     flex: 1,
   },
-  featureValue: {
+  featureValueText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
-  restoreLink: {
+
+  // Support footer
+  supportFooter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: spacing.xl,
+    flexWrap: 'wrap',
+  },
+  supportText: {
+    fontSize: fontSize.sm,
+  },
+  supportLink: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+
+  // Restore
+  restoreLink: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
     paddingVertical: spacing.md,
   },
   restoreLinkText: {
     fontSize: fontSize.sm,
   },
+
+  // Overlay
   purchasingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',

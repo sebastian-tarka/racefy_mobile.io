@@ -10,31 +10,28 @@ export function SubscriptionMixin<TBase extends Constructable<ApiBase>>(Base: TB
     /**
      * Get available subscription plans
      */
-    async getSubscriptionPlans(): Promise<Types.SubscriptionPlan[]> {
-      const response = await this.request<Types.ApiResponse<Types.SubscriptionPlan[]>>(
+    async getSubscriptionPlans(): Promise<{ plans: Types.SubscriptionPlan[]; country_code: string }> {
+      const response = await this.request<{ plans: Types.SubscriptionPlan[]; country_code: string } | Types.ApiResponse<{ plans: Types.SubscriptionPlan[]; country_code: string }>>(
         '/subscription/plans'
       );
-      return response.data;
+      // Handle both wrapped {data: {plans}} and unwrapped {plans} responses
+      return 'data' in response && (response as any).data?.plans ? (response as any).data : response as { plans: Types.SubscriptionPlan[]; country_code: string };
     }
 
     /**
      * Get current user's subscription status
      */
     async getSubscriptionStatus(): Promise<Types.SubscriptionStatus> {
-      const response = await this.request<Types.ApiResponse<Types.SubscriptionStatus>>(
-        '/subscription/status'
-      );
-      return response.data;
+      const response = await this.request<any>('/subscription/status');
+      return response.data ?? response;
     }
 
     /**
      * Get current user's subscription features and usage
      */
-    async getSubscriptionFeatures(): Promise<Types.SubscriptionFeatures> {
-      const response = await this.request<Types.ApiResponse<Types.SubscriptionFeatures>>(
-        '/subscription/features'
-      );
-      return response.data;
+    async getSubscriptionFeatures(): Promise<{ features: Record<string, Record<string, boolean | number>>; tiers: Record<string, { name: string; level: number }> }> {
+      const response = await this.request<any>('/subscription/features');
+      return response.data ?? response;
     }
   };
 }

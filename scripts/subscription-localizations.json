@@ -1,0 +1,60 @@
+{
+  "subscriptions": [
+    {
+      "id": "6761525815",
+      "productId": "racefy_plus_monthly",
+      "localizations": {
+        "en-US": {
+          "name": "Racefy Plus Monthly",
+          "description": "AI posts, stats, GPX export, and more."
+        },
+        "pl": {
+          "name": "Racefy Plus Miesięczny",
+          "description": "Posty AI, statystyki, eksport GPX i więcej."
+        }
+      }
+    },
+    {
+      "id": "6761538189",
+      "productId": "racefy_plus_yearly",
+      "localizations": {
+        "en-US": {
+          "name": "Racefy Plus Yearly",
+          "description": "All Plus features. Save 33% vs monthly."
+        },
+        "pl": {
+          "name": "Racefy Plus Roczny",
+          "description": "Wszystkie funkcje Plus. Oszczędź 33%."
+        }
+      }
+    },
+    {
+      "id": "6761538417",
+      "productId": "racefy_pro_monthly",
+      "localizations": {
+        "en-US": {
+          "name": "Racefy Pro Monthly",
+          "description": "Unlimited events, AI, badges, 1.5x pts."
+        },
+        "pl": {
+          "name": "Racefy Pro Miesięczny",
+          "description": "Bez limitów: wydarzenia, AI, odznaki."
+        }
+      }
+    },
+    {
+      "id": "6761538303",
+      "productId": "racefy_pro_yearly",
+      "localizations": {
+        "en-US": {
+          "name": "Racefy Pro Yearly",
+          "description": "All Pro features. Save 33% vs monthly."
+        },
+        "pl": {
+          "name": "Racefy Pro Roczny",
+          "description": "Wszystkie funkcje Pro. Oszczędź 33%."
+        }
+      }
+    }
+  ]
+}

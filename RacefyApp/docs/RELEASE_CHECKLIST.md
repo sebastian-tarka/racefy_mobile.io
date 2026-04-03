@@ -1,31 +1,35 @@
 # Release Checklist — Google Sign-In + Płatności (iOS & Android)
 
-## Stan wyjściowy
+## Stan wyjściowy (aktualizacja: 2026-04-03)
 
 | Obszar | iOS | Android |
 |--------|-----|---------|
 | Konto deweloperskie | ✅ Masz | ❌ Brak ($25 jednorazowo) |
-| Google Sign-In | ⚠️ Brak `GOOGLE_IOS_CLIENT_ID` | ✅ Działa z dev key |
+| Google Sign-In | ✅ `GOOGLE_IOS_CLIENT_ID` ustawiony | ✅ Działa z dev key |
 | RevenueCat | ❌ Brak `REVENUECAT_APPLE_API_KEY` | ⚠️ Tylko test key |
-| Firebase | ✅ 3 środowiska (dev/staging/prod) | ✅ 3 środowiska |
+| Firebase | ✅ 3 środowiska (EAS env vars) | ✅ 3 środowiska (EAS env vars) |
 | Build config | ✅ EAS production profile | ✅ EAS production profile |
 | Signing | ✅ EAS managed | ⚠️ Debug keystore w release! |
-| Produkty w Store | ❌ Nie skonfigurowane | ❌ Nie skonfigurowane |
+| Produkty w Store | ⚠️ Utworzone, brak metadanych (screenshot) | ❌ Nie skonfigurowane |
+| Paid Apps Agreement | ⚠️ Złożony, czeka na przetworzenie | — |
+| DSA Trader Status | ✅ Trader | — |
 
 ## Kolejność zależności
 
 ```
-FAZA 1 (Google Cloud)  ──→  FAZA 4 (EAS Secrets iOS)
-FAZA 2 (Apple Developer) ─→ FAZA 3 (RevenueCat) ──→ FAZA 6 (TestFlight)
-FAZA 5 (Backend Laravel) ─────────────────────────→ FAZA 6 (TestFlight)
+FAZA 1 (Google Cloud) ✅ ──→  FAZA 4 (EAS Secrets iOS)
+FAZA 2 (Apple Developer) ⚠️ ─→ FAZA 2a (metadane subskrypcji) ─→ FAZA 2b (link z wersją)
+                            ├─→ FAZA 3 (RevenueCat) ──→ FAZA 6 (TestFlight)
+FAZA 5 (Backend Laravel) ──────────────────────────→ FAZA 6 (TestFlight)
+FAZA 2b + FAZA 6 razem → pierwszy submission do App Review
 
 FAZA 7 (Google Play account) → FAZA 8 (Android build)
 FAZA 9 (Web React) — niezależna, równolegle z resztą
 CLEANUP — w dowolnym momencie
 ```
 
-**Zacznij od FAZY 1 + 2 równolegle** — obie to konfiguracja w konsolach webowych.
-Potem FAZA 3 (RevenueCat potrzebuje danych z obu).
+**Aktualny stan:** FAZA 1 zakończona. FAZA 2 prawie gotowa — brakuje screenshotów review, sandbox accounts, i DSA.
+**Następne kroki:** Dokończ FAZĘ 2 (screenshot + DSA) → FAZA 3 (RevenueCat) → FAZA 2a/2b + FAZA 6 (build + submission).
 
 ---
 
@@ -55,11 +59,32 @@ Apple Developer Portal (developer.apple.com):
   - `racefy_pro_yearly` (ID: 6761538303)
 - [x] Ustaw ceny regionalne dla 45 terytoriów ✅ (via API, skrypt `scripts/set-regional-prices-v2.mjs`)
 - [x] Dodaj lokalizacje (en-US) dla subskrypcji ✅
-- [ ] Dodaj lokalizacje polskie (pl) dla subskrypcji
-- [ ] Ustaw okresy próbne (opcjonalnie)
-- [ ] Dodaj sandbox test accounts w App Store Connect
+- [x] Dodaj lokalizacje polskie (pl) dla subskrypcji ✅ (via `scripts/set-subscription-localizations.mjs`)
+- [ ] Ustaw okresy próbne (opcjonalnie — Free Trial lub Pay Up Front w Subscription Prices)
+- [ ] Dodaj sandbox test accounts w App Store Connect (Users and Access → Sandbox → Testers)
 - [ ] Wypełnij Paid Applications agreement (formularz W-8BEN, dane bankowe) — ✅ złożony 2026-04-02, czeka na przetworzenie
-- [ ] Digital Services Act (DSA) — trader status do ustawienia
+- [x] Digital Services Act (DSA) — trader status ustawiony ✅ (App Information → App Store Regulations & Permits)
+
+### 2a: Dokończenie metadanych subskrypcji (Missing Metadata → Ready to Submit)
+
+Każdy produkt subskrypcyjny wymaga poniższych metadanych zanim zmieni status na "Ready to Submit":
+
+- [ ] **Review Screenshot** — zrzut ekranu PaywallScreen z aplikacji (wymagany dla App Review)
+- [ ] **Promotional Image** (1024×1024, opcjonalnie) — do win-back offers i App Store promotion
+- [ ] Zweryfikuj dostępność (Availability) — 45 terytoriów powinno być już ustawione
+- [ ] Zweryfikuj ceny (Subscription Prices) — powinny być ustawione z kroku wyżej
+- [ ] Status wszystkich 4 produktów zmienił się na **Ready to Submit**
+
+### 2b: Powiązanie subskrypcji z wersją aplikacji (wymagane dla pierwszego submission!)
+
+> ⚠️ Pierwsza subskrypcja **musi** być przesłana razem z nową wersją aplikacji.
+
+- [ ] Upload binary (build) do App Store Connect (via `eas submit --platform ios --latest`)
+- [ ] Na stronie wersji → sekcja **In-App Purchases and Subscriptions** → dodaj subskrypcje
+- [ ] Powiąż wszystkie 4 produkty z wersją
+- [ ] Submit wersję + subskrypcje razem do App Review
+
+> Po zatwierdzeniu pierwszej subskrypcji, kolejne subskrypcje można dodawać niezależnie od wersji.
 
 ---
 
@@ -125,6 +150,8 @@ W repo backendu Laravel:
 
 ## FAZA 6: iOS Build + TestFlight — test Google Sign-In i zakupów
 
+> ⚠️ **Wymagania wstępne:** Paid Applications agreement musi być przetworzony, FAZA 3 (RevenueCat) gotowa, FAZA 5 (backend) gotowa.
+
 ```bash
 eas build --platform ios --profile staging
 eas submit --platform ios --latest   # → TestFlight
@@ -137,7 +164,9 @@ eas submit --platform ios --latest   # → TestFlight
 - [ ] Przetestuj restore purchases
 - [ ] Przetestuj webhook flow (zakup → RevenueCat → backend → user.subscription updated)
 - [ ] Build production: `eas build --platform ios --profile production`
-- [ ] Submit do App Store Review
+- [ ] Submit do App Store Connect (via `eas submit --platform ios --latest`)
+- [ ] **FAZA 2b:** Na stronie wersji → powiąż subskrypcje → submit wersję + subskrypcje do App Review
+- [ ] App Review zatwierdził subskrypcje (po tym kolejne subskrypcje można dodawać niezależnie)
 
 ---
 
@@ -209,18 +238,18 @@ Cel: każdy deweloper (lub CI) powinien móc sklonować repo, ustawić kilka sek
 
 | Plik | Powód |
 |------|-------|
-| `google-services-{dev,staging,production}.json` | Firebase config Android — zawierają tylko publiczne klucze API, sender ID, project ID. **Nie są tajne** — Google oficjalnie potwierdza że te pliki można commitować |
-| `GoogleService-Info-{dev,staging,production}.plist` | Firebase config iOS — j.w., publiczne identyfikatory |
 | `.env.example` | Szablon zmiennych środowiskowych (bez wartości) |
 | `eas.json` | Build profiles, env mapping — **nie** zawiera sekretów |
 | `app.config.ts` | Dynamiczna konfiguracja, czyta sekrety z env vars |
-| `scripts/` | Helper scripts (deploy, select-google-services) |
+| `scripts/decode-firebase-config.js` | Dekoduje Firebase config z EAS env vars (base64) podczas buildu |
 
 ### ❌ NIE W REPO (gitignored lub w zewnętrznych systemach)
 
 | Sekret | Gdzie trzymać | Potrzebne do |
 |--------|---------------|--------------|
 | `.env` | Lokalna kopia per maszyna (z `.env.example`) | Dev server |
+| `GOOGLE_SERVICES_JSON` | EAS env (base64, per environment) | Firebase config Android — dekodowany przez `scripts/decode-firebase-config.js` |
+| `GOOGLE_SERVICE_INFO_PLIST` | EAS env (base64, per environment) | Firebase config iOS — dekodowany przez `scripts/decode-firebase-config.js` |
 | `RNMAPBOX_MAPS_DOWNLOAD_TOKEN` | `~/.gradle/gradle.properties` (local build) + EAS env (cloud build) | Build Android/iOS |
 | `REVENUECAT_APPLE_API_KEY` | EAS env (production + preview) | iOS purchases |
 | `REVENUECAT_GOOGLE_API_KEY` | EAS env (production + preview) | Android purchases |
@@ -246,13 +275,19 @@ npm install
 cp .env.example .env
 # Edytuj .env — ustaw API_LOCAL_IP, tokeny Mapbox, Google Client IDs
 
-# 4. Zaloguj się do EAS (wymagane do buildów cloud)
+# 4. Firebase config do lokalnego devu
+# Pobierz z Firebase Console (Project Settings → odpowiednia aplikacja):
+# - google-services.json → RacefyApp/google-services.json
+# - GoogleService-Info.plist → RacefyApp/GoogleService-Info.plist
+# Lub poproś kolegę o kopię — pliki są w .gitignore
+
+# 5. Zaloguj się do EAS (wymagane do buildów cloud)
 npx eas-cli login
 
-# 5. (Opcjonalnie) Mapbox token do lokalnych buildów Android
+# 6. (Opcjonalnie) Mapbox token do lokalnych buildów Android
 echo "RNMAPBOX_MAPS_DOWNLOAD_TOKEN=sk.xxx" >> ~/.gradle/gradle.properties
 
-# 6. Gotowe — dev server
+# 7. Gotowe — dev server
 npm run start:adb
 ```
 
@@ -299,20 +334,28 @@ eas env:list production --include-sensitive
 ```
 
 Wymagane zmienne w **production**:
+- [x] `GOOGLE_SERVICES_JSON` (base64)
+- [x] `GOOGLE_SERVICE_INFO_PLIST` (base64)
+- [x] `GOOGLE_IOS_CLIENT_ID`
+- [x] `GOOGLE_WEB_CLIENT_ID`
+- [x] `GOOGLE_ANDROID_CLIENT_ID`
+- [x] `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`
+- [x] `MAPBOX_ACCESS_TOKEN`
+- [x] `API_PRODUCTION_URL`
 - [ ] `REVENUECAT_APPLE_API_KEY`
 - [ ] `REVENUECAT_GOOGLE_API_KEY`
-- [ ] `GOOGLE_IOS_CLIENT_ID`
-- [ ] `GOOGLE_WEB_CLIENT_ID`
-- [ ] `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`
-- [ ] `MAPBOX_ACCESS_TOKEN`
 
 Wymagane zmienne w **preview** (staging):
+- [x] `GOOGLE_SERVICES_JSON` (base64)
+- [x] `GOOGLE_SERVICE_INFO_PLIST` (base64)
+- [x] `GOOGLE_IOS_CLIENT_ID`
+- [x] `GOOGLE_WEB_CLIENT_ID`
+- [x] `GOOGLE_ANDROID_CLIENT_ID`
+- [x] `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`
+- [x] `MAPBOX_ACCESS_TOKEN`
+- [x] `API_PRODUCTION_URL`
 - [ ] `REVENUECAT_APPLE_API_KEY`
 - [ ] `REVENUECAT_GOOGLE_API_KEY`
-- [ ] `GOOGLE_IOS_CLIENT_ID`
-- [ ] `GOOGLE_WEB_CLIENT_ID`
-- [ ] `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`
-- [ ] `MAPBOX_ACCESS_TOKEN`
 
 ---
 
