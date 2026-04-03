@@ -11,37 +11,8 @@ const getApiUrl = (): string => {
   return process.env.API_PRODUCTION_URL || 'https://racefy.io/api';
 };
 
-// Determine Firebase config file based on APP_ENV
-const getGoogleServicesFile = (): string => {
-  const env = process.env.APP_ENV || 'production';
-
-  switch (env) {
-    case 'development':
-      return './google-services-dev.json';
-    case 'staging':
-      return './google-services-staging.json';
-    case 'production':
-      return './google-services-production.json';
-    default:
-      return './google-services-production.json';
-  }
-};
-
-// Determine iOS Firebase config file based on APP_ENV
-const getGoogleServicesFileiOS = (): string => {
-  const env = process.env.APP_ENV || 'production';
-
-  switch (env) {
-    case 'development':
-      return './GoogleService-Info-dev.plist';
-    case 'staging':
-      return './GoogleService-Info-staging.plist';
-    case 'production':
-      return './GoogleService-Info-production.plist';
-    default:
-      return './GoogleService-Info-production.plist';
-  }
-};
+// Firebase config files are decoded from EAS env vars by scripts/decode-firebase-config.js
+// For local dev, place google-services.json and GoogleService-Info.plist manually
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -62,7 +33,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
     buildNumber: '1.9.3',
-    googleServicesFile: getGoogleServicesFileiOS(),
+    googleServicesFile: './GoogleService-Info.plist',
     associatedDomains: [
       'applinks:racefy.io',
       'applinks:app.dev.racefy.io',
@@ -111,7 +82,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
     versionCode: 15,
-    googleServicesFile: getGoogleServicesFile(),
+    googleServicesFile: './google-services.json',
     permissions: [
       'ACCESS_FINE_LOCATION',
       'ACCESS_COARSE_LOCATION',
