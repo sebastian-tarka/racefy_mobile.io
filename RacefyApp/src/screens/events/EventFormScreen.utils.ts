@@ -78,6 +78,8 @@ export interface FormData {
     point_rewards_second: string;
     point_rewards_third: string;
     point_rewards_finisher: string;
+    // Route planning
+    route_id: number | null;
 }
 
 export const initialFormData: FormData = {
@@ -118,6 +120,8 @@ export const initialFormData: FormData = {
     point_rewards_second: '',
     point_rewards_third: '',
     point_rewards_finisher: '',
+    // Route planning
+    route_id: null,
 };
 export type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
 export const styles = StyleSheet.create({

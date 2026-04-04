@@ -22,6 +22,7 @@ import { useUnits } from '../hooks/useUnits';
 import { useAuth } from '../hooks/useAuth';
 import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { formatDistance, formatTotalTime } from '../utils/formatters';
 import type { Event, EventRegistration, Activity, LeaderboardEntry, User } from '../types/api';
 import type { ThemeColors } from '../theme/colors';
 
@@ -144,6 +145,40 @@ export function EventDetailsTabContent({
             </View>
           </View>
         </Card>
+
+        {/* Event Route */}
+        {event.route && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('eventDetail.route', 'Event Route')}
+            </Text>
+            <View style={styles.routeStats}>
+              <View style={styles.routeStat}>
+                <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  {formatDistance(event.route.distance)}
+                </Text>
+              </View>
+              <View style={styles.routeStat}>
+                <Ionicons name="trending-up-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  {event.route.elevation_gain}m
+                </Text>
+              </View>
+              <View style={styles.routeStat}>
+                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  ~{formatTotalTime(event.route.estimated_duration)}
+                </Text>
+              </View>
+            </View>
+            {event.route.description && (
+              <Text style={[styles.routeDescription, { color: colors.textSecondary }]}>
+                {event.route.description}
+              </Text>
+            )}
+          </Card>
+        )}
 
         {/* Details Grid */}
         <Card style={styles.section}>
@@ -576,5 +611,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
+  },
+  routeStats: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  routeStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  routeStatText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  routeDescription: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.sm,
+    lineHeight: 20,
   },
 });

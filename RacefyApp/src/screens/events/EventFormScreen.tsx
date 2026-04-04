@@ -26,7 +26,7 @@ import {fixStorageUrl} from '../../config/api';
 import {useTheme} from '../../hooks/useTheme';
 import {useSubscription} from '../../hooks/useSubscription';
 import {useSportTypes} from '../../hooks/useSportTypes';
-import {spacing} from '../../theme';
+import {spacing, fontSize} from '../../theme';
 import {
     CreateEventRequest,
     Event,
@@ -185,6 +185,8 @@ export function EventFormScreen({navigation, route}: Props) {
             point_rewards_second: event.point_rewards?.second_place?.toString() || '',
             point_rewards_third: event.point_rewards?.third_place?.toString() || '',
             point_rewards_finisher: event.point_rewards?.finisher?.toString() || '',
+            // Route planning
+            route_id: event.route_id || null,
         });
         setCoverImage(fixStorageUrl(event.cover_image_url) || null);
 
@@ -310,6 +312,8 @@ export function EventFormScreen({navigation, route}: Props) {
                             finisher: formData.point_rewards_finisher ? parseInt(formData.point_rewards_finisher, 10) : undefined,
                           }
                         : undefined,
+                    // Route planning
+                    route_id: formData.route_id,
                 };
 
                 await api.updateEvent(eventId, updateData);
@@ -361,6 +365,8 @@ export function EventFormScreen({navigation, route}: Props) {
                             finisher: formData.point_rewards_finisher ? parseInt(formData.point_rewards_finisher, 10) : undefined,
                           }
                         : undefined,
+                    // Route planning
+                    route_id: formData.route_id,
                 };
 
                 const createdEvent = await api.createEvent(createData);
@@ -669,6 +675,38 @@ export function EventFormScreen({navigation, route}: Props) {
                                     thumbColor="#fff"
                                 />
                             </View>
+                        </View>
+                    </Card>
+
+                    {/* Route Planning */}
+                    <Card style={styles.optionalCard}>
+                        <View style={[styles.gpsPrivacySection, {borderTopWidth: 0, paddingTop: 0}]}>
+                            <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                {t('eventForm.route', 'Event Route')}
+                            </Text>
+                            <Text style={[styles.sectionDescription, {color: colors.textSecondary, marginBottom: spacing.md}]}>
+                                {t('eventForm.routeDescription', 'Attach a planned route so participants can see the course before the event.')}
+                            </Text>
+                            {formData.route_id ? (
+                                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                    <View style={{flexDirection: 'row', alignItems: 'center', gap: spacing.sm}}>
+                                        <Ionicons name="map-outline" size={20} color={colors.primary} />
+                                        <Text style={{color: colors.textPrimary, fontSize: fontSize.sm, fontWeight: '500'}}>
+                                            {t('eventForm.routeAttached', 'Route attached')}
+                                        </Text>
+                                    </View>
+                                    <TouchableOpacity onPress={() => updateField('route_id', null)}>
+                                        <Ionicons name="close-circle" size={22} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <Button
+                                    title={t('eventForm.selectRoute', 'Select Route')}
+                                    variant="outline"
+                                    onPress={() => navigation.navigate('RouteLibrary')}
+                                    disabled={isLimitedEdit}
+                                />
+                            )}
                         </View>
                     </Card>
 
