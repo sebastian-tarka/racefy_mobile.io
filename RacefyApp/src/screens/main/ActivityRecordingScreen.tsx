@@ -27,8 +27,10 @@ import {
 import {
   BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
   ViewToggleButton, NearbyRoutesList, NearbyRoutesHorizontalPanel, ScreenContainer,
-  MapboxLiveMap,
+  MapboxLiveMap, FeatureGate,
 } from '../../components';
+import { NavigationOverlay } from '../../components/NavigationOverlay';
+import { useLiveNavigation } from '../../hooks/useLiveNavigation';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
@@ -279,6 +281,37 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
+  // Live navigation (Pro feature)
+  const plannedRouteForNav = selectedShadowTrack?.track_data
+    ? {
+        id: selectedShadowTrack.id,
+        user_id: 0,
+        title: selectedShadowTrack.title,
+        sport_type_id: selectedShadowTrack.sport_type_id,
+        profile: 'walking' as const,
+        waypoints: [],
+        geometry: selectedShadowTrack.track_data,
+        distance: selectedShadowTrack.distance,
+        estimated_duration: selectedShadowTrack.duration,
+        elevation_gain: selectedShadowTrack.elevation_gain,
+        elevation_loss: 0,
+        elevation_profile: [],
+        turn_instructions: [],
+        bounds: { min_lat: 0, max_lat: 0, min_lng: 0, max_lng: 0 },
+        is_public: false,
+        usage_count: 0,
+        created_at: selectedShadowTrack.created_at,
+        updated_at: selectedShadowTrack.created_at,
+      }
+    : null;
+
+  const liveNav = useLiveNavigation({
+    route: plannedRouteForNav,
+    currentPosition,
+    currentPace: currentStats.currentPace,
+    isRecording: status === 'recording',
+  });
+
   // Accessibility: announce key recording state changes for screen readers
   const prevStatusRef = useRef<RecordingStatus | null>(null);
   useEffect(() => {
@@ -390,10 +423,28 @@ export function ActivityRecordingScreen() {
         if (matchingSport) {
           setSelectedSport(matchingSport);
           preselectedEventHandled.current = true;
+
+          // Auto-load event route as shadow track
+          if (preselectedEvent.route?.geometry) {
+            const eventRoute = preselectedEvent.route;
+            handleRouteSelect({
+              id: eventRoute.id,
+              title: eventRoute.title,
+              distance: eventRoute.distance,
+              elevation_gain: eventRoute.elevation_gain,
+              duration: eventRoute.estimated_duration,
+              sport_type_id: eventRoute.sport_type_id,
+              user: eventRoute.user || { id: 0, name: '', username: '', avatar: '' },
+              stats: { likes_count: 0, boosts_count: 0 },
+              track_data: eventRoute.geometry,
+              distance_from_user: 0,
+              created_at: eventRoute.created_at,
+            });
+          }
         }
       }
     }
-  }, [route.params?.preselectedEvent, sportTypes, sportsLoading]);
+  }, [route.params?.preselectedEvent, sportTypes, sportsLoading, handleRouteSelect]);
 
   // Pulse animation for start button
   useEffect(() => {
@@ -1168,7 +1219,15 @@ export function ActivityRecordingScreen() {
               selectedRouteId={selectedShadowTrack?.id || null}
               onRouteSelect={handleRouteSelect}
               onFollowUserChanged={setFollowUser}
+              plannedRoute={selectedShadowTrack?.track_data || null}
             />
+
+            {/* Live Navigation Overlay (Pro only) */}
+            {liveNav.isActive && status === 'recording' && (
+              <FeatureGate feature="live_navigation">
+                <NavigationOverlay navigation={liveNav} />
+              </FeatureGate>
+            )}
 
             {/* Nearby routes list (idle state only) */}
             {isIdle && showNearbyRoutesToggle && (

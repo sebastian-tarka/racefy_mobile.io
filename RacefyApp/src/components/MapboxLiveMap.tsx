@@ -77,6 +77,9 @@ export interface MapboxLiveMapProps {
   selectedRouteId?: number | null;
   onRouteSelect?: (route: NearbyRoute) => void;
   onFollowUserChanged?: (following: boolean) => void;
+
+  // Planned route (for live navigation)
+  plannedRoute?: GeoJSONLineString | null;
 }
 
 /**
@@ -96,6 +99,7 @@ export function MapboxLiveMap({
   shadowTrack,
   selectedRouteId,
   onFollowUserChanged,
+  plannedRoute,
 }: MapboxLiveMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -346,6 +350,42 @@ export function MapboxLiveMap({
             </MapboxGL.ShapeSource>
           );
         })()}
+
+        {/* Planned route polyline (for live navigation) */}
+        {plannedRoute && plannedRoute.coordinates.length > 1 && (
+          <MapboxGL.ShapeSource
+            id="planned-route"
+            shape={{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: plannedRoute.coordinates,
+              },
+            }}
+          >
+            <MapboxGL.LineLayer
+              id="planned-route-border"
+              style={{
+                lineColor: isDark ? '#1e40af' : '#1e3a8a',
+                lineWidth: 8,
+                lineOpacity: 0.4,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            <MapboxGL.LineLayer
+              id="planned-route-line"
+              style={{
+                lineColor: isDark ? '#60a5fa' : '#3b82f6',
+                lineWidth: 5,
+                lineOpacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        )}
 
         {/* Shadow track polyline with border (recording/paused state only) */}
         {validShadowTrack && livePoints.length > 0 && (
