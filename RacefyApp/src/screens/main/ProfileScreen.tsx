@@ -569,6 +569,21 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: '#06b6d4', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={() => navigation.navigate('RouteLibrary')}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: '#06b6d422' }]}>
+              <Ionicons name="map" size={20} color="#06b6d4" />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('routes.title')}</Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('routes.subtitle')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
       </View>
 

@@ -33,6 +33,7 @@ export * from './DraftsReminderModal';
 export * from './DraftsTab';
 export * from './EmptyState';
 export * from './EventCard';
+export * from './RouteCard';
 export * from './EventTabs';
 export * from './ParticipantAvatarsStack';
 export * from './ImagePickerButton';

@@ -2105,5 +2105,55 @@
       "rateLimited": "Please wait before submitting again",
       "loadFailed": "Failed to load feedback"
     }
+  },
+  "routes": {
+    "title": "Routes",
+    "subtitle": "Plan and discover running & cycling routes",
+    "noRoutes": "No routes found",
+    "noRoutesMessage": "You haven't created any routes yet",
+    "createRoute": "Plan a Route",
+    "failedToLoad": "Failed to load routes",
+    "walking": "Walking",
+    "cycling": "Cycling",
+    "public": "Public",
+    "usedTimes": "Used {{count}} times",
+    "filters": {
+      "my": "My Routes",
+      "popular": "Popular",
+      "nearby": "Nearby"
+    },
+    "deleteConfirm": "Are you sure you want to delete this route?",
+    "deleted": "Route deleted",
+    "duplicated": "Route copied to your library"
+  },
+  "routeDetail": {
+    "title": "Route Details",
+    "loading": "Loading route...",
+    "notFound": "Route not found",
+    "failedToLoad": "Failed to load route details",
+    "distance": "Distance",
+    "elevation": "Elevation Gain",
+    "elevationLoss": "Elevation Loss",
+    "estimatedTime": "Est. Time",
+    "profile": "Type",
+    "waypoints": "Waypoints",
+    "sport": "Sport",
+    "createdBy": "Created by",
+    "startNavigation": "Start Navigation",
+    "duplicate": "Save to Library",
+    "delete": "Delete Route",
+    "edit": "Edit Route",
+    "elevationProfile": "Elevation Profile",
+    "turnInstructions": "Turn Instructions",
+    "noElevationData": "No elevation data available"
+  },
+  "navigation": {
+    "offRoute": "Off route",
+    "remaining": "Remaining",
+    "eta": "ETA",
+    "turnLeft": "Turn left",
+    "turnRight": "Turn right",
+    "goStraight": "Go straight",
+    "uTurn": "U-turn"
   }
 }

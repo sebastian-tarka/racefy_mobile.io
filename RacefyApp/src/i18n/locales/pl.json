@@ -2107,5 +2107,55 @@
       "rateLimited": "Poczekaj chwilę przed ponownym wysłaniem",
       "loadFailed": "Nie udało się załadować zgłoszenia"
     }
+  },
+  "routes": {
+    "title": "Trasy",
+    "subtitle": "Planuj i odkrywaj trasy biegowe i rowerowe",
+    "noRoutes": "Nie znaleziono tras",
+    "noRoutesMessage": "Nie masz jeszcze żadnych tras",
+    "createRoute": "Zaplanuj trasę",
+    "failedToLoad": "Nie udało się załadować tras",
+    "walking": "Bieg",
+    "cycling": "Rower",
+    "public": "Publiczna",
+    "usedTimes": "Użyta {{count}} razy",
+    "filters": {
+      "my": "Moje trasy",
+      "popular": "Popularne",
+      "nearby": "W pobliżu"
+    },
+    "deleteConfirm": "Czy na pewno chcesz usunąć tę trasę?",
+    "deleted": "Trasa usunięta",
+    "duplicated": "Trasa skopiowana do biblioteki"
+  },
+  "routeDetail": {
+    "title": "Szczegóły trasy",
+    "loading": "Ładowanie trasy...",
+    "notFound": "Nie znaleziono trasy",
+    "failedToLoad": "Nie udało się załadować szczegółów trasy",
+    "distance": "Dystans",
+    "elevation": "Przewyższenie",
+    "elevationLoss": "Spadek",
+    "estimatedTime": "Szac. czas",
+    "profile": "Typ",
+    "waypoints": "Punkty trasy",
+    "sport": "Sport",
+    "createdBy": "Autor",
+    "startNavigation": "Rozpocznij nawigację",
+    "duplicate": "Zapisz do biblioteki",
+    "delete": "Usuń trasę",
+    "edit": "Edytuj trasę",
+    "elevationProfile": "Profil wysokości",
+    "turnInstructions": "Instrukcje skrętów",
+    "noElevationData": "Brak danych o wysokości"
+  },
+  "navigation": {
+    "offRoute": "Poza trasą",
+    "remaining": "Pozostało",
+    "eta": "ETA",
+    "turnLeft": "Skręć w lewo",
+    "turnRight": "Skręć w prawo",
+    "goStraight": "Jedź prosto",
+    "uTurn": "Zawróć"
   }
 }

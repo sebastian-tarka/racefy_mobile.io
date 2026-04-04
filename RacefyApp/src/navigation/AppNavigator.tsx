@@ -59,6 +59,7 @@ import { FeedbackFormScreen } from '../screens/feedback/FeedbackFormScreen';
 import { FeedbackDetailScreen } from '../screens/feedback/FeedbackDetailScreen';
 import { InviteMemberScreen } from '../screens/teams/InviteMemberScreen';
 import { TeamsLeaderboardScreen } from '../screens/teams/TeamsLeaderboardScreen';
+import { RouteLibraryScreen, RouteDetailScreen, RoutePlannerScreen } from '../screens/routes';
 
 // Types
 import type {
@@ -840,6 +841,10 @@ export function AppNavigator() {
             <RootStack.Screen name="FeedbackList" component={FeedbackListScreen} />
             <RootStack.Screen name="FeedbackForm" component={FeedbackFormScreen} />
             <RootStack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} />
+            {/* Routes */}
+            <RootStack.Screen name="RouteLibrary" component={RouteLibraryScreen} />
+            <RootStack.Screen name="RouteDetail" component={RouteDetailScreen} />
+            <RootStack.Screen name="RoutePlanner" component={RoutePlannerScreen} />
           </>
         )}
           </RootStack.Navigator>

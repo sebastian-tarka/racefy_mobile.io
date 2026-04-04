@@ -64,6 +64,10 @@ export type RootStackParamList = {
   FeedbackList: undefined;
   FeedbackForm: undefined;
   FeedbackDetail: { feedbackId: number };
+  // Routes
+  RouteLibrary: undefined;
+  RouteDetail: { routeId: number };
+  RoutePlanner: undefined;
 };
 
 declare global {
