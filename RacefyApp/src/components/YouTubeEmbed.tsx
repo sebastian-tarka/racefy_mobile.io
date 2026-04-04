@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize } from '../theme';
+import React, {useRef, useState} from 'react';
+import {LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import YoutubePlayer, {YoutubeIframeRef} from 'react-native-youtube-iframe';
+import {useTranslation} from 'react-i18next';
+import {useTheme} from '../hooks/useTheme';
+import {fontSize, spacing} from '../theme';
 
 interface YouTubeEmbedProps {
   embedId: string;
@@ -12,12 +12,16 @@ interface YouTubeEmbedProps {
 export function YouTubeEmbed({ embedId }: YouTubeEmbedProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
   const playerRef = useRef<YoutubeIframeRef>(null);
   const [playing, setPlaying] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const height = Math.round(width * (9 / 16));
+  const height = containerWidth > 0 ? Math.round(containerWidth * (9 / 16)) : 0;
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    setContainerWidth(e.nativeEvent.layout.width);
+  };
 
   const onChangeState = (state: string) => {
     if (state === 'ended') {
@@ -35,22 +39,26 @@ export function YouTubeEmbed({ embedId }: YouTubeEmbedProps) {
   };
 
   return (
-    <View style={{ width, height }}>
-      <YoutubePlayer
-        ref={playerRef}
-        height={height}
-        width={width}
-        videoId={embedId}
-        play={playing}
-        onChangeState={onChangeState}
-        initialPlayerParams={{ rel: 0, preventFullScreen: false }}
-      />
-      {ended && (
-        <View style={styles.overlay}>
-          <TouchableOpacity style={[styles.watchAgainButton, { backgroundColor: colors.primary }]} onPress={watchAgain} activeOpacity={0.8}>
-            <Text style={styles.watchAgainText}>{t('feed.watchAgain')}</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={{ width: '100%' }} onLayout={onLayout}>
+      {containerWidth > 0 && (
+        <>
+          <YoutubePlayer
+            ref={playerRef}
+            height={height}
+            width={containerWidth}
+            videoId={embedId}
+            play={playing}
+            onChangeState={onChangeState}
+            initialPlayerParams={{ rel: 0, preventFullScreen: false }}
+          />
+          {ended && (
+            <View style={styles.overlay}>
+              <TouchableOpacity style={[styles.watchAgainButton, { backgroundColor: colors.primary }]} onPress={watchAgain} activeOpacity={0.8}>
+                <Text style={styles.watchAgainText}>{t('feed.watchAgain')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
