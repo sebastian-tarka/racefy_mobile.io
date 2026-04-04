@@ -20,6 +20,8 @@ const DEFAULT_FREE_FEATURES: SubscriptionFeatures = {
   teams_max: 1,
   team_members_max: 5,
   coaching_hints_bulk: false,
+  live_navigation: false,
+  saved_routes: 5,
 };
 
 export function useSubscription() {
