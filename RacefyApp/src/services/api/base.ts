@@ -19,6 +19,7 @@ export class ApiBase {
   private onUnauthorizedCallback: (() => void) | null = null;
   private onMaintenanceModeCallback: ((data: { message?: string; estimated_end?: string }) => void) | null = null;
   private onUpgradeRequiredCallback: ((data: { feature?: string; currentTier: Types.SubscriptionTier; limit?: { feature: string; limit: number; current_usage: number; remaining: number } }) => void) | null = null;
+  private onRateLimitCallback: ((data: { retryAfter?: number }) => void) | null = null;
   /** In-flight GET requests — concurrent identical calls share the same Promise */
   private readonly inflightRequests = new Map<string, Promise<unknown>>();
 
@@ -50,6 +51,14 @@ export class ApiBase {
    */
   setOnUpgradeRequired(callback: ((data: { feature?: string; currentTier: string; limit?: any }) => void) | null) {
     this.onUpgradeRequiredCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 429 rate limit response is received.
+   * Use this to surface a global toast/notification to the user.
+   */
+  setOnRateLimit(callback: ((data: { retryAfter?: number }) => void) | null) {
+    this.onRateLimitCallback = callback;
   }
 
   /**
@@ -153,6 +162,14 @@ export class ApiBase {
           }
         }
 
+        // Handle 429 Rate Limit — surface a global toast/notification once
+        if (response.status === 429) {
+          logger.warn('api', 'Rate limit exceeded', { endpoint });
+          if (this.onRateLimitCallback) {
+            this.onRateLimitCallback({ retryAfter: Number(response.headers.get('Retry-After')) || undefined });
+          }
+        }
+
         // Handle 403 with upgrade_required - premium feature access denied
         if (response.status === 403 && (data as any).upgrade_required === true) {
           const premiumData = data as Types.PremiumErrorResponse;
@@ -170,6 +187,8 @@ export class ApiBase {
           }
         }
 
+        // Attach HTTP status so callers can branch on it (409, 429, etc.)
+        (data as Types.ApiError).status = response.status;
         throw data as Types.ApiError;
       }
 

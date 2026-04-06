@@ -66,7 +66,8 @@ export interface FormData {
     // Visibility
     visibility: EventVisibility;
     // Ranking mode config
-    target_distance: string;   // km in UI → meters to API
+    // NOTE: target_distance is no longer a separate form field. Backend mirrors
+    // `distance` into `target_distance` automatically. We send only `distance`.
     time_limit: string;        // minutes in UI → seconds to API
     // Team event
     is_team_event: boolean;
@@ -106,7 +107,6 @@ export const initialFormData: FormData = {
     // Visibility
     visibility: 'public',
     // Ranking mode config
-    target_distance: '',
     time_limit: '',
     // Team event
     is_team_event: false,

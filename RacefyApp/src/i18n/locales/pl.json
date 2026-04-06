@@ -3,6 +3,7 @@
     "loading": "Ładowanie...",
     "loadingMore": "Ładowanie więcej...",
     "error": "Błąd",
+    "rateLimited": "Zbyt wiele żądań, spróbuj ponownie za chwilę",
     "success": "Sukces",
     "cancel": "Anuluj",
     "delete": "Usuń",
@@ -457,6 +458,24 @@
     }
   },
   "events": {
+    "pointsBudget": {
+      "title": "Pula punktów",
+      "sponsored": "Sponsorowane",
+      "remaining": "Pozostało",
+      "allocated": "Przydzielone",
+      "pool": "Pula",
+      "estimatedFinishers": "Szac. ukończenia",
+      "exceeded": "Przekroczono pulę punktów",
+      "missingData": "Uzupełnij wymagane pola, aby obliczyć pulę",
+      "loading": "Obliczanie puli...",
+      "disabledHint": "Uzupełnij dystans/sport/uczestników by odblokować",
+      "prereqTitle": "Aby obliczyć pulę punktów, podaj:",
+      "prereqSportType": "Dyscyplina sportowa",
+      "prereqEffort": "Dystans lub przewyższenie",
+      "prereqMaxParticipants": "Maks. liczba uczestników",
+      "poolReady": "Pula gotowa",
+      "rewardsLockedHint": "🔒 Uzupełnij dane powyżej, aby przyznać punkty"
+    },
     "title": "Wydarzenia",
     "subtitle": "Odkrywaj i dołączaj do lokalnych wydarzeń sportowych",
     "loadingEvents": "Ładowanie wydarzeń...",
@@ -676,6 +695,8 @@
     "discardConfirm": "Czy na pewno chcesz odrzucić tę aktywność? Tego nie można cofnąć.",
     "activitySaved": "Aktywność została zapisana!",
     "activityShared": "Aktywność zapisana i udostępniona na Twoim profilu!",
+    "noPointsAwarded": "Aktywność nie spełniła progów do naliczenia punktów.",
+    "pointsAwarded": "Zdobyto {{points}} pkt",
     "draftCreated": "Twoja aktywność została zapisana jako wersja robocza. Możesz ją przejrzeć i opublikować później.",
     "viewDraft": "Zobacz wersję roboczą",
     "later": "Później",
@@ -764,6 +785,8 @@
     "importing": "Importowanie...",
     "importSuccess": "Aktywność została zaimportowana!",
     "importFailed": "Nie udało się zaimportować pliku GPX",
+    "duplicateTitle": "Aktywność już istnieje",
+    "duplicateMessage": "Ten plik (lub aktywność z tym czasem startu) został już zaimportowany.",
     "invalidFileType": "Wybierz plik .gpx",
     "selectFileFailed": "Nie udało się wybrać pliku",
     "viewActivity": "Zobacz aktywność"
@@ -813,6 +836,14 @@
     "yesterday": "Wczoraj"
   },
   "eventForm": {
+    "tabs": {
+      "basic": "Podstawowe",
+      "scoring": "Scoring",
+      "rewards": "Nagrody",
+      "team": "Drużyna",
+      "ai": "AI"
+    },
+    "aiNotAvailable": "Funkcje AI nie są dostępne dla Twojego konta.",
     "createTitle": "Utwórz wydarzenie",
     "editTitle": "Edytuj wydarzenie",
     "coverImage": "Zdjęcie okładki",

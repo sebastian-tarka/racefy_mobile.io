@@ -109,6 +109,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         currentTier: data.currentTier,
       });
     });
+    // Global rate limit (429) toast — debounced via local flag to avoid multiple alerts
+    let rateLimitAlertActive = false;
+    api.setOnRateLimit(() => {
+      if (rateLimitAlertActive) return;
+      rateLimitAlertActive = true;
+      // Lazy import to keep this hook framework-agnostic
+      const { Alert } = require('react-native');
+      const i18n = require('../i18n').default;
+      Alert.alert(
+        i18n.t('common.error'),
+        i18n.t('common.rateLimited'),
+        [{ text: i18n.t('common.ok'), onPress: () => { rateLimitAlertActive = false; } }],
+        { onDismiss: () => { rateLimitAlertActive = false; } }
+      );
+    });
     initAuth();
   }, [handleUnauthorized]);
 

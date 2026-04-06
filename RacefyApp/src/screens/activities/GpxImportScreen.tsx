@@ -119,9 +119,19 @@ export function GpxImportScreen({ navigation }: Props) {
       );
     } catch (error: any) {
       logger.error('activity', 'GPX import failed', { error });
+      // 409: duplicate import (deduped by SHA256 hash + started_at)
+      if (error?.status === 409) {
+        Alert.alert(
+          t('gpxImport.duplicateTitle'),
+          error.message || t('gpxImport.duplicateMessage')
+        );
+        return;
+      }
+      // 429 is handled globally via api.setOnRateLimit
+      if (error?.status === 429) return;
       Alert.alert(
         t('common.error'),
-        error.message || t('gpxImport.importFailed')
+        error?.message || t('gpxImport.importFailed')
       );
     } finally {
       setIsImporting(false);

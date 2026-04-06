@@ -671,13 +671,20 @@ export function ActivityRecordingScreen() {
         loadAudioCoachSettings();
       }
 
+      // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
+      const pointsEarned = result?.points_earned;
+      const successMessage =
+        pointsEarned == null || pointsEarned === 0
+          ? t('recording.noPointsAwarded')
+          : t('recording.pointsAwarded', { points: pointsEarned });
+
       if (result?.post) {
         if (result.post.status === 'published') {
-          Alert.alert(t('common.success'), t('recording.activityShared'));
+          Alert.alert(t('common.success'), `${t('recording.activityShared')}\n\n${successMessage}`);
         } else if (result.post.status === 'draft') {
           Alert.alert(
             t('recording.activitySaved'),
-            t('recording.draftCreated'),
+            `${t('recording.draftCreated')}\n\n${successMessage}`,
             [
               { text: t('recording.later'), style: 'cancel' },
               {
@@ -688,7 +695,7 @@ export function ActivityRecordingScreen() {
           );
         }
       } else {
-        Alert.alert(t('common.success'), t('recording.activitySaved'));
+        Alert.alert(t('common.success'), `${t('recording.activitySaved')}\n\n${successMessage}`);
       }
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
