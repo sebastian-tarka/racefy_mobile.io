@@ -76,8 +76,10 @@ export function RoutePreview({
     }
   }, [routeMapUrl, activityId]);
 
-  // Use interactive Mapbox if available and track data is provided
-  if (MAPBOX_ACCESS_TOKEN && MapboxRouteMap && trackData && trackData.coordinates.length > 0 && activityId) {
+  // Use interactive Mapbox if available and track data is provided.
+  // activityId is optional — only required for analytics on the static fallback,
+  // not for the interactive map itself (e.g. saved planned routes have no activityId).
+  if (MAPBOX_ACCESS_TOKEN && MapboxRouteMap && trackData && trackData.coordinates.length > 0) {
     return (
       <MapboxRouteMap
         trackData={trackData}

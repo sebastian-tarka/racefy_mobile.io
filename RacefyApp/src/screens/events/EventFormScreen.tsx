@@ -858,6 +858,7 @@ export function EventFormScreen({navigation, route}: Props) {
                             )}
                         </View>
                     </Card>
+                    </>)}
 
                     {activeTab === 'team' && (<>
                     {/* Team Event */}

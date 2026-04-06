@@ -18,6 +18,10 @@ interface NearbyRoutesListProps {
   onRouteSelect: (route: NearbyRoute) => void;
   isLoading: boolean;
   error: string | null;
+  /** When true, the container fills its parent (flex: 1) instead of fixed 200px. */
+  fillContainer?: boolean;
+  /** Optional content rendered above the list (scrolls with it). */
+  listHeader?: React.ReactElement | null;
 }
 
 export function NearbyRoutesList({
@@ -26,6 +30,8 @@ export function NearbyRoutesList({
   onRouteSelect,
   isLoading,
   error,
+  fillContainer,
+  listHeader,
 }: NearbyRoutesListProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -43,10 +49,17 @@ export function NearbyRoutesList({
     }
   };
 
+  const containerStyle = [
+    styles.container,
+    fillContainer && { flex: 1, height: undefined },
+    { backgroundColor: colors.cardBackground },
+  ];
+
   // Render loading state
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+      <View style={containerStyle}>
+        {listHeader}
         <View style={styles.loadingState}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
@@ -60,7 +73,8 @@ export function NearbyRoutesList({
   // Render error state
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+      <View style={containerStyle}>
+        {listHeader}
         <View style={styles.errorState}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
@@ -72,7 +86,8 @@ export function NearbyRoutesList({
   // Render empty state
   if (routes.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+      <View style={containerStyle}>
+        {listHeader}
         <View style={styles.emptyState}>
           <Ionicons name="map-outline" size={48} color={colors.textMuted} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -146,7 +161,7 @@ export function NearbyRoutesList({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+    <View style={[styles.container, fillContainer && { flex: 1, height: undefined }, { backgroundColor: colors.cardBackground }]}>
       <View style={styles.header}>
         <Text style={[styles.headerText, { color: colors.textPrimary }]}>
           {t('recording.nearbyRoutes')}
@@ -163,6 +178,7 @@ export function NearbyRoutesList({
         horizontal={false}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={listHeader ?? undefined}
       />
     </View>
   );

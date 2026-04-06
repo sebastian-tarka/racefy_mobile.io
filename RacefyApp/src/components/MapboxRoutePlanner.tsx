@@ -3,8 +3,9 @@
  * Tap to add waypoints, renders route polyline from Directions API preview
  */
 
-import React, { useRef, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useRef, useCallback, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
 import { logger } from '../services/logger';
@@ -25,30 +26,54 @@ try {
   logger.debug('gps', 'Mapbox SDK not available for route planner');
 }
 
+export type RoutePlannerMapStyle = 'outdoors' | 'streets' | 'satellite';
+
+export interface MapboxRoutePlannerHandle {
+  /** Fly the camera to the given coordinates. */
+  flyTo: (lat: number, lng: number, zoom?: number) => void;
+}
+
 interface MapboxRoutePlannerProps {
   waypoints: RouteWaypoint[];
   routeGeometry: GeoJSONLineString | null;
   isLoadingPreview: boolean;
   onMapTap: (lat: number, lng: number) => void;
   onWaypointDrag?: (index: number, lat: number, lng: number) => void;
+  /** Fixed height in px. Omit to let the component fill its parent (flex: 1). */
   height?: number;
+  /** Initial map center. Used until the user adds waypoints. */
+  initialCenter?: { lat: number; lng: number } | null;
+  /** Map style variant. Defaults to 'outdoors'. */
+  mapStyleType?: RoutePlannerMapStyle;
 }
 
-export function MapboxRoutePlanner({
+export const MapboxRoutePlanner = forwardRef<MapboxRoutePlannerHandle, MapboxRoutePlannerProps>(function MapboxRoutePlanner({
   waypoints,
   routeGeometry,
   isLoadingPreview,
   onMapTap,
   onWaypointDrag,
-  height = 400,
-}: MapboxRoutePlannerProps) {
+  height,
+  initialCenter,
+  mapStyleType = 'outdoors',
+}, ref) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
 
+  useImperativeHandle(ref, () => ({
+    flyTo: (lat: number, lng: number, zoom: number = 15) => {
+      cameraRef.current?.setCamera({
+        centerCoordinate: [lng, lat],
+        zoomLevel: zoom,
+        animationDuration: 600,
+      });
+    },
+  }), []);
+
   if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
     return (
-      <View style={[styles.fallback, { height, backgroundColor: colors.cardBackground }]}>
+      <View style={[styles.fallback, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
         <Text style={{ color: colors.textSecondary }}>Mapbox not available</Text>
       </View>
     );
@@ -61,6 +86,21 @@ export function MapboxRoutePlanner({
       onMapTap(lat, lng);
     }
   }, [onMapTap]);
+
+  // Center on user location once when map first becomes ready (and there are no waypoints yet)
+  const didInitialCenterRef = useRef(false);
+  useEffect(() => {
+    if (!mapReady || !cameraRef.current) return;
+    if (didInitialCenterRef.current) return;
+    if (waypoints.length > 0) return;
+    if (!initialCenter) return;
+    cameraRef.current.setCamera({
+      centerCoordinate: [initialCenter.lng, initialCenter.lat],
+      zoomLevel: 14,
+      animationDuration: 600,
+    });
+    didInitialCenterRef.current = true;
+  }, [mapReady, initialCenter, waypoints.length]);
 
   // Fit camera to all waypoints + route
   useEffect(() => {
@@ -112,9 +152,14 @@ export function MapboxRoutePlanner({
       }
     : null;
 
-  const mapStyle = isDark
-    ? 'mapbox://styles/mapbox/dark-v11'
-    : 'mapbox://styles/mapbox/outdoors-v12';
+  const mapStyle =
+    mapStyleType === 'satellite'
+      ? 'mapbox://styles/mapbox/satellite-streets-v12'
+      : mapStyleType === 'streets'
+        ? 'mapbox://styles/mapbox/streets-v12'
+        : isDark
+          ? 'mapbox://styles/mapbox/dark-v11'
+          : 'mapbox://styles/mapbox/outdoors-v12';
 
   const routeColor = isDark ? '#34d399' : '#10b981';
   const waypointColor = isDark ? '#60a5fa' : '#3b82f6';
@@ -122,7 +167,7 @@ export function MapboxRoutePlanner({
   const endColor = isDark ? '#fb7185' : '#ef4444';
 
   return (
-    <View style={{ height }}>
+    <View style={height ? { height } : { flex: 1 }}>
       <MapboxGL.MapView
         style={styles.map}
         styleURL={mapStyle}
@@ -196,7 +241,7 @@ export function MapboxRoutePlanner({
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   map: {

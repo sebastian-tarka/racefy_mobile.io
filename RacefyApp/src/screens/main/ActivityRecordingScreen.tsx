@@ -35,7 +35,7 @@ import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Event, TrainingWeek } from '../../types/api';
+import type { Event, NearbyRoute, TrainingWeek } from '../../types/api';
 import * as Haptics from 'expo-haptics';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { RootStackParamList, MainTabParamList } from '../../navigation';
@@ -72,7 +72,7 @@ export function ActivityRecordingScreen() {
   // Bottom offset for floating buttons to clear the tab bar (60px + safe area)
   const tabBarHeight = 60 + insets.bottom;
   const fabBottom = tabBarHeight + spacing.md;
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { canUse, tier } = useSubscription();
   const canUseAdvancedStats = canUse('advanced_stats');
   const canUseAiPostOnFinish = canUse('ai_post_on_finish');
@@ -262,6 +262,59 @@ export function ActivityRecordingScreen() {
     handleRouteSelect, handleClearShadowTrack,
   } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
+  // User's saved planned routes (for the route-selection modal). Fetched once
+  // when authenticated; converted to NearbyRoute shape so the existing
+  // selection handler and shadow-track rendering work without changes.
+  const [myPlannedRoutes, setMyPlannedRoutes] = useState<NearbyRoute[]>([]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setMyPlannedRoutes([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await api.getRoutes({ page: 1, per_page: 50 });
+        if (cancelled) return;
+        const converted: NearbyRoute[] = response.data.map((r) => ({
+          id: r.id,
+          title: r.title,
+          distance: r.distance,
+          elevation_gain: r.elevation_gain,
+          duration: r.estimated_duration,
+          sport_type_id: r.sport_type_id,
+          user: {
+            id: user?.id ?? r.user_id,
+            name: user?.name ?? '',
+            username: user?.username ?? '',
+            avatar: (user as any)?.avatar ?? '',
+          },
+          distance_from_user: 0,
+          stats: { likes_count: 0, completion_count: 0 },
+          track_data: r.geometry,
+          created_at: r.created_at,
+        } as unknown as NearbyRoute));
+        setMyPlannedRoutes(converted);
+      } catch (err) {
+        logger.debug('api', 'Failed to fetch my planned routes', { error: err });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, user?.id]);
+
+  // Show all user routes regardless of sport — sport filter on saved routes was
+  // confusing (cycling route + running activity = empty list). User explicitly
+  // picked the route, so trust their choice.
+  const myPlannedRoutesFiltered = myPlannedRoutes;
+
+  // Merged list (my routes first, then nearby) used by both the inline horizontal
+  // panel and the full-screen route-selection modal.
+  const mergedRoutesForPanel = useMemo(() => {
+    const myIds = new Set(myPlannedRoutesFiltered.map((r) => r.id));
+    const nearbyDeduped = nearbyRoutes.filter((r) => !myIds.has(r.id));
+    return [...myPlannedRoutesFiltered, ...nearbyDeduped];
+  }, [myPlannedRoutesFiltered, nearbyRoutes]);
+
   // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
     return milestonesData?.distance_single
@@ -281,29 +334,33 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
-  // Live navigation (Pro feature)
-  const plannedRouteForNav = selectedShadowTrack?.track_data
-    ? {
-        id: selectedShadowTrack.id,
-        user_id: 0,
-        title: selectedShadowTrack.title,
-        sport_type_id: selectedShadowTrack.sport_type_id,
-        profile: 'walking' as const,
-        waypoints: [],
-        geometry: selectedShadowTrack.track_data,
-        distance: selectedShadowTrack.distance,
-        estimated_duration: selectedShadowTrack.duration,
-        elevation_gain: selectedShadowTrack.elevation_gain,
-        elevation_loss: 0,
-        elevation_profile: [],
-        turn_instructions: [],
-        bounds: { min_lat: 0, max_lat: 0, min_lng: 0, max_lng: 0 },
-        is_public: false,
-        usage_count: 0,
-        created_at: selectedShadowTrack.created_at,
-        updated_at: selectedShadowTrack.created_at,
-      }
-    : null;
+  // Live navigation (Pro feature) - memoized to prevent infinite re-renders in useLiveNavigation
+  const plannedRouteForNav = useMemo(
+    () =>
+      selectedShadowTrack?.track_data
+        ? {
+            id: selectedShadowTrack.id,
+            user_id: 0,
+            title: selectedShadowTrack.title,
+            sport_type_id: selectedShadowTrack.sport_type_id,
+            profile: 'walking' as const,
+            waypoints: [],
+            geometry: selectedShadowTrack.track_data,
+            distance: selectedShadowTrack.distance,
+            estimated_duration: selectedShadowTrack.duration,
+            elevation_gain: selectedShadowTrack.elevation_gain,
+            elevation_loss: 0,
+            elevation_profile: [],
+            turn_instructions: [],
+            bounds: { min_lat: 0, max_lat: 0, min_lng: 0, max_lng: 0 },
+            is_public: false,
+            usage_count: 0,
+            created_at: selectedShadowTrack.created_at,
+            updated_at: selectedShadowTrack.created_at,
+          }
+        : null,
+    [selectedShadowTrack?.id, selectedShadowTrack?.track_data]
+  );
 
   const liveNav = useLiveNavigation({
     route: plannedRouteForNav,
@@ -1055,7 +1112,7 @@ export function ActivityRecordingScreen() {
           {/* Nearby routes list (idle state only) */}
           {showNearbyRoutes && (
             <NearbyRoutesHorizontalPanel
-              routes={nearbyRoutes}
+              routes={mergedRoutesForPanel}
               selectedRouteId={selectedShadowTrack?.id ?? null}
               onRouteSelect={handleRouteSelect}
               onClearRoute={handleClearShadowTrack}
@@ -1239,7 +1296,7 @@ export function ActivityRecordingScreen() {
             {/* Nearby routes list (idle state only) */}
             {isIdle && showNearbyRoutesToggle && (
               <NearbyRoutesHorizontalPanel
-                routes={nearbyRoutes}
+                routes={mergedRoutesForPanel}
                 selectedRouteId={selectedShadowTrack?.id ?? null}
                 onRouteSelect={handleRouteSelect}
                 onClearRoute={handleClearShadowTrack}
@@ -1561,7 +1618,7 @@ export function ActivityRecordingScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Routes list */}
+          {/* Routes list — with optional "My routes" section above nearby */}
           <NearbyRoutesList
             routes={nearbyRoutes}
             selectedRouteId={selectedShadowTrack?.id || null}
@@ -1571,6 +1628,98 @@ export function ActivityRecordingScreen() {
             }}
             isLoading={loadingRoutes}
             error={routesError}
+            fillContainer
+            listHeader={
+              <View style={{paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm}}>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm}}>
+                  <Text style={{
+                    color: colors.textPrimary,
+                    fontSize: fontSize.md,
+                    fontWeight: '600',
+                  }}>
+                    {t('recording.myRoutes', 'My routes')} ({myPlannedRoutesFiltered.length})
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setRouteSelectionModalVisible(false);
+                      navigation.navigate('RouteLibrary');
+                    }}
+                  >
+                    <Text style={{color: colors.primary, fontSize: fontSize.sm, fontWeight: '600'}}>
+                      {t('routes.openLibrary', 'Library →')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {myPlannedRoutesFiltered.length === 0 && (
+                  <View style={{
+                    padding: spacing.md,
+                    borderRadius: borderRadius.md,
+                    backgroundColor: colors.background,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderStyle: 'dashed',
+                    marginBottom: spacing.sm,
+                  }}>
+                    <Text style={{color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center'}}>
+                      {t('recording.noSavedRoutes', "You don't have any saved routes yet")}
+                    </Text>
+                  </View>
+                )}
+                {myPlannedRoutesFiltered.length > 0 && (
+                <View>
+                  {myPlannedRoutesFiltered.map((r) => {
+                    const isSelected = selectedShadowTrack?.id === r.id;
+                    return (
+                      <TouchableOpacity
+                        key={`my-${r.id}`}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          padding: spacing.md,
+                          borderRadius: borderRadius.md,
+                          marginBottom: spacing.sm,
+                          borderWidth: isSelected ? 2 : 1,
+                          borderColor: isSelected ? colors.primary : colors.border,
+                          backgroundColor: colors.background,
+                          gap: spacing.sm,
+                        }}
+                        onPress={() => {
+                          handleRouteSelect(r);
+                          setRouteSelectionModalVisible(false);
+                        }}
+                      >
+                        <Ionicons name="bookmark" size={18} color={colors.primary} />
+                        <View style={{flex: 1}}>
+                          <Text style={{color: colors.textPrimary, fontWeight: '600'}} numberOfLines={1}>
+                            {r.title}
+                          </Text>
+                          <Text style={{color: colors.textMuted, fontSize: fontSize.sm}}>
+                            {(r.distance / 1000).toFixed(1)} km
+                            {r.elevation_gain > 0 ? ` · ↑${Math.round(r.elevation_gain)} m` : ''}
+                          </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                )}
+                <View style={{
+                  height: 1,
+                  backgroundColor: colors.border,
+                  marginTop: spacing.sm,
+                  marginBottom: spacing.xs,
+                }} />
+                <Text style={{
+                  color: colors.textPrimary,
+                  fontSize: fontSize.md,
+                  fontWeight: '600',
+                  marginTop: spacing.sm,
+                }}>
+                  {t('recording.nearbyRoutes', 'Nearby routes')}
+                </Text>
+              </View>
+            }
           />
 
           {/* Cancel button at bottom (optional, for better UX) */}

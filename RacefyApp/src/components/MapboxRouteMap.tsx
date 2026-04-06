@@ -32,7 +32,8 @@ try {
 
 interface MapboxRouteMapProps {
   trackData: GeoJSONLineString;
-  activityId: number;
+  /** Optional — only used for analytics + caching key. Saved planned routes have no activity. */
+  activityId?: number;
   height?: number;
   backgroundColor?: string;
   initialZoom?: number;
@@ -135,9 +136,9 @@ export function MapboxRouteMap({
   // Use theme-appropriate background if not provided
   const bgColor = backgroundColor || colors.cardBackground;
 
-  // Track map load for analytics/cost monitoring
+  // Track map load for analytics/cost monitoring (only when tied to an activity)
   useEffect(() => {
-    mapboxAnalytics.trackMapLoad(activityId);
+    if (activityId != null) mapboxAnalytics.trackMapLoad(activityId);
   }, [activityId]);
 
   // Calculate map bounds from trackData

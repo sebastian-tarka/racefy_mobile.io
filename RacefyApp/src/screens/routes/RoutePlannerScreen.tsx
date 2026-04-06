@@ -1,4 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import * as Location from 'expo-location';
+import { logger } from '../../services/logger';
 import {
   View,
   Text,
@@ -18,7 +20,7 @@ import {
   ScreenContainer,
   SportTypeSelector,
 } from '../../components';
-import { MapboxRoutePlanner } from '../../components/MapboxRoutePlanner';
+import { MapboxRoutePlanner, type MapboxRoutePlannerHandle, type RoutePlannerMapStyle } from '../../components/MapboxRoutePlanner';
 import { useRoutePlanner } from '../../hooks/useRoutePlanner';
 import { useTheme } from '../../hooks/useTheme';
 import { formatDistance, formatTotalTime } from '../../utils/formatters';
@@ -53,6 +55,49 @@ export function RoutePlannerScreen({ navigation }: Props) {
   const [sportTypeId, setSportTypeId] = useState<number | null>(null);
   const [isPublic, setIsPublic] = useState(false);
   const [showSaveForm, setShowSaveForm] = useState(false);
+
+  // User location for initial map center
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const mapRef = useRef<MapboxRoutePlannerHandle>(null);
+  const [mapStyleType, setMapStyleType] = useState<RoutePlannerMapStyle>('outdoors');
+
+  const cycleMapStyle = useCallback(() => {
+    const order: RoutePlannerMapStyle[] = ['outdoors', 'streets', 'satellite'];
+    setMapStyleType((prev) => order[(order.indexOf(prev) + 1) % order.length]);
+  }, []);
+
+  const handleLocateMe = useCallback(async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      mapRef.current?.flyTo(pos.coords.latitude, pos.coords.longitude, 15);
+    } catch (err) {
+      logger.debug('gps', 'Locate-me failed', { error: err });
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          logger.debug('gps', 'Route planner: location permission denied');
+          return;
+        }
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        if (cancelled) return;
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      } catch (err) {
+        logger.debug('gps', 'Route planner: failed to get current location', { error: err });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleMapTap = useCallback((lat: number, lng: number) => {
     addWaypoint(lat, lng);
@@ -99,7 +144,7 @@ export function RoutePlannerScreen({ navigation }: Props) {
       />
 
       {!showSaveForm ? (
-        <>
+        <View style={{flex: 1}}>
           {/* Profile toggle */}
           <View style={styles.profileToggle}>
             <TouchableOpacity
@@ -143,54 +188,109 @@ export function RoutePlannerScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
 
-          {/* Map */}
-          <MapboxRoutePlanner
-            waypoints={waypoints}
-            routeGeometry={preview.geometry}
-            isLoadingPreview={isLoadingPreview}
-            onMapTap={handleMapTap}
-            height={350}
-          />
+          {/* Map — fills available space */}
+          <View style={{flex: 1}}>
+            <MapboxRoutePlanner
+              ref={mapRef}
+              waypoints={waypoints}
+              routeGeometry={preview.geometry}
+              isLoadingPreview={isLoadingPreview}
+              onMapTap={handleMapTap}
+              initialCenter={userLocation}
+              mapStyleType={mapStyleType}
+            />
 
-          {/* Hint */}
-          {waypoints.length === 0 && (
-            <View style={styles.hint}>
-              <Ionicons name="finger-print-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                {t('routes.tapToAddWaypoint', 'Tap on the map to add waypoints')}
-              </Text>
+            {/* Floating action buttons: locate me + map style toggle */}
+            <View style={styles.fabColumn} pointerEvents="box-none">
+              <TouchableOpacity
+                style={[styles.fab, { backgroundColor: colors.cardBackground }]}
+                onPress={cycleMapStyle}
+                accessibilityLabel={t('recording.mapStyle', 'Map style')}
+              >
+                <Ionicons
+                  name={
+                    mapStyleType === 'satellite' ? 'earth' :
+                    mapStyleType === 'streets' ? 'map' : 'leaf'
+                  }
+                  size={22}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.fab, { backgroundColor: colors.cardBackground }]}
+                onPress={handleLocateMe}
+                accessibilityLabel={t('routes.locateMe', 'Locate me')}
+              >
+                <Ionicons name="locate" size={22} color={colors.primary} />
+              </TouchableOpacity>
             </View>
-          )}
+          </View>
 
-          {/* Waypoints list */}
-          {waypoints.length > 0 && (
-            <View style={styles.waypointsList}>
-              {waypoints.map((wp, idx) => (
-                <View key={idx} style={[styles.waypointRow, { borderBottomColor: colors.border }]}>
-                  <View style={[
-                    styles.waypointDot,
-                    {
-                      backgroundColor: idx === 0 ? '#22c55e' :
-                        idx === waypoints.length - 1 ? '#ef4444' : '#3b82f6',
-                    },
-                  ]} />
-                  <Text style={[styles.waypointLabel, { color: colors.textPrimary }]}>
-                    {wp.label || `${t('routeDetail.waypoints', 'Waypoint')} ${idx + 1}`}
+          {/* Bottom panel: hint / waypoints / stats / action — always pinned */}
+          <View style={[styles.bottomPanel, {backgroundColor: colors.background, borderTopColor: colors.border}]}>
+            {waypoints.length === 0 && (
+              <View style={styles.hint}>
+                <Ionicons name="finger-print-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+                  {t('routes.tapToAddWaypoint', 'Tap on the map to add waypoints')}
+                </Text>
+              </View>
+            )}
+
+            {waypoints.length > 0 && (
+              <View>
+                {/* Header row with count + scroll hint */}
+                <View style={styles.waypointsHeader}>
+                  <Text style={[styles.waypointsCount, { color: colors.textSecondary }]}>
+                    {waypoints.length} {t('routeDetail.waypoints', 'waypoints').toLowerCase()}
                   </Text>
-                  <TouchableOpacity onPress={() => removeWaypoint(idx)}>
-                    <Ionicons name="close-circle-outline" size={20} color={colors.textSecondary} />
-                  </TouchableOpacity>
+                  {waypoints.length > 2 && (
+                    <View style={styles.scrollHint}>
+                      <Ionicons name="swap-horizontal" size={14} color={colors.textMuted} />
+                      <Text style={[styles.scrollHintText, { color: colors.textMuted }]}>
+                        {t('routes.swipeToSeeAll', 'swipe')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              ))}
-            </View>
-          )}
 
-          {/* Route stats */}
-          {hasRoute && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator
+                  contentContainerStyle={{paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.sm}}
+                >
+                  {waypoints.map((wp, idx) => (
+                    <View key={idx} style={[styles.waypointChip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                      <View style={[
+                        styles.waypointDot,
+                        {
+                          backgroundColor: idx === 0 ? '#22c55e' :
+                            idx === waypoints.length - 1 ? '#ef4444' : '#3b82f6',
+                        },
+                      ]} />
+                      <Text style={[styles.waypointLabel, { color: colors.textPrimary }]}>
+                        {wp.label || `${t('routeDetail.waypoints', 'Waypoint')} ${idx + 1}`}
+                      </Text>
+                      <TouchableOpacity onPress={() => removeWaypoint(idx)}>
+                        <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                  {/* Trailing chevron hint */}
+                  {waypoints.length > 2 && (
+                    <View style={styles.endHint}>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Stats — always visible, show "—" before route is built */}
             <View style={[styles.statsBar, { backgroundColor: colors.cardBackground }]}>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {formatDistance(preview.distance)}
+                  {hasRoute ? formatDistance(preview.distance) : '—'}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                   {t('routeDetail.distance')}
@@ -198,7 +298,7 @@ export function RoutePlannerScreen({ navigation }: Props) {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  ~{formatTotalTime(preview.estimatedDuration)}
+                  {hasRoute ? `~${formatTotalTime(preview.estimatedDuration)}` : '—'}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                   {t('routeDetail.estimatedTime')}
@@ -206,25 +306,24 @@ export function RoutePlannerScreen({ navigation }: Props) {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {preview.elevationGain}m
+                  {hasRoute ? `${preview.elevationGain}m` : '—'}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                   {t('routeDetail.elevation')}
                 </Text>
               </View>
             </View>
-          )}
 
-          {/* Save button */}
-          {hasRoute && (
+            {/* Save button — always rendered, disabled until route is valid */}
             <View style={styles.bottomAction}>
               <Button
                 title={t('common.next', 'Next')}
                 onPress={() => setShowSaveForm(true)}
+                disabled={!hasRoute}
               />
             </View>
-          )}
-        </>
+          </View>
+        </View>
       ) : (
         /* Save form */
         <KeyboardAvoidingView
@@ -323,6 +422,64 @@ const styles = StyleSheet.create({
   profileText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  fabColumn: {
+    position: 'absolute',
+    right: spacing.md,
+    bottom: spacing.md,
+    gap: spacing.sm,
+  },
+  fab: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  bottomPanel: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingBottom: spacing.md,
+  },
+  waypointChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  waypointsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  waypointsCount: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  scrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  scrollHintText: {
+    fontSize: fontSize.xs,
+    fontStyle: 'italic',
+  },
+  endHint: {
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
   },
   hint: {
     flexDirection: 'row',
