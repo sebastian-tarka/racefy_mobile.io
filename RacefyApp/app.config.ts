@@ -1,4 +1,4 @@
-import { ExpoConfig, ConfigContext } from 'expo/config';
+import {ConfigContext, ExpoConfig} from 'expo/config';
 
 // Determine API URL based on APP_ENV
 const getApiUrl = (): string => {
@@ -18,7 +18,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.9.3',
+  version: '1.10.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1.9.3',
+    buildNumber: '1.10.0',
     googleServicesFile: './GoogleService-Info.plist',
     associatedDomains: [
       'applinks:racefy.io',
@@ -81,7 +81,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 15,
+    versionCode: 16,
     googleServicesFile: './google-services.json',
     permissions: [
       'ACCESS_FINE_LOCATION',
