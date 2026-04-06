@@ -1360,6 +1360,28 @@ export function ActivityRecordingScreen() {
               />
             )}
 
+            {/* Start button (idle state, map view) */}
+            {isIdle && (
+              <View
+                pointerEvents="box-none"
+                style={[
+                  styles.mapStartButtonContainer,
+                  { bottom: tabBarHeight + spacing.lg + (showNearbyRoutesToggle ? 180 : 0) },
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.mapStartButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                  onPress={handleStart}
+                  disabled={isLoading || !selectedSport}
+                  activeOpacity={0.85}
+                  accessibilityLabel={t('recording.start')}
+                >
+                  <Ionicons name="play" size={36} color="#fff" />
+                  <Text style={styles.mapStartButtonText}>{t('recording.start')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Recording controls (recording/paused state) */}
             {(isTracking || isPaused) && (
               <RecordingMapControls
@@ -1954,6 +1976,31 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+
+  // Start FAB on map view (idle state)
+  mapStartButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  mapStartButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 999,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  mapStartButtonText: {
+    color: '#fff',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    marginLeft: spacing.sm,
   },
 
   // Nearby routes toggle container and button (matching ViewToggleButton style)
