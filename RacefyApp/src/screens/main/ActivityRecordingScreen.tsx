@@ -336,10 +336,11 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
-  // Capture GPS position at the moment recording starts (for approach-path routing)
+  // Capture GPS position at the moment recording starts (for approach-path routing).
+  // If GPS isn't ready yet at the start moment, retry as soon as currentPosition becomes available.
   const [recordingStartPosition, setRecordingStartPosition] = useState<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    if (status === 'recording' && !recordingStartPosition && currentPosition) {
+    if ((status === 'recording' || status === 'paused') && !recordingStartPosition && currentPosition) {
       setRecordingStartPosition({ lat: currentPosition.lat, lng: currentPosition.lng });
     }
     if (status === 'idle' || status === 'finished') {
@@ -368,7 +369,11 @@ export function ActivityRecordingScreen() {
   // Live navigation (Pro feature) - memoized to prevent infinite re-renders in useLiveNavigation
   const plannedRouteForNav = useMemo(() => {
     if (!selectedShadowTrack?.track_data) return null;
-    // Prefer the merged approach geometry once it's ready (or snapped); otherwise fall back to raw track
+    // Wait until the approach hook has a result — otherwise off-route would fire immediately
+    // because the raw track starts at a different position than the user.
+    if (approach.status !== 'ready' && approach.status !== 'snapped' && approach.status !== 'error') {
+      return null;
+    }
     const geometry = approach.geometry ?? selectedShadowTrack.track_data;
     const turnInstructions = approach.turnInstructions ?? [];
     const distance = approach.totalDistance || selectedShadowTrack.distance;
@@ -395,6 +400,7 @@ export function ActivityRecordingScreen() {
   }, [
     selectedShadowTrack?.id,
     selectedShadowTrack?.track_data,
+    approach.status,
     approach.geometry,
     approach.turnInstructions,
     approach.totalDistance,

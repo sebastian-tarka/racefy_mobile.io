@@ -86,6 +86,11 @@ export function useRouteApproachPath({
     if (nearest.distance <= snapThresholdM) {
       const trimmed = trimRouteFrom(baseCoords, nearest.index, nearest.point);
       const offset = nearest.distanceAlong;
+      logger.info('activity', 'Route approach snapped (within threshold)', {
+        routeId,
+        distanceFromRoute: Math.round(nearest.distance),
+        snapThresholdM,
+      });
       setState({
         status: 'snapped',
         geometry: { type: 'LineString', coordinates: trimmed },
