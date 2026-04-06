@@ -9,7 +9,6 @@
       "distribution": "internal",
       "environment": "development",
       "node": "22.22.0",
-      "prebuildCommand": "node scripts/decode-firebase-config.js",
       "env": {
         "APP_ENV": "development"
       }
@@ -17,7 +16,6 @@
     "staging": {
       "environment": "preview",
       "node": "22.22.0",
-      "prebuildCommand": "node scripts/decode-firebase-config.js",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
@@ -40,7 +38,6 @@
     "production": {
       "environment": "production",
       "node": "22.22.0",
-      "prebuildCommand": "node scripts/decode-firebase-config.js",
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
