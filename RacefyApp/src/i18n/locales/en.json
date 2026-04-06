@@ -1,5 +1,6 @@
 {
   "common": {
+    "rateLimited": "Too many requests, please try again in a moment",
     "loading": "Loading...",
     "loadingMore": "Loading more...",
     "error": "Error",
@@ -158,7 +159,7 @@
       "findEvents": "Events"
     },
     "weeklyStats": {
-      "title": "Your Stats",
+      "title": "This Week",
       "details": "Details →",
       "activities": "Activities",
       "distance": "Distance",
@@ -337,7 +338,7 @@
     "title": "Profile",
     "signInRequired": "Sign in to view profile",
     "signInDescription": "Track your activities and manage your account",
-    "editProfile": "Edit Profile",
+    "editProfile": "Edit",
     "logoutConfirm": "Are you sure you want to logout?",
     "failedToLogout": "Failed to logout",
     "failedToLoad": "Failed to load profile",
@@ -457,6 +458,24 @@
     }
   },
   "events": {
+    "pointsBudget": {
+      "title": "Points budget",
+      "sponsored": "Sponsored",
+      "remaining": "Remaining",
+      "allocated": "Allocated",
+      "pool": "Pool",
+      "estimatedFinishers": "Est. finishers",
+      "exceeded": "Points budget exceeded",
+      "missingData": "Fill required fields to compute the pool",
+      "loading": "Calculating pool...",
+      "disabledHint": "Fill distance/sport/participants to unlock",
+      "prereqTitle": "To compute the points pool, provide:",
+      "prereqSportType": "Sport type",
+      "prereqEffort": "Distance or elevation",
+      "prereqMaxParticipants": "Max participants",
+      "poolReady": "Pool ready",
+      "rewardsLockedHint": "🔒 Fill the fields above to award points"
+    },
     "title": "Events",
     "subtitle": "Discover and join local sports events",
     "loadingEvents": "Loading events...",
@@ -676,6 +695,8 @@
     "discardConfirm": "Are you sure you want to discard this activity? This cannot be undone.",
     "activitySaved": "Activity saved successfully!",
     "activityShared": "Activity saved and shared to your feed!",
+    "noPointsAwarded": "Activity didn't meet the thresholds for points.",
+    "pointsAwarded": "{{points}} points awarded",
     "draftCreated": "Your activity was saved as a draft post. You can review and publish it later.",
     "viewDraft": "View Draft",
     "later": "Later",
@@ -763,6 +784,8 @@
     "importButton": "Import Activity",
     "importing": "Importing...",
     "importSuccess": "Activity imported successfully!",
+    "duplicateTitle": "Activity already exists",
+    "duplicateMessage": "This file (or an activity with the same start time) was already imported.",
     "importFailed": "Failed to import GPX file",
     "invalidFileType": "Please select a .gpx file",
     "selectFileFailed": "Failed to select file",
@@ -813,6 +836,14 @@
     "yesterday": "Yesterday"
   },
   "eventForm": {
+    "tabs": {
+      "basic": "Basics",
+      "scoring": "Scoring",
+      "rewards": "Rewards",
+      "team": "Team",
+      "ai": "AI"
+    },
+    "aiNotAvailable": "AI features are not available on your account.",
     "createTitle": "Create Event",
     "editTitle": "Edit Event",
     "coverImage": "Cover Image",

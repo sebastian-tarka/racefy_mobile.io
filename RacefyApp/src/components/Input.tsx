@@ -10,10 +10,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, borderRadius, fontSize, iconSize, componentSize } from '../theme';
+import { normalizeFieldError } from '../utils/getFieldError';
 
 interface InputProps extends TextInputProps {
   label?: string;
-  error?: string;
+  /**
+   * Error message. Accepts a plain string (from local validation) or a
+   * string array (raw Laravel validation errors). The first item is shown.
+   */
+  error?: string | string[] | null;
   leftIcon?: keyof typeof Ionicons.glyphMap;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
@@ -21,7 +26,7 @@ interface InputProps extends TextInputProps {
 
 export function Input({
   label,
-  error,
+  error: rawError,
   leftIcon,
   rightIcon,
   onRightIconPress,
@@ -33,6 +38,7 @@ export function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  const error = normalizeFieldError(rawError);
   const isPassword = secureTextEntry !== undefined;
   const showPassword = isPassword && isPasswordVisible;
 

@@ -28,6 +28,7 @@ export * from './CountdownTimer';
 export * from './DebugLogsSection';
 export * from './DifficultySelector';
 export * from './OptionSelector';
+export * from './PointsBudgetIndicator';
 export * from './DraftPostCard';
 export * from './DraftsReminderModal';
 export * from './DraftsTab';

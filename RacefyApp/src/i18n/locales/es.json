@@ -1,5 +1,6 @@
 {
   "common": {
+    "rateLimited": "Demasiadas solicitudes, inténtalo de nuevo en un momento",
     "loading": "Cargando...",
     "loadingMore": "Cargando más...",
     "error": "Error",
@@ -158,7 +159,7 @@
       "findEvents": "Eventos"
     },
     "weeklyStats": {
-      "title": "Tus estadísticas",
+      "title": "Esta semana",
       "details": "Detalles →",
       "activities": "Actividades",
       "distance": "Distancia",
@@ -337,7 +338,7 @@
     "title": "Perfil",
     "signInRequired": "Inicia sesión para ver el perfil",
     "signInDescription": "Registra tus actividades y gestiona tu cuenta",
-    "editProfile": "Editar perfil",
+    "editProfile": "Editar",
     "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
     "failedToLogout": "Error al cerrar sesión",
     "failedToLoad": "Error al cargar el perfil",
@@ -457,6 +458,24 @@
     }
   },
   "events": {
+    "pointsBudget": {
+      "title": "Presupuesto de puntos",
+      "sponsored": "Patrocinado",
+      "remaining": "Restante",
+      "allocated": "Asignado",
+      "pool": "Bolsa",
+      "estimatedFinishers": "Finalistas est.",
+      "exceeded": "Presupuesto de puntos excedido",
+      "missingData": "Completa los campos requeridos para calcular la bolsa",
+      "loading": "Calculando bolsa...",
+      "disabledHint": "Completa distancia/deporte/participantes para desbloquear",
+      "prereqTitle": "Para calcular la bolsa de puntos, indica:",
+      "prereqSportType": "Tipo de deporte",
+      "prereqEffort": "Distancia o desnivel",
+      "prereqMaxParticipants": "Máx. participantes",
+      "poolReady": "Bolsa lista",
+      "rewardsLockedHint": "🔒 Completa los campos arriba para asignar puntos"
+    },
     "title": "Eventos",
     "subtitle": "Descubre y únete a eventos deportivos locales",
     "loadingEvents": "Cargando eventos...",
@@ -676,6 +695,8 @@
     "discardConfirm": "¿Estás seguro de que quieres descartar esta actividad? Esto no se puede deshacer.",
     "activitySaved": "¡Actividad guardada exitosamente!",
     "activityShared": "¡Actividad guardada y compartida en tu feed!",
+    "noPointsAwarded": "La actividad no alcanzó los umbrales para puntos.",
+    "pointsAwarded": "{{points}} puntos obtenidos",
     "draftCreated": "Tu actividad fue guardada como borrador. Puedes revisarla y publicarla más tarde.",
     "viewDraft": "Ver borrador",
     "later": "Más tarde",
@@ -764,6 +785,8 @@
     "importing": "Importando...",
     "importSuccess": "¡Actividad importada exitosamente!",
     "importFailed": "Error al importar el archivo GPX",
+    "duplicateTitle": "La actividad ya existe",
+    "duplicateMessage": "Este archivo (o una actividad con la misma hora de inicio) ya fue importado.",
     "invalidFileType": "Por favor selecciona un archivo .gpx",
     "selectFileFailed": "Error al seleccionar el archivo",
     "viewActivity": "Ver actividad"
@@ -813,6 +836,14 @@
     "yesterday": "Ayer"
   },
   "eventForm": {
+    "tabs": {
+      "basic": "Básico",
+      "scoring": "Puntuación",
+      "rewards": "Recompensas",
+      "team": "Equipo",
+      "ai": "IA"
+    },
+    "aiNotAvailable": "Las funciones de IA no están disponibles en tu cuenta.",
     "createTitle": "Crear evento",
     "editTitle": "Editar evento",
     "coverImage": "Imagen de portada",

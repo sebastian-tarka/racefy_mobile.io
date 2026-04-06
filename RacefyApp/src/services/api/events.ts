@@ -73,6 +73,35 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/events/${id}`, { method: 'DELETE' });
     }
 
+    // ============ EVENT POINTS BUDGET ============
+
+    /**
+     * Preview the points budget for given event parameters (no event yet).
+     * Used during event creation/edit to live-validate point_rewards against pool.
+     */
+    async previewPointsBudget(
+      payload: Types.EventPointsBudgetPreviewRequest
+    ): Promise<Types.EventPointsBudget> {
+      const response = await this.request<Types.ApiResponse<Types.EventPointsBudget>>(
+        '/events/points-budget/preview',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        }
+      );
+      return response.data;
+    }
+
+    /**
+     * Get the persisted points budget for an existing event.
+     */
+    async getEventPointsBudget(eventId: number): Promise<Types.EventPointsBudget> {
+      const response = await this.request<Types.ApiResponse<Types.EventPointsBudget>>(
+        `/events/${eventId}/points-budget`
+      );
+      return response.data;
+    }
+
     async registerForEvent(eventId: number): Promise<Types.EventRegistration> {
       const response = await this.request<
         Types.ApiResponse<Types.EventRegistration>

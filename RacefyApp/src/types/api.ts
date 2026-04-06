@@ -1539,6 +1539,39 @@ export interface ApiError {
   errors?: Record<string, string[]>;
   training_week_id?: number; // Present when trying to delete activity linked to training plan
   hint?: string; // Hint message for force deletion
+  /** HTTP status code, attached by the API client before throwing */
+  status?: number;
+}
+
+// ============ EVENT POINTS BUDGET ============
+
+/**
+ * Request payload for POST /api/events/points-budget/preview.
+ * All distances/elevations in meters. max_participants is integer.
+ */
+export interface EventPointsBudgetPreviewRequest {
+  sport_type_id: number;
+  distance?: number | null;
+  elevation_gain?: number | null;
+  target_distance?: number | null;
+  target_elevation?: number | null;
+  max_participants?: number | null;
+  is_sponsored?: boolean;
+}
+
+/**
+ * Response from POST /api/events/points-budget/preview
+ * and GET /api/events/{event}/points-budget.
+ */
+export interface EventPointsBudget {
+  valid: boolean;
+  pool: number;
+  allocated: number;
+  remaining: number;
+  estimated_finishers: number;
+  is_sponsored: boolean;
+  effective_distance: number;
+  effective_elevation: number;
 }
 
 // ============ DEBUG LOGS ============
@@ -1706,7 +1739,12 @@ export type CommentaryStyle =
   | 'statistical'
   | 'motivational';
 
-export type CommentaryLanguage = 'en' | 'pl';
+/**
+ * AI commentary language code (ISO 639-1).
+ * Loosely typed because the backend is the source of truth via
+ * GET /commentary/languages — new languages can be added without a mobile release.
+ */
+export type CommentaryLanguage = string;
 
 export interface StandingsSnapshot {
   position: number;

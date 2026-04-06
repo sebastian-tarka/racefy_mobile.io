@@ -1,24 +1,15 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Switch,
-  Platform,
-  Modal,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useTheme } from '../hooks';
-import { Card } from './Card';
-import { Input } from './Input';
-import { spacing, fontSize, borderRadius } from '../theme';
-import type {
-  CommentaryStyle,
-  CommentaryLanguage,
-} from '../types/api';
+import React, {useEffect, useState} from 'react';
+import {api} from '../services/api';
+import {logger} from '../services/logger';
+import {Modal, Platform, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {useTheme} from '../hooks';
+import {Card} from './Card';
+import {Input} from './Input';
+import {borderRadius, fontSize, spacing} from '../theme';
+import type {CommentaryLanguage, CommentaryStyle,} from '../types/api';
 
 interface CommentarySettingsData {
   enabled: boolean;
@@ -75,10 +66,32 @@ const AVAILABLE_STYLES: Record<
   },
 };
 
-const AVAILABLE_LANGUAGES: Record<CommentaryLanguage, { name: string; flag: string }> = {
-  en: { name: 'English', flag: '🇬🇧' },
-  pl: { name: 'Polski', flag: '🇵🇱' },
+/**
+ * Fallback list used if the API call to /commentary/languages fails or
+ * before it resolves. Backend is the source of truth — anything it returns
+ * will override this.
+ */
+const FALLBACK_LANGUAGES: Record<string, string> = {
+  en: 'English',
+  pl: 'Polski',
+  es: 'Español',
 };
+
+/** Best-effort flag emoji for an ISO 639-1 language code. */
+const LANGUAGE_FLAGS: Record<string, string> = {
+  en: '🇬🇧',
+  pl: '🇵🇱',
+  es: '🇪🇸',
+  de: '🇩🇪',
+  fr: '🇫🇷',
+  it: '🇮🇹',
+  pt: '🇵🇹',
+  cs: '🇨🇿',
+  sk: '🇸🇰',
+  uk: '🇺🇦',
+};
+
+const getLanguageFlag = (code: string): string => LANGUAGE_FLAGS[code] || '🌐';
 
 const INTERVAL_OPTIONS = [5, 10, 15, 30, 60];
 
@@ -97,6 +110,24 @@ export function CommentarySettingsSection({
     windowIndex: number;
     field: 'start' | 'end';
   } | null>(null);
+
+  // Available languages — loaded from backend, fallback to static map
+  const [availableLanguages, setAvailableLanguages] = useState<Record<string, string>>(FALLBACK_LANGUAGES);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getCommentaryLanguages()
+      .then((response) => {
+        if (cancelled) return;
+        if (response?.languages && Object.keys(response.languages).length > 0) {
+          setAvailableLanguages(response.languages);
+        }
+      })
+      .catch((err) => {
+        logger.debug('api', 'Failed to load commentary languages, using fallback', { error: err });
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const updateSetting = <K extends keyof CommentarySettingsData>(
     key: K,
@@ -323,8 +354,9 @@ export function CommentarySettingsSection({
                   {t('commentary.languagesHint', 'Select languages for commentary generation')}
                 </Text>
                 <View style={styles.languageRow}>
-                  {(Object.keys(AVAILABLE_LANGUAGES) as CommentaryLanguage[]).map((lang) => {
-                    const langInfo = AVAILABLE_LANGUAGES[lang];
+                  {Object.keys(availableLanguages).map((lang) => {
+                    const langName = availableLanguages[lang];
+                    const langFlag = getLanguageFlag(lang);
                     const isSelected = value.languages.includes(lang);
                     return (
                       <TouchableOpacity
@@ -342,7 +374,7 @@ export function CommentarySettingsSection({
                         disabled={disabled}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.languageFlag}>{langInfo.flag}</Text>
+                        <Text style={styles.languageFlag}>{langFlag}</Text>
                         <Text
                           style={[
                             styles.languageName,
@@ -351,7 +383,7 @@ export function CommentarySettingsSection({
                             },
                           ]}
                         >
-                          {langInfo.name}
+                          {langName}
                         </Text>
                       </TouchableOpacity>
                     );

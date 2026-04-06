@@ -1684,7 +1684,7 @@ function useLiveActivityInternal() {
     description?: string;
     calories?: number;
     skip_auto_post?: boolean;
-  }): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
+  }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
     if (!state.activity) return null;
 
     isFinishingOrDiscardingRef.current = true;
@@ -1771,7 +1771,7 @@ function useLiveActivityInternal() {
         },
       });
 
-      return { activity, post: response.post };
+      return { activity, post: response.post, points_earned: response.points_earned };
     } catch (error: any) {
       logger.error("activity", "Failed to finish with GPS duration", {
         id: state.activity.id,
@@ -1809,7 +1809,7 @@ function useLiveActivityInternal() {
     description?: string;
     calories?: number;
     skip_auto_post?: boolean;
-  }): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
+  }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
     if (!state.activity) return null;
 
     isFinishingOrDiscardingRef.current = true;
@@ -1891,7 +1891,7 @@ function useLiveActivityInternal() {
         },
       });
 
-      return { activity, post: response.post };
+      return { activity, post: response.post, points_earned: response.points_earned };
     } catch (error: any) {
       logger.error("activity", "Failed to finish with full duration", {
         id: state.activity.id,
@@ -1929,7 +1929,7 @@ function useLiveActivityInternal() {
       description?: string;
       calories?: number;
       skip_auto_post?: boolean;
-    }): Promise<{ activity: Activity; post?: AutoCreatedPost } | null> => {
+    }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
       if (!state.activity) return null;
 
       // Guard: prevent concurrent finish/discard calls
@@ -1965,6 +1965,7 @@ function useLiveActivityInternal() {
           return new Promise<{
             activity: Activity;
             post?: AutoCreatedPost;
+            points_earned?: number;
           } | null>((resolve) => {
             Alert.alert(
               "GPS Tracking Stopped",
@@ -2080,7 +2081,7 @@ function useLiveActivityInternal() {
           },
         });
 
-        return { activity, post: response.post };
+        return { activity, post: response.post, points_earned: response.points_earned };
       } catch (error: any) {
         logger.error("activity", "Failed to finish activity", {
           id: state.activity.id,
@@ -2241,7 +2242,7 @@ interface LiveActivityContextType {
     description?: string;
     calories?: number;
     skip_auto_post?: boolean;
-  }) => Promise<{ activity: Activity; post?: AutoCreatedPost } | null>;
+  }) => Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null>;
   discardTracking: () => Promise<void>;
   clearError: () => void;
   checkExistingActivity: () => Promise<void>;
