@@ -31,6 +31,8 @@ import {
 } from '../../components';
 import { NavigationOverlay } from '../../components/NavigationOverlay';
 import { useLiveNavigation } from '../../hooks/useLiveNavigation';
+import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
+import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
@@ -334,39 +336,85 @@ export function ActivityRecordingScreen() {
   const status = getStatus();
   const distance = currentStats.distance;
 
+  // Capture GPS position at the moment recording starts (for approach-path routing)
+  const [recordingStartPosition, setRecordingStartPosition] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (status === 'recording' && !recordingStartPosition && currentPosition) {
+      setRecordingStartPosition({ lat: currentPosition.lat, lng: currentPosition.lng });
+    }
+    if (status === 'idle' || status === 'finished') {
+      if (recordingStartPosition) setRecordingStartPosition(null);
+    }
+  }, [status, currentPosition, recordingStartPosition]);
+
+  // Map profile from sport (cycling vs walking) for approach routing
+  const approachProfile: 'walking' | 'cycling' = useMemo(() => {
+    const sport = selectedSport?.name?.toLowerCase() ?? '';
+    return sport.includes('bike') || sport.includes('cycl') || sport.includes('rower')
+      ? 'cycling'
+      : 'walking';
+  }, [selectedSport?.name]);
+
+  // Re-route from start position to nearest point on shadow track + merge geometries
+  const approach = useRouteApproachPath({
+    baseGeometry: selectedShadowTrack?.track_data ?? null,
+    baseTurnInstructions: [],
+    routeId: selectedShadowTrack?.id ?? null,
+    startPosition: recordingStartPosition,
+    isRecording: status === 'recording',
+    profile: approachProfile,
+  });
+
   // Live navigation (Pro feature) - memoized to prevent infinite re-renders in useLiveNavigation
-  const plannedRouteForNav = useMemo(
-    () =>
-      selectedShadowTrack?.track_data
-        ? {
-            id: selectedShadowTrack.id,
-            user_id: 0,
-            title: selectedShadowTrack.title,
-            sport_type_id: selectedShadowTrack.sport_type_id,
-            profile: 'walking' as const,
-            waypoints: [],
-            geometry: selectedShadowTrack.track_data,
-            distance: selectedShadowTrack.distance,
-            estimated_duration: selectedShadowTrack.duration,
-            elevation_gain: selectedShadowTrack.elevation_gain,
-            elevation_loss: 0,
-            elevation_profile: [],
-            turn_instructions: [],
-            bounds: { min_lat: 0, max_lat: 0, min_lng: 0, max_lng: 0 },
-            is_public: false,
-            usage_count: 0,
-            created_at: selectedShadowTrack.created_at,
-            updated_at: selectedShadowTrack.created_at,
-          }
-        : null,
-    [selectedShadowTrack?.id, selectedShadowTrack?.track_data]
-  );
+  const plannedRouteForNav = useMemo(() => {
+    if (!selectedShadowTrack?.track_data) return null;
+    // Prefer the merged approach geometry once it's ready (or snapped); otherwise fall back to raw track
+    const geometry = approach.geometry ?? selectedShadowTrack.track_data;
+    const turnInstructions = approach.turnInstructions ?? [];
+    const distance = approach.totalDistance || selectedShadowTrack.distance;
+    return {
+      id: selectedShadowTrack.id,
+      user_id: 0,
+      title: selectedShadowTrack.title,
+      sport_type_id: selectedShadowTrack.sport_type_id,
+      profile: approachProfile,
+      waypoints: [],
+      geometry,
+      distance,
+      estimated_duration: selectedShadowTrack.duration,
+      elevation_gain: selectedShadowTrack.elevation_gain,
+      elevation_loss: 0,
+      elevation_profile: [],
+      turn_instructions: turnInstructions,
+      bounds: { min_lat: 0, max_lat: 0, min_lng: 0, max_lng: 0 },
+      is_public: false,
+      usage_count: 0,
+      created_at: selectedShadowTrack.created_at,
+      updated_at: selectedShadowTrack.created_at,
+    };
+  }, [
+    selectedShadowTrack?.id,
+    selectedShadowTrack?.track_data,
+    approach.geometry,
+    approach.turnInstructions,
+    approach.totalDistance,
+    approachProfile,
+  ]);
 
   const liveNav = useLiveNavigation({
     route: plannedRouteForNav,
     currentPosition,
     currentPace: currentStats.currentPace,
     isRecording: status === 'recording',
+  });
+
+  // Voice + haptic announcements for upcoming turns and off-route warnings
+  useNavigationAnnouncer({
+    nextTurn: liveNav.nextTurn,
+    distanceToTurn: liveNav.distanceToTurn,
+    shouldAnnounce: liveNav.shouldAnnounce,
+    isOffRoute: liveNav.isOffRoute,
+    isActive: liveNav.isActive,
   });
 
   // Accessibility: announce key recording state changes for screen readers
