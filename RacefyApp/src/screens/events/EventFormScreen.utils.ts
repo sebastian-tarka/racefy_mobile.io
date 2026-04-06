@@ -27,18 +27,27 @@ export interface CommentarySettingsData {
     pause_summary_enabled: boolean;
 }
 
-export const defaultCommentarySettings: CommentarySettingsData = {
+/**
+ * Builds default commentary settings preselecting the user's preferred app
+ * language only. Falls back to 'en' when i18n hasn't initialized yet.
+ */
+export const buildDefaultCommentarySettings = (
+    preferredLanguage?: string | null
+): CommentarySettingsData => ({
     enabled: false,
     style: 'exciting',
     token_limit: null,
     interval_minutes: 15,
     auto_publish: true,
-    languages: ['en', 'pl'],
+    languages: [(preferredLanguage || 'en').substring(0, 2)],
     force_participants: false,
     time_windows: [],
     days_of_week: [],
     pause_summary_enabled: true,
-};
+});
+
+/** @deprecated Use buildDefaultCommentarySettings(i18n.language) instead. */
+export const defaultCommentarySettings: CommentarySettingsData = buildDefaultCommentarySettings('en');
 
 export interface FormData {
     title: string;
