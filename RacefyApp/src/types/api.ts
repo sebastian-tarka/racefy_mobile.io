@@ -1730,7 +1730,12 @@ export type CommentaryStyle =
   | 'statistical'
   | 'motivational';
 
-export type CommentaryLanguage = 'en' | 'pl';
+/**
+ * AI commentary language code (ISO 639-1).
+ * Loosely typed because the backend is the source of truth via
+ * GET /commentary/languages — new languages can be added without a mobile release.
+ */
+export type CommentaryLanguage = string;
 
 export interface StandingsSnapshot {
   position: number;

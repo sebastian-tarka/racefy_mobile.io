@@ -39,6 +39,7 @@ import {
 } from '../../types/api';
 import {getFieldError} from '../../utils/getFieldError';
 import {
+    buildDefaultCommentarySettings,
     CommentarySettingsData,
     DatePickerField,
     defaultCommentarySettings,
@@ -52,7 +53,7 @@ import {EventRankingModeSelector} from "../../components/EventRankingModeSelecto
 export function EventFormScreen({navigation, route}: Props) {
     const {eventId} = route.params || {};
     const isEditMode = !!eventId;
-    const {t} = useTranslation();
+    const {t, i18n} = useTranslation();
     const {colors} = useTheme();
     const {canUse} = useSubscription();
     const {sportTypes, isLoading: isSportTypesLoading} = useSportTypes();
@@ -61,7 +62,7 @@ export function EventFormScreen({navigation, route}: Props) {
     const [coverImage, setCoverImage] = useState<string | null>(null);
     const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
     const [commentarySettings, setCommentarySettings] = useState<CommentarySettingsData>(
-        defaultCommentarySettings
+        () => buildDefaultCommentarySettings(i18n.language)
     );
     const [errors, setErrors] = useState<Record<string, string | string[]>>({});
     const [isLoading, setIsLoading] = useState(false);
