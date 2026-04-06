@@ -158,7 +158,7 @@
       "findEvents": "Wydarzenia"
     },
     "weeklyStats": {
-      "title": "Twoje statystyki",
+      "title": "Statystyki tygodnia",
       "details": "Szczegóły →",
       "activities": "Aktywności",
       "distance": "Dystans",
@@ -337,7 +337,7 @@
     "title": "Profil",
     "signInRequired": "Zaloguj się, aby zobaczyć profil",
     "signInDescription": "Śledź swoje aktywności i zarządzaj kontem",
-    "editProfile": "Edytuj profil",
+    "editProfile": "Edytuj",
     "logoutConfirm": "Czy na pewno chcesz się wylogować?",
     "failedToLogout": "Nie udało się wylogować",
     "failedToLoad": "Nie udało się załadować profilu",

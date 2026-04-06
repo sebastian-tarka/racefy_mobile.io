@@ -158,7 +158,7 @@
       "findEvents": "Eventos"
     },
     "weeklyStats": {
-      "title": "Tus estadísticas",
+      "title": "Esta semana",
       "details": "Detalles →",
       "activities": "Actividades",
       "distance": "Distancia",
@@ -337,7 +337,7 @@
     "title": "Perfil",
     "signInRequired": "Inicia sesión para ver el perfil",
     "signInDescription": "Registra tus actividades y gestiona tu cuenta",
-    "editProfile": "Editar perfil",
+    "editProfile": "Editar",
     "logoutConfirm": "¿Estás seguro de que quieres cerrar sesión?",
     "failedToLogout": "Error al cerrar sesión",
     "failedToLoad": "Error al cargar el perfil",
