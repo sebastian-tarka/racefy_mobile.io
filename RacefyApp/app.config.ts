@@ -1,4 +1,24 @@
 import {ConfigContext, ExpoConfig} from 'expo/config';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Decode Firebase config files from base64 EAS env vars (or use existing local files).
+// Runs both locally (when files exist on disk) and on EAS servers (when env vars are set).
+const decodeFirebaseConfig = (envVar: string, outputFile: string): string | undefined => {
+  const outputPath = path.resolve(__dirname, outputFile);
+  if (fs.existsSync(outputPath)) return `./${outputFile}`;
+  const base64 = process.env[envVar];
+  if (!base64) return undefined;
+  try {
+    fs.writeFileSync(outputPath, Buffer.from(base64, 'base64').toString('utf-8'));
+    return `./${outputFile}`;
+  } catch {
+    return undefined;
+  }
+};
+
+const iosGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICE_INFO_PLIST', 'GoogleService-Info.plist');
+const androidGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICES_JSON', 'google-services.json');
 
 // Determine API URL based on APP_ENV
 const getApiUrl = (): string => {
@@ -33,7 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
     buildNumber: '1.10.0',
-    googleServicesFile: './GoogleService-Info.plist',
+    ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
     associatedDomains: [
       'applinks:racefy.io',
       'applinks:app.dev.racefy.io',
@@ -82,7 +102,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
     versionCode: 16,
-    googleServicesFile: './google-services.json',
+    ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [
       'ACCESS_FINE_LOCATION',
       'ACCESS_COARSE_LOCATION',
