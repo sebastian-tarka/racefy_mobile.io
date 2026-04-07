@@ -7,6 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, borderRadius } from '../theme/spacing';
 import { formatTime, formatDistance } from '../utils/formatters';
@@ -26,6 +27,9 @@ interface RecordingMapControlsProps {
   shadowTrackTitle?: string | null;
   onClearShadowTrack?: () => void;
   onSelectShadowTrack?: () => void;
+
+  // Offset from screen bottom (e.g. tab bar height + safe area inset)
+  bottomOffset?: number;
 }
 
 export function RecordingMapControls({
@@ -40,15 +44,24 @@ export function RecordingMapControls({
   shadowTrackTitle,
   onClearShadowTrack,
   onSelectShadowTrack,
+  bottomOffset,
 }: RecordingMapControlsProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  // Fall back to measured tab bar height if parent didn't provide offset
+  let measuredTabBarHeight = 0;
+  try {
+    measuredTabBarHeight = useBottomTabBarHeight();
+  } catch {
+    // Not inside a bottom tab navigator — leave 0
+  }
+  const effectiveBottom = bottomOffset ?? measuredTabBarHeight;
 
   // Shadow track blue color (same as map)
   const shadowTrackColor = isDark ? '#60A5FA' : '#3B82F6';
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground + 'F0' }]}>
+    <View style={[styles.container, { backgroundColor: colors.cardBackground + 'F0', bottom: effectiveBottom }]}>
       {/* Shadow track selection/indicator */}
       {shadowTrackTitle && onClearShadowTrack ? (
         <View style={[styles.shadowTrackChip, { backgroundColor: shadowTrackColor + '20', borderColor: shadowTrackColor }]}>
