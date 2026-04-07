@@ -55,3 +55,19 @@ export const formatTotalTime = (seconds: number): string => {
 export const formatAvgPace = (avgSpeed: number, units: UnitSystem = 'metric'): string => {
   return ucFormatPaceFromSpeed(avgSpeed, units);
 };
+
+/**
+ * Format price with currency symbol using device locale
+ */
+export const formatPrice = (amount: number, currency: string = 'PLN'): string => {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency.toUpperCase()}`;
+  }
+};

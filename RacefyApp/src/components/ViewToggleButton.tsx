@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +24,10 @@ export function ViewToggleButton({
 }: ViewToggleButtonProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Account for bottom tab bar height (60px + safe area bottom inset)
+  const tabBarHeight = 60 + insets.bottom;
 
   const handleToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -33,7 +38,7 @@ export function ViewToggleButton({
 
   return (
     <TouchableOpacity
-      style={[styles.fab, { backgroundColor: colors.primary }]}
+      style={[styles.fab, { backgroundColor: colors.primary, bottom: tabBarHeight + spacing.md }]}
       onPress={handleToggle}
       disabled={disabled}
       accessibilityLabel={t('recording.toggleView')}
@@ -47,7 +52,6 @@ export function ViewToggleButton({
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    bottom: spacing.xxl,
     right: spacing.lg,
     width: 56,
     height: 56,
@@ -59,6 +63,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-    zIndex: 1000,  // Ensure button stays on top
+    zIndex: 1000,
   },
 });

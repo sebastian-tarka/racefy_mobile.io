@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
 import { useCommentarySettings } from '../../hooks/useCommentarySettings';
 import { useGenerateCommentary } from '../../hooks/useGenerateCommentary';
 import { useTranslation } from 'react-i18next';
@@ -84,7 +85,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
         }
       } catch (error) {
         // Silently fail, we'll still show settings
-        console.error('Failed to fetch event:', error);
+        logger.error('general', 'Failed to fetch event', { error });
       } finally {
         if (isMounted) {
           setIsLoadingEvent(false);

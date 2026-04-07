@@ -13,7 +13,9 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, componentSize } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
+import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
 
 interface ActivitySliderCardProps {
@@ -22,68 +24,6 @@ interface ActivitySliderCardProps {
   isAuthenticated?: boolean;
 }
 
-// Sport-themed color palettes
-const sportThemes: Record<string, { gradient: [string, string]; accent: string; icon: keyof typeof Ionicons.glyphMap }> = {
-  running: {
-    gradient: ['#10b981', '#059669'],
-    accent: '#34d399',
-    icon: 'walk',
-  },
-  cycling: {
-    gradient: ['#3b82f6', '#1d4ed8'],
-    accent: '#60a5fa',
-    icon: 'bicycle',
-  },
-  swimming: {
-    gradient: ['#06b6d4', '#0891b2'],
-    accent: '#22d3ee',
-    icon: 'water',
-  },
-  gym: {
-    gradient: ['#f97316', '#ea580c'],
-    accent: '#fb923c',
-    icon: 'barbell',
-  },
-  yoga: {
-    gradient: ['#a855f7', '#7c3aed'],
-    accent: '#c084fc',
-    icon: 'body',
-  },
-  hiking: {
-    gradient: ['#84cc16', '#65a30d'],
-    accent: '#a3e635',
-    icon: 'trail-sign',
-  },
-  default: {
-    gradient: ['#6366f1', '#4f46e5'],
-    accent: '#818cf8',
-    icon: 'fitness',
-  },
-};
-
-const getSportTheme = (sportName?: string) => {
-  if (!sportName) return sportThemes.default;
-  const name = sportName.toLowerCase();
-
-  if (name.includes('run') || name.includes('jog')) return sportThemes.running;
-  if (name.includes('cycl') || name.includes('bike')) return sportThemes.cycling;
-  if (name.includes('swim')) return sportThemes.swimming;
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness')) return sportThemes.gym;
-  if (name.includes('yoga') || name.includes('pilates')) return sportThemes.yoga;
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return sportThemes.hiking;
-
-  return sportThemes.default;
-};
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes} min`;
-};
 
 
 export function ActivitySliderCard({
@@ -97,7 +37,7 @@ export function ActivitySliderCard({
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
-  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_map_url || null;
+  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_preview_url || activity.route_map_url || null;
   const backgroundImage = fixStorageUrl(rawBackgroundImage);
   const hasBackgroundImage = !!backgroundImage;
 
@@ -139,7 +79,7 @@ export function ActivitySliderCard({
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.statText}>{formatDuration(activity.duration)}</Text>
+          <Text style={styles.statText}>{formatDurationCompact(activity.duration)}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
@@ -276,9 +216,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sportBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: componentSize.sportBadge,
+    height: componentSize.sportBadge,
+    borderRadius: componentSize.sportBadge / 2,
     backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -298,7 +238,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   mainStatValue: {
-    fontSize: 48,
+    fontSize: componentSize.heroStatFont,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: -1,

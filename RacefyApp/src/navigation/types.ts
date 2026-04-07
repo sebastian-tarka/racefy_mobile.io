@@ -25,10 +25,11 @@ export type RootStackParamList = {
   PostDetail: { postId: number; focusComments?: boolean };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };
-  ActivityShare: { activityId: number };
+  ActivityShare: { activityId: number; hasGpsTrack?: boolean; photos?: import('../types/api').Photo[] };
   UserProfile: { username: string };
   Settings: undefined;
   BlockedUsers: undefined;
+  PrivacyZones: undefined;
   EditProfile: undefined;
   ImpersonateUser: undefined;
   Notifications: undefined;
@@ -40,8 +41,10 @@ export type RootStackParamList = {
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;
+  Paywall: { feature?: string } | undefined;
   Leaderboard: undefined;
   PointHistory: undefined;
+  Insights: undefined;
   // Training Plans
   TrainingCalibration: undefined;
   ProgramLoading: { programId: number };
@@ -49,6 +52,22 @@ export type RootStackParamList = {
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
   WeekFeedback: { weekId: number };
+  // Training Reminders
+  TrainingReminders: undefined;
+  // Teams
+  TeamsList: undefined;
+  TeamDetail: { slug: string; initialTab?: 'members' | 'stats' | 'events' };
+  TeamForm: { teamId?: number };
+  InviteMember: { teamId: number };
+  TeamsLeaderboard: undefined;
+  // Feedback
+  FeedbackList: undefined;
+  FeedbackForm: undefined;
+  FeedbackDetail: { feedbackId: number };
+  // Routes
+  RouteLibrary: undefined;
+  RouteDetail: { routeId: number };
+  RoutePlanner: undefined;
 };
 
 declare global {

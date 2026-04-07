@@ -9,11 +9,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, iconSize, componentSize } from '../theme';
+import { normalizeFieldError } from '../utils/getFieldError';
 
 interface InputProps extends TextInputProps {
   label?: string;
-  error?: string;
+  /**
+   * Error message. Accepts a plain string (from local validation) or a
+   * string array (raw Laravel validation errors). The first item is shown.
+   */
+  error?: string | string[] | null;
   leftIcon?: keyof typeof Ionicons.glyphMap;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
@@ -21,7 +26,7 @@ interface InputProps extends TextInputProps {
 
 export function Input({
   label,
-  error,
+  error: rawError,
   leftIcon,
   rightIcon,
   onRightIconPress,
@@ -33,6 +38,7 @@ export function Input({
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  const error = normalizeFieldError(rawError);
   const isPassword = secureTextEntry !== undefined;
   const showPassword = isPassword && isPasswordVisible;
 
@@ -50,7 +56,7 @@ export function Input({
         {leftIcon && (
           <Ionicons
             name={leftIcon}
-            size={20}
+            size={iconSize.md}
             color={colors.textSecondary}
             style={styles.leftIcon}
           />
@@ -75,7 +81,7 @@ export function Input({
           >
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={20}
+              size={iconSize.md}
               color={colors.textSecondary}
             />
           </TouchableOpacity>
@@ -86,7 +92,7 @@ export function Input({
             style={styles.rightIcon}
             disabled={!onRightIconPress}
           >
-            <Ionicons name={rightIcon} size={20} color={colors.textSecondary} />
+            <Ionicons name={rightIcon} size={iconSize.md} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
@@ -113,7 +119,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 48,
+    height: componentSize.inputHeight,
     fontSize: fontSize.md,
   },
   inputWithLeftIcon: {

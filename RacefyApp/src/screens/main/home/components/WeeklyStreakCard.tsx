@@ -1,16 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
+import { triggerHaptic } from '../../../../hooks/useHaptics';
 import { spacing, borderRadius, fontSize, fontWeight } from '../../../../theme';
+import type { TrainingDay } from '../../../../hooks/useTrainingReminders';
 
 interface WeeklyStreakCardProps {
   activeDays: boolean[];
   todayIndex: number;
   goalDays: number;
   completedDays: number;
+  trainingDays?: TrainingDay[];
+  plannedTrainingDays?: number[];  // From API: current week's training activities (0=Mon, 6=Sun)
+  onToggleTrainingDay?: (day: TrainingDay) => void;
+  onSettingsPress?: () => void;
 }
 
 export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
@@ -18,6 +24,10 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
   todayIndex,
   goalDays,
   completedDays,
+  trainingDays,
+  plannedTrainingDays,
+  onToggleTrainingDay,
+  onSettingsPress,
 }) => {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -29,8 +39,10 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
     const isToday = index === todayIndex;
     const isFuture = index > todayIndex;
     const isMissed = !isCompleted && !isToday && !isFuture;
+    const isTrainingDay = trainingDays?.includes(index as TrainingDay);
+    const isPlannedDay = plannedTrainingDays?.includes(index);
 
-    return (
+    const dayContent = (
       <View key={index} style={styles.dayContainer}>
         {isCompleted ? (
           <LinearGradient
@@ -50,22 +62,33 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
                   ? colors.border
                   : isToday
                   ? colors.cardBackground
+                  : isPlannedDay && isFuture
+                  ? colors.primary + '12'
                   : colors.borderLight,
-                borderWidth: isToday ? 2 : 0,
-                borderColor: colors.primary,
+                borderWidth: isToday ? 2 : (isTrainingDay || (isPlannedDay && isFuture)) ? 1.5 : 0,
+                borderColor: isToday ? colors.primary : colors.primaryLight,
                 borderStyle: isToday ? 'dashed' : 'solid',
               },
             ]}
           >
-            {isMissed && <Text style={{ color: colors.textMuted }}>–</Text>}
+            {isPlannedDay && !isCompleted && !isMissed && (
+              <Ionicons name="barbell-outline" size={14} color={colors.primaryLight} />
+            )}
+            {!isPlannedDay && isTrainingDay && !isToday && !isMissed && (
+              <View style={[styles.trainingDot, { backgroundColor: colors.primaryLight }]} />
+            )}
+            {isMissed && !isPlannedDay && <Text style={{ color: colors.textMuted }}>–</Text>}
+            {isMissed && isPlannedDay && (
+              <Ionicons name="barbell-outline" size={14} color={colors.textMuted} />
+            )}
           </View>
         )}
         <Text
           style={[
             styles.dayLabel,
             {
-              color: isToday ? colors.primary : colors.textMuted,
-              fontWeight: isToday ? fontWeight.bold : fontWeight.medium,
+              color: isToday ? colors.primary : (isTrainingDay || isPlannedDay) ? colors.primary : colors.textMuted,
+              fontWeight: isToday || isTrainingDay || isPlannedDay ? fontWeight.bold : fontWeight.medium,
             }
           ]}
         >
@@ -73,6 +96,23 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
         </Text>
       </View>
     );
+
+    if (onToggleTrainingDay) {
+      return (
+        <TouchableOpacity
+          key={index}
+          onPress={() => {
+            triggerHaptic();
+            onToggleTrainingDay(index as TrainingDay);
+          }}
+          activeOpacity={0.7}
+        >
+          {dayContent}
+        </TouchableOpacity>
+      );
+    }
+
+    return dayContent;
   };
 
   return (
@@ -84,9 +124,16 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
             {t('home.weeklyStreak.title')}
           </Text>
         </View>
-        <Text style={[styles.progress, { color: colors.orange }]}>
-          {t('home.weeklyStreak.progress', { completed: completedDays, goal: goalDays })}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text style={[styles.progress, { color: colors.orange }]}>
+            {t('home.weeklyStreak.progress', { completed: completedDays, goal: goalDays })}
+          </Text>
+          {onSettingsPress && (
+            <TouchableOpacity onPress={onSettingsPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.daysGrid}>
@@ -118,6 +165,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.semibold,
@@ -144,5 +196,10 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+  },
+  trainingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });

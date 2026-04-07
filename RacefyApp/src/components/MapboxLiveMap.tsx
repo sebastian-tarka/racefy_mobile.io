@@ -6,7 +6,7 @@
  * Shows live route polyline, user location marker, GPS signal indicator, and optional shadow track.
  */
 
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-native';
 import * as Location from 'expo-location';
 import { logger } from '../services/logger';
@@ -57,6 +57,8 @@ export type MapStyleType = 'outdoors' | 'streets' | 'satellite';
 
 export interface MapboxLiveMapProps {
   livePoints: GpsPoint[];
+  /** Version counter for livePoints — triggers useMemo recompute without array reference change */
+  livePointsVersion?: number;
   currentPosition: {
     lat: number;
     lng: number;
@@ -74,6 +76,10 @@ export interface MapboxLiveMapProps {
   shadowTrack?: GeoJSONLineString | null;
   selectedRouteId?: number | null;
   onRouteSelect?: (route: NearbyRoute) => void;
+  onFollowUserChanged?: (following: boolean) => void;
+
+  // Planned route (for live navigation)
+  plannedRoute?: GeoJSONLineString | null;
 }
 
 /**
@@ -82,6 +88,7 @@ export interface MapboxLiveMapProps {
  */
 export function MapboxLiveMap({
   livePoints,
+  livePointsVersion,
   currentPosition,
   height,
   gpsSignalQuality,
@@ -91,6 +98,8 @@ export function MapboxLiveMap({
   nearbyRoutes,
   shadowTrack,
   selectedRouteId,
+  onFollowUserChanged,
+  plannedRoute,
 }: MapboxLiveMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -99,7 +108,26 @@ export function MapboxLiveMap({
   const [previewLocation, setPreviewLocation] = useState<{ lat: number; lng: number } | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
+  const [isFollowing, setIsFollowing] = useState(followUser);
+  const prevFollowUserRef = useRef(followUser);
+
   const mapboxAvailable = !!MapboxGL && !!MAPBOX_ACCESS_TOKEN;
+
+  // Sync isFollowing when parent explicitly changes followUser (e.g. re-center button)
+  useEffect(() => {
+    if (followUser !== prevFollowUserRef.current) {
+      setIsFollowing(followUser);
+      prevFollowUserRef.current = followUser;
+    }
+  }, [followUser]);
+
+  // Handle user interaction with the map (pan/zoom) — stop following
+  const handleUserInteraction = useCallback(() => {
+    if (isFollowing) {
+      setIsFollowing(false);
+      onFollowUserChanged?.(false);
+    }
+  }, [isFollowing, onFollowUserChanged]);
 
   // Fetch current location for preview when currentPosition is null (idle state)
   useEffect(() => {
@@ -123,6 +151,8 @@ export function MapboxLiveMap({
   const displayPosition = currentPosition || previewLocation;
 
   // Build GeoJSON LineString from livePoints
+  // Depends on livePointsVersion (cheap number comparison) instead of array reference
+  // to avoid O(n) copy on every render from duration timer
   const routeGeoJSON = useMemo(() => {
     if (livePoints.length < 2) return null;
 
@@ -134,7 +164,8 @@ export function MapboxLiveMap({
         coordinates: livePoints.map(p => [p.lng, p.lat]),
       },
     };
-  }, [livePoints]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [livePointsVersion]);
 
   // Note: Map load analytics tracked by parent when activityId is available
   // No trackMapLoad(0) call here - activityId 0 is invalid and API rejects it
@@ -240,16 +271,16 @@ export function MapboxLiveMap({
         attributionEnabled={false}
         compassEnabled={false}
         onDidFinishLoadingMap={onMapReadyInternal}
+        onTouchStart={handleUserInteraction}
       >
-        {/* Camera follows user position */}
-        {followUser && (
-          <MapboxGL.Camera
-            ref={cameraRef}
-            centerCoordinate={[displayPosition.lng, displayPosition.lat]}
-            zoomLevel={15}
-            animationMode="none"
-          />
-        )}
+        {/* Camera follows user position — stops when user pans/zooms */}
+        <MapboxGL.Camera
+          ref={cameraRef}
+          centerCoordinate={isFollowing ? [displayPosition.lng, displayPosition.lat] : undefined}
+          zoomLevel={isFollowing ? 15 : undefined}
+          animationMode={isFollowing ? 'easeTo' : 'none'}
+          animationDuration={isFollowing ? 500 : 0}
+        />
 
         {/* All nearby routes as gray base layer */}
         {validNearbyRoutes.map(route => {
@@ -319,6 +350,42 @@ export function MapboxLiveMap({
             </MapboxGL.ShapeSource>
           );
         })()}
+
+        {/* Planned route polyline (for live navigation) */}
+        {plannedRoute && plannedRoute.coordinates.length > 1 && (
+          <MapboxGL.ShapeSource
+            id="planned-route"
+            shape={{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: plannedRoute.coordinates,
+              },
+            }}
+          >
+            <MapboxGL.LineLayer
+              id="planned-route-border"
+              style={{
+                lineColor: isDark ? '#1e40af' : '#1e3a8a',
+                lineWidth: 8,
+                lineOpacity: 0.4,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+            <MapboxGL.LineLayer
+              id="planned-route-line"
+              style={{
+                lineColor: isDark ? '#60a5fa' : '#3b82f6',
+                lineWidth: 5,
+                lineOpacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round',
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        )}
 
         {/* Shadow track polyline with border (recording/paused state only) */}
         {validShadowTrack && livePoints.length > 0 && (

@@ -3,6 +3,7 @@
     "loading": "Ładowanie...",
     "loadingMore": "Ładowanie więcej...",
     "error": "Błąd",
+    "rateLimited": "Zbyt wiele żądań, spróbuj ponownie za chwilę",
     "success": "Sukces",
     "cancel": "Anuluj",
     "delete": "Usuń",
@@ -34,7 +35,8 @@
     "thu": "Czw",
     "fri": "Pt",
     "sat": "Sob",
-    "sun": "Ndz"
+    "sun": "Ndz",
+    "notNow": "Nie teraz"
   },
   "sports": {
     "running": "Bieganie",
@@ -66,21 +68,33 @@
     "tagline": "Społeczność sportowa i fitness"
   },
   "landing": {
-    "heroTitle": "Twoja przygoda z fitnessem zaczyna się tutaj",
-    "heroSubtitle": "Śledź aktywności, łącz się ze sportowcami i dołączaj do ekscytujących wydarzeń sportowych w Twojej okolicy",
-    "whyRacefy": "Dlaczego Racefy?",
+    "heroTitlePart1": "Twoja Sportowa",
+    "heroTitleHighlight": "Społeczność",
+    "heroSubtitle": "Łącz się ze sportowcami, dziel się aktywnościami, dołączaj do wydarzeń i śledź swoją drogę fitness razem.",
+    "login": "Zaloguj",
+    "signUp": "Rejestracja",
+    "getStartedFree": "Zacznij za darmo",
+    "exploreEvents": "Zobacz wydarzenia",
     "features": {
-      "track": {
-        "title": "Śledź aktywności",
-        "description": "Nagrywaj treningi z GPS, monitoruj postępy i analizuj swoje wyniki w czasie"
-      },
       "connect": {
-        "title": "Łącz się ze sportowcami",
-        "description": "Dołącz do aktywnej społeczności miłośników fitnessu, dziel się osiągnięciami i motywujcie się nawzajem"
+        "title": "Społeczność",
+        "description": "Obserwuj sportowców, udostępniaj posty i buduj swoją społeczność fitness."
       },
       "events": {
-        "title": "Dołączaj do wydarzeń",
-        "description": "Odkrywaj lokalne wydarzenia sportowe, rejestruj się na zawody i stawiaj sobie nowe cele"
+        "title": "Wydarzenia",
+        "description": "Twórz i dołączaj do lokalnych wydarzeń sportowych, wyścigów i aktywności grupowych."
+      },
+      "track": {
+        "title": "Śledzenie",
+        "description": "Rejestruj aktywności, śledź postępy i świętuj osiągnięcia."
+      },
+      "liveCommentary": {
+        "title": "Komentarz na żywo",
+        "description": "Śledź wydarzenia w czasie rzeczywistym z czatem i komentarzami uczestników i widzów."
+      },
+      "trainingPlans": {
+        "title": "Plany treningowe",
+        "description": "Otrzymuj spersonalizowane plany treningowe AI dopasowane do Twoich celów i poziomu fitness."
       }
     },
     "ctaTitle": "Gotowy do działania?",
@@ -145,7 +159,7 @@
       "findEvents": "Wydarzenia"
     },
     "weeklyStats": {
-      "title": "Twoje statystyki",
+      "title": "Statystyki tygodnia",
       "details": "Szczegóły →",
       "activities": "Aktywności",
       "distance": "Dystans",
@@ -155,7 +169,15 @@
     "weeklyStreak": {
       "title": "Seria tygodniowa",
       "progress": "{{completed}} / {{goal}} dni",
-      "days": ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]
+      "days": [
+        "Pn",
+        "Wt",
+        "Śr",
+        "Cz",
+        "Pt",
+        "Sb",
+        "Nd"
+      ]
     },
     "primaryCta": {
       "startTraining": "Rozpocznij trening"
@@ -198,6 +220,10 @@
     "live": "NA ŻYWO",
     "recentActivities": "Ostatnie aktywności"
   },
+  "network": {
+    "offline": "Brak połączenia z internetem",
+    "backOnline": "Połączono ponownie"
+  },
   "feed": {
     "title": "Aktualności",
     "createPost": "Utwórz post",
@@ -227,9 +253,22 @@
       "activity": "Aktywność",
       "event": "Wydarzenie",
       "sponsored": "Sponsorowane",
-      "reshare": "Udostępnienie"
+      "reshare": "Udostępnienie",
+      "achievement": "Osiągnięcie",
+      "challenge": "Wyzwanie",
+      "digest": "Podsumowanie tygodnia",
+      "milestone": "Kamień milowy"
+    },
+    "achievement": {
+      "rarity": {
+        "legendary": "Legendarny",
+        "epic": "Epicki",
+        "rare": "Rzadki",
+        "common": "Zwykły"
+      }
     },
     "showMore": "Pokaż więcej",
+    "watchAgain": "Obejrzyj ponownie",
     "viewDetails": "Pokaż szczegóły",
     "visibility": {
       "public": "Publiczny",
@@ -289,13 +328,17 @@
     "aiGenerated": "Wygenerowane przez AI",
     "draftBanner": "Ten post jest wersją roboczą i jest widoczny tylko dla Ciebie",
     "loadingDrafts": "Ładowanie wersji roboczych...",
-    "refreshing": "Odświeżanie..."
+    "refreshing": "Odświeżanie...",
+    "reminderTitle": "Masz nieopublikowane wersje robocze",
+    "reminderSubtitle": "Przejrzyj i opublikuj swoje wersje robocze",
+    "viewAll": "Zobacz wszystkie wersje robocze",
+    "dismissReminder": "Później"
   },
   "profile": {
     "title": "Profil",
     "signInRequired": "Zaloguj się, aby zobaczyć profil",
     "signInDescription": "Śledź swoje aktywności i zarządzaj kontem",
-    "editProfile": "Edytuj profil",
+    "editProfile": "Edytuj",
     "logoutConfirm": "Czy na pewno chcesz się wylogować?",
     "failedToLogout": "Nie udało się wylogować",
     "failedToLoad": "Nie udało się załadować profilu",
@@ -322,6 +365,7 @@
     },
     "stats": {
       "posts": "Posty",
+      "totalDistance": "Łącznie",
       "followers": "Obserwujący",
       "following": "Obserwowani",
       "compareWith": "Porównaj z",
@@ -419,6 +463,24 @@
     }
   },
   "events": {
+    "pointsBudget": {
+      "title": "Pula punktów",
+      "sponsored": "Sponsorowane",
+      "remaining": "Pozostało",
+      "allocated": "Przydzielone",
+      "pool": "Pula",
+      "estimatedFinishers": "Szac. ukończenia",
+      "exceeded": "Przekroczono pulę punktów",
+      "missingData": "Uzupełnij wymagane pola, aby obliczyć pulę",
+      "loading": "Obliczanie puli...",
+      "disabledHint": "Uzupełnij dystans/sport/uczestników by odblokować",
+      "prereqTitle": "Aby obliczyć pulę punktów, podaj:",
+      "prereqSportType": "Dyscyplina sportowa",
+      "prereqEffort": "Dystans lub przewyższenie",
+      "prereqMaxParticipants": "Maks. liczba uczestników",
+      "poolReady": "Pula gotowa",
+      "rewardsLockedHint": "🔒 Uzupełnij dane powyżej, aby przyznać punkty"
+    },
     "title": "Wydarzenia",
     "subtitle": "Odkrywaj i dołączaj do lokalnych wydarzeń sportowych",
     "loadingEvents": "Ładowanie wydarzeń...",
@@ -428,11 +490,27 @@
     "createEvent": "Utwórz wydarzenie",
     "failedToLoad": "Nie udało się załadować wydarzeń",
     "filters": {
-      "all": "Wszystkie",
+      "all": "Ogólne",
       "upcoming": "Nadchodzące",
       "ongoing": "Trwające",
       "completed": "Zakończone"
-    }
+    },
+    "stats": {
+      "totalEvents": "Wydarzenia",
+      "participants": "Uczestnicy",
+      "ongoing": "Trwające",
+      "upcoming": "Nadchodzące",
+      "joined": "Dołączone",
+      "completed": "Zakończone",
+      "myCompleted": "Ukończone",
+      "organized": "Organizowane",
+      "podiums": "Podium",
+      "distance": "Dystans",
+      "finishes": "Ukończenia"
+    },
+    "happeningNow": "Trwają teraz",
+    "upcomingEvents": "Nadchodzące wydarzenia",
+    "completedEvents": "Ostatnio zakończone"
   },
   "eventDetail": {
     "title": "Szczegóły wydarzenia",
@@ -481,11 +559,19 @@
     "activities": "Aktywności",
     "moreActivities": "+{{count}} więcej",
     "leaderboard": "Ranking",
+    "rewards": "Nagrody",
+    "rewardsDescription": "Ukończ to wydarzenie i zdobądź punkty do rankingu!",
+    "firstPlace": "1. miejsce",
+    "secondPlace": "2. miejsce",
+    "thirdPlace": "3. miejsce",
+    "finisher": "Ukończenie",
+    "pts": "pkt",
     "tabs": {
       "details": "Szczegóły",
       "commentary": "Komentarz",
       "participants": "Uczestnicy",
-      "leaderboard": "Ranking"
+      "leaderboard": "Ranking",
+      "teams": "Zespoły"
     },
     "eventEnded": "Wydarzenie się zakończyło",
     "eventCancelled": "Wydarzenie zostało anulowane",
@@ -585,6 +671,7 @@
   "recording": {
     "title": "Zapisz aktywność",
     "selectSport": "Wybierz sport",
+    "audioCoach": "Trener głosowy",
     "status": {
       "recording": "Nagrywanie",
       "paused": "Wstrzymano",
@@ -613,6 +700,8 @@
     "discardConfirm": "Czy na pewno chcesz odrzucić tę aktywność? Tego nie można cofnąć.",
     "activitySaved": "Aktywność została zapisana!",
     "activityShared": "Aktywność zapisana i udostępniona na Twoim profilu!",
+    "noPointsAwarded": "Aktywność nie spełniła progów do naliczenia punktów.",
+    "pointsAwarded": "Zdobyto {{points}} pkt",
     "draftCreated": "Twoja aktywność została zapisana jako wersja robocza. Możesz ją przejrzeć i opublikować później.",
     "viewDraft": "Zobacz wersję roboczą",
     "later": "Później",
@@ -663,6 +752,7 @@
     "viewStats": "Widok statystyk",
     "toggleView": "Przełącz widok",
     "routes": "Trasy",
+    "recenter": "Wyśrodkuj mapę",
     "mapStyle": "Styl mapy",
     "mapStyleOutdoors": "Terenowa",
     "mapStyleStreets": "Ulice",
@@ -700,6 +790,8 @@
     "importing": "Importowanie...",
     "importSuccess": "Aktywność została zaimportowana!",
     "importFailed": "Nie udało się zaimportować pliku GPX",
+    "duplicateTitle": "Aktywność już istnieje",
+    "duplicateMessage": "Ten plik (lub aktywność z tym czasem startu) został już zaimportowany.",
     "invalidFileType": "Wybierz plik .gpx",
     "selectFileFailed": "Nie udało się wybrać pliku",
     "viewActivity": "Zobacz aktywność"
@@ -744,9 +836,19 @@
     "deleteConfirm": "Czy na pewno chcesz usunąć tę konwersację?",
     "searchUsers": "Szukaj użytkowników...",
     "noSearchResults": "Nie znaleziono użytkowników",
-    "startingConversation": "Rozpoczynanie rozmowy..."
+    "startingConversation": "Rozpoczynanie rozmowy...",
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj"
   },
   "eventForm": {
+    "tabs": {
+      "basic": "Podstawowe",
+      "scoring": "Scoring",
+      "rewards": "Nagrody",
+      "team": "Drużyna",
+      "ai": "AI"
+    },
+    "aiNotAvailable": "Funkcje AI nie są dostępne dla Twojego konta.",
     "createTitle": "Utwórz wydarzenie",
     "editTitle": "Edytuj wydarzenie",
     "coverImage": "Zdjęcie okładki",
@@ -796,6 +898,8 @@
     "allowMultipleActivities": "Agregacja aktywności",
     "allowMultipleActivitiesDescription": "Pozwól uczestnikom na przesyłanie wielu aktywności, które zostaną zagregowane dla tego wydarzenia",
     "allowMultipleActivitiesToggle": "Zezwól na wiele aktywności",
+    "autoFinalizeResults": "Automatyczna finalizacja wyników",
+    "autoFinalizeResultsDescription": "Automatycznie oblicz wyniki i przyznaj punkty po zakończeniu wydarzenia. Jeśli wyłączone, organizator musi sfinalizować ręcznie.",
     "visibility": "Widoczność",
     "visibilityPublic": "Publiczne",
     "visibilityFollowers": "Tylko obserwujący",
@@ -895,6 +999,8 @@
     "showStatsDesc": "Wyświetlaj statystyki na profilu",
     "allowMessages": "Zezwalaj na wiadomości",
     "allowMessagesDesc": "Kto może wysyłać Ci wiadomości",
+    "shareAchievements": "Udostępniaj osiągnięcia w feedzie",
+    "shareAchievementsDesc": "Gdy zdobędziesz odznakę, post pojawi się automatycznie w feedzie",
     "activityDefaults": "Domyślne ustawienia aktywności",
     "favoriteSport": "Ulubiony sport",
     "favoriteSportDesc": "Domyślny typ sportu dla nowych aktywności",
@@ -911,7 +1017,38 @@
     "noOne": "Nikt",
     "privacySafety": {
       "title": "Prywatność i Bezpieczeństwo",
-      "blockedUsers": "Zablokowani użytkownicy"
+      "blockedUsers": "Zablokowani użytkownicy",
+      "privacyZones": "Strefy prywatności",
+      "feedbackAndBugs": "Opinie i zgłoszenia błędów"
+    },
+    "privacyZones": {
+      "title": "Strefy prywatności",
+      "description": "Ukryj swój dom, pracę i inne wrażliwe lokalizacje ze śladów GPS. Punkty startu i mety w promieniu 200m od strefy będą ukryte przed innymi użytkownikami.",
+      "empty": "Brak stref prywatności. Dodaj strefę, aby ukryć wrażliwe lokalizacje ze śladów aktywności.",
+      "addZone": "Dodaj strefę",
+      "editZone": "Edytuj strefę",
+      "zoneName": "Nazwa strefy",
+      "zoneNamePlaceholder": "np. Dom, Biuro",
+      "zoneType": "Typ strefy",
+      "typeHome": "Dom",
+      "typeWork": "Praca",
+      "typeOther": "Inne",
+      "location": "Lokalizacja",
+      "tapMapToSelect": "Dotknij mapę, aby wybrać lokalizację",
+      "useCurrentLocation": "Użyj aktualnej lokalizacji",
+      "radius": "Promień 200m (automatyczny)",
+      "active": "Aktywna",
+      "inactive": "Nieaktywna",
+      "deleteZone": "Usuń strefę",
+      "deleteConfirm": "Czy na pewno chcesz usunąć tę strefę prywatności? Twoje przyszłe aktywności nie będą chronione w tym obszarze.",
+      "saved": "Strefa prywatności zapisana",
+      "deleted": "Strefa prywatności usunięta",
+      "limitReached": "Osiągnięto limit stref prywatności ({{limit}}). Ulepsz plan, aby dodać więcej.",
+      "suggestions": "Sugerowane strefy",
+      "suggestionsHint": "Na podstawie Twoich aktywności sugerujemy te lokalizacje:",
+      "addSuggestion": "Dodaj",
+      "activities": "{{count}} aktywności",
+      "confidence": "{{value}}% pewności"
     },
     "updateFailed": "Nie udało się zaktualizować ustawień",
     "aiPostsUpdated": "Preferencja postów AI zaktualizowana",
@@ -945,6 +1082,28 @@
       "autoPublish": "Auto-publikuj",
       "autoPublishDescription": "Publikuj posty automatycznie bez sprawdzania (niezalecane)"
     },
+    "audioCoach": {
+      "title": "Trener głosowy",
+      "description": "Otrzymuj komunikaty głosowe o tempie, dystansie i statystykach podczas aktywności.",
+      "enable": "Włącz trenera głosowego",
+      "enableHint": "Komunikaty głosowe co określony dystans",
+      "language": "Język",
+      "interval": "Komunikat co",
+      "style": "Styl trenera",
+      "styles": {
+        "neutral": "Neutralny",
+        "motivational": "Motywacyjny",
+        "coach": "Trener",
+        "minimal": "Minimalny"
+      },
+      "speechRate": "Szybkość mowy",
+      "aiVoice": "Głos AI",
+      "aiVoiceHint": "Użyj naturalnych głosów AI zamiast syntezatora urządzenia",
+      "heartRate": "Ogłaszaj tętno",
+      "splitDelta": "Ogłaszaj porównanie odcinków",
+      "usage": "{{used}} / {{total}} znaków wykorzystanych w tym miesiącu",
+      "preview": "Podgląd"
+    },
     "healthSync": {
       "title": "Synchronizacja tętna",
       "description": "Automatycznie wzbogacaj aktywności o dane tętna z zegarka sportowego.",
@@ -964,6 +1123,16 @@
     "app": "Aplikacja",
     "version": "Wersja",
     "allRightsReserved": "Wszelkie prawa zastrzeżone",
+    "subscriptionSection": "Subskrypcja",
+    "currentPlan": "Obecny plan",
+    "planFree": "Darmowy",
+    "planPlus": "Plus",
+    "planPro": "Pro",
+    "trialBadge": "Trial",
+    "expiresOn": "Wygasa {{date}}",
+    "trialEndsOn": "Trial kończy się {{date}}",
+    "upgradePlan": "Ulepsz plan",
+    "changePlan": "Zmień plan",
     "dangerZone": "Strefa zagrożenia",
     "deleteAccount": "Usuń konto",
     "deleteAccountConfirm": "Ta operacja jest nieodwracalna. Wszystkie Twoje dane zostaną trwale usunięte.",
@@ -973,6 +1142,16 @@
     "passwordRequiredForDelete": "Hasło jest wymagane do usunięcia konta",
     "confirmPassword": "Hasło",
     "enterPasswordToDelete": "Wprowadź hasło, aby potwierdzić",
+    "trainingReminders": {
+      "title": "Przypomnienia treningowe",
+      "remindMe": "Przypominaj o zaplanowanym treningu",
+      "trainingDays": "Dni treningowe",
+      "reminderTime": "Godzina przypomnienia",
+      "pushNotifications": "Powiadomienia push",
+      "pushInfo": "Włącz powiadomienia push, aby otrzymywać przypomnienia o treningu na urządzeniu",
+      "at": "o",
+      "off": "Wył."
+    },
     "adminTools": {
       "title": "Narzędzia administratora",
       "impersonate": "Podszywaj się pod użytkownika"
@@ -1137,6 +1316,7 @@
     "liveActive": "Komentarz na żywo aktywny",
     "nextUpdate": "Następna aktualizacja za",
     "loading": "Ładowanie komentarza...",
+    "fallbackNotice": "Komentarz niedostępny w Twoim języku. Wyświetlam w języku: {{language}}",
     "emptyTitle": "Brak komentarzy",
     "emptyMessage": "Komentarze pojawią się w miarę postępu wydarzenia",
     "disabledTitle": "Komentarz jest wyłączony",
@@ -1289,7 +1469,18 @@
     "retry": "Ponów",
     "shareImage": "Udostępnij z obrazem",
     "shareTextOnly": "Udostępnij tylko tekst",
-    "selectFormatFirst": "Najpierw wybierz format obrazu"
+    "selectFormatFirst": "Najpierw wybierz format obrazu",
+    "mapMode": "Mapa trasy",
+    "photoMode": "Zdjęcie + Trasa",
+    "selectPhoto": "Wybierz zdjęcie",
+    "selectPhotoHint": "Wybierz lub wgraj zdjęcie, na które zostanie nałożona trasa",
+    "uploadPhoto": "Wgraj",
+    "generatingOverlay": "Generowanie obrazu...",
+    "photoOverlayPreview": "Podgląd zdjęcia z trasą",
+    "photoOverlayFailed": "Nie udało się wygenerować obrazu ze zdjęciem",
+    "savedToGallery": "Obraz zapisany w galerii!",
+    "saveFailed": "Nie udało się zapisać obrazu",
+    "saveToGallery": "Zapisz w galerii"
   },
   "training": {
     "title": "Plany Treningowe",
@@ -1327,6 +1518,13 @@
     "loading": {
       "title": "Generowanie Twojego Planu",
       "subtitle": "Nasza AI tworzy spersonalizowany plan treningowy specjalnie dla Ciebie. Zwykle trwa to 5-10 sekund."
+    },
+    "programSelector": {
+      "weekProgress": "Tydzień {{current}}/{{total}}",
+      "active": "aktywny",
+      "paused": "wstrzymany",
+      "newProgram": "+ Nowy",
+      "upgrade": "Ulepsz"
     },
     "weeksList": {
       "title": "Tygodnie Treningowe",
@@ -1582,5 +1780,418 @@
       "followers": "Obserwujący",
       "private": "Prywatny"
     }
+  },
+  "batteryOptimization": {
+    "title": "Włącz nieograniczone śledzenie GPS",
+    "subtitle": "Aby aktywność była śledzona dokładnie, wyłącz optymalizację baterii dla Racefy. Inaczej Android może wstrzymać GPS w tle.",
+    "step1": "Naciśnij \"Otwórz ustawienia\" poniżej",
+    "step2": "Wybierz \"Bateria\"",
+    "step3": "Wybierz \"Optymalizacja baterii\" lub \"Optymalizuj użycie baterii\"",
+    "step4": "Znajdź Racefy i ustaw \"Nie optymalizuj\" lub \"Brak ograniczeń\"",
+    "openSettings": "Otwórz ustawienia aplikacji",
+    "dismiss": "Zrobię to później"
+  },
+  "maintenance": {
+    "title": "Prace serwisowe",
+    "defaultMessage": "Trwają zaplanowane prace serwisowe. Aplikacja wróci wkrótce.",
+    "estimatedEnd": "Przewidywane zakończenie:",
+    "retry": "Sprawdź ponownie",
+    "today": "dziś"
+  },
+  "subscription": {
+    "choosePlan": "Wybierz Plan",
+    "current": "Aktualny",
+    "trialActive": "Trial Plus aktywny — {{days}} dni pozostało",
+    "trialEndsIn": "Trial kończy się za {{days}} dni",
+    "upgradeRequired": "Wymagany Upgrade",
+    "upgradeRequiredDesc": "Ta funkcja nie jest dostępna w Twoim obecnym planie. Ulepsz plan, aby ją odblokować.",
+    "viewPlans": "Zobacz Plany",
+    "featureLocked": "Funkcja Premium",
+    "upgradeToUnlock": "Ulepsz plan, aby odblokować",
+    "upgradeTo": "Ulepsz do {{plan}}",
+    "restorePurchases": "Przywróć Zakupy",
+    "status": "Subskrypcja",
+    "plan": "Plan",
+    "trialLabel": "Trial",
+    "expiresAt": "Wygasa",
+    "manageSub": "Zarządzaj Subskrypcją",
+    "availablePlans": "Dostępne Plany",
+    "compareFeatures": "Porównaj Wszystkie Funkcje",
+    "month": "miesiąc",
+    "year": "rok",
+    "monthly": "Miesięcznie",
+    "yearly": "Rocznie",
+    "yearlyDiscount": "Rocznie -20%",
+    "perMonth": "/mies.",
+    "perYear": "/rok",
+    "mostPopular": "Najpopularniejszy",
+    "currentPlan": "Aktualny Plan",
+    "selectPlan": "Wybierz Plan",
+    "contactSupport": "Pytania o plany?",
+    "unlimited": "Bez limitu",
+    "free": "Darmowy",
+    "purchaseSuccess": "Witaj w Premium!",
+    "purchaseSuccessDesc": "Twoja subskrypcja jest aktywna. Korzystaj ze wszystkich funkcji premium!",
+    "purchaseFailed": "Zakup nie mógł zostać ukończony. Spróbuj ponownie.",
+    "restoreSuccess": "Zakupy Przywrócone",
+    "restoreSuccessDesc": "Twoje poprzednie zakupy zostały przywrócone.",
+    "restoreEmpty": "Brak Zakupów",
+    "restoreEmptyDesc": "Nie znaleziono poprzednich zakupów dla tego konta.",
+    "restoreFailed": "Nie udało się przywrócić zakupów. Spróbuj ponownie.",
+    "features": {
+      "ai_posts_monthly": "Posty AI",
+      "ai_post_on_finish": "Post AI po aktywności",
+      "events_monthly": "Eventy",
+      "event_prizes": "Nagrody eventowe",
+      "event_ai_commentary": "Komentarz AI",
+      "training_summaries": "Podsumowania treningów",
+      "advanced_stats": "Zaawansowane statystyki",
+      "gpx_export": "Eksport GPX",
+      "share_link_permanent": "Stałe linki udostępniania",
+      "privacy_zones": "Strefy prywatności",
+      "training_programs": "Plany treningowe",
+      "active_training_programs": "Aktywne plany treningowe",
+      "exclusive_badges": "Ekskluzywne odznaki",
+      "points_multiplier": "Mnożnik punktów",
+      "teams_max": "Zespoły",
+      "team_members_max": "Członkowie zespołu",
+      "coaching_hints_bulk": "Hurtowe wskazówki",
+      "audio_coach_ai": "Trener audio AI",
+      "insights_advanced": "Zaawansowane analizy",
+      "ad_free": "Bez reklam"
+    },
+    "featureDescriptions": {
+      "ai_posts_monthly": "Pozwól AI tworzyć angażujące posty o Twoich aktywnościach.",
+      "ai_post_on_finish": "Automatycznie generuj post po zakończeniu aktywności.",
+      "events_monthly": "Twórz więcej eventów każdego miesiąca.",
+      "event_prizes": "Dodaj nagrody, aby Twoje eventy były bardziej ekscytujące.",
+      "event_ai_commentary": "Otrzymuj komentarz AI na żywo podczas eventów.",
+      "training_summaries": "Otrzymuj szczegółowe tygodniowe podsumowania treningów.",
+      "advanced_stats": "Odblokuj strefy tempa, analizę tętna i metryki obciążenia.",
+      "gpx_export": "Eksportuj aktywności jako pliki GPX do innych aplikacji.",
+      "share_link_permanent": "Twórz stałe linki udostępniania aktywności.",
+      "privacy_zones": "Ustaw więcej stref prywatności, aby ukryć lokalizację.",
+      "training_programs": "Uzyskaj dostęp do większej liczby planów treningowych.",
+      "active_training_programs": "Prowadź kilka planów treningowych jednocześnie.",
+      "exclusive_badges": "Odblokuj ekskluzywne odznaki na swoim profilu.",
+      "points_multiplier": "Zdobywaj punkty szybciej dzięki bonusowi mnożnika."
+    },
+    "tapToUpgrade": "Kliknij, aby ulepszyć"
+  },
+  "insights": {
+    "title": "Profil treningowy",
+    "subtitle": "Twoje statystyki i analiza treningów",
+    "updatedAt": "Zaktualizowano: {{date}}",
+    "empty": {
+      "title": "Brak danych",
+      "message": "Ukończ pierwszą aktywność, aby zobaczyć profil treningowy"
+    },
+    "locked": {
+      "availableIn": "Dostępne w planie {{tier}}",
+      "upgrade": "Ulepsz plan"
+    },
+    "summary": {
+      "title": "Podsumowanie aktywności",
+      "activities": "Aktywności",
+      "distance": "Dystans",
+      "duration": "Czas",
+      "elevation": "Przewyższenie",
+      "calories": "Kalorie",
+      "bySport": "Według dyscypliny"
+    },
+    "comparison": {
+      "title": "Porównania",
+      "vsLastWeek": "vs poprzedni tydzień",
+      "vsLastMonth": "vs poprzedni miesiąc",
+      "vs3Months": "vs 3 miesiące temu",
+      "activities": "Aktywności",
+      "distance": "Dystans",
+      "streak": "Seria",
+      "rank": "Ranking"
+    },
+    "streak": {
+      "title": "Serie i regularność",
+      "current": "Aktualna seria",
+      "longest": "Najdłuższa seria",
+      "thisWeek": "Ten tydzień",
+      "thisMonth": "Ten miesiąc",
+      "days": "d",
+      "consistency": "Regularność tygodniowa",
+      "weeks": "tygodnie",
+      "totalActiveDays": "{{count}} aktywnych dni łącznie"
+    },
+    "trends": {
+      "title": "Trendy",
+      "weeklyDistance": "Dystans tygodniowy",
+      "monthlyDistance": "Dystans miesięczny",
+      "weeklyBreakdown": "Podział tygodniowy"
+    },
+    "timePatterns": {
+      "title": "Wzorce czasowe",
+      "preferredTime": "Preferowana pora",
+      "preferredDay": "Preferowany dzień",
+      "hourDistribution": "Rozkład godzinowy",
+      "dayDistribution": "Rozkład dzienny",
+      "weekend": "{{pct}}% w weekendy",
+      "earlyMorning": "Wczesny ranek",
+      "morning": "Rano",
+      "midday": "Południe",
+      "afternoon": "Popołudnie",
+      "evening": "Wieczór",
+      "night": "Noc"
+    },
+    "milestones": {
+      "title": "Kamienie milowe",
+      "upcoming": "Następne cele",
+      "achieved": "Ostatnio osiągnięte"
+    },
+    "weather": {
+      "title": "Profil pogodowy",
+      "preferredTemp": "Preferowana temperatura",
+      "tempDistribution": "Rozkład temperatur",
+      "conditions": "Warunki pogodowe",
+      "temp": {
+        "cold": "Zimno",
+        "cool": "Chłodno",
+        "moderate": "Umiarkowanie",
+        "warm": "Ciepło",
+        "hot": "Gorąco"
+      },
+      "condition": {
+        "clear": "Słonecznie",
+        "cloudy": "Pochmurnie",
+        "rain": "Deszcz",
+        "snow": "Śnieg",
+        "fog": "Mgła",
+        "wind": "Wiatr"
+      }
+    },
+    "routes": {
+      "title": "Ulubione trasy",
+      "fingerprints": "Odciski tras",
+      "uniqueCities": "Unikalne miasta",
+      "topLocations": "Najczęstsze lokalizacje",
+      "avgDistance": "śr. {{km}} km",
+      "repeatedRoutes": "Powtarzane trasy",
+      "loop": "Pętla",
+      "outAndBack": "Tam i z powrotem"
+    }
+  },
+  "teams": {
+    "teams": "Zespoły",
+    "myTeams": "Moje zespoły",
+    "allTeams": "Wszystkie zespoły",
+    "noTeams": "Nie znaleziono zespołów",
+    "noMyTeams": "Nie należysz jeszcze do żadnego zespołu",
+    "loading": "Ładowanie zespołu...",
+    "notFound": "Zespół nie został znaleziony",
+    "failedToLoad": "Nie udało się załadować zespołu",
+    "searchPlaceholder": "Szukaj zespołów...",
+    "createTeam": "Utwórz zespół",
+    "createNewTeam": "Utwórz nowy zespół",
+    "editTeam": "Edytuj zespół",
+    "deleteTeam": "Usuń zespół",
+    "leaveTeam": "Opuść zespół",
+    "joinTeam": "Dołącz do zespołu",
+    "joinTeamModal": "Dołącz kodem",
+    "teamName": "Nazwa zespołu",
+    "teamNamePlaceholder": "Wpisz nazwę zespołu",
+    "teamDescription": "Opis",
+    "teamDescriptionPlaceholder": "Opisz swój zespół (opcjonalnie)",
+    "teamVisibility": "Zespół publiczny",
+    "publicDescription": "Każdy może znaleźć i poprosić o dołączenie",
+    "privateDescription": "Tylko zaproszenia, ukryty w wyszukiwaniu",
+    "public": "Publiczny",
+    "private": "Prywatny",
+    "nameRequired": "Nazwa zespołu jest wymagana",
+    "teamCreated": "Zespół utworzony!",
+    "teamUpdated": "Zespół zaktualizowany",
+    "teamCode": "Kod dołączenia",
+    "teamCodePlaceholder": "Wpisz 6-znakowy kod",
+    "shareCode": "Udostępnij ten kod swoim współzawodnikom",
+    "invalidCode": "Nieprawidłowy kod zespołu",
+    "createFailed": "Nie udało się utworzyć zespołu",
+    "joinFailed": "Nie udało się dołączyć do zespołu",
+    "members": "Członkowie",
+    "membersCount": "{{count}} członków",
+    "captain": "Kapitan",
+    "teamFull": "Pełny",
+    "youAreCaptain": "Jesteś kapitanem",
+    "youAreInThisTeam": "Jesteś w tym zespole",
+    "requestToJoin": "Poproś o dołączenie",
+    "requestSent": "Prośba o dołączenie wysłana",
+    "requestFailed": "Nie udało się wysłać prośby",
+    "invitedToTeam": "Zostałeś zaproszony do tego zespołu",
+    "invitePlayer": "Zaproś członka",
+    "invited": "Zaproszony",
+    "invitationSent": "Zaproszenie wysłane",
+    "pendingInvitation": "Oczekuje na akceptację",
+    "searchUserPlaceholder": "Szukaj użytkowników...",
+    "joinRequests": "Prośby o dołączenie",
+    "transferCaptain": "Przekaż kapitaństwo",
+    "kickMember": "Usuń członka",
+    "confirmLeaveTeam": "Opuścić zespół?",
+    "confirmLeaveTeamDescription": "Czy na pewno chcesz opuścić ten zespół?",
+    "confirmDeleteTeam": "Usunąć zespół?",
+    "confirmDeleteTeamDescription": "Tej akcji nie można cofnąć. Wszystkie dane zespołu zostaną utracone.",
+    "confirmKick": "Usunąć członka?",
+    "confirmKickDescription": "Usunąć {{name}} z zespołu?",
+    "confirmTransferCaptain": "Przekazać kapitaństwo?",
+    "confirmTransferCaptainDescription": "Uczynić {{name}} nowym kapitanem? Staniesz się zwykłym członkiem.",
+    "profileSubtitle": "Utwórz lub dołącz do zespołu",
+    "teamsUsage": "Zespoły: {{used}}/{{max}}",
+    "membersLimitReached": "Limit członków osiągnięty — Ulepsz plan",
+    "avatarOptions": "Avatar zespołu",
+    "changeAvatar": "Zmień avatar",
+    "deleteAvatar": "Usuń avatar",
+    "stats": "Statystyki",
+    "events": "Wydarzenia",
+    "statsPrivate": "Statystyki tego zespołu są prywatne",
+    "statsPrivateDescription": "Dołącz do zespołu, aby zobaczyć statystyki.",
+    "noActivities": "Brak aktywności",
+    "noActivitiesDescription": "Członkowie zespołu muszą ukończyć aktywności, aby zobaczyć tutaj statystyki.",
+    "allTime": "Ogółem",
+    "activities": "Aktywności",
+    "distance": "Dystans",
+    "duration": "Czas",
+    "elevation": "Przewyższenie",
+    "activeMembers": "Aktywni",
+    "calories": "Kalorie",
+    "longestDistance": "Najdłuższy",
+    "longestDuration": "Najdłuższy czas",
+    "memberRanking": "Ranking członków",
+    "sortBy": "Sortuj",
+    "sortDistance": "Dystans",
+    "sortDuration": "Czas",
+    "sortElevation": "Przewyższenie",
+    "sortActivities": "Aktywności",
+    "activityTrends": "Trendy aktywności",
+    "weekly": "Tygodniowo",
+    "monthly": "Miesięcznie",
+    "bySportType": "Wg dyscypliny",
+    "teamLeaderboard": "Ranking zespołów",
+    "noLeaderboardEntries": "Brak zespołów w rankingu",
+    "sortMembers": "Członkowie",
+    "periodThisWeek": "Ten tydzień",
+    "periodLastWeek": "Ostatni tydzień",
+    "periodThisMonth": "Ten miesiąc",
+    "periodLastMonth": "Ostatni miesiąc",
+    "periodThisYear": "Ten rok",
+    "periodLastYear": "Ostatni rok"
+  },
+  "feedback": {
+    "title": "Opinie i zgłoszenia błędów",
+    "myFeedback": "Moje zgłoszenia",
+    "newFeedback": "Zgłoś opinię",
+    "noFeedback": "Nie masz jeszcze żadnych zgłoszeń.",
+    "noFeedbackCta": "Daj nam znać, jak możemy się poprawić!",
+    "allStatuses": "Wszystkie",
+    "repliesCount": "{{count}} odpowiedzi",
+    "repliesCountOne": "1 odpowiedź",
+    "noRepliesShort": "Brak odpowiedzi",
+    "types": {
+      "bug": "Zgłoszenie błędu",
+      "feature_request": "Propozycja funkcji",
+      "feedback": "Ogólna opinia"
+    },
+    "statuses": {
+      "open": "Otwarte",
+      "in_progress": "W trakcie",
+      "waiting_for_user": "Oczekuje na odpowiedź",
+      "resolved": "Rozwiązane",
+      "closed": "Zamknięte"
+    },
+    "priorities": {
+      "low": "Niski",
+      "medium": "Średni",
+      "high": "Wysoki",
+      "critical": "Krytyczny"
+    },
+    "form": {
+      "title": "Wyślij zgłoszenie",
+      "type": "Jakiego rodzaju opinia?",
+      "subject": "Temat",
+      "subjectPlaceholder": "Krótkie podsumowanie problemu...",
+      "description": "Opis",
+      "descriptionPlaceholder": "Opisz problem lub sugestię szczegółowo...",
+      "priority": "Priorytet",
+      "attachments": "Zrzuty ekranu",
+      "addPhoto": "Dodaj zdjęcie",
+      "maxAttachments": "Maksymalnie 5 załączników",
+      "deviceInfoHint": "Informacje o urządzeniu są zbierane automatycznie, aby pomóc nam zdiagnozować problemy.",
+      "submit": "Wyślij zgłoszenie",
+      "submitting": "Wysyłanie...",
+      "subjectRequired": "Temat jest wymagany",
+      "descriptionRequired": "Opis jest wymagany"
+    },
+    "detail": {
+      "replies": "Odpowiedzi",
+      "noReplies": "Brak odpowiedzi. Nasz zespół odpowie wkrótce.",
+      "replyPlaceholder": "Napisz odpowiedź...",
+      "sendReply": "Wyślij",
+      "adminReply": "Zespół",
+      "you": "Ty",
+      "closedNotice": "To zgłoszenie jest zamknięte.",
+      "deviceInfo": "Informacje o urządzeniu",
+      "submittedFrom": "Wysłane z"
+    },
+    "messages": {
+      "submitted": "Zgłoszenie wysłane! Wkrótce je przejrzymy.",
+      "submitFailed": "Nie udało się wysłać zgłoszenia",
+      "replyAdded": "Odpowiedź wysłana",
+      "replyFailed": "Nie udało się wysłać odpowiedzi",
+      "rateLimited": "Poczekaj chwilę przed ponownym wysłaniem",
+      "loadFailed": "Nie udało się załadować zgłoszenia"
+    }
+  },
+  "routes": {
+    "title": "Trasy",
+    "subtitle": "Planuj i odkrywaj trasy biegowe i rowerowe",
+    "noRoutes": "Nie znaleziono tras",
+    "noRoutesMessage": "Nie masz jeszcze żadnych tras",
+    "createRoute": "Zaplanuj trasę",
+    "failedToLoad": "Nie udało się załadować tras",
+    "walking": "Bieg",
+    "cycling": "Rower",
+    "public": "Publiczna",
+    "usedTimes": "Użyta {{count}} razy",
+    "filters": {
+      "my": "Moje trasy",
+      "popular": "Popularne",
+      "nearby": "W pobliżu"
+    },
+    "deleteConfirm": "Czy na pewno chcesz usunąć tę trasę?",
+    "deleted": "Trasa usunięta",
+    "duplicated": "Trasa skopiowana do biblioteki"
+  },
+  "routeDetail": {
+    "title": "Szczegóły trasy",
+    "loading": "Ładowanie trasy...",
+    "notFound": "Nie znaleziono trasy",
+    "failedToLoad": "Nie udało się załadować szczegółów trasy",
+    "distance": "Dystans",
+    "elevation": "Przewyższenie",
+    "elevationLoss": "Spadek",
+    "estimatedTime": "Szac. czas",
+    "profile": "Typ",
+    "waypoints": "Punkty trasy",
+    "sport": "Sport",
+    "createdBy": "Autor",
+    "startNavigation": "Rozpocznij nawigację",
+    "duplicate": "Zapisz do biblioteki",
+    "delete": "Usuń trasę",
+    "edit": "Edytuj trasę",
+    "elevationProfile": "Profil wysokości",
+    "turnInstructions": "Instrukcje skrętów",
+    "noElevationData": "Brak danych o wysokości"
+  },
+  "navigation": {
+    "offRoute": "Poza trasą",
+    "remaining": "Pozostało",
+    "eta": "ETA",
+    "turnLeft": "Skręć w lewo",
+    "turnRight": "Skręć w prawo",
+    "goStraight": "Jedź prosto",
+    "uTurn": "Zawróć"
   }
 }

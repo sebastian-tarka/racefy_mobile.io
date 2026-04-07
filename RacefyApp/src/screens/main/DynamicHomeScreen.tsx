@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,9 +16,11 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
+import { useTrainingReminders } from '../../hooks/useTrainingReminders';
 
 // Services
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { homeAnalytics } from '../../services/homeAnalytics';
 import { navigateForCtaActionFromTab } from '../../utils/homeNavigation';
 import { useRefreshOn } from '../../services/refreshEvents';
@@ -28,7 +30,6 @@ import { spacing } from '../../theme';
 
 // Components
 import {
-  ConnectionErrorBanner,
   HomeHeader,
   LiveActivityBanner,
   PrimaryCTA,
@@ -39,16 +40,10 @@ import {
   CollapsibleTipCard,
   LiveEventsCard,
 } from './home/components';
-import { Loading, FadeInView, ScreenContainer } from '../../components';
+import { Loading, FadeInView, ScreenContainer, DraftsReminderModal } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
-type ConnectionStatus = {
-  checked: boolean;
-  connected: boolean;
-  latency?: number;
-  error?: string;
-};
 
 /**
  * DynamicHomeScreen - Config-driven Home screen implementation.
@@ -73,10 +68,35 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
   const weeklyStreakData = useWeeklyStreak();
+  const trainingReminders = useTrainingReminders();
+  const [plannedTrainingDays, setPlannedTrainingDays] = useState<number[]>([]);
   const insets = useSafeAreaInsets();
 
   // Listen for notification refresh events
   useRefreshOn('notifications', refreshNotifications);
+
+  // Reload training reminders when TrainingRemindersScreen emits refresh (on goBack)
+  useRefreshOn('training', trainingReminders.reload);
+
+  // Fetch planned training days from current program's active week
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    (async () => {
+      try {
+        const program = await api.getCurrentProgram();
+        const activities = program?.current_week?.activities;
+        if (activities && activities.length > 0) {
+          // day_of_week: 1=Monday(0 in our array), 7=Sunday(6)
+          const days = [...new Set(activities.map(a => a.day_of_week - 1))];
+          setPlannedTrainingDays(days);
+        } else {
+          setPlannedTrainingDays([]);
+        }
+      } catch {
+        // No program or error — no markers
+      }
+    })();
+  }, [isAuthenticated]);
 
   // Calculate padding to prevent content from being hidden under floating tab bar
   const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;
@@ -105,13 +125,14 @@ export function DynamicHomeScreen({ navigation }: Props) {
     enableAutoRefresh: true,
   });
 
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
-    checked: false,
-    connected: true,
-  });
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
+
+  // Drafts reminder modal — once per app session
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
+  const [reminderDrafts, setReminderDrafts] = useState<import('../../types/api').DraftPost[]>([]);
+  const draftsReminderShown = useRef(false);
 
   // Get greeting based on time of day
   const getGreeting = useCallback(() => {
@@ -166,6 +187,15 @@ export function DynamicHomeScreen({ navigation }: Props) {
     []
   );
 
+  // Register tip delivery when a new tip appears (fire-and-forget)
+  useEffect(() => {
+    const tip = availableTips[0];
+    if (!tip) return;
+    api.getTip(tip.id).catch(() => {
+      // Ignore errors (403 = already delivered, network issues, etc.)
+    });
+  }, [availableTips[0]?.id]);
+
   // Reload tips when screen comes back into focus (e.g. after returning from TipDetail)
   useFocusEffect(
     useCallback(() => {
@@ -173,27 +203,32 @@ export function DynamicHomeScreen({ navigation }: Props) {
     }, [loadAvailableTips])
   );
 
-  const checkConnection = useCallback(async () => {
-    const result = await api.checkHealth();
-    setConnectionStatus({
-      checked: true,
-      connected: result.connected,
-      latency: result.latency,
-      error: result.error,
-    });
-    return result.connected;
-  }, []);
+  // Check for pending drafts once per session
+  useEffect(() => {
+    if (!isAuthenticated || draftsReminderShown.current) return;
+
+    const checkDrafts = async () => {
+      try {
+        const response = await api.getDrafts({ page: 1, per_page: 5 });
+        logger.debug('general', 'Drafts reminder check', { count: response.data.length });
+        if (response.data.length > 0) {
+          setReminderDrafts(response.data);
+          setShowDraftsModal(true);
+          draftsReminderShown.current = true;
+        }
+      } catch (err) {
+        logger.debug('general', 'Failed to check drafts for reminder', { error: err });
+      }
+    };
+
+    checkDrafts();
+  }, [isAuthenticated]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await checkConnection();
     await Promise.all([refetchConfig(), refetchData(), loadAvailableTips()]);
     setRefreshing(false);
-  }, [checkConnection, refetchConfig, refetchData, loadAvailableTips]);
-
-  useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+  }, [refetchConfig, refetchData, loadAvailableTips]);
 
   // Navigation helpers
   const navigateToAuth = useCallback(
@@ -304,15 +339,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Connection Error Banner - no animation, always visible */}
-        {connectionStatus.checked && !connectionStatus.connected && (
-          <ConnectionErrorBanner
-            error={connectionStatus.error}
-            apiUrl={api.getBaseUrl()}
-            onRetry={checkConnection}
-          />
-        )}
-
         {/* Live Activity Banner - no animation, shows when recording */}
         <LiveActivityBanner
           isActive={isTracking}
@@ -332,6 +358,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
             greeting={getGreeting()}
             isAuthenticated={isAuthenticated}
             unreadCount={unreadCount}
+            userTier={user?.subscription?.tier}
             onNotificationPress={() => {
               navigation.getParent()?.navigate('Notifications');
             }}
@@ -364,6 +391,10 @@ export function DynamicHomeScreen({ navigation }: Props) {
               todayIndex={weeklyStreakData.todayIndex}
               goalDays={weeklyStreakData.goalDays}
               completedDays={weeklyStreakData.completedDays}
+              trainingDays={trainingReminders.enabled ? trainingReminders.days : undefined}
+              plannedTrainingDays={plannedTrainingDays.length > 0 ? plannedTrainingDays : undefined}
+              onToggleTrainingDay={trainingReminders.enabled ? trainingReminders.toggleDay : undefined}
+              onSettingsPress={() => navigation.getParent()?.navigate('TrainingReminders')}
             />
           </FadeInView>
         )}
@@ -423,6 +454,28 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
       </ScrollView>
+
+      {isAuthenticated && (
+        <DraftsReminderModal
+          visible={showDraftsModal}
+          onClose={() => setShowDraftsModal(false)}
+          drafts={reminderDrafts}
+          onPublish={async (postId) => {
+            await api.publishDraft(postId);
+            const remaining = reminderDrafts.filter((d) => d.id !== postId);
+            setReminderDrafts(remaining);
+            if (remaining.length === 0) {
+              setShowDraftsModal(false);
+            }
+          }}
+          onEdit={(draft) => {
+            navigation.getParent()?.navigate('PostForm', { postId: draft.id });
+          }}
+          onViewAll={() => {
+            navigation.navigate('Profile', { initialTab: 'drafts' });
+          }}
+        />
+      )}
     </ScreenContainer>
   );
 }

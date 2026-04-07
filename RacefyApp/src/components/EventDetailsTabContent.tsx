@@ -5,9 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,13 +13,16 @@ import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { CommentSection } from './CommentSection';
+import { KeyboardAwareScreenLayout } from './KeyboardAwareScreenLayout';
 import { CountdownTimer } from './CountdownTimer';
 import { ParticipantAvatarsStack } from './ParticipantAvatarsStack';
 import { LeaderboardEntryRow } from './EventLeaderboardTabContent';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { useAuth } from '../hooks/useAuth';
-import { spacing, fontSize } from '../theme';
+import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
+import { spacing, fontSize, borderRadius } from '../theme';
+import { formatDistance, formatTotalTime } from '../utils/formatters';
 import type { Event, EventRegistration, Activity, LeaderboardEntry, User } from '../types/api';
 import type { ThemeColors } from '../theme/colors';
 
@@ -50,6 +50,7 @@ interface EventDetailsTabContentProps {
   onUserPress?: (username: string) => void;
   onActivityPress: (activityId: number) => void;
   onScroll?: (event: any) => void;
+  onCommentInputReady?: (commentInput: React.ReactNode) => void;
 }
 
 export function EventDetailsTabContent({
@@ -69,31 +70,37 @@ export function EventDetailsTabContent({
   onUserPress,
   onActivityPress,
   onScroll,
+  onCommentInputReady,
 }: EventDetailsTabContentProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistanceShort, formatDistance } = useUnits();
   const { isAuthenticated } = useAuth();
   const { bottom: bottomInset } = useSafeAreaInsets();
+  const isKeyboardVisible = useKeyboardVisible();
   const difficultyColors = getDifficultyColors(colors);
 
   const startDate = new Date(event.starts_at);
   const endDate = new Date(event.ends_at);
 
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoid}
-      behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-      keyboardVerticalOffset={0}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
-        keyboardShouldPersistTaps="handled"
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
+    <CommentSection
+      commentableType="event"
+      commentableId={eventId}
+      onUserPress={
+        isAuthenticated
+          ? (user: User) => onUserPress?.(user.username)
+          : undefined
+      }
+      onInputFocus={onScrollToBottom}
+      renderLayout={({ header, commentList, commentInput }) => (
+        <KeyboardAwareScreenLayout
+          scrollViewRef={scrollViewRef}
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          keyboardVerticalOffset={{ ios: 120, android: 0 }}
+          scrollViewProps={{ onScroll, scrollEventThrottle: 16 }}
+        >
         {/* About */}
         {event.post?.content && (
           <Card style={styles.section}>
@@ -138,6 +145,40 @@ export function EventDetailsTabContent({
             </View>
           </View>
         </Card>
+
+        {/* Event Route */}
+        {event.route && (
+          <Card style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              {t('eventDetail.route', 'Event Route')}
+            </Text>
+            <View style={styles.routeStats}>
+              <View style={styles.routeStat}>
+                <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  {formatDistance(event.route.distance)}
+                </Text>
+              </View>
+              <View style={styles.routeStat}>
+                <Ionicons name="trending-up-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  {event.route.elevation_gain}m
+                </Text>
+              </View>
+              <View style={styles.routeStat}>
+                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                  ~{formatTotalTime(event.route.estimated_duration)}
+                </Text>
+              </View>
+            </View>
+            {event.route.description && (
+              <Text style={[styles.routeDescription, { color: colors.textSecondary }]}>
+                {event.route.description}
+              </Text>
+            )}
+          </Card>
+        )}
 
         {/* Details Grid */}
         <Card style={styles.section}>
@@ -217,6 +258,72 @@ export function EventDetailsTabContent({
             )}
           </View>
         </Card>
+
+        {/* Rewards */}
+        {event.point_rewards && (
+          event.point_rewards.first_place ||
+          event.point_rewards.second_place ||
+          event.point_rewards.third_place ||
+          event.point_rewards.finisher
+        ) && (
+          <Card style={styles.section}>
+            <View style={styles.rewardsHeader}>
+              <Ionicons name="gift-outline" size={22} color={colors.primary} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0, marginLeft: spacing.sm }]}>
+                {t('eventDetail.rewards')}
+              </Text>
+            </View>
+            <Text style={[styles.rewardsSubtitle, { color: colors.textSecondary }]}>
+              {t('eventDetail.rewardsDescription')}
+            </Text>
+            <View style={styles.rewardsGrid}>
+              {event.point_rewards.first_place != null && event.point_rewards.first_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#FFD70015', borderColor: '#FFD700' }]}>
+                  <Text style={styles.rewardMedal}>🥇</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.firstPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.first_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.second_place != null && event.point_rewards.second_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#C0C0C015', borderColor: '#C0C0C0' }]}>
+                  <Text style={styles.rewardMedal}>🥈</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.secondPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.second_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.third_place != null && event.point_rewards.third_place > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: '#CD7F3215', borderColor: '#CD7F32' }]}>
+                  <Text style={styles.rewardMedal}>🥉</Text>
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.thirdPlace')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.third_place} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+              {event.point_rewards.finisher != null && event.point_rewards.finisher > 0 && (
+                <View style={[styles.rewardItem, { backgroundColor: colors.primaryLight + '15', borderColor: colors.primary }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                    {t('eventDetail.finisher')}
+                  </Text>
+                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                    +{event.point_rewards.finisher} {t('eventDetail.pts')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
 
         {/* Registration Info */}
         {(event.registration_opens_at || event.registration_closes_at) && (
@@ -344,28 +451,19 @@ export function EventDetailsTabContent({
 
         {/* Comments */}
         <View style={styles.section}>
-          <CommentSection
-            commentableType="event"
-            commentableId={eventId}
-            onUserPress={
-              isAuthenticated
-                ? (user: User) => onUserPress?.(user.username)
-                : undefined
-            }
-            onInputFocus={onScrollToBottom}
-          />
+          {header}
+          {commentList}
+          {commentInput}
         </View>
 
-        <View style={{ height: 100 + bottomInset }} />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        {!isKeyboardVisible && <View style={{ height: 100 + bottomInset }} />}
+        </KeyboardAwareScreenLayout>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
-    flex: 1,
-  },
   scrollContent: {
     paddingBottom: spacing.lg,
   },
@@ -472,10 +570,65 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingTop: spacing.sm,
   },
+  rewardsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  rewardsSubtitle: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
+  },
+  rewardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  rewardItem: {
+    flex: 1,
+    minWidth: '45%',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  rewardMedal: {
+    fontSize: 28,
+  },
+  rewardPlace: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginTop: spacing.xs,
+  },
+  rewardPoints: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+  },
   leaderboardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
+  },
+  routeStats: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  routeStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  routeStatText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  routeDescription: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.sm,
+    lineHeight: 20,
   },
 });

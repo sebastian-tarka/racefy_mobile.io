@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '../../../components';
+import { Badge, PremiumTeaser } from '../../../components';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
 import type { LiveActivityStats, TrackingStatus } from '../../../hooks/useLiveActivity';
@@ -24,6 +24,7 @@ interface PausedViewProps {
   isLoading: boolean;
   isAuthenticated: boolean;
   skipAutoPost: boolean;
+  canUseAiPostOnFinish: boolean;
   gpsProfile: GpsProfile | null;
   onResume: () => void;
   onSave: () => void;
@@ -41,6 +42,7 @@ export function PausedView({
   isLoading,
   isAuthenticated,
   skipAutoPost,
+  canUseAiPostOnFinish,
   gpsProfile,
   onResume,
   onSave,
@@ -164,7 +166,7 @@ export function PausedView({
 
         {/* Save Options */}
         <View style={styles.saveSection}>
-          {isAuthenticated && (
+          {isAuthenticated && canUseAiPostOnFinish && (
             <TouchableOpacity
               style={styles.skipPostRow}
               onPress={() => onSkipAutoPostChange(!skipAutoPost)}
@@ -182,6 +184,16 @@ export function PausedView({
                 {t('recording.skipAutoPost')}
               </Text>
             </TouchableOpacity>
+          )}
+          {isAuthenticated && !canUseAiPostOnFinish && (
+            <PremiumTeaser feature="ai_post_on_finish">
+              <View style={styles.skipPostRow}>
+                <Switch value={false} disabled />
+                <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
+                  {t('recording.skipAutoPost')}
+                </Text>
+              </View>
+            </PremiumTeaser>
           )}
 
           <TouchableOpacity

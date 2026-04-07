@@ -172,7 +172,7 @@ LOG [general] Handling notification navigation
     "actor_id": "456",
     "actor_name": "John Doe",
     "actor_username": "johndoe",
-    "actor_avatar": "https://api.racefy.app/storage/avatars/johndoe.jpg",
+    "actor_avatar": "https://racefy.io/storage/avatars/johndoe.jpg",
     "timestamp": "2026-02-06T10:30:00Z",
     "likeable_type": "post",
     "likeable_id": "123"

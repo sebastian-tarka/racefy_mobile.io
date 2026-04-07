@@ -5,8 +5,10 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
 import { useEventCommentaryFeed } from '../hooks/useEventCommentaryFeed';
@@ -50,6 +52,11 @@ export function CommentaryFeed({
     isCommentaryEnabled,
     tokensUsed,
     tokenLimit,
+    availableLanguages,
+    activeLanguage,
+    fallbackLanguage,
+    languagesWithContent,
+    changeLanguage,
     isPollingActive,
     secondsUntilRefresh,
     handleBoostChange,
@@ -108,10 +115,67 @@ export function CommentaryFeed({
     );
   };
 
+  const renderFallbackBanner = () => {
+    if (!fallbackLanguage) return null;
+    const langName = availableLanguages[fallbackLanguage] ?? fallbackLanguage.toUpperCase();
+    return (
+      <View
+        style={[
+          styles.fallbackBanner,
+          { backgroundColor: colors.warningLight ?? '#fffbeb', borderColor: colors.warning ?? '#f59e0b' },
+        ]}
+      >
+        <Ionicons name="information-circle-outline" size={16} color={colors.warning ?? '#f59e0b'} />
+        <Text style={[styles.fallbackBannerText, { color: colors.warning ?? '#92400e' }]}>
+          {t('commentary.fallbackNotice', 'Commentary not available in your language. Showing in: {{language}}', {
+            language: langName,
+          })}
+        </Text>
+      </View>
+    );
+  };
+
+  const renderLanguageSwitcher = () => {
+    if (languagesWithContent.length <= 1) return null;
+    return (
+      <View style={styles.languageSwitcher}>
+        {languagesWithContent.map((lang) => {
+          const isActive = lang === activeLanguage;
+          const langName = availableLanguages[lang] ?? lang.toUpperCase();
+          return (
+            <TouchableOpacity
+              key={lang}
+              style={[
+                styles.languageButton,
+                {
+                  backgroundColor: isActive ? colors.primary : colors.cardBackground,
+                  borderColor: isActive ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => changeLanguage(lang)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.languageButtonText,
+                  { color: isActive ? '#fff' : colors.textSecondary },
+                ]}
+              >
+                {langName}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderHeader = () => {
     return (
       <>
         {ListHeaderComponent}
+        {renderFallbackBanner()}
+        {renderLanguageSwitcher()}
         {isPollingActive && (
           <View
             style={[
@@ -305,5 +369,36 @@ const styles = StyleSheet.create({
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
+  },
+  fallbackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+  },
+  fallbackBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  languageSwitcher: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  languageButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  languageButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

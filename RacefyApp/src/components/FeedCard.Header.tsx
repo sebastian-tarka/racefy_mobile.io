@@ -14,9 +14,10 @@ interface MenuBottomSheetProps {
   visible: boolean;
   onClose: () => void;
   onMenu?: (action: 'edit' | 'delete' | 'report') => void;
+  canEdit?: boolean;
 }
 
-function MenuBottomSheet({ isOwner, visible, onClose, onMenu }: MenuBottomSheetProps) {
+function MenuBottomSheet({ isOwner, visible, onClose, onMenu, canEdit = true }: MenuBottomSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -44,15 +45,17 @@ function MenuBottomSheet({ isOwner, visible, onClose, onMenu }: MenuBottomSheetP
 
           {isOwner ? (
             <>
-              <TouchableOpacity
-                style={[bottomSheetStyles.option, { borderBottomColor: colors.borderLight }]}
-                onPress={() => handleAction('edit')}
-              >
-                <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
-                <Text style={[bottomSheetStyles.optionText, { color: colors.textPrimary }]}>
-                  {t('feed.edit')}
-                </Text>
-              </TouchableOpacity>
+              {canEdit && (
+                <TouchableOpacity
+                  style={[bottomSheetStyles.option, { borderBottomColor: colors.borderLight }]}
+                  onPress={() => handleAction('edit')}
+                >
+                  <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
+                  <Text style={[bottomSheetStyles.optionText, { color: colors.textPrimary }]}>
+                    {t('feed.edit')}
+                  </Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={[bottomSheetStyles.option, { borderBottomColor: colors.borderLight }]}
                 onPress={() => handleAction('delete')}
@@ -203,7 +206,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
     <>
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.headerUserBlock} onPress={onUserPress} disabled={!onUserPress}>
-          <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+          <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" showTierBadge={!!post.user?.subscription?.tier && post.user.subscription.tier !== 'free'} tier={post.user?.subscription?.tier} />
           <View style={styles.headerTextBlock}>
             <Text style={[styles.headerName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
             <View style={styles.headerMetaRow}>
@@ -237,7 +240,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
           </TouchableOpacity>
         )}
       </View>
-      <MenuBottomSheet isOwner={isOwner} visible={menuOpen} onClose={onToggleMenu} onMenu={onMenu} />
+      <MenuBottomSheet isOwner={isOwner} visible={menuOpen} onClose={onToggleMenu} onMenu={onMenu} canEdit={type !== 'achievement'} />
     </>
   );
 }

@@ -75,6 +75,9 @@ export function ActivitiesFeedPreview({
       if (saved === 'true') {
         setIsCollapsed(true);
         collapseAnim.setValue(0);
+      } else if (saved === 'false') {
+        setIsCollapsed(false);
+        collapseAnim.setValue(1);
       }
     });
   }, []);

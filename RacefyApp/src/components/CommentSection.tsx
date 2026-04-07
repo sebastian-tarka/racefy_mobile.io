@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   TouchableOpacity,
-  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +19,12 @@ import { emitRefresh } from '../services/refreshEvents';
 import { spacing, fontSize } from '../theme';
 import type { Comment, CommentableType, User, MediaItem } from '../types/api';
 
+interface CommentSectionParts {
+  header: React.ReactNode;
+  commentList: React.ReactNode;
+  commentInput: React.ReactNode;
+}
+
 interface CommentSectionProps {
   commentableType: CommentableType;
   commentableId: number;
@@ -28,6 +32,7 @@ interface CommentSectionProps {
   initialExpanded?: boolean;
   commentsCount?: number;
   onInputFocus?: () => void;
+  renderLayout?: (parts: CommentSectionParts) => React.ReactNode;
 }
 
 export function CommentSection({
@@ -37,6 +42,7 @@ export function CommentSection({
   initialExpanded = false,
   commentsCount = 0,
   onInputFocus,
+  renderLayout,
 }: CommentSectionProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -130,30 +136,30 @@ export function CommentSection({
     emitRefresh('feed');
   };
 
-  const handleLikeComment = async (commentId: number) => {
+  const handleLikeComment = useCallback(async (commentId: number) => {
     await api.likeComment(commentId);
-  };
+  }, []);
 
-  const handleUnlikeComment = async (commentId: number) => {
+  const handleUnlikeComment = useCallback(async (commentId: number) => {
     await api.unlikeComment(commentId);
-  };
+  }, []);
 
-  const handleDeleteComment = async (commentId: number) => {
+  const handleDeleteComment = useCallback(async (commentId: number) => {
     await api.deleteComment(commentId);
     setComments((prev) => {
       // Remove from top-level
       const filtered = prev.filter((c) => c.id !== commentId);
-      // Remove from replies
-      return filtered.map((c) => ({
-        ...c,
-        replies: c.replies?.filter((r) => r.id !== commentId),
-      }));
+      // Only recreate comment objects that actually have the deleted reply
+      return filtered.map((c) => {
+        if (!c.replies?.some((r) => r.id === commentId)) return c;
+        return { ...c, replies: c.replies!.filter((r) => r.id !== commentId) };
+      });
     });
     setLocalCommentsCount((prev) => prev - 1);
     emitRefresh('feed');
-  };
+  }, []);
 
-  const handleEditComment = async (
+  const handleEditComment = useCallback(async (
     commentId: number,
     data: { content: string; deleteMediaId?: number; newMedia?: MediaItem }
   ) => {
@@ -180,6 +186,7 @@ export function CommentSection({
           return {
             ...c,
             content: updatedComment.content,
+            mentions: updatedComment.mentions ?? c.mentions,
             photos: updatedComment.photos || [],
           };
         }
@@ -192,6 +199,7 @@ export function CommentSection({
                 return {
                   ...r,
                   content: updatedComment.content,
+                  mentions: updatedComment.mentions ?? r.mentions,
                   photos: updatedComment.photos || [],
                 };
               }
@@ -202,21 +210,21 @@ export function CommentSection({
         return c;
       })
     );
-  };
+  }, []);
 
-  const handleReply = (comment: Comment) => {
+  const handleReply = useCallback((comment: Comment) => {
     setReplyingTo(comment);
-  };
+  }, []);
 
-  const handleCancelReply = () => {
+  const handleCancelReply = useCallback(() => {
     setReplyingTo(null);
-  };
+  }, []);
 
   const toggleExpanded = () => {
     setIsExpanded((prev) => !prev);
   };
 
-  const renderComment = ({ item }: { item: Comment }) => (
+  const renderComment = useCallback(({ item }: { item: Comment }) => (
     <CommentItem
       comment={item}
       onLike={handleLikeComment}
@@ -226,7 +234,7 @@ export function CommentSection({
       onReply={handleReply}
       onUserPress={onUserPress}
     />
-  );
+  ), [handleLikeComment, handleUnlikeComment, handleDeleteComment, handleEditComment, handleReply, onUserPress]);
 
   const renderEmpty = () => {
     if (isLoading) {
@@ -261,72 +269,78 @@ export function CommentSection({
     );
   };
 
+  const headerNode = (
+    <TouchableOpacity style={styles.header} onPress={toggleExpanded}>
+      <View style={styles.headerLeft}>
+        <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} />
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+          {t('comments.title')}
+        </Text>
+        {localCommentsCount > 0 && (
+          <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.countText}>{localCommentsCount}</Text>
+          </View>
+        )}
+      </View>
+      <Ionicons
+        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+        size={20}
+        color={colors.textMuted}
+      />
+    </TouchableOpacity>
+  );
+
+  const commentListNode = isExpanded ? (
+    isAuthenticated ? (
+      <View style={styles.listContent}>
+        {comments.length === 0
+          ? renderEmpty()
+          : comments.map((item) => (
+              <React.Fragment key={String(item.id)}>
+                {renderComment({ item })}
+              </React.Fragment>
+            ))}
+      </View>
+    ) : (
+      <View style={styles.authPrompt}>
+        <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
+        <Text style={[styles.authPromptTitle, { color: colors.textPrimary }]}>
+          {t('comments.signInRequired')}
+        </Text>
+        <Text style={[styles.authPromptText, { color: colors.textMuted }]}>
+          {t('comments.signInToViewComments')}
+        </Text>
+      </View>
+    )
+  ) : null;
+
+  const commentInputNode = isExpanded && isAuthenticated ? (
+    <CommentInput
+      onSubmit={handleCreateComment}
+      replyingTo={replyingTo}
+      onCancelReply={handleCancelReply}
+      onFocus={onInputFocus}
+      placeholder={
+        replyingTo
+          ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
+          : undefined
+      }
+    />
+  ) : null;
+
+  if (renderLayout) {
+    return renderLayout({
+      header: headerNode,
+      commentList: commentListNode,
+      commentInput: commentInputNode,
+    });
+  }
+
   return (
     <Card style={styles.container}>
-      {/* Header */}
-      <TouchableOpacity style={styles.header} onPress={toggleExpanded}>
-        <View style={styles.headerLeft}>
-          <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} />
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            {t('comments.title')}
-          </Text>
-          {localCommentsCount > 0 && (
-            <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.countText}>{localCommentsCount}</Text>
-            </View>
-          )}
-        </View>
-        <Ionicons
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.textMuted}
-        />
-      </TouchableOpacity>
-
-      {/* Expanded content */}
-      {isExpanded && (
-        <>
-          {isAuthenticated ? (
-            <>
-              {/* Comments list */}
-              <FlatList
-                data={comments}
-                renderItem={renderComment}
-                keyExtractor={(item) => String(item.id)}
-                ListEmptyComponent={renderEmpty}
-                scrollEnabled={false}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                  <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-                }
-              />
-
-              {/* Comment input */}
-              <CommentInput
-                onSubmit={handleCreateComment}
-                replyingTo={replyingTo}
-                onCancelReply={handleCancelReply}
-                onFocus={onInputFocus}
-                placeholder={
-                  replyingTo
-                    ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
-                    : undefined
-                }
-              />
-            </>
-          ) : (
-            <View style={styles.authPrompt}>
-              <Ionicons name="lock-closed-outline" size={32} color={colors.textMuted} />
-              <Text style={[styles.authPromptTitle, { color: colors.textPrimary }]}>
-                {t('comments.signInRequired')}
-              </Text>
-              <Text style={[styles.authPromptText, { color: colors.textMuted }]}>
-                {t('comments.signInToViewComments')}
-              </Text>
-            </View>
-          )}
-        </>
-      )}
+      {headerNode}
+      {commentListNode}
+      {commentInputNode}
     </Card>
   );
 }

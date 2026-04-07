@@ -171,7 +171,7 @@ export function convertApiGpsProfile(apiProfile: GpsProfileApiResponse): GpsProf
     distanceInterval: apiProfile.distance_interval,
     smoothingBufferSize: apiProfile.smoothing_buffer_size,
     // Use API value if available, otherwise default to 0.5 m/s
-    stationarySpeedThreshold: (apiProfile as any).stationary_speed_threshold ?? 0.5,
+    stationarySpeedThreshold: apiProfile.stationary_speed_threshold ?? 0.5,
     // Pace display settings (with sensible defaults if not provided by API)
     paceSmoothingFactor: apiProfile.pace_smoothing_factor ?? 0.3,
     paceWindowSeconds: apiProfile.pace_window_seconds ?? 45,
@@ -199,6 +199,8 @@ export function convertToApiGpsProfile(profile: GpsProfile): GpsProfileRequest {
     time_interval: profile.timeInterval,
     distance_interval: profile.distanceInterval,
     smoothing_buffer_size: profile.smoothingBufferSize,
+    // Stationary detection
+    stationary_speed_threshold: profile.stationarySpeedThreshold,
     // Pace display settings
     pace_smoothing_factor: profile.paceSmoothingFactor,
     pace_window_seconds: profile.paceWindowSeconds,

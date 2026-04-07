@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
 
-export type EventTabType = 'details' | 'commentary' | 'participants' | 'leaderboard';
+export type EventTabType = 'details' | 'commentary' | 'participants' | 'leaderboard' | 'teams';
 
 interface TabConfig {
   label: string;

@@ -5,6 +5,7 @@ import { useTheme } from '../../../../hooks/useTheme';
 import { useUnits } from '../../../../hooks/useUnits';
 import { useActivityStats } from '../../../../hooks/useActivityStats';
 import { spacing, fontSize, borderRadius, fontWeight } from '../../../../theme';
+import { formatDurationCompact } from '../../../../utils/formatDuration';
 import { StatCard } from './StatCard';
 import type { ActivityStats } from '../../../../types/api';
 
@@ -12,17 +13,6 @@ interface WeeklyStatsCardV2Props {
   stats?: ActivityStats | null;  // Opcjonalne statystyki z zewnątrz
   onPress?: () => void;
 }
-
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes}min`;
-};
 
 /**
  * WeeklyStatsCardV2 - Nowa wersja karty statystyk
@@ -87,7 +77,7 @@ export function WeeklyStatsCardV2({ stats: statsFromProps, onPress }: WeeklyStat
       icon: 'time-outline' as const,
       iconColor: colors.textMuted,
       label: t('home.weeklyStats.time'),
-      value: formatDuration(stats.totals.duration),
+      value: formatDurationCompact(stats.totals.duration),
       suffix: '',
       decimals: 0,
       valueColor: colors.textMuted,

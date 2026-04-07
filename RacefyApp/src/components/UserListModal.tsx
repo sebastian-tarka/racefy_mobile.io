@@ -30,6 +30,7 @@ interface UserListModalProps {
   isOwnProfile: boolean;
   onUserPress: (user: User) => void;
   isRestricted?: boolean;
+  pendingRequestsCount?: number;
 }
 
 function UserListModalComponent({
@@ -40,6 +41,7 @@ function UserListModalComponent({
   isOwnProfile,
   onUserPress,
   isRestricted = false,
+  pendingRequestsCount,
 }: UserListModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -355,19 +357,28 @@ function UserListModalComponent({
                     ]}
                     onPress={() => setActiveTab(tab.value)}
                   >
-                    <Text
-                      style={[
-                        styles.tabText,
-                        {
-                          color:
-                            activeTab === tab.value
-                              ? colors.primary
-                              : colors.textSecondary,
-                        },
-                      ]}
-                    >
-                      {tab.label}
-                    </Text>
+                    <View style={styles.tabLabelRow}>
+                      <Text
+                        style={[
+                          styles.tabText,
+                          {
+                            color:
+                              activeTab === tab.value
+                                ? colors.primary
+                                : colors.textSecondary,
+                          },
+                        ]}
+                      >
+                        {tab.label}
+                      </Text>
+                      {tab.value === 'requests' && pendingRequestsCount != null && pendingRequestsCount > 0 && (
+                        <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
+                          <Text style={styles.tabBadgeText}>
+                            {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -391,7 +402,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
-    minHeight: 400,
+    minHeight: '40%',
   },
   handleContainer: {
     alignItems: 'center',
@@ -432,6 +443,24 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: fontSize.md,
     fontWeight: '500',
+  },
+  tabLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tabBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
   },
   loadingContainer: {
     padding: spacing.xxl,

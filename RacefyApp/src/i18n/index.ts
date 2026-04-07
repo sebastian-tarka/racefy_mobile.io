@@ -5,17 +5,20 @@ import { logger } from '../services/logger';
 
 import en from './locales/en.json';
 import pl from './locales/pl.json';
+import es from './locales/es.json';
 
 const LANGUAGE_KEY = '@racefy_language';
 
 export const resources = {
   en: { translation: en },
   pl: { translation: pl },
+  es: { translation: es },
 };
 
 export const supportedLanguages = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'pl', name: 'Polish', nativeName: 'Polski' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];
 
 // Initialize i18n
@@ -36,7 +39,7 @@ i18n.use(initReactI18next).init({
 export const loadSavedLanguage = async (): Promise<void> => {
   try {
     const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'pl')) {
+    if (savedLanguage && Object.keys(resources).includes(savedLanguage)) {
       await i18n.changeLanguage(savedLanguage);
     }
   } catch (error) {

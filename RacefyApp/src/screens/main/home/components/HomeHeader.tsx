@@ -6,17 +6,20 @@ import { Avatar, NotificationBadge } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
 import { spacing, borderRadius, fontSize, fontWeight } from '../../../../theme';
 
+import type { SubscriptionTier } from '../../../../types/api';
+
 interface HomeHeaderProps {
   userName?: string;
   userAvatar?: string | null;
   greeting?: string;
   isAuthenticated: boolean;
   unreadCount?: number;
+  userTier?: SubscriptionTier;
   onNotificationPress?: () => void;
   onAvatarPress?: () => void;
 }
 
-export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, unreadCount = 0, onNotificationPress, onAvatarPress }: HomeHeaderProps) {
+export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, unreadCount = 0, userTier, onNotificationPress, onAvatarPress }: HomeHeaderProps) {
   const { colors } = useTheme();
 
   return (
@@ -31,7 +34,7 @@ export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, un
                 end={{ x: 1, y: 1 }}
                 style={styles.avatarGradient}
               >
-                <Avatar uri={userAvatar} name={userName} size="lg" />
+                <Avatar uri={userAvatar} name={userName} size="lg" showTierBadge={!!userTier && userTier !== 'free'} tier={userTier} />
               </LinearGradient>
             </TouchableOpacity>
             <View style={styles.greetingContainer}>

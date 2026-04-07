@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { SharedPostBlock } from './SharedPostBlock';
@@ -95,6 +96,10 @@ export function ReshareModal({ visible, onClose, post, onSubmit }: ReshareModalP
       animationType="slide"
       onRequestClose={handleClose}
     >
+      <KeyboardAvoidingView
+        style={styles.kavFlex}
+        behavior="padding"
+      >
       <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable
           style={[styles.sheet, { backgroundColor: colors.cardBackground }]}
@@ -187,11 +192,15 @@ export function ReshareModal({ visible, onClose, post, onSubmit }: ReshareModalP
           </View>
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  kavFlex: {
+    flex: 1,
+  },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

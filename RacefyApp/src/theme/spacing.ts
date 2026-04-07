@@ -43,3 +43,26 @@ export const avatarSizes = {
   xl: ms(64),
   xxl: ms(80),
 };
+
+export const iconSize = {
+  xs: ms(14),
+  sm: ms(16),
+  md: ms(20),
+  lg: ms(24),
+  xl: ms(32),
+  xxl: ms(48),
+};
+
+export const componentSize = {
+  buttonMinHeight: ms(48),
+  inputHeight: ms(48),
+  tabBarHeight: ms(60),
+  controlButton: ms(88),
+  startButton: ms(160),
+  cardWidth: ms(200),
+  cardWidthSm: ms(160),
+  sportBadge: ms(36),
+  heroTimerFont: ms(72),
+  heroStatFont: ms(48),
+  platformIcon: ms(40),
+};

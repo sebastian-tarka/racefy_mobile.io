@@ -182,10 +182,12 @@ export function RewardCard({ reward, onPress }: RewardCardProps) {
 
       case 'badge':
         const rarityColor = getBadgeRarityColor(reward.badge.rarity, colors);
+        const emoji = reward.badge.icon_emoji || '🏅';
 
         return (
           <View style={styles.detailsContainer}>
             <View style={[styles.badgeContainer, { borderColor: rarityColor }]}>
+              <Text style={styles.badgeEmojiLarge}>{emoji}</Text>
               <Text style={[styles.badgeName, { color: rarityColor }]}>
                 {reward.badge.name}
               </Text>
@@ -209,12 +211,20 @@ export function RewardCard({ reward, onPress }: RewardCardProps) {
   const title = getTitle();
   const isNew = reward.reward_type === 'badge' && reward.is_new;
 
+  const badgeEmoji = reward.reward_type === 'badge' && reward.badge
+    ? reward.badge.icon_emoji || '🏅'
+    : null;
+
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress}>
       <Card style={styles.card}>
         <View style={styles.header}>
           <View style={[styles.iconContainer, { backgroundColor: `${rewardColor}15` }]}>
-            <Ionicons name={icon} size={24} color={rewardColor} />
+            {badgeEmoji ? (
+              <Text style={styles.badgeIconEmoji}>{badgeEmoji}</Text>
+            ) : (
+              <Ionicons name={icon} size={24} color={rewardColor} />
+            )}
           </View>
           <View style={styles.headerText}>
             <View style={styles.titleRow}>
@@ -387,6 +397,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   // Badge
+  badgeIconEmoji: {
+    fontSize: 24,
+  },
+  badgeEmojiLarge: {
+    fontSize: 40,
+    marginBottom: spacing.sm,
+  },
   badgeContainer: {
     borderWidth: 2,
     borderRadius: borderRadius.lg,

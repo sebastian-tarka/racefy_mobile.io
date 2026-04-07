@@ -7,7 +7,13 @@ import { UsersMixin } from './users';
 import { TrainingMixin } from './training';
 import { MessagingMixin } from './messaging';
 import { MiscMixin } from './misc';
+import { SubscriptionMixin } from './subscription';
+import { InsightsMixin } from './insights';
+import { TeamsMixin } from './teams';
+import { PrivacyZonesMixin } from './privacyZones';
+import { FeedbackMixin } from './feedback';
+import { RoutesMixin } from './routes';
 
-class ApiService extends AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(MiscMixin(ApiBase)))))))) {}
+class ApiService extends RoutesMixin(FeedbackMixin(PrivacyZonesMixin(TeamsMixin(InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))))))))))))) {}
 
 export const api = new ApiService();

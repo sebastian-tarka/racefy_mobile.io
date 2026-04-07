@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -78,10 +78,15 @@ export function CommentItem({
   const isOwnComment = currentUser?.id === (comment.user_id ?? comment.user?.id);
   const currentPhoto = localPhotos[0] || null;
 
-  // Sync local state when comment prop changes
+  // Sync local state when comment prop changes (skip on first render - state already initialized from props)
+  const isMounted = useRef(false);
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     setLocalContent(comment.content);
-    setLocalPhotos(comment.photos || []);
+    setLocalPhotos(comment.photos ?? []);
   }, [comment.content, comment.photos]);
 
   const handleLikeToggle = async () => {
@@ -244,6 +249,8 @@ export function CommentItem({
           uri={comment.user?.avatar}
           name={comment.user?.name || '?'}
           size={isReply ? 'sm' : 'md'}
+          showTierBadge={!!comment.user?.subscription?.tier && comment.user.subscription.tier !== 'free'}
+          tier={comment.user?.subscription?.tier}
         />
       </TouchableOpacity>
 

@@ -10,9 +10,14 @@ import {
 } from '../utils/unitConversions';
 import type { Post, Activity } from '../types/api';
 
+// Re-export from canonical locations for backwards compatibility
+export { formatDuration } from '../utils/formatDuration';
+export { formatDurationCompact } from '../utils/formatDuration';
+export { getSportIcon } from '../utils/sportIcon';
+
 // ============ TYPES & INTERFACES ============
 
-export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare';
+export type FeedPostType = 'general' | 'activity' | 'event' | 'sponsored' | 'reshare' | 'achievement' | 'challenge' | 'digest' | 'milestone';
 
 export interface PostMediaItem {
   id: number;
@@ -46,6 +51,10 @@ export const TEXT_TRUNCATION: Record<FeedPostType, { maxLength: number; maxSente
   event: { maxLength: 200, maxSentences: 2 },
   sponsored: { maxLength: 200, maxSentences: 2 },
   reshare: { maxLength: 200, maxSentences: 2 },
+  achievement: { maxLength: 200, maxSentences: 2 },
+  challenge: { maxLength: 200, maxSentences: 2 },
+  digest: { maxLength: 200, maxSentences: 2 },
+  milestone: { maxLength: 200, maxSentences: 2 },
 };
 
 // ============ UTILITY FUNCTIONS ============
@@ -55,16 +64,24 @@ export function getEffectiveType(post: Post): FeedPostType {
   if (post.shared_post || post.shared_post_deleted) return 'reshare';
   if (post.type === 'activity') return 'activity';
   if (post.type === 'event') return 'event';
+  if (post.type === 'achievement') return 'achievement';
+  if (post.type === 'challenge') return 'challenge';
+  if (post.type === 'digest') return 'digest';
+  if (post.type === 'milestone') return 'milestone';
   return 'general';
 }
 
 export function getTypeColors(type: FeedPostType, colors: any) {
-  const colorMap = {
+  const colorMap: Record<FeedPostType, string> = {
     general: colors.primary,
     activity: colors.primary,
     event: colors.info,
     sponsored: colors.warning,
     reshare: '#06b6d4',
+    achievement: '#EAB308',
+    challenge: '#F59E0B',  // amber-500
+    digest: '#10B981',     // emerald-500
+    milestone: '#8B5CF6',  // violet-500
   };
   return {
     accent: type === 'general' ? null : colorMap[type],
@@ -80,6 +97,10 @@ export function getTypeIcon(type: FeedPostType): keyof typeof Ionicons.glyphMap 
     event: 'calendar-outline',
     sponsored: 'megaphone-outline',
     reshare: 'repeat-outline',
+    achievement: 'trophy-outline',
+    challenge: 'flame-outline',
+    digest: 'stats-chart-outline',
+    milestone: 'sparkles-outline',
   };
   return iconMap[type];
 }
@@ -124,13 +145,6 @@ export function buildMediaItems(post: Post): PostMediaItem[] {
   return [...videos, ...photos, ...media];
 }
 
-export function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
-}
 
 export function formatDistance(meters: number, units: UnitSystem = 'metric'): string {
   return ucFormatDistance(meters, units);
@@ -154,15 +168,6 @@ export function getEffortLevel(sportName: string | undefined, meters: number, se
   return { label: 'Hard', emoji: '😤' };
 }
 
-export function getSportIcon(sportName?: string): keyof typeof Ionicons.glyphMap {
-  const name = (sportName || '').toLowerCase();
-  if (name.includes('run')) return 'walk-outline';
-  if (name.includes('cycl') || name.includes('bike')) return 'bicycle-outline';
-  if (name.includes('swim')) return 'water-outline';
-  if (name.includes('gym') || name.includes('fitness')) return 'barbell-outline';
-  if (name.includes('yoga')) return 'body-outline';
-  return 'fitness-outline';
-}
 
 export function getHeroStat(activity: Activity): 'distance' | 'duration' | 'elevation' {
   const name = (activity.sport_type?.name || '').toLowerCase();

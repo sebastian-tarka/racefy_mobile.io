@@ -85,7 +85,7 @@ Create `.env` or `.env.local`:
 
 ```bash
 # API Configuration
-VITE_API_BASE_URL=https://api.racefy.app/api
+VITE_API_BASE_URL=https://racefy.io/api
 # or for local development:
 # VITE_API_BASE_URL=http://localhost:8080/api
 
@@ -103,7 +103,7 @@ Create `src/config/api.ts`:
 
 ```typescript
 // API Base URL
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.racefy.app/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://racefy.io/api';
 
 // Mapbox Configuration
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || null;

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { triggerHaptic } from '../hooks/useHaptics';
-import { spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, componentSize } from '../theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: componentSize.buttonMinHeight,
   },
   text: {
     fontSize: fontSize.md,

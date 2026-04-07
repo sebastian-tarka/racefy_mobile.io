@@ -283,7 +283,7 @@ class MapUsageLog extends Model
 ### Using cURL
 
 ```bash
-curl -X POST https://api.racefy.app/api/analytics/map-usage \
+curl -X POST https://racefy.io/api/analytics/map-usage \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

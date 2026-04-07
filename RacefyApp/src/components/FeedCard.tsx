@@ -5,7 +5,7 @@ import { ReshareModal } from './ReshareModal';
 import { useTheme } from '../hooks/useTheme';
 import { FeedCardHeader } from './FeedCard.Header';
 import { FeedCardActions } from './FeedCard.Actions';
-import { GeneralBody, ActivityBody, EventBody, SponsoredBody } from './FeedCard.Bodies';
+import { GeneralBody, ActivityBody, EventBody, SponsoredBody, AchievementBody } from './FeedCard.Bodies';
 import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles } from './FeedCard.utils';
 
 // Re-export types for backward compatibility
@@ -17,6 +17,10 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   event: EventBody,
   sponsored: SponsoredBody,
   reshare: GeneralBody,
+  achievement: AchievementBody,
+  challenge: GeneralBody,
+  digest: GeneralBody,
+  milestone: GeneralBody,
 };
 
 export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {

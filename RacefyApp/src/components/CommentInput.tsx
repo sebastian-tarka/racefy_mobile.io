@@ -153,13 +153,28 @@ export function CommentInput({
     if (!canSubmit) return;
 
     setIsSubmitting(true);
+
+    // Save values before clearing — allows restore on error
+    const savedContent = content;
+    const savedPhoto = photo;
+    const trimmedContent = stripMentionsForApi(savedContent.trim());
+
+    // Clear input and dismiss keyboard BEFORE the API call.
+    // This lets the layout settle (input shrinks, keyboard animates out)
+    // while the network request is in flight. The new comment then appears
+    // in a separate render cycle after layout is already stable.
+    setContent('');
+    setPhoto(null);
     Keyboard.dismiss();
 
     try {
-      await onSubmit(stripMentionsForApi(content.trim()), photo || undefined);
-      setContent('');
-      setPhoto(null);
+      await onSubmit(trimmedContent, savedPhoto || undefined);
       onCancelReply?.();
+    } catch (err) {
+      // Restore content so the user doesn't lose their message
+      setContent(savedContent);
+      setPhoto(savedPhoto);
+      throw err;
     } finally {
       setIsSubmitting(false);
     }

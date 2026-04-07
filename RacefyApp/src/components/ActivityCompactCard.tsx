@@ -10,6 +10,8 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
+import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
 
 interface ActivityCompactCardProps {
@@ -17,44 +19,6 @@ interface ActivityCompactCardProps {
   onPress?: () => void;
   isAuthenticated?: boolean;
 }
-
-const getSportIcon = (sportName?: string): keyof typeof Ionicons.glyphMap => {
-  if (!sportName) return 'fitness';
-  const name = sportName.toLowerCase();
-
-  if (name.includes('run') || name.includes('jog')) return 'walk';
-  if (name.includes('cycl') || name.includes('bike')) return 'bicycle';
-  if (name.includes('swim')) return 'water';
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness')) return 'barbell';
-  if (name.includes('yoga') || name.includes('pilates')) return 'body';
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return 'trail-sign';
-
-  return 'fitness';
-};
-
-const getSportColor = (sportName?: string): string => {
-  if (!sportName) return '#6366f1';
-  const name = sportName.toLowerCase();
-
-  if (name.includes('run') || name.includes('jog')) return '#10b981';
-  if (name.includes('cycl') || name.includes('bike')) return '#3b82f6';
-  if (name.includes('swim')) return '#06b6d4';
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness')) return '#f97316';
-  if (name.includes('yoga') || name.includes('pilates')) return '#a855f7';
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return '#84cc16';
-
-  return '#6366f1';
-};
-
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-  return `${minutes} min`;
-};
 
 
 export function ActivityCompactCard({
@@ -64,7 +28,8 @@ export function ActivityCompactCard({
 }: ActivityCompactCardProps) {
   const { colors } = useTheme();
   const { formatDistanceShort } = useUnits();
-  const sportColor = getSportColor(activity.sport_type?.name);
+  const sportTheme = getSportTheme(activity.sport_type?.name);
+  const sportColor = sportTheme.color;
 
   return (
     <TouchableOpacity
@@ -84,7 +49,7 @@ export function ActivityCompactCard({
 
       {/* Sport icon */}
       <View style={[styles.sportIcon, { backgroundColor: sportColor + '15' }]}>
-        <Ionicons name={getSportIcon(activity.sport_type?.name)} size={18} color={sportColor} />
+        <Ionicons name={sportTheme.icon} size={18} color={sportColor} />
       </View>
 
       {/* Activity info */}
@@ -103,7 +68,7 @@ export function ActivityCompactCard({
           <View style={styles.stat}>
             <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {formatDuration(activity.duration)}
+              {formatDurationCompact(activity.duration)}
             </Text>
           </View>
         </View>

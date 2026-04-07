@@ -305,7 +305,7 @@ export function NotificationsScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader title={t('notifications.title')} />
+      <ScreenHeader title={t('notifications.title')} showBack onBack={() => navigation.goBack()} />
 
       {unreadCount > 0 && (
         <View style={[styles.header, { borderBottomColor: colors.border }]}>

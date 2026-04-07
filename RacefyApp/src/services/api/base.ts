@@ -17,6 +17,9 @@ export const appendXdebugTrigger = (url: string): string => {
 export class ApiBase {
   private token: string | null = null;
   private onUnauthorizedCallback: (() => void) | null = null;
+  private onMaintenanceModeCallback: ((data: { message?: string; estimated_end?: string }) => void) | null = null;
+  private onUpgradeRequiredCallback: ((data: { feature?: string; currentTier: Types.SubscriptionTier; limit?: { feature: string; limit: number; current_usage: number; remaining: number } }) => void) | null = null;
+  private onRateLimitCallback: ((data: { retryAfter?: number }) => void) | null = null;
   /** In-flight GET requests — concurrent identical calls share the same Promise */
   private readonly inflightRequests = new Map<string, Promise<unknown>>();
 
@@ -34,6 +37,28 @@ export class ApiBase {
    */
   setOnUnauthorized(callback: () => void) {
     this.onUnauthorizedCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 503 maintenance mode response is received.
+   */
+  setOnMaintenanceMode(callback: ((data: { message?: string; estimated_end?: string }) => void) | null) {
+    this.onMaintenanceModeCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 403 response with upgrade_required is received.
+   */
+  setOnUpgradeRequired(callback: ((data: { feature?: string; currentTier: string; limit?: any }) => void) | null) {
+    this.onUpgradeRequiredCallback = callback;
+  }
+
+  /**
+   * Set callback to be invoked when a 429 rate limit response is received.
+   * Use this to surface a global toast/notification to the user.
+   */
+  setOnRateLimit(callback: ((data: { retryAfter?: number }) => void) | null) {
+    this.onRateLimitCallback = callback;
   }
 
   /**
@@ -120,6 +145,14 @@ export class ApiBase {
           });
         }
 
+        // Handle 503 Maintenance Mode
+        if (response.status === 503 && (data as any).maintenance) {
+          logger.warn('api', 'Server in maintenance mode', { endpoint });
+          if (this.onMaintenanceModeCallback) {
+            this.onMaintenanceModeCallback(data as any);
+          }
+        }
+
         // Handle 401 Unauthorized - token expired or invalid
         if (response.status === 401) {
           logger.warn('auth', 'Received 401 Unauthorized, clearing token', { endpoint });
@@ -129,6 +162,33 @@ export class ApiBase {
           }
         }
 
+        // Handle 429 Rate Limit — surface a global toast/notification once
+        if (response.status === 429) {
+          logger.warn('api', 'Rate limit exceeded', { endpoint });
+          if (this.onRateLimitCallback) {
+            this.onRateLimitCallback({ retryAfter: Number(response.headers.get('Retry-After')) || undefined });
+          }
+        }
+
+        // Handle 403 with upgrade_required - premium feature access denied
+        if (response.status === 403 && (data as any).upgrade_required === true) {
+          const premiumData = data as Types.PremiumErrorResponse;
+          logger.warn('api', 'Premium feature access denied', {
+            endpoint,
+            feature: premiumData.feature,
+            currentTier: premiumData.current_tier,
+          });
+          if (this.onUpgradeRequiredCallback) {
+            this.onUpgradeRequiredCallback({
+              feature: premiumData.feature,
+              currentTier: premiumData.current_tier,
+              limit: premiumData.limit,
+            });
+          }
+        }
+
+        // Attach HTTP status so callers can branch on it (409, 429, etc.)
+        (data as Types.ApiError).status = response.status;
         throw data as Types.ApiError;
       }
 

@@ -27,11 +27,12 @@ export const SPORT_TYPES: SportTypeOption[] = FALLBACK_SPORTS;
 interface SportTypeSelectorProps {
   value: number | null;
   onChange: (sportTypeId: number) => void;
-  error?: string;
+  error?: string | string[] | null;
   disabled?: boolean;
 }
 
-export function SportTypeSelector({ value, onChange, error, disabled }: SportTypeSelectorProps) {
+export function SportTypeSelector({ value, onChange, error: rawError, disabled }: SportTypeSelectorProps) {
+  const error = Array.isArray(rawError) ? rawError[0] : rawError ?? undefined;
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes, isLoading, getSportById } = useSportTypes();

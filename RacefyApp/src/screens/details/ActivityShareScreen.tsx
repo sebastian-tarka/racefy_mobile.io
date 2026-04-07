@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { ScreenHeader, ShareFormatSelector, ScreenContainer } from '../../components';
+import { PhotoOverlaySelector } from '../../components/PhotoOverlaySelector';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { shareActivityWithImage, shareToApp } from '../../utils/share';
@@ -21,6 +22,8 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { ShareLinkResponse } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityShare'>;
+
+type ShareMode = 'map' | 'photo';
 
 interface SharePlatform {
   id: string;
@@ -39,17 +42,19 @@ const SHARE_PLATFORMS: SharePlatform[] = [
 export function ActivityShareScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { activityId } = route.params;
+  const { activityId, hasGpsTrack, photos } = route.params;
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string>('');
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [currentShareData, setCurrentShareData] = useState<ShareLinkResponse | null>(null);
+  const [shareMode, setShareMode] = useState<ShareMode>('map');
+
+  const canUsePhotoOverlay = !!hasGpsTrack;
 
   const handleShare = async (imageUrl: string | null, shareData: ShareLinkResponse) => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Store share data for platform buttons and copy functionality
       setShareUrl(shareData.url);
       setCurrentImageUrl(imageUrl);
       setCurrentShareData(shareData);
@@ -64,9 +69,6 @@ export function ActivityShareScreen({ route, navigation }: Props) {
         activityId,
         hasImage: !!imageUrl,
       });
-
-      // Don't navigate back - let user choose to share to multiple platforms
-      // navigation.goBack();
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
         logger.error('general', 'Share with image failed', { error: err });
@@ -84,10 +86,9 @@ export function ActivityShareScreen({ route, navigation }: Props) {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      // Special handling for Messenger (WebP compatibility issues)
       if (platformId === 'messenger') {
         Alert.alert(
-          '📱 Messenger Sharing',
+          'Messenger Sharing',
           'Messenger works best with a two-step process:\n\n1. Save the image to your Photos\n2. Share from Photos to Messenger\n\nWould you like to continue?',
           [
             { text: 'Cancel', style: 'cancel' },
@@ -110,7 +111,6 @@ export function ActivityShareScreen({ route, navigation }: Props) {
           currentShareData
         );
       } else {
-        // For other platforms, use native share
         await shareActivityWithImage({
           activityId,
           imageUrl: currentImageUrl,
@@ -156,103 +156,164 @@ export function ActivityShareScreen({ route, navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Format Selector with Image Preview */}
-        <ShareFormatSelector
-          activityId={activityId}
-          onShare={handleShare}
-          onClose={() => navigation.goBack()}
-        />
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        {/* Platform Buttons */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-          {t('share.shareOn')}
-        </Text>
-
-        <View style={styles.platformsGrid}>
-          {SHARE_PLATFORMS.map((platform) => (
+        {/* Mode Toggle - only shown when GPS track exists */}
+        {canUsePhotoOverlay && (
+          <View style={[styles.modeToggle, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <TouchableOpacity
-              key={platform.id}
               style={[
-                styles.platformButton,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                  opacity: currentShareData ? 1 : 0.5,
-                },
+                styles.modeButton,
+                shareMode === 'map' && { backgroundColor: colors.primary },
               ]}
-              onPress={() => handlePlatformShare(platform.id)}
-              disabled={!currentShareData}
+              onPress={() => setShareMode('map')}
               activeOpacity={0.7}
             >
-              <View
+              <Ionicons
+                name="map-outline"
+                size={18}
+                color={shareMode === 'map' ? colors.white : colors.textSecondary}
+              />
+              <Text
                 style={[
-                  styles.platformIconContainer,
-                  { backgroundColor: platform.color },
+                  styles.modeButtonText,
+                  { color: shareMode === 'map' ? colors.white : colors.textSecondary },
                 ]}
               >
-                <Ionicons name={platform.icon} size={24} color="#FFFFFF" />
-              </View>
-              <Text
-                style={[styles.platformName, { color: colors.textPrimary }]}
-                numberOfLines={1}
-              >
-                {platform.name}
+                {t('share.mapMode')}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
 
-        {/* Copy Link Section */}
-        {shareUrl && (
+            <TouchableOpacity
+              style={[
+                styles.modeButton,
+                shareMode === 'photo' && { backgroundColor: colors.primary },
+              ]}
+              onPress={() => setShareMode('photo')}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="image-outline"
+                size={18}
+                color={shareMode === 'photo' ? colors.white : colors.textSecondary}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  { color: shareMode === 'photo' ? colors.white : colors.textSecondary },
+                ]}
+              >
+                {t('share.photoMode')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Content based on mode */}
+        {shareMode === 'photo' && canUsePhotoOverlay ? (
+          <PhotoOverlaySelector
+            activityId={activityId}
+            photos={photos}
+          />
+        ) : (
           <>
+            {/* Existing Route Map share flow */}
+            <ShareFormatSelector
+              activityId={activityId}
+              onShare={handleShare}
+              onClose={() => navigation.goBack()}
+            />
+
+            {/* Divider */}
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
+            {/* Platform Buttons */}
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-              {t('share.copyLink')}
+              {t('share.shareOn')}
             </Text>
 
-            <View
-              style={[
-                styles.linkContainer,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.linkText, { color: colors.textSecondary }]}
-                numberOfLines={1}
-              >
-                {shareUrl}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.copyButton,
-                  {
-                    backgroundColor: copied ? colors.success : colors.primary,
-                  },
-                ]}
-                onPress={handleCopyLink}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={copied ? 'checkmark' : 'copy-outline'}
-                  size={18}
-                  color={colors.white}
-                />
-                <Text style={[styles.copyButtonText, { color: colors.white }]}>
-                  {copied ? t('share.copied') : t('share.copy')}
-                </Text>
-              </TouchableOpacity>
+            <View style={styles.platformsGrid}>
+              {SHARE_PLATFORMS.map((platform) => (
+                <TouchableOpacity
+                  key={platform.id}
+                  style={[
+                    styles.platformButton,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                      opacity: currentShareData ? 1 : 0.5,
+                    },
+                  ]}
+                  onPress={() => handlePlatformShare(platform.id)}
+                  disabled={!currentShareData}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.platformIconContainer,
+                      { backgroundColor: platform.color },
+                    ]}
+                  >
+                    <Ionicons name={platform.icon} size={24} color="#FFFFFF" />
+                  </View>
+                  <Text
+                    style={[styles.platformName, { color: colors.textPrimary }]}
+                    numberOfLines={1}
+                  >
+                    {platform.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+
+            {/* Copy Link Section */}
+            {shareUrl && (
+              <>
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                  {t('share.copyLink')}
+                </Text>
+
+                <View
+                  style={[
+                    styles.linkContainer,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.linkText, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {shareUrl}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.copyButton,
+                      {
+                        backgroundColor: copied ? colors.success : colors.primary,
+                      },
+                    ]}
+                    onPress={handleCopyLink}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={copied ? 'checkmark' : 'copy-outline'}
+                      size={18}
+                      color={colors.white}
+                    />
+                    <Text style={[styles.copyButtonText, { color: colors.white }]}>
+                      {copied ? t('share.copied') : t('share.copy')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </>
         )}
 
-        {/* Bottom padding for better scrolling */}
+        {/* Bottom padding */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </ScreenContainer>
@@ -260,14 +321,31 @@ export function ActivityShareScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: spacing.md,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: 3,
+    marginBottom: spacing.md,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    gap: spacing.xs,
+  },
+  modeButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   divider: {
     height: 1,

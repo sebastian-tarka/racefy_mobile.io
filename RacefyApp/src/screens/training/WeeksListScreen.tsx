@@ -15,12 +15,15 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { ScreenHeader, Loading, Card, EmptyState, ScreenContainer } from '../../components';
+import { ProgramSelector } from '../../components/Training/ProgramSelector';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, TrainingProgram, PausedReason, MentalBudget, AiMode } from '../../types/api';
 
@@ -34,11 +37,22 @@ export function WeeksListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes } = useSportTypes();
+  const { features, tier, canUse } = useSubscription();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [program, setProgram] = useState<TrainingProgram | null>(null);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const program = programs.find(p => p.id === selectedProgramId) ?? programs[0] ?? null;
+
+  const canCreateNew = (() => {
+    const limit = features.active_training_programs;
+    return limit === -1 || programs.length < limit;
+  })();
+
+  const showSelector = programs.length > 1 || (tier !== 'free' && canCreateNew);
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -61,18 +75,38 @@ export function WeeksListScreen({ navigation }: Props) {
       if (!isRefresh) setLoading(true);
       setError(null);
 
-      const [programData, weeksData] = await Promise.all([
-        api.getCurrentProgram(),
-        api.getWeeks(),
-      ]);
+      const allPrograms = await api.getCurrentPrograms();
+      setPrograms(allPrograms);
 
-      setProgram(programData);
+      // Set initial selection if not yet set
+      if (!selectedProgramId && allPrograms.length > 0) {
+        setSelectedProgramId(allPrograms[0].id);
+      }
+
+      // Load weeks for the selected (or first) program
+      const activeProgram = allPrograms.find(p => p.id === selectedProgramId) ?? allPrograms[0];
+      let weeksData: TrainingWeek[] = [];
+      if (activeProgram) {
+        // Use program-specific endpoint to get weeks for the selected program
+        const fullProgram = await api.getProgram(activeProgram.id);
+        weeksData = fullProgram.current_week ? [fullProgram.current_week] : [];
+        // If the program-specific endpoint doesn't return all weeks, fall back to getWeeks
+        // (which returns weeks for the most recent active program)
+        if (activeProgram.id === allPrograms[0]?.id) {
+          weeksData = await api.getWeeks();
+        } else {
+          // For non-primary programs, we still use getWeeks as it's program-scoped on the backend
+          // TODO: When backend supports GET /training/programs/{id}/weeks, use that instead
+          weeksData = await api.getWeeks();
+        }
+      }
+
       setWeeks(weeksData);
 
-      logger.info('training', 'Loaded training program', {
-        programId: programData?.id,
+      logger.info('training', 'Loaded training programs', {
+        programCount: allPrograms.length,
+        selectedId: activeProgram?.id,
         totalWeeks: weeksData.length,
-        currentWeekNumber: programData?.current_week_number,
       });
     } catch (err: any) {
       logger.error('training', 'Failed to load training weeks', { error: err });
@@ -81,7 +115,7 @@ export function WeeksListScreen({ navigation }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t]);
+  }, [t, selectedProgramId]);
 
   useEffect(() => {
     loadData();
@@ -98,6 +132,28 @@ export function WeeksListScreen({ navigation }: Props) {
   const handleRefresh = () => {
     setRefreshing(true);
     loadData(true);
+  };
+
+  const handleSelectProgram = (id: number) => {
+    setSelectedProgramId(id);
+  };
+
+  // Reload weeks when selected program changes
+  useEffect(() => {
+    if (selectedProgramId && !loading) {
+      loadData(true);
+    }
+  }, [selectedProgramId]);
+
+  const handleCreateNewProgram = () => {
+    if (!canCreateNew) {
+      upgradePromptEmitter.emit('show', {
+        feature: 'active_training_programs',
+        currentTier: tier,
+      });
+      return;
+    }
+    navigation.navigate('TrainingCalibration');
   };
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -123,7 +179,14 @@ export function WeeksListScreen({ navigation }: Props) {
             try {
               await api.abandonProgram(program.id);
               logger.info('training', 'Program abandoned', { programId: program.id });
-              navigation.goBack();
+              // If there are other programs, switch to one; otherwise go back
+              const remaining = programs.filter(p => p.id !== program.id);
+              if (remaining.length > 0) {
+                setSelectedProgramId(remaining[0].id);
+                loadData(true);
+              } else {
+                navigation.goBack();
+              }
             } catch (err: any) {
               logger.error('training', 'Failed to abandon program', { error: err });
               Alert.alert(t('training.errors.title'), err.message);
@@ -297,6 +360,11 @@ export function WeeksListScreen({ navigation }: Props) {
     } catch (err: any) {
       setGeneratingHints(false);
       logger.error('training', 'Failed to generate coaching hints', { error: err });
+      // Handle 403 — Pro subscription required
+      if (err?.status === 403 && err?.data?.required_tier) {
+        upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier });
+        return;
+      }
       Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
     }
   };
@@ -491,121 +559,6 @@ export function WeeksListScreen({ navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      {program && (
-        <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="calendar" size={20} color={colors.textSecondary} />
-            <Text style={[styles.programInfoText, { color: colors.textSecondary }]}>
-              {new Date(program.start_date).toLocaleDateString()}
-              {program.planned_end_date && ` - ${new Date(program.planned_end_date).toLocaleDateString()}`}
-            </Text>
-          </View>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="fitness" size={20} color={colors.primary} />
-            <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-              {t('training.weeksList.programName')}: {program.name}
-            </Text>
-          </View>
-          <View style={styles.programInfoRow}>
-            <Ionicons name="trending-up" size={20} color={colors.primary} />
-            <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-              {t('training.weeksList.weekProgress')}: {program.current_week_number || 0}/{program.total_weeks}
-            </Text>
-          </View>
-
-          {/* Settings Button */}
-          <TouchableOpacity
-            style={[styles.settingsRow, { borderTopColor: colors.border }]}
-            onPress={handleOpenSettings}
-          >
-            <View style={styles.settingsLabelRow}>
-              <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>
-                {t('training.weeksList.settings')}
-              </Text>
-            </View>
-            <View style={styles.settingsValueRow}>
-              <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>
-                {program.auto_link_activities
-                  ? t('training.weeksList.autoLinkEnabled')
-                  : t('training.weeksList.autoLinkDisabled')}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-            </View>
-          </TouchableOpacity>
-
-          {/* Program Actions */}
-          <View style={styles.programActions}>
-            {program.status === 'paused' ? (
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                onPress={handleResumeProgram}
-                disabled={actionLoading}
-              >
-                {actionLoading ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <>
-                    <Ionicons name="play" size={16} color={colors.white} />
-                    <Text style={[styles.actionButtonText, { color: colors.white }]}>
-                      {t('training.weeksList.resumeProgram')}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.warning + '20', borderColor: colors.warning, borderWidth: 1 }]}
-                onPress={handlePauseProgram}
-                disabled={actionLoading}
-              >
-                <Ionicons name="pause" size={16} color={colors.warning} />
-                <Text style={[styles.actionButtonText, { color: colors.warning }]}>
-                  {t('training.weeksList.pauseProgram')}
-                </Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
-              onPress={handleAbandonProgram}
-              disabled={actionLoading}
-            >
-              <Ionicons name="close-circle" size={16} color={colors.error} />
-              <Text style={[styles.actionButtonText, { color: colors.error }]}>
-                {t('training.weeksList.abandonProgram')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Generate Coaching Hints Button */}
-      {program && weeks.some(w => !w.coaching_hint) && (
-        <TouchableOpacity
-          style={[styles.generateHintsButton, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}
-          onPress={handleGenerateHints}
-          disabled={generatingHints}
-        >
-          {generatingHints ? (
-            <>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                {hintsProgress.total > 0
-                  ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
-                  : t('training.coachingHints.generating')}
-              </Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="bulb-outline" size={20} color={colors.primary} />
-              <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                {t('training.coachingHints.generateButton')}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
       <FlatList
         data={weeks}
         renderItem={renderWeekItem}
@@ -617,6 +570,144 @@ export function WeeksListScreen({ navigation }: Props) {
             onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
+        }
+        ListHeaderComponent={
+          <>
+            {showSelector && (
+              <ProgramSelector
+                programs={programs}
+                selectedId={selectedProgramId}
+                onSelect={handleSelectProgram}
+                canCreateNew={canCreateNew}
+                onCreateNew={handleCreateNewProgram}
+              />
+            )}
+
+            {program && (
+              <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="calendar" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.programInfoText, { color: colors.textSecondary }]}>
+                    {new Date(program.start_date).toLocaleDateString()}
+                    {program.planned_end_date && ` - ${new Date(program.planned_end_date).toLocaleDateString()}`}
+                  </Text>
+                </View>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="fitness" size={20} color={colors.primary} />
+                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
+                    {t('training.weeksList.programName')}: {program.name}
+                  </Text>
+                </View>
+                <View style={styles.programInfoRow}>
+                  <Ionicons name="trending-up" size={20} color={colors.primary} />
+                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
+                    {t('training.weeksList.weekProgress')}: {program.current_week_number || 0}/{program.total_weeks}
+                  </Text>
+                </View>
+
+                {/* Settings Button */}
+                <TouchableOpacity
+                  style={[styles.settingsRow, { borderTopColor: colors.border }]}
+                  onPress={handleOpenSettings}
+                >
+                  <View style={styles.settingsLabelRow}>
+                    <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
+                    <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>
+                      {t('training.weeksList.settings')}
+                    </Text>
+                  </View>
+                  <View style={styles.settingsValueRow}>
+                    <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>
+                      {program.auto_link_activities
+                        ? t('training.weeksList.autoLinkEnabled')
+                        : t('training.weeksList.autoLinkDisabled')}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                  </View>
+                </TouchableOpacity>
+
+                {/* Program Actions */}
+                <View style={styles.programActions}>
+                  {program.status === 'paused' ? (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                      onPress={handleResumeProgram}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? (
+                        <ActivityIndicator size="small" color={colors.white} />
+                      ) : (
+                        <>
+                          <Ionicons name="play" size={16} color={colors.white} />
+                          <Text style={[styles.actionButtonText, { color: colors.white }]}>
+                            {t('training.weeksList.resumeProgram')}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.warning + '20', borderColor: colors.warning, borderWidth: 1 }]}
+                      onPress={handlePauseProgram}
+                      disabled={actionLoading}
+                    >
+                      <Ionicons name="pause" size={16} color={colors.warning} />
+                      <Text style={[styles.actionButtonText, { color: colors.warning }]}>
+                        {t('training.weeksList.pauseProgram')}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
+                    onPress={handleAbandonProgram}
+                    disabled={actionLoading}
+                  >
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
+                    <Text style={[styles.actionButtonText, { color: colors.error }]}>
+                      {t('training.weeksList.abandonProgram')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Generate Coaching Hints Button — Pro only */}
+            {program && weeks.some(w => !w.coaching_hint) && (
+              <TouchableOpacity
+                style={[
+                  styles.generateHintsButton,
+                  { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' },
+                  !canUse('coaching_hints_bulk') && { opacity: 0.7 },
+                ]}
+                onPress={canUse('coaching_hints_bulk') ? handleGenerateHints : () => upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })}
+                disabled={generatingHints}
+              >
+                {generatingHints ? (
+                  <>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                      {hintsProgress.total > 0
+                        ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
+                        : t('training.coachingHints.generating')}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    {!canUse('coaching_hints_bulk') && <Ionicons name="lock-closed" size={16} color={colors.primary} />}
+                    <Ionicons name="bulb-outline" size={20} color={colors.primary} />
+                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
+                      {t('training.coachingHints.generateButton')}
+                    </Text>
+                    {!canUse('coaching_hints_bulk') && (
+                      <View style={[styles.proBadge, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.proBadgeText, { color: colors.white }]}>PRO</Text>
+                      </View>
+                    )}
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </>
         }
         ListEmptyComponent={
           <EmptyState
@@ -1065,11 +1156,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
+    marginBottom: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
   },
   generateHintsText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  proBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  proBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
   },
 });

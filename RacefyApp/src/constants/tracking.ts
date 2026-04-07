@@ -19,6 +19,15 @@ export const MAX_BACKOFF_MS = 300_000; // 5 minutes
 /** Time without GPS update (ms) below which signal is considered "good" */
 export const GPS_GOOD_THRESHOLD_MS = 10_000;
 
+/**
+ * Time gap (ms) between consecutive buffered GPS points above which the route
+ * is considered discontinuous (app was in background, GPS was lost, etc.).
+ * The first point arriving after such a gap is discarded to prevent jumps on
+ * the route map.  Only the point is discarded — the next one is accepted as
+ * the new segment start.
+ */
+export const GPS_GAP_THRESHOLD_MS = 60_000; // 60 seconds
+
 /** Time without GPS update (ms) below which signal is considered "weak" (above = "lost") */
 export const GPS_WEAK_THRESHOLD_MS = 30_000;
 

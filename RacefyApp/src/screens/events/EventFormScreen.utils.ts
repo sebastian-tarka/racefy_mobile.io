@@ -1,4 +1,10 @@
-import {CommentaryLanguage, CommentaryStyle, EventRankingMode, EventTeamScoring, EventVisibility} from "../../types/api";
+import {
+    CommentaryLanguage,
+    CommentaryStyle,
+    EventRankingMode,
+    EventTeamScoring,
+    EventVisibility
+} from "../../types/api";
 import type {NativeStackScreenProps} from "@react-navigation/native-stack";
 import type {RootStackParamList} from "../../navigation";
 import {StyleSheet} from "react-native";
@@ -21,18 +27,27 @@ export interface CommentarySettingsData {
     pause_summary_enabled: boolean;
 }
 
-export const defaultCommentarySettings: CommentarySettingsData = {
+/**
+ * Builds default commentary settings preselecting the user's preferred app
+ * language only. Falls back to 'en' when i18n hasn't initialized yet.
+ */
+export const buildDefaultCommentarySettings = (
+    preferredLanguage?: string | null
+): CommentarySettingsData => ({
     enabled: false,
     style: 'exciting',
     token_limit: null,
     interval_minutes: 15,
     auto_publish: true,
-    languages: ['en', 'pl'],
+    languages: [(preferredLanguage || 'en').substring(0, 2)],
     force_participants: false,
     time_windows: [],
     days_of_week: [],
     pause_summary_enabled: true,
-};
+});
+
+/** @deprecated Use buildDefaultCommentarySettings(i18n.language) instead. */
+export const defaultCommentarySettings: CommentarySettingsData = buildDefaultCommentarySettings('en');
 
 export interface FormData {
     title: string;
@@ -55,10 +70,13 @@ export interface FormData {
     start_finish_note: string;
     // Activity aggregation
     allow_multiple_activities: boolean;
+    // Auto-finalize results
+    auto_finalize_results: boolean;
     // Visibility
     visibility: EventVisibility;
     // Ranking mode config
-    target_distance: string;   // km in UI → meters to API
+    // NOTE: target_distance is no longer a separate form field. Backend mirrors
+    // `distance` into `target_distance` automatically. We send only `distance`.
     time_limit: string;        // minutes in UI → seconds to API
     // Team event
     is_team_event: boolean;
@@ -70,6 +88,8 @@ export interface FormData {
     point_rewards_second: string;
     point_rewards_third: string;
     point_rewards_finisher: string;
+    // Route planning
+    route_id: number | null;
 }
 
 export const initialFormData: FormData = {
@@ -93,10 +113,11 @@ export const initialFormData: FormData = {
     start_finish_note: '',
     // Activity aggregation
     allow_multiple_activities: false,
+    // Auto-finalize results
+    auto_finalize_results: true,
     // Visibility
     visibility: 'public',
     // Ranking mode config
-    target_distance: '',
     time_limit: '',
     // Team event
     is_team_event: false,
@@ -108,6 +129,8 @@ export const initialFormData: FormData = {
     point_rewards_second: '',
     point_rewards_third: '',
     point_rewards_finisher: '',
+    // Route planning
+    route_id: null,
 };
 export type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
 export const styles = StyleSheet.create({

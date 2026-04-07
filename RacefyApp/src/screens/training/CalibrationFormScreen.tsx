@@ -21,6 +21,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { ScreenHeader, Button, Loading, Input, SportTypeSelector, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
@@ -156,39 +157,44 @@ export function CalibrationFormScreen({ navigation }: Props) {
       return;
     }
 
-    // Check if user already has an active program
+    // Check if user already has active programs
     setLoading(true);
     try {
-      const existingProgram = await api.getCurrentProgram();
+      const existingPrograms = await api.getCurrentPrograms();
 
-      logger.debug('training', 'Existing program check', {
-        hasProgram: !!existingProgram,
-        status: existingProgram?.status,
-        id: existingProgram?.id,
+      logger.debug('training', 'Existing programs check', {
+        count: existingPrograms.length,
+        ids: existingPrograms.map(p => p.id),
       });
 
-      if (existingProgram) {
+      if (existingPrograms.length > 0) {
         setLoading(false);
-        // Show confirmation dialog
-        Alert.alert(
-          t('training.calibration.existingProgramTitle'),
-          t('training.calibration.existingProgramMessage'),
-          [
-            {
-              text: t('common.cancel'),
-              style: 'cancel',
-            },
-            {
-              text: t('training.calibration.viewExisting'),
-              onPress: () => navigation.replace('TrainingWeeksList'),
-            },
-            {
-              text: t('training.calibration.replaceProgram'),
-              style: 'destructive',
-              onPress: () => createNewProgram(existingProgram.id),
-            },
-          ]
-        );
+        // For single program (free tier behavior), show replace dialog
+        if (existingPrograms.length === 1) {
+          const existingProgram = existingPrograms[0];
+          Alert.alert(
+            t('training.calibration.existingProgramTitle'),
+            t('training.calibration.existingProgramMessage'),
+            [
+              {
+                text: t('common.cancel'),
+                style: 'cancel',
+              },
+              {
+                text: t('training.calibration.viewExisting'),
+                onPress: () => navigation.replace('TrainingWeeksList'),
+              },
+              {
+                text: t('training.calibration.replaceProgram'),
+                style: 'destructive',
+                onPress: () => createNewProgram(existingProgram.id),
+              },
+            ]
+          );
+        } else {
+          // Multiple programs exist - just create a new one (limit enforced by API)
+          await createNewProgram();
+        }
         return;
       }
 
@@ -245,7 +251,15 @@ export function CalibrationFormScreen({ navigation }: Props) {
       navigation.replace('ProgramLoading', { programId: program.id });
     } catch (error: any) {
       logger.error('training', 'Failed to create calibration', { error });
-      setErrors({ submit: error.message || t('training.errors.creationFailed') });
+      // Handle 403 feature-gating for active_training_programs limit
+      const msg = error.message?.toLowerCase() || '';
+      if (msg.includes('active_training_programs') || msg.includes('limit') || error.status === 403) {
+        upgradePromptEmitter.emit('show', {
+          feature: 'active_training_programs',
+        });
+      } else {
+        setErrors({ submit: error.message || t('training.errors.creationFailed') });
+      }
     } finally {
       setLoading(false);
     }

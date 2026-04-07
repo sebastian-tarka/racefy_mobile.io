@@ -79,7 +79,7 @@ export function UserProfileHeader({
 
       <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-          <Avatar uri={profile.avatar} name={profile.name} size="xxl" />
+          <Avatar uri={profile.avatar} name={profile.name} size="xxl" showTierBadge={!!profile.subscription?.tier && profile.subscription.tier !== 'free'} tier={profile.subscription?.tier} />
         </View>
 
         <Text style={[styles.name, { color: colors.textPrimary }]}>{profile.name}</Text>

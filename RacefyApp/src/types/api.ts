@@ -14,6 +14,79 @@ export interface User {
   role: 'user' | 'moderator' | 'admin';
   created_at: string;
   updated_at: string;
+  subscription?: SubscriptionStatus;
+}
+
+// ============ SUBSCRIPTIONS ============
+
+export type SubscriptionTier = 'free' | 'plus' | 'pro';
+
+export interface SubscriptionFeatures {
+  ai_posts_monthly: number;
+  ai_post_on_finish: boolean;
+  events_monthly: number;
+  event_prizes: boolean;
+  event_ai_commentary: boolean;
+  privacy_zones: number;
+  training_programs: number;
+  active_training_programs: number;  // concurrent active/paused limit (-1 = unlimited)
+  training_summaries: boolean;
+  advanced_stats: boolean;
+  share_link_permanent: boolean;
+  points_multiplier: number;
+  gpx_export: boolean;
+  exclusive_badges: boolean;
+  teams_max: number;          // -1 = unlimited
+  team_members_max: number;   // -1 = unlimited
+  coaching_hints_bulk: boolean; // Pro only: generate all hints at once
+  live_navigation: boolean;     // Pro only: turn-by-turn navigation during activities
+  saved_routes: number;         // -1 = unlimited, free = 5, plus = 20
+}
+
+export interface SubscriptionUsage {
+  ai_posts_monthly: number;
+  events_monthly: number;
+  privacy_zones: number;
+  training_programs: number;
+  teams_max: number;
+}
+
+export interface SubscriptionStatus {
+  tier: SubscriptionTier;
+  is_premium: boolean;
+  is_active: boolean;
+  is_trial: boolean;
+  trial_ends_at: string | null;
+  expires_at: string | null;
+  remaining_days: number | null;
+  provider: string | null;
+  features: SubscriptionFeatures;
+  usage: SubscriptionUsage;
+}
+
+export interface SubscriptionPlan {
+  id: number;
+  slug: string;
+  name: string;
+  tier: SubscriptionTier;
+  price_monthly: number | null;
+  price_yearly: number | null;
+  currency: string;
+  features: SubscriptionFeatures;
+  is_popular: boolean;
+}
+
+export interface PremiumErrorResponse {
+  message: string;
+  feature?: string;
+  limit?: {
+    feature: string;
+    limit: number;
+    current_usage: number;
+    remaining: number;
+  };
+  current_tier: SubscriptionTier;
+  upgrade_required: true;
 }
 
 export interface UserProfilePrivacy {
@@ -21,6 +94,23 @@ export interface UserProfilePrivacy {
   show_activities: boolean;
   show_stats: boolean;
   allow_messages: 'everyone' | 'followers' | 'none';
+  share_achievements?: boolean;
+}
+
+export interface BadgeData {
+  id: number;
+  name: string;
+  description: string;
+  icon: string | null;
+  icon_url: string | null;
+  rarity: 'legendary' | 'epic' | 'rare' | 'common';
+  rarity_color: string;
+}
+
+export interface AchievementData {
+  user_badge_id: number;
+  earned_at: string;
+  badge: BadgeData;
 }
 
 export interface UserProfile extends User {
@@ -114,7 +204,7 @@ export interface AiPostsPreferences {
 
 export interface UserPreferences {
   units: 'metric' | 'imperial';
-  language: 'en' | 'pl';
+  language: 'en' | 'pl' | 'es';
   theme: 'light' | 'dark' | 'system';
   notifications: {
     likes: NotificationChannelSettings;
@@ -132,6 +222,7 @@ export interface UserPreferences {
     show_activities: boolean;
     show_stats: boolean;
     allow_messages: 'everyone' | 'followers' | 'none';
+    share_achievements?: boolean;
   };
   activity_defaults: {
     visibility: 'public' | 'followers' | 'private';
@@ -139,6 +230,11 @@ export interface UserPreferences {
     favorite_sport_id: number | null;
   };
   ai_posts: AiPostsPreferences;
+  training_reminders?: {
+    enabled: boolean;
+    days: (0 | 1 | 2 | 3 | 4 | 5 | 6)[];
+    time: string; // "HH:MM"
+  };
 }
 
 // ============ SPORT TYPES ============
@@ -153,6 +249,8 @@ export interface GpsProfileApiResponse {
   time_interval: number;
   distance_interval: number;
   smoothing_buffer_size: number;
+  // Stationary detection
+  stationary_speed_threshold?: number; // Speed in m/s below which user is considered stationary (0.1-3)
   // Pace display settings (optional - API may not provide these yet)
   pace_smoothing_factor?: number;     // EMA alpha for pace smoothing (0.1-0.9)
   pace_window_seconds?: number;       // Time window for current pace calculation (20-120s)
@@ -173,6 +271,8 @@ export interface GpsProfileRequest {
   time_interval?: number;
   distance_interval?: number;
   smoothing_buffer_size?: number;
+  // Stationary detection
+  stationary_speed_threshold?: number;
   // Pace display settings
   pace_smoothing_factor?: number;
   pace_window_seconds?: number;
@@ -197,7 +297,7 @@ export interface SportType {
 export interface Post {
   id: number;
   user_id: number;
-  type: 'general' | 'event' | 'activity';
+  type: 'general' | 'event' | 'activity' | 'achievement' | 'challenge' | 'digest' | 'milestone';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';
@@ -212,6 +312,8 @@ export interface Post {
   videos?: Video[];
   event?: Event;
   activity?: Activity;
+  achievement?: AchievementData;
+  tagged_event?: TaggedEvent;
   is_liked?: boolean;
   is_owner?: boolean;
   mentions?: MentionMap;
@@ -219,11 +321,22 @@ export interface Post {
   shared_post?: SharedPost | null;
   shared_post_deleted?: boolean;
   is_reshared?: boolean;
+  youtube_embed_id?: string | null;
+}
+
+export interface TaggedEvent {
+  id: number;
+  slug?: string;
+  name: string;
+  sport_type?: string;
+  status?: string;
+  starts_at?: string;
+  ends_at?: string;
 }
 
 export interface SharedPost {
   id: number;
-  type: 'general' | 'event' | 'activity';
+  type: 'general' | 'event' | 'activity' | 'achievement' | 'challenge' | 'digest' | 'milestone';
   title: string | null;
   content: string;
   visibility: 'public' | 'followers' | 'private';
@@ -344,6 +457,7 @@ export interface Event {
   target_elevation?: number;
   time_limit?: number;
   results_finalized?: boolean;
+  auto_finalize_results?: boolean;
   // Team event
   is_team_event?: boolean;
   team_size_min?: number;
@@ -371,6 +485,9 @@ export interface Event {
   allow_multiple_activities?: boolean;  // Allow multiple activities to be aggregated
   // Point rewards
   point_rewards?: EventPointRewards;
+  // Route planning
+  route_id?: number | null;
+  route?: PlannedRoute | null;
   // Registration status
   is_registration_open?: boolean; // DEPRECATED: Use registration_eligibility instead
   is_full?: boolean;
@@ -434,8 +551,12 @@ export interface CreateEventRequest {
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Auto-finalize results
+  auto_finalize_results?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
+  // Route planning
+  route_id?: number | null;
 }
 
 export interface UpdateEventRequest {
@@ -485,8 +606,12 @@ export interface UpdateEventRequest {
   start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Auto-finalize results
+  auto_finalize_results?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
+  // Route planning
+  route_id?: number | null;
 }
 
 export interface EventRegistration {
@@ -499,6 +624,59 @@ export interface EventRegistration {
   registered_at: string;
   event?: Event;
   user?: User;
+}
+
+// ============ EVENT STATS ============
+
+export interface EventStats {
+  organized: {
+    total: number;
+    completed: number;
+    total_participants: number;
+  };
+  participated: {
+    joined: number;
+    completed: number;
+    ongoing: number;
+    upcoming: number;
+  };
+  results: {
+    total_finishes: number;
+    podiums: number;
+    gold: number;
+    silver: number;
+    bronze: number;
+    best_result: {
+      place: number;
+      place_label: string;
+      event_slug: string;
+      event_title: string;
+    } | null;
+  };
+  activity_totals: {
+    count: number;
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+  };
+}
+
+// ============ EVENT OVERVIEW (global platform stats) ============
+
+export interface EventStatusStats {
+  event_count: number;
+  total_participants: number;
+  total_activities: number;
+  total_distance: number;        // meters
+  total_elevation_gain: number;  // meters
+  total_duration: number;        // seconds
+}
+
+export interface EventOverview {
+  upcoming: EventStatusStats;
+  ongoing: EventStatusStats;
+  completed: EventStatusStats;
+  totals: EventStatusStats;
 }
 
 // ============ ACTIVITIES ============
@@ -539,6 +717,7 @@ export interface Activity {
   ended_at: string | null;
   duration: number;
   distance: number;
+  client_distance: number | null;
   elevation_gain: number | null;
   calories: number | null;
   avg_speed: number | null;
@@ -564,6 +743,7 @@ export interface Activity {
   has_gps_track: boolean;
   route_svg?: string | null;
   route_map_url?: string | null;
+  route_preview_url?: string | null; // PNG, transparent bg, route + km markers
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
@@ -625,6 +805,7 @@ export interface GpsPoint {
   hr?: number;
   speed?: number;
   cadence?: number;
+  accuracy?: number;
 }
 
 // Nearby route for shadow track feature
@@ -657,6 +838,8 @@ export interface AddActivityPointsRequest {
   calories?: number;
   avg_heart_rate?: number;
   max_heart_rate?: number;
+  // Client-calculated distance (meters) - preserved alongside server-calculated distance
+  client_distance?: number;
 }
 
 // Response from adding GPS points to live activity
@@ -704,6 +887,9 @@ export interface FinishActivityRequest {
   max_heart_rate?: number;
   location?: ActivityLocation;
   skip_auto_post?: boolean;
+  final_points?: GpsPoint[];
+  // Client-calculated distance (meters) - preserved alongside server-calculated distance
+  client_distance?: number;
 }
 
 // Auto-created post info returned when finishing an activity
@@ -747,6 +933,7 @@ export interface GpsTrack {
   simplified_track: GeoJSONLineString; // Privacy-aware: trimmed if viewer is not owner
   route_svg: string | null;
   route_map_url: string | null;
+  route_preview_url: string | null; // PNG, transparent bg, route + km markers
   svg_generated_at: string | null;
   map_generated_at: string | null;
   // GPS Privacy (new in 2026-01)
@@ -1352,6 +1539,39 @@ export interface ApiError {
   errors?: Record<string, string[]>;
   training_week_id?: number; // Present when trying to delete activity linked to training plan
   hint?: string; // Hint message for force deletion
+  /** HTTP status code, attached by the API client before throwing */
+  status?: number;
+}
+
+// ============ EVENT POINTS BUDGET ============
+
+/**
+ * Request payload for POST /api/events/points-budget/preview.
+ * All distances/elevations in meters. max_participants is integer.
+ */
+export interface EventPointsBudgetPreviewRequest {
+  sport_type_id: number;
+  distance?: number | null;
+  elevation_gain?: number | null;
+  target_distance?: number | null;
+  target_elevation?: number | null;
+  max_participants?: number | null;
+  is_sponsored?: boolean;
+}
+
+/**
+ * Response from POST /api/events/points-budget/preview
+ * and GET /api/events/{event}/points-budget.
+ */
+export interface EventPointsBudget {
+  valid: boolean;
+  pool: number;
+  allocated: number;
+  remaining: number;
+  estimated_finishers: number;
+  is_sponsored: boolean;
+  effective_distance: number;
+  effective_elevation: number;
 }
 
 // ============ DEBUG LOGS ============
@@ -1519,7 +1739,12 @@ export type CommentaryStyle =
   | 'statistical'
   | 'motivational';
 
-export type CommentaryLanguage = 'en' | 'pl';
+/**
+ * AI commentary language code (ISO 639-1).
+ * Loosely typed because the backend is the source of truth via
+ * GET /commentary/languages — new languages can be added without a mobile release.
+ */
+export type CommentaryLanguage = string;
 
 export interface StandingsSnapshot {
   position: number;
@@ -1564,6 +1789,7 @@ export interface CommentaryListResponse {
     commentary_enabled: boolean;
     available_languages: Record<CommentaryLanguage, string>;
     event_languages: CommentaryLanguage[];
+    languages_with_content: CommentaryLanguage[];
   };
 }
 
@@ -1812,8 +2038,15 @@ export interface AppConfigPush {
   token_method: 'getExpoPushTokenAsync' | 'getDevicePushTokenAsync';
 }
 
+export interface AppConfigMaintenance {
+  enabled: boolean;
+  message: string | null;
+  estimated_end: string | null;
+}
+
 export interface AppConfigResponse {
   push: AppConfigPush;
+  maintenance: AppConfigMaintenance;
 }
 
 // ============ DEVICE REGISTRATION (Push Notifications) ============
@@ -1892,6 +2125,16 @@ export interface  ShareLinkResponse {
     whatsapp: ShareLinkPlatform;
     telegram: ShareLinkPlatform;
   };
+}
+
+// ============ PHOTO OVERLAY SHARE ============
+
+export type PhotoOverlayFormat = 'photo_social' | 'photo_story' | 'photo_square';
+
+export interface PhotoOverlayResponse {
+  image: string;
+  format: string;
+  photo_id: number;
 }
 
 // ============ TRAINING PLANS ============
@@ -2067,6 +2310,7 @@ export interface GetProgramResponse {
 
 export interface GetCurrentProgramResponse {
   program?: TrainingProgram | null;
+  programs?: TrainingProgram[];
   data?: TrainingProgram | null;
 }
 
@@ -2377,4 +2621,368 @@ export interface RewardsResponse {
 export interface RewardsQueryParams {
   type?: 'points' | 'coupon' | 'badge' | 'prize';
   event_id?: number;
+}
+
+// ============ STANDALONE TEAMS ============
+
+export interface Team {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  avatar: string | null;
+  visibility: 'public' | 'private';
+  captain: User;
+  members_count: number;
+  is_captain: boolean;
+  is_member: boolean;
+  has_pending_invitation?: boolean;
+  has_pending_request?: boolean;
+  members?: TeamMember[];
+  invitations?: TeamMember[];
+  join_requests?: TeamMember[];
+  created_at: string;
+}
+
+export interface TeamMember {
+  id: number;
+  user: User;
+  role: 'captain' | 'member';
+  status: 'active' | 'invited' | 'pending_request' | 'declined';
+  invited_by: User | null;
+  responded_at: string | null;
+  joined_at: string;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+  visibility?: 'public' | 'private';
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+  description?: string;
+  visibility?: 'public' | 'private';
+}
+
+// ============ EVENT TEAMS ============
+
+export interface EventTeam {
+  id: number;
+  name: string;
+  code?: string;
+  captain: User;
+  members_count: number;
+  is_full: boolean;
+  is_captain?: boolean;
+  is_member?: boolean;
+  members?: EventRegistration[];
+  created_at: string;
+}
+
+// ============ TEAM STATS ============
+
+export interface TeamActivityTotals {
+  activities_count: number;
+  active_members: number;
+  /** meters */
+  total_distance: number;
+  /** seconds */
+  total_duration: number;
+  /** meters */
+  total_elevation: number;
+  /** kcal */
+  total_calories: number;
+  /** meters — longest single activity */
+  longest_distance: number;
+  /** seconds — longest single activity */
+  longest_duration: number;
+  by_sport_type: TeamSportTypeStat[];
+}
+
+export interface TeamSportTypeStat {
+  sport_type_id: number;
+  activities_count: number;
+  total_distance: number;
+  total_duration: number;
+}
+
+export type StatsPeriod =
+  | 'this_week'
+  | 'last_week'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'last_year';
+
+export interface TeamSummaryResponse {
+  team_id: number;
+  team_name: string;
+  members_count: number;
+  all_time: TeamActivityTotals;
+  period: TeamActivityTotals;
+  period_label: StatsPeriod;
+}
+
+export type RankingSortBy = 'distance' | 'duration' | 'elevation' | 'activities';
+
+export interface TeamMemberRank {
+  rank: number;
+  user: {
+    id: number;
+    name: string;
+    username: string;
+    avatar: string | null;
+  };
+  activities_count: number;
+  total_distance: number;
+  total_duration: number;
+  total_elevation: number;
+  total_calories: number;
+}
+
+export interface TeamRankingResponse {
+  team_id: number;
+  team_name: string;
+  sort_by: RankingSortBy;
+  ranking: TeamMemberRank[];
+}
+
+export type TrendGranularity = 'weekly' | 'monthly';
+
+export interface TrendDataPoint {
+  /** "2026-W13" or "2026-03" */
+  period: string;
+  activities_count: number;
+  active_members: number;
+  total_distance: number;
+  total_duration: number;
+  total_elevation: number;
+  total_calories: number;
+}
+
+export interface TeamTrendsResponse {
+  team_id: number;
+  team_name: string;
+  granularity: TrendGranularity;
+  trends: TrendDataPoint[];
+}
+
+export type LeaderboardSortBy = 'distance' | 'duration' | 'elevation' | 'activities' | 'members';
+
+export interface TeamLeaderboardEntry {
+  rank: number;
+  team_id: number;
+  team_name: string;
+  team_slug: string;
+  team_avatar: string | null;
+  members_count: number;
+  active_members: number;
+  activities_count: number;
+  total_distance: number;
+  total_duration: number;
+  total_elevation: number;
+}
+
+export interface TeamLeaderboardResponse {
+  data: TeamLeaderboardEntry[];
+  total: number;
+}
+
+// ============ PRIVACY ZONES ============
+
+export interface PrivacyZone {
+  id: number;
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+  radius_meters: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PrivacyZoneSuggestion {
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+  activity_count: number;
+  confidence: number;
+}
+
+export interface CreatePrivacyZoneRequest {
+  name: string;
+  type: 'home' | 'work' | 'other';
+  latitude: number;
+  longitude: number;
+}
+
+export interface UpdatePrivacyZoneRequest {
+  name?: string;
+  type?: 'home' | 'work' | 'other';
+  latitude?: number;
+  longitude?: number;
+}
+
+// ============ FEEDBACK ============
+
+export type FeedbackType = 'bug' | 'feature_request' | 'feedback';
+export type FeedbackStatus = 'open' | 'in_progress' | 'waiting_for_user' | 'resolved' | 'closed';
+export type FeedbackPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface FeedbackAttachment {
+  id: number;
+  url: string;
+  filename: string;
+  mime_type: string;
+  size: number;
+  created_at: string;
+}
+
+export interface FeedbackUser {
+  id: number;
+  name: string;
+  username?: string;
+  avatar: string | null;
+}
+
+export interface FeedbackReply {
+  id: number;
+  body: string;
+  is_admin_reply: boolean;
+  user: FeedbackUser;
+  attachments: FeedbackAttachment[];
+  created_at: string;
+}
+
+export interface Feedback {
+  id: number;
+  type: FeedbackType;
+  status: FeedbackStatus;
+  priority: FeedbackPriority;
+  subject: string;
+  description: string;
+  platform: 'ios' | 'android' | 'web' | null;
+  app_version: string | null;
+  os_version: string | null;
+  device_model: string | null;
+  url: string | null;
+  user?: FeedbackUser;
+  attachments: FeedbackAttachment[];
+  replies?: FeedbackReply[];
+  replies_count: number;
+  latest_reply: FeedbackReply | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeviceInfoPayload {
+  screen_width: number;
+  screen_height: number;
+  pixel_ratio: number;
+  memory_available?: number;
+  battery_level?: number;
+  network_type?: 'wifi' | 'cellular' | 'none';
+  locale: string;
+  is_tablet?: boolean;
+}
+
+// ============ PLANNED ROUTES ============
+
+export interface RouteWaypoint {
+  lat: number;
+  lng: number;
+  label?: string;  // e.g., "Start", "Water Station", "Finish"
+}
+
+export interface RouteElevationPoint {
+  distance: number;    // meters from start
+  elevation: number;   // meters
+}
+
+export interface RouteTurnInstruction {
+  distance_along: number;     // meters from start where turn occurs
+  maneuver: string;           // 'turn-left', 'turn-right', 'straight', 'u-turn', etc.
+  instruction: string;        // Human-readable: "Turn left onto Main St"
+  location: [number, number]; // [lng, lat]
+}
+
+export interface PlannedRoute {
+  id: number;
+  user_id: number;
+  title: string;
+  description?: string;
+  sport_type_id: number;
+  profile: 'walking' | 'cycling';
+  waypoints: RouteWaypoint[];
+  geometry: GeoJSONLineString;
+  distance: number;                  // meters
+  estimated_duration: number;        // seconds
+  elevation_gain: number;            // meters
+  elevation_loss: number;            // meters
+  elevation_profile: RouteElevationPoint[];
+  turn_instructions: RouteTurnInstruction[];
+  bounds: {
+    min_lat: number;
+    max_lat: number;
+    min_lng: number;
+    max_lng: number;
+  };
+  is_public: boolean;
+  usage_count: number;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    username: string;
+    avatar: string;
+  };
+  sport_type?: SportType;
+}
+
+export interface CreateRouteRequest {
+  title: string;
+  description?: string;
+  sport_type_id: number;
+  profile: 'walking' | 'cycling';
+  waypoints: RouteWaypoint[];
+  is_public?: boolean;
+}
+
+export interface UpdateRouteRequest {
+  title?: string;
+  description?: string;
+  waypoints?: RouteWaypoint[];
+  profile?: 'walking' | 'cycling';
+  is_public?: boolean;
+}
+
+export interface RouteSearchParams {
+  lat?: number;
+  lng?: number;
+  radius?: number;         // meters
+  sport_type_id?: number;
+  query?: string;
+  page?: number;
+  per_page?: number;
+}
+
+export interface RoutePreviewRequest {
+  waypoints: RouteWaypoint[];
+  profile: 'walking' | 'cycling';
+}
+
+export interface RoutePreviewResponse {
+  geometry: GeoJSONLineString;
+  distance: number;
+  estimated_duration: number;
+  elevation_gain: number;
+  elevation_loss: number;
+  elevation_profile: RouteElevationPoint[];
+  turn_instructions: RouteTurnInstruction[];
 }

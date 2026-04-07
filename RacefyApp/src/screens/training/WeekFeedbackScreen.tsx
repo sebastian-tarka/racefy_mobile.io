@@ -13,6 +13,7 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -264,6 +265,10 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
         transparent
         onRequestClose={closeNoteModal}
       >
+        <KeyboardAvoidingView
+          style={styles.kavFlex}
+          behavior="padding"
+        >
         <TouchableWithoutFeedback onPress={closeNoteModal}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -344,6 +349,7 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>
   );
@@ -422,6 +428,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
   },
   // Note modal
+  kavFlex: {
+    flex: 1,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

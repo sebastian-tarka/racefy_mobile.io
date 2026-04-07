@@ -19,6 +19,8 @@ import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { logger } from '../services/logger';
+import { formatDuration } from '../utils/formatDuration';
+import { getSportIcon } from '../utils/sportIcon';
 import type { Post } from '../types/api';
 
 interface PostCardProps {
@@ -34,28 +36,6 @@ interface PostCardProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-
-// Helper functions
-const formatDuration = (seconds: number): string => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
-};
-
-
-const getSportIcon = (sportName?: string): keyof typeof Ionicons.glyphMap => {
-  const name = sportName?.toLowerCase() || '';
-  if (name.includes('run')) return 'walk-outline';
-  if (name.includes('cycling') || name.includes('bike')) return 'bicycle-outline';
-  if (name.includes('swim')) return 'water-outline';
-  if (name.includes('gym') || name.includes('fitness')) return 'barbell-outline';
-  if (name.includes('yoga')) return 'body-outline';
-  return 'fitness-outline';
-};
 
 export function PostCard({
   post,
@@ -113,7 +93,7 @@ export function PostCard({
     const activity = post.activity;
 
     // Check if activity has route map or SVG
-    const hasRouteMap = activity.route_map_url || activity.route_svg;
+    const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
     return (
       <TouchableOpacity
@@ -126,6 +106,7 @@ export function PostCard({
         {hasRouteMap && (
           <View style={styles.activityMapContainer}>
             <RoutePreview
+              routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
               trackData={activity.gps_track?.simplified_track}

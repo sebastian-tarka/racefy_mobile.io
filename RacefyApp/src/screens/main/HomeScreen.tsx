@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { api } from '../../services/api';
+import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing } from '../../theme';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -31,6 +33,7 @@ import {
   Loading,
   TipCard,
   ScreenContainer,
+  DraftsReminderModal,
 } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
@@ -45,6 +48,8 @@ type ConnectionStatus = {
 export function HomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
@@ -76,6 +81,11 @@ export function HomeScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
+
+  // Drafts reminder modal — once per app session
+  const [showDraftsModal, setShowDraftsModal] = useState(false);
+  const [reminderDrafts, setReminderDrafts] = useState<import('../../types/api').DraftPost[]>([]);
+  const draftsReminderShown = useRef(false);
 
   const loadAvailableTips = useCallback(async () => {
     if (!isAuthenticated) {
@@ -121,6 +131,27 @@ export function HomeScreen({ navigation }: Props) {
     loadAvailableTips();
   }, [loadAvailableTips]);
 
+  // Check for pending drafts once per session
+  useEffect(() => {
+    if (!isAuthenticated || draftsReminderShown.current) return;
+
+    const checkDrafts = async () => {
+      try {
+        const response = await api.getDrafts({ page: 1, per_page: 5 });
+        logger.debug('general', 'Drafts reminder check', { count: response.data.length });
+        if (response.data.length > 0) {
+          setReminderDrafts(response.data);
+          setShowDraftsModal(true);
+          draftsReminderShown.current = true;
+        }
+      } catch (err) {
+        logger.debug('general', 'Failed to check drafts for reminder', { error: err });
+      }
+    };
+
+    checkDrafts();
+  }, [isAuthenticated]);
+
   const navigateToAuth = (screen: 'Login' | 'Register') => {
     navigation.getParent()?.navigate('Auth', { screen });
   };
@@ -128,7 +159,7 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarPaddingBottom }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -146,6 +177,7 @@ export function HomeScreen({ navigation }: Props) {
           userAvatar={user?.avatar}
           isAuthenticated={isAuthenticated}
           unreadCount={unreadCount}
+          userTier={user?.subscription?.tier}
           onNotificationPress={() => {
             navigation.getParent()?.navigate('Notifications');
           }}
@@ -283,6 +315,28 @@ export function HomeScreen({ navigation }: Props) {
           limit={5}
         />
       </ScrollView>
+
+      {isAuthenticated && (
+        <DraftsReminderModal
+          visible={showDraftsModal}
+          onClose={() => setShowDraftsModal(false)}
+          drafts={reminderDrafts}
+          onPublish={async (postId) => {
+            await api.publishDraft(postId);
+            const remaining = reminderDrafts.filter((d) => d.id !== postId);
+            setReminderDrafts(remaining);
+            if (remaining.length === 0) {
+              setShowDraftsModal(false);
+            }
+          }}
+          onEdit={(draft) => {
+            navigation.getParent()?.navigate('PostForm', { postId: draft.id });
+          }}
+          onViewAll={() => {
+            navigation.navigate('Profile', { initialTab: 'drafts' });
+          }}
+        />
+      )}
     </ScreenContainer>
   );
 }

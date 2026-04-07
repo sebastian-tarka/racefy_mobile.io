@@ -47,7 +47,7 @@ Authorization: Bearer {token}
 **Response:**
 ```json
 {
-  "url": "https://racefy.app/share/activities/x7k9m2p4r5t1w3z8...",
+  "url": "https://racefy.io/share/activities/x7k9m2p4r5t1w3z8...",
   "title": "John Doe completed 10.5km Running",
   "description": "Distance: 10.50 km | Time: 52:30 | Elevation: 125m",
   "hashtags": ["#Racefy", "#Running", "#Krakow"],

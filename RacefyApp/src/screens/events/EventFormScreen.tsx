@@ -1,15 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Switch,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import {ActivityIndicator, Alert, Platform, ScrollView, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {Ionicons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {useTranslation} from 'react-i18next';
@@ -23,19 +14,32 @@ import {
     Input,
     MediaPicker,
     OptionSelector,
+    PointsBudgetIndicator,
+    PremiumTeaser,
+    ScreenContainer,
     ScreenHeader,
     SportTypeSelector,
-    ScreenContainer,
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
 import {emitRefresh} from '../../services/refreshEvents';
 import {fixStorageUrl} from '../../config/api';
 import {useTheme} from '../../hooks/useTheme';
+import {useSubscription} from '../../hooks/useSubscription';
 import {useSportTypes} from '../../hooks/useSportTypes';
-import {spacing} from '../../theme';
-import {CreateEventRequest, Event, EventRankingMode, EventTeamScoring, EventVisibility, MediaItem, UpdateEventRequest,} from '../../types/api';
+import {spacing, fontSize} from '../../theme';
 import {
+    ApiError,
+    CreateEventRequest,
+    Event,
+    EventTeamScoring,
+    EventVisibility,
+    MediaItem,
+    UpdateEventRequest,
+} from '../../types/api';
+import {getFieldError} from '../../utils/getFieldError';
+import {
+    buildDefaultCommentarySettings,
     CommentarySettingsData,
     DatePickerField,
     defaultCommentarySettings,
@@ -49,17 +53,18 @@ import {EventRankingModeSelector} from "../../components/EventRankingModeSelecto
 export function EventFormScreen({navigation, route}: Props) {
     const {eventId} = route.params || {};
     const isEditMode = !!eventId;
-    const {t} = useTranslation();
+    const {t, i18n} = useTranslation();
     const {colors} = useTheme();
+    const {canUse} = useSubscription();
     const {sportTypes, isLoading: isSportTypesLoading} = useSportTypes();
 
     const [formData, setFormData] = useState<FormData>(initialFormData);
     const [coverImage, setCoverImage] = useState<string | null>(null);
     const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
     const [commentarySettings, setCommentarySettings] = useState<CommentarySettingsData>(
-        defaultCommentarySettings
+        () => buildDefaultCommentarySettings(i18n.language)
     );
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [errors, setErrors] = useState<Record<string, string | string[]>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(isEditMode);
     const [showDatePicker, setShowDatePicker] = useState<{
@@ -69,6 +74,53 @@ export function EventFormScreen({navigation, route}: Props) {
     const [showOptionalFields, setShowOptionalFields] = useState(false);
     const [eventStatus, setEventStatus] = useState<string | null>(null);
     const [hasAiFeatures, setHasAiFeatures] = useState(false);
+
+    // Points budget state
+    const [pointsBudgetValid, setPointsBudgetValid] = useState(true);
+    const [pointsBudgetPrereqReady, setPointsBudgetPrereqReady] = useState(false);
+
+    // Tab state
+    type EventFormTab = 'basic' | 'scoring' | 'rewards' | 'team' | 'ai';
+    const [activeTab, setActiveTab] = useState<EventFormTab>('basic');
+
+    // Field → tab mapping for error counts and auto-switch
+    const TAB_FIELDS: Record<EventFormTab, string[]> = {
+        basic: ['title', 'content', 'location_name', 'sport_type_id', 'visibility', 'latitude', 'longitude', 'starts_at', 'ends_at', 'cover_image', 'slug', 'slug_expires_at'],
+        scoring: ['ranking_mode', 'distance', 'target_distance', 'target_elevation', 'time_limit', 'max_participants', 'entry_fee', 'registration_opens_at', 'registration_closes_at', 'difficulty', 'show_start_finish_points', 'start_finish_note', 'allow_multiple_activities', 'auto_finalize_results'],
+        rewards: ['point_rewards', 'point_rewards_first', 'point_rewards_second', 'point_rewards_third', 'point_rewards_finisher'],
+        team: ['is_team_event', 'team_size_min', 'team_size_max', 'team_scoring'],
+        ai: ['ai_commentary_enabled', 'ai_commentary_style', 'ai_commentary_languages', 'ai_commentary_interval_minutes', 'ai_commentary_token_limit', 'ai_commentary_auto_publish', 'ai_commentary_force_participants', 'ai_commentary_time_windows', 'ai_commentary_days_of_week', 'ai_commentary_pause_summary_enabled'],
+    };
+
+    const getTabErrorCount = (tab: EventFormTab): number =>
+        TAB_FIELDS[tab].filter((field) => errors[field] != null).length;
+
+    /** Find the first tab containing any of the given error fields. */
+    const findFirstErrorTab = (errorFields: string[]): EventFormTab | null => {
+        const tabs: EventFormTab[] = ['basic', 'scoring', 'rewards', 'team', 'ai'];
+        for (const tab of tabs) {
+            if (errorFields.some((f) => TAB_FIELDS[tab].includes(f))) return tab;
+        }
+        return null;
+    };
+
+    // Parse rewards once for reuse (allocated points + payload)
+    const parsedRewards = {
+        first: parseInt(formData.point_rewards_first, 10) || 0,
+        second: parseInt(formData.point_rewards_second, 10) || 0,
+        third: parseInt(formData.point_rewards_third, 10) || 0,
+        finisher: parseInt(formData.point_rewards_finisher, 10) || 0,
+    };
+    const parsedMaxParticipants = formData.max_participants ? parseInt(formData.max_participants, 10) : null;
+    const parsedDistanceMeters = formData.distance ? parseFloat(formData.distance) * 1000 : null;
+    // Allocated = 1st + 2nd + 3rd + finisher × estimated_finishers
+    // We approximate estimated_finishers = max_participants until backend returns it; the
+    // indicator will refine it after the preview response.
+    const allocatedPoints =
+        parsedRewards.first +
+        parsedRewards.second +
+        parsedRewards.third +
+        parsedRewards.finisher * (parsedMaxParticipants ?? 0);
 
     // Limited edit mode for ongoing/completed/cancelled events - only media, title, description can be edited
     const isLimitedEdit = isEditMode && (eventStatus === 'ongoing' || eventStatus === 'completed' || eventStatus === 'cancelled');
@@ -160,18 +212,24 @@ export function EventFormScreen({navigation, route}: Props) {
                 : null,
             max_participants: event.max_participants?.toString() || '',
             difficulty: event.difficulty,
-            // Convert from meters (API) to km (form display)
-            distance: event.distance ? (event.distance / 1000).toString() : '',
+            // Convert from meters (API) to km (form display).
+            // Backend auto-mirrors `distance` ↔ `target_distance`, so prefer
+            // whichever is set when loading an existing event.
+            distance: event.distance
+                ? (event.distance / 1000).toString()
+                : event.target_distance
+                    ? (event.target_distance / 1000).toString()
+                    : '',
             entry_fee: event.entry_fee?.toString() || '',
             // GPS Privacy (new in 2026-01)
             show_start_finish_points: event.show_start_finish_points ?? false,
             start_finish_note: event.start_finish_note || '',
             // Activity aggregation
             allow_multiple_activities: event.allow_multiple_activities ?? false,
+            auto_finalize_results: event.auto_finalize_results !== false,
             // Visibility
             visibility: event.visibility || 'public',
-            // Ranking mode config
-            target_distance: event.target_distance ? (event.target_distance / 1000).toString() : '',
+            // Ranking mode config (target_distance is mirrored from `distance` by backend)
             time_limit: event.time_limit ? (event.time_limit / 60).toString() : '',
             // Team event
             is_team_event: event.is_team_event ?? false,
@@ -183,6 +241,8 @@ export function EventFormScreen({navigation, route}: Props) {
             point_rewards_second: event.point_rewards?.second_place?.toString() || '',
             point_rewards_third: event.point_rewards?.third_place?.toString() || '',
             point_rewards_finisher: event.point_rewards?.finisher?.toString() || '',
+            // Route planning
+            route_id: event.route_id || null,
         });
         setCoverImage(fixStorageUrl(event.cover_image_url) || null);
 
@@ -214,8 +274,9 @@ export function EventFormScreen({navigation, route}: Props) {
         }
     };
 
-    const validate = (): boolean => {
-        const newErrors: Record<string, string> = {};
+    /** Returns the freshly computed errors object (also commits it to state). */
+    const validate = (): Record<string, string | string[]> | null => {
+        const newErrors: Record<string, string | string[]> = {};
 
         if (!formData.title.trim()) {
             newErrors.title = t('eventForm.validation.titleRequired');
@@ -245,7 +306,7 @@ export function EventFormScreen({navigation, route}: Props) {
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return Object.keys(newErrors).length === 0 ? null : newErrors;
     };
 
     // Check if the image is a local file (needs upload) vs a server URL
@@ -255,13 +316,22 @@ export function EventFormScreen({navigation, route}: Props) {
     };
 
     const handleSubmit = async () => {
-        if (!validate()) return;
+        const validationErrors = validate();
+        if (validationErrors) {
+            // Auto-switch to the first tab with validation errors
+            const tab = findFirstErrorTab(Object.keys(validationErrors));
+            if (tab) setActiveTab(tab);
+            return;
+        }
+        if (!pointsBudgetValid) {
+            setActiveTab('rewards');
+            Alert.alert(t('common.error'), t('events.pointsBudget.exceeded'));
+            return;
+        }
 
         setIsLoading(true);
         try {
             let savedEventId: number;
-
-            console.log(formData)
 
             if (isEditMode && eventId) {
                 const updateData: UpdateEventRequest = {
@@ -288,10 +358,11 @@ export function EventFormScreen({navigation, route}: Props) {
                     start_finish_note: formData.start_finish_note || undefined,
                     // Activity aggregation
                     allow_multiple_activities: formData.allow_multiple_activities,
+                    // Auto-finalize results
+                    auto_finalize_results: formData.auto_finalize_results,
                     // Visibility
                     visibility: formData.visibility,
-                    // Ranking mode config
-                    target_distance: formData.target_distance ? parseFloat(formData.target_distance) * 1000 : undefined,
+                    // Ranking mode config — backend auto-mirrors distance → target_distance
                     time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
                     // Team event
                     is_team_event: formData.is_team_event,
@@ -308,6 +379,8 @@ export function EventFormScreen({navigation, route}: Props) {
                             finisher: formData.point_rewards_finisher ? parseInt(formData.point_rewards_finisher, 10) : undefined,
                           }
                         : undefined,
+                    // Route planning
+                    route_id: formData.route_id,
                 };
 
                 await api.updateEvent(eventId, updateData);
@@ -337,10 +410,11 @@ export function EventFormScreen({navigation, route}: Props) {
                     start_finish_note: formData.start_finish_note || undefined,
                     // Activity aggregation
                     allow_multiple_activities: formData.allow_multiple_activities,
+                    // Auto-finalize results (only send when disabled, API defaults to true)
+                    ...(!formData.auto_finalize_results ? { auto_finalize_results: false } : {}),
                     // Visibility
                     visibility: formData.visibility,
-                    // Ranking mode config
-                    target_distance: formData.target_distance ? parseFloat(formData.target_distance) * 1000 : undefined,
+                    // Ranking mode config — backend auto-mirrors distance → target_distance
                     time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
                     // Team event
                     is_team_event: formData.is_team_event,
@@ -357,6 +431,8 @@ export function EventFormScreen({navigation, route}: Props) {
                             finisher: formData.point_rewards_finisher ? parseInt(formData.point_rewards_finisher, 10) : undefined,
                           }
                         : undefined,
+                    // Route planning
+                    route_id: formData.route_id,
                 };
 
                 const createdEvent = await api.createEvent(createData);
@@ -412,9 +488,34 @@ export function EventFormScreen({navigation, route}: Props) {
             navigation.goBack();
         } catch (error) {
             logger.error('api', 'Failed to save event', {error});
+            // Surface backend validation errors (Laravel-style: { field: [..] })
+            const apiError = error as ApiError | undefined;
+            const apiErrors = apiError?.errors;
+            if (apiErrors && typeof apiErrors === 'object') {
+                const mapped: Record<string, string | string[]> = {};
+                for (const [key, value] of Object.entries(apiErrors)) {
+                    // Flatten nested point_rewards.* → point_rewards_*
+                    if (key.startsWith('point_rewards.')) {
+                        const sub = key.slice('point_rewards.'.length);
+                        const flatKey =
+                            sub === 'first_place' ? 'point_rewards_first' :
+                            sub === 'second_place' ? 'point_rewards_second' :
+                            sub === 'third_place' ? 'point_rewards_third' :
+                            sub === 'finisher' ? 'point_rewards_finisher' :
+                            `point_rewards_${sub}`;
+                        mapped[flatKey] = value as string[];
+                    } else {
+                        mapped[key] = value as string[];
+                    }
+                }
+                setErrors(mapped);
+                // Auto-switch to first tab with backend errors
+                const tab = findFirstErrorTab(Object.keys(mapped));
+                if (tab) setActiveTab(tab);
+            }
             Alert.alert(
                 t('common.error'),
-                isEditMode ? t('eventForm.updateFailed') : t('eventForm.createFailed')
+                apiError?.message || (isEditMode ? t('eventForm.updateFailed') : t('eventForm.createFailed'))
             );
         } finally {
             setIsLoading(false);
@@ -505,7 +606,7 @@ export function EventFormScreen({navigation, route}: Props) {
         <ScreenContainer>
             <KeyboardAvoidingView
                 style={styles.keyboardView}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior="padding"
             >
                 <ScreenHeader
                     title={isEditMode ? t('eventForm.editTitle') : t('eventForm.createTitle')}
@@ -513,11 +614,63 @@ export function EventFormScreen({navigation, route}: Props) {
                     onBack={() => navigation.goBack()}
                 />
 
+                {/* Tab bar */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm}}
+                    style={{flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.border}}
+                >
+                    {(['basic', 'scoring', 'rewards', 'team', 'ai'] as EventFormTab[]).map((tab) => {
+                        const isActive = activeTab === tab;
+                        const errCount = getTabErrorCount(tab);
+                        return (
+                            <TouchableOpacity
+                                key={tab}
+                                onPress={() => setActiveTab(tab)}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    paddingHorizontal: spacing.md,
+                                    paddingVertical: spacing.sm,
+                                    borderRadius: 999,
+                                    backgroundColor: isActive ? colors.primary : colors.cardBackground,
+                                    borderWidth: 1,
+                                    borderColor: isActive ? colors.primary : colors.border,
+                                    gap: spacing.xs,
+                                }}
+                            >
+                                <Text style={{
+                                    color: isActive ? '#fff' : colors.textPrimary,
+                                    fontWeight: '600',
+                                    fontSize: 14,
+                                }}>
+                                    {t(`eventForm.tabs.${tab}`)}
+                                </Text>
+                                {errCount > 0 && (
+                                    <View style={{
+                                        backgroundColor: colors.error,
+                                        minWidth: 18,
+                                        height: 18,
+                                        borderRadius: 9,
+                                        paddingHorizontal: 5,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}>
+                                        <Text style={{color: '#fff', fontSize: 11, fontWeight: '700'}}>{errCount}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+
                 <ScrollView
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
                 >
+                    {activeTab === 'basic' && (<>
                     {/* Cover Image */}
                     <ImagePickerButton value={coverImage} onChange={setCoverImage}/>
 
@@ -553,6 +706,7 @@ export function EventFormScreen({navigation, route}: Props) {
                             multiline
                             numberOfLines={4}
                             style={styles.textArea}
+                            error={errors.content}
                         />
                     </View>
 
@@ -576,7 +730,9 @@ export function EventFormScreen({navigation, route}: Props) {
                         label={t('eventForm.visibility')}
                         disabled={isLimitedEdit}
                     />
+                    </>)}
 
+                    {activeTab === 'scoring' && (<>
                     {/* Ranking Modes */}
                     <EventRankingModeSelector
                         value={formData.ranking_mode || 'fastest_time'}
@@ -584,17 +740,19 @@ export function EventFormScreen({navigation, route}: Props) {
                         disabled={isLimitedEdit}
                     />
 
-                    {/* Ranking Config - Target Distance (for fastest_time / first_finish) */}
+                    {/* Ranking Config - Distance (for fastest_time / first_finish) */}
+                    {/* Single source of truth: backend mirrors `distance` ↔ `target_distance` */}
                     {(formData.ranking_mode === 'fastest_time' || formData.ranking_mode === 'first_finish') && (
                         <Card style={styles.optionalCard}>
                             <Input
-                                label={t('eventForm.targetDistance')}
-                                placeholder={t('eventForm.targetDistancePlaceholder')}
-                                value={formData.target_distance}
-                                onChangeText={(v) => updateField('target_distance', v)}
+                                label={t('eventForm.distance')}
+                                placeholder={t('eventForm.distancePlaceholder')}
+                                value={formData.distance}
+                                onChangeText={(v) => updateField('distance', v)}
                                 keyboardType="decimal-pad"
                                 leftIcon="flag-outline"
                                 editable={!isLimitedEdit}
+                                error={errors.distance ?? errors.target_distance}
                             />
                             <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
                                 {t('eventForm.targetDistanceDescription')}
@@ -613,6 +771,7 @@ export function EventFormScreen({navigation, route}: Props) {
                                 keyboardType="number-pad"
                                 leftIcon="timer-outline"
                                 editable={!isLimitedEdit}
+                                error={errors.time_limit}
                             />
                             <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
                                 {t('eventForm.timeLimitDescription')}
@@ -644,6 +803,64 @@ export function EventFormScreen({navigation, route}: Props) {
                         </View>
                     </Card>
 
+                    {/* Auto-finalize Results */}
+                    <Card style={styles.optionalCard}>
+                        <View style={[styles.gpsPrivacySection, {borderTopWidth: 0, paddingTop: 0}]}>
+                            <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                {t('eventForm.autoFinalizeResults')}
+                            </Text>
+                            <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
+                                {t('eventForm.autoFinalizeResultsDescription')}
+                            </Text>
+                            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md}}>
+                                <Text style={[styles.checkboxLabel, {color: colors.textPrimary}]}>
+                                    {t('eventForm.autoFinalizeResults')}
+                                </Text>
+                                <Switch
+                                    value={formData.auto_finalize_results}
+                                    onValueChange={(value) => updateField('auto_finalize_results', value)}
+                                    disabled={isLimitedEdit}
+                                    trackColor={{true: colors.primary, false: colors.border}}
+                                    thumbColor="#fff"
+                                />
+                            </View>
+                        </View>
+                    </Card>
+
+                    {/* Route Planning */}
+                    <Card style={styles.optionalCard}>
+                        <View style={[styles.gpsPrivacySection, {borderTopWidth: 0, paddingTop: 0}]}>
+                            <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                {t('eventForm.route', 'Event Route')}
+                            </Text>
+                            <Text style={[styles.sectionDescription, {color: colors.textSecondary, marginBottom: spacing.md}]}>
+                                {t('eventForm.routeDescription', 'Attach a planned route so participants can see the course before the event.')}
+                            </Text>
+                            {formData.route_id ? (
+                                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                    <View style={{flexDirection: 'row', alignItems: 'center', gap: spacing.sm}}>
+                                        <Ionicons name="map-outline" size={20} color={colors.primary} />
+                                        <Text style={{color: colors.textPrimary, fontSize: fontSize.sm, fontWeight: '500'}}>
+                                            {t('eventForm.routeAttached', 'Route attached')}
+                                        </Text>
+                                    </View>
+                                    <TouchableOpacity onPress={() => updateField('route_id', null)}>
+                                        <Ionicons name="close-circle" size={22} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <Button
+                                    title={t('eventForm.selectRoute', 'Select Route')}
+                                    variant="outline"
+                                    onPress={() => navigation.navigate('RouteLibrary')}
+                                    disabled={isLimitedEdit}
+                                />
+                            )}
+                        </View>
+                    </Card>
+                    </>)}
+
+                    {activeTab === 'team' && (<>
                     {/* Team Event */}
                     <Card style={styles.optionalCard}>
                         <View style={[styles.gpsPrivacySection, {borderTopWidth: 0, paddingTop: 0}]}>
@@ -706,14 +923,18 @@ export function EventFormScreen({navigation, route}: Props) {
                             )}
                         </View>
                     </Card>
+                    </>)}
 
+                    {activeTab === 'scoring' && (<>
                     {/* Difficulty */}
                     <DifficultySelector
                         value={formData.difficulty}
                         onChange={(difficulty) => updateField('difficulty', difficulty)}
                         disabled={isLimitedEdit}
                     />
+                    </>)}
 
+                    {activeTab === 'basic' && (<>
                     {/* Location */}
                     <Input
                         label={t('eventForm.location')}
@@ -743,7 +964,7 @@ export function EventFormScreen({navigation, route}: Props) {
                                 style={[styles.dateText, {color: colors.textPrimary}]}>{formatDateTime(formData.starts_at)}</Text>
                         </TouchableOpacity>
                         {errors.starts_at &&
-                            <Text style={[styles.errorText, {color: colors.error}]}>{errors.starts_at}</Text>}
+                            <Text style={[styles.errorText, {color: colors.error}]}>{getFieldError(errors, 'starts_at')}</Text>}
                     </View>
 
                     {/* End Date */}
@@ -763,24 +984,11 @@ export function EventFormScreen({navigation, route}: Props) {
                                 style={[styles.dateText, {color: colors.textPrimary}]}>{formatDateTime(formData.ends_at)}</Text>
                         </TouchableOpacity>
                         {errors.ends_at &&
-                            <Text style={[styles.errorText, {color: colors.error}]}>{errors.ends_at}</Text>}
+                            <Text style={[styles.errorText, {color: colors.error}]}>{getFieldError(errors, 'ends_at')}</Text>}
                     </View>
+                    </>)}
 
-                    {/* Optional Fields Toggle */}
-                    <TouchableOpacity
-                        style={styles.optionalToggle}
-                        onPress={() => setShowOptionalFields(!showOptionalFields)}
-                    >
-                        <Text
-                            style={[styles.optionalToggleText, {color: colors.textPrimary}]}>{t('eventForm.eventDetails')}</Text>
-                        <Ionicons
-                            name={showOptionalFields ? 'chevron-up' : 'chevron-down'}
-                            size={20}
-                            color={colors.textSecondary}
-                        />
-                    </TouchableOpacity>
-
-                    {showOptionalFields && (
+                    {activeTab === 'scoring' && (
                         <View style={isLimitedEdit ? {opacity: 0.6} : undefined}>
                             <Card style={styles.optionalCard}>
                                 {/* Registration Opens */}
@@ -830,18 +1038,22 @@ export function EventFormScreen({navigation, route}: Props) {
                                     keyboardType="number-pad"
                                     leftIcon="people-outline"
                                     editable={!isLimitedEdit}
+                                    error={errors.max_participants}
                                 />
 
-                                {/* Distance */}
-                                <Input
-                                    label={t('eventForm.distance')}
-                                    placeholder={t('eventForm.distancePlaceholder')}
-                                    value={formData.distance}
-                                    onChangeText={(text) => updateField('distance', text)}
-                                    keyboardType="decimal-pad"
-                                    leftIcon="map-outline"
-                                    editable={!isLimitedEdit}
-                                />
+                                {/* Distance — hidden when shown in ranking-mode card to avoid duplication */}
+                                {formData.ranking_mode !== 'fastest_time' && formData.ranking_mode !== 'first_finish' && (
+                                    <Input
+                                        label={t('eventForm.distance')}
+                                        placeholder={t('eventForm.distancePlaceholder')}
+                                        value={formData.distance}
+                                        onChangeText={(text) => updateField('distance', text)}
+                                        keyboardType="decimal-pad"
+                                        leftIcon="map-outline"
+                                        editable={!isLimitedEdit}
+                                        error={errors.distance ?? errors.target_distance}
+                                    />
+                                )}
 
                                 {/* Entry Fee */}
                                 <Input
@@ -852,6 +1064,7 @@ export function EventFormScreen({navigation, route}: Props) {
                                     keyboardType="decimal-pad"
                                     leftIcon="cash-outline"
                                     editable={!isLimitedEdit}
+                                    error={errors.entry_fee}
                                 />
 
                                 {/* GPS Privacy Section */}
@@ -902,79 +1115,153 @@ export function EventFormScreen({navigation, route}: Props) {
                                             leftIcon="information-circle-outline"
                                             editable={!isLimitedEdit}
                                             style={{marginTop: spacing.md}}
+                                            error={errors.start_finish_note}
                                         />
                                     )}
                                 </View>
+                            </Card>
+                        </View>
+                    )}
 
+                    {activeTab === 'rewards' && (
+                        <View style={isLimitedEdit ? {opacity: 0.6} : undefined}>
+                            <Card style={styles.optionalCard}>
                                 {/* Point Rewards Section */}
-                                <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>
-                                    <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
-                                        {t('eventForm.pointRewards')}
-                                    </Text>
-                                    <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
-                                        {t('eventForm.pointRewardsDescription')}
-                                    </Text>
-                                    <View style={{marginTop: spacing.md}}>
-                                        <Input
-                                            label={t('eventForm.pointRewardsFirstPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_first}
-                                            onChangeText={(v) => updateField('point_rewards_first', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="trophy-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsSecondPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_second}
-                                            onChangeText={(v) => updateField('point_rewards_second', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="medal-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsThirdPlace')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_third}
-                                            onChangeText={(v) => updateField('point_rewards_third', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="ribbon-outline"
-                                            editable={!isLimitedEdit}
-                                        />
-                                        <Input
-                                            label={t('eventForm.pointRewardsFinisher')}
-                                            placeholder={t('eventForm.pointRewardsPlaceholder')}
-                                            value={formData.point_rewards_finisher}
-                                            onChangeText={(v) => updateField('point_rewards_finisher', v)}
-                                            keyboardType="number-pad"
-                                            leftIcon="checkmark-circle-outline"
-                                            editable={!isLimitedEdit}
-                                        />
+                                <PremiumTeaser feature="event_prizes">
+                                    <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>
+                                        <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>
+                                            {t('eventForm.pointRewards')}
+                                        </Text>
+                                        <Text style={[styles.sectionDescription, {color: colors.textSecondary}]}>
+                                            {t('eventForm.pointRewardsDescription')}
+                                        </Text>
+
+                                        {/* Live points budget indicator */}
+                                        <View style={{marginTop: spacing.md}}>
+                                            <PointsBudgetIndicator
+                                                sportTypeId={formData.sport_type_id}
+                                                distance={parsedDistanceMeters}
+                                                maxParticipants={parsedMaxParticipants}
+                                                allocated={allocatedPoints}
+                                                eventId={isEditMode ? eventId : undefined}
+                                                onValidityChange={setPointsBudgetValid}
+                                                onPrerequisitesChange={setPointsBudgetPrereqReady}
+                                            />
+                                        </View>
+
+                                        {!pointsBudgetPrereqReady && (
+                                            <Text style={[styles.sectionDescription, {color: colors.textMuted, marginBottom: spacing.sm}]}>
+                                                {t('events.pointsBudget.rewardsLockedHint')}
+                                            </Text>
+                                        )}
+
+                                        <View style={[
+                                            {marginTop: spacing.md},
+                                            !pointsBudgetPrereqReady && {opacity: 0.5},
+                                        ]}>
+                                            <Input
+                                                label={t('eventForm.pointRewardsFirstPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_first}
+                                                onChangeText={(v) => updateField('point_rewards_first', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="trophy-outline"
+                                                editable={!isLimitedEdit && pointsBudgetPrereqReady}
+                                                error={errors.point_rewards_first}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsSecondPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_second}
+                                                onChangeText={(v) => updateField('point_rewards_second', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="medal-outline"
+                                                editable={!isLimitedEdit && pointsBudgetPrereqReady}
+                                                error={errors.point_rewards_second}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsThirdPlace')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_third}
+                                                onChangeText={(v) => updateField('point_rewards_third', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="ribbon-outline"
+                                                editable={!isLimitedEdit && pointsBudgetPrereqReady}
+                                                error={errors.point_rewards_third}
+                                            />
+                                            <Input
+                                                label={t('eventForm.pointRewardsFinisher')}
+                                                placeholder={t('eventForm.pointRewardsPlaceholder')}
+                                                value={formData.point_rewards_finisher}
+                                                onChangeText={(v) => updateField('point_rewards_finisher', v)}
+                                                keyboardType="number-pad"
+                                                leftIcon="checkmark-circle-outline"
+                                                editable={!isLimitedEdit && pointsBudgetPrereqReady}
+                                                error={errors.point_rewards_finisher}
+                                            />
+                                        </View>
+                                        {/* Top-level point_rewards budget error */}
+                                        {errors.point_rewards && (
+                                            <Text style={[styles.errorText, {color: colors.error, marginTop: spacing.sm}]}>
+                                                {getFieldError(errors, 'point_rewards')}
+                                            </Text>
+                                        )}
                                     </View>
-                                </View>
+                                </PremiumTeaser>
 
                             </Card>
                         </View>
                     )}
 
-                    {/* AI Commentary Settings - only shown if user has AI features enabled */}
-                    {hasAiFeatures && (
-                        <CommentarySettingsSection
-                            value={commentarySettings}
-                            onChange={setCommentarySettings}
-                            disabled={isLoading || isCommentaryReadOnly}
-                        />
+                    {activeTab === 'ai' && (
+                        <>
+                            {/* AI Commentary Settings */}
+                            {hasAiFeatures && canUse('event_ai_commentary') ? (
+                                <CommentarySettingsSection
+                                    value={commentarySettings}
+                                    onChange={setCommentarySettings}
+                                    disabled={isLoading || isCommentaryReadOnly}
+                                />
+                            ) : hasAiFeatures ? (
+                                <PremiumTeaser feature="event_ai_commentary">
+                                    <CommentarySettingsSection
+                                        value={defaultCommentarySettings}
+                                        onChange={() => {}}
+                                        disabled
+                                    />
+                                </PremiumTeaser>
+                            ) : (
+                                <Text style={[styles.sectionDescription, {color: colors.textSecondary, padding: spacing.md}]}>
+                                    {t('eventForm.aiNotAvailable')}
+                                </Text>
+                            )}
+                        </>
                     )}
+                </ScrollView>
 
-                    {/* Submit Button */}
+                {/* Sticky footer with Cancel/Save */}
+                <View style={{
+                    flexDirection: 'row',
+                    gap: spacing.md,
+                    padding: spacing.md,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
+                    backgroundColor: colors.background,
+                }}>
+                    <Button
+                        title={t('common.cancel')}
+                        variant="secondary"
+                        onPress={() => navigation.goBack()}
+                        style={{flex: 1}}
+                    />
                     <Button
                         title={isEditMode ? t('eventForm.updateButton') : t('eventForm.createButton')}
                         onPress={handleSubmit}
                         loading={isLoading}
-                        style={styles.submitButton}
+                        disabled={!pointsBudgetValid}
+                        style={{flex: 2}}
                     />
-                </ScrollView>
+                </View>
 
                 {/* Date Picker Modal */}
                 {showDatePicker && (

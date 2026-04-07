@@ -1,5 +1,6 @@
 {
   "common": {
+    "rateLimited": "Too many requests, please try again in a moment",
     "loading": "Loading...",
     "loadingMore": "Loading more...",
     "error": "Error",
@@ -34,7 +35,8 @@
     "thu": "Thu",
     "fri": "Fri",
     "sat": "Sat",
-    "sun": "Sun"
+    "sun": "Sun",
+    "notNow": "Not now"
   },
   "sports": {
     "running": "Running",
@@ -66,21 +68,33 @@
     "tagline": "Sports & Fitness Community"
   },
   "landing": {
-    "heroTitle": "Your Fitness Journey Starts Here",
-    "heroSubtitle": "Track your activities, connect with athletes, and join exciting sports events in your community",
-    "whyRacefy": "Why Choose Racefy?",
+    "heroTitlePart1": "Your Sports & Fitness",
+    "heroTitleHighlight": "Community",
+    "heroSubtitle": "Connect with athletes, share your activities, join events, and track your fitness journey together.",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "getStartedFree": "Get Started Free",
+    "exploreEvents": "Explore Events",
     "features": {
-      "track": {
-        "title": "Track Activities",
-        "description": "Record your workouts with GPS tracking, monitor your progress, and analyze your performance over time"
-      },
       "connect": {
-        "title": "Connect with Athletes",
-        "description": "Join a vibrant community of fitness enthusiasts, share achievements, and motivate each other"
+        "title": "Connect",
+        "description": "Follow athletes, share posts, and build your fitness community."
       },
       "events": {
-        "title": "Join Events",
-        "description": "Discover local sports events, register for competitions, and challenge yourself with new goals"
+        "title": "Events",
+        "description": "Create and join local sports events, races, and group activities."
+      },
+      "track": {
+        "title": "Track",
+        "description": "Log your activities, track progress, and celebrate achievements."
+      },
+      "liveCommentary": {
+        "title": "Live Commentary",
+        "description": "Follow events in real time with live chat and comments from participants and spectators."
+      },
+      "trainingPlans": {
+        "title": "Training Plans",
+        "description": "Get personalized AI-powered training programs tailored to your goals and fitness level."
       }
     },
     "ctaTitle": "Ready to Get Moving?",
@@ -145,7 +159,7 @@
       "findEvents": "Events"
     },
     "weeklyStats": {
-      "title": "Your Stats",
+      "title": "This Week",
       "details": "Details →",
       "activities": "Activities",
       "distance": "Distance",
@@ -155,7 +169,15 @@
     "weeklyStreak": {
       "title": "Weekly Streak",
       "progress": "{{completed}} / {{goal}} days",
-      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ]
     },
     "primaryCta": {
       "startTraining": "Start Training"
@@ -198,6 +220,10 @@
     "recentActivities": "Recent Activities",
     "checkConnection": "Check your internet connection"
   },
+  "network": {
+    "offline": "No internet connection",
+    "backOnline": "Back online"
+  },
   "feed": {
     "title": "Feed",
     "createPost": "Create Post",
@@ -227,9 +253,22 @@
       "activity": "Activity",
       "event": "Event",
       "sponsored": "Sponsored",
-      "reshare": "Reshare"
+      "reshare": "Reshare",
+      "achievement": "Achievement",
+      "challenge": "Challenge",
+      "digest": "Weekly Digest",
+      "milestone": "Milestone"
+    },
+    "achievement": {
+      "rarity": {
+        "legendary": "Legendary",
+        "epic": "Epic",
+        "rare": "Rare",
+        "common": "Common"
+      }
     },
     "showMore": "Show more",
+    "watchAgain": "Watch again",
     "viewDetails": "View Details",
     "visibility": {
       "public": "Public",
@@ -289,13 +328,17 @@
     "aiGenerated": "AI Generated",
     "draftBanner": "This is a draft and only visible to you",
     "loadingDrafts": "Loading drafts...",
-    "refreshing": "Refreshing..."
+    "refreshing": "Refreshing...",
+    "reminderTitle": "You have unpublished drafts",
+    "reminderSubtitle": "Review and publish your drafts",
+    "viewAll": "View all drafts",
+    "dismissReminder": "Later"
   },
   "profile": {
     "title": "Profile",
     "signInRequired": "Sign in to view profile",
     "signInDescription": "Track your activities and manage your account",
-    "editProfile": "Edit Profile",
+    "editProfile": "Edit",
     "logoutConfirm": "Are you sure you want to logout?",
     "failedToLogout": "Failed to logout",
     "failedToLoad": "Failed to load profile",
@@ -322,6 +365,7 @@
     },
     "stats": {
       "posts": "Posts",
+      "totalDistance": "Total",
       "followers": "Followers",
       "following": "Following",
       "compareWith": "Compare with",
@@ -419,6 +463,24 @@
     }
   },
   "events": {
+    "pointsBudget": {
+      "title": "Points budget",
+      "sponsored": "Sponsored",
+      "remaining": "Remaining",
+      "allocated": "Allocated",
+      "pool": "Pool",
+      "estimatedFinishers": "Est. finishers",
+      "exceeded": "Points budget exceeded",
+      "missingData": "Fill required fields to compute the pool",
+      "loading": "Calculating pool...",
+      "disabledHint": "Fill distance/sport/participants to unlock",
+      "prereqTitle": "To compute the points pool, provide:",
+      "prereqSportType": "Sport type",
+      "prereqEffort": "Distance or elevation",
+      "prereqMaxParticipants": "Max participants",
+      "poolReady": "Pool ready",
+      "rewardsLockedHint": "🔒 Fill the fields above to award points"
+    },
     "title": "Events",
     "subtitle": "Discover and join local sports events",
     "loadingEvents": "Loading events...",
@@ -428,11 +490,27 @@
     "createEvent": "Create Event",
     "failedToLoad": "Failed to load events",
     "filters": {
-      "all": "All",
+      "all": "General",
       "upcoming": "Upcoming",
       "ongoing": "Ongoing",
       "completed": "Completed"
-    }
+    },
+    "stats": {
+      "totalEvents": "Events",
+      "participants": "Participants",
+      "ongoing": "Ongoing",
+      "upcoming": "Upcoming",
+      "joined": "Joined",
+      "completed": "Completed",
+      "myCompleted": "Finished",
+      "organized": "Organized",
+      "podiums": "Podiums",
+      "distance": "Distance",
+      "finishes": "Finishes"
+    },
+    "happeningNow": "Happening Now",
+    "upcomingEvents": "Upcoming Events",
+    "completedEvents": "Recently Completed"
   },
   "eventDetail": {
     "title": "Event Details",
@@ -481,11 +559,19 @@
     "activities": "Activities",
     "moreActivities": "+{{count}} more",
     "leaderboard": "Leaderboard",
+    "rewards": "Rewards",
+    "rewardsDescription": "Complete this event to earn points for the ranking!",
+    "firstPlace": "1st Place",
+    "secondPlace": "2nd Place",
+    "thirdPlace": "3rd Place",
+    "finisher": "Finisher",
+    "pts": "pts",
     "tabs": {
       "details": "Details",
       "commentary": "Commentary",
       "participants": "Participants",
-      "leaderboard": "Leaderboard"
+      "leaderboard": "Leaderboard",
+      "teams": "Teams"
     },
     "eventEnded": "Event has ended",
     "eventCancelled": "Event was cancelled",
@@ -585,6 +671,7 @@
   "recording": {
     "title": "Record Activity",
     "selectSport": "Select Sport",
+    "audioCoach": "Audio Coach",
     "status": {
       "recording": "Recording",
       "paused": "Paused",
@@ -613,6 +700,8 @@
     "discardConfirm": "Are you sure you want to discard this activity? This cannot be undone.",
     "activitySaved": "Activity saved successfully!",
     "activityShared": "Activity saved and shared to your feed!",
+    "noPointsAwarded": "Activity didn't meet the thresholds for points.",
+    "pointsAwarded": "{{points}} points awarded",
     "draftCreated": "Your activity was saved as a draft post. You can review and publish it later.",
     "viewDraft": "View Draft",
     "later": "Later",
@@ -663,6 +752,7 @@
     "viewStats": "Stats View",
     "toggleView": "Toggle View",
     "routes": "Routes",
+    "recenter": "Re-center map",
     "mapStyle": "Map Style",
     "mapStyleOutdoors": "Outdoors",
     "mapStyleStreets": "Streets",
@@ -699,6 +789,8 @@
     "importButton": "Import Activity",
     "importing": "Importing...",
     "importSuccess": "Activity imported successfully!",
+    "duplicateTitle": "Activity already exists",
+    "duplicateMessage": "This file (or an activity with the same start time) was already imported.",
     "importFailed": "Failed to import GPX file",
     "invalidFileType": "Please select a .gpx file",
     "selectFileFailed": "Failed to select file",
@@ -744,9 +836,19 @@
     "deleteConfirm": "Are you sure you want to delete this conversation?",
     "searchUsers": "Search users...",
     "noSearchResults": "No users found",
-    "startingConversation": "Starting conversation..."
+    "startingConversation": "Starting conversation...",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "eventForm": {
+    "tabs": {
+      "basic": "Basics",
+      "scoring": "Scoring",
+      "rewards": "Rewards",
+      "team": "Team",
+      "ai": "AI"
+    },
+    "aiNotAvailable": "AI features are not available on your account.",
     "createTitle": "Create Event",
     "editTitle": "Edit Event",
     "coverImage": "Cover Image",
@@ -796,6 +898,8 @@
     "allowMultipleActivities": "Activity Aggregation",
     "allowMultipleActivitiesDescription": "Allow participants to submit multiple activities that will be aggregated for this event",
     "allowMultipleActivitiesToggle": "Allow multiple activities",
+    "autoFinalizeResults": "Auto-finalize Results",
+    "autoFinalizeResultsDescription": "Automatically calculate results and award points when the event ends. If disabled, the organizer must finalize manually.",
     "visibility": "Visibility",
     "visibilityPublic": "Public",
     "visibilityFollowers": "Followers Only",
@@ -895,6 +999,8 @@
     "showStatsDesc": "Display your stats on profile",
     "allowMessages": "Allow Messages",
     "allowMessagesDesc": "Who can send you messages",
+    "shareAchievements": "Share Achievements in Feed",
+    "shareAchievementsDesc": "When you earn a badge, a post will appear automatically in the feed",
     "activityDefaults": "Activity Defaults",
     "favoriteSport": "Favorite Sport",
     "favoriteSportDesc": "Default sport type for new activities",
@@ -911,7 +1017,38 @@
     "noOne": "No One",
     "privacySafety": {
       "title": "Privacy & Safety",
-      "blockedUsers": "Blocked Users"
+      "blockedUsers": "Blocked Users",
+      "privacyZones": "Privacy Zones",
+      "feedbackAndBugs": "Feedback & Bug Reports"
+    },
+    "privacyZones": {
+      "title": "Privacy Zones",
+      "description": "Hide your home, work, and other sensitive locations from GPS tracks. Start and end points within 200m of a zone will be hidden from other users.",
+      "empty": "No privacy zones yet. Add a zone to hide sensitive locations from your activity tracks.",
+      "addZone": "Add Privacy Zone",
+      "editZone": "Edit Zone",
+      "zoneName": "Zone Name",
+      "zoneNamePlaceholder": "e.g. Home, Office",
+      "zoneType": "Zone Type",
+      "typeHome": "Home",
+      "typeWork": "Work",
+      "typeOther": "Other",
+      "location": "Location",
+      "tapMapToSelect": "Tap the map to select location",
+      "useCurrentLocation": "Use Current Location",
+      "radius": "200m radius (automatic)",
+      "active": "Active",
+      "inactive": "Inactive",
+      "deleteZone": "Delete Zone",
+      "deleteConfirm": "Are you sure you want to delete this privacy zone? Your future activities will no longer be protected in this area.",
+      "saved": "Privacy zone saved",
+      "deleted": "Privacy zone deleted",
+      "limitReached": "You've reached your privacy zones limit ({{limit}}). Upgrade your plan to add more.",
+      "suggestions": "Suggested Zones",
+      "suggestionsHint": "Based on your activity patterns, we suggest these locations:",
+      "addSuggestion": "Add",
+      "activities": "{{count}} activities",
+      "confidence": "{{value}}% confidence"
     },
     "updateFailed": "Failed to update settings",
     "aiPostsUpdated": "AI posts preference updated",
@@ -945,6 +1082,28 @@
       "autoPublish": "Auto-publish",
       "autoPublishDescription": "Publish posts automatically without review (not recommended)"
     },
+    "audioCoach": {
+      "title": "Audio Coach",
+      "description": "Get voice announcements about your pace, distance and stats during activities.",
+      "enable": "Enable Audio Coach",
+      "enableHint": "Voice updates at distance intervals",
+      "language": "Language",
+      "interval": "Announce every",
+      "style": "Coaching Style",
+      "styles": {
+        "neutral": "Neutral",
+        "motivational": "Motivational",
+        "coach": "Coach",
+        "minimal": "Minimal"
+      },
+      "speechRate": "Speech Rate",
+      "aiVoice": "AI Voice",
+      "aiVoiceHint": "Use natural AI voices instead of device TTS",
+      "heartRate": "Announce Heart Rate",
+      "splitDelta": "Announce Split Comparison",
+      "usage": "{{used}} / {{total}} characters used this month",
+      "preview": "Preview"
+    },
     "healthSync": {
       "title": "Heart Rate Sync",
       "description": "Automatically enrich activities with heart rate data from your smartwatch.",
@@ -964,6 +1123,16 @@
     "app": "App",
     "version": "Version",
     "allRightsReserved": "All rights reserved",
+    "subscriptionSection": "Subscription",
+    "currentPlan": "Current Plan",
+    "planFree": "Free",
+    "planPlus": "Plus",
+    "planPro": "Pro",
+    "trialBadge": "Trial",
+    "expiresOn": "Expires {{date}}",
+    "trialEndsOn": "Trial ends {{date}}",
+    "upgradePlan": "Upgrade Plan",
+    "changePlan": "Change Plan",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "deleteAccountConfirm": "This action cannot be undone. All your data will be permanently deleted.",
@@ -973,6 +1142,16 @@
     "passwordRequiredForDelete": "Password is required to delete your account",
     "confirmPassword": "Password",
     "enterPasswordToDelete": "Enter your password to confirm",
+    "trainingReminders": {
+      "title": "Training Reminders",
+      "remindMe": "Remind me about planned training",
+      "trainingDays": "Training days",
+      "reminderTime": "Reminder time",
+      "pushNotifications": "Push notifications",
+      "pushInfo": "Enable push notifications to receive training reminders on your device",
+      "at": "at",
+      "off": "Off"
+    },
     "adminTools": {
       "title": "Admin Tools",
       "impersonate": "Impersonate User"
@@ -1137,6 +1316,7 @@
     "liveActive": "Live Commentary Active",
     "nextUpdate": "Next update in",
     "loading": "Loading commentary...",
+    "fallbackNotice": "Commentary not available in your language. Showing in: {{language}}",
     "emptyTitle": "No commentary yet",
     "emptyMessage": "Commentary will appear as the event progresses",
     "disabledTitle": "Commentary is disabled",
@@ -1287,7 +1467,18 @@
     "retry": "Retry",
     "shareImage": "Share with Image",
     "shareTextOnly": "Share Text Only",
-    "selectFormatFirst": "Please select an image format first"
+    "selectFormatFirst": "Please select an image format first",
+    "mapMode": "Route Map",
+    "photoMode": "Photo + Route",
+    "selectPhoto": "Select photo",
+    "selectPhotoHint": "Select or upload a photo to overlay the route on",
+    "uploadPhoto": "Upload",
+    "generatingOverlay": "Generating image...",
+    "photoOverlayPreview": "Photo Overlay Preview",
+    "photoOverlayFailed": "Failed to generate photo overlay",
+    "savedToGallery": "Image saved to gallery!",
+    "saveFailed": "Failed to save image",
+    "saveToGallery": "Save to Gallery"
   },
   "training": {
     "title": "Training Plans",
@@ -1325,6 +1516,13 @@
     "loading": {
       "title": "Generating Your Plan",
       "subtitle": "Our AI is creating a personalized training program just for you. This usually takes 5-10 seconds."
+    },
+    "programSelector": {
+      "weekProgress": "Week {{current}}/{{total}}",
+      "active": "active",
+      "paused": "paused",
+      "newProgram": "+ New",
+      "upgrade": "Upgrade"
     },
     "weeksList": {
       "title": "Training Weeks",
@@ -1580,5 +1778,418 @@
       "followers": "Followers",
       "private": "Private"
     }
+  },
+  "batteryOptimization": {
+    "title": "Enable Unrestricted GPS",
+    "subtitle": "For accurate activity tracking, disable battery optimization for Racefy. Otherwise Android may pause GPS in the background.",
+    "step1": "Tap \"Open App Settings\" below",
+    "step2": "Tap \"Battery\"",
+    "step3": "Tap \"Battery optimization\" or \"Optimize battery usage\"",
+    "step4": "Find Racefy and select \"Don't optimize\" or \"No restrictions\"",
+    "openSettings": "Open App Settings",
+    "dismiss": "I'll do it later"
+  },
+  "maintenance": {
+    "title": "Maintenance in Progress",
+    "defaultMessage": "We're performing scheduled maintenance. The app will be back shortly.",
+    "estimatedEnd": "Estimated completion:",
+    "retry": "Check Again",
+    "today": "today"
+  },
+  "subscription": {
+    "choosePlan": "Choose Your Plan",
+    "current": "Current",
+    "trialActive": "Plus trial active — {{days}} days remaining",
+    "trialEndsIn": "Trial ends in {{days}} days",
+    "upgradeRequired": "Upgrade Required",
+    "upgradeRequiredDesc": "This feature is not available on your current plan. Upgrade to unlock it.",
+    "viewPlans": "View Plans",
+    "featureLocked": "Premium Feature",
+    "upgradeToUnlock": "Upgrade to unlock this feature",
+    "upgradeTo": "Upgrade to {{plan}}",
+    "restorePurchases": "Restore Purchases",
+    "status": "Subscription",
+    "plan": "Plan",
+    "trialLabel": "Trial",
+    "expiresAt": "Expires",
+    "manageSub": "Manage Subscription",
+    "availablePlans": "Available Plans",
+    "compareFeatures": "Compare All Features",
+    "month": "month",
+    "year": "year",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "yearlyDiscount": "Yearly -20%",
+    "perMonth": "/mo",
+    "perYear": "/yr",
+    "mostPopular": "Most Popular",
+    "currentPlan": "Current Plan",
+    "selectPlan": "Select Plan",
+    "contactSupport": "Questions about plans?",
+    "unlimited": "Unlimited",
+    "free": "Free",
+    "purchaseSuccess": "Welcome to Premium!",
+    "purchaseSuccessDesc": "Your subscription is now active. Enjoy all premium features!",
+    "purchaseFailed": "Purchase could not be completed. Please try again.",
+    "restoreSuccess": "Purchases Restored",
+    "restoreSuccessDesc": "Your previous purchases have been restored successfully.",
+    "restoreEmpty": "No Purchases Found",
+    "restoreEmptyDesc": "No previous purchases were found for this account.",
+    "restoreFailed": "Could not restore purchases. Please try again.",
+    "features": {
+      "ai_posts_monthly": "AI Posts",
+      "ai_post_on_finish": "AI Post on Finish",
+      "events_monthly": "Events",
+      "event_prizes": "Event Prizes",
+      "event_ai_commentary": "AI Commentary",
+      "training_summaries": "Training Summaries",
+      "advanced_stats": "Advanced Stats",
+      "gpx_export": "GPX Export",
+      "share_link_permanent": "Permanent Share Links",
+      "privacy_zones": "Privacy Zones",
+      "training_programs": "Training Programs",
+      "active_training_programs": "Active Training Programs",
+      "exclusive_badges": "Exclusive Badges",
+      "points_multiplier": "Points Multiplier",
+      "teams_max": "Teams",
+      "team_members_max": "Members per Team",
+      "coaching_hints_bulk": "Bulk Coaching Hints",
+      "audio_coach_ai": "AI Audio Coach",
+      "insights_advanced": "Advanced Insights",
+      "ad_free": "Ad Free"
+    },
+    "featureDescriptions": {
+      "ai_posts_monthly": "Let AI write engaging posts about your activities.",
+      "ai_post_on_finish": "Automatically generate a post when you finish an activity.",
+      "events_monthly": "Create more events each month.",
+      "event_prizes": "Add prizes to make your events more exciting.",
+      "event_ai_commentary": "Get live AI commentary during your events.",
+      "training_summaries": "Get detailed weekly training summaries and insights.",
+      "advanced_stats": "Unlock pace zones, heart rate analysis, and training load metrics.",
+      "gpx_export": "Export your activities as GPX files to use with other apps.",
+      "share_link_permanent": "Create permanent share links for your activities.",
+      "privacy_zones": "Set up more privacy zones to hide your location.",
+      "training_programs": "Access more training programs to reach your goals.",
+      "active_training_programs": "Run multiple training programs simultaneously.",
+      "exclusive_badges": "Unlock exclusive achievement badges for your profile.",
+      "points_multiplier": "Earn points faster with a multiplier bonus."
+    },
+    "tapToUpgrade": "Tap to upgrade"
+  },
+  "insights": {
+    "title": "Training Profile",
+    "subtitle": "Your training insights and statistics",
+    "updatedAt": "Updated: {{date}}",
+    "empty": {
+      "title": "No data yet",
+      "message": "Complete your first activity to see your training profile"
+    },
+    "locked": {
+      "availableIn": "Available in {{tier}} plan",
+      "upgrade": "Upgrade"
+    },
+    "summary": {
+      "title": "Activity Summary",
+      "activities": "Activities",
+      "distance": "Distance",
+      "duration": "Duration",
+      "elevation": "Elevation",
+      "calories": "Calories",
+      "bySport": "By sport type"
+    },
+    "comparison": {
+      "title": "Comparisons",
+      "vsLastWeek": "vs last week",
+      "vsLastMonth": "vs last month",
+      "vs3Months": "vs 3 months ago",
+      "activities": "Activities",
+      "distance": "Distance",
+      "streak": "Streak",
+      "rank": "Rank"
+    },
+    "streak": {
+      "title": "Streak & Consistency",
+      "current": "Current streak",
+      "longest": "Longest streak",
+      "thisWeek": "This week",
+      "thisMonth": "This month",
+      "days": "d",
+      "consistency": "Weekly consistency",
+      "weeks": "weeks",
+      "totalActiveDays": "{{count}} total active days"
+    },
+    "trends": {
+      "title": "Trends",
+      "weeklyDistance": "Weekly distance",
+      "monthlyDistance": "Monthly distance",
+      "weeklyBreakdown": "Weekly breakdown"
+    },
+    "timePatterns": {
+      "title": "Time Patterns",
+      "preferredTime": "Preferred time",
+      "preferredDay": "Preferred day",
+      "hourDistribution": "Hour distribution",
+      "dayDistribution": "Day distribution",
+      "weekend": "{{pct}}% on weekends",
+      "earlyMorning": "Early morning",
+      "morning": "Morning",
+      "midday": "Midday",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "night": "Night"
+    },
+    "milestones": {
+      "title": "Milestones",
+      "upcoming": "Next milestones",
+      "achieved": "Recently achieved"
+    },
+    "weather": {
+      "title": "Weather Profile",
+      "preferredTemp": "Preferred temperature",
+      "tempDistribution": "Temperature distribution",
+      "conditions": "Weather conditions",
+      "temp": {
+        "cold": "Cold",
+        "cool": "Cool",
+        "moderate": "Moderate",
+        "warm": "Warm",
+        "hot": "Hot"
+      },
+      "condition": {
+        "clear": "Clear",
+        "cloudy": "Cloudy",
+        "rain": "Rain",
+        "snow": "Snow",
+        "fog": "Fog",
+        "wind": "Wind"
+      }
+    },
+    "routes": {
+      "title": "Favorite Routes",
+      "fingerprints": "Route Fingerprints",
+      "uniqueCities": "Unique cities",
+      "topLocations": "Top locations",
+      "avgDistance": "avg {{km}} km",
+      "repeatedRoutes": "Repeated routes",
+      "loop": "Loop",
+      "outAndBack": "Out & Back"
+    }
+  },
+  "teams": {
+    "teams": "Teams",
+    "myTeams": "My Teams",
+    "allTeams": "All Teams",
+    "noTeams": "No teams found",
+    "noMyTeams": "You're not in any team yet",
+    "loading": "Loading team...",
+    "notFound": "Team not found",
+    "failedToLoad": "Failed to load team",
+    "searchPlaceholder": "Search teams...",
+    "createTeam": "Create Team",
+    "createNewTeam": "Create New Team",
+    "editTeam": "Edit Team",
+    "deleteTeam": "Delete Team",
+    "leaveTeam": "Leave Team",
+    "joinTeam": "Join Team",
+    "joinTeamModal": "Join Team by Code",
+    "teamName": "Team Name",
+    "teamNamePlaceholder": "Enter team name",
+    "teamDescription": "Description",
+    "teamDescriptionPlaceholder": "Describe your team (optional)",
+    "teamVisibility": "Public Team",
+    "publicDescription": "Anyone can find and request to join",
+    "privateDescription": "Invite only, hidden from search",
+    "public": "Public",
+    "private": "Private",
+    "nameRequired": "Team name is required",
+    "teamCreated": "Team created!",
+    "teamUpdated": "Team updated",
+    "teamCode": "Join Code",
+    "teamCodePlaceholder": "Enter 6-character code",
+    "shareCode": "Share this code with your teammates",
+    "invalidCode": "Invalid team code",
+    "createFailed": "Failed to create team",
+    "joinFailed": "Failed to join team",
+    "members": "Members",
+    "membersCount": "{{count}} members",
+    "captain": "Captain",
+    "teamFull": "Full",
+    "youAreCaptain": "You are the captain",
+    "youAreInThisTeam": "You are in this team",
+    "requestToJoin": "Request to Join",
+    "requestSent": "Join request sent",
+    "requestFailed": "Failed to send request",
+    "invitedToTeam": "You've been invited to this team",
+    "invitePlayer": "Invite Member",
+    "invited": "Invited",
+    "invitationSent": "Invitation sent",
+    "pendingInvitation": "Pending invitation",
+    "searchUserPlaceholder": "Search users...",
+    "joinRequests": "Join Requests",
+    "transferCaptain": "Transfer Captain",
+    "kickMember": "Remove Member",
+    "confirmLeaveTeam": "Leave Team?",
+    "confirmLeaveTeamDescription": "Are you sure you want to leave this team?",
+    "confirmDeleteTeam": "Delete Team?",
+    "confirmDeleteTeamDescription": "This action cannot be undone. All team data will be lost.",
+    "confirmKick": "Remove Member?",
+    "confirmKickDescription": "Remove {{name}} from the team?",
+    "confirmTransferCaptain": "Transfer Captain Role?",
+    "confirmTransferCaptainDescription": "Make {{name}} the new captain? You will become a regular member.",
+    "profileSubtitle": "Create or join a team",
+    "teamsUsage": "Teams: {{used}}/{{max}}",
+    "membersLimitReached": "Members limit reached — Upgrade",
+    "avatarOptions": "Team Avatar",
+    "changeAvatar": "Change Avatar",
+    "deleteAvatar": "Delete Avatar",
+    "stats": "Stats",
+    "events": "Events",
+    "statsPrivate": "This team's stats are private",
+    "statsPrivateDescription": "Join the team to view statistics.",
+    "noActivities": "No activities yet",
+    "noActivitiesDescription": "Team members need to complete activities to see stats here.",
+    "allTime": "All time",
+    "activities": "Activities",
+    "distance": "Distance",
+    "duration": "Duration",
+    "elevation": "Elevation",
+    "activeMembers": "Active",
+    "calories": "Calories",
+    "longestDistance": "Longest",
+    "longestDuration": "Longest time",
+    "memberRanking": "Member Ranking",
+    "sortBy": "Sort",
+    "sortDistance": "Distance",
+    "sortDuration": "Duration",
+    "sortElevation": "Elevation",
+    "sortActivities": "Activities",
+    "activityTrends": "Activity Trends",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "bySportType": "By Sport Type",
+    "teamLeaderboard": "Teams Leaderboard",
+    "noLeaderboardEntries": "No teams in leaderboard yet",
+    "sortMembers": "Members",
+    "periodThisWeek": "This week",
+    "periodLastWeek": "Last week",
+    "periodThisMonth": "This month",
+    "periodLastMonth": "Last month",
+    "periodThisYear": "This year",
+    "periodLastYear": "Last year"
+  },
+  "feedback": {
+    "title": "Feedback & Bug Reports",
+    "myFeedback": "My Feedback",
+    "newFeedback": "Submit Feedback",
+    "noFeedback": "You haven't submitted any feedback yet.",
+    "noFeedbackCta": "Let us know how we can improve!",
+    "allStatuses": "All",
+    "repliesCount": "{{count}} replies",
+    "repliesCountOne": "1 reply",
+    "noRepliesShort": "No replies",
+    "types": {
+      "bug": "Bug Report",
+      "feature_request": "Feature Request",
+      "feedback": "General Feedback"
+    },
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In Progress",
+      "waiting_for_user": "Waiting for Response",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "form": {
+      "title": "Submit Feedback",
+      "type": "What kind of feedback?",
+      "subject": "Subject",
+      "subjectPlaceholder": "Brief summary of the issue...",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe the issue or suggestion in detail...",
+      "priority": "Priority",
+      "attachments": "Screenshots",
+      "addPhoto": "Add Photo",
+      "maxAttachments": "Maximum 5 attachments",
+      "deviceInfoHint": "Device information is automatically collected to help us diagnose issues.",
+      "submit": "Submit Feedback",
+      "submitting": "Submitting...",
+      "subjectRequired": "Subject is required",
+      "descriptionRequired": "Description is required"
+    },
+    "detail": {
+      "replies": "Replies",
+      "noReplies": "No replies yet. Our team will respond soon.",
+      "replyPlaceholder": "Write a reply...",
+      "sendReply": "Send",
+      "adminReply": "Team",
+      "you": "You",
+      "closedNotice": "This feedback is closed.",
+      "deviceInfo": "Device Info",
+      "submittedFrom": "Submitted from"
+    },
+    "messages": {
+      "submitted": "Feedback submitted! We'll review it shortly.",
+      "submitFailed": "Failed to submit feedback",
+      "replyAdded": "Reply sent",
+      "replyFailed": "Failed to send reply",
+      "rateLimited": "Please wait before submitting again",
+      "loadFailed": "Failed to load feedback"
+    }
+  },
+  "routes": {
+    "title": "Routes",
+    "subtitle": "Plan and discover running & cycling routes",
+    "noRoutes": "No routes found",
+    "noRoutesMessage": "You haven't created any routes yet",
+    "createRoute": "Plan a Route",
+    "failedToLoad": "Failed to load routes",
+    "walking": "Walking",
+    "cycling": "Cycling",
+    "public": "Public",
+    "usedTimes": "Used {{count}} times",
+    "filters": {
+      "my": "My Routes",
+      "popular": "Popular",
+      "nearby": "Nearby"
+    },
+    "deleteConfirm": "Are you sure you want to delete this route?",
+    "deleted": "Route deleted",
+    "duplicated": "Route copied to your library"
+  },
+  "routeDetail": {
+    "title": "Route Details",
+    "loading": "Loading route...",
+    "notFound": "Route not found",
+    "failedToLoad": "Failed to load route details",
+    "distance": "Distance",
+    "elevation": "Elevation Gain",
+    "elevationLoss": "Elevation Loss",
+    "estimatedTime": "Est. Time",
+    "profile": "Type",
+    "waypoints": "Waypoints",
+    "sport": "Sport",
+    "createdBy": "Created by",
+    "startNavigation": "Start Navigation",
+    "duplicate": "Save to Library",
+    "delete": "Delete Route",
+    "edit": "Edit Route",
+    "elevationProfile": "Elevation Profile",
+    "turnInstructions": "Turn Instructions",
+    "noElevationData": "No elevation data available"
+  },
+  "navigation": {
+    "offRoute": "Off route",
+    "remaining": "Remaining",
+    "eta": "ETA",
+    "turnLeft": "Turn left",
+    "turnRight": "Turn right",
+    "goStraight": "Go straight",
+    "uTurn": "U-turn"
   }
 }

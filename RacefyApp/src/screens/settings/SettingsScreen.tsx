@@ -13,12 +13,15 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer } from '../../components';
+import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, AudioCoachSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer, PremiumTeaser } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
 import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
@@ -26,7 +29,7 @@ import { useHealthSync } from '../../hooks/useHealthSync';
 import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { changeLanguage } from '../../i18n';
+import { changeLanguage, supportedLanguages } from '../../i18n';
 import { spacing, fontSize } from '../../theme';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
@@ -158,6 +161,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     show_activities: true,
     show_stats: true,
     allow_messages: 'everyone',
+    share_achievements: true,
   },
   activity_defaults: {
     visibility: 'public',
@@ -180,6 +184,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { tier, isPremium, isTrial, remainingDays, expiresAt, canUse } = useSubscription();
   const { colors, isDark, themePreference, setThemePreference } = useTheme();
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
   const { setUnits } = useUnits();
@@ -218,6 +223,7 @@ export function SettingsScreen({ navigation }: Props) {
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
     account: true,
+    subscription: false,
     adminTools: false,
     consents: false,
     preferences: false,
@@ -227,6 +233,9 @@ export function SettingsScreen({ navigation }: Props) {
     activityDefaults: false,
     healthSync: false,
     aiPosts: false,
+    audioCoach: false,
+    trainingReminders: false,
+    notifDebug: false,
     app: true,
     dangerZone: false,
   });
@@ -259,6 +268,22 @@ export function SettingsScreen({ navigation }: Props) {
   }, []);
 
   const appVersion = Application.nativeApplicationVersion || '1.0.0';
+
+  // Training reminders summary for settings row
+  const trainingRemindersSummary = (() => {
+    const tr = (preferences as any).training_reminders;
+    if (!tr?.enabled) return t('settings.trainingReminders.off', 'Off');
+    const dayLabels: Record<string, string[]> = {
+      en: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      pl: ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'],
+      es: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    };
+    const lang = preferences.language || 'en';
+    const labels = dayLabels[lang] || dayLabels.en;
+    const selectedDays = (tr.days || []).map((d: number) => labels[d]).join(', ');
+    const time = tr.time || '08:00';
+    return selectedDays ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}` : t('settings.trainingReminders.on', 'On');
+  })();
 
   useEffect(() => {
     loadPreferences();
@@ -618,6 +643,55 @@ export function SettingsScreen({ navigation }: Props) {
           )}
         </SettingsSection>
 
+        {/* Subscription */}
+        <SettingsSection
+          title={t('settings.subscriptionSection')}
+          isExpanded={expandedSections.subscription}
+          onToggle={() => toggleSection('subscription')}
+        >
+          <View style={[styles.subscriptionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <View style={styles.subscriptionRow}>
+              <Text style={[styles.subscriptionLabel, { color: colors.textSecondary }]}>
+                {t('settings.currentPlan')}
+              </Text>
+              <View style={styles.subscriptionPlanRow}>
+                <Text style={[styles.subscriptionPlanValue, { color: isPremium ? colors.primary : colors.textPrimary }]}>
+                  {t(`settings.plan${tier.charAt(0).toUpperCase() + tier.slice(1)}`)}
+                </Text>
+                {isTrial && (
+                  <View style={[styles.subscriptionTrialBadge, { backgroundColor: colors.primary + '20' }]}>
+                    <Text style={[styles.subscriptionTrialBadgeText, { color: colors.primary }]}>
+                      {t('settings.trialBadge')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {isTrial && remainingDays !== null && (
+              <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
+                {t('settings.trialEndsOn', { date: remainingDays + 'd' })}
+              </Text>
+            )}
+            {!isTrial && isPremium && expiresAt && (
+              <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
+                {t('settings.expiresOn', { date: new Date(expiresAt).toLocaleDateString() })}
+              </Text>
+            )}
+          </View>
+          <SettingsRow
+            icon={isPremium ? 'swap-horizontal-outline' : 'diamond-outline'}
+            label={isPremium ? t('settings.changePlan') : t('settings.upgradePlan')}
+            onPress={() => navigation.navigate('Paywall', {})}
+          />
+          {isPremium && (
+            <SettingsRow
+              icon="card-outline"
+              label={t('subscription.manageSub')}
+              onPress={() => navigation.navigate('Paywall', {})}
+            />
+          )}
+        </SettingsSection>
+
         {/* Admin Tools (only visible to admins) */}
         {user?.role === 'admin' && (
           <SettingsSection
@@ -669,10 +743,13 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="language-outline"
             label={t('settings.language')}
-            value={preferences.language === 'en' ? 'English' : 'Polski'}
-            onPress={async () => {
-              const newLang = preferences.language === 'en' ? 'pl' : 'en';
-              await changeLanguage(newLang);
+            value={supportedLanguages.find(l => l.code === preferences.language)?.nativeName || 'English'}
+            onPress={() => {
+              const langs = supportedLanguages;
+              const currentIndex = langs.findIndex(l => l.code === preferences.language);
+              const nextIndex = (currentIndex + 1) % langs.length;
+              const newLang = langs[nextIndex].code as UserPreferences['language'];
+              changeLanguage(newLang);
               updatePreference('language', newLang);
             }}
           />
@@ -829,6 +906,18 @@ export function SettingsScreen({ navigation }: Props) {
             value={getMessagesLabel(preferences.privacy.allow_messages)}
             onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
           />
+          <SettingsRow
+            icon="trophy-outline"
+            label={t('settings.shareAchievements')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.share_achievements ?? true}
+                onValueChange={(value) => updateNestedPreference('privacy', 'share_achievements', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={(preferences.privacy.share_achievements ?? true) ? colors.primary : colors.white}
+              />
+            }
+          />
         </SettingsSection>
 
         {/* Privacy & Safety */}
@@ -838,9 +927,19 @@ export function SettingsScreen({ navigation }: Props) {
           onToggle={() => toggleSection('privacySafety')}
         >
           <SettingsRow
+            icon="location-outline"
+            label={t('settings.privacySafety.privacyZones')}
+            onPress={() => navigation.navigate('PrivacyZones')}
+          />
+          <SettingsRow
             icon="shield-outline"
             label={t('settings.privacySafety.blockedUsers')}
             onPress={() => navigation.navigate('BlockedUsers')}
+          />
+          <SettingsRow
+            icon="chatbubbles-outline"
+            label={t('settings.privacySafety.feedbackAndBugs')}
+            onPress={() => navigation.navigate('FeedbackList')}
           />
         </SettingsSection>
 
@@ -940,16 +1039,135 @@ export function SettingsScreen({ navigation }: Props) {
           isExpanded={expandedSections.aiPosts}
           onToggle={() => toggleSection('aiPosts')}
         >
-          <AiPostsSettings
-            preferences={preferences.ai_posts}
-            onPreferenceChange={updateAiPostsPreference}
-            isUpdating={isUpdatingAiPosts}
-            embedded
-          />
+          {canUse('ai_posts_monthly') ? (
+            <AiPostsSettings
+              preferences={preferences.ai_posts}
+              onPreferenceChange={updateAiPostsPreference}
+              isUpdating={isUpdatingAiPosts}
+              embedded
+            />
+          ) : (
+            <PremiumTeaser feature="ai_posts_monthly">
+              <AiPostsSettings
+                preferences={preferences.ai_posts}
+                onPreferenceChange={async () => {}}
+                isUpdating={false}
+                embedded
+              />
+            </PremiumTeaser>
+          )}
+        </SettingsSection>
+
+        {/* Audio Coach Settings */}
+        <SettingsSection
+          title={t('settings.audioCoach.title')}
+          isExpanded={expandedSections.audioCoach}
+          onToggle={() => toggleSection('audioCoach')}
+        >
+          <AudioCoachSettings embedded />
         </SettingsSection>
 
         {/* Debug Logs (only visible in dev mode when enabled) */}
         <DebugLogsSection />
+
+        {/* Notification Debug - test if local notification tap opens app */}
+        {__DEV__ && (
+          <SettingsSection
+            title="Notification Debug"
+            isExpanded={expandedSections.notifDebug}
+            onToggle={() => toggleSection('notifDebug')}
+          >
+            <View style={{ padding: spacing.md }}>
+              <Button
+                title="Send test notification (5s delay)"
+                onPress={async () => {
+                  try {
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: 'Test Notification',
+                        body: 'Tap this to test if the app opens! Sent at ' + new Date().toLocaleTimeString(),
+                        data: { type: 'test', post_id: 1 },
+                        sound: 'default',
+                      },
+                      trigger: {
+                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+                        seconds: 5,
+                      },
+                    });
+                    Alert.alert('Scheduled', 'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.');
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title="Send immediate notification"
+                onPress={async () => {
+                  try {
+                    await Notifications.scheduleNotificationAsync({
+                      content: {
+                        title: 'Immediate Test',
+                        body: 'Tap to test app opening. ' + new Date().toLocaleTimeString(),
+                        data: { type: 'test' },
+                        sound: 'default',
+                      },
+                      trigger: null,
+                    });
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.sm }} />
+              <Button
+                title="Show Push Token"
+                onPress={async () => {
+                  try {
+                    const token = await Notifications.getExpoPushTokenAsync({
+                      projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
+                    });
+                    Alert.alert('Expo Push Token', token.data, [
+                      { text: 'Copy', onPress: () => {
+                        Clipboard.setStringAsync(token.data);
+                      }},
+                      { text: 'OK' },
+                    ]);
+                  } catch (e: any) {
+                    Alert.alert('Error getting token', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.md }} />
+              <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
+                Test 1 - Lokalna notyfikacja:{'\n'}
+                1. "Send test notification (5s delay)"{'\n'}
+                2. Zminimalizuj appkę{'\n'}
+                3. Tapnij powiadomienie{'\n'}
+                {'\n'}
+                Test 2 - Push via Expo Tool:{'\n'}
+                1. "Show Push Token" → skopiuj token{'\n'}
+                2. Wejdź na expo.dev/notifications{'\n'}
+                3. Wklej token i wyślij{'\n'}
+                4. Tapnij powiadomienie
+              </Text>
+            </View>
+          </SettingsSection>
+        )}
+
+        {/* Training Reminders */}
+        <SettingsSection
+          title={t('settings.trainingReminders.title')}
+          isExpanded={expandedSections.trainingReminders}
+          onToggle={() => toggleSection('trainingReminders')}
+        >
+          <SettingsRow
+            icon="notifications-outline"
+            label={t('settings.trainingReminders.title')}
+            value={trainingRemindersSummary}
+            onPress={() => navigation.navigate('TrainingReminders')}
+          />
+        </SettingsSection>
 
         {/* App Section */}
         <SettingsSection
@@ -1245,5 +1463,40 @@ const styles = StyleSheet.create({
   healthSyncDescription: {
     fontSize: fontSize.sm,
     lineHeight: 20,
+  },
+  subscriptionCard: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subscriptionLabel: {
+    fontSize: fontSize.sm,
+  },
+  subscriptionPlanRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  subscriptionPlanValue: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  subscriptionTrialBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  subscriptionTrialBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  subscriptionExpiry: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
   },
 });

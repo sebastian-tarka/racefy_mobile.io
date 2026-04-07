@@ -5,16 +5,18 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccessibilityInfo, Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { ms } from '../theme/scale';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
+import { useMaintenance } from '../hooks/useMaintenance';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useHomeConfig } from '../hooks/useHomeConfig';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
-import { Loading, ImpersonationBanner, ErrorBoundary } from '../components';
+import { Loading, ImpersonationBanner, NetworkStatusBar, ErrorBoundary, BatteryOptimizationModal, UpgradePromptModal } from '../components';
 
 // Screens
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -32,8 +34,9 @@ import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
 import { EventFormScreen, EventCommentarySettingsScreen } from '../screens/events';
 import { PostFormScreen } from '../screens/posts';
 import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
+import { PaywallScreen } from '../screens/PaywallScreen';
 import { EditProfileScreen } from '../screens/profile';
-import { SettingsScreen, BlockedUsersScreen } from '../screens/settings';
+import { SettingsScreen, BlockedUsersScreen, PrivacyZonesScreen, TrainingRemindersScreen } from '../screens/settings';
 import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
 import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
@@ -47,6 +50,16 @@ import {
   TipDetailScreen,
   WeekFeedbackScreen,
 } from '../screens/training';
+import { MaintenanceScreen } from '../screens/maintenance/MaintenanceScreen';
+import { TeamsListScreen } from '../screens/teams/TeamsListScreen';
+import { TeamDetailScreen } from '../screens/teams/TeamDetailScreen';
+import { TeamFormScreen } from '../screens/teams/TeamFormScreen';
+import { FeedbackListScreen } from '../screens/feedback/FeedbackListScreen';
+import { FeedbackFormScreen } from '../screens/feedback/FeedbackFormScreen';
+import { FeedbackDetailScreen } from '../screens/feedback/FeedbackDetailScreen';
+import { InviteMemberScreen } from '../screens/teams/InviteMemberScreen';
+import { TeamsLeaderboardScreen } from '../screens/teams/TeamsLeaderboardScreen';
+import { RouteLibraryScreen, RouteDetailScreen, RoutePlannerScreen } from '../screens/routes';
 
 // Types
 import type {
@@ -54,7 +67,8 @@ import type {
   AuthStackParamList,
   MainTabParamList,
 } from './types';
-import {FeedScreen} from "../screens/main/FeedScreen";
+import { FeedScreen } from '../screens/main/FeedScreen';
+import { InsightsScreen } from '../screens/main/InsightsScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -63,21 +77,21 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-// Custom Tab Bar Background with blur effect
-function TabBarBackground({ colors }: { colors: any }) {
+// Custom Tab Bar Background with glass blur effect
+function TabBarBackground({ colors, isDark }: { colors: any; isDark: boolean }) {
   return (
     <BlurView
-      intensity={95}
-      tint="dark"
+      intensity={isDark ? 80 : 90}
+      tint={isDark ? 'dark' : 'light'}
       style={StyleSheet.absoluteFill}
     >
       <View
         style={[
           StyleSheet.absoluteFill,
           {
-            backgroundColor: 'rgba(17, 24, 39, 0.98)', // More opaque to hide content underneath
-            borderWidth: 1,
-            borderColor: colors.border,
+            backgroundColor: isDark
+              ? 'rgba(11, 18, 32, 0.8)'
+              : 'rgba(255, 255, 255, 0.95)',
           },
         ]}
       />
@@ -172,9 +186,9 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
-            width: 56,
-            height: 46,
-            borderRadius: 20,
+            width: ms(56),
+            height: ms(46),
+            borderRadius: ms(20),
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -195,10 +209,23 @@ function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
     );
   }
 
-  // Not on Record tab, no recording - show gray +
+  // Not on Record tab, no recording - subtle outlined pill with +
   return (
-    <Animated.View style={{ alignItems: 'center', justifyContent: 'center', transform: [{ scale: scaleAnim }] }}>
-      <Text style={{ fontSize: 20, color: '#9ca3af', lineHeight: 20 }}>+</Text>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <View
+        style={{
+          width: ms(48),
+          height: ms(38),
+          borderRadius: ms(16),
+          borderWidth: 1.5,
+          borderColor: 'rgba(16, 185, 129, 0.4)',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 22, color: '#10b981', fontWeight: '600', lineHeight: 24 }}>+</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -414,7 +441,7 @@ function CustomTabButton({ children, onPress, accessibilityState, style, ...prop
  */
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { style } = useNavigationStyle();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -438,7 +465,7 @@ function MainTabNavigator() {
     },
   };
 
-  const tabBarHeight = 60 + insets.bottom;
+  const tabBarHeight = ms(60) + insets.bottom;
   const tabBarPaddingBottom = Math.max(insets.bottom, 8);
 
   const DYNAMIC_ICONS: Record<string, string> = {
@@ -495,22 +522,26 @@ function MainTabNavigator() {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarBackground: () => <TabBarBackground colors={colors} isDark={isDark} />,
         tabBarStyle: isDynamic
           ? {
-              backgroundColor: colors.cardBackground,
+              backgroundColor: 'transparent',
               height: tabBarHeight,
               paddingTop: 8,
               paddingBottom: tabBarPaddingBottom,
-              borderTopWidth: 0,
+              borderTopWidth: 1,
+              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+              position: 'absolute' as const,
             }
           : {
-              backgroundColor: colors.cardBackground,
-              borderTopColor: colors.border,
+              backgroundColor: 'transparent',
+              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               borderTopWidth: 1,
+              position: 'absolute' as const,
             },
         ...(isDynamic && {
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: ms(11),
             fontWeight: '500' as const,
             letterSpacing: 0.3,
           },
@@ -580,12 +611,18 @@ function NavigationStyleSetter({ children }: { children: React.ReactNode }) {
 export function AppNavigator() {
   const { isLoading, isAuthenticated, requiresConsent } = useAuth();
   const { colors, isDark } = useTheme();
+  const { isMaintenanceMode } = useMaintenance();
 
   // Initialize push notifications with navigation ref for deep linking
   usePushNotifications({ navigationRef });
 
   if (isLoading) {
     return <Loading fullScreen message="Loading..." />;
+  }
+
+  // Show maintenance screen when server is in maintenance mode
+  if (isMaintenanceMode) {
+    return <MaintenanceScreen />;
   }
 
   // Create custom theme for React Navigation
@@ -717,6 +754,10 @@ export function AppNavigator() {
               component={GpxImportScreen}
             />
             <RootStack.Screen
+              name="Paywall"
+              component={PaywallScreen}
+            />
+            <RootStack.Screen
               name="EditProfile"
               component={EditProfileScreen}
             />
@@ -727,6 +768,14 @@ export function AppNavigator() {
             <RootStack.Screen
               name="BlockedUsers"
               component={BlockedUsersScreen}
+            />
+            <RootStack.Screen
+              name="PrivacyZones"
+              component={PrivacyZonesScreen}
+            />
+            <RootStack.Screen
+              name="TrainingReminders"
+              component={TrainingRemindersScreen}
             />
             <RootStack.Screen
               name="ImpersonateUser"
@@ -750,6 +799,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="PointHistory"
               component={PointHistoryScreen}
+            />
+            <RootStack.Screen
+              name="Insights"
+              component={InsightsScreen}
             />
             <RootStack.Screen
               name="TrainingCalibration"
@@ -778,10 +831,27 @@ export function AppNavigator() {
               name="WeekFeedback"
               component={WeekFeedbackScreen}
             />
+            {/* Teams */}
+            <RootStack.Screen name="TeamsList" component={TeamsListScreen} />
+            <RootStack.Screen name="TeamDetail" component={TeamDetailScreen} />
+            <RootStack.Screen name="TeamForm" component={TeamFormScreen} />
+            <RootStack.Screen name="InviteMember" component={InviteMemberScreen} />
+            <RootStack.Screen name="TeamsLeaderboard" component={TeamsLeaderboardScreen} />
+            {/* Feedback */}
+            <RootStack.Screen name="FeedbackList" component={FeedbackListScreen} />
+            <RootStack.Screen name="FeedbackForm" component={FeedbackFormScreen} />
+            <RootStack.Screen name="FeedbackDetail" component={FeedbackDetailScreen} />
+            {/* Routes */}
+            <RootStack.Screen name="RouteLibrary" component={RouteLibraryScreen} />
+            <RootStack.Screen name="RouteDetail" component={RouteDetailScreen} />
+            <RootStack.Screen name="RoutePlanner" component={RoutePlannerScreen} />
           </>
         )}
           </RootStack.Navigator>
           <ImpersonationBanner />
+          <NetworkStatusBar />
+          <BatteryOptimizationModal />
+          <UpgradePromptModal />
         </NavigationContainer>
       </NavigationStyleSetter>
     </NavigationStyleProvider>

@@ -14,6 +14,7 @@ import { syncUnitsPreference } from './useUnits';
 import { logger } from '../services/logger';
 import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
 import { useImpersonationActions, IMPERSONATION_SESSION_KEY } from './useImpersonationActions';
+import { revenueCatLogIn, revenueCatLogOut } from '../services/revenuecat';
 import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -100,6 +101,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Set up the unauthorized callback before initializing
     api.setOnUnauthorized(handleUnauthorized);
+    api.setOnUpgradeRequired((data) => {
+      // Lazy import to avoid circular dependency
+      const { upgradePromptEmitter } = require('../services/upgradePromptEmitter');
+      upgradePromptEmitter.emit('show', {
+        feature: data.feature,
+        currentTier: data.currentTier,
+      });
+    });
+    // Global rate limit (429) toast — debounced via local flag to avoid multiple alerts
+    let rateLimitAlertActive = false;
+    api.setOnRateLimit(() => {
+      if (rateLimitAlertActive) return;
+      rateLimitAlertActive = true;
+      // Lazy import to keep this hook framework-agnostic
+      const { Alert } = require('react-native');
+      const i18n = require('../i18n').default;
+      Alert.alert(
+        i18n.t('common.error'),
+        i18n.t('common.rateLimited'),
+        [{ text: i18n.t('common.ok'), onPress: () => { rateLimitAlertActive = false; } }],
+        { onDismiss: () => { rateLimitAlertActive = false; } }
+      );
+    });
     initAuth();
   }, [handleUnauthorized]);
 
@@ -145,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await api.getUser();
         setUser(userData);
         logger.auth('User authenticated', { userId: userData.id, username: userData.username });
+        revenueCatLogIn(userData.id).catch(() => {});
         // Sync language preference from server after auth
         syncPreferences();
         // Check consent status for existing authenticated users
@@ -169,14 +194,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
     const response = await api.login(data);
+    // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
+    const status = await getConsentStatus();
+    // Set both atomically - React 18 batches these (no await between them)
+    setRequiresConsent(!status.accepted);
     setUser(response.user);
     logger.auth('Login successful', { userId: response.user.id, username: response.user.username });
-    // Sync language preference after login
     syncPreferences();
-    // Check consent status after login
-    const status = await getConsentStatus();
-    setRequiresConsent(!status.accepted);
-    // Register for push notifications (non-blocking)
+    revenueCatLogIn(response.user.id).catch(() => {});
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after login', { error });
     });
@@ -187,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.register(data);
     setUser(response.user);
     logger.auth('Registration successful', { userId: response.user.id });
+    revenueCatLogIn(response.user.id).catch(() => {});
     // New users always need to accept consents
     setRequiresConsent(true);
     // Register for push notifications (non-blocking)
@@ -199,18 +225,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logger.auth('Google Sign-In attempt');
     const idToken = await signInWithGoogle();
     const response = await api.googleAuth(idToken);
-    setUser(response.user);
-    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
-    // Sync language preference after login
-    syncPreferences();
-    // New users need to accept consents; existing users: check status
+    // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
+    let needsConsent = false;
     if (response.is_new_user) {
-      setRequiresConsent(true);
+      needsConsent = true;
     } else {
       const status = await getConsentStatus();
-      setRequiresConsent(!status.accepted);
+      needsConsent = !status.accepted;
     }
-    // Register for push notifications (non-blocking)
+    // Set both atomically - React 18 batches these (no await between them)
+    setRequiresConsent(needsConsent);
+    setUser(response.user);
+    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
+    revenueCatLogIn(response.user.id).catch(() => {});
+    syncPreferences();
     pushNotificationService.registerWithBackend().catch((error) => {
       logger.warn('auth', 'Failed to register for push notifications after Google sign-in', { error });
     });
@@ -226,6 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     await api.logout();
     await signOutFromGoogle();
+    await revenueCatLogOut();
     // Reset push notification service state
     pushNotificationService.reset();
     setUser(null);
@@ -236,6 +265,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       const userData = await api.getUser();
+      logger.debug('auth', 'refreshUser subscription data', {
+        tier: userData.subscription?.tier,
+        is_premium: userData.subscription?.is_premium,
+        features: userData.subscription?.features,
+      });
       setUser(userData);
     } catch (error) {
       // Ignore errors

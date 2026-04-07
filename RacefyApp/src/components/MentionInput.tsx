@@ -30,7 +30,7 @@ interface MentionInputProps {
   autoFocus?: boolean;
   onFocus?: () => void;
   numberOfLines?: number;
-  error?: string;
+  error?: string | string[] | null;
 }
 
 const DEBOUNCE_MS = 300;
@@ -122,9 +122,10 @@ export function MentionInput({
   autoFocus = false,
   onFocus,
   numberOfLines,
-  error,
+  error: rawError,
 }: MentionInputProps) {
   const { colors } = useTheme();
+  const error = Array.isArray(rawError) ? rawError[0] : rawError ?? undefined;
 
   const searchUsers = useCallback(async (query: string): Promise<MentionSearchUser[]> => {
     const resp = await api.searchMentionUsers(query);

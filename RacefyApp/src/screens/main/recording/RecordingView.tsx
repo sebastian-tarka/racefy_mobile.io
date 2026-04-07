@@ -11,7 +11,8 @@ import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
-import { spacing, fontSize, borderRadius } from '../../../theme';
+import { logger } from '../../../services/logger';
+import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
@@ -36,6 +37,8 @@ interface RecordingViewProps {
   isAuthenticated: boolean;
   nextMilestone: MilestoneSingle | undefined;
   gpsProfile: GpsProfile | null;
+  audioCoachActive?: boolean;
+  onToggleAudioCoach?: () => void;
   onPause: () => void;
   onStop: () => void;
 }
@@ -51,6 +54,8 @@ export function RecordingView({
   isAuthenticated,
   nextMilestone,
   gpsProfile,
+  audioCoachActive,
+  onToggleAudioCoach,
   onPause,
   onStop,
 }: RecordingViewProps) {
@@ -68,7 +73,18 @@ export function RecordingView({
   const formatAvgPace = (): string => {
     if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
-    return formatPaceFromSecPerKm(avgPace);
+    const formatted = formatPaceFromSecPerKm(avgPace);
+    // Debug: log avg pace calculation every ~5km to diagnose display issues
+    if (Math.floor(currentStats.distance / 5000) !== Math.floor((currentStats.distance - 50) / 5000)) {
+      logger.debug('activity', 'formatAvgPace debug', {
+        localDuration,
+        distance: Math.round(currentStats.distance),
+        minDistance,
+        avgPaceRaw: avgPace,
+        formatted,
+      });
+    }
+    return formatted;
   };
 
   return (
@@ -88,6 +104,24 @@ export function RecordingView({
           )}
         </View>
         <View style={styles.compactHeaderRight}>
+          {onToggleAudioCoach !== undefined && (
+            <TouchableOpacity
+              style={[styles.audioCoachToggle, {
+                backgroundColor: audioCoachActive ? colors.primary + '20' : colors.border + '40',
+              }]}
+              onPress={onToggleAudioCoach}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.audioCoach')}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: audioCoachActive }}
+            >
+              <Ionicons
+                name={audioCoachActive ? 'volume-high' : 'volume-mute'}
+                size={14}
+                color={audioCoachActive ? colors.primary : colors.textMuted}
+              />
+            </TouchableOpacity>
+          )}
           <Badge
             label={status === 'recording' ? t('recording.status.recording') : t('recording.status.paused')}
             variant={status === 'recording' ? 'ongoing' : 'upcoming'}
@@ -173,7 +207,7 @@ export function RecordingView({
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Ionicons name="pause" size={32} color={colors.white} />
+            <Ionicons name="pause" size={iconSize.xl} color={colors.white} />
             <Text style={styles.controlButtonText}>{t('recording.pause')}</Text>
           </TouchableOpacity>
 
@@ -183,7 +217,7 @@ export function RecordingView({
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Ionicons name="stop" size={32} color={colors.white} />
+            <Ionicons name="stop" size={iconSize.xl} color={colors.white} />
             <Text style={styles.controlButtonText}>{t('recording.stop')}</Text>
           </TouchableOpacity>
         </View>
@@ -252,6 +286,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  audioCoachToggle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   gpsIndicator: {
     height: 28,
     borderRadius: 14,
@@ -270,7 +311,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
   },
   heroTimer: {
-    fontSize: 72,
+    fontSize: componentSize.heroTimerFont,
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
     letterSpacing: -2,
@@ -322,9 +363,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   controlButton: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: componentSize.controlButton,
+    height: componentSize.controlButton,
+    borderRadius: componentSize.controlButton / 2,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',

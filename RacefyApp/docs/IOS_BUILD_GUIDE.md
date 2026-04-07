@@ -34,7 +34,7 @@ This guide explains how to build and distribute iOS apps for different environme
 |---------|---------|--------------|----------|---------|
 | **staging** | `https://app.dev.racefy.io/api` | Internal/Ad-Hoc | Internal team testing (requires device UDIDs) | `eas build --platform ios --profile staging` |
 | **production** (current) | `https://app.dev.racefy.io/api` | TestFlight/App Store | Testing with friends via TestFlight (staging API) | `eas build --platform ios --profile production` |
-| **production** (future) | `https://api.racefy.app/api` | App Store | Final production release to public | Update `APP_ENV` to `production` in eas.json |
+| **production** (future) | `https://racefy.io/api` | App Store | Final production release to public | Update `APP_ENV` to `production` in eas.json |
 
 ### Current Configuration:
 
@@ -217,7 +217,7 @@ eas env:list production --include-sensitive
 
 # Add production API URL if needed
 eas env:create --name API_PRODUCTION_URL \
-  --value "https://api.racefy.app/api" \
+  --value "https://racefy.io/api" \
   --scope project \
   --type string \
   --visibility secret \

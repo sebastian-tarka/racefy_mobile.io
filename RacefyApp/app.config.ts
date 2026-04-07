@@ -1,4 +1,24 @@
-import { ExpoConfig, ConfigContext } from 'expo/config';
+import {ConfigContext, ExpoConfig} from 'expo/config';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Decode Firebase config files from base64 EAS env vars (or use existing local files).
+// Runs both locally (when files exist on disk) and on EAS servers (when env vars are set).
+const decodeFirebaseConfig = (envVar: string, outputFile: string): string | undefined => {
+  const outputPath = path.resolve(__dirname, outputFile);
+  if (fs.existsSync(outputPath)) return `./${outputFile}`;
+  const base64 = process.env[envVar];
+  if (!base64) return undefined;
+  try {
+    fs.writeFileSync(outputPath, Buffer.from(base64, 'base64').toString('utf-8'));
+    return `./${outputFile}`;
+  } catch {
+    return undefined;
+  }
+};
+
+const iosGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICE_INFO_PLIST', 'GoogleService-Info.plist');
+const androidGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICES_JSON', 'google-services.json');
 
 // Determine API URL based on APP_ENV
 const getApiUrl = (): string => {
@@ -8,46 +28,17 @@ const getApiUrl = (): string => {
     return process.env.API_STAGING_URL || 'https://app.dev.racefy.io/api';
   }
 
-  return process.env.API_PRODUCTION_URL || 'https://api.racefy.app/api';
+  return process.env.API_PRODUCTION_URL || 'https://racefy.io/api';
 };
 
-// Determine Firebase config file based on APP_ENV
-const getGoogleServicesFile = (): string => {
-  const env = process.env.APP_ENV || 'production';
-
-  switch (env) {
-    case 'development':
-      return './google-services-dev.json';
-    case 'staging':
-      return './google-services-staging.json';
-    case 'production':
-      return './google-services-production.json';
-    default:
-      return './google-services-production.json';
-  }
-};
-
-// Determine iOS Firebase config file based on APP_ENV
-const getGoogleServicesFileiOS = (): string => {
-  const env = process.env.APP_ENV || 'production';
-
-  switch (env) {
-    case 'development':
-      return './GoogleService-Info-dev.plist';
-    case 'staging':
-      return './GoogleService-Info-staging.plist';
-    case 'production':
-      return './GoogleService-Info-production.plist';
-    default:
-      return './GoogleService-Info-production.plist';
-  }
-};
+// Firebase config files are decoded from EAS env vars by scripts/decode-firebase-config.js
+// For local dev, place google-services.json and GoogleService-Info.plist manually
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.6.0',
+  version: '1.10.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -61,10 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '8',
-    googleServicesFile: getGoogleServicesFileiOS(),
+    buildNumber: '1.10.0',
+    ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
     associatedDomains: [
-      'applinks:racefy.app',
+      'applinks:racefy.io',
       'applinks:app.dev.racefy.io',
     ],
     infoPlist: {
@@ -87,7 +78,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSHealthShareUsageDescription:
         'Racefy reads heart rate data from your smartwatch to enrich your activities.',
       // Required for background location tracking and push notifications
-      UIBackgroundModes: ['location', 'fetch', 'remote-notification'],
+      UIBackgroundModes: ['location', 'fetch', 'remote-notification', 'audio'],
       // Google Sign-In iOS URL scheme (reversed client ID)
       ...(process.env.GOOGLE_IOS_CLIENT_ID ? {
         CFBundleURLTypes: [
@@ -110,8 +101,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 8,
-    googleServicesFile: getGoogleServicesFile(),
+    versionCode: 16,
+    ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [
       'ACCESS_FINE_LOCATION',
       'ACCESS_COARSE_LOCATION',
@@ -131,7 +122,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         data: [
           {
             scheme: 'https',
-            host: 'racefy.app',
+            host: 'racefy.io',
           },
           {
             scheme: 'https',
@@ -217,7 +208,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     mapboxEnabled: process.env.MAPBOX_ENABLED !== 'false', // Default to true
     // Debug logging configuration
     logEnabled: process.env.LOG_ENABLED === 'true',
-    logLevel: process.env.LOG_LEVEL || 'debug',
+    logLevel: process.env.LOG_LEVEL || 'error',
     logPersist: process.env.LOG_PERSIST !== 'false',
     logMaxEntries: parseInt(process.env.LOG_MAX_ENTRIES || '2000', 10),
     logCategories: process.env.LOG_CATEGORIES || 'all',
@@ -225,6 +216,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // Google Sign-In
     googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID || '',
     googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
+    // RevenueCat
+    revenueCatAppleApiKey: process.env.REVENUECAT_APPLE_API_KEY || '',
+    revenueCatGoogleApiKey: process.env.REVENUECAT_GOOGLE_API_KEY || '',
     // Feature flags
     useDynamicHome: process.env.USE_DYNAMIC_HOME === 'true',
     eas: {

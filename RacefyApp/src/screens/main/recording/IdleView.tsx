@@ -12,10 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../../../theme';
+import { spacing, fontSize, borderRadius, iconSize, componentSize } from '../../../theme';
 import { formatTotalTime } from '../../../utils/formatters';
 import type { Event, TrainingWeek, SuggestedActivity, ActivityStats, MilestoneSingle } from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
+import { PremiumTeaser } from '../../../components';
 
 // Milestone key-to-km mapping (shared with parent)
 const MILESTONE_KM: Record<string, string> = {
@@ -39,6 +40,9 @@ interface IdleViewProps {
   statsLoading: boolean;
   milestonesLoading: boolean;
   nextMilestone: MilestoneSingle | undefined;
+  canUseAdvancedStats: boolean;
+  audioCoachActive?: boolean;
+  onToggleAudioCoach?: () => void;
   onStart: () => void;
   onOpenSportModal: () => void;
   onOpenEventSheet: () => void;
@@ -58,6 +62,9 @@ export function IdleView({
   statsLoading,
   milestonesLoading,
   nextMilestone,
+  canUseAdvancedStats,
+  audioCoachActive,
+  onToggleAudioCoach,
   onStart,
   onOpenSportModal,
   onOpenEventSheet,
@@ -225,12 +232,35 @@ export function IdleView({
               <ActivityIndicator color={colors.white} size="large" />
             ) : (
               <>
-                <Ionicons name="play" size={48} color={colors.white} />
+                <Ionicons name="play" size={iconSize.xxl} color={colors.white} />
                 <Text style={styles.startButtonText}>{t('recording.start')}</Text>
               </>
             )}
           </TouchableOpacity>
         </Animated.View>
+
+        {/* Audio Coach quick toggle */}
+        {onToggleAudioCoach !== undefined && (
+          <TouchableOpacity
+            style={[styles.audioCoachChip, {
+              backgroundColor: audioCoachActive ? colors.primary + '15' : colors.cardBackground,
+              borderColor: audioCoachActive ? colors.primary : colors.border,
+            }]}
+            onPress={onToggleAudioCoach}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={audioCoachActive ? 'volume-high' : 'volume-mute'}
+              size={14}
+              color={audioCoachActive ? colors.primary : colors.textMuted}
+            />
+            <Text style={[styles.audioCoachChipText, {
+              color: audioCoachActive ? colors.primary : colors.textMuted,
+            }]}>
+              {t('recording.audioCoach')}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Event Link (Collapsed) */}
@@ -326,13 +356,24 @@ export function IdleView({
                   </View>
 
                   {/* Next Milestone Preview */}
-                  {nextMilestone && (
-                    <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
-                      <Ionicons name="flag-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
-                        {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
-                      </Text>
-                    </View>
+                  {canUseAdvancedStats ? (
+                    nextMilestone && (
+                      <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
+                        <Ionicons name="flag-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
+                          {t('recording.nextMilestone')}: {getMilestoneLabel(MILESTONE_KM[nextMilestone.type] || nextMilestone.type)} ({Math.round(nextMilestone.progress * 100)}%)
+                        </Text>
+                      </View>
+                    )
+                  ) : (
+                    <PremiumTeaser feature="advanced_stats">
+                      <View style={[styles.nextMilestonePreview, { borderTopColor: colors.border }]}>
+                        <Ionicons name="flag-outline" size={16} color={colors.primary} />
+                        <Text style={[styles.nextMilestoneText, { color: colors.textSecondary }]}>
+                          {t('recording.nextMilestone')}: 5 km (0%)
+                        </Text>
+                      </View>
+                    </PremiumTeaser>
                   )}
                 </>
               ) : (
@@ -384,10 +425,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
+  audioCoachChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  audioCoachChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+  },
   startButton: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: componentSize.startButton,
+    height: componentSize.startButton,
+    borderRadius: componentSize.startButton / 2,
     justifyContent: 'center',
     alignItems: 'center',
     shadowOffset: { width: 0, height: 8 },
@@ -504,7 +559,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.lg,
   },
   suggestedActivityCard: {
-    width: 200,
+    width: componentSize.cardWidth,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     marginRight: spacing.md,

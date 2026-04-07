@@ -6,4 +6,14 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# Apple API keys (secrets - never commit)
+AuthKey_*.p8
+
+# App Store Connect exports
+*.zip
+Starting Price.csv
+
+# Node modules (root level - for helper scripts)
+/node_modules/
 /RacefyApp/src/hooks/.useLiveActivity.ts.swp

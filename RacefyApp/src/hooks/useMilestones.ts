@@ -31,9 +31,15 @@ export function useMilestones(sportTypeId?: number): UseMilestonesResult {
       const data = await api.getMilestones(sportTypeId);
       setMilestones(data);
     } catch (err: any) {
-      logger.error('activity', 'Failed to fetch milestones', { error: err });
-      setError(err.message || 'Failed to load milestones');
-      setMilestones(null);
+      // 403 = premium feature not available for current plan — silently return empty
+      if (err?.upgrade_required || err?.status === 403) {
+        logger.debug('activity', 'Milestones not available for current plan');
+        setMilestones(null);
+      } else {
+        logger.error('activity', 'Failed to fetch milestones', { error: err });
+        setError(err.message || 'Failed to load milestones');
+        setMilestones(null);
+      }
     } finally {
       setIsLoading(false);
     }

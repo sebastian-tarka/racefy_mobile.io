@@ -6,7 +6,10 @@ import { AuthProvider } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 import { LiveActivityProvider } from './src/hooks/useLiveActivity';
 import { UnitsProvider } from './src/hooks/useUnits';
+import { MaintenanceProvider } from './src/hooks/useMaintenance';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
+import { configureRevenueCat } from './src/services/revenuecat';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AppNavigator } from './src/navigation';
 
 // Initialize i18n
@@ -19,6 +22,7 @@ function AppContent() {
   useEffect(() => {
     loadSavedLanguage();
     loadGlobalHapticsPreference();
+    configureRevenueCat();
   }, []);
 
   return (
@@ -32,15 +36,19 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <UnitsProvider>
-          <AuthProvider>
-            <LiveActivityProvider>
-              <AppContent />
-            </LiveActivityProvider>
-          </AuthProvider>
-        </UnitsProvider>
-      </ThemeProvider>
+      <KeyboardProvider>
+        <ThemeProvider>
+          <UnitsProvider>
+            <MaintenanceProvider>
+              <AuthProvider>
+                <LiveActivityProvider>
+                  <AppContent />
+                </LiveActivityProvider>
+              </AuthProvider>
+            </MaintenanceProvider>
+          </UnitsProvider>
+        </ThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }
