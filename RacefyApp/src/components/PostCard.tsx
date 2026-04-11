@@ -1,32 +1,29 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow, format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
-import { Card } from './Card';
-import { Avatar } from './Avatar';
-import { MediaGallery } from './MediaGallery';
-import { RoutePreview } from './LeafletMap';
-import { BoostButton } from './BoostButton';
-import { useTheme } from '../hooks/useTheme';
-import { useUnits } from '../hooks/useUnits';
-import { fixStorageUrl } from '../config/api';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { logger } from '../services/logger';
-import { formatDuration } from '../utils/formatDuration';
-import { getSportIcon } from '../utils/sportIcon';
-import type { Post } from '../types/api';
+import {Dimensions, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format, formatDistanceToNow} from 'date-fns';
+import {useTranslation} from 'react-i18next';
+import {Card} from './Card';
+import {Avatar} from './Avatar';
+import {MediaGallery} from './MediaGallery';
+import {RoutePreview} from './LeafletMap';
+import {InteractionButton} from './InteractionButton';
+import {useTheme} from '../hooks/useTheme';
+import {useUnits} from '../hooks/useUnits';
+import {fixStorageUrl} from '../config/api';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {logger} from '../services/logger';
+import {formatDuration} from '../utils/formatDuration';
+import {getSportIcon} from '../utils/sportIcon';
+import type {Post} from '../types/api';
 
 interface PostCardProps {
   post: Post;
   onPress?: () => void;
-  onLike?: () => void;
+  /** Notifies parent after a like has been confirmed by the server */
+  onLikeChange?: (isLiked: boolean, likesCount: number) => void;
+  /** Notifies parent after a boost has been confirmed by the server */
+  onBoostChange?: (isBoosted: boolean, boostsCount: number) => void;
   onComment?: () => void;
   onUserPress?: () => void;
   onMenuPress?: () => void;
@@ -40,7 +37,8 @@ const { width: screenWidth } = Dimensions.get('window');
 export function PostCard({
   post,
   onPress,
-  onLike,
+  onLikeChange,
+  onBoostChange,
   onComment,
   onUserPress,
   onMenuPress,
@@ -173,12 +171,15 @@ export function PostCard({
 
         {/* Boost button for activity */}
         <View style={[styles.activityBoostContainer, { borderTopColor: colors.borderLight }]}>
-          <BoostButton
-            activityId={activity.id}
-            initialBoostsCount={activity.boosts_count || 0}
-            initialIsBoosted={activity.is_boosted || false}
+          <InteractionButton
+            variant="boost"
+            targetType="activity"
+            targetId={activity.id}
+            count={activity.boosts_count || 0}
+            isActive={activity.is_boosted || false}
             disabled={activity.is_owner || false}
-            compact
+            size="md"
+            onChange={onBoostChange}
           />
         </View>
       </TouchableOpacity>
@@ -315,35 +316,27 @@ export function PostCard({
       </TouchableOpacity>
 
       <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
-        <TouchableOpacity
-          onPress={onLike}
-          style={styles.actionButton}
-          disabled={!onLike}
-        >
-          <Ionicons
-            name={post.is_liked ? 'heart' : 'heart-outline'}
-            size={22}
-            color={post.is_liked ? colors.error : colors.textSecondary}
-          />
-          <Text
-            style={[styles.actionText, { color: colors.textSecondary }, post.is_liked && { color: colors.error }]}
-          >
-            {post.likes_count}
-          </Text>
-        </TouchableOpacity>
+        <InteractionButton
+          variant="like"
+          targetType="post"
+          targetId={post.id}
+          count={post.likes_count}
+          isActive={post.is_liked}
+          disabled={isOwner}
+          size="lg"
+          onChange={onLikeChange}
+          containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+        />
 
-        <TouchableOpacity
+        <InteractionButton
+          variant="comment"
+          targetType="post"
+          targetId={post.id}
+          count={post.comments_count}
+          size="lg"
           onPress={onComment}
-          style={styles.actionButton}
-          disabled={!onComment}
-        >
-          <Ionicons
-            name="chatbubble-outline"
-            size={20}
-            color={colors.textSecondary}
-          />
-          <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.comments_count}</Text>
-        </TouchableOpacity>
+          containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+        />
       </View>
     </Card>
   );

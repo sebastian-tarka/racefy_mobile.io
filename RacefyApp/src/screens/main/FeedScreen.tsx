@@ -1,43 +1,36 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
+  ActivityIndicator,
   Alert,
   Animated,
-  ActivityIndicator,
+  FlatList,
   Keyboard,
+  RefreshControl,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import {
-  FeedCard,
-  Avatar,
-  Loading,
-  EmptyState,
-  ScreenContainer,
-  AnimatedListItem,
-} from '../../components';
-import { ActivitiesFeedPreview } from './home/components';
-import { useAuth } from '../../hooks/useAuth';
-import { useFeed } from '../../hooks/useFeed';
-import { useUnreadCount } from '../../hooks/useUnreadCount';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../hooks/useTheme';
-import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { User, Event, Post } from '../../types/api';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {AnimatedListItem, Avatar, EmptyState, FeedCard, Loading, ScreenContainer,} from '../../components';
+import {ActivitiesFeedPreview} from './home/components';
+import {useAuth} from '../../hooks/useAuth';
+import {useFeed} from '../../hooks/useFeed';
+import {useUnreadCount} from '../../hooks/useUnreadCount';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '../../hooks/useTheme';
+import {useVideoPauseOnBlur} from '../../hooks/useVideoPauseOnBlur';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import type {CompositeNavigationProp} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
+import type {Event, Post, User} from '../../types/api';
 import {useRefreshOn} from "../../services/refreshEvents";
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
@@ -70,7 +63,8 @@ export function FeedScreen({ navigation, route }: Props) {
     error,
     refresh,
     loadMore,
-    toggleLike,
+    applyLikeChange,
+    applyBoostChange,
     deletePost,
     resharePost,
     unresharePost,
@@ -223,7 +217,8 @@ export function FeedScreen({ navigation, route }: Props) {
     <FeedCard
       post={item}
       isOwner={item.is_owner ?? item.user_id === user?.id}
-      onLike={() => toggleLike(item)}
+      onLikeChange={(isLiked, count) => applyLikeChange(item.id, isLiked, count)}
+      onBoostChange={(isBoosted, count) => applyBoostChange(item.id, isBoosted, count)}
       onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
       onShareActivity={
         item.type === 'activity' && item.activity
@@ -257,7 +252,7 @@ export function FeedScreen({ navigation, route }: Props) {
       }}
     />
     </AnimatedListItem>
-  ), [user?.id, toggleLike, navigation, handleDeletePost, handleReportPost, resharePost, unresharePost]);
+  ), [user?.id, applyLikeChange, applyBoostChange, navigation, handleDeletePost, handleReportPost, resharePost, unresharePost]);
 
   const renderSearchResults = () => {
     if (!isSearchVisible) return null;

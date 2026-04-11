@@ -1,26 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { SocialShareModal } from './SocialShareModal';
-import { useTheme } from '../hooks/useTheme';
-import type { Post } from '../types/api';
-import { styles } from './FeedCard.utils';
+import React, {useState} from 'react';
+import {Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {SocialShareModal} from './SocialShareModal';
+import {InteractionButton} from './InteractionButton';
+import {useTheme} from '../hooks/useTheme';
+import type {Post} from '../types/api';
+import {spacing} from '../theme';
+import {styles} from './FeedCard.utils';
 
 interface FeedCardActionsProps {
   post: Post;
   isOwner: boolean;
-  onLike?: () => void;
-  onBoost?: () => void;
+  onLikeChange?: (isLiked: boolean, likesCount: number) => void;
+  onBoostChange?: (isBoosted: boolean, boostsCount: number) => void;
   onComment?: () => void;
   onShareActivity?: () => void;
   onResharePress?: () => void;
   onUnreshare?: () => void;
 }
 
-export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onShareActivity, onResharePress, onUnreshare }: FeedCardActionsProps) {
+export function FeedCardActions({
+  post,
+  isOwner,
+  onLikeChange,
+  onBoostChange,
+  onComment,
+  onShareActivity,
+  onResharePress,
+  onUnreshare,
+}: FeedCardActionsProps) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
   const [shareVisible, setShareVisible] = useState(false);
 
   const activity = post.activity;
@@ -29,42 +38,49 @@ export function FeedCardActions({ post, isOwner, onLike, onBoost, onComment, onS
 
   const handleSharePress = () => {
     if (isActivityPost && onShareActivity) {
-      // Navigate to ActivityShareScreen for activity posts
       onShareActivity();
     } else {
-      // Show modal for other post types
       setShareVisible(true);
     }
   };
 
   return (
     <View style={[styles.actionsRow, { borderTopColor: colors.background }]}>
-      <TouchableOpacity style={styles.actionButton} onPress={onLike} disabled={isOwner || !onLike}>
-        <Ionicons name={post.is_liked ? 'heart' : 'heart-outline'} size={20} color={post.is_liked ? colors.error : colors.textSecondary} />
-        <Text style={[styles.actionText, { color: colors.textSecondary }, post.is_liked && { color: colors.error }]}>{post.likes_count}</Text>
-      </TouchableOpacity>
+      <InteractionButton
+        variant="like"
+        targetType="post"
+        targetId={post.id}
+        count={post.likes_count}
+        isActive={post.is_liked}
+        disabled={isOwner}
+        size="lg"
+        onChange={onLikeChange}
+        containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+      />
 
-      {showBoost && onBoost && (
-        <TouchableOpacity style={styles.actionButton} onPress={onBoost} disabled={isOwner}>
-          <Ionicons
-            name={activity.is_boosted ? 'rocket' : 'rocket-outline'}
-            size={20}
-            color={activity.is_boosted ? colors.primary : colors.textSecondary}
-          />
-          <Text style={[
-            styles.actionText,
-            { color: colors.textSecondary },
-            activity.is_boosted && { color: colors.primary }
-          ]}>
-            {activity.boosts_count || 0}
-          </Text>
-        </TouchableOpacity>
+      {showBoost && activity && (
+        <InteractionButton
+          variant="boost"
+          targetType="activity"
+          targetId={activity.id}
+          count={activity.boosts_count || 0}
+          isActive={activity.is_boosted}
+          disabled={isOwner}
+          size="lg"
+          onChange={onBoostChange}
+          containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+        />
       )}
 
-      <TouchableOpacity style={styles.actionButton} onPress={onComment} disabled={!onComment}>
-        <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
-        <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.comments_count}</Text>
-      </TouchableOpacity>
+      <InteractionButton
+        variant="comment"
+        targetType="post"
+        targetId={post.id}
+        count={post.comments_count}
+        size="lg"
+        onPress={onComment}
+        containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+      />
 
       {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
         <TouchableOpacity

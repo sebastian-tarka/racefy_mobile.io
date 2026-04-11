@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type { ApiBase } from './base';
+import type {ApiBase} from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -386,6 +386,19 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         {
           method: 'DELETE',
         }
+      );
+    }
+
+    /**
+     * List users who boosted a commentary (paginated)
+     */
+    async getCommentaryBoosters(
+      eventId: number,
+      commentaryId: number,
+      page = 1
+    ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
+      return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
+        `/events/${eventId}/commentary/${commentaryId}/boosts?page=${page}`
       );
     }
   };

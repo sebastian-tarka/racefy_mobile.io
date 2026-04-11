@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { fixStorageUrl } from '../config/api';
-import type { UnitSystem } from '../utils/unitConversions';
+import {useState} from 'react';
+import {StyleSheet} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {fixStorageUrl} from '../config/api';
+import type {UnitSystem} from '../utils/unitConversions';
 import {
   formatDistance as ucFormatDistance,
   formatPaceWithUnit as ucFormatPaceWithUnit,
 } from '../utils/unitConversions';
-import type { Post, Activity } from '../types/api';
+import type {Activity, Post} from '../types/api';
 
 // Re-export from canonical locations for backwards compatibility
 export { formatDuration } from '../utils/formatDuration';
@@ -31,8 +31,10 @@ export interface FeedCardProps {
   post: Post;
   isOwner?: boolean;
   onUserPress?: () => void;
-  onLike?: () => void;
-  onBoost?: () => void;
+  /** Notifies parent after a like/unlike has been confirmed by the server */
+  onLikeChange?: (isLiked: boolean, likesCount: number) => void;
+  /** Notifies parent after a boost/unboost has been confirmed by the server */
+  onBoostChange?: (isBoosted: boolean, boostsCount: number) => void;
   onComment?: () => void;
   onShareActivity?: () => void;
   onActivityPress?: () => void;

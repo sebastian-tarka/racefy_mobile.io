@@ -1470,6 +1470,17 @@ export interface PaginatedResponse<T> {
   };
 }
 
+// ============ INTERACTIONS (likes/boosts list) ============
+
+/**
+ * A user that interacted with content (liked / boosted), with the timestamp
+ * of the interaction. Returned by the *_likes / *_boosts list endpoints.
+ */
+export interface UserInteractor extends User {
+  is_following?: boolean;
+  interacted_at: string;
+}
+
 // ============ MESSAGING ============
 
 export interface ConversationParticipant {

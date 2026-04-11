@@ -1,17 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { Card } from './Card';
-import { Avatar } from './Avatar';
-import { BoostButton } from './BoostButton';
-import { useTheme } from '../hooks/useTheme';
-import { useUnits } from '../hooks/useUnits';
-import { useSportTypes } from '../hooks/useSportTypes';
-import { fixStorageUrl } from '../config/api';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { formatDuration } from '../utils/formatDuration';
-import type { Activity } from '../types/api';
+import React, {useEffect, useRef, useState} from 'react';
+import {Animated, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {Card} from './Card';
+import {Avatar} from './Avatar';
+import {InteractionButton} from './InteractionButton';
+import {useTheme} from '../hooks/useTheme';
+import {useUnits} from '../hooks/useUnits';
+import {useSportTypes} from '../hooks/useSportTypes';
+import {fixStorageUrl} from '../config/api';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {formatDuration} from '../utils/formatDuration';
+import type {Activity} from '../types/api';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -32,9 +32,11 @@ export function ActivityCard({
   const { getSportById } = useSportTypes();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
 
-  // Engagement state
+  // Engagement state — local copies so the buttons can update independently
   const [boostsCount, setBoostsCount] = useState(activity.boosts_count || 0);
   const [isBoosted, setIsBoosted] = useState(activity.is_boosted || false);
+  const [likesCount, setLikesCount] = useState(activity.likes_count || 0);
+  const [isLiked, setIsLiked] = useState(activity.is_liked || false);
   const [showAdditionalStats, setShowAdditionalStats] = useState(false);
 
   // Animation values
@@ -253,38 +255,42 @@ export function ActivityCard({
         {/* Engagement bar */}
         {showEngagement && (
           <View style={[styles.engagementBar, { borderTopColor: colors.borderLight }]}>
-            {/* Likes */}
-            <View style={styles.engagementItem}>
-              <Ionicons
-                name={activity.is_liked ? 'heart' : 'heart-outline'}
-                size={18}
-                color={activity.is_liked ? '#E53E3E' : colors.textMuted}
-              />
-              <Text style={[styles.engagementText, { color: colors.textMuted }]}>
-                {activity.likes_count || 0}
-              </Text>
-            </View>
-
-            {/* Boosts */}
-            <BoostButton
-              activityId={activity.id}
-              initialBoostsCount={boostsCount}
-              initialIsBoosted={isBoosted}
+            <InteractionButton
+              variant="like"
+              targetType="activity"
+              targetId={activity.id}
+              count={likesCount}
+              isActive={isLiked}
               disabled={activity.is_owner}
-              compact
-              onBoostChange={(newIsBoosted, newCount) => {
-                setIsBoosted(newIsBoosted);
-                setBoostsCount(newCount);
+              size="md"
+              onChange={(active, count) => {
+                setIsLiked(active);
+                setLikesCount(count);
               }}
             />
 
-            {/* Comments */}
-            <View style={styles.engagementItem}>
-              <Ionicons name="chatbubble-outline" size={18} color={colors.textMuted} />
-              <Text style={[styles.engagementText, { color: colors.textMuted }]}>
-                {activity.comments_count || 0}
-              </Text>
-            </View>
+            <InteractionButton
+              variant="boost"
+              targetType="activity"
+              targetId={activity.id}
+              count={boostsCount}
+              isActive={isBoosted}
+              disabled={activity.is_owner}
+              size="md"
+              onChange={(active, count) => {
+                setIsBoosted(active);
+                setBoostsCount(count);
+              }}
+            />
+
+            <InteractionButton
+              variant="comment"
+              targetType="activity"
+              targetId={activity.id}
+              count={activity.comments_count || 0}
+              size="md"
+              onPress={onPress}
+            />
           </View>
         )}
       </Card>

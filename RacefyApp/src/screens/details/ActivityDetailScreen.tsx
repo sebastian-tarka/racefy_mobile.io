@@ -1,32 +1,48 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Image,
-  Dimensions,
-  Modal,
-  Animated,
+    Alert,
+    Animated,
+    Dimensions,
+    Image,
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
-import { Card, Button, Loading, Avatar, RoutePreview, ScreenHeader, CommentSection, BoostButton, PaceChart, ElevationChart, HeartRateChart, MentionText, ScreenContainer, PremiumTeaser, KeyboardAwareScreenLayout } from '../../components';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
-import { useTheme } from '../../hooks/useTheme';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useUnits } from '../../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { getSportIcon } from '../../utils/sportIcon';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
-import type { Activity, GpsTrack, User, SingleActivityStats } from '../../types/api';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {useTranslation} from 'react-i18next';
+import {
+    Avatar,
+    Button,
+    Card,
+    CommentSection,
+    ElevationChart,
+    HeartRateChart,
+    InteractionButton,
+    KeyboardAwareScreenLayout,
+    Loading,
+    MentionText,
+    PaceChart,
+    PremiumTeaser,
+    RoutePreview,
+    ScreenContainer,
+    ScreenHeader
+} from '../../components';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {emitRefresh, useRefreshOn} from '../../services/refreshEvents';
+import {fixStorageUrl} from '../../config/api';
+import {useTheme} from '../../hooks/useTheme';
+import {useSubscription} from '../../hooks/useSubscription';
+import {useUnits} from '../../hooks/useUnits';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import {getSportIcon} from '../../utils/sportIcon';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../../navigation/types';
+import type {Activity, GpsTrack, SingleActivityStats, User} from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -178,29 +194,13 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   };
 
 
-  const handleLike = useCallback(async () => {
-    if (!activity || activity.is_owner) return;
-
-    // Optimistic update
-    const previousLiked = isLiked;
-    const previousCount = likesCount;
-
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
-
-    try {
-      if (isLiked) {
-        await api.unlikeActivity(activityId);
-      } else {
-        await api.likeActivity(activityId);
-      }
-    } catch (error) {
-      // Revert on error
-      setIsLiked(previousLiked);
-      setLikesCount(previousCount);
-      logger.error('activity', 'Failed to like/unlike activity', { error });
-    }
-  }, [activity, activityId, isLiked, likesCount]);
+  const handleLikeChange = useCallback(
+    (active: boolean, count: number) => {
+      setIsLiked(active);
+      setLikesCount(count);
+    },
+    []
+  );
 
   const toggleMapExpand = useCallback(() => {
     const newExpandedState = !isMapExpanded;
@@ -408,50 +408,47 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         {/* Engagement Section - Moved up for better UX */}
         <Card style={styles.engagementCard}>
           <View style={styles.engagementRow}>
-            {/* Likes */}
-            <TouchableOpacity
-              style={styles.engagementItem}
-              onPress={handleLike}
+            <InteractionButton
+              variant="like"
+              targetType="activity"
+              targetId={activity.id}
+              count={likesCount}
+              isActive={isLiked}
               disabled={isOwner}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={isLiked ? 'heart' : 'heart-outline'}
-                size={28}
-                color={isLiked ? '#E53E3E' : colors.textMuted}
-              />
-              <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
-                {likesCount}
-              </Text>
-              <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
-                {t('engagement.likes')}
-              </Text>
-            </TouchableOpacity>
+              layout="vertical"
+              iconSize={28}
+              label={t('engagement.likes')}
+              countStyle={styles.engagementCount}
+              onChange={handleLikeChange}
+              containerStyle={styles.engagementItem}
+            />
 
-            {/* Comments - Make it scrollable */}
-            <TouchableOpacity
-              style={styles.engagementItem}
+            <InteractionButton
+              variant="comment"
+              targetType="activity"
+              targetId={activity.id}
+              count={activity.comments_count || 0}
+              layout="vertical"
+              iconSize={28}
+              label={t('engagement.comments')}
+              countStyle={styles.engagementCount}
               onPress={scrollToComments}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="chatbubble-outline" size={28} color={colors.textMuted} />
-              <Text style={[styles.engagementCount, { color: colors.textPrimary }]}>
-                {activity.comments_count || 0}
-              </Text>
-              <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
-                {t('engagement.comments')}
-              </Text>
-            </TouchableOpacity>
+              containerStyle={styles.engagementItem}
+            />
 
-            {/* Boosts */}
-            <View style={styles.engagementItem}>
-              <BoostButton
-                activityId={activity.id}
-                initialBoostsCount={activity.boosts_count || 0}
-                initialIsBoosted={activity.is_boosted || false}
-                disabled={isOwner}
-              />
-            </View>
+            <InteractionButton
+              variant="boost"
+              targetType="activity"
+              targetId={activity.id}
+              count={activity.boosts_count || 0}
+              isActive={activity.is_boosted || false}
+              disabled={isOwner}
+              layout="vertical"
+              iconSize={28}
+              label={t('engagement.boosts')}
+              countStyle={styles.engagementCount}
+              containerStyle={styles.engagementItem}
+            />
 
             {/* Share */}
             <TouchableOpacity

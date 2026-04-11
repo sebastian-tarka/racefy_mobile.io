@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type { ApiBase } from './base';
+import type {ApiBase} from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -332,6 +332,15 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       return response;
     }
 
+    async getActivityBoosters(
+      activityId: number,
+      page = 1
+    ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
+      return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
+        `/activities/${activityId}/boosts?page=${page}`
+      );
+    }
+
     // ============ ACTIVITY LIKES ============
 
     async likeActivity(id: number): Promise<void> {
@@ -340,6 +349,15 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
 
     async unlikeActivity(id: number): Promise<void> {
       await this.request(`/activities/${id}/like`, { method: 'DELETE' });
+    }
+
+    async getActivityLikers(
+      id: number,
+      page = 1
+    ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
+      return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
+        `/activities/${id}/likes?page=${page}`
+      );
     }
 
     // ============ SOCIAL SHARING ============

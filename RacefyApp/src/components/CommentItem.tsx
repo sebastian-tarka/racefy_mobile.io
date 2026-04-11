@@ -1,27 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow } from 'date-fns';
-import { useTranslation } from 'react-i18next';
+import React, {useEffect, useRef, useState} from 'react';
+import {ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {formatDistanceToNow} from 'date-fns';
+import {useTranslation} from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
-import { Avatar } from './Avatar';
-import { MediaGallery } from './MediaGallery';
-import { MentionText } from './MentionText';
-import { MentionInput as MentionInputComponent } from './MentionInput';
-import { useTheme } from '../hooks/useTheme';
-import { useAuth } from '../hooks/useAuth';
-import { stripMentionsForApi, apiTokensToLibraryFormat } from '../utils/mentions';
-import { spacing, fontSize, borderRadius } from '../theme';
-import type { Comment, User, MediaItem, Photo } from '../types/api';
+import {Avatar} from './Avatar';
+import {MediaGallery} from './MediaGallery';
+import {MentionText} from './MentionText';
+import {MentionInput as MentionInputComponent} from './MentionInput';
+import {InteractionButton} from './InteractionButton';
+import {useTheme} from '../hooks/useTheme';
+import {useAuth} from '../hooks/useAuth';
+import {apiTokensToLibraryFormat, stripMentionsForApi} from '../utils/mentions';
+import {borderRadius, fontSize, spacing} from '../theme';
+import type {Comment, MediaItem, Photo, User} from '../types/api';
 
 interface MediaEditState {
   existingMedia: Photo | null;  // Current media from comment
@@ -37,8 +29,6 @@ interface CommentEditData {
 
 interface CommentItemProps {
   comment: Comment;
-  onLike: (commentId: number) => Promise<void>;
-  onUnlike: (commentId: number) => Promise<void>;
   onDelete: (commentId: number) => Promise<void>;
   onEdit?: (commentId: number, data: CommentEditData) => Promise<void>;
   onReply?: (comment: Comment) => void;
@@ -48,8 +38,6 @@ interface CommentItemProps {
 
 export function CommentItem({
   comment,
-  onLike,
-  onUnlike,
   onDelete,
   onEdit,
   onReply,
@@ -59,9 +47,6 @@ export function CommentItem({
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { user: currentUser } = useAuth();
-  const [isLiking, setIsLiking] = useState(false);
-  const [localIsLiked, setLocalIsLiked] = useState(comment.is_liked || false);
-  const [localLikesCount, setLocalLikesCount] = useState(comment.likes_count);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
@@ -88,31 +73,6 @@ export function CommentItem({
     setLocalContent(comment.content);
     setLocalPhotos(comment.photos ?? []);
   }, [comment.content, comment.photos]);
-
-  const handleLikeToggle = async () => {
-    if (isLiking) return;
-
-    setIsLiking(true);
-    const wasLiked = localIsLiked;
-
-    // Optimistic update
-    setLocalIsLiked(!wasLiked);
-    setLocalLikesCount((prev) => (wasLiked ? prev - 1 : prev + 1));
-
-    try {
-      if (wasLiked) {
-        await onUnlike(comment.id);
-      } else {
-        await onLike(comment.id);
-      }
-    } catch {
-      // Revert on error
-      setLocalIsLiked(wasLiked);
-      setLocalLikesCount((prev) => (wasLiked ? prev + 1 : prev - 1));
-    } finally {
-      setIsLiking(false);
-    }
-  };
 
   const handleDelete = () => {
     Alert.alert(
@@ -368,27 +328,16 @@ export function CommentItem({
         {/* Actions */}
         <View style={styles.actions}>
           <View style={styles.actionsLeft}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleLikeToggle}
-              disabled={isLiking}
-            >
-              <Ionicons
-                name={localIsLiked ? 'heart' : 'heart-outline'}
-                size={16}
-                color={localIsLiked ? colors.error : colors.textMuted}
-              />
-              {localLikesCount > 0 && (
-                <Text
-                  style={[
-                    styles.actionText,
-                    { color: localIsLiked ? colors.error : colors.textMuted },
-                  ]}
-                >
-                  {localLikesCount}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <InteractionButton
+              variant="like"
+              targetType="comment"
+              targetId={comment.id}
+              count={comment.likes_count}
+              isActive={comment.is_liked || false}
+              size="sm"
+              hideCountWhenZero
+              containerStyle={{ paddingHorizontal: 0 }}
+            />
 
             {onReply && !isReply && (
               <TouchableOpacity
@@ -424,8 +373,6 @@ export function CommentItem({
               <CommentItem
                 key={reply.id}
                 comment={reply}
-                onLike={onLike}
-                onUnlike={onUnlike}
                 onDelete={onDelete}
                 onEdit={onEdit}
                 onUserPress={onUserPress}

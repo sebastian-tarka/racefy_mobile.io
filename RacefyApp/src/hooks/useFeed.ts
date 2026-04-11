@@ -1,8 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
-import { Alert } from 'react-native';
-import { api } from '../services/api';
-import { logger } from '../services/logger';
-import type { Post, MediaItem, ReshareRequest } from '../types/api';
+import {useCallback, useRef, useState} from 'react';
+import {api} from '../services/api';
+import {logger} from '../services/logger';
+import type {MediaItem, Post, ReshareRequest} from '../types/api';
 
 export function useFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -58,45 +57,44 @@ export function useFeed() {
     [hasMore, fetchFeed]
   );
 
-  const likePost = useCallback(async (postId: number) => {
-    try {
-      await api.likePost(postId);
+  /**
+   * Pure local state update — applied after the InteractionButton has
+   * already confirmed the like/unlike with the server.
+   */
+  const applyLikeChange = useCallback(
+    (postId: number, isLiked: boolean, likesCount: number) => {
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
-            ? { ...p, likes_count: p.likes_count + 1, is_liked: true }
+            ? { ...p, is_liked: isLiked, likes_count: likesCount }
             : p
         )
       );
-    } catch (err) {
-      logger.error('api', 'Failed to like post', { postId, error: err });
-    }
-  }, []);
-
-  const unlikePost = useCallback(async (postId: number) => {
-    try {
-      await api.unlikePost(postId);
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, likes_count: p.likes_count - 1, is_liked: false }
-            : p
-        )
-      );
-    } catch (err) {
-      logger.error('api', 'Failed to unlike post', { postId, error: err });
-    }
-  }, []);
-
-  const toggleLike = useCallback(
-    async (post: Post) => {
-      if (post.is_liked) {
-        await unlikePost(post.id);
-      } else {
-        await likePost(post.id);
-      }
     },
-    [likePost, unlikePost]
+    []
+  );
+
+  /**
+   * Pure local state update — applied after the InteractionButton has
+   * already confirmed the boost/unboost with the server.
+   */
+  const applyBoostChange = useCallback(
+    (postId: number, isBoosted: boolean, boostsCount: number) => {
+      setPosts((prev) =>
+        prev.map((p) => {
+          if (p.id !== postId || !p.activity) return p;
+          return {
+            ...p,
+            activity: {
+              ...p.activity,
+              is_boosted: isBoosted,
+              boosts_count: boostsCount,
+            },
+          };
+        })
+      );
+    },
+    []
   );
 
   const createPost = useCallback(async (
@@ -172,9 +170,8 @@ export function useFeed() {
     error,
     refresh,
     loadMore,
-    likePost,
-    unlikePost,
-    toggleLike,
+    applyLikeChange,
+    applyBoostChange,
     createPost,
     deletePost,
     resharePost,

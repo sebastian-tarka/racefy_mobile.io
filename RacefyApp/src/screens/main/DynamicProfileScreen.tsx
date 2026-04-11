@@ -1142,19 +1142,6 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     return `${activeTab}-${item.id}`;
   };
 
-  const handleLikePost = async (post: Post) => {
-    try {
-      if (post.is_liked) {
-        await api.unlikePost(post.id);
-      } else {
-        await api.likePost(post.id);
-      }
-      await postsData.refresh();
-    } catch (error) {
-      logger.error('api', 'Failed to like/unlike post', { error, postId: post.id, action: post.is_liked ? 'unlike' : 'like' });
-    }
-  };
-
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {
       const post = item as Post;
@@ -1162,7 +1149,6 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         <PostCard
           post={post}
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
-          onLike={() => handleLikePost(post)}
           onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
           onUserPress={() => {}}
           onActivityPress={

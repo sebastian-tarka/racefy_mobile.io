@@ -1,47 +1,40 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format, formatDistanceToNow} from 'date-fns';
+import {useTranslation} from 'react-i18next';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow, format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
-import {
-  Card,
-  Button,
-  Loading,
-  Avatar,
-  ScreenHeader,
-  MediaGallery,
-  CommentSection,
-  RoutePreview,
-  SocialShareModal,
-  MentionText,
-  ScreenContainer,
-  SharedPostBlock,
-  SharedPostDeletedBlock,
-  ReshareModal,
-  KeyboardAwareScreenLayout,
+    Avatar,
+    Button,
+    Card,
+    CommentSection,
+    InteractionButton,
+    KeyboardAwareScreenLayout,
+    Loading,
+    MediaGallery,
+    MentionText,
+    ReshareModal,
+    RoutePreview,
+    ScreenContainer,
+    ScreenHeader,
+    SharedPostBlock,
+    SharedPostDeletedBlock,
+    SocialShareModal,
 } from '../../components';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
-import { useTheme } from '../../hooks/useTheme';
-import { useUnits } from '../../hooks/useUnits';
-import { useAuth } from '../../hooks/useAuth';
-import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { formatDuration } from '../../utils/formatDuration';
-import { getSportIcon } from '../../utils/sportIcon';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
-import type { Post, User, GpsTrack } from '../../types/api';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {emitRefresh, useRefreshOn} from '../../services/refreshEvents';
+import {fixStorageUrl} from '../../config/api';
+import {useTheme} from '../../hooks/useTheme';
+import {useUnits} from '../../hooks/useUnits';
+import {useAuth} from '../../hooks/useAuth';
+import {useVideoPauseOnBlur} from '../../hooks/useVideoPauseOnBlur';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import {formatDuration} from '../../utils/formatDuration';
+import {getSportIcon} from '../../utils/sportIcon';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../../navigation/types';
+import type {GpsTrack, Post, User} from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PostDetail'>;
 
@@ -125,27 +118,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
   useRefreshOn('feed', fetchPost);
 
-  const handleLike = async () => {
-    if (!isAuthenticated) {
-      navigation.navigate('Auth', { screen: 'Login' });
-      return;
-    }
-
-    const wasLiked = isLiked;
-    setIsLiked(!wasLiked);
-    setLikesCount((prev) => (wasLiked ? prev - 1 : prev + 1));
-
-    try {
-      if (wasLiked) {
-        await api.unlikePost(postId);
-      } else {
-        await api.likePost(postId);
-      }
-    } catch {
-      setIsLiked(wasLiked);
-      setLikesCount((prev) => (wasLiked ? prev + 1 : prev - 1));
-    }
-  };
+  const handleLikeChange = useCallback((active: boolean, count: number) => {
+    setIsLiked(active);
+    setLikesCount(count);
+  }, []);
 
   const handleReshareSubmit = async (content?: string, visibility?: string) => {
     await api.resharePost(postId, { content, visibility: visibility as any });
@@ -454,28 +430,27 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
               {/* Actions */}
               <View style={[styles.actions, { borderTopColor: colors.borderLight }]}>
-                <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-                  <Ionicons
-                    name={isLiked ? 'heart' : 'heart-outline'}
-                    size={22}
-                    color={isLiked ? colors.error : colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.actionText,
-                      { color: isLiked ? colors.error : colors.textSecondary },
-                    ]}
-                  >
-                    {likesCount}
-                  </Text>
-                </TouchableOpacity>
+                <InteractionButton
+                  variant="like"
+                  targetType="post"
+                  targetId={post.id}
+                  count={likesCount}
+                  isActive={isLiked}
+                  disabled={isOwner || !isAuthenticated}
+                  size="lg"
+                  onChange={handleLikeChange}
+                  containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+                />
 
-                <View style={styles.actionButton}>
-                  <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
-                  <Text style={[styles.actionText, { color: colors.textSecondary }]}>
-                    {post.comments_count}
-                  </Text>
-                </View>
+                <InteractionButton
+                  variant="comment"
+                  targetType="post"
+                  targetId={post.id}
+                  count={post.comments_count}
+                  size="lg"
+                  onPress={scrollToComments}
+                  containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
+                />
 
                 {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
                   <TouchableOpacity

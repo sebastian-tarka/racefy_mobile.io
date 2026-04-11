@@ -1,15 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
-import { Card } from './Card';
-import { CommentaryBoostButton } from './CommentaryBoostButton';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { fixStorageUrl } from '../config/api';
-import { getSportIcon } from '../utils/sportIcon';
-import type { EventWithLatestCommentary } from '../types/api';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {useTranslation} from 'react-i18next';
+import {Card} from './Card';
+import {InteractionButton} from './InteractionButton';
+import {useTheme} from '../hooks/useTheme';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {fixStorageUrl} from '../config/api';
+import {getSportIcon} from '../utils/sportIcon';
+import type {EventWithLatestCommentary} from '../types/api';
 
 interface LiveEventCardProps {
   event: EventWithLatestCommentary;
@@ -118,12 +118,16 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
                   {event.latest_commentary.published_at &&
                     format(new Date(event.latest_commentary.published_at), 'h:mm a')}
                 </Text>
-                <CommentaryBoostButton
-                  eventId={event.id}
-                  commentaryId={event.latest_commentary.id}
-                  boostsCount={event.latest_commentary.boosts_count}
-                  userBoosted={event.latest_commentary.user_boosted}
-                  onBoostComplete={onBoostComplete}
+                <InteractionButton
+                  variant="boost"
+                  targetType="commentary"
+                  targetId={event.latest_commentary.id}
+                  parentId={event.id}
+                  count={event.latest_commentary.boosts_count}
+                  isActive={event.latest_commentary.user_boosted}
+                  size="md"
+                  pill
+                  onChange={() => onBoostComplete?.()}
                 />
               </View>
             </View>

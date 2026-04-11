@@ -1,12 +1,12 @@
-import React, { useState, useCallback } from 'react';
-import { View } from 'react-native';
-import { Card } from './Card';
-import { ReshareModal } from './ReshareModal';
-import { useTheme } from '../hooks/useTheme';
-import { FeedCardHeader } from './FeedCard.Header';
-import { FeedCardActions } from './FeedCard.Actions';
-import { GeneralBody, ActivityBody, EventBody, SponsoredBody, AchievementBody } from './FeedCard.Bodies';
-import { type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles } from './FeedCard.utils';
+import React, {useCallback, useState} from 'react';
+import {View} from 'react-native';
+import {Card} from './Card';
+import {ReshareModal} from './ReshareModal';
+import {useTheme} from '../hooks/useTheme';
+import {FeedCardHeader} from './FeedCard.Header';
+import {FeedCardActions} from './FeedCard.Actions';
+import {AchievementBody, ActivityBody, EventBody, GeneralBody, SponsoredBody} from './FeedCard.Bodies';
+import {type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles} from './FeedCard.utils';
 
 // Re-export types for backward compatibility
 export type { FeedCardProps } from './FeedCard.utils';
@@ -23,7 +23,7 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   milestone: GeneralBody,
 };
 
-export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLike, onBoost, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {
+export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLikeChange, onBoostChange, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
@@ -69,8 +69,8 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
       <FeedCardActions
         post={post}
         isOwner={isOwner}
-        onLike={onLike}
-        onBoost={onBoost}
+        onLikeChange={onLikeChange}
+        onBoostChange={onBoostChange}
         onComment={onComment}
         onShareActivity={onShareActivity}
         onResharePress={() => setReshareModalVisible(true)}

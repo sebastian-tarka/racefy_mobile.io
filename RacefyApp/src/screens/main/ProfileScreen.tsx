@@ -1,58 +1,57 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  RefreshControl,
-  ActivityIndicator,
-  ImageBackground,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    ImageBackground,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
+import {Ionicons} from '@expo/vector-icons';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useTranslation} from 'react-i18next';
+import type {CompositeNavigationProp} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import {
-  Avatar,
-  Button,
-  DraftsTab,
-  EmptyState,
-  PostCard,
-  ActivityCard,
-  EventCard,
-  SportStatsChart,
-  PointsCard,
-  CompareUserSelector,
-  UserListModal,
-  SportTypeFilter,
-  TimeRangeFilter,
-  ScreenContainer,
-  PremiumTeaser,
-  type TimeRange,
-  type PeriodOption,
+    ActivityCard,
+    Avatar,
+    CompareUserSelector,
+    DraftsTab,
+    EmptyState,
+    EventCard,
+    type PeriodOption,
+    PointsCard,
+    PostCard,
+    PremiumTeaser,
+    ScreenContainer,
+    SportStatsChart,
+    SportTypeFilter,
+    type TimeRange,
+    TimeRangeFilter,
+    UserListModal,
 } from '../../components';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from '../../hooks/useAuth';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useTheme } from '../../hooks/useTheme';
-import { useActivityStats } from '../../hooks/useActivityStats';
-import { usePointStats } from '../../hooks/usePointStats';
-import { useSportTypes } from '../../hooks/useSportTypes';
-import { useFollowing } from '../../hooks/useFollowing';
-import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { getDateRangeForTimeRange } from '../../utils/dateRanges';
-import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { UserStats, Post, Activity, Event, User, ActivityStats } from '../../types/api';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useAuth} from '../../hooks/useAuth';
+import {useSubscription} from '../../hooks/useSubscription';
+import {useTheme} from '../../hooks/useTheme';
+import {useActivityStats} from '../../hooks/useActivityStats';
+import {usePointStats} from '../../hooks/usePointStats';
+import {useSportTypes} from '../../hooks/useSportTypes';
+import {useFollowing} from '../../hooks/useFollowing';
+import {usePaginatedTabData} from '../../hooks/usePaginatedTabData';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {useRefreshOn} from '../../services/refreshEvents';
+import {fixStorageUrl} from '../../config/api';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import {getDateRangeForTimeRange} from '../../utils/dateRanges';
+import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
+import type {Activity, ActivityStats, Event, Post, User, UserStats} from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -772,20 +771,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     return `${activeTab}-${item.id}`;
   };
 
-  const handleLikePost = async (post: Post) => {
-    try {
-      if (post.is_liked) {
-        await api.unlikePost(post.id);
-      } else {
-        await api.likePost(post.id);
-      }
-      // Refresh posts to get updated like status from server
-      await postsData.refresh();
-    } catch (error) {
-      logger.error('api', 'Failed to like/unlike post', { error, postId: post.id, action: post.is_liked ? 'unlike' : 'like' });
-    }
-  };
-
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {
       const post = item as Post;
@@ -793,7 +778,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         <PostCard
           post={post}
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
-          onLike={() => handleLikePost(post)}
           onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
           onUserPress={() => {}}
           onActivityPress={

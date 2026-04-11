@@ -1,23 +1,17 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { CommentItem } from './CommentItem';
-import { CommentInput } from './CommentInput';
-import { Card } from './Card';
-import { useTheme } from '../hooks/useTheme';
-import { useAuth } from '../hooks/useAuth';
-import { api } from '../services/api';
-import { logger } from '../services/logger';
-import { emitRefresh } from '../services/refreshEvents';
-import { spacing, fontSize } from '../theme';
-import type { Comment, CommentableType, User, MediaItem } from '../types/api';
+import React, {useCallback, useEffect, useState} from 'react';
+import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {CommentItem} from './CommentItem';
+import {CommentInput} from './CommentInput';
+import {Card} from './Card';
+import {useTheme} from '../hooks/useTheme';
+import {useAuth} from '../hooks/useAuth';
+import {api} from '../services/api';
+import {logger} from '../services/logger';
+import {emitRefresh} from '../services/refreshEvents';
+import {fontSize, spacing} from '../theme';
+import type {Comment, CommentableType, MediaItem, User} from '../types/api';
 
 interface CommentSectionParts {
   header: React.ReactNode;
@@ -136,14 +130,6 @@ export function CommentSection({
     emitRefresh('feed');
   };
 
-  const handleLikeComment = useCallback(async (commentId: number) => {
-    await api.likeComment(commentId);
-  }, []);
-
-  const handleUnlikeComment = useCallback(async (commentId: number) => {
-    await api.unlikeComment(commentId);
-  }, []);
-
   const handleDeleteComment = useCallback(async (commentId: number) => {
     await api.deleteComment(commentId);
     setComments((prev) => {
@@ -227,14 +213,12 @@ export function CommentSection({
   const renderComment = useCallback(({ item }: { item: Comment }) => (
     <CommentItem
       comment={item}
-      onLike={handleLikeComment}
-      onUnlike={handleUnlikeComment}
       onDelete={handleDeleteComment}
       onEdit={handleEditComment}
       onReply={handleReply}
       onUserPress={onUserPress}
     />
-  ), [handleLikeComment, handleUnlikeComment, handleDeleteComment, handleEditComment, handleReply, onUserPress]);
+  ), [handleDeleteComment, handleEditComment, handleReply, onUserPress]);
 
   const renderEmpty = () => {
     if (isLoading) {

@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, borderRadius } from '../theme';
-import { formatDistanceToNow } from 'date-fns';
-import { enUS, pl } from 'date-fns/locale';
-import { useTranslation } from 'react-i18next';
-import { CommentaryBoostButton } from './CommentaryBoostButton';
-import type { EventCommentary, CommentaryType } from '../types/api';
+import {StyleSheet, Text, View} from 'react-native';
+import {useTheme} from '../hooks/useTheme';
+import {borderRadius, spacing} from '../theme';
+import {formatDistanceToNow} from 'date-fns';
+import {enUS, pl} from 'date-fns/locale';
+import {useTranslation} from 'react-i18next';
+import {InteractionButton} from './InteractionButton';
+import type {CommentaryType, EventCommentary} from '../types/api';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
@@ -159,12 +159,16 @@ export function CommentaryItem({
       {/* Boost button footer */}
       {showBoostButton && (
         <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
-          <CommentaryBoostButton
-            eventId={eventId}
-            commentaryId={commentary.id}
-            boostsCount={commentary.boosts_count ?? 0}
-            userBoosted={commentary.user_boosted ?? false}
-            onBoostChange={(isBoosted, newBoostsCount) =>
+          <InteractionButton
+            variant="boost"
+            targetType="commentary"
+            targetId={commentary.id}
+            parentId={eventId}
+            count={commentary.boosts_count ?? 0}
+            isActive={commentary.user_boosted ?? false}
+            size="md"
+            pill
+            onChange={(isBoosted, newBoostsCount) =>
               onBoostChange?.(commentary.id, isBoosted, newBoostsCount)
             }
           />

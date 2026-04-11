@@ -1,6 +1,6 @@
-import { getImageMimeType, getMediaMimeType, getFilename } from '../../utils/mime';
+import {getFilename, getImageMimeType, getMediaMimeType} from '../../utils/mime';
 import type * as Types from '../../types/api';
-import type { ApiBase } from './base';
+import type {ApiBase} from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -71,6 +71,15 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async unlikePost(id: number): Promise<void> {
       await this.request(`/posts/${id}/like`, { method: 'DELETE' });
+    }
+
+    async getPostLikers(
+      id: number,
+      page = 1
+    ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
+      return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
+        `/posts/${id}/likes?page=${page}`
+      );
     }
 
     async resharePost(id: number, data: Types.ReshareRequest = {}): Promise<Types.Post> {
@@ -164,6 +173,15 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async unlikeComment(id: number): Promise<void> {
       await this.request(`/comments/${id}/like`, { method: 'DELETE' });
+    }
+
+    async getCommentLikers(
+      id: number,
+      page = 1
+    ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
+      return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
+        `/comments/${id}/likes?page=${page}`
+      );
     }
 
     async updateComment(
