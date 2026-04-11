@@ -73,6 +73,7 @@ export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './SportTypeFilter';
 export * from './TimeRangeFilter';
+export * from './SoftUpdateBanner';
 export * from './UserListModal';
 export * from './VideoPlayer';
 export * from './AutoPlayVideo';

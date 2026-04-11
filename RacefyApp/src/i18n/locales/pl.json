@@ -316,7 +316,7 @@
     "noDrafts": "Brak wersji roboczych",
     "noDraftsDesc": "Wersje robocze postów pojawią się tutaj. Posty generowane przez AI są domyślnie tworzone jako wersje robocze.",
     "publish": "Opublikuj",
-    "editThenPublish": "Edytuj i opublikuj",
+    "editThenPublish": "Edytuj",
     "published": "Post został opublikowany!",
     "publishFailed": "Nie udało się opublikować posta",
     "deleted": "Wersja robocza usunięta",
@@ -326,7 +326,7 @@
     "confirmDeleteTitle": "Usunąć wersję roboczą",
     "confirmDelete": "Usunąć tę wersję roboczą? Ta operacja jest nieodwracalna.",
     "aiGenerated": "Wygenerowane przez AI",
-    "draftBanner": "Ten post jest wersją roboczą i jest widoczny tylko dla Ciebie",
+    "draftBanner": "Wersja robocza · widoczna tylko dla Ciebie",
     "loadingDrafts": "Ładowanie wersji roboczych...",
     "refreshing": "Odświeżanie...",
     "reminderTitle": "Masz nieopublikowane wersje robocze",
@@ -1797,6 +1797,16 @@
     "estimatedEnd": "Przewidywane zakończenie:",
     "retry": "Sprawdź ponownie",
     "today": "dziś"
+  },
+  "update": {
+    "requiredTitle": "Wymagana aktualizacja",
+    "requiredMessage": "Twoja wersja aplikacji jest nieaktualna. Zaktualizuj ją, aby kontynuować korzystanie z Racefy.",
+    "softMessage": "Dostępna jest nowa wersja Racefy",
+    "updateNow": "Aktualizuj",
+    "later": "Później",
+    "installedVersion": "Zainstalowana",
+    "latestVersion": "Najnowsza",
+    "openStoreFailed": "Nie udało się otworzyć sklepu z aplikacjami"
   },
   "subscription": {
     "choosePlan": "Wybierz Plan",

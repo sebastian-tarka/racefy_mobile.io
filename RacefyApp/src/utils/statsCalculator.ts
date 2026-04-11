@@ -1,5 +1,5 @@
-import { startOfDay, subDays, parseISO } from 'date-fns';
-import type { Activity, ActivityStats } from '../types/api';
+import {parseISO, startOfDay, subDays} from 'date-fns';
+import type {Activity, ActivityStats} from '../types/api';
 
 /**
  * Oblicza statystyki tygodniowe z listy aktywności
@@ -57,6 +57,7 @@ export function calculateWeeklyStats(
       };
 
   return {
+    period: null,
     count,
     totals,
     averages,

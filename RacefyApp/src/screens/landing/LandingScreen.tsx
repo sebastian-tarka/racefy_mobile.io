@@ -1,26 +1,28 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Dimensions,
+  Modal,
+  Pressable,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
+import {Ionicons} from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { Button, BrandLogo } from '../../components';
-import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { VideoPlayerManager } from '../../services/VideoPlayerManager';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useVideoPlayer, VideoView} from 'expo-video';
+import {BrandLogo, Button} from '../../components';
+import {useTheme} from '../../hooks/useTheme';
+import {spacing} from '../../theme';
+import {VideoPlayerManager} from '../../services/VideoPlayerManager';
 
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../../navigation/types';
 
 // All available hero videos — one is picked at random each mount
 const HERO_VIDEOS = [
@@ -62,12 +64,14 @@ function FeatureItem({ icon, title, description, colors }: FeatureItemProps) {
 interface LanguageOption {
   code: string;
   label: string;
+  name: string;
+  flag: string;
 }
 
 const LANGUAGES: LanguageOption[] = [
-  { code: 'en', label: 'EN' },
-  { code: 'pl', label: 'PL' },
-  { code: 'es', label: 'ES' },
+  { code: 'en', label: 'EN', name: 'English', flag: '🇬🇧' },
+  { code: 'pl', label: 'PL', name: 'Polski', flag: '🇵🇱' },
+  { code: 'es', label: 'ES', name: 'Español', flag: '🇪🇸' },
 ];
 
 // ---------- Main component ----------
@@ -179,28 +183,18 @@ export function LandingScreen({ navigation }: Props) {
             <BrandLogo category="logo-full" variant="light" width={120} height={34} />
 
             <View style={styles.topBarRight}>
-              {/* Language toggle */}
-              <View style={styles.langToggle}>
-                {LANGUAGES.map((lang) => (
-                  <TouchableOpacity
-                    key={lang.code}
-                    onPress={() => handleLanguageChange(lang.code)}
-                    style={[
-                      styles.langBtn,
-                      currentLang === lang.code && styles.langBtnActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.langBtnText,
-                        currentLang === lang.code && styles.langBtnTextActive,
-                      ]}
-                    >
-                      {lang.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {/* Language selector — opens modal */}
+              <TouchableOpacity
+                onPress={() => setShowLanguageSelector(true)}
+                style={styles.langSelectorBtn}
+                accessibilityLabel={t('common.selectLanguage', { defaultValue: 'Select language' })}
+              >
+                <Ionicons name="globe-outline" size={14} color="#fff" />
+                <Text style={styles.langSelectorText}>
+                  {(LANGUAGES.find((l) => l.code === currentLang) ?? LANGUAGES[0]).label}
+                </Text>
+                <Ionicons name="chevron-down" size={12} color="#fff" />
+              </TouchableOpacity>
 
               {/* Login */}
               <TouchableOpacity onPress={handleSignIn} style={styles.loginBtn}>
@@ -299,6 +293,49 @@ export function LandingScreen({ navigation }: Props) {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Language selection modal */}
+      <Modal
+        visible={showLanguageSelector}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageSelector(false)}
+      >
+        <Pressable
+          style={styles.langModalBackdrop}
+          onPress={() => setShowLanguageSelector(false)}
+        >
+          <Pressable
+            style={[styles.langModalCard, { backgroundColor: colors.cardBackground }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.langModalTitle, { color: colors.textPrimary }]}>
+              {t('common.selectLanguage', { defaultValue: 'Select language' })}
+            </Text>
+            {LANGUAGES.map((lang) => {
+              const active = currentLang === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
+                  onPress={() => handleLanguageChange(lang.code)}
+                  style={[
+                    styles.langModalRow,
+                    active && { backgroundColor: `${colors.primary}20` },
+                  ]}
+                >
+                  <Text style={styles.langModalFlag}>{lang.flag}</Text>
+                  <Text style={[styles.langModalName, { color: colors.textPrimary }]}>
+                    {lang.name}
+                  </Text>
+                  {active && (
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -327,27 +364,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  langToggle: {
+  langSelectorBtn: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
-    overflow: 'hidden',
   },
-  langBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  langBtnActive: {
-    backgroundColor: '#10b981',
-  },
-  langBtnText: {
+  langSelectorText: {
+    color: '#fff',
     fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
   },
-  langBtnTextActive: {
-    color: '#fff',
+  langModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  langModalCard: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 14,
+    padding: spacing.lg,
+  },
+  langModalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  langModalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: 10,
+    gap: spacing.md,
+  },
+  langModalFlag: {
+    fontSize: 22,
+  },
+  langModalName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
   },
   loginBtn: {
     paddingHorizontal: 12,

@@ -1,10 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
-import { api } from './api';
-import { logger } from './logger';
-import type { DeviceType, PushProvider } from '../types/api';
+import {Platform} from 'react-native';
+import {api} from './api';
+import {logger} from './logger';
+import type {AppConfigPush, DeviceType, PushProvider} from '../types/api';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -21,10 +21,30 @@ class PushNotificationService {
   private pushToken: string | null = null;
   private pushProvider: PushProvider = 'expo'; // Default to expo
   private isRegistered = false;
+  /**
+   * True once a config has been injected from AppConfigProvider.
+   * Used to detect cases where `initialize()` runs before the provider
+   * had a chance to push config — in which case we fall back to fetching
+   * directly to preserve previous behavior.
+   */
+  private hasInjectedConfig = false;
+
+  /**
+   * Inject push config from {@link AppConfigProvider}.
+   * Preferred path — avoids duplicate /config/app fetches.
+   */
+  setPushConfig(push: AppConfigPush): void {
+    this.pushProvider = push.provider;
+    this.hasInjectedConfig = true;
+    logger.debug('general', 'Push config injected from AppConfigProvider', {
+      provider: push.provider,
+      tokenMethod: push.token_method,
+    });
+  }
 
   /**
    * Initialize push notifications
-   * - Fetches server config to determine provider
+   * - Uses injected server config (or fetches as fallback) to determine provider
    * - Creates Android notification channel
    * - Requests permissions
    * - Gets push token (Expo or FCM based on config)
@@ -32,8 +52,11 @@ class PushNotificationService {
   async initialize(): Promise<string | null> {
     logger.info('general', 'Initializing push notifications');
 
-    // Fetch server config to determine which provider to use
-    await this.fetchServerConfig();
+    // If AppConfigProvider hasn't injected config yet (race on cold start),
+    // fall back to a direct fetch so behavior matches the legacy path.
+    if (!this.hasInjectedConfig) {
+      await this.fetchServerConfig();
+    }
 
     // Create Android notification channel
     if (Platform.OS === 'android') {

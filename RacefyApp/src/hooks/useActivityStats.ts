@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api } from '../services/api';
-import { logger } from '../services/logger';
-import { useAuth } from './useAuth';
-import type { ActivityStats } from '../types/api';
+import {useCallback, useEffect, useState} from 'react';
+import {api} from '../services/api';
+import {logger} from '../services/logger';
+import {useAuth} from './useAuth';
+import type {ActivityStats, ActivityStatsPeriod} from '../types/api';
 
 interface UseActivityStatsResult {
   stats: ActivityStats | null;
@@ -12,6 +12,7 @@ interface UseActivityStatsResult {
 }
 
 interface UseActivityStatsParams {
+  period?: ActivityStatsPeriod | null;
   sportTypeId?: number | null;
   from?: string | null;
   to?: string | null;
@@ -24,6 +25,7 @@ export function useActivityStats(params?: UseActivityStatsParams): UseActivitySt
   const [error, setError] = useState<string | null>(null);
 
   // Extract values for dependencies
+  const period = params?.period ?? null;
   const sportTypeId = params?.sportTypeId ?? null;
   const from = params?.from ?? null;
   const to = params?.to ?? null;
@@ -39,9 +41,18 @@ export function useActivityStats(params?: UseActivityStatsParams): UseActivitySt
     setError(null);
 
     try {
-      const apiParams: { from?: string; to?: string; sport_type_id?: number } = {};
-      if (from) apiParams.from = from;
-      if (to) apiParams.to = to;
+      const apiParams: {
+        period?: ActivityStatsPeriod;
+        from?: string;
+        to?: string;
+        sport_type_id?: number;
+      } = {};
+      if (period) {
+        apiParams.period = period;
+      } else {
+        if (from) apiParams.from = from;
+        if (to) apiParams.to = to;
+      }
       if (sportTypeId) apiParams.sport_type_id = sportTypeId;
 
       logger.info('activity', 'Fetching activity stats', apiParams);
@@ -60,10 +71,10 @@ export function useActivityStats(params?: UseActivityStatsParams): UseActivitySt
     } finally {
       setIsLoading(false);
     }
-  }, [sportTypeId, from, to, isAuthenticated]);
+  }, [period, sportTypeId, from, to, isAuthenticated]);
 
   useEffect(() => {
-    logger.debug('activity', 'useActivityStats effect triggered', { sportTypeId, from, to });
+    logger.debug('activity', 'useActivityStats effect triggered', { period, sportTypeId, from, to });
     fetchStats();
   }, [fetchStats]);
 

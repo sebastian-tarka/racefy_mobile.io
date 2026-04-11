@@ -1,54 +1,54 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  RefreshControl,
   ActivityIndicator,
+  Alert,
+  FlatList,
   ImageBackground,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
-import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
+import {Ionicons} from '@expo/vector-icons';
+import Svg, {Circle} from 'react-native-svg';
+import {useTranslation} from 'react-i18next';
+import type {CompositeNavigationProp} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import {
+  ActivityCard,
   Avatar,
+  CompareUserSelector,
   DraftsTab,
   EmptyState,
-  PostCard,
-  ActivityCard,
   EventCard,
+  type PeriodOption,
   PointsCard,
-  CompareUserSelector,
-  UserListModal,
-  TimeRangeFilter,
+  PostCard,
   ScreenContainer,
   type TimeRange,
-  type PeriodOption,
+  TimeRangeFilter,
+  UserListModal,
 } from '../../components';
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../hooks/useTheme';
-import { useActivityStats } from '../../hooks/useActivityStats';
-import { usePointStats } from '../../hooks/usePointStats';
-import { useSportTypes } from '../../hooks/useSportTypes';
-import { useFollowing } from '../../hooks/useFollowing';
-import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
-import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { formatTotalTime } from '../../utils/formatters';
-import { getDateRangeForTimeRange } from '../../utils/dateRanges';
-import type { BottomTabScreenProps, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import type { CompositeNavigationProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { UserStats, Post, Activity, Event, User, ActivityStats } from '../../types/api';
+import {useAuth} from '../../hooks/useAuth';
+import {useTheme} from '../../hooks/useTheme';
+import {useActivityStats} from '../../hooks/useActivityStats';
+import {usePointStats} from '../../hooks/usePointStats';
+import {useSportTypes} from '../../hooks/useSportTypes';
+import {useFollowing} from '../../hooks/useFollowing';
+import {usePaginatedTabData} from '../../hooks/usePaginatedTabData';
+import {useWeeklyStreak} from '../../hooks/useWeeklyStreak';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {useRefreshOn} from '../../services/refreshEvents';
+import {fixStorageUrl} from '../../config/api';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import {formatTotalTime} from '../../utils/formatters';
+import {getDateRangeForTimeRange} from '../../utils/dateRanges';
+import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
+import type {Activity, ActivityStats, Event, Post, User, UserStats} from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -542,7 +542,6 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
             <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>
               @{user?.username}
             </Text>
-
             {/* Compact posts/followers/following */}
             <View style={styles.compactStatsRow}>
               <View style={styles.compactStatItem}>
@@ -644,6 +643,48 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
           )}
         </TouchableOpacity>
+
+        {/* Quick navigation: Insights / Teams / Routes */}
+        <View style={styles.quickNavRow}>
+          <TouchableOpacity
+            style={[styles.quickNavCard, { backgroundColor: colors.info + '10', borderColor: colors.info + '40' }]}
+            onPress={() => navigation.navigate('Insights')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickNavIcon, { backgroundColor: colors.info + '22' }]}>
+              <Ionicons name="bar-chart" size={18} color={colors.info} />
+            </View>
+            <Text style={[styles.quickNavLabel, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('insights.title')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickNavCard, { backgroundColor: '#8b5cf610', borderColor: '#8b5cf640' }]}
+            onPress={() => navigation.navigate('TeamsList')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickNavIcon, { backgroundColor: '#8b5cf622' }]}>
+              <Ionicons name="shield" size={18} color="#8b5cf6" />
+            </View>
+            <Text style={[styles.quickNavLabel, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('teams.teams')}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.quickNavCard, { backgroundColor: '#06b6d410', borderColor: '#06b6d440' }]}
+            onPress={() => navigation.navigate('RouteLibrary')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.quickNavIcon, { backgroundColor: '#06b6d422' }]}>
+              <Ionicons name="map" size={18} color="#06b6d4" />
+            </View>
+            <Text style={[styles.quickNavLabel, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('routes.title')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Spacer between header and tabs */}
@@ -1398,6 +1439,36 @@ const styles = StyleSheet.create({
   trainingSubtitle: {
     fontSize: fontSize.xs,
     lineHeight: 16,
+  },
+
+  // Quick Navigation Cards (Insights / Teams / Routes)
+  quickNavRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  quickNavCard: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 4,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    gap: 6,
+  },
+  quickNavIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickNavLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 
   // Pill Tab Bar

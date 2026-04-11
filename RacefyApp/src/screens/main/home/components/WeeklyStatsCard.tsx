@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../../../hooks/useTheme';
-import { useUnits } from '../../../../hooks/useUnits';
-import { useActivityStats } from '../../../../hooks/useActivityStats';
-import { spacing, fontSize, borderRadius } from '../../../../theme';
-import { formatDurationCompact } from '../../../../utils/formatDuration';
+import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useTranslation} from 'react-i18next';
+import {useTheme} from '../../../../hooks/useTheme';
+import {useUnits} from '../../../../hooks/useUnits';
+import {useActivityStats} from '../../../../hooks/useActivityStats';
+import {borderRadius, fontSize, spacing} from '../../../../theme';
+import {formatDurationCompact} from '../../../../utils/formatDuration';
 
 interface WeeklyStatsCardProps {
   onPress?: () => void;
@@ -17,7 +17,7 @@ export function WeeklyStatsCard({ onPress }: WeeklyStatsCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistanceShort: formatDistance } = useUnits();
-  const { stats, isLoading } = useActivityStats();
+  const { stats, isLoading } = useActivityStats({ period: 'this_week' });
 
   if (isLoading) {
     return (

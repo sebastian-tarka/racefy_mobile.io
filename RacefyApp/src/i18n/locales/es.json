@@ -316,7 +316,7 @@
     "noDrafts": "Sin borradores aún",
     "noDraftsDesc": "Las publicaciones en borrador aparecerán aquí. Las publicaciones generadas por IA se crean como borradores por defecto.",
     "publish": "Publicar",
-    "editThenPublish": "Editar y publicar",
+    "editThenPublish": "Editar",
     "published": "¡Publicación publicada exitosamente!",
     "publishFailed": "Error al publicar la publicación",
     "deleted": "Borrador eliminado",
@@ -326,7 +326,7 @@
     "confirmDeleteTitle": "Eliminar borrador",
     "confirmDelete": "¿Eliminar este borrador? Esta acción no se puede deshacer.",
     "aiGenerated": "Generado por IA",
-    "draftBanner": "Este es un borrador y solo tú puedes verlo",
+    "draftBanner": "Borrador · solo visible para ti",
     "loadingDrafts": "Cargando borradores...",
     "refreshing": "Actualizando...",
     "reminderTitle": "Tienes borradores sin publicar",
@@ -1791,6 +1791,16 @@
     "retry": "Verificar de nuevo",
     "today": "hoy"
   },
+  "update": {
+    "requiredTitle": "Actualización requerida",
+    "requiredMessage": "Tu versión de la aplicación está desactualizada. Actualízala para seguir usando Racefy.",
+    "softMessage": "Hay una nueva versión de Racefy disponible",
+    "updateNow": "Actualizar",
+    "later": "Más tarde",
+    "installedVersion": "Instalada",
+    "latestVersion": "Más reciente",
+    "openStoreFailed": "No se pudo abrir la tienda de aplicaciones"
+  },
   "subscription": {
     "choosePlan": "Elige tu plan",
     "current": "Actual",
@@ -2119,5 +2129,25 @@
       "rateLimited": "Por favor espera antes de enviar de nuevo",
       "loadFailed": "Error al cargar comentarios"
     }
+  },
+  "routes": {
+    "title": "Rutas",
+    "subtitle": "Planifica y descubre rutas para correr y ciclismo",
+    "noRoutes": "No se encontraron rutas",
+    "noRoutesMessage": "Aún no tienes ninguna ruta",
+    "createRoute": "Planificar ruta",
+    "failedToLoad": "Error al cargar las rutas",
+    "walking": "Carrera",
+    "cycling": "Bicicleta",
+    "public": "Pública",
+    "usedTimes": "Usada {{count}} veces",
+    "filters": {
+      "my": "Mis rutas",
+      "popular": "Populares",
+      "nearby": "Cercanas"
+    },
+    "deleteConfirm": "¿Seguro que quieres eliminar esta ruta?",
+    "deleted": "Ruta eliminada",
+    "duplicated": "Ruta copiada a la biblioteca"
   }
 }

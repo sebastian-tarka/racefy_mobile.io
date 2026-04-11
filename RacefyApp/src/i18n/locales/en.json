@@ -316,7 +316,7 @@
     "noDrafts": "No drafts yet",
     "noDraftsDesc": "Draft posts will appear here. AI-generated posts are created as drafts by default.",
     "publish": "Publish",
-    "editThenPublish": "Edit & Publish",
+    "editThenPublish": "Edit",
     "published": "Post published successfully!",
     "publishFailed": "Failed to publish post",
     "deleted": "Draft deleted",
@@ -326,7 +326,7 @@
     "confirmDeleteTitle": "Delete Draft",
     "confirmDelete": "Delete this draft? This action cannot be undone.",
     "aiGenerated": "AI Generated",
-    "draftBanner": "This is a draft and only visible to you",
+    "draftBanner": "Draft · only visible to you",
     "loadingDrafts": "Loading drafts...",
     "refreshing": "Refreshing...",
     "reminderTitle": "You have unpublished drafts",
@@ -1795,6 +1795,16 @@
     "estimatedEnd": "Estimated completion:",
     "retry": "Check Again",
     "today": "today"
+  },
+  "update": {
+    "requiredTitle": "Update required",
+    "requiredMessage": "Your app version is out of date. Please update to keep using Racefy.",
+    "softMessage": "A new version of Racefy is available",
+    "updateNow": "Update",
+    "later": "Later",
+    "installedVersion": "Installed",
+    "latestVersion": "Latest",
+    "openStoreFailed": "Could not open the app store"
   },
   "subscription": {
     "choosePlan": "Choose Your Plan",

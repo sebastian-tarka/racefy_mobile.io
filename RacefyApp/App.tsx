@@ -1,20 +1,20 @@
-import React, { useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/hooks/useAuth';
-import { ThemeProvider, useTheme } from './src/hooks/useTheme';
-import { LiveActivityProvider } from './src/hooks/useLiveActivity';
-import { UnitsProvider } from './src/hooks/useUnits';
-import { MaintenanceProvider } from './src/hooks/useMaintenance';
-import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
-import { configureRevenueCat } from './src/services/revenuecat';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { AppNavigator } from './src/navigation';
+import React, {useEffect} from 'react';
+import {StatusBar} from 'expo-status-bar';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {AuthProvider} from './src/hooks/useAuth';
+import {ThemeProvider, useTheme} from './src/hooks/useTheme';
+import {LiveActivityProvider} from './src/hooks/useLiveActivity';
+import {UnitsProvider} from './src/hooks/useUnits';
+import {AppConfigProvider} from './src/contexts/AppConfigContext';
+import {loadGlobalHapticsPreference} from './src/hooks/useHaptics';
+import {configureRevenueCat} from './src/services/revenuecat';
+import {KeyboardProvider} from 'react-native-keyboard-controller';
+import {AppNavigator} from './src/navigation';
 
 // Initialize i18n
 import './src/i18n';
-import { loadSavedLanguage } from './src/i18n';
+import {loadSavedLanguage} from './src/i18n';
 
 function AppContent() {
   const { colors, isDark } = useTheme();
@@ -39,13 +39,13 @@ export default function App() {
       <KeyboardProvider>
         <ThemeProvider>
           <UnitsProvider>
-            <MaintenanceProvider>
+            <AppConfigProvider>
               <AuthProvider>
                 <LiveActivityProvider>
                   <AppContent />
                 </LiveActivityProvider>
               </AuthProvider>
-            </MaintenanceProvider>
+            </AppConfigProvider>
           </UnitsProvider>
         </ThemeProvider>
       </KeyboardProvider>

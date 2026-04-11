@@ -1242,7 +1242,20 @@ export interface UserStats {
   };
 }
 
+export type ActivityStatsPeriod =
+  | 'this_week'
+  | 'last_week'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'last_year';
+
 export interface ActivityStats {
+  period: {
+    period: ActivityStatsPeriod;
+    from: string;
+    to: string;
+  } | null;
   count: number;
   totals: {
     distance: number;
@@ -2044,9 +2057,34 @@ export interface AppConfigMaintenance {
   estimated_end: string | null;
 }
 
+export interface AppUpdateConfig {
+  /** Latest available version (used for soft update prompt). */
+  current_version: string;
+  /** Below this version the app is blocked. */
+  minimum_version: string;
+  /** Store URL the user is sent to when tapping "Update". May be empty. */
+  update_url: string;
+  /** Soft-update banner message (already localized by backend via Accept-Language). */
+  update_message?: string;
+  /** Force-update screen message (already localized by backend via Accept-Language). */
+  force_update_message?: string;
+  /**
+   * Server-side decision: when true, the running version must be blocked.
+   * Client also compares versions as a fallback when this flag is missing.
+   */
+  force_update?: boolean;
+}
+
 export interface AppConfigResponse {
   push: AppConfigPush;
   maintenance: AppConfigMaintenance;
+  /** Optional — when omitted, version checking is disabled client-side. */
+  update?: AppUpdateConfig;
+}
+
+export interface AppConfigQuery {
+  platform: 'ios' | 'android';
+  app_version: string;
 }
 
 // ============ DEVICE REGISTRATION (Push Notifications) ============

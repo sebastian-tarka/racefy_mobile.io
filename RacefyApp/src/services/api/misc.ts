@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type { ApiBase } from './base';
+import type {ApiBase} from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -140,12 +140,19 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ APP CONFIG (Public) ============
 
     /**
-     * Get app configuration from server
-     * Used to determine which push notification provider to use
-     * No authentication required
+     * Get app configuration from server.
+     *
+     * Used for: push provider selection, maintenance mode, and version
+     * gating (force/soft update). The optional `query` lets the backend
+     * tailor the version response per platform & current native version.
+     *
+     * No authentication required.
      */
-    async getAppConfig(): Promise<Types.AppConfigResponse> {
-      return this.request<Types.AppConfigResponse>('/config/app');
+    async getAppConfig(query?: Types.AppConfigQuery): Promise<Types.AppConfigResponse> {
+      const qs = query
+        ? `?platform=${encodeURIComponent(query.platform)}&app_version=${encodeURIComponent(query.app_version)}`
+        : '';
+      return this.request<Types.AppConfigResponse>(`/config/app${qs}`);
     }
 
     // ============ ADMIN - IMPERSONATION ============

@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type { ApiBase } from './base';
+import type {ApiBase} from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -135,13 +135,18 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getActivityStats(params?: {
+      period?: Types.ActivityStatsPeriod;
       from?: string;
       to?: string;
       sport_type_id?: number;
     }): Promise<Types.ActivityStats> {
       const query = new URLSearchParams();
-      if (params?.from) query.append('from', params.from);
-      if (params?.to) query.append('to', params.to);
+      if (params?.period) {
+        query.append('period', params.period);
+      } else {
+        if (params?.from) query.append('from', params.from);
+        if (params?.to) query.append('to', params.to);
+      }
       if (params?.sport_type_id)
         query.append('sport_type_id', String(params.sport_type_id));
       const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(

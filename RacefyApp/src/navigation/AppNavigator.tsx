@@ -1,74 +1,87 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { NavigationContainer, useNavigation, DefaultTheme, DarkTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
-import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AccessibilityInfo, Animated, View, Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { ms } from '../theme/scale';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
-import { useLiveActivityContext } from '../hooks/useLiveActivity';
-import { useMaintenance } from '../hooks/useMaintenance';
-import { usePushNotifications } from '../hooks/usePushNotifications';
-import { useHomeConfig } from '../hooks/useHomeConfig';
-import { triggerHaptic } from '../hooks/useHaptics';
-import { useNavigationStyle, NavigationStyleProvider } from '../contexts/NavigationStyleContext';
-import { Loading, ImpersonationBanner, NetworkStatusBar, ErrorBoundary, BatteryOptimizationModal, UpgradePromptModal } from '../components';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+    createNavigationContainerRef,
+    DarkTheme,
+    DefaultTheme,
+    NavigationContainer,
+    Theme,
+    useNavigation
+} from '@react-navigation/native';
+import {createNativeStackNavigator, NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {Ionicons} from '@expo/vector-icons';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {AccessibilityInfo, Animated, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ms} from '../theme/scale';
+import {BlurView} from 'expo-blur';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useAuth} from '../hooks/useAuth';
+import {useTheme} from '../hooks/useTheme';
+import {useLiveActivityContext} from '../hooks/useLiveActivity';
+import {useMaintenance} from '../hooks/useMaintenance';
+import {useAppVersion} from '../hooks/useAppVersion';
+import {usePushNotifications} from '../hooks/usePushNotifications';
+import {useHomeConfig} from '../hooks/useHomeConfig';
+import {triggerHaptic} from '../hooks/useHaptics';
+import {NavigationStyleProvider, useNavigationStyle} from '../contexts/NavigationStyleContext';
+import {
+    BatteryOptimizationModal,
+    ErrorBoundary,
+    ImpersonationBanner,
+    Loading,
+    NetworkStatusBar,
+    SoftUpdateBanner,
+    UpgradePromptModal
+} from '../components';
 
 // Screens
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { RegisterScreen } from '../screens/auth/RegisterScreen';
-import { HomeScreenWrapper } from '../screens/main/HomeScreenWrapper';
-import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
-import { EventsScreen } from '../screens/main/EventsScreen';
-import { ProfileScreenWrapper } from '../screens/main/ProfileScreenWrapper';
-import { EventDetailScreen } from '../screens/details/EventDetailScreen';
-import { UserProfileScreen } from '../screens/details/UserProfileScreen';
-import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
-import { ActivityShareScreen } from '../screens/details/ActivityShareScreen';
-import { PostDetailScreen } from '../screens/details/PostDetailScreen';
-import { ConversationsListScreen, ChatScreen } from '../screens/messaging';
-import { EventFormScreen, EventCommentarySettingsScreen } from '../screens/events';
-import { PostFormScreen } from '../screens/posts';
-import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
-import { PaywallScreen } from '../screens/PaywallScreen';
-import { EditProfileScreen } from '../screens/profile';
-import { SettingsScreen, BlockedUsersScreen, PrivacyZonesScreen, TrainingRemindersScreen } from '../screens/settings';
-import { ConsentModalScreen, LegalDocumentsScreen } from '../screens/legal';
-import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
-import { NotificationsScreen } from '../screens/notifications';
-import { LandingScreen } from '../screens/landing';
-import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
+import {LoginScreen} from '../screens/auth/LoginScreen';
+import {RegisterScreen} from '../screens/auth/RegisterScreen';
+import {HomeScreenWrapper} from '../screens/main/HomeScreenWrapper';
+import {ActivityRecordingScreen} from '../screens/main/ActivityRecordingScreen';
+import {EventsScreen} from '../screens/main/EventsScreen';
+import {ProfileScreenWrapper} from '../screens/main/ProfileScreenWrapper';
+import {EventDetailScreen} from '../screens/details/EventDetailScreen';
+import {UserProfileScreen} from '../screens/details/UserProfileScreen';
+import {ActivityDetailScreen} from '../screens/details/ActivityDetailScreen';
+import {ActivityShareScreen} from '../screens/details/ActivityShareScreen';
+import {PostDetailScreen} from '../screens/details/PostDetailScreen';
+import {ChatScreen, ConversationsListScreen} from '../screens/messaging';
+import {EventCommentarySettingsScreen, EventFormScreen} from '../screens/events';
+import {PostFormScreen} from '../screens/posts';
+import {ActivityFormScreen, GpxImportScreen} from '../screens/activities';
+import {PaywallScreen} from '../screens/PaywallScreen';
+import {EditProfileScreen} from '../screens/profile';
+import {BlockedUsersScreen, PrivacyZonesScreen, SettingsScreen, TrainingRemindersScreen} from '../screens/settings';
+import {ConsentModalScreen, LegalDocumentsScreen} from '../screens/legal';
+import {ImpersonateUserScreen} from '../screens/admin/ImpersonateUserScreen';
+import {NotificationsScreen} from '../screens/notifications';
+import {LandingScreen} from '../screens/landing';
+import {LeaderboardScreen, PointHistoryScreen} from '../screens/leaderboard';
 import {
-  CalibrationFormScreen,
-  ProgramLoadingScreen,
-  WeeksListScreen,
-  WeekDetailScreen,
-  TipDetailScreen,
-  WeekFeedbackScreen,
+    CalibrationFormScreen,
+    ProgramLoadingScreen,
+    TipDetailScreen,
+    WeekDetailScreen,
+    WeekFeedbackScreen,
+    WeeksListScreen,
 } from '../screens/training';
-import { MaintenanceScreen } from '../screens/maintenance/MaintenanceScreen';
-import { TeamsListScreen } from '../screens/teams/TeamsListScreen';
-import { TeamDetailScreen } from '../screens/teams/TeamDetailScreen';
-import { TeamFormScreen } from '../screens/teams/TeamFormScreen';
-import { FeedbackListScreen } from '../screens/feedback/FeedbackListScreen';
-import { FeedbackFormScreen } from '../screens/feedback/FeedbackFormScreen';
-import { FeedbackDetailScreen } from '../screens/feedback/FeedbackDetailScreen';
-import { InviteMemberScreen } from '../screens/teams/InviteMemberScreen';
-import { TeamsLeaderboardScreen } from '../screens/teams/TeamsLeaderboardScreen';
-import { RouteLibraryScreen, RouteDetailScreen, RoutePlannerScreen } from '../screens/routes';
+import {MaintenanceScreen} from '../screens/maintenance/MaintenanceScreen';
+import {ForceUpdateScreen} from '../screens/update/ForceUpdateScreen';
+import {TeamsListScreen} from '../screens/teams/TeamsListScreen';
+import {TeamDetailScreen} from '../screens/teams/TeamDetailScreen';
+import {TeamFormScreen} from '../screens/teams/TeamFormScreen';
+import {FeedbackListScreen} from '../screens/feedback/FeedbackListScreen';
+import {FeedbackFormScreen} from '../screens/feedback/FeedbackFormScreen';
+import {FeedbackDetailScreen} from '../screens/feedback/FeedbackDetailScreen';
+import {InviteMemberScreen} from '../screens/teams/InviteMemberScreen';
+import {TeamsLeaderboardScreen} from '../screens/teams/TeamsLeaderboardScreen';
+import {RouteDetailScreen, RouteLibraryScreen, RoutePlannerScreen} from '../screens/routes';
 
 // Types
-import type {
-  RootStackParamList,
-  AuthStackParamList,
-  MainTabParamList,
-} from './types';
-import { FeedScreen } from '../screens/main/FeedScreen';
-import { InsightsScreen } from '../screens/main/InsightsScreen';
+import type {AuthStackParamList, MainTabParamList, RootStackParamList,} from './types';
+import {FeedScreen} from '../screens/main/FeedScreen';
+import {InsightsScreen} from '../screens/main/InsightsScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -612,6 +625,7 @@ export function AppNavigator() {
   const { isLoading, isAuthenticated, requiresConsent } = useAuth();
   const { colors, isDark } = useTheme();
   const { isMaintenanceMode } = useMaintenance();
+  const { forceUpdate } = useAppVersion();
 
   // Initialize push notifications with navigation ref for deep linking
   usePushNotifications({ navigationRef });
@@ -620,9 +634,16 @@ export function AppNavigator() {
     return <Loading fullScreen message="Loading..." />;
   }
 
-  // Show maintenance screen when server is in maintenance mode
+  // Show maintenance screen when server is in maintenance mode.
+  // Maintenance takes priority over force-update — if backend is down,
+  // sending the user to the store won't help.
   if (isMaintenanceMode) {
     return <MaintenanceScreen />;
+  }
+
+  // Block running on outdated native binaries.
+  if (forceUpdate) {
+    return <ForceUpdateScreen />;
   }
 
   // Create custom theme for React Navigation
@@ -852,6 +873,7 @@ export function AppNavigator() {
           <NetworkStatusBar />
           <BatteryOptimizationModal />
           <UpgradePromptModal />
+          <SoftUpdateBanner />
         </NavigationContainer>
       </NavigationStyleSetter>
     </NavigationStyleProvider>
