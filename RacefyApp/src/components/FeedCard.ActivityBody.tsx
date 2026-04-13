@@ -1,202 +1,175 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Dimensions, ViewToken, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { LazyRoutePreview as RoutePreview } from './LeafletMap';
-import { FeedVideo } from './FeedVideo';
-import { AutoDisplayImage } from './AutoDisplayImage';
-import { ExpandableContent } from './FeedCard.Media';
-import { MentionText } from './MentionText';
-import { ImageViewer } from './ImageViewer';
-import { ImageGallery } from './ImageGallery';
-import { MediaSlider } from './MediaSlider';
-import { useTheme } from '../hooks/useTheme';
-import { useUnits } from '../hooks/useUnits';
-import { fixStorageUrl } from '../config/api';
-import type { Post, Activity } from '../types/api';
+import React, {useMemo, useRef, useState} from 'react';
+import {Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View, ViewToken} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useTranslation} from 'react-i18next';
+import {LazyRoutePreview as RoutePreview} from './LeafletMap';
+import {FeedVideo} from './FeedVideo';
+import {AutoDisplayImage} from './AutoDisplayImage';
+import {MediaGrid} from './MediaGrid';
+import {MentionText} from './MentionText';
+import {ImageViewer} from './ImageViewer';
+import {ImageGallery} from './ImageGallery';
+import {useTheme} from '../hooks/useTheme';
+import {useUnits} from '../hooks/useUnits';
+import {fixStorageUrl} from '../config/api';
+import type {Activity, Post} from '../types/api';
 import {
-  type PostMediaItem,
   formatDuration,
-  formatDistance,
-  formatPace,
   getEffortLevel,
   getSportIcon,
-  getHeroStat,
-  getTimeOfDay,
+  type PostMediaItem,
+  styles,
   truncateDescription,
   useImageGallery,
-  styles,
 } from './FeedCard.utils';
+import {borderRadius, fontSize, spacing} from '../theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+/** Width of media area inside card padding (Card has padding: spacing.lg on each side + card border) */
+const MEDIA_WIDTH = SCREEN_WIDTH - spacing.lg * 2 - 2;
 
-function ActivityTagPills({ activity }: { activity: Activity }) {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-
-  const duration = formatDuration(activity.duration);
-  const effort = getEffortLevel(activity.sport_type?.name, activity.distance, activity.duration);
-  const timeOfDay = activity.started_at ? getTimeOfDay(activity.started_at) : null;
-
-  // Difficulty badge colors
-  const difficultyColors = {
-    Easy: { bg: colors.success + '20', text: colors.success },
-    Moderate: { bg: colors.warning + '20', text: colors.warning },
-    Hard: { bg: colors.error + '20', text: colors.error },
-  };
-
-  const effortColors = effort ? difficultyColors[effort.label as keyof typeof difficultyColors] : null;
-
-  return (
-    <View style={styles.tagPillsRow}>
-      {/* Sport Type */}
-      <View style={[styles.tagPill, { backgroundColor: colors.primary + '15' }]}>
-        <Ionicons name={getSportIcon(activity.sport_type?.name)} size={14} color={colors.primary} />
-        <Text style={[styles.badgeText, { color: colors.primary }]}>
-          {activity.sport_type?.name || t('sports.other')}
-        </Text>
-      </View>
-
-      {/* Difficulty */}
-      {effort && effortColors && (
-        <View style={[styles.tagPill, { backgroundColor: effortColors.bg }]}>
-          <Text style={[styles.badgeText, { color: effortColors.text }]}>{effort.label}</Text>
-        </View>
-      )}
-
-      {/* Time of Day */}
-      {timeOfDay && (
-        <View style={[styles.tagPill, { backgroundColor: colors.info + '15' }]}>
-          <Ionicons
-            name={
-              timeOfDay === 'morning' ? 'sunny-outline' :
-              timeOfDay === 'afternoon' ? 'partly-sunny-outline' :
-              'moon-outline'
-            }
-            size={14}
-            color={colors.info}
-          />
-          <Text style={[styles.badgeText, { color: colors.info }]}>
-            {t(`timeOfDay.${timeOfDay}`)}
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function ActivityStatsNew({ activity }: { activity: Activity }) {
+/* ──────────────────────────────────────────────────────────
+ * Activity Stats — Prominent horizontal bar under the map
+ * ────────────────────────────────────────────────────────── */
+function ActivityStatsBar({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { formatDistance: fmtDistance, formatElevation } = useUnits();
 
   const stats = [
-    {
-      icon: 'navigate-outline',
-      value: fmtDistance(activity.distance),
-      label: t('activity.stats.distance')
-    },
-    {
-      icon: 'time-outline',
-      value: formatDuration(activity.duration),
-      label: t('activity.stats.duration')
-    },
-    {
-      icon: 'trending-up',
-      value: formatElevation(activity.elevation_gain || 0),
-      label: t('activity.stats.elevationGain'),
-      show: true // Always show, even if 0
-    },
+    { label: t('activity.stats.distance'), value: fmtDistance(activity.distance), icon: 'navigate-outline' as const },
+    { label: t('activity.stats.duration'), value: formatDuration(activity.duration), icon: 'time-outline' as const },
+    { label: t('activity.stats.elevationGain'), value: formatElevation(activity.elevation_gain || 0), icon: 'trending-up' as const },
   ];
 
   return (
-    <View style={styles.statsRowNew}>
-      {stats.map((stat, index) => (
-        <View key={index} style={styles.statColumn}>
-          <Ionicons name={stat.icon as any} size={20} color={colors.textSecondary} />
-          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {stat.value}
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-            {stat.label}
-          </Text>
-        </View>
+    <View style={[actStyles.statsBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+      {stats.map((stat, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <View style={[actStyles.statsDivider, { backgroundColor: colors.border }]} />}
+          <View style={actStyles.statItem}>
+            <Text style={[actStyles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+            <Text style={[actStyles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
+          </View>
+        </React.Fragment>
       ))}
     </View>
   );
 }
 
-function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }: any) {
+/* ──────────────────────────────────────────────────────────
+ * Hero Route Map — Full-bleed map with distance overlay
+ * ────────────────────────────────────────────────────────── */
+function HeroRouteMap({ activity, onActivityPress }: { activity: Activity; onActivityPress?: () => void }) {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { formatDistance: fmtDistance } = useUnits();
+
   return (
-    <>
-      {galleryVisible && imageUrls.length > 0 && (
-        <ImageGallery images={imageUrls} initialIndex={galleryIndex} visible={galleryVisible} onClose={() => setGalleryVisible(false)} />
+    <TouchableOpacity
+      style={actStyles.heroMapContainer}
+      onPress={onActivityPress}
+      activeOpacity={0.85}
+      disabled={!onActivityPress}
+    >
+      <RoutePreview
+        routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
+        routeMapUrl={fixStorageUrl(activity.route_map_url)}
+        routeSvg={activity.route_svg}
+        trackData={undefined}
+        activityId={activity.id}
+        height={280}
+        backgroundColor={colors.background}
+        showStartMarker={activity.gps_track?.show_start_marker ?? true}
+        showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
+        startPoint={activity.gps_track?.start_point ?? null}
+        finishPoint={activity.gps_track?.finish_point ?? null}
+      />
+      {/* Gradient overlay at bottom for distance badge */}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.5)']}
+        style={actStyles.heroGradient}
+      />
+      {/* Distance overlay */}
+      {activity.distance > 0 && (
+        <View style={actStyles.distanceOverlay}>
+          <Text style={actStyles.distanceValue}>{fmtDistance(activity.distance)}</Text>
+        </View>
       )}
-      {expandedImage && (
-        <ImageViewer uri={expandedImage} visible={true} onClose={() => setExpandedImage(null)} />
+      {/* View details button */}
+      {onActivityPress && (
+        <TouchableOpacity
+          style={actStyles.viewDetailsBtn}
+          onPress={onActivityPress}
+          activeOpacity={0.8}
+        >
+          <Text style={actStyles.viewDetailsTxt}>{t('feed.viewDetails')}</Text>
+          <Ionicons name="arrow-forward" size={14} color="#fff" />
+        </TouchableOpacity>
       )}
-    </>
+    </TouchableOpacity>
   );
 }
 
-interface ActivityMediaSliderProps {
+/* ──────────────────────────────────────────────────────────
+ * Activity Media Slider — route map + photos/videos carousel
+ * ────────────────────────────────────────────────────────── */
+function ActivityMediaSlider({
+  activity, mediaItems, imageUrls, onActivityPress, openGallery, setExpandedImage,
+}: {
   activity: Activity;
   mediaItems: PostMediaItem[];
   imageUrls: string[];
   onActivityPress?: () => void;
   openGallery: (index: number) => void;
   setExpandedImage: (uri: string) => void;
-}
-
-function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress, openGallery, setExpandedImage }: ActivityMediaSliderProps) {
+}) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { formatDistance: fmtDistance } = useUnits();
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0) {
-      setActiveIndex(viewableItems[0].index || 0);
-    }
+    if (viewableItems.length > 0) setActiveIndex(viewableItems[0].index || 0);
   }).current;
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50
-  }).current;
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current;
+
+  const slides = hasRouteMap
+    ? [{ type: 'route' as const }, ...mediaItems]
+    : mediaItems;
 
   const renderItem = ({ item, index }: { item: PostMediaItem | { type: 'route' }; index: number }) => {
-    // First slide is the route map
     if (item.type === 'route' && hasRouteMap) {
       return (
-        <View style={activitySliderStyles.slide}>
-          <TouchableOpacity
-            style={[activitySliderStyles.routeContainer]}
-            onPress={onActivityPress}
-            activeOpacity={0.8}
-            disabled={!onActivityPress}
-          >
+        <View style={sliderStyles.slide}>
+          <TouchableOpacity style={sliderStyles.routeContainer} onPress={onActivityPress} activeOpacity={0.85} disabled={!onActivityPress}>
             <RoutePreview
               routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
               routeMapUrl={fixStorageUrl(activity.route_map_url)}
               routeSvg={activity.route_svg}
               trackData={undefined}
               activityId={activity.id}
-              height={300}
+              height={280}
               backgroundColor={colors.background}
               showStartMarker={activity.gps_track?.show_start_marker ?? true}
               showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
               startPoint={activity.gps_track?.start_point ?? null}
               finishPoint={activity.gps_track?.finish_point ?? null}
             />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.5)']} style={actStyles.heroGradient} />
+            {activity.distance > 0 && (
+              <View style={actStyles.distanceOverlay}>
+                <Text style={actStyles.distanceValue}>{fmtDistance(activity.distance)}</Text>
+              </View>
+            )}
             {onActivityPress && (
-              <TouchableOpacity
-                style={styles.viewDetailsButton}
-                onPress={onActivityPress}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.viewDetailsText}>{t('feed.viewDetails')}</Text>
-                <Ionicons name="arrow-forward" size={16} color="#fff" />
+              <TouchableOpacity style={actStyles.viewDetailsBtn} onPress={onActivityPress} activeOpacity={0.8}>
+                <Text style={actStyles.viewDetailsTxt}>{t('feed.viewDetails')}</Text>
+                <Ionicons name="arrow-forward" size={14} color="#fff" />
               </TouchableOpacity>
             )}
           </TouchableOpacity>
@@ -204,40 +177,29 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
       );
     }
 
-    // Media items (videos and photos)
     const mediaItem = item as PostMediaItem;
     if (mediaItem.type === 'video') {
       return (
-        <View style={activitySliderStyles.slide}>
-          <FeedVideo
-            videoUrl={mediaItem.url}
-            thumbnailUrl={mediaItem.thumbnailUrl}
-            aspectRatio={mediaItem.aspectRatio || 16 / 9}
-          />
+        <View style={sliderStyles.slide}>
+          <FeedVideo videoUrl={mediaItem.url} thumbnailUrl={mediaItem.thumbnailUrl} aspectRatio={mediaItem.aspectRatio || 16 / 9} />
         </View>
       );
     }
 
-    // Image
     const imageIndex = mediaItems.slice(0, index).filter(it => it.type === 'image').length;
     return (
-      <View style={activitySliderStyles.slide}>
+      <View style={sliderStyles.slide}>
         <AutoDisplayImage
           imageUrl={mediaItem.url}
           onExpand={() => imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(mediaItem.url)}
-          previewHeight={300}
+          previewHeight={280}
         />
       </View>
     );
   };
 
-  // Build slides array: route map first (if exists), then media items
-  const slides = hasRouteMap
-    ? [{ type: 'route' as const }, ...mediaItems]
-    : mediaItems;
-
   return (
-    <View style={activitySliderStyles.container}>
+    <View style={sliderStyles.container}>
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -249,22 +211,14 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         decelerationRate="fast"
-        snapToInterval={SCREEN_WIDTH}
+        snapToInterval={MEDIA_WIDTH}
         snapToAlignment="center"
-        removeClippedSubviews={true}
+        removeClippedSubviews
       />
-
-      {/* Pagination dots */}
       {slides.length > 1 && (
-        <View style={activitySliderStyles.pagination}>
-          {slides.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                activitySliderStyles.dot,
-                index === activeIndex && activitySliderStyles.dotActive
-              ]}
-            />
+        <View style={sliderStyles.pagination}>
+          {slides.map((_, i) => (
+            <View key={i} style={[sliderStyles.dot, i === activeIndex && sliderStyles.dotActive]} />
           ))}
         </View>
       )}
@@ -272,16 +226,270 @@ function ActivityMediaSlider({ activity, mediaItems, imageUrls, onActivityPress,
   );
 }
 
-const activitySliderStyles = StyleSheet.create({
-  container: {
+/* ──────────────────────────────────────────────────────────
+ * Main ActivityBody
+ * ────────────────────────────────────────────────────────── */
+export function ActivityBody({ post, onActivityPress }: { post: Post; onActivityPress?: () => void }) {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const activity = post.activity;
+  if (!activity) return null;
+
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const truncatedDesc = activity.description
+    ? truncateDescription(activity.description, 120)
+    : { text: '', isTruncated: false };
+
+  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
+
+  const { imageUrls, mediaItems } = useMemo(() => {
+    const postVideos = post.videos || [];
+    const postPhotos = post.photos || [];
+    const urls = postPhotos.map(p => fixStorageUrl(p.url) || '');
+    const items: PostMediaItem[] = [];
+    postVideos.forEach(v => items.push({
+      id: v.id, type: 'video', url: fixStorageUrl(v.url) || '',
+      thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
+      aspectRatio: v.width && v.height ? v.width / v.height : undefined,
+    }));
+    postPhotos.forEach(p => items.push({
+      id: p.id, type: 'image', url: fixStorageUrl(p.url) || '',
+    }));
+    return { imageUrls: urls, mediaItems: items };
+  }, [post.videos, post.photos]);
+
+  const hasMedia = mediaItems.length > 0;
+
+  // Determine effort level for badge color
+  const effort = getEffortLevel(activity.sport_type?.name, activity.distance, activity.duration);
+  const effortColors: Record<string, { bg: string; text: string }> = {
+    Easy: { bg: colors.success + '20', text: colors.success },
+    Moderate: { bg: colors.warning + '20', text: colors.warning },
+    Hard: { bg: colors.error + '20', text: colors.error },
+  };
+
+  return (
+    <>
+      {/* Gallery modals */}
+      {galleryVisible && imageUrls.length > 0 && (
+        <ImageGallery images={imageUrls} initialIndex={galleryIndex} visible={galleryVisible} onClose={() => setGalleryVisible(false)} />
+      )}
+      {expandedImage && (
+        <ImageViewer uri={expandedImage} visible onClose={() => setExpandedImage(null)} />
+      )}
+
+      {/* Description + sport badge row */}
+      <View style={styles.bodyPadding}>
+        {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
+        {activity.description && (
+          <View>
+            {activity.mentions ? (
+              <MentionText
+                text={showFullDescription ? activity.description : truncatedDesc.text}
+                mentions={activity.mentions}
+                style={[styles.expandableText, { color: colors.textPrimary }]}
+              />
+            ) : (
+              <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
+                {showFullDescription ? activity.description : truncatedDesc.text}
+              </Text>
+            )}
+            {truncatedDesc.isTruncated && !showFullDescription && (
+              <TouchableOpacity onPress={() => setShowFullDescription(true)}>
+                <Text style={[styles.showMoreLink, { color: colors.primary }]}>{t('feed.showMore')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Compact tag pills row */}
+        <View style={actStyles.tagRow}>
+          <View style={[actStyles.sportBadge, { backgroundColor: colors.primary + '15' }]}>
+            <Ionicons name={getSportIcon(activity.sport_type?.name)} size={14} color={colors.primary} />
+            <Text style={[actStyles.sportBadgeText, { color: colors.primary }]}>
+              {activity.sport_type?.name || t('sports.other')}
+            </Text>
+          </View>
+          {effort && effortColors[effort.label] && (
+            <View style={[actStyles.sportBadge, { backgroundColor: effortColors[effort.label].bg }]}>
+              <Text style={[actStyles.sportBadgeText, { color: effortColors[effort.label].text }]}>{effort.label}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Hero visual area — padded with rounded corners to match content */}
+      {hasRouteMap && hasMedia ? (
+        <View style={actStyles.paddedMedia}>
+          <View style={actStyles.mediaRounded}>
+            <ActivityMediaSlider
+              activity={activity}
+              mediaItems={mediaItems}
+              imageUrls={imageUrls}
+              onActivityPress={onActivityPress}
+              openGallery={openGallery}
+              setExpandedImage={setExpandedImage}
+            />
+          </View>
+        </View>
+      ) : hasRouteMap ? (
+        <View style={actStyles.paddedMedia}>
+          <View style={actStyles.mediaRounded}>
+            <HeroRouteMap activity={activity} onActivityPress={onActivityPress} />
+          </View>
+        </View>
+      ) : mediaItems.length > 1 ? (
+        <View style={actStyles.paddedMedia}>
+          <View style={actStyles.mediaRounded}>
+            <MediaGrid items={mediaItems} />
+          </View>
+        </View>
+      ) : mediaItems.length === 1 ? (
+        mediaItems[0].type === 'video' ? (
+          <View style={actStyles.paddedMedia}>
+            <View style={actStyles.mediaRounded}>
+              <FeedVideo
+                key={`post-${post.id}-activity-video-${mediaItems[0].id}`}
+                videoUrl={mediaItems[0].url}
+                thumbnailUrl={mediaItems[0].thumbnailUrl}
+                aspectRatio={mediaItems[0].aspectRatio || 16 / 9}
+              />
+            </View>
+          </View>
+        ) : (
+          <View style={actStyles.paddedMedia}>
+            <View style={actStyles.mediaRounded}>
+              <AutoDisplayImage
+                imageUrl={mediaItems[0].url}
+                onExpand={() => setExpandedImage(mediaItems[0].url)}
+                previewHeight={280}
+              />
+            </View>
+          </View>
+        )
+      ) : null}
+
+      {/* Stats bar — prominent, always visible */}
+      <ActivityStatsBar activity={activity} />
+    </>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Styles
+ * ────────────────────────────────────────────────────────── */
+const actStyles = StyleSheet.create({
+  // Stats bar
+  statsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderTopWidth: 1,
+    marginTop: spacing.sm,
+  },
+  statsDivider: {
+    width: 1,
+    height: 32,
+    marginHorizontal: spacing.sm,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+
+  // Padded media — no extra horizontal padding, Card already provides spacing.lg
+  paddedMedia: {
+    marginTop: spacing.sm,
+  },
+  mediaRounded: {
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+  },
+
+  // Hero map
+  heroMapContainer: {
+    height: 280,
     position: 'relative',
+    overflow: 'hidden',
   },
-  slide: {
-    width: SCREEN_WIDTH,
+  heroGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 80,
   },
-  routeContainer: {
-    height: 300,
+  distanceOverlay: {
+    position: 'absolute',
+    bottom: spacing.md,
+    left: spacing.lg,
   },
+  distanceValue: {
+    color: '#fff',
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  viewDetailsBtn: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  viewDetailsTxt: {
+    color: '#fff',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+
+  // Tag pills
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  sportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+    gap: 4,
+  },
+  sportBadgeText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+});
+
+const sliderStyles = StyleSheet.create({
+  container: { position: 'relative' },
+  slide: { width: MEDIA_WIDTH },
+  routeContainer: { height: 280, position: 'relative', overflow: 'hidden' },
   pagination: {
     position: 'absolute',
     bottom: 12,
@@ -293,164 +501,11 @@ const activitySliderStyles = StyleSheet.create({
     gap: 6,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
   },
   dotActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    width: 8, height: 8, borderRadius: 4,
   },
 });
-
-export function ActivityBody({ post, onActivityPress }: { post: Post; onActivityPress?: () => void }) {
-  const { colors } = useTheme();
-  const { t } = useTranslation();
-  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
-  const activity = post.activity;
-  if (!activity) return null;
-
-  const [showFullDescription, setShowFullDescription] = useState(false);
-  const truncatedDescription = activity.description
-    ? truncateDescription(activity.description, 120)
-    : { text: '', isTruncated: false };
-
-  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
-
-  const { imageUrls, mediaItems } = useMemo(() => {
-    const postVideos = post.videos || [];
-    const postPhotos = post.photos || [];
-    const urls = postPhotos.map(p => fixStorageUrl(p.url) || '');
-    const items: PostMediaItem[] = [];
-    postVideos.forEach((v) => items.push({
-      id: v.id,
-      type: 'video' as const,
-      url: fixStorageUrl(v.url) || '',
-      thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
-      aspectRatio: v.width && v.height ? v.width / v.height : undefined,
-    }));
-    postPhotos.forEach((p) => items.push({
-      id: p.id,
-      type: 'image' as const,
-      url: fixStorageUrl(p.url) || '',
-    }));
-    return { imageUrls: urls, mediaItems: items };
-  }, [post.videos, post.photos]);
-
-  const hasMedia = mediaItems.length > 0;
-  const hasMultipleItems = hasRouteMap && hasMedia ? true : mediaItems.length > 1;
-
-  return (
-    <>
-      <GalleryModals galleryVisible={galleryVisible} setGalleryVisible={setGalleryVisible} galleryIndex={galleryIndex} imageUrls={imageUrls} expandedImage={expandedImage} setExpandedImage={setExpandedImage} />
-
-      {/* Title, description, and badges with padding */}
-      <View style={styles.bodyPadding}>
-        {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-        {activity.description && (
-          <View>
-            {activity.mentions ? (
-              <MentionText
-                text={showFullDescription ? activity.description : truncatedDescription.text}
-                mentions={activity.mentions}
-                style={[styles.expandableText, { color: colors.textPrimary }]}
-              />
-            ) : (
-              <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
-                {showFullDescription ? activity.description : truncatedDescription.text}
-              </Text>
-            )}
-            {truncatedDescription.isTruncated && !showFullDescription && (
-              <TouchableOpacity onPress={() => setShowFullDescription(true)}>
-                <Text style={[styles.showMoreLink, { color: colors.primary }]}>
-                  {t('feed.showMore')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-        <ActivityTagPills activity={activity} />
-      </View>
-
-      {/* Full-bleed hero media */}
-      {hasRouteMap && hasMedia ? (
-        <View style={styles.fullBleedMedia}>
-          <ActivityMediaSlider
-            activity={activity}
-            mediaItems={mediaItems}
-            imageUrls={imageUrls}
-            onActivityPress={onActivityPress}
-            openGallery={openGallery}
-            setExpandedImage={setExpandedImage}
-          />
-        </View>
-      ) : hasRouteMap ? (
-        <TouchableOpacity style={[styles.heroVisual, styles.fullBleedMedia, { borderRadius: 0, height: 300 }]} onPress={onActivityPress} activeOpacity={0.8} disabled={!onActivityPress}>
-          <RoutePreview
-            routeMapUrl={fixStorageUrl(activity.route_map_url)}
-            routeSvg={activity.route_svg}
-            trackData={undefined}
-            activityId={activity.id}
-            height={300}
-            backgroundColor={colors.background}
-            showStartMarker={activity.gps_track?.show_start_marker ?? true}
-            showFinishMarker={activity.gps_track?.show_finish_marker ?? true}
-            startPoint={activity.gps_track?.start_point ?? null}
-            finishPoint={activity.gps_track?.finish_point ?? null}
-          />
-          {onActivityPress && (
-            <TouchableOpacity
-              style={styles.viewDetailsButton}
-              onPress={onActivityPress}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.viewDetailsText}>{t('feed.viewDetails')}</Text>
-              <Ionicons name="arrow-forward" size={16} color="#fff" />
-            </TouchableOpacity>
-          )}
-        </TouchableOpacity>
-      ) : mediaItems.length > 1 ? (
-        <View style={styles.fullBleedMedia}>
-          <MediaSlider
-            items={mediaItems}
-            onImagePress={(index) => {
-              const item = mediaItems[index];
-              if (item.type === 'image') {
-                const imageIndex = mediaItems.slice(0, index + 1).filter(it => it.type === 'image').length - 1;
-                imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(item.url);
-              }
-            }}
-            previewHeight={300}
-          />
-        </View>
-      ) : mediaItems.length === 1 ? (
-        mediaItems[0].type === 'video' ? (
-          <View style={styles.fullBleedMedia}>
-            <FeedVideo
-              key={`post-${post.id}-activity-video-${mediaItems[0].id}`}
-              videoUrl={mediaItems[0].url}
-              thumbnailUrl={mediaItems[0].thumbnailUrl}
-              aspectRatio={mediaItems[0].aspectRatio || 16 / 9}
-            />
-          </View>
-        ) : (
-          <View style={[styles.heroVisualContainer, styles.fullBleedMedia]}>
-            <AutoDisplayImage
-              imageUrl={mediaItems[0].url}
-              onExpand={() => setExpandedImage(mediaItems[0].url)}
-              previewHeight={300}
-            />
-          </View>
-        )
-      ) : null}
-
-      {/* Stats with padding */}
-      <View style={styles.bodyPadding}>
-        <ActivityStatsNew activity={activity} />
-      </View>
-    </>
-  );
-}

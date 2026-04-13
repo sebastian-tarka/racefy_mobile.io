@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { ExpandableContent, PostMedia } from './FeedCard.Media';
-import { SharedPostBlock } from './SharedPostBlock';
-import { SharedPostDeletedBlock } from './SharedPostDeletedBlock';
-import { YouTubeEmbed } from './YouTubeEmbed';
-import { styles } from './FeedCard.utils';
-import { spacing, borderRadius, fontSize } from '../theme';
-import type { Post, TaggedEvent } from '../types/api';
+import {Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {useTheme} from '../hooks/useTheme';
+import {ExpandableContent, PostMedia} from './FeedCard.Media';
+import {MediaGrid} from './MediaGrid';
+import {SharedPostBlock} from './SharedPostBlock';
+import {SharedPostDeletedBlock} from './SharedPostDeletedBlock';
+import {YouTubeEmbed} from './YouTubeEmbed';
+import {buildMediaItems, styles} from './FeedCard.utils';
+import {borderRadius, fontSize, spacing} from '../theme';
+import type {Post, TaggedEvent} from '../types/api';
 
 const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
   challenge: { accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
@@ -129,6 +130,8 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
   }
 
   // Has media - title/content with padding, media full-bleed
+  const mediaItems = buildMediaItems(post);
+
   return (
     <>
       {(post.title || post.content) && (
@@ -143,7 +146,11 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
         </View>
       )}
       <View style={styles.fullBleedMedia}>
-        <PostMedia post={post} heroMode />
+        {mediaItems.length > 1 ? (
+          <MediaGrid items={mediaItems} />
+        ) : (
+          <PostMedia post={post} heroMode />
+        )}
       </View>
       {sharedPostContent()}
       {post.tagged_event && (

@@ -270,6 +270,7 @@
     "showMore": "Show more",
     "watchAgain": "Watch again",
     "viewDetails": "View Details",
+    "newEvent": "NEW EVENT",
     "visibility": {
       "public": "Public",
       "followers": "Followers",
@@ -284,7 +285,14 @@
     "reportConfirm": "Are you sure you want to report this post?",
     "reportSuccess": "Post reported successfully",
     "reportFailed": "Failed to report post",
-    "editNotImplemented": "Edit post feature coming soon"
+    "editNotImplemented": "Edit post feature coming soon",
+    "joinChallenge": "JOIN CHALLENGE",
+    "challengeStatus": {
+      "upcoming": "UPCOMING",
+      "ongoing": "ONGOING",
+      "completed": "COMPLETED",
+      "cancelled": "CANCELLED"
+    }
   },
   "postForm": {
     "editTitle": "Edit Post",

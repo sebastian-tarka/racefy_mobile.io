@@ -270,6 +270,7 @@
     "showMore": "Ver más",
     "watchAgain": "Ver de nuevo",
     "viewDetails": "Ver detalles",
+    "newEvent": "NUEVO EVENTO",
     "visibility": {
       "public": "Público",
       "followers": "Seguidores",
@@ -284,7 +285,14 @@
     "reportConfirm": "¿Estás seguro de que quieres reportar esta publicación?",
     "reportSuccess": "Publicación reportada exitosamente",
     "reportFailed": "Error al reportar la publicación",
-    "editNotImplemented": "La función de editar publicación estará disponible pronto"
+    "editNotImplemented": "La función de editar publicación estará disponible pronto",
+    "joinChallenge": "UNIRSE AL DESAFÍO",
+    "challengeStatus": {
+      "upcoming": "PRÓXIMO",
+      "ongoing": "EN CURSO",
+      "completed": "COMPLETADO",
+      "cancelled": "CANCELADO"
+    }
   },
   "postForm": {
     "editTitle": "Editar publicación",

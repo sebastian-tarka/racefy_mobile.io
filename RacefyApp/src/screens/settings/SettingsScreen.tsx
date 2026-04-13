@@ -1,41 +1,53 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Modal,
-  FlatList,
   ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {Ionicons} from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { useTranslation } from 'react-i18next';
+import {useTranslation} from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Input, Button, ScreenHeader, PrivacyConsentsSection, AiPostsSettings, AudioCoachSettings, DebugLogsSection, SettingsSection, BrandLogo, ScreenContainer, PremiumTeaser } from '../../components';
-import { useAuth } from '../../hooks/useAuth';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useTheme } from '../../hooks/useTheme';
-import { useHaptics, triggerHaptic } from '../../hooks/useHaptics';
-import { useSportTypes, type SportTypeWithIcon } from '../../hooks/useSportTypes';
-import { useHealthSync } from '../../hooks/useHealthSync';
-import { useUnits } from '../../hooks/useUnits';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { changeLanguage, supportedLanguages } from '../../i18n';
-import { spacing, fontSize } from '../../theme';
+import {
+  AiPostsSettings,
+  AudioCoachSettings,
+  BrandLogo,
+  Button,
+  DebugLogsSection,
+  Input,
+  PremiumTeaser,
+  PrivacyConsentsSection,
+  ScreenContainer,
+  ScreenHeader,
+  SettingsSection
+} from '../../components';
+import {useAuth} from '../../hooks/useAuth';
+import {useSubscription} from '../../hooks/useSubscription';
+import {useTheme} from '../../hooks/useTheme';
+import {triggerHaptic, useHaptics} from '../../hooks/useHaptics';
+import {type SportTypeWithIcon, useSportTypes} from '../../hooks/useSportTypes';
+import {useHealthSync} from '../../hooks/useHealthSync';
+import {useUnits} from '../../hooks/useUnits';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {changeLanguage, supportedLanguages} from '../../i18n';
+import {fontSize, spacing} from '../../theme';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../../navigation/types';
+import type {NotificationChannelSettings, UserPreferences} from '../../types/api';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
-import type { UserPreferences, NotificationChannelSettings } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -222,22 +234,16 @@ export function SettingsScreen({ navigation }: Props) {
 
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
-    account: true,
-    subscription: false,
-    adminTools: false,
-    consents: false,
-    preferences: false,
+    accountSubscription: true,
+    general: false,
+    activityTraining: false,
     notifications: false,
-    privacy: false,
     privacySafety: false,
-    activityDefaults: false,
-    healthSync: false,
-    aiPosts: false,
-    audioCoach: false,
-    trainingReminders: false,
-    notifDebug: false,
+    legalSupport: false,
     app: true,
     dangerZone: false,
+    adminTools: false,
+    devTools: false,
   });
 
   // Load saved section states from storage
@@ -587,11 +593,13 @@ export function SettingsScreen({ navigation }: Props) {
       />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Account Section */}
+        {/* ══════════════════════════════════════════════════════════
+            1. ACCOUNT & SUBSCRIPTION
+            ══════════════════════════════════════════════════════════ */}
         <SettingsSection
           title={t('settings.account')}
-          isExpanded={expandedSections.account}
-          onToggle={() => toggleSection('account')}
+          isExpanded={expandedSections.accountSubscription}
+          onToggle={() => toggleSection('accountSubscription')}
         >
           <SettingsRow
             icon="person-outline"
@@ -606,7 +614,6 @@ export function SettingsScreen({ navigation }: Props) {
               setPasswordErrors({});
             }}
           />
-          {/* Password Change Form */}
           {showPasswordChange && (
             <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
               <Input
@@ -641,14 +648,7 @@ export function SettingsScreen({ navigation }: Props) {
               />
             </View>
           )}
-        </SettingsSection>
-
-        {/* Subscription */}
-        <SettingsSection
-          title={t('settings.subscriptionSection')}
-          isExpanded={expandedSections.subscription}
-          onToggle={() => toggleSection('subscription')}
-        >
+          {/* Subscription info */}
           <View style={[styles.subscriptionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
             <View style={styles.subscriptionRow}>
               <Text style={[styles.subscriptionLabel, { color: colors.textSecondary }]}>
@@ -692,35 +692,13 @@ export function SettingsScreen({ navigation }: Props) {
           )}
         </SettingsSection>
 
-        {/* Admin Tools (only visible to admins) */}
-        {user?.role === 'admin' && (
-          <SettingsSection
-            title={t('settings.adminTools.title')}
-            isExpanded={expandedSections.adminTools}
-            onToggle={() => toggleSection('adminTools')}
-          >
-            <SettingsRow
-              icon="person-circle-outline"
-              label={t('settings.adminTools.impersonate')}
-              onPress={() => navigation.navigate('ImpersonateUser')}
-            />
-          </SettingsSection>
-        )}
-
-        {/* Legal Consents */}
-        <SettingsSection
-          title={t('legal.consentsTitle')}
-          isExpanded={expandedSections.consents}
-          onToggle={() => toggleSection('consents')}
-        >
-          <PrivacyConsentsSection embedded />
-        </SettingsSection>
-
-        {/* General Preferences */}
+        {/* ══════════════════════════════════════════════════════════
+            2. GENERAL PREFERENCES
+            ══════════════════════════════════════════════════════════ */}
         <SettingsSection
           title={t('settings.preferences')}
-          isExpanded={expandedSections.preferences}
-          onToggle={() => toggleSection('preferences')}
+          isExpanded={expandedSections.general}
+          onToggle={() => toggleSection('general')}
         >
           <SettingsRow
             icon="speedometer-outline"
@@ -784,7 +762,122 @@ export function SettingsScreen({ navigation }: Props) {
           />
         </SettingsSection>
 
-        {/* Notifications */}
+        {/* ══════════════════════════════════════════════════════════
+            3. ACTIVITY & TRAINING
+            ══════════════════════════════════════════════════════════ */}
+        <SettingsSection
+          title={t('settings.activityDefaults')}
+          isExpanded={expandedSections.activityTraining}
+          onToggle={() => toggleSection('activityTraining')}
+        >
+          {/* Activity defaults */}
+          <SettingsRow
+            icon="fitness-outline"
+            label={t('settings.favoriteSport')}
+            value={sportsLoading ? t('common.loading') : getFavoriteSportLabel()}
+            onPress={() => !sportsLoading && setShowSportModal(true)}
+          />
+          <SettingsRow
+            icon="globe-outline"
+            label={t('settings.defaultVisibility')}
+            value={getVisibilityLabel(preferences.activity_defaults.visibility)}
+            onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
+          />
+          <SettingsRow
+            icon="share-outline"
+            label={t('settings.autoShare')}
+            rightElement={
+              <Switch
+                value={preferences.activity_defaults.auto_share}
+                onValueChange={(value) => updateNestedPreference('activity_defaults', 'auto_share', value)}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={preferences.activity_defaults.auto_share ? colors.primary : colors.white}
+              />
+            }
+          />
+          {/* Health Sync */}
+          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <Text style={[styles.healthSyncDescription, { color: colors.textSecondary }]}>
+              {t('settings.healthSync.description')}
+            </Text>
+          </View>
+          <SettingsRow
+            icon="heart-outline"
+            label={t('settings.healthSync.enable')}
+            rightElement={
+              <Switch
+                value={healthSyncEnabled}
+                onValueChange={() => {
+                  triggerHaptic();
+                  toggleHealthSync();
+                }}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={healthSyncEnabled ? colors.primary : colors.white}
+                disabled={healthSyncLoading || healthStatus === 'not_available'}
+              />
+            }
+          />
+          <SettingsRow
+            icon="pulse-outline"
+            label={t('settings.healthSync.status')}
+            value={
+              healthStatus === 'available'
+                ? (Platform.OS === 'ios'
+                    ? t('settings.healthSync.sourceAppleHealth')
+                    : t('settings.healthSync.sourceHealthConnect'))
+                : healthStatus === 'not_installed'
+                  ? t('settings.healthSync.statusNotInstalled')
+                  : t('settings.healthSync.statusNotAvailable')
+            }
+          />
+          {healthSyncEnabled && healthStatus === 'available' && !hasHealthPermission && (
+            <SettingsRow
+              icon="key-outline"
+              label={t('settings.healthSync.grantPermission')}
+              onPress={() => {
+                triggerHaptic();
+                requestHealthPermission();
+              }}
+            />
+          )}
+          {healthSyncEnabled && hasHealthPermission && (
+            <SettingsRow
+              icon="checkmark-circle-outline"
+              label={t('settings.healthSync.permissionGranted')}
+            />
+          )}
+          {/* Training Reminders */}
+          <SettingsRow
+            icon="notifications-outline"
+            label={t('settings.trainingReminders.title')}
+            value={trainingRemindersSummary}
+            onPress={() => navigation.navigate('TrainingReminders')}
+          />
+          {/* Audio Coach */}
+          <AudioCoachSettings embedded />
+          {/* AI Posts */}
+          {canUse('ai_posts_monthly') ? (
+            <AiPostsSettings
+              preferences={preferences.ai_posts}
+              onPreferenceChange={updateAiPostsPreference}
+              isUpdating={isUpdatingAiPosts}
+              embedded
+            />
+          ) : (
+            <PremiumTeaser feature="ai_posts_monthly">
+              <AiPostsSettings
+                preferences={preferences.ai_posts}
+                onPreferenceChange={async () => {}}
+                isUpdating={false}
+                embedded
+              />
+            </PremiumTeaser>
+          )}
+        </SettingsSection>
+
+        {/* ══════════════════════════════════════════════════════════
+            4. NOTIFICATIONS
+            ══════════════════════════════════════════════════════════ */}
         <SettingsSection
           title={t('settings.notifications')}
           isExpanded={expandedSections.notifications}
@@ -864,11 +957,13 @@ export function SettingsScreen({ navigation }: Props) {
           />
         </SettingsSection>
 
-        {/* Privacy */}
+        {/* ══════════════════════════════════════════════════════════
+            5. PRIVACY & SAFETY (merged)
+            ══════════════════════════════════════════════════════════ */}
         <SettingsSection
-          title={t('settings.privacy')}
-          isExpanded={expandedSections.privacy}
-          onToggle={() => toggleSection('privacy')}
+          title={t('settings.privacySafety.title')}
+          isExpanded={expandedSections.privacySafety}
+          onToggle={() => toggleSection('privacySafety')}
         >
           <SettingsRow
             icon="eye-outline"
@@ -918,14 +1013,6 @@ export function SettingsScreen({ navigation }: Props) {
               />
             }
           />
-        </SettingsSection>
-
-        {/* Privacy & Safety */}
-        <SettingsSection
-          title={t('settings.privacySafety.title')}
-          isExpanded={expandedSections.privacySafety}
-          onToggle={() => toggleSection('privacySafety')}
-        >
           <SettingsRow
             icon="location-outline"
             label={t('settings.privacySafety.privacyZones')}
@@ -936,6 +1023,17 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.privacySafety.blockedUsers')}
             onPress={() => navigation.navigate('BlockedUsers')}
           />
+        </SettingsSection>
+
+        {/* ══════════════════════════════════════════════════════════
+            6. LEGAL & SUPPORT
+            ══════════════════════════════════════════════════════════ */}
+        <SettingsSection
+          title={t('legal.consentsTitle')}
+          isExpanded={expandedSections.legalSupport}
+          onToggle={() => toggleSection('legalSupport')}
+        >
+          <PrivacyConsentsSection embedded />
           <SettingsRow
             icon="chatbubbles-outline"
             label={t('settings.privacySafety.feedbackAndBugs')}
@@ -943,139 +1041,92 @@ export function SettingsScreen({ navigation }: Props) {
           />
         </SettingsSection>
 
-        {/* Activity Defaults */}
+        {/* ══════════════════════════════════════════════════════════
+            7. APP INFO
+            ══════════════════════════════════════════════════════════ */}
         <SettingsSection
-          title={t('settings.activityDefaults')}
-          isExpanded={expandedSections.activityDefaults}
-          onToggle={() => toggleSection('activityDefaults')}
+          title={t('settings.app')}
+          isExpanded={expandedSections.app}
+          onToggle={() => toggleSection('app')}
         >
-          <SettingsRow
-            icon="fitness-outline"
-            label={t('settings.favoriteSport')}
-            value={sportsLoading ? t('common.loading') : getFavoriteSportLabel()}
-            onPress={() => !sportsLoading && setShowSportModal(true)}
-          />
-          <SettingsRow
-            icon="globe-outline"
-            label={t('settings.defaultVisibility')}
-            value={getVisibilityLabel(preferences.activity_defaults.visibility)}
-            onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
-          />
-          <SettingsRow
-            icon="share-outline"
-            label={t('settings.autoShare')}
-            rightElement={
-              <Switch
-                value={preferences.activity_defaults.auto_share}
-                onValueChange={(value) => updateNestedPreference('activity_defaults', 'auto_share', value)}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.activity_defaults.auto_share ? colors.primary : colors.white}
-              />
-            }
-          />
-        </SettingsSection>
-
-        {/* Heart Rate Sync */}
-        <SettingsSection
-          title={t('settings.healthSync.title')}
-          isExpanded={expandedSections.healthSync}
-          onToggle={() => toggleSection('healthSync')}
-        >
-          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.healthSyncDescription, { color: colors.textSecondary }]}>
-              {t('settings.healthSync.description')}
+          <View style={[styles.aboutSection, { borderBottomColor: colors.border }]}>
+            <BrandLogo category="logo-full" variant={isDark ? 'light' : 'dark'} width={160} height={45} />
+            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+              {t('settings.version')} {appVersion}
+            </Text>
+            <Text style={[styles.copyrightText, { color: colors.textMuted }]}>
+              © {new Date().getFullYear()} Racefy. {t('settings.allRightsReserved')}
             </Text>
           </View>
           <SettingsRow
-            icon="heart-outline"
-            label={t('settings.healthSync.enable')}
-            rightElement={
-              <Switch
-                value={healthSyncEnabled}
-                onValueChange={() => {
-                  triggerHaptic();
-                  toggleHealthSync();
-                }}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={healthSyncEnabled ? colors.primary : colors.white}
-                disabled={healthSyncLoading || healthStatus === 'not_available'}
-              />
-            }
+            icon="log-out-outline"
+            label={t('common.logout')}
+            onPress={handleLogout}
           />
+        </SettingsSection>
+
+        {/* ══════════════════════════════════════════════════════════
+            8. DANGER ZONE
+            ══════════════════════════════════════════════════════════ */}
+        <SettingsSection
+          title={t('settings.dangerZone')}
+          isExpanded={expandedSections.dangerZone}
+          onToggle={() => toggleSection('dangerZone')}
+          titleColor={colors.error}
+        >
           <SettingsRow
-            icon="pulse-outline"
-            label={t('settings.healthSync.status')}
-            value={
-              healthStatus === 'available'
-                ? (Platform.OS === 'ios'
-                    ? t('settings.healthSync.sourceAppleHealth')
-                    : t('settings.healthSync.sourceHealthConnect'))
-                : healthStatus === 'not_installed'
-                  ? t('settings.healthSync.statusNotInstalled')
-                  : t('settings.healthSync.statusNotAvailable')
-            }
+            icon="trash-outline"
+            label={t('settings.deleteAccount')}
+            onPress={() => setShowDeleteAccount(!showDeleteAccount)}
+            danger
           />
-          {healthSyncEnabled && healthStatus === 'available' && !hasHealthPermission && (
-            <SettingsRow
-              icon="key-outline"
-              label={t('settings.healthSync.grantPermission')}
-              onPress={() => {
-                triggerHaptic();
-                requestHealthPermission();
-              }}
-            />
-          )}
-          {healthSyncEnabled && hasHealthPermission && (
-            <SettingsRow
-              icon="checkmark-circle-outline"
-              label={t('settings.healthSync.permissionGranted')}
-            />
-          )}
-        </SettingsSection>
-
-        {/* AI Posts Settings */}
-        <SettingsSection
-          title={t('settings.aiPosts.title')}
-          isExpanded={expandedSections.aiPosts}
-          onToggle={() => toggleSection('aiPosts')}
-        >
-          {canUse('ai_posts_monthly') ? (
-            <AiPostsSettings
-              preferences={preferences.ai_posts}
-              onPreferenceChange={updateAiPostsPreference}
-              isUpdating={isUpdatingAiPosts}
-              embedded
-            />
-          ) : (
-            <PremiumTeaser feature="ai_posts_monthly">
-              <AiPostsSettings
-                preferences={preferences.ai_posts}
-                onPreferenceChange={async () => {}}
-                isUpdating={false}
-                embedded
+          {showDeleteAccount && (
+            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+              <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
+              <Input
+                label={t('settings.confirmPassword')}
+                placeholder={t('settings.enterPasswordToDelete')}
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                secureTextEntry
               />
-            </PremiumTeaser>
+              <Button
+                title={t('settings.deleteAccountButton')}
+                onPress={handleDeleteAccount}
+                loading={isDeleting}
+                variant="danger"
+                style={styles.formButton}
+              />
+            </View>
           )}
         </SettingsSection>
 
-        {/* Audio Coach Settings */}
-        <SettingsSection
-          title={t('settings.audioCoach.title')}
-          isExpanded={expandedSections.audioCoach}
-          onToggle={() => toggleSection('audioCoach')}
-        >
-          <AudioCoachSettings embedded />
-        </SettingsSection>
+        {/* ══════════════════════════════════════════════════════════
+            ADMIN TOOLS (admin only)
+            ══════════════════════════════════════════════════════════ */}
+        {user?.role === 'admin' && (
+          <SettingsSection
+            title={t('settings.adminTools.title')}
+            isExpanded={expandedSections.adminTools}
+            onToggle={() => toggleSection('adminTools')}
+          >
+            <SettingsRow
+              icon="person-circle-outline"
+              label={t('settings.adminTools.impersonate')}
+              onPress={() => navigation.navigate('ImpersonateUser')}
+            />
+          </SettingsSection>
+        )}
 
-        {/* Debug Logs (only visible in dev mode when enabled) */}
+        {/* ══════════════════════════════════════════════════════════
+            DEV TOOLS (__DEV__ only)
+            ══════════════════════════════════════════════════════════ */}
         <DebugLogsSection />
-
-        {/* Notification Debug - test if local notification tap opens app */}
         {__DEV__ && (
           <SettingsSection
-            title="Notification Debug"
-            isExpanded={expandedSections.notifDebug}
-            onToggle={() => toggleSection('notifDebug')}
+            title="Dev Tools"
+            isExpanded={expandedSections.devTools}
+            onToggle={() => toggleSection('devTools')}
           >
             <View style={{ padding: spacing.md }}>
               <Button
@@ -1154,78 +1205,6 @@ export function SettingsScreen({ navigation }: Props) {
             </View>
           </SettingsSection>
         )}
-
-        {/* Training Reminders */}
-        <SettingsSection
-          title={t('settings.trainingReminders.title')}
-          isExpanded={expandedSections.trainingReminders}
-          onToggle={() => toggleSection('trainingReminders')}
-        >
-          <SettingsRow
-            icon="notifications-outline"
-            label={t('settings.trainingReminders.title')}
-            value={trainingRemindersSummary}
-            onPress={() => navigation.navigate('TrainingReminders')}
-          />
-        </SettingsSection>
-
-        {/* App Section */}
-        <SettingsSection
-          title={t('settings.app')}
-          isExpanded={expandedSections.app}
-          onToggle={() => toggleSection('app')}
-        >
-          {/* About/Branding */}
-          <View style={[styles.aboutSection, { borderBottomColor: colors.border }]}>
-            <BrandLogo category="logo-full" variant={isDark ? 'light' : 'dark'} width={160} height={45} />
-            <Text style={[styles.versionText, { color: colors.textSecondary }]}>
-              {t('settings.version')} {appVersion}
-            </Text>
-            <Text style={[styles.copyrightText, { color: colors.textMuted }]}>
-              © {new Date().getFullYear()} Racefy. {t('settings.allRightsReserved')}
-            </Text>
-          </View>
-          <SettingsRow
-            icon="log-out-outline"
-            label={t('common.logout')}
-            onPress={handleLogout}
-          />
-        </SettingsSection>
-
-        {/* Danger Zone */}
-        <SettingsSection
-          title={t('settings.dangerZone')}
-          isExpanded={expandedSections.dangerZone}
-          onToggle={() => toggleSection('dangerZone')}
-          titleColor={colors.error}
-        >
-          <SettingsRow
-            icon="trash-outline"
-            label={t('settings.deleteAccount')}
-            onPress={() => setShowDeleteAccount(!showDeleteAccount)}
-            danger
-          />
-          {/* Delete Account Form */}
-          {showDeleteAccount && (
-            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-              <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
-              <Input
-                label={t('settings.confirmPassword')}
-                placeholder={t('settings.enterPasswordToDelete')}
-                value={deletePassword}
-                onChangeText={setDeletePassword}
-                secureTextEntry
-              />
-              <Button
-                title={t('settings.deleteAccountButton')}
-                onPress={handleDeleteAccount}
-                loading={isDeleting}
-                variant="danger"
-                style={styles.formButton}
-              />
-            </View>
-          )}
-        </SettingsSection>
       </ScrollView>
 
       {/* Sport Selection Modal */}

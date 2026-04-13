@@ -1,15 +1,17 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import { VideoView, useVideoPlayer } from 'expo-video';
-import { Ionicons } from '@expo/vector-icons';
-import { VideoPlayerManager } from '../services/VideoPlayerManager';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Image} from 'expo-image';
+import {useVideoPlayer, VideoView} from 'expo-video';
+import {Ionicons} from '@expo/vector-icons';
+import {VideoPlayerManager} from '../services/VideoPlayerManager';
 
 interface AutoPlayVideoProps {
   videoUrl: string;
   thumbnailUrl?: string | null;
   aspectRatio?: number;
   previewHeight?: number;
+  /** When true, stretches to fill parent container instead of using aspectRatio for sizing */
+  fillContainer?: boolean;
   onScroll?: () => void;
   onExpand?: () => void;
 }
@@ -20,6 +22,7 @@ export function AutoPlayVideo({
   videoUrl,
   thumbnailUrl,
   aspectRatio = 16 / 9,
+  fillContainer,
   onExpand,
 }: AutoPlayVideoProps) {
   const [isMuted, setIsMuted] = useState(true);
@@ -68,8 +71,12 @@ export function AutoPlayVideo({
     } catch {}
   }, [player]);
 
+  const containerStyle = fillContainer
+    ? styles.fillContainer
+    : [styles.container, { aspectRatio }];
+
   return (
-    <View style={[styles.container, { aspectRatio }]}>
+    <View style={containerStyle}>
       {thumbnailUrl && (
         <Image
           source={{ uri: thumbnailUrl }}
@@ -87,16 +94,7 @@ export function AutoPlayVideo({
         allowsPictureInPicture={false}
       />
 
-      <TouchableOpacity style={styles.controls} activeOpacity={0.9} onPress={togglePlayPause}>
-        {onExpand && (
-          <TouchableOpacity
-            style={styles.expandBtn}
-            onPress={(e) => { e.stopPropagation(); onExpand(); }}
-          >
-            <Ionicons name="expand" size={20} color="#fff" />
-          </TouchableOpacity>
-        )}
-
+      <TouchableOpacity style={styles.controls} activeOpacity={0.9} onPress={onExpand || togglePlayPause}>
         <TouchableOpacity
           style={styles.muteBtn}
           onPress={(e) => { e.stopPropagation(); toggleMute(); }}
@@ -121,6 +119,12 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#000',
   },
+  fillContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000',
+  },
   fill: {
     position: 'absolute',
     width: '100%',
@@ -131,12 +135,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     zIndex: 2,
-  },
-  expandBtn: {
-    position: 'absolute', top: 12, right: 12,
-    width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center', alignItems: 'center',
   },
   muteBtn: {
     position: 'absolute', bottom: 12, right: 12,

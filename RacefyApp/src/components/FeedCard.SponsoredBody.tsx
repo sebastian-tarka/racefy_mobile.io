@@ -1,51 +1,89 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { useTheme } from '../hooks/useTheme';
-import { ExpandableContent, PostMedia } from './FeedCard.Media';
-import { styles } from './FeedCard.utils';
-import type { Post } from '../types/api';
+import React, {useMemo} from 'react';
+import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {useTheme} from '../hooks/useTheme';
+import {useImageAccentColor} from '../hooks/useImageAccentColor';
+import {ExpandableContent, PostMedia} from './FeedCard.Media';
+import {styles} from './FeedCard.utils';
+import {fixStorageUrl} from '../config/api';
+import {borderRadius, fontSize, spacing} from '../theme';
+import type {Post} from '../types/api';
 
 export function SponsoredBody({ post }: { post: Post }) {
   const { colors } = useTheme();
   const hasMedia = (post.videos?.length ?? 0) > 0 || (post.photos?.length ?? 0) > 0 || (post.media?.length ?? 0) > 0;
+  const sponsoredData = (post as any).sponsored_data;
+  const campaignName = sponsoredData?.campaign_name;
+  const ctaText = sponsoredData?.cta_text;
+  const ctaUrl = sponsoredData?.promoted_link || sponsoredData?.cta_url;
+
+  const firstMediaUrl = useMemo(() => {
+    const photo = post.photos?.[0];
+    if (photo) return fixStorageUrl(photo.url);
+    const media = post.media?.[0];
+    if (media) return fixStorageUrl(media.url);
+    const video = post.videos?.[0];
+    if (video?.thumbnail_url) return fixStorageUrl(video.thumbnail_url);
+    return null;
+  }, [post.photos, post.media, post.videos]);
+
+  const accentColor = useImageAccentColor(firstMediaUrl, '#f59e0b');
 
   return (
     <>
-      {/* Title and media in full-bleed for product-first layout */}
+      {/* Full-bleed hero media */}
       {hasMedia ? (
-        <>
-          {post.title && (
-            <View style={styles.bodyPadding}>
-              <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>
-            </View>
-          )}
-          {/* Full-bleed media - negative margin offsets Card's padding */}
-          <View style={styles.fullBleedMedia}>
-            <PostMedia post={post} heroMode />
-          </View>
-        </>
-      ) : (
-        <View style={styles.bodyPadding}>
-          {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
+        <View style={styles.fullBleedMedia}>
+          <PostMedia post={post} heroMode />
+        </View>
+      ) : null}
+
+      {/* Title + content */}
+      <View style={styles.bodyPadding}>
+        {post.title && (
+          <Text style={[spStyles.productTitle, { color: colors.textPrimary }]}>{post.title}</Text>
+        )}
+        {post.content && <ExpandableContent text={post.content} type="sponsored" mentions={post.mentions} />}
+      </View>
+
+      {/* CTA button — full width, prominent */}
+      {ctaUrl && ctaText && (
+        <View style={spStyles.ctaContainer}>
+          <TouchableOpacity
+            style={[spStyles.ctaButton, { backgroundColor: accentColor }]}
+            activeOpacity={0.8}
+            onPress={() => void Linking.openURL(ctaUrl)}
+          >
+            <Text style={spStyles.ctaText}>{ctaText}</Text>
+          </TouchableOpacity>
         </View>
       )}
-
-      {/* Content and CTA with padding */}
-      <View style={styles.bodyPadding}>
-        {post.content && <ExpandableContent text={post.content} type="sponsored" mentions={post.mentions} />}
-        {(post as any).sponsored_data?.cta_url && (post as any).sponsored_data?.cta_text && (
-          <TouchableOpacity
-            style={[styles.ctaButton, { backgroundColor: '#f59e0b' }]}
-            activeOpacity={0.8}
-            onPress={() => {
-              const url = (post as any).sponsored_data.promoted_link || (post as any).sponsored_data.cta_url;
-              void Linking.openURL(url);
-            }}
-          >
-            <Text style={styles.ctaButtonText}>{(post as any).sponsored_data.cta_text}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
     </>
   );
 }
+
+const spStyles = StyleSheet.create({
+  productTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: spacing.xs,
+  },
+  ctaContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+    paddingTop: spacing.sm,
+  },
+  ctaButton: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 14,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  ctaText: {
+    color: '#fff',
+    fontSize: fontSize.md,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+});

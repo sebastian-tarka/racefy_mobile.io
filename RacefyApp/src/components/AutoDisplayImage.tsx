@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useViewability } from '../hooks/useViewability';
+import React from 'react';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Image} from 'expo-image';
+import {Ionicons} from '@expo/vector-icons';
+import {LinearGradient} from 'expo-linear-gradient';
+import {useViewability} from '../hooks/useViewability';
 
 interface AutoDisplayImageProps {
   imageUrl: string;
   onExpand?: () => void;
   previewHeight?: number;
 }
-
-const { width: screenWidth } = Dimensions.get('window');
 
 /**
  * AutoDisplayImage - Memory-safe image component for feeds.
@@ -27,9 +25,6 @@ export function AutoDisplayImage({
   previewHeight = 300,
 }: AutoDisplayImageProps) {
   const { viewRef, isViewable } = useViewability({ threshold: 5, delay: 150 });
-  const [expanded, setExpanded] = useState(false);
-
-  const displayHeight = expanded ? screenWidth * 1.5 : previewHeight;
 
   // Placeholder when not visible - no Image loaded, minimal memory
   if (!isViewable) {
@@ -39,7 +34,7 @@ export function AutoDisplayImage({
   }
 
   return (
-    <View ref={viewRef} style={[styles.container, { height: displayHeight }]}>
+    <View ref={viewRef} style={[styles.container, { height: previewHeight }]}>
       <Image
         source={{ uri: imageUrl }}
         style={styles.image}
@@ -48,16 +43,14 @@ export function AutoDisplayImage({
         cachePolicy="memory-disk"
       />
 
-      {!expanded && (
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.3)']}
-          style={styles.gradientOverlay}
-          pointerEvents="none"
-        />
-      )}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.3)']}
+        style={styles.gradientOverlay}
+        pointerEvents="none"
+      />
 
-      <View style={styles.overlay}>
-        {onExpand && (
+      {onExpand && (
+        <View style={styles.overlay} pointerEvents="box-none">
           <TouchableOpacity
             style={[styles.expandButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
             onPress={onExpand}
@@ -65,20 +58,8 @@ export function AutoDisplayImage({
           >
             <Ionicons name="expand" size={20} color="#fff" />
           </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={[styles.toggleButton, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-          onPress={() => setExpanded(!expanded)}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={20}
-            color="#fff"
-          />
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -113,17 +94,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
-  },
-  toggleButton: {
-    position: 'absolute',
-    bottom: 12,
-    alignSelf: 'center',
     width: 36,
     height: 36,
     borderRadius: 18,

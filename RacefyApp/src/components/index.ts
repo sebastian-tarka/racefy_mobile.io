@@ -53,6 +53,7 @@ export * from './MentionText';
 export * from './MentionInput';
 export * from './MediaPicker';
 export * from './MediaSlider';
+export * from './MediaGrid';
 export * from './MediaThumbnail';
 export * from './NotificationItem';
 export * from './NotificationBadge';

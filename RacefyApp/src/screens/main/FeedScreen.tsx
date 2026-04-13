@@ -236,7 +236,7 @@ export function FeedScreen({ navigation, route }: Props) {
           : undefined
       }
       onEventPress={
-        item.type === 'event' && item.event
+        (item.type === 'event' || item.type === 'challenge') && item.event
           ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
           : (item as any).tagged_event
             ? () => navigation.navigate('EventDetail', { eventId: (item as any).tagged_event!.id })

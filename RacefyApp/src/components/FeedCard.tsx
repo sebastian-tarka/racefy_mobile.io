@@ -5,7 +5,7 @@ import {ReshareModal} from './ReshareModal';
 import {useTheme} from '../hooks/useTheme';
 import {FeedCardHeader} from './FeedCard.Header';
 import {FeedCardActions} from './FeedCard.Actions';
-import {AchievementBody, ActivityBody, EventBody, GeneralBody, SponsoredBody} from './FeedCard.Bodies';
+import {AchievementBody, ActivityBody, ChallengeBody, EventBody, GeneralBody, SponsoredBody} from './FeedCard.Bodies';
 import {type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles} from './FeedCard.utils';
 
 // Re-export types for backward compatibility
@@ -18,7 +18,7 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   sponsored: SponsoredBody,
   reshare: GeneralBody,
   achievement: AchievementBody,
-  challenge: GeneralBody,
+  challenge: ChallengeBody,
   digest: GeneralBody,
   milestone: GeneralBody,
 };
@@ -46,19 +46,21 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
   }, [post.shared_post]);
 
   return (
-    <Card style={{ marginBottom, position: 'relative' }}>
-      {typeColors.accent && (
+    <Card style={{ marginBottom, position: 'relative', ...(type === 'challenge' && { overflow: 'hidden' }) }} noPadding={type === 'challenge'}>
+      {type !== 'challenge' && typeColors.accent && (
         <View style={[styles.accentBar, { backgroundColor: typeColors.accent, opacity: 0.8 }]} />
       )}
-      <FeedCardHeader
-        post={post}
-        type={type}
-        isOwner={isOwner}
-        menuOpen={menuOpen}
-        onToggleMenu={() => setMenuOpen(!menuOpen)}
-        onUserPress={onUserPress}
-        onMenu={onMenu}
-      />
+      {type !== 'challenge' && (
+        <FeedCardHeader
+          post={post}
+          type={type}
+          isOwner={isOwner}
+          menuOpen={menuOpen}
+          onToggleMenu={() => setMenuOpen(!menuOpen)}
+          onUserPress={onUserPress}
+          onMenu={onMenu}
+        />
+      )}
       <Body
         post={post}
         onActivityPress={onActivityPress}
