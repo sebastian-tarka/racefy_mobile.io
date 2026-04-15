@@ -9,7 +9,6 @@ import {AutoDisplayImage} from './AutoDisplayImage';
 import {ImageViewer} from './ImageViewer';
 import {ImageGallery} from './ImageGallery';
 import {useTheme} from '../hooks/useTheme';
-import {useImageAccentColor} from '../hooks/useImageAccentColor';
 import {fixStorageUrl} from '../config/api';
 import {useImageGallery} from './FeedCard.utils';
 import {borderRadius, fontSize, spacing} from '../theme';
@@ -48,7 +47,7 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
     return { coverUrl: cover, imageUrls: urls };
   }, [event.cover_image_url, post.photos]);
 
-  const accentColor = useImageAccentColor(coverUrl, colors.primary);
+  const accentColor = event.accent_color || post.accent_color || colors.primary;
 
   const sportName = event.sport_type?.name;
   const dateRange = `${format(new Date(event.starts_at), 'MMM d', { locale: dateFnsLocale })} — ${format(new Date(event.ends_at), 'MMM d', { locale: dateFnsLocale })}`;

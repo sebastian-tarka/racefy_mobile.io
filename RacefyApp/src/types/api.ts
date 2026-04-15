@@ -322,6 +322,16 @@ export interface Post {
   shared_post_deleted?: boolean;
   is_reshared?: boolean;
   youtube_embed_id?: string | null;
+  accent_color?: string | null;
+  sponsored_data?: SponsoredData;
+}
+
+export interface SponsoredData {
+  campaign_name?: string;
+  cta_text?: string;
+  cta_url?: string;
+  promoted_link?: string;
+  accent_color?: string | null;
 }
 
 export interface TaggedEvent {
@@ -451,6 +461,7 @@ export interface Event {
   visibility?: EventVisibility;
   cover_image: string | null;
   cover_image_url: string | null;
+  accent_color?: string | null;
   // Ranking mode
   ranking_mode?: EventRankingMode;
   target_distance?: number;

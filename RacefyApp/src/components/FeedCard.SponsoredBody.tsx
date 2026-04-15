@@ -1,32 +1,19 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '../hooks/useTheme';
-import {useImageAccentColor} from '../hooks/useImageAccentColor';
 import {ExpandableContent, PostMedia} from './FeedCard.Media';
 import {styles} from './FeedCard.utils';
-import {fixStorageUrl} from '../config/api';
 import {borderRadius, fontSize, spacing} from '../theme';
 import type {Post} from '../types/api';
 
 export function SponsoredBody({ post }: { post: Post }) {
   const { colors } = useTheme();
   const hasMedia = (post.videos?.length ?? 0) > 0 || (post.photos?.length ?? 0) > 0 || (post.media?.length ?? 0) > 0;
-  const sponsoredData = (post as any).sponsored_data;
-  const campaignName = sponsoredData?.campaign_name;
+  const sponsoredData = post.sponsored_data;
   const ctaText = sponsoredData?.cta_text;
   const ctaUrl = sponsoredData?.promoted_link || sponsoredData?.cta_url;
 
-  const firstMediaUrl = useMemo(() => {
-    const photo = post.photos?.[0];
-    if (photo) return fixStorageUrl(photo.url);
-    const media = post.media?.[0];
-    if (media) return fixStorageUrl(media.url);
-    const video = post.videos?.[0];
-    if (video?.thumbnail_url) return fixStorageUrl(video.thumbnail_url);
-    return null;
-  }, [post.photos, post.media, post.videos]);
-
-  const accentColor = useImageAccentColor(firstMediaUrl, '#f59e0b');
+  const accentColor = sponsoredData?.accent_color || post.accent_color || '#f59e0b';
 
   return (
     <>
