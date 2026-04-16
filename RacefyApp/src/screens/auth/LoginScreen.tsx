@@ -1,23 +1,16 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { useTranslation } from 'react-i18next';
-import { Input, Button, BrandLogo, ScreenContainer } from '../../components';
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../hooks/useTheme';
-import { logger } from '../../services/logger';
-import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
-import { spacing, fontSize } from '../../theme';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
-import type { CompositeScreenProps } from '@react-navigation/native';
+import React, {useState} from 'react';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
+import {useTranslation} from 'react-i18next';
+import {BrandLogo, Button, Input, ScreenContainer} from '../../components';
+import {useAuth} from '../../hooks/useAuth';
+import {useTheme} from '../../hooks/useTheme';
+import {logger} from '../../services/logger';
+import {isGoogleSignInAvailable, statusCodes} from '../../services/googleSignIn';
+import {fontSize, spacing} from '../../theme';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {AuthStackParamList, RootStackParamList} from '../../navigation/types';
+import type {CompositeScreenProps} from '@react-navigation/native';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<AuthStackParamList, 'Login'>,
@@ -139,6 +132,15 @@ export function LoginScreen({ navigation }: Props) {
               style={styles.button}
             />
 
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ForgotPassword')}
+              style={styles.forgotPasswordLink}
+            >
+              <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
+                {t('auth.forgotPasswordLink')}
+              </Text>
+            </TouchableOpacity>
+
             {isGoogleSignInAvailable() && (
               <>
                 <View style={styles.dividerContainer}>
@@ -217,6 +219,15 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.md,
+  },
+  forgotPasswordLink: {
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  forgotPasswordText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
   dividerContainer: {
     flexDirection: 'row',

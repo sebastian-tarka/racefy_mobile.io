@@ -3,6 +3,7 @@ import {
     createNavigationContainerRef,
     DarkTheme,
     DefaultTheme,
+    LinkingOptions,
     NavigationContainer,
     Theme,
     useNavigation
@@ -37,6 +38,8 @@ import {
 // Screens
 import {LoginScreen} from '../screens/auth/LoginScreen';
 import {RegisterScreen} from '../screens/auth/RegisterScreen';
+import {ForgotPasswordScreen} from '../screens/auth/ForgotPasswordScreen';
+import {ResetPasswordScreen} from '../screens/auth/ResetPasswordScreen';
 import {HomeScreenWrapper} from '../screens/main/HomeScreenWrapper';
 import {ActivityRecordingScreen} from '../screens/main/ActivityRecordingScreen';
 import {EventsScreen} from '../screens/main/EventsScreen';
@@ -85,6 +88,24 @@ import {InsightsScreen} from '../screens/main/InsightsScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+// Deep linking: /reset-password?token=XXX&email=YYY opens the reset flow
+// inside the Auth modal stack on racefy://, https://racefy.io and https://app.dev.racefy.io.
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['racefy://', 'https://racefy.io', 'https://app.dev.racefy.io'],
+  config: {
+    screens: {
+      Auth: {
+        screens: {
+          Login: 'login',
+          Register: 'register',
+          ForgotPassword: 'forgot-password',
+          ResetPassword: 'reset-password',
+        },
+      },
+    },
+  },
+};
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -254,6 +275,8 @@ function AuthNavigator() {
     >
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <AuthStack.Screen name="LegalDocuments" component={LegalDocumentsScreen} />
     </AuthStack.Navigator>
   );
@@ -670,7 +693,7 @@ export function AppNavigator() {
     <ErrorBoundary>
     <NavigationStyleProvider>
       <NavigationStyleSetter>
-        <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey}>
+        <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey} linking={linking}>
           <RootStack.Navigator
             screenOptions={{
               headerShown: false,

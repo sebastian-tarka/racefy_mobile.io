@@ -1,10 +1,12 @@
-import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { ConversationParticipant, Event } from '../types/api';
-import type { LegalDocumentType } from '../types/legal';
+import type {NavigatorScreenParams} from '@react-navigation/native';
+import type {ConversationParticipant, Event} from '../types/api';
+import type {LegalDocumentType} from '../types/legal';
 
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { token: string; email: string };
   LegalDocuments: { documentType?: LegalDocumentType };
 };
 

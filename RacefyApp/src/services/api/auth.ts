@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '../../config/api';
+import {API_BASE_URL} from '../../config/api';
 import type * as Types from '../../types/api';
-import { assertUser, assertToken } from '../../utils/apiGuards';
-import type { ApiBase } from './base';
+import {assertToken, assertUser} from '../../utils/apiGuards';
+import type {ApiBase} from './base';
 
 /**
  * Raw auth response shape — the API may return the payload directly
@@ -115,6 +115,20 @@ export function AuthMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         token_type: 'Bearer',
         is_new_user: !!authData.is_new_user,
       };
+    }
+
+    async forgotPassword(email: string): Promise<Types.MessageResponse> {
+      return this.request<Types.MessageResponse>('/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email } satisfies Types.ForgotPasswordRequest),
+      });
+    }
+
+    async resetPassword(data: Types.ResetPasswordRequest): Promise<Types.MessageResponse> {
+      return this.request<Types.MessageResponse>('/reset-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
     }
 
     async logout(): Promise<void> {
