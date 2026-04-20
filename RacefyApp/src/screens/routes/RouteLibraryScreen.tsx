@@ -1,28 +1,30 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  Alert,
+    Alert,
+    DeviceEventEmitter,
+    FlatList,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { RouteCard, Loading, EmptyState, ScreenHeader, ScreenContainer } from '../../components';
-import { useRoutes } from '../../hooks/useRoutes';
-import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../navigation/types';
-import type { PlannedRoute } from '../../types/api';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {EmptyState, Loading, RouteCard, ScreenContainer, ScreenHeader} from '../../components';
+import {useRoutes} from '../../hooks/useRoutes';
+import {useTheme} from '../../hooks/useTheme';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../../navigation/types';
+import type {PlannedRoute} from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RouteLibrary'>;
 
 type FilterOption = 'my' | 'popular' | 'nearby';
 
-export function RouteLibraryScreen({ navigation }: Props) {
+export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
+  const selectMode = navRoute.params?.selectMode ?? false;
   const { t } = useTranslation();
   const { colors } = useTheme();
   const {
@@ -66,8 +68,13 @@ export function RouteLibraryScreen({ navigation }: Props) {
   }, []);
 
   const handleRoutePress = useCallback((route: PlannedRoute) => {
+    if (selectMode) {
+      DeviceEventEmitter.emit('route:selected', route.id);
+      navigation.goBack();
+      return;
+    }
     navigation.navigate('RouteDetail', { routeId: route.id });
-  }, [navigation]);
+  }, [navigation, selectMode]);
 
   const handleDelete = useCallback(async (routeId: number) => {
     Alert.alert(
@@ -109,14 +116,14 @@ export function RouteLibraryScreen({ navigation }: Props) {
   return (
     <ScreenContainer>
       <ScreenHeader
-        title={t('routes.title')}
+        title={selectMode ? t('routes.selectRoute', 'Select Route') : t('routes.title')}
         showBack
         onBack={() => navigation.goBack()}
-        rightAction={
+        rightAction={!selectMode ? (
           <TouchableOpacity onPress={() => navigation.navigate('RoutePlanner')} style={{ padding: spacing.xs }}>
             <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
           </TouchableOpacity>
-        }
+        ) : undefined}
       />
 
       {/* Filter tabs */}

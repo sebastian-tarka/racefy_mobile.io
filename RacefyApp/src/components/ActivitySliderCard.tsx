@@ -1,22 +1,17 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { Avatar } from './Avatar';
-import { useTheme } from '../hooks/useTheme';
-import { useUnits } from '../hooks/useUnits';
-import { fixStorageUrl } from '../config/api';
-import { spacing, fontSize, borderRadius, componentSize } from '../theme';
-import { formatDurationCompact } from '../utils/formatDuration';
-import { getSportTheme } from '../utils/sportTheme';
-import type { Activity } from '../types/api';
+import {StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Image as ExpoImage} from 'expo-image';
+import {LinearGradient} from 'expo-linear-gradient';
+import {Ionicons} from '@expo/vector-icons';
+import {BlurView} from 'expo-blur';
+import {Avatar} from './Avatar';
+import {useTheme} from '../hooks/useTheme';
+import {useUnits} from '../hooks/useUnits';
+import {fixStorageUrl} from '../config/api';
+import {borderRadius, componentSize, fontSize, spacing} from '../theme';
+import {formatDurationCompact} from '../utils/formatDuration';
+import {getSportTheme} from '../utils/sportTheme';
+import type {Activity} from '../types/api';
 
 interface ActivitySliderCardProps {
   activity: Activity;
@@ -37,7 +32,7 @@ export function ActivitySliderCard({
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
-  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_preview_url || activity.route_map_url || null;
+  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_map_url || activity.route_preview_url || null;
   const backgroundImage = fixStorageUrl(rawBackgroundImage);
   const hasBackgroundImage = !!backgroundImage;
 

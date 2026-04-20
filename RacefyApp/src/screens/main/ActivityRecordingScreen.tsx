@@ -1,49 +1,72 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Modal,
-  FlatList,
-  Animated,
   AccessibilityInfo,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
-  usePreviewLocation, useNearbyRoutes, useLiveActivityContext, usePermissions,
-  useActivityStats, useOngoingEvents, useMilestones, useHealthEnrichment,
-  useSportTypes, type SportTypeWithIcon, useTheme, useUnits, useAuth,
-  triggerHaptic, useActivityTimer, useMilestoneTracking, useSubscription,
-  useAudioCoach, useAudioCoachSettings, announceStart, announceEnd,
+  announceEnd,
+  announceStart,
+  type SportTypeWithIcon,
+  triggerHaptic,
+  useActivityStats,
+  useActivityTimer,
+  useAudioCoach,
+  useAudioCoachSettings,
+  useAuth,
+  useHealthEnrichment,
+  useLiveActivityContext,
+  useMilestones,
+  useMilestoneTracking,
+  useNearbyRoutes,
+  useOngoingEvents,
+  usePermissions,
+  usePreviewLocation,
+  useSportTypes,
+  useSubscription,
+  useTheme,
+  useUnits,
 } from '../../hooks';
 import {
-  BottomSheet, EventSelectionSheet, type BottomSheetOption, RecordingMapControls,
-  ViewToggleButton, NearbyRoutesList, NearbyRoutesHorizontalPanel, ScreenContainer,
-  MapboxLiveMap, FeatureGate,
+  BottomSheet,
+  type BottomSheetOption,
+  EventSelectionSheet,
+  FeatureGate,
+  MapboxLiveMap,
+  NearbyRoutesHorizontalPanel,
+  NearbyRoutesList,
+  RecordingMapControls,
+  ScreenContainer,
+  ViewToggleButton,
 } from '../../components';
-import { NavigationOverlay } from '../../components/NavigationOverlay';
-import { useLiveNavigation } from '../../hooks/useLiveNavigation';
-import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
-import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
-import { IdleView } from './recording/IdleView';
-import { RecordingView } from './recording/RecordingView';
-import { PausedView } from './recording/PausedView';
+import {NavigationOverlay} from '../../components/NavigationOverlay';
+import {useLiveNavigation} from '../../hooks/useLiveNavigation';
+import {useRouteApproachPath} from '../../hooks/useRouteApproachPath';
+import {useNavigationAnnouncer} from '../../hooks/useNavigationAnnouncer';
+import {IdleView} from './recording/IdleView';
+import {RecordingView} from './recording/RecordingView';
+import {PausedView} from './recording/PausedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Event, NearbyRoute, TrainingWeek } from '../../types/api';
+import type {Event, NearbyRoute, TrainingWeek} from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import type { RootStackParamList, MainTabParamList } from '../../navigation';
-import { logger } from '../../services/logger';
-import { api } from '../../services/api';
-import { formatTime } from '../../utils/formatters';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import type {MainTabParamList, RootStackParamList} from '../../navigation';
+import {logger} from '../../services/logger';
+import {api} from '../../services/api';
+import {formatTime} from '../../utils/formatters';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -699,6 +722,10 @@ export function ActivityRecordingScreen() {
                 Alert.alert(t('common.success'), t('recording.activitySaved'));
               } catch (err) {
                 logger.error('activity', 'Failed to finish from existing activity dialog', { error: err });
+                Alert.alert(
+                  t('recording.saveFailedTitle'),
+                  t('recording.saveFailed'),
+                );
               } finally {
                 isFinishingRef.current = false;
               }
@@ -861,6 +888,20 @@ export function ActivityRecordingScreen() {
       }
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
+      Alert.alert(
+        t('recording.saveFailedTitle'),
+        t('recording.saveFailed'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('recording.retry'),
+            onPress: () => {
+              isFinishingRef.current = false;
+              handleSave();
+            },
+          },
+        ]
+      );
     } finally {
       isFinishingRef.current = false;
     }

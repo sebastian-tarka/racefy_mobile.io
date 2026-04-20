@@ -1,35 +1,44 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
-  Animated,
   ActivityIndicator,
+  Animated,
+  FlatList,
   Keyboard,
+  RefreshControl,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {format} from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EventCard, LiveEventCard, Loading, EmptyState, RewardCard, ScreenContainer, AnimatedListItem, Card } from '../../components';
-import { useAuth } from '../../hooks/useAuth';
-import { useEvents } from '../../hooks/useEvents';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../hooks/useTheme';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { useRefreshOn } from '../../services/refreshEvents';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import type { CompositeScreenProps } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { Event, EventWithLatestCommentary, EventStats, EventOverview, Reward, RewardType } from '../../types/api';
+import {
+  AnimatedListItem,
+  Card,
+  EmptyState,
+  EventCard,
+  LiveEventCard,
+  Loading,
+  RewardCard,
+  ScreenContainer
+} from '../../components';
+import {useAuth} from '../../hooks/useAuth';
+import {useEvents} from '../../hooks/useEvents';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from '../../hooks/useTheme';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {useRefreshOn} from '../../services/refreshEvents';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import type {CompositeScreenProps} from '@react-navigation/native';
+import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
+import type {Event, EventOverview, EventStats, EventWithLatestCommentary, Reward} from '../../types/api';
 
 const LIVE_VIEW_MODE_KEY = '@racefy_events_live_view_mode';
 type LiveViewMode = 'compact' | 'detailed';
@@ -819,11 +828,11 @@ export function EventsScreen({ navigation, route }: Props) {
   return (
     <ScreenContainer>
       <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <View>
+        <View style={styles.headerTextContainer}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {activeTab === 'rewards' ? t('rewards.title') : t('events.title')}
           </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
             {activeTab === 'rewards' ? t('rewards.subtitle') : t('events.subtitle')}
           </Text>
         </View>
@@ -969,6 +978,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginRight: spacing.sm,
   },
   title: {
     fontSize: fontSize.xl,

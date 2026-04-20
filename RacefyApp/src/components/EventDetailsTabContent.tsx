@@ -1,30 +1,26 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next';
-import { Card } from './Card';
-import { Avatar } from './Avatar';
-import { CommentSection } from './CommentSection';
-import { KeyboardAwareScreenLayout } from './KeyboardAwareScreenLayout';
-import { CountdownTimer } from './CountdownTimer';
-import { ParticipantAvatarsStack } from './ParticipantAvatarsStack';
-import { LeaderboardEntryRow } from './EventLeaderboardTabContent';
-import { useTheme } from '../hooks/useTheme';
-import { useUnits } from '../hooks/useUnits';
-import { useAuth } from '../hooks/useAuth';
-import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { formatDistance, formatTotalTime } from '../utils/formatters';
-import type { Event, EventRegistration, Activity, LeaderboardEntry, User } from '../types/api';
-import type { ThemeColors } from '../theme/colors';
+import {ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {useTranslation} from 'react-i18next';
+import {Card} from './Card';
+import {Avatar} from './Avatar';
+import {RoutePreview} from './LeafletMap';
+import {CommentSection} from './CommentSection';
+import {KeyboardAwareScreenLayout} from './KeyboardAwareScreenLayout';
+import {CountdownTimer} from './CountdownTimer';
+import {ParticipantAvatarsStack} from './ParticipantAvatarsStack';
+import {LeaderboardEntryRow} from './EventLeaderboardTabContent';
+import {useTheme} from '../hooks/useTheme';
+import {useUnits} from '../hooks/useUnits';
+import {useAuth} from '../hooks/useAuth';
+import {useFeatureFlags} from '../hooks/useFeatureFlags';
+import {useKeyboardVisible} from '../hooks/useKeyboardVisible';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {formatTotalTime} from '../utils/formatters';
+import type {Activity, Event, EventRegistration, LeaderboardEntry, User} from '../types/api';
+import type {ThemeColors} from '../theme/colors';
 
 const getDifficultyColors = (colors: ThemeColors): Record<string, string> => ({
   beginner: colors.success,
@@ -76,6 +72,7 @@ export function EventDetailsTabContent({
   const { colors } = useTheme();
   const { formatDistanceShort, formatDistance } = useUnits();
   const { isAuthenticated } = useAuth();
+  const { event_entry_fee: entryFeeEnabled } = useFeatureFlags();
   const { bottom: bottomInset } = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
   const difficultyColors = getDifficultyColors(colors);
@@ -146,12 +143,20 @@ export function EventDetailsTabContent({
           </View>
         </Card>
 
-        {/* Event Route */}
-        {event.route && (
+        {/* Event Route - map + stats */}
+        {event.route && event.route.geometry && (
           <Card style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
               {t('eventDetail.route', 'Event Route')}
             </Text>
+            <View style={styles.routeMapContainer}>
+              <RoutePreview
+                trackData={event.route.geometry}
+                height={200}
+                backgroundColor={colors.cardBackground}
+                showKmMarkers
+              />
+            </View>
             <View style={styles.routeStats}>
               <View style={styles.routeStat}>
                 <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
@@ -227,7 +232,7 @@ export function EventDetailsTabContent({
                 </Text>
               </View>
             )}
-            {event.entry_fee !== null && (
+            {entryFeeEnabled && event.entry_fee !== null && (
               <View style={styles.detailItem}>
                 <Ionicons name="cash-outline" size={20} color={colors.textSecondary} />
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
@@ -611,6 +616,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
+  },
+  routeMapContainer: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
   },
   routeStats: {
     flexDirection: 'row',

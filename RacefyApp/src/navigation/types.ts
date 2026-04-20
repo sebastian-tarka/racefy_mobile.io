@@ -67,7 +67,7 @@ export type RootStackParamList = {
   FeedbackForm: undefined;
   FeedbackDetail: { feedbackId: number };
   // Routes
-  RouteLibrary: undefined;
+  RouteLibrary: { selectMode?: boolean } | undefined;
   RouteDetail: { routeId: number };
   RoutePlanner: undefined;
 };

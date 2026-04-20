@@ -13,6 +13,7 @@ import {
 import {Ionicons} from '@expo/vector-icons';
 import Svg, {Circle} from 'react-native-svg';
 import {useTranslation} from 'react-i18next';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {CompositeNavigationProp} from '@react-navigation/native';
 import {useFocusEffect} from '@react-navigation/native';
 import {
@@ -170,6 +171,8 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -1199,6 +1202,7 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         <DraftsTab
           isOwnProfile={true}
           ListHeaderComponent={renderProfileHeader}
+          contentPaddingBottom={tabBarPaddingBottom}
           onPublishSuccess={() => {
             postsData.refresh();
             fetchDraftsCount();
@@ -1220,7 +1224,7 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           ListHeaderComponent={renderProfileHeader}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

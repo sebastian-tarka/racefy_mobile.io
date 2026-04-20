@@ -2112,11 +2112,17 @@ export interface AppUpdateConfig {
   force_update?: boolean;
 }
 
+export interface AppConfigFeatures {
+  event_entry_fee: boolean;
+}
+
 export interface AppConfigResponse {
   push: AppConfigPush;
   maintenance: AppConfigMaintenance;
   /** Optional — when omitted, version checking is disabled client-side. */
   update?: AppUpdateConfig;
+  /** Feature flags — controlled by admin panel. */
+  features?: AppConfigFeatures;
 }
 
 export interface AppConfigQuery {

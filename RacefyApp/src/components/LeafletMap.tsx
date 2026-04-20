@@ -1,21 +1,21 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Image } from 'expo-image';
+import React, {useEffect, useRef, useState} from 'react';
+import {Animated, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {Image} from 'expo-image';
 import {
-  PinchGestureHandler,
   PanGestureHandler,
-  State,
-  PinchGestureHandlerGestureEvent,
   PanGestureHandlerGestureEvent,
+  PinchGestureHandler,
+  PinchGestureHandlerGestureEvent,
+  State,
 } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
-import { SvgXml } from 'react-native-svg';
-import { spacing, borderRadius } from '../theme';
-import { MAPBOX_ACCESS_TOKEN } from '../config/api';
-import { mapboxAnalytics } from '../services/mapboxAnalytics';
-import { useTheme } from '../hooks/useTheme';
-import { useViewability } from '../hooks/useViewability';
-import type { GeoJSONLineString } from '../types/api';
+import {Ionicons} from '@expo/vector-icons';
+import {SvgXml} from 'react-native-svg';
+import {borderRadius, spacing} from '../theme';
+import {MAPBOX_ACCESS_TOKEN} from '../config/api';
+import {mapboxAnalytics} from '../services/mapboxAnalytics';
+import {useTheme} from '../hooks/useTheme';
+import {useViewability} from '../hooks/useViewability';
+import type {GeoJSONLineString} from '../types/api';
 
 // Lazy load MapboxRouteMap to avoid import errors if @rnmapbox/maps is not installed
 let MapboxRouteMap: any = null;
@@ -45,8 +45,8 @@ interface RoutePreviewProps {
 /**
  * RoutePreview - Displays activity route using:
  * 1. Interactive Mapbox map (trackData) - best experience, requires @rnmapbox/maps and token
- * 2. Route preview PNG (routePreviewUrl) - lightweight transparent PNG with route + km markers
- * 3. Pre-generated map image (routeMapUrl) - static Mapbox JPEG from backend
+ * 2. Pre-generated map image (routeMapUrl) - static Mapbox JPEG with map background
+ * 3. Route preview PNG (routePreviewUrl) - transparent PNG with route line only
  * 4. SVG route (routeSvg) - last fallback, just the route path
  */
 export function RoutePreview({
@@ -223,21 +223,7 @@ export function RoutePreview({
     ],
   };
 
-  // Prefer route preview PNG (transparent, lightweight) over full map
-  if (routePreviewUrl) {
-    return (
-      <View style={[styles.container, { height, backgroundColor: bgColor }]}>
-        <Image
-          source={{ uri: routePreviewUrl }}
-          style={styles.mapImage}
-          contentFit="contain"
-          cachePolicy="memory-disk"
-        />
-      </View>
-    );
-  }
-
-  // Full map image (Mapbox JPEG with map background)
+  // Prefer full map image (Mapbox JPEG with map background) for best visual experience
   if (routeMapUrl) {
     const content = (
       <Animated.View style={[styles.imageWrapper, enableZoom && animatedStyle]}>
@@ -299,6 +285,20 @@ export function RoutePreview({
         ) : (
           content
         )}
+      </View>
+    );
+  }
+
+  // Route preview PNG (transparent background with route line) - fallback when no full map available
+  if (routePreviewUrl) {
+    return (
+      <View style={[styles.container, { height, backgroundColor: bgColor }]}>
+        <Image
+          source={{ uri: routePreviewUrl }}
+          style={styles.mapImage}
+          contentFit="contain"
+          cachePolicy="memory-disk"
+        />
       </View>
     );
   }

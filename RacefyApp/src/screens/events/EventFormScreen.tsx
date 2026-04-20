@@ -1,5 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Alert, Platform, ScrollView, Switch, Text, TouchableOpacity, View,} from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    DeviceEventEmitter,
+    Platform,
+    ScrollView,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
 import {Ionicons} from '@expo/vector-icons';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
@@ -26,8 +36,9 @@ import {emitRefresh} from '../../services/refreshEvents';
 import {fixStorageUrl} from '../../config/api';
 import {useTheme} from '../../hooks/useTheme';
 import {useSubscription} from '../../hooks/useSubscription';
+import {useFeatureFlags} from '../../hooks/useFeatureFlags';
 import {useSportTypes} from '../../hooks/useSportTypes';
-import {spacing, fontSize} from '../../theme';
+import {fontSize, spacing} from '../../theme';
 import {
     ApiError,
     CreateEventRequest,
@@ -56,6 +67,7 @@ export function EventFormScreen({navigation, route}: Props) {
     const {t, i18n} = useTranslation();
     const {colors} = useTheme();
     const {canUse} = useSubscription();
+    const { event_entry_fee: entryFeeEnabled } = useFeatureFlags();
     const {sportTypes, isLoading: isSportTypesLoading} = useSportTypes();
 
     const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -78,6 +90,14 @@ export function EventFormScreen({navigation, route}: Props) {
     // Points budget state
     const [pointsBudgetValid, setPointsBudgetValid] = useState(true);
     const [pointsBudgetPrereqReady, setPointsBudgetPrereqReady] = useState(false);
+
+    // Listen for route selection from RouteLibrary
+    useEffect(() => {
+        const sub = DeviceEventEmitter.addListener('route:selected', (routeId: number) => {
+            setFormData(prev => ({ ...prev, route_id: routeId }));
+        });
+        return () => sub.remove();
+    }, []);
 
     // Tab state
     type EventFormTab = 'basic' | 'scoring' | 'rewards' | 'team' | 'ai';
@@ -352,7 +372,7 @@ export function EventFormScreen({navigation, route}: Props) {
                     difficulty: formData.difficulty,
                     // Convert from km (form) to meters (API)
                     distance: formData.distance ? parseFloat(formData.distance) * 1000 : null,
-                    entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : null,
+                    entry_fee: entryFeeEnabled && formData.entry_fee ? parseFloat(formData.entry_fee) : null,
                     // GPS Privacy (new in 2026-01)
                     show_start_finish_points: formData.show_start_finish_points,
                     start_finish_note: formData.start_finish_note || undefined,
@@ -404,7 +424,7 @@ export function EventFormScreen({navigation, route}: Props) {
                     difficulty: formData.difficulty,
                     // Convert from km (form) to meters (API)
                     distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
-                    entry_fee: formData.entry_fee ? parseFloat(formData.entry_fee) : undefined,
+                    ...(entryFeeEnabled && formData.entry_fee ? { entry_fee: parseFloat(formData.entry_fee) } : {}),
                     // GPS Privacy (new in 2026-01)
                     show_start_finish_points: formData.show_start_finish_points,
                     start_finish_note: formData.start_finish_note || undefined,
@@ -852,7 +872,7 @@ export function EventFormScreen({navigation, route}: Props) {
                                 <Button
                                     title={t('eventForm.selectRoute', 'Select Route')}
                                     variant="outline"
-                                    onPress={() => navigation.navigate('RouteLibrary')}
+                                    onPress={() => navigation.navigate('RouteLibrary', { selectMode: true })}
                                     disabled={isLimitedEdit}
                                 />
                             )}
@@ -1055,7 +1075,8 @@ export function EventFormScreen({navigation, route}: Props) {
                                     />
                                 )}
 
-                                {/* Entry Fee */}
+                                {/* Entry Fee - only when feature flag enabled */}
+                                {entryFeeEnabled && (
                                 <Input
                                     label={t('eventForm.entryFee')}
                                     placeholder={t('eventForm.entryFeePlaceholder')}
@@ -1066,6 +1087,7 @@ export function EventFormScreen({navigation, route}: Props) {
                                     editable={!isLimitedEdit}
                                     error={errors.entry_fee}
                                 />
+                                )}
 
                                 {/* GPS Privacy Section */}
                                 <View style={[styles.gpsPrivacySection, {borderTopColor: colors.border}]}>

@@ -1,66 +1,41 @@
-import React, {
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-  createContext,
-  useContext,
-} from "react";
-import { Platform, AppState, AppStateStatus, Alert } from "react-native";
+import React, {createContext, useCallback, useContext, useEffect, useRef, useState,} from "react";
+import {Alert, AppState, AppStateStatus, Platform} from "react-native";
 import * as Location from "expo-location";
-import { api } from "../services/api";
+import {api} from "../services/api";
 import {
+  type BufferedLocation,
+  clearAllPersistedPoints,
+  clearBackgroundSyncState,
+  clearForegroundBuffer,
+  clearLocationBuffer,
+  getAllPersistedPoints,
+  getBackgroundSyncState,
+  getLastBackgroundPosition,
+  getLocationBuffer,
+  saveForegroundBuffer,
+  saveLocationBuffer,
+  setActiveActivityId,
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
-  getAndClearLocationBuffer,
-  setActiveActivityId,
-  clearLocationBuffer,
-  saveForegroundBuffer,
-  clearForegroundBuffer,
-  getAllPersistedPoints,
-  clearAllPersistedPoints,
-  updateSyncStatus,
-  clearSyncStatus,
-  getLastBackgroundPosition,
-  saveLocationBuffer,
-  getLocationBuffer,
-  getBackgroundSyncState,
-  clearBackgroundSyncState,
   syncAudioCoachForegroundDistance,
-  type BufferedLocation,
-  type LastPosition,
 } from "../services/backgroundLocation";
-import NetInfo, { NetInfoState } from "@react-native-community/netinfo";
-import type {
-  Activity,
-  GpsPoint,
-  ActivityLocation,
-  AutoCreatedPost,
-} from "../types/api";
+import NetInfo, {NetInfoState} from "@react-native-community/netinfo";
+import type {Activity, ActivityLocation, AutoCreatedPost, GpsPoint,} from "../types/api";
+import {convertToApiGpsProfile, DEFAULT_GPS_PROFILE, type GpsProfile,} from "../config/gpsProfiles";
+import {useSportTypes} from "./useSportTypes";
+import {useAuth} from "./useAuth";
+import {logger} from "../services/logger";
+import {captureActivityLocation} from "../utils/locationCapture";
+import {addPaceSegment, calculateCurrentPace, type PaceSegment, smoothPace,} from "../utils/paceCalculator";
 import {
-  DEFAULT_GPS_PROFILE,
-  convertToApiGpsProfile,
-  type GpsProfile,
-} from "../config/gpsProfiles";
-import { useSportTypes } from "./useSportTypes";
-import { useAuth } from "./useAuth";
-import { logger } from "../services/logger";
-import { captureActivityLocation } from "../utils/locationCapture";
-import {
-  type PaceSegment,
-  calculateCurrentPace,
-  smoothPace,
-  addPaceSegment,
-} from "../utils/paceCalculator";
-import {
-  SYNC_INTERVAL_MS,
-  PERSIST_INTERVAL_MS,
-  MAX_BACKOFF_MS,
-  GPS_GOOD_THRESHOLD_MS,
-  GPS_WEAK_THRESHOLD_MS,
-  MAX_PACE_SEGMENTS,
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
+  GPS_GOOD_THRESHOLD_MS,
+  GPS_WEAK_THRESHOLD_MS,
+  MAX_BACKOFF_MS,
+  MAX_PACE_SEGMENTS,
+  PERSIST_INTERVAL_MS,
+  SYNC_INTERVAL_MS,
 } from "../constants/tracking";
 
 const isWeb = Platform.OS === "web";
@@ -724,7 +699,7 @@ function useLiveActivityInternal() {
           lng: location.coords.longitude,
           ele: location.coords.altitude ?? undefined,
           time: new Date(location.timestamp).toISOString(),
-          speed: location.coords.speed ?? undefined,
+          speed: location.coords.speed != null && location.coords.speed >= 0 ? location.coords.speed : undefined,
           accuracy: location.coords.accuracy ?? undefined,
         };
 

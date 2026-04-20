@@ -152,12 +152,12 @@ export function ActivityCard({
         </View>
 
         {/* Route Map Preview */}
-        {(activity.route_preview_url || activity.route_map_url) && (
+        {(activity.route_map_url || activity.route_preview_url) && (
           <View style={styles.mapContainer}>
             <Image
-              source={{ uri: fixStorageUrl(activity.route_preview_url || activity.route_map_url) ?? undefined }}
+              source={{ uri: fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined }}
               style={styles.mapImage}
-              resizeMode={activity.route_preview_url ? "contain" : "cover"}
+              resizeMode={activity.route_map_url ? "cover" : "contain"}
             />
             <View style={[styles.mapOverlay, { backgroundColor: colors.primary + '10' }]}>
               <Ionicons name="map-outline" size={16} color={colors.primary} />

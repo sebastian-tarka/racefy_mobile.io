@@ -2,10 +2,10 @@ import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logger } from './logger';
-import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
-import type { GpsProfile } from '../config/gpsProfiles';
-import { syncPointsToServer } from './backgroundApiClient';
+import {logger} from './logger';
+import {buildAnnouncementText, buildMilestoneAnnouncement} from './audioCoach/templates';
+import type {GpsProfile} from '../config/gpsProfiles';
+import {syncPointsToServer} from './backgroundApiClient';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
@@ -453,7 +453,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             lng,
             ele: location.coords.altitude ?? undefined,
             time: new Date(timestamp).toISOString(),
-            speed: location.coords.speed ?? undefined,
+            speed: location.coords.speed != null && location.coords.speed >= 0 ? location.coords.speed : undefined,
             accuracy: location.coords.accuracy ?? undefined,
           });
 
