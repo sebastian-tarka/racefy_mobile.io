@@ -76,7 +76,10 @@ export function AuthMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async register(data: Types.RegisterRequest): Promise<Types.AuthResponse> {
       const response = await this.request<Types.AuthResponse>('/register', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          timezone: data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       });
       assertUser(response.user);
       assertToken(response.access_token, 'register');
@@ -101,7 +104,10 @@ export function AuthMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async googleAuth(idToken: string): Promise<Types.GoogleAuthResponse> {
       const response = await this.request<RawAuthResponse>('/auth/google', {
         method: 'POST',
-        body: JSON.stringify({ id_token: idToken }),
+        body: JSON.stringify({
+          id_token: idToken,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       });
       const authData = unwrapAuth(response);
       const token = authData.access_token ?? authData.token;

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import * as Notifications from 'expo-notifications';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
@@ -19,7 +18,7 @@ interface TrainingRemindersState {
 }
 
 export function useTrainingReminders() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [state, setState] = useState<TrainingRemindersState>({
     enabled: false,
     days: [],
@@ -35,13 +34,6 @@ export function useTrainingReminders() {
   useEffect(() => {
     loadPreferences();
   }, []);
-
-  // Schedule/cancel notifications when relevant state changes
-  useEffect(() => {
-    if (!state.loading) {
-      scheduleNotifications();
-    }
-  }, [state.enabled, state.days, state.time, state.pushEnabled, state.loading]);
 
   const loadPreferences = useCallback(async () => {
     try {
@@ -125,61 +117,6 @@ export function useTrainingReminders() {
       return { ...prev, pushEnabled: newPush };
     });
   }, [debouncedApiUpdate]);
-
-  const scheduleNotifications = async () => {
-    try {
-      // Cancel all existing training reminder notifications
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      for (const notif of scheduled) {
-        if (notif.content.data?.type === 'training_reminder') {
-          await Notifications.cancelScheduledNotificationAsync(notif.identifier);
-        }
-      }
-
-      // Only schedule if both enabled and push enabled, and there are days selected
-      if (!state.enabled || !state.pushEnabled || state.days.length === 0) {
-        return;
-      }
-
-      const [hours, minutes] = state.time.split(':').map(Number);
-      const lang = i18n.language || 'en';
-
-      const title = lang === 'pl' ? 'Czas na trening!' : 'Training day!';
-      const body = lang === 'pl'
-        ? 'Zaplanowałeś trening na dziś. Do dzieła!'
-        : 'You planned a workout for today. Let\'s go!';
-
-      // Map our day index (0=Mon) to JS weekday (1=Sun, 2=Mon, ..., 7=Sat)
-      const dayToWeekday = (day: TrainingDay): number => {
-        // 0=Mon->2, 1=Tue->3, 2=Wed->4, 3=Thu->5, 4=Fri->6, 5=Sat->7, 6=Sun->1
-        return day === 6 ? 1 : day + 2;
-      };
-
-      for (const day of state.days) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title,
-            body,
-            sound: 'default',
-            data: { type: 'training_reminder', day },
-          },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-            weekday: dayToWeekday(day),
-            hour: hours,
-            minute: minutes,
-          },
-        });
-      }
-
-      logger.debug('general', 'Training reminders scheduled', {
-        days: state.days,
-        time: state.time,
-      });
-    } catch (error) {
-      logger.error('general', 'Failed to schedule training reminders', { error });
-    }
-  };
 
   return {
     enabled: state.enabled,

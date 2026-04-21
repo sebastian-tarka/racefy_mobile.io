@@ -129,6 +129,7 @@ export interface AuthResponse {
 
 export interface GoogleAuthRequest {
   id_token: string;
+  timezone?: string;
 }
 
 export interface GoogleAuthResponse {
@@ -143,6 +144,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   password_confirmation: string;
+  timezone?: string;
 }
 
 export interface LoginRequest {
