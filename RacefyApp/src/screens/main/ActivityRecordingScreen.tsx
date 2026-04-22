@@ -4,14 +4,11 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  FlatList,
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {useTranslation} from 'react-i18next';
@@ -20,17 +17,19 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   announceEnd,
   announceStart,
-  type SportTypeWithIcon,
   triggerHaptic,
+  useActiveWeek,
   useActivityStats,
   useActivityTimer,
   useAudioCoach,
   useAudioCoachSettings,
   useAuth,
+  useDefaultSport,
   useHealthEnrichment,
   useLiveActivityContext,
   useMilestones,
   useMilestoneTracking,
+  useMyPlannedRoutes,
   useNearbyRoutes,
   useOngoingEvents,
   usePermissions,
@@ -47,7 +46,6 @@ import {
   FeatureGate,
   MapboxLiveMap,
   NearbyRoutesHorizontalPanel,
-  NearbyRoutesList,
   RecordingMapControls,
   ScreenContainer,
   ViewToggleButton,
@@ -59,23 +57,16 @@ import {useNavigationAnnouncer} from '../../hooks/useNavigationAnnouncer';
 import {IdleView} from './recording/IdleView';
 import {RecordingView} from './recording/RecordingView';
 import {PausedView} from './recording/PausedView';
+import {SportSelectionModal} from './recording/SportSelectionModal';
+import {RouteSelectionModal} from './recording/RouteSelectionModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {Event, NearbyRoute, TrainingWeek} from '../../types/api';
+import type {Event} from '../../types/api';
 import * as Haptics from 'expo-haptics';
 import {borderRadius, fontSize, spacing} from '../../theme';
 import type {MainTabParamList, RootStackParamList} from '../../navigation';
 import {logger} from '../../services/logger';
-import {api} from '../../services/api';
 import {formatTime} from '../../utils/formatters';
 
-// Conditional import - only loads if @rnmapbox/maps is installed
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-let MapboxGL: any = null;
-try {
-  MapboxGL = require('@rnmapbox/maps').default;
-} catch {
-  // Mapbox not available
-}
 
 const MILESTONE_ORDER = [
   'first_5km',
@@ -86,11 +77,14 @@ const MILESTONE_ORDER = [
   'first_marathon',
 ];
 
+const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
+
+type MapStyleType = 'outdoors' | 'streets' | 'satellite';
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { formatDistance: fmtDistance } = useUnits();
 
@@ -105,6 +99,9 @@ export function ActivityRecordingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MainTabParamList, 'Record'>>();
 
+  // Data hooks (declared early — needed for useDefaultSport below)
+  const { sportTypes, isLoading: sportsLoading } = useSportTypes();
+
   // Bottom sheets & modals
   const [showAddOptions, setShowAddOptions] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
@@ -112,7 +109,7 @@ export function ActivityRecordingScreen() {
   const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
 
   // Activity options
-  const [selectedSport, setSelectedSport] = useState<SportTypeWithIcon | null>(null);
+  const [selectedSport, setSelectedSport] = useDefaultSport(sportTypes, isAuthenticated, sportsLoading);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [skipAutoPost, setSkipAutoPost] = useState(false);
   const preselectedEventHandled = useRef(false);
@@ -124,15 +121,10 @@ export function ActivityRecordingScreen() {
   // Nearby routes visibility toggle (default hidden)
   const [showNearbyRoutesToggle, setShowNearbyRoutesToggle] = useState(false);
 
-  // Toggle between inline map and MapboxLiveMap component
-  // Production/staging always uses LiveMap; dev mode allows switching for comparison
-  const [useLiveMapComponent, setUseLiveMapComponent] = useState(true);
-
   // Map follow user state (false when user pans/zooms the map)
   const [followUser, setFollowUser] = useState(true);
 
   // Map style selection
-  type MapStyleType = 'outdoors' | 'streets' | 'satellite';
   const [mapStyle, setMapStyle] = useState<MapStyleType>('outdoors');
   const [showStyleToast, setShowStyleToast] = useState(false);
   const styleToastOpacity = useRef(new Animated.Value(0)).current;
@@ -140,14 +132,10 @@ export function ActivityRecordingScreen() {
   // Animation for toggle buttons position
   const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
 
-  // Training program state
-  const [activeWeek, setActiveWeek] = useState<TrainingWeek | null>(null);
-
   // Animation for start button
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Data hooks
-  const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
   const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
     isAuthenticated && selectedSport ? { sportTypeId: selectedSport.id } : undefined
@@ -189,7 +177,6 @@ export function ActivityRecordingScreen() {
  // Persist audio coach session toggle to AsyncStorage so the background task respects it.
   // On Android the background location task runs continuously (even in foreground)
   // and reads settings from AsyncStorage — without this sync it ignores the toggle.
-  const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
   const handleToggleAudioCoach = useCallback(() => {
     triggerHaptic();
     setAudioCoachSessionEnabled(prev => {
@@ -279,7 +266,7 @@ export function ActivityRecordingScreen() {
   });
 
   // Preview location for map view (before tracking starts)
-  const { previewLocation, fetchingPreviewLocation } = usePreviewLocation(viewMode, isTracking, isPaused, currentPosition);
+  const { previewLocation } = usePreviewLocation(viewMode, isTracking, isPaused, currentPosition);
 
   // Nearby routes and shadow track
   const {
@@ -287,58 +274,16 @@ export function ActivityRecordingScreen() {
     handleRouteSelect, handleClearShadowTrack,
   } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
-  // User's saved planned routes (for the route-selection modal). Fetched once
-  // when authenticated; converted to NearbyRoute shape so the existing
-  // selection handler and shadow-track rendering work without changes.
-  const [myPlannedRoutes, setMyPlannedRoutes] = useState<NearbyRoute[]>([]);
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setMyPlannedRoutes([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await api.getRoutes({ page: 1, per_page: 50 });
-        if (cancelled) return;
-        const converted: NearbyRoute[] = response.data.map((r) => ({
-          id: r.id,
-          title: r.title,
-          distance: r.distance,
-          elevation_gain: r.elevation_gain,
-          duration: r.estimated_duration,
-          sport_type_id: r.sport_type_id,
-          user: {
-            id: user?.id ?? r.user_id,
-            name: user?.name ?? '',
-            username: user?.username ?? '',
-            avatar: (user as any)?.avatar ?? '',
-          },
-          distance_from_user: 0,
-          stats: { likes_count: 0, completion_count: 0 },
-          track_data: r.geometry,
-          created_at: r.created_at,
-        } as unknown as NearbyRoute));
-        setMyPlannedRoutes(converted);
-      } catch (err) {
-        logger.debug('api', 'Failed to fetch my planned routes', { error: err });
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isAuthenticated, user?.id]);
-
-  // Show all user routes regardless of sport — sport filter on saved routes was
-  // confusing (cycling route + running activity = empty list). User explicitly
-  // picked the route, so trust their choice.
-  const myPlannedRoutesFiltered = myPlannedRoutes;
+  const myPlannedRoutes = useMyPlannedRoutes(isAuthenticated, user);
+  const activeWeek = useActiveWeek(isAuthenticated, selectedSport?.id);
 
   // Merged list (my routes first, then nearby) used by both the inline horizontal
   // panel and the full-screen route-selection modal.
   const mergedRoutesForPanel = useMemo(() => {
-    const myIds = new Set(myPlannedRoutesFiltered.map((r) => r.id));
+    const myIds = new Set(myPlannedRoutes.map((r) => r.id));
     const nearbyDeduped = nearbyRoutes.filter((r) => !myIds.has(r.id));
-    return [...myPlannedRoutesFiltered, ...nearbyDeduped];
-  }, [myPlannedRoutesFiltered, nearbyRoutes]);
+    return [...myPlannedRoutes, ...nearbyDeduped];
+  }, [myPlannedRoutes, nearbyRoutes]);
 
   // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
@@ -347,16 +292,13 @@ export function ActivityRecordingScreen() {
       ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
   }, [milestonesData?.distance_single]);
 
-  // Derive status
-  const getStatus = (): RecordingStatus => {
+  const status = useMemo<RecordingStatus>(() => {
     if (!activity) return 'idle';
     if (activity.status === 'completed') return 'finished';
     if (isPaused) return 'paused';
     if (isTracking) return 'recording';
     return 'idle';
-  };
-
-  const status = getStatus();
+  }, [activity, isPaused, isTracking]);
   const distance = currentStats.distance;
 
   // Capture GPS position at the moment recording starts (for approach-path routing).
@@ -483,68 +425,6 @@ export function ActivityRecordingScreen() {
     return distanceMilestones.find(m => !m.achieved && !passedMilestones.includes(m.threshold));
   }, [distanceMilestones, passedMilestones]);
 
-  // Set default sport from user preferences or fallback to first sport
-  useEffect(() => {
-    const setDefaultSport = async () => {
-      if (sportTypes.length > 0 && !selectedSport && !sportsLoading) {
-        try {
-          // Try to get favorite sport from user preferences if authenticated
-          if (isAuthenticated) {
-            const preferences = await api.getPreferences();
-            const favoriteSportId = preferences.activity_defaults.favorite_sport_id;
-
-            if (favoriteSportId) {
-              const favoriteSport = sportTypes.find(s => s.id === favoriteSportId);
-              if (favoriteSport) {
-                setSelectedSport(favoriteSport);
-                return;
-              }
-            }
-          }
-        } catch (error) {
-          logger.debug('activity', 'Failed to load favorite sport preference, using fallback', { error });
-        }
-
-        // Fallback to first sport if no favorite or not authenticated
-        setSelectedSport(sportTypes[0]);
-      }
-    };
-
-    setDefaultSport();
-  }, [sportTypes, selectedSport, sportsLoading, isAuthenticated]);
-
-  // Load active week for suggested activities
-  useEffect(() => {
-    const loadActiveWeek = async () => {
-      if (!isAuthenticated || !selectedSport) {
-        setActiveWeek(null);
-        return;
-      }
-
-      try {
-        const program = await api.getCurrentProgram();
-
-        if (!program) {
-          setActiveWeek(null);
-          return;
-        }
-
-        // Only fetch active week if sport types match
-        if (program.sport_type_id === selectedSport.id) {
-          const weeks = await api.getWeeks();
-          const currentWeek = weeks.find(w => w.status === 'current' || w.status === 'active');
-          setActiveWeek(currentWeek || null);
-        } else {
-          setActiveWeek(null);
-        }
-      } catch (err: unknown) {
-        logger.error('activity', 'Failed to load active week', { error: err });
-        setActiveWeek(null);
-      }
-    };
-
-    loadActiveWeek();
-  }, [isAuthenticated, selectedSport]);
 
   // Handle preselected event
   useEffect(() => {
@@ -947,21 +827,6 @@ export function ActivityRecordingScreen() {
     );
   };
 
-  // Pan gesture for modal drag-to-close
-  const modalDragGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // Only respond to downward drags
-      if (event.translationY > 0) {
-        // Could add visual feedback here (translate modal down)
-      }
-    })
-    .onEnd((event) => {
-      // Close modal if dragged down more than 100px with reasonable velocity
-      if (event.translationY > 100 || event.velocityY > 500) {
-        setRouteSelectionModalVisible(false);
-      }
-    });
-
   // Bottom sheet options
   const handleEventSelect = (event: Event | null) => {
     setSelectedEvent(event);
@@ -990,273 +855,6 @@ export function ActivityRecordingScreen() {
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Layout Delegates (IdleView, RecordingView, PausedView are in recording/)
   // ═══════════════════════════════════════════════════════════════════════════
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Map View (Idle, Recording, or Paused)
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderMapView = () => {
-    // Show controls only during recording/paused (not in idle preview)
-    const showControls = isTracking || isPaused;
-    // Show nearby routes in idle state AND if toggle is enabled
-    const showNearbyRoutes = isIdle && showNearbyRoutesToggle;
-
-    // Use tracking position if available, otherwise use preview location
-    const displayPosition = currentPosition || previewLocation;
-
-    try {
-      // Don't render map until we have a position (avoids zoom effect)
-      if (!displayPosition) {
-        return (
-          <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.mapFallbackText, { color: colors.textMuted }]}>
-              {fetchingPreviewLocation ? t('recording.fetchingLocation') : t('recording.waitingForGPS')}
-            </Text>
-          </View>
-        );
-      }
-
-      if (!MapboxGL) {
-        return (
-          <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
-            <Ionicons name="map-outline" size={64} color={colors.textMuted} />
-            <Text style={[styles.mapFallbackText, { color: colors.textMuted }]}>
-              {t('recording.mapError')}
-            </Text>
-          </View>
-        );
-      }
-
-      // Create stable key for map view to prevent layer conflicts
-      // Include mapStyle so map re-renders when style changes
-      const mapKey = `map-${showControls ? 'recording' : 'idle'}-${isDark ? 'dark' : 'light'}-${mapStyle}`;
-
-      return (
-        <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
-          {/* Map - already centered on cached position (no animation) */}
-          <MapboxGL.MapView
-            key={mapKey}
-            style={{ flex: 1 }}
-            styleURL={
-              mapStyle === 'satellite'
-                ? MapboxGL.StyleURL.Satellite
-                : mapStyle === 'streets'
-                ? isDark
-                  ? 'mapbox://styles/mapbox/navigation-night-v1'
-                  : MapboxGL.StyleURL.Street
-                : isDark
-                ? 'mapbox://styles/mapbox/dark-v11'
-                : MapboxGL.StyleURL.Outdoors
-            }
-            logoEnabled={false}
-            attributionEnabled={false}
-          >
-            <MapboxGL.Camera
-              defaultSettings={{
-                centerCoordinate: [displayPosition.lng, displayPosition.lat],
-                zoomLevel: 15,
-              }}
-              animationMode="none"
-            />
-
-            {/* Shadow track (when recording/paused and track is selected) */}
-            {showControls && selectedShadowTrack && selectedShadowTrack.track_data && (
-              <MapboxGL.ShapeSource
-                id="shadow-track"
-                shape={{
-                  type: 'Feature',
-                  properties: {},
-                  geometry: selectedShadowTrack.track_data,
-                }}
-              >
-                {/* Border/outline layer for shadow track */}
-                <MapboxGL.LineLayer
-                  id="shadow-border"
-                  style={{
-                    lineColor: isDark ? '#1E3A8A' : '#1E40AF',
-                    lineWidth: 8,
-                    lineOpacity: 0.4,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-                {/* Main shadow track line */}
-                <MapboxGL.LineLayer
-                  id="shadow-line"
-                  style={{
-                    lineColor: isDark ? '#60A5FA' : '#3B82F6',
-                    lineWidth: 5,
-                    lineOpacity: 0.7,
-                    lineDasharray: [3, 2],
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-              </MapboxGL.ShapeSource>
-            )}
-
-            {/* Live tracking route (when recording/paused) */}
-            {showControls && livePoints.length > 0 && (
-              <MapboxGL.ShapeSource
-                id="live-route"
-                shape={{
-                  type: 'Feature',
-                  properties: {},
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: livePoints.map(p => [p.lng, p.lat]),
-                  },
-                }}
-              >
-                <MapboxGL.LineLayer
-                  id="live-route-line"
-                  style={{
-                    lineColor: colors.primary,
-                    lineWidth: 4,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    lineOpacity: 1,
-                  }}
-                />
-              </MapboxGL.ShapeSource>
-            )}
-
-            {/* All nearby routes as gray base layer (idle state only) */}
-            {showNearbyRoutes && nearbyRoutes
-              .filter(route => {
-                // Validate route has proper track_data structure
-                return route.track_data &&
-                       route.track_data.type === 'LineString' &&
-                       route.track_data.coordinates &&
-                       Array.isArray(route.track_data.coordinates) &&
-                       route.track_data.coordinates.length > 0;
-              })
-              .map((route) => {
-                const unselectedColor = isDark ? '#9CA3AF' : '#6B7280'; // Gray for all routes
-
-                return (
-                  <MapboxGL.ShapeSource
-                    key={`nearby-base-${route.id}`}
-                    id={`nearby-base-source-${route.id}`}
-                    shape={{
-                      type: 'Feature',
-                      properties: {},
-                      geometry: route.track_data,
-                    }}
-                  >
-                    <MapboxGL.LineLayer
-                      id={`nearby-base-line-${route.id}`}
-                      style={{
-                        lineColor: unselectedColor,
-                        lineWidth: 2.5,
-                        lineOpacity: 0.6,
-                        lineCap: 'round',
-                        lineJoin: 'round',
-                      }}
-                    />
-                  </MapboxGL.ShapeSource>
-                );
-              })}
-
-            {/* Selected route overlay (blue with border) - rendered on top */}
-            {showNearbyRoutes && selectedShadowTrack && selectedShadowTrack.track_data && (
-              <MapboxGL.ShapeSource
-                id="selected-route-overlay"
-                shape={{
-                  type: 'Feature',
-                  properties: {},
-                  geometry: selectedShadowTrack.track_data,
-                }}
-              >
-                {/* Border layer */}
-                <MapboxGL.LineLayer
-                  id="selected-route-border"
-                  style={{
-                    lineColor: isDark ? '#1E3A8A' : '#1E40AF',
-                    lineWidth: 8,
-                    lineOpacity: 0.6,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-                {/* Main line layer */}
-                <MapboxGL.LineLayer
-                  id="selected-route-line"
-                  style={{
-                    lineColor: isDark ? '#60A5FA' : '#3B82F6',
-                    lineWidth: 5,
-                    lineOpacity: 1,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-              </MapboxGL.ShapeSource>
-            )}
-
-            {/* User position marker */}
-            <MapboxGL.PointAnnotation
-              id="currentPosition"
-              coordinate={[displayPosition.lng, displayPosition.lat]}
-            >
-              <View style={styles.mapMarker}>
-                <View style={[styles.mapMarkerInner, { backgroundColor: colors.primary }]} />
-              </View>
-            </MapboxGL.PointAnnotation>
-          </MapboxGL.MapView>
-
-          {/* Nearby routes list (idle state only) */}
-          {showNearbyRoutes && (
-            <NearbyRoutesHorizontalPanel
-              routes={mergedRoutesForPanel}
-              selectedRouteId={selectedShadowTrack?.id ?? null}
-              onRouteSelect={handleRouteSelect}
-              onClearRoute={handleClearShadowTrack}
-              isLoading={loadingRoutes}
-              error={routesError}
-              bottomOffset={tabBarHeight - spacing.md}
-            />
-          )}
-
-        {showControls && (
-          <RecordingMapControls
-            duration={localDuration}
-            distance={currentStats.distance}
-            currentPace={currentStats.currentPace}
-            isPaused={isPaused}
-            isLoading={isLoading}
-            onPause={handlePause}
-            onStop={handleStop}
-            onResume={handleResume}
-            // Shadow track props
-            shadowTrackTitle={selectedShadowTrack?.title || null}
-            onClearShadowTrack={handleClearShadowTrack}
-            onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
-          />
-        )}
-        </View>
-      );
-    } catch (error: unknown) {
-      logger.error('activity', 'Map view render error', { error: error instanceof Error ? error.message : String(error) });
-      // Fallback to stats view if map fails
-      return (
-        <View style={[styles.mapFallbackContainer, { backgroundColor: colors.background }]}>
-          <Ionicons name="warning-outline" size={48} color={colors.error} />
-          <Text style={[styles.mapErrorText, { color: colors.error }]}>
-            {t('recording.mapError')}
-          </Text>
-          <Text style={[styles.mapErrorDetail, { color: colors.textMuted }]}>
-            {error instanceof Error ? error.message : String(error)}
-          </Text>
-          <TouchableOpacity
-            style={[styles.mapErrorButton, { backgroundColor: colors.primary }]}
-            onPress={() => setViewMode('stats')}
-          >
-            <Text style={{ color: '#fff' }}>{t('recording.backToStats')}</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Idle Layout
@@ -1364,85 +962,81 @@ export function ActivityRecordingScreen() {
 
       {/* Main Content Based on Status and View Mode */}
       {viewMode === 'map' ? (
-        useLiveMapComponent ? (
-          <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
-            <MapboxLiveMap
-              livePoints={livePoints}
-              livePointsVersion={livePointsVersion}
-              currentPosition={currentPosition || previewLocation}
-              gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
-              followUser={followUser}
-              mapStyle={mapStyle}
-              nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
-              shadowTrack={selectedShadowTrack?.track_data || null}
-              selectedRouteId={selectedShadowTrack?.id || null}
+        <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
+          <MapboxLiveMap
+            livePoints={livePoints}
+            livePointsVersion={livePointsVersion}
+            currentPosition={currentPosition || previewLocation}
+            gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
+            followUser={followUser}
+            mapStyle={mapStyle}
+            nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
+            shadowTrack={selectedShadowTrack?.track_data || null}
+            selectedRouteId={selectedShadowTrack?.id || null}
+            onRouteSelect={handleRouteSelect}
+            onFollowUserChanged={setFollowUser}
+            plannedRoute={selectedShadowTrack?.track_data || null}
+          />
+
+          {/* Live Navigation Overlay (Pro only) */}
+          {liveNav.isActive && status === 'recording' && (
+            <FeatureGate feature="live_navigation">
+              <NavigationOverlay navigation={liveNav} />
+            </FeatureGate>
+          )}
+
+          {/* Nearby routes list (idle state only) */}
+          {isIdle && showNearbyRoutesToggle && (
+            <NearbyRoutesHorizontalPanel
+              routes={mergedRoutesForPanel}
+              selectedRouteId={selectedShadowTrack?.id ?? null}
               onRouteSelect={handleRouteSelect}
-              onFollowUserChanged={setFollowUser}
-              plannedRoute={selectedShadowTrack?.track_data || null}
+              onClearRoute={handleClearShadowTrack}
+              isLoading={loadingRoutes}
+              error={routesError}
+              bottomOffset={tabBarHeight - spacing.md}
             />
+          )}
 
-            {/* Live Navigation Overlay (Pro only) */}
-            {liveNav.isActive && status === 'recording' && (
-              <FeatureGate feature="live_navigation">
-                <NavigationOverlay navigation={liveNav} />
-              </FeatureGate>
-            )}
-
-            {/* Nearby routes list (idle state only) */}
-            {isIdle && showNearbyRoutesToggle && (
-              <NearbyRoutesHorizontalPanel
-                routes={mergedRoutesForPanel}
-                selectedRouteId={selectedShadowTrack?.id ?? null}
-                onRouteSelect={handleRouteSelect}
-                onClearRoute={handleClearShadowTrack}
-                isLoading={loadingRoutes}
-                error={routesError}
-                bottomOffset={tabBarHeight - spacing.md}
-              />
-            )}
-
-            {/* Start button (idle state, map view) */}
-            {isIdle && (
-              <View
-                pointerEvents="box-none"
-                style={[
-                  styles.mapStartButtonContainer,
-                  { bottom: tabBarHeight + spacing.lg + (showNearbyRoutesToggle ? 180 : 0) },
-                ]}
+          {/* Start button (idle state, map view) */}
+          {isIdle && (
+            <View
+              pointerEvents="box-none"
+              style={[
+                styles.mapStartButtonContainer,
+                { bottom: tabBarHeight + spacing.lg + (showNearbyRoutesToggle ? 180 : 0) },
+              ]}
+            >
+              <TouchableOpacity
+                style={[styles.mapStartButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                onPress={handleStart}
+                disabled={isLoading || !selectedSport}
+                activeOpacity={0.85}
+                accessibilityLabel={t('recording.start')}
               >
-                <TouchableOpacity
-                  style={[styles.mapStartButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-                  onPress={handleStart}
-                  disabled={isLoading || !selectedSport}
-                  activeOpacity={0.85}
-                  accessibilityLabel={t('recording.start')}
-                >
-                  <Ionicons name="play" size={36} color="#fff" />
-                  <Text style={styles.mapStartButtonText}>{t('recording.start')}</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                <Ionicons name="play" size={36} color="#fff" />
+                <Text style={styles.mapStartButtonText}>{t('recording.start')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-            {/* Recording controls (recording/paused state) */}
-            {(isTracking || isPaused) && (
-              <RecordingMapControls
-                duration={localDuration}
-                distance={currentStats.distance}
-                currentPace={currentStats.currentPace}
-                isPaused={isPaused}
-                isLoading={isLoading}
-                onPause={handlePause}
-                onStop={handleStop}
-                onResume={handleResume}
-                shadowTrackTitle={selectedShadowTrack?.title || null}
-                onClearShadowTrack={handleClearShadowTrack}
-                onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
-              />
-            )}
-          </View>
-        ) : (
-          renderMapView()
-        )
+          {/* Recording controls (recording/paused state) */}
+          {(isTracking || isPaused) && (
+            <RecordingMapControls
+              duration={localDuration}
+              distance={currentStats.distance}
+              currentPace={currentStats.currentPace}
+              isPaused={isPaused}
+              isLoading={isLoading}
+              onPause={handlePause}
+              onStop={handleStop}
+              onResume={handleResume}
+              shadowTrackTitle={selectedShadowTrack?.title || null}
+              onClearShadowTrack={handleClearShadowTrack}
+              onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
+            />
+          )}
+        </View>
       ) : (
         <>
           {status === 'idle' && renderIdleLayout()}
@@ -1575,33 +1169,6 @@ export function ActivityRecordingScreen() {
             </View>
           )}
 
-          {/* DEV ONLY: Toggle between inline map and MapboxLiveMap component */}
-          {__DEV__ && viewMode === 'map' && (
-            <View style={[styles.devMapToggleContainer, { bottom: fabBottom + 280 }]}>
-              <TouchableOpacity
-                style={[
-                  styles.mapStyleToggleButton,
-                  {
-                    backgroundColor: useLiveMapComponent ? colors.primary : colors.cardBackground,
-                  },
-                ]}
-                onPress={() => {
-                  setUseLiveMapComponent(prev => !prev);
-                  triggerHaptic();
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={useLiveMapComponent ? 'layers' : 'layers-outline'}
-                  size={28}
-                  color={useLiveMapComponent ? '#fff' : colors.textSecondary}
-                />
-              </TouchableOpacity>
-              <Text style={{ color: colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 2 }}>
-                {useLiveMapComponent ? 'LiveMap' : 'Inline'}
-              </Text>
-            </View>
-          )}
         </Animated.View>
       )}
 
@@ -1638,51 +1205,13 @@ export function ActivityRecordingScreen() {
         </Animated.View>
       )}
 
-      {/* Sport Selection Modal */}
-      <Modal
+      <SportSelectionModal
         visible={sportModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSportModalVisible(false)}
-      >
-        <ScreenContainer style={styles.modalContainer}>
-          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
-            <TouchableOpacity onPress={() => setSportModalVisible(false)} style={styles.modalCloseButton}>
-              <Ionicons name="close" size={24} color={colors.textPrimary} />
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={sportTypes}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.modalList}
-            renderItem={({ item: sport }) => {
-              const isSelected = selectedSport?.id === sport.id;
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.modalSportItem,
-                    { backgroundColor: colors.cardBackground },
-                    isSelected && { backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary },
-                  ]}
-                  onPress={() => {
-                    setSelectedSport(sport);
-                    setSportModalVisible(false);
-                  }}
-                >
-                  <View style={[styles.modalSportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
-                    <Ionicons name={sport.icon} size={24} color={isSelected ? colors.primary : colors.textSecondary} />
-                  </View>
-                  <Text style={[styles.modalSportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
-                    {sport.name}
-                  </Text>
-                  {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
-                </TouchableOpacity>
-              );
-            }}
-          />
-        </ScreenContainer>
-      </Modal>
+        onClose={() => setSportModalVisible(false)}
+        sportTypes={sportTypes}
+        selectedSport={selectedSport}
+        onSelect={setSelectedSport}
+      />
 
       {/* Bottom Sheets */}
       <BottomSheet
@@ -1701,158 +1230,17 @@ export function ActivityRecordingScreen() {
         isLoading={eventsLoading}
       />
 
-      {/* Route Selection Modal */}
-      <Modal
+      <RouteSelectionModal
         visible={routeSelectionModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setRouteSelectionModalVisible(false)}
-        transparent={false}
-      >
-        <ScreenContainer>
-          {/* Drag handle bar (Android/iOS) - swipe down to close */}
-          <GestureDetector gesture={modalDragGesture}>
-            <TouchableOpacity
-              style={[styles.modalDragHandle, { backgroundColor: colors.cardBackground }]}
-              onPress={() => setRouteSelectionModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.modalDragIndicator, { backgroundColor: colors.border }]} />
-            </TouchableOpacity>
-          </GestureDetector>
-
-          {/* Header with close button */}
-          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {t('recording.selectShadowTrack')}
-            </Text>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setRouteSelectionModalVisible(false)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={28} color={colors.textPrimary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Routes list — with optional "My routes" section above nearby */}
-          <NearbyRoutesList
-            routes={nearbyRoutes}
-            selectedRouteId={selectedShadowTrack?.id || null}
-            onRouteSelect={(route) => {
-              handleRouteSelect(route);
-              setRouteSelectionModalVisible(false);
-            }}
-            isLoading={loadingRoutes}
-            error={routesError}
-            fillContainer
-            listHeader={
-              <View style={{paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.sm}}>
-                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm}}>
-                  <Text style={{
-                    color: colors.textPrimary,
-                    fontSize: fontSize.md,
-                    fontWeight: '600',
-                  }}>
-                    {t('recording.myRoutes', 'My routes')} ({myPlannedRoutesFiltered.length})
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setRouteSelectionModalVisible(false);
-                      navigation.navigate('RouteLibrary');
-                    }}
-                  >
-                    <Text style={{color: colors.primary, fontSize: fontSize.sm, fontWeight: '600'}}>
-                      {t('routes.openLibrary', 'Library →')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {myPlannedRoutesFiltered.length === 0 && (
-                  <View style={{
-                    padding: spacing.md,
-                    borderRadius: borderRadius.md,
-                    backgroundColor: colors.background,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderStyle: 'dashed',
-                    marginBottom: spacing.sm,
-                  }}>
-                    <Text style={{color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center'}}>
-                      {t('recording.noSavedRoutes', "You don't have any saved routes yet")}
-                    </Text>
-                  </View>
-                )}
-                {myPlannedRoutesFiltered.length > 0 && (
-                <View>
-                  {myPlannedRoutesFiltered.map((r) => {
-                    const isSelected = selectedShadowTrack?.id === r.id;
-                    return (
-                      <TouchableOpacity
-                        key={`my-${r.id}`}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          padding: spacing.md,
-                          borderRadius: borderRadius.md,
-                          marginBottom: spacing.sm,
-                          borderWidth: isSelected ? 2 : 1,
-                          borderColor: isSelected ? colors.primary : colors.border,
-                          backgroundColor: colors.background,
-                          gap: spacing.sm,
-                        }}
-                        onPress={() => {
-                          handleRouteSelect(r);
-                          setRouteSelectionModalVisible(false);
-                        }}
-                      >
-                        <Ionicons name="bookmark" size={18} color={colors.primary} />
-                        <View style={{flex: 1}}>
-                          <Text style={{color: colors.textPrimary, fontWeight: '600'}} numberOfLines={1}>
-                            {r.title}
-                          </Text>
-                          <Text style={{color: colors.textMuted, fontSize: fontSize.sm}}>
-                            {(r.distance / 1000).toFixed(1)} km
-                            {r.elevation_gain > 0 ? ` · ↑${Math.round(r.elevation_gain)} m` : ''}
-                          </Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                )}
-                <View style={{
-                  height: 1,
-                  backgroundColor: colors.border,
-                  marginTop: spacing.sm,
-                  marginBottom: spacing.xs,
-                }} />
-                <Text style={{
-                  color: colors.textPrimary,
-                  fontSize: fontSize.md,
-                  fontWeight: '600',
-                  marginTop: spacing.sm,
-                }}>
-                  {t('recording.nearbyRoutes', 'Nearby routes')}
-                </Text>
-              </View>
-            }
-          />
-
-          {/* Cancel button at bottom (optional, for better UX) */}
-          <View style={[styles.modalFooter, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
-            <TouchableOpacity
-              style={[styles.modalCancelButton, { backgroundColor: colors.background }]}
-              onPress={() => setRouteSelectionModalVisible(false)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.modalCancelButtonText, { color: colors.textSecondary }]}>
-                {t('common.cancel')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScreenContainer>
-      </Modal>
+        onClose={() => setRouteSelectionModalVisible(false)}
+        nearbyRoutes={nearbyRoutes}
+        myRoutes={myPlannedRoutes}
+        selectedRouteId={selectedShadowTrack?.id ?? null}
+        onRouteSelect={handleRouteSelect}
+        onNavigateToLibrary={() => navigation.navigate('RouteLibrary')}
+        isLoading={loadingRoutes}
+        error={routesError}
+      />
     </ScreenContainer>
   );
 }
@@ -1861,10 +1249,6 @@ export function ActivityRecordingScreen() {
 // STYLES
 // ═══════════════════════════════════════════════════════════════════════════
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
   // ─────────────────────────────────────────────────────────────────────────
   // Idle Header
   // ─────────────────────────────────────────────────────────────────────────
@@ -1903,120 +1287,10 @@ const styles = StyleSheet.create({
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Modal
-  // ─────────────────────────────────────────────────────────────────────────
-  modalContainer: {
-    flex: 1,
-  },
-  modalDragHandle: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  modalDragIndicator: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-  },
-  modalCloseButton: {
-    padding: spacing.xs,
-  },
-  modalList: {
-    padding: spacing.md,
-  },
-  modalFooter: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-  },
-  modalCancelButton: {
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-  },
-  modalCancelButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  modalSportItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
-  },
-  modalSportIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  modalSportName: {
-    flex: 1,
-    fontSize: fontSize.md,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Map View
   // ─────────────────────────────────────────────────────────────────────────
-  mapFallbackContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  mapFallbackText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.lg,
-  },
   mapContainer: {
     flex: 1,
-  },
-  mapErrorText: {
-    marginTop: spacing.md,
-    textAlign: 'center',
-  },
-  mapErrorDetail: {
-    marginTop: spacing.sm,
-    textAlign: 'center',
-    fontSize: 12,
-  },
-  mapErrorButton: {
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-  },
-  mapMarker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  mapMarkerInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
   },
 
   // Start FAB on map view (idle state)

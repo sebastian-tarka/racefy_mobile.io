@@ -47,3 +47,6 @@ export * from './useTeamRanking';
 export * from './useTeamTrends';
 export * from './useTeamsLeaderboard';
 export * from './useEventTeams';
+export * from './useMyPlannedRoutes';
+export * from './useActiveWeek';
+export * from './useDefaultSport';
