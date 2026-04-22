@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
     createNavigationContainerRef,
     DarkTheme,
@@ -11,20 +11,15 @@ import {
 import {createNativeStackNavigator, NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Ionicons} from '@expo/vector-icons';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {AccessibilityInfo, Animated, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {ms} from '../theme/scale';
+import {Animated, StyleSheet, View} from 'react-native';
 import {BlurView} from 'expo-blur';
-import {LinearGradient} from 'expo-linear-gradient';
 import {useAuth} from '../hooks/useAuth';
 import {useTheme} from '../hooks/useTheme';
 import {useLiveActivityContext} from '../hooks/useLiveActivity';
 import {useMaintenance} from '../hooks/useMaintenance';
 import {useAppVersion} from '../hooks/useAppVersion';
 import {usePushNotifications} from '../hooks/usePushNotifications';
-import {useHomeConfig} from '../hooks/useHomeConfig';
 import {triggerHaptic} from '../hooks/useHaptics';
-import {NavigationStyleProvider, useNavigationStyle} from '../contexts/NavigationStyleContext';
 import {
     BatteryOptimizationModal,
     ErrorBoundary,
@@ -40,7 +35,7 @@ import {LoginScreen} from '../screens/auth/LoginScreen';
 import {RegisterScreen} from '../screens/auth/RegisterScreen';
 import {ForgotPasswordScreen} from '../screens/auth/ForgotPasswordScreen';
 import {ResetPasswordScreen} from '../screens/auth/ResetPasswordScreen';
-import {HomeScreenWrapper} from '../screens/main/HomeScreenWrapper';
+import {DynamicHomeScreen} from '../screens/main/DynamicHomeScreen';
 import {ActivityRecordingScreen} from '../screens/main/ActivityRecordingScreen';
 import {EventsScreen} from '../screens/main/EventsScreen';
 import {ProfileScreenWrapper} from '../screens/main/ProfileScreenWrapper';
@@ -133,136 +128,6 @@ function TabBarBackground({ colors, isDark }: { colors: any; isDark: boolean }) 
   );
 }
 
-// Pulsing Record Icon Component with gradient background
-function RecordIcon({ focused, size, hasActiveRecording, isActivelyTracking }: {
-  focused: boolean;
-  size: number;
-  hasActiveRecording: boolean;  // true when there's any activity (recording or paused)
-  isActivelyTracking: boolean;  // true when GPS is actively tracking
-}) {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
-    return () => sub.remove();
-  }, []);
-
-  // Only pulse when actively tracking, not on the Record tab, and user allows motion
-  const shouldPulse = isActivelyTracking && !focused && !reduceMotion;
-
-  useEffect(() => {
-    if (shouldPulse) {
-      // Start pulsing animation when tracking and not focused
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.3,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulse.start();
-      return () => pulse.stop();
-    } else {
-      // Reset scale when not pulsing
-      pulseAnim.setValue(1);
-    }
-  }, [shouldPulse, pulseAnim]);
-
-  // Animate scale based on focused state
-  useEffect(() => {
-    if (focused) {
-      // Pop in effect: grow bigger, then settle
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1.25,
-          useNativeDriver: true,
-          tension: 180,
-          friction: 5,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1.1,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }),
-      ]).start();
-    } else {
-      // Shrink back to normal
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [focused, scaleAnim]);
-
-  // When focused (on Record tab): show gradient background with + icon
-  // When not focused but has recording: show recording indicator
-  // When not focused and no recording: show gray +
-
-  if (focused) {
-    // On Record tab - gradient background with white + icon
-    return (
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <LinearGradient
-          colors={['#10b981', '#059669']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            width: ms(56),
-            height: ms(46),
-            borderRadius: ms(20),
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ fontSize: 24, color: '#ffffff', fontWeight: 'bold', lineHeight: 24 }}>+</Text>
-        </LinearGradient>
-      </Animated.View>
-    );
-  }
-
-  if (hasActiveRecording) {
-    // Not on Record tab, but has active recording - show pulsing indicator
-    const color = isActivelyTracking ? '#ef4444' : '#f97316';
-    return (
-      <Animated.View style={{ transform: [{ scale: Animated.multiply(pulseAnim, scaleAnim) }] }}>
-        <Ionicons name="radio-button-on" size={size + 4} color={color} />
-      </Animated.View>
-    );
-  }
-
-  // Not on Record tab, no recording - subtle outlined pill with +
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <View
-        style={{
-          width: ms(48),
-          height: ms(38),
-          borderRadius: ms(16),
-          borderWidth: 1.5,
-          borderColor: 'rgba(16, 185, 129, 0.4)',
-          backgroundColor: 'rgba(16, 185, 129, 0.08)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 22, color: '#10b981', fontWeight: '600', lineHeight: 24 }}>+</Text>
-      </View>
-    </Animated.View>
-  );
-}
 
 function AuthNavigator() {
   const { colors } = useTheme();
@@ -329,171 +194,19 @@ function AnimatedTabIcon({ iconName, focused, size, color }: {
   );
 }
 
-// Animated Text Icon wrapper for smooth transitions (Dynamic Nav)
-function AnimatedTextIcon({ icon, focused, size }: {
-  icon: string;
-  focused: boolean;
-  size: number;
-}) {
-  const { colors } = useTheme();
-  const scaleAnim = useRef(new Animated.Value(focused ? 1.15 : 1)).current;
-
-  useEffect(() => {
-    if (focused) {
-      // Pop in effect: grow bigger, then settle
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1.4,
-          useNativeDriver: true,
-          tension: 180,
-          friction: 5,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1.15,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }),
-      ]).start();
-    } else {
-      // Shrink back to normal
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [focused, scaleAnim]);
-
-  const iconColor = colors.textPrimary;
-
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <Text style={{ fontSize: size, color: iconColor, lineHeight: size }}>{icon}</Text>
-    </Animated.View>
-  );
-}
-
-// Custom Tab Button with background for active state (used only in MainNavigatorDynamic)
-function CustomTabButton({ children, onPress, accessibilityState, style, ...props }: any) {
-  const { colors } = useTheme();
-  const focused = accessibilityState?.selected;
-  const scaleAnim = useRef(new Animated.Value(focused ? 1 : 0.92)).current;
-  const bgOpacityAnim = useRef(new Animated.Value(focused ? 1 : 0)).current;
-
-  useEffect(() => {
-    if (focused) {
-      // Pop in effect with background fade
-      Animated.parallel([
-        Animated.sequence([
-          Animated.spring(scaleAnim, {
-            toValue: 1.08,
-            useNativeDriver: true,
-            tension: 180,
-            friction: 5,
-          }),
-          Animated.spring(scaleAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-            tension: 120,
-            friction: 8,
-          }),
-        ]),
-        Animated.timing(bgOpacityAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Shrink with fade out
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 0.92,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }),
-        Animated.timing(bgOpacityAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [focused, scaleAnim, bgOpacityAnim]);
-
-  return (
-    <TouchableOpacity
-      {...props}
-      onPress={(e: any) => { triggerHaptic(); onPress?.(e); }}
-      style={[
-        style,
-        {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-        }
-      ]}
-    >
-      <Animated.View
-        style={{
-          width: '100%',
-          height: '100%',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transform: [{ scale: scaleAnim }],
-        }}
-      >
-        <Animated.View
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            borderRadius: 14,
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            opacity: bgOpacityAnim,
-          }}
-        />
-        {children}
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-/**
- * Single tab navigator that adapts its visual style based on the API-driven navigation style.
- *
- * Previously this was split into MainNavigator (legacy) + MainNavigatorDynamic (dynamic) + a
- * conditional wrapper that switched between them. That caused React to unmount/remount the entire
- * tab tree whenever the style changed (on startup cache-load, every 60s API poll, or app foreground),
- * losing all scroll positions.
- *
- * Now there is ONE navigator component. When `style` changes, the component re-renders (updates
- * screenOptions/tabBarStyle) without unmounting any screens — scroll positions are preserved.
- */
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
-  const { style } = useNavigationStyle();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const insets = useSafeAreaInsets();
   const { isTracking, activity } = useLiveActivityContext();
 
-  const isDynamic = style === 'dynamic';
-
-  // Haptic-only listener for Home tab in legacy mode (no auth guard needed for Home)
   const hapticListener = {
     tabPress: () => { triggerHaptic(); },
   };
 
-  // Auth guard listener — also triggers haptic in legacy; CustomTabButton handles haptic in dynamic
   const authGuardListener = {
     tabPress: (e: { preventDefault: () => void }) => {
-      if (!isDynamic) triggerHaptic();
+      triggerHaptic();
       if (!isAuthenticated) {
         e.preventDefault();
         navigation.navigate('Auth', { screen: 'Login' });
@@ -501,35 +214,11 @@ function MainTabNavigator() {
     },
   };
 
-  const tabBarHeight = ms(60) + insets.bottom;
-  const tabBarPaddingBottom = Math.max(insets.bottom, 8);
-
-  const DYNAMIC_ICONS: Record<string, string> = {
-    Home: '🏠',
-    Feed: '📋',
-    Events: '📅',
-    Profile: '👤',
-  };
-
   return (
     <MainTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        ...(isDynamic && { tabBarButton: (props: any) => <CustomTabButton {...props} /> }),
         tabBarIcon: ({ focused, color, size }) => {
-          if (isDynamic) {
-            // Dynamic: emoji icons; Record tab icon is overridden at screen level
-            if (route.name === 'Record') return null;
-            return (
-              <AnimatedTextIcon
-                icon={DYNAMIC_ICONS[route.name] ?? '?'}
-                focused={focused}
-                size={20}
-              />
-            );
-          }
-
-          // Legacy: Ionicons
           let iconName: keyof typeof Ionicons.glyphMap;
           let iconColor = color;
           switch (route.name) {
@@ -559,36 +248,19 @@ function MainTabNavigator() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarBackground: () => <TabBarBackground colors={colors} isDark={isDark} />,
-        tabBarStyle: isDynamic
-          ? {
-              backgroundColor: 'transparent',
-              height: tabBarHeight,
-              paddingTop: 8,
-              paddingBottom: tabBarPaddingBottom,
-              borderTopWidth: 1,
-              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-              position: 'absolute' as const,
-            }
-          : {
-              backgroundColor: 'transparent',
-              borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-              borderTopWidth: 1,
-              position: 'absolute' as const,
-            },
-        ...(isDynamic && {
-          tabBarLabelStyle: {
-            fontSize: ms(11),
-            fontWeight: '500' as const,
-            letterSpacing: 0.3,
-          },
-        }),
+        tabBarStyle: {
+          backgroundColor: 'transparent',
+          borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          borderTopWidth: 1,
+          position: 'absolute' as const,
+        },
       })}
     >
       <MainTab.Screen
         name="Home"
-        component={HomeScreenWrapper}
+        component={DynamicHomeScreen}
         options={{ tabBarLabel: 'Home', tabBarAccessibilityLabel: 'Strona główna' }}
-        listeners={isDynamic ? undefined : hapticListener}
+        listeners={hapticListener}
       />
       <MainTab.Screen
         name="Feed"
@@ -599,20 +271,7 @@ function MainTabNavigator() {
       <MainTab.Screen
         name="Record"
         component={ActivityRecordingScreen}
-        options={{
-          tabBarLabel: isDynamic ? '' : 'Record',
-          tabBarAccessibilityLabel: 'Nagraj aktywność',
-          ...(isDynamic && {
-            tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) => (
-              <RecordIcon
-                focused={focused}
-                size={size}
-                hasActiveRecording={!!activity}
-                isActivelyTracking={isTracking}
-              />
-            ),
-          }),
-        }}
+        options={{ tabBarLabel: 'Record', tabBarAccessibilityLabel: 'Nagraj aktywność' }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
@@ -631,18 +290,6 @@ function MainTabNavigator() {
   );
 }
 
-// Component that loads home config and sets navigation style
-function NavigationStyleSetter({ children }: { children: React.ReactNode }) {
-  const { homeVersion } = useHomeConfig();
-  const { setStyle } = useNavigationStyle();
-
-  useEffect(() => {
-    // Update navigation style based on API config
-    setStyle(homeVersion);
-  }, [homeVersion, setStyle]);
-
-  return <>{children}</>;
-}
 
 export function AppNavigator() {
   const { isLoading, isAuthenticated, requiresConsent } = useAuth();
@@ -691,8 +338,6 @@ export function AppNavigator() {
 
   return (
     <ErrorBoundary>
-    <NavigationStyleProvider>
-      <NavigationStyleSetter>
         <NavigationContainer ref={navigationRef} theme={navigationTheme} key={authStateKey} linking={linking}>
           <RootStack.Navigator
             screenOptions={{
@@ -898,8 +543,6 @@ export function AppNavigator() {
           <UpgradePromptModal />
           <SoftUpdateBanner />
         </NavigationContainer>
-      </NavigationStyleSetter>
-    </NavigationStyleProvider>
     </ErrorBoundary>
   );
 }

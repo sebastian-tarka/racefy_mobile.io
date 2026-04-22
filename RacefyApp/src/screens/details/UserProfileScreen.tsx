@@ -29,7 +29,6 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
 import { useBlockUser } from '../../hooks/useBlockUser';
-import { useNavigationStyle } from '../../contexts/NavigationStyleContext';
 import { api } from '../../services/api';
 import {
   canViewFollowersList,
@@ -194,10 +193,6 @@ export function UserProfileScreen({ navigation, route }: Props) {
     ? canSendMessage(profile, currentUser ?? null, isFollowing)
     : false;
 
-  // Tab configuration
-  const { style: navStyle } = useNavigationStyle();
-  const isDynamic = navStyle === 'dynamic';
-
   const tabs = [
     { label: t('profile.tabs.posts'), value: 'posts' as TabType, icon: 'newspaper-outline' as const, emoji: '📝' },
     { label: t('profile.tabs.stats'), value: 'stats' as TabType, icon: 'stats-chart' as const, emoji: '📊' },
@@ -232,7 +227,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
           canMessage={canMessageUser}
           activeTab={activeTab}
           tabs={tabs}
-          useEmojiTabs={isDynamic}
+          useEmojiTabs={false}
           onBackPress={() => navigation.goBack()}
           onFollowersPress={handleFollowersPress}
           onFollowingPress={handleFollowingPress}
