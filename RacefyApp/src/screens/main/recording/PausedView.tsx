@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Badge, PremiumTeaser } from '../../../components';
+import { Badge, MapboxLiveMap, PremiumTeaser } from '../../../components';
+import type { MapStyleType } from '../../../components/MapboxLiveMap';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
 import type { LiveActivityStats, TrackingStatus } from '../../../hooks/useLiveActivity';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
+import type { Event, GpsPoint } from '../../../types/api';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
 import { spacing, fontSize, borderRadius } from '../../../theme';
@@ -26,6 +29,13 @@ interface PausedViewProps {
   skipAutoPost: boolean;
   canUseAiPostOnFinish: boolean;
   gpsProfile: GpsProfile | null;
+  livePoints: GpsPoint[];
+  livePointsVersion: number;
+  currentPosition: { lat: number; lng: number } | null;
+  mapStyle: MapStyleType;
+  selectedEvent: Event | null;
+  onShowEventSheet: () => void;
+  onClearEvent: () => void;
   onResume: () => void;
   onSave: () => void;
   onDiscard: () => void;
@@ -44,6 +54,13 @@ export function PausedView({
   skipAutoPost,
   canUseAiPostOnFinish,
   gpsProfile,
+  livePoints,
+  livePointsVersion,
+  currentPosition,
+  mapStyle,
+  selectedEvent,
+  onShowEventSheet,
+  onClearEvent,
   onResume,
   onSave,
   onDiscard,
@@ -51,6 +68,7 @@ export function PausedView({
 }: PausedViewProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { formatDistance: fmtDistance, formatPaceFromSecPerKm, getPaceUnit } = useUnits();
 
   const minDistance = gpsProfile?.minDistanceForPace ?? 50;
@@ -112,15 +130,14 @@ export function PausedView({
         </View>
       </View>
 
-      <View style={styles.content}>
-        {/* Hero Timer */}
+      {/* TOP — timer + stats + actions (fixed, no flex grow) */}
+      <View style={styles.topSection}>
         <View style={styles.heroTimerContainer}>
           <Text style={[styles.heroTimer, { color: colors.textPrimary }]}>
             {formatTime(localDuration)}
           </Text>
         </View>
 
-        {/* Live Stats */}
         <View style={[styles.liveStatsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
           <View style={styles.liveStatItem}>
             <Text style={[styles.liveStatValue, { color: colors.primary }]}>
@@ -150,54 +167,21 @@ export function PausedView({
           </View>
         </View>
 
-        {/* Resume Button */}
-        <TouchableOpacity
-          style={[styles.resumeButton, { backgroundColor: colors.primary }]}
-          onPress={onResume}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="play" size={28} color={colors.white} />
-          <Text style={styles.resumeButtonText}>{t('recording.resume')}</Text>
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
-
-        {/* Save Options */}
-        <View style={styles.saveSection}>
-          {isAuthenticated && canUseAiPostOnFinish && (
-            <TouchableOpacity
-              style={styles.skipPostRow}
-              onPress={() => onSkipAutoPostChange(!skipAutoPost)}
-              disabled={isLoading}
-              activeOpacity={0.7}
-            >
-              <Switch
-                value={skipAutoPost}
-                onValueChange={onSkipAutoPostChange}
-                trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={skipAutoPost ? colors.primary : colors.white}
-                disabled={isLoading}
-              />
-              <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
-                {t('recording.skipAutoPost')}
-              </Text>
-            </TouchableOpacity>
-          )}
-          {isAuthenticated && !canUseAiPostOnFinish && (
-            <PremiumTeaser feature="ai_post_on_finish">
-              <View style={styles.skipPostRow}>
-                <Switch value={false} disabled />
-                <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
-                  {t('recording.skipAutoPost')}
-                </Text>
-              </View>
-            </PremiumTeaser>
-          )}
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+            onPress={onResume}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="play" size={26} color={colors.white} />
+            <Text style={[styles.actionButtonText, { color: colors.white }]}>
+              {t('recording.resume')}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.success }]}
+            style={[styles.actionButton, { backgroundColor: colors.success }]}
             onPress={onSave}
             disabled={isLoading}
             activeOpacity={0.8}
@@ -206,23 +190,117 @@ export function PausedView({
               <ActivityIndicator color={colors.white} />
             ) : (
               <>
-                <Ionicons name="checkmark-circle" size={24} color={colors.white} />
-                <Text style={styles.saveButtonText}>{t('recording.saveActivity')}</Text>
+                <Ionicons name="checkmark-circle" size={26} color={colors.white} />
+                <Text style={[styles.actionButtonText, { color: colors.white }]}>
+                  {t('recording.saveActivity')}
+                </Text>
               </>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.discardButton}
+            style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
             onPress={onDiscard}
             disabled={isLoading}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={18} color={colors.error} />
-            <Text style={[styles.discardButtonText, { color: colors.error }]}>
+            <Ionicons name="trash-outline" size={24} color={colors.error} />
+            <Text style={[styles.actionButtonText, { color: colors.error }]}>
               {t('recording.discard')}
             </Text>
           </TouchableOpacity>
+        </View>
+
+        {isAuthenticated && canUseAiPostOnFinish && (
+          <TouchableOpacity
+            style={styles.skipPostRow}
+            onPress={() => onSkipAutoPostChange(!skipAutoPost)}
+            disabled={isLoading}
+            activeOpacity={0.7}
+          >
+            <Switch
+              value={skipAutoPost}
+              onValueChange={onSkipAutoPostChange}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={skipAutoPost ? colors.primary : colors.white}
+              disabled={isLoading}
+            />
+            <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
+              {t('recording.skipAutoPost')}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {isAuthenticated && !canUseAiPostOnFinish && (
+          <PremiumTeaser feature="ai_post_on_finish">
+            <View style={styles.skipPostRow}>
+              <Switch value={false} disabled />
+              <Text style={[styles.skipPostText, { color: colors.textSecondary }]}>
+                {t('recording.skipAutoPost')}
+              </Text>
+            </View>
+          </PremiumTeaser>
+        )}
+      </View>
+
+      {/* BOTTOM — event selector + map (fills remaining space, respects nav bar) */}
+      <View style={[styles.bottomSection, { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <TouchableOpacity
+          style={[
+            styles.eventSelector,
+            { backgroundColor: colors.cardBackground, borderColor: selectedEvent ? colors.primary : colors.border },
+          ]}
+          onPress={onShowEventSheet}
+          disabled={isLoading}
+          activeOpacity={0.7}
+        >
+          {selectedEvent ? (
+            <>
+              <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                <Ionicons
+                  name={(selectedEvent.sport_type?.icon as any) || 'calendar-outline'}
+                  size={20}
+                  color={colors.primary}
+                />
+              </View>
+              <View style={styles.eventSelectorContent}>
+                <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {selectedEvent.post?.title || t('eventDetail.untitled')}
+                </Text>
+                {selectedEvent.location_name ? (
+                  <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {selectedEvent.location_name}
+                  </Text>
+                ) : null}
+              </View>
+              <TouchableOpacity
+                onPress={onClearEvent}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={22} color={colors.textMuted} />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
+                <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
+              </View>
+              <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>
+                {t('recording.selectEvent', 'Wybierz wydarzenie (opcjonalnie)')}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.mapFill}>
+          <MapboxLiveMap
+            livePoints={livePoints}
+            livePointsVersion={livePointsVersion}
+            currentPosition={currentPosition}
+            gpsSignalQuality={trackingStatus?.gpsSignal ?? 'disabled'}
+            followUser={livePoints.length === 0}
+            mapStyle={mapStyle}
+          />
         </View>
       </View>
     </View>
@@ -233,9 +311,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
+  topSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  bottomSection: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+  },
+  mapFill: {
+    flex: 1,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
   },
   compactHeader: {
     flexDirection: 'row',
@@ -281,7 +372,7 @@ const styles = StyleSheet.create({
   },
   heroTimerContainer: {
     alignItems: 'center',
-    paddingVertical: spacing.xl,
+    paddingVertical: spacing.md,
   },
   heroTimer: {
     fontSize: 72,
@@ -312,57 +403,60 @@ const styles = StyleSheet.create({
     width: 1,
     marginVertical: spacing.xs,
   },
-  resumeButton: {
+  actionRow: {
     flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  actionButton: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
+    gap: 4,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
-    marginTop: spacing.xl,
   },
-  resumeButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.lg,
+  actionButtonText: {
+    fontSize: fontSize.sm,
     fontWeight: '700',
-  },
-  sectionDivider: {
-    height: 1,
-    marginVertical: spacing.xl,
-  },
-  saveSection: {
-    gap: spacing.md,
   },
   skipPostRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginTop: spacing.md,
   },
   skipPostText: {
     fontSize: fontSize.sm,
   },
-  saveButton: {
+  eventSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.md,
+    padding: spacing.md,
+    borderWidth: 1,
     borderRadius: borderRadius.lg,
   },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  discardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  eventIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.md,
+    alignItems: 'center',
   },
-  discardButtonText: {
+  eventSelectorContent: {
+    flex: 1,
+  },
+  eventSelectorTitle: {
     fontSize: fontSize.md,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  eventSelectorSubtitle: {
+    fontSize: fontSize.sm,
+    marginTop: 2,
+  },
+  eventSelectorPlaceholder: {
+    flex: 1,
+    fontSize: fontSize.md,
   },
 });

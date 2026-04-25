@@ -1904,6 +1904,7 @@ function useLiveActivityInternal() {
       description?: string;
       calories?: number;
       skip_auto_post?: boolean;
+      event_id?: number | null;
     }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
       if (!state.activity) return null;
 
@@ -2217,6 +2218,7 @@ interface LiveActivityContextType {
     description?: string;
     calories?: number;
     skip_auto_post?: boolean;
+    event_id?: number | null;
   }) => Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null>;
   discardTracking: () => Promise<void>;
   clearError: () => void;

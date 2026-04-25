@@ -918,6 +918,8 @@ export interface FinishActivityRequest {
   final_points?: GpsPoint[];
   // Client-calculated distance (meters) - preserved alongside server-calculated distance
   client_distance?: number;
+  // Event the activity should be linked to (set/changed at save time)
+  event_id?: number | null;
 }
 
 // Auto-created post info returned when finishing an activity

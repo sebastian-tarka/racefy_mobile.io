@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {LinearGradient} from 'expo-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {useTranslation} from 'react-i18next';
@@ -518,6 +518,24 @@ export function ActivityRecordingScreen() {
     }
   }, [viewMode, isTracking, isPaused]);
 
+  // Auto-pick a matching ongoing event when entering paused state
+  // (only if user hasn't selected one yet and an event with the same sport_type is ongoing)
+  useEffect(() => {
+    if (status !== 'paused') return;
+    if (selectedEvent) return;
+    if (!selectedSport) return;
+    if (!ongoingEvents.length) return;
+    const sportId = selectedSport.id;
+    const match = ongoingEvents.find((e) => (e.sport_type_id ?? e.sport_type?.id) === sportId);
+    if (match) {
+      setSelectedEvent(match);
+      logger.info('activity', 'Auto-selected ongoing event matching sport', {
+        eventId: match.id,
+        sportId,
+      });
+    }
+  }, [status, selectedSport, ongoingEvents, selectedEvent]);
+
   // Reset routes toggle when leaving idle map view
   useEffect(() => {
     const isIdleMapView = isIdle && viewMode === 'map';
@@ -665,7 +683,7 @@ export function ActivityRecordingScreen() {
     try {
       await startTracking(selectedSport.id, `${selectedSport.name} Activity`, selectedEvent?.id);
       resetMilestones();
-      setSelectedEvent(null);
+      // Keep selectedEvent in state — user may want to change it at save time in PausedView
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
 
       // Audio coach: announce start
@@ -732,6 +750,7 @@ export function ActivityRecordingScreen() {
         title: `${selectedSport.name} Activity`,
         calories: Math.floor(localDuration * 0.15),
         skip_auto_post: skipAutoPost,
+        event_id: selectedEvent?.id ?? null,
       });
 
       logger.activity('Activity saved from UI', {
@@ -956,6 +975,13 @@ export function ActivityRecordingScreen() {
       skipAutoPost={skipAutoPost}
       canUseAiPostOnFinish={canUseAiPostOnFinish}
       gpsProfile={gpsProfile}
+      livePoints={livePoints}
+      livePointsVersion={livePointsVersion}
+      currentPosition={currentPosition}
+      mapStyle={mapStyle}
+      selectedEvent={selectedEvent}
+      onShowEventSheet={() => setEventSheetVisible(true)}
+      onClearEvent={() => setSelectedEvent(null)}
       onResume={handleResume}
       onSave={handleSave}
       onDiscard={handleDiscard}
@@ -1252,9 +1278,10 @@ export function ActivityRecordingScreen() {
             transform: [{ translateY: toggleButtonsPosition }],
           }}
         >
-          {/* Top-right controls row — re-center + view toggle + map style, always during recording/paused */}
-          {!isIdle && !isScreenLocked && (
-            <View style={[styles.topRightControls, { top: insets.top + 52 + spacing.xs }]}>
+          {/* Top-right controls row — re-center + view toggle + map style.
+              Hidden during paused stats view (no map → buttons would overlap the timer). */}
+          {!isIdle && !isScreenLocked && !(status === 'paused' && viewMode === 'stats') && (
+            <View style={[styles.topRightControls, { top: insets.top + 68 + spacing.sm }]}>
               <TouchableOpacity
                 style={[styles.mapStyleToggleButton, { backgroundColor: followUser ? colors.cardBackground : colors.primary }]}
                 onPress={() => {
