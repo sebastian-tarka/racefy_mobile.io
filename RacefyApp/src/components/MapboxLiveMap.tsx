@@ -116,9 +116,20 @@ export function MapboxLiveMap({
   // Sync isFollowing when parent explicitly changes followUser (e.g. re-center button)
   useEffect(() => {
     if (followUser !== prevFollowUserRef.current) {
-      setIsFollowing(followUser);
       prevFollowUserRef.current = followUser;
+      setIsFollowing(followUser);
+      // Imperatively fly to current position so camera moves even if coordinates haven't changed
+      if (followUser && displayPosition && cameraRef.current) {
+        cameraRef.current.setCamera({
+          centerCoordinate: [displayPosition.lng, displayPosition.lat],
+          zoomLevel: 15,
+          animationDuration: 600,
+          animationMode: 'easeTo',
+        });
+      }
     }
+  // displayPosition intentionally excluded — we only want this to fire when followUser flips
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [followUser]);
 
   // Handle user interaction with the map (pan/zoom) — stop following

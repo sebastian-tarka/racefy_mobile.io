@@ -4,22 +4,22 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Ionicons} from '@expo/vector-icons';
 import {useTranslation} from 'react-i18next';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {RouteProp, TabActions, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {
   announceEnd,
   announceStart,
   triggerHaptic,
-  useActiveWeek,
-  useActivityStats,
   useActivityTimer,
   useAudioCoach,
   useAudioCoachSettings,
@@ -48,7 +48,6 @@ import {
   NearbyRoutesHorizontalPanel,
   RecordingMapControls,
   ScreenContainer,
-  ViewToggleButton,
 } from '../../components';
 import {NavigationOverlay} from '../../components/NavigationOverlay';
 import {useLiveNavigation} from '../../hooks/useLiveNavigation';
@@ -88,8 +87,8 @@ export function ActivityRecordingScreen() {
   const insets = useSafeAreaInsets();
   const { formatDistance: fmtDistance } = useUnits();
 
-  // Bottom offset for floating buttons to clear the tab bar (60px + safe area)
-  const tabBarHeight = 60 + insets.bottom;
+  // Tab bar is hidden on this screen, so offset is just safe areawymoge
+  const tabBarHeight = insets.bottom;
   const fabBottom = tabBarHeight + spacing.md;
   const { isAuthenticated, user } = useAuth();
   const { canUse, tier } = useSubscription();
@@ -98,6 +97,17 @@ export function ActivityRecordingScreen() {
   const { requestActivityTrackingPermissions } = usePermissions();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MainTabParamList, 'Record'>>();
+
+  // Hide bottom tab bar when this screen is focused.
+  // Cast needed: navigation is typed as NativeStack but at runtime is BottomTab navigation.
+  useFocusEffect(
+    useCallback(() => {
+      (navigation as any).setOptions({ tabBarStyle: { display: 'none' } });
+      return () => {
+        (navigation as any).setOptions({ tabBarStyle: undefined });
+      };
+    }, [navigation])
+  );
 
   // Data hooks (declared early — needed for useDefaultSport below)
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
@@ -132,15 +142,20 @@ export function ActivityRecordingScreen() {
   // Animation for toggle buttons position
   const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
 
-  // Animation for start button
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Screen lock
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
+  const [showLockToast, setShowLockToast] = useState(false);
+  const [lockToastLocked, setLockToastLocked] = useState(false);
+  const lockToastOpacity = useRef(new Animated.Value(0)).current;
+
+  // Audio coach toast
+  const [showAudioCoachToast, setShowAudioCoachToast] = useState(false);
+  const [audioCoachToastEnabled, setAudioCoachToastEnabled] = useState(false);
+  const audioCoachToastOpacity = useRef(new Animated.Value(0)).current;
 
   // Data hooks
-  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
-  const { stats: activityStats, isLoading: statsLoading } = useActivityStats(
-    isAuthenticated && selectedSport ? { sportTypeId: selectedSport.id } : undefined
-  );
-  const { milestones: milestonesData, isLoading: milestonesLoading } = useMilestones(
+  const { events: ongoingEvents, isLoading: eventsLoading } = useOngoingEvents();
+  const { milestones: milestonesData } = useMilestones(
     isAuthenticated && canUseAdvancedStats && selectedSport ? selectedSport.id : undefined
   );
 
@@ -179,17 +194,40 @@ export function ActivityRecordingScreen() {
   // and reads settings from AsyncStorage — without this sync it ignores the toggle.
   const handleToggleAudioCoach = useCallback(() => {
     triggerHaptic();
-    setAudioCoachSessionEnabled(prev => {
-      const newEnabled = !(prev ?? audioCoachSettings.enabled);
-      // Sync to AsyncStorage for background task
-      AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY).then(json => {
-        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
-        stored.enabled = newEnabled;
-        AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
-      }).catch(() => {});
-      return newEnabled;
-    });
-  }, [audioCoachSettings]);
+    const newEnabled = !(audioCoachSessionEnabled ?? audioCoachSettings.enabled);
+    setAudioCoachSessionEnabled(newEnabled);
+
+    // Sync to AsyncStorage for background task
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY).then(json => {
+      const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+      stored.enabled = newEnabled;
+      AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+    }).catch(() => {});
+
+    // Show toast
+    setAudioCoachToastEnabled(newEnabled);
+    setShowAudioCoachToast(true);
+    audioCoachToastOpacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(audioCoachToastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1800),
+      Animated.timing(audioCoachToastOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setShowAudioCoachToast(false));
+  }, [audioCoachSessionEnabled, audioCoachSettings, audioCoachToastOpacity]);
+
+  const handleToggleLock = useCallback(() => {
+    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
+    const newLocked = !isScreenLocked;
+    setIsScreenLocked(newLocked);
+    setLockToastLocked(newLocked);
+    setShowLockToast(true);
+    lockToastOpacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(lockToastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1800),
+      Animated.timing(lockToastOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => setShowLockToast(false));
+  }, [isScreenLocked, lockToastOpacity]);
 
   // ── DEV ONLY: Simulated run for testing audio coach ──
   // Time-based distance: recalculated on every render from elapsed time.
@@ -275,7 +313,6 @@ export function ActivityRecordingScreen() {
   } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
   const myPlannedRoutes = useMyPlannedRoutes(isAuthenticated, user);
-  const activeWeek = useActiveWeek(isAuthenticated, selectedSport?.id);
 
   // Merged list (my routes first, then nearby) used by both the inline horizontal
   // panel and the full-screen route-selection modal.
@@ -417,14 +454,8 @@ export function ActivityRecordingScreen() {
 
   // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
-  const { passedMilestones, resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
+  const { resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
   const { enrichActivityWithHeartRate } = useHealthEnrichment();
-
-  // Find next milestone
-  const nextMilestone = useMemo(() => {
-    return distanceMilestones.find(m => !m.achieved && !passedMilestones.includes(m.threshold));
-  }, [distanceMilestones, passedMilestones]);
-
 
   // Handle preselected event
   useEffect(() => {
@@ -460,19 +491,6 @@ export function ActivityRecordingScreen() {
     }
   }, [route.params?.preselectedEvent, sportTypes, sportsLoading, handleRouteSelect]);
 
-  // Pulse animation for start button
-  useEffect(() => {
-    if (status === 'idle') {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-        ])
-      );
-      pulse.start();
-      return () => pulse.stop();
-    }
-  }, [status, pulseAnim]);
 
   // Error handling
   useEffect(() => {
@@ -691,8 +709,14 @@ export function ActivityRecordingScreen() {
 
   const handleStop = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
-    if (isTracking) {
-      await handlePause();
+    // Pause first (if still tracking) to stop the timer, then immediately save
+    try {
+      if (isTracking) {
+        await pauseTracking();
+      }
+      await handleSave();
+    } catch (err) {
+      logger.error('activity', 'Failed to stop and save activity', { error: err });
     }
   };
 
@@ -862,24 +886,29 @@ export function ActivityRecordingScreen() {
   const renderIdleLayout = () => (
     <IdleView
       selectedSport={selectedSport}
+      sportTypes={sportTypes}
       sportsLoading={sportsLoading}
       isLoading={isLoading}
-      isAuthenticated={isAuthenticated}
-      pulseAnim={pulseAnim}
-      selectedEvent={selectedEvent}
-      activeWeek={activeWeek}
-      activityStats={activityStats}
-      statsLoading={statsLoading}
-      milestonesLoading={milestonesLoading}
-      nextMilestone={nextMilestone}
-      canUseAdvancedStats={canUseAdvancedStats}
       audioCoachActive={isAudioCoachActive}
       onToggleAudioCoach={handleToggleAudioCoach}
+      gpsSignal={trackingStatus?.gpsSignal ?? null}
+      currentPosition={currentPosition}
+      previewLocation={previewLocation}
+      mapStyle={mapStyle}
+      livePoints={livePoints}
+      livePointsVersion={livePointsVersion}
+      gpsEnabled={gpsProfile?.enabled ?? false}
       onStart={handleStart}
-      onOpenSportModal={() => setSportModalVisible(true)}
-      onOpenEventSheet={() => setEventSheetVisible(true)}
-      onClearEvent={() => setSelectedEvent(null)}
-      onRefreshEvents={refreshEvents}
+      onSelectSport={(sport) => setSelectedSport(sport)}
+      viewMode={viewMode}
+      onToggleView={gpsProfile?.enabled ? () => {
+        const newMode = viewMode === 'stats' ? 'map' : 'stats';
+        logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
+        setViewMode(newMode);
+      } : undefined}
+      devSimRunning={devSimRunning}
+      onToggleDevSim={() => { setDevSimRunning(prev => !prev); triggerHaptic(); }}
+      devSimDistanceKm={devSimDistanceM / 1000}
     />
   );
 
@@ -895,11 +924,17 @@ export function ActivityRecordingScreen() {
       currentStats={currentStats}
       distance={distance}
       isLoading={isLoading}
-      isAuthenticated={isAuthenticated}
-      nextMilestone={nextMilestone}
       gpsProfile={gpsProfile}
       audioCoachActive={isAudioCoachActive}
       onToggleAudioCoach={handleToggleAudioCoach}
+      currentPosition={currentPosition}
+      mapStyle={mapStyle}
+      livePoints={livePoints}
+      livePointsVersion={livePointsVersion}
+      followUser={followUser}
+      onFollowUserChanged={setFollowUser}
+      isLocked={isScreenLocked}
+      onToggleLock={handleToggleLock}
       onPause={handlePause}
       onStop={handleStop}
     />
@@ -929,6 +964,141 @@ export function ActivityRecordingScreen() {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER: Map Top Overlay (idle + map mode) — sport grid + icon toolbar
+  // ═══════════════════════════════════════════════════════════════════════════
+  const renderMapTopOverlay = () => {
+    if (!isIdle) return null;
+    const mapStyleIcon =
+      mapStyle === 'satellite' ? 'globe-outline' :
+      mapStyle === 'streets' ? 'car-outline' : 'trail-sign-outline';
+
+    return (
+      <>
+        <LinearGradient
+          colors={['rgba(0,0,0,0.60)', 'transparent']}
+          style={styles.mapTopGradient}
+          pointerEvents="none"
+        />
+        <ScrollView
+          style={styles.mapTopOverlay}
+          contentContainerStyle={styles.mapTopOverlayContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Sport grid – centered wrapping tiles */}
+          {sportsLoading ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+          ) : (
+            <View style={styles.mapSportGrid}>
+              {sportTypes.map(sport => {
+                const isSelected = selectedSport?.id === sport.id;
+                return (
+                  <TouchableOpacity
+                    key={sport.id}
+                    style={[
+                      styles.mapSportCard,
+                      {
+                        backgroundColor: colors.cardBackground,
+                        borderColor: isSelected ? colors.primary : 'transparent',
+                        borderWidth: isSelected ? 2 : 0,
+                      },
+                    ]}
+                    onPress={() => setSelectedSport(sport)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[
+                      styles.mapSportCardIcon,
+                      { backgroundColor: isSelected ? colors.primary + '18' : colors.background },
+                    ]}>
+                      <Ionicons
+                        name={sport.icon}
+                        size={22}
+                        color={isSelected ? colors.primary : colors.textSecondary}
+                      />
+                    </View>
+                    <Text
+                      style={[styles.mapSportCardName, { color: isSelected ? colors.primary : colors.textSecondary }]}
+                      numberOfLines={1}
+                    >
+                      {sport.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Icon toolbar – centered */}
+          <View style={styles.mapIconToolbar}>
+            {/* Audio coach */}
+            <TouchableOpacity
+              style={[styles.mapToolbarIcon, { backgroundColor: isAudioCoachActive ? colors.primary : colors.cardBackground }]}
+              onPress={handleToggleAudioCoach}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.audioCoach')}
+            >
+              <Ionicons
+                name={isAudioCoachActive ? 'musical-notes' : 'musical-notes-outline'}
+                size={24}
+                color={isAudioCoachActive ? '#ffffff' : colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* View toggle → back to stats */}
+            <TouchableOpacity
+              style={[styles.mapToolbarIcon, { backgroundColor: colors.primary }]}
+              onPress={() => { setViewMode('stats'); triggerHaptic(); }}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.viewStats')}
+            >
+              <Ionicons name="list-outline" size={24} color="#ffffff" />
+            </TouchableOpacity>
+
+            {/* Routes toggle */}
+            <TouchableOpacity
+              style={[styles.mapToolbarIcon, { backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground }]}
+              onPress={() => { setShowNearbyRoutesToggle(v => !v); triggerHaptic(); }}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.routes')}
+            >
+              <Ionicons
+                name={showNearbyRoutesToggle ? 'map' : 'map-outline'}
+                size={24}
+                color={showNearbyRoutesToggle ? '#ffffff' : colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {/* Map style */}
+            <TouchableOpacity
+              style={[styles.mapToolbarIcon, { backgroundColor: colors.cardBackground }]}
+              onPress={handleMapStyleToggle}
+              activeOpacity={0.7}
+              accessibilityLabel={t('recording.mapStyle')}
+            >
+              <Ionicons name={mapStyleIcon} size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {/* DEV sim */}
+            {__DEV__ && (
+              <TouchableOpacity
+                style={[styles.mapToolbarIcon, { backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground }]}
+                onPress={() => { setDevSimRunning(v => !v); triggerHaptic(); }}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={devSimRunning ? 'stop' : 'walk'}
+                  size={24}
+                  color={devSimRunning ? '#ffffff' : colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+      </>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Loading Overlay
   // ═══════════════════════════════════════════════════════════════════════════
   const renderLoadingOverlay = () => {
@@ -946,17 +1116,37 @@ export function ActivityRecordingScreen() {
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <ScreenContainer edges={['top']}>
-      {/* Idle Header */}
-      {status === 'idle' && (
+      {/* Header — idle + recording only (paused has its own header in PausedView) */}
+      {(status === 'idle' || status === 'recording') && !isScreenLocked && (
         <View style={[styles.idleHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.idleTitle, { color: colors.textPrimary }]}>{t('recording.title')}</Text>
           <TouchableOpacity
-            onPress={() => setShowAddOptions(true)}
-            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.dispatch(TabActions.jumpTo('Home'))}
+            style={styles.backButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="add" size={20} color={colors.white} />
+            <Ionicons name="chevron-back" size={26} color={colors.textPrimary} />
           </TouchableOpacity>
+          <Text style={[styles.idleTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            {status === 'recording' && selectedSport ? selectedSport.name : t('recording.title')}
+          </Text>
+          {(() => {
+            const sig = trackingStatus?.gpsSignal ?? null;
+            const gpsColor =
+              sig === 'good' ? colors.success :
+              sig === 'weak' ? colors.warning :
+              sig === 'lost' ? colors.error :
+              colors.textMuted;
+            const gpsLabel =
+              sig === 'good' ? 'READY' :
+              sig === 'weak' ? 'WEAK' :
+              sig === 'lost' ? 'LOST' : 'GPS';
+            return (
+              <View style={[styles.gpsHeaderBadge, { backgroundColor: gpsColor + '20' }]}>
+                <Ionicons name="locate" size={12} color={gpsColor} />
+                <Text style={[styles.gpsHeaderText, { color: gpsColor }]}>{gpsLabel}</Text>
+              </View>
+            );
+          })()}
         </View>
       )}
 
@@ -977,6 +1167,9 @@ export function ActivityRecordingScreen() {
             onFollowUserChanged={setFollowUser}
             plannedRoute={selectedShadowTrack?.track_data || null}
           />
+
+          {/* Top overlay: sport grid + icon toolbar (idle map mode) */}
+          {renderMapTopOverlay()}
 
           {/* Live Navigation Overlay (Pro only) */}
           {liveNav.isActive && status === 'recording' && (
@@ -1054,51 +1247,16 @@ export function ActivityRecordingScreen() {
           pointerEvents="box-none"
           style={{
             ...StyleSheet.absoluteFillObject,
+            zIndex: 50,
+            elevation: 50,
             transform: [{ translateY: toggleButtonsPosition }],
           }}
         >
-          <ViewToggleButton
-            currentView={viewMode}
-            onToggle={() => {
-              const newMode = viewMode === 'stats' ? 'map' : 'stats';
-              logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
-              setViewMode(newMode);
-            }}
-          />
-
-          {/* Nearby routes toggle - only visible in idle state and map view */}
-          {isIdle && viewMode === 'map' && (
-            <View style={[styles.routesToggleContainer, { bottom: fabBottom + 70 }]}>
+          {/* Top-right controls row — re-center + view toggle + map style, always during recording/paused */}
+          {!isIdle && !isScreenLocked && (
+            <View style={[styles.topRightControls, { top: insets.top + 52 + spacing.xs }]}>
               <TouchableOpacity
-                style={[
-                  styles.routesToggleButton,
-                  {
-                    backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground,
-                  },
-                ]}
-                onPress={() => {
-                  const newValue = !showNearbyRoutesToggle;
-                  logger.info('activity', 'Toggling nearby routes', { show: newValue });
-                  setShowNearbyRoutesToggle(newValue);
-                  triggerHaptic();
-                }}
-                activeOpacity={0.7}
-                accessibilityLabel={t('recording.routes')}
-              >
-                <Ionicons
-                  name={showNearbyRoutesToggle ? 'map' : 'map-outline'}
-                  size={28}
-                  color={showNearbyRoutesToggle ? '#fff' : colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Re-center button - visible when user has panned away in map view */}
-          {viewMode === 'map' && !followUser && (
-            <View style={[styles.recenterContainer, { bottom: fabBottom + 210 }]}>
-              <TouchableOpacity
-                style={[styles.recenterButton, { backgroundColor: colors.primary }]}
+                style={[styles.mapStyleToggleButton, { backgroundColor: followUser ? colors.cardBackground : colors.primary }]}
                 onPress={() => {
                   setFollowUser(true);
                   triggerHaptic();
@@ -1106,14 +1264,31 @@ export function ActivityRecordingScreen() {
                 activeOpacity={0.7}
                 accessibilityLabel={t('recording.recenter')}
               >
-                <Ionicons name="navigate" size={24} color="#fff" />
+                <Ionicons
+                  name="navigate"
+                  size={26}
+                  color={followUser ? colors.textSecondary : '#ffffff'}
+                />
               </TouchableOpacity>
-            </View>
-          )}
 
-          {/* Map style toggle - only visible in map view */}
-          {viewMode === 'map' && (
-            <View style={[styles.mapStyleToggleContainer, { bottom: fabBottom + 140 }]}>
+              <TouchableOpacity
+                style={[styles.mapStyleToggleButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  const newMode = viewMode === 'stats' ? 'map' : 'stats';
+                  logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
+                  setViewMode(newMode);
+                  triggerHaptic();
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel={t('recording.toggleView')}
+              >
+                <Ionicons
+                  name={viewMode === 'stats' ? 'map-outline' : 'list-outline'}
+                  size={26}
+                  color="#ffffff"
+                />
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.mapStyleToggleButton, { backgroundColor: colors.cardBackground }]}
                 onPress={handleMapStyleToggle}
@@ -1128,15 +1303,15 @@ export function ActivityRecordingScreen() {
                       ? 'car-outline'
                       : 'trail-sign-outline'
                   }
-                  size={28}
+                  size={26}
                   color={colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
           )}
 
-          {/* DEV ONLY: Simulated run for testing audio coach */}
-          {__DEV__ && (
+          {/* DEV ONLY: Simulated run — only during recording/paused (idle handled by toolbars) */}
+          {__DEV__ && !isIdle && (
             <View style={[styles.devMapToggleContainer, { bottom: fabBottom + 340 }]}>
               <TouchableOpacity
                 style={[
@@ -1169,6 +1344,54 @@ export function ActivityRecordingScreen() {
             </View>
           )}
 
+        </Animated.View>
+      )}
+
+      {/* Audio coach toast */}
+      {showAudioCoachToast && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: audioCoachToastEnabled ? colors.primary : colors.cardBackground,
+              borderColor: audioCoachToastEnabled ? colors.primary : colors.border,
+              opacity: audioCoachToastOpacity,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons
+            name={audioCoachToastEnabled ? 'musical-notes' : 'musical-notes-outline'}
+            size={20}
+            color={audioCoachToastEnabled ? '#ffffff' : colors.textSecondary}
+          />
+          <Text style={[styles.mapStyleToastText, { color: audioCoachToastEnabled ? '#ffffff' : colors.textPrimary }]}>
+            {t(audioCoachToastEnabled ? 'recording.audioCoachEnabled' : 'recording.audioCoachDisabled')}
+          </Text>
+        </Animated.View>
+      )}
+
+      {/* Lock toast */}
+      {showLockToast && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: lockToastLocked ? '#1f2937' : colors.cardBackground,
+              borderColor: lockToastLocked ? '#374151' : colors.border,
+              opacity: lockToastOpacity,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons
+            name={lockToastLocked ? 'lock-closed' : 'lock-open-outline'}
+            size={20}
+            color={lockToastLocked ? '#f9fafb' : colors.textSecondary}
+          />
+          <Text style={[styles.mapStyleToastText, { color: lockToastLocked ? '#f9fafb' : colors.textPrimary }]}>
+            {t(lockToastLocked ? 'recording.screenLocked' : 'recording.screenUnlocked')}
+          </Text>
         </Animated.View>
       )}
 
@@ -1254,22 +1477,35 @@ const styles = StyleSheet.create({
   // ─────────────────────────────────────────────────────────────────────────
   idleHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   },
   idleTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  backButton: {
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  gpsHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+  },
+  gpsHeaderText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1402,4 +1638,87 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Map Top Overlay (idle + map mode)
+  // ─────────────────────────────────────────────────────────────────────────
+  mapTopGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 220,
+    zIndex: 1,
+  },
+  mapTopOverlay: {
+    position: 'absolute',
+    top: spacing.md,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    maxHeight: '55%',
+  },
+  mapTopOverlayContent: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  mapSportGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  mapSportCard: {
+    width: 76,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mapSportCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapSportCardName: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  mapIconToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  mapToolbarIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  topRightControls: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
 });

@@ -800,7 +800,13 @@
     "mapError": "Nie można załadować widoku mapy",
     "backToStats": "Powrót do statystyk",
     "fetchingLocation": "Pobieranie lokalizacji...",
-    "waitingForGPS": "Oczekiwanie na GPS..."
+    "waitingForGPS": "Oczekiwanie na GPS...",
+    "audioCoachEnabled": "Trener głosowy WŁ",
+    "audioCoachDisabled": "Trener głosowy WYŁ",
+    "screenLocked": "Ekran zablokowany",
+    "screenUnlocked": "Ekran odblokowany",
+    "holdToUnlock": "PRZYTRZYMAJ ABY ODBLOKOWAĆ",
+    "lock": "Zablokuj ekran"
   },
   "gpxImport": {
     "title": "Importuj GPX",

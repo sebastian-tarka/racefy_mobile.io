@@ -800,7 +800,13 @@
     "mapError": "Unable to load map view",
     "backToStats": "Back to Stats",
     "fetchingLocation": "Getting your location...",
-    "waitingForGPS": "Waiting for GPS..."
+    "waitingForGPS": "Waiting for GPS...",
+    "audioCoachEnabled": "Audio Coach ON",
+    "audioCoachDisabled": "Audio Coach OFF",
+    "screenLocked": "Screen locked",
+    "screenUnlocked": "Screen unlocked",
+    "holdToUnlock": "HOLD TO UNLOCK",
+    "lock": "Lock screen"
   },
   "gpxImport": {
     "title": "Import GPX",
