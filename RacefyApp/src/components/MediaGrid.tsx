@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Dimensions, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {Image} from 'expo-image';
 import {FeedVideo} from './FeedVideo';
 import {AutoDisplayImage} from './AutoDisplayImage';
@@ -10,7 +10,6 @@ import {VideoPlayerManager} from '../services/VideoPlayerManager';
 import type {PostMediaItem} from './FeedCard.utils';
 import {useImageGallery} from './FeedCard.utils';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 2;
 
 interface MediaGridProps {
@@ -30,6 +29,12 @@ interface MediaGridProps {
 export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
   const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
   const [expandedVideo, setExpandedVideoRaw] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const onContainerLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w && w !== containerWidth) setContainerWidth(w);
+  };
 
   const setExpandedVideo = (url: string | null) => {
     if (url) VideoPlayerManager.pauseAll();
@@ -143,7 +148,8 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
       );
     }
 
-    const gridWidth = SCREEN_WIDTH;
+    if (containerWidth === 0) return null;
+    const gridWidth = containerWidth;
     const gridHeight = gridWidth * 0.75; // 4:3 aspect for grid
 
     // 2 items → side by side
@@ -203,7 +209,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
   };
 
   return (
-    <View>
+    <View onLayout={onContainerLayout}>
       {renderGrid()}
 
       {/* Modals */}

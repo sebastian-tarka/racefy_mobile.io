@@ -1,10 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { View, FlatList, Dimensions, StyleSheet, ViewToken } from 'react-native';
+import { View, FlatList, LayoutChangeEvent, StyleSheet, ViewToken } from 'react-native';
 import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import type { PostMediaItem } from './FeedCard.utils';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface MediaSliderProps {
   items: PostMediaItem[];
@@ -22,7 +20,13 @@ export function MediaSlider({
   previewHeight = 300
 }: MediaSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+
+  const onContainerLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    if (w && w !== containerWidth) setContainerWidth(w);
+  };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
@@ -37,7 +41,7 @@ export function MediaSlider({
   const renderItem = ({ item, index }: { item: PostMediaItem; index: number }) => {
     if (item.type === 'video') {
       return (
-        <View style={styles.slide}>
+        <View style={{ width: containerWidth }}>
           <FeedVideo
             videoUrl={item.url}
             thumbnailUrl={item.thumbnailUrl}
@@ -49,7 +53,7 @@ export function MediaSlider({
     }
 
     return (
-      <View style={styles.slide}>
+      <View style={{ width: containerWidth }}>
         <AutoDisplayImage
           imageUrl={item.url}
           onExpand={() => onImagePress?.(index)}
@@ -60,22 +64,24 @@ export function MediaSlider({
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        decelerationRate="fast"
-        snapToInterval={SCREEN_WIDTH}
-        snapToAlignment="center"
-        removeClippedSubviews={true}
-      />
+    <View style={styles.container} onLayout={onContainerLayout}>
+      {containerWidth > 0 && (
+        <FlatList
+          ref={flatListRef}
+          data={items}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          decelerationRate="fast"
+          snapToInterval={containerWidth}
+          snapToAlignment="center"
+          removeClippedSubviews={true}
+        />
+      )}
 
       {/* Pagination dots */}
       {items.length > 1 && (
@@ -98,9 +104,6 @@ export function MediaSlider({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
-  },
-  slide: {
-    width: SCREEN_WIDTH,
   },
   pagination: {
     position: 'absolute',
