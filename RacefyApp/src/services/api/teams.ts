@@ -110,6 +110,18 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/teams/${teamId}/transfer-captain/${userId}`, { method: 'POST' });
     }
 
+    /**
+     * Shortcut endpoint: get the team's group conversation directly.
+     * Path parameter is the team's numeric id (Laravel route model binding defaults to id).
+     * Returns 403 if current user is not an active member, 404 if team has no chat.
+     */
+    async getTeamConversation(teamId: number): Promise<Types.Conversation> {
+      const response = await this.request<Types.ApiResponse<Types.Conversation>>(
+        `/teams/${teamId}/conversation`
+      );
+      return response.data;
+    }
+
     // ============ TEAM STATS ============
 
     async getTeamStats(

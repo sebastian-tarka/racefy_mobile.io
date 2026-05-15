@@ -879,7 +879,17 @@
     "noSearchResults": "Nie znaleziono użytkowników",
     "startingConversation": "Rozpoczynanie rozmowy...",
     "today": "Dzisiaj",
-    "yesterday": "Wczoraj"
+    "yesterday": "Wczoraj",
+    "teamChat": "Czat zespołu",
+    "openTeamChat": "Otwórz czat zespołu",
+    "members": "{{count}} członków",
+    "memberOne": "{{count}} członek",
+    "viewMembers": "Uczestnicy",
+    "captain": "Kapitan",
+    "rename": "Zmień nazwę",
+    "renamePlaceholder": "Nazwa czatu",
+    "renameSuccess": "Nazwa zmieniona",
+    "renameFailed": "Nie udało się zmienić nazwy"
   },
   "eventForm": {
     "tabs": {

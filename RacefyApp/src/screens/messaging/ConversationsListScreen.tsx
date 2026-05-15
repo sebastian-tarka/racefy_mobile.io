@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format, isToday, isYesterday, isThisWeek, isThisYear } from 'date-fns';
 import { pl, enUS } from 'date-fns/locale';
@@ -115,11 +116,14 @@ export function ConversationsListScreen({ navigation }: Props) {
   const handleConversationPress = (conversation: Conversation) => {
     navigation.navigate('Chat', {
       conversationId: conversation.id,
-      participant: conversation.participant,
+      participant: conversation.participant ?? undefined,
+      conversation,
     });
   };
 
   const handleDeleteConversation = (conversation: Conversation) => {
+    // Team chats can't be deleted client-side (backend returns 403); leaving the team handles it.
+    if (conversation.type === 'team') return;
     Alert.alert(
       t('messaging.deleteConversation'),
       t('messaging.deleteConfirm'),
@@ -159,6 +163,22 @@ export function ConversationsListScreen({ navigation }: Props) {
         : item.last_message.content
       : '';
 
+    const isTeam = item.type === 'team';
+    const title = isTeam
+      ? item.name || item.team?.name || ''
+      : item.participant?.name || '';
+    const subtitle = isTeam
+      ? item.participants_count
+        ? item.participants_count === 1
+          ? t('messaging.memberOne', { count: item.participants_count })
+          : t('messaging.members', { count: item.participants_count })
+        : ''
+      : item.participant
+        ? `@${item.participant.username}`
+        : '';
+    const avatarUri = isTeam ? item.team?.avatar ?? null : item.participant?.avatar ?? null;
+    const avatarName = isTeam ? item.team?.name ?? '' : item.participant?.name ?? '';
+
     return (
       <TouchableOpacity
         style={[
@@ -169,19 +189,24 @@ export function ConversationsListScreen({ navigation }: Props) {
         onLongPress={() => handleDeleteConversation(item)}
         activeOpacity={0.7}
       >
-        <Avatar
-          uri={item.participant.avatar}
-          name={item.participant.name}
-          size="lg"
-        />
+        <View>
+          <Avatar uri={avatarUri} name={avatarName} size="lg" />
+          {isTeam && (
+            <View style={[styles.groupOverlay, { backgroundColor: colors.primary, borderColor: colors.cardBackground }]}>
+              <Ionicons name="people" size={10} color={colors.white} />
+            </View>
+          )}
+        </View>
         <View style={styles.conversationContent}>
           <View style={styles.conversationHeader}>
             <Text style={[styles.participantName, { color: colors.textPrimary }]} numberOfLines={1}>
-              {item.participant.name}
+              {title}
             </Text>
             {timeAgo && <Text style={[styles.timeAgo, { color: colors.textMuted }]}>{timeAgo}</Text>}
           </View>
-          <Text style={[styles.username, { color: colors.textSecondary }]}>@{item.participant.username}</Text>
+          {subtitle ? (
+            <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>{subtitle}</Text>
+          ) : null}
           {lastMessagePreview && (
             <Text style={[styles.lastMessage, { color: colors.textMuted }]} numberOfLines={1}>
               {lastMessagePreview}
@@ -411,5 +436,16 @@ const styles = StyleSheet.create({
   overlayText: {
     marginTop: spacing.md,
     fontSize: fontSize.md,
+  },
+  groupOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

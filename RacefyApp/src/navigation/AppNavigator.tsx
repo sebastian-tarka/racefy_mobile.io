@@ -88,6 +88,8 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // Deep linking: /reset-password?token=XXX&email=YYY opens the reset flow
 // inside the Auth modal stack on racefy://, https://racefy.io and https://app.dev.racefy.io.
+// /messages/{id} opens the Chat screen directly (works for direct & team chats —
+// ChatScreen fetches the conversation when it's not passed as a param).
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['racefy://', 'https://racefy.io', 'https://app.dev.racefy.io'],
   config: {
@@ -100,6 +102,8 @@ const linking: LinkingOptions<RootStackParamList> = {
           ResetPassword: 'reset-password',
         },
       },
+      Chat: 'messages/:conversationId',
+      ConversationsList: 'messages',
     },
   },
 };

@@ -83,6 +83,7 @@ export * from './AutoDisplayImage';
 export * from './ImageViewer';
 export * from './ImageGallery';
 export * from './BottomSheet';
+export * from './ParticipantsSheet';
 export * from './EventSelectionSheet';
 export * from './ActivitySelectionSheet';
 export * from './ProfileStats';

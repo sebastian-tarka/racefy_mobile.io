@@ -879,7 +879,17 @@
     "noSearchResults": "No users found",
     "startingConversation": "Starting conversation...",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "teamChat": "Team chat",
+    "openTeamChat": "Open team chat",
+    "members": "{{count}} members",
+    "memberOne": "{{count}} member",
+    "viewMembers": "Members",
+    "captain": "Captain",
+    "rename": "Rename",
+    "renamePlaceholder": "Chat name",
+    "renameSuccess": "Chat renamed",
+    "renameFailed": "Couldn't rename chat"
   },
   "eventForm": {
     "tabs": {

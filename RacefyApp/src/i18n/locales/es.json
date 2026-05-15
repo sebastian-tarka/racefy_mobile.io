@@ -868,7 +868,17 @@
     "noSearchResults": "No se encontraron usuarios",
     "startingConversation": "Iniciando conversación...",
     "today": "Hoy",
-    "yesterday": "Ayer"
+    "yesterday": "Ayer",
+    "teamChat": "Chat del equipo",
+    "openTeamChat": "Abrir chat del equipo",
+    "members": "{{count}} miembros",
+    "memberOne": "{{count}} miembro",
+    "viewMembers": "Miembros",
+    "captain": "Capitán",
+    "rename": "Cambiar nombre",
+    "renamePlaceholder": "Nombre del chat",
+    "renameSuccess": "Nombre actualizado",
+    "renameFailed": "No se pudo cambiar el nombre"
   },
   "eventForm": {
     "tabs": {

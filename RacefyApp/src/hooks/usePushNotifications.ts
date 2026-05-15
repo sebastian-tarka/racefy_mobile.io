@@ -151,10 +151,14 @@ export function usePushNotifications(
           break;
 
         case 'messages':
-          // Navigate to conversations list - Chat screen requires participant data
-          // which we don't have in the push notification payload
-          // The ConversationsList screen will show the conversation at the top
-          navigation.navigate('ConversationsList');
+          // If the push carries a conversation_id, open the chat directly.
+          // ChatScreen fetches the conversation when neither participant nor conversation
+          // is provided, so we can deep-link straight in (works for direct and team chats).
+          if (data.conversation_id) {
+            navigation.navigate('Chat', { conversationId: data.conversation_id });
+          } else {
+            navigation.navigate('ConversationsList');
+          }
           break;
 
         case 'event_reminders':
@@ -264,8 +268,18 @@ export function usePushNotifications(
         return true;
       }
 
-      // Messages: /messages?conversation={id}
-      // Note: We navigate to ConversationsList because Chat screen requires participant data
+      // Messages: /messages?conversation={id} or /messages/{id}
+      const messagesQueryMatch = url.match(/^\/messages\?(?:.*&)?conversation=(\d+)/);
+      const messagesPathMatch = url.match(/^\/messages\/(\d+)$/);
+      const conversationIdFromUrl = messagesQueryMatch
+        ? parseInt(messagesQueryMatch[1])
+        : messagesPathMatch
+          ? parseInt(messagesPathMatch[1])
+          : null;
+      if (conversationIdFromUrl) {
+        navigation.navigate('Chat', { conversationId: conversationIdFromUrl });
+        return true;
+      }
       if (url.startsWith('/messages')) {
         navigation.navigate('ConversationsList');
         return true;

@@ -63,6 +63,36 @@ export function MessagingMixin<TBase extends Constructable<ApiBase>>(Base: TBase
       return response.unread_count;
     }
 
+    /**
+     * Rename a team chat. Captain-only on the backend (returns 403 otherwise).
+     */
+    async updateConversation(
+      id: number,
+      data: { name: string }
+    ): Promise<Types.Conversation> {
+      const response = await this.request<Types.ApiResponse<Types.Conversation>>(
+        `/conversations/${id}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }
+      );
+      return response.data;
+    }
+
+    /**
+     * List active participants of a conversation (excludes soft-removed users).
+     * Used for the participants bottom sheet on team chats.
+     */
+    async getConversationParticipants(
+      id: number
+    ): Promise<Types.ConversationParticipant[]> {
+      const response = await this.request<Types.ApiResponse<Types.ConversationParticipant[]>>(
+        `/conversations/${id}/participants`
+      );
+      return response.data;
+    }
+
     // ============ DEBUG LOGS ============
 
     /**

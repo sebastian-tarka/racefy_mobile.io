@@ -92,6 +92,31 @@ export function TeamDetailScreen({ route, navigation }: Props) {
     navigation.navigate('UserProfile', { username });
   }, [navigation]);
 
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [teamChatUnavailable, setTeamChatUnavailable] = useState(false);
+
+  const handleOpenTeamChat = useCallback(async () => {
+    if (!team || isOpeningChat) return;
+    setIsOpeningChat(true);
+    try {
+      const conversation = await api.getTeamConversation(team.id);
+      navigation.navigate('Chat', {
+        conversationId: conversation.id,
+        conversation,
+      });
+    } catch (error: any) {
+      if (error.status === 403) {
+        setTeamChatUnavailable(true);
+      } else if (error.status === 404) {
+        Alert.alert('', t('messaging.failedToLoad'));
+      } else {
+        Alert.alert('', error.message || t('messaging.failedToLoad'));
+      }
+    } finally {
+      setIsOpeningChat(false);
+    }
+  }, [team, isOpeningChat, navigation, t]);
+
   if (isLoading) {
     return (
       <ScreenContainer>
@@ -202,6 +227,16 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                 <Button title={t('common.decline')} onPress={handleDeclineInvitation} variant="outline" />
               </View>
             </View>
+          </Card>
+        )}
+        {isMember && !teamChatUnavailable && (
+          <Card style={styles.section}>
+            <Button
+              title={t('messaging.openTeamChat')}
+              onPress={handleOpenTeamChat}
+              loading={isOpeningChat}
+              variant="primary"
+            />
           </Card>
         )}
         {isMember && !isCaptain && (
