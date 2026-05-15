@@ -40,7 +40,7 @@ import {
   CollapsibleTipCard,
   LiveEventsCard,
 } from './home/components';
-import { Loading, FadeInView, ScreenContainer, DraftsReminderModal } from '../../components';
+import { Loading, FadeInView, ScreenContainer, DraftsReminderModal, BottomSheet, type BottomSheetOption } from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -238,6 +238,8 @@ export function DynamicHomeScreen({ navigation }: Props) {
     [navigation]
   );
 
+  const [isStartActionsSheetVisible, setIsStartActionsSheetVisible] = useState(false);
+
   const handlePrimaryCtaPress = useCallback(
     (action: string) => {
       if (!config) return;
@@ -253,6 +255,10 @@ export function DynamicHomeScreen({ navigation }: Props) {
     },
     [config, navigation]
   );
+
+  const handlePrimaryCtaLongPress = useCallback(() => {
+    setIsStartActionsSheetVisible(true);
+  }, []);
 
   // Handle section CTA press - navigate based on section type
   const handleSectionCtaPress = useCallback(
@@ -378,6 +384,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
               <PrimaryCTA
                 cta={config.primary_cta}
                 onPress={handlePrimaryCtaPress}
+                onLongPress={handlePrimaryCtaLongPress}
               />
             )}
           </FadeInView>
@@ -454,6 +461,28 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
       </ScrollView>
+
+      <BottomSheet
+        visible={isStartActionsSheetVisible}
+        onClose={() => setIsStartActionsSheetVisible(false)}
+        title={t('home.startActions.title')}
+        options={[
+          {
+            id: 'start',
+            icon: 'play-circle',
+            title: t('home.startActions.start'),
+            description: t('home.startActions.startDesc'),
+            onPress: () => navigation.navigate('Record'),
+          },
+          {
+            id: 'import',
+            icon: 'cloud-upload-outline',
+            title: t('home.startActions.import'),
+            description: t('home.startActions.importDesc'),
+            onPress: () => navigation.getParent()?.navigate('GpxImport'),
+          },
+        ] as BottomSheetOption[]}
+      />
 
       {isAuthenticated && (
         <DraftsReminderModal

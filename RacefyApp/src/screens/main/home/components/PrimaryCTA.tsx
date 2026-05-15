@@ -1,14 +1,16 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../hooks/useTheme';
+import { logger } from '../../../../services/logger';
 import { spacing, fontSize, borderRadius, fontWeight } from '../../../../theme';
 import type { HomePrimaryCta, HomeCtaAction } from '../../../../types/api';
 
 interface PrimaryCtaProps {
   cta: HomePrimaryCta;
   onPress: (action: HomeCtaAction) => void;
+  onLongPress?: (action: HomeCtaAction) => void;
 }
 
 /**
@@ -37,20 +39,30 @@ function getIconForAction(action: HomeCtaAction): keyof typeof Ionicons.glyphMap
  * The component does NOT contain any business logic for determining
  * what action to show - it simply renders what the backend provides.
  */
-export function PrimaryCTA({ cta, onPress }: PrimaryCtaProps) {
+export function PrimaryCTA({ cta, onPress, onLongPress }: PrimaryCtaProps) {
   const { colors } = useTheme();
 
   const handlePress = useCallback(() => {
     onPress(cta.action);
   }, [cta.action, onPress]);
 
+  const handleLongPress = useCallback(() => {
+    logger.debug('navigation', 'PrimaryCTA long press', { action: cta.action });
+    onLongPress?.(cta.action);
+  }, [cta.action, onLongPress]);
+
   const icon = getIconForAction(cta.action);
 
   return (
-    <TouchableOpacity
-      style={[styles.container, { shadowColor: colors.primary }]}
+    <Pressable
+      style={({ pressed }) => [
+        styles.container,
+        { shadowColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+      ]}
       onPress={handlePress}
-      activeOpacity={0.8}
+      onLongPress={onLongPress ? handleLongPress : undefined}
+      delayLongPress={350}
+      android_ripple={{ color: 'rgba(255,255,255,0.15)', borderless: false }}
     >
       <LinearGradient
         colors={[colors.primary, colors.primaryDark]}
@@ -70,9 +82,12 @@ export function PrimaryCTA({ cta, onPress }: PrimaryCtaProps) {
               </Text>
             )}
           </View>
+          {onLongPress && (
+            <Ionicons name="chevron-down" size={16} color="rgba(255,255,255,0.7)" style={styles.hintIcon} />
+          )}
         </View>
       </LinearGradient>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -111,5 +126,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: 'rgba(255, 255, 255, 0.85)',
     marginTop: spacing.xs,
+  },
+  hintIcon: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 });
