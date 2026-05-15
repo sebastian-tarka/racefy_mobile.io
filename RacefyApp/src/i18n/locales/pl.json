@@ -1316,7 +1316,11 @@
     "markAllAsReadConfirm": "Czy na pewno chcesz oznaczyć wszystkie powiadomienia jako przeczytane?",
     "markAllAsReadError": "Nie udało się oznaczyć wszystkich powiadomień jako przeczytane",
     "loadError": "Nie udało się załadować powiadomień. Spróbuj ponownie.",
-    "navigationError": "Nie można przejść do tej treści"
+    "navigationError": "Nie można przejść do tej treści",
+    "activity_report_ready": {
+      "title": "Twój raport AI jest gotowy",
+      "body": "Stuknij, aby zobaczyć analizę trenerską."
+    }
   },
   "leaderboard": {
     "title": "Ranking",
@@ -2017,6 +2021,42 @@
       "repeatedRoutes": "Powtarzane trasy",
       "loop": "Pętla",
       "outAndBack": "Tam i z powrotem"
+    },
+    "aiReports": {
+      "title": "Raporty AI",
+      "subtitle": "Spersonalizowana analiza trenerska Twoich aktywności",
+      "generate": "Wygeneruj raport AI",
+      "generateForActivity": "Wygeneruj raport AI dla tej aktywności",
+      "generating": "Generowanie…",
+      "viewAll": "Zobacz wszystkie raporty",
+      "noneYet": "Brak raportów",
+      "noneYetHint": "Wygeneruj swój pierwszy raport AI z dowolnej ukończonej aktywności.",
+      "premiumRequired": "Raporty AI dostępne w planach Plus i Pro.",
+      "monthlyLimitReached": "Osiągnięto miesięczny limit.",
+      "monthlyLimitReachedHint": "Przejdź na Pro, aby mieć nielimitowane raporty AI.",
+      "status": {
+        "pending": "W kolejce",
+        "processing": "Generowanie…",
+        "completed": "Gotowe",
+        "failed": "Błąd"
+      },
+      "sections": {
+        "summary": "Podsumowanie",
+        "highlights": "Najważniejsze",
+        "areas_to_improve": "Co poprawić",
+        "coaching_recommendations": "Rekomendacje trenera",
+        "next_steps": "Następne kroki"
+      },
+      "activityIncluded": "{{count}} aktywność",
+      "activitiesIncluded": "{{count}} aktywności",
+      "generatedBy": "Wygenerowane przez {{model}}",
+      "delete": "Usuń raport",
+      "deleteConfirm": "Usunąć ten raport? Tej operacji nie można cofnąć.",
+      "deleted": "Raport usunięty",
+      "errorWaiting": "Coś poszło nie tak podczas generowania raportu.",
+      "regenerate": "Wygeneruj ponownie",
+      "stillProcessing": "Wciąż przetwarzane — powiadomimy Cię, gdy będzie gotowe.",
+      "openActivity": "Otwórz aktywność"
     }
   },
   "teams": {

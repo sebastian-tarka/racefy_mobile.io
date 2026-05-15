@@ -80,6 +80,8 @@ import {RouteDetailScreen, RouteLibraryScreen, RoutePlannerScreen} from '../scre
 import type {AuthStackParamList, MainTabParamList, RootStackParamList,} from './types';
 import {FeedScreen} from '../screens/main/FeedScreen';
 import {InsightsScreen} from '../screens/main/InsightsScreen';
+import {AiActivityReportsScreen} from '../screens/insights/AiActivityReportsScreen';
+import {AiActivityReportDetailScreen} from '../screens/insights/AiActivityReportDetailScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -492,6 +494,14 @@ export function AppNavigator() {
             <RootStack.Screen
               name="Insights"
               component={InsightsScreen}
+            />
+            <RootStack.Screen
+              name="AiActivityReports"
+              component={AiActivityReportsScreen}
+            />
+            <RootStack.Screen
+              name="AiActivityReportDetail"
+              component={AiActivityReportDetailScreen}
             />
             <RootStack.Screen
               name="TrainingCalibration"

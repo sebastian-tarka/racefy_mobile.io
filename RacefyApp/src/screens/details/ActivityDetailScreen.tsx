@@ -51,7 +51,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export function ActivityDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { canUse } = useSubscription();
+  const { canUse, tier } = useSubscription();
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -202,6 +203,37 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     []
   );
 
+  const handleGenerateAiReport = useCallback(async () => {
+    if (isGeneratingReport) return;
+    if (tier === 'free') {
+      navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' });
+      return;
+    }
+    setIsGeneratingReport(true);
+    try {
+      const response = await api.generateActivityReport({ activity_ids: [activityId] });
+      navigation.navigate('AiActivityReportDetail', { reportId: response.data.id });
+    } catch (error: any) {
+      if (error.status === 403 && error.upgrade_required) {
+        Alert.alert(
+          t('insights.aiReports.monthlyLimitReached'),
+          t('insights.aiReports.monthlyLimitReachedHint'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('insights.locked.upgrade'),
+              onPress: () => navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' }),
+            },
+          ]
+        );
+      } else {
+        Alert.alert('', error.message || t('insights.aiReports.errorWaiting'));
+      }
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [isGeneratingReport, tier, activityId, navigation, t]);
+
   const toggleMapExpand = useCallback(() => {
     const newExpandedState = !isMapExpanded;
     setIsMapExpanded(newExpandedState);
@@ -254,6 +286,20 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         rightAction={
           isOwner ? (
             <View style={styles.headerActions}>
+              {activity.status === 'completed' ? (
+                <TouchableOpacity
+                  onPress={handleGenerateAiReport}
+                  disabled={isGeneratingReport}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityLabel={t('insights.aiReports.generateForActivity')}
+                >
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={22}
+                    color={isGeneratingReport ? colors.textMuted : colors.primary}
+                  />
+                </TouchableOpacity>
+              ) : null}
               <TouchableOpacity
                 onPress={() => navigation.navigate('ActivityForm', { activityId })}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

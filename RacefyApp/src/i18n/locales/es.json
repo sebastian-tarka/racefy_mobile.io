@@ -1305,7 +1305,11 @@
     "markAllAsReadConfirm": "¿Estás seguro de que quieres marcar todas las notificaciones como leídas?",
     "markAllAsReadError": "Error al marcar todas las notificaciones como leídas",
     "loadError": "Error al cargar notificaciones. Por favor intenta de nuevo.",
-    "navigationError": "No se puede navegar a este contenido"
+    "navigationError": "No se puede navegar a este contenido",
+    "activity_report_ready": {
+      "title": "Tu informe IA está listo",
+      "body": "Toca para ver tu análisis de entrenamiento."
+    }
   },
   "leaderboard": {
     "title": "Clasificación",
@@ -1987,6 +1991,42 @@
       "repeatedRoutes": "Rutas repetidas",
       "loop": "Circuito",
       "outAndBack": "Ida y vuelta"
+    },
+    "aiReports": {
+      "title": "Informes IA",
+      "subtitle": "Análisis de entrenamiento personalizado de tus actividades",
+      "generate": "Generar informe IA",
+      "generateForActivity": "Generar informe IA de esta actividad",
+      "generating": "Generando…",
+      "viewAll": "Ver todos los informes",
+      "noneYet": "Aún no hay informes",
+      "noneYetHint": "Genera tu primer informe IA desde cualquier actividad completada.",
+      "premiumRequired": "Los informes IA están disponibles con Plus o Pro.",
+      "monthlyLimitReached": "Has alcanzado el límite mensual.",
+      "monthlyLimitReachedHint": "Actualiza a Pro para informes IA ilimitados.",
+      "status": {
+        "pending": "En cola",
+        "processing": "Generando…",
+        "completed": "Listo",
+        "failed": "Error"
+      },
+      "sections": {
+        "summary": "Resumen",
+        "highlights": "Destacados",
+        "areas_to_improve": "Áreas a mejorar",
+        "coaching_recommendations": "Recomendaciones",
+        "next_steps": "Próximos pasos"
+      },
+      "activityIncluded": "{{count}} actividad",
+      "activitiesIncluded": "{{count}} actividades",
+      "generatedBy": "Generado por {{model}}",
+      "delete": "Eliminar informe",
+      "deleteConfirm": "¿Eliminar este informe? Esta acción no se puede deshacer.",
+      "deleted": "Informe eliminado",
+      "errorWaiting": "Algo salió mal al generar el informe.",
+      "regenerate": "Regenerar",
+      "stillProcessing": "Aún procesándose — te notificaremos cuando esté listo.",
+      "openActivity": "Abrir actividad"
     }
   },
   "teams": {

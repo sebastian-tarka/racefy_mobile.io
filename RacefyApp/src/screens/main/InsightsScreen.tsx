@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -99,7 +100,20 @@ export function InsightsScreen({ navigation }: Props) {
   if (isLoading) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('insights.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+          rightAction={
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AiActivityReports')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={t('insights.aiReports.viewAll')}
+            >
+              <Ionicons name="sparkles-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          }
+        />
         <Loading fullScreen message={t('common.loading')} />
       </ScreenContainer>
     );
@@ -108,7 +122,20 @@ export function InsightsScreen({ navigation }: Props) {
   if (error) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('insights.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+          rightAction={
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AiActivityReports')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={t('insights.aiReports.viewAll')}
+            >
+              <Ionicons name="sparkles-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          }
+        />
         <EmptyState
           icon="alert-circle-outline"
           title={t('common.error')}
@@ -123,7 +150,20 @@ export function InsightsScreen({ navigation }: Props) {
   if (!data || !data.has_data) {
     return (
       <ScreenContainer edges={['top']}>
-        <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('insights.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+          rightAction={
+            <TouchableOpacity
+              onPress={() => navigation.navigate('AiActivityReports')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={t('insights.aiReports.viewAll')}
+            >
+              <Ionicons name="sparkles-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          }
+        />
         <EmptyState
           icon="fitness-outline"
           title={t('insights.empty.title')}

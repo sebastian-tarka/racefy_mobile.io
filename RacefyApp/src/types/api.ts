@@ -1699,7 +1699,8 @@ export type NotificationType =
   | 'points_awarded'
   | 'weekly_summary'
   | 'training_week_feedback'
-  | 'reshares';
+  | 'reshares'
+  | 'activity_report_ready';
 
 export interface NotificationData {
   type: NotificationType;
@@ -2188,6 +2189,8 @@ export interface PushNotificationData {
   week_number?: number;
   program_name?: string;
   overall_rating?: string;
+  // AI activity report data
+  report_id?: number;
 }
 
 // ============ SOCIAL SHARING ============

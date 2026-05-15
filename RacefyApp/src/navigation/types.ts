@@ -66,6 +66,9 @@ export type RootStackParamList = {
   FeedbackList: undefined;
   FeedbackForm: undefined;
   FeedbackDetail: { feedbackId: number };
+  // AI Activity Reports
+  AiActivityReports: undefined;
+  AiActivityReportDetail: { reportId: number };
   // Routes
   RouteLibrary: { selectMode?: boolean } | undefined;
   RouteDetail: { routeId: number };
