@@ -555,6 +555,33 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: colors.primary, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={() =>
+              tier === 'free'
+                ? navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
+                : navigation.navigate('AiActivityReports')
+            }
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: colors.primary + '22' }]}>
+              <Ionicons name="sparkles" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+                {t('insights.aiReports.title')}
+              </Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+                {tier === 'free' ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')}
+              </Text>
+            </View>
+            {tier === 'free' ? (
+              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+            ) : (
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.sectionCard, { borderLeftColor: '#8b5cf6', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
             onPress={() => navigation.navigate('TeamsList')}
             activeOpacity={0.75}

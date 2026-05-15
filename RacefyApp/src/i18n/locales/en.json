@@ -36,7 +36,8 @@
     "fri": "Fri",
     "sat": "Sat",
     "sun": "Sun",
-    "notNow": "Not now"
+    "notNow": "Not now",
+    "options": "Options"
   },
   "sports": {
     "running": "Running",
@@ -606,6 +607,7 @@
   },
   "activityDetail": {
     "title": "Activity Details",
+    "actions": "Activity actions",
     "activity": "Activity",
     "loading": "Loading activity...",
     "notFound": "Activity not found",

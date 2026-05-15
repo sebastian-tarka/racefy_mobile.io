@@ -236,8 +236,9 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.headerRow}>
-          <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.badgeText, { color: statusColor }]}>
+          <View style={styles.statusBadge}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
               {t(`insights.aiReports.status.${report.status}`)}
             </Text>
           </View>
@@ -396,12 +397,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  badgeText: {
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
   },

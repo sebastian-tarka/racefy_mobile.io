@@ -16,6 +16,8 @@ import {format} from 'date-fns';
 import {useTranslation} from 'react-i18next';
 import {
     Avatar,
+    BottomSheet,
+    type BottomSheetOption,
     Button,
     Card,
     CommentSection,
@@ -53,6 +55,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const { canUse, tier } = useSubscription();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isActionsSheetVisible, setIsActionsSheetVisible] = useState(false);
   const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -285,35 +288,13 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         }}
         rightAction={
           isOwner ? (
-            <View style={styles.headerActions}>
-              {activity.status === 'completed' ? (
-                <TouchableOpacity
-                  onPress={handleGenerateAiReport}
-                  disabled={isGeneratingReport}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  accessibilityLabel={t('insights.aiReports.generateForActivity')}
-                >
-                  <Ionicons
-                    name="sparkles-outline"
-                    size={22}
-                    color={isGeneratingReport ? colors.textMuted : colors.primary}
-                  />
-                </TouchableOpacity>
-              ) : null}
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ActivityForm', { activityId })}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="create-outline" size={22} color={colors.textPrimary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={confirmDelete}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.deleteButton}
-              >
-                <Ionicons name="trash-outline" size={22} color={colors.error} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => setIsActionsSheetVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={t('common.options')}
+            >
+              <Ionicons name="ellipsis-horizontal" size={22} color={colors.textPrimary} />
+            </TouchableOpacity>
           ) : undefined
         }
       />
@@ -743,6 +724,48 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         </View>
           </KeyboardAwareScreenLayout>
         )}
+      />
+
+      <BottomSheet
+        visible={isActionsSheetVisible}
+        onClose={() => setIsActionsSheetVisible(false)}
+        title={t('activityDetail.actions')}
+        options={(() => {
+          const opts: BottomSheetOption[] = [];
+          if (activity.status === 'completed') {
+            opts.push({
+              id: 'generate-report',
+              icon: 'sparkles-outline',
+              title: t('insights.aiReports.generateForActivity'),
+              onPress: handleGenerateAiReport,
+              color: colors.primary,
+            });
+          }
+          opts.push({
+            id: 'edit',
+            icon: 'create-outline',
+            title: t('common.edit'),
+            onPress: () => navigation.navigate('ActivityForm', { activityId }),
+          });
+          opts.push({
+            id: 'share',
+            icon: 'share-outline',
+            title: t('common.share'),
+            onPress: () => navigation.navigate('ActivityShare', {
+              activityId,
+              hasGpsTrack: activity.has_gps_track,
+              photos: activity.photos,
+            }),
+          });
+          opts.push({
+            id: 'delete',
+            icon: 'trash-outline',
+            title: t('common.delete'),
+            onPress: confirmDelete,
+            color: colors.error,
+          });
+          return opts;
+        })()}
       />
     </ScreenContainer>
   );

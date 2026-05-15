@@ -36,7 +36,8 @@
     "fri": "Vie",
     "sat": "Sáb",
     "sun": "Dom",
-    "notNow": "Ahora no"
+    "notNow": "Ahora no",
+    "options": "Opciones"
   },
   "sports": {
     "running": "Correr",
@@ -601,6 +602,7 @@
   },
   "activityDetail": {
     "title": "Detalles de la actividad",
+    "actions": "Acciones de la actividad",
     "activity": "Actividad",
     "loading": "Cargando actividad...",
     "notFound": "Actividad no encontrada",

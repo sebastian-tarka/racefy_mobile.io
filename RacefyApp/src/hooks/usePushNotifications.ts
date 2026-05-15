@@ -208,6 +208,14 @@ export function usePushNotifications(
           }
           break;
 
+        case 'activity_report_ready':
+          if (data.report_id) {
+            navigation.navigate('AiActivityReportDetail', { reportId: data.report_id });
+          } else {
+            navigation.navigate('AiActivityReports');
+          }
+          break;
+
         case 'reshares':
           if (data.post_id) {
             navigation.navigate('PostDetail', { postId: data.post_id });

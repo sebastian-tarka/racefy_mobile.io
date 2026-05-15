@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ScreenContainer, ScreenHeader, EmptyState } from '../../components';
+import { ScreenContainer, ScreenHeader, EmptyState, Button } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
@@ -31,6 +32,7 @@ const STATUS_COLORS: Record<AiActivityReportStatus, string> = {
 export function AiActivityReportsScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
+  const { tier } = useSubscription();
 
   const [reports, setReports] = useState<AiActivityReport[]>([]);
   const [page, setPage] = useState(1);
@@ -110,8 +112,9 @@ export function AiActivityReportsScreen({ navigation }: Props) {
               {countLabel}
             </Text>
           </View>
-          <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
-            <Text style={[styles.badgeText, { color: statusColor }]}>
+          <View style={styles.statusBadge}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>
               {t(`insights.aiReports.status.${item.status}`)}
             </Text>
           </View>
@@ -130,6 +133,31 @@ export function AiActivityReportsScreen({ navigation }: Props) {
 
   const renderEmpty = () => {
     if (isLoading) return null;
+    if (tier === 'free') {
+      return (
+        <View style={styles.freeEmpty}>
+          <Text style={styles.freeEmoji}>🤖</Text>
+          <Text style={[styles.freeTitle, { color: colors.textPrimary }]}>
+            {t('insights.aiReports.premiumRequired')}
+          </Text>
+          <Text style={[styles.freeMessage, { color: colors.textSecondary }]}>
+            {t('insights.aiReports.noneYetHint')}
+          </Text>
+          <View style={[styles.lockChip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+            <Text style={[styles.lockChipText, { color: colors.textSecondary }]}>
+              {t('insights.locked.upgrade')}
+            </Text>
+          </View>
+          <Button
+            title={t('insights.locked.upgrade')}
+            onPress={() => navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })}
+            variant="primary"
+            style={styles.freeCta}
+          />
+        </View>
+      );
+    }
     return (
       <EmptyState
         icon="sparkles-outline"
@@ -233,12 +261,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: 2,
   },
-  badge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  badgeText: {
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -248,5 +281,41 @@ const styles = StyleSheet.create({
   },
   footerLoader: {
     paddingVertical: spacing.md,
+  },
+  freeEmpty: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
+  freeEmoji: {
+    fontSize: 64,
+    marginBottom: spacing.sm,
+  },
+  freeTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  freeMessage: {
+    fontSize: fontSize.md,
+    textAlign: 'center',
+    lineHeight: fontSize.md * 1.4,
+  },
+  lockChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  lockChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  freeCta: {
+    minWidth: 200,
+    marginTop: spacing.sm,
   },
 });
