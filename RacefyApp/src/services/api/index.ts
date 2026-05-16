@@ -14,7 +14,8 @@ import { PrivacyZonesMixin } from './privacyZones';
 import { FeedbackMixin } from './feedback';
 import { RoutesMixin } from './routes';
 import { ReportsMixin } from './reports';
+import { GoalsMixin } from './goals';
 
-class ApiService extends ReportsMixin(RoutesMixin(FeedbackMixin(PrivacyZonesMixin(TeamsMixin(InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase))))))))))))))) {}
+class ApiService extends GoalsMixin(ReportsMixin(RoutesMixin(FeedbackMixin(PrivacyZonesMixin(TeamsMixin(InsightsMixin(AuthMixin(PostsMixin(ActivitiesMixin(EventsMixin(UsersMixin(TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))))))))))))))) {}
 
 export const api = new ApiService();

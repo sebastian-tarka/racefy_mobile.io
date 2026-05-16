@@ -272,6 +272,11 @@ export function getSectionComponentName(type: HomeSectionType): string {
     event_results: 'EventResultsSection',
     nearby_events: 'NearbyEventsSection',
     friend_events: 'FriendEventsSection',
+    // Training-related section types (handled outside SectionRenderer)
+    todays_training_session: 'PrimaryCTAHero',
+    weekly_training_progress: 'WeeklyTrainingProgressSection',
+    training_goal_progress: 'TrainingGoalProgressSection',
+    program_phase_intro: 'ProgramPhaseIntroSection',
     // UI-only sections
     upcoming_events: 'UpcomingEventsSection',
     auth_prompt: 'AuthPromptSection',

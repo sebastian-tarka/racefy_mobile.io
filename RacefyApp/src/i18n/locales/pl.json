@@ -712,7 +712,8 @@
     "gpsSignal": {
       "good": "GPS: Dobry",
       "weak": "GPS: Słaby",
-      "lost": "GPS: Brak"
+      "lost": "GPS: Brak",
+      "disabled": "GPS: Wyłączony"
     },
     "duration": "Czas trwania",
     "distance": "Dystans",
@@ -1942,6 +1943,88 @@
       "points_multiplier": "Zdobywaj punkty szybciej dzięki bonusowi mnożnika."
     },
     "tapToUpgrade": "Kliknij, aby ulepszyć"
+  },
+  "goals": {
+    "title": "Cele treningowe",
+    "subtitle": "Ustaw cele i śledź postępy",
+    "manageGoals": "Zarządzaj celami",
+    "allSports": "Wszystkie sporty",
+    "rolling": "Cel cykliczny",
+    "unlimited": "Bez limitu",
+    "slotsUsed": "{{used}} / {{max}} aktywnych",
+    "deleted": "Cel usunięty",
+    "confirmDelete": "Usunąć ten cel? Historia okresów zostanie utracona.",
+    "empty": {
+      "headline": "Brak celów",
+      "subtitle": "Ustaw pierwszy cel treningowy, a my zajmiemy się śledzeniem postępów.",
+      "cta": "Utwórz cel"
+    },
+    "period": {
+      "week": "Tygodniowy",
+      "month": "Miesięczny",
+      "year": "Roczny"
+    },
+    "metric": {
+      "distance": "Dystans",
+      "duration": "Czas",
+      "elevation": "Przewyższenie",
+      "activities_count": "Aktywności"
+    },
+    "form": {
+      "sport": "Sport",
+      "metric": "Metryka",
+      "target": "Cel",
+      "period": "Okres",
+      "startDate": "Data startu",
+      "endDate": "Data końca",
+      "repeating": "Okres odnawia się po zakończeniu"
+    },
+    "status": {
+      "onTrack": "Na bieżąco",
+      "behind": "W tyle",
+      "ahead": "Przed planem",
+      "completed": "Osiągnięty",
+      "daysLeft_one": "Pozostał {{count}} dzień",
+      "daysLeft_other": "Pozostało {{count}} dni"
+    },
+    "actions": {
+      "create": "Utwórz cel",
+      "edit": "Edytuj cel",
+      "delete": "Usuń",
+      "save": "Zapisz"
+    },
+    "toast": {
+      "created": "Cel utworzony",
+      "updated": "Cel zaktualizowany",
+      "deleted": "Cel usunięty"
+    },
+    "errors": {
+      "targetTooLow": "Cel musi być większy niż 0",
+      "upgradeRequired": "Ulepsz plan, aby odblokować więcej opcji",
+      "duplicate": "Masz już aktywny cel dla tej kombinacji"
+    },
+    "limitReached": {
+      "title": "Osiągnięto limit celów",
+      "body": "Wykorzystujesz wszystkie {{max}} aktywnych celów. Przejdź na wyższy plan, aby mieć więcej.",
+      "cta": "Ulepsz"
+    },
+    "detail": {
+      "backToGoals": "Powrót do celów",
+      "historyTitle": "Historia okresów",
+      "historyRange": "Ostatnie {{months}} mies.",
+      "historyAll": "Cała historia",
+      "historyEmpty": "Brak zamkniętych okresów — wróć po zakończeniu okresu.",
+      "metRatio": "Zaliczone",
+      "avgPercent": "Średnia",
+      "streak": "Seria",
+      "bestPeriod": "Najlepszy",
+      "linearExpected": "liniowo: {{percent}}%",
+      "status": {
+        "success": "Osiągnięty",
+        "partial": "Częściowy",
+        "missed": "Niezaliczony"
+      }
+    }
   },
   "insights": {
     "title": "Profil treningowy",

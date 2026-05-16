@@ -82,6 +82,9 @@ import {FeedScreen} from '../screens/main/FeedScreen';
 import {InsightsScreen} from '../screens/main/InsightsScreen';
 import {AiActivityReportsScreen} from '../screens/insights/AiActivityReportsScreen';
 import {AiActivityReportDetailScreen} from '../screens/insights/AiActivityReportDetailScreen';
+import {GoalsScreen} from '../screens/goals/GoalsScreen';
+import {GoalDetailScreen} from '../screens/goals/GoalDetailScreen';
+import {GoalFormScreen} from '../screens/goals/GoalFormScreen';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -506,6 +509,18 @@ export function AppNavigator() {
             <RootStack.Screen
               name="AiActivityReportDetail"
               component={AiActivityReportDetailScreen}
+            />
+            <RootStack.Screen
+              name="Goals"
+              component={GoalsScreen}
+            />
+            <RootStack.Screen
+              name="GoalDetail"
+              component={GoalDetailScreen}
+            />
+            <RootStack.Screen
+              name="GoalForm"
+              component={GoalFormScreen}
             />
             <RootStack.Screen
               name="TrainingCalibration"

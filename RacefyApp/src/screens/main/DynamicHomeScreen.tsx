@@ -5,7 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
-import type { TrainingTip } from '../../types/api';
+import type {
+  TrainingTip,
+  HomeSection,
+  HomeActionPayload,
+  HomeCtaAction,
+  TodaysTrainingSessionMeta,
+} from '../../types/api';
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../../navigation/constants';
 
 // Hooks
@@ -22,7 +28,7 @@ import { useTrainingReminders } from '../../hooks/useTrainingReminders';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { homeAnalytics } from '../../services/homeAnalytics';
-import { navigateForCtaActionFromTab } from '../../utils/homeNavigation';
+import { executeCtaActionFromTab } from '../../utils/homeNavigation';
 import { useRefreshOn } from '../../services/refreshEvents';
 
 // Theme
@@ -240,20 +246,49 @@ export function DynamicHomeScreen({ navigation }: Props) {
 
   const [isStartActionsSheetVisible, setIsStartActionsSheetVisible] = useState(false);
 
+  // Find rich training-session data for the primary CTA (if backend returned it).
+  const todaysSession = useMemo(
+    () => sortedSections.find((s) => s.type === 'todays_training_session'),
+    [sortedSections]
+  );
+
+  // Hide the section from the generic SectionRenderer — it's rendered as part
+  // of the primary CTA hero instead.
+  const renderableSections = useMemo<HomeSection[]>(
+    () => sortedSections.filter((s) => s.type !== 'todays_training_session'),
+    [sortedSections]
+  );
+
+  const primaryCtaHero = useMemo(() => {
+    if (!todaysSession) return undefined;
+    return {
+      label: todaysSession.label,
+      title: todaysSession.title,
+      message: todaysSession.message,
+      cta: todaysSession.cta,
+      action: todaysSession.action,
+      meta: todaysSession.meta as TodaysTrainingSessionMeta | undefined,
+    };
+  }, [todaysSession]);
+
   const handlePrimaryCtaPress = useCallback(
-    (action: string) => {
+    (action: HomeCtaAction | string, payload?: HomeActionPayload) => {
       if (!config) return;
 
-      // Track analytics
+      // Track analytics with the resolved action (hero action takes precedence).
       homeAnalytics.primaryCtaClicked(
-        config.primary_cta.action,
+        (action as HomeCtaAction) ?? config.primary_cta.action,
         config.primary_cta.label
       );
 
-      // Navigate
-      navigateForCtaActionFromTab(navigation, config.primary_cta.action);
+      executeCtaActionFromTab(navigation, action, payload).then((handled) => {
+        if (handled && action === 'resume_training') {
+          // Program was resumed — refresh config to reflect new state.
+          refetchConfig();
+        }
+      });
     },
-    [config, navigation]
+    [config, navigation, refetchConfig]
   );
 
   const handlePrimaryCtaLongPress = useCallback(() => {
@@ -383,6 +418,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
             {config?.primary_cta && (
               <PrimaryCTA
                 cta={config.primary_cta}
+                hero={primaryCtaHero}
                 onPress={handlePrimaryCtaPress}
                 onLongPress={handlePrimaryCtaLongPress}
               />
@@ -449,11 +485,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
 
-        {/* Sections - rendered based on config, sorted by priority */}
-        {!isLoading && sortedSections.length > 0 && (
+        {/* Sections - rendered based on config, sorted by priority.
+            todays_training_session is excluded — it powers the primary CTA hero. */}
+        {!isLoading && renderableSections.length > 0 && (
           <FadeInView delay={560}>
             <SectionRenderer
-              sections={sortedSections}
+              sections={renderableSections}
               data={sectionData}
               callbacks={sectionCallbacks}
               isAuthenticated={isAuthenticated}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 
-export type RefreshEventType = 'feed' | 'events' | 'activities' | 'profile' | 'posts' | 'notifications' | 'messages' | 'teams' | 'training';
+export type RefreshEventType = 'feed' | 'events' | 'activities' | 'profile' | 'posts' | 'notifications' | 'messages' | 'teams' | 'training' | 'goals';
 
 const REFRESH_EVENT_PREFIX = 'refresh:';
 

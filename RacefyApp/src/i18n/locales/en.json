@@ -712,7 +712,8 @@
     "gpsSignal": {
       "good": "GPS: Good",
       "weak": "GPS: Weak",
-      "lost": "GPS: Lost"
+      "lost": "GPS: Lost",
+      "disabled": "GPS: Disabled"
     },
     "duration": "Duration",
     "distance": "Distance",
@@ -1940,6 +1941,88 @@
       "points_multiplier": "Earn points faster with a multiplier bonus."
     },
     "tapToUpgrade": "Tap to upgrade"
+  },
+  "goals": {
+    "title": "Training Goals",
+    "subtitle": "Set targets and track progress",
+    "manageGoals": "Manage goals",
+    "allSports": "All sports",
+    "rolling": "Rolling goal",
+    "unlimited": "Unlimited",
+    "slotsUsed": "{{used}} / {{max}} active",
+    "deleted": "Goal deleted",
+    "confirmDelete": "Delete this goal? Period history will be lost.",
+    "empty": {
+      "headline": "No goals yet",
+      "subtitle": "Set your first training goal and we'll track progress automatically.",
+      "cta": "Create goal"
+    },
+    "period": {
+      "week": "Weekly",
+      "month": "Monthly",
+      "year": "Yearly"
+    },
+    "metric": {
+      "distance": "Distance",
+      "duration": "Duration",
+      "elevation": "Elevation",
+      "activities_count": "Activities"
+    },
+    "form": {
+      "sport": "Sport",
+      "metric": "Metric",
+      "target": "Target",
+      "period": "Period",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "repeating": "Period rolls over on completion"
+    },
+    "status": {
+      "onTrack": "On track",
+      "behind": "Behind",
+      "ahead": "Ahead",
+      "completed": "Completed",
+      "daysLeft_one": "{{count}} day left",
+      "daysLeft_other": "{{count}} days left"
+    },
+    "actions": {
+      "create": "Create goal",
+      "edit": "Edit goal",
+      "delete": "Delete",
+      "save": "Save"
+    },
+    "toast": {
+      "created": "Goal created",
+      "updated": "Goal updated",
+      "deleted": "Goal deleted"
+    },
+    "errors": {
+      "targetTooLow": "Target must be greater than 0",
+      "upgradeRequired": "Upgrade to unlock more goal options",
+      "duplicate": "You already have an active goal for this combination"
+    },
+    "limitReached": {
+      "title": "Goal limit reached",
+      "body": "You're using all {{max}} active goal slots. Upgrade to get more.",
+      "cta": "Upgrade"
+    },
+    "detail": {
+      "backToGoals": "Back to goals",
+      "historyTitle": "Period history",
+      "historyRange": "Last {{months}} months",
+      "historyAll": "All history",
+      "historyEmpty": "No closed periods yet — check back at the end of the period.",
+      "metRatio": "Met",
+      "avgPercent": "Avg",
+      "streak": "Streak",
+      "bestPeriod": "Best",
+      "linearExpected": "linear: {{percent}}%",
+      "status": {
+        "success": "Achieved",
+        "partial": "Partial",
+        "missed": "Missed"
+      }
+    }
   },
   "insights": {
     "title": "Training Profile",

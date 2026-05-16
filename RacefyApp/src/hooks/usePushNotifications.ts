@@ -220,6 +220,16 @@ export function usePushNotifications(
           }
           break;
 
+        case 'goal_achieved':
+        case 'goal_period_completed':
+        case 'goal_pace_warning':
+          if (data.goal_id) {
+            navigation.navigate('GoalDetail', { goalId: data.goal_id });
+          } else {
+            navigation.navigate('Goals');
+          }
+          break;
+
         case 'reshares':
           if (data.post_id) {
             navigation.navigate('PostDetail', { postId: data.post_id });
@@ -265,6 +275,17 @@ export function usePushNotifications(
       const eventMatch = url.match(/^\/events\/(\d+)$/);
       if (eventMatch) {
         navigation.navigate('EventDetail', { eventId: parseInt(eventMatch[1]) });
+        return true;
+      }
+
+      // Goal: /goals/{id} or /goals
+      const goalMatch = url.match(/^\/goals\/(\d+)$/);
+      if (goalMatch) {
+        navigation.navigate('GoalDetail', { goalId: parseInt(goalMatch[1]) });
+        return true;
+      }
+      if (url === '/goals') {
+        navigation.navigate('Goals');
         return true;
       }
 

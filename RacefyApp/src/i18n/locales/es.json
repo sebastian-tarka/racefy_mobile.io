@@ -707,7 +707,8 @@
     "gpsSignal": {
       "good": "GPS: Bueno",
       "weak": "GPS: Débil",
-      "lost": "GPS: Perdido"
+      "lost": "GPS: Perdido",
+      "disabled": "GPS: Desactivado"
     },
     "duration": "Duración",
     "distance": "Distancia",
@@ -1912,6 +1913,88 @@
       "points_multiplier": "Gana puntos más rápido con un multiplicador de bonificación."
     },
     "tapToUpgrade": "Toca para mejorar"
+  },
+  "goals": {
+    "title": "Objetivos de entrenamiento",
+    "subtitle": "Define metas y sigue tu progreso",
+    "manageGoals": "Gestionar objetivos",
+    "allSports": "Todos los deportes",
+    "rolling": "Objetivo recurrente",
+    "unlimited": "Sin límite",
+    "slotsUsed": "{{used}} / {{max}} activos",
+    "deleted": "Objetivo eliminado",
+    "confirmDelete": "¿Eliminar este objetivo? Se perderá el historial de periodos.",
+    "empty": {
+      "headline": "Aún no hay objetivos",
+      "subtitle": "Crea tu primer objetivo y haremos el seguimiento por ti.",
+      "cta": "Crear objetivo"
+    },
+    "period": {
+      "week": "Semanal",
+      "month": "Mensual",
+      "year": "Anual"
+    },
+    "metric": {
+      "distance": "Distancia",
+      "duration": "Duración",
+      "elevation": "Desnivel",
+      "activities_count": "Actividades"
+    },
+    "form": {
+      "sport": "Deporte",
+      "metric": "Métrica",
+      "target": "Meta",
+      "period": "Periodo",
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
+      "repeating": "El periodo se renueva al completarse"
+    },
+    "status": {
+      "onTrack": "En ruta",
+      "behind": "Por detrás",
+      "ahead": "Adelantado",
+      "completed": "Completado",
+      "daysLeft_one": "Queda {{count}} día",
+      "daysLeft_other": "Quedan {{count}} días"
+    },
+    "actions": {
+      "create": "Crear objetivo",
+      "edit": "Editar objetivo",
+      "delete": "Eliminar",
+      "save": "Guardar"
+    },
+    "toast": {
+      "created": "Objetivo creado",
+      "updated": "Objetivo actualizado",
+      "deleted": "Objetivo eliminado"
+    },
+    "errors": {
+      "targetTooLow": "La meta debe ser mayor que 0",
+      "upgradeRequired": "Actualiza tu plan para desbloquear más opciones",
+      "duplicate": "Ya tienes un objetivo activo con esta combinación"
+    },
+    "limitReached": {
+      "title": "Límite de objetivos alcanzado",
+      "body": "Estás usando los {{max}} objetivos activos. Actualiza para tener más.",
+      "cta": "Actualizar"
+    },
+    "detail": {
+      "backToGoals": "Volver a objetivos",
+      "historyTitle": "Historial de periodos",
+      "historyRange": "Últimos {{months}} meses",
+      "historyAll": "Todo el historial",
+      "historyEmpty": "Aún no hay periodos cerrados — vuelve al final del periodo.",
+      "metRatio": "Cumplidos",
+      "avgPercent": "Promedio",
+      "streak": "Racha",
+      "bestPeriod": "Mejor",
+      "linearExpected": "lineal: {{percent}}%",
+      "status": {
+        "success": "Logrado",
+        "partial": "Parcial",
+        "missed": "No logrado"
+      }
+    }
   },
   "insights": {
     "title": "Perfil de entrenamiento",

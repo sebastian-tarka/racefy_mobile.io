@@ -582,6 +582,21 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.sectionCard, { borderLeftColor: '#f59e0b', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
+            onPress={() => navigation.navigate('Goals')}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.sectionIcon, { backgroundColor: '#f59e0b22' }]}>
+              <Ionicons name="flag" size={20} color="#f59e0b" />
+            </View>
+            <View style={styles.sectionText}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('goals.title')}</Text>
+              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('goals.subtitle')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.sectionCard, { borderLeftColor: '#8b5cf6', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
             onPress={() => navigation.navigate('TeamsList')}
             activeOpacity={0.75}

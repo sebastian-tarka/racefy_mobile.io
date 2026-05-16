@@ -41,6 +41,16 @@ export interface SubscriptionFeatures {
   coaching_hints_bulk: boolean; // Pro only: generate all hints at once
   live_navigation: boolean;     // Pro only: turn-by-turn navigation during activities
   saved_routes: number;         // -1 = unlimited, free = 5, plus = 20
+  // Training Goals
+  goals_max_active: number;             // free: 1, plus: 5, pro: -1
+  goals_period_week: boolean;
+  goals_period_month: boolean;
+  goals_period_year: boolean;
+  goals_metrics: import('./goals').GoalMetric[]; // free: ['distance'], plus+: all 4
+  goals_per_sport_type: boolean;
+  goals_history_months: number;         // free: 1, plus: 12, pro: -1
+  goals_smart_suggestions: boolean;
+  goals_pace_warning_notifications: boolean;
 }
 
 export interface SubscriptionUsage {
@@ -1731,7 +1741,10 @@ export type NotificationType =
   | 'weekly_summary'
   | 'training_week_feedback'
   | 'reshares'
-  | 'activity_report_ready';
+  | 'activity_report_ready'
+  | 'goal_achieved'
+  | 'goal_period_completed'
+  | 'goal_pace_warning';
 
 export interface NotificationData {
   type: NotificationType;
@@ -1977,15 +1990,36 @@ export type HomeCtaAction =
   | 'start_activity'
   | 'view_events'
   | 'view_feed'
-  | 'register';
+  | 'register'
+  | 'start_planned_training'
+  | 'view_training_week'
+  | 'view_goal'
+  | 'resume_training';
 
 /** Home screen version - controlled by API */
 export type HomeVersion = 'legacy' | 'dynamic';
+
+/**
+ * Whitelisted payload keys for action-driven navigation.
+ * Backend strips any keys outside this set.
+ */
+export interface HomeActionPayload {
+  training_week_id?: number;
+  session_order?: number;
+  goal_id?: number;
+  program_id?: number;
+}
+
+export interface HomeSectionAction {
+  type: HomeCtaAction | string;
+  payload?: HomeActionPayload;
+}
 
 export interface HomePrimaryCta {
   action: HomeCtaAction;
   label: string;
   subtitle?: string;
+  payload?: HomeActionPayload;
 }
 
 export type HomeSectionType =
@@ -2002,10 +2036,27 @@ export type HomeSectionType =
   | 'event_results'
   | 'nearby_events'
   | 'friend_events'
+  // Training-related types (rich data for hero CTA)
+  | 'todays_training_session'
+  | 'weekly_training_progress'
+  | 'training_goal_progress'
+  | 'program_phase_intro'
   // UI-only types (not from backend config)
   | 'upcoming_events'
   | 'auth_prompt'
   | 'quick_actions';
+
+/**
+ * Meta for `todays_training_session` section.
+ * Used to enrich the primary CTA button with structured details.
+ */
+export interface TodaysTrainingSessionMeta {
+  target_distance_meters?: number;
+  target_duration_minutes?: number;
+  tags?: string[];
+  activity_type?: string;
+  program_name?: string;
+}
 
 export interface HomeSectionEvent {
   id: number;
@@ -2042,6 +2093,15 @@ export interface HomeSection {
   title: string;
   message?: string;
   cta?: string | null;
+
+  /** Small overline shown above the title (e.g. "Today's plan · Coach"). */
+  label?: string;
+
+  /** Deep-link target for the section CTA. */
+  action?: HomeSectionAction;
+
+  /** Structured render data — shape depends on `type`. */
+  meta?: Record<string, unknown>;
 
   /** Additional data for weather_insight section */
   weather?: {
@@ -2222,6 +2282,8 @@ export interface PushNotificationData {
   overall_rating?: string;
   // AI activity report data
   report_id?: number;
+  // Training goals data
+  goal_id?: number;
 }
 
 // ============ SOCIAL SHARING ============

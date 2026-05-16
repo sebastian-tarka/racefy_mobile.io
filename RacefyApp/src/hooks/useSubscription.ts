@@ -22,6 +22,15 @@ const DEFAULT_FREE_FEATURES: SubscriptionFeatures = {
   coaching_hints_bulk: false,
   live_navigation: false,
   saved_routes: 5,
+  goals_max_active: 1,
+  goals_period_week: true,
+  goals_period_month: false,
+  goals_period_year: false,
+  goals_metrics: ['distance'],
+  goals_per_sport_type: false,
+  goals_history_months: 1,
+  goals_smart_suggestions: false,
+  goals_pace_warning_notifications: false,
 };
 
 export function useSubscription() {

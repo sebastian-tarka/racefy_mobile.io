@@ -69,6 +69,10 @@ export type RootStackParamList = {
   // AI Activity Reports
   AiActivityReports: undefined;
   AiActivityReportDetail: { reportId: number };
+  // Training Goals
+  Goals: undefined;
+  GoalDetail: { goalId: number };
+  GoalForm: { goalId?: number };
   // Routes
   RouteLibrary: { selectMode?: boolean } | undefined;
   RouteDetail: { routeId: number };
