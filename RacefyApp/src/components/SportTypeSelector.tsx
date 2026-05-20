@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { useSportTypes, type SportTypeWithIcon, FALLBACK_SPORTS } from '../hooks/useSportTypes';
+import React, {useState} from 'react';
+import {ActivityIndicator, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {useTranslation} from 'react-i18next';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useTheme} from '../hooks/useTheme';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {FALLBACK_SPORTS, type SportTypeWithIcon, useSportTypes} from '../hooks/useSportTypes';
 
 export interface SportTypeOption {
   id: number;
@@ -106,7 +99,10 @@ export function SportTypeSelector({ value, onChange, error: rawError, disabled }
         presentationStyle="pageSheet"
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <SafeAreaView
+          style={[styles.modalContainer, { backgroundColor: colors.background }]}
+          edges={['top', 'bottom']}
+        >
           <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('eventForm.selectSportType')}</Text>
             <TouchableOpacity
@@ -128,7 +124,7 @@ export function SportTypeSelector({ value, onChange, error: rawError, disabled }
               contentContainerStyle={styles.listContent}
             />
           )}
-        </View>
+        </SafeAreaView>
       </Modal>
     </View>
   );

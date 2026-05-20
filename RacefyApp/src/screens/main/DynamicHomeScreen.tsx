@@ -1,52 +1,59 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import { StyleSheet, ScrollView, RefreshControl, View, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { MainTabParamList } from '../../navigation/types';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
+import {RefreshControl, ScrollView, StyleSheet} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
+import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import type {MainTabParamList} from '../../navigation/types';
 import type {
-  TrainingTip,
-  HomeSection,
-  HomeActionPayload,
-  HomeCtaAction,
-  TodaysTrainingSessionMeta,
+    HomeActionPayload,
+    HomeCtaAction,
+    HomeSection,
+    TodaysTrainingSessionMeta,
+    TrainingTip,
 } from '../../types/api';
-import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../../navigation/constants';
+import {TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT} from '../../navigation/constants';
 
 // Hooks
-import { useAuth } from '../../hooks/useAuth';
-import { useTheme } from '../../hooks/useTheme';
-import { useLiveActivityContext } from '../../hooks/useLiveActivity';
-import { useNotifications } from '../../hooks/useNotifications';
-import { useHomeData } from '../../hooks/useHomeData';
-import { useHomeConfig } from '../../hooks/useHomeConfig';
-import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
-import { useTrainingReminders } from '../../hooks/useTrainingReminders';
+import {useAuth} from '../../hooks/useAuth';
+import {useTheme} from '../../hooks/useTheme';
+import {useLiveActivityContext} from '../../hooks/useLiveActivity';
+import {useNotifications} from '../../hooks/useNotifications';
+import {useHomeData} from '../../hooks/useHomeData';
+import {useHomeConfig} from '../../hooks/useHomeConfig';
+import {useWeeklyStreak} from '../../hooks/useWeeklyStreak';
+import {useTrainingReminders} from '../../hooks/useTrainingReminders';
 
 // Services
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { homeAnalytics } from '../../services/homeAnalytics';
-import { executeCtaActionFromTab } from '../../utils/homeNavigation';
-import { useRefreshOn } from '../../services/refreshEvents';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {homeAnalytics} from '../../services/homeAnalytics';
+import {executeCtaActionFromTab} from '../../utils/homeNavigation';
+import {useRefreshOn} from '../../services/refreshEvents';
 
 // Theme
-import { spacing } from '../../theme';
+import {spacing} from '../../theme';
 
 // Components
 import {
-  HomeHeader,
-  LiveActivityBanner,
-  PrimaryCTA,
-  SectionRenderer,
-  WeeklyStatsCardV2,
-  WeeklyStreakCard,
-  QuickActionsBarV2,
-  CollapsibleTipCard,
-  LiveEventsCard,
+    CollapsibleTipCard,
+    HomeHeader,
+    LiveActivityBanner,
+    LiveEventsCard,
+    PrimaryCTA,
+    QuickActionsBarV2,
+    SectionRenderer,
+    WeeklyStatsCardV2,
+    WeeklyStreakCard,
 } from './home/components';
-import { Loading, FadeInView, ScreenContainer, DraftsReminderModal, BottomSheet, type BottomSheetOption } from '../../components';
+import {
+    BottomSheet,
+    type BottomSheetOption,
+    DraftsReminderModal,
+    FadeInView,
+    Loading,
+    ScreenContainer
+} from '../../components';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -252,6 +259,11 @@ export function DynamicHomeScreen({ navigation }: Props) {
     [sortedSections]
   );
 
+  const primaryCtaWeather = useMemo(() => {
+    const section = sortedSections.find((s) => s.type === 'weather_insight');
+    return section?.meta as HomeSection['weather'] | undefined;
+  }, [sortedSections]);
+
   // Hide the section from the generic SectionRenderer — it's rendered as part
   // of the primary CTA hero instead.
   const renderableSections = useMemo<HomeSection[]>(
@@ -419,6 +431,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
               <PrimaryCTA
                 cta={config.primary_cta}
                 hero={primaryCtaHero}
+                weather={primaryCtaWeather}
                 onPress={handlePrimaryCtaPress}
                 onLongPress={handlePrimaryCtaLongPress}
               />
