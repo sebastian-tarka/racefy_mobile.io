@@ -43,6 +43,7 @@ export type RootStackParamList = {
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;
+  UnsyncedActivities: undefined;
   Paywall: { feature?: string } | undefined;
   Leaderboard: undefined;
   PointHistory: undefined;

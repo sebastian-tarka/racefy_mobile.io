@@ -1,12 +1,12 @@
 import React, {useEffect, useRef} from 'react';
 import {
-    createNavigationContainerRef,
-    DarkTheme,
-    DefaultTheme,
-    LinkingOptions,
-    NavigationContainer,
-    Theme,
-    useNavigation
+  createNavigationContainerRef,
+  DarkTheme,
+  DefaultTheme,
+  LinkingOptions,
+  NavigationContainer,
+  Theme,
+  useNavigation
 } from '@react-navigation/native';
 import {createNativeStackNavigator, NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -21,13 +21,13 @@ import {useAppVersion} from '../hooks/useAppVersion';
 import {usePushNotifications} from '../hooks/usePushNotifications';
 import {triggerHaptic} from '../hooks/useHaptics';
 import {
-    BatteryOptimizationModal,
-    ErrorBoundary,
-    ImpersonationBanner,
-    Loading,
-    NetworkStatusBar,
-    SoftUpdateBanner,
-    UpgradePromptModal
+  BatteryOptimizationModal,
+  ErrorBoundary,
+  ImpersonationBanner,
+  Loading,
+  NetworkStatusBar,
+  SoftUpdateBanner,
+  UpgradePromptModal
 } from '../components';
 
 // Screens
@@ -57,12 +57,12 @@ import {NotificationsScreen} from '../screens/notifications';
 import {LandingScreen} from '../screens/landing';
 import {LeaderboardScreen, PointHistoryScreen} from '../screens/leaderboard';
 import {
-    CalibrationFormScreen,
-    ProgramLoadingScreen,
-    TipDetailScreen,
-    WeekDetailScreen,
-    WeekFeedbackScreen,
-    WeeksListScreen,
+  CalibrationFormScreen,
+  ProgramLoadingScreen,
+  TipDetailScreen,
+  WeekDetailScreen,
+  WeekFeedbackScreen,
+  WeeksListScreen,
 } from '../screens/training';
 import {MaintenanceScreen} from '../screens/maintenance/MaintenanceScreen';
 import {ForceUpdateScreen} from '../screens/update/ForceUpdateScreen';
@@ -80,6 +80,7 @@ import {RouteDetailScreen, RouteLibraryScreen, RoutePlannerScreen} from '../scre
 import type {AuthStackParamList, MainTabParamList, RootStackParamList,} from './types';
 import {FeedScreen} from '../screens/main/FeedScreen';
 import {InsightsScreen} from '../screens/main/InsightsScreen';
+import {UnsyncedActivitiesScreen} from '../screens/main/UnsyncedActivitiesScreen';
 import {AiActivityReportsScreen} from '../screens/insights/AiActivityReportsScreen';
 import {AiActivityReportDetailScreen} from '../screens/insights/AiActivityReportDetailScreen';
 import {GoalsScreen} from '../screens/goals/GoalsScreen';
@@ -450,6 +451,10 @@ export function AppNavigator() {
             <RootStack.Screen
               name="GpxImport"
               component={GpxImportScreen}
+            />
+            <RootStack.Screen
+              name="UnsyncedActivities"
+              component={UnsyncedActivitiesScreen}
             />
             <RootStack.Screen
               name="Paywall"

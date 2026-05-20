@@ -19,6 +19,7 @@ import {
   stopBackgroundLocationTracking,
   syncAudioCoachForegroundDistance,
 } from "../services/backgroundLocation";
+import {enqueueUnsyncedActivity} from "../services/unsyncedActivities";
 import NetInfo, {NetInfoState} from "@react-native-community/netinfo";
 import type {Activity, ActivityLocation, AutoCreatedPost, GpsPoint,} from "../types/api";
 import {convertToApiGpsProfile, DEFAULT_GPS_PROFILE, type GpsProfile,} from "../config/gpsProfiles";
@@ -1061,6 +1062,76 @@ function useLiveActivityInternal() {
         pointsBuffer.current.push(...recoveredGpsPoints);
         allRoutePoints.current.push(...recoveredGpsPoints);
         pointsVersionRef.current++;
+
+        // Rebuild local distance/elevation from the recovered points so the UI
+        // doesn't show 0 km after an app kill or after the server-derived
+        // currentStats (which may be 0 if sync was failing) overwrote them.
+        // We mirror the gap- and threshold-filtering used during live tracking
+        // so accidental jumps between far-apart points aren't counted.
+        const ordered = [...recoveredGpsPoints].sort((a, b) => {
+          const ta = a.time ? new Date(a.time).getTime() : 0;
+          const tb = b.time ? new Date(b.time).getTime() : 0;
+          return ta - tb;
+        });
+
+        let recoveredDistance = 0;
+        let recoveredElevation = 0;
+        let prevRec: { lat: number; lng: number; ele?: number; t: number } | null = null;
+        let lastRecoveredT: number | null = null;
+
+        for (const p of ordered) {
+          const t = p.time ? new Date(p.time).getTime() : 0;
+          if (prevRec && t - prevRec.t <= GPS_GAP_THRESHOLD_MS) {
+            const dist = calculateDistance(prevRec.lat, prevRec.lng, p.lat, p.lng);
+            if (dist > profile.minDistanceThreshold) {
+              recoveredDistance += dist;
+              if (p.ele != null && prevRec.ele != null) {
+                const elevDiff = p.ele - prevRec.ele;
+                if (elevDiff > profile.minElevationChange) {
+                  recoveredElevation += elevDiff;
+                }
+              }
+            }
+          }
+          prevRec = { lat: p.lat, lng: p.lng, ele: p.ele, t };
+          lastRecoveredT = t;
+        }
+
+        if (recoveredDistance > 0) {
+          localStatsRef.current = {
+            ...localStatsRef.current,
+            distance: localStatsRef.current.distance + recoveredDistance,
+            elevation_gain:
+              (localStatsRef.current.elevation_gain || 0) + recoveredElevation,
+          };
+
+          // Seed the gap clock + last position so the very next live GPS sample
+          // doesn't add a jump from the recovered tail to the new position.
+          if (prevRec) {
+            lastPosition.current = {
+              lat: prevRec.lat,
+              lng: prevRec.lng,
+              ele: prevRec.ele,
+              timestamp: prevRec.t || Date.now(),
+            };
+          }
+          if (lastRecoveredT) {
+            lastBufferedPointTime.current = lastRecoveredT;
+          }
+
+          setState((prevState) => ({
+            ...prevState,
+            currentStats: { ...localStatsRef.current },
+          }));
+
+          logger.gps("Restored local stats from recovered points", {
+            recoveredDistance: recoveredDistance.toFixed(1),
+            recoveredElevation: recoveredElevation.toFixed(1),
+            totalDistance: localStatsRef.current.distance.toFixed(1),
+            recoveredCount: ordered.length,
+          });
+        }
+
         await clearAllPersistedPoints();
       }
 
@@ -1653,6 +1724,46 @@ function useLiveActivityInternal() {
     }
   }, [state.activity]);
 
+  // Snapshot the current activity + buffered points into the unsynced queue.
+  // Called from finish error paths when the server keeps rejecting /points or
+  // /finish — the user can later retry or export GPX from the queue screen.
+  const enqueueFailedFinish = async (errorMessage: string): Promise<void> => {
+    if (!state.activity) return;
+    try {
+      const points = deduplicatePoints(pointsBuffer.current);
+      const startedAt = state.activity.started_at;
+      const endedAt = lastPosition.current?.timestamp
+        ? new Date(lastPosition.current.timestamp).toISOString()
+        : new Date().toISOString();
+
+      await enqueueUnsyncedActivity(
+        {
+          activityId: state.activity.id,
+          sportTypeId: state.activity.sport_type_id,
+          sportTypeName: state.activity.sport_type?.name,
+          title: state.activity.title,
+          startedAt,
+          endedAt,
+          distance: Math.round(localStatsRef.current.distance),
+          duration: localStatsRef.current.duration,
+          elevationGain: Math.round(localStatsRef.current.elevation_gain || 0),
+          calories: localStatsRef.current.calories,
+          avgHeartRate: localStatsRef.current.avg_heart_rate,
+          maxHeartRate: localStatsRef.current.max_heart_rate,
+          pointsCount: points.length,
+          location: activityLocationRef.current ?? undefined,
+          lastError: errorMessage,
+        },
+        points,
+      );
+    } catch (err) {
+      logger.warn('activity', 'Failed to enqueue unsynced activity', {
+        id: state.activity?.id,
+        error: err,
+      });
+    }
+  };
+
   // Helper: Finish activity using GPS timestamp duration (when timer ran after GPS stopped)
   const finishWithGpsDuration = async (data?: {
     title?: string;
@@ -1766,6 +1877,8 @@ function useLiveActivityInternal() {
         );
         await saveForegroundBuffer(pointsToSave).catch(() => {});
       }
+
+      await enqueueFailedFinish(error?.message || "Failed to finish activity");
 
       setState((prev) => ({
         ...prev,
@@ -1886,6 +1999,8 @@ function useLiveActivityInternal() {
         );
         await saveForegroundBuffer(pointsToSave).catch(() => {});
       }
+
+      await enqueueFailedFinish(error?.message || "Failed to finish activity");
 
       setState((prev) => ({
         ...prev,
@@ -2078,6 +2193,8 @@ function useLiveActivityInternal() {
           );
           await saveForegroundBuffer(pointsToSave).catch(() => {});
         }
+
+        await enqueueFailedFinish(error?.message || "Failed to finish activity");
 
         setState((prev) => ({
           ...prev,

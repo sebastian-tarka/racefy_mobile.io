@@ -1,37 +1,37 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {format} from 'date-fns';
 import {useTranslation} from 'react-i18next';
 import {
-    Avatar,
-    BottomSheet,
-    type BottomSheetOption,
-    Button,
-    Card,
-    CommentSection,
-    ElevationChart,
-    HeartRateChart,
-    InteractionButton,
-    KeyboardAwareScreenLayout,
-    Loading,
-    MentionText,
-    PaceChart,
-    PremiumTeaser,
-    RoutePreview,
-    ScreenContainer,
-    ScreenHeader
+  Avatar,
+  BottomSheet,
+  type BottomSheetOption,
+  Button,
+  Card,
+  CommentSection,
+  ElevationChart,
+  HeartRateChart,
+  InteractionButton,
+  KeyboardAwareScreenLayout,
+  Loading,
+  MentionText,
+  PaceChart,
+  PremiumTeaser,
+  RoutePreview,
+  ScreenContainer,
+  ScreenHeader
 } from '../../components';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
@@ -42,6 +42,7 @@ import {useSubscription} from '../../hooks/useSubscription';
 import {useUnits} from '../../hooks/useUnits';
 import {borderRadius, fontSize, spacing} from '../../theme';
 import {getSportIcon} from '../../utils/sportIcon';
+import {exportGpxAndShare} from '../../utils/gpxExport';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../../navigation/types';
 import type {Activity, GpsTrack, SingleActivityStats, User} from '../../types/api';
@@ -236,6 +237,41 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       setIsGeneratingReport(false);
     }
   }, [isGeneratingReport, tier, activityId, navigation, t]);
+
+  const [isExportingGpx, setIsExportingGpx] = useState(false);
+  const handleExportGpx = useCallback(async () => {
+    if (!activity || isExportingGpx) return;
+    setIsExportingGpx(true);
+    try {
+      const response = await api.getActivityTrackPoints(activityId);
+      const points = (response.data || []).map(p => ({
+        lat: p.lat,
+        lng: p.lng,
+        ele: p.elevation,
+        time: p.timestamp,
+        speed: p.speed,
+      }));
+      if (points.length === 0) {
+        Alert.alert('', t('unsynced.exportEmpty'));
+        return;
+      }
+      const ok = await exportGpxAndShare({
+        activityId,
+        name: activity.title,
+        startedAt: activity.started_at,
+        sportType: activity.sport_type?.name,
+        points,
+      });
+      if (!ok) {
+        Alert.alert('', t('unsynced.exportFailedBody'));
+      }
+    } catch (err: any) {
+      logger.error('activity', 'GPX export from detail failed', { activityId, error: err });
+      Alert.alert('', err?.message || t('unsynced.exportFailedBody'));
+    } finally {
+      setIsExportingGpx(false);
+    }
+  }, [activity, activityId, isExportingGpx, t]);
 
   const toggleMapExpand = useCallback(() => {
     const newExpandedState = !isMapExpanded;
@@ -757,6 +793,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
               photos: activity.photos,
             }),
           });
+          if (activity.has_gps_track) {
+            opts.push({
+              id: 'export-gpx',
+              icon: 'download-outline',
+              title: t('unsynced.exportGpx'),
+              onPress: handleExportGpx,
+            });
+          }
           opts.push({
             id: 'delete',
             icon: 'trash-outline',

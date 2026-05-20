@@ -1,21 +1,21 @@
-import React, {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useCallback,
-} from 'react';
-import { api } from '../services/api';
-import { secureStorage } from '../services/secureStorage';
-import { pushNotificationService } from '../services/pushNotifications';
-import { getConsentStatus } from '../services/legal';
-import { changeLanguage } from '../i18n';
-import { syncUnitsPreference } from './useUnits';
-import { logger } from '../services/logger';
-import { configureGoogleSignIn, signInWithGoogle, signOutFromGoogle } from '../services/googleSignIn';
-import { useImpersonationActions, IMPERSONATION_SESSION_KEY } from './useImpersonationActions';
-import { revenueCatLogIn, revenueCatLogOut } from '../services/revenuecat';
-import type { User, LoginRequest, RegisterRequest, ImpersonationSession } from '../types/api';
+import React, {createContext, useCallback, useContext, useEffect, useState,} from 'react';
+import {api} from '../services/api';
+import {secureStorage} from '../services/secureStorage';
+import {pushNotificationService} from '../services/pushNotifications';
+import {getConsentStatus} from '../services/legal';
+import {changeLanguage} from '../i18n';
+import {syncUnitsPreference} from './useUnits';
+import {logger} from '../services/logger';
+import {configureGoogleSignIn, signInWithGoogle, signOutFromGoogle} from '../services/googleSignIn';
+import {IMPERSONATION_SESSION_KEY, useImpersonationActions} from './useImpersonationActions';
+import {revenueCatLogIn, revenueCatLogOut} from '../services/revenuecat';
+import {
+  clearAllPersistedPoints,
+  getAllPersistedPoints,
+  setActiveActivityId,
+  stopBackgroundLocationTracking,
+} from '../services/backgroundLocation';
+import type {ImpersonationSession, LoginRequest, RegisterRequest, User} from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
@@ -252,6 +252,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       logger.warn('auth', 'Failed to unregister from push notifications during logout', { error });
     }
+
+    // Tear down any background location tracking still attached to the previous session.
+    // Without this, an OS-registered location task survives logout, the active activity
+    // id stays in AsyncStorage, and the background sync timer keeps firing — once the
+    // token is gone it spams "Background sync: FAILED - No auth token" for hours.
+    try {
+      const pending = await getAllPersistedPoints();
+      if (pending.length > 0) {
+        logger.warn('gps', 'Logout with unsynced GPS points — discarding buffered track', {
+          pendingPoints: pending.length,
+        });
+      }
+      await stopBackgroundLocationTracking();
+      await setActiveActivityId(null);
+      await clearAllPersistedPoints();
+    } catch (error) {
+      logger.warn('gps', 'Failed to tear down background tracking during logout', { error });
+    }
+
     await api.logout();
     await signOutFromGoogle();
     await revenueCatLogOut();

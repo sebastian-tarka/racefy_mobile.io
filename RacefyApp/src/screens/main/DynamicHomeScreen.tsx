@@ -6,11 +6,11 @@ import {useTranslation} from 'react-i18next';
 import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import type {MainTabParamList} from '../../navigation/types';
 import type {
-    HomeActionPayload,
-    HomeCtaAction,
-    HomeSection,
-    TodaysTrainingSessionMeta,
-    TrainingTip,
+  HomeActionPayload,
+  HomeCtaAction,
+  HomeSection,
+  TodaysTrainingSessionMeta,
+  TrainingTip,
 } from '../../types/api';
 import {TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT} from '../../navigation/constants';
 
@@ -36,24 +36,25 @@ import {spacing} from '../../theme';
 
 // Components
 import {
-    CollapsibleTipCard,
-    HomeHeader,
-    LiveActivityBanner,
-    LiveEventsCard,
-    PrimaryCTA,
-    QuickActionsBarV2,
-    SectionRenderer,
-    WeeklyStatsCardV2,
-    WeeklyStreakCard,
+  CollapsibleTipCard,
+  HomeHeader,
+  LiveActivityBanner,
+  LiveEventsCard,
+  PrimaryCTA,
+  QuickActionsBarV2,
+  SectionRenderer,
+  WeeklyStatsCardV2,
+  WeeklyStreakCard,
 } from './home/components';
 import {
-    BottomSheet,
-    type BottomSheetOption,
-    DraftsReminderModal,
-    FadeInView,
-    Loading,
-    ScreenContainer
+  BottomSheet,
+  type BottomSheetOption,
+  DraftsReminderModal,
+  FadeInView,
+  Loading,
+  ScreenContainer
 } from '../../components';
+import {UnsyncedActivitiesBanner} from '../../components/UnsyncedActivitiesBanner';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
 
@@ -392,6 +393,11 @@ export function DynamicHomeScreen({ navigation }: Props) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* Unsynced activities banner - shows when failed finishes are queued. */}
+        <UnsyncedActivitiesBanner
+          onPress={() => navigation.getParent()?.navigate('UnsyncedActivities')}
+        />
+
         {/* Live Activity Banner - no animation, shows when recording */}
         <LiveActivityBanner
           isActive={isTracking}
