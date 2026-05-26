@@ -178,6 +178,8 @@
       "title": "Inicia una actividad",
       "start": "Grabar nueva actividad",
       "startDesc": "Sigue por GPS en tiempo real",
+      "trainings": "Mostrar entrenamientos",
+      "trainingsDesc": "Explora tu plan de entrenamiento",
       "import": "Importar desde GPX",
       "importDesc": "Sube un archivo desde tu dispositivo"
     },
@@ -1012,6 +1014,21 @@
     "theme_light": "Claro",
     "theme_dark": "Oscuro",
     "hapticFeedback": "Vibración táctil",
+    "mapStyle": {
+      "title": "Estilo del mapa de rutas",
+      "description": "Elige el estilo de mapa usado al generar las imágenes de ruta de tus actividades.",
+      "systemDefault": "Predeterminado del sistema",
+      "hint": "Los mapas de ruta existentes conservan el estilo con el que se generaron. Las nuevas actividades usarán tu selección.",
+      "updated": "Estilo de mapa actualizado",
+      "failed": "No se pudo actualizar el estilo del mapa",
+      "styles": {
+        "mapbox/light-v11": "Claro",
+        "mapbox/outdoors-v12": "Exteriores",
+        "mapbox/streets-v12": "Calles",
+        "mapbox/satellite-v9": "Satélite",
+        "mapbox/dark-v11": "Oscuro"
+      }
+    },
     "notifications": "Notificaciones",
     "notif_likes": "Me gusta",
     "notif_likes_desc": "Cuando alguien le da me gusta a tu publicación o actividad",

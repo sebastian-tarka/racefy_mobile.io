@@ -5,6 +5,7 @@ import {pushNotificationService} from '../services/pushNotifications';
 import {getConsentStatus} from '../services/legal';
 import {changeLanguage} from '../i18n';
 import {syncUnitsPreference} from './useUnits';
+import {syncMapStylePreference} from './useMapStyle';
 import {logger} from '../services/logger';
 import {configureGoogleSignIn, signInWithGoogle, signOutFromGoogle} from '../services/googleSignIn';
 import {IMPERSONATION_SESSION_KEY, useImpersonationActions} from './useImpersonationActions';
@@ -81,6 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (prefs.units) {
         await syncUnitsPreference(prefs.units);
       }
+      // map_style is always present (server merges defaults); null = system default.
+      await syncMapStylePreference(prefs.map_style ?? null);
     } catch (error) {
       // Ignore errors - local preferences will be used
       logger.warn('auth', 'Failed to sync preferences', { error });

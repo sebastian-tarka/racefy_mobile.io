@@ -1,7 +1,17 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {Pressable, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {LinearGradient} from 'expo-linear-gradient';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import {useTheme} from '../../../../hooks/useTheme';
 import {logger} from '../../../../services/logger';
 import {borderRadius, fontSize, fontWeight, spacing} from '../../../../theme';
@@ -14,8 +24,13 @@ import type {
   TodaysTrainingSessionMeta,
 } from '../../../../types/api';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 type GradientPair = readonly [string, string];
 type TimeOfDay = 'dawn' | 'morning' | 'day' | 'evening' | 'dusk' | 'night';
+
+/** Actions that represent "go" — these get the attention-pulse on the icon. */
+const START_ACTIONS = new Set(['start_activity', 'start_planned_training', 'resume_training']);
 
 const ATMOSPHERE_CONDITIONS = new Set([
   'Mist', 'Smoke', 'Haze', 'Dust', 'Fog', 'Sand', 'Ash', 'Squall', 'Tornado',
@@ -186,16 +201,71 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
 
   const icon = getIconForAction(resolvedAction);
   const isHero = Boolean(hero && (hero.label || hero.title || hero.meta));
+  const isStartAction = START_ACTIONS.has(resolvedAction);
 
   const tags = useMemo(() => hero?.meta?.tags?.filter(Boolean) ?? [], [hero?.meta?.tags]);
 
+  // --- Animations ---------------------------------------------------------
+  // Tactile spring scale on press.
+  const pressScale = useSharedValue(1);
+  const handlePressIn = useCallback(() => {
+    pressScale.value = withSpring(0.96, { damping: 18, stiffness: 320 });
+  }, [pressScale]);
+  const handlePressOut = useCallback(() => {
+    pressScale.value = withSpring(1, { damping: 13, stiffness: 240 });
+  }, [pressScale]);
+  const containerAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  // Radar-style pulse behind the play icon — only for "start" actions.
+  const pulse = useSharedValue(0);
+  useEffect(() => {
+    if (!isStartAction) {
+      cancelAnimation(pulse);
+      pulse.value = 0;
+      return;
+    }
+    pulse.value = withRepeat(
+      withTiming(1, { duration: 1900, easing: Easing.out(Easing.ease) }),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(pulse);
+  }, [isStartAction, pulse]);
+  const glowAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + pulse.value * 0.55 }],
+    opacity: 0.4 * (1 - pulse.value),
+  }));
+
+  // Gentle bob on the long-press hint chevron.
+  const bob = useSharedValue(0);
+  useEffect(() => {
+    if (!onLongPress) {
+      cancelAnimation(bob);
+      bob.value = 0;
+      return;
+    }
+    bob.value = withRepeat(
+      withSequence(
+        withTiming(3, { duration: 750, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 750, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(bob);
+  }, [onLongPress, bob]);
+  const chevronAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bob.value }],
+  }));
+
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.container,
-        { shadowColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-      ]}
+    <AnimatedPressable
+      style={[styles.container, { shadowColor: colors.primary }, containerAnimStyle]}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onLongPress={onLongPress ? handleLongPress : undefined}
       delayLongPress={350}
       android_ripple={{ color: 'rgba(255,255,255,0.15)', borderless: false }}
@@ -233,24 +303,33 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
             {/*  </View>*/}
             {/*)}*/}
             <View style={styles.heroActionRow}>
-              <View style={[styles.heroIconCircle, { width: iconBox, height: iconBox, borderRadius: iconBox / 2 }]}>
-                <Ionicons name={icon} size={iconSize} color={colors.primary} />
+              <View style={[styles.heroIconWrap, { width: iconBox, height: iconBox }]}>
+                {isStartAction && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[
+                      styles.heroGlow,
+                      { width: iconBox, height: iconBox, borderRadius: iconBox / 2 },
+                      glowAnimStyle,
+                    ]}
+                  />
+                )}
+                <View style={[styles.heroIconCircle, { width: iconBox, height: iconBox, borderRadius: iconBox / 2 }]}>
+                  <Ionicons name={icon} size={iconSize} color={colors.primary} />
+                </View>
               </View>
               <Text style={styles.heroCtaLabel} numberOfLines={1}>
                 {ctaLabel}
               </Text>
               {onLongPress && (
-                <Ionicons
-                  name="chevron-down"
-                  size={16}
-                  color="rgba(255,255,255,0.7)"
-                  style={styles.heroHintIcon}
-                />
+                <Animated.View style={[styles.heroHintIcon, chevronAnimStyle]}>
+                  <Ionicons name="chevron-down" size={16} color="rgba(255,255,255,0.7)" />
+                </Animated.View>
               )}
             </View>
           </View>
         ) : (
-          <View style={styles.content}>
+           <View style={styles.content}>
             <Ionicons name={icon} size={22} color="#ffffff" style={styles.leadingIcon} />
             <View style={styles.textContainer}>
               <Text style={styles.label} numberOfLines={1}>
@@ -263,12 +342,14 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
               )}
             </View>
             {onLongPress && (
-              <Ionicons name="chevron-down" size={16} color="rgba(255,255,255,0.7)" style={styles.hintIcon} />
+              <Animated.View style={[styles.hintIcon, chevronAnimStyle]}>
+                <Ionicons name="chevron-down" size={16} color="rgba(255,255,255,0.7)" />
+              </Animated.View>
             )}
           </View>
         )}
       </LinearGradient>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -364,14 +445,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.md,
   },
+  heroIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  heroGlow: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
   heroIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'transparent',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
   },
   heroCtaLabel: {
     fontSize: fontSize.lg,

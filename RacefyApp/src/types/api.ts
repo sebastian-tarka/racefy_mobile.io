@@ -233,6 +233,12 @@ export interface UserPreferences {
   units: 'metric' | 'imperial';
   language: 'en' | 'pl' | 'es';
   theme: 'light' | 'dark' | 'system';
+  /**
+   * Per-user Mapbox style for route maps. A full style id from the backend's
+   * ALLOWED_STYLES (e.g. "mapbox/satellite-v9"), or null to use the
+   * admin-configured system default. See GET /config/map-style.
+   */
+  map_style: string | null;
   notifications: {
     likes: NotificationChannelSettings;
     comments: NotificationChannelSettings;
@@ -262,6 +268,20 @@ export interface UserPreferences {
     days: (0 | 1 | 2 | 3 | 4 | 5 | 6)[];
     time: string; // "HH:MM"
   };
+}
+
+/**
+ * Public map-style config from GET /config/map-style.
+ * `available_styles` is the source of truth for the settings picker —
+ * never hardcode the list. `static_style` is the admin default used for
+ * server-generated route images (and the "System default" preview tile).
+ */
+export interface MapStyleConfigResponse {
+  static_style: string;
+  dynamic_style_light: string;
+  dynamic_style_dark: string;
+  available_styles: string[];
+  route_stroke_color: string;
 }
 
 // ============ SPORT TYPES ============

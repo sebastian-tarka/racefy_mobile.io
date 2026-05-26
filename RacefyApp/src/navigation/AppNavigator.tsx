@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   createNavigationContainerRef,
   DarkTheme,
@@ -9,9 +9,10 @@ import {
   useNavigation
 } from '@react-navigation/native';
 import {createNativeStackNavigator, NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {BottomTabBarButtonProps, createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {Ionicons} from '@expo/vector-icons';
-import {Animated, StyleSheet, View} from 'react-native';
+import {Animated, Easing, Pressable, StyleSheet, View} from 'react-native';
+import {useTranslation} from 'react-i18next';
 import {BlurView} from 'expo-blur';
 import {useAuth} from '../hooks/useAuth';
 import {useTheme} from '../hooks/useTheme';
@@ -22,6 +23,8 @@ import {usePushNotifications} from '../hooks/usePushNotifications';
 import {triggerHaptic} from '../hooks/useHaptics';
 import {
   BatteryOptimizationModal,
+  BottomSheet,
+  type BottomSheetOption,
   ErrorBoundary,
   ImpersonationBanner,
   Loading,
@@ -161,13 +164,17 @@ function AuthNavigator() {
 export { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from './constants';
 
 // Animated Tab Icon wrapper for smooth transitions (Classic Nav)
-function AnimatedTabIcon({ iconName, focused, size, color }: {
+function AnimatedTabIcon({ iconName, focused, size, color, pulse, pulseColor }: {
   iconName: keyof typeof Ionicons.glyphMap;
   focused: boolean;
   size: number;
   color: string;
+  /** When true, a looping "radar" glow plays behind the icon to invite a tap. */
+  pulse?: boolean;
+  pulseColor?: string;
 }) {
   const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (focused) {
@@ -197,18 +204,92 @@ function AnimatedTabIcon({ iconName, focused, size, color }: {
     }
   }, [focused, scaleAnim]);
 
+  useEffect(() => {
+    if (!pulse) {
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 1900,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, pulseAnim]);
+
+  const glowSize = size + 6;
+  const glowScale = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.9] });
+  const glowOpacity = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] });
+
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <Ionicons name={iconName} size={size} color={color} />
-    </Animated.View>
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      {pulse && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: glowSize,
+            height: glowSize,
+            borderRadius: glowSize / 2,
+            backgroundColor: pulseColor ?? color,
+            transform: [{ scale: glowScale }],
+            opacity: glowOpacity,
+          }}
+        />
+      )}
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Ionicons name={iconName} size={size} color={color} />
+      </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * Custom tab button for the Record tab. Tap behaves like a normal tab
+ * (navigation + auth-guard listener fire via the passed `onPress`); a long
+ * press opens the start-actions sheet instead.
+ */
+function RecordTabButton({ children, style, onPress, onLongPress, accessibilityState, accessibilityLabel, testID }: BottomTabBarButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      android_ripple={{ color: 'rgba(16,185,129,0.18)', borderless: true }}
+      style={style as any}
+    >
+      {children}
+    </Pressable>
   );
 }
 
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isTracking, activity } = useLiveActivityContext();
+  const [startSheetVisible, setStartSheetVisible] = useState(false);
+
+  // Long-pressing the Record tab opens the start-actions sheet, mirroring the
+  // Home primary CTA. Tap still navigates to the Record screen as usual.
+  const openStartSheet = useCallback(() => {
+    triggerHaptic();
+    if (!isAuthenticated) {
+      navigation.navigate('Auth', { screen: 'Login' });
+      return;
+    }
+    setStartSheetVisible(true);
+  }, [isAuthenticated, navigation]);
 
   const hapticListener = {
     tabPress: () => { triggerHaptic(); },
@@ -225,6 +306,7 @@ function MainTabNavigator() {
   };
 
   return (
+    <>
     <MainTab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -253,7 +335,16 @@ function MainTabNavigator() {
             default:
               iconName = 'help-circle-outline';
           }
-          return <AnimatedTabIcon iconName={iconName} focused={focused} size={size} color={iconColor} />;
+          return (
+            <AnimatedTabIcon
+              iconName={iconName}
+              focused={focused}
+              size={size}
+              color={iconColor}
+              pulse={route.name === 'Record' && !activity && !focused}
+              pulseColor={colors.primary}
+            />
+          );
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
@@ -281,7 +372,13 @@ function MainTabNavigator() {
       <MainTab.Screen
         name="Record"
         component={ActivityRecordingScreen}
-        options={{ tabBarLabel: 'Record', tabBarAccessibilityLabel: 'Nagraj aktywność' }}
+        options={{
+          tabBarLabel: 'Record',
+          tabBarAccessibilityLabel: 'Nagraj aktywność',
+          tabBarButton: (props) => (
+            <RecordTabButton {...props} onLongPress={openStartSheet} />
+          ),
+        }}
         listeners={authGuardListener}
       />
       <MainTab.Screen
@@ -297,6 +394,36 @@ function MainTabNavigator() {
         listeners={authGuardListener}
       />
     </MainTab.Navigator>
+
+    <BottomSheet
+      visible={startSheetVisible}
+      onClose={() => setStartSheetVisible(false)}
+      title={t('home.startActions.title')}
+      options={[
+        {
+          id: 'start',
+          icon: 'play-circle',
+          title: t('home.startActions.start'),
+          description: t('home.startActions.startDesc'),
+          onPress: () => navigation.navigate('Main', { screen: 'Record' }),
+        },
+        {
+          id: 'trainings',
+          icon: 'list-circle-outline',
+          title: t('home.startActions.trainings'),
+          description: t('home.startActions.trainingsDesc'),
+          onPress: () => navigation.navigate('TrainingWeeksList'),
+        },
+        {
+          id: 'import',
+          icon: 'cloud-upload-outline',
+          title: t('home.startActions.import'),
+          description: t('home.startActions.importDesc'),
+          onPress: () => navigation.navigate('GpxImport'),
+        },
+      ] as BottomSheetOption[]}
+    />
+    </>
   );
 }
 

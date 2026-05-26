@@ -6,12 +6,13 @@
  * if @rnmapbox/maps is not installed.
  */
 
-import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Animated } from 'react-native';
-import { mapboxAnalytics } from '../services/mapboxAnalytics';
-import { logger } from '../services/logger';
-import { useTheme } from '../hooks/useTheme';
-import type { GeoJSONLineString } from '../types/api';
+import React, {useEffect, useRef, useState} from 'react';
+import {ActivityIndicator, Animated, StyleSheet, View} from 'react-native';
+import {mapboxAnalytics} from '../services/mapboxAnalytics';
+import {logger} from '../services/logger';
+import {useTheme} from '../hooks/useTheme';
+import {useMapStyle} from '../hooks/useMapStyle';
+import type {GeoJSONLineString} from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -123,6 +124,7 @@ export function MapboxRouteMap({
   finishPoint = null,
 }: MapboxRouteMapProps) {
   const { colors, isDark } = useTheme();
+  const { resolveStyleUrl } = useMapStyle();
   const cameraRef = useRef<any>(null);
   const mapReadyRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -215,18 +217,17 @@ export function MapboxRouteMap({
   // Use size category as key to force re-render on significant height changes
   const sizeCategory = height > 300 ? 'large' : 'small';
 
-  // Reset map ready state and loading state when size category or theme changes
+  // Resolve the map style: the user's Settings preference wins, otherwise the
+  // admin dynamic dark/light style for the current device theme.
+  const mapStyle = resolveStyleUrl(isDark);
+
+  // Reset map ready state and loading state when the size category, theme, or
+  // resolved style changes (the MapView is re-keyed below so it re-mounts).
   useEffect(() => {
     mapReadyRef.current = false;
     setIsLoading(true);
     fadeAnim.setValue(1);
-  }, [sizeCategory, isDark]);
-
-  // Select map style based on theme
-  // Navigation Night is warmer and more readable than the harsh Dark style
-  const mapStyle = isDark
-    ? 'mapbox://styles/mapbox/navigation-night-v1'
-    : MapboxGL.StyleURL.Outdoors;
+  }, [sizeCategory, isDark, mapStyle]);
 
   // Theme-aware colors - brighter in dark mode for better visibility
   const routeColor = isDark ? '#34d399' : colors.primary; // Brighter emerald in dark mode
@@ -245,7 +246,7 @@ export function MapboxRouteMap({
   return (
     <View style={[styles.container, { height, backgroundColor: bgColor }]}>
       <MapboxGL.MapView
-        key={`mapbox-${activityId}-${sizeCategory}-${isDark ? 'dark' : 'light'}`}
+        key={`mapbox-${activityId}-${sizeCategory}-${mapStyle}`}
         style={styles.map}
         styleURL={mapStyle}
         logoEnabled={false}

@@ -178,6 +178,8 @@
       "title": "Start an activity",
       "start": "Record new activity",
       "startDesc": "Track with GPS in real time",
+      "trainings": "Show trainings",
+      "trainingsDesc": "Browse your training plan",
       "import": "Import from GPX",
       "importDesc": "Upload a file from your device"
     },
@@ -1023,6 +1025,21 @@
     "theme_light": "Light",
     "theme_dark": "Dark",
     "hapticFeedback": "Haptic Feedback",
+    "mapStyle": {
+      "title": "Route map style",
+      "description": "Choose the map style used when generating route images for your activities.",
+      "systemDefault": "System default",
+      "hint": "Existing route maps keep the style they were generated with. New activities will use your selection.",
+      "updated": "Map style updated",
+      "failed": "Failed to update map style",
+      "styles": {
+        "mapbox/light-v11": "Light",
+        "mapbox/outdoors-v12": "Outdoors",
+        "mapbox/streets-v12": "Streets",
+        "mapbox/satellite-v9": "Satellite",
+        "mapbox/dark-v11": "Dark"
+      }
+    },
     "notifications": "Notifications",
     "notif_likes": "Likes",
     "notif_likes_desc": "When someone likes your post or activity",

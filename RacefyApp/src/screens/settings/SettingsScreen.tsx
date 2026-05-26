@@ -26,6 +26,7 @@ import {
   Button,
   DebugLogsSection,
   Input,
+  MapStylePicker,
   PremiumTeaser,
   PrivacyConsentsSection,
   ScreenContainer,
@@ -157,6 +158,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   units: 'metric',
   language: 'en',
   theme: 'system',
+  map_style: null,
   notifications: {
     likes: { ...DEFAULT_CHANNEL_SETTINGS },
     comments: { ...DEFAULT_CHANNEL_SETTINGS },
@@ -760,6 +762,7 @@ export function SettingsScreen({ navigation }: Props) {
               />
             }
           />
+          <MapStylePicker />
         </SettingsSection>
 
         {/* ══════════════════════════════════════════════════════════

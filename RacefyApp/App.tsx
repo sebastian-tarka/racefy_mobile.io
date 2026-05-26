@@ -6,6 +6,7 @@ import {AuthProvider} from './src/hooks/useAuth';
 import {ThemeProvider, useTheme} from './src/hooks/useTheme';
 import {LiveActivityProvider} from './src/hooks/useLiveActivity';
 import {UnitsProvider} from './src/hooks/useUnits';
+import {MapStyleProvider} from './src/hooks/useMapStyle';
 import {AppConfigProvider} from './src/contexts/AppConfigContext';
 import {loadGlobalHapticsPreference} from './src/hooks/useHaptics';
 import {configureRevenueCat} from './src/services/revenuecat';
@@ -41,9 +42,11 @@ export default function App() {
           <UnitsProvider>
             <AppConfigProvider>
               <AuthProvider>
-                <LiveActivityProvider>
-                  <AppContent />
-                </LiveActivityProvider>
+                <MapStyleProvider>
+                  <LiveActivityProvider>
+                    <AppContent />
+                  </LiveActivityProvider>
+                </MapStyleProvider>
               </AuthProvider>
             </AppConfigProvider>
           </UnitsProvider>

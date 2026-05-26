@@ -113,3 +113,4 @@ export { FeatureGate } from './FeatureGate';
 export { UpgradePromptModal } from './UpgradePromptModal';
 export * from './EventTeamsTabContent';
 export * from './TeamCard';
+export { MapStylePicker } from './MapStylePicker';

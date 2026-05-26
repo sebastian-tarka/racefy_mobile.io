@@ -178,6 +178,8 @@
       "title": "Rozpocznij aktywność",
       "start": "Nagraj nową aktywność",
       "startDesc": "Śledź GPS w czasie rzeczywistym",
+      "trainings": "Pokaż treningi",
+      "trainingsDesc": "Przeglądaj swój plan treningowy",
       "import": "Importuj z pliku GPX",
       "importDesc": "Wgraj plik z urządzenia"
     },
@@ -1023,6 +1025,21 @@
     "theme_light": "Jasny",
     "theme_dark": "Ciemny",
     "hapticFeedback": "Wibracje",
+    "mapStyle": {
+      "title": "Styl mapy tras",
+      "description": "Wybierz styl mapy używany przy generowaniu obrazów tras Twoich aktywności.",
+      "systemDefault": "Systemowy",
+      "hint": "Istniejące mapy tras zachowują styl, z jakim zostały wygenerowane. Nowe aktywności użyją Twojego wyboru.",
+      "updated": "Styl mapy zaktualizowany",
+      "failed": "Nie udało się zaktualizować stylu mapy",
+      "styles": {
+        "mapbox/light-v11": "Jasna",
+        "mapbox/outdoors-v12": "Outdoor",
+        "mapbox/streets-v12": "Ulice",
+        "mapbox/satellite-v9": "Satelita",
+        "mapbox/dark-v11": "Ciemna"
+      }
+    },
     "notifications": "Powiadomienia",
     "notif_likes": "Polubienia",
     "notif_likes_desc": "Gdy ktoś polubi Twój post lub aktywność",

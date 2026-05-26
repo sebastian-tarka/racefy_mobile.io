@@ -155,6 +155,15 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return this.request<Types.AppConfigResponse>(`/config/app${qs}`);
     }
 
+    /**
+     * Get available Mapbox styles + admin defaults for route maps.
+     * Public (no auth). Source of truth for the map-style picker — the
+     * `available_styles` list may change without a mobile redeploy.
+     */
+    async getMapStyleConfig(): Promise<Types.MapStyleConfigResponse> {
+      return this.request<Types.MapStyleConfigResponse>('/config/map-style');
+    }
+
     // ============ ADMIN - IMPERSONATION ============
 
     /**

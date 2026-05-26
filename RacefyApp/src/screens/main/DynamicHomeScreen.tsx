@@ -5,13 +5,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import type {MainTabParamList} from '../../navigation/types';
-import type {
-  HomeActionPayload,
-  HomeCtaAction,
-  HomeSection,
-  TodaysTrainingSessionMeta,
-  TrainingTip,
-} from '../../types/api';
+import type {HomeCtaAction, HomeSection, TodaysTrainingSessionMeta, TrainingTip,} from '../../types/api';
 import {TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT} from '../../navigation/constants';
 
 // Hooks
@@ -28,7 +22,6 @@ import {useTrainingReminders} from '../../hooks/useTrainingReminders';
 import {api} from '../../services/api';
 import {logger} from '../../services/logger';
 import {homeAnalytics} from '../../services/homeAnalytics';
-import {executeCtaActionFromTab} from '../../utils/homeNavigation';
 import {useRefreshOn} from '../../services/refreshEvents';
 
 // Theme
@@ -285,23 +278,18 @@ export function DynamicHomeScreen({ navigation }: Props) {
   }, [todaysSession]);
 
   const handlePrimaryCtaPress = useCallback(
-    (action: HomeCtaAction | string, payload?: HomeActionPayload) => {
-      if (!config) return;
-
-      // Track analytics with the resolved action (hero action takes precedence).
-      homeAnalytics.primaryCtaClicked(
-        (action as HomeCtaAction) ?? config.primary_cta.action,
-        config.primary_cta.label
-      );
-
-      executeCtaActionFromTab(navigation, action, payload).then((handled) => {
-        if (handled && action === 'resume_training') {
-          // Program was resumed — refresh config to reflect new state.
-          refetchConfig();
-        }
-      });
+    (action: HomeCtaAction | string) => {
+      // Short press always goes straight to the activity recording screen.
+      // The long press exposes the richer choice (start / trainings / import).
+      if (config) {
+        homeAnalytics.primaryCtaClicked(
+          (action as HomeCtaAction) ?? config.primary_cta.action,
+          config.primary_cta.label
+        );
+      }
+      navigation.navigate('Record');
     },
-    [config, navigation, refetchConfig]
+    [config, navigation]
   );
 
   const handlePrimaryCtaLongPress = useCallback(() => {
@@ -529,6 +517,13 @@ export function DynamicHomeScreen({ navigation }: Props) {
             title: t('home.startActions.start'),
             description: t('home.startActions.startDesc'),
             onPress: () => navigation.navigate('Record'),
+          },
+          {
+            id: 'trainings',
+            icon: 'list-circle-outline',
+            title: t('home.startActions.trainings'),
+            description: t('home.startActions.trainingsDesc'),
+            onPress: () => navigation.getParent()?.navigate('TrainingWeeksList'),
           },
           {
             id: 'import',
