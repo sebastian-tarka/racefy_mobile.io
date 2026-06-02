@@ -1,14 +1,14 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    ImageBackground,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  ImageBackground,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import {Ionicons} from '@expo/vector-icons';
 import {LinearGradient} from 'expo-linear-gradient';
@@ -16,22 +16,23 @@ import {useTranslation} from 'react-i18next';
 import type {CompositeNavigationProp} from '@react-navigation/native';
 import {useFocusEffect} from '@react-navigation/native';
 import {
-    ActivityCard,
-    Avatar,
-    CompareUserSelector,
-    DraftsTab,
-    EmptyState,
-    EventCard,
-    type PeriodOption,
-    PointsCard,
-    PostCard,
-    PremiumTeaser,
-    ScreenContainer,
-    SportStatsChart,
-    SportTypeFilter,
-    type TimeRange,
-    TimeRangeFilter,
-    UserListModal,
+  ActivityCard,
+  Avatar,
+  CompareUserSelector,
+  DraftsTab,
+  EmptyState,
+  EventCard,
+  type PeriodOption,
+  PointsCard,
+  PostCard,
+  PremiumTeaser,
+  ProfileNavigationSections,
+  ScreenContainer,
+  SportStatsChart,
+  SportTypeFilter,
+  type TimeRange,
+  TimeRangeFilter,
+  UserListModal,
 } from '../../components';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useAuth} from '../../hooks/useAuth';
@@ -83,7 +84,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [loadingTraining, setLoadingTraining] = useState(false);
   const [draftsCount, setDraftsCount] = useState(0);
 
   // Modal state
@@ -357,26 +357,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
 
-  const handleTrainingPress = async () => {
-    setLoadingTraining(true);
-    try {
-      const program = await api.getCurrentProgram();
-      if (program) {
-        // User has active program - go to weeks list
-        navigation.navigate('TrainingWeeksList');
-      } else {
-        // No active program - go to calibration to create one
-        navigation.navigate('TrainingCalibration');
-      }
-    } catch (error: any) {
-      // Unexpected error - log it and navigate to calibration
-      logger.error('training', 'Failed to check training program', { error });
-      navigation.navigate('TrainingCalibration');
-    } finally {
-      setLoadingTraining(false);
-    }
-  };
-
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
@@ -518,114 +498,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         </View>
 
         {/* Navigation Sections */}
-        <View style={styles.sectionGroup}>
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: colors.primary, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={handleTrainingPress}
-            disabled={loadingTraining}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: colors.primary + '22' }]}>
-              <Ionicons name="fitness" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('training.title')}</Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('training.subtitle')}</Text>
-            </View>
-            {loadingTraining ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: colors.info, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={() => navigation.navigate('Insights')}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: colors.info + '22' }]}>
-              <Ionicons name="bar-chart" size={20} color={colors.info} />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('insights.title')}</Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('insights.subtitle')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: colors.primary, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={() =>
-              tier === 'free'
-                ? navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
-                : navigation.navigate('AiActivityReports')
-            }
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: colors.primary + '22' }]}>
-              <Ionicons name="sparkles" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-                {t('insights.aiReports.title')}
-              </Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-                {tier === 'free' ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')}
-              </Text>
-            </View>
-            {tier === 'free' ? (
-              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
-            ) : (
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: '#f59e0b', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={() => navigation.navigate('Goals')}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: '#f59e0b22' }]}>
-              <Ionicons name="flag" size={20} color="#f59e0b" />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('goals.title')}</Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('goals.subtitle')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: '#8b5cf6', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={() => navigation.navigate('TeamsList')}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: '#8b5cf622' }]}>
-              <Ionicons name="shield" size={20} color="#8b5cf6" />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('teams.teams')}</Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('teams.profileSubtitle')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.sectionCard, { borderLeftColor: '#06b6d4', backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}
-            onPress={() => navigation.navigate('RouteLibrary')}
-            activeOpacity={0.75}
-          >
-            <View style={[styles.sectionIcon, { backgroundColor: '#06b6d422' }]}>
-              <Ionicons name="map" size={20} color="#06b6d4" />
-            </View>
-            <View style={styles.sectionText}>
-              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>{t('routes.title')}</Text>
-              <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{t('routes.subtitle')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
+        <ProfileNavigationSections navigation={navigation} tier={tier} />
       </View>
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
@@ -1156,39 +1029,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 16,
-  },
-  sectionGroup: {
-    alignSelf: 'stretch',
-    marginTop: spacing.lg,
-    marginHorizontal: spacing.sm,
-    gap: 10,
-  },
-  sectionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    borderLeftWidth: 4,
-    paddingVertical: 12,
-    paddingHorizontal: spacing.md,
-  },
-  sectionIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  sectionText: {
-    flex: 1,
-    marginRight: 8,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  sectionSub: {
-    fontSize: 11,
-    marginTop: 1,
   },
 });

@@ -89,6 +89,8 @@ export * from './ActivitySelectionSheet';
 export * from './ProfileStats';
 export * from './ProfileActions';
 export * from './ProfileTabs';
+export * from './ProfileSectionCard';
+export * from './ProfileNavigationSections';
 export * from './UserProfileHeader';
 export * from './EventRankingModeSelector'
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
