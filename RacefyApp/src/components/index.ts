@@ -116,3 +116,6 @@ export { UpgradePromptModal } from './UpgradePromptModal';
 export * from './EventTeamsTabContent';
 export * from './TeamCard';
 export { MapStylePicker } from './MapStylePicker';
+export { TrainingProgramRow } from './Training/TrainingProgramRow';
+export { TrainingPlansSheet } from './Training/TrainingPlansSheet';
+export { OptionList, type OptionListItem } from './OptionList';

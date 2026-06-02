@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   ImageBackground,
   RefreshControl,
@@ -47,7 +46,7 @@ import {api} from '../../services/api';
 import {logger} from '../../services/logger';
 import {useRefreshOn} from '../../services/refreshEvents';
 import {fixStorageUrl} from '../../config/api';
-import {borderRadius, fontSize, spacing} from '../../theme';
+import {fontSize, spacing} from '../../theme';
 import {getDateRangeForTimeRange} from '../../utils/dateRanges';
 import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -75,13 +74,12 @@ const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
 
 export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
   const { canUse, tier } = useSubscription();
   const insets = useSafeAreaInsets();
   const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [draftsCount, setDraftsCount] = useState(0);
@@ -322,26 +320,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   useRefreshOn('events', eventsData.refresh);
   useRefreshOn('profile', handleRefresh);
 
-  const handleLogout = () => {
-    Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.logout'),
-        style: 'destructive',
-        onPress: async () => {
-          setIsLoggingOut(true);
-          try {
-            await logout();
-          } catch (error) {
-            Alert.alert(t('common.error'), t('profile.failedToLogout'));
-          } finally {
-            setIsLoggingOut(false);
-          }
-        },
-      },
-    ]);
-  };
-
   const handleFollowersPress = () => {
     setFollowModalTab('followers');
     setShowFollowModal(true);
@@ -430,76 +408,50 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const renderProfileHeader = () => (
     <>
-      {renderCoverImage()}
+      <View style={[styles.profileCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+        {renderCoverImage()}
 
-      <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-        <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-          <Avatar uri={user?.avatar} name={user?.name} size="xxl" showTierBadge={tier !== 'free'} tier={tier} />
-        </View>
-
-        <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name}</Text>
-        <Text style={[styles.username, { color: colors.textSecondary }]}>@{user?.username}</Text>
-
-        {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{user.bio}</Text>}
-
-        <View style={[styles.statsRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.posts.total ?? 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.posts')}</Text>
+        <View style={styles.profileBody}>
+          <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
+            <Avatar uri={user?.avatar} name={user?.name} size="xxl" showTierBadge={tier !== 'free'} tier={tier} />
           </View>
-          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {stats?.activities?.total_distance ? Math.round(stats.activities.total_distance / 1000) : 0} km
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.totalDistance', 'Total')}</Text>
-          </View>
-          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
-          <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
-            <View style={styles.statValueRow}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
-              {pendingFollowCount > 0 && (
-                <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.statBadgeText}>{pendingFollowCount > 99 ? '99+' : pendingFollowCount}</Text>
-                </View>
-              )}
+
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name}</Text>
+          <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>@{user?.username}</Text>
+          {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]} numberOfLines={2}>{user.bio}</Text>}
+
+          <View style={[styles.statsRow, { borderTopColor: colors.borderLight }]}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.activities')}</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.activities?.total ?? 0}</Text>
             </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
-          </TouchableOpacity>
-          <View style={[styles.statsDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
-          <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
-          </TouchableOpacity>
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.totalDistance', 'Total')}</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.activities?.total_distance ? Math.round(stats.activities.total_distance / 1000) : 0} km
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
+              <View style={styles.statValueRow}>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
+                {pendingFollowCount > 0 && (
+                  <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.statBadgeText}>{pendingFollowCount > 99 ? '99+' : pendingFollowCount}</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionBtnPrimary, { backgroundColor: colors.primary }]}
-            onPress={() => navigation.navigate('EditProfile')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="pencil" size={14} color={isDark ? '#0f1729' : '#fff'} />
-            <Text style={[styles.actionBtnPrimaryText, { color: isDark ? '#0f1729' : '#fff' }]}>
-              {t('profile.editProfile')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtnGhost, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-            disabled={isLoggingOut}
-          >
-            <Ionicons name="log-out-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.actionBtnGhostText, { color: colors.textSecondary }]}>
-              {t('common.logout')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Navigation Sections */}
-        <ProfileNavigationSections navigation={navigation} tier={tier} />
       </View>
+
+      {/* Navigation Sections */}
+      <ProfileNavigationSections navigation={navigation} tier={tier} />
 
       <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
         {tabs.map((tab) => (
@@ -839,7 +791,6 @@ const styles = StyleSheet.create({
   coverImage: {
     height: 160,
     position: 'relative',
-    marginHorizontal: -spacing.md, // Counteract FlatList contentContainerStyle padding
   },
   settingsButton: {
     position: 'absolute',
@@ -853,49 +804,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  profileHeader: {
-    alignItems: 'center',
+  profileCard: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  profileBody: {
+    alignItems: 'stretch',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginHorizontal: -spacing.md,
+    paddingBottom: spacing.lg,
   },
   avatarContainer: {
-    marginTop: -40,
+    alignSelf: 'flex-start',
+    marginTop: -44,
     borderWidth: 4,
     borderRadius: 44,
   },
   name: {
     fontSize: fontSize.xl,
     fontWeight: '700',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   username: {
     fontSize: fontSize.md,
     marginTop: 2,
   },
   bio: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.xl,
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
   },
   statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     marginTop: spacing.lg,
-    marginHorizontal: spacing.sm,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.xs,
-  },
-  statsDivider: {
-    width: 1,
-    height: 28,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   statItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 4,
   },
   statValueRow: {
     flexDirection: 'row',
@@ -916,47 +867,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statValue: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
+    fontSize: fontSize.xxxl,
+    fontWeight: '800',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 11,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
-    marginTop: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
-    marginTop: spacing.md,
-    marginHorizontal: spacing.sm, // same as sectionGroup
-    gap: 10,
-  },
-  actionBtnPrimary: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 40,
-    borderRadius: 12,
-  },
-  actionBtnPrimaryText: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  actionBtnGhost: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 40,
-    borderRadius: 12,
-  },
-  actionBtnGhostText: {
-    fontWeight: '600',
-    fontSize: 14,
   },
   tabContainer: {
     flexDirection: 'row',

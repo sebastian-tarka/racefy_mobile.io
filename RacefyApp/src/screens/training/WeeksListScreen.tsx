@@ -1,36 +1,118 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  Alert,
   ActivityIndicator,
+  Alert,
   Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useTranslation} from 'react-i18next';
+import {Ionicons} from '@expo/vector-icons';
 
-import { useTheme } from '../../hooks/useTheme';
-import { useSubscription } from '../../hooks/useSubscription';
-import { useSportTypes } from '../../hooks/useSportTypes';
-import { triggerHaptic } from '../../hooks/useHaptics';
-import { api } from '../../services/api';
-import { logger } from '../../services/logger';
-import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Loading, Card, EmptyState, ScreenContainer } from '../../components';
-import { ProgramSelector } from '../../components/Training/ProgramSelector';
-import type { RootStackParamList } from '../../navigation/types';
-import type { TrainingWeek, TrainingProgram, PausedReason, MentalBudget, AiMode } from '../../types/api';
+import {useTheme} from '../../hooks/useTheme';
+import {useSubscription} from '../../hooks/useSubscription';
+import {useSportTypes} from '../../hooks/useSportTypes';
+import {triggerHaptic} from '../../hooks/useHaptics';
+import {api} from '../../services/api';
+import {logger} from '../../services/logger';
+import {upgradePromptEmitter} from '../../services/upgradePromptEmitter';
+import {borderRadius, fontSize, spacing} from '../../theme';
+import {formatDurationCompact} from '../../utils/formatDuration';
+import type {OptionListItem} from '../../components';
+import {Card, EmptyState, Loading, OptionList, ScreenContainer, ScreenHeader} from '../../components';
+import {TrainingPlansSheet} from '../../components/Training/TrainingPlansSheet';
+import type {RootStackParamList} from '../../navigation/types';
+import type {AiMode, MentalBudget, PausedReason, TrainingProgram, TrainingWeek,} from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Props {
   navigation: NavigationProp;
+}
+
+const fmtDay = (d: string) =>
+  new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const fmtFull = (d: string) =>
+  new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtKm = (meters: number) => `${Math.round(meters / 100) / 10} km`;
+
+interface UISession {
+  id: string;
+  title: string;
+  detail: string;
+  durationMinutes: number;
+  status: 'completed' | 'skipped' | 'pending';
+  iconType: string;
+}
+
+/**
+ * Normalize a week's sessions into a single list. Prefers `activities` (they carry a
+ * completion status → DONE/PLANNED); falls back to the prescribed `suggested_activities`
+ * (always shown as planned) when no concrete activities exist yet.
+ */
+function getSessions(week: TrainingWeek): UISession[] {
+  const acts = week.activities || [];
+  if (acts.length > 0) {
+    return acts.map((a) => ({
+      id: `a-${a.id}`,
+      title: humanize(a.description || a.activity_type),
+      detail: [a.distance_meters ? fmtKm(a.distance_meters) : null, a.intensity]
+        .filter(Boolean)
+        .join(' · '),
+      durationMinutes: a.duration_minutes || 0,
+      status: a.status,
+      iconType: a.activity_type,
+    }));
+  }
+  const suggested = week.suggested_activities || [];
+  return suggested.map((s) => ({
+    id: `s-${s.id}`,
+    title: humanize(s.activity_type),
+    detail: [s.target_distance_meters ? fmtKm(s.target_distance_meters) : null, s.intensity_description]
+      .filter(Boolean)
+      .join(' · '),
+    durationMinutes: s.target_duration_minutes || 0,
+    status: 'pending' as const,
+    iconType: s.activity_type,
+  }));
+}
+
+/** Completed / total sessions, planned minutes and percent for a week. */
+function weekStats(week: TrainingWeek) {
+  const sessions = getSessions(week);
+  const statusCompleted = sessions.filter((s) => s.status === 'completed').length;
+  // The backend exposes completed/planned counts in `progress` (derived from
+  // activity matching). Prefer them so the card matches the week-progress
+  // (compliance) screen even when per-session status isn't set on auto-linked runs.
+  const completed = Math.max(statusCompleted, week.progress?.activities_count ?? 0);
+  const total =
+    week.progress?.suggested_activities_count ||
+    week.progress?.sessions_per_week ||
+    sessions.length;
+  const plannedMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0);
+  const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
+  return { sessions, completed, total, plannedMinutes, percent };
+}
+
+function activityIcon(type: string): keyof typeof Ionicons.glyphMap {
+  const t = (type || '').toLowerCase();
+  if (t.includes('rest')) return 'bed-outline';
+  if (t.includes('hill') || t.includes('interval') || t.includes('tempo') || t.includes('speed'))
+    return 'flame';
+  if (t.includes('bike') || t.includes('cycl') || t.includes('cross')) return 'bicycle';
+  if (t.includes('swim')) return 'water';
+  return 'walk';
+}
+
+function humanize(text: string): string {
+  if (!text) return '';
+  const s = text.replace(/[_-]+/g, ' ').trim();
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 export function WeeksListScreen({ navigation }: Props) {
@@ -43,16 +125,16 @@ export function WeeksListScreen({ navigation }: Props) {
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
+  const [selectedWeekId, setSelectedWeekId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPlansSheet, setShowPlansSheet] = useState(false);
 
-  const program = programs.find(p => p.id === selectedProgramId) ?? programs[0] ?? null;
+  const program = programs.find((p) => p.id === selectedProgramId) ?? programs[0] ?? null;
 
   const canCreateNew = (() => {
     const limit = features.active_training_programs;
     return limit === -1 || programs.length < limit;
   })();
-
-  const showSelector = programs.length > 1 || (tier !== 'free' && canCreateNew);
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -84,21 +166,10 @@ export function WeeksListScreen({ navigation }: Props) {
       }
 
       // Load weeks for the selected (or first) program
-      const activeProgram = allPrograms.find(p => p.id === selectedProgramId) ?? allPrograms[0];
+      const activeProgram = allPrograms.find((p) => p.id === selectedProgramId) ?? allPrograms[0];
       let weeksData: TrainingWeek[] = [];
       if (activeProgram) {
-        // Use program-specific endpoint to get weeks for the selected program
-        const fullProgram = await api.getProgram(activeProgram.id);
-        weeksData = fullProgram.current_week ? [fullProgram.current_week] : [];
-        // If the program-specific endpoint doesn't return all weeks, fall back to getWeeks
-        // (which returns weeks for the most recent active program)
-        if (activeProgram.id === allPrograms[0]?.id) {
-          weeksData = await api.getWeeks();
-        } else {
-          // For non-primary programs, we still use getWeeks as it's program-scoped on the backend
-          // TODO: When backend supports GET /training/programs/{id}/weeks, use that instead
-          weeksData = await api.getWeeks();
-        }
+        weeksData = await api.getWeeks();
       }
 
       setWeeks(weeksData);
@@ -129,6 +200,18 @@ export function WeeksListScreen({ navigation }: Props) {
     }
   }, [program]);
 
+  // Keep the selected week valid; default to the current week.
+  useEffect(() => {
+    if (weeks.length === 0) {
+      setSelectedWeekId(null);
+      return;
+    }
+    if (!weeks.some((w) => w.id === selectedWeekId)) {
+      const current = weeks.find((w) => w.status === 'current' || w.status === 'active');
+      setSelectedWeekId((current ?? weeks[0]).id);
+    }
+  }, [weeks, selectedWeekId]);
+
   const handleRefresh = () => {
     setRefreshing(true);
     loadData(true);
@@ -158,12 +241,6 @@ export function WeeksListScreen({ navigation }: Props) {
 
   const [actionLoading, setActionLoading] = useState(false);
 
-  const handleWeekPress = (week: TrainingWeek) => {
-    navigation.navigate('TrainingWeekDetail', {
-      weekId: week.id,
-    });
-  };
-
   const handleAbandonProgram = () => {
     if (!program) return;
     Alert.alert(
@@ -179,8 +256,7 @@ export function WeeksListScreen({ navigation }: Props) {
             try {
               await api.abandonProgram(program.id);
               logger.info('training', 'Program abandoned', { programId: program.id });
-              // If there are other programs, switch to one; otherwise go back
-              const remaining = programs.filter(p => p.id !== program.id);
+              const remaining = programs.filter((p) => p.id !== program.id);
               if (remaining.length > 0) {
                 setSelectedProgramId(remaining[0].id);
                 loadData(true);
@@ -205,22 +281,25 @@ export function WeeksListScreen({ navigation }: Props) {
     Alert.alert(
       t('training.weeksList.pauseReasonTitle'),
       t('training.weeksList.confirmPauseMessage'),
-      reasons.map((reason) => ({
-        text: t(`training.weeksList.pauseReasons.${reason}`),
-        onPress: async () => {
-          setActionLoading(true);
-          try {
-            await api.pauseProgram(program.id, reason);
-            logger.info('training', 'Program paused', { programId: program.id, reason });
-            loadData(true);
-          } catch (err: any) {
-            logger.error('training', 'Failed to pause program', { error: err });
-            Alert.alert(t('training.errors.title'), err.message);
-          } finally {
-            setActionLoading(false);
-          }
-        },
-      }))
+      [
+        ...reasons.map((reason) => ({
+          text: t(`training.weeksList.pauseReasons.${reason}`),
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              await api.pauseProgram(program.id, reason);
+              logger.info('training', 'Program paused', { programId: program.id, reason });
+              loadData(true);
+            } catch (err: any) {
+              logger.error('training', 'Failed to pause program', { error: err });
+              Alert.alert(t('training.errors.title'), err.message);
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        })),
+        { text: t('common.cancel'), style: 'cancel' as const },
+      ]
     );
   };
 
@@ -234,7 +313,6 @@ export function WeeksListScreen({ navigation }: Props) {
       logger.info('training', 'Mental budget loaded', { budget });
     } catch (err: any) {
       logger.error('training', 'Failed to load mental budget', { error: err });
-      // Silently fail - mental budget is optional
     } finally {
       setLoadingMentalBudget(false);
     }
@@ -242,11 +320,9 @@ export function WeeksListScreen({ navigation }: Props) {
 
   const handleOpenSettings = async () => {
     if (!program) return;
-    // Refresh local state from program
     setAutoLinkActivities(program.auto_link_activities);
     setAllowedSportTypes(program.allowed_sport_types || []);
     setShowSettingsModal(true);
-    // Load mental budget in parallel
     await loadMentalBudget();
   };
 
@@ -254,7 +330,6 @@ export function WeeksListScreen({ navigation }: Props) {
     if (!program) return;
     setSavingSettings(true);
     try {
-      // Save program settings
       await api.updateProgramSettings(program.id, {
         auto_link_activities: autoLinkActivities,
         allowed_sport_types: allowedSportTypes.length > 0 ? allowedSportTypes : undefined,
@@ -265,13 +340,11 @@ export function WeeksListScreen({ navigation }: Props) {
         allowedSportTypes: allowedSportTypes.length,
       });
 
-      // Save mental budget settings if changed
       if (mentalBudget && aiMode !== mentalBudget.ai_mode) {
         await api.updateMentalBudget({ ai_mode: aiMode });
         logger.info('training', 'Mental budget updated', { aiMode });
       }
 
-      // Refresh program data
       await loadData(true);
       setShowSettingsModal(false);
       Alert.alert(t('common.success'), t('training.weeksList.settingsUpdated'));
@@ -311,8 +384,7 @@ export function WeeksListScreen({ navigation }: Props) {
   const handleGenerateHints = async () => {
     if (!program) return;
 
-    // Check if all weeks already have hints
-    if (weeks.every(w => w.coaching_hint)) {
+    if (weeks.every((w) => w.coaching_hint)) {
       Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.allGenerated'));
       return;
     }
@@ -322,7 +394,6 @@ export function WeeksListScreen({ navigation }: Props) {
       const response = await api.generateAllHints(program.id);
 
       if (response.status === 'completed') {
-        // All done immediately
         await loadData(true);
         setGeneratingHints(false);
         triggerHaptic();
@@ -330,7 +401,6 @@ export function WeeksListScreen({ navigation }: Props) {
         return;
       }
 
-      // Processing - start polling
       const totalWeeks = response.total_weeks || program.total_weeks;
       const weeksPending = response.weeks_pending || 0;
       setHintsProgress({ done: totalWeeks - weeksPending, total: totalWeeks });
@@ -340,11 +410,10 @@ export function WeeksListScreen({ navigation }: Props) {
           const updatedWeeks = await api.getWeeks();
           setWeeks(updatedWeeks);
 
-          const remaining = updatedWeeks.filter(w => !w.coaching_hint).length;
+          const remaining = updatedWeeks.filter((w) => !w.coaching_hint).length;
           setHintsProgress({ done: totalWeeks - remaining, total: totalWeeks });
 
           if (remaining === 0) {
-            // All done
             if (pollRef.current) {
               clearInterval(pollRef.current);
               pollRef.current = null;
@@ -360,172 +429,12 @@ export function WeeksListScreen({ navigation }: Props) {
     } catch (err: any) {
       setGeneratingHints(false);
       logger.error('training', 'Failed to generate coaching hints', { error: err });
-      // Handle 403 — Pro subscription required
       if (err?.status === 403 && err?.data?.required_tier) {
         upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier });
         return;
       }
       Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
     }
-  };
-
-  const renderWeekItem = ({ item: week }: { item: TrainingWeek }) => {
-    const isCurrentWeek = week.status === 'current' || week.status === 'active';
-    const activities = week.activities || [];
-
-    // Use week.progress if activities are not loaded in list view
-    const completedActivities = activities.length > 0
-      ? activities.filter(a => a.status === 'completed').length
-      : week.progress?.activities_count || 0;
-    const totalActivities = activities.length > 0
-      ? activities.length
-      : week.progress?.suggested_activities_count || week.progress?.sessions_per_week || 0;
-    const completionPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
-
-    // @ts-ignore
-    return (
-      <TouchableOpacity
-        onPress={() => handleWeekPress(week)}
-        style={styles.weekCardContainer}
-      >
-        <Card style={[
-          styles.weekCard,
-          // @ts-ignore
-          isCurrentWeek && { borderColor: colors.primary, borderWidth: 2 },
-        ]}>
-          <View style={styles.weekHeader}>
-            <View style={styles.weekTitleContainer}>
-              <Text style={[styles.weekTitle, { color: colors.textPrimary }]}>
-                {t('training.weeksList.weekNumber', { number: week.week_number })}
-              </Text>
-              {isCurrentWeek && (
-                <View style={[styles.currentBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.currentBadgeText, { color: colors.white }]}>
-                    {t('training.weeksList.current')}
-                  </Text>
-                </View>
-              )}
-              {week.coaching_hint && (
-                <Ionicons name="bulb-outline" size={16} color={colors.primary} />
-              )}
-            </View>
-
-            <View style={[
-              styles.statusBadge,
-              {
-                backgroundColor:
-                  week.status === 'completed'
-                    ? colors.success + '15'
-                    : week.status === 'skipped'
-                      ? colors.textMuted + '15'
-                      : isCurrentWeek
-                        ? colors.primary + '15'
-                        : colors.border,
-              },
-            ]}>
-              <Text style={[
-                styles.statusText,
-                {
-                  color:
-                    week.status === 'completed'
-                      ? colors.success
-                      : week.status === 'skipped'
-                        ? colors.textMuted
-                        : isCurrentWeek
-                          ? colors.primary
-                          : colors.textSecondary,
-                },
-              ]}>
-                {t(`training.weeksList.status.${isCurrentWeek ? 'current' : week.status}`)}
-              </Text>
-            </View>
-          </View>
-
-          <Text style={[styles.weekDate, { color: colors.textSecondary }]}>
-            {new Date(week.start_date).toLocaleDateString()}
-          </Text>
-
-          {/* Progress Bar */}
-          {totalActivities > 0 && (
-            <View style={styles.progressSection}>
-              <View style={styles.progressInfo}>
-                <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-                  {t('training.weeksList.progress')}
-                </Text>
-                <Text style={[styles.progressValue, { color: colors.textPrimary }]}>
-                  {completedActivities}/{totalActivities} {t('training.weekDetail.completed')}
-                </Text>
-              </View>
-              <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      backgroundColor: colors.primary,
-                      width: `${completionPercentage}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          )}
-
-          {/* View Feedback Button */}
-          {(week.status === 'completed' || week.status === 'skipped' || isCurrentWeek) && (
-            <TouchableOpacity
-              style={[styles.feedbackLink, { backgroundColor: colors.primary + '10' }]}
-              onPress={(e) => {
-                e.stopPropagation();
-                triggerHaptic();
-                navigation.navigate('WeekFeedback', { weekId: week.id });
-              }}
-              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-            >
-              <Ionicons name="bar-chart-outline" size={14} color={colors.primary} />
-              <Text style={[styles.feedbackLinkText, { color: colors.primary }]}>
-                {isCurrentWeek
-                  ? t('training.feedback.midWeekCheck')
-                  : t('training.feedback.viewFeedback')}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Activities Preview */}
-          {(activities.length > 0 || totalActivities > 0) && (
-            <View style={styles.sessionsPreview}>
-              {activities.length > 0 ? (
-                activities.map((activity) => (
-                  <View
-                    key={activity.id}
-                    style={[
-                      styles.sessionDot,
-                      {
-                        backgroundColor: activity.status === 'completed'
-                          ? colors.success
-                          : activity.status === 'skipped'
-                            ? colors.textMuted
-                            : colors.border,
-                      },
-                    ]}
-                  />
-                ))
-              ) : (
-                // Show dots based on progress when activities not loaded
-                Array.from({ length: totalActivities }).map((_, idx) => (
-                  <View
-                    key={`dot-${idx}`}
-                    style={[
-                      styles.sessionDot,
-                      { backgroundColor: idx < completedActivities ? colors.success : colors.border },
-                    ]}
-                  />
-                ))
-              )}
-            </View>
-          )}
-        </Card>
-      </TouchableOpacity>
-    );
   };
 
   if (loading) {
@@ -535,11 +444,7 @@ export function WeeksListScreen({ navigation }: Props) {
   if (error) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('training.weeksList.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('training.weeksList.title')} showBack onBack={() => navigation.goBack()} />
         <EmptyState
           icon="alert-circle"
           title={t('training.errors.title')}
@@ -551,171 +456,466 @@ export function WeeksListScreen({ navigation }: Props) {
     );
   }
 
+  const settingsAction = program ? (
+    <TouchableOpacity onPress={handleOpenSettings} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+      <Ionicons name="settings-outline" size={22} color={colors.textPrimary} />
+    </TouchableOpacity>
+  ) : undefined;
+
+  if (!program) {
+    return (
+      <ScreenContainer>
+        <ScreenHeader title={t('training.weeksList.title')} showBack onBack={() => navigation.goBack()} />
+        <EmptyState
+          icon="calendar-outline"
+          title={t('training.weeksList.empty.title')}
+          message={t('training.weeksList.empty.message')}
+          actionLabel={t('training.calibration.createProgram')}
+          onAction={() => navigation.navigate('TrainingCalibration')}
+        />
+      </ScreenContainer>
+    );
+  }
+
+  // ---- Derived program-level values ----
+  const totalWeeks = program.total_weeks || 0;
+  const currentWeekNumber = program.current_week_number ?? 0;
+  const weeksDone = Math.max(0, currentWeekNumber - 1);
+  const toGo = Math.max(0, totalWeeks - weeksDone);
+  const overallPercent = totalWeeks > 0 ? Math.min(100, Math.round((weeksDone / totalWeeks) * 100)) : 0;
+
+  // Adherence: completed vs planned sessions across all non-upcoming weeks (computed client-side).
+  const adherence = (() => {
+    let done = 0;
+    let planned = 0;
+    weeks.forEach((w) => {
+      if (w.status === 'upcoming') return;
+      const s = weekStats(w);
+      done += s.completed;
+      planned += s.total;
+    });
+    return planned > 0 ? Math.round((done / planned) * 100) : null;
+  })();
+
+  const isPaused = program.status === 'paused';
+  const selectedWeek = weeks.find((w) => w.id === selectedWeekId) ?? null;
+  const hasOtherPrograms = programs.length > 1;
+
+  const renderWeekTile = (week: TrainingWeek) => {
+    const isCurrent = week.status === 'current' || week.status === 'active';
+    const isSelected = week.id === selectedWeekId;
+    const dotColor =
+      week.status === 'completed'
+        ? colors.success
+        : week.status === 'skipped'
+          ? colors.textMuted
+          : isCurrent
+            ? colors.white
+            : 'transparent';
+
+    return (
+      <TouchableOpacity
+        key={week.id}
+        style={[
+          styles.weekTile,
+          {
+            backgroundColor: isCurrent ? colors.textPrimary : colors.cardBackground,
+            borderColor: isSelected ? colors.primary : colors.borderLight,
+          },
+        ]}
+        onPress={() => setSelectedWeekId(week.id)}
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.weekTileLabel, { color: isCurrent ? colors.background : colors.textMuted }]}>
+          {t('training.weeksList.weekShort')}
+        </Text>
+        <Text style={[styles.weekTileNumber, { color: isCurrent ? colors.background : colors.textPrimary }]}>
+          {week.week_number}
+        </Text>
+        <View
+          style={[
+            styles.weekTileDot,
+            dotColor === 'transparent'
+              ? { borderWidth: 1.5, borderColor: colors.border }
+              : { backgroundColor: dotColor },
+          ]}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSession = (session: UISession) => {
+    const done = session.status === 'completed';
+    const skipped = session.status === 'skipped';
+    const duration = session.durationMinutes
+      ? formatDurationCompact(session.durationMinutes * 60)
+      : null;
+    const statusColor = done ? colors.success : skipped ? colors.textMuted : colors.textSecondary;
+    const statusLabel = done
+      ? t('training.weeksList.sessionStatus.done')
+      : skipped
+        ? t('training.weeksList.sessionStatus.skipped')
+        : t('training.weeksList.sessionStatus.planned');
+
+    return (
+      <View key={session.id} style={styles.session}>
+        <View
+          style={[
+            styles.sessionIcon,
+            { backgroundColor: done ? colors.success : colors.primary + '18' },
+          ]}
+        >
+          <Ionicons
+            name={done ? 'checkmark' : activityIcon(session.iconType)}
+            size={18}
+            color={done ? colors.white : colors.primary}
+          />
+        </View>
+        <View style={styles.sessionText}>
+          <Text style={[styles.sessionTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            {session.title}
+          </Text>
+          {!!session.detail && (
+            <Text style={[styles.sessionDetail, { color: colors.textSecondary }]} numberOfLines={1}>
+              {session.detail}
+            </Text>
+          )}
+        </View>
+        <View style={styles.sessionMeta}>
+          {duration && (
+            <Text
+              style={[
+                styles.sessionDuration,
+                { color: done ? colors.textMuted : colors.textPrimary },
+                done && styles.strikethrough,
+              ]}
+            >
+              {duration}
+            </Text>
+          )}
+          <Text style={[styles.sessionStatus, { color: statusColor }]}>{statusLabel}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const selectedStats = selectedWeek ? weekStats(selectedWeek) : null;
+  const selectedIsCurrent =
+    selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
+
+  // ---- Grouped options below the week card ----
+  const needsHints = weeks.some((w) => !w.coaching_hint);
+  const hintsLocked = !canUse('coaching_hints_bulk');
+  const programOptions: OptionListItem[] = [];
+
+  if (hasOtherPrograms) {
+    programOptions.push({
+      id: 'switch',
+      icon: 'swap-horizontal',
+      title: t('training.weeksList.switchPlan'),
+      subtitle: t('training.weeksList.switchPlanDesc'),
+      onPress: () => setShowPlansSheet(true),
+    });
+  } else if (canCreateNew) {
+    programOptions.push({
+      id: 'create',
+      icon: 'sparkles',
+      iconColor: colors.ai,
+      title: t('training.createPlan'),
+      subtitle: t('training.createPlanDesc'),
+      onPress: handleCreateNewProgram,
+    });
+  }
+
+  programOptions.push({
+    id: 'settings',
+    icon: 'settings-outline',
+    iconColor: colors.textSecondary,
+    title: t('training.weeksList.settings'),
+    subtitle: program.auto_link_activities
+      ? t('training.weeksList.autoLinkEnabled')
+      : t('training.weeksList.autoLinkDisabled'),
+    onPress: handleOpenSettings,
+  });
+
+  if (needsHints) {
+    programOptions.push({
+      id: 'hints',
+      icon: 'bulb-outline',
+      iconColor: colors.warning,
+      title: t('training.coachingHints.generateButton'),
+      subtitle: generatingHints
+        ? hintsProgress.total > 0
+          ? t('training.coachingHints.generatingProgress', {
+              done: hintsProgress.done,
+              total: hintsProgress.total,
+            })
+          : t('training.coachingHints.generating')
+        : undefined,
+      loading: generatingHints,
+      trailing: hintsLocked ? (
+        <View style={[styles.proBadge, { backgroundColor: colors.primary }]}>
+          <Text style={[styles.proBadgeText, { color: colors.white }]}>PRO</Text>
+        </View>
+      ) : undefined,
+      onPress: hintsLocked
+        ? () => upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })
+        : handleGenerateHints,
+    });
+  }
+
+  programOptions.push(
+    isPaused
+      ? {
+          id: 'resume',
+          icon: 'play',
+          iconColor: colors.success,
+          title: t('training.weeksList.resumeProgram'),
+          hideChevron: true,
+          loading: actionLoading,
+          onPress: handleResumeProgram,
+        }
+      : {
+          id: 'pause',
+          icon: 'pause',
+          iconColor: colors.warning,
+          title: t('training.weeksList.pauseProgram'),
+          hideChevron: true,
+          disabled: actionLoading,
+          onPress: handlePauseProgram,
+        }
+  );
+
+  programOptions.push({
+    id: 'abandon',
+    icon: 'close-circle',
+    iconColor: colors.error,
+    titleColor: colors.error,
+    title: t('training.weeksList.abandonProgram'),
+    hideChevron: true,
+    disabled: actionLoading,
+    onPress: handleAbandonProgram,
+  });
+
   return (
     <ScreenContainer>
       <ScreenHeader
         title={t('training.weeksList.title')}
         showBack
         onBack={() => navigation.goBack()}
+        rightAction={settingsAction}
       />
 
-      <FlatList
-        data={weeks}
-        renderItem={renderWeekItem}
-        keyExtractor={(item) => `week-${item.id}`}
-        contentContainerStyle={styles.listContent}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
-        ListHeaderComponent={
-          <>
-            {showSelector && (
-              <ProgramSelector
-                programs={programs}
-                selectedId={selectedProgramId}
-                onSelect={handleSelectProgram}
-                canCreateNew={canCreateNew}
-                onCreateNew={handleCreateNewProgram}
-              />
-            )}
+      >
+        {/* ---- Program overview card ---- */}
+        <Card style={styles.programCard}>
+          <View style={styles.programTitleRow}>
+            <Text style={[styles.programName, { color: colors.textPrimary }]} numberOfLines={1}>
+              {program.name}
+            </Text>
+            <View
+              style={[
+                styles.statusPill,
+                { backgroundColor: (isPaused ? colors.warning : colors.success) + '1f' },
+              ]}
+            >
+              <Text style={[styles.statusPillText, { color: isPaused ? colors.warning : colors.success }]}>
+                {isPaused ? t('training.pausedBadge') : t('training.activeBadge')}
+              </Text>
+            </View>
+          </View>
 
-            {program && (
-              <View style={[styles.programInfo, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-                <View style={styles.programInfoRow}>
-                  <Ionicons name="calendar" size={20} color={colors.textSecondary} />
-                  <Text style={[styles.programInfoText, { color: colors.textSecondary }]}>
-                    {new Date(program.start_date).toLocaleDateString()}
-                    {program.planned_end_date && ` - ${new Date(program.planned_end_date).toLocaleDateString()}`}
-                  </Text>
-                </View>
-                <View style={styles.programInfoRow}>
-                  <Ionicons name="fitness" size={20} color={colors.primary} />
-                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-                    {t('training.weeksList.programName')}: {program.name}
-                  </Text>
-                </View>
-                <View style={styles.programInfoRow}>
-                  <Ionicons name="trending-up" size={20} color={colors.primary} />
-                  <Text style={[styles.programInfoText, { color: colors.textPrimary }]}>
-                    {t('training.weeksList.weekProgress')}: {program.current_week_number || 0}/{program.total_weeks}
-                  </Text>
-                </View>
+          {!!program.template?.name && (
+            <View style={styles.goalRow}>
+              <Ionicons name="trophy-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.goalText, { color: colors.textSecondary }]} numberOfLines={1}>
+                {program.template.name}
+              </Text>
+            </View>
+          )}
 
-                {/* Settings Button */}
-                <TouchableOpacity
-                  style={[styles.settingsRow, { borderTopColor: colors.border }]}
-                  onPress={handleOpenSettings}
-                >
-                  <View style={styles.settingsLabelRow}>
-                    <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
-                    <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>
-                      {t('training.weeksList.settings')}
+          <View style={styles.overallRow}>
+            <Text style={[styles.overallLabel, { color: colors.textSecondary }]}>
+              {t('training.weekOfTotal', { current: Math.max(1, currentWeekNumber), total: totalWeeks })}
+            </Text>
+            <Text style={[styles.overallPercent, { color: colors.textPrimary }]}>{overallPercent}%</Text>
+          </View>
+          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+            <View
+              style={[styles.progressFill, { backgroundColor: colors.primary, width: `${overallPercent}%` }]}
+            />
+          </View>
+
+          <Text style={[styles.dateRange, { color: colors.textMuted }]}>
+            {fmtDay(program.start_date)}
+            {program.planned_end_date ? ` – ${fmtFull(program.planned_end_date)}` : ''}
+          </Text>
+
+          <View style={[styles.statsDivider, { backgroundColor: colors.borderLight }]} />
+
+          <View style={styles.statsRow}>
+            <View style={styles.statCol}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('training.weeksList.weeksDone')}
+              </Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {weeksDone}
+                <Text style={[styles.statUnit, { color: colors.textMuted }]}> /{totalWeeks}</Text>
+              </Text>
+            </View>
+            <View style={styles.statCol}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('training.weeksList.toGo')}
+              </Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {toGo}
+                <Text style={[styles.statUnit, { color: colors.textMuted }]}>
+                  {' '}
+                  {t('training.weeksList.toGoUnit')}
+                </Text>
+              </Text>
+            </View>
+            <View style={styles.statCol}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('training.weeksList.adherence')}
+              </Text>
+              <Text style={[styles.statValue, { color: colors.success }]}>
+                {adherence != null ? adherence : '—'}
+                {adherence != null && <Text style={[styles.statUnit, { color: colors.textMuted }]}> %</Text>}
+              </Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* ---- Browse weeks ---- */}
+        {weeks.length > 0 && (
+          <View style={styles.browseSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+              {t('training.weeksList.browseWeeks')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.weekStrip}
+            >
+              {weeks.map(renderWeekTile)}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* ---- Selected week card ---- */}
+        {selectedWeek && selectedStats && (
+          <Card
+            style={
+              selectedIsCurrent
+                ? [styles.weekCard, { borderColor: colors.primary, borderWidth: 1.5 }]
+                : styles.weekCard
+            }
+          >
+            <View style={styles.weekCardHeader}>
+              <View style={styles.weekCardTitleRow}>
+                <Text style={[styles.weekCardTitle, { color: colors.textPrimary }]}>
+                  {t('training.weeksList.weekNumber', { number: selectedWeek.week_number })}
+                </Text>
+                {!!selectedWeek.phase_name && (
+                  <View style={[styles.phasePill, { backgroundColor: colors.cardBackgroundHighlight }]}>
+                    <Text style={[styles.phaseText, { color: colors.textSecondary }]}>
+                      {selectedWeek.phase_name}
                     </Text>
                   </View>
-                  <View style={styles.settingsValueRow}>
-                    <Text style={[styles.settingsValue, { color: colors.textSecondary }]}>
-                      {program.auto_link_activities
-                        ? t('training.weeksList.autoLinkEnabled')
-                        : t('training.weeksList.autoLinkDisabled')}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                  </View>
-                </TouchableOpacity>
-
-                {/* Program Actions */}
-                <View style={styles.programActions}>
-                  {program.status === 'paused' ? (
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                      onPress={handleResumeProgram}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? (
-                        <ActivityIndicator size="small" color={colors.white} />
-                      ) : (
-                        <>
-                          <Ionicons name="play" size={16} color={colors.white} />
-                          <Text style={[styles.actionButtonText, { color: colors.white }]}>
-                            {t('training.weeksList.resumeProgram')}
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.warning + '20', borderColor: colors.warning, borderWidth: 1 }]}
-                      onPress={handlePauseProgram}
-                      disabled={actionLoading}
-                    >
-                      <Ionicons name="pause" size={16} color={colors.warning} />
-                      <Text style={[styles.actionButtonText, { color: colors.warning }]}>
-                        {t('training.weeksList.pauseProgram')}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
-                    onPress={handleAbandonProgram}
-                    disabled={actionLoading}
-                  >
-                    <Ionicons name="close-circle" size={16} color={colors.error} />
-                    <Text style={[styles.actionButtonText, { color: colors.error }]}>
-                      {t('training.weeksList.abandonProgram')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {/* Generate Coaching Hints Button — Pro only */}
-            {program && weeks.some(w => !w.coaching_hint) && (
-              <TouchableOpacity
-                style={[
-                  styles.generateHintsButton,
-                  { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' },
-                  !canUse('coaching_hints_bulk') && { opacity: 0.7 },
-                ]}
-                onPress={canUse('coaching_hints_bulk') ? handleGenerateHints : () => upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })}
-                disabled={generatingHints}
-              >
-                {generatingHints ? (
-                  <>
-                    <ActivityIndicator size="small" color={colors.primary} />
-                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                      {hintsProgress.total > 0
-                        ? t('training.coachingHints.generatingProgress', { done: hintsProgress.done, total: hintsProgress.total })
-                        : t('training.coachingHints.generating')}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    {!canUse('coaching_hints_bulk') && <Ionicons name="lock-closed" size={16} color={colors.primary} />}
-                    <Ionicons name="bulb-outline" size={20} color={colors.primary} />
-                    <Text style={[styles.generateHintsText, { color: colors.primary }]}>
-                      {t('training.coachingHints.generateButton')}
-                    </Text>
-                    {!canUse('coaching_hints_bulk') && (
-                      <View style={[styles.proBadge, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.proBadgeText, { color: colors.white }]}>PRO</Text>
-                      </View>
-                    )}
-                  </>
                 )}
-              </TouchableOpacity>
+              </View>
+              <View style={styles.weekCardHeaderRight}>
+                {!!selectedWeek.coaching_hint && (
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('TrainingWeekDetail', { weekId: selectedWeek.id })}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="bulb" size={18} color={colors.warning} />
+                  </TouchableOpacity>
+                )}
+                {selectedIsCurrent && (
+                  <View style={[styles.currentPill, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.currentDot, { backgroundColor: colors.white }]} />
+                    <Text style={[styles.currentPillText, { color: colors.white }]}>
+                      {t('training.weeksList.current')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.weekMetaRow}>
+              <View style={styles.weekMetaItem}>
+                <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                <Text style={[styles.weekMetaText, { color: colors.textSecondary }]}>
+                  {new Date(selectedWeek.start_date).getDate()}–{fmtDay(selectedWeek.end_date)}
+                </Text>
+              </View>
+              {selectedStats.plannedMinutes > 0 && (
+                <View style={styles.weekMetaItem}>
+                  <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.weekMetaText, { color: colors.textSecondary }]}>
+                    {t('training.weeksList.planned', {
+                      value: formatDurationCompact(selectedStats.plannedMinutes * 60),
+                    })}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.sessionsHeader}>
+              <Text style={[styles.sessionsLabel, { color: colors.textSecondary }]}>
+                {t('training.weeksList.sessions')}
+              </Text>
+              <Text style={[styles.sessionsCount, { color: colors.textPrimary }]}>
+                {selectedStats.completed}/{selectedStats.total}
+              </Text>
+            </View>
+            <View style={[styles.progressTrack, styles.sessionsTrack, { backgroundColor: colors.border }]}>
+              <View
+                style={[styles.progressFill, { backgroundColor: colors.primary, width: `${selectedStats.percent}%` }]}
+              />
+            </View>
+
+            {selectedStats.sessions.length > 0 && (
+              <View style={styles.sessionsList}>{selectedStats.sessions.map(renderSession)}</View>
             )}
-          </>
-        }
-        ListEmptyComponent={
-          <EmptyState
-            icon="calendar-outline"
-            title={t('training.weeksList.empty.title')}
-            message={t('training.weeksList.empty.message')}
-          />
-        }
+
+            <TouchableOpacity
+              style={[styles.viewProgressBtn, { backgroundColor: colors.primary + '15' }]}
+              onPress={() => {
+                triggerHaptic();
+                navigation.navigate('WeekFeedback', { weekId: selectedWeek.id });
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="stats-chart" size={16} color={colors.primary} />
+              <Text style={[styles.viewProgressText, { color: colors.primary }]}>
+                {t('training.weeksList.viewWeekProgress')}
+              </Text>
+            </TouchableOpacity>
+          </Card>
+        )}
+
+        {/* ---- Grouped program options ---- */}
+        <OptionList options={programOptions} grouped />
+      </ScrollView>
+
+      {/* Switch-plan sheet */}
+      <TrainingPlansSheet
+        visible={showPlansSheet}
+        onClose={() => setShowPlansSheet(false)}
+        programs={programs}
+        activeProgramId={program.id}
+        onSelectProgram={(p) => handleSelectProgram(p.id)}
+        onCreateNew={handleCreateNewProgram}
       />
 
       {/* Settings Modal */}
@@ -733,21 +933,16 @@ export function WeeksListScreen({ navigation }: Props) {
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {t('training.weeksList.settings')}
             </Text>
-            <TouchableOpacity
-              onPress={handleSaveSettings}
-              disabled={savingSettings}
-            >
+            <TouchableOpacity onPress={handleSaveSettings} disabled={savingSettings}>
               {savingSettings ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <Text style={[styles.modalDoneText, { color: colors.primary }]}>
-                  {t('common.save')}
-                </Text>
+                <Text style={[styles.modalDoneText, { color: colors.primary }]}>{t('common.save')}</Text>
               )}
             </TouchableOpacity>
           </View>
 
-          <View style={styles.modalContent}>
+          <ScrollView style={styles.modalContent}>
             {/* Auto-Link Toggle */}
             <View style={styles.modalSection}>
               <Text style={[styles.modalSectionTitle, { color: colors.textPrimary }]}>
@@ -757,10 +952,7 @@ export function WeeksListScreen({ navigation }: Props) {
                 style={[
                   styles.modalToggleRow,
                   { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  autoLinkActivities && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '15',
-                  },
+                  autoLinkActivities && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
                 ]}
                 onPress={() => setAutoLinkActivities(!autoLinkActivities)}
               >
@@ -783,7 +975,7 @@ export function WeeksListScreen({ navigation }: Props) {
             </View>
 
             {/* Cross-Training Sports */}
-            {autoLinkActivities && program && (
+            {autoLinkActivities && (
               <View style={styles.modalSection}>
                 <Text style={[styles.modalSectionTitle, { color: colors.textPrimary }]}>
                   {t('training.calibration.crossTrainingSports')}
@@ -792,8 +984,8 @@ export function WeeksListScreen({ navigation }: Props) {
                   {t('training.calibration.crossTrainingSportsDescription')}
                 </Text>
                 {sportTypes
-                  .filter(s => s.id !== program.sport_type_id)
-                  .map(sport => {
+                  .filter((s) => s.id !== program.sport_type_id)
+                  .map((sport) => {
                     const isSelected = allowedSportTypes.includes(sport.id);
                     return (
                       <TouchableOpacity
@@ -801,16 +993,11 @@ export function WeeksListScreen({ navigation }: Props) {
                         style={[
                           styles.modalSportRow,
                           { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && {
-                            borderColor: colors.primary,
-                            backgroundColor: colors.primary + '15',
-                          },
+                          isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
                         ]}
                         onPress={() => {
-                          setAllowedSportTypes(prev =>
-                            isSelected
-                              ? prev.filter(id => id !== sport.id)
-                              : [...prev, sport.id]
+                          setAllowedSportTypes((prev) =>
+                            isSelected ? prev.filter((id) => id !== sport.id) : [...prev, sport.id]
                           );
                         }}
                       >
@@ -819,12 +1006,8 @@ export function WeeksListScreen({ navigation }: Props) {
                           size={24}
                           color={isSelected ? colors.primary : colors.textSecondary}
                         />
-                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
-                          {sport.name}
-                        </Text>
-                        {isSelected && (
-                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                        )}
+                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>{sport.name}</Text>
+                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
                       </TouchableOpacity>
                     );
                   })}
@@ -846,7 +1029,6 @@ export function WeeksListScreen({ navigation }: Props) {
                 </View>
               ) : (
                 <>
-                  {/* AI Mode Options */}
                   {(['silent', 'reactive', 'proactive'] as AiMode[]).map((mode) => {
                     const isSelected = aiMode === mode;
                     const modeIcons: Record<AiMode, string> = {
@@ -860,10 +1042,7 @@ export function WeeksListScreen({ navigation }: Props) {
                         style={[
                           styles.modalSportRow,
                           { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && {
-                            borderColor: colors.primary,
-                            backgroundColor: colors.primary + '15',
-                          },
+                          isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
                         ]}
                         onPress={() => setAiMode(mode)}
                       >
@@ -875,14 +1054,11 @@ export function WeeksListScreen({ navigation }: Props) {
                         <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
                           {t(`training.tips.settings.${mode}`)}
                         </Text>
-                        {isSelected && (
-                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                        )}
+                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
                       </TouchableOpacity>
                     );
                   })}
 
-                  {/* Usage Indicator */}
                   {mentalBudget && (
                     <View style={[styles.usageContainer, { backgroundColor: colors.cardBackground }]}>
                       <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
@@ -897,7 +1073,7 @@ export function WeeksListScreen({ navigation }: Props) {
                 </>
               )}
             </View>
-          </View>
+          </ScrollView>
         </ScreenContainer>
       </Modal>
     </ScreenContainer>
@@ -905,159 +1081,288 @@ export function WeeksListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContent: {
+    padding: spacing.md,
+    paddingBottom: spacing.xxl,
+    gap: spacing.md,
   },
-  programInfo: {
+  // Program overview card
+  programCard: {
     padding: spacing.lg,
-    borderBottomWidth: 1,
-    gap: spacing.sm,
   },
-  programInfoRow: {
+  programTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  programInfoText: {
+  programName: {
+    flex: 1,
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+  },
+  statusPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
+  statusPillText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.xs,
+  },
+  goalText: {
     fontSize: fontSize.sm,
+    flex: 1,
   },
-  listContent: {
-    padding: spacing.lg,
-  },
-  weekCardContainer: {
-    marginBottom: spacing.lg,
-  },
-  weekCard: {
-    padding: spacing.lg,
-  },
-  weekHeader: {
+  overallRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
-  weekTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  weekTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  currentBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  currentBadgeText: {
+  overallLabel: {
     fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  statusBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+  overallPercent: {
+    fontSize: fontSize.md,
+    fontWeight: '800',
   },
-  statusText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  weekDate: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.lg,
-  },
-  progressSection: {
-    marginBottom: spacing.md,
-  },
-  progressInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xs,
-  },
-  progressText: {
-    fontSize: fontSize.sm,
-  },
-  progressValue: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  progressBarContainer: {
+  progressTrack: {
     height: 8,
-    borderRadius: borderRadius.sm,
+    borderRadius: 4,
     overflow: 'hidden',
   },
-  progressBar: {
+  progressFill: {
     height: '100%',
-    borderRadius: borderRadius.sm,
+    borderRadius: 4,
   },
-  feedbackLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    alignSelf: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  feedbackLinkText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  sessionsPreview: {
-    flexDirection: 'row',
-    gap: spacing.xs,
+  dateRange: {
+    fontSize: fontSize.xs,
     marginTop: spacing.sm,
   },
-  sessionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  statsDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: spacing.md,
   },
-  programActions: {
+  statsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+  statCol: {
+    flex: 1,
+    gap: 4,
   },
-  actionButtonText: {
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+  },
+  statUnit: {
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
-  settingsRow: {
+  // Browse weeks
+  browseSection: {
+    gap: spacing.sm,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  weekStrip: {
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  weekTile: {
+    width: 60,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    gap: 2,
+  },
+  weekTileLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  weekTileNumber: {
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+  },
+  weekTileDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 2,
+  },
+  // Selected week card
+  weekCard: {
+    padding: spacing.lg,
+  },
+  weekCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: spacing.md,
-    marginTop: spacing.md,
-    borderTopWidth: 1,
+    gap: spacing.sm,
   },
-  settingsLabelRow: {
+  weekCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  weekCardTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+  },
+  phasePill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+  },
+  phaseText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  weekCardHeaderRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  settingsLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  settingsValueRow: {
+  currentPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
   },
-  settingsValue: {
+  currentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  currentPillText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  weekMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  weekMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  weekMetaText: {
     fontSize: fontSize.sm,
   },
+  sessionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  sessionsLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  sessionsCount: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  sessionsTrack: {
+    height: 6,
+  },
+  sessionsList: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  session: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sessionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  sessionText: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  sessionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  sessionDetail: {
+    fontSize: fontSize.xs,
+    marginTop: 1,
+  },
+  sessionMeta: {
+    alignItems: 'flex-end',
+  },
+  sessionDuration: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  strikethrough: {
+    textDecorationLine: 'line-through',
+  },
+  sessionStatus: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 1,
+  },
+  viewProgressBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginTop: spacing.md,
+  },
+  viewProgressText: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  proBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  proBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  // Settings modal
   modalContainer: {
     flex: 1,
   },
@@ -1146,31 +1451,5 @@ const styles = StyleSheet.create({
   usageText: {
     flex: 1,
     fontSize: fontSize.sm,
-  },
-  generateHintsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    marginBottom: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  generateHintsText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  proBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  proBadgeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
   },
 });

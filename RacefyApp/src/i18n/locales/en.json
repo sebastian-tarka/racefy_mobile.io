@@ -398,6 +398,7 @@
     },
     "stats": {
       "posts": "Posts",
+      "activities": "Activities",
       "totalDistance": "Total",
       "followers": "Followers",
       "following": "Following",
@@ -1556,6 +1557,13 @@
   "training": {
     "title": "Training Plans",
     "subtitle": "AI-powered personalized training programs",
+    "activeBadge": "Active",
+    "pausedBadge": "Paused",
+    "weekOfTotal": "Week {{current}} of {{total}}",
+    "holdToSwitch": "hold to switch",
+    "yourPlans": "Your training plans · {{count}}",
+    "createPlan": "Create new plan",
+    "createPlanDesc": "AI builds it around your goal & schedule",
     "creatingProgram": "Creating your personalized training program...",
     "calibration": {
       "title": "Training Calibration",
@@ -1598,12 +1606,28 @@
       "upgrade": "Upgrade"
     },
     "weeksList": {
-      "title": "Training Weeks",
+      "title": "Training plan",
       "weekNumber": "Week {{number}}",
+      "weekShort": "WK",
       "current": "Current",
       "progress": "Progress",
       "programName": "Program",
       "weekProgress": "Week Progress",
+      "browseWeeks": "Browse weeks",
+      "weeksDone": "Weeks done",
+      "toGo": "To go",
+      "toGoUnit": "wks",
+      "adherence": "Adherence",
+      "sessions": "Sessions",
+      "planned": "{{value}} planned",
+      "viewWeekProgress": "View week progress",
+      "switchPlan": "Switch plan",
+      "switchPlanDesc": "You have other active plans",
+      "sessionStatus": {
+        "done": "Done",
+        "planned": "Planned",
+        "skipped": "Skipped"
+      },
       "status": {
         "upcoming": "Upcoming",
         "current": "Current",

@@ -398,6 +398,7 @@
     },
     "stats": {
       "posts": "Posty",
+      "activities": "Aktywności",
       "totalDistance": "Łącznie",
       "followers": "Obserwujący",
       "following": "Obserwowani",
@@ -1558,6 +1559,13 @@
   "training": {
     "title": "Plany Treningowe",
     "subtitle": "Spersonalizowane plany treningowe oparte na AI",
+    "activeBadge": "Aktywny",
+    "pausedBadge": "Wstrzymany",
+    "weekOfTotal": "Tydzień {{current}} z {{total}}",
+    "holdToSwitch": "przytrzymaj, aby przełączyć",
+    "yourPlans": "Twoje plany treningowe · {{count}}",
+    "createPlan": "Utwórz nowy plan",
+    "createPlanDesc": "AI zbuduje go pod Twój cel i harmonogram",
     "creatingProgram": "Tworzenie spersonalizowanego planu treningowego...",
     "calibration": {
       "title": "Kalibracja Treningowa",
@@ -1600,12 +1608,28 @@
       "upgrade": "Ulepsz"
     },
     "weeksList": {
-      "title": "Tygodnie Treningowe",
+      "title": "Plan treningowy",
       "weekNumber": "Tydzień {{number}}",
+      "weekShort": "TYG",
       "current": "Aktualny",
       "progress": "Postęp",
       "programName": "Program",
       "weekProgress": "Postęp Tygodni",
+      "browseWeeks": "Przeglądaj tygodnie",
+      "weeksDone": "Tygodnie ukończone",
+      "toGo": "Pozostało",
+      "toGoUnit": "tyg.",
+      "adherence": "Zgodność",
+      "sessions": "Sesje",
+      "planned": "{{value}} w planie",
+      "viewWeekProgress": "Przegląd przebiegu tygodnia",
+      "switchPlan": "Przełącz plan",
+      "switchPlanDesc": "Masz inne aktywne plany",
+      "sessionStatus": {
+        "done": "Zrobione",
+        "planned": "Zaplanowane",
+        "skipped": "Pominięte"
+      },
       "status": {
         "upcoming": "Nadchodzący",
         "current": "Bieżący",
