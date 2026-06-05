@@ -23,9 +23,21 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { spacing, fontSize, borderRadius } from '../../theme';
-import { ScreenHeader, Button, Loading, Input, SportTypeSelector, ScreenContainer } from '../../components';
+import {
+  ScreenHeader,
+  Button,
+  Loading,
+  Input,
+  SportTypeSelector,
+  ScreenContainer,
+} from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
-import type { ExperienceLevel, GuidanceLevel, RecoveryProfile, TrainingGoal } from '../../types/api';
+import type {
+  ExperienceLevel,
+  GuidanceLevel,
+  RecoveryProfile,
+  TrainingGoal,
+} from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -78,7 +90,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
   const [showCrossTrainingModal, setShowCrossTrainingModal] = useState(false);
 
   // Cross-training sport types (excludes selected primary sport)
-  const crossTrainingSports = sportTypes.filter(s => s.id !== sportTypeId);
+  const crossTrainingSports = sportTypes.filter((s) => s.id !== sportTypeId);
 
   // Load training goals when sport type changes
   useEffect(() => {
@@ -113,7 +125,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
     if (selectedGoal?.requires_target_date && selectedGoal.default_duration_weeks) {
       // Calculate suggested date: today + default_duration_weeks
       const suggestedDate = new Date();
-      suggestedDate.setDate(suggestedDate.getDate() + (selectedGoal.default_duration_weeks * 7));
+      suggestedDate.setDate(suggestedDate.getDate() + selectedGoal.default_duration_weeks * 7);
       setTargetDate(suggestedDate);
       logger.info('training', 'Auto-populated target date', {
         goalId: selectedGoal.id,
@@ -164,7 +176,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
 
       logger.debug('training', 'Existing programs check', {
         count: existingPrograms.length,
-        ids: existingPrograms.map(p => p.id),
+        ids: existingPrograms.map((p) => p.id),
       });
 
       if (existingPrograms.length > 0) {
@@ -189,7 +201,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
                 style: 'destructive',
                 onPress: () => createNewProgram(existingProgram.id),
               },
-            ]
+            ],
           );
         } else {
           // Multiple programs exist - just create a new one (limit enforced by API)
@@ -226,8 +238,14 @@ export function CalibrationFormScreen({ navigation }: Props) {
         guidance_level: guidanceLevel!,
         recovery_profile: recoveryProfile!,
         injury_history: injuryHistory,
-        target_distance: selectedGoal!.requires_target_distance && targetDistance ? parseInt(targetDistance) : undefined,
-        target_date: selectedGoal!.requires_target_date && targetDate ? targetDate.toISOString().split('T')[0] : undefined,
+        target_distance:
+          selectedGoal!.requires_target_distance && targetDistance
+            ? parseInt(targetDistance)
+            : undefined,
+        target_date:
+          selectedGoal!.requires_target_date && targetDate
+            ? targetDate.toISOString().split('T')[0]
+            : undefined,
       });
 
       logger.info('training', 'Calibration created', { calibrationId: calibration.id });
@@ -253,7 +271,11 @@ export function CalibrationFormScreen({ navigation }: Props) {
       logger.error('training', 'Failed to create calibration', { error });
       // Handle 403 feature-gating for active_training_programs limit
       const msg = error.message?.toLowerCase() || '';
-      if (msg.includes('active_training_programs') || msg.includes('limit') || error.status === 403) {
+      if (
+        msg.includes('active_training_programs') ||
+        msg.includes('limit') ||
+        error.status === 403
+      ) {
         upgradePromptEmitter.emit('show', {
           feature: 'active_training_programs',
         });
@@ -372,7 +394,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
             ))}
           </View>
           {errors.experienceLevel && (
-            <Text style={[styles.errorText, { color: colors.error }]}>{errors.experienceLevel}</Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>
+              {errors.experienceLevel}
+            </Text>
           )}
         </View>
 
@@ -475,7 +499,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
             ))}
           </View>
           {errors.recoveryProfile && (
-            <Text style={[styles.errorText, { color: colors.error }]}>{errors.recoveryProfile}</Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>
+              {errors.recoveryProfile}
+            </Text>
           )}
         </View>
 
@@ -550,11 +576,18 @@ export function CalibrationFormScreen({ navigation }: Props) {
               onPress={() => setShowCrossTrainingModal(true)}
             >
               <Ionicons name="fitness-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.dateText, {
-                color: allowedSportTypes.length > 0 ? colors.textPrimary : colors.textMuted,
-              }]}>
+              <Text
+                style={[
+                  styles.dateText,
+                  {
+                    color: allowedSportTypes.length > 0 ? colors.textPrimary : colors.textMuted,
+                  },
+                ]}
+              >
                 {allowedSportTypes.length > 0
-                  ? t('training.calibration.crossTrainingSelected', { count: allowedSportTypes.length })
+                  ? t('training.calibration.crossTrainingSelected', {
+                      count: allowedSportTypes.length,
+                    })
                   : t('training.calibration.primarySportOnly')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
@@ -592,7 +625,12 @@ export function CalibrationFormScreen({ navigation }: Props) {
               onPress={() => setShowDatePicker(true)}
             >
               <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.dateText, { color: targetDate ? colors.textPrimary : colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.dateText,
+                  { color: targetDate ? colors.textPrimary : colors.textMuted },
+                ]}
+              >
                 {targetDate
                   ? targetDate.toLocaleDateString()
                   : t('training.calibration.selectDate')}
@@ -600,7 +638,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
             </TouchableOpacity>
             {selectedGoal.default_duration_weeks && !errors.targetDate && (
               <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                {t('training.calibration.suggestedDate', { weeks: selectedGoal.default_duration_weeks })}
+                {t('training.calibration.suggestedDate', {
+                  weeks: selectedGoal.default_duration_weeks,
+                })}
               </Text>
             )}
             {errors.targetDate && (
@@ -683,10 +723,8 @@ export function CalibrationFormScreen({ navigation }: Props) {
                     },
                   ]}
                   onPress={() => {
-                    setAllowedSportTypes(prev =>
-                      isSelected
-                        ? prev.filter(id => id !== item.id)
-                        : [...prev, item.id]
+                    setAllowedSportTypes((prev) =>
+                      isSelected ? prev.filter((id) => id !== item.id) : [...prev, item.id],
                     );
                   }}
                 >

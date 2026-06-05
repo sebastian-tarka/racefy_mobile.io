@@ -44,7 +44,9 @@ export function OngoingEventsPreview({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('home.ongoingEvents')}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('home.ongoingEvents')}
+        </Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={colors.primary} />
         </View>
@@ -72,27 +74,23 @@ export function OngoingEventsPreview({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('home.ongoingEvents')}</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          {t('home.ongoingEvents')}
+        </Text>
         <TouchableOpacity onPress={onViewAllPress}>
           <Text style={[styles.viewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
         </TouchableOpacity>
       </View>
 
       {events.map((event) => (
-        <TouchableOpacity
-          key={event.id}
-          onPress={() => onEventPress(event.id)}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity key={event.id} onPress={() => onEventPress(event.id)} activeOpacity={0.8}>
           <Card style={styles.eventCard}>
             <View style={[styles.liveBadge, { backgroundColor: colors.error }]}>
               <View style={styles.pulseContainer}>
                 <View style={[styles.pulse, { backgroundColor: colors.error }]} />
               </View>
               <Ionicons name="radio" size={18} color={colors.white} />
-              <Text style={[styles.liveText, { color: colors.white }]}>
-                {t('home.live')}
-              </Text>
+              <Text style={[styles.liveText, { color: colors.white }]}>{t('home.live')}</Text>
             </View>
             <View style={styles.eventContent}>
               <Text style={[styles.eventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -101,7 +99,8 @@ export function OngoingEventsPreview({
               <View style={styles.eventMeta}>
                 <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={[styles.eventTime, { color: colors.textMuted }]} numberOfLines={1}>
-                  {format(new Date(event.starts_at), 'HH:mm')} - {format(new Date(event.ends_at), 'HH:mm')}
+                  {format(new Date(event.starts_at), 'HH:mm')} -{' '}
+                  {format(new Date(event.ends_at), 'HH:mm')}
                 </Text>
               </View>
               <View style={styles.eventMeta}>
@@ -111,14 +110,21 @@ export function OngoingEventsPreview({
                 </Text>
               </View>
               <View style={styles.eventTags}>
-                <View style={[styles.tag, { backgroundColor: getDifficultyColor(event.difficulty) + '20' }]}>
+                <View
+                  style={[
+                    styles.tag,
+                    { backgroundColor: getDifficultyColor(event.difficulty) + '20' },
+                  ]}
+                >
                   <Text style={[styles.tagText, { color: getDifficultyColor(event.difficulty) }]}>
                     {t(`difficulty.${event.difficulty}`)}
                   </Text>
                 </View>
                 {event.sport_type && (
                   <View style={[styles.tag, { backgroundColor: colors.border }]}>
-                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>{event.sport_type.name}</Text>
+                    <Text style={[styles.tagText, { color: colors.textSecondary }]}>
+                      {event.sport_type.name}
+                    </Text>
                   </View>
                 )}
               </View>

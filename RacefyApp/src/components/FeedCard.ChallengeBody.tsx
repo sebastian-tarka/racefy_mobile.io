@@ -1,24 +1,36 @@
-import React, {useMemo} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {format} from 'date-fns';
-import {enUS, es, pl} from 'date-fns/locale';
-import {useTranslation} from 'react-i18next';
-import {AutoDisplayImage} from './AutoDisplayImage';
-import {ImageViewer} from './ImageViewer';
-import {ImageGallery} from './ImageGallery';
-import {useTheme} from '../hooks/useTheme';
-import {fixStorageUrl} from '../config/api';
-import {useImageGallery} from './FeedCard.utils';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Post} from '../types/api';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { format } from 'date-fns';
+import { enUS, es, pl } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { AutoDisplayImage } from './AutoDisplayImage';
+import { ImageViewer } from './ImageViewer';
+import { ImageGallery } from './ImageGallery';
+import { useTheme } from '../hooks/useTheme';
+import { fixStorageUrl } from '../config/api';
+import { useImageGallery } from './FeedCard.utils';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Post } from '../types/api';
 
-function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }: any) {
+function GalleryModals({
+  galleryVisible,
+  setGalleryVisible,
+  galleryIndex,
+  imageUrls,
+  expandedImage,
+  setExpandedImage,
+}: any) {
   return (
     <>
       {galleryVisible && imageUrls.length > 0 && (
-        <ImageGallery images={imageUrls} initialIndex={galleryIndex} visible={galleryVisible} onClose={() => setGalleryVisible(false)} />
+        <ImageGallery
+          images={imageUrls}
+          initialIndex={galleryIndex}
+          visible={galleryVisible}
+          onClose={() => setGalleryVisible(false)}
+        />
       )}
       {expandedImage && (
         <ImageViewer uri={expandedImage} visible onClose={() => setExpandedImage(null)} />
@@ -30,7 +42,14 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
 export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress?: () => void }) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const {
+    expandedImage,
+    setExpandedImage,
+    galleryVisible,
+    setGalleryVisible,
+    galleryIndex,
+    openGallery,
+  } = useImageGallery();
   const event = post.event;
   if (!event) return null;
 
@@ -40,7 +59,7 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
     const cover = event.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
     const urls: string[] = [];
     if (cover) urls.push(cover);
-    (post.photos || []).forEach(p => {
+    (post.photos || []).forEach((p) => {
       const url = fixStorageUrl(p.url);
       if (url) urls.push(url);
     });
@@ -53,9 +72,12 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
   const dateRange = `${format(new Date(event.starts_at), 'MMM d', { locale: dateFnsLocale })} — ${format(new Date(event.ends_at), 'MMM d', { locale: dateFnsLocale })}`;
   const statusLabel = t(`feed.challengeStatus.${event.status}`, event.status.toUpperCase());
 
-  const statusColor = event.status === 'upcoming' ? colors.info
-    : event.status === 'ongoing' ? colors.primary
-    : colors.textMuted;
+  const statusColor =
+    event.status === 'upcoming'
+      ? colors.info
+      : event.status === 'ongoing'
+        ? colors.primary
+        : colors.textMuted;
 
   return (
     <>
@@ -69,7 +91,7 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
         {coverUrl ? (
           <AutoDisplayImage
             imageUrl={coverUrl}
-            onExpand={() => imageUrls.length > 1 ? openGallery(0) : setExpandedImage(coverUrl)}
+            onExpand={() => (imageUrls.length > 1 ? openGallery(0) : setExpandedImage(coverUrl))}
             previewHeight={200}
           />
         ) : (
@@ -122,7 +144,16 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
         </TouchableOpacity>
       </View>
 
-      <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
+      <GalleryModals
+        {...{
+          galleryVisible,
+          setGalleryVisible,
+          galleryIndex,
+          imageUrls,
+          expandedImage,
+          setExpandedImage,
+        }}
+      />
     </>
   );
 }

@@ -76,9 +76,7 @@ function ComplianceRing({
       <Text style={[styles.ringSubtext, { color: colors.textSecondary }]}>
         {completedLabel} {t('training.feedback.compliance.of')} {suggestedLabel}
       </Text>
-      <Text style={[styles.ringLabel, { color: colors.textPrimary }]}>
-        {title}
-      </Text>
+      <Text style={[styles.ringLabel, { color: colors.textPrimary }]}>{title}</Text>
     </View>
   );
 }
@@ -89,9 +87,7 @@ export function ComplianceRings({ compliance }: Props) {
 
   return (
     <Card style={styles.card}>
-      <Text style={styles.hidden}>
-        {/* Section title handled by parent */}
-      </Text>
+      <Text style={styles.hidden}>{/* Section title handled by parent */}</Text>
       <View style={styles.ringsRow}>
         <ComplianceRing
           percentage={compliance.sessions.percentage}

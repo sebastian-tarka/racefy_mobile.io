@@ -64,7 +64,8 @@ export function PointsBudgetIndicator({
   const lastReqIdRef = useRef(0);
 
   // Prerequisites check: need sport_type, max_participants, and either distance or elevation
-  const hasEffort = (distance != null && distance > 0) || (elevationGain != null && elevationGain > 0);
+  const hasEffort =
+    (distance != null && distance > 0) || (elevationGain != null && elevationGain > 0);
   const prerequisitesReady = !!sportTypeId && hasEffort && !!maxParticipants && maxParticipants > 0;
 
   // Notify parent about prerequisite changes
@@ -84,7 +85,7 @@ export function PointsBudgetIndicator({
         isSponsored: !!isSponsored,
         eventId,
       }),
-    [sportTypeId, distance, elevationGain, targetElevation, maxParticipants, isSponsored, eventId]
+    [sportTypeId, distance, elevationGain, targetElevation, maxParticipants, isSponsored, eventId],
   );
 
   // Fetch preview (debounced) or persisted budget when inputs change
@@ -152,14 +153,25 @@ export function PointsBudgetIndicator({
     if (!maxParticipants) missing.push(t('events.pointsBudget.prereqMaxParticipants'));
 
     return (
-      <View style={[styles.container, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[
+          styles.container,
+          { borderColor: colors.border, backgroundColor: colors.cardBackground },
+        ]}
+      >
         <View style={styles.headerRow}>
           <Ionicons name="trophy-outline" size={18} color={colors.textMuted} />
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('events.pointsBudget.title')}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('events.pointsBudget.title')}
+          </Text>
         </View>
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('events.pointsBudget.prereqTitle')}</Text>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>
+          {t('events.pointsBudget.prereqTitle')}
+        </Text>
         {missing.map((m) => (
-          <Text key={m} style={[styles.hintItem, { color: colors.textMuted }]}>• {m}</Text>
+          <Text key={m} style={[styles.hintItem, { color: colors.textMuted }]}>
+            • {m}
+          </Text>
         ))}
       </View>
     );
@@ -168,10 +180,17 @@ export function PointsBudgetIndicator({
   // ---------- Render: loading ----------
   if (loading && !budget) {
     return (
-      <View style={[styles.container, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[
+          styles.container,
+          { borderColor: colors.border, backgroundColor: colors.cardBackground },
+        ]}
+      >
         <View style={styles.headerRow}>
           <ActivityIndicator size="small" color={colors.primary} />
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('events.pointsBudget.loading')}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('events.pointsBudget.loading')}
+          </Text>
         </View>
       </View>
     );
@@ -180,7 +199,12 @@ export function PointsBudgetIndicator({
   // ---------- Render: error ----------
   if (error && !budget) {
     return (
-      <View style={[styles.container, { borderColor: colors.error, backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[
+          styles.container,
+          { borderColor: colors.error, backgroundColor: colors.cardBackground },
+        ]}
+      >
         <View style={styles.headerRow}>
           <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
           <Text style={[styles.title, { color: colors.error }]}>{error}</Text>
@@ -207,7 +231,9 @@ export function PointsBudgetIndicator({
     >
       <View style={styles.headerRow}>
         <Ionicons name="trophy" size={18} color={exceeded ? colors.error : colors.primary} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('events.pointsBudget.title')}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {t('events.pointsBudget.title')}
+        </Text>
         {budget.is_sponsored && (
           <View style={[styles.badge, { backgroundColor: colors.primary + '22' }]}>
             <Text style={[styles.badgeText, { color: colors.primary }]}>
@@ -215,20 +241,32 @@ export function PointsBudgetIndicator({
             </Text>
           </View>
         )}
-        {loading && <ActivityIndicator size="small" color={colors.textMuted} style={{ marginLeft: 'auto' }} />}
+        {loading && (
+          <ActivityIndicator size="small" color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+        )}
       </View>
 
       <View style={styles.statsRow}>
         <View style={styles.statCol}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('events.pointsBudget.pool')}</Text>
-          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{budget.pool.toLocaleString()}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('events.pointsBudget.pool')}
+          </Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {budget.pool.toLocaleString()}
+          </Text>
         </View>
         <View style={styles.statCol}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('events.pointsBudget.allocated')}</Text>
-          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{allocated.toLocaleString()}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('events.pointsBudget.allocated')}
+          </Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+            {allocated.toLocaleString()}
+          </Text>
         </View>
         <View style={styles.statCol}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('events.pointsBudget.remaining')}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('events.pointsBudget.remaining')}
+          </Text>
           <Text style={[styles.statValue, { color: exceeded ? colors.error : colors.primary }]}>
             {remaining.toLocaleString()}
           </Text>

@@ -3,9 +3,9 @@ import type { AnnouncementData, AudioCoachLanguage, AudioCoachStyle } from '../.
 // ─── Pluralization helpers ───────────────────────────────────────────────────
 
 type PluralForms = {
-  one: string;   // nominative singular (n = 1)
-  few?: string;  // 2–4 (Slavic languages)
-  many: string;  // 5+ (also used as simple plural for non-Slavic)
+  one: string; // nominative singular (n = 1)
+  few?: string; // 2–4 (Slavic languages)
+  many: string; // 5+ (also used as simple plural for non-Slavic)
 };
 
 /**
@@ -28,13 +28,16 @@ type LangTimeForms = { min: PluralForms; sec: PluralForms };
 
 /** Genitive forms — used for "X minutes Y seconds" in pace context */
 const PACE_FORMS: Record<AudioCoachLanguage, LangTimeForms> = {
-  en: { min: { one: 'minute',  many: 'minutes'  }, sec: { one: 'second',  many: 'seconds'  } },
-  pl: { min: { one: 'minuta',  few: 'minuty',  many: 'minut'  }, sec: { one: 'sekunda',  few: 'sekundy',  many: 'sekund'  } },
-  de: { min: { one: 'Minute',  many: 'Minuten' }, sec: { one: 'Sekunde', many: 'Sekunden' } },
-  fr: { min: { one: 'minute',  many: 'minutes'  }, sec: { one: 'seconde', many: 'secondes' } },
-  es: { min: { one: 'minuto',  many: 'minutos'  }, sec: { one: 'segundo', many: 'segundos' } },
-  it: { min: { one: 'minuto',  many: 'minuti'   }, sec: { one: 'secondo', many: 'secondi'  } },
-  pt: { min: { one: 'minuto',  many: 'minutos'  }, sec: { one: 'segundo', many: 'segundos' } },
+  en: { min: { one: 'minute', many: 'minutes' }, sec: { one: 'second', many: 'seconds' } },
+  pl: {
+    min: { one: 'minuta', few: 'minuty', many: 'minut' },
+    sec: { one: 'sekunda', few: 'sekundy', many: 'sekund' },
+  },
+  de: { min: { one: 'Minute', many: 'Minuten' }, sec: { one: 'Sekunde', many: 'Sekunden' } },
+  fr: { min: { one: 'minute', many: 'minutes' }, sec: { one: 'seconde', many: 'secondes' } },
+  es: { min: { one: 'minuto', many: 'minutos' }, sec: { one: 'segundo', many: 'segundos' } },
+  it: { min: { one: 'minuto', many: 'minuti' }, sec: { one: 'secondo', many: 'secondi' } },
+  pt: { min: { one: 'minuto', many: 'minutos' }, sec: { one: 'segundo', many: 'segundos' } },
 };
 
 /** Accusative/object forms — used for "X minutes faster" in delta context (Polish differs here) */
@@ -46,13 +49,13 @@ const DELTA_FORMS: Record<AudioCoachLanguage, LangTimeForms> = {
 // ─── Kilometer forms per language ────────────────────────────────────────────
 
 const KM_FORMS: Record<AudioCoachLanguage, PluralForms> = {
-  en: { one: 'kilometer',   many: 'kilometers'   },
-  pl: { one: 'kilometr',    few: 'kilometry',    many: 'kilometrów' },
-  de: { one: 'Kilometer',   many: 'Kilometer'    },
-  fr: { one: 'kilomètre',   many: 'kilomètres'   },
-  es: { one: 'kilómetro',   many: 'kilómetros'   },
-  it: { one: 'chilometro',  many: 'chilometri'   },
-  pt: { one: 'quilómetro',  many: 'quilómetros'  },
+  en: { one: 'kilometer', many: 'kilometers' },
+  pl: { one: 'kilometr', few: 'kilometry', many: 'kilometrów' },
+  de: { one: 'Kilometer', many: 'Kilometer' },
+  fr: { one: 'kilomètre', many: 'kilomètres' },
+  es: { one: 'kilómetro', many: 'kilómetros' },
+  it: { one: 'chilometro', many: 'chilometri' },
+  pt: { one: 'quilómetro', many: 'quilómetros' },
 };
 
 /**
@@ -112,13 +115,13 @@ function formatDelta(deltaSeconds: number, language: AudioCoachLanguage): string
   }
 
   const dirLabels: Record<AudioCoachLanguage, { faster: string; slower: string }> = {
-    en: { faster: 'faster',      slower: 'slower'       },
-    pl: { faster: 'szybciej',    slower: 'wolniej'      },
-    de: { faster: 'schneller',   slower: 'langsamer'    },
-    fr: { faster: 'plus vite',   slower: 'plus lent'    },
-    es: { faster: 'más rápido',  slower: 'más lento'    },
-    it: { faster: 'più veloce',  slower: 'più lento'    },
-    pt: { faster: 'mais rápido', slower: 'mais lento'   },
+    en: { faster: 'faster', slower: 'slower' },
+    pl: { faster: 'szybciej', slower: 'wolniej' },
+    de: { faster: 'schneller', slower: 'langsamer' },
+    fr: { faster: 'plus vite', slower: 'plus lent' },
+    es: { faster: 'más rápido', slower: 'más lento' },
+    it: { faster: 'più veloce', slower: 'più lento' },
+    pt: { faster: 'mais rápido', slower: 'mais lento' },
   };
 
   const label = deltaSeconds < 0 ? dirLabels[language].faster : dirLabels[language].slower;
@@ -139,9 +142,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} K done! You're running ${formatPace(d.pace, d.language)} pace. Keep pushing!`;
       if (d.heartRate) text += ` Heart at ${d.heartRate} BPM.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` You're getting faster, ${formatDelta(d.splitDelta, 'en')}!`
-          : ` Stay strong, ${formatDelta(d.splitDelta, 'en')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` You're getting faster, ${formatDelta(d.splitDelta, 'en')}!`
+            : ` Stay strong, ${formatDelta(d.splitDelta, 'en')}.`;
       }
       return text;
     },
@@ -149,9 +153,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Kilometer ${d.km}. Current pace is ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Heart rate ${d.heartRate} beats per minute.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Picking up speed, ${formatDelta(d.splitDelta, 'en')}. Good work.`
-          : ` Slowing down ${formatDelta(d.splitDelta, 'en')}. Try to maintain your pace.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Picking up speed, ${formatDelta(d.splitDelta, 'en')}. Good work.`
+            : ` Slowing down ${formatDelta(d.splitDelta, 'en')}. Try to maintain your pace.`;
       }
       return text;
     },
@@ -172,9 +177,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km za tobą! Tempo ${formatPace(d.pace, d.language)}. Tak trzymaj!`;
       if (d.heartRate) text += ` Tętno ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Przyspieszasz, ${formatDelta(d.splitDelta, 'pl')}!`
-          : ` Nie poddawaj się, ${formatDelta(d.splitDelta, 'pl')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Przyspieszasz, ${formatDelta(d.splitDelta, 'pl')}!`
+            : ` Nie poddawaj się, ${formatDelta(d.splitDelta, 'pl')}.`;
       }
       return text;
     },
@@ -182,9 +188,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Kilometr ${d.km}. Aktualne tempo ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Tętno ${d.heartRate} uderzeń na minutę.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Przyspieszasz o ${formatDelta(d.splitDelta, 'pl')}. Dobrze.`
-          : ` Zwalniasz o ${formatDelta(d.splitDelta, 'pl')}. Utrzymaj tempo.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Przyspieszasz o ${formatDelta(d.splitDelta, 'pl')}. Dobrze.`
+            : ` Zwalniasz o ${formatDelta(d.splitDelta, 'pl')}. Utrzymaj tempo.`;
       }
       return text;
     },
@@ -205,9 +212,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km geschafft! Tempo ${formatPace(d.pace, d.language)}. Weiter so!`;
       if (d.heartRate) text += ` Puls ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Du wirst schneller, ${formatDelta(d.splitDelta, 'de')}!`
-          : ` Bleib dran, ${formatDelta(d.splitDelta, 'de')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Du wirst schneller, ${formatDelta(d.splitDelta, 'de')}!`
+            : ` Bleib dran, ${formatDelta(d.splitDelta, 'de')}.`;
       }
       return text;
     },
@@ -215,9 +223,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Kilometer ${d.km}. Aktuelles Tempo ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Herzfrequenz ${d.heartRate} Schläge pro Minute.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Tempo erhöht, ${formatDelta(d.splitDelta, 'de')}.`
-          : ` Tempo verlangsamt, ${formatDelta(d.splitDelta, 'de')}. Versuche das Tempo zu halten.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Tempo erhöht, ${formatDelta(d.splitDelta, 'de')}.`
+            : ` Tempo verlangsamt, ${formatDelta(d.splitDelta, 'de')}. Versuche das Tempo zu halten.`;
       }
       return text;
     },
@@ -238,9 +247,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km! Allure ${formatPace(d.pace, d.language)}. Continue comme ça!`;
       if (d.heartRate) text += ` Cœur à ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Tu accélères, ${formatDelta(d.splitDelta, 'fr')}!`
-          : ` Tiens bon, ${formatDelta(d.splitDelta, 'fr')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Tu accélères, ${formatDelta(d.splitDelta, 'fr')}!`
+            : ` Tiens bon, ${formatDelta(d.splitDelta, 'fr')}.`;
       }
       return text;
     },
@@ -248,9 +258,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Kilomètre ${d.km}. Allure actuelle ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Fréquence cardiaque ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Accélération de ${formatDelta(d.splitDelta, 'fr')}.`
-          : ` Ralentissement de ${formatDelta(d.splitDelta, 'fr')}. Maintenez votre allure.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Accélération de ${formatDelta(d.splitDelta, 'fr')}.`
+            : ` Ralentissement de ${formatDelta(d.splitDelta, 'fr')}. Maintenez votre allure.`;
       }
       return text;
     },
@@ -271,9 +282,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. ¡Sigue así!`;
       if (d.heartRate) text += ` Corazón a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Estás acelerando, ${formatDelta(d.splitDelta, 'es')}!`
-          : ` Aguanta, ${formatDelta(d.splitDelta, 'es')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Estás acelerando, ${formatDelta(d.splitDelta, 'es')}!`
+            : ` Aguanta, ${formatDelta(d.splitDelta, 'es')}.`;
       }
       return text;
     },
@@ -281,9 +293,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Kilómetro ${d.km}. Ritmo actual ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frecuencia cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Acelerando ${formatDelta(d.splitDelta, 'es')}.`
-          : ` Desacelerando ${formatDelta(d.splitDelta, 'es')}. Mantén el ritmo.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Acelerando ${formatDelta(d.splitDelta, 'es')}.`
+            : ` Desacelerando ${formatDelta(d.splitDelta, 'es')}. Mantén el ritmo.`;
       }
       return text;
     },
@@ -304,9 +317,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. Continua così!`;
       if (d.heartRate) text += ` Cuore a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Stai accelerando, ${formatDelta(d.splitDelta, 'it')}!`
-          : ` Resisti, ${formatDelta(d.splitDelta, 'it')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Stai accelerando, ${formatDelta(d.splitDelta, 'it')}!`
+            : ` Resisti, ${formatDelta(d.splitDelta, 'it')}.`;
       }
       return text;
     },
@@ -314,9 +328,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Chilometro ${d.km}. Ritmo attuale ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frequenza cardiaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Accelerazione di ${formatDelta(d.splitDelta, 'it')}.`
-          : ` Rallentamento di ${formatDelta(d.splitDelta, 'it')}. Mantieni il ritmo.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Accelerazione di ${formatDelta(d.splitDelta, 'it')}.`
+            : ` Rallentamento di ${formatDelta(d.splitDelta, 'it')}. Mantieni il ritmo.`;
       }
       return text;
     },
@@ -337,9 +352,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `${d.km} km! Ritmo ${formatPace(d.pace, d.language)}. Continue assim!`;
       if (d.heartRate) text += ` Coração a ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Você está acelerando, ${formatDelta(d.splitDelta, 'pt')}!`
-          : ` Aguente firme, ${formatDelta(d.splitDelta, 'pt')}.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Você está acelerando, ${formatDelta(d.splitDelta, 'pt')}!`
+            : ` Aguente firme, ${formatDelta(d.splitDelta, 'pt')}.`;
       }
       return text;
     },
@@ -347,9 +363,10 @@ const templates: Record<AudioCoachLanguage, Record<AudioCoachStyle, TemplateBuil
       let text = `Quilómetro ${d.km}. Ritmo atual ${formatPace(d.pace, d.language)}.`;
       if (d.heartRate) text += ` Frequência cardíaca ${d.heartRate}.`;
       if (d.splitDelta !== undefined) {
-        text += d.splitDelta < 0
-          ? ` Acelerando ${formatDelta(d.splitDelta, 'pt')}.`
-          : ` Desacelerando ${formatDelta(d.splitDelta, 'pt')}. Mantenha o ritmo.`;
+        text +=
+          d.splitDelta < 0
+            ? ` Acelerando ${formatDelta(d.splitDelta, 'pt')}.`
+            : ` Desacelerando ${formatDelta(d.splitDelta, 'pt')}. Mantenha o ritmo.`;
       }
       return text;
     },
@@ -387,7 +404,10 @@ export function buildStartAnnouncement(language: AudioCoachLanguage): string {
   return startTemplates[language] || startTemplates.en;
 }
 
-const endTemplates: Record<AudioCoachLanguage, (km: number, pace: number, lang: AudioCoachLanguage) => string> = {
+const endTemplates: Record<
+  AudioCoachLanguage,
+  (km: number, pace: number, lang: AudioCoachLanguage) => string
+> = {
   en: (km, pace, lang) =>
     `Run complete. ${formatKm(km, 'en')} in ${formatPace(pace, lang)}. Great job!`,
   pl: (km, pace, lang) =>
@@ -417,12 +437,60 @@ export function buildEndAnnouncement(
 
 // Milestone threshold labels (km value → spoken name per language)
 const MILESTONE_NAMES: Record<number, Record<AudioCoachLanguage, string>> = {
-  5:    { en: '5 K',            pl: '5 kilometrów',         de: '5 Kilometer',       fr: '5 kilomètres',       es: '5 kilómetros',       it: '5 chilometri',       pt: '5 quilómetros' },
-  10:   { en: '10 K',           pl: '10 kilometrów',        de: '10 Kilometer',      fr: '10 kilomètres',      es: '10 kilómetros',      it: '10 chilometri',      pt: '10 quilómetros' },
-  15:   { en: '15 K',           pl: '15 kilometrów',        de: '15 Kilometer',      fr: '15 kilomètres',      es: '15 kilómetros',      it: '15 chilometri',      pt: '15 quilómetros' },
-  21.1: { en: 'half marathon',  pl: 'półmaraton',           de: 'Halbmarathon',      fr: 'semi-marathon',      es: 'media maratón',      it: 'mezza maratona',     pt: 'meia maratona' },
-  30:   { en: '30 K',           pl: '30 kilometrów',        de: '30 Kilometer',      fr: '30 kilomètres',      es: '30 kilómetros',      it: '30 chilometri',      pt: '30 quilómetros' },
-  42.2: { en: 'marathon',       pl: 'maraton',              de: 'Marathon',          fr: 'marathon',           es: 'maratón',            it: 'maratona',           pt: 'maratona' },
+  5: {
+    en: '5 K',
+    pl: '5 kilometrów',
+    de: '5 Kilometer',
+    fr: '5 kilomètres',
+    es: '5 kilómetros',
+    it: '5 chilometri',
+    pt: '5 quilómetros',
+  },
+  10: {
+    en: '10 K',
+    pl: '10 kilometrów',
+    de: '10 Kilometer',
+    fr: '10 kilomètres',
+    es: '10 kilómetros',
+    it: '10 chilometri',
+    pt: '10 quilómetros',
+  },
+  15: {
+    en: '15 K',
+    pl: '15 kilometrów',
+    de: '15 Kilometer',
+    fr: '15 kilomètres',
+    es: '15 kilómetros',
+    it: '15 chilometri',
+    pt: '15 quilómetros',
+  },
+  21.1: {
+    en: 'half marathon',
+    pl: 'półmaraton',
+    de: 'Halbmarathon',
+    fr: 'semi-marathon',
+    es: 'media maratón',
+    it: 'mezza maratona',
+    pt: 'meia maratona',
+  },
+  30: {
+    en: '30 K',
+    pl: '30 kilometrów',
+    de: '30 Kilometer',
+    fr: '30 kilomètres',
+    es: '30 kilómetros',
+    it: '30 chilometri',
+    pt: '30 quilómetros',
+  },
+  42.2: {
+    en: 'marathon',
+    pl: 'maraton',
+    de: 'Marathon',
+    fr: 'marathon',
+    es: 'maratón',
+    it: 'maratona',
+    pt: 'maratona',
+  },
 };
 
 const milestoneTemplates: Record<AudioCoachLanguage, (name: string) => string> = {

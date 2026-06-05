@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -57,10 +51,7 @@ export function ProgramSelector({
             onPress={() => onSelect(program.id)}
             activeOpacity={0.7}
           >
-            <Text
-              style={[styles.cardName, { color: colors.textPrimary }]}
-              numberOfLines={1}
-            >
+            <Text style={[styles.cardName, { color: colors.textPrimary }]} numberOfLines={1}>
               {program.name}
             </Text>
             <Text style={[styles.cardProgress, { color: colors.textSecondary }]}>

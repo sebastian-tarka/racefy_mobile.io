@@ -32,7 +32,7 @@ export interface PaceSegment {
 export function calculateCurrentPace(
   segments: PaceSegment[],
   windowSeconds: number,
-  minSegmentDistance: number
+  minSegmentDistance: number,
 ): number | null {
   if (segments.length < 2) {
     return null;
@@ -43,7 +43,7 @@ export function calculateCurrentPace(
   const cutoffTime = now - windowMs;
 
   // Filter segments within the time window
-  const windowSegments = segments.filter(s => s.timestamp >= cutoffTime);
+  const windowSegments = segments.filter((s) => s.timestamp >= cutoffTime);
 
   if (windowSegments.length < 2) {
     // Not enough segments in window, fall back to all available segments
@@ -110,7 +110,7 @@ export function calculateCurrentPace(
 export function smoothPace(
   currentPace: number,
   previousSmoothed: number | null,
-  smoothingFactor: number
+  smoothingFactor: number,
 ): number {
   // Clamp smoothing factor to valid range
   const alpha = Math.max(0.1, Math.min(0.9, smoothingFactor));
@@ -134,7 +134,7 @@ export function smoothPace(
 export function formatPaceDisplay(
   secondsPerKm: number | null,
   placeholder: string = '--:--',
-  units: 'metric' | 'imperial' = 'metric'
+  units: 'metric' | 'imperial' = 'metric',
 ): string {
   if (secondsPerKm === null || !isFinite(secondsPerKm)) {
     return placeholder;
@@ -168,7 +168,7 @@ export function formatPaceDisplay(
 export function calculateAveragePace(
   durationSeconds: number,
   distanceMeters: number,
-  minDistance: number = 50
+  minDistance: number = 50,
 ): number | null {
   if (distanceMeters < minDistance || durationSeconds < 1) {
     return null;
@@ -196,7 +196,7 @@ export function calculateAveragePace(
 export function addPaceSegment(
   buffer: PaceSegment[],
   newSegment: PaceSegment,
-  maxSegments: number = 30
+  maxSegments: number = 30,
 ): PaceSegment[] {
   const updated = [...buffer, newSegment];
 
@@ -217,8 +217,8 @@ export function addPaceSegment(
  */
 export function trimSegmentsToWindow(
   segments: PaceSegment[],
-  windowSeconds: number
+  windowSeconds: number,
 ): PaceSegment[] {
-  const cutoffTime = Date.now() - (windowSeconds * 1000);
-  return segments.filter(s => s.timestamp >= cutoffTime);
+  const cutoffTime = Date.now() - windowSeconds * 1000;
+  return segments.filter((s) => s.timestamp >= cutoffTime);
 }

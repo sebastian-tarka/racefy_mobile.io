@@ -13,14 +13,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { Button, Input, ScreenHeader, ScreenContainer, SportTypeSelector } from '../../components';
 import {
-  Button,
-  Input,
-  ScreenHeader,
-  ScreenContainer,
-  SportTypeSelector,
-} from '../../components';
-import { MapboxRoutePlanner, type MapboxRoutePlannerHandle, type RoutePlannerMapStyle } from '../../components/MapboxRoutePlanner';
+  MapboxRoutePlanner,
+  type MapboxRoutePlannerHandle,
+  type RoutePlannerMapStyle,
+} from '../../components/MapboxRoutePlanner';
 import { useRoutePlanner } from '../../hooks/useRoutePlanner';
 import { useTheme } from '../../hooks/useTheme';
 import { formatDistance, formatTotalTime } from '../../utils/formatters';
@@ -96,12 +94,17 @@ export function RoutePlannerScreen({ navigation }: Props) {
         logger.debug('gps', 'Route planner: failed to get current location', { error: err });
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleMapTap = useCallback((lat: number, lng: number) => {
-    addWaypoint(lat, lng);
-  }, [addWaypoint]);
+  const handleMapTap = useCallback(
+    (lat: number, lng: number) => {
+      addWaypoint(lat, lng);
+    },
+    [addWaypoint],
+  );
 
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
@@ -113,7 +116,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
       return;
     }
 
-    const route = await saveRoute(title.trim(), sportTypeId, description.trim() || undefined, isPublic);
+    const route = await saveRoute(
+      title.trim(),
+      sportTypeId,
+      description.trim() || undefined,
+      isPublic,
+    );
     if (route) {
       navigation.replace('RouteDetail', { routeId: route.id });
     }
@@ -144,7 +152,7 @@ export function RoutePlannerScreen({ navigation }: Props) {
       />
 
       {!showSaveForm ? (
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           {/* Profile toggle */}
           <View style={styles.profileToggle}>
             <TouchableOpacity
@@ -159,10 +167,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
                 size={18}
                 color={profile === 'walking' ? '#fff' : colors.textSecondary}
               />
-              <Text style={[
-                styles.profileText,
-                { color: profile === 'walking' ? '#fff' : colors.textSecondary },
-              ]}>
+              <Text
+                style={[
+                  styles.profileText,
+                  { color: profile === 'walking' ? '#fff' : colors.textSecondary },
+                ]}
+              >
                 {t('routes.walking')}
               </Text>
             </TouchableOpacity>
@@ -179,17 +189,19 @@ export function RoutePlannerScreen({ navigation }: Props) {
                 size={18}
                 color={profile === 'cycling' ? '#fff' : colors.textSecondary}
               />
-              <Text style={[
-                styles.profileText,
-                { color: profile === 'cycling' ? '#fff' : colors.textSecondary },
-              ]}>
+              <Text
+                style={[
+                  styles.profileText,
+                  { color: profile === 'cycling' ? '#fff' : colors.textSecondary },
+                ]}
+              >
                 {t('routes.cycling')}
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Map — fills available space */}
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <MapboxRoutePlanner
               ref={mapRef}
               waypoints={waypoints}
@@ -209,8 +221,11 @@ export function RoutePlannerScreen({ navigation }: Props) {
               >
                 <Ionicons
                   name={
-                    mapStyleType === 'satellite' ? 'earth' :
-                    mapStyleType === 'streets' ? 'map' : 'leaf'
+                    mapStyleType === 'satellite'
+                      ? 'earth'
+                      : mapStyleType === 'streets'
+                        ? 'map'
+                        : 'leaf'
                   }
                   size={22}
                   color={colors.primary}
@@ -227,7 +242,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
           </View>
 
           {/* Bottom panel: hint / waypoints / stats / action — always pinned */}
-          <View style={[styles.bottomPanel, {backgroundColor: colors.background, borderTopColor: colors.border}]}>
+          <View
+            style={[
+              styles.bottomPanel,
+              { backgroundColor: colors.background, borderTopColor: colors.border },
+            ]}
+          >
             {waypoints.length === 0 && (
               <View style={styles.hint}>
                 <Ionicons name="finger-print-outline" size={20} color={colors.textSecondary} />
@@ -257,17 +277,33 @@ export function RoutePlannerScreen({ navigation }: Props) {
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator
-                  contentContainerStyle={{paddingHorizontal: spacing.md, gap: spacing.sm, paddingBottom: spacing.sm}}
+                  contentContainerStyle={{
+                    paddingHorizontal: spacing.md,
+                    gap: spacing.sm,
+                    paddingBottom: spacing.sm,
+                  }}
                 >
                   {waypoints.map((wp, idx) => (
-                    <View key={idx} style={[styles.waypointChip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-                      <View style={[
-                        styles.waypointDot,
-                        {
-                          backgroundColor: idx === 0 ? '#22c55e' :
-                            idx === waypoints.length - 1 ? '#ef4444' : '#3b82f6',
-                        },
-                      ]} />
+                    <View
+                      key={idx}
+                      style={[
+                        styles.waypointChip,
+                        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.waypointDot,
+                          {
+                            backgroundColor:
+                              idx === 0
+                                ? '#22c55e'
+                                : idx === waypoints.length - 1
+                                  ? '#ef4444'
+                                  : '#3b82f6',
+                          },
+                        ]}
+                      />
                       <Text style={[styles.waypointLabel, { color: colors.textPrimary }]}>
                         {wp.label || `${t('routeDetail.waypoints', 'Waypoint')} ${idx + 1}`}
                       </Text>
@@ -347,15 +383,9 @@ export function RoutePlannerScreen({ navigation }: Props) {
               numberOfLines={3}
             />
 
-            <SportTypeSelector
-              value={sportTypeId}
-              onChange={setSportTypeId}
-            />
+            <SportTypeSelector value={sportTypeId} onChange={setSportTypeId} />
 
-            <TouchableOpacity
-              style={styles.publicToggle}
-              onPress={() => setIsPublic(!isPublic)}
-            >
+            <TouchableOpacity style={styles.publicToggle} onPress={() => setIsPublic(!isPublic)}>
               <Ionicons
                 name={isPublic ? 'checkbox' : 'square-outline'}
                 size={22}
@@ -369,13 +399,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
             {/* Route summary */}
             <View style={[styles.summaryCard, { backgroundColor: colors.cardBackground }]}>
               <Text style={[styles.summaryText, { color: colors.textSecondary }]}>
-                {formatDistance(preview.distance)} · ~{formatTotalTime(preview.estimatedDuration)} · {waypoints.length} {t('routeDetail.waypoints').toLowerCase()}
+                {formatDistance(preview.distance)} · ~{formatTotalTime(preview.estimatedDuration)} ·{' '}
+                {waypoints.length} {t('routeDetail.waypoints').toLowerCase()}
               </Text>
             </View>
 
-            {error && (
-              <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-            )}
+            {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
 
             <View style={styles.saveActions}>
               <Button

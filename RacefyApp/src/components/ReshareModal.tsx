@@ -90,108 +90,106 @@ export function ReshareModal({ visible, onClose, post, onSubmit }: ReshareModalP
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.kavFlex}
-        behavior="padding"
-      >
-      <Pressable style={styles.backdrop} onPress={handleClose}>
-        <Pressable
-          style={[styles.sheet, { backgroundColor: colors.cardBackground }]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={styles.kavFlex} behavior="padding">
+        <Pressable style={styles.backdrop} onPress={handleClose}>
+          <Pressable
+            style={[styles.sheet, { backgroundColor: colors.cardBackground }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {t('reshare.title')}
-          </Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('reshare.title')}</Text>
 
-          {/* Content input */}
-          <View style={[styles.inputContainer, { borderColor: colors.border, backgroundColor: colors.background }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder={t('reshare.addComment')}
-              placeholderTextColor={colors.textMuted}
-              value={content}
-              onChangeText={(text) => setContent(text.slice(0, MAX_CONTENT_LENGTH))}
-              multiline
-              maxLength={MAX_CONTENT_LENGTH}
-              editable={!isSubmitting}
-            />
-            <Text style={[styles.charCount, { color: colors.textMuted }]}>
-              {content.length}/{MAX_CONTENT_LENGTH}
-            </Text>
-          </View>
+            {/* Content input */}
+            <View
+              style={[
+                styles.inputContainer,
+                { borderColor: colors.border, backgroundColor: colors.background },
+              ]}
+            >
+              <TextInput
+                style={[styles.input, { color: colors.textPrimary }]}
+                placeholder={t('reshare.addComment')}
+                placeholderTextColor={colors.textMuted}
+                value={content}
+                onChangeText={(text) => setContent(text.slice(0, MAX_CONTENT_LENGTH))}
+                multiline
+                maxLength={MAX_CONTENT_LENGTH}
+                editable={!isSubmitting}
+              />
+              <Text style={[styles.charCount, { color: colors.textMuted }]}>
+                {content.length}/{MAX_CONTENT_LENGTH}
+              </Text>
+            </View>
 
-          {/* Visibility selector */}
-          <View style={styles.visibilityRow}>
-            {visibilityOptions.map(({ key, icon }) => (
+            {/* Visibility selector */}
+            <View style={styles.visibilityRow}>
+              {visibilityOptions.map(({ key, icon }) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.visibilityButton,
+                    {
+                      borderColor: visibility === key ? '#06b6d4' : colors.border,
+                      backgroundColor: visibility === key ? '#06b6d4' + '15' : 'transparent',
+                    },
+                  ]}
+                  onPress={() => setVisibility(key)}
+                  disabled={isSubmitting}
+                >
+                  <Ionicons
+                    name={icon}
+                    size={16}
+                    color={visibility === key ? '#06b6d4' : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.visibilityText,
+                      { color: visibility === key ? '#06b6d4' : colors.textSecondary },
+                    ]}
+                  >
+                    {t(`reshare.visibility.${key}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Post preview */}
+            <SharedPostBlock sharedPost={previewPost} />
+
+            {/* Actions */}
+            <View style={styles.actions}>
               <TouchableOpacity
-                key={key}
-                style={[
-                  styles.visibilityButton,
-                  {
-                    borderColor: visibility === key ? '#06b6d4' : colors.border,
-                    backgroundColor: visibility === key ? '#06b6d4' + '15' : 'transparent',
-                  },
-                ]}
-                onPress={() => setVisibility(key)}
+                style={[styles.cancelButton, { backgroundColor: colors.background }]}
+                onPress={handleClose}
                 disabled={isSubmitting}
               >
-                <Ionicons
-                  name={icon}
-                  size={16}
-                  color={visibility === key ? '#06b6d4' : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.visibilityText,
-                    { color: visibility === key ? '#06b6d4' : colors.textSecondary },
-                  ]}
-                >
-                  {t(`reshare.visibility.${key}`)}
+                <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
 
-          {/* Post preview */}
-          <SharedPostBlock sharedPost={previewPost} />
-
-          {/* Actions */}
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: colors.background }]}
-              onPress={handleClose}
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
-                {t('common.cancel')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: '#06b6d4', opacity: isSubmitting ? 0.6 : 1 }]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Ionicons name="repeat" size={18} color="#fff" />
-                  <Text style={styles.submitText}>{t('reshare.reshareButton')}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  { backgroundColor: '#06b6d4', opacity: isSubmitting ? 0.6 : 1 },
+                ]}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="repeat" size={18} color="#fff" />
+                    <Text style={styles.submitText}>{t('reshare.reshareButton')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
       </KeyboardAvoidingView>
     </Modal>
   );

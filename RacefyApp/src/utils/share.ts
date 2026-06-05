@@ -55,11 +55,9 @@ export async function shareActivityWithImage({
     if (!localUri) {
       // Fallback to text-only if download fails
       logger.warn('general', 'Image download failed, sharing text only');
-      Alert.alert(
-        'Download Failed',
-        'Could not download the image. Sharing text only instead.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Download Failed', 'Could not download the image. Sharing text only instead.', [
+        { text: 'OK' },
+      ]);
       await Share.share({
         message,
         title: shareData.title,
@@ -75,7 +73,7 @@ export async function shareActivityWithImage({
         Alert.alert(
           'File Not Found',
           'The image file could not be found. Sharing text only instead.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
         await Share.share({
           message,
@@ -84,16 +82,20 @@ export async function shareActivityWithImage({
         return;
       }
       if ('size' in fileInfo) {
-        logger.debug('general', 'File verified before share', { size: fileInfo.size, uri: localUri });
+        logger.debug('general', 'File verified before share', {
+          size: fileInfo.size,
+          uri: localUri,
+        });
       }
     } catch (checkError) {
       logger.error('general', 'Failed to verify file before share', { error: checkError });
     }
 
     // Detect MIME type from file extension
-    const mimeType = localUri.toLowerCase().endsWith('.jpg') || localUri.toLowerCase().endsWith('.jpeg')
-      ? 'image/jpeg'
-      : 'image/webp';
+    const mimeType =
+      localUri.toLowerCase().endsWith('.jpg') || localUri.toLowerCase().endsWith('.jpeg')
+        ? 'image/jpeg'
+        : 'image/webp';
 
     // Use expo-sharing to share the image file
     // This properly handles file sharing on both iOS and Android
@@ -117,7 +119,7 @@ export async function shareActivityWithImage({
       Alert.alert(
         '✅ Image Shared',
         'The image has been shared. Tap "Copy Link" below to copy the text and link to paste in your message.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     } catch (shareError: any) {
       logger.warn('general', 'expo-sharing failed, trying native Share as fallback', {
@@ -135,12 +137,12 @@ export async function shareActivityWithImage({
             const contentUri = await FileSystem.getContentUriAsync(localUri);
             logger.info('general', 'Converted to content URI', {
               fileUri: localUri,
-              contentUri
+              contentUri,
             });
             shareUri = contentUri;
           } catch (contentUriError) {
             logger.warn('general', 'Could not get content URI, using file URI', {
-              error: contentUriError
+              error: contentUriError,
             });
           }
         }
@@ -155,11 +157,9 @@ export async function shareActivityWithImage({
 
         logger.info('general', 'Image shared successfully via native Share');
 
-        Alert.alert(
-          '✅ Image Shared',
-          'Image shared! Paste the text manually if needed.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('✅ Image Shared', 'Image shared! Paste the text manually if needed.', [
+          { text: 'OK' },
+        ]);
       } catch (nativeShareError: any) {
         logger.error('general', 'Both sharing methods failed', {
           expoSharingError: shareError.message,
@@ -169,7 +169,7 @@ export async function shareActivityWithImage({
         Alert.alert(
           '❌ Share Failed',
           'Could not share the image. Use "Share Text Only" button or save the image and share manually.',
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
 
         throw nativeShareError;
@@ -179,7 +179,7 @@ export async function shareActivityWithImage({
     // Clean up downloaded file after sharing
     setTimeout(() => {
       FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
-        logger.warn('general', 'Failed to clean up downloaded share image', { error: err })
+        logger.warn('general', 'Failed to clean up downloaded share image', { error: err }),
       );
     }, 10000);
   } catch (error: any) {
@@ -211,9 +211,10 @@ async function downloadImageForSharing(imageUrl: string): Promise<string | null>
     }
 
     // Determine file extension from URL or default to webp
-    const urlExt = imageUrl.toLowerCase().includes('.jpg') || imageUrl.toLowerCase().includes('.jpeg')
-      ? 'jpg'
-      : 'webp';
+    const urlExt =
+      imageUrl.toLowerCase().includes('.jpg') || imageUrl.toLowerCase().includes('.jpeg')
+        ? 'jpg'
+        : 'webp';
     const filename = `share-image-${Date.now()}.${urlExt}`;
     const localUri = `${FileSystem.cacheDirectory}${filename}`;
 
@@ -275,7 +276,7 @@ async function downloadImageForSharing(imageUrl: string): Promise<string | null>
 export async function shareToApp(
   appId: 'whatsapp' | 'telegram' | 'messenger' | 'instagram',
   imageUrl: string | null,
-  shareData: ShareLinkResponse
+  shareData: ShareLinkResponse,
 ): Promise<void> {
   try {
     const message = `${shareData.title}\n\n${shareData.description}\n\n${shareData.url}`;
@@ -319,7 +320,7 @@ export async function shareToApp(
       Alert.alert(
         '✅ Image Shared',
         'The image has been shared. You can copy the text and link from the "Copy Link" section below.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     } else {
       // Fallback to text share
@@ -332,7 +333,7 @@ export async function shareToApp(
     // Clean up downloaded file
     setTimeout(() => {
       FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
-        logger.warn('general', 'Failed to clean up app share image', { error: err })
+        logger.warn('general', 'Failed to clean up app share image', { error: err }),
       );
     }, 10000);
   } catch (error: any) {
@@ -355,7 +356,7 @@ export async function shareToApp(
 export async function shareActivitySafe(
   activityId: number,
   shareData: ShareLinkResponse,
-  imageUrl?: string | null
+  imageUrl?: string | null,
 ): Promise<void> {
   try {
     await shareActivityWithImage({
@@ -366,11 +367,7 @@ export async function shareActivitySafe(
   } catch (error: any) {
     // If error is not "User did not share", show alert
     if (error?.message !== 'User did not share') {
-      Alert.alert(
-        'Share Failed',
-        'Failed to share activity. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Share Failed', 'Failed to share activity. Please try again.', [{ text: 'OK' }]);
     }
   }
 }

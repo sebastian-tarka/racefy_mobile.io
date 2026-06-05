@@ -1,21 +1,21 @@
 import React from 'react';
-import {Dimensions, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format, formatDistanceToNow} from 'date-fns';
-import {useTranslation} from 'react-i18next';
-import {Card} from './Card';
-import {Avatar} from './Avatar';
-import {MediaGallery} from './MediaGallery';
-import {RoutePreview} from './LeafletMap';
-import {InteractionButton} from './InteractionButton';
-import {useTheme} from '../hooks/useTheme';
-import {useUnits} from '../hooks/useUnits';
-import {fixStorageUrl} from '../config/api';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {logger} from '../services/logger';
-import {formatDuration} from '../utils/formatDuration';
-import {getSportIcon} from '../utils/sportIcon';
-import type {Post} from '../types/api';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format, formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { Card } from './Card';
+import { Avatar } from './Avatar';
+import { MediaGallery } from './MediaGallery';
+import { RoutePreview } from './LeafletMap';
+import { InteractionButton } from './InteractionButton';
+import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
+import { fixStorageUrl } from '../config/api';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { logger } from '../services/logger';
+import { formatDuration } from '../utils/formatDuration';
+import { getSportIcon } from '../utils/sportIcon';
+import type { Post } from '../types/api';
 
 interface PostCardProps {
   post: Post;
@@ -79,9 +79,7 @@ function PostCardBase({
     return (
       <View style={[styles.typeBadge, { backgroundColor: typeConfig.color + '15' }]}>
         <Ionicons name={typeConfig.icon} size={12} color={typeConfig.color} />
-        <Text style={[styles.typeBadgeText, { color: typeConfig.color }]}>
-          {typeConfig.label}
-        </Text>
+        <Text style={[styles.typeBadgeText, { color: typeConfig.color }]}>{typeConfig.label}</Text>
       </View>
     );
   };
@@ -95,7 +93,10 @@ function PostCardBase({
 
     return (
       <TouchableOpacity
-        style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        style={[
+          styles.activityPreview,
+          { backgroundColor: colors.background, borderColor: colors.borderLight },
+        ]}
         onPress={onActivityPress}
         activeOpacity={0.7}
         disabled={!onActivityPress}
@@ -140,7 +141,10 @@ function PostCardBase({
                 <>
                   <Text style={[styles.activitySport, { color: colors.textSecondary }]}> · </Text>
                   <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-                  <Text style={[styles.activitySport, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.activitySport, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
                     {activity.location.location_name}
                   </Text>
                 </>
@@ -155,11 +159,15 @@ function PostCardBase({
         <View style={[styles.activityStats, { borderTopColor: colors.borderLight }]}>
           <View style={styles.activityStatItem}>
             <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
+            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
+              {formatDistance(activity.distance)}
+            </Text>
           </View>
           <View style={styles.activityStatItem}>
             <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
+            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
+              {formatDuration(activity.duration)}
+            </Text>
           </View>
           <View style={styles.activityStatItem}>
             <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
@@ -192,7 +200,10 @@ function PostCardBase({
 
     return (
       <TouchableOpacity
-        style={[styles.eventPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        style={[
+          styles.eventPreview,
+          { backgroundColor: colors.background, borderColor: colors.borderLight },
+        ]}
         onPress={onEventPress}
         activeOpacity={0.7}
         disabled={!onEventPress}
@@ -212,14 +223,19 @@ function PostCardBase({
             </Text>
             <View style={styles.eventMeta}>
               <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-              <Text style={[styles.eventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text
+                style={[styles.eventLocation, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
                 {event.location_name}
               </Text>
             </View>
             <View style={styles.eventTags}>
               {event.sport_type && (
                 <View style={[styles.eventTag, { backgroundColor: colors.border }]}>
-                  <Text style={[styles.eventTagText, { color: colors.textSecondary }]}>{event.sport_type.name}</Text>
+                  <Text style={[styles.eventTagText, { color: colors.textSecondary }]}>
+                    {event.sport_type.name}
+                  </Text>
                 </View>
               )}
               <View style={[styles.eventTag, { backgroundColor: colors.primary + '15' }]}>
@@ -229,9 +245,7 @@ function PostCardBase({
               </View>
             </View>
           </View>
-          {onEventPress && (
-            <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-          )}
+          {onEventPress && <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />}
         </View>
       </TouchableOpacity>
     );
@@ -270,25 +284,15 @@ function PostCardBase({
 
   return (
     <Card style={styles.card}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.9}
-        disabled={!onPress}
-      >
+      <TouchableOpacity onPress={onPress} activeOpacity={0.9} disabled={!onPress}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={onUserPress}
-            style={styles.userInfo}
-            disabled={!onUserPress}
-          >
-            <Avatar
-              uri={post.user?.avatar}
-              name={post.user?.name}
-              size="md"
-            />
+          <TouchableOpacity onPress={onUserPress} style={styles.userInfo} disabled={!onUserPress}>
+            <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
             <View style={styles.userText}>
               <View style={styles.userNameRow}>
-                <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
+                <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                  {post.user?.name}
+                </Text>
                 {renderTypeBadge()}
               </View>
               <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
@@ -298,16 +302,14 @@ function PostCardBase({
           </TouchableOpacity>
           {isOwner && onMenuPress && (
             <TouchableOpacity onPress={onMenuPress} style={styles.menuButton}>
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={20}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
-        {post.content && <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>}
+        {post.content && (
+          <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>
+        )}
 
         {renderActivityPreview()}
         {renderEventPreview()}

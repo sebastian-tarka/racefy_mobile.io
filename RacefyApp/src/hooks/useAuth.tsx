@@ -1,22 +1,26 @@
-import React, {createContext, useCallback, useContext, useEffect, useState,} from 'react';
-import {api} from '../services/api';
-import {secureStorage} from '../services/secureStorage';
-import {pushNotificationService} from '../services/pushNotifications';
-import {getConsentStatus} from '../services/legal';
-import {changeLanguage} from '../i18n';
-import {syncUnitsPreference} from './useUnits';
-import {syncMapStylePreference} from './useMapStyle';
-import {logger} from '../services/logger';
-import {configureGoogleSignIn, signInWithGoogle, signOutFromGoogle} from '../services/googleSignIn';
-import {IMPERSONATION_SESSION_KEY, useImpersonationActions} from './useImpersonationActions';
-import {revenueCatLogIn, revenueCatLogOut} from '../services/revenuecat';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { secureStorage } from '../services/secureStorage';
+import { pushNotificationService } from '../services/pushNotifications';
+import { getConsentStatus } from '../services/legal';
+import { changeLanguage } from '../i18n';
+import { syncUnitsPreference } from './useUnits';
+import { syncMapStylePreference } from './useMapStyle';
+import { logger } from '../services/logger';
+import {
+  configureGoogleSignIn,
+  signInWithGoogle,
+  signOutFromGoogle,
+} from '../services/googleSignIn';
+import { IMPERSONATION_SESSION_KEY, useImpersonationActions } from './useImpersonationActions';
+import { revenueCatLogIn, revenueCatLogOut } from '../services/revenuecat';
 import {
   clearAllPersistedPoints,
   getAllPersistedPoints,
   setActiveActivityId,
   stopBackgroundLocationTracking,
 } from '../services/backgroundLocation';
-import type {ImpersonationSession, LoginRequest, RegisterRequest, User} from '../types/api';
+import type { ImpersonationSession, LoginRequest, RegisterRequest, User } from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
@@ -46,13 +50,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [requiresConsent, setRequiresConsent] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
-  const [impersonationSession, setImpersonationSession] = useState<ImpersonationSession | null>(null);
+  const [impersonationSession, setImpersonationSession] = useState<ImpersonationSession | null>(
+    null,
+  );
   const [originalAdminToken, setOriginalAdminToken] = useState<string | null>(null);
 
   const { startImpersonation, stopImpersonation, restoreAdminToken, clearImpersonationState } =
     useImpersonationActions(
       { user, originalAdminToken },
-      { setUser, setIsImpersonating, setImpersonatedUser, setImpersonationSession, setOriginalAdminToken }
+      {
+        setUser,
+        setIsImpersonating,
+        setImpersonatedUser,
+        setImpersonationSession,
+        setOriginalAdminToken,
+      },
     );
 
   // Check if user has accepted all required consents
@@ -123,8 +135,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       Alert.alert(
         i18n.t('common.error'),
         i18n.t('common.rateLimited'),
-        [{ text: i18n.t('common.ok'), onPress: () => { rateLimitAlertActive = false; } }],
-        { onDismiss: () => { rateLimitAlertActive = false; } }
+        [
+          {
+            text: i18n.t('common.ok'),
+            onPress: () => {
+              rateLimitAlertActive = false;
+            },
+          },
+        ],
+        {
+          onDismiss: () => {
+            rateLimitAlertActive = false;
+          },
+        },
       );
     });
     initAuth();
@@ -239,11 +262,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set both atomically - React 18 batches these (no await between them)
     setRequiresConsent(needsConsent);
     setUser(response.user);
-    logger.auth('Google Sign-In successful', { userId: response.user.id, username: response.user.username, isNewUser: response.is_new_user });
+    logger.auth('Google Sign-In successful', {
+      userId: response.user.id,
+      username: response.user.username,
+      isNewUser: response.is_new_user,
+    });
     revenueCatLogIn(response.user.id).catch(() => {});
     syncPreferences();
     pushNotificationService.registerWithBackend().catch((error) => {
-      logger.warn('auth', 'Failed to register for push notifications after Google sign-in', { error });
+      logger.warn('auth', 'Failed to register for push notifications after Google sign-in', {
+        error,
+      });
     });
   }, []);
 

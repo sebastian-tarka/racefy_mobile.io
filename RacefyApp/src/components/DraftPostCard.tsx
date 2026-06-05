@@ -41,16 +41,19 @@ export function DraftPostCard({
     return (
       <View style={[styles.aiBadge, { backgroundColor: colors.aiLight }]}>
         <Ionicons name="sparkles" size={12} color={colors.ai} />
-        <Text style={[styles.aiBadgeText, { color: colors.ai }]}>
-          {t('drafts.aiGenerated')}
-        </Text>
+        <Text style={[styles.aiBadgeText, { color: colors.ai }]}>{t('drafts.aiGenerated')}</Text>
       </View>
     );
   };
 
   const renderDraftBanner = () => {
     return (
-      <View style={[styles.draftBanner, { backgroundColor: colors.draftLight, borderColor: colors.draftBorder }]}>
+      <View
+        style={[
+          styles.draftBanner,
+          { backgroundColor: colors.draftLight, borderColor: colors.draftBorder },
+        ]}
+      >
         <Ionicons name="information-circle-outline" size={16} color={colors.draft} />
         <Text style={[styles.draftBannerText, { color: colors.draft }]}>
           {t('drafts.draftBanner')}
@@ -83,20 +86,14 @@ export function DraftPostCard({
       <View style={styles.header}>
         {renderAiBadge()}
         <TouchableOpacity onPress={onDelete} style={styles.menuButton}>
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={20}
-            color={colors.textSecondary}
-          />
+          <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {renderDraftBanner()}
 
       {post.title && (
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {post.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text>
       )}
 
       {post.content && (

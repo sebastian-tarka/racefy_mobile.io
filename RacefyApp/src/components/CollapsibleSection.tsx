@@ -1,12 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  LayoutAnimation,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
@@ -59,32 +52,15 @@ export function CollapsibleSection({
         },
       ]}
     >
-      <TouchableOpacity
-        style={styles.header}
-        onPress={handleToggle}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.header} onPress={handleToggle} activeOpacity={0.7}>
         <View style={styles.headerLeft}>
-          {icon && (
-            <Ionicons
-              name={icon}
-              size={20}
-              color={colors.primary}
-              style={styles.icon}
-            />
-          )}
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {title}
-          </Text>
+          {icon && <Ionicons name={icon} size={20} color={colors.primary} style={styles.icon} />}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         </View>
         <View style={styles.headerRight}>
           {rightElement}
           <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={colors.textSecondary}
-            />
+            <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
           </Animated.View>
         </View>
       </TouchableOpacity>

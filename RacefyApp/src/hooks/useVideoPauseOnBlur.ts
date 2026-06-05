@@ -14,16 +14,14 @@ import { logger } from '../services/logger';
  * }
  */
 export function useVideoPauseOnBlur() {
-  useFocusEffect(
-    () => {
-      // When screen gains focus
-      logger.nav('[useVideoPauseOnBlur] Screen focused');
+  useFocusEffect(() => {
+    // When screen gains focus
+    logger.nav('[useVideoPauseOnBlur] Screen focused');
 
-      return () => {
-        // When screen loses focus (navigating away)
-        logger.nav('[useVideoPauseOnBlur] Screen blurred, pausing all videos');
-        VideoPlayerManager.pauseAll();
-      };
-    }
-  );
+    return () => {
+      // When screen loses focus (navigating away)
+      logger.nav('[useVideoPauseOnBlur] Screen blurred, pausing all videos');
+      VideoPlayerManager.pauseAll();
+    };
+  });
 }

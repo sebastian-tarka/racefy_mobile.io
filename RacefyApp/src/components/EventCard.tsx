@@ -1,15 +1,15 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {Card} from './Card';
-import {Badge} from './Badge';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {fixStorageUrl} from '../config/api';
-import {getSportIcon} from '../utils/sportIcon';
-import type {Event} from '../types/api';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { Card } from './Card';
+import { Badge } from './Badge';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { fixStorageUrl } from '../config/api';
+import { getSportIcon } from '../utils/sportIcon';
+import type { Event } from '../types/api';
 
 interface EventCardProps {
   event: Event;
@@ -30,22 +30,16 @@ function EventCardBase({ event, onPress }: EventCardProps) {
       : `${event.participants_count}`;
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={!onPress}
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={styles.imageContainer}>
             {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.image}
-                resizeMode="cover"
-              />
+              <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
             ) : (
-              <View style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
+              <View
+                style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}
+              >
                 <Ionicons
                   name={getSportIcon(event.sport_type?.name)}
                   size={32}
@@ -61,11 +55,7 @@ function EventCardBase({ event, onPress }: EventCardProps) {
             </Text>
 
             <View style={styles.detailRow}>
-              <Ionicons
-                name="fitness-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="fitness-outline" size={14} color={colors.textSecondary} />
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {event.sport_type?.name || t('eventDetail.sport')}
               </Text>
@@ -76,31 +66,21 @@ function EventCardBase({ event, onPress }: EventCardProps) {
             </View>
 
             <View style={styles.detailRow}>
-              <Ionicons
-                name="location-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
               <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>
                 {event.location_name}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Ionicons
-                name="calendar-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>{formattedDate}</Text>
+              <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
+                {formattedDate}
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Ionicons
-                name="people-outline"
-                size={14}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
               <Text style={[styles.detailText, { color: colors.textSecondary }]}>
                 {spotsText} {t('eventDetail.participants').toLowerCase()}
               </Text>
@@ -112,11 +92,7 @@ function EventCardBase({ event, onPress }: EventCardProps) {
           <Badge label={event.status} variant={event.status} />
           {event.is_registered && (
             <View style={styles.registeredBadge}>
-              <Ionicons
-                name="checkmark-circle"
-                size={16}
-                color={colors.primary}
-              />
+              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
               <Text style={[styles.registeredText, { color: colors.primary }]}>
                 {t('eventDetail.registered')}
               </Text>

@@ -1,8 +1,8 @@
 import React from 'react';
-import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTheme} from '../hooks/useTheme';
-import {spacing} from '../theme';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../hooks/useTheme';
+import { spacing } from '../theme';
 
 interface ProfileSectionCardProps {
   icon: keyof typeof Ionicons.glyphMap;

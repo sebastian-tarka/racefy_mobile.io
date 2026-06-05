@@ -52,13 +52,13 @@ export function useRoutes() {
         setIsRefreshing(false);
       }
     },
-    [page, isLoading, filter]
+    [page, isLoading, filter],
   );
 
   const refresh = useCallback(() => fetchRoutes(true), [fetchRoutes]);
   const loadMore = useCallback(
     () => hasMore && !isLoading && fetchRoutes(false),
-    [hasMore, isLoading, fetchRoutes]
+    [hasMore, isLoading, fetchRoutes],
   );
 
   const changeFilter = useCallback((newFilter: RouteFilter) => {

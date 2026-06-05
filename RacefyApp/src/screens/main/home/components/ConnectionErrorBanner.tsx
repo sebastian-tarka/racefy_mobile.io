@@ -24,7 +24,9 @@ export function ConnectionErrorBanner({ error, apiUrl, onRetry }: ConnectionErro
       <Ionicons name="cloud-offline" size={20} color={colors.white} />
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.white }]}>{t('home.connectionError')}</Text>
-        <Text style={[styles.message, { color: colors.white }]}>{error || t('home.checkConnection')}</Text>
+        <Text style={[styles.message, { color: colors.white }]}>
+          {error || t('home.checkConnection')}
+        </Text>
         <Text style={[styles.hint, { color: colors.white }]}>API: {apiUrl}</Text>
       </View>
       <Ionicons name="refresh" size={20} color={colors.white} />

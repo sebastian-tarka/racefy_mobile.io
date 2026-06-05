@@ -66,7 +66,7 @@ export function usePermissions() {
       if (!canAskAgain) {
         showSettingsAlert(
           'Location Permission Required',
-          'Please enable location access in your device settings to track activities.'
+          'Please enable location access in your device settings to track activities.',
         );
       }
 
@@ -91,7 +91,7 @@ export function usePermissions() {
       if (!canAskAgain) {
         showSettingsAlert(
           'Camera Permission Required',
-          'Please enable camera access in your device settings to take photos.'
+          'Please enable camera access in your device settings to take photos.',
         );
       }
 
@@ -116,7 +116,7 @@ export function usePermissions() {
       if (!canAskAgain) {
         showSettingsAlert(
           'Photo Library Permission Required',
-          'Please enable photo library access in your device settings to select photos.'
+          'Please enable photo library access in your device settings to select photos.',
         );
       }
 
@@ -167,7 +167,7 @@ export function usePermissions() {
                 }
               },
             },
-          ]
+          ],
         );
         return false;
       }

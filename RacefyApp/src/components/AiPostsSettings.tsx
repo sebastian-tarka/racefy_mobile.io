@@ -93,7 +93,17 @@ export function AiPostsSettings({
           {t('settings.aiPosts.defaultStyle')}
         </Text>
         <View style={styles.buttonGrid}>
-          {(['achievement', 'statistical', 'comparison', 'casual', 'motivational', 'technical', 'social'] as const).map((style) => (
+          {(
+            [
+              'achievement',
+              'statistical',
+              'comparison',
+              'casual',
+              'motivational',
+              'technical',
+              'social',
+            ] as const
+          ).map((style) => (
             <TouchableOpacity
               key={style}
               style={[
@@ -112,9 +122,7 @@ export function AiPostsSettings({
                   styles.styleButtonText,
                   {
                     color:
-                      preferences.default_style === style
-                        ? colors.white
-                        : colors.textSecondary,
+                      preferences.default_style === style ? colors.white : colors.textSecondary,
                   },
                 ]}
               >
@@ -141,7 +149,9 @@ export function AiPostsSettings({
                 styles.styleButton,
                 {
                   backgroundColor:
-                    preferences.default_perspective === perspective ? colors.primary : colors.border,
+                    preferences.default_perspective === perspective
+                      ? colors.primary
+                      : colors.border,
                 },
               ]}
               onPress={() => handlePerspectiveChange(perspective)}
@@ -179,14 +189,16 @@ export function AiPostsSettings({
           const translationKey = key
             .split('_')
             .map((word, index) =>
-              index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+              index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1),
             )
             .join('');
 
           return (
             <View key={key} style={styles.row}>
               <Text style={[styles.triggerLabel, { color: colors.textPrimary }]}>
-                {t(`settings.aiPosts.trigger${translationKey.charAt(0).toUpperCase() + translationKey.slice(1)}`)}
+                {t(
+                  `settings.aiPosts.trigger${translationKey.charAt(0).toUpperCase() + translationKey.slice(1)}`,
+                )}
               </Text>
               <Switch
                 value={value}

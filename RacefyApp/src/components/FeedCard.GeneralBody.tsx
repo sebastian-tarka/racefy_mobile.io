@@ -1,16 +1,16 @@
 import React from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {ExpandableContent, PostMedia} from './FeedCard.Media';
-import {MediaGrid} from './MediaGrid';
-import {SharedPostBlock} from './SharedPostBlock';
-import {SharedPostDeletedBlock} from './SharedPostDeletedBlock';
-import {YouTubeEmbed} from './YouTubeEmbed';
-import {buildMediaItems, styles} from './FeedCard.utils';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Post, TaggedEvent} from '../types/api';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { ExpandableContent, PostMedia } from './FeedCard.Media';
+import { MediaGrid } from './MediaGrid';
+import { SharedPostBlock } from './SharedPostBlock';
+import { SharedPostDeletedBlock } from './SharedPostDeletedBlock';
+import { YouTubeEmbed } from './YouTubeEmbed';
+import { buildMediaItems, styles } from './FeedCard.utils';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Post, TaggedEvent } from '../types/api';
 
 const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
   challenge: { accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
@@ -18,7 +18,15 @@ const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: str
   milestone: { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
 };
 
-function TaggedEventBlock({ taggedEvent, postType, onPress }: { taggedEvent: TaggedEvent; postType: string; onPress?: () => void }) {
+function TaggedEventBlock({
+  taggedEvent,
+  postType,
+  onPress,
+}: {
+  taggedEvent: TaggedEvent;
+  postType: string;
+  onPress?: () => void;
+}) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const tc = TAG_EVENT_COLORS[postType] || TAG_EVENT_COLORS.challenge;
@@ -30,11 +38,37 @@ function TaggedEventBlock({ taggedEvent, postType, onPress }: { taggedEvent: Tag
 
   return (
     <View style={[styles.bodyPadding, { paddingTop: spacing.md }]}>
-      <View style={{ backgroundColor: tc.bg, borderColor: tc.border, borderWidth: 1, borderRadius: borderRadius.md, overflow: 'hidden' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: tc.border }}>
+      <View
+        style={{
+          backgroundColor: tc.bg,
+          borderColor: tc.border,
+          borderWidth: 1,
+          borderRadius: borderRadius.md,
+          overflow: 'hidden',
+        }}
+      >
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.sm,
+            borderBottomWidth: 1,
+            borderBottomColor: tc.border,
+          }}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
             <Ionicons name="calendar-outline" size={14} color={tc.accent} />
-            <Text style={{ fontSize: 11, fontWeight: '700', color: tc.accent, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '700',
+                color: tc.accent,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
               {taggedEvent.sport_type || t('feed.postTypes.event', 'Event')}
             </Text>
           </View>
@@ -44,9 +78,20 @@ function TaggedEventBlock({ taggedEvent, postType, onPress }: { taggedEvent: Tag
             </Text>
           )}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.md }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.md,
+          }}
+        >
           <View style={{ flex: 1, marginRight: spacing.sm }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>
+            <Text
+              style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.textPrimary }}
+              numberOfLines={1}
+            >
               {taggedEvent.name}
             </Text>
             {taggedEvent.starts_at && (
@@ -59,7 +104,12 @@ function TaggedEventBlock({ taggedEvent, postType, onPress }: { taggedEvent: Tag
           {onPress && (
             <TouchableOpacity
               onPress={onPress}
-              style={{ backgroundColor: tc.accent, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.md }}
+              style={{
+                backgroundColor: tc.accent,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
+                borderRadius: borderRadius.md,
+              }}
             >
               <Text style={{ color: '#fff', fontSize: fontSize.xs, fontWeight: '700' }}>
                 {t('feed.viewDetails', 'View Event')}
@@ -79,7 +129,12 @@ interface GeneralBodyProps {
   onOriginalPostUserPress?: (username: string) => void;
 }
 
-export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOriginalPostUserPress }: GeneralBodyProps) {
+export function GeneralBody({
+  post,
+  onEventPress,
+  onOriginalPostPress,
+  onOriginalPostUserPress,
+}: GeneralBodyProps) {
   const { colors } = useTheme();
   const postVideos = post.videos || [];
   const postPhotos = post.photos || [];
@@ -113,8 +168,12 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
     return (
       <>
         <View style={styles.bodyPadding}>
-          {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-          {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
+          {post.title && (
+            <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>
+          )}
+          {post.content && (
+            <ExpandableContent text={post.content} type="general" mentions={post.mentions} />
+          )}
         </View>
         {post.youtube_embed_id && (
           <View style={[styles.fullBleedMedia, { marginTop: 8 }]}>
@@ -123,7 +182,11 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
         )}
         {sharedPostContent()}
         {post.tagged_event && (
-          <TaggedEventBlock taggedEvent={post.tagged_event} postType={post.type} onPress={onEventPress} />
+          <TaggedEventBlock
+            taggedEvent={post.tagged_event}
+            postType={post.type}
+            onPress={onEventPress}
+          />
         )}
       </>
     );
@@ -136,8 +199,12 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
     <>
       {(post.title || post.content) && (
         <View style={styles.bodyPadding}>
-          {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
-          {post.content && <ExpandableContent text={post.content} type="general" mentions={post.mentions} />}
+          {post.title && (
+            <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>
+          )}
+          {post.content && (
+            <ExpandableContent text={post.content} type="general" mentions={post.mentions} />
+          )}
         </View>
       )}
       {post.youtube_embed_id && (
@@ -154,7 +221,11 @@ export function GeneralBody({ post, onEventPress, onOriginalPostPress, onOrigina
       </View>
       {sharedPostContent()}
       {post.tagged_event && (
-        <TaggedEventBlock taggedEvent={post.tagged_event} postType={post.type} onPress={onEventPress} />
+        <TaggedEventBlock
+          taggedEvent={post.tagged_event}
+          postType={post.type}
+          onPress={onEventPress}
+        />
       )}
     </>
   );

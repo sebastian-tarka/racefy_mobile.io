@@ -56,11 +56,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   },
 ];
 
-export function ShareFormatSelector({
-  activityId,
-  onShare,
-  onClose,
-}: ShareFormatSelectorProps) {
+export function ShareFormatSelector({ activityId, onShare, onClose }: ShareFormatSelectorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [selectedFormat, setSelectedFormat] = useState<ShareFormat>('social');
@@ -126,9 +122,7 @@ export function ShareFormatSelector({
   }, []);
 
   const selectedOption = FORMAT_OPTIONS.find((opt) => opt.id === selectedFormat);
-  const imageHeight = selectedOption
-    ? IMAGE_PREVIEW_WIDTH / selectedOption.aspectRatio
-    : 200;
+  const imageHeight = selectedOption ? IMAGE_PREVIEW_WIDTH / selectedOption.aspectRatio : 200;
 
   return (
     <View style={styles.container}>
@@ -146,9 +140,7 @@ export function ShareFormatSelector({
               style={[
                 styles.formatButton,
                 {
-                  backgroundColor: isSelected
-                    ? colors.primary + '15'
-                    : colors.cardBackground,
+                  backgroundColor: isSelected ? colors.primary + '15' : colors.cardBackground,
                   borderColor: isSelected ? colors.primary : colors.border,
                   borderWidth: isSelected ? 2 : 1,
                 },
@@ -206,9 +198,7 @@ export function ShareFormatSelector({
         ) : imageError ? (
           <View style={styles.centerContent}>
             <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-            <Text style={[styles.errorText, { color: colors.error }]}>
-              {t('share.imageError')}
-            </Text>
+            <Text style={[styles.errorText, { color: colors.error }]}>{t('share.imageError')}</Text>
             <TouchableOpacity
               style={[styles.retryButton, { backgroundColor: colors.primary }]}
               onPress={() => loadShareData(selectedFormat)}

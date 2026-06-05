@@ -1,20 +1,19 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {Avatar} from './Avatar';
-import {useTheme} from '../hooks/useTheme';
-import {useUnits} from '../hooks/useUnits';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {formatDurationCompact} from '../utils/formatDuration';
-import {getSportTheme} from '../utils/sportTheme';
-import type {Activity} from '../types/api';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Avatar } from './Avatar';
+import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
+import { getSportTheme } from '../utils/sportTheme';
+import type { Activity } from '../types/api';
 
 interface ActivityCompactCardProps {
   activity: Activity;
   onPress?: () => void;
   isAuthenticated?: boolean;
 }
-
 
 function ActivityCompactCardBase({
   activity,
@@ -72,11 +71,7 @@ function ActivityCompactCardBase({
       {/* User avatar */}
       {activity.user && (
         <View style={styles.avatarContainer}>
-          <Avatar
-            uri={activity.user.avatar}
-            name={activity.user.name}
-            size="sm"
-          />
+          <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
         </View>
       )}
 

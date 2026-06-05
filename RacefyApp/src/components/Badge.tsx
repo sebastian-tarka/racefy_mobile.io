@@ -18,10 +18,9 @@ interface BadgeProps {
   variant?: BadgeVariant;
 }
 
-const getVariantStyles = (colors: ThemeColors): Record<
-  BadgeVariant,
-  { backgroundColor: string; color: string }
-> => ({
+const getVariantStyles = (
+  colors: ThemeColors,
+): Record<BadgeVariant, { backgroundColor: string; color: string }> => ({
   upcoming: { backgroundColor: colors.upcoming.bg, color: colors.upcoming.text },
   ongoing: { backgroundColor: colors.ongoing.bg, color: colors.ongoing.text },
   completed: {
@@ -45,9 +44,7 @@ export function Badge({ label, variant = 'upcoming' }: BadgeProps) {
 
   return (
     <View style={[styles.badge, { backgroundColor: style.backgroundColor }]}>
-      <Text style={[styles.text, { color: style.color }]}>
-        {label.toUpperCase()}
-      </Text>
+      <Text style={[styles.text, { color: style.color }]}>{label.toUpperCase()}</Text>
     </View>
   );
 }

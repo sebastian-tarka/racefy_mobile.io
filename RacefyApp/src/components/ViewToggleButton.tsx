@@ -42,7 +42,9 @@ export function ViewToggleButton({
       onPress={handleToggle}
       disabled={disabled}
       accessibilityLabel={t('recording.toggleView')}
-      accessibilityHint={currentView === 'stats' ? t('recording.viewMap') : t('recording.viewStats')}
+      accessibilityHint={
+        currentView === 'stats' ? t('recording.viewMap') : t('recording.viewStats')
+      }
     >
       <Ionicons name={iconName} size={28} color="#fff" />
     </TouchableOpacity>

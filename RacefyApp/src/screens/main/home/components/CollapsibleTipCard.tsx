@@ -103,14 +103,13 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={toggleExpand}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.header} onPress={toggleExpand} activeOpacity={0.7}>
         <View style={styles.titleRow}>
           <Text style={styles.emoji}>{categoryConfig.emoji}</Text>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={isExpanded ? undefined : 1}>
+          <Text
+            style={[styles.title, { color: colors.textPrimary }]}
+            numberOfLines={isExpanded ? undefined : 1}
+          >
             {title}
           </Text>
         </View>
@@ -120,14 +119,9 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
       </TouchableOpacity>
 
       <Animated.View style={animatedContentStyle}>
-        <View
-          onLayout={handleContentLayout}
-          style={styles.contentWrapper}
-        >
+        <View onLayout={handleContentLayout} style={styles.contentWrapper}>
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <Text style={[styles.content, { color: colors.textSecondary }]}>
-            {content}
-          </Text>
+          <Text style={[styles.content, { color: colors.textSecondary }]}>{content}</Text>
           <View style={styles.footer}>
             {renderEmotionalLoad()}
             {onPress && (
@@ -146,7 +140,10 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
               </Text>
               <View style={styles.feedbackButtons}>
                 <TouchableOpacity
-                  style={[styles.feedbackButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+                  style={[
+                    styles.feedbackButton,
+                    { backgroundColor: colors.success + '15', borderColor: colors.success },
+                  ]}
                   onPress={() => onMarkHelpful(true)}
                   activeOpacity={0.7}
                 >
@@ -155,7 +152,10 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.feedbackButton, { backgroundColor: colors.error + '15', borderColor: colors.error }]}
+                  style={[
+                    styles.feedbackButton,
+                    { backgroundColor: colors.error + '15', borderColor: colors.error },
+                  ]}
                   onPress={() => onMarkHelpful(false)}
                   activeOpacity={0.7}
                 >

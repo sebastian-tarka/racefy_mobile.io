@@ -11,7 +11,13 @@ interface SummaryCardProps {
   data: ActivitySummary;
 }
 
-function StatBox({ label, value, icon, colors, isDark }: {
+function StatBox({
+  label,
+  value,
+  icon,
+  colors,
+  isDark,
+}: {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -19,7 +25,12 @@ function StatBox({ label, value, icon, colors, isDark }: {
   isDark: boolean;
 }) {
   return (
-    <View style={[styles.statBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+    <View
+      style={[
+        styles.statBox,
+        { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+      ]}
+    >
       <Ionicons name={icon} size={18} color={colors.primary} style={styles.statIcon} />
       <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
@@ -31,10 +42,13 @@ export function SummaryCard({ data }: SummaryCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
 
-  const formatDistance = (km: number) => km >= 1000 ? `${(km / 1000).toFixed(1)}k` : km.toFixed(1);
+  const formatDistance = (km: number) =>
+    km >= 1000 ? `${(km / 1000).toFixed(1)}k` : km.toFixed(1);
   const formatDuration = (hours: number) => hours.toFixed(1);
-  const formatElevation = (m: number) => m >= 1000 ? `${(m / 1000).toFixed(1)}k` : Math.round(m).toString();
-  const formatCalories = (cal: number) => cal >= 1000 ? `${(cal / 1000).toFixed(1)}k` : cal.toString();
+  const formatElevation = (m: number) =>
+    m >= 1000 ? `${(m / 1000).toFixed(1)}k` : Math.round(m).toString();
+  const formatCalories = (cal: number) =>
+    cal >= 1000 ? `${(cal / 1000).toFixed(1)}k` : cal.toString();
 
   return (
     <InsightCard title={t('insights.summary.title')} icon="stats-chart">

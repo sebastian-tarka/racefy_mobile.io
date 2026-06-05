@@ -19,7 +19,12 @@ export function SessionHintCard({ hint }: Props) {
   const [coolDownExpanded, setCoolDownExpanded] = useState(false);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+    >
       {/* Session Header */}
       <View style={styles.header}>
         <View style={[styles.sessionBadge, { backgroundColor: colors.primary + '15' }]}>
@@ -27,9 +32,7 @@ export function SessionHintCard({ hint }: Props) {
             {t('training.weekDetail.sessionNumber', { number: hint.session_order })}
           </Text>
         </View>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {hint.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{hint.title}</Text>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           {hint.description}
         </Text>
@@ -42,9 +45,7 @@ export function SessionHintCard({ hint }: Props) {
         isExpanded={warmUpExpanded}
         onToggle={() => setWarmUpExpanded(!warmUpExpanded)}
       >
-        <Text style={[styles.sectionContent, { color: colors.textPrimary }]}>
-          {hint.warm_up}
-        </Text>
+        <Text style={[styles.sectionContent, { color: colors.textPrimary }]}>{hint.warm_up}</Text>
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -64,9 +65,7 @@ export function SessionHintCard({ hint }: Props) {
         isExpanded={coolDownExpanded}
         onToggle={() => setCoolDownExpanded(!coolDownExpanded)}
       >
-        <Text style={[styles.sectionContent, { color: colors.textPrimary }]}>
-          {hint.cool_down}
-        </Text>
+        <Text style={[styles.sectionContent, { color: colors.textPrimary }]}>{hint.cool_down}</Text>
       </CollapsibleSection>
     </View>
   );

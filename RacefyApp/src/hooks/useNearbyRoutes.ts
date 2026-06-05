@@ -58,8 +58,18 @@ export function useNearbyRoutes(
         setRoutesError(null);
 
         try {
-          logger.debug('activity', 'Fetching nearby routes', { lat: position.lat, lng: position.lng, sportId: selectedSportId });
-          const routes = await api.getNearbyRoutes(position.lat, position.lng, 5000, selectedSportId, 10);
+          logger.debug('activity', 'Fetching nearby routes', {
+            lat: position.lat,
+            lng: position.lng,
+            sportId: selectedSportId,
+          });
+          const routes = await api.getNearbyRoutes(
+            position.lat,
+            position.lng,
+            5000,
+            selectedSportId,
+            10,
+          );
           setNearbyRoutes(routes);
           logger.info('activity', 'Nearby routes fetched successfully', { count: routes.length });
         } catch (error: any) {

@@ -91,52 +91,67 @@ export function useRoutePlanner() {
     }
   }, []);
 
-  const debouncedPreview = useCallback((wps: RouteWaypoint[], prof: 'walking' | 'cycling') => {
-    if (previewTimer.current) {
-      clearTimeout(previewTimer.current);
-    }
-    previewTimer.current = setTimeout(() => {
-      fetchPreview(wps, prof);
-    }, 400);
-  }, [fetchPreview]);
+  const debouncedPreview = useCallback(
+    (wps: RouteWaypoint[], prof: 'walking' | 'cycling') => {
+      if (previewTimer.current) {
+        clearTimeout(previewTimer.current);
+      }
+      previewTimer.current = setTimeout(() => {
+        fetchPreview(wps, prof);
+      }, 400);
+    },
+    [fetchPreview],
+  );
 
-  const addWaypoint = useCallback((lat: number, lng: number, label?: string) => {
-    setWaypoints((prev) => {
-      undoStack.current.push([...prev]);
-      const newWps = [...prev, { lat, lng, label }];
-      debouncedPreview(newWps, profile);
-      return newWps;
-    });
-  }, [profile, debouncedPreview]);
+  const addWaypoint = useCallback(
+    (lat: number, lng: number, label?: string) => {
+      setWaypoints((prev) => {
+        undoStack.current.push([...prev]);
+        const newWps = [...prev, { lat, lng, label }];
+        debouncedPreview(newWps, profile);
+        return newWps;
+      });
+    },
+    [profile, debouncedPreview],
+  );
 
-  const removeWaypoint = useCallback((index: number) => {
-    setWaypoints((prev) => {
-      undoStack.current.push([...prev]);
-      const newWps = prev.filter((_, i) => i !== index);
-      debouncedPreview(newWps, profile);
-      return newWps;
-    });
-  }, [profile, debouncedPreview]);
+  const removeWaypoint = useCallback(
+    (index: number) => {
+      setWaypoints((prev) => {
+        undoStack.current.push([...prev]);
+        const newWps = prev.filter((_, i) => i !== index);
+        debouncedPreview(newWps, profile);
+        return newWps;
+      });
+    },
+    [profile, debouncedPreview],
+  );
 
-  const moveWaypoint = useCallback((index: number, lat: number, lng: number) => {
-    setWaypoints((prev) => {
-      const newWps = [...prev];
-      newWps[index] = { ...newWps[index], lat, lng };
-      debouncedPreview(newWps, profile);
-      return newWps;
-    });
-  }, [profile, debouncedPreview]);
+  const moveWaypoint = useCallback(
+    (index: number, lat: number, lng: number) => {
+      setWaypoints((prev) => {
+        const newWps = [...prev];
+        newWps[index] = { ...newWps[index], lat, lng };
+        debouncedPreview(newWps, profile);
+        return newWps;
+      });
+    },
+    [profile, debouncedPreview],
+  );
 
-  const reorderWaypoints = useCallback((fromIndex: number, toIndex: number) => {
-    setWaypoints((prev) => {
-      undoStack.current.push([...prev]);
-      const newWps = [...prev];
-      const [moved] = newWps.splice(fromIndex, 1);
-      newWps.splice(toIndex, 0, moved);
-      debouncedPreview(newWps, profile);
-      return newWps;
-    });
-  }, [profile, debouncedPreview]);
+  const reorderWaypoints = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      setWaypoints((prev) => {
+        undoStack.current.push([...prev]);
+        const newWps = [...prev];
+        const [moved] = newWps.splice(fromIndex, 1);
+        newWps.splice(toIndex, 0, moved);
+        debouncedPreview(newWps, profile);
+        return newWps;
+      });
+    },
+    [profile, debouncedPreview],
+  );
 
   const undo = useCallback(() => {
     const prevState = undoStack.current.pop();
@@ -155,39 +170,50 @@ export function useRoutePlanner() {
     }
   }, [waypoints]);
 
-  const changeProfile = useCallback((newProfile: 'walking' | 'cycling') => {
-    setProfile(newProfile);
-    if (waypoints.length >= 2) {
-      debouncedPreview(waypoints, newProfile);
-    }
-  }, [waypoints, debouncedPreview]);
+  const changeProfile = useCallback(
+    (newProfile: 'walking' | 'cycling') => {
+      setProfile(newProfile);
+      if (waypoints.length >= 2) {
+        debouncedPreview(waypoints, newProfile);
+      }
+    },
+    [waypoints, debouncedPreview],
+  );
 
-  const saveRoute = useCallback(async (title: string, sportTypeId: number, description?: string, isPublic?: boolean): Promise<PlannedRoute | null> => {
-    if (waypoints.length < 2) {
-      setError('At least 2 waypoints required');
-      return null;
-    }
+  const saveRoute = useCallback(
+    async (
+      title: string,
+      sportTypeId: number,
+      description?: string,
+      isPublic?: boolean,
+    ): Promise<PlannedRoute | null> => {
+      if (waypoints.length < 2) {
+        setError('At least 2 waypoints required');
+        return null;
+      }
 
-    setIsSaving(true);
-    setError(null);
+      setIsSaving(true);
+      setError(null);
 
-    try {
-      const route = await api.createRoute({
-        title,
-        description,
-        sport_type_id: sportTypeId,
-        profile,
-        waypoints,
-        is_public: isPublic,
-      });
-      return route;
-    } catch (err) {
-      setError('Failed to save route');
-      return null;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [waypoints, profile]);
+      try {
+        const route = await api.createRoute({
+          title,
+          description,
+          sport_type_id: sportTypeId,
+          profile,
+          waypoints,
+          is_public: isPublic,
+        });
+        return route;
+      } catch (err) {
+        setError('Failed to save route');
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [waypoints, profile],
+  );
 
   return {
     waypoints,

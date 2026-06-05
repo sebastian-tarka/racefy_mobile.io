@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { logger } from '../../services/logger';
 import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
@@ -104,21 +97,27 @@ export function RegisterScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.keyboardView}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
             <BrandLogo category="logo-full" width={200} height={56} />
-            <Text style={[styles.tagline, { color: colors.textSecondary }]}>{t('app.tagline')}</Text>
+            <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+              {t('app.tagline')}
+            </Text>
           </View>
 
-          <View style={[styles.form, { backgroundColor: colors.cardBackground, shadowColor: colors.black }]}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.createAccount')}</Text>
+          <View
+            style={[
+              styles.form,
+              { backgroundColor: colors.cardBackground, shadowColor: colors.black },
+            ]}
+          >
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {t('auth.createAccount')}
+            </Text>
 
             <Input
               label={t('auth.name')}
@@ -194,9 +193,13 @@ export function RegisterScreen({ navigation }: Props) {
             )}
 
             <View style={styles.footer}>
-              <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.haveAccount')} </Text>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+                {t('auth.haveAccount')}{' '}
+              </Text>
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={[styles.footerLink, { color: colors.primary }]}>{t('auth.signIn')}</Text>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>
+                  {t('auth.signIn')}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -204,12 +207,20 @@ export function RegisterScreen({ navigation }: Props) {
               {t('legal.registerTermsNotice')}
             </Text>
             <View style={styles.legalLinks}>
-              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}>
-                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.terms')}</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}
+              >
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>
+                  {t('legal.terms')}
+                </Text>
               </TouchableOpacity>
               <Text style={[styles.legalSeparator, { color: colors.textMuted }]}> • </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}>
-                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.privacy')}</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}
+              >
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>
+                  {t('legal.privacy')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -46,52 +46,58 @@ export function useDrafts() {
         setIsRefreshing(false);
       }
     },
-    [page, isLoading]
+    [page, isLoading],
   );
 
   const refresh = useCallback(() => fetchDrafts(true), [fetchDrafts]);
 
   const loadMore = useCallback(
     () => hasMore && !isLoading && fetchDrafts(false),
-    [hasMore, isLoading, fetchDrafts]
+    [hasMore, isLoading, fetchDrafts],
   );
 
-  const publishDraft = useCallback(async (postId: number): Promise<Post> => {
-    // Optimistic update - remove from drafts immediately
-    const draftToPublish = drafts.find((d) => d.id === postId);
-    if (!draftToPublish) {
-      throw new Error('Draft not found');
-    }
+  const publishDraft = useCallback(
+    async (postId: number): Promise<Post> => {
+      // Optimistic update - remove from drafts immediately
+      const draftToPublish = drafts.find((d) => d.id === postId);
+      if (!draftToPublish) {
+        throw new Error('Draft not found');
+      }
 
-    setDrafts((prev) => prev.filter((d) => d.id !== postId));
+      setDrafts((prev) => prev.filter((d) => d.id !== postId));
 
-    try {
-      const publishedPost = await api.publishDraft(postId);
-      return publishedPost;
-    } catch (err) {
-      // Revert optimistic update on error
-      setDrafts((prev) => [draftToPublish, ...prev]);
-      throw err;
-    }
-  }, [drafts]);
+      try {
+        const publishedPost = await api.publishDraft(postId);
+        return publishedPost;
+      } catch (err) {
+        // Revert optimistic update on error
+        setDrafts((prev) => [draftToPublish, ...prev]);
+        throw err;
+      }
+    },
+    [drafts],
+  );
 
-  const deleteDraft = useCallback(async (postId: number) => {
-    // Optimistic update - remove from drafts immediately
-    const draftToDelete = drafts.find((d) => d.id === postId);
-    if (!draftToDelete) {
-      throw new Error('Draft not found');
-    }
+  const deleteDraft = useCallback(
+    async (postId: number) => {
+      // Optimistic update - remove from drafts immediately
+      const draftToDelete = drafts.find((d) => d.id === postId);
+      if (!draftToDelete) {
+        throw new Error('Draft not found');
+      }
 
-    setDrafts((prev) => prev.filter((d) => d.id !== postId));
+      setDrafts((prev) => prev.filter((d) => d.id !== postId));
 
-    try {
-      await api.deleteDraft(postId);
-    } catch (err) {
-      // Revert optimistic update on error
-      setDrafts((prev) => [draftToDelete, ...prev]);
-      throw err;
-    }
-  }, [drafts]);
+      try {
+        await api.deleteDraft(postId);
+      } catch (err) {
+        // Revert optimistic update on error
+        setDrafts((prev) => [draftToDelete, ...prev]);
+        throw err;
+      }
+    },
+    [drafts],
+  );
 
   return {
     drafts,

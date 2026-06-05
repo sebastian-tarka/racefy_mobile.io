@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -12,9 +12,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {format} from 'date-fns';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AnimatedListItem,
@@ -24,21 +24,27 @@ import {
   LiveEventCard,
   Loading,
   RewardCard,
-  ScreenContainer
+  ScreenContainer,
 } from '../../components';
-import {useAuth} from '../../hooks/useAuth';
-import {useEvents} from '../../hooks/useEvents';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from '../../hooks/useTheme';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {useRefreshOn} from '../../services/refreshEvents';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {CompositeScreenProps} from '@react-navigation/native';
-import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
-import type {Event, EventOverview, EventStats, EventWithLatestCommentary, Reward} from '../../types/api';
+import { useAuth } from '../../hooks/useAuth';
+import { useEvents } from '../../hooks/useEvents';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { CompositeScreenProps } from '@react-navigation/native';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import type {
+  Event,
+  EventOverview,
+  EventStats,
+  EventWithLatestCommentary,
+  Reward,
+} from '../../types/api';
 
 const LIVE_VIEW_MODE_KEY = '@racefy_events_live_view_mode';
 type LiveViewMode = 'compact' | 'detailed';
@@ -77,7 +83,9 @@ export function EventsScreen({ navigation, route }: Props) {
     { label: t('events.filters.completed'), value: 'completed' },
   ];
 
-  const [activeFilter, setActiveFilter] = useState<FilterOption>(route.params?.initialFilter || 'all');
+  const [activeFilter, setActiveFilter] = useState<FilterOption>(
+    route.params?.initialFilter || 'all',
+  );
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabOption>('events');
@@ -147,7 +155,10 @@ export function EventsScreen({ navigation, route }: Props) {
       // Fetch detailed live events (with commentary) for detailed mode
       if (ongoingRes.data.length > 0) {
         try {
-          const homeData = await api.getHome({ include_activities: false, include_upcoming: false });
+          const homeData = await api.getHome({
+            include_activities: false,
+            include_upcoming: false,
+          });
           setLiveEventsDetailed(homeData.live_events || []);
         } catch {
           setLiveEventsDetailed(ongoingRes.data as EventWithLatestCommentary[]);
@@ -217,23 +228,26 @@ export function EventsScreen({ navigation, route }: Props) {
   }, []);
 
   // Debounced search
-  const handleSearchChange = useCallback((text: string) => {
-    setSearchQuery(text);
+  const handleSearchChange = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
 
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
 
-    if (text.length >= 2) {
-      setIsSearching(true);
-      searchDebounceRef.current = setTimeout(() => {
-        performSearch(text);
-      }, 300);
-    } else {
-      setSearchResults(null);
-      setIsSearching(false);
-    }
-  }, [performSearch]);
+      if (text.length >= 2) {
+        setIsSearching(true);
+        searchDebounceRef.current = setTimeout(() => {
+          performSearch(text);
+        }, 300);
+      } else {
+        setSearchResults(null);
+        setIsSearching(false);
+      }
+    },
+    [performSearch],
+  );
 
   const toggleSearch = useCallback(() => {
     if (isSearchVisible) {
@@ -249,42 +263,45 @@ export function EventsScreen({ navigation, route }: Props) {
   };
 
   // Load rewards from API
-  const loadRewards = useCallback(async (isRefreshing = false) => {
-    if (!isAuthenticated) return;
+  const loadRewards = useCallback(
+    async (isRefreshing = false) => {
+      if (!isAuthenticated) return;
 
-    if (isRefreshing) {
-      setRewardsRefreshing(true);
-    } else {
-      setRewardsLoading(true);
-    }
+      if (isRefreshing) {
+        setRewardsRefreshing(true);
+      } else {
+        setRewardsLoading(true);
+      }
 
-    setRewardsError(null);
+      setRewardsError(null);
 
-    try {
-      const filters = rewardFilter !== 'all' ? { type: rewardFilter } : undefined;
-      logger.info('api', 'Loading rewards', { filters, rewardFilter });
+      try {
+        const filters = rewardFilter !== 'all' ? { type: rewardFilter } : undefined;
+        logger.info('api', 'Loading rewards', { filters, rewardFilter });
 
-      const response = await api.getUserRewards(filters);
+        const response = await api.getUserRewards(filters);
 
-      logger.info('api', 'Rewards loaded', {
-        count: response.data.length,
-        total_points: response.total_points,
-        filter: rewardFilter,
-        types: response.data.map(r => r.reward_type)
-      });
+        logger.info('api', 'Rewards loaded', {
+          count: response.data.length,
+          total_points: response.total_points,
+          filter: rewardFilter,
+          types: response.data.map((r) => r.reward_type),
+        });
 
-      setRewards(response.data);
-      setTotalPoints(response.total_points);
-      setTotalCoupons(response.total_coupons);
-      setTotalBadges(response.total_badges);
-    } catch (error) {
-      logger.error('api', 'Failed to load rewards', { error });
-      setRewardsError('Failed to load rewards');
-    } finally {
-      setRewardsLoading(false);
-      setRewardsRefreshing(false);
-    }
-  }, [isAuthenticated, rewardFilter]);
+        setRewards(response.data);
+        setTotalPoints(response.total_points);
+        setTotalCoupons(response.total_coupons);
+        setTotalBadges(response.total_badges);
+      } catch (error) {
+        logger.error('api', 'Failed to load rewards', { error });
+        setRewardsError('Failed to load rewards');
+      } finally {
+        setRewardsLoading(false);
+        setRewardsRefreshing(false);
+      }
+    },
+    [isAuthenticated, rewardFilter],
+  );
 
   // Load rewards when switching to rewards tab or when filter changes
   useEffect(() => {
@@ -295,7 +312,12 @@ export function EventsScreen({ navigation, route }: Props) {
 
   const renderTabs = () => {
     return (
-      <View style={[styles.tabsContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.tabsContainer,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity
           style={[
             styles.tab,
@@ -355,7 +377,12 @@ export function EventsScreen({ navigation, route }: Props) {
 
     return (
       <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
-        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
             <Ionicons name="search" size={20} color={colors.textMuted} />
             <TextInput
@@ -399,11 +426,11 @@ export function EventsScreen({ navigation, route }: Props) {
 
     // Calculate filtered stats
     const filteredPointsSum = rewards
-      .filter(r => r.reward_type === 'points')
+      .filter((r) => r.reward_type === 'points')
       .reduce((sum, r) => sum + (r as any).points, 0);
 
-    const filteredCouponsCount = rewards.filter(r => r.reward_type === 'coupon').length;
-    const filteredBadgesCount = rewards.filter(r => r.reward_type === 'badge').length;
+    const filteredCouponsCount = rewards.filter((r) => r.reward_type === 'coupon').length;
+    const filteredBadgesCount = rewards.filter((r) => r.reward_type === 'badge').length;
 
     // Show filtered or total stats
     const displayPoints = rewardFilter === 'points' ? filteredPointsSum : totalPoints;
@@ -424,7 +451,9 @@ export function EventsScreen({ navigation, route }: Props) {
             </View>
             <View style={styles.statItem}>
               <Ionicons name="ticket" size={20} color={colors.success} />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{displayCoupons}</Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {displayCoupons}
+              </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
                 {t('rewards.stats.totalCoupons')}
               </Text>
@@ -440,7 +469,12 @@ export function EventsScreen({ navigation, route }: Props) {
         )}
 
         {/* Reward Filters */}
-        <View style={[styles.filterContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.filterContainer,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           {rewardFilters.map((filter) => (
             <TouchableOpacity
               key={filter.value}
@@ -519,12 +553,16 @@ export function EventsScreen({ navigation, route }: Props) {
     );
   };
 
-   const getDifficultyColor = (difficulty: Event['difficulty']) => {
+  const getDifficultyColor = (difficulty: Event['difficulty']) => {
     switch (difficulty) {
-      case 'beginner': return colors.success;
-      case 'intermediate': return colors.warning;
-      case 'advanced': return colors.error;
-      default: return colors.primary;
+      case 'beginner':
+        return colors.success;
+      case 'intermediate':
+        return colors.warning;
+      case 'advanced':
+        return colors.error;
+      default:
+        return colors.primary;
     }
   };
 
@@ -533,7 +571,12 @@ export function EventsScreen({ navigation, route }: Props) {
     return `${meters} m`;
   };
 
-  type StatItem = { icon: keyof typeof Ionicons.glyphMap; color: string; value: number | string; label: string };
+  type StatItem = {
+    icon: keyof typeof Ionicons.glyphMap;
+    color: string;
+    value: number | string;
+    label: string;
+  };
 
   const getStatsForFilter = (filter: FilterOption): StatItem[] => {
     const s = eventStats;
@@ -543,29 +586,99 @@ export function EventsScreen({ navigation, route }: Props) {
       case 'all':
         // General tab: personal overview
         return [
-          { icon: 'checkbox', color: colors.success, value: s?.participated.joined ?? 0, label: t('events.stats.joined') },
-          { icon: 'trophy', color: colors.warning, value: s?.results.podiums ?? 0, label: t('events.stats.podiums') },
-          { icon: 'radio', color: colors.error, value: s?.participated.ongoing ?? o?.ongoing.event_count ?? 0, label: t('events.stats.ongoing') },
-          { icon: 'time', color: colors.primary, value: s?.participated.upcoming ?? o?.upcoming.event_count ?? 0, label: t('events.stats.upcoming') },
+          {
+            icon: 'checkbox',
+            color: colors.success,
+            value: s?.participated.joined ?? 0,
+            label: t('events.stats.joined'),
+          },
+          {
+            icon: 'trophy',
+            color: colors.warning,
+            value: s?.results.podiums ?? 0,
+            label: t('events.stats.podiums'),
+          },
+          {
+            icon: 'radio',
+            color: colors.error,
+            value: s?.participated.ongoing ?? o?.ongoing.event_count ?? 0,
+            label: t('events.stats.ongoing'),
+          },
+          {
+            icon: 'time',
+            color: colors.primary,
+            value: s?.participated.upcoming ?? o?.upcoming.event_count ?? 0,
+            label: t('events.stats.upcoming'),
+          },
         ];
       case 'ongoing':
         return [
-          { icon: 'radio', color: colors.error, value: o?.ongoing.event_count ?? 0, label: t('events.stats.ongoing') },
-          { icon: 'people', color: colors.info || '#3b82f6', value: o?.ongoing.total_participants ?? 0, label: t('events.stats.participants') },
-          { icon: 'flag', color: colors.success, value: s?.participated.ongoing ?? 0, label: t('events.stats.joined') },
+          {
+            icon: 'radio',
+            color: colors.error,
+            value: o?.ongoing.event_count ?? 0,
+            label: t('events.stats.ongoing'),
+          },
+          {
+            icon: 'people',
+            color: colors.info || '#3b82f6',
+            value: o?.ongoing.total_participants ?? 0,
+            label: t('events.stats.participants'),
+          },
+          {
+            icon: 'flag',
+            color: colors.success,
+            value: s?.participated.ongoing ?? 0,
+            label: t('events.stats.joined'),
+          },
         ];
       case 'upcoming':
         return [
-          { icon: 'time', color: colors.warning, value: o?.upcoming.event_count ?? 0, label: t('events.stats.upcoming') },
-          { icon: 'people', color: colors.info || '#3b82f6', value: o?.upcoming.total_participants ?? 0, label: t('events.stats.participants') },
-          { icon: 'checkbox', color: colors.success, value: s?.participated.upcoming ?? 0, label: t('events.stats.joined') },
+          {
+            icon: 'time',
+            color: colors.warning,
+            value: o?.upcoming.event_count ?? 0,
+            label: t('events.stats.upcoming'),
+          },
+          {
+            icon: 'people',
+            color: colors.info || '#3b82f6',
+            value: o?.upcoming.total_participants ?? 0,
+            label: t('events.stats.participants'),
+          },
+          {
+            icon: 'checkbox',
+            color: colors.success,
+            value: s?.participated.upcoming ?? 0,
+            label: t('events.stats.joined'),
+          },
         ];
       case 'completed':
         return [
-          { icon: 'checkmark-done', color: colors.primary, value: s?.participated.completed ?? 0, label: t('events.stats.myCompleted') },
-          { icon: 'trophy', color: colors.warning, value: s?.results.podiums ?? 0, label: t('events.stats.podiums') },
-          { icon: 'navigate', color: colors.success, value: s ? formatDistance(s.activity_totals.distance) : '0', label: t('events.stats.distance') },
-          { icon: 'ribbon', color: colors.error, value: s?.results.total_finishes ?? 0, label: t('events.stats.finishes') },
+          {
+            icon: 'checkmark-done',
+            color: colors.primary,
+            value: s?.participated.completed ?? 0,
+            label: t('events.stats.myCompleted'),
+          },
+          {
+            icon: 'trophy',
+            color: colors.warning,
+            value: s?.results.podiums ?? 0,
+            label: t('events.stats.podiums'),
+          },
+          {
+            icon: 'navigate',
+            color: colors.success,
+            value: s ? formatDistance(s.activity_totals.distance) : '0',
+            label: t('events.stats.distance'),
+          },
+          {
+            icon: 'ribbon',
+            color: colors.error,
+            value: s?.results.total_finishes ?? 0,
+            label: t('events.stats.finishes'),
+          },
         ];
     }
   };
@@ -576,7 +689,9 @@ export function EventsScreen({ navigation, route }: Props) {
       <View style={[styles.overviewStatsRow, { backgroundColor: colors.cardBackground }]}>
         {stats.map((stat, index) => (
           <React.Fragment key={stat.label}>
-            {index > 0 && <View style={[styles.overviewStatDivider, { backgroundColor: colors.border }]} />}
+            {index > 0 && (
+              <View style={[styles.overviewStatDivider, { backgroundColor: colors.border }]} />
+            )}
             <View style={styles.overviewStatItem}>
               <Ionicons name={stat.icon} size={20} color={stat.color} />
               <Text style={[styles.overviewStatValue, { color: colors.textPrimary }]}>
@@ -595,7 +710,6 @@ export function EventsScreen({ navigation, route }: Props) {
   const renderEventsOverview = () => {
     return (
       <View style={styles.overviewContainer}>
-
         {/* Ongoing Events Section */}
         {ongoingEvents.length > 0 && (
           <View style={styles.overviewSection}>
@@ -616,57 +730,68 @@ export function EventsScreen({ navigation, route }: Props) {
                 </TouchableOpacity>
                 {(eventOverview?.ongoing.event_count ?? 0) > 3 && (
                   <TouchableOpacity onPress={() => setActiveFilter('ongoing')}>
-                    <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                    <Text style={[styles.overviewViewAll, { color: colors.primary }]}>
+                      {t('common.viewAll')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
 
-            {liveViewMode === 'detailed' ? (
-              // Detailed view with cover image + AI commentary (like Home screen)
-              liveEventsDetailed.map((event) => (
-                <LiveEventCard
-                  key={event.id}
-                  event={event}
-                  onPress={() => handleEventPress(event.id)}
-                  onBoostComplete={() => fetchOverviewData()}
-                />
-              ))
-            ) : (
-              // Compact view (default)
-              ongoingEvents.map((event) => (
-                <TouchableOpacity
-                  key={event.id}
-                  onPress={() => handleEventPress(event.id)}
-                  activeOpacity={0.8}
-                >
-                  <Card style={styles.overviewEventCard}>
-                    <View style={[styles.overviewLiveBadge, { backgroundColor: colors.error }]}>
-                      <Ionicons name="radio" size={18} color={colors.white} />
-                      <Text style={[styles.overviewLiveText, { color: colors.white }]}>
-                        {t('home.live')}
-                      </Text>
-                    </View>
-                    <View style={styles.overviewEventContent}>
-                      <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {event.post?.title || t('eventDetail.untitled')}
-                      </Text>
-                      <View style={styles.overviewEventMeta}>
-                        <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                        <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
-                          {event.participants_count}
-                        </Text>
-                        <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
-                        <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
-                          {event.location_name}
+            {liveViewMode === 'detailed'
+              ? // Detailed view with cover image + AI commentary (like Home screen)
+                liveEventsDetailed.map((event) => (
+                  <LiveEventCard
+                    key={event.id}
+                    event={event}
+                    onPress={() => handleEventPress(event.id)}
+                    onBoostComplete={() => fetchOverviewData()}
+                  />
+                ))
+              : // Compact view (default)
+                ongoingEvents.map((event) => (
+                  <TouchableOpacity
+                    key={event.id}
+                    onPress={() => handleEventPress(event.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Card style={styles.overviewEventCard}>
+                      <View style={[styles.overviewLiveBadge, { backgroundColor: colors.error }]}>
+                        <Ionicons name="radio" size={18} color={colors.white} />
+                        <Text style={[styles.overviewLiveText, { color: colors.white }]}>
+                          {t('home.live')}
                         </Text>
                       </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                  </Card>
-                </TouchableOpacity>
-              ))
-            )}
+                      <View style={styles.overviewEventContent}>
+                        <Text
+                          style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
+                          numberOfLines={1}
+                        >
+                          {event.post?.title || t('eventDetail.untitled')}
+                        </Text>
+                        <View style={styles.overviewEventMeta}>
+                          <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                          <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
+                            {event.participants_count}
+                          </Text>
+                          <Ionicons
+                            name="location-outline"
+                            size={14}
+                            color={colors.textMuted}
+                            style={{ marginLeft: spacing.sm }}
+                          />
+                          <Text
+                            style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
+                            numberOfLines={1}
+                          >
+                            {event.location_name}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                    </Card>
+                  </TouchableOpacity>
+                ))}
           </View>
         )}
 
@@ -679,7 +804,9 @@ export function EventsScreen({ navigation, route }: Props) {
               </Text>
               {(eventOverview?.upcoming.event_count ?? 0) > 3 && (
                 <TouchableOpacity onPress={() => setActiveFilter('upcoming')}>
-                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>
+                    {t('common.viewAll')}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -699,7 +826,10 @@ export function EventsScreen({ navigation, route }: Props) {
                     </Text>
                   </View>
                   <View style={styles.overviewEventContent}>
-                    <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                    >
                       {event.post?.title || t('eventDetail.untitled')}
                     </Text>
                     <View style={styles.overviewEventMeta}>
@@ -707,8 +837,16 @@ export function EventsScreen({ navigation, route }: Props) {
                       <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
                         {event.participants_count}
                       </Text>
-                      <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
-                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color={colors.textMuted}
+                        style={{ marginLeft: spacing.sm }}
+                      />
+                      <Text
+                        style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
+                        numberOfLines={1}
+                      >
                         {event.location_name}
                       </Text>
                     </View>
@@ -729,7 +867,9 @@ export function EventsScreen({ navigation, route }: Props) {
               </Text>
               {(eventOverview?.completed.event_count ?? 0) > 3 && (
                 <TouchableOpacity onPress={() => setActiveFilter('completed')}>
-                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>{t('common.viewAll')}</Text>
+                  <Text style={[styles.overviewViewAll, { color: colors.primary }]}>
+                    {t('common.viewAll')}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -744,7 +884,10 @@ export function EventsScreen({ navigation, route }: Props) {
                     <Ionicons name="checkmark" size={22} color={colors.white} />
                   </View>
                   <View style={styles.overviewEventContent}>
-                    <Text style={[styles.overviewEventTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                    >
                       {event.post?.title || t('eventDetail.untitled')}
                     </Text>
                     <View style={styles.overviewEventMeta}>
@@ -752,8 +895,16 @@ export function EventsScreen({ navigation, route }: Props) {
                       <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
                         {event.participants_count}
                       </Text>
-                      <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginLeft: spacing.sm }} />
-                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                      <Ionicons
+                        name="location-outline"
+                        size={14}
+                        color={colors.textMuted}
+                        style={{ marginLeft: spacing.sm }}
+                      />
+                      <Text
+                        style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
+                        numberOfLines={1}
+                      >
                         {event.location_name}
                       </Text>
                     </View>
@@ -827,7 +978,12 @@ export function EventsScreen({ navigation, route }: Props) {
 
   return (
     <ScreenContainer>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <View style={styles.headerTextContainer}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {activeTab === 'rewards' ? t('rewards.title') : t('events.title')}
@@ -837,10 +993,7 @@ export function EventsScreen({ navigation, route }: Props) {
           </Text>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={toggleSearch}
-          >
+          <TouchableOpacity style={styles.headerButton} onPress={toggleSearch}>
             <Ionicons
               name={isSearchVisible ? 'close' : 'search'}
               size={24}
@@ -867,7 +1020,12 @@ export function EventsScreen({ navigation, route }: Props) {
         renderRewardsTab()
       ) : (
         <>
-          <View style={[styles.filterContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <View
+            style={[
+              styles.filterContainer,
+              { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+            ]}
+          >
             {filters.map((filter) => (
               <TouchableOpacity
                 key={filter.value}
@@ -933,12 +1091,12 @@ export function EventsScreen({ navigation, route }: Props) {
                   <EmptyState
                     icon="calendar-outline"
                     title={t('events.noEvents')}
-                    message={t('events.noEventsFiltered', { filter: filters.find(f => f.value === activeFilter)?.label })}
+                    message={t('events.noEventsFiltered', {
+                      filter: filters.find((f) => f.value === activeFilter)?.label,
+                    })}
                     actionLabel={isAuthenticated ? t('events.createEvent') : undefined}
                     onAction={
-                      isAuthenticated
-                        ? () => navigation.navigate('EventForm', {})
-                        : undefined
+                      isAuthenticated ? () => navigation.navigate('EventForm', {}) : undefined
                     }
                   />
                 )

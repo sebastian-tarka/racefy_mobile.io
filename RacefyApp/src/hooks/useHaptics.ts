@@ -67,7 +67,7 @@ export function useHaptics(): UseHapticsResult {
         Haptics.impactAsync(style);
       }
     },
-    [isEnabled, isSupported]
+    [isEnabled, isSupported],
   );
 
   // Notification feedback (for success/warning/error)
@@ -77,7 +77,7 @@ export function useHaptics(): UseHapticsResult {
         Haptics.notificationAsync(type);
       }
     },
-    [isEnabled, isSupported]
+    [isEnabled, isSupported],
   );
 
   // Selection feedback (for picker/selection changes)
@@ -114,7 +114,7 @@ export const loadGlobalHapticsPreference = async (): Promise<void> => {
 };
 
 export const triggerHaptic = (
-  style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light
+  style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light,
 ): void => {
   if (globalHapticsEnabled && checkHapticsSupport()) {
     Haptics.impactAsync(style);

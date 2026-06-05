@@ -39,7 +39,7 @@ export function MediaPicker({
 
   // Maximum file size: 100MB for videos, 10MB for images
   const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024;  // 10MB
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
   const checkFileSize = async (uri: string, type: 'image' | 'video'): Promise<boolean> => {
     try {
@@ -56,13 +56,13 @@ export function MediaPicker({
         const maxSizeMB = type === 'video' ? '100' : '10';
         Alert.alert(
           t('common.error'),
-          `${type === 'video' ? 'Video' : 'Image'} size is too large (${sizeMB}MB). Maximum allowed: ${maxSizeMB}MB`
+          `${type === 'video' ? 'Video' : 'Image'} size is too large (${sizeMB}MB). Maximum allowed: ${maxSizeMB}MB`,
         );
         logger.warn('media', 'File size exceeds limit', {
           uri,
           sizeMB,
           maxSizeMB,
-          type
+          type,
         });
         return false;
       }
@@ -89,11 +89,7 @@ export function MediaPicker({
 
       let options: ImagePicker.ImagePickerOptions = {
         mediaTypes:
-          mediaType === 'all'
-            ? ['images', 'videos']
-            : mediaType === 'video'
-            ? 'videos'
-            : 'images',
+          mediaType === 'all' ? ['images', 'videos'] : mediaType === 'video' ? 'videos' : 'images',
         allowsMultipleSelection: true,
         quality: 0.8,
         selectionLimit: maxItems - media.length,
@@ -132,7 +128,7 @@ export function MediaPicker({
         const updatedMedia = [...media, ...newMedia].slice(0, maxItems);
         logger.info('media', 'Media added', {
           newCount: newMedia.length,
-          totalCount: updatedMedia.length
+          totalCount: updatedMedia.length,
         });
         onChange(updatedMedia);
       } else {
@@ -142,7 +138,7 @@ export function MediaPicker({
       logger.error('media', 'Error picking from gallery', { error, mediaType });
       Alert.alert(
         t('common.error'),
-        'Failed to select media. Please try again or choose a different file.'
+        'Failed to select media. Please try again or choose a different file.',
       );
     }
   };
@@ -185,10 +181,7 @@ export function MediaPicker({
       }
     } catch (error) {
       logger.error('media', 'Error taking photo', { error });
-      Alert.alert(
-        t('common.error'),
-        'Failed to take photo. Please try again.'
-      );
+      Alert.alert(t('common.error'), 'Failed to take photo. Please try again.');
     }
   };
 
@@ -227,7 +220,7 @@ export function MediaPicker({
         };
         logger.info('media', 'Video recorded successfully', {
           uri: asset.uri,
-          duration: newItem.duration
+          duration: newItem.duration,
         });
         onChange([...media, newItem]);
       } else {
@@ -237,7 +230,7 @@ export function MediaPicker({
       logger.error('media', 'Error recording video', { error });
       Alert.alert(
         t('common.error'),
-        'Failed to record video. Please check permissions and try again.'
+        'Failed to record video. Please check permissions and try again.',
       );
     }
   };
@@ -276,25 +269,21 @@ export function MediaPicker({
             // Gallery
             void pickFromGallery(mediaType);
           }
-        }
+        },
       );
     } else {
       // Android: Use Alert dialog
-      Alert.alert(
-        isVideo ? t('feed.addVideo') : t('feed.addPhoto'),
-        undefined,
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('feed.chooseFromLibrary'),
-            onPress: () => void pickFromGallery(mediaType),
-          },
-          {
-            text: isVideo ? t('feed.recordVideo') : t('feed.takePhoto'),
-            onPress: () => void (isVideo ? recordVideo() : takePhoto()),
-          },
-        ]
-      );
+      Alert.alert(isVideo ? t('feed.addVideo') : t('feed.addPhoto'), undefined, [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('feed.chooseFromLibrary'),
+          onPress: () => void pickFromGallery(mediaType),
+        },
+        {
+          text: isVideo ? t('feed.recordVideo') : t('feed.takePhoto'),
+          onPress: () => void (isVideo ? recordVideo() : takePhoto()),
+        },
+      ]);
     }
   };
 

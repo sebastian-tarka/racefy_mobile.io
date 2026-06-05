@@ -1,11 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { getCurrentLanguage } from '../i18n';
-import type {
-  EventCommentary,
-  CommentaryListResponse,
-  CommentaryLanguage,
-} from '../types/api';
+import type { EventCommentary, CommentaryListResponse, CommentaryLanguage } from '../types/api';
 
 interface UseEventCommentaryFeedOptions {
   eventId: number;
@@ -34,7 +30,7 @@ export function useEventCommentaryFeed({
 
   // Language management
   const [selectedLanguage, setSelectedLanguageState] = useState<CommentaryLanguage>(
-    language || (getCurrentLanguage() as CommentaryLanguage)
+    language || (getCurrentLanguage() as CommentaryLanguage),
   );
   const [fallbackLanguage, setFallbackLanguage] = useState<CommentaryLanguage | null>(null);
   const [languagesWithContent, setLanguagesWithContent] = useState<CommentaryLanguage[]>([]);
@@ -137,7 +133,7 @@ export function useEventCommentaryFeed({
         }
       }
     },
-    [eventId, page, perPage, selectedLanguage, activeLanguage, isLoading]
+    [eventId, page, perPage, selectedLanguage, activeLanguage, isLoading],
   );
 
   const refresh = useCallback(() => {
@@ -240,10 +236,10 @@ export function useEventCommentaryFeed({
             };
           }
           return c;
-        })
+        }),
       );
     },
-    []
+    [],
   );
 
   // Cleanup on unmount

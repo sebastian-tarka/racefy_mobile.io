@@ -1,10 +1,10 @@
-import React, {createContext, useCallback, useContext, useEffect, useRef, useState,} from 'react';
-import {AppState, AppStateStatus, Platform} from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus, Platform } from 'react-native';
 import * as Application from 'expo-application';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {pushNotificationService} from '../services/pushNotifications';
-import type {AppConfigQuery, AppConfigResponse} from '../types/api';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { pushNotificationService } from '../services/pushNotifications';
+import type { AppConfigQuery, AppConfigResponse } from '../types/api';
 
 /**
  * Native binary version (NOT the JS bundle / OTA version).
@@ -103,7 +103,7 @@ export function AppConfigProvider({ children }: { children: React.ReactNode }) {
       setMaintenanceMessage(data.message ?? null);
       setMaintenanceEstimatedEnd(data.estimated_end ?? null);
     },
-    []
+    [],
   );
 
   // Initial fetch on mount.

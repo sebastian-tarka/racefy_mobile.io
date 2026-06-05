@@ -68,8 +68,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Health data query timed out')), ms);
     promise.then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (error) => { clearTimeout(timer); reject(error); },
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
     );
   });
 }
@@ -142,9 +148,7 @@ class HealthConnectService implements HealthService {
       const granted = await sdk.requestPermission([
         { accessType: 'read', recordType: 'HeartRate' },
       ]);
-      return granted.some(
-        (p: any) => p.recordType === 'HeartRate' && p.accessType === 'read',
-      );
+      return granted.some((p: any) => p.recordType === 'HeartRate' && p.accessType === 'read');
     } catch {
       return false;
     }

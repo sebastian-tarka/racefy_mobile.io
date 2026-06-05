@@ -119,7 +119,7 @@ export function IdleView({
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
         ) : (
           <View style={styles.sportGrid}>
-            {sportTypes.map(sport => {
+            {sportTypes.map((sport) => {
               const isSelected = selectedSport?.id === sport.id;
               return (
                 <TouchableOpacity
@@ -148,7 +148,10 @@ export function IdleView({
                     />
                   </View>
                   <Text
-                    style={[styles.sportCardName, { color: isSelected ? colors.primary : colors.textSecondary }]}
+                    style={[
+                      styles.sportCardName,
+                      { color: isSelected ? colors.primary : colors.textSecondary },
+                    ]}
                     numberOfLines={1}
                   >
                     {sport.name}
@@ -160,7 +163,9 @@ export function IdleView({
         )}
 
         {/* Icon toolbar – centered below sport grid */}
-        {(onToggleAudioCoach !== undefined || onToggleView !== undefined || (__DEV__ && onToggleDevSim !== undefined)) && (
+        {(onToggleAudioCoach !== undefined ||
+          onToggleView !== undefined ||
+          (__DEV__ && onToggleDevSim !== undefined)) && (
           <View style={styles.iconToolbar}>
             {onToggleAudioCoach !== undefined && (
               <TouchableOpacity
@@ -346,7 +351,7 @@ const styles = StyleSheet.create({
   startButton: {
     borderRadius: borderRadius.full,
     paddingVertical: spacing.xl,
-    width: Math.min(SCREEN_WIDTH * 0.70, componentSize.startButton * 2.4),
+    width: Math.min(SCREEN_WIDTH * 0.7, componentSize.startButton * 2.4),
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#10b981',

@@ -33,18 +33,14 @@ export function WeeklyInsightSection({ section, onPress }: WeeklyInsightSectionP
           <Ionicons name="bar-chart" size={24} color={colors.info} />
         </View>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           {section.message && (
             <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={2}>
               {section.message}
             </Text>
           )}
         </View>
-        {section.cta && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        )}
+        {section.cta && <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
       </View>
 
       {stats && (
@@ -54,9 +50,7 @@ export function WeeklyInsightSection({ section, onPress }: WeeklyInsightSectionP
               <Text style={[styles.statValue, { color: colors.primary }]}>
                 {stats.activities_count}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                aktywności
-              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>aktywności</Text>
             </View>
           )}
           {stats.total_distance_km !== undefined && (
@@ -74,9 +68,7 @@ export function WeeklyInsightSection({ section, onPress }: WeeklyInsightSectionP
               <Text style={[styles.statValue, { color: colors.warning }]}>
                 {stats.streak_days}🔥
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                dni z rzędu
-              </Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>dni z rzędu</Text>
             </View>
           )}
         </View>

@@ -85,7 +85,10 @@ export function formatMetricValue(siValue: number, metric: GoalMetric, units: Un
 /**
  * Colour for the pace-status chip — keep in sync with SPA `paceStatusColor()`.
  */
-export function paceStatusColor(status: PaceStatus, theme: { primary: string; warning: string; textSecondary: string }): string {
+export function paceStatusColor(
+  status: PaceStatus,
+  theme: { primary: string; warning: string; textSecondary: string },
+): string {
   switch (status) {
     case 'completed':
     case 'ahead':

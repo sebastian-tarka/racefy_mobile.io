@@ -123,7 +123,7 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         startPolling();
       }
       return () => clearPolling();
-    }, [report, pollingGaveUp, startPolling, clearPolling])
+    }, [report, pollingGaveUp, startPolling, clearPolling]),
   );
 
   useEffect(() => {
@@ -193,7 +193,11 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('insights.aiReports.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('insights.aiReports.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -204,16 +208,21 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
   if (!report) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('insights.aiReports.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('insights.aiReports.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
       </ScreenContainer>
     );
   }
 
   const statusColor = STATUS_COLORS[report.status];
   const count = report.activity_ids.length;
-  const countLabel = count === 1
-    ? t('insights.aiReports.activityIncluded', { count })
-    : t('insights.aiReports.activitiesIncluded', { count });
+  const countLabel =
+    count === 1
+      ? t('insights.aiReports.activityIncluded', { count })
+      : t('insights.aiReports.activitiesIncluded', { count });
   const isNonTerminal = !TERMINAL_STATUSES.includes(report.status);
   const hasParseWarning = report.content?._parse_warning != null;
 
@@ -242,16 +251,17 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
               {t(`insights.aiReports.status.${report.status}`)}
             </Text>
           </View>
-          <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-            {countLabel}
-          </Text>
+          <Text style={[styles.metaText, { color: colors.textSecondary }]}>{countLabel}</Text>
         </View>
 
         <View style={styles.chipsRow}>
           {report.activity_ids.map((id) => (
             <TouchableOpacity
               key={id}
-              style={[styles.chip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+              style={[
+                styles.chip,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
               onPress={() => navigation.navigate('ActivityDetail', { activityId: id })}
             >
               <Text style={[styles.chipText, { color: colors.textPrimary }]}>#{id}</Text>
@@ -260,7 +270,12 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         </View>
 
         {isNonTerminal && !pollingGaveUp && (
-          <View style={[styles.stateCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.stateCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={[styles.stateLabel, { color: colors.textPrimary }]}>
               {t(`insights.aiReports.status.${report.status}`)}
@@ -269,7 +284,12 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         )}
 
         {isNonTerminal && pollingGaveUp && (
-          <View style={[styles.stateCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.stateCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="time-outline" size={32} color={colors.textSecondary} />
             <Text style={[styles.stateLabel, { color: colors.textPrimary }]}>
               {t('insights.aiReports.stillProcessing')}
@@ -278,7 +298,12 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         )}
 
         {report.status === 'failed' && (
-          <View style={[styles.stateCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.stateCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="alert-circle-outline" size={32} color={STATUS_COLORS.failed} />
             <Text style={[styles.errorMessage, { color: colors.textPrimary }]}>
               {report.error_message || t('insights.aiReports.errorWaiting')}
@@ -296,10 +321,7 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         {report.status === 'completed' && report.content && (
           <View style={styles.contentSections}>
             {report.content.summary ? (
-              <Section
-                title={t('insights.aiReports.sections.summary')}
-                colors={colors}
-              >
+              <Section title={t('insights.aiReports.sections.summary')} colors={colors}>
                 <Text style={[styles.paragraph, { color: colors.textPrimary }]}>
                   {report.content.summary}
                 </Text>
@@ -313,13 +335,19 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
             )}
 
             {!hasParseWarning && report.content.areas_to_improve?.length > 0 && (
-              <Section title={`🎯 ${t('insights.aiReports.sections.areas_to_improve')}`} colors={colors}>
+              <Section
+                title={`🎯 ${t('insights.aiReports.sections.areas_to_improve')}`}
+                colors={colors}
+              >
                 <BulletList items={report.content.areas_to_improve} colors={colors} />
               </Section>
             )}
 
             {!hasParseWarning && report.content.coaching_recommendations?.length > 0 && (
-              <Section title={`💡 ${t('insights.aiReports.sections.coaching_recommendations')}`} colors={colors}>
+              <Section
+                title={`💡 ${t('insights.aiReports.sections.coaching_recommendations')}`}
+                colors={colors}
+              >
                 <BulletList items={report.content.coaching_recommendations} colors={colors} />
               </Section>
             )}
@@ -329,7 +357,10 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
                 {report.content.next_steps.map((step, idx) => (
                   <View
                     key={idx}
-                    style={[styles.nextStep, { borderLeftColor: colors.primary, backgroundColor: colors.cardBackground }]}
+                    style={[
+                      styles.nextStep,
+                      { borderLeftColor: colors.primary, backgroundColor: colors.cardBackground },
+                    ]}
                   >
                     <Text style={[styles.nextStepAction, { color: colors.textPrimary }]}>
                       {step.action}
@@ -356,9 +387,22 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
   );
 }
 
-function Section({ title, colors, children }: { title: string; colors: any; children: React.ReactNode }) {
+function Section({
+  title,
+  colors,
+  children,
+}: {
+  title: string;
+  colors: any;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.section,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+    >
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{title}</Text>
       {children}
     </View>

@@ -14,7 +14,7 @@ import { logger } from '../services/logger';
 export function useActivityTimer(
   activity: Activity | null,
   isTracking: boolean,
-  isPaused: boolean
+  isPaused: boolean,
 ) {
   const [localDuration, setLocalDuration] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -83,7 +83,6 @@ export function useActivityTimer(
         // Always track the last known duration while running
         lastKnownDurationRef.current = safeDuration;
       }, 100);
-
     } else if (isPaused && activity) {
       // PAUSED state
 
@@ -120,7 +119,6 @@ export function useActivityTimer(
       setLocalDuration(durationToShow);
       // Update lastKnownDuration in case server has a better value
       lastKnownDurationRef.current = durationToShow;
-
     } else if (!activity) {
       // IDLE state - reset everything
 

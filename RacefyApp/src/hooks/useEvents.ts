@@ -11,9 +11,7 @@ export function useEvents() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(
-    undefined
-  );
+  const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(undefined);
 
   const fetchEvents = useCallback(
     async (reset = false) => {
@@ -49,13 +47,13 @@ export function useEvents() {
         setIsRefreshing(false);
       }
     },
-    [page, isLoading, statusFilter]
+    [page, isLoading, statusFilter],
   );
 
   const refresh = useCallback(() => fetchEvents(true), [fetchEvents]);
   const loadMore = useCallback(
     () => hasMore && !isLoading && fetchEvents(false),
-    [hasMore, isLoading, fetchEvents]
+    [hasMore, isLoading, fetchEvents],
   );
 
   const changeFilter = useCallback((status: EventStatus | undefined) => {
@@ -76,8 +74,8 @@ export function useEvents() {
                 is_registered: true,
                 participants_count: e.participants_count + 1,
               }
-            : e
-        )
+            : e,
+        ),
       );
     } catch (err) {
       throw err;
@@ -95,8 +93,8 @@ export function useEvents() {
                 is_registered: false,
                 participants_count: e.participants_count - 1,
               }
-            : e
-        )
+            : e,
+        ),
       );
     } catch (err) {
       throw err;

@@ -6,5 +6,5 @@ import { ProfileScreen } from './ProfileScreen';
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
 export function ProfileScreenWrapper(props: Props) {
-  return <ProfileScreen {...props as any} />;
+  return <ProfileScreen {...(props as any)} />;
 }

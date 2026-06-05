@@ -1,30 +1,30 @@
 import {
-    CommentaryLanguage,
-    CommentaryStyle,
-    EventRankingMode,
-    EventTeamScoring,
-    EventVisibility
-} from "../../types/api";
-import type {NativeStackScreenProps} from "@react-navigation/native-stack";
-import type {RootStackParamList} from "../../navigation";
-import {StyleSheet} from "react-native";
-import {borderRadius, fontSize, spacing} from "../../theme";
+  CommentaryLanguage,
+  CommentaryStyle,
+  EventRankingMode,
+  EventTeamScoring,
+  EventVisibility,
+} from '../../types/api';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation';
+import { StyleSheet } from 'react-native';
+import { borderRadius, fontSize, spacing } from '../../theme';
 
 export type Props = NativeStackScreenProps<RootStackParamList, 'EventForm'>;
 type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 
 // Local interface for commentary settings (managed via separate API)
 export interface CommentarySettingsData {
-    enabled: boolean;
-    style: CommentaryStyle;
-    token_limit: number | null;
-    interval_minutes: number;
-    auto_publish: boolean;
-    languages: CommentaryLanguage[];
-    force_participants: boolean;
-    time_windows: Array<{ start: string; end: string }>;
-    days_of_week: number[];
-    pause_summary_enabled: boolean;
+  enabled: boolean;
+  style: CommentaryStyle;
+  token_limit: number | null;
+  interval_minutes: number;
+  auto_publish: boolean;
+  languages: CommentaryLanguage[];
+  force_participants: boolean;
+  time_windows: Array<{ start: string; end: string }>;
+  days_of_week: number[];
+  pause_summary_enabled: boolean;
 }
 
 /**
@@ -32,212 +32,217 @@ export interface CommentarySettingsData {
  * language only. Falls back to 'en' when i18n hasn't initialized yet.
  */
 export const buildDefaultCommentarySettings = (
-    preferredLanguage?: string | null
+  preferredLanguage?: string | null,
 ): CommentarySettingsData => ({
-    enabled: false,
-    style: 'exciting',
-    token_limit: null,
-    interval_minutes: 15,
-    auto_publish: true,
-    languages: [(preferredLanguage || 'en').substring(0, 2)],
-    force_participants: false,
-    time_windows: [],
-    days_of_week: [],
-    pause_summary_enabled: true,
+  enabled: false,
+  style: 'exciting',
+  token_limit: null,
+  interval_minutes: 15,
+  auto_publish: true,
+  languages: [(preferredLanguage || 'en').substring(0, 2)],
+  force_participants: false,
+  time_windows: [],
+  days_of_week: [],
+  pause_summary_enabled: true,
 });
 
 /** @deprecated Use buildDefaultCommentarySettings(i18n.language) instead. */
-export const defaultCommentarySettings: CommentarySettingsData = buildDefaultCommentarySettings('en');
+export const defaultCommentarySettings: CommentarySettingsData =
+  buildDefaultCommentarySettings('en');
 
 export interface FormData {
-    title: string;
-    content: string;
-    sport_type_id: number | null;
-    ranking_mode?: EventRankingMode,
-    location_name: string;
-    latitude: number;
-    longitude: number;
-    starts_at: Date;
-    ends_at: Date;
-    registration_opens_at: Date | null;
-    registration_closes_at: Date | null;
-    max_participants: string;
-    difficulty: DifficultyLevel;
-    distance: string;
-    entry_fee: string;
-    // GPS Privacy (new in 2026-01)
-    show_start_finish_points: boolean;
-    start_finish_note: string;
-    // Activity aggregation
-    allow_multiple_activities: boolean;
-    // Auto-finalize results
-    auto_finalize_results: boolean;
-    // Visibility
-    visibility: EventVisibility;
-    // Ranking mode config
-    // NOTE: target_distance is no longer a separate form field. Backend mirrors
-    // `distance` into `target_distance` automatically. We send only `distance`.
-    time_limit: string;        // minutes in UI → seconds to API
-    // Team event
-    is_team_event: boolean;
-    team_size_min: string;
-    team_size_max: string;
-    team_scoring: EventTeamScoring;
-    // Point rewards
-    point_rewards_first: string;
-    point_rewards_second: string;
-    point_rewards_third: string;
-    point_rewards_finisher: string;
-    // Route planning
-    route_id: number | null;
+  title: string;
+  content: string;
+  sport_type_id: number | null;
+  ranking_mode?: EventRankingMode;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+  starts_at: Date;
+  ends_at: Date;
+  registration_opens_at: Date | null;
+  registration_closes_at: Date | null;
+  max_participants: string;
+  difficulty: DifficultyLevel;
+  distance: string;
+  entry_fee: string;
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points: boolean;
+  start_finish_note: string;
+  // Activity aggregation
+  allow_multiple_activities: boolean;
+  // Auto-finalize results
+  auto_finalize_results: boolean;
+  // Visibility
+  visibility: EventVisibility;
+  // Ranking mode config
+  // NOTE: target_distance is no longer a separate form field. Backend mirrors
+  // `distance` into `target_distance` automatically. We send only `distance`.
+  time_limit: string; // minutes in UI → seconds to API
+  // Team event
+  is_team_event: boolean;
+  team_size_min: string;
+  team_size_max: string;
+  team_scoring: EventTeamScoring;
+  // Point rewards
+  point_rewards_first: string;
+  point_rewards_second: string;
+  point_rewards_third: string;
+  point_rewards_finisher: string;
+  // Route planning
+  route_id: number | null;
 }
 
 export const initialFormData: FormData = {
-    title: '',
-    content: '',
-    sport_type_id: null,
-    ranking_mode: 'fastest_time',
-    location_name: '',
-    latitude: 0,
-    longitude: 0,
-    starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
-    ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
-    registration_opens_at: null,
-    registration_closes_at: null,
-    max_participants: '',
-    difficulty: 'all_levels',
-    distance: '',
-    entry_fee: '',
-    // GPS Privacy (new in 2026-01)
-    show_start_finish_points: false,
-    start_finish_note: '',
-    // Activity aggregation
-    allow_multiple_activities: false,
-    // Auto-finalize results
-    auto_finalize_results: true,
-    // Visibility
-    visibility: 'public',
-    // Ranking mode config
-    time_limit: '',
-    // Team event
-    is_team_event: false,
-    team_size_min: '',
-    team_size_max: '',
-    team_scoring: 'sum',
-    // Point rewards
-    point_rewards_first: '',
-    point_rewards_second: '',
-    point_rewards_third: '',
-    point_rewards_finisher: '',
-    // Route planning
-    route_id: null,
+  title: '',
+  content: '',
+  sport_type_id: null,
+  ranking_mode: 'fastest_time',
+  location_name: '',
+  latitude: 0,
+  longitude: 0,
+  starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
+  ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
+  registration_opens_at: null,
+  registration_closes_at: null,
+  max_participants: '',
+  difficulty: 'all_levels',
+  distance: '',
+  entry_fee: '',
+  // GPS Privacy (new in 2026-01)
+  show_start_finish_points: false,
+  start_finish_note: '',
+  // Activity aggregation
+  allow_multiple_activities: false,
+  // Auto-finalize results
+  auto_finalize_results: true,
+  // Visibility
+  visibility: 'public',
+  // Ranking mode config
+  time_limit: '',
+  // Team event
+  is_team_event: false,
+  team_size_min: '',
+  team_size_max: '',
+  team_scoring: 'sum',
+  // Point rewards
+  point_rewards_first: '',
+  point_rewards_second: '',
+  point_rewards_third: '',
+  point_rewards_finisher: '',
+  // Route planning
+  route_id: null,
 };
-export type DatePickerField = 'starts_at' | 'ends_at' | 'registration_opens_at' | 'registration_closes_at';
+export type DatePickerField =
+  | 'starts_at'
+  | 'ends_at'
+  | 'registration_opens_at'
+  | 'registration_closes_at';
 export const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        padding: spacing.lg,
-    },
-    inputContainer: {
-        marginBottom: spacing.md,
-    },
-    label: {
-        fontSize: fontSize.sm,
-        fontWeight: '500',
-        marginBottom: spacing.xs,
-    },
-    textArea: {
-        minHeight: 100,
-        textAlignVertical: 'top',
-    },
-    dateButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderRadius: borderRadius.md,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.md,
-        gap: spacing.sm,
-    },
-    dateText: {
-        fontSize: fontSize.md,
-        flex: 1,
-    },
-    errorText: {
-        fontSize: fontSize.sm,
-        marginTop: spacing.xs,
-    },
-    optionalToggle: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: spacing.md,
-        marginBottom: spacing.sm,
-    },
-    optionalToggleText: {
-        fontSize: fontSize.md,
-        fontWeight: '600',
-    },
-    optionalCard: {
-        marginBottom: spacing.md,
-    },
-    submitButton: {
-        marginTop: spacing.lg,
-        marginBottom: spacing.xl,
-    },
-    gpsPrivacySection: {
-        borderTopWidth: 1,
-        paddingTop: spacing.lg,
-        marginTop: spacing.lg,
-    },
-    sectionTitle: {
-        fontSize: fontSize.md,
-        fontWeight: '600',
-        marginBottom: spacing.xs,
-    },
-    sectionDescription: {
-        fontSize: fontSize.sm,
-        lineHeight: 20,
-    },
-    checkboxRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: spacing.md,
-    },
-    checkbox: {
-        width: 24,
-        height: 24,
-        borderWidth: 2,
-        borderRadius: borderRadius.sm,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    checkboxChecked: {
-        borderColor: 'transparent',
-    },
-    checkboxTextContainer: {
-        flex: 1,
-    },
-    checkboxLabel: {
-        fontSize: fontSize.md,
-        fontWeight: '500',
-        marginBottom: spacing.xs,
-    },
-    checkboxDescription: {
-        fontSize: fontSize.sm,
-        lineHeight: 18,
-    },
+  container: {
+    flex: 1,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+  },
+  inputContainer: {
+    marginBottom: spacing.md,
+  },
+  label: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  dateText: {
+    fontSize: fontSize.md,
+    flex: 1,
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
+  },
+  optionalToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  optionalToggleText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  optionalCard: {
+    marginBottom: spacing.md,
+  },
+  submitButton: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  gpsPrivacySection: {
+    borderTopWidth: 1,
+    paddingTop: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  sectionDescription: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    borderColor: 'transparent',
+  },
+  checkboxTextContainer: {
+    flex: 1,
+  },
+  checkboxLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
+  checkboxDescription: {
+    fontSize: fontSize.sm,
+    lineHeight: 18,
+  },
 });

@@ -52,7 +52,7 @@ export function useCollapsibleHeader() {
         }).start();
       }
     },
-    [headerAnim]
+    [headerAnim],
   );
 
   const handleTabChange = useCallback(
@@ -65,7 +65,7 @@ export function useCollapsibleHeader() {
         useNativeDriver: false,
       }).start();
     },
-    [headerAnim]
+    [headerAnim],
   );
 
   return { headerAnim, collapsibleHeight, collapsibleOpacity, handleTabScroll, handleTabChange };

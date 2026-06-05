@@ -10,26 +10,29 @@ export function useTeams() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
-  const fetchTeams = useCallback(async (reset = false) => {
-    const currentPage = reset ? 1 : page;
-    if (!reset) setIsLoading(true);
-    try {
-      const response = await api.getTeams({
-        search: search || undefined,
-        page: currentPage,
-        per_page: 20,
-      });
-      const newTeams = response.data;
-      setTeams(reset ? newTeams : prev => [...prev, ...newTeams]);
-      setHasMore(response.meta.current_page < response.meta.last_page);
-      setPage(currentPage + 1);
-    } catch {
-      // Silent
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [page, search]);
+  const fetchTeams = useCallback(
+    async (reset = false) => {
+      const currentPage = reset ? 1 : page;
+      if (!reset) setIsLoading(true);
+      try {
+        const response = await api.getTeams({
+          search: search || undefined,
+          page: currentPage,
+          per_page: 20,
+        });
+        const newTeams = response.data;
+        setTeams(reset ? newTeams : (prev) => [...prev, ...newTeams]);
+        setHasMore(response.meta.current_page < response.meta.last_page);
+        setPage(currentPage + 1);
+      } catch {
+        // Silent
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [page, search],
+  );
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -44,9 +47,15 @@ export function useTeams() {
   }, [isLoading, hasMore, fetchTeams]);
 
   return {
-    teams, isLoading, isRefreshing, hasMore,
-    search, setSearch,
-    fetchTeams, refresh, loadMore,
+    teams,
+    isLoading,
+    isRefreshing,
+    hasMore,
+    search,
+    setSearch,
+    fetchTeams,
+    refresh,
+    loadMore,
   };
 }
 

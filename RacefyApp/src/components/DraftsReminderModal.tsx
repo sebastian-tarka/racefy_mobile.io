@@ -59,12 +59,7 @@ export function DraftsReminderModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable
           style={[styles.sheet, { backgroundColor: colors.cardBackground }]}
@@ -86,10 +81,7 @@ export function DraftsReminderModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            style={styles.draftsList}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView style={styles.draftsList} showsVerticalScrollIndicator={false}>
             {drafts.map((draft) => (
               <DraftPostCard
                 key={draft.id}

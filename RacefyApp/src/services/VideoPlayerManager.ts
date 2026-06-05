@@ -39,7 +39,10 @@ class VideoPlayerManagerClass {
       try {
         player.pause();
       } catch (error) {
-        logger.debug('activity', `[VideoPlayerManager] Player ${id} already released during unregister`);
+        logger.debug(
+          'activity',
+          `[VideoPlayerManager] Player ${id} already released during unregister`,
+        );
       }
       this.players.delete(id);
       logger.activity(`[VideoPlayerManager] Unregistered player: ${id}`, {
@@ -62,13 +65,15 @@ class VideoPlayerManagerClass {
       try {
         player.pause();
       } catch (error) {
-        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, { error });
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, {
+          error,
+        });
         invalidPlayers.push(id);
       }
     });
 
     // Clean up invalid players
-    invalidPlayers.forEach(id => this.players.delete(id));
+    invalidPlayers.forEach((id) => this.players.delete(id));
 
     if (invalidPlayers.length > 0) {
       logger.activity('[VideoPlayerManager] Cleaned up released players', {
@@ -93,13 +98,15 @@ class VideoPlayerManagerClass {
       try {
         player.play();
       } catch (error) {
-        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, { error });
+        logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`, {
+          error,
+        });
         invalidPlayers.push(id);
       }
     });
 
     // Clean up invalid players
-    invalidPlayers.forEach(id => this.players.delete(id));
+    invalidPlayers.forEach((id) => this.players.delete(id));
 
     if (invalidPlayers.length > 0) {
       logger.activity('[VideoPlayerManager] Cleaned up released players', {
@@ -189,10 +196,7 @@ class VideoPlayerManagerClass {
    * Setup app state listener to pause videos when app goes to background
    */
   private setupAppStateListener() {
-    this.appStateSubscription = AppState.addEventListener(
-      'change',
-      this.handleAppStateChange
-    );
+    this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   /**

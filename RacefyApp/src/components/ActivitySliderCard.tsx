@@ -1,17 +1,17 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Image as ExpoImage} from 'expo-image';
-import {LinearGradient} from 'expo-linear-gradient';
-import {Ionicons} from '@expo/vector-icons';
-import {BlurView} from 'expo-blur';
-import {Avatar} from './Avatar';
-import {useTheme} from '../hooks/useTheme';
-import {useUnits} from '../hooks/useUnits';
-import {fixStorageUrl} from '../config/api';
-import {borderRadius, componentSize, fontSize, spacing} from '../theme';
-import {formatDurationCompact} from '../utils/formatDuration';
-import {getSportTheme} from '../utils/sportTheme';
-import type {Activity} from '../types/api';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { Avatar } from './Avatar';
+import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
+import { fixStorageUrl } from '../config/api';
+import { borderRadius, componentSize, fontSize, spacing } from '../theme';
+import { formatDurationCompact } from '../utils/formatDuration';
+import { getSportTheme } from '../utils/sportTheme';
+import type { Activity } from '../types/api';
 
 interface ActivitySliderCardProps {
   activity: Activity;
@@ -19,20 +19,25 @@ interface ActivitySliderCardProps {
   isAuthenticated?: boolean;
 }
 
-
-
 export function ActivitySliderCard({
   activity,
   onPress,
   isAuthenticated = true,
 }: ActivitySliderCardProps) {
   const { colors, isDark } = useTheme();
-  const { getDistanceValue, getDistanceUnit, getSmallDistanceUnit, formatPaceFromDistanceTime, getPaceUnit } = useUnits();
+  const {
+    getDistanceValue,
+    getDistanceUnit,
+    getSmallDistanceUnit,
+    formatPaceFromDistanceTime,
+    getPaceUnit,
+  } = useUnits();
   const sportTheme = getSportTheme(activity.sport_type?.name);
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
-  const rawBackgroundImage = activity.photos?.[0]?.url || activity.route_map_url || activity.route_preview_url || null;
+  const rawBackgroundImage =
+    activity.photos?.[0]?.url || activity.route_map_url || activity.route_preview_url || null;
   const backgroundImage = fixStorageUrl(rawBackgroundImage);
   const hasBackgroundImage = !!backgroundImage;
 
@@ -40,20 +45,18 @@ export function ActivitySliderCard({
     <View style={styles.content}>
       {/* Header with sport icon and user */}
       <View style={styles.header}>
-        <View style={[
-          styles.sportBadge,
-          hasBackgroundImage && { backgroundColor: sportTheme.gradient[0] }
-        ]}>
+        <View
+          style={[
+            styles.sportBadge,
+            hasBackgroundImage && { backgroundColor: sportTheme.gradient[0] },
+          ]}
+        >
           <Ionicons name={sportTheme.icon} size={18} color="#fff" />
         </View>
 
         {activity.user && (
           <View style={styles.userBadge}>
-            <Avatar
-              uri={activity.user.avatar}
-              name={activity.user.name}
-              size="sm"
-            />
+            <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
           </View>
         )}
       </View>
@@ -62,7 +65,9 @@ export function ActivitySliderCard({
       <View style={styles.heroStats}>
         <View style={styles.mainStat}>
           <Text style={styles.mainStatValue}>
-            {activity.distance >= 1000 ? getDistanceValue(activity.distance).toFixed(1) : Math.round(activity.distance).toString()}
+            {activity.distance >= 1000
+              ? getDistanceValue(activity.distance).toFixed(1)
+              : Math.round(activity.distance).toString()}
           </Text>
           <Text style={styles.mainStatUnit}>
             {activity.distance >= 1000 ? getDistanceUnit() : getSmallDistanceUnit()}
@@ -79,7 +84,9 @@ export function ActivitySliderCard({
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
           <Ionicons name="speedometer-outline" size={14} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.statText}>{formatPaceFromDistanceTime(activity.distance, activity.duration)} {getPaceUnit()}</Text>
+          <Text style={styles.statText}>
+            {formatPaceFromDistanceTime(activity.distance, activity.duration)} {getPaceUnit()}
+          </Text>
         </View>
       </View>
 
@@ -88,9 +95,7 @@ export function ActivitySliderCard({
         <Text style={styles.title} numberOfLines={1}>
           {activity.title}
         </Text>
-        <Text style={styles.sportName}>
-          {activity.sport_type?.name || 'Activity'}
-        </Text>
+        <Text style={styles.sportName}>{activity.sport_type?.name || 'Activity'}</Text>
 
         {activity.user && (
           <Text style={styles.userName} numberOfLines={1}>
@@ -115,11 +120,7 @@ export function ActivitySliderCard({
   // Inner content with gradient overlay
   const renderCardInner = () => (
     <LinearGradient
-      colors={
-        hasBackgroundImage
-          ? ['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)']
-          : sportTheme.gradient
-      }
+      colors={hasBackgroundImage ? ['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)'] : sportTheme.gradient}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.gradient}
@@ -127,8 +128,20 @@ export function ActivitySliderCard({
       {/* Decorative elements - only show when no background image */}
       {!hasBackgroundImage && (
         <>
-          <View style={[styles.decorCircle, styles.decorCircle1, { backgroundColor: sportTheme.accent }]} />
-          <View style={[styles.decorCircle, styles.decorCircle2, { backgroundColor: sportTheme.accent }]} />
+          <View
+            style={[
+              styles.decorCircle,
+              styles.decorCircle1,
+              { backgroundColor: sportTheme.accent },
+            ]}
+          />
+          <View
+            style={[
+              styles.decorCircle,
+              styles.decorCircle2,
+              { backgroundColor: sportTheme.accent },
+            ]}
+          />
         </>
       )}
 

@@ -14,11 +14,11 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import {API_BASE_URL} from '../config/api';
-import {appendXdebugTrigger} from './api';
-import {logger} from './logger';
-import {getCurrentLanguage} from '../i18n';
-import type {BufferedLocation} from './backgroundLocation';
+import { API_BASE_URL } from '../config/api';
+import { appendXdebugTrigger } from './api';
+import { logger } from './logger';
+import { getCurrentLanguage } from '../i18n';
+import type { BufferedLocation } from './backgroundLocation';
 
 // Must match secureStorage.ts TOKEN_KEY and its '@secure_' AsyncStorage fallback prefix.
 const SECURE_TOKEN_KEY = 'racefy_auth_token';
@@ -77,7 +77,7 @@ function getApiBaseUrl(): string {
  */
 export async function syncPointsToServer(
   activityId: number,
-  points: BufferedLocation[]
+  points: BufferedLocation[],
 ): Promise<{ success: boolean; error?: string }> {
   const startTime = Date.now();
 
@@ -94,7 +94,7 @@ export async function syncPointsToServer(
     const url = appendXdebugTrigger(`${getApiBaseUrl()}${endpoint}`);
 
     // Convert BufferedLocation to GpsPoint format
-    const gpsPoints = points.map(point => ({
+    const gpsPoints = points.map((point) => ({
       lat: point.lat,
       lng: point.lng,
       ele: point.ele,
@@ -115,10 +115,10 @@ export async function syncPointsToServer(
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         'Accept-Language': getCurrentLanguage(),
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body,
       signal: controller.signal,
@@ -149,7 +149,6 @@ export async function syncPointsToServer(
 
     logger.gps(`Background sync: SUCCESS (${points.length} points, ${duration}ms)`);
     return { success: true };
-
   } catch (error: any) {
     const duration = Date.now() - startTime;
 

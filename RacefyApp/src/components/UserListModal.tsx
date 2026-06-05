@@ -119,7 +119,7 @@ function UserListModalComponent({
     try {
       await api.acceptFollowRequest(request.id);
       // Remove from requests list optimistically
-      setRequests(prev => prev.filter(r => r.id !== request.id));
+      setRequests((prev) => prev.filter((r) => r.id !== request.id));
       logger.info('general', 'Follow request accepted', { requestId: request.id });
     } catch (err) {
       logger.error('api', 'Failed to accept follow request', { error: err, requestId: request.id });
@@ -136,7 +136,7 @@ function UserListModalComponent({
     try {
       await api.rejectFollowRequest(request.id);
       // Remove from requests list optimistically
-      setRequests(prev => prev.filter(r => r.id !== request.id));
+      setRequests((prev) => prev.filter((r) => r.id !== request.id));
       logger.info('general', 'Follow request rejected', { requestId: request.id });
     } catch (err) {
       logger.error('api', 'Failed to reject follow request', { error: err, requestId: request.id });
@@ -161,12 +161,8 @@ function UserListModalComponent({
     >
       <Avatar uri={item.avatar} name={item.name} size="sm" />
       <View style={styles.userInfo}>
-        <Text style={[styles.userName, { color: colors.textPrimary }]}>
-          {item.name}
-        </Text>
-        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
-          @{item.username}
-        </Text>
+        <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
+        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
     </TouchableOpacity>
@@ -181,9 +177,7 @@ function UserListModalComponent({
       >
         <Avatar uri={item.follower.avatar} name={item.follower.name} size="sm" />
         <View style={styles.userInfo}>
-          <Text style={[styles.userName, { color: colors.textPrimary }]}>
-            {item.follower.name}
-          </Text>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.follower.name}</Text>
           <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
             @{item.follower.username}
           </Text>
@@ -313,28 +307,17 @@ function UserListModalComponent({
   ];
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.background }]}
-            >
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
               <View style={styles.handleContainer}>
                 <View style={[styles.handle, { backgroundColor: colors.border }]} />
               </View>
 
-              <View
-                style={[styles.modalHeader, { borderBottomColor: colors.border }]}
-              >
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {getTitle()}
-                </Text>
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{getTitle()}</Text>
                 <TouchableOpacity
                   onPress={onClose}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -362,22 +345,21 @@ function UserListModalComponent({
                         style={[
                           styles.tabText,
                           {
-                            color:
-                              activeTab === tab.value
-                                ? colors.primary
-                                : colors.textSecondary,
+                            color: activeTab === tab.value ? colors.primary : colors.textSecondary,
                           },
                         ]}
                       >
                         {tab.label}
                       </Text>
-                      {tab.value === 'requests' && pendingRequestsCount != null && pendingRequestsCount > 0 && (
-                        <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
-                          <Text style={styles.tabBadgeText}>
-                            {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
-                          </Text>
-                        </View>
-                      )}
+                      {tab.value === 'requests' &&
+                        pendingRequestsCount != null &&
+                        pendingRequestsCount > 0 && (
+                          <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
+                            <Text style={styles.tabBadgeText}>
+                              {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                            </Text>
+                          </View>
+                        )}
                     </View>
                   </TouchableOpacity>
                 ))}

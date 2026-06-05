@@ -1,5 +1,5 @@
-import {useAppConfig} from '../contexts/AppConfigContext';
-import type {AppConfigFeatures} from '../types/api';
+import { useAppConfig } from '../contexts/AppConfigContext';
+import type { AppConfigFeatures } from '../types/api';
 
 const DEFAULTS: AppConfigFeatures = {
   event_entry_fee: false,

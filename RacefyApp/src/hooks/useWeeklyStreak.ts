@@ -5,15 +5,23 @@ import { logger } from '../services/logger';
 import type { Activity } from '../types/api';
 
 interface WeeklyStreakData {
-  weekActivity: boolean[];  // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+  weekActivity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   completedDays: number;
   goalDays: number;
-  todayIndex: number;       // 0-6 (Monday = 0)
+  todayIndex: number; // 0-6 (Monday = 0)
   isLoading: boolean;
 }
 
 export function useWeeklyStreak(): WeeklyStreakData {
-  const [weekActivity, setWeekActivity] = useState<boolean[]>([false, false, false, false, false, false, false]);
+  const [weekActivity, setWeekActivity] = useState<boolean[]>([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +59,7 @@ export function useWeeklyStreak(): WeeklyStreakData {
       for (let i = 0; i < 7; i++) {
         const dayDate = addDays(weekStart, i);
         const hasActivity = thisWeekActivities.some((activity: Activity) =>
-          isSameDay(parseISO(activity.started_at), dayDate)
+          isSameDay(parseISO(activity.started_at), dayDate),
         );
         activityMap[i] = hasActivity;
       }

@@ -56,7 +56,7 @@ export function useMessages(conversationId: number) {
         setIsSending(false);
       }
     },
-    [conversationId]
+    [conversationId],
   );
 
   // Poll for new messages
@@ -75,7 +75,7 @@ export function useMessages(conversationId: number) {
 
           // Mark as read if there are new messages from others
           const hasNewFromOthers = fetchedMessages.some(
-            (m) => !m.is_own && m.id > (lastMessageIdRef.current || 0)
+            (m) => !m.is_own && m.id > (lastMessageIdRef.current || 0),
           );
           if (hasNewFromOthers) {
             api.markConversationAsRead(conversationId).catch(() => {});

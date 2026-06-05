@@ -1,7 +1,7 @@
-import {API_BASE_URL} from '../../config/api';
+import { API_BASE_URL } from '../../config/api';
 import type * as Types from '../../types/api';
-import {assertToken, assertUser} from '../../utils/apiGuards';
-import type {ApiBase} from './base';
+import { assertToken, assertUser } from '../../utils/apiGuards';
+import type { ApiBase } from './base';
 
 /**
  * Raw auth response shape — the API may return the payload directly
@@ -62,8 +62,7 @@ export function AuthMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         }
         return { connected: false, error: `Server returned ${response.status}` };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         if (errorMessage.includes('aborted')) {
           return { connected: false, error: 'Connection timeout' };
         }
@@ -146,16 +145,14 @@ export function AuthMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getUser(): Promise<Types.User> {
-      const response =
-        await this.request<Types.ApiResponse<Types.User>>('/user');
+      const response = await this.request<Types.ApiResponse<Types.User>>('/user');
       return response.data;
     }
 
     // ============ SPORT TYPES ============
 
     async getSportTypes(): Promise<Types.SportType[]> {
-      const response =
-        await this.request<Types.ApiResponse<Types.SportType[]>>('/sport-types');
+      const response = await this.request<Types.ApiResponse<Types.SportType[]>>('/sport-types');
       return response.data;
     }
   };

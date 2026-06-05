@@ -1,11 +1,19 @@
-import React, {useState} from 'react';
-import {ActivityIndicator, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {FALLBACK_SPORTS, type SportTypeWithIcon, useSportTypes} from '../hooks/useSportTypes';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { FALLBACK_SPORTS, type SportTypeWithIcon, useSportTypes } from '../hooks/useSportTypes';
 
 export interface SportTypeOption {
   id: number;
@@ -24,8 +32,13 @@ interface SportTypeSelectorProps {
   disabled?: boolean;
 }
 
-export function SportTypeSelector({ value, onChange, error: rawError, disabled }: SportTypeSelectorProps) {
-  const error = Array.isArray(rawError) ? rawError[0] : rawError ?? undefined;
+export function SportTypeSelector({
+  value,
+  onChange,
+  error: rawError,
+  disabled,
+}: SportTypeSelectorProps) {
+  const error = Array.isArray(rawError) ? rawError[0] : (rawError ?? undefined);
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes, isLoading, getSportById } = useSportTypes();
@@ -40,26 +53,40 @@ export function SportTypeSelector({ value, onChange, error: rawError, disabled }
         style={[
           styles.sportItem,
           { backgroundColor: colors.cardBackground },
-          isSelected && { backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary },
+          isSelected && {
+            backgroundColor: colors.primary + '15',
+            borderWidth: 1,
+            borderColor: colors.primary,
+          },
         ]}
         onPress={() => {
           onChange(item.id);
           setIsModalVisible(false);
         }}
       >
-        <View style={[styles.sportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
+        <View
+          style={[
+            styles.sportIcon,
+            { backgroundColor: colors.background },
+            isSelected && { backgroundColor: colors.primary + '30' },
+          ]}
+        >
           <Ionicons
             name={item.icon}
             size={24}
             color={isSelected ? colors.primary : colors.textSecondary}
           />
         </View>
-        <Text style={[styles.sportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
+        <Text
+          style={[
+            styles.sportName,
+            { color: colors.textPrimary },
+            isSelected && { fontWeight: '600', color: colors.primary },
+          ]}
+        >
           {item.name}
         </Text>
-        {isSelected && (
-          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-        )}
+        {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
       </TouchableOpacity>
     );
   };
@@ -84,10 +111,19 @@ export function SportTypeSelector({ value, onChange, error: rawError, disabled }
               size={20}
               color={disabled ? colors.textMuted : colors.primary}
             />
-            <Text style={[styles.selectedText, { color: disabled ? colors.textMuted : colors.textPrimary }]}>{selectedSport.name}</Text>
+            <Text
+              style={[
+                styles.selectedText,
+                { color: disabled ? colors.textMuted : colors.textPrimary },
+              ]}
+            >
+              {selectedSport.name}
+            </Text>
           </View>
         ) : (
-          <Text style={[styles.placeholder, { color: colors.textMuted }]}>{t('eventForm.selectSportType')}</Text>
+          <Text style={[styles.placeholder, { color: colors.textMuted }]}>
+            {t('eventForm.selectSportType')}
+          </Text>
         )}
         <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
@@ -103,12 +139,16 @@ export function SportTypeSelector({ value, onChange, error: rawError, disabled }
           style={[styles.modalContainer, { backgroundColor: colors.background }]}
           edges={['top', 'bottom']}
         >
-          <View style={[styles.modalHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('eventForm.selectSportType')}</Text>
-            <TouchableOpacity
-              onPress={() => setIsModalVisible(false)}
-              style={styles.closeButton}
-            >
+          <View
+            style={[
+              styles.modalHeader,
+              { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('eventForm.selectSportType')}
+            </Text>
+            <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>

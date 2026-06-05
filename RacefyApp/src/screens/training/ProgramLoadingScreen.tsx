@@ -135,22 +135,11 @@ export function ProgramLoadingScreen({ navigation, route }: Props) {
             {t('training.errors.title')}
           </Text>
 
-          <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
-            {error}
-          </Text>
+          <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>{error}</Text>
 
           <View style={styles.errorButtons}>
-            <Button
-              title={t('common.tryAgain')}
-              onPress={handleRetry}
-              fullWidth
-            />
-            <Button
-              title={t('common.goBack')}
-              onPress={handleGoBack}
-              variant="outline"
-              fullWidth
-            />
+            <Button title={t('common.tryAgain')} onPress={handleRetry} fullWidth />
+            <Button title={t('common.goBack')} onPress={handleGoBack} variant="outline" fullWidth />
           </View>
         </View>
       </ScreenContainer>

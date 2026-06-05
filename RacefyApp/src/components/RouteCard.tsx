@@ -1,13 +1,13 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {Card} from './Card';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {formatDistance, formatTotalTime} from '../utils/formatters';
-import {getSportIcon} from '../utils/sportIcon';
-import type {PlannedRoute} from '../types/api';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Card } from './Card';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { formatDistance, formatTotalTime } from '../utils/formatters';
+import { getSportIcon } from '../utils/sportIcon';
+import type { PlannedRoute } from '../types/api';
 
 interface RouteCardProps {
   route: PlannedRoute;
@@ -18,16 +18,10 @@ function RouteCardBase({ route, onPress }: RouteCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  const profileLabel = route.profile === 'cycling'
-    ? t('routes.cycling')
-    : t('routes.walking');
+  const profileLabel = route.profile === 'cycling' ? t('routes.cycling') : t('routes.walking');
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={!onPress}
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight + '20' }]}>
@@ -36,9 +30,7 @@ function RouteCardBase({ route, onPress }: RouteCardProps) {
               size={28}
               color={colors.primary}
             />
-            <Text style={[styles.profileBadge, { color: colors.primary }]}>
-              {profileLabel}
-            </Text>
+            <Text style={[styles.profileBadge, { color: colors.primary }]}>{profileLabel}</Text>
           </View>
 
           <View style={styles.info}>

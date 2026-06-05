@@ -9,14 +9,22 @@
  * the hint below the grid explains this. Designed to live inside the General
  * Preferences SettingsSection.
  */
-import React, {useMemo, useState} from 'react';
-import {ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {useMapStyle} from '../hooks/useMapStyle';
-import {fixStorageUrl} from '../config/api';
-import {borderRadius, fontSize, fontWeight, spacing} from '../theme';
+import React, { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { useMapStyle } from '../hooks/useMapStyle';
+import { fixStorageUrl } from '../config/api';
+import { borderRadius, fontSize, fontWeight, spacing } from '../theme';
 
 /** Slug used in the static preview asset path: "mapbox/dark-v11" -> "mapbox-dark-v11". */
 function styleSlug(styleId: string): string {
@@ -38,7 +46,14 @@ interface StyleTileProps {
   onPress: () => void;
 }
 
-function StyleTile({ previewStyleId, selected, disabled, label, subLabel, onPress }: StyleTileProps) {
+function StyleTile({
+  previewStyleId,
+  selected,
+  disabled,
+  label,
+  subLabel,
+  onPress,
+}: StyleTileProps) {
   const { colors } = useTheme();
   const [failed, setFailed] = useState(false);
   const uri = previewStyleId ? previewUrl(previewStyleId) : null;
@@ -47,7 +62,10 @@ function StyleTile({ previewStyleId, selected, disabled, label, subLabel, onPres
     <TouchableOpacity
       style={[
         styles.tile,
-        { backgroundColor: colors.cardBackground, borderColor: selected ? colors.primary : colors.border },
+        {
+          backgroundColor: colors.cardBackground,
+          borderColor: selected ? colors.primary : colors.border,
+        },
         selected && styles.tileSelected,
         selected && { borderColor: colors.primary },
       ]}
@@ -77,10 +95,7 @@ function StyleTile({ previewStyleId, selected, disabled, label, subLabel, onPres
         )}
       </View>
       <View style={styles.tileLabelWrap}>
-        <Text
-          style={[styles.tileLabel, { color: colors.textPrimary }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.tileLabel, { color: colors.textPrimary }]} numberOfLines={1}>
           {label}
         </Text>
         {!!subLabel && (
@@ -103,10 +118,7 @@ export function MapStylePicker() {
     t(`settings.mapStyle.styles.${styleId}`, { defaultValue: styleId });
 
   // System default tile first, then every available style.
-  const tiles = useMemo(
-    () => [null as string | null, ...availableStyles],
-    [availableStyles]
-  );
+  const tiles = useMemo(() => [null as string | null, ...availableStyles], [availableStyles]);
 
   const handleSelect = async (styleId: string | null) => {
     if (saving || styleId === preference) return;
@@ -124,9 +136,18 @@ export function MapStylePicker() {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Ionicons name="map-outline" size={20} color={colors.textPrimary} style={styles.headerIcon} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('settings.mapStyle.title')}</Text>
-        {saving && <ActivityIndicator size="small" color={colors.primary} style={styles.savingSpinner} />}
+        <Ionicons
+          name="map-outline"
+          size={20}
+          color={colors.textPrimary}
+          style={styles.headerIcon}
+        />
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {t('settings.mapStyle.title')}
+        </Text>
+        {saving && (
+          <ActivityIndicator size="small" color={colors.primary} style={styles.savingSpinner} />
+        )}
       </View>
       <Text style={[styles.description, { color: colors.textMuted }]}>
         {t('settings.mapStyle.description')}

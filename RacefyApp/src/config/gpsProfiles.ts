@@ -86,69 +86,69 @@ function validateProfile(profile: GpsProfile): GpsProfile {
     accuracyThreshold: clamp(
       profile.accuracyThreshold,
       PROFILE_CONSTRAINTS.accuracyThreshold.min,
-      PROFILE_CONSTRAINTS.accuracyThreshold.max
+      PROFILE_CONSTRAINTS.accuracyThreshold.max,
     ),
     minDistanceThreshold: clamp(
       profile.minDistanceThreshold,
       PROFILE_CONSTRAINTS.minDistanceThreshold.min,
-      PROFILE_CONSTRAINTS.minDistanceThreshold.max
+      PROFILE_CONSTRAINTS.minDistanceThreshold.max,
     ),
     maxRealisticSpeed: clamp(
       profile.maxRealisticSpeed,
       PROFILE_CONSTRAINTS.maxRealisticSpeed.min,
-      PROFILE_CONSTRAINTS.maxRealisticSpeed.max
+      PROFILE_CONSTRAINTS.maxRealisticSpeed.max,
     ),
     minElevationChange: clamp(
       profile.minElevationChange,
       PROFILE_CONSTRAINTS.minElevationChange.min,
-      PROFILE_CONSTRAINTS.minElevationChange.max
+      PROFILE_CONSTRAINTS.minElevationChange.max,
     ),
     timeInterval: clamp(
       profile.timeInterval,
       PROFILE_CONSTRAINTS.timeInterval.min,
-      PROFILE_CONSTRAINTS.timeInterval.max
+      PROFILE_CONSTRAINTS.timeInterval.max,
     ),
     distanceInterval: clamp(
       profile.distanceInterval,
       PROFILE_CONSTRAINTS.distanceInterval.min,
-      PROFILE_CONSTRAINTS.distanceInterval.max
+      PROFILE_CONSTRAINTS.distanceInterval.max,
     ),
     smoothingBufferSize: clamp(
       profile.smoothingBufferSize,
       PROFILE_CONSTRAINTS.smoothingBufferSize.min,
-      PROFILE_CONSTRAINTS.smoothingBufferSize.max
+      PROFILE_CONSTRAINTS.smoothingBufferSize.max,
     ),
     stationarySpeedThreshold: clamp(
       profile.stationarySpeedThreshold ?? 0.5,
       PROFILE_CONSTRAINTS.stationarySpeedThreshold.min,
-      PROFILE_CONSTRAINTS.stationarySpeedThreshold.max
+      PROFILE_CONSTRAINTS.stationarySpeedThreshold.max,
     ),
     // Pace display settings
     paceSmoothingFactor: clamp(
       profile.paceSmoothingFactor ?? 0.3,
       PROFILE_CONSTRAINTS.paceSmoothingFactor.min,
-      PROFILE_CONSTRAINTS.paceSmoothingFactor.max
+      PROFILE_CONSTRAINTS.paceSmoothingFactor.max,
     ),
     paceWindowSeconds: clamp(
       profile.paceWindowSeconds ?? 45,
       PROFILE_CONSTRAINTS.paceWindowSeconds.min,
-      PROFILE_CONSTRAINTS.paceWindowSeconds.max
+      PROFILE_CONSTRAINTS.paceWindowSeconds.max,
     ),
     minDistanceForPace: clamp(
       profile.minDistanceForPace ?? 50,
       PROFILE_CONSTRAINTS.minDistanceForPace.min,
-      PROFILE_CONSTRAINTS.minDistanceForPace.max
+      PROFILE_CONSTRAINTS.minDistanceForPace.max,
     ),
     minSegmentDistance: clamp(
       profile.minSegmentDistance ?? 20,
       PROFILE_CONSTRAINTS.minSegmentDistance.min,
-      PROFILE_CONSTRAINTS.minSegmentDistance.max
+      PROFILE_CONSTRAINTS.minSegmentDistance.max,
     ),
     // Background sync settings
     backgroundSyncInterval: clamp(
       profile.backgroundSyncInterval ?? 240000,
       PROFILE_CONSTRAINTS.backgroundSyncInterval.min,
-      PROFILE_CONSTRAINTS.backgroundSyncInterval.max
+      PROFILE_CONSTRAINTS.backgroundSyncInterval.max,
     ),
     backgroundSyncEnabled: profile.backgroundSyncEnabled ?? profile.enabled,
   };
@@ -415,7 +415,7 @@ export function updateGpsProfileCache(
     id: number;
     slug: string;
     gps_profile?: GpsProfileApiResponse;
-  }>
+  }>,
 ): void {
   cachedApiProfiles.clear();
   cachedSportIdToSlug.clear();

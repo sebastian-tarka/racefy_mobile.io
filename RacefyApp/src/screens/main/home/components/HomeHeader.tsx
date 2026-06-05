@@ -19,7 +19,16 @@ interface HomeHeaderProps {
   onAvatarPress?: () => void;
 }
 
-export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, unreadCount = 0, userTier, onNotificationPress, onAvatarPress }: HomeHeaderProps) {
+export function HomeHeader({
+  userName,
+  userAvatar,
+  greeting,
+  isAuthenticated,
+  unreadCount = 0,
+  userTier,
+  onNotificationPress,
+  onAvatarPress,
+}: HomeHeaderProps) {
   const { colors } = useTheme();
 
   return (
@@ -34,7 +43,13 @@ export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, un
                 end={{ x: 1, y: 1 }}
                 style={styles.avatarGradient}
               >
-                <Avatar uri={userAvatar} name={userName} size="lg" showTierBadge={!!userTier && userTier !== 'free'} tier={userTier} />
+                <Avatar
+                  uri={userAvatar}
+                  name={userName}
+                  size="lg"
+                  showTierBadge={!!userTier && userTier !== 'free'}
+                  tier={userTier}
+                />
               </LinearGradient>
             </TouchableOpacity>
             <View style={styles.greetingContainer}>
@@ -48,9 +63,7 @@ export function HomeHeader({ userName, userAvatar, greeting, isAuthenticated, un
           </View>
         ) : (
           <View style={styles.leftContent}>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>
-              Racefy
-            </Text>
+            <Text style={[styles.userName, { color: colors.textPrimary }]}>Racefy</Text>
           </View>
         )}
 

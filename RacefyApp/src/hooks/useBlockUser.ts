@@ -30,63 +30,54 @@ export function useBlockUser(): UseBlockUserReturn {
   const blockUser = async (
     userId: number,
     username: string,
-    onBlockSuccess?: () => void
+    onBlockSuccess?: () => void,
   ): Promise<void> => {
     return new Promise((resolve) => {
       // Show confirmation dialog
-      Alert.alert(
-        t('blocking.confirmTitle'),
-        t('blocking.confirmMessage', { username }),
-        [
-          {
-            text: t('common.cancel'),
-            style: 'cancel',
-            onPress: () => resolve(),
+      Alert.alert(t('blocking.confirmTitle'), t('blocking.confirmMessage', { username }), [
+        {
+          text: t('common.cancel'),
+          style: 'cancel',
+          onPress: () => resolve(),
+        },
+        {
+          text: t('blocking.blockAction'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+              await api.blockUser(userId);
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+              logger.auth('User blocked', { userId, username });
+              emitRefresh('feed');
+
+              // Show success message
+              Alert.alert(t('blocking.blockedTitle'), t('blocking.blockedMessage', { username }), [
+                { text: t('common.ok') },
+              ]);
+
+              onBlockSuccess?.();
+              resolve();
+            } catch (err: any) {
+              const errorMessage = err?.message || t('blocking.blockError');
+              setError(errorMessage);
+              logger.error('auth', 'Failed to block user', { userId, error: err });
+
+              Alert.alert(t('common.error'), errorMessage);
+              resolve();
+            } finally {
+              setIsLoading(false);
+            }
           },
-          {
-            text: t('blocking.blockAction'),
-            style: 'destructive',
-            onPress: async () => {
-              setIsLoading(true);
-              setError(null);
-
-              try {
-                await api.blockUser(userId);
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-                logger.auth('User blocked', { userId, username });
-                emitRefresh('feed');
-
-                // Show success message
-                Alert.alert(
-                  t('blocking.blockedTitle'),
-                  t('blocking.blockedMessage', { username }),
-                  [{ text: t('common.ok') }]
-                );
-
-                onBlockSuccess?.();
-                resolve();
-              } catch (err: any) {
-                const errorMessage = err?.message || t('blocking.blockError');
-                setError(errorMessage);
-                logger.error('auth', 'Failed to block user', { userId, error: err });
-
-                Alert.alert(t('common.error'), errorMessage);
-                resolve();
-              } finally {
-                setIsLoading(false);
-              }
-            },
-          },
-        ]
-      );
+        },
+      ]);
     });
   };
 
-  const unblockUser = async (
-    userId: number,
-    onUnblockSuccess?: () => void
-  ): Promise<void> => {
+  const unblockUser = async (userId: number, onUnblockSuccess?: () => void): Promise<void> => {
     setIsLoading(true);
     setError(null);
 

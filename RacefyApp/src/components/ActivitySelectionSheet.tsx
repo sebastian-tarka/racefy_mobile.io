@@ -66,12 +66,7 @@ export function ActivitySelectionSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
@@ -122,16 +117,14 @@ export function ActivitySelectionSheet({
 
                   {/* Activity List */}
                   {activities.map((activity) => {
-                    const isLinkedElsewhere = activity.training_week_id != null
-                      && activity.training_week_id !== currentWeekId;
+                    const isLinkedElsewhere =
+                      activity.training_week_id != null &&
+                      activity.training_week_id !== currentWeekId;
 
                     return (
                       <TouchableOpacity
                         key={activity.id}
-                        style={[
-                          styles.activityItem,
-                          { backgroundColor: colors.background },
-                        ]}
+                        style={[styles.activityItem, { backgroundColor: colors.background }]}
                         onPress={() => {
                           onSelect(activity);
                           onClose();
@@ -139,10 +132,7 @@ export function ActivitySelectionSheet({
                         activeOpacity={0.7}
                       >
                         <View
-                          style={[
-                            styles.activityIcon,
-                            { backgroundColor: colors.primary + '20' },
-                          ]}
+                          style={[styles.activityIcon, { backgroundColor: colors.primary + '20' }]}
                         >
                           <Ionicons
                             name={(activity.sport_type?.icon as any) || 'fitness-outline'}
@@ -178,7 +168,12 @@ export function ActivitySelectionSheet({
                             )}
                           </View>
                           {isLinkedElsewhere && (
-                            <View style={[styles.warningBadge, { backgroundColor: colors.warning + '15' }]}>
+                            <View
+                              style={[
+                                styles.warningBadge,
+                                { backgroundColor: colors.warning + '15' },
+                              ]}
+                            >
                               <Ionicons name="warning-outline" size={14} color={colors.warning} />
                               <Text style={[styles.warningText, { color: colors.warning }]}>
                                 {t('training.weekDetail.alreadyLinked')}

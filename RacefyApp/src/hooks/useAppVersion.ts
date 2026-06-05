@@ -1,8 +1,8 @@
-import {useMemo} from 'react';
+import { useMemo } from 'react';
 import * as Application from 'expo-application';
-import {useAppConfig} from '../contexts/AppConfigContext';
-import {compareVersions} from '../utils/semver';
-import type {AppUpdateConfig} from '../types/api';
+import { useAppConfig } from '../contexts/AppConfigContext';
+import { compareVersions } from '../utils/semver';
+import type { AppUpdateConfig } from '../types/api';
 
 export interface AppVersionState {
   /** Native binary version of the running app. */
@@ -50,13 +50,11 @@ export function useAppVersion(): AppVersionState {
 
     // Server's explicit decision wins. Fall back to semver compare when
     // the flag is absent so older backends still work.
-    const belowMinimum =
-      compareVersions(NATIVE_APP_VERSION, update.minimum_version) < 0;
+    const belowMinimum = compareVersions(NATIVE_APP_VERSION, update.minimum_version) < 0;
     const forceUpdate =
       typeof update.force_update === 'boolean' ? update.force_update : belowMinimum;
 
-    const belowCurrent =
-      compareVersions(NATIVE_APP_VERSION, update.current_version) < 0;
+    const belowCurrent = compareVersions(NATIVE_APP_VERSION, update.current_version) < 0;
 
     return {
       currentAppVersion: NATIVE_APP_VERSION,

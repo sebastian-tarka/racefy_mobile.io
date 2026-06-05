@@ -11,7 +11,12 @@ interface UseEventTeamsParams {
   isRegistered: boolean;
 }
 
-export function useEventTeams({ eventId, isTeamEvent, isAuthenticated, isRegistered }: UseEventTeamsParams) {
+export function useEventTeams({
+  eventId,
+  isTeamEvent,
+  isAuthenticated,
+  isRegistered,
+}: UseEventTeamsParams) {
   const { t } = useTranslation();
 
   const [teams, setTeams] = useState<EventTeam[]>([]);
@@ -19,7 +24,7 @@ export function useEventTeams({ eventId, isTeamEvent, isAuthenticated, isRegiste
   const [isActing, setIsActing] = useState(false);
   const [createdTeam, setCreatedTeam] = useState<EventTeam | null>(null);
 
-  const myTeam = teams.find(team => team.is_captain || team.is_member);
+  const myTeam = teams.find((team) => team.is_captain || team.is_member);
   const isInTeam = !!myTeam;
   const isCaptain = myTeam?.is_captain ?? false;
 
@@ -40,40 +45,46 @@ export function useEventTeams({ eventId, isTeamEvent, isAuthenticated, isRegiste
     if (isTeamEvent) fetchTeams();
   }, [fetchTeams, isTeamEvent]);
 
-  const handleCreateTeam = useCallback(async (name: string) => {
-    setIsActing(true);
-    try {
-      const team = await api.createEventTeam(eventId, name);
-      setCreatedTeam(team);
-      await fetchTeams();
-      return team;
-    } catch {
-      Alert.alert(t('common.error'), t('teams.createFailed'));
-      return null;
-    } finally {
-      setIsActing(false);
-    }
-  }, [eventId, fetchTeams, t]);
-
-  const handleJoinTeam = useCallback(async (code: string) => {
-    setIsActing(true);
-    try {
-      // Find team by code from loaded teams
-      const team = teams.find(t => t.code === code.toUpperCase());
-      if (!team) {
-        Alert.alert(t('common.error'), t('teams.invalidCode'));
-        return false;
+  const handleCreateTeam = useCallback(
+    async (name: string) => {
+      setIsActing(true);
+      try {
+        const team = await api.createEventTeam(eventId, name);
+        setCreatedTeam(team);
+        await fetchTeams();
+        return team;
+      } catch {
+        Alert.alert(t('common.error'), t('teams.createFailed'));
+        return null;
+      } finally {
+        setIsActing(false);
       }
-      await api.joinEventTeam(eventId, team.id, code);
-      await fetchTeams();
-      return true;
-    } catch {
-      Alert.alert(t('common.error'), t('teams.joinFailed'));
-      return false;
-    } finally {
-      setIsActing(false);
-    }
-  }, [eventId, teams, fetchTeams, t]);
+    },
+    [eventId, fetchTeams, t],
+  );
+
+  const handleJoinTeam = useCallback(
+    async (code: string) => {
+      setIsActing(true);
+      try {
+        // Find team by code from loaded teams
+        const team = teams.find((t) => t.code === code.toUpperCase());
+        if (!team) {
+          Alert.alert(t('common.error'), t('teams.invalidCode'));
+          return false;
+        }
+        await api.joinEventTeam(eventId, team.id, code);
+        await fetchTeams();
+        return true;
+      } catch {
+        Alert.alert(t('common.error'), t('teams.joinFailed'));
+        return false;
+      } finally {
+        setIsActing(false);
+      }
+    },
+    [eventId, teams, fetchTeams, t],
+  );
 
   const handleLeaveTeam = useCallback(async () => {
     if (!myTeam) return;
@@ -113,25 +124,31 @@ export function useEventTeams({ eventId, isTeamEvent, isAuthenticated, isRegiste
     ]);
   }, [eventId, myTeam, fetchTeams, t]);
 
-  const handleKickMember = useCallback(async (userId: number) => {
-    if (!myTeam) return;
-    try {
-      await api.removeEventTeamMember(eventId, myTeam.id, userId);
-      await fetchTeams();
-    } catch {
-      Alert.alert(t('common.error'), t('common.tryAgain'));
-    }
-  }, [eventId, myTeam, fetchTeams, t]);
+  const handleKickMember = useCallback(
+    async (userId: number) => {
+      if (!myTeam) return;
+      try {
+        await api.removeEventTeamMember(eventId, myTeam.id, userId);
+        await fetchTeams();
+      } catch {
+        Alert.alert(t('common.error'), t('common.tryAgain'));
+      }
+    },
+    [eventId, myTeam, fetchTeams, t],
+  );
 
-  const handleTransferCaptain = useCallback(async (userId: number) => {
-    if (!myTeam) return;
-    try {
-      await api.transferEventTeamCaptain(eventId, myTeam.id, userId);
-      await fetchTeams();
-    } catch {
-      Alert.alert(t('common.error'), t('common.tryAgain'));
-    }
-  }, [eventId, myTeam, fetchTeams, t]);
+  const handleTransferCaptain = useCallback(
+    async (userId: number) => {
+      if (!myTeam) return;
+      try {
+        await api.transferEventTeamCaptain(eventId, myTeam.id, userId);
+        await fetchTeams();
+      } catch {
+        Alert.alert(t('common.error'), t('common.tryAgain'));
+      }
+    },
+    [eventId, myTeam, fetchTeams, t],
+  );
 
   const clearCreatedTeam = useCallback(() => setCreatedTeam(null), []);
 

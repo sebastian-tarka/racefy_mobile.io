@@ -6,13 +6,13 @@
  * if @rnmapbox/maps is not installed.
  */
 
-import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, Animated, StyleSheet, View} from 'react-native';
-import {mapboxAnalytics} from '../services/mapboxAnalytics';
-import {logger} from '../services/logger';
-import {useTheme} from '../hooks/useTheme';
-import {useMapStyle} from '../hooks/useMapStyle';
-import type {GeoJSONLineString} from '../types/api';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import { mapboxAnalytics } from '../services/mapboxAnalytics';
+import { logger } from '../services/logger';
+import { useTheme } from '../hooks/useTheme';
+import { useMapStyle } from '../hooks/useMapStyle';
+import type { GeoJSONLineString } from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -56,8 +56,10 @@ function haversineDistance(coord1: number[], coord2: number[]): number {
   const dLon = toRad(coord2[0] - coord1[0]);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(coord1[1])) * Math.cos(toRad(coord2[1])) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(toRad(coord1[1])) *
+      Math.cos(toRad(coord2[1])) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -66,10 +68,7 @@ function haversineDistance(coord1: number[], coord2: number[]): number {
  * Interpolate a point between two coordinates at a given fraction (0-1)
  */
 function interpolateCoord(from: number[], to: number[], fraction: number): [number, number] {
-  return [
-    from[0] + (to[0] - from[0]) * fraction,
-    from[1] + (to[1] - from[1]) * fraction,
-  ];
+  return [from[0] + (to[0] - from[0]) * fraction, from[1] + (to[1] - from[1]) * fraction];
 }
 
 /**
@@ -254,13 +253,9 @@ export function MapboxRouteMap({
         compassEnabled={false}
         onDidFinishLoadingMap={onMapReady}
       >
-        <MapboxGL.Camera
-          ref={cameraRef}
-          zoomLevel={initialZoom}
-          animationMode="none"
-        />
+        <MapboxGL.Camera ref={cameraRef} zoomLevel={initialZoom} animationMode="none" />
 
-         {/* Route line - must be rendered first to appear below markers */}
+        {/* Route line - must be rendered first to appear below markers */}
         <MapboxGL.ShapeSource id="routeSource" shape={lineGeoJSON}>
           <MapboxGL.LineLayer
             id="routeLine"
@@ -354,10 +349,7 @@ export function MapboxRouteMap({
       {/* Loading overlay with spinner */}
       {isLoading && (
         <Animated.View
-          style={[
-            styles.loadingOverlay,
-            { backgroundColor: bgColor, opacity: fadeAnim },
-          ]}
+          style={[styles.loadingOverlay, { backgroundColor: bgColor, opacity: fadeAnim }]}
         >
           <ActivityIndicator size="large" color={colors.primary} />
         </Animated.View>

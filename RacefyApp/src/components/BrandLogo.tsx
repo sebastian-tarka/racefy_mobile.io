@@ -73,11 +73,7 @@ export function BrandLogo({
     if (fallbackSvg) {
       return (
         <View style={[styles.container, style]}>
-          <SvgXml
-            xml={fallbackSvg}
-            width={logoWidth}
-            height={logoHeight}
-          />
+          <SvgXml xml={fallbackSvg} width={logoWidth} height={logoHeight} />
         </View>
       );
     }
@@ -91,11 +87,7 @@ export function BrandLogo({
   if (isSvg) {
     return (
       <View style={[styles.container, style]}>
-        <SvgUri
-          uri={asset.url}
-          width={logoWidth}
-          height={logoHeight}
-        />
+        <SvgUri uri={asset.url} width={logoWidth} height={logoHeight} />
       </View>
     );
   }

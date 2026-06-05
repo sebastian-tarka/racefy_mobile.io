@@ -37,7 +37,10 @@ function UpgradePromptInline({ feature }: { feature: string }) {
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '20' }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.primary + '10', borderColor: colors.primary + '20' },
+      ]}
       onPress={() => navigation.navigate('Paywall', { feature })}
       activeOpacity={0.7}
     >

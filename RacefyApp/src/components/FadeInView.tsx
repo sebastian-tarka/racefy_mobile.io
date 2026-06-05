@@ -30,7 +30,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
       withTiming(1, {
         duration,
         easing: Easing.out(Easing.ease),
-      })
+      }),
     );
 
     translateY.value = withDelay(
@@ -38,7 +38,7 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
       withTiming(0, {
         duration,
         easing: Easing.out(Easing.ease),
-      })
+      }),
     );
   }, [delay, duration]);
 
@@ -47,9 +47,5 @@ export const FadeInView: React.FC<FadeInViewProps> = ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 };

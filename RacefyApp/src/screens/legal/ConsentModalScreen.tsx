@@ -15,11 +15,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { logger } from '../../services/logger';
 import { getCurrentLanguage } from '../../i18n';
-import {
-  getCurrentDocuments,
-  getAvailableLanguages,
-  submitConsent,
-} from '../../services/legal';
+import { getCurrentDocuments, getAvailableLanguages, submitConsent } from '../../services/legal';
 import { spacing, fontSize } from '../../theme';
 import type { LegalDocument, LegalDocumentType } from '../../types/legal';
 
@@ -76,7 +72,7 @@ export function ConsentModalScreen() {
 
       // Initialize consents (all unchecked)
       const initialConsents: Record<number, boolean> = {};
-      docs.forEach(doc => {
+      docs.forEach((doc) => {
         initialConsents[doc.version_id] = false;
       });
       setConsents(initialConsents);
@@ -89,11 +85,11 @@ export function ConsentModalScreen() {
   };
 
   const toggleConsent = (versionId: number) => {
-    setConsents(prev => ({ ...prev, [versionId]: !prev[versionId] }));
+    setConsents((prev) => ({ ...prev, [versionId]: !prev[versionId] }));
   };
 
   const toggleExpand = (versionId: number) => {
-    setExpandedDocs(prev => {
+    setExpandedDocs((prev) => {
       const next = new Set(prev);
       if (next.has(versionId)) {
         next.delete(versionId);
@@ -105,8 +101,8 @@ export function ConsentModalScreen() {
   };
 
   const allRequiredAccepted = documents
-    .filter(d => d.is_required)
-    .every(d => consents[d.version_id]);
+    .filter((d) => d.is_required)
+    .every((d) => consents[d.version_id]);
 
   const handleSubmit = async () => {
     try {
@@ -138,9 +134,7 @@ export function ConsentModalScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('legal.consentTitle')}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('legal.consentTitle')}</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           {t('legal.consentDescription')}
         </Text>
@@ -148,13 +142,16 @@ export function ConsentModalScreen() {
 
       {/* Language Switcher */}
       <View style={styles.languageRow}>
-        {languages.map(lang => (
+        {languages.map((lang) => (
           <TouchableOpacity
             key={lang}
             style={[
               styles.langButton,
               { backgroundColor: colors.borderLight, borderColor: colors.border },
-              selectedLanguage === lang && { backgroundColor: colors.primary, borderColor: colors.primary },
+              selectedLanguage === lang && {
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+              },
             ]}
             onPress={() => setSelectedLanguage(lang)}
           >
@@ -172,10 +169,13 @@ export function ConsentModalScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {documents.map(doc => (
+        {documents.map((doc) => (
           <View
             key={doc.version_id}
-            style={[styles.docCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            style={[
+              styles.docCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
           >
             <View style={styles.docHeader}>
               <Switch
@@ -187,7 +187,9 @@ export function ConsentModalScreen() {
               <View style={styles.docInfo}>
                 <Text style={[styles.docTitle, { color: colors.textPrimary }]}>
                   {getDocumentTitle(doc.type, t)}
-                  {doc.is_required && <Text style={[styles.required, { color: colors.error }]}> *</Text>}
+                  {doc.is_required && (
+                    <Text style={[styles.required, { color: colors.error }]}> *</Text>
+                  )}
                 </Text>
                 <Text style={[styles.docMeta, { color: colors.textSecondary }]}>
                   v{doc.version} • {doc.language.toUpperCase()}
@@ -195,7 +197,10 @@ export function ConsentModalScreen() {
               </View>
             </View>
 
-            <TouchableOpacity onPress={() => toggleExpand(doc.version_id)} style={styles.viewContentButton}>
+            <TouchableOpacity
+              onPress={() => toggleExpand(doc.version_id)}
+              style={styles.viewContentButton}
+            >
               <Text style={[styles.viewContent, { color: colors.primary }]}>
                 {expandedDocs.has(doc.version_id) ? t('legal.hideContent') : t('legal.viewContent')}
               </Text>
@@ -222,9 +227,7 @@ export function ConsentModalScreen() {
           {t('legal.requiredNote')}
         </Text>
 
-        {error && (
-          <Text style={[styles.error, { color: colors.error }]}>{error}</Text>
-        )}
+        {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
 
         <Button
           title={submitting ? t('common.pleaseWait') : t('legal.accept')}

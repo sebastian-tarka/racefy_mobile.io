@@ -98,15 +98,12 @@ export function GoalFormScreen({ navigation, route }: Props) {
       }
       return false;
     },
-    [features]
+    [features],
   );
 
-  const handleLockedTap = useCallback(
-    () => {
-      navigation.navigate('Paywall', { feature: 'training_goals' });
-    },
-    [navigation]
-  );
+  const handleLockedTap = useCallback(() => {
+    navigation.navigate('Paywall', { feature: 'training_goals' });
+  }, [navigation]);
 
   const handleSelectMetric = (value: GoalMetric) => {
     if (isFreeLocked('metric', value)) {
@@ -181,20 +178,16 @@ export function GoalFormScreen({ navigation, route }: Props) {
                 text: t('goals.limitReached.cta'),
                 onPress: () => navigation.navigate('Paywall', { feature: 'training_goals' }),
               },
-            ]
+            ],
           );
         } else {
-          Alert.alert(
-            t('goals.errors.upgradeRequired', { tier }),
-            error.message || '',
-            [
-              { text: t('common.cancel'), style: 'cancel' },
-              {
-                text: t('insights.locked.upgrade'),
-                onPress: () => navigation.navigate('Paywall', { feature: 'training_goals' }),
-              },
-            ]
-          );
+          Alert.alert(t('goals.errors.upgradeRequired', { tier }), error.message || '', [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('insights.locked.upgrade'),
+              onPress: () => navigation.navigate('Paywall', { feature: 'training_goals' }),
+            },
+          ]);
         }
       } else if (error.status === 422) {
         setFieldErrors(error.errors || {});
@@ -239,17 +232,29 @@ export function GoalFormScreen({ navigation, route }: Props) {
         {/* Sport — disabled in edit mode (immutable) */}
         {!isEdit && (
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('goals.form.sport')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {t('goals.form.sport')}
+            </Text>
             <View style={styles.sportRow}>
               <TouchableOpacity
                 style={[
                   styles.sportChip,
                   { backgroundColor: colors.background, borderColor: colors.border },
-                  sportTypeId === null && { backgroundColor: colors.primary, borderColor: colors.primary },
+                  sportTypeId === null && {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                  },
                 ]}
                 onPress={() => handleSelectSport(null)}
               >
-                <Text style={[styles.sportChipText, sportTypeId === null ? styles.sportChipTextSelected : { color: colors.textSecondary }]}>
+                <Text
+                  style={[
+                    styles.sportChipText,
+                    sportTypeId === null
+                      ? styles.sportChipTextSelected
+                      : { color: colors.textSecondary },
+                  ]}
+                >
                   {t('goals.allSports')}
                 </Text>
               </TouchableOpacity>
@@ -262,7 +267,10 @@ export function GoalFormScreen({ navigation, route }: Props) {
                     style={[
                       styles.sportChip,
                       { backgroundColor: colors.background, borderColor: colors.border },
-                      isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
+                      isSelected && {
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary,
+                      },
                     ]}
                     onPress={() => handleSelectSport(s.id)}
                   >
@@ -272,7 +280,8 @@ export function GoalFormScreen({ navigation, route }: Props) {
                         isSelected ? styles.sportChipTextSelected : { color: colors.textSecondary },
                       ]}
                     >
-                      {s.name}{isLocked ? ' 🔒' : ''}
+                      {s.name}
+                      {isLocked ? ' 🔒' : ''}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -312,9 +321,14 @@ export function GoalFormScreen({ navigation, route }: Props) {
 
         {!isEdit && (
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('goals.form.startDate')}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {t('goals.form.startDate')}
+            </Text>
             <TouchableOpacity
-              style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.background }]}
+              style={[
+                styles.dateButton,
+                { borderColor: colors.border, backgroundColor: colors.background },
+              ]}
               onPress={() => setDatePickerField('start')}
             >
               <Text style={[styles.dateText, { color: colors.textPrimary }]}>
@@ -326,9 +340,14 @@ export function GoalFormScreen({ navigation, route }: Props) {
         )}
 
         <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>{t('goals.form.endDate')}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('goals.form.endDate')}
+          </Text>
           <TouchableOpacity
-            style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.background }]}
+            style={[
+              styles.dateButton,
+              { borderColor: colors.border, backgroundColor: colors.background },
+            ]}
             onPress={() => setDatePickerField('end')}
           >
             <Text style={[styles.dateText, { color: colors.textPrimary }]}>
@@ -336,7 +355,10 @@ export function GoalFormScreen({ navigation, route }: Props) {
             </Text>
             <View style={styles.endDateActions}>
               {endDate && (
-                <TouchableOpacity onPress={() => setEndDate(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <TouchableOpacity
+                  onPress={() => setEndDate(null)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
                   <Ionicons name="close-circle" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               )}

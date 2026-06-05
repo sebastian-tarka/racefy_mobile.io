@@ -1,5 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Platform, ActionSheetIOS } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Platform,
+  ActionSheetIOS,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
@@ -26,10 +35,7 @@ export function ImagePickerButton({
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert(
-        t('common.error'),
-        'Permission to access photos is required to select an image.'
-      );
+      Alert.alert(t('common.error'), 'Permission to access photos is required to select an image.');
       return;
     }
 
@@ -51,10 +57,7 @@ export function ImagePickerButton({
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert(
-        t('common.error'),
-        'Permission to access camera is required to take a photo.'
-      );
+      Alert.alert(t('common.error'), 'Permission to access camera is required to take a photo.');
       return;
     }
 
@@ -83,18 +86,14 @@ export function ImagePickerButton({
           } else if (buttonIndex === 2) {
             launchGallery();
           }
-        }
+        },
       );
     } else {
-      Alert.alert(
-        t('eventForm.selectImage'),
-        '',
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('eventForm.takePhoto'), onPress: launchCamera },
-          { text: t('eventForm.chooseFromGallery'), onPress: launchGallery },
-        ]
-      );
+      Alert.alert(t('eventForm.selectImage'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('eventForm.takePhoto'), onPress: launchCamera },
+        { text: t('eventForm.chooseFromGallery'), onPress: launchGallery },
+      ]);
     }
   };
 
@@ -106,14 +105,20 @@ export function ImagePickerButton({
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.coverImage')}</Text>
       <TouchableOpacity
-        style={[styles.imageContainer, { backgroundColor: colors.background, borderColor: colors.border }]}
+        style={[
+          styles.imageContainer,
+          { backgroundColor: colors.background, borderColor: colors.border },
+        ]}
         onPress={pickImage}
         activeOpacity={0.8}
       >
         {value ? (
           <>
             <Image source={{ uri: value }} style={styles.image} resizeMode="cover" />
-            <TouchableOpacity style={[styles.removeButton, { backgroundColor: colors.cardBackground }]} onPress={removeImage}>
+            <TouchableOpacity
+              style={[styles.removeButton, { backgroundColor: colors.cardBackground }]}
+              onPress={removeImage}
+            >
               <Ionicons name="close-circle" size={28} color={colors.error} />
             </TouchableOpacity>
             <View style={styles.changeOverlay}>

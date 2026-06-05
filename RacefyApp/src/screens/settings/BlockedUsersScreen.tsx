@@ -56,12 +56,8 @@ export function BlockedUsersScreen() {
     >
       <Avatar uri={item.avatar} name={item.name} size="md" />
       <View style={styles.userInfo}>
-        <Text style={[styles.userName, { color: colors.textPrimary }]}>
-          {item.name}
-        </Text>
-        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
-          @{item.username}
-        </Text>
+        <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
+        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
       </View>
       <TouchableOpacity
         style={[
@@ -123,11 +119,7 @@ export function BlockedUsersScreen() {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('blocking.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('blocking.title')} showBack onBack={() => navigation.goBack()} />
 
       {totalUsers > 0 && (
         <View style={styles.countContainer}>

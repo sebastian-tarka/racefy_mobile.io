@@ -44,9 +44,7 @@ export function AiActivityReportsScreen({ navigation }: Props) {
   const fetchPage = useCallback(async (pageNum: number, mode: 'refresh' | 'append') => {
     try {
       const response = await api.listActivityReports(pageNum);
-      setReports((prev) =>
-        mode === 'refresh' ? response.data : [...prev, ...response.data]
-      );
+      setReports((prev) => (mode === 'refresh' ? response.data : [...prev, ...response.data]));
       setPage(response.meta.current_page);
       setLastPage(response.meta.last_page);
     } catch (error: any) {
@@ -92,13 +90,17 @@ export function AiActivityReportsScreen({ navigation }: Props) {
   const renderCard = ({ item }: { item: AiActivityReport }) => {
     const statusColor = STATUS_COLORS[item.status];
     const count = item.activity_ids.length;
-    const countLabel = count === 1
-      ? t('insights.aiReports.activityIncluded', { count })
-      : t('insights.aiReports.activitiesIncluded', { count });
+    const countLabel =
+      count === 1
+        ? t('insights.aiReports.activityIncluded', { count })
+        : t('insights.aiReports.activitiesIncluded', { count });
 
     return (
       <TouchableOpacity
-        style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+        ]}
         onPress={() => navigation.navigate('AiActivityReportDetail', { reportId: item.id })}
         activeOpacity={0.7}
       >
@@ -108,9 +110,7 @@ export function AiActivityReportsScreen({ navigation }: Props) {
             <Text style={[styles.cardDate, { color: colors.textPrimary }]}>
               {formatDate(item.created_at)}
             </Text>
-            <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>
-              {countLabel}
-            </Text>
+            <Text style={[styles.cardMeta, { color: colors.textSecondary }]}>{countLabel}</Text>
           </View>
           <View style={styles.statusBadge}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
@@ -120,10 +120,7 @@ export function AiActivityReportsScreen({ navigation }: Props) {
           </View>
         </View>
         {item.content?.summary ? (
-          <Text
-            style={[styles.cardSummary, { color: colors.textSecondary }]}
-            numberOfLines={2}
-          >
+          <Text style={[styles.cardSummary, { color: colors.textSecondary }]} numberOfLines={2}>
             {item.content.summary}
           </Text>
         ) : null}
@@ -143,7 +140,12 @@ export function AiActivityReportsScreen({ navigation }: Props) {
           <Text style={[styles.freeMessage, { color: colors.textSecondary }]}>
             {t('insights.aiReports.noneYetHint')}
           </Text>
-          <View style={[styles.lockChip, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.lockChip,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
             <Text style={[styles.lockChipText, { color: colors.textSecondary }]}>
               {t('insights.locked.upgrade')}
@@ -151,7 +153,9 @@ export function AiActivityReportsScreen({ navigation }: Props) {
           </View>
           <Button
             title={t('insights.locked.upgrade')}
-            onPress={() => navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })}
+            onPress={() =>
+              navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
+            }
             variant="primary"
             style={styles.freeCta}
           />
@@ -189,10 +193,7 @@ export function AiActivityReportsScreen({ navigation }: Props) {
           data={reports}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderCard}
-          contentContainerStyle={[
-            styles.listContent,
-            reports.length === 0 && styles.emptyList,
-          ]}
+          contentContainerStyle={[styles.listContent, reports.length === 0 && styles.emptyList]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

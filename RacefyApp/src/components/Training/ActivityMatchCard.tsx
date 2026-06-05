@@ -14,7 +14,10 @@ interface Props {
   onPress?: (activityId: number) => void;
 }
 
-const STATUS_CONFIG: Record<MatchStatus, { color: string; icon: 'checkmark-circle' | 'alert-circle' | 'close-circle' }> = {
+const STATUS_CONFIG: Record<
+  MatchStatus,
+  { color: string; icon: 'checkmark-circle' | 'alert-circle' | 'close-circle' }
+> = {
   completed: { color: '#10b981', icon: 'checkmark-circle' },
   partial: { color: '#f59e0b', icon: 'alert-circle' },
   missed: { color: '#ef4444', icon: 'close-circle' },
@@ -45,13 +48,22 @@ export function ActivityMatchCard({ match, onPress }: Props) {
 
   const Wrapper = isTappable ? TouchableOpacity : View;
   const wrapperProps = isTappable
-    ? { onPress: () => { triggerHaptic(); onPress(match.matched_activity_id!); }, activeOpacity: 0.7 }
+    ? {
+        onPress: () => {
+          triggerHaptic();
+          onPress(match.matched_activity_id!);
+        },
+        activeOpacity: 0.7,
+      }
     : {};
 
   return (
     <Wrapper
       {...wrapperProps}
-      style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
     >
       <View style={styles.header}>
         <Text style={[styles.activityType, { color: colors.textPrimary }]}>
@@ -68,14 +80,10 @@ export function ActivityMatchCard({ match, onPress }: Props) {
       {/* Targets */}
       <View style={styles.targetsRow}>
         {targetDistance && (
-          <Text style={[styles.targetText, { color: colors.textSecondary }]}>
-            {targetDistance}
-          </Text>
+          <Text style={[styles.targetText, { color: colors.textSecondary }]}>{targetDistance}</Text>
         )}
         {targetDuration && (
-          <Text style={[styles.targetText, { color: colors.textSecondary }]}>
-            {targetDuration}
-          </Text>
+          <Text style={[styles.targetText, { color: colors.textSecondary }]}>{targetDuration}</Text>
         )}
       </View>
 
@@ -94,11 +102,17 @@ export function ActivityMatchCard({ match, onPress }: Props) {
           )}
           {match.matched_pace != null && (
             <Text style={[styles.actualText, { color: colors.textSecondary }]}>
-              {t('training.feedback.activityMatching.pace')}: {match.matched_pace.toFixed(2)} {getPaceUnit()}
+              {t('training.feedback.activityMatching.pace')}: {match.matched_pace.toFixed(2)}{' '}
+              {getPaceUnit()}
             </Text>
           )}
           {isTappable && (
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={styles.chevron} />
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={colors.textMuted}
+              style={styles.chevron}
+            />
           )}
         </View>
       ) : (

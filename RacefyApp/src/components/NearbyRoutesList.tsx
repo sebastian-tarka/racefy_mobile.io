@@ -4,7 +4,14 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
@@ -41,11 +48,16 @@ export function NearbyRoutesList({
   const getSportIcon = (sportTypeId: number): any => {
     // Common sport type IDs (adjust based on your backend)
     switch (sportTypeId) {
-      case 1: return 'walk'; // Running
-      case 2: return 'bicycle'; // Cycling
-      case 3: return 'walk'; // Walking
-      case 4: return 'fitness'; // Gym
-      default: return 'pulse'; // Generic
+      case 1:
+        return 'walk'; // Running
+      case 2:
+        return 'bicycle'; // Cycling
+      case 3:
+        return 'walk'; // Walking
+      case 4:
+        return 'fitness'; // Gym
+      default:
+        return 'pulse'; // Generic
     }
   };
 
@@ -161,7 +173,13 @@ export function NearbyRoutesList({
   };
 
   return (
-    <View style={[styles.container, fillContainer && { flex: 1, height: undefined }, { backgroundColor: colors.cardBackground }]}>
+    <View
+      style={[
+        styles.container,
+        fillContainer && { flex: 1, height: undefined },
+        { backgroundColor: colors.cardBackground },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={[styles.headerText, { color: colors.textPrimary }]}>
           {t('recording.nearbyRoutes')}

@@ -40,14 +40,28 @@ export function TimePatternsCard({ data }: TimePatternsCardProps) {
   return (
     <InsightCard title={t('insights.timePatterns.title')} icon="time">
       <View style={styles.infoBoxes}>
-        <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('insights.timePatterns.preferredTime')}</Text>
+        <View
+          style={[
+            styles.infoBox,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+          ]}
+        >
+          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+            {t('insights.timePatterns.preferredTime')}
+          </Text>
           <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
             {t(TIME_SLOT_KEYS[data.preferred_time_slot] ?? data.preferred_time_slot)}
           </Text>
         </View>
-        <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
-          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('insights.timePatterns.preferredDay')}</Text>
+        <View
+          style={[
+            styles.infoBox,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+          ]}
+        >
+          <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+            {t('insights.timePatterns.preferredDay')}
+          </Text>
           <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
             {t(DAY_KEYS[data.preferred_day] ?? data.preferred_day)}
           </Text>
@@ -67,9 +81,12 @@ export function TimePatternsCard({ data }: TimePatternsCardProps) {
                 style={[
                   styles.hourBar,
                   {
-                    backgroundColor: count > 0
-                      ? `rgba(16, 185, 129, ${opacity})`
-                      : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)'),
+                    backgroundColor:
+                      count > 0
+                        ? `rgba(16, 185, 129, ${opacity})`
+                        : isDark
+                          ? 'rgba(255,255,255,0.04)'
+                          : 'rgba(0,0,0,0.03)',
                   },
                 ]}
               />
@@ -97,7 +114,12 @@ export function TimePatternsCard({ data }: TimePatternsCardProps) {
               <Text style={[styles.dayLabel, { color: colors.textSecondary }]}>
                 {t(DAY_KEYS[day] ?? day)}
               </Text>
-              <View style={[styles.dayBarBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }]}>
+              <View
+                style={[
+                  styles.dayBarBg,
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' },
+                ]}
+              >
                 <View
                   style={[
                     styles.dayBarFill,

@@ -1,12 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-  LayoutAnimation,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { triggerHaptic } from '../hooks/useHaptics';
@@ -51,24 +44,21 @@ export function SettingsSection({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={handleToggle}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity style={styles.header} onPress={handleToggle} activeOpacity={0.7}>
         <Text style={[styles.sectionTitle, { color: titleColor || colors.textSecondary }]}>
           {title}
         </Text>
         <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            color={titleColor || colors.textSecondary}
-          />
+          <Ionicons name="chevron-down" size={16} color={titleColor || colors.textSecondary} />
         </Animated.View>
       </TouchableOpacity>
       {isExpanded && (
-        <View style={[styles.content, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.content,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           {children}
         </View>
       )}

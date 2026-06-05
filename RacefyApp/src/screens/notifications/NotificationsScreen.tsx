@@ -50,7 +50,7 @@ export function NotificationsScreen({ navigation }: Props) {
           setNotifications(response.data);
           setPage(2);
         } else {
-          setNotifications(prev => [...prev, ...response.data]);
+          setNotifications((prev) => [...prev, ...response.data]);
           setPage(currentPage + 1);
         }
 
@@ -68,7 +68,7 @@ export function NotificationsScreen({ navigation }: Props) {
         setRefreshing(false);
       }
     },
-    [loading, page, t]
+    [loading, page, t],
   );
 
   useEffect(() => {
@@ -144,11 +144,17 @@ export function NotificationsScreen({ navigation }: Props) {
               return;
             }
             if (fallbackData.likeable_type === 'comment' && fallbackData.post_id) {
-              navigation.navigate('PostDetail', { postId: fallbackData.post_id, focusComments: true });
+              navigation.navigate('PostDetail', {
+                postId: fallbackData.post_id,
+                focusComments: true,
+              });
               return;
             }
             if (fallbackData.commentable_type === 'post' && fallbackData.commentable_id) {
-              navigation.navigate('PostDetail', { postId: fallbackData.commentable_id, focusComments: true });
+              navigation.navigate('PostDetail', {
+                postId: fallbackData.commentable_id,
+                focusComments: true,
+              });
               return;
             }
             if (fallbackData.commentable_type === 'activity' && fallbackData.commentable_id) {
@@ -175,7 +181,7 @@ export function NotificationsScreen({ navigation }: Props) {
         Alert.alert(t('common.error'), t('notifications.navigationError'));
       }
     },
-    [navigation, t]
+    [navigation, t],
   );
 
   const handleTrainingWeekFeedbackNavigation = useCallback(
@@ -190,12 +196,14 @@ export function NotificationsScreen({ navigation }: Props) {
       if (data.week_number) {
         try {
           const weeks = await api.getWeeks();
-          const week = weeks.find(w => w.week_number === data.week_number);
+          const week = weeks.find((w) => w.week_number === data.week_number);
           if (week) {
             navigation.navigate('WeekFeedback', { weekId: week.id });
             return;
           }
-          logger.warn('navigation', 'Week not found for notification', { weekNumber: data.week_number });
+          logger.warn('navigation', 'Week not found for notification', {
+            weekNumber: data.week_number,
+          });
         } catch (error) {
           logger.error('navigation', 'Failed to resolve week for notification', { error });
         }
@@ -204,7 +212,7 @@ export function NotificationsScreen({ navigation }: Props) {
       // Fallback: go to weeks list
       navigation.navigate('TrainingWeeksList');
     },
-    [navigation]
+    [navigation],
   );
 
   const handleNotificationPress = useCallback(
@@ -222,12 +230,10 @@ export function NotificationsScreen({ navigation }: Props) {
         try {
           await markAsRead(notification.id);
           // Update local state
-          setNotifications(prev =>
-            prev.map(n =>
-              n.id === notification.id
-                ? { ...n, read_at: new Date().toISOString() }
-                : n
-            )
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n,
+            ),
           );
           // Emit refresh event so badge updates immediately
           emitRefresh('notifications');
@@ -266,42 +272,38 @@ export function NotificationsScreen({ navigation }: Props) {
         }
       }
     },
-    [markAsRead, navigateToUrl]
+    [markAsRead, navigateToUrl],
   );
 
   const handleMarkAllAsRead = useCallback(async () => {
-    Alert.alert(
-      t('notifications.markAllAsRead'),
-      t('notifications.markAllAsReadConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: async () => {
-            setMarkingAllAsRead(true);
-            try {
-              await api.markAllNotificationsAsRead();
-              // Update all notifications to read
-              setNotifications(prev =>
-                prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
-              );
-              refreshUnreadCount();
-              // Emit refresh event so badge updates immediately
-              emitRefresh('notifications');
-              logger.info('navigation', 'Marked all notifications as read');
-            } catch (error) {
-              logger.error('navigation', 'Failed to mark all notifications as read', { error });
-              Alert.alert(t('common.error'), t('notifications.markAllAsReadError'));
-            } finally {
-              setMarkingAllAsRead(false);
-            }
-          },
+    Alert.alert(t('notifications.markAllAsRead'), t('notifications.markAllAsReadConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.confirm'),
+        onPress: async () => {
+          setMarkingAllAsRead(true);
+          try {
+            await api.markAllNotificationsAsRead();
+            // Update all notifications to read
+            setNotifications((prev) =>
+              prev.map((n) => ({ ...n, read_at: n.read_at || new Date().toISOString() })),
+            );
+            refreshUnreadCount();
+            // Emit refresh event so badge updates immediately
+            emitRefresh('notifications');
+            logger.info('navigation', 'Marked all notifications as read');
+          } catch (error) {
+            logger.error('navigation', 'Failed to mark all notifications as read', { error });
+            Alert.alert(t('common.error'), t('notifications.markAllAsReadError'));
+          } finally {
+            setMarkingAllAsRead(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   }, [t, refreshUnreadCount]);
 
-  const unreadCount = notifications.filter(n => !n.read_at).length;
+  const unreadCount = notifications.filter((n) => !n.read_at).length;
 
   return (
     <ScreenContainer>
@@ -333,7 +335,7 @@ export function NotificationsScreen({ navigation }: Props) {
 
       <FlatList
         data={notifications}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <NotificationItem notification={item} onPress={handleNotificationPress} />
         )}
@@ -361,11 +363,7 @@ export function NotificationsScreen({ navigation }: Props) {
         }
         ListFooterComponent={
           loading && notifications.length > 0 ? (
-            <ActivityIndicator
-              size="small"
-              color={colors.primary}
-              style={styles.footerLoader}
-            />
+            <ActivityIndicator size="small" color={colors.primary} style={styles.footerLoader} />
           ) : null
         }
       />

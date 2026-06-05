@@ -10,14 +10,28 @@ interface TrendsCardProps {
   data: TrendsData;
 }
 
-function ChangeIndicator({ value, colors }: { value: number | null; colors: ReturnType<typeof useTheme>['colors'] }) {
+function ChangeIndicator({
+  value,
+  colors,
+}: {
+  value: number | null;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
   if (value === null || value === undefined) return null;
   const color = value === 0 ? colors.textMuted : value > 0 ? colors.success : colors.error;
   const text = value === 0 ? '0%' : `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   return <Text style={[styles.changeText, { color }]}>{text}</Text>;
 }
 
-function TrendComparison({ label, current, previous, changePct, unit, colors, isDark }: {
+function TrendComparison({
+  label,
+  current,
+  previous,
+  changePct,
+  unit,
+  colors,
+  isDark,
+}: {
   label: string;
   current: string;
   previous: string;
@@ -27,7 +41,12 @@ function TrendComparison({ label, current, previous, changePct, unit, colors, is
   isDark: boolean;
 }) {
   return (
-    <View style={[styles.trendBlock, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+    <View
+      style={[
+        styles.trendBlock,
+        { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+      ]}
+    >
       <Text style={[styles.trendLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.trendValues}>
         <View style={styles.trendColumn}>
@@ -51,7 +70,7 @@ export function TrendsCard({ data }: TrendsCardProps) {
 
   const weekly = data.weekly;
   const breakdown = data.weekly_breakdown ?? [];
-  const maxDistance = Math.max(...breakdown.map(w => w.distance_km), 1);
+  const maxDistance = Math.max(...breakdown.map((w) => w.distance_km), 1);
 
   return (
     <InsightCard title={t('insights.trends.title')} icon="trending-up">

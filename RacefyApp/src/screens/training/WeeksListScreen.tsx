@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,24 +10,37 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {useTranslation} from 'react-i18next';
-import {Ionicons} from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
-import {useTheme} from '../../hooks/useTheme';
-import {useSubscription} from '../../hooks/useSubscription';
-import {useSportTypes} from '../../hooks/useSportTypes';
-import {triggerHaptic} from '../../hooks/useHaptics';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {upgradePromptEmitter} from '../../services/upgradePromptEmitter';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import {formatDurationCompact} from '../../utils/formatDuration';
-import type {OptionListItem} from '../../components';
-import {Card, EmptyState, Loading, OptionList, ScreenContainer, ScreenHeader} from '../../components';
-import {TrainingPlansSheet} from '../../components/Training/TrainingPlansSheet';
-import type {RootStackParamList} from '../../navigation/types';
-import type {AiMode, MentalBudget, PausedReason, TrainingProgram, TrainingWeek,} from '../../types/api';
+import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useSportTypes } from '../../hooks/useSportTypes';
+import { triggerHaptic } from '../../hooks/useHaptics';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import { formatDurationCompact } from '../../utils/formatDuration';
+import type { OptionListItem } from '../../components';
+import {
+  Card,
+  EmptyState,
+  Loading,
+  OptionList,
+  ScreenContainer,
+  ScreenHeader,
+} from '../../components';
+import { TrainingPlansSheet } from '../../components/Training/TrainingPlansSheet';
+import type { RootStackParamList } from '../../navigation/types';
+import type {
+  AiMode,
+  MentalBudget,
+  PausedReason,
+  TrainingProgram,
+  TrainingWeek,
+} from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -73,7 +86,10 @@ function getSessions(week: TrainingWeek): UISession[] {
   return suggested.map((s) => ({
     id: `s-${s.id}`,
     title: humanize(s.activity_type),
-    detail: [s.target_distance_meters ? fmtKm(s.target_distance_meters) : null, s.intensity_description]
+    detail: [
+      s.target_distance_meters ? fmtKm(s.target_distance_meters) : null,
+      s.intensity_description,
+    ]
       .filter(Boolean)
       .join(' · '),
     durationMinutes: s.target_duration_minutes || 0,
@@ -152,41 +168,44 @@ export function WeeksListScreen({ navigation }: Props) {
   const [hintsProgress, setHintsProgress] = useState({ done: 0, total: 0 });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    try {
-      if (!isRefresh) setLoading(true);
-      setError(null);
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (!isRefresh) setLoading(true);
+        setError(null);
 
-      const allPrograms = await api.getCurrentPrograms();
-      setPrograms(allPrograms);
+        const allPrograms = await api.getCurrentPrograms();
+        setPrograms(allPrograms);
 
-      // Set initial selection if not yet set
-      if (!selectedProgramId && allPrograms.length > 0) {
-        setSelectedProgramId(allPrograms[0].id);
+        // Set initial selection if not yet set
+        if (!selectedProgramId && allPrograms.length > 0) {
+          setSelectedProgramId(allPrograms[0].id);
+        }
+
+        // Load weeks for the selected (or first) program
+        const activeProgram = allPrograms.find((p) => p.id === selectedProgramId) ?? allPrograms[0];
+        let weeksData: TrainingWeek[] = [];
+        if (activeProgram) {
+          weeksData = await api.getWeeks();
+        }
+
+        setWeeks(weeksData);
+
+        logger.info('training', 'Loaded training programs', {
+          programCount: allPrograms.length,
+          selectedId: activeProgram?.id,
+          totalWeeks: weeksData.length,
+        });
+      } catch (err: any) {
+        logger.error('training', 'Failed to load training weeks', { error: err });
+        setError(err.message || t('training.errors.loadingFailed'));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      // Load weeks for the selected (or first) program
-      const activeProgram = allPrograms.find((p) => p.id === selectedProgramId) ?? allPrograms[0];
-      let weeksData: TrainingWeek[] = [];
-      if (activeProgram) {
-        weeksData = await api.getWeeks();
-      }
-
-      setWeeks(weeksData);
-
-      logger.info('training', 'Loaded training programs', {
-        programCount: allPrograms.length,
-        selectedId: activeProgram?.id,
-        totalWeeks: weeksData.length,
-      });
-    } catch (err: any) {
-      logger.error('training', 'Failed to load training weeks', { error: err });
-      setError(err.message || t('training.errors.loadingFailed'));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [t, selectedProgramId]);
+    },
+    [t, selectedProgramId],
+  );
 
   useEffect(() => {
     loadData();
@@ -271,7 +290,7 @@ export function WeeksListScreen({ navigation }: Props) {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -299,7 +318,7 @@ export function WeeksListScreen({ navigation }: Props) {
           },
         })),
         { text: t('common.cancel'), style: 'cancel' as const },
-      ]
+      ],
     );
   };
 
@@ -385,7 +404,10 @@ export function WeeksListScreen({ navigation }: Props) {
     if (!program) return;
 
     if (weeks.every((w) => w.coaching_hint)) {
-      Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.allGenerated'));
+      Alert.alert(
+        t('training.coachingHints.sectionTitle'),
+        t('training.coachingHints.allGenerated'),
+      );
       return;
     }
 
@@ -397,7 +419,10 @@ export function WeeksListScreen({ navigation }: Props) {
         await loadData(true);
         setGeneratingHints(false);
         triggerHaptic();
-        Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.generationComplete'));
+        Alert.alert(
+          t('training.coachingHints.sectionTitle'),
+          t('training.coachingHints.generationComplete'),
+        );
         return;
       }
 
@@ -420,7 +445,10 @@ export function WeeksListScreen({ navigation }: Props) {
             }
             setGeneratingHints(false);
             triggerHaptic();
-            Alert.alert(t('training.coachingHints.sectionTitle'), t('training.coachingHints.generationComplete'));
+            Alert.alert(
+              t('training.coachingHints.sectionTitle'),
+              t('training.coachingHints.generationComplete'),
+            );
           }
         } catch (pollErr) {
           logger.error('training', 'Polling hints progress failed', { error: pollErr });
@@ -444,7 +472,11 @@ export function WeeksListScreen({ navigation }: Props) {
   if (error) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('training.weeksList.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('training.weeksList.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <EmptyState
           icon="alert-circle"
           title={t('training.errors.title')}
@@ -457,7 +489,10 @@ export function WeeksListScreen({ navigation }: Props) {
   }
 
   const settingsAction = program ? (
-    <TouchableOpacity onPress={handleOpenSettings} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+    <TouchableOpacity
+      onPress={handleOpenSettings}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    >
       <Ionicons name="settings-outline" size={22} color={colors.textPrimary} />
     </TouchableOpacity>
   ) : undefined;
@@ -465,7 +500,11 @@ export function WeeksListScreen({ navigation }: Props) {
   if (!program) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('training.weeksList.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('training.weeksList.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <EmptyState
           icon="calendar-outline"
           title={t('training.weeksList.empty.title')}
@@ -482,7 +521,8 @@ export function WeeksListScreen({ navigation }: Props) {
   const currentWeekNumber = program.current_week_number ?? 0;
   const weeksDone = Math.max(0, currentWeekNumber - 1);
   const toGo = Math.max(0, totalWeeks - weeksDone);
-  const overallPercent = totalWeeks > 0 ? Math.min(100, Math.round((weeksDone / totalWeeks) * 100)) : 0;
+  const overallPercent =
+    totalWeeks > 0 ? Math.min(100, Math.round((weeksDone / totalWeeks) * 100)) : 0;
 
   // Adherence: completed vs planned sessions across all non-upcoming weeks (computed client-side).
   const adherence = (() => {
@@ -526,10 +566,20 @@ export function WeeksListScreen({ navigation }: Props) {
         onPress={() => setSelectedWeekId(week.id)}
         activeOpacity={0.8}
       >
-        <Text style={[styles.weekTileLabel, { color: isCurrent ? colors.background : colors.textMuted }]}>
+        <Text
+          style={[
+            styles.weekTileLabel,
+            { color: isCurrent ? colors.background : colors.textMuted },
+          ]}
+        >
           {t('training.weeksList.weekShort')}
         </Text>
-        <Text style={[styles.weekTileNumber, { color: isCurrent ? colors.background : colors.textPrimary }]}>
+        <Text
+          style={[
+            styles.weekTileNumber,
+            { color: isCurrent ? colors.background : colors.textPrimary },
+          ]}
+        >
           {week.week_number}
         </Text>
         <View
@@ -600,8 +650,7 @@ export function WeeksListScreen({ navigation }: Props) {
   };
 
   const selectedStats = selectedWeek ? weekStats(selectedWeek) : null;
-  const selectedIsCurrent =
-    selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
+  const selectedIsCurrent = selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
 
   // ---- Grouped options below the week card ----
   const needsHints = weeks.some((w) => !w.coaching_hint);
@@ -659,7 +708,8 @@ export function WeeksListScreen({ navigation }: Props) {
         </View>
       ) : undefined,
       onPress: hintsLocked
-        ? () => upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })
+        ? () =>
+            upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier })
         : handleGenerateHints,
     });
   }
@@ -683,7 +733,7 @@ export function WeeksListScreen({ navigation }: Props) {
           hideChevron: true,
           disabled: actionLoading,
           onPress: handlePauseProgram,
-        }
+        },
   );
 
   programOptions.push({
@@ -710,7 +760,11 @@ export function WeeksListScreen({ navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+          />
         }
       >
         {/* ---- Program overview card ---- */}
@@ -725,7 +779,12 @@ export function WeeksListScreen({ navigation }: Props) {
                 { backgroundColor: (isPaused ? colors.warning : colors.success) + '1f' },
               ]}
             >
-              <Text style={[styles.statusPillText, { color: isPaused ? colors.warning : colors.success }]}>
+              <Text
+                style={[
+                  styles.statusPillText,
+                  { color: isPaused ? colors.warning : colors.success },
+                ]}
+              >
                 {isPaused ? t('training.pausedBadge') : t('training.activeBadge')}
               </Text>
             </View>
@@ -742,13 +801,21 @@ export function WeeksListScreen({ navigation }: Props) {
 
           <View style={styles.overallRow}>
             <Text style={[styles.overallLabel, { color: colors.textSecondary }]}>
-              {t('training.weekOfTotal', { current: Math.max(1, currentWeekNumber), total: totalWeeks })}
+              {t('training.weekOfTotal', {
+                current: Math.max(1, currentWeekNumber),
+                total: totalWeeks,
+              })}
             </Text>
-            <Text style={[styles.overallPercent, { color: colors.textPrimary }]}>{overallPercent}%</Text>
+            <Text style={[styles.overallPercent, { color: colors.textPrimary }]}>
+              {overallPercent}%
+            </Text>
           </View>
           <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
             <View
-              style={[styles.progressFill, { backgroundColor: colors.primary, width: `${overallPercent}%` }]}
+              style={[
+                styles.progressFill,
+                { backgroundColor: colors.primary, width: `${overallPercent}%` },
+              ]}
             />
           </View>
 
@@ -787,7 +854,9 @@ export function WeeksListScreen({ navigation }: Props) {
               </Text>
               <Text style={[styles.statValue, { color: colors.success }]}>
                 {adherence != null ? adherence : '—'}
-                {adherence != null && <Text style={[styles.statUnit, { color: colors.textMuted }]}> %</Text>}
+                {adherence != null && (
+                  <Text style={[styles.statUnit, { color: colors.textMuted }]}> %</Text>
+                )}
               </Text>
             </View>
           </View>
@@ -824,7 +893,9 @@ export function WeeksListScreen({ navigation }: Props) {
                   {t('training.weeksList.weekNumber', { number: selectedWeek.week_number })}
                 </Text>
                 {!!selectedWeek.phase_name && (
-                  <View style={[styles.phasePill, { backgroundColor: colors.cardBackgroundHighlight }]}>
+                  <View
+                    style={[styles.phasePill, { backgroundColor: colors.cardBackgroundHighlight }]}
+                  >
                     <Text style={[styles.phaseText, { color: colors.textSecondary }]}>
                       {selectedWeek.phase_name}
                     </Text>
@@ -834,7 +905,9 @@ export function WeeksListScreen({ navigation }: Props) {
               <View style={styles.weekCardHeaderRight}>
                 {!!selectedWeek.coaching_hint && (
                   <TouchableOpacity
-                    onPress={() => navigation.navigate('TrainingWeekDetail', { weekId: selectedWeek.id })}
+                    onPress={() =>
+                      navigation.navigate('TrainingWeekDetail', { weekId: selectedWeek.id })
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="bulb" size={18} color={colors.warning} />
@@ -878,9 +951,18 @@ export function WeeksListScreen({ navigation }: Props) {
                 {selectedStats.completed}/{selectedStats.total}
               </Text>
             </View>
-            <View style={[styles.progressTrack, styles.sessionsTrack, { backgroundColor: colors.border }]}>
+            <View
+              style={[
+                styles.progressTrack,
+                styles.sessionsTrack,
+                { backgroundColor: colors.border },
+              ]}
+            >
               <View
-                style={[styles.progressFill, { backgroundColor: colors.primary, width: `${selectedStats.percent}%` }]}
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: colors.primary, width: `${selectedStats.percent}%` },
+                ]}
               />
             </View>
 
@@ -937,7 +1019,9 @@ export function WeeksListScreen({ navigation }: Props) {
               {savingSettings ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <Text style={[styles.modalDoneText, { color: colors.primary }]}>{t('common.save')}</Text>
+                <Text style={[styles.modalDoneText, { color: colors.primary }]}>
+                  {t('common.save')}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -952,7 +1036,10 @@ export function WeeksListScreen({ navigation }: Props) {
                 style={[
                   styles.modalToggleRow,
                   { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  autoLinkActivities && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
+                  autoLinkActivities && {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '15',
+                  },
                 ]}
                 onPress={() => setAutoLinkActivities(!autoLinkActivities)}
               >
@@ -993,11 +1080,14 @@ export function WeeksListScreen({ navigation }: Props) {
                         style={[
                           styles.modalSportRow,
                           { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
+                          isSelected && {
+                            borderColor: colors.primary,
+                            backgroundColor: colors.primary + '15',
+                          },
                         ]}
                         onPress={() => {
                           setAllowedSportTypes((prev) =>
-                            isSelected ? prev.filter((id) => id !== sport.id) : [...prev, sport.id]
+                            isSelected ? prev.filter((id) => id !== sport.id) : [...prev, sport.id],
                           );
                         }}
                       >
@@ -1006,8 +1096,12 @@ export function WeeksListScreen({ navigation }: Props) {
                           size={24}
                           color={isSelected ? colors.primary : colors.textSecondary}
                         />
-                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>{sport.name}</Text>
-                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
+                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
+                          {sport.name}
+                        </Text>
+                        {isSelected && (
+                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                        )}
                       </TouchableOpacity>
                     );
                   })}
@@ -1042,7 +1136,10 @@ export function WeeksListScreen({ navigation }: Props) {
                         style={[
                           styles.modalSportRow,
                           { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
+                          isSelected && {
+                            borderColor: colors.primary,
+                            backgroundColor: colors.primary + '15',
+                          },
                         ]}
                         onPress={() => setAiMode(mode)}
                       >
@@ -1054,14 +1151,22 @@ export function WeeksListScreen({ navigation }: Props) {
                         <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
                           {t(`training.tips.settings.${mode}`)}
                         </Text>
-                        {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
+                        {isSelected && (
+                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                        )}
                       </TouchableOpacity>
                     );
                   })}
 
                   {mentalBudget && (
-                    <View style={[styles.usageContainer, { backgroundColor: colors.cardBackground }]}>
-                      <Ionicons name="information-circle-outline" size={20} color={colors.textSecondary} />
+                    <View
+                      style={[styles.usageContainer, { backgroundColor: colors.cardBackground }]}
+                    >
+                      <Ionicons
+                        name="information-circle-outline"
+                        size={20}
+                        color={colors.textSecondary}
+                      />
                       <Text style={[styles.usageText, { color: colors.textSecondary }]}>
                         {t('training.tips.settings.usage', {
                           delivered: mentalBudget.tips_delivered_this_week,

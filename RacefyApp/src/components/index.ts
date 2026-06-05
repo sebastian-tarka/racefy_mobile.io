@@ -92,7 +92,7 @@ export * from './ProfileTabs';
 export * from './ProfileSectionCard';
 export * from './ProfileNavigationSections';
 export * from './UserProfileHeader';
-export * from './EventRankingModeSelector'
+export * from './EventRankingModeSelector';
 export { ImpersonationBanner } from './ImpersonationBanner/ImpersonationBanner';
 export { NetworkStatusBar } from './NetworkStatusBar/NetworkStatusBar';
 export * from './TipCard';

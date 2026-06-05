@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -10,12 +10,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {RouteProp, TabActions, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import {
+  RouteProp,
+  TabActions,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   announceEnd,
   announceStart,
@@ -49,23 +55,22 @@ import {
   RecordingMapControls,
   ScreenContainer,
 } from '../../components';
-import {NavigationOverlay} from '../../components/NavigationOverlay';
-import {useLiveNavigation} from '../../hooks/useLiveNavigation';
-import {useRouteApproachPath} from '../../hooks/useRouteApproachPath';
-import {useNavigationAnnouncer} from '../../hooks/useNavigationAnnouncer';
-import {IdleView} from './recording/IdleView';
-import {RecordingView} from './recording/RecordingView';
-import {PausedView} from './recording/PausedView';
-import {SportSelectionModal} from './recording/SportSelectionModal';
-import {RouteSelectionModal} from './recording/RouteSelectionModal';
+import { NavigationOverlay } from '../../components/NavigationOverlay';
+import { useLiveNavigation } from '../../hooks/useLiveNavigation';
+import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
+import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
+import { IdleView } from './recording/IdleView';
+import { RecordingView } from './recording/RecordingView';
+import { PausedView } from './recording/PausedView';
+import { SportSelectionModal } from './recording/SportSelectionModal';
+import { RouteSelectionModal } from './recording/RouteSelectionModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type {Event} from '../../types/api';
+import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {MainTabParamList, RootStackParamList} from '../../navigation';
-import {logger} from '../../services/logger';
-import {formatTime} from '../../utils/formatters';
-
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { MainTabParamList, RootStackParamList } from '../../navigation';
+import { logger } from '../../services/logger';
+import { formatTime } from '../../utils/formatters';
 
 const MILESTONE_ORDER = [
   'first_5km',
@@ -106,7 +111,7 @@ export function ActivityRecordingScreen() {
       return () => {
         (navigation as any).setOptions({ tabBarStyle: undefined });
       };
-    }, [navigation])
+    }, [navigation]),
   );
 
   // Data hooks (declared early — needed for useDefaultSport below)
@@ -119,7 +124,11 @@ export function ActivityRecordingScreen() {
   const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
 
   // Activity options
-  const [selectedSport, setSelectedSport] = useDefaultSport(sportTypes, isAuthenticated, sportsLoading);
+  const [selectedSport, setSelectedSport] = useDefaultSport(
+    sportTypes,
+    isAuthenticated,
+    sportsLoading,
+  );
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [skipAutoPost, setSkipAutoPost] = useState(false);
   const preselectedEventHandled = useRef(false);
@@ -156,7 +165,7 @@ export function ActivityRecordingScreen() {
   // Data hooks
   const { events: ongoingEvents, isLoading: eventsLoading } = useOngoingEvents();
   const { milestones: milestonesData } = useMilestones(
-    isAuthenticated && canUseAdvancedStats && selectedSport ? selectedSport.id : undefined
+    isAuthenticated && canUseAdvancedStats && selectedSport ? selectedSport.id : undefined,
   );
 
   // Live activity context
@@ -184,12 +193,15 @@ export function ActivityRecordingScreen() {
   const isIdle = !isTracking && !isPaused;
 
   // Audio Coach — session-level toggle (overrides settings.enabled for this session only)
-  const { settings: audioCoachSettings, loadSettings: loadAudioCoachSettings } = useAudioCoachSettings();
-  useEffect(() => { loadAudioCoachSettings(); }, [loadAudioCoachSettings]);
+  const { settings: audioCoachSettings, loadSettings: loadAudioCoachSettings } =
+    useAudioCoachSettings();
+  useEffect(() => {
+    loadAudioCoachSettings();
+  }, [loadAudioCoachSettings]);
   const [audioCoachSessionEnabled, setAudioCoachSessionEnabled] = useState<boolean | null>(null);
   const isAudioCoachActive = audioCoachSessionEnabled ?? audioCoachSettings.enabled;
 
- // Persist audio coach session toggle to AsyncStorage so the background task respects it.
+  // Persist audio coach session toggle to AsyncStorage so the background task respects it.
   // On Android the background location task runs continuously (even in foreground)
   // and reads settings from AsyncStorage — without this sync it ignores the toggle.
   const handleToggleAudioCoach = useCallback(() => {
@@ -198,11 +210,13 @@ export function ActivityRecordingScreen() {
     setAudioCoachSessionEnabled(newEnabled);
 
     // Sync to AsyncStorage for background task
-    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY).then(json => {
-      const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
-      stored.enabled = newEnabled;
-      AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
-    }).catch(() => {});
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY)
+      .then((json) => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = newEnabled;
+        AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      })
+      .catch(() => {});
 
     // Show toast
     setAudioCoachToastEnabled(newEnabled);
@@ -239,9 +253,10 @@ export function ActivityRecordingScreen() {
   const [, setDevSimTick] = useState(0);
   const devSimPace = 5.5; // simulated pace: 5:30 min/km
   // Distance from elapsed time — correct on every render, even after background resume
-  const devSimDistanceM = devSimRunning && devSimStartRef.current > 0
-    ? Math.floor((Date.now() - devSimStartRef.current) / 10000) * 350
-    : 0;
+  const devSimDistanceM =
+    devSimRunning && devSimStartRef.current > 0
+      ? Math.floor((Date.now() - devSimStartRef.current) / 10000) * 350
+      : 0;
   const devSimBgStartedRef = useRef(false);
   useEffect(() => {
     if (!__DEV__ || !devSimRunning) return;
@@ -254,22 +269,26 @@ export function ActivityRecordingScreen() {
     // 1. Write sim flag to AsyncStorage — background task reads it
     AsyncStorage.setItem('@racefy:audioCoach:bgSimStartTime', startTime.toString())
       .then(() => logger.info('audioCoach', 'DEV SimRun: sim flag written'))
-      .catch(e => logger.error('audioCoach', 'DEV SimRun: failed to write sim flag', { error: e }));
+      .catch((e) =>
+        logger.error('audioCoach', 'DEV SimRun: failed to write sim flag', { error: e }),
+      );
 
     // 2. Start lightweight background tracking (foreground service)
     // Dynamic import — backgroundLocation.ts has TaskManager.defineTask at module level
     // and cannot be statically imported from React components
     import('../../services/backgroundLocation')
-      .then(m => m.startSimBackgroundTracking())
-      .then(ok => {
+      .then((m) => m.startSimBackgroundTracking())
+      .then((ok) => {
         devSimBgStartedRef.current = ok;
         logger.info('audioCoach', `DEV SimRun: bg tracking ${ok ? 'STARTED' : 'FAILED'}`);
       })
-      .catch(e => logger.error('audioCoach', 'DEV SimRun: bg tracking error', { error: String(e) }));
+      .catch((e) =>
+        logger.error('audioCoach', 'DEV SimRun: bg tracking error', { error: String(e) }),
+      );
 
     // 3. Foreground re-render tick
     const interval = setInterval(() => {
-      setDevSimTick(t => {
+      setDevSimTick((t) => {
         const elapsed = Date.now() - devSimStartRef.current;
         const dist = Math.floor(elapsed / 10000) * 350;
         logger.info('audioCoach', `DEV SimRun tick: ${dist}m (${(dist / 1000).toFixed(2)}km)`);
@@ -282,17 +301,19 @@ export function ActivityRecordingScreen() {
       AsyncStorage.removeItem('@racefy:audioCoach:bgSimStartTime');
       AsyncStorage.setItem('@racefy:audioCoach:bgLastThreshold', '0');
       if (devSimBgStartedRef.current) {
-        import('../../services/backgroundLocation').then(m => m.stopBackgroundLocationTracking());
+        import('../../services/backgroundLocation').then((m) => m.stopBackgroundLocationTracking());
       }
     };
   }, [devSimRunning]);
 
-  const audioCoachDistanceKm = __DEV__ && devSimRunning
-    ? devSimDistanceM / 1000
-    : currentStats.distance / 1000;
-  const audioCoachPace = __DEV__ && devSimRunning
-    ? devSimPace
-    : (currentStats.currentPace ? currentStats.currentPace / 60 : 0);
+  const audioCoachDistanceKm =
+    __DEV__ && devSimRunning ? devSimDistanceM / 1000 : currentStats.distance / 1000;
+  const audioCoachPace =
+    __DEV__ && devSimRunning
+      ? devSimPace
+      : currentStats.currentPace
+        ? currentStats.currentPace / 60
+        : 0;
 
   useAudioCoach({
     settings: { ...audioCoachSettings, enabled: isAudioCoachActive || (__DEV__ && devSimRunning) },
@@ -308,8 +329,12 @@ export function ActivityRecordingScreen() {
 
   // Nearby routes and shadow track
   const {
-    nearbyRoutes, selectedShadowTrack, loadingRoutes, routesError,
-    handleRouteSelect, handleClearShadowTrack,
+    nearbyRoutes,
+    selectedShadowTrack,
+    loadingRoutes,
+    routesError,
+    handleRouteSelect,
+    handleClearShadowTrack,
   } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
   const myPlannedRoutes = useMyPlannedRoutes(isAuthenticated, user);
@@ -324,9 +349,11 @@ export function ActivityRecordingScreen() {
 
   // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
-    return milestonesData?.distance_single
-      ?.filter((m) => MILESTONE_ORDER.includes(m.type))
-      ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || [];
+    return (
+      milestonesData?.distance_single
+        ?.filter((m) => MILESTONE_ORDER.includes(m.type))
+        ?.sort((a, b) => MILESTONE_ORDER.indexOf(a.type) - MILESTONE_ORDER.indexOf(b.type)) || []
+    );
   }, [milestonesData?.distance_single]);
 
   const status = useMemo<RecordingStatus>(() => {
@@ -340,9 +367,16 @@ export function ActivityRecordingScreen() {
 
   // Capture GPS position at the moment recording starts (for approach-path routing).
   // If GPS isn't ready yet at the start moment, retry as soon as currentPosition becomes available.
-  const [recordingStartPosition, setRecordingStartPosition] = useState<{ lat: number; lng: number } | null>(null);
+  const [recordingStartPosition, setRecordingStartPosition] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   useEffect(() => {
-    if ((status === 'recording' || status === 'paused') && !recordingStartPosition && currentPosition) {
+    if (
+      (status === 'recording' || status === 'paused') &&
+      !recordingStartPosition &&
+      currentPosition
+    ) {
       setRecordingStartPosition({ lat: currentPosition.lat, lng: currentPosition.lng });
     }
     if (status === 'idle' || status === 'finished') {
@@ -373,7 +407,11 @@ export function ActivityRecordingScreen() {
     if (!selectedShadowTrack?.track_data) return null;
     // Wait until the approach hook has a result — otherwise off-route would fire immediately
     // because the raw track starts at a different position than the user.
-    if (approach.status !== 'ready' && approach.status !== 'snapped' && approach.status !== 'error') {
+    if (
+      approach.status !== 'ready' &&
+      approach.status !== 'snapped' &&
+      approach.status !== 'error'
+    ) {
       return null;
     }
     const geometry = approach.geometry ?? selectedShadowTrack.track_data;
@@ -464,7 +502,7 @@ export function ActivityRecordingScreen() {
       setSelectedEvent(preselectedEvent);
       const eventSportTypeId = preselectedEvent.sport_type_id ?? preselectedEvent.sport_type?.id;
       if (eventSportTypeId && sportTypes.length > 0 && !sportsLoading) {
-        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
+        const matchingSport = sportTypes.find((s) => s.id === eventSportTypeId);
         if (matchingSport) {
           setSelectedSport(matchingSport);
           preselectedEventHandled.current = true;
@@ -491,7 +529,6 @@ export function ActivityRecordingScreen() {
     }
   }, [route.params?.preselectedEvent, sportTypes, sportsLoading, handleRouteSelect]);
 
-
   // Error handling
   useEffect(() => {
     if (error) {
@@ -502,7 +539,7 @@ export function ActivityRecordingScreen() {
   // Load view preference from AsyncStorage
   useEffect(() => {
     AsyncStorage.getItem('@racefy_recording_view_mode')
-      .then(saved => {
+      .then((saved) => {
         if (saved === 'map' || saved === 'stats') {
           setViewMode(saved);
         }
@@ -513,8 +550,7 @@ export function ActivityRecordingScreen() {
   // Save view preference when changed
   useEffect(() => {
     if (isTracking || isPaused) {
-      AsyncStorage.setItem('@racefy_recording_view_mode', viewMode)
-        .catch(() => {});
+      AsyncStorage.setItem('@racefy_recording_view_mode', viewMode).catch(() => {});
     }
   }, [viewMode, isTracking, isPaused]);
 
@@ -624,7 +660,9 @@ export function ActivityRecordingScreen() {
                 await requestActivityTrackingPermissions();
                 await resumeTracking();
               } catch (err) {
-                logger.error('activity', 'Failed to resume from existing activity dialog', { error: err });
+                logger.error('activity', 'Failed to resume from existing activity dialog', {
+                  error: err,
+                });
               }
             },
           },
@@ -637,11 +675,10 @@ export function ActivityRecordingScreen() {
                 await finishTracking();
                 Alert.alert(t('common.success'), t('recording.activitySaved'));
               } catch (err) {
-                logger.error('activity', 'Failed to finish from existing activity dialog', { error: err });
-                Alert.alert(
-                  t('recording.saveFailedTitle'),
-                  t('recording.saveFailed'),
-                );
+                logger.error('activity', 'Failed to finish from existing activity dialog', {
+                  error: err,
+                });
+                Alert.alert(t('recording.saveFailedTitle'), t('recording.saveFailed'));
               } finally {
                 isFinishingRef.current = false;
               }
@@ -654,12 +691,14 @@ export function ActivityRecordingScreen() {
               try {
                 await discardTracking();
               } catch (err) {
-                logger.error('activity', 'Failed to discard from existing activity dialog', { error: err });
+                logger.error('activity', 'Failed to discard from existing activity dialog', {
+                  error: err,
+                });
               }
             },
           },
         ],
-        { cancelable: false }
+        { cancelable: false },
       );
     }
   }, [hasExistingActivity, activity]);
@@ -691,12 +730,10 @@ export function ActivityRecordingScreen() {
 
       // Store milestone thresholds for background audio coach
       if (distanceMilestones.length > 0) {
-        const thresholds = distanceMilestones
-          .filter(m => !m.achieved)
-          .map(m => m.threshold);
+        const thresholds = distanceMilestones.filter((m) => !m.achieved).map((m) => m.threshold);
         if (thresholds.length > 0) {
           import('../../services/backgroundLocation')
-            .then(m => m.setAudioCoachMilestones(thresholds))
+            .then((m) => m.setAudioCoachMilestones(thresholds))
             .catch(() => {});
         }
       }
@@ -760,9 +797,10 @@ export function ActivityRecordingScreen() {
 
       // Audio coach: announce end with summary
       const totalKm = currentStats.distance / 1000;
-      const avgPace = localDuration > 0 && totalKm > 0
-        ? (localDuration / 60) / totalKm  // min/km
-        : 0;
+      const avgPace =
+        localDuration > 0 && totalKm > 0
+          ? localDuration / 60 / totalKm // min/km
+          : 0;
       if (avgPace > 0) {
         announceEnd(audioCoachSettings, totalKm, avgPace, tier as any);
       }
@@ -803,7 +841,7 @@ export function ActivityRecordingScreen() {
                 text: t('recording.viewDraft'),
                 onPress: () => navigation.navigate('PostDetail', { postId: result.post!.id }),
               },
-            ]
+            ],
           );
         }
       } else {
@@ -811,20 +849,16 @@ export function ActivityRecordingScreen() {
       }
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
-      Alert.alert(
-        t('recording.saveFailedTitle'),
-        t('recording.saveFailed'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('recording.retry'),
-            onPress: () => {
-              isFinishingRef.current = false;
-              handleSave();
-            },
+      Alert.alert(t('recording.saveFailedTitle'), t('recording.saveFailed'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('recording.retry'),
+          onPress: () => {
+            isFinishingRef.current = false;
+            handleSave();
           },
-        ]
-      );
+        },
+      ]);
     } finally {
       isFinishingRef.current = false;
     }
@@ -843,31 +877,27 @@ export function ActivityRecordingScreen() {
 
   const handleDiscard = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(
-      t('recording.discardActivity'),
-      t('recording.discardConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('recording.discard'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await discardTracking();
-              resetMilestones();
-              // Restore original audio coach settings in AsyncStorage
-              if (audioCoachSessionEnabled !== null) {
-                setAudioCoachSessionEnabled(null);
-                loadAudioCoachSettings();
-              }
-              logger.activity('Activity discarded from UI');
-            } catch (err) {
-              logger.error('activity', 'Failed to discard activity from UI', { error: err });
+    Alert.alert(t('recording.discardActivity'), t('recording.discardConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('recording.discard'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await discardTracking();
+            resetMilestones();
+            // Restore original audio coach settings in AsyncStorage
+            if (audioCoachSessionEnabled !== null) {
+              setAudioCoachSessionEnabled(null);
+              loadAudioCoachSettings();
             }
-          },
+            logger.activity('Activity discarded from UI');
+          } catch (err) {
+            logger.error('activity', 'Failed to discard activity from UI', { error: err });
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Bottom sheet options
@@ -876,7 +906,7 @@ export function ActivityRecordingScreen() {
     if (event) {
       const eventSportTypeId = event.sport_type_id ?? event.sport_type?.id;
       if (eventSportTypeId && sportTypes.length > 0) {
-        const matchingSport = sportTypes.find(s => s.id === eventSportTypeId);
+        const matchingSport = sportTypes.find((s) => s.id === eventSportTypeId);
         if (matchingSport) {
           setSelectedSport(matchingSport);
         }
@@ -884,16 +914,19 @@ export function ActivityRecordingScreen() {
     }
   };
 
-  const addActivityOptions: BottomSheetOption[] = useMemo(() => [
-    {
-      id: 'import',
-      icon: 'cloud-upload-outline',
-      title: t('recording.addOptions.importGpx'),
-      description: t('recording.addOptions.importDescription'),
-      onPress: () => navigation.navigate('GpxImport'),
-      color: colors.success,
-    },
-  ], [t, colors.success, navigation]);
+  const addActivityOptions: BottomSheetOption[] = useMemo(
+    () => [
+      {
+        id: 'import',
+        icon: 'cloud-upload-outline',
+        title: t('recording.addOptions.importGpx'),
+        description: t('recording.addOptions.importDescription'),
+        onPress: () => navigation.navigate('GpxImport'),
+        color: colors.success,
+      },
+    ],
+    [t, colors.success, navigation],
+  );
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Layout Delegates (IdleView, RecordingView, PausedView are in recording/)
@@ -920,13 +953,20 @@ export function ActivityRecordingScreen() {
       onStart={handleStart}
       onSelectSport={(sport) => setSelectedSport(sport)}
       viewMode={viewMode}
-      onToggleView={gpsProfile?.enabled ? () => {
-        const newMode = viewMode === 'stats' ? 'map' : 'stats';
-        logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
-        setViewMode(newMode);
-      } : undefined}
+      onToggleView={
+        gpsProfile?.enabled
+          ? () => {
+              const newMode = viewMode === 'stats' ? 'map' : 'stats';
+              logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
+              setViewMode(newMode);
+            }
+          : undefined
+      }
       devSimRunning={devSimRunning}
-      onToggleDevSim={() => { setDevSimRunning(prev => !prev); triggerHaptic(); }}
+      onToggleDevSim={() => {
+        setDevSimRunning((prev) => !prev);
+        triggerHaptic();
+      }}
       devSimDistanceKm={devSimDistanceM / 1000}
     />
   );
@@ -995,8 +1035,11 @@ export function ActivityRecordingScreen() {
   const renderMapTopOverlay = () => {
     if (!isIdle) return null;
     const mapStyleIcon =
-      mapStyle === 'satellite' ? 'globe-outline' :
-      mapStyle === 'streets' ? 'car-outline' : 'trail-sign-outline';
+      mapStyle === 'satellite'
+        ? 'globe-outline'
+        : mapStyle === 'streets'
+          ? 'car-outline'
+          : 'trail-sign-outline';
 
     return (
       <>
@@ -1016,7 +1059,7 @@ export function ActivityRecordingScreen() {
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
           ) : (
             <View style={styles.mapSportGrid}>
-              {sportTypes.map(sport => {
+              {sportTypes.map((sport) => {
                 const isSelected = selectedSport?.id === sport.id;
                 return (
                   <TouchableOpacity
@@ -1032,10 +1075,12 @@ export function ActivityRecordingScreen() {
                     onPress={() => setSelectedSport(sport)}
                     activeOpacity={0.75}
                   >
-                    <View style={[
-                      styles.mapSportCardIcon,
-                      { backgroundColor: isSelected ? colors.primary + '18' : colors.background },
-                    ]}>
+                    <View
+                      style={[
+                        styles.mapSportCardIcon,
+                        { backgroundColor: isSelected ? colors.primary + '18' : colors.background },
+                      ]}
+                    >
                       <Ionicons
                         name={sport.icon}
                         size={22}
@@ -1043,7 +1088,10 @@ export function ActivityRecordingScreen() {
                       />
                     </View>
                     <Text
-                      style={[styles.mapSportCardName, { color: isSelected ? colors.primary : colors.textSecondary }]}
+                      style={[
+                        styles.mapSportCardName,
+                        { color: isSelected ? colors.primary : colors.textSecondary },
+                      ]}
                       numberOfLines={1}
                     >
                       {sport.name}
@@ -1058,7 +1106,10 @@ export function ActivityRecordingScreen() {
           <View style={styles.mapIconToolbar}>
             {/* Audio coach */}
             <TouchableOpacity
-              style={[styles.mapToolbarIcon, { backgroundColor: isAudioCoachActive ? colors.primary : colors.cardBackground }]}
+              style={[
+                styles.mapToolbarIcon,
+                { backgroundColor: isAudioCoachActive ? colors.primary : colors.cardBackground },
+              ]}
               onPress={handleToggleAudioCoach}
               activeOpacity={0.7}
               accessibilityLabel={t('recording.audioCoach')}
@@ -1073,7 +1124,10 @@ export function ActivityRecordingScreen() {
             {/* View toggle → back to stats */}
             <TouchableOpacity
               style={[styles.mapToolbarIcon, { backgroundColor: colors.primary }]}
-              onPress={() => { setViewMode('stats'); triggerHaptic(); }}
+              onPress={() => {
+                setViewMode('stats');
+                triggerHaptic();
+              }}
               activeOpacity={0.7}
               accessibilityLabel={t('recording.viewStats')}
             >
@@ -1082,8 +1136,16 @@ export function ActivityRecordingScreen() {
 
             {/* Routes toggle */}
             <TouchableOpacity
-              style={[styles.mapToolbarIcon, { backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground }]}
-              onPress={() => { setShowNearbyRoutesToggle(v => !v); triggerHaptic(); }}
+              style={[
+                styles.mapToolbarIcon,
+                {
+                  backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground,
+                },
+              ]}
+              onPress={() => {
+                setShowNearbyRoutesToggle((v) => !v);
+                triggerHaptic();
+              }}
               activeOpacity={0.7}
               accessibilityLabel={t('recording.routes')}
             >
@@ -1107,8 +1169,14 @@ export function ActivityRecordingScreen() {
             {/* DEV sim */}
             {__DEV__ && (
               <TouchableOpacity
-                style={[styles.mapToolbarIcon, { backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground }]}
-                onPress={() => { setDevSimRunning(v => !v); triggerHaptic(); }}
+                style={[
+                  styles.mapToolbarIcon,
+                  { backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground },
+                ]}
+                onPress={() => {
+                  setDevSimRunning((v) => !v);
+                  triggerHaptic();
+                }}
                 activeOpacity={0.7}
               >
                 <Ionicons
@@ -1132,7 +1200,9 @@ export function ActivityRecordingScreen() {
     return (
       <View style={[styles.loadingOverlay, { backgroundColor: colors.background + 'CC' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('common.pleaseWait')}</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          {t('common.pleaseWait')}
+        </Text>
       </View>
     );
   };
@@ -1144,7 +1214,12 @@ export function ActivityRecordingScreen() {
     <ScreenContainer edges={['top']}>
       {/* Header — idle + recording only (paused has its own header in PausedView) */}
       {(status === 'idle' || status === 'recording') && !isScreenLocked && (
-        <View style={[styles.idleHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.idleHeader,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <TouchableOpacity
             onPress={() => navigation.dispatch(TabActions.jumpTo('Home'))}
             style={styles.backButton}
@@ -1158,14 +1233,15 @@ export function ActivityRecordingScreen() {
           {(() => {
             const sig = trackingStatus?.gpsSignal ?? null;
             const gpsColor =
-              sig === 'good' ? colors.success :
-              sig === 'weak' ? colors.warning :
-              sig === 'lost' ? colors.error :
-              colors.textMuted;
+              sig === 'good'
+                ? colors.success
+                : sig === 'weak'
+                  ? colors.warning
+                  : sig === 'lost'
+                    ? colors.error
+                    : colors.textMuted;
             const gpsLabel =
-              sig === 'good' ? 'READY' :
-              sig === 'weak' ? 'WEAK' :
-              sig === 'lost' ? 'LOST' : 'GPS';
+              sig === 'good' ? 'READY' : sig === 'weak' ? 'WEAK' : sig === 'lost' ? 'LOST' : 'GPS';
             return (
               <View style={[styles.gpsHeaderBadge, { backgroundColor: gpsColor + '20' }]}>
                 <Ionicons name="locate" size={12} color={gpsColor} />
@@ -1227,7 +1303,10 @@ export function ActivityRecordingScreen() {
               ]}
             >
               <TouchableOpacity
-                style={[styles.mapStartButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+                style={[
+                  styles.mapStartButton,
+                  { backgroundColor: colors.primary, shadowColor: colors.primary },
+                ]}
                 onPress={handleStart}
                 disabled={isLoading || !selectedSport}
                 activeOpacity={0.85}
@@ -1283,7 +1362,10 @@ export function ActivityRecordingScreen() {
           {!isIdle && !isScreenLocked && !(status === 'paused' && viewMode === 'stats') && (
             <View style={[styles.topRightControls, { top: insets.top + 68 + spacing.sm }]}>
               <TouchableOpacity
-                style={[styles.mapStyleToggleButton, { backgroundColor: followUser ? colors.cardBackground : colors.primary }]}
+                style={[
+                  styles.mapStyleToggleButton,
+                  { backgroundColor: followUser ? colors.cardBackground : colors.primary },
+                ]}
                 onPress={() => {
                   setFollowUser(true);
                   triggerHaptic();
@@ -1327,8 +1409,8 @@ export function ActivityRecordingScreen() {
                     mapStyle === 'satellite'
                       ? 'globe-outline'
                       : mapStyle === 'streets'
-                      ? 'car-outline'
-                      : 'trail-sign-outline'
+                        ? 'car-outline'
+                        : 'trail-sign-outline'
                   }
                   size={26}
                   color={colors.textSecondary}
@@ -1348,7 +1430,7 @@ export function ActivityRecordingScreen() {
                   },
                 ]}
                 onPress={() => {
-                  setDevSimRunning(prev => !prev);
+                  setDevSimRunning((prev) => !prev);
                   triggerHaptic();
                 }}
                 onLongPress={() => {
@@ -1365,12 +1447,18 @@ export function ActivityRecordingScreen() {
                   color={devSimRunning ? '#fff' : colors.textSecondary}
                 />
               </TouchableOpacity>
-              <Text style={{ color: devSimRunning ? '#ef4444' : colors.textMuted, fontSize: 9, textAlign: 'center', marginTop: 2 }}>
+              <Text
+                style={{
+                  color: devSimRunning ? '#ef4444' : colors.textMuted,
+                  fontSize: 9,
+                  textAlign: 'center',
+                  marginTop: 2,
+                }}
+              >
                 {devSimRunning ? `${(devSimDistanceM / 1000).toFixed(1)}km` : 'SimRun'}
               </Text>
             </View>
           )}
-
         </Animated.View>
       )}
 
@@ -1392,8 +1480,17 @@ export function ActivityRecordingScreen() {
             size={20}
             color={audioCoachToastEnabled ? '#ffffff' : colors.textSecondary}
           />
-          <Text style={[styles.mapStyleToastText, { color: audioCoachToastEnabled ? '#ffffff' : colors.textPrimary }]}>
-            {t(audioCoachToastEnabled ? 'recording.audioCoachEnabled' : 'recording.audioCoachDisabled')}
+          <Text
+            style={[
+              styles.mapStyleToastText,
+              { color: audioCoachToastEnabled ? '#ffffff' : colors.textPrimary },
+            ]}
+          >
+            {t(
+              audioCoachToastEnabled
+                ? 'recording.audioCoachEnabled'
+                : 'recording.audioCoachDisabled',
+            )}
           </Text>
         </Animated.View>
       )}
@@ -1416,7 +1513,12 @@ export function ActivityRecordingScreen() {
             size={20}
             color={lockToastLocked ? '#f9fafb' : colors.textSecondary}
           />
-          <Text style={[styles.mapStyleToastText, { color: lockToastLocked ? '#f9fafb' : colors.textPrimary }]}>
+          <Text
+            style={[
+              styles.mapStyleToastText,
+              { color: lockToastLocked ? '#f9fafb' : colors.textPrimary },
+            ]}
+          >
             {t(lockToastLocked ? 'recording.screenLocked' : 'recording.screenUnlocked')}
           </Text>
         </Animated.View>
@@ -1436,11 +1538,7 @@ export function ActivityRecordingScreen() {
         >
           <Ionicons
             name={
-              mapStyle === 'satellite'
-                ? 'globe'
-                : mapStyle === 'streets'
-                ? 'car'
-                : 'trail-sign'
+              mapStyle === 'satellite' ? 'globe' : mapStyle === 'streets' ? 'car' : 'trail-sign'
             }
             size={20}
             color={colors.primary}
@@ -1449,8 +1547,8 @@ export function ActivityRecordingScreen() {
             {mapStyle === 'satellite'
               ? t('recording.mapStyleSatellite')
               : mapStyle === 'streets'
-              ? t('recording.mapStyleStreets')
-              : t('recording.mapStyleOutdoors')}
+                ? t('recording.mapStyleStreets')
+                : t('recording.mapStyleOutdoors')}
           </Text>
         </Animated.View>
       )}
@@ -1747,5 +1845,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
 });

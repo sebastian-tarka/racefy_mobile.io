@@ -1,11 +1,5 @@
 import React, { memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
@@ -26,7 +20,7 @@ interface PointHistoryListProps {
 // Get icon and color for transaction type
 const getTransactionStyle = (
   type: PointTransactionType,
-  colors: any
+  colors: any,
 ): { icon: keyof typeof Ionicons.glyphMap; color: string } => {
   switch (type) {
     case 'activity':
@@ -73,13 +67,9 @@ const PointHistoryItem = memo(({ transaction }: PointHistoryItemProps) => {
 
       {/* Points */}
       <View style={styles.pointsContainer}>
-        <Text
-          style={[
-            styles.points,
-            { color: isPositive ? colors.success : colors.error },
-          ]}
-        >
-          {isPositive ? '+' : ''}{transaction.points}
+        <Text style={[styles.points, { color: isPositive ? colors.success : colors.error }]}>
+          {isPositive ? '+' : ''}
+          {transaction.points}
         </Text>
         <Text style={[styles.pointsLabel, { color: colors.textMuted }]}>
           {t('leaderboard.history.points')}

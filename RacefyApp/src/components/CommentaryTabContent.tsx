@@ -15,10 +15,7 @@ interface CommentaryTabContentProps {
   onOpenSettings?: () => void;
 }
 
-export function CommentaryTabContent({
-  event,
-  onOpenSettings,
-}: CommentaryTabContentProps) {
+export function CommentaryTabContent({ event, onOpenSettings }: CommentaryTabContentProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -85,11 +82,7 @@ export function CommentaryTabContent({
           <Text style={[styles.settingsText, { color: colors.primary }]}>
             {t('commentary.settings')}
           </Text>
-          <Ionicons
-            name="chevron-forward"
-            size={16}
-            color={colors.textMuted}
-          />
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
     );

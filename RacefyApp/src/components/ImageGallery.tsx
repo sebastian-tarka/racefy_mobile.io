@@ -12,16 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme';
-import {
-  GestureDetector,
-  Gesture,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 interface ImageGalleryProps {
   images: string[];
@@ -102,12 +94,7 @@ function GalleryImage({ uri }: { uri: string }) {
   );
 }
 
-export function ImageGallery({
-  images,
-  initialIndex = 0,
-  visible,
-  onClose,
-}: ImageGalleryProps) {
+export function ImageGallery({ images, initialIndex = 0, visible, onClose }: ImageGalleryProps) {
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
@@ -162,10 +149,7 @@ export function ImageGallery({
             {images.map((_, index) => (
               <View
                 key={index}
-                style={[
-                  styles.indicator,
-                  index === currentIndex && styles.indicatorActive,
-                ]}
+                style={[styles.indicator, index === currentIndex && styles.indicatorActive]}
               />
             ))}
           </View>

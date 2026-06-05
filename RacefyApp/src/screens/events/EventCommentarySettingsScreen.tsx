@@ -22,21 +22,13 @@ import { Button } from '../../components/Button';
 import { ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type {
-  CommentaryStyle,
-  CommentaryLanguage,
-  CommentaryType,
-  Event,
-} from '../../types/api';
+import type { CommentaryStyle, CommentaryLanguage, CommentaryType, Event } from '../../types/api';
 
 type RootStackParamList = {
   EventCommentarySettings: { eventId: number };
 };
 
-type Props = NativeStackScreenProps<
-  RootStackParamList,
-  'EventCommentarySettings'
->;
+type Props = NativeStackScreenProps<RootStackParamList, 'EventCommentarySettings'>;
 
 export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
@@ -116,7 +108,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     } catch (err) {
       Alert.alert(
         t('commentary.error', 'Error'),
-        t('commentary.updateFailed', 'Failed to update commentary settings')
+        t('commentary.updateFailed', 'Failed to update commentary settings'),
       );
     }
   };
@@ -127,7 +119,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     } catch (err) {
       Alert.alert(
         t('commentary.error', 'Error'),
-        t('commentary.updateFailed', 'Failed to update commentary settings')
+        t('commentary.updateFailed', 'Failed to update commentary settings'),
       );
     }
   };
@@ -138,7 +130,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     } catch (err) {
       Alert.alert(
         t('commentary.error', 'Error'),
-        t('commentary.updateFailed', 'Failed to update commentary settings')
+        t('commentary.updateFailed', 'Failed to update commentary settings'),
       );
     }
   };
@@ -149,7 +141,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     } catch (err) {
       Alert.alert(
         t('commentary.error', 'Error'),
-        t('commentary.updateFailed', 'Failed to update commentary settings')
+        t('commentary.updateFailed', 'Failed to update commentary settings'),
       );
     }
   };
@@ -166,7 +158,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     if (newLanguages.length === 0) {
       Alert.alert(
         t('commentary.warning', 'Warning'),
-        t('commentary.atLeastOneLanguage', 'At least one language must be selected')
+        t('commentary.atLeastOneLanguage', 'At least one language must be selected'),
       );
       return;
     }
@@ -176,7 +168,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     } catch (err) {
       Alert.alert(
         t('commentary.error', 'Error'),
-        t('commentary.updateFailed', 'Failed to update commentary settings')
+        t('commentary.updateFailed', 'Failed to update commentary settings'),
       );
     }
   };
@@ -188,7 +180,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
       t('commentary.generate', 'Generate Commentary'),
       t(
         'commentary.generateConfirm',
-        `Generate a ${type} commentary update? This will use tokens from your limit.`
+        `Generate a ${type} commentary update? This will use tokens from your limit.`,
       ),
       [
         {
@@ -204,19 +196,18 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 t('common.success', 'Success'),
                 t(
                   'commentary.generateStarted',
-                  'Commentary generation has been started. It will appear in the feed shortly.'
-                )
+                  'Commentary generation has been started. It will appear in the feed shortly.',
+                ),
               );
             } catch (err) {
               Alert.alert(
                 t('commentary.error', 'Error'),
-                generateError ||
-                  t('commentary.generateFailed', 'Failed to generate commentary')
+                generateError || t('commentary.generateFailed', 'Failed to generate commentary'),
               );
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -280,7 +271,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
               <Text style={[styles.readOnlyMessage, { color: colors.textSecondary }]}>
                 {t(
                   'commentary.readOnlyMessage',
-                  'Settings cannot be modified for completed or cancelled events'
+                  'Settings cannot be modified for completed or cancelled events',
                 )}
               </Text>
             </View>
@@ -310,9 +301,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
             )}
           </View>
           {tokenLimit > 0 && (
-            <View
-              style={[styles.progressBar, { backgroundColor: colors.borderLight }]}
-            >
+            <View style={[styles.progressBar, { backgroundColor: colors.borderLight }]}>
               <View
                 style={[
                   styles.progressFill,
@@ -334,10 +323,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 {t('commentary.enableAI', 'Enable AI Commentary')}
               </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t(
-                  'commentary.enableDescription',
-                  'Generate AI commentary for this event'
-                )}
+                {t('commentary.enableDescription', 'Generate AI commentary for this event')}
               </Text>
             </View>
             <Switch
@@ -364,11 +350,8 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                     styles.styleOption,
                     {
                       backgroundColor:
-                        settings.style === key
-                          ? colors.successLight
-                          : colors.transparent,
-                      borderColor:
-                        settings.style === key ? colors.success : colors.border,
+                        settings.style === key ? colors.successLight : colors.transparent,
+                      borderColor: settings.style === key ? colors.success : colors.border,
                       opacity: isReadOnly ? 0.5 : 1,
                     },
                   ]}
@@ -380,25 +363,18 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                       style={[
                         styles.styleName,
                         {
-                          color:
-                            settings.style === key
-                              ? colors.success
-                              : colors.textPrimary,
+                          color: settings.style === key ? colors.success : colors.textPrimary,
                         },
                       ]}
                     >
                       {value.name}
                     </Text>
-                    <Text
-                      style={[styles.styleDescription, { color: colors.textSecondary }]}
-                    >
+                    <Text style={[styles.styleDescription, { color: colors.textSecondary }]}>
                       {value.description}
                     </Text>
                   </View>
                   {settings.style === key && (
-                    <Text style={[styles.checkmark, { color: colors.success }]}>
-                      ✓
-                    </Text>
+                    <Text style={[styles.checkmark, { color: colors.success }]}>✓</Text>
                   )}
                 </TouchableOpacity>
               ))}
@@ -412,19 +388,15 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
               <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
                 {t(
                   'commentary.languagesDescription',
-                  'Select which languages to generate commentary in'
+                  'Select which languages to generate commentary in',
                 )}
               </Text>
               {Object.entries(settings.available_languages).map(([code, name]) => (
                 <View key={code} style={styles.settingRow}>
-                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                    {name}
-                  </Text>
+                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{name}</Text>
                   <Switch
                     value={settings.languages.includes(code as CommentaryLanguage)}
-                    onValueChange={() =>
-                      handleToggleLanguage(code as CommentaryLanguage)
-                    }
+                    onValueChange={() => handleToggleLanguage(code as CommentaryLanguage)}
                     disabled={isSaving || isReadOnly}
                     trackColor={{ true: colors.primary, false: colors.border }}
                     thumbColor={colors.white}
@@ -444,12 +416,10 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                   <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
                     {t('commentary.autoPublish', 'Auto-publish')}
                   </Text>
-                  <Text
-                    style={[styles.settingDescription, { color: colors.textSecondary }]}
-                  >
+                  <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                     {t(
                       'commentary.autoPublishDescription',
-                      'Automatically publish generated commentary'
+                      'Automatically publish generated commentary',
                     )}
                   </Text>
                 </View>
@@ -468,10 +438,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 {t('commentary.updateInterval', 'Update Interval')}
               </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t(
-                  'commentary.updateIntervalDescription',
-                  'How often to generate live updates'
-                )}
+                {t('commentary.updateIntervalDescription', 'How often to generate live updates')}
               </Text>
               <View style={styles.intervalOptions}>
                 {[5, 10, 15, 30, 60].map((interval) => (
@@ -485,9 +452,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                             ? colors.primary
                             : colors.transparent,
                         borderColor:
-                          settings.interval_minutes === interval
-                            ? colors.primary
-                            : colors.border,
+                          settings.interval_minutes === interval ? colors.primary : colors.border,
                         opacity: isReadOnly ? 0.5 : 1,
                       },
                     ]}
@@ -518,10 +483,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                 {t('commentary.manualGeneration', 'Manual Generation')}
               </Text>
               <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                {t(
-                  'commentary.manualGenerationDescription',
-                  'Generate commentary on demand'
-                )}
+                {t('commentary.manualGenerationDescription', 'Generate commentary on demand')}
               </Text>
 
               <View style={styles.generateButtons}>

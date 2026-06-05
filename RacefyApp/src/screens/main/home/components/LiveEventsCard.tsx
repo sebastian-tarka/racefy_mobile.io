@@ -14,15 +14,15 @@ interface LiveEventsCardProps {
 
 // Sport type emoji mapping
 const SPORT_EMOJI: Record<string, string> = {
-  'running': '🏃',
-  'cycling': '🚴',
-  'swimming': '🏊',
-  'skiing': '⛷️',
-  'hiking': '🥾',
-  'walking': '🚶',
-  'gym': '💪',
-  'yoga': '🧘',
-  'other': '🏋️',
+  running: '🏃',
+  cycling: '🚴',
+  swimming: '🏊',
+  skiing: '⛷️',
+  hiking: '🥾',
+  walking: '🚶',
+  gym: '💪',
+  yoga: '🧘',
+  other: '🏋️',
 };
 
 /**
@@ -52,7 +52,7 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
           duration: 1000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     pulse.start();
     return () => pulse.stop();
@@ -93,7 +93,10 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
       onPress={() => onPress?.(selectedEvent.id)}
       activeOpacity={0.8}
     >
@@ -102,11 +105,7 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
         {coverImageUrl ? (
           <>
             {/* Cover image - positioned from top */}
-            <Image
-              source={{ uri: coverImageUrl }}
-              style={styles.coverImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: coverImageUrl }} style={styles.coverImage} resizeMode="cover" />
             {/* Dark gradient overlay for readability */}
             <LinearGradient
               colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}

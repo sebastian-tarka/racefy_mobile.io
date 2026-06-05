@@ -87,7 +87,12 @@ export function PausedView({
   return (
     <View style={styles.container}>
       {/* Compact Header */}
-      <View style={[styles.compactHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.compactHeader,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <View style={styles.compactHeaderLeft}>
           {selectedSport && (
             <>
@@ -102,27 +107,52 @@ export function PausedView({
         </View>
         <View style={styles.compactHeaderRight}>
           <Badge
-            label={status === 'recording' ? t('recording.status.recording') : t('recording.status.paused')}
+            label={
+              status === 'recording'
+                ? t('recording.status.recording')
+                : t('recording.status.paused')
+            }
             variant={status === 'recording' ? 'ongoing' : 'upcoming'}
           />
           {trackingStatus && (
-            <View style={[styles.gpsIndicator, {
-              backgroundColor: trackingStatus.gpsSignal === 'good' ? colors.success + '20' :
-                              trackingStatus.gpsSignal === 'weak' ? colors.warning + '20' :
-                              colors.error + '20'
-            }]}
+            <View
+              style={[
+                styles.gpsIndicator,
+                {
+                  backgroundColor:
+                    trackingStatus.gpsSignal === 'good'
+                      ? colors.success + '20'
+                      : trackingStatus.gpsSignal === 'weak'
+                        ? colors.warning + '20'
+                        : colors.error + '20',
+                },
+              ]}
               accessibilityLabel={t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
             >
               <Ionicons
                 name="locate"
                 size={14}
-                color={trackingStatus.gpsSignal === 'good' ? colors.success :
-                       trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error}
+                color={
+                  trackingStatus.gpsSignal === 'good'
+                    ? colors.success
+                    : trackingStatus.gpsSignal === 'weak'
+                      ? colors.warning
+                      : colors.error
+                }
               />
-              <Text style={[styles.gpsSignalText, {
-                color: trackingStatus.gpsSignal === 'good' ? colors.success :
-                       trackingStatus.gpsSignal === 'weak' ? colors.warning : colors.error
-              }]}>
+              <Text
+                style={[
+                  styles.gpsSignalText,
+                  {
+                    color:
+                      trackingStatus.gpsSignal === 'good'
+                        ? colors.success
+                        : trackingStatus.gpsSignal === 'weak'
+                          ? colors.warning
+                          : colors.error,
+                  },
+                ]}
+              >
                 {t(`recording.gpsSignal.${trackingStatus.gpsSignal}`)}
               </Text>
             </View>
@@ -138,7 +168,12 @@ export function PausedView({
           </Text>
         </View>
 
-        <View style={[styles.liveStatsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.liveStatsContainer,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.liveStatItem}>
             <Text style={[styles.liveStatValue, { color: colors.primary }]}>
               {fmtDistance(distance)}
@@ -158,9 +193,7 @@ export function PausedView({
           </View>
           <View style={[styles.liveStatDivider, { backgroundColor: colors.border }]} />
           <View style={styles.liveStatItem}>
-            <Text style={[styles.liveStatValue, { color: colors.primary }]}>
-              {formatAvgPace()}
-            </Text>
+            <Text style={[styles.liveStatValue, { color: colors.primary }]}>{formatAvgPace()}</Text>
             <Text style={[styles.liveStatLabel, { color: colors.textMuted }]}>
               {t('recording.avgPace')} {getPaceUnit()}
             </Text>
@@ -199,7 +232,10 @@ export function PausedView({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 }]}
+            style={[
+              styles.actionButton,
+              { backgroundColor: colors.error + '15', borderColor: colors.error, borderWidth: 1 },
+            ]}
             onPress={onDiscard}
             disabled={isLoading}
             activeOpacity={0.7}
@@ -243,11 +279,19 @@ export function PausedView({
       </View>
 
       {/* BOTTOM — event selector + map (fills remaining space, respects nav bar) */}
-      <View style={[styles.bottomSection, { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+      <View
+        style={[
+          styles.bottomSection,
+          { borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, spacing.md) },
+        ]}
+      >
         <TouchableOpacity
           style={[
             styles.eventSelector,
-            { backgroundColor: colors.cardBackground, borderColor: selectedEvent ? colors.primary : colors.border },
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: selectedEvent ? colors.primary : colors.border,
+            },
           ]}
           onPress={onShowEventSheet}
           disabled={isLoading}
@@ -263,11 +307,17 @@ export function PausedView({
                 />
               </View>
               <View style={styles.eventSelectorContent}>
-                <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                <Text
+                  style={[styles.eventSelectorTitle, { color: colors.textPrimary }]}
+                  numberOfLines={1}
+                >
                   {selectedEvent.post?.title || t('eventDetail.untitled')}
                 </Text>
                 {selectedEvent.location_name ? (
-                  <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
                     {selectedEvent.location_name}
                   </Text>
                 ) : null}
@@ -281,7 +331,9 @@ export function PausedView({
             </>
           ) : (
             <>
-              <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
+              <View
+                style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}
+              >
                 <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
               </View>
               <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>

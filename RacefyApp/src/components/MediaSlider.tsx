@@ -17,7 +17,7 @@ export function MediaSlider({
   onImagePress,
   onVideoPress,
   aspectRatio = 16 / 9,
-  previewHeight = 300
+  previewHeight = 300,
 }: MediaSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -35,7 +35,7 @@ export function MediaSlider({
   }).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50
+    itemVisiblePercentThreshold: 50,
   }).current;
 
   const renderItem = ({ item, index }: { item: PostMediaItem; index: number }) => {
@@ -87,13 +87,7 @@ export function MediaSlider({
       {items.length > 1 && (
         <View style={styles.pagination}>
           {items.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                index === activeIndex && styles.dotActive
-              ]}
-            />
+            <View key={index} style={[styles.dot, index === activeIndex && styles.dotActive]} />
           ))}
         </View>
       )}

@@ -1,6 +1,6 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Animated, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Image} from 'expo-image';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
@@ -8,14 +8,14 @@ import {
   PinchGestureHandlerGestureEvent,
   State,
 } from 'react-native-gesture-handler';
-import {Ionicons} from '@expo/vector-icons';
-import {SvgXml} from 'react-native-svg';
-import {borderRadius, spacing} from '../theme';
-import {MAPBOX_ACCESS_TOKEN} from '../config/api';
-import {mapboxAnalytics} from '../services/mapboxAnalytics';
-import {useTheme} from '../hooks/useTheme';
-import {useViewability} from '../hooks/useViewability';
-import type {GeoJSONLineString} from '../types/api';
+import { Ionicons } from '@expo/vector-icons';
+import { SvgXml } from 'react-native-svg';
+import { borderRadius, spacing } from '../theme';
+import { MAPBOX_ACCESS_TOKEN } from '../config/api';
+import { mapboxAnalytics } from '../services/mapboxAnalytics';
+import { useTheme } from '../hooks/useTheme';
+import { useViewability } from '../hooks/useViewability';
+import type { GeoJSONLineString } from '../types/api';
 
 // Lazy load MapboxRouteMap to avoid import errors if @rnmapbox/maps is not installed
 let MapboxRouteMap: any = null;
@@ -216,11 +216,7 @@ export function RoutePreview({
   };
 
   const animatedStyle = {
-    transform: [
-      { translateX },
-      { translateY },
-      { scale },
-    ],
+    transform: [{ translateX }, { translateY }, { scale }],
   };
 
   // Prefer full map image (Mapbox JPEG with map background) for best visual experience
@@ -230,7 +226,7 @@ export function RoutePreview({
         <Image
           source={{ uri: routeMapUrl }}
           style={styles.mapImage}
-          contentFit={enableZoom ? "contain" : "cover"}
+          contentFit={enableZoom ? 'contain' : 'cover'}
           cachePolicy="memory-disk"
         />
       </Animated.View>
@@ -250,9 +246,7 @@ export function RoutePreview({
                   onGestureEvent={onPinchEvent}
                   onHandlerStateChange={onPinchStateChange}
                 >
-                  <Animated.View style={{ flex: 1 }}>
-                    {content}
-                  </Animated.View>
+                  <Animated.View style={{ flex: 1 }}>{content}</Animated.View>
                 </PinchGestureHandler>
               </Animated.View>
             </PanGestureHandler>
@@ -330,9 +324,7 @@ export function RoutePreview({
                   onGestureEvent={onPinchEvent}
                   onHandlerStateChange={onPinchStateChange}
                 >
-                  <Animated.View style={{ flex: 1 }}>
-                    {svgContent}
-                  </Animated.View>
+                  <Animated.View style={{ flex: 1 }}>{svgContent}</Animated.View>
                 </PinchGestureHandler>
               </Animated.View>
             </PanGestureHandler>
@@ -383,7 +375,10 @@ export function LazyRoutePreview(props: RoutePreviewProps) {
 
   if (!isViewable) {
     return (
-      <View ref={viewRef} style={[styles.container, { height: props.height || 250, backgroundColor: bgColor }]}>
+      <View
+        ref={viewRef}
+        style={[styles.container, { height: props.height || 250, backgroundColor: bgColor }]}
+      >
         <View style={styles.mapPlaceholder}>
           <Ionicons name="map-outline" size={32} color={colors.textMuted || '#888'} />
         </View>
@@ -395,7 +390,14 @@ export function LazyRoutePreview(props: RoutePreviewProps) {
 }
 
 // Backwards compatible alias
-export function LeafletMap(props: RoutePreviewProps & { coordinates?: unknown; bounds?: unknown; strokeColor?: string; strokeWidth?: number }) {
+export function LeafletMap(
+  props: RoutePreviewProps & {
+    coordinates?: unknown;
+    bounds?: unknown;
+    strokeColor?: string;
+    strokeWidth?: number;
+  },
+) {
   return <RoutePreview {...props} />;
 }
 

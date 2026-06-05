@@ -142,22 +142,17 @@ export function FeedbackFormScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('feedback.form.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('feedback.form.title')} showBack onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* Type selector */}
-          <Text style={[styles.label, { color: colors.textPrimary }]}>{t('feedback.form.type')}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('feedback.form.type')}
+          </Text>
           <View style={styles.typeSelector}>
             {FEEDBACK_TYPES.map(({ type, icon, color }) => {
               const isActive = feedbackType === type;
@@ -173,12 +168,13 @@ export function FeedbackFormScreen({ navigation }: Props) {
                   ]}
                   onPress={() => setFeedbackType(type)}
                 >
-                  <Ionicons name={icon as any} size={24} color={isActive ? color : colors.textSecondary} />
+                  <Ionicons
+                    name={icon as any}
+                    size={24}
+                    color={isActive ? color : colors.textSecondary}
+                  />
                   <Text
-                    style={[
-                      styles.typeLabel,
-                      { color: isActive ? color : colors.textSecondary },
-                    ]}
+                    style={[styles.typeLabel, { color: isActive ? color : colors.textSecondary }]}
                     numberOfLines={2}
                   >
                     {t(`feedback.types.${type}`)}
@@ -219,7 +215,9 @@ export function FeedbackFormScreen({ navigation }: Props) {
           />
 
           {/* Priority */}
-          <Text style={[styles.label, { color: colors.textPrimary }]}>{t('feedback.form.priority')}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('feedback.form.priority')}
+          </Text>
           <View style={styles.priorityRow}>
             {PRIORITIES.map((p) => {
               const isActive = priority === p;
@@ -250,11 +248,16 @@ export function FeedbackFormScreen({ navigation }: Props) {
           </View>
 
           {/* Attachments */}
-          <Text style={[styles.label, { color: colors.textPrimary }]}>{t('feedback.form.attachments')}</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('feedback.form.attachments')}
+          </Text>
           <View style={styles.attachmentsRow}>
             {attachments.length < 5 && (
               <TouchableOpacity
-                style={[styles.addPhotoButton, { borderColor: colors.border, backgroundColor: colors.cardBackground }]}
+                style={[
+                  styles.addPhotoButton,
+                  { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                ]}
                 onPress={handleAddPhoto}
               >
                 <Ionicons name="camera-outline" size={24} color={colors.textSecondary} />

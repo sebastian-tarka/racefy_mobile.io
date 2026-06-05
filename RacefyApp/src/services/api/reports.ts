@@ -18,7 +18,7 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
      * navigate to detail and let polling resolve the final state.
      */
     async generateActivityReport(
-      data: GenerateActivityReportRequest
+      data: GenerateActivityReportRequest,
     ): Promise<GenerateActivityReportResponse> {
       return this.request<GenerateActivityReportResponse>('/ai/activity-reports', {
         method: 'POST',
@@ -31,7 +31,7 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
      */
     async listActivityReports(page = 1): Promise<Types.PaginatedResponse<AiActivityReport>> {
       return this.request<Types.PaginatedResponse<AiActivityReport>>(
-        `/ai/activity-reports?page=${page}`
+        `/ai/activity-reports?page=${page}`,
       );
     }
 
@@ -41,7 +41,7 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
      */
     async getActivityReport(id: number): Promise<AiActivityReport> {
       const response = await this.request<Types.ApiResponse<AiActivityReport>>(
-        `/ai/activity-reports/${id}`
+        `/ai/activity-reports/${id}`,
       );
       return response.data;
     }
@@ -50,10 +50,9 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
      * Delete a report. Owner-only.
      */
     async deleteActivityReport(id: number): Promise<string> {
-      const response = await this.request<{ message: string }>(
-        `/ai/activity-reports/${id}`,
-        { method: 'DELETE' }
-      );
+      const response = await this.request<{ message: string }>(`/ai/activity-reports/${id}`, {
+        method: 'DELETE',
+      });
       return response.message;
     }
   };

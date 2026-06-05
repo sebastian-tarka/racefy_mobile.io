@@ -54,10 +54,7 @@ export function useFeedback() {
   }, []);
 
   const refresh = useCallback(() => fetchFeedbacks(true), [fetchFeedbacks]);
-  const loadMore = useCallback(
-    () => hasMore && fetchFeedbacks(false),
-    [hasMore, fetchFeedbacks]
-  );
+  const loadMore = useCallback(() => hasMore && fetchFeedbacks(false), [hasMore, fetchFeedbacks]);
 
   const setFilters = useCallback(
     (filters: { status?: FeedbackStatus; type?: FeedbackType }) => {
@@ -65,7 +62,7 @@ export function useFeedback() {
       pageRef.current = 1;
       fetchFeedbacks(true);
     },
-    [fetchFeedbacks]
+    [fetchFeedbacks],
   );
 
   return {

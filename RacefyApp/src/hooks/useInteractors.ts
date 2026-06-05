@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import type {InteractionTargetType, InteractionVariant,} from '../components/InteractionButton';
-import type {PaginatedResponse, UserInteractor} from '../types/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import type { InteractionTargetType, InteractionVariant } from '../components/InteractionButton';
+import type { PaginatedResponse, UserInteractor } from '../types/api';
 
 interface UseInteractorsParams {
   /** When false, the hook won't fetch (used to gate on modal visibility) */
@@ -28,7 +28,7 @@ async function fetchInteractors(
   targetType: InteractionTargetType,
   targetId: number,
   parentId: number | undefined,
-  page: number
+  page: number,
 ): Promise<PaginatedResponse<UserInteractor>> {
   if (variant === 'like') {
     if (targetType === 'post') return api.getPostLikers(targetId, page);
@@ -37,8 +37,7 @@ async function fetchInteractors(
     throw new Error(`Likers not supported for ${targetType}`);
   }
   if (variant === 'boost') {
-    if (targetType === 'activity')
-      return api.getActivityBoosters(targetId, page);
+    if (targetType === 'activity') return api.getActivityBoosters(targetId, page);
     if (targetType === 'commentary') {
       if (parentId == null) {
         throw new Error('commentary boosters require parentId (eventId)');
@@ -72,17 +71,9 @@ export function useInteractors({
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetchInteractors(
-          variant,
-          targetType,
-          targetId,
-          parentId,
-          pageToFetch
-        );
+        const res = await fetchInteractors(variant, targetType, targetId, parentId, pageToFetch);
         if (reqId !== requestIdRef.current) return; // stale
-        setUsers((prev) =>
-          pageToFetch === 1 ? res.data : [...prev, ...res.data]
-        );
+        setUsers((prev) => (pageToFetch === 1 ? res.data : [...prev, ...res.data]));
         setPage(res.meta.current_page);
         setHasMore(res.meta.current_page < res.meta.last_page);
       } catch (err: any) {
@@ -100,7 +91,7 @@ export function useInteractors({
         }
       }
     },
-    [variant, targetType, targetId, parentId]
+    [variant, targetType, targetId, parentId],
   );
 
   // Reset & fetch when enabled changes from false to true, or when target changes

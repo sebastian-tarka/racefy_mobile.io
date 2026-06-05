@@ -27,7 +27,12 @@ export function CoachingHintPanel({ coachingHint }: Props) {
       </View>
 
       {/* Week Overview */}
-      <View style={[styles.overviewCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+      <View
+        style={[
+          styles.overviewCard,
+          { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' },
+        ]}
+      >
         <Text style={[styles.overviewLabel, { color: colors.primary }]}>
           {t('training.coachingHints.weekOverview')}
         </Text>

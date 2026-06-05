@@ -1,13 +1,13 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Alert, Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Ionicons} from '@expo/vector-icons';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {useAppVersion} from '../hooks/useAppVersion';
-import {logger} from '../services/logger';
-import {borderRadius, fontSize, spacing} from '../theme';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { useAppVersion } from '../hooks/useAppVersion';
+import { logger } from '../services/logger';
+import { borderRadius, fontSize, spacing } from '../theme';
 
 /**
  * Top-of-screen dismissable banner shown when a newer (but not mandatory)
@@ -101,7 +101,10 @@ export function SoftUpdateBanner() {
             {t('update.updateNow')}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity
+          onPress={handleDismiss}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Ionicons name="close" size={20} color={colors.white} />
         </TouchableOpacity>
       </View>

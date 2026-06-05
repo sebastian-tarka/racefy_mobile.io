@@ -26,7 +26,7 @@ export function useActiveWeek(
         if (program.sport_type_id === selectedSportId) {
           const weeks = await api.getWeeks();
           if (cancelled) return;
-          const currentWeek = weeks.find(w => w.status === 'current' || w.status === 'active');
+          const currentWeek = weeks.find((w) => w.status === 'current' || w.status === 'active');
           setActiveWeek(currentWeek || null);
         } else {
           setActiveWeek(null);
@@ -36,7 +36,9 @@ export function useActiveWeek(
         setActiveWeek(null);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated, selectedSportId]);
 
   return activeWeek;

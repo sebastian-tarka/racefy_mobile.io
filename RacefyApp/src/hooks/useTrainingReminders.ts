@@ -42,7 +42,7 @@ export function useTrainingReminders() {
       const trainingReminders = (prefs as any).training_reminders;
       const notifications = (prefs as any).notifications;
 
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         enabled: trainingReminders?.enabled ?? false,
         days: trainingReminders?.days ?? [],
@@ -52,66 +52,75 @@ export function useTrainingReminders() {
       }));
     } catch (error) {
       logger.error('api', 'Failed to load training reminders preferences', { error });
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
     }
   }, []);
 
-  const debouncedApiUpdate = useCallback((data: Record<string, any>) => {
-    // Merge with any pending update
-    pendingUpdate.current = { ...(pendingUpdate.current || {}), ...data };
+  const debouncedApiUpdate = useCallback(
+    (data: Record<string, any>) => {
+      // Merge with any pending update
+      pendingUpdate.current = { ...(pendingUpdate.current || {}), ...data };
 
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(async () => {
-      const updateData = pendingUpdate.current;
-      pendingUpdate.current = null;
-      if (!updateData) return;
-
-      setState(prev => ({ ...prev, saving: true }));
-      try {
-        await api.updatePreferences(updateData);
-        logger.debug('general', 'Training reminders saved, emitting refresh', { updateData });
-        emitRefresh('training');
-      } catch (error) {
-        logger.error('api', 'Failed to update training reminders', { error });
-        Alert.alert(t('common.error'), t('settings.updateFailed'));
-        // Reload to revert
-        loadPreferences();
-      } finally {
-        setState(prev => ({ ...prev, saving: false }));
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
       }
-    }, 300);
-  }, [t]);
+
+      debounceTimer.current = setTimeout(async () => {
+        const updateData = pendingUpdate.current;
+        pendingUpdate.current = null;
+        if (!updateData) return;
+
+        setState((prev) => ({ ...prev, saving: true }));
+        try {
+          await api.updatePreferences(updateData);
+          logger.debug('general', 'Training reminders saved, emitting refresh', { updateData });
+          emitRefresh('training');
+        } catch (error) {
+          logger.error('api', 'Failed to update training reminders', { error });
+          Alert.alert(t('common.error'), t('settings.updateFailed'));
+          // Reload to revert
+          loadPreferences();
+        } finally {
+          setState((prev) => ({ ...prev, saving: false }));
+        }
+      }, 300);
+    },
+    [t],
+  );
 
   const toggleEnabled = useCallback(() => {
-    setState(prev => {
+    setState((prev) => {
       const newEnabled = !prev.enabled;
       debouncedApiUpdate({ 'training_reminders.enabled': newEnabled });
       return { ...prev, enabled: newEnabled };
     });
   }, [debouncedApiUpdate]);
 
-  const toggleDay = useCallback((day: TrainingDay) => {
-    setState(prev => {
-      const newDays = prev.days.includes(day)
-        ? prev.days.filter(d => d !== day)
-        : [...prev.days, day].sort();
-      debouncedApiUpdate({ 'training_reminders.days': newDays });
-      return { ...prev, days: newDays };
-    });
-  }, [debouncedApiUpdate]);
+  const toggleDay = useCallback(
+    (day: TrainingDay) => {
+      setState((prev) => {
+        const newDays = prev.days.includes(day)
+          ? prev.days.filter((d) => d !== day)
+          : [...prev.days, day].sort();
+        debouncedApiUpdate({ 'training_reminders.days': newDays });
+        return { ...prev, days: newDays };
+      });
+    },
+    [debouncedApiUpdate],
+  );
 
-  const setTime = useCallback((time: string) => {
-    setState(prev => {
-      debouncedApiUpdate({ 'training_reminders.time': time });
-      return { ...prev, time };
-    });
-  }, [debouncedApiUpdate]);
+  const setTime = useCallback(
+    (time: string) => {
+      setState((prev) => {
+        debouncedApiUpdate({ 'training_reminders.time': time });
+        return { ...prev, time };
+      });
+    },
+    [debouncedApiUpdate],
+  );
 
   const togglePush = useCallback(() => {
-    setState(prev => {
+    setState((prev) => {
       const newPush = !prev.pushEnabled;
       debouncedApiUpdate({ 'notifications.training_reminder.push': newPush });
       return { ...prev, pushEnabled: newPush };

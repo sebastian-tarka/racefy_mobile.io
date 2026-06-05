@@ -35,30 +35,35 @@ interface MentionInputProps {
 
 const DEBOUNCE_MS = 300;
 
-function useDebouncedSearch<T>(
-  searchFn: (query: string) => Promise<T[]>,
-): { results: T[]; search: (keyword: string | undefined) => void; clear: () => void } {
+function useDebouncedSearch<T>(searchFn: (query: string) => Promise<T[]>): {
+  results: T[];
+  search: (keyword: string | undefined) => void;
+  clear: () => void;
+} {
   const [results, setResults] = useState<T[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const search = useCallback((keyword: string | undefined) => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+  const search = useCallback(
+    (keyword: string | undefined) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
 
-    if (keyword === undefined || keyword.trim().length === 0) {
-      setResults([]);
-      return;
-    }
-
-    timerRef.current = setTimeout(async () => {
-      try {
-        const data = await searchFn(keyword);
-        setResults(data);
-      } catch (err) {
-        logger.error('api', 'Mention search failed', { error: err });
+      if (keyword === undefined || keyword.trim().length === 0) {
         setResults([]);
+        return;
       }
-    }, DEBOUNCE_MS);
-  }, [searchFn]);
+
+      timerRef.current = setTimeout(async () => {
+        try {
+          const data = await searchFn(keyword);
+          setResults(data);
+        } catch (err) {
+          logger.error('api', 'Mention search failed', { error: err });
+          setResults([]);
+        }
+      }, DEBOUNCE_MS);
+    },
+    [searchFn],
+  );
 
   const clear = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -74,8 +79,12 @@ function UserSuggestionItem({ item, onPress }: { item: MentionSearchUser; onPres
     <TouchableOpacity style={styles.suggestionItem} onPress={onPress} activeOpacity={0.7}>
       <Avatar uri={item.avatar} name={item.name} size="sm" />
       <View style={styles.suggestionText}>
-        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.name}</Text>
-        <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>@{item.username}</Text>
+        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
+          @{item.username}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -89,14 +98,26 @@ function EventSuggestionItem({ item, onPress }: { item: MentionSearchEvent; onPr
         <Text style={[styles.triggerIconText, { color: colors.info }]}>#</Text>
       </View>
       <View style={styles.suggestionText}>
-        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
-        {item.location && <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>{item.location}</Text>}
+        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>
+          {item.title || item.name}
+        </Text>
+        {item.location && (
+          <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>
+            {item.location}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
 }
 
-function ActivitySuggestionItem({ item, onPress }: { item: MentionSearchActivity; onPress: () => void }) {
+function ActivitySuggestionItem({
+  item,
+  onPress,
+}: {
+  item: MentionSearchActivity;
+  onPress: () => void;
+}) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity style={styles.suggestionItem} onPress={onPress} activeOpacity={0.7}>
@@ -104,7 +125,9 @@ function ActivitySuggestionItem({ item, onPress }: { item: MentionSearchActivity
         <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>!</Text>
       </View>
       <View style={styles.suggestionText}>
-        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
+        <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>
+          {item.title || item.name}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -125,7 +148,7 @@ export function MentionInput({
   error: rawError,
 }: MentionInputProps) {
   const { colors } = useTheme();
-  const error = Array.isArray(rawError) ? rawError[0] : rawError ?? undefined;
+  const error = Array.isArray(rawError) ? rawError[0] : (rawError ?? undefined);
 
   const searchUsers = useCallback(async (query: string): Promise<MentionSearchUser[]> => {
     const resp = await api.searchMentionUsers(query);
@@ -174,13 +197,20 @@ export function MentionInput({
   const activityKeyword = triggers.activity.keyword;
 
   // Trigger search when keyword changes
-  React.useEffect(() => { userSearch.search(mentionKeyword); }, [mentionKeyword]);
-  React.useEffect(() => { eventSearch.search(eventKeyword); }, [eventKeyword]);
-  React.useEffect(() => { activitySearch.search(activityKeyword); }, [activityKeyword]);
+  React.useEffect(() => {
+    userSearch.search(mentionKeyword);
+  }, [mentionKeyword]);
+  React.useEffect(() => {
+    eventSearch.search(eventKeyword);
+  }, [eventKeyword]);
+  React.useEffect(() => {
+    activitySearch.search(activityKeyword);
+  }, [activityKeyword]);
 
   const showUserSuggestions = mentionKeyword !== undefined && userSearch.results.length > 0;
   const showEventSuggestions = eventKeyword !== undefined && eventSearch.results.length > 0;
-  const showActivitySuggestions = activityKeyword !== undefined && activitySearch.results.length > 0;
+  const showActivitySuggestions =
+    activityKeyword !== undefined && activitySearch.results.length > 0;
   const showSuggestions = showUserSuggestions || showEventSuggestions || showActivitySuggestions;
 
   const handleSelectUser = (user: MentionSearchUser) => {
@@ -194,32 +224,64 @@ export function MentionInput({
   };
 
   const handleSelectActivity = (activity: MentionSearchActivity) => {
-    triggers.activity.onSelect({ id: String(activity.id), name: activity.title || activity.name || '' });
+    triggers.activity.onSelect({
+      id: String(activity.id),
+      name: activity.title || activity.name || '',
+    });
     activitySearch.clear();
   };
 
   return (
     <View style={[styles.container, style]}>
       {showSuggestions && (
-        <View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.suggestionsContainer,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           {showUserSuggestions && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {userSearch.results.map((item) => (
-                <UserSuggestionItem key={`user-${item.id}`} item={item} onPress={() => handleSelectUser(item)} />
+                <UserSuggestionItem
+                  key={`user-${item.id}`}
+                  item={item}
+                  onPress={() => handleSelectUser(item)}
+                />
               ))}
             </ScrollView>
           )}
           {showEventSuggestions && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {eventSearch.results.map((item) => (
-                <EventSuggestionItem key={`event-${item.id}`} item={item} onPress={() => handleSelectEvent(item)} />
+                <EventSuggestionItem
+                  key={`event-${item.id}`}
+                  item={item}
+                  onPress={() => handleSelectEvent(item)}
+                />
               ))}
             </ScrollView>
           )}
           {showActivitySuggestions && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {activitySearch.results.map((item) => (
-                <ActivitySuggestionItem key={`activity-${item.id}`} item={item} onPress={() => handleSelectActivity(item)} />
+                <ActivitySuggestionItem
+                  key={`activity-${item.id}`}
+                  item={item}
+                  onPress={() => handleSelectActivity(item)}
+                />
               ))}
             </ScrollView>
           )}
@@ -246,9 +308,7 @@ export function MentionInput({
           inputStyle,
         ]}
       />
-      {error && (
-        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
-      )}
+      {error && <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 }

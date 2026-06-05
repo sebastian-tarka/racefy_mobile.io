@@ -1,8 +1,8 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet, View} from 'react-native';
-import {Image, ImageLoadEventData} from 'expo-image';
-import {Ionicons} from '@expo/vector-icons';
-import {useViewability} from '../hooks/useViewability';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Image, ImageLoadEventData } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { useViewability } from '../hooks/useViewability';
 
 interface FeedVideoProps {
   videoUrl: string;
@@ -30,15 +30,18 @@ export function FeedVideo(props: FeedVideoProps) {
   // Detect real aspect ratio from thumbnail (fixes rotation mismatch from backend)
   const [detectedAspectRatio, setDetectedAspectRatio] = useState<number | null>(null);
 
-  const onThumbnailLoad = useCallback((event: ImageLoadEventData) => {
-    const { width, height } = event.source;
-    if (width > 0 && height > 0) {
-      const detected = width / height;
-      if (Math.abs(detected - propAspectRatio) > 0.1) {
-        setDetectedAspectRatio(detected);
+  const onThumbnailLoad = useCallback(
+    (event: ImageLoadEventData) => {
+      const { width, height } = event.source;
+      if (width > 0 && height > 0) {
+        const detected = width / height;
+        if (Math.abs(detected - propAspectRatio) > 0.1) {
+          setDetectedAspectRatio(detected);
+        }
       }
-    }
-  }, [propAspectRatio]);
+    },
+    [propAspectRatio],
+  );
 
   // Use detected ratio (from thumbnail) if available, otherwise backend ratio
   const aspectRatio = detectedAspectRatio ?? propAspectRatio;
@@ -86,13 +89,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   playOverlay: {
-    position: 'absolute', width: '100%', height: '100%',
-    justifyContent: 'center', alignItems: 'center',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   playIcon: {
-    width: 52, height: 52, borderRadius: 26,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingLeft: 3,
   },
 });

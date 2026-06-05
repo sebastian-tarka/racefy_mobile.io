@@ -33,7 +33,9 @@ export function StatsSection({ stats = defaultStats }: StatsSectionProps) {
         <View key={index} style={styles.statItem}>
           <Ionicons name={stat.icon} size={24} color={colors.primary} />
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t(stat.labelKey)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+            {t(stat.labelKey)}
+          </Text>
         </View>
       ))}
     </View>

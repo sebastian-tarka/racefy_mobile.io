@@ -92,9 +92,7 @@ export function TipCard({ tip, onPress }: Props) {
       </View>
 
       {/* Emotional Load Indicator */}
-      <View style={styles.footer}>
-        {renderEmotionalLoad()}
-      </View>
+      <View style={styles.footer}>{renderEmotionalLoad()}</View>
     </TouchableOpacity>
   );
 }

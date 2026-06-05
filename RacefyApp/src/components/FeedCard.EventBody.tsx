@@ -1,25 +1,37 @@
-import React, {useMemo} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {format} from 'date-fns';
-import {enUS, es, pl} from 'date-fns/locale';
-import {useTranslation} from 'react-i18next';
-import {AutoDisplayImage} from './AutoDisplayImage';
-import {ExpandableContent, PostMedia} from './FeedCard.Media';
-import {ImageViewer} from './ImageViewer';
-import {ImageGallery} from './ImageGallery';
-import {useTheme} from '../hooks/useTheme';
-import {fixStorageUrl} from '../config/api';
-import {styles, useImageGallery} from './FeedCard.utils';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Post} from '../types/api';
+import React, { useMemo } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { format } from 'date-fns';
+import { enUS, es, pl } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { AutoDisplayImage } from './AutoDisplayImage';
+import { ExpandableContent, PostMedia } from './FeedCard.Media';
+import { ImageViewer } from './ImageViewer';
+import { ImageGallery } from './ImageGallery';
+import { useTheme } from '../hooks/useTheme';
+import { fixStorageUrl } from '../config/api';
+import { styles, useImageGallery } from './FeedCard.utils';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Post } from '../types/api';
 
-function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }: any) {
+function GalleryModals({
+  galleryVisible,
+  setGalleryVisible,
+  galleryIndex,
+  imageUrls,
+  expandedImage,
+  setExpandedImage,
+}: any) {
   return (
     <>
       {galleryVisible && imageUrls.length > 0 && (
-        <ImageGallery images={imageUrls} initialIndex={galleryIndex} visible={galleryVisible} onClose={() => setGalleryVisible(false)} />
+        <ImageGallery
+          images={imageUrls}
+          initialIndex={galleryIndex}
+          visible={galleryVisible}
+          onClose={() => setGalleryVisible(false)}
+        />
       )}
       {expandedImage && (
         <ImageViewer uri={expandedImage} visible onClose={() => setExpandedImage(null)} />
@@ -31,7 +43,14 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
 export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: () => void }) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const {
+    expandedImage,
+    setExpandedImage,
+    galleryVisible,
+    setGalleryVisible,
+    galleryIndex,
+    openGallery,
+  } = useImageGallery();
   const event = post.event;
   if (!event) return null;
 
@@ -41,7 +60,7 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
     const cover = event.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
     const urls: string[] = [];
     if (cover) urls.push(cover);
-    (post.photos || []).forEach(p => {
+    (post.photos || []).forEach((p) => {
       const url = fixStorageUrl(p.url);
       if (url) urls.push(url);
     });
@@ -63,7 +82,7 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
         >
           <AutoDisplayImage
             imageUrl={coverUrl}
-            onExpand={() => imageUrls.length > 1 ? openGallery(0) : setExpandedImage(coverUrl)}
+            onExpand={() => (imageUrls.length > 1 ? openGallery(0) : setExpandedImage(coverUrl))}
             previewHeight={220}
           />
           {/* Gradient overlay */}
@@ -88,8 +107,15 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
               <Text style={evStyles.heroMetaText}>{formattedDate}</Text>
               {event.location_name && (
                 <>
-                  <Ionicons name="location" size={14} color="rgba(255,255,255,0.85)" style={{ marginLeft: 10 }} />
-                  <Text style={evStyles.heroMetaText} numberOfLines={1}>{event.location_name}</Text>
+                  <Ionicons
+                    name="location"
+                    size={14}
+                    color="rgba(255,255,255,0.85)"
+                    style={{ marginLeft: 10 }}
+                  />
+                  <Text style={evStyles.heroMetaText} numberOfLines={1}>
+                    {event.location_name}
+                  </Text>
                 </>
               )}
             </View>
@@ -100,10 +126,14 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
         <View style={styles.bodyPadding}>
           {isNew && (
             <View style={[evStyles.newBadgeInline, { backgroundColor: colors.info + '15' }]}>
-              <Text style={[evStyles.newBadgeInlineText, { color: colors.info }]}>{t('feed.newEvent', 'NEW EVENT')}</Text>
+              <Text style={[evStyles.newBadgeInlineText, { color: colors.info }]}>
+                {t('feed.newEvent', 'NEW EVENT')}
+              </Text>
             </View>
           )}
-          {post.title && <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>}
+          {post.title && (
+            <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>
+          )}
         </View>
       )}
 
@@ -136,7 +166,10 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
           </Text>
         </View>
         {onEventPress && (
-          <TouchableOpacity onPress={onEventPress} style={[evStyles.viewDetailsBtn, { backgroundColor: colors.info }]}>
+          <TouchableOpacity
+            onPress={onEventPress}
+            style={[evStyles.viewDetailsBtn, { backgroundColor: colors.info }]}
+          >
             <Text style={evStyles.viewDetailsBtnText}>{t('feed.viewDetails')}</Text>
             <Ionicons name="chevron-forward" size={14} color="#fff" />
           </TouchableOpacity>
@@ -157,7 +190,16 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
         </View>
       )}
 
-      <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
+      <GalleryModals
+        {...{
+          galleryVisible,
+          setGalleryVisible,
+          galleryIndex,
+          imageUrls,
+          expandedImage,
+          setExpandedImage,
+        }}
+      />
     </>
   );
 }

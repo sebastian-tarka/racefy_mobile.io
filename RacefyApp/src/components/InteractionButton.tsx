@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -10,20 +10,16 @@ import {
   TouchableOpacity,
   type ViewStyle,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import {useTheme} from '../hooks/useTheme';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {fontSize, spacing} from '../theme';
-import {InteractorsListModal} from './InteractorsListModal';
+import { useTheme } from '../hooks/useTheme';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { fontSize, spacing } from '../theme';
+import { InteractorsListModal } from './InteractorsListModal';
 
 export type InteractionVariant = 'like' | 'boost' | 'comment';
-export type InteractionTargetType =
-  | 'post'
-  | 'activity'
-  | 'comment'
-  | 'commentary';
+export type InteractionTargetType = 'post' | 'activity' | 'comment' | 'commentary';
 
 const BOOST_COLOR = '#FF6B35';
 
@@ -104,7 +100,7 @@ async function performInteraction(
   targetType: InteractionTargetType,
   targetId: number,
   parentId: number | undefined,
-  add: boolean
+  add: boolean,
 ): Promise<{ count?: number }> {
   if (variant === 'like') {
     if (targetType === 'post') {
@@ -124,9 +120,7 @@ async function performInteraction(
 
   // boost
   if (targetType === 'activity') {
-    const res = add
-      ? await api.boostActivity(targetId)
-      : await api.unboostActivity(targetId);
+    const res = add ? await api.boostActivity(targetId) : await api.unboostActivity(targetId);
     return { count: res.boosts_count };
   }
   if (targetType === 'commentary') {
@@ -183,19 +177,10 @@ export function InteractionButton({
 
   // Active color depends on variant
   const activeColor =
-    variant === 'like'
-      ? colors.error
-      : variant === 'boost'
-        ? BOOST_COLOR
-        : colors.textSecondary;
+    variant === 'like' ? colors.error : variant === 'boost' ? BOOST_COLOR : colors.textSecondary;
   const inactiveColor = colors.textSecondary;
   // Comment doesn't really have an "active" state — it's always tinted neutrally
-  const tintColor =
-    variant === 'comment'
-      ? inactiveColor
-      : isActive
-        ? activeColor
-        : inactiveColor;
+  const tintColor = variant === 'comment' ? inactiveColor : isActive ? activeColor : inactiveColor;
 
   const iconSize = iconSizeOverride ?? ICON_SIZES[size];
   const textSize = TEXT_SIZES[size];
@@ -228,7 +213,7 @@ export function InteractionButton({
             duration: 150,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
     }
     Animated.parallel(animations).start();
@@ -259,13 +244,7 @@ export function InteractionButton({
 
     try {
       setIsLoading(true);
-      const res = await performInteraction(
-        variant,
-        targetType,
-        targetId,
-        parentId,
-        nextActive
-      );
+      const res = await performInteraction(variant, targetType, targetId, parentId, nextActive);
       const finalCount = res.count ?? nextCount;
       if (res.count != null) setCount(res.count);
       onChange?.(nextActive, finalCount);
@@ -282,8 +261,7 @@ export function InteractionButton({
     }
   };
 
-  const longPressEnabled =
-    showInteractors ?? (variant === 'like' || variant === 'boost');
+  const longPressEnabled = showInteractors ?? (variant === 'like' || variant === 'boost');
 
   const handleLongPress = () => {
     if (disabled || !longPressEnabled) return;
@@ -313,9 +291,7 @@ export function InteractionButton({
           pill && [
             styles.pillContainer,
             {
-              backgroundColor: isActive
-                ? `${activeColor}20`
-                : colors.cardBackground,
+              backgroundColor: isActive ? `${activeColor}20` : colors.cardBackground,
               borderColor: isActive ? activeColor : colors.border,
             },
           ],
@@ -332,19 +308,13 @@ export function InteractionButton({
             style={{
               transform: [
                 { scale: scaleAnim },
-                ...(variant === 'boost'
-                  ? [{ rotate: rotateInterpolate }]
-                  : []),
+                ...(variant === 'boost' ? [{ rotate: rotateInterpolate }] : []),
               ],
             }}
           >
             <Ionicons
               name={
-                variant === 'comment'
-                  ? icons.inactive
-                  : isActive
-                    ? icons.active
-                    : icons.inactive
+                variant === 'comment' ? icons.inactive : isActive ? icons.active : icons.inactive
               }
               size={iconSize}
               color={tintColor}
@@ -363,9 +333,7 @@ export function InteractionButton({
           </Text>
         )}
         {layout === 'vertical' && label && (
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {label}
-          </Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
         )}
       </TouchableOpacity>
 

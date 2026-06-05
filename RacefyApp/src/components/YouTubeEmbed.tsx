@@ -1,9 +1,9 @@
-import React, {useRef, useState} from 'react';
-import {LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import YoutubePlayer, {YoutubeIframeRef} from 'react-native-youtube-iframe';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {fontSize, spacing} from '../theme';
+import React, { useRef, useState } from 'react';
+import { LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { fontSize, spacing } from '../theme';
 
 interface YouTubeEmbedProps {
   embedId: string;
@@ -53,7 +53,11 @@ export function YouTubeEmbed({ embedId }: YouTubeEmbedProps) {
           />
           {ended && (
             <View style={styles.overlay}>
-              <TouchableOpacity style={[styles.watchAgainButton, { backgroundColor: colors.primary }]} onPress={watchAgain} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={[styles.watchAgainButton, { backgroundColor: colors.primary }]}
+                onPress={watchAgain}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.watchAgainText}>{t('feed.watchAgain')}</Text>
               </TouchableOpacity>
             </View>

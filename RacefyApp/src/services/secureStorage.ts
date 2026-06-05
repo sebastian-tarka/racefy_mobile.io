@@ -58,7 +58,7 @@ async function setSecure(key: string, value: string): Promise<boolean> {
     return true;
   } catch (error) {
     logger.error('auth', `SecureStore write failed: ${key}`, { error });
-    return false;  // Do not fall back — caller must handle this
+    return false; // Do not fall back — caller must handle this
   }
 }
 

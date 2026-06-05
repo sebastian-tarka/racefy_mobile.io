@@ -15,7 +15,6 @@ interface LiveActivityBannerProps {
   onPress: () => void;
 }
 
-
 export function LiveActivityBanner({
   isActive,
   isPaused,
@@ -43,7 +42,7 @@ export function LiveActivityBanner({
             duration: 500,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       pulse.start();
       return () => pulse.stop();
@@ -56,19 +55,13 @@ export function LiveActivityBanner({
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        { backgroundColor: isPaused ? colors.warning : '#ef4444' },
-      ]}
+      style={[styles.container, { backgroundColor: isPaused ? colors.warning : '#ef4444' }]}
       onPress={onPress}
       activeOpacity={0.9}
     >
       <View style={styles.leftSection}>
         <Animated.View
-          style={[
-            styles.recordingDot,
-            { transform: [{ scale: isPaused ? 1 : pulseAnim }] },
-          ]}
+          style={[styles.recordingDot, { transform: [{ scale: isPaused ? 1 : pulseAnim }] }]}
         >
           <View style={[styles.dot, isPaused && styles.pausedDot]} />
         </Animated.View>

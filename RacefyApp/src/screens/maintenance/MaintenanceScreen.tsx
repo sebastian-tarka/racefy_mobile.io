@@ -27,7 +27,9 @@ export function MaintenanceScreen() {
   const formattedEnd = estimatedEnd ? formatEstimatedEnd(estimatedEnd, t) : null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+    >
       <View style={styles.content}>
         <BrandLogo category="logo-full" width={160} height={44} />
 
@@ -35,16 +37,19 @@ export function MaintenanceScreen() {
           <Ionicons name="construct-outline" size={48} color={colors.warning} />
         </View>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('maintenance.title')}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('maintenance.title')}</Text>
 
         <Text style={[styles.message, { color: colors.textSecondary }]}>
           {message || t('maintenance.defaultMessage')}
         </Text>
 
         {formattedEnd && (
-          <View style={[styles.estimatedContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.estimatedContainer,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="time-outline" size={18} color={colors.textMuted} />
             <Text style={[styles.estimatedText, { color: colors.textSecondary }]}>
               {t('maintenance.estimatedEnd')}{' '}
@@ -57,11 +62,7 @@ export function MaintenanceScreen() {
           {checking ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Button
-              title={t('maintenance.retry')}
-              onPress={handleRetry}
-              variant="outline"
-            />
+            <Button title={t('maintenance.retry')} onPress={handleRetry} variant="outline" />
           )}
         </View>
       </View>

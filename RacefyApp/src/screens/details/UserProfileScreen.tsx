@@ -30,11 +30,7 @@ import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
 import { useBlockUser } from '../../hooks/useBlockUser';
 import { api } from '../../services/api';
-import {
-  canViewFollowersList,
-  canViewFollowingList,
-  canSendMessage,
-} from '../../utils/privacy';
+import { canViewFollowersList, canViewFollowingList, canSendMessage } from '../../utils/privacy';
 import { spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -68,7 +64,9 @@ export function UserProfileScreen({ navigation, route }: Props) {
 
   // Modal state
   const [showFollowModal, setShowFollowModal] = useState(false);
-  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
+  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>(
+    'followers',
+  );
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -87,12 +85,9 @@ export function UserProfileScreen({ navigation, route }: Props) {
   });
 
   const eventsData = usePaginatedTabData<Event>({
-    fetchFunction: useCallback(
-      async (userId: number, page: number) => {
-        return api.getEvents({ user_id: userId, page });
-      },
-      []
-    ),
+    fetchFunction: useCallback(async (userId: number, page: number) => {
+      return api.getEvents({ user_id: userId, page });
+    }, []),
     userId: profile?.id ?? null,
   });
 
@@ -194,16 +189,37 @@ export function UserProfileScreen({ navigation, route }: Props) {
     : false;
 
   const tabs = [
-    { label: t('profile.tabs.posts'), value: 'posts' as TabType, icon: 'newspaper-outline' as const, emoji: '📝' },
-    { label: t('profile.tabs.stats'), value: 'stats' as TabType, icon: 'stats-chart' as const, emoji: '📊' },
-    { label: t('profile.tabs.activities'), value: 'activities' as TabType, icon: 'fitness-outline' as const, emoji: '💪' },
-    { label: t('profile.tabs.events'), value: 'events' as TabType, icon: 'calendar-outline' as const, emoji: '📅' },
+    {
+      label: t('profile.tabs.posts'),
+      value: 'posts' as TabType,
+      icon: 'newspaper-outline' as const,
+      emoji: '📝',
+    },
+    {
+      label: t('profile.tabs.stats'),
+      value: 'stats' as TabType,
+      icon: 'stats-chart' as const,
+      emoji: '📊',
+    },
+    {
+      label: t('profile.tabs.activities'),
+      value: 'activities' as TabType,
+      icon: 'fitness-outline' as const,
+      emoji: '💪',
+    },
+    {
+      label: t('profile.tabs.events'),
+      value: 'events' as TabType,
+      icon: 'calendar-outline' as const,
+      emoji: '📅',
+    },
   ];
 
   // Get current tab data
   const getCurrentTabData = () => {
     if (activeTab === 'posts') return postsData;
-    if (activeTab === 'stats') return { data: [], isLoading: isLoadingPointStats, loadMore: () => {} };
+    if (activeTab === 'stats')
+      return { data: [], isLoading: isLoadingPointStats, loadMore: () => {} };
     if (activeTab === 'activities') return activitiesData;
     return eventsData;
   };
@@ -238,10 +254,7 @@ export function UserProfileScreen({ navigation, route }: Props) {
         />
         {activeTab === 'stats' && (
           <View style={styles.statsTabContent}>
-            <PointsCard
-              stats={userPointStats}
-              isLoading={isLoadingPointStats}
-            />
+            <PointsCard stats={userPointStats} isLoading={isLoadingPointStats} />
           </View>
         )}
       </>

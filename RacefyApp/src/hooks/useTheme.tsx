@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback, useMemo } from 'react';
 import { useColorScheme, Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { lightColors, darkColors, ThemeColors } from '../theme/colors';
@@ -85,7 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       themePreference,
       setThemePreference,
     }),
-    [colors, isDark, themePreference, setThemePreference]
+    [colors, isDark, themePreference, setThemePreference],
   );
 
   // Don't render until theme is loaded to prevent flash
@@ -93,11 +86,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export const useTheme = () => {

@@ -3,7 +3,12 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import { useTheme } from './useTheme';
-import type { BrandAsset, BrandAssetCategory, BrandAssetVariant, BrandAssetsResponse } from '../types/api';
+import type {
+  BrandAsset,
+  BrandAssetCategory,
+  BrandAssetVariant,
+  BrandAssetsResponse,
+} from '../types/api';
 
 // Cache for brand assets to avoid refetching
 let cachedAssets: BrandAssetsResponse | null = null;
@@ -109,7 +114,7 @@ export function useBrandAssets(): UseBrandAssetsResult {
       const asset = getAsset(category);
       return asset?.url || null;
     },
-    [getAsset]
+    [getAsset],
   );
 
   return {

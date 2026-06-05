@@ -42,14 +42,14 @@ export function ImpersonationBanner() {
                       },
                     },
                   ],
-                })
+                }),
               );
             } catch (error) {
               Alert.alert(t('common.error'), t('admin.impersonate.exitError'));
             }
           },
         },
-      ]
+      ],
     );
   };
 

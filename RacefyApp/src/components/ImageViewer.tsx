@@ -11,16 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme';
-import {
-  GestureDetector,
-  Gesture,
-  GestureHandlerRootView,
-} from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 interface ImageViewerProps {
   uri: string;
@@ -106,11 +98,7 @@ export function ImageViewer({ uri, visible, onClose }: ImageViewerProps) {
         <GestureDetector gesture={composed}>
           <Animated.View style={styles.imageContainer}>
             <Animated.View style={animatedStyle}>
-              <Image
-                source={{ uri }}
-                style={styles.image}
-                resizeMode="contain"
-              />
+              <Image source={{ uri }} style={styles.image} resizeMode="contain" />
             </Animated.View>
           </Animated.View>
         </GestureDetector>

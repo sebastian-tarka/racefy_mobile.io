@@ -112,7 +112,7 @@ export function FeedbackMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       data: {
         body: string;
         attachments?: { uri: string; name: string; type: string }[];
-      }
+      },
     ): Promise<Types.FeedbackReply> {
       const formData = new FormData();
       formData.append('body', data.body);
@@ -129,7 +129,7 @@ export function FeedbackMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
 
       const response = await this.request<Types.ApiResponse<Types.FeedbackReply>>(
         `/feedback/${feedbackId}/replies`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return response.data;
     }

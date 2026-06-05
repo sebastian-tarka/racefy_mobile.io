@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {useTranslation} from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import {
   Avatar,
   BottomSheet,
@@ -31,21 +31,21 @@ import {
   PremiumTeaser,
   RoutePreview,
   ScreenContainer,
-  ScreenHeader
+  ScreenHeader,
 } from '../../components';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {emitRefresh, useRefreshOn} from '../../services/refreshEvents';
-import {fixStorageUrl} from '../../config/api';
-import {useTheme} from '../../hooks/useTheme';
-import {useSubscription} from '../../hooks/useSubscription';
-import {useUnits} from '../../hooks/useUnits';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import {getSportIcon} from '../../utils/sportIcon';
-import {exportGpxAndShare} from '../../utils/gpxExport';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../../navigation/types';
-import type {Activity, GpsTrack, SingleActivityStats, User} from '../../types/api';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
+import { fixStorageUrl } from '../../config/api';
+import { useTheme } from '../../hooks/useTheme';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useUnits } from '../../hooks/useUnits';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import { getSportIcon } from '../../utils/sportIcon';
+import { exportGpxAndShare } from '../../utils/gpxExport';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -99,17 +99,18 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           // Fetch activity stats for charts (includes splits) — only for premium users
           if (!canUse('advanced_stats')) {
             logger.debug('gps', 'Skipping activity analysis — advanced_stats not available');
-          } else try {
-            const stats = await api.getActivityAnalysis(activityId);
-            setActivityStats(stats);
-            logger.debug('gps', 'Activity stats loaded', {
-              hasSplits: !!stats.splits,
-              splitsCount: stats.splits?.total_splits,
-              hasData: stats.has_data,
-            });
-          } catch (statsError) {
-            logger.debug('gps', 'Failed to load activity stats', { error: statsError });
-          }
+          } else
+            try {
+              const stats = await api.getActivityAnalysis(activityId);
+              setActivityStats(stats);
+              logger.debug('gps', 'Activity stats loaded', {
+                hasSplits: !!stats.splits,
+                splitsCount: stats.splits?.total_splits,
+                hasData: stats.has_data,
+              });
+            } catch (statsError) {
+              logger.debug('gps', 'Failed to load activity stats', { error: statsError });
+            }
         } catch (trackError) {
           logger.debug('gps', 'Failed to load GPS track', { error: trackError });
         }
@@ -135,47 +136,46 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   useRefreshOn('activities', fetchActivity);
 
-  const handleDelete = useCallback(async (force: boolean = false) => {
-    try {
-      await api.deleteActivity(activityId, force);
-      // Navigate back first to unmount this screen and cleanup listeners
-      navigation.goBack();
-      // Then emit refresh to update other screens (feed, profile, etc.)
-      emitRefresh('activities');
-    } catch (error: any) {
-      // Check if activity is linked to training plan (422 error)
-      if (error.training_week_id) {
-        Alert.alert(
-          t('activityDetail.linkedToTrainingPlan'),
-          t('activityDetail.linkedToTrainingPlanMessage'),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            {
-              text: t('activityDetail.forceDelete'),
-              style: 'destructive',
-              onPress: () => handleDelete(true),
-            },
-          ]
-        );
-      } else {
-        Alert.alert(t('common.error'), error.message || t('activityDetail.deleteFailed'));
+  const handleDelete = useCallback(
+    async (force: boolean = false) => {
+      try {
+        await api.deleteActivity(activityId, force);
+        // Navigate back first to unmount this screen and cleanup listeners
+        navigation.goBack();
+        // Then emit refresh to update other screens (feed, profile, etc.)
+        emitRefresh('activities');
+      } catch (error: any) {
+        // Check if activity is linked to training plan (422 error)
+        if (error.training_week_id) {
+          Alert.alert(
+            t('activityDetail.linkedToTrainingPlan'),
+            t('activityDetail.linkedToTrainingPlanMessage'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('activityDetail.forceDelete'),
+                style: 'destructive',
+                onPress: () => handleDelete(true),
+              },
+            ],
+          );
+        } else {
+          Alert.alert(t('common.error'), error.message || t('activityDetail.deleteFailed'));
+        }
       }
-    }
-  }, [activityId, navigation, t]);
+    },
+    [activityId, navigation, t],
+  );
 
   const confirmDelete = useCallback(() => {
-    Alert.alert(
-      t('activityDetail.deleteActivity'),
-      t('activityDetail.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => handleDelete(false),
-        },
-      ]
-    );
+    Alert.alert(t('activityDetail.deleteActivity'), t('activityDetail.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => handleDelete(false),
+      },
+    ]);
   }, [handleDelete, t]);
 
   const formatDuration = (seconds: number): string => {
@@ -198,14 +198,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     return formatSpeed(metersPerSecond);
   };
 
-
-  const handleLikeChange = useCallback(
-    (active: boolean, count: number) => {
-      setIsLiked(active);
-      setLikesCount(count);
-    },
-    []
-  );
+  const handleLikeChange = useCallback((active: boolean, count: number) => {
+    setIsLiked(active);
+    setLikesCount(count);
+  }, []);
 
   const handleGenerateAiReport = useCallback(async () => {
     if (isGeneratingReport) return;
@@ -226,9 +222,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             { text: t('common.cancel'), style: 'cancel' },
             {
               text: t('insights.locked.upgrade'),
-              onPress: () => navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' }),
+              onPress: () =>
+                navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' }),
             },
-          ]
+          ],
         );
       } else {
         Alert.alert('', error.message || t('insights.aiReports.errorWaiting'));
@@ -244,7 +241,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     setIsExportingGpx(true);
     try {
       const response = await api.getActivityTrackPoints(activityId);
-      const points = (response.data || []).map(p => ({
+      const points = (response.data || []).map((p) => ({
         lat: p.lat,
         lng: p.lng,
         ele: p.elevation,
@@ -304,7 +301,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('activityDetail.notFound')}</Text>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {error || t('activityDetail.notFound')}
+          </Text>
           <Button title={t('common.tryAgain')} onPress={fetchActivity} variant="primary" />
         </View>
       </ScreenContainer>
@@ -338,7 +337,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       <CommentSection
         commentableType="post"
         commentableId={activity.post_id!}
-        onUserPress={(user: User) => navigation.navigate('UserProfile', { username: user.username })}
+        onUserPress={(user: User) =>
+          navigation.navigate('UserProfile', { username: user.username })
+        }
         onInputFocus={scrollToComments}
         renderLayout={({ header, commentList, commentInput }) => (
           <KeyboardAwareScreenLayout
@@ -348,416 +349,520 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             onRefresh={onRefresh}
             scrollViewProps={{ scrollEnabled: !isMapExpanded }}
           >
-          {/* Map Section */}
-          {activity.has_gps_track && (gpsTrack?.route_preview_url || gpsTrack?.route_map_url || gpsTrack?.route_svg || gpsTrack?.track_data) && (
-          <Animated.View style={{ height: mapHeightAnim }}>
-            <RoutePreview
-              routePreviewUrl={fixStorageUrl(gpsTrack.route_preview_url)}
-              routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
-              routeSvg={gpsTrack.route_svg}
-              trackData={gpsTrack?.simplified_track}
-              activityId={activity.id}
-              height={isMapExpanded ? 500 : 250}
-              enableZoom={isMapExpanded}
-              showKmMarkers={showKmMarkers}
-              showStartMarker={gpsTrack?.show_start_marker ?? true}
-              showFinishMarker={gpsTrack?.show_finish_marker ?? true}
-              startPoint={gpsTrack?.start_point ?? null}
-              finishPoint={gpsTrack?.finish_point ?? null}
-            />
-            {/* Map control buttons */}
-            <View style={styles.mapControlsRow}>
-              <TouchableOpacity
-                style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
-                onPress={toggleMapExpand}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
-                  size={20}
-                  color={colors.textPrimary}
-                />
-                <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
-                  {isMapExpanded ? t('activityDetail.collapseMap') : t('activityDetail.expandMap')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.mapKmButton, { backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground }]}
-                onPress={() => setShowKmMarkers(!showKmMarkers)}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name="flag-outline"
-                  size={16}
-                  color={showKmMarkers ? '#ffffff' : colors.textSecondary}
-                />
-                <Text style={[styles.mapKmButtonText, { color: showKmMarkers ? '#ffffff' : colors.textSecondary }]}>
-                  km
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {/* Map Section */}
+            {activity.has_gps_track &&
+              (gpsTrack?.route_preview_url ||
+                gpsTrack?.route_map_url ||
+                gpsTrack?.route_svg ||
+                gpsTrack?.track_data) && (
+                <Animated.View style={{ height: mapHeightAnim }}>
+                  <RoutePreview
+                    routePreviewUrl={fixStorageUrl(gpsTrack.route_preview_url)}
+                    routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
+                    routeSvg={gpsTrack.route_svg}
+                    trackData={gpsTrack?.simplified_track}
+                    activityId={activity.id}
+                    height={isMapExpanded ? 500 : 250}
+                    enableZoom={isMapExpanded}
+                    showKmMarkers={showKmMarkers}
+                    showStartMarker={gpsTrack?.show_start_marker ?? true}
+                    showFinishMarker={gpsTrack?.show_finish_marker ?? true}
+                    startPoint={gpsTrack?.start_point ?? null}
+                    finishPoint={gpsTrack?.finish_point ?? null}
+                  />
+                  {/* Map control buttons */}
+                  <View style={styles.mapControlsRow}>
+                    <TouchableOpacity
+                      style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
+                      onPress={toggleMapExpand}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
+                        size={20}
+                        color={colors.textPrimary}
+                      />
+                      <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
+                        {isMapExpanded
+                          ? t('activityDetail.collapseMap')
+                          : t('activityDetail.expandMap')}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.mapKmButton,
+                        { backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground },
+                      ]}
+                      onPress={() => setShowKmMarkers(!showKmMarkers)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name="flag-outline"
+                        size={16}
+                        color={showKmMarkers ? '#ffffff' : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.mapKmButtonText,
+                          { color: showKmMarkers ? '#ffffff' : colors.textSecondary },
+                        ]}
+                      >
+                        km
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
 
-            {/* GPS Privacy Indicator */}
-            <View style={[styles.privacyIndicator, { backgroundColor: colors.cardBackground + '80', borderColor: colors.borderLight }]}>
-              <Ionicons
-                name={activity.can_view_start_finish ? "eye-outline" : "shield-outline"}
-                size={16}
-                color={activity.is_owner ? colors.primary : colors.textSecondary}
-              />
-              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
-                {activity.is_owner
-                  ? (activity.show_start_finish_points
-                      ? t('activityDetail.gpsPrivacyVisible')
-                      : t('activityDetail.gpsPrivacyHidden'))
-                  : (!activity.can_view_start_finish
-                      ? t('activityDetail.gpsPrivacyViewerHidden')
-                      : null)
-                }
-              </Text>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Header Section: Title + User Info Combined */}
-        <View style={[styles.headerSection, { backgroundColor: colors.cardBackground }]}>
-          {/* User Info */}
-          {activity.user && (
-            <TouchableOpacity
-              style={styles.userRow}
-              onPress={() => navigation.navigate('UserProfile', { username: activity.user!.username })}
-            >
-              <Avatar uri={activity.user.avatar} name={activity.user.name} size="md" />
-              <View style={styles.userInfo}>
-                <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
-                <Text style={[styles.activityDate, { color: colors.textMuted }]}>
-                  {format(new Date(activity.started_at), 'EEEE, MMMM d · h:mm a')}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-
-          {/* Title and Sport */}
-          <View style={styles.titleRow}>
-            <Ionicons name={getSportIcon(activity?.sport_type?.name)} size={24} color={colors.primary} style={styles.sportIcon} />
-            <View style={styles.titleContent}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>{activity.title}</Text>
-              <View style={styles.sportTypeRow}>
-                <Text style={[styles.sportType, { color: colors.textSecondary }]}>
-                  {activity.sport_type?.name || t('activityDetail.activity')}
-                </Text>
-                {activity.training_week_id && (
-                  <View style={[styles.trainingBadge, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}>
-                    <Ionicons name="school-outline" size={14} color={colors.primary} />
-                    <Text style={[styles.trainingBadgeText, { color: colors.primary }]}>
-                      {t('activityDetail.trainingPlan')}
+                  {/* GPS Privacy Indicator */}
+                  <View
+                    style={[
+                      styles.privacyIndicator,
+                      {
+                        backgroundColor: colors.cardBackground + '80',
+                        borderColor: colors.borderLight,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={activity.can_view_start_finish ? 'eye-outline' : 'shield-outline'}
+                      size={16}
+                      color={activity.is_owner ? colors.primary : colors.textSecondary}
+                    />
+                    <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
+                      {activity.is_owner
+                        ? activity.show_start_finish_points
+                          ? t('activityDetail.gpsPrivacyVisible')
+                          : t('activityDetail.gpsPrivacyHidden')
+                        : !activity.can_view_start_finish
+                          ? t('activityDetail.gpsPrivacyViewerHidden')
+                          : null}
                     </Text>
                   </View>
-                )}
+                </Animated.View>
+              )}
+
+            {/* Header Section: Title + User Info Combined */}
+            <View style={[styles.headerSection, { backgroundColor: colors.cardBackground }]}>
+              {/* User Info */}
+              {activity.user && (
+                <TouchableOpacity
+                  style={styles.userRow}
+                  onPress={() =>
+                    navigation.navigate('UserProfile', { username: activity.user!.username })
+                  }
+                >
+                  <Avatar uri={activity.user.avatar} name={activity.user.name} size="md" />
+                  <View style={styles.userInfo}>
+                    <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                      {activity.user.name}
+                    </Text>
+                    <Text style={[styles.activityDate, { color: colors.textMuted }]}>
+                      {format(new Date(activity.started_at), 'EEEE, MMMM d · h:mm a')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {/* Title and Sport */}
+              <View style={styles.titleRow}>
+                <Ionicons
+                  name={getSportIcon(activity?.sport_type?.name)}
+                  size={24}
+                  color={colors.primary}
+                  style={styles.sportIcon}
+                />
+                <View style={styles.titleContent}>
+                  <Text style={[styles.title, { color: colors.textPrimary }]}>
+                    {activity.title}
+                  </Text>
+                  <View style={styles.sportTypeRow}>
+                    <Text style={[styles.sportType, { color: colors.textSecondary }]}>
+                      {activity.sport_type?.name || t('activityDetail.activity')}
+                    </Text>
+                    {activity.training_week_id && (
+                      <View
+                        style={[
+                          styles.trainingBadge,
+                          { backgroundColor: colors.primary + '20', borderColor: colors.primary },
+                        ]}
+                      >
+                        <Ionicons name="school-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.trainingBadgeText, { color: colors.primary }]}>
+                          {t('activityDetail.trainingPlan')}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
 
-          {/* Location */}
-          {activity.location?.location_name && (
-            <View style={styles.locationRow}>
-              <Ionicons name="location-outline" size={16} color={colors.textMuted} />
-              <Text style={[styles.locationText, { color: colors.textMuted }]}>
-                {activity.location.location_name}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Engagement Section - Moved up for better UX */}
-        <Card style={styles.engagementCard}>
-          <View style={styles.engagementRow}>
-            <InteractionButton
-              variant="like"
-              targetType="activity"
-              targetId={activity.id}
-              count={likesCount}
-              isActive={isLiked}
-              disabled={isOwner}
-              layout="vertical"
-              iconSize={28}
-              label={t('engagement.likes')}
-              countStyle={styles.engagementCount}
-              onChange={handleLikeChange}
-              containerStyle={styles.engagementItem}
-            />
-
-            <InteractionButton
-              variant="comment"
-              targetType="activity"
-              targetId={activity.id}
-              count={activity.comments_count || 0}
-              layout="vertical"
-              iconSize={28}
-              label={t('engagement.comments')}
-              countStyle={styles.engagementCount}
-              onPress={scrollToComments}
-              containerStyle={styles.engagementItem}
-            />
-
-            <InteractionButton
-              variant="boost"
-              targetType="activity"
-              targetId={activity.id}
-              count={activity.boosts_count || 0}
-              isActive={activity.is_boosted || false}
-              disabled={isOwner}
-              layout="vertical"
-              iconSize={28}
-              label={t('engagement.boosts')}
-              countStyle={styles.engagementCount}
-              containerStyle={styles.engagementItem}
-            />
-
-            {/* Share */}
-            <TouchableOpacity
-              style={styles.engagementItem}
-              onPress={() => navigation.navigate('ActivityShare', { activityId, hasGpsTrack: activity.has_gps_track, photos: activity.photos })}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="share-social-outline" size={28} color={colors.textMuted} />
-              <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
-                {t('common.share')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
-
-        {/* Main Stats - Key Metrics First */}
-        <Card style={styles.statsCard}>
-          <View style={styles.mainStats}>
-            <View style={styles.mainStatItem}>
-              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
-              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.distance')}</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.mainStatItem}>
-              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
-              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.duration')}</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.mainStatItem}>
-              <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                {formatPace(activity.duration, activity.distance)}
-              </Text>
-              <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>{t('activityDetail.pace')}</Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Description - Story comes before technical details */}
-        {activity.description && (
-          <Card style={styles.section}>
-            <MentionText
-              text={activity.description}
-              mentions={activity.mentions}
-              style={[styles.description, { color: colors.textSecondary }]}
-            />
-          </Card>
-        )}
-
-        {/* Secondary Stats - Detailed Metrics */}
-        {canUse('advanced_stats') ? (
-          (activity.calories || activity.elevation_gain || activity.avg_speed || activity.max_speed || activity.avg_heart_rate || activity.max_heart_rate) && (
-            <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.detailedStats')}</Text>
-              <View style={styles.statsGrid}>
-                {activity.calories !== null && activity.calories > 0 && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="flame-outline" size={22} color={colors.primary} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.calories')}</Text>
-                  </View>
-                )}
-                {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain)}</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.elevationGain')}</Text>
-                  </View>
-                )}
-                {activity.avg_speed !== null && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.avg_speed)}</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgSpeed')}</Text>
-                  </View>
-                )}
-                {activity.max_speed !== null && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="flash-outline" size={22} color={colors.primary} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{fmtSpeed(activity.max_speed)}</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxSpeed')}</Text>
-                  </View>
-                )}
-                {activity.avg_heart_rate !== null && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="heart-outline" size={22} color={colors.error} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.avg_heart_rate} bpm</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.avgHeartRate')}</Text>
-                  </View>
-                )}
-                {activity.max_heart_rate !== null && (
-                  <View style={styles.statGridItem}>
-                    <Ionicons name="heart" size={22} color={colors.error} />
-                    <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>{activity.max_heart_rate} bpm</Text>
-                    <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>{t('activityDetail.maxHeartRate')}</Text>
-                  </View>
-                )}
-              </View>
-              {activity.hr_data_source && (
-                <View style={styles.hrSourceBadge}>
-                  <Ionicons name="watch-outline" size={14} color={colors.primary} />
-                  <Text style={[styles.hrSourceText, { color: colors.primary }]}>
-                    {activity.hr_data_source === 'health_connect'
-                      ? t('settings.healthSync.hrFromHealthConnect')
-                      : t('settings.healthSync.hrFromAppleHealth')}
+              {/* Location */}
+              {activity.location?.location_name && (
+                <View style={styles.locationRow}>
+                  <Ionicons name="location-outline" size={16} color={colors.textMuted} />
+                  <Text style={[styles.locationText, { color: colors.textMuted }]}>
+                    {activity.location.location_name}
                   </Text>
                 </View>
               )}
-            </Card>
-          )
-        ) : (
-          <PremiumTeaser feature="advanced_stats" style={styles.section} />
-        )}
+            </View>
 
-        {/* Charts Section - Performance Analysis */}
-        {canUse('advanced_stats') ? (
-          activityStats?.splits && activityStats.splits.splits.length > 0 && (
-            <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.performanceAnalysis')}</Text>
-              <PaceChart splits={activityStats.splits.splits} title={t('activityDetail.pacePerKm')} />
-              {activityStats.has_data.elevation && (
-                <ElevationChart splits={activityStats.splits.splits} title={t('activityDetail.elevationPerKm')} />
-              )}
-              {activityStats.has_data.heart_rate && (
-                <HeartRateChart splits={activityStats.splits.splits} title={t('activityDetail.heartRatePerKm')} />
-              )}
-            </Card>
-          )
-        ) : activity.has_gps_track ? (
-          <PremiumTeaser feature="advanced_stats" style={styles.section} />
-        ) : null}
+            {/* Engagement Section - Moved up for better UX */}
+            <Card style={styles.engagementCard}>
+              <View style={styles.engagementRow}>
+                <InteractionButton
+                  variant="like"
+                  targetType="activity"
+                  targetId={activity.id}
+                  count={likesCount}
+                  isActive={isLiked}
+                  disabled={isOwner}
+                  layout="vertical"
+                  iconSize={28}
+                  label={t('engagement.likes')}
+                  countStyle={styles.engagementCount}
+                  onChange={handleLikeChange}
+                  containerStyle={styles.engagementItem}
+                />
 
-        {/* Photo Gallery */}
-        {activity.photos && activity.photos.length > 0 && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('activityDetail.photos')} ({activity.photos.length})
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.photoGallery}
-            >
-              {activity.photos.map((photo, index) => (
+                <InteractionButton
+                  variant="comment"
+                  targetType="activity"
+                  targetId={activity.id}
+                  count={activity.comments_count || 0}
+                  layout="vertical"
+                  iconSize={28}
+                  label={t('engagement.comments')}
+                  countStyle={styles.engagementCount}
+                  onPress={scrollToComments}
+                  containerStyle={styles.engagementItem}
+                />
+
+                <InteractionButton
+                  variant="boost"
+                  targetType="activity"
+                  targetId={activity.id}
+                  count={activity.boosts_count || 0}
+                  isActive={activity.is_boosted || false}
+                  disabled={isOwner}
+                  layout="vertical"
+                  iconSize={28}
+                  label={t('engagement.boosts')}
+                  countStyle={styles.engagementCount}
+                  containerStyle={styles.engagementItem}
+                />
+
+                {/* Share */}
                 <TouchableOpacity
-                  key={photo.id}
-                  onPress={() => setSelectedPhotoIndex(index)}
-                  activeOpacity={0.8}
+                  style={styles.engagementItem}
+                  onPress={() =>
+                    navigation.navigate('ActivityShare', {
+                      activityId,
+                      hasGpsTrack: activity.has_gps_track,
+                      photos: activity.photos,
+                    })
+                  }
+                  activeOpacity={0.7}
                 >
-                  <Image
-                    source={{ uri: fixStorageUrl(photo.url) || '' }}
-                    style={styles.photoThumbnail}
-                  />
+                  <Ionicons name="share-social-outline" size={28} color={colors.textMuted} />
+                  <Text style={[styles.engagementLabel, { color: colors.textMuted }]}>
+                    {t('common.share')}
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Card>
-        )}
+              </View>
+            </Card>
 
-        {/* Fullscreen Photo Modal */}
-        <Modal
-          visible={selectedPhotoIndex !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedPhotoIndex(null)}
-        >
-          <View style={styles.modalContainer}>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setSelectedPhotoIndex(null)}
-            >
-              <Ionicons name="close" size={28} color="#fff" />
-            </TouchableOpacity>
+            {/* Main Stats - Key Metrics First */}
+            <Card style={styles.statsCard}>
+              <View style={styles.mainStats}>
+                <View style={styles.mainStatItem}>
+                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                    {formatDistance(activity.distance)}
+                  </Text>
+                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                    {t('activityDetail.distance')}
+                  </Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.mainStatItem}>
+                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                    {formatDuration(activity.duration)}
+                  </Text>
+                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                    {t('activityDetail.duration')}
+                  </Text>
+                </View>
+                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                <View style={styles.mainStatItem}>
+                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                    {formatPace(activity.duration, activity.distance)}
+                  </Text>
+                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                    {t('activityDetail.pace')}
+                  </Text>
+                </View>
+              </View>
+            </Card>
 
-            {selectedPhotoIndex !== null && activity.photos && (
-              <>
+            {/* Description - Story comes before technical details */}
+            {activity.description && (
+              <Card style={styles.section}>
+                <MentionText
+                  text={activity.description}
+                  mentions={activity.mentions}
+                  style={[styles.description, { color: colors.textSecondary }]}
+                />
+              </Card>
+            )}
+
+            {/* Secondary Stats - Detailed Metrics */}
+            {canUse('advanced_stats') ? (
+              (activity.calories ||
+                activity.elevation_gain ||
+                activity.avg_speed ||
+                activity.max_speed ||
+                activity.avg_heart_rate ||
+                activity.max_heart_rate) && (
+                <Card style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                    {t('activityDetail.detailedStats')}
+                  </Text>
+                  <View style={styles.statsGrid}>
+                    {activity.calories !== null && activity.calories > 0 && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="flame-outline" size={22} color={colors.primary} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {activity.calories}
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.calories')}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {formatElevation(activity.elevation_gain)}
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.elevationGain')}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.avg_speed !== null && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {fmtSpeed(activity.avg_speed)}
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.avgSpeed')}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.max_speed !== null && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="flash-outline" size={22} color={colors.primary} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {fmtSpeed(activity.max_speed)}
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.maxSpeed')}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.avg_heart_rate !== null && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="heart-outline" size={22} color={colors.error} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {activity.avg_heart_rate} bpm
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.avgHeartRate')}
+                        </Text>
+                      </View>
+                    )}
+                    {activity.max_heart_rate !== null && (
+                      <View style={styles.statGridItem}>
+                        <Ionicons name="heart" size={22} color={colors.error} />
+                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
+                          {activity.max_heart_rate} bpm
+                        </Text>
+                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
+                          {t('activityDetail.maxHeartRate')}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {activity.hr_data_source && (
+                    <View style={styles.hrSourceBadge}>
+                      <Ionicons name="watch-outline" size={14} color={colors.primary} />
+                      <Text style={[styles.hrSourceText, { color: colors.primary }]}>
+                        {activity.hr_data_source === 'health_connect'
+                          ? t('settings.healthSync.hrFromHealthConnect')
+                          : t('settings.healthSync.hrFromAppleHealth')}
+                      </Text>
+                    </View>
+                  )}
+                </Card>
+              )
+            ) : (
+              <PremiumTeaser feature="advanced_stats" style={styles.section} />
+            )}
+
+            {/* Charts Section - Performance Analysis */}
+            {canUse('advanced_stats') ? (
+              activityStats?.splits &&
+              activityStats.splits.splits.length > 0 && (
+                <Card style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                    {t('activityDetail.performanceAnalysis')}
+                  </Text>
+                  <PaceChart
+                    splits={activityStats.splits.splits}
+                    title={t('activityDetail.pacePerKm')}
+                  />
+                  {activityStats.has_data.elevation && (
+                    <ElevationChart
+                      splits={activityStats.splits.splits}
+                      title={t('activityDetail.elevationPerKm')}
+                    />
+                  )}
+                  {activityStats.has_data.heart_rate && (
+                    <HeartRateChart
+                      splits={activityStats.splits.splits}
+                      title={t('activityDetail.heartRatePerKm')}
+                    />
+                  )}
+                </Card>
+              )
+            ) : activity.has_gps_track ? (
+              <PremiumTeaser feature="advanced_stats" style={styles.section} />
+            ) : null}
+
+            {/* Photo Gallery */}
+            {activity.photos && activity.photos.length > 0 && (
+              <Card style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('activityDetail.photos')} ({activity.photos.length})
+                </Text>
                 <ScrollView
                   horizontal
-                  pagingEnabled
                   showsHorizontalScrollIndicator={false}
-                  contentOffset={{ x: selectedPhotoIndex * SCREEN_WIDTH, y: 0 }}
-                  onMomentumScrollEnd={(e) => {
-                    const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-                    setSelectedPhotoIndex(newIndex);
-                  }}
+                  contentContainerStyle={styles.photoGallery}
                 >
-                  {activity.photos.map((photo) => (
-                    <View key={photo.id} style={styles.modalImageContainer}>
+                  {activity.photos.map((photo, index) => (
+                    <TouchableOpacity
+                      key={photo.id}
+                      onPress={() => setSelectedPhotoIndex(index)}
+                      activeOpacity={0.8}
+                    >
                       <Image
                         source={{ uri: fixStorageUrl(photo.url) || '' }}
-                        style={styles.modalImage}
-                        resizeMode="contain"
+                        style={styles.photoThumbnail}
                       />
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
+              </Card>
+            )}
 
-                {/* Photo counter */}
-                <View style={styles.photoCounter}>
-                  <Text style={styles.photoCounterText}>
-                    {selectedPhotoIndex + 1} / {activity.photos.length}
+            {/* Fullscreen Photo Modal */}
+            <Modal
+              visible={selectedPhotoIndex !== null}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setSelectedPhotoIndex(null)}
+            >
+              <View style={styles.modalContainer}>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setSelectedPhotoIndex(null)}
+                >
+                  <Ionicons name="close" size={28} color="#fff" />
+                </TouchableOpacity>
+
+                {selectedPhotoIndex !== null && activity.photos && (
+                  <>
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      contentOffset={{ x: selectedPhotoIndex * SCREEN_WIDTH, y: 0 }}
+                      onMomentumScrollEnd={(e) => {
+                        const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                        setSelectedPhotoIndex(newIndex);
+                      }}
+                    >
+                      {activity.photos.map((photo) => (
+                        <View key={photo.id} style={styles.modalImageContainer}>
+                          <Image
+                            source={{ uri: fixStorageUrl(photo.url) || '' }}
+                            style={styles.modalImage}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      ))}
+                    </ScrollView>
+
+                    {/* Photo counter */}
+                    <View style={styles.photoCounter}>
+                      <Text style={styles.photoCounterText}>
+                        {selectedPhotoIndex + 1} / {activity.photos.length}
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            </Modal>
+
+            {/* Activity Info - Technical Details */}
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('activityDetail.technicalInfo')}
+              </Text>
+              <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
+                <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  {t('activityDetail.date')}
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                  {format(new Date(activity.started_at), 'PPpp')}
+                </Text>
+              </View>
+              <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
+                <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                  {t('activityDetail.source')}
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                  {activity.source === 'app'
+                    ? t('activityDetail.sources.app')
+                    : activity.source === 'manual'
+                      ? t('activityDetail.sources.manual')
+                      : activity.source === 'gpx_import'
+                        ? t('activityDetail.sources.gpxImport')
+                        : activity.source}
+                </Text>
+              </View>
+              {gpsTrack && (
+                <View style={[styles.infoRow, { borderBottomColor: 'transparent' }]}>
+                  <Ionicons name="location-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
+                    {t('activityDetail.gpsPoints')}
+                  </Text>
+                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                    {gpsTrack.points_count.toLocaleString()} {t('activityDetail.points')}
                   </Text>
                 </View>
-              </>
-            )}
-          </View>
-        </Modal>
+              )}
+            </Card>
 
-        {/* Activity Info - Technical Details */}
-        <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('activityDetail.technicalInfo')}</Text>
-          <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
-            <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.date')}</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-              {format(new Date(activity.started_at), 'PPpp')}
-            </Text>
-          </View>
-          <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
-            <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
-            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.source')}</Text>
-            <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-              {activity.source === 'app'
-                ? t('activityDetail.sources.app')
-                : activity.source === 'manual'
-                  ? t('activityDetail.sources.manual')
-                  : activity.source === 'gpx_import'
-                    ? t('activityDetail.sources.gpxImport')
-                    : activity.source}
-            </Text>
-          </View>
-          {gpsTrack && (
-            <View style={[styles.infoRow, { borderBottomColor: 'transparent' }]}>
-              <Ionicons name="location-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('activityDetail.gpsPoints')}</Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                {gpsTrack.points_count.toLocaleString()} {t('activityDetail.points')}
-              </Text>
+            {/* Comments Section */}
+            <View style={styles.commentsSection}>
+              {header}
+              {commentList}
             </View>
-          )}
-        </Card>
-
-        {/* Comments Section */}
-        <View style={styles.commentsSection}>
-          {header}
-          {commentList}
-        </View>
           </KeyboardAwareScreenLayout>
         )}
       />
@@ -787,11 +892,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             id: 'share',
             icon: 'share-outline',
             title: t('common.share'),
-            onPress: () => navigation.navigate('ActivityShare', {
-              activityId,
-              hasGpsTrack: activity.has_gps_track,
-              photos: activity.photos,
-            }),
+            onPress: () =>
+              navigation.navigate('ActivityShare', {
+                activityId,
+                hasGpsTrack: activity.has_gps_track,
+                photos: activity.photos,
+              }),
           });
           if (activity.has_gps_track) {
             opts.push({

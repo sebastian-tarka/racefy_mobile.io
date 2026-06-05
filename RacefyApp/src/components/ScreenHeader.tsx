@@ -47,11 +47,7 @@ export function ScreenHeader({
         </Text>
       </View>
 
-      {rightAction && (
-        <View style={styles.rightSection}>
-          {rightAction}
-        </View>
-      )}
+      {rightAction && <View style={styles.rightSection}>{rightAction}</View>}
     </View>
   );
 }

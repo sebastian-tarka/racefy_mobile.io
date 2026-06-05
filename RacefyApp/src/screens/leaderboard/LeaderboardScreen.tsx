@@ -1,15 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ScreenHeader, LeaderboardList, EmptyState, TimeRangeFilter, type PeriodOption, ScreenContainer } from '../../components';
+import {
+  ScreenHeader,
+  LeaderboardList,
+  EmptyState,
+  TimeRangeFilter,
+  type PeriodOption,
+  ScreenContainer,
+} from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../hooks/useAuth';
 import { useLeaderboard, LeaderboardType } from '../../hooks/useLeaderboard';
@@ -52,20 +52,26 @@ export function LeaderboardScreen({ navigation }: Props) {
 
   const currentLeaderboard = activeTab === 'global' ? globalLeaderboard : followingLeaderboard;
 
-  const handleTabChange = useCallback((tab: TabType) => {
-    setActiveTab(tab);
-    if (tab === 'following' && isAuthenticated) {
-      followingLeaderboard.changePeriod(globalLeaderboard.period);
-      followingLeaderboard.refetch();
-    }
-  }, [isAuthenticated, globalLeaderboard.period]);
+  const handleTabChange = useCallback(
+    (tab: TabType) => {
+      setActiveTab(tab);
+      if (tab === 'following' && isAuthenticated) {
+        followingLeaderboard.changePeriod(globalLeaderboard.period);
+        followingLeaderboard.refetch();
+      }
+    },
+    [isAuthenticated, globalLeaderboard.period],
+  );
 
-  const handlePeriodChange = useCallback((period: LeaderboardPeriod) => {
-    globalLeaderboard.changePeriod(period);
-    if (activeTab === 'following' && isAuthenticated) {
-      followingLeaderboard.changePeriod(period);
-    }
-  }, [activeTab, isAuthenticated]);
+  const handlePeriodChange = useCallback(
+    (period: LeaderboardPeriod) => {
+      globalLeaderboard.changePeriod(period);
+      if (activeTab === 'following' && isAuthenticated) {
+        followingLeaderboard.changePeriod(period);
+      }
+    },
+    [activeTab, isAuthenticated],
+  );
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -73,9 +79,12 @@ export function LeaderboardScreen({ navigation }: Props) {
     setIsRefreshing(false);
   }, [currentLeaderboard]);
 
-  const handleUserPress = useCallback((username: string) => {
-    navigation.navigate('UserProfile', { username });
-  }, [navigation]);
+  const handleUserPress = useCallback(
+    (username: string) => {
+      navigation.navigate('UserProfile', { username });
+    },
+    [navigation],
+  );
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('leaderboard.tabs.global'), value: 'global', icon: 'globe-outline' },
@@ -89,10 +98,7 @@ export function LeaderboardScreen({ navigation }: Props) {
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.value}
-            style={[
-              styles.tab,
-              activeTab === tab.value && { backgroundColor: colors.primary },
-            ]}
+            style={[styles.tab, activeTab === tab.value && { backgroundColor: colors.primary }]}
             onPress={() => handleTabChange(tab.value)}
           >
             <Ionicons
@@ -126,11 +132,7 @@ export function LeaderboardScreen({ navigation }: Props) {
   if (activeTab === 'following' && !isAuthenticated) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('leaderboard.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('leaderboard.title')} showBack onBack={() => navigation.goBack()} />
         <ScrollView
           refreshControl={
             <RefreshControl
@@ -156,11 +158,7 @@ export function LeaderboardScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('leaderboard.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('leaderboard.title')} showBack onBack={() => navigation.goBack()} />
       <LeaderboardList
         entries={currentLeaderboard.entries}
         isLoading={currentLeaderboard.isLoading}

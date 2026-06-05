@@ -18,7 +18,12 @@ export function RoutesCard({ routes, fingerprints }: RoutesCardProps) {
 
   return (
     <InsightCard title={t('insights.routes.title')} icon="map">
-      <View style={[styles.uniqueBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+      <View
+        style={[
+          styles.uniqueBox,
+          { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+        ]}
+      >
         <Text style={[styles.uniqueValue, { color: colors.primary }]}>
           {routes.unique_cities_count}
         </Text>
@@ -40,11 +45,14 @@ export function RoutesCard({ routes, fingerprints }: RoutesCardProps) {
                   {loc.region ? `, ${loc.region}` : ''}
                 </Text>
                 <Text style={[styles.locationMeta, { color: colors.textMuted }]}>
-                  {loc.count}x · {t('insights.routes.avgDistance', { km: loc.avg_distance_km.toFixed(1) })}
+                  {loc.count}x ·{' '}
+                  {t('insights.routes.avgDistance', { km: loc.avg_distance_km.toFixed(1) })}
                 </Text>
               </View>
               {loc.country && (
-                <Text style={[styles.countryBadge, { color: colors.textMuted }]}>{loc.country}</Text>
+                <Text style={[styles.countryBadge, { color: colors.textMuted }]}>
+                  {loc.country}
+                </Text>
               )}
             </View>
           ))}
@@ -63,7 +71,12 @@ export function RoutesCard({ routes, fingerprints }: RoutesCardProps) {
                   <Text style={[styles.fingerprintLabel, { color: colors.textPrimary }]}>
                     {fp.label}
                   </Text>
-                  <View style={[styles.badge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                    ]}
+                  >
                     <Text style={[styles.badgeText, { color: colors.textSecondary }]}>
                       {fp.is_loop ? t('insights.routes.loop') : t('insights.routes.outAndBack')}
                     </Text>

@@ -30,7 +30,11 @@ function formatEventDate(dateString?: string): string {
  * Upcoming Event section component (singular).
  * Shows a single featured upcoming event.
  */
-export function UpcomingEventSection({ section, onPress, onEventPress }: UpcomingEventSectionProps) {
+export function UpcomingEventSection({
+  section,
+  onPress,
+  onEventPress,
+}: UpcomingEventSectionProps) {
   const { colors } = useTheme();
 
   const event = section.event;
@@ -48,11 +52,7 @@ export function UpcomingEventSection({ section, onPress, onEventPress }: Upcomin
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       <ImageBackground
         source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
         style={styles.imageBackground}
@@ -66,7 +66,9 @@ export function UpcomingEventSection({ section, onPress, onEventPress }: Upcomin
 
           <View style={styles.content}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+            <Text style={styles.eventTitle} numberOfLines={2}>
+              {event.title}
+            </Text>
 
             <View style={styles.meta}>
               {event.start_date && (
@@ -78,7 +80,9 @@ export function UpcomingEventSection({ section, onPress, onEventPress }: Upcomin
               {event.location && (
                 <View style={styles.metaItem}>
                   <Ionicons name="location-outline" size={14} color="rgba(255,255,255,0.8)" />
-                  <Text style={styles.metaText} numberOfLines={1}>{event.location}</Text>
+                  <Text style={styles.metaText} numberOfLines={1}>
+                    {event.location}
+                  </Text>
                 </View>
               )}
               {event.participants_count !== undefined && (

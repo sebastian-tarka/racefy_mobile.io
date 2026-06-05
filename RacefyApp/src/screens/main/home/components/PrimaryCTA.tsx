@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
-import {Pressable, StyleSheet, Text, useWindowDimensions, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {LinearGradient} from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -12,9 +12,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import {useTheme} from '../../../../hooks/useTheme';
-import {logger} from '../../../../services/logger';
-import {borderRadius, fontSize, fontWeight, spacing} from '../../../../theme';
+import { useTheme } from '../../../../hooks/useTheme';
+import { logger } from '../../../../services/logger';
+import { borderRadius, fontSize, fontWeight, spacing } from '../../../../theme';
 import type {
   HomeActionPayload,
   HomeCtaAction,
@@ -33,7 +33,15 @@ type TimeOfDay = 'dawn' | 'morning' | 'day' | 'evening' | 'dusk' | 'night';
 const START_ACTIONS = new Set(['start_activity', 'start_planned_training', 'resume_training']);
 
 const ATMOSPHERE_CONDITIONS = new Set([
-  'Mist', 'Smoke', 'Haze', 'Dust', 'Fog', 'Sand', 'Ash', 'Squall', 'Tornado',
+  'Mist',
+  'Smoke',
+  'Haze',
+  'Dust',
+  'Fog',
+  'Sand',
+  'Ash',
+  'Squall',
+  'Tornado',
 ]);
 
 function getTimeOfDay(hour: number): TimeOfDay {
@@ -102,10 +110,7 @@ const PALETTE: Record<TimeOfDay, Record<string, GradientPair>> = {
   },
 };
 
-function getWeatherGradient(
-  condition: string | undefined,
-  hour: number,
-): GradientPair | null {
+function getWeatherGradient(condition: string | undefined, hour: number): GradientPair | null {
   if (!condition) return null;
   const tod = getTimeOfDay(hour);
   const key = ATMOSPHERE_CONDITIONS.has(condition) ? 'atmosphere' : condition;
@@ -314,7 +319,12 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
                     ]}
                   />
                 )}
-                <View style={[styles.heroIconCircle, { width: iconBox, height: iconBox, borderRadius: iconBox / 2 }]}>
+                <View
+                  style={[
+                    styles.heroIconCircle,
+                    { width: iconBox, height: iconBox, borderRadius: iconBox / 2 },
+                  ]}
+                >
                   <Ionicons name={icon} size={iconSize} color={colors.primary} />
                 </View>
               </View>
@@ -329,7 +339,7 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
             </View>
           </View>
         ) : (
-           <View style={styles.content}>
+          <View style={styles.content}>
             <Ionicons name={icon} size={22} color="#ffffff" style={styles.leadingIcon} />
             <View style={styles.textContainer}>
               <Text style={styles.label} numberOfLines={1}>

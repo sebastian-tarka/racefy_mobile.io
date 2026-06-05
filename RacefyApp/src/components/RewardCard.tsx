@@ -1,12 +1,12 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {Card} from './Card';
-import {useTheme} from '../hooks/useTheme';
-import {useTranslation} from 'react-i18next';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Reward, RewardType} from '../types/api';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { Card } from './Card';
+import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from 'react-i18next';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Reward, RewardType } from '../types/api';
 
 interface RewardCardProps {
   reward: Reward;
@@ -102,13 +102,12 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
           <View style={styles.detailsContainer}>
             <View style={[styles.pointsBadge, { backgroundColor: `${rewardColor}15` }]}>
               <Text style={[styles.pointsText, { color: rewardColor }]}>
-                {reward.points > 0 ? '+' : ''}{reward.points} {t('rewards.points')}
+                {reward.points > 0 ? '+' : ''}
+                {reward.points} {t('rewards.points')}
               </Text>
             </View>
             {reward.type && (
-              <Text style={[styles.typeText, { color: colors.textMuted }]}>
-                {reward.type}
-              </Text>
+              <Text style={[styles.typeText, { color: colors.textMuted }]}>{reward.type}</Text>
             )}
           </View>
         );
@@ -120,16 +119,17 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
 
         return (
           <View style={styles.detailsContainer}>
-            <View style={[
-              styles.couponBadge,
-              { backgroundColor: `${rewardColor}15` },
-              !isActive && { opacity: 0.5 }
-            ]}>
+            <View
+              style={[
+                styles.couponBadge,
+                { backgroundColor: `${rewardColor}15` },
+                !isActive && { opacity: 0.5 },
+              ]}
+            >
               <Text style={[styles.couponDiscount, { color: rewardColor }]}>
                 {reward.coupon.discount_type === 'percentage'
                   ? `${reward.coupon.discount_value}% ${t('rewards.off')}`
-                  : `${reward.coupon.discount_value} ${reward.coupon.currency} ${t('rewards.off')}`
-                }
+                  : `${reward.coupon.discount_value} ${reward.coupon.currency} ${t('rewards.off')}`}
               </Text>
             </View>
             <Text style={[styles.couponDescription, { color: colors.textSecondary }]}>
@@ -139,8 +139,11 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
               {t('rewards.code')}: {reward.coupon.code}
             </Text>
             <View style={styles.couponFooter}>
-              <Text style={[styles.expiryText, { color: isExpired ? colors.error : colors.textMuted }]}>
-                {t('rewards.expiresAt')}: {format(new Date(reward.coupon.expires_at), 'MMM d, yyyy')}
+              <Text
+                style={[styles.expiryText, { color: isExpired ? colors.error : colors.textMuted }]}
+              >
+                {t('rewards.expiresAt')}:{' '}
+                {format(new Date(reward.coupon.expires_at), 'MMM d, yyyy')}
               </Text>
               {isCancelled && (
                 <Text style={[styles.statusBadge, { color: colors.error }]}>
@@ -188,9 +191,7 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
           <View style={styles.detailsContainer}>
             <View style={[styles.badgeContainer, { borderColor: rarityColor }]}>
               <Text style={styles.badgeEmojiLarge}>{emoji}</Text>
-              <Text style={[styles.badgeName, { color: rarityColor }]}>
-                {reward.badge.name}
-              </Text>
+              <Text style={[styles.badgeName, { color: rarityColor }]}>{reward.badge.name}</Text>
               <Text style={[styles.rarityText, { color: rarityColor }]}>
                 {t(`rewards.rarity.${reward.badge.rarity}`)}
               </Text>
@@ -211,9 +212,8 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
   const title = getTitle();
   const isNew = reward.reward_type === 'badge' && reward.is_new;
 
-  const badgeEmoji = reward.reward_type === 'badge' && reward.badge
-    ? reward.badge.icon_emoji || '🏅'
-    : null;
+  const badgeEmoji =
+    reward.reward_type === 'badge' && reward.badge ? reward.badge.icon_emoji || '🏅' : null;
 
   return (
     <TouchableOpacity onPress={onPress} disabled={!onPress}>
@@ -238,9 +238,7 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
               )}
             </View>
             {eventName && (
-              <Text style={[styles.eventName, { color: colors.textSecondary }]}>
-                {eventName}
-              </Text>
+              <Text style={[styles.eventName, { color: colors.textSecondary }]}>{eventName}</Text>
             )}
             {place && place <= 3 && (
               <View style={styles.positionRow}>
@@ -262,9 +260,7 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
         <View style={styles.footer}>
           <View style={styles.dateContainer}>
             <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
-            <Text style={[styles.date, { color: colors.textMuted }]}>
-              {formattedDate}
-            </Text>
+            <Text style={[styles.date, { color: colors.textMuted }]}>{formattedDate}</Text>
           </View>
         </View>
       </Card>

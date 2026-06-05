@@ -1,12 +1,12 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {Card} from './Card';
-import {Avatar} from './Avatar';
-import {useTheme} from '../hooks/useTheme';
-import {fontSize, spacing} from '../theme';
-import type {Team} from '../types/api';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { Card } from './Card';
+import { Avatar } from './Avatar';
+import { useTheme } from '../hooks/useTheme';
+import { fontSize, spacing } from '../theme';
+import type { Team } from '../types/api';
 
 interface TeamCardProps {
   team: Team;

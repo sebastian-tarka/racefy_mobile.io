@@ -1,31 +1,36 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
-import {RefreshControl, ScrollView, StyleSheet} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
-import type {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import type {MainTabParamList} from '../../navigation/types';
-import type {HomeCtaAction, HomeSection, TodaysTrainingSessionMeta, TrainingTip,} from '../../types/api';
-import {TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT} from '../../navigation/constants';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { MainTabParamList } from '../../navigation/types';
+import type {
+  HomeCtaAction,
+  HomeSection,
+  TodaysTrainingSessionMeta,
+  TrainingTip,
+} from '../../types/api';
+import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT } from '../../navigation/constants';
 
 // Hooks
-import {useAuth} from '../../hooks/useAuth';
-import {useTheme} from '../../hooks/useTheme';
-import {useLiveActivityContext} from '../../hooks/useLiveActivity';
-import {useNotifications} from '../../hooks/useNotifications';
-import {useHomeData} from '../../hooks/useHomeData';
-import {useHomeConfig} from '../../hooks/useHomeConfig';
-import {useWeeklyStreak} from '../../hooks/useWeeklyStreak';
-import {useTrainingReminders} from '../../hooks/useTrainingReminders';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { useLiveActivityContext } from '../../hooks/useLiveActivity';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useHomeData } from '../../hooks/useHomeData';
+import { useHomeConfig } from '../../hooks/useHomeConfig';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
+import { useTrainingReminders } from '../../hooks/useTrainingReminders';
 
 // Services
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {homeAnalytics} from '../../services/homeAnalytics';
-import {useRefreshOn} from '../../services/refreshEvents';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { homeAnalytics } from '../../services/homeAnalytics';
+import { useRefreshOn } from '../../services/refreshEvents';
 
 // Theme
-import {spacing} from '../../theme';
+import { spacing } from '../../theme';
 
 // Components
 import {
@@ -45,12 +50,11 @@ import {
   DraftsReminderModal,
   FadeInView,
   Loading,
-  ScreenContainer
+  ScreenContainer,
 } from '../../components';
-import {UnsyncedActivitiesBanner} from '../../components/UnsyncedActivitiesBanner';
+import { UnsyncedActivitiesBanner } from '../../components/UnsyncedActivitiesBanner';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
-
 
 /**
  * DynamicHomeScreen - Config-driven Home screen implementation.
@@ -94,7 +98,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
         const activities = program?.current_week?.activities;
         if (activities && activities.length > 0) {
           // day_of_week: 1=Monday(0 in our array), 7=Sunday(6)
-          const days = [...new Set(activities.map(a => a.day_of_week - 1))];
+          const days = [...new Set(activities.map((a) => a.day_of_week - 1))];
           setPlannedTrainingDays(days);
         } else {
           setPlannedTrainingDays([]);
@@ -181,18 +185,15 @@ export function DynamicHomeScreen({ navigation }: Props) {
     }
   }, [isAuthenticated]);
 
-  const handleTipMarkHelpful = useCallback(
-    async (tipId: number, helpful: boolean) => {
-      try {
-        await api.markTipHelpful(tipId, helpful);
-        // Remove the tip from the list so the next one shows (or card disappears)
-        setAvailableTips((prev) => prev.filter((t) => t.id !== tipId));
-      } catch {
-        // Silently fail
-      }
-    },
-    []
-  );
+  const handleTipMarkHelpful = useCallback(async (tipId: number, helpful: boolean) => {
+    try {
+      await api.markTipHelpful(tipId, helpful);
+      // Remove the tip from the list so the next one shows (or card disappears)
+      setAvailableTips((prev) => prev.filter((t) => t.id !== tipId));
+    } catch {
+      // Silently fail
+    }
+  }, []);
 
   // Register tip delivery when a new tip appears (fire-and-forget)
   useEffect(() => {
@@ -207,7 +208,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       loadAvailableTips();
-    }, [loadAvailableTips])
+    }, [loadAvailableTips]),
   );
 
   // Check for pending drafts once per session
@@ -242,7 +243,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
     (screen: 'Login' | 'Register') => {
       navigation.getParent()?.navigate('Auth', { screen });
     },
-    [navigation]
+    [navigation],
   );
 
   const [isStartActionsSheetVisible, setIsStartActionsSheetVisible] = useState(false);
@@ -250,7 +251,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
   // Find rich training-session data for the primary CTA (if backend returned it).
   const todaysSession = useMemo(
     () => sortedSections.find((s) => s.type === 'todays_training_session'),
-    [sortedSections]
+    [sortedSections],
   );
 
   const primaryCtaWeather = useMemo(() => {
@@ -262,7 +263,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
   // of the primary CTA hero instead.
   const renderableSections = useMemo<HomeSection[]>(
     () => sortedSections.filter((s) => s.type !== 'todays_training_session'),
-    [sortedSections]
+    [sortedSections],
   );
 
   const primaryCtaHero = useMemo(() => {
@@ -284,12 +285,12 @@ export function DynamicHomeScreen({ navigation }: Props) {
       if (config) {
         homeAnalytics.primaryCtaClicked(
           (action as HomeCtaAction) ?? config.primary_cta.action,
-          config.primary_cta.label
+          config.primary_cta.label,
         );
       }
       navigation.navigate('Record');
     },
-    [config, navigation]
+    [config, navigation],
   );
 
   const handlePrimaryCtaLongPress = useCallback(() => {
@@ -324,7 +325,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
           break;
       }
     },
-    [navigation]
+    [navigation],
   );
 
   // Quick actions callbacks
@@ -360,7 +361,14 @@ export function DynamicHomeScreen({ navigation }: Props) {
       onFindEvents: handleFindEvents,
       onSectionCtaPress: handleSectionCtaPress,
     }),
-    [navigation, navigateToAuth, handleSectionCtaPress, handleStartTraining, handleCreatePost, handleFindEvents]
+    [
+      navigation,
+      navigateToAuth,
+      handleSectionCtaPress,
+      handleStartTraining,
+      handleCreatePost,
+      handleFindEvents,
+    ],
   );
 
   // Section data - memoized to prevent re-renders
@@ -368,7 +376,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
     () => ({
       upcomingEvents,
     }),
-    [upcomingEvents]
+    [upcomingEvents],
   );
 
   const isLoading = configLoading && !config;
@@ -377,9 +385,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
     <ScreenContainer>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPaddingBottom }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Unsynced activities banner - shows when failed finishes are queued. */}
         <UnsyncedActivitiesBanner
@@ -443,7 +449,9 @@ export function DynamicHomeScreen({ navigation }: Props) {
               completedDays={weeklyStreakData.completedDays}
               trainingDays={trainingReminders.enabled ? trainingReminders.days : undefined}
               plannedTrainingDays={plannedTrainingDays.length > 0 ? plannedTrainingDays : undefined}
-              onToggleTrainingDay={trainingReminders.enabled ? trainingReminders.toggleDay : undefined}
+              onToggleTrainingDay={
+                trainingReminders.enabled ? trainingReminders.toggleDay : undefined
+              }
               onSettingsPress={() => navigation.getParent()?.navigate('TrainingReminders')}
             />
           </FadeInView>
@@ -473,10 +481,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
         {/* Quick Actions - authenticated users only */}
         {isAuthenticated && (
           <FadeInView delay={480}>
-            <QuickActionsBarV2
-              onCreatePost={handleCreatePost}
-              onFindEvents={handleFindEvents}
-            />
+            <QuickActionsBarV2 onCreatePost={handleCreatePost} onFindEvents={handleFindEvents} />
           </FadeInView>
         )}
 
@@ -510,29 +515,31 @@ export function DynamicHomeScreen({ navigation }: Props) {
         visible={isStartActionsSheetVisible}
         onClose={() => setIsStartActionsSheetVisible(false)}
         title={t('home.startActions.title')}
-        options={[
-          {
-            id: 'start',
-            icon: 'play-circle',
-            title: t('home.startActions.start'),
-            description: t('home.startActions.startDesc'),
-            onPress: () => navigation.navigate('Record'),
-          },
-          {
-            id: 'trainings',
-            icon: 'list-circle-outline',
-            title: t('home.startActions.trainings'),
-            description: t('home.startActions.trainingsDesc'),
-            onPress: () => navigation.getParent()?.navigate('TrainingWeeksList'),
-          },
-          {
-            id: 'import',
-            icon: 'cloud-upload-outline',
-            title: t('home.startActions.import'),
-            description: t('home.startActions.importDesc'),
-            onPress: () => navigation.getParent()?.navigate('GpxImport'),
-          },
-        ] as BottomSheetOption[]}
+        options={
+          [
+            {
+              id: 'start',
+              icon: 'play-circle',
+              title: t('home.startActions.start'),
+              description: t('home.startActions.startDesc'),
+              onPress: () => navigation.navigate('Record'),
+            },
+            {
+              id: 'trainings',
+              icon: 'list-circle-outline',
+              title: t('home.startActions.trainings'),
+              description: t('home.startActions.trainingsDesc'),
+              onPress: () => navigation.getParent()?.navigate('TrainingWeeksList'),
+            },
+            {
+              id: 'import',
+              icon: 'cloud-upload-outline',
+              title: t('home.startActions.import'),
+              description: t('home.startActions.importDesc'),
+              onPress: () => navigation.getParent()?.navigate('GpxImport'),
+            },
+          ] as BottomSheetOption[]
+        }
       />
 
       {isAuthenticated && (

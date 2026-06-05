@@ -39,7 +39,9 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [languages, setLanguages] = useState<string[]>(['en', 'pl']);
   const [selectedLanguage, setSelectedLanguage] = useState(getCurrentLanguage());
-  const [selectedType, setSelectedType] = useState<LegalDocumentType | null>(initialDocType || null);
+  const [selectedType, setSelectedType] = useState<LegalDocumentType | null>(
+    initialDocType || null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,8 +92,8 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
     }
   };
 
-  const selectedDocument = (documents ?? []).find(d => d.type === selectedType);
-  const documentTypes = [...new Set((documents ?? []).map(d => d.type))];
+  const selectedDocument = (documents ?? []).find((d) => d.type === selectedType);
+  const documentTypes = [...new Set((documents ?? []).map((d) => d.type))];
 
   if (loading) {
     return (
@@ -119,7 +121,9 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
           <TouchableOpacity onPress={loadDocuments}>
-            <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.tryAgain')}</Text>
+            <Text style={[styles.retryText, { color: colors.primary }]}>
+              {t('common.tryAgain')}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScreenContainer>
@@ -145,11 +149,7 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('legal.documentsTitle')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('legal.documentsTitle')} showBack onBack={() => navigation.goBack()} />
 
       <View style={styles.headerSection}>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -158,13 +158,16 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
 
         {/* Language Switcher */}
         <View style={styles.languageRow}>
-          {languages.map(lang => (
+          {languages.map((lang) => (
             <TouchableOpacity
               key={lang}
               style={[
                 styles.langButton,
                 { backgroundColor: colors.borderLight, borderColor: colors.border },
-                selectedLanguage === lang && { backgroundColor: colors.primary, borderColor: colors.primary },
+                selectedLanguage === lang && {
+                  backgroundColor: colors.primary,
+                  borderColor: colors.primary,
+                },
               ]}
               onPress={() => setSelectedLanguage(lang)}
             >
@@ -189,13 +192,16 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
         style={styles.tabsContainer}
         contentContainerStyle={styles.tabsContent}
       >
-        {documentTypes.map(type => (
+        {documentTypes.map((type) => (
           <TouchableOpacity
             key={type}
             style={[
               styles.tab,
               { borderColor: colors.border },
-              selectedType === type && { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+              selectedType === type && {
+                borderColor: colors.primary,
+                backgroundColor: colors.primaryLight,
+              },
             ]}
             onPress={() => setSelectedType(type)}
           >
@@ -215,7 +221,12 @@ export function LegalDocumentsScreen({ navigation, route }: Props) {
       {/* Document Content */}
       <ScrollView style={styles.contentContainer} contentContainerStyle={styles.contentScroll}>
         {selectedDocument && (
-          <View style={[styles.documentCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.documentCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.documentHeader}>
               <Text style={[styles.documentTitle, { color: colors.textPrimary }]}>
                 {getDocumentTitle(selectedDocument.type, t)}

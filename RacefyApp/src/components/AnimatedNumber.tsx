@@ -37,12 +37,11 @@ export const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
   useAnimatedReaction(
     () => animatedValue.value,
     (currentValue) => {
-      const formattedValue = decimals > 0
-        ? currentValue.toFixed(decimals)
-        : Math.round(currentValue).toString();
+      const formattedValue =
+        decimals > 0 ? currentValue.toFixed(decimals) : Math.round(currentValue).toString();
 
       runOnJS(setDisplayValue)(`${formattedValue}${suffix}`);
-    }
+    },
   );
 
   return <Text style={style}>{displayValue}</Text>;

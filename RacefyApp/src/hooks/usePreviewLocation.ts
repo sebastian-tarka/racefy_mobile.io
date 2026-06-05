@@ -25,7 +25,14 @@ export function usePreviewLocation(
   // Fetch preview location BEFORE showing map view (to avoid zoom effect)
   useEffect(() => {
     const fetchPreviewLocation = async () => {
-      if (viewMode === 'map' && !isTracking && !isPaused && !currentPosition && !previewLocation && !fetchingPreviewLocation) {
+      if (
+        viewMode === 'map' &&
+        !isTracking &&
+        !isPaused &&
+        !currentPosition &&
+        !previewLocation &&
+        !fetchingPreviewLocation
+      ) {
         setFetchingPreviewLocation(true);
         logger.debug('activity', 'Pre-fetching location before showing map');
 
@@ -59,7 +66,15 @@ export function usePreviewLocation(
     };
 
     fetchPreviewLocation();
-  }, [viewMode, isTracking, isPaused, currentPosition, previewLocation, fetchingPreviewLocation, requestActivityTrackingPermissions]);
+  }, [
+    viewMode,
+    isTracking,
+    isPaused,
+    currentPosition,
+    previewLocation,
+    fetchingPreviewLocation,
+    requestActivityTrackingPermissions,
+  ]);
 
   // Clear preview location when starting to track
   useEffect(() => {

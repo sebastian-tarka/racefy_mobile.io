@@ -40,17 +40,16 @@ export function NavigationOverlay({ navigation: nav }: NavigationOverlayProps) {
       {nav.nextTurn && nav.distanceToTurn !== null && (
         <View style={[styles.turnCard, { backgroundColor: colors.cardBackground }]}>
           <View style={[styles.turnIconBox, { backgroundColor: colors.primary }]}>
-            <Ionicons
-              name={getTurnIconName(nav.nextTurn.maneuver)}
-              size={24}
-              color="#fff"
-            />
+            <Ionicons name={getTurnIconName(nav.nextTurn.maneuver)} size={24} color="#fff" />
           </View>
           <View style={styles.turnInfo}>
             <Text style={[styles.turnDistance, { color: colors.textPrimary }]}>
               {formatDistance(nav.distanceToTurn)}
             </Text>
-            <Text style={[styles.turnInstruction, { color: colors.textSecondary }]} numberOfLines={1}>
+            <Text
+              style={[styles.turnInstruction, { color: colors.textSecondary }]}
+              numberOfLines={1}
+            >
               {nav.nextTurn.instruction}
             </Text>
           </View>

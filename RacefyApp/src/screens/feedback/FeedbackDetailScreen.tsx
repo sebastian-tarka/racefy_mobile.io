@@ -11,7 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { ScreenContainer, ScreenHeader, Loading, KeyboardAwareScreenLayout } from '../../components';
+import {
+  ScreenContainer,
+  ScreenHeader,
+  Loading,
+  KeyboardAwareScreenLayout,
+} from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -110,7 +115,10 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
         {attachments.map((att) => (
           <TouchableOpacity
             key={att.id}
-            style={[styles.attachmentItem, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            style={[
+              styles.attachmentItem,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
             onPress={() => handleOpenAttachment(att)}
           >
             <Ionicons name="attach" size={14} color={colors.textSecondary} />
@@ -131,7 +139,10 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
     return (
       <View
         key={reply.id}
-        style={[styles.replyCard, { borderLeftColor: borderColor, backgroundColor: colors.cardBackground }]}
+        style={[
+          styles.replyCard,
+          { borderLeftColor: borderColor, backgroundColor: colors.cardBackground },
+        ]}
       >
         <View style={styles.replyHeader}>
           {isAdmin && (
@@ -193,16 +204,33 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
         scrollViewProps={{ contentContainerStyle: styles.content }}
         bottomContent={
           isClosed ? (
-            <View style={[styles.closedBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+            <View
+              style={[
+                styles.closedBar,
+                { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+              ]}
+            >
               <Ionicons name="lock-closed-outline" size={16} color={colors.textSecondary} />
               <Text style={[styles.closedText, { color: colors.textSecondary }]}>
                 {t('feedback.detail.closedNotice')}
               </Text>
             </View>
           ) : (
-            <View style={[styles.replyBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+            <View
+              style={[
+                styles.replyBar,
+                { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+              ]}
+            >
               <TextInput
-                style={[styles.replyInput, { color: colors.textPrimary, backgroundColor: colors.background, borderColor: colors.border }]}
+                style={[
+                  styles.replyInput,
+                  {
+                    color: colors.textPrimary,
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
                 placeholder={t('feedback.detail.replyPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 value={replyText}
@@ -212,7 +240,10 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
                 editable={!isSendingReply}
               />
               <TouchableOpacity
-                style={[styles.sendButton, { opacity: (!replyText.trim() || isSendingReply) ? 0.4 : 1 }]}
+                style={[
+                  styles.sendButton,
+                  { opacity: !replyText.trim() || isSendingReply ? 0.4 : 1 },
+                ]}
                 onPress={handleSendReply}
                 disabled={!replyText.trim() || isSendingReply}
               >
@@ -226,7 +257,12 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
         <Text style={[styles.subject, { color: colors.textPrimary }]}>{feedback.subject}</Text>
 
         {/* Meta */}
-        <View style={[styles.metaCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.metaCard,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.metaRow}>
             <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
               <Text style={[styles.badgeText, { color: statusColor }]}>
@@ -248,10 +284,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
           </View>
           {(feedback.app_version || feedback.device_model) && (
             <Text style={[styles.metaInfo, { color: colors.textMuted }]}>
-              {[
-                feedback.app_version && `v${feedback.app_version}`,
-                feedback.device_model,
-              ]
+              {[feedback.app_version && `v${feedback.app_version}`, feedback.device_model]
                 .filter(Boolean)
                 .join(' • ')}
             </Text>
@@ -268,7 +301,9 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Description */}
-        <Text style={[styles.description, { color: colors.textPrimary }]}>{feedback.description}</Text>
+        <Text style={[styles.description, { color: colors.textPrimary }]}>
+          {feedback.description}
+        </Text>
 
         {/* Attachments */}
         {renderAttachments(feedback.attachments)}
@@ -279,7 +314,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
             {t('feedback.detail.replies')} ({feedback.replies?.length || 0})
           </Text>
 
-          {(!feedback.replies || feedback.replies.length === 0) ? (
+          {!feedback.replies || feedback.replies.length === 0 ? (
             <Text style={[styles.noReplies, { color: colors.textSecondary }]}>
               {t('feedback.detail.noReplies')}
             </Text>

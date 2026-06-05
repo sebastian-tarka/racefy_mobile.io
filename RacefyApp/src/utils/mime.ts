@@ -13,12 +13,17 @@ export function getImageMimeType(uri: string): string {
   if (!match) return 'image/jpeg';
 
   switch (match[1].toLowerCase()) {
-    case 'png':  return 'image/png';
-    case 'gif':  return 'image/gif';
-    case 'webp': return 'image/webp';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
     case 'heic':
-    case 'heif': return 'image/heic';
-    default:     return 'image/jpeg';
+    case 'heif':
+      return 'image/heic';
+    default:
+      return 'image/jpeg';
   }
 }
 
@@ -32,11 +37,16 @@ export function getVideoMimeType(uri: string): string {
   if (!match) return 'video/mp4';
 
   switch (match[1].toLowerCase()) {
-    case 'mp4':  return 'video/mp4';
-    case 'mov':  return 'video/quicktime';
-    case 'avi':  return 'video/x-msvideo';
-    case 'webm': return 'video/webm';
-    default:     return 'video/mp4';
+    case 'mp4':
+      return 'video/mp4';
+    case 'mov':
+      return 'video/quicktime';
+    case 'avi':
+      return 'video/x-msvideo';
+    case 'webm':
+      return 'video/webm';
+    default:
+      return 'video/mp4';
   }
 }
 

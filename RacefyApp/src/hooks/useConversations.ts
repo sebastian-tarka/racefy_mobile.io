@@ -30,9 +30,7 @@ export function useConversations() {
           if (reset) return response.data;
           // Deduplicate by ID when loading more
           const existingIds = new Set(prev.map((c) => c.id));
-          const newConversations = response.data.filter(
-            (c) => !existingIds.has(c.id)
-          );
+          const newConversations = response.data.filter((c) => !existingIds.has(c.id));
           return [...prev, ...newConversations];
         });
         setHasMore(response.meta.current_page < response.meta.last_page);
@@ -45,14 +43,14 @@ export function useConversations() {
         setIsRefreshing(false);
       }
     },
-    [page, isLoading]
+    [page, isLoading],
   );
 
   const refresh = useCallback(() => fetchConversations(true), [fetchConversations]);
 
   const loadMore = useCallback(
     () => hasMore && !isLoading && fetchConversations(false),
-    [hasMore, isLoading, fetchConversations]
+    [hasMore, isLoading, fetchConversations],
   );
 
   const deleteConversation = useCallback(async (conversationId: number) => {

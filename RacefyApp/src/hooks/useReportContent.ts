@@ -14,7 +14,7 @@ interface UseReportContentReturn {
     reportableId: number,
     reason: ReportReason,
     description?: string,
-    onReportSuccess?: () => void
+    onReportSuccess?: () => void,
   ) => Promise<void>;
 }
 
@@ -37,7 +37,7 @@ export function useReportContent(): UseReportContentReturn {
     reportableId: number,
     reason: ReportReason,
     description?: string,
-    onReportSuccess?: () => void
+    onReportSuccess?: () => void,
   ): Promise<void> => {
     setIsLoading(true);
     setError(null);
@@ -60,11 +60,9 @@ export function useReportContent(): UseReportContentReturn {
       });
 
       // Show success message
-      Alert.alert(
-        t('reporting.reportedTitle'),
-        t('reporting.reportedMessage'),
-        [{ text: t('common.ok') }]
-      );
+      Alert.alert(t('reporting.reportedTitle'), t('reporting.reportedMessage'), [
+        { text: t('common.ok') },
+      ]);
 
       onReportSuccess?.();
     } catch (err: any) {

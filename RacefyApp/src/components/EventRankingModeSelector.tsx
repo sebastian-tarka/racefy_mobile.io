@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { OptionSelector, OptionItem } from './OptionSelector';
-import {EventRankingMode, RankingModeOption} from '../types/api';
+import { EventRankingMode, RankingModeOption } from '../types/api';
 import { logger } from '../services/logger';
 import { api } from '../services/api';
 

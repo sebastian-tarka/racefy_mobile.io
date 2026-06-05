@@ -128,8 +128,8 @@ export function MapboxLiveMap({
         });
       }
     }
-  // displayPosition intentionally excluded — we only want this to fire when followUser flips
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // displayPosition intentionally excluded — we only want this to fire when followUser flips
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [followUser]);
 
   // Handle user interaction with the map (pan/zoom) — stop following
@@ -145,14 +145,17 @@ export function MapboxLiveMap({
     if (!mapboxAvailable) return;
     if (!currentPosition && !previewLocation) {
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-        .then(loc => {
+        .then((loc) => {
           setPreviewLocation({
             lat: loc.coords.latitude,
-            lng: loc.coords.longitude
+            lng: loc.coords.longitude,
           });
-          logger.debug('gps', 'Preview location acquired', { lat: loc.coords.latitude, lng: loc.coords.longitude });
+          logger.debug('gps', 'Preview location acquired', {
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+          });
         })
-        .catch(err => {
+        .catch((err) => {
           logger.warn('gps', 'Failed to get preview location', { error: err?.message });
         });
     }
@@ -172,7 +175,7 @@ export function MapboxLiveMap({
       properties: {},
       geometry: {
         type: 'LineString' as const,
-        coordinates: livePoints.map(p => [p.lng, p.lat]),
+        coordinates: livePoints.map((p) => [p.lng, p.lat]),
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -184,11 +187,12 @@ export function MapboxLiveMap({
   // Validate nearby routes have proper track_data
   const validNearbyRoutes = useMemo(() => {
     if (!nearbyRoutes) return [];
-    return nearbyRoutes.filter(route =>
-      route?.track_data &&
-      route.track_data.type === 'LineString' &&
-      Array.isArray(route.track_data.coordinates) &&
-      route.track_data.coordinates.length >= 2
+    return nearbyRoutes.filter(
+      (route) =>
+        route?.track_data &&
+        route.track_data.type === 'LineString' &&
+        Array.isArray(route.track_data.coordinates) &&
+        route.track_data.coordinates.length >= 2,
     );
   }, [nearbyRoutes]);
 
@@ -230,12 +234,12 @@ export function MapboxLiveMap({
     if (mapStyleProp === 'streets') {
       return isDark
         ? 'mapbox://styles/mapbox/navigation-night-v1'
-        : (MapboxGL.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v12');
+        : MapboxGL.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v12';
     }
     // outdoors (default)
     return isDark
       ? 'mapbox://styles/mapbox/dark-v11'
-      : (MapboxGL.StyleURL?.Outdoors || 'mapbox://styles/mapbox/outdoors-v12');
+      : MapboxGL.StyleURL?.Outdoors || 'mapbox://styles/mapbox/outdoors-v12';
   };
 
   const mapStyleURL = getStyleURL();
@@ -243,11 +247,16 @@ export function MapboxLiveMap({
   // GPS signal indicator color
   const getSignalColor = (): string => {
     switch (gpsSignalQuality) {
-      case 'good': return '#22c55e';
-      case 'weak': return '#eab308';
-      case 'lost': return '#ef4444';
-      case 'disabled': return '#9ca3af';
-      default: return colors.primary;
+      case 'good':
+        return '#22c55e';
+      case 'weak':
+        return '#eab308';
+      case 'lost':
+        return '#ef4444';
+      case 'disabled':
+        return '#9ca3af';
+      default:
+        return colors.primary;
     }
   };
 
@@ -261,7 +270,13 @@ export function MapboxLiveMap({
   // Show loading state while waiting for location
   if (!displayPosition) {
     return (
-      <View style={[styles.container, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[
+          styles.container,
+          height ? { height } : { flex: 1 },
+          { backgroundColor: colors.cardBackground },
+        ]}
+      >
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
@@ -273,7 +288,13 @@ export function MapboxLiveMap({
   }
 
   return (
-    <View style={[styles.container, height ? { height } : { flex: 1 }, { backgroundColor: colors.cardBackground }]}>
+    <View
+      style={[
+        styles.container,
+        height ? { height } : { flex: 1 },
+        { backgroundColor: colors.cardBackground },
+      ]}
+    >
       <MapboxGL.MapView
         key={`mapbox-live-${isDark ? 'dark' : 'light'}-${mapStyleProp}`}
         style={styles.map}
@@ -294,7 +315,7 @@ export function MapboxLiveMap({
         />
 
         {/* All nearby routes as gray base layer */}
-        {validNearbyRoutes.map(route => {
+        {validNearbyRoutes.map((route) => {
           const unselectedColor = isDark ? '#9CA3AF' : '#6B7280';
           return (
             <MapboxGL.ShapeSource
@@ -324,43 +345,45 @@ export function MapboxLiveMap({
         })}
 
         {/* Selected route overlay (blue with border) - rendered on top */}
-        {selectedRouteId && validNearbyRoutes.find(r => r.id === selectedRouteId) && (() => {
-          const selected = validNearbyRoutes.find(r => r.id === selectedRouteId)!;
-          return (
-            <MapboxGL.ShapeSource
-              id="selected-route-overlay"
-              shape={{
-                type: 'Feature',
-                properties: {},
-                geometry: {
-                  type: 'LineString',
-                  coordinates: selected.track_data.coordinates,
-                },
-              }}
-            >
-              <MapboxGL.LineLayer
-                id="selected-route-border"
-                style={{
-                  lineColor: shadowTrackBorderColor,
-                  lineWidth: 8,
-                  lineOpacity: 0.6,
-                  lineCap: 'round',
-                  lineJoin: 'round',
+        {selectedRouteId &&
+          validNearbyRoutes.find((r) => r.id === selectedRouteId) &&
+          (() => {
+            const selected = validNearbyRoutes.find((r) => r.id === selectedRouteId)!;
+            return (
+              <MapboxGL.ShapeSource
+                id="selected-route-overlay"
+                shape={{
+                  type: 'Feature',
+                  properties: {},
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: selected.track_data.coordinates,
+                  },
                 }}
-              />
-              <MapboxGL.LineLayer
-                id="selected-route-line"
-                style={{
-                  lineColor: shadowTrackMainColor,
-                  lineWidth: 5,
-                  lineOpacity: 1,
-                  lineCap: 'round',
-                  lineJoin: 'round',
-                }}
-              />
-            </MapboxGL.ShapeSource>
-          );
-        })()}
+              >
+                <MapboxGL.LineLayer
+                  id="selected-route-border"
+                  style={{
+                    lineColor: shadowTrackBorderColor,
+                    lineWidth: 8,
+                    lineOpacity: 0.6,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+                <MapboxGL.LineLayer
+                  id="selected-route-line"
+                  style={{
+                    lineColor: shadowTrackMainColor,
+                    lineWidth: 5,
+                    lineOpacity: 1,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              </MapboxGL.ShapeSource>
+            );
+          })()}
 
         {/* Planned route polyline (for live navigation) */}
         {plannedRoute && plannedRoute.coordinates.length > 1 && (

@@ -1,11 +1,5 @@
 import React, { useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -99,7 +93,9 @@ export function RecordingView({
   const formatAvgPace = (): string => {
     if (currentStats.distance < minDistance) return '--:--';
     const avgPace = calculateAveragePace(localDuration, currentStats.distance, minDistance);
-    if (Math.floor(currentStats.distance / 5000) !== Math.floor((currentStats.distance - 50) / 5000)) {
+    if (
+      Math.floor(currentStats.distance / 5000) !== Math.floor((currentStats.distance - 50) / 5000)
+    ) {
       logger.debug('activity', 'formatAvgPace debug', {
         localDuration,
         distance: Math.round(currentStats.distance),
@@ -141,24 +137,19 @@ export function RecordingView({
 
       {/* Two-half overlay — zIndex above gradients */}
       <View style={[StyleSheet.absoluteFill, styles.overlay]} pointerEvents="box-none">
-
         {/* ── TOP HALF: timer + stats, centered ── */}
         <View style={styles.topHalf}>
           <Text style={styles.durationLabel}>
             {t('recording.duration', 'DURATION').toUpperCase()}
           </Text>
-          <Text style={styles.heroTimer}>
-            {formatTime(localDuration)}
-          </Text>
+          <Text style={styles.heroTimer}>{formatTime(localDuration)}</Text>
 
           <View style={styles.metricCards}>
             <View style={styles.metricCard}>
               <Text style={styles.metricLabel}>
                 {t('recording.distance', 'DISTANCE').toUpperCase()}
               </Text>
-              <Text style={styles.metricValue}>
-                {fmtDistance(distance)}
-              </Text>
+              <Text style={styles.metricValue}>{fmtDistance(distance)}</Text>
             </View>
             <View style={styles.metricCard}>
               <Text style={styles.metricLabel}>
@@ -183,7 +174,10 @@ export function RecordingView({
           <View style={styles.toolbar}>
             {/* Audio coach */}
             <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: audioCoachActive ? colors.primary + '22' : 'rgba(0,0,0,0.08)' }]}
+              style={[
+                styles.toolbarButton,
+                { backgroundColor: audioCoachActive ? colors.primary + '22' : 'rgba(0,0,0,0.08)' },
+              ]}
               onPress={onToggleAudioCoach}
               activeOpacity={0.7}
               accessibilityLabel={t('recording.audioCoach')}
@@ -208,7 +202,10 @@ export function RecordingView({
 
             {/* Lock */}
             <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: isLocked ? 'rgba(239,68,68,0.12)' : 'rgba(0,0,0,0.08)' }]}
+              style={[
+                styles.toolbarButton,
+                { backgroundColor: isLocked ? 'rgba(239,68,68,0.12)' : 'rgba(0,0,0,0.08)' },
+              ]}
               onPress={onToggleLock}
               activeOpacity={0.7}
               accessibilityLabel={t('recording.lock')}
@@ -239,7 +236,6 @@ export function RecordingView({
             </Text>
           </TouchableOpacity>
         </View>
-
       </View>
 
       {/* ── Lock overlay ── */}
@@ -252,7 +248,12 @@ export function RecordingView({
           accessibilityLabel={t('recording.holdToUnlock')}
         >
           <Text style={styles.lockedTimer}>{formatTime(localDuration)}</Text>
-          <Ionicons name="lock-closed" size={52} color="rgba(255,255,255,0.9)" style={{ marginTop: spacing.lg }} />
+          <Ionicons
+            name="lock-closed"
+            size={52}
+            color="rgba(255,255,255,0.9)"
+            style={{ marginTop: spacing.lg }}
+          />
           <View style={styles.lockedHintRow}>
             <Ionicons name="hand-left-outline" size={16} color="rgba(255,255,255,0.6)" />
             <Text style={styles.lockedHint}>

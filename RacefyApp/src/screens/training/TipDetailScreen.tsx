@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -75,11 +68,9 @@ export function TipDetailScreen({ navigation, route }: Props) {
       logger.info('training', 'Tip feedback submitted', { tipId: tip.id, helpful });
 
       // Show toast-style confirmation
-      Alert.alert(
-        '',
-        t('training.tips.thanksFeedback'),
-        [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
-      );
+      Alert.alert('', t('training.tips.thanksFeedback'), [
+        { text: t('common.ok'), onPress: () => navigation.goBack() },
+      ]);
     } catch (error: any) {
       logger.error('training', 'Failed to submit tip feedback', { error, tipId: tip.id });
       Alert.alert(t('common.error'), error.message);
@@ -139,27 +130,31 @@ export function TipDetailScreen({ navigation, route }: Props) {
         </View>
 
         {/* Title */}
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
 
         {/* Divider */}
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* Content */}
-        <Text style={[styles.contentText, { color: colors.textSecondary }]}>
-          {content}
-        </Text>
+        <Text style={[styles.contentText, { color: colors.textSecondary }]}>{content}</Text>
       </ScrollView>
 
       {/* Sticky Footer with Feedback Buttons */}
-      <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+      <View
+        style={[
+          styles.footer,
+          { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+        ]}
+      >
         <Text style={[styles.feedbackLabel, { color: colors.textPrimary }]}>
           {t('training.tips.wasHelpful')}
         </Text>
         <View style={styles.feedbackButtons}>
           <TouchableOpacity
-            style={[styles.feedbackButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+            style={[
+              styles.feedbackButton,
+              { backgroundColor: colors.success + '15', borderColor: colors.success },
+            ]}
             onPress={() => handleFeedback(true)}
             disabled={submittingFeedback}
           >
@@ -168,7 +163,10 @@ export function TipDetailScreen({ navigation, route }: Props) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.feedbackButton, { backgroundColor: colors.error + '15', borderColor: colors.error }]}
+            style={[
+              styles.feedbackButton,
+              { backgroundColor: colors.error + '15', borderColor: colors.error },
+            ]}
             onPress={() => handleFeedback(false)}
             disabled={submittingFeedback}
           >

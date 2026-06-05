@@ -97,7 +97,9 @@ export function TeamFormScreen({ route, navigation }: Props) {
 
             <View style={styles.switchRow}>
               <View style={styles.switchInfo}>
-                <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>{t('teams.teamVisibility')}</Text>
+                <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>
+                  {t('teams.teamVisibility')}
+                </Text>
                 <Text style={[styles.switchHint, { color: colors.textMuted }]}>
                   {isPublic ? t('teams.publicDescription') : t('teams.privateDescription')}
                 </Text>
@@ -128,7 +130,9 @@ const styles = StyleSheet.create({
   container: { padding: spacing.md, gap: spacing.md },
   card: { gap: spacing.md },
   switchRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.sm,
   },
   switchInfo: { flex: 1, marginRight: spacing.md },

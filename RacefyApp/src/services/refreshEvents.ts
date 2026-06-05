@@ -1,7 +1,17 @@
 import { useEffect } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 
-export type RefreshEventType = 'feed' | 'events' | 'activities' | 'profile' | 'posts' | 'notifications' | 'messages' | 'teams' | 'training' | 'goals';
+export type RefreshEventType =
+  | 'feed'
+  | 'events'
+  | 'activities'
+  | 'profile'
+  | 'posts'
+  | 'notifications'
+  | 'messages'
+  | 'teams'
+  | 'training'
+  | 'goals';
 
 const REFRESH_EVENT_PREFIX = 'refresh:';
 
@@ -19,10 +29,7 @@ export function emitRefresh(type: RefreshEventType): void {
  */
 export function useRefreshOn(type: RefreshEventType, callback: () => void): void {
   useEffect(() => {
-    const subscription = DeviceEventEmitter.addListener(
-      `${REFRESH_EVENT_PREFIX}${type}`,
-      callback
-    );
+    const subscription = DeviceEventEmitter.addListener(`${REFRESH_EVENT_PREFIX}${type}`, callback);
     return () => subscription.remove();
   }, [type, callback]);
 }

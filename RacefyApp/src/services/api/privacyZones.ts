@@ -5,21 +5,23 @@ type Constructable<T = object> = new (...args: any[]) => T;
 
 export function PrivacyZonesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
   return class PrivacyZonesMixin extends Base {
-
     async getPrivacyZones(): Promise<Types.PrivacyZone[]> {
       const response = await this.request<Types.ApiResponse<Types.PrivacyZone[]>>('/privacy-zones');
       return response.data;
     }
 
     async createPrivacyZone(data: Types.CreatePrivacyZoneRequest): Promise<Types.PrivacyZone> {
-      const response = await this.request<Types.ApiResponse<Types.PrivacyZone>>(
-        '/privacy-zones',
-        { method: 'POST', body: JSON.stringify(data) },
-      );
+      const response = await this.request<Types.ApiResponse<Types.PrivacyZone>>('/privacy-zones', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
-    async updatePrivacyZone(id: number, data: Types.UpdatePrivacyZoneRequest): Promise<Types.PrivacyZone> {
+    async updatePrivacyZone(
+      id: number,
+      data: Types.UpdatePrivacyZoneRequest,
+    ): Promise<Types.PrivacyZone> {
       const response = await this.request<Types.ApiResponse<Types.PrivacyZone>>(
         `/privacy-zones/${id}`,
         { method: 'PATCH', body: JSON.stringify(data) },

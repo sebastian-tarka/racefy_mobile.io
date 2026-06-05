@@ -33,9 +33,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
       <View style={styles.header}>
         <Ionicons name={icon} size={20} color={iconColor} />
-        <Text style={[styles.label, { color: colors.textSecondary }]}>
-          {label}
-        </Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
       </View>
 
       <View style={styles.valueContainer}>
@@ -47,9 +45,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             style={{ ...styles.value, color: displayColor }}
           />
         ) : (
-          <Text style={[styles.value, { color: displayColor }]}>
-            {value}
-          </Text>
+          <Text style={[styles.value, { color: displayColor }]}>{value}</Text>
         )}
       </View>
     </View>

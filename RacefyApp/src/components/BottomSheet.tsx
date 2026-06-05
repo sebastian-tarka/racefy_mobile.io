@@ -34,12 +34,7 @@ export function BottomSheet({ visible, onClose, title, options }: BottomSheetPro
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>

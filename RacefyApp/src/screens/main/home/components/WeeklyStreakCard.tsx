@@ -14,7 +14,7 @@ interface WeeklyStreakCardProps {
   goalDays: number;
   completedDays: number;
   trainingDays?: TrainingDay[];
-  plannedTrainingDays?: number[];  // From API: current week's training activities (0=Mon, 6=Sun)
+  plannedTrainingDays?: number[]; // From API: current week's training activities (0=Mon, 6=Sun)
   onToggleTrainingDay?: (day: TrainingDay) => void;
   onSettingsPress?: () => void;
 }
@@ -61,11 +61,11 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
                 backgroundColor: isMissed
                   ? colors.border
                   : isToday
-                  ? colors.cardBackground
-                  : isPlannedDay && isFuture
-                  ? colors.primary + '12'
-                  : colors.borderLight,
-                borderWidth: isToday ? 2 : (isTrainingDay || (isPlannedDay && isFuture)) ? 1.5 : 0,
+                    ? colors.cardBackground
+                    : isPlannedDay && isFuture
+                      ? colors.primary + '12'
+                      : colors.borderLight,
+                borderWidth: isToday ? 2 : isTrainingDay || (isPlannedDay && isFuture) ? 1.5 : 0,
                 borderColor: isToday ? colors.primary : colors.primaryLight,
                 borderStyle: isToday ? 'dashed' : 'solid',
               },
@@ -87,9 +87,14 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
           style={[
             styles.dayLabel,
             {
-              color: isToday ? colors.primary : (isTrainingDay || isPlannedDay) ? colors.primary : colors.textMuted,
-              fontWeight: isToday || isTrainingDay || isPlannedDay ? fontWeight.bold : fontWeight.medium,
-            }
+              color: isToday
+                ? colors.primary
+                : isTrainingDay || isPlannedDay
+                  ? colors.primary
+                  : colors.textMuted,
+              fontWeight:
+                isToday || isTrainingDay || isPlannedDay ? fontWeight.bold : fontWeight.medium,
+            },
           ]}
         >
           {dayLabels[index]}
@@ -129,16 +134,17 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
             {t('home.weeklyStreak.progress', { completed: completedDays, goal: goalDays })}
           </Text>
           {onSettingsPress && (
-            <TouchableOpacity onPress={onSettingsPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={onSettingsPress}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      <View style={styles.daysGrid}>
-        {activeDays.map((_, index) => renderDayBox(index))}
-      </View>
+      <View style={styles.daysGrid}>{activeDays.map((_, index) => renderDayBox(index))}</View>
     </View>
   );
 };

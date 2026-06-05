@@ -30,11 +30,14 @@ export function MilestonesCard({ data }: MilestonesCardProps) {
                   <Text style={[styles.milestoneType, { color: colors.textPrimary }]}>
                     {milestone.type}
                   </Text>
-                  <Text style={[styles.milestonePct, { color: colors.primary }]}>
-                    {pct}%
-                  </Text>
+                  <Text style={[styles.milestonePct, { color: colors.primary }]}>{pct}%</Text>
                 </View>
-                <View style={[styles.progressBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+                <View
+                  style={[
+                    styles.progressBg,
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+                  ]}
+                >
                   <View
                     style={[
                       styles.progressFill,
@@ -63,9 +66,17 @@ export function MilestonesCard({ data }: MilestonesCardProps) {
           </Text>
           <View style={styles.chipsRow}>
             {data.recently_achieved.map((achievement, idx) => (
-              <View key={idx} style={[styles.chip, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }]}>
+              <View
+                key={idx}
+                style={[
+                  styles.chip,
+                  { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' },
+                ]}
+              >
                 <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                <Text style={[styles.chipText, { color: colors.textPrimary }]}>{achievement.type}</Text>
+                <Text style={[styles.chipText, { color: colors.textPrimary }]}>
+                  {achievement.type}
+                </Text>
               </View>
             ))}
           </View>

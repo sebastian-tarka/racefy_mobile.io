@@ -40,11 +40,7 @@ export function ParticipantAvatarsStack({
           disabled={!onParticipantPress}
           activeOpacity={onParticipantPress ? 0.7 : 1}
         >
-          <Avatar
-            uri={registration.user?.avatar}
-            name={registration.user?.name || '?'}
-            size="md"
-          />
+          <Avatar uri={registration.user?.avatar} name={registration.user?.name || '?'} size="md" />
         </TouchableOpacity>
       ))}
 
@@ -57,9 +53,7 @@ export function ParticipantAvatarsStack({
             { backgroundColor: colors.border },
           ]}
         >
-          <Text style={[styles.overflowText, { color: colors.textPrimary }]}>
-            +{overflow}
-          </Text>
+          <Text style={[styles.overflowText, { color: colors.textPrimary }]}>+{overflow}</Text>
         </View>
       )}
     </View>

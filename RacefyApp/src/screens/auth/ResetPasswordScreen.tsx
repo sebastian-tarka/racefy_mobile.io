@@ -1,15 +1,15 @@
-import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
-import {useTranslation} from 'react-i18next';
-import {BrandLogo, Button, Input, ScreenContainer} from '../../components';
-import {api} from '../../services/api';
-import {useTheme} from '../../hooks/useTheme';
-import {logger} from '../../services/logger';
-import {fontSize, spacing} from '../../theme';
-import {Ionicons} from '@expo/vector-icons';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {AuthStackParamList} from '../../navigation/types';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { useTranslation } from 'react-i18next';
+import { BrandLogo, Button, Input, ScreenContainer } from '../../components';
+import { api } from '../../services/api';
+import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
+import { fontSize, spacing } from '../../theme';
+import { Ionicons } from '@expo/vector-icons';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -28,8 +28,10 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
     const next: Record<string, string> = {};
     if (!password) next.password = t('auth.validation.passwordRequired');
     else if (password.length < 8) next.password = t('auth.validation.passwordMinLength');
-    if (!passwordConfirmation) next.passwordConfirmation = t('auth.validation.confirmPasswordRequired');
-    else if (password !== passwordConfirmation) next.passwordConfirmation = t('auth.validation.passwordsNotMatch');
+    if (!passwordConfirmation)
+      next.passwordConfirmation = t('auth.validation.confirmPasswordRequired');
+    else if (password !== passwordConfirmation)
+      next.passwordConfirmation = t('auth.validation.passwordsNotMatch');
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -57,12 +59,20 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
   return (
     <ScreenContainer>
       <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <BrandLogo category="logo-full" width={200} height={56} />
           </View>
 
-          <View style={[styles.form, { backgroundColor: colors.cardBackground, shadowColor: colors.black }]}>
+          <View
+            style={[
+              styles.form,
+              { backgroundColor: colors.cardBackground, shadowColor: colors.black },
+            ]}
+          >
             {isDone ? (
               <View style={styles.successContainer}>
                 <View style={[styles.successIcon, { backgroundColor: `${colors.primary}15` }]}>

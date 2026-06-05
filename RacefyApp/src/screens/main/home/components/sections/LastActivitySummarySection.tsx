@@ -33,9 +33,7 @@ export function LastActivitySummarySection({ section, onPress }: LastActivitySum
           <Ionicons name="trophy" size={24} color={colors.primary} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           {section.message && (
             <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={2}>
               {section.message}
@@ -62,9 +60,7 @@ export function LastActivitySummarySection({ section, onPress }: LastActivitySum
             </View>
           )}
         </View>
-        {section.cta && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        )}
+        {section.cta && <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
       </View>
     </TouchableOpacity>
   );

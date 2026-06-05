@@ -61,21 +61,37 @@ export function RecordingMapControls({
   const shadowTrackColor = isDark ? '#60A5FA' : '#3B82F6';
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground + 'F0', bottom: effectiveBottom }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground + 'F0', bottom: effectiveBottom },
+      ]}
+    >
       {/* Shadow track selection/indicator */}
       {shadowTrackTitle && onClearShadowTrack ? (
-        <View style={[styles.shadowTrackChip, { backgroundColor: shadowTrackColor + '20', borderColor: shadowTrackColor }]}>
+        <View
+          style={[
+            styles.shadowTrackChip,
+            { backgroundColor: shadowTrackColor + '20', borderColor: shadowTrackColor },
+          ]}
+        >
           <Ionicons name="map" size={14} color={shadowTrackColor} />
           <Text style={[styles.shadowTrackText, { color: colors.textPrimary }]} numberOfLines={1}>
             {shadowTrackTitle}
           </Text>
-          <TouchableOpacity onPress={onClearShadowTrack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={onClearShadowTrack}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Ionicons name="close-circle" size={18} color={shadowTrackColor} />
           </TouchableOpacity>
         </View>
       ) : onSelectShadowTrack ? (
         <TouchableOpacity
-          style={[styles.shadowTrackSelectButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+          style={[
+            styles.shadowTrackSelectButton,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
           onPress={onSelectShadowTrack}
         >
           <Ionicons name="map-outline" size={16} color={colors.textMuted} />

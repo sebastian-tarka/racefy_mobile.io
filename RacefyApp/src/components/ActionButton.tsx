@@ -42,9 +42,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       activeOpacity={0.7}
     >
       <Text style={styles.icon}>{icon}</Text>
-      <Text style={[styles.label, { color: colors.textPrimary }]}>
-        {label}
-      </Text>
+      <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
     </TouchableOpacity>
   );
 };

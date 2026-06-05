@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useState} from 'react';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {useAuth} from './useAuth';
-import type {ActivityStats, ActivityStatsPeriod} from '../types/api';
+import { useCallback, useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { useAuth } from './useAuth';
+import type { ActivityStats, ActivityStatsPeriod } from '../types/api';
 
 interface UseActivityStatsResult {
   stats: ActivityStats | null;
@@ -74,7 +74,12 @@ export function useActivityStats(params?: UseActivityStatsParams): UseActivitySt
   }, [period, sportTypeId, from, to, isAuthenticated]);
 
   useEffect(() => {
-    logger.debug('activity', 'useActivityStats effect triggered', { period, sportTypeId, from, to });
+    logger.debug('activity', 'useActivityStats effect triggered', {
+      period,
+      sportTypeId,
+      from,
+      to,
+    });
     fetchStats();
   }, [fetchStats]);
 

@@ -78,7 +78,8 @@ export function MentionText({ text, mentions, style, numberOfLines }: MentionTex
             }}
             onPress={() => navigateToMention(navigation, entity)}
           >
-            {' '}{segment.text}{' '}
+            {' '}
+            {segment.text}{' '}
           </Text>
         );
       })}

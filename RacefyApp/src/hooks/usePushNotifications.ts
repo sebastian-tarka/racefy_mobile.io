@@ -43,7 +43,7 @@ export interface UsePushNotificationsResult {
  * - Cold start notification handling
  */
 export function usePushNotifications(
-  options: UsePushNotificationsOptions = {}
+  options: UsePushNotificationsOptions = {},
 ): UsePushNotificationsResult {
   const { navigationRef } = options;
   const [hasPermission, setHasPermission] = useState(false);
@@ -112,7 +112,9 @@ export function usePushNotifications(
           return;
         }
         // If URL navigation failed, fall through to type-based navigation
-        logger.warn('general', 'Failed to navigate from URL, trying type-based navigation', { url });
+        logger.warn('general', 'Failed to navigate from URL, trying type-based navigation', {
+          url,
+        });
       }
 
       // PRIORITY 2: Fallback to type-based navigation
@@ -129,7 +131,11 @@ export function usePushNotifications(
                 focusComments: type === 'comments' || type === 'mentions',
               });
             }
-          } else if (data.likeable_type === 'activity' || data.commentable_type === 'activity' || data.activity_id) {
+          } else if (
+            data.likeable_type === 'activity' ||
+            data.commentable_type === 'activity' ||
+            data.activity_id
+          ) {
             const activityId = data.activity_id || data.likeable_id || data.commentable_id;
             if (activityId) {
               navigation.navigate('ActivityDetail', {
@@ -238,10 +244,10 @@ export function usePushNotifications(
 
         default:
           logger.warn('general', 'Unhandled notification type', { type });
-          // Don't navigate for unhandled types - just log the warning
+        // Don't navigate for unhandled types - just log the warning
       }
     },
-    [navigationRef]
+    [navigationRef],
   );
 
   /**
@@ -322,45 +328,44 @@ export function usePushNotifications(
   }, [handleNotificationNavigation]);
 
   // Navigate when navigation is ready — with retry if not ready yet
-  const navigateWhenReady = useCallback((data: PushNotificationData) => {
-    if (navigationRef?.current?.isReady()) {
-      handleNotificationNavigationRef.current(data);
-      return;
-    }
-
-    const interval = setInterval(() => {
+  const navigateWhenReady = useCallback(
+    (data: PushNotificationData) => {
       if (navigationRef?.current?.isReady()) {
-        clearInterval(interval);
         handleNotificationNavigationRef.current(data);
+        return;
       }
-    }, 100);
 
-    // Give up after 5 seconds
-    setTimeout(() => clearInterval(interval), 5000);
-  }, [navigationRef]);
+      const interval = setInterval(() => {
+        if (navigationRef?.current?.isReady()) {
+          clearInterval(interval);
+          handleNotificationNavigationRef.current(data);
+        }
+      }, 100);
+
+      // Give up after 5 seconds
+      setTimeout(() => clearInterval(interval), 5000);
+    },
+    [navigationRef],
+  );
 
   // Set up notification listeners — stable, never recreated
   useEffect(() => {
     // Listener for notifications received while app is in foreground
-    notificationListener.current = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        logger.debug('general', 'Notification received in foreground', {
-          title: notification.request.content.title,
-          body: notification.request.content.body,
-          data: notification.request.content.data,
-        });
-        // Notification will be displayed automatically due to notification handler config
-      }
-    );
+    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+      logger.debug('general', 'Notification received in foreground', {
+        title: notification.request.content.title,
+        body: notification.request.content.body,
+        data: notification.request.content.data,
+      });
+      // Notification will be displayed automatically due to notification handler config
+    });
 
     // Listener for when user taps on a notification (app in foreground or background)
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data as unknown as PushNotificationData;
-        logger.info('general', 'Notification tapped', { data });
-        navigateWhenReady(data);
-      }
-    );
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as unknown as PushNotificationData;
+      logger.info('general', 'Notification tapped', { data });
+      navigateWhenReady(data);
+    });
 
     return () => {
       if (notificationListener.current) {
@@ -370,7 +375,7 @@ export function usePushNotifications(
         responseListener.current.remove();
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigateWhenReady]);
 
   // Handle cold start (app opened from notification when fully killed)

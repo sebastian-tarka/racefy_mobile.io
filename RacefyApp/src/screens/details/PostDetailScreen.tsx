@@ -1,40 +1,48 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format, formatDistanceToNow} from 'date-fns';
-import {useTranslation} from 'react-i18next';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Avatar,
-    Button,
-    Card,
-    CommentSection,
-    InteractionButton,
-    KeyboardAwareScreenLayout,
-    Loading,
-    MediaGallery,
-    MentionText,
-    ReshareModal,
-    RoutePreview,
-    ScreenContainer,
-    ScreenHeader,
-    SharedPostBlock,
-    SharedPostDeletedBlock,
-    SocialShareModal,
+  Alert,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format, formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import {
+  Avatar,
+  Button,
+  Card,
+  CommentSection,
+  InteractionButton,
+  KeyboardAwareScreenLayout,
+  Loading,
+  MediaGallery,
+  MentionText,
+  ReshareModal,
+  RoutePreview,
+  ScreenContainer,
+  ScreenHeader,
+  SharedPostBlock,
+  SharedPostDeletedBlock,
+  SocialShareModal,
 } from '../../components';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {emitRefresh, useRefreshOn} from '../../services/refreshEvents';
-import {fixStorageUrl} from '../../config/api';
-import {useTheme} from '../../hooks/useTheme';
-import {useUnits} from '../../hooks/useUnits';
-import {useAuth} from '../../hooks/useAuth';
-import {useVideoPauseOnBlur} from '../../hooks/useVideoPauseOnBlur';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import {formatDuration} from '../../utils/formatDuration';
-import {getSportIcon} from '../../utils/sportIcon';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../../navigation/types';
-import type {GpsTrack, Post, User} from '../../types/api';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
+import { fixStorageUrl } from '../../config/api';
+import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
+import { useAuth } from '../../hooks/useAuth';
+import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import { formatDuration } from '../../utils/formatDuration';
+import { getSportIcon } from '../../utils/sportIcon';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import type { GpsTrack, Post, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PostDetail'>;
 
@@ -142,35 +150,29 @@ export function PostDetailScreen({ route, navigation }: Props) {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      t('feed.deletePost'),
-      t('feed.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deletePost(postId);
-              emitRefresh('feed');
-              navigation.goBack();
-            } catch {
-              Alert.alert(t('common.error'), t('feed.failedToDelete'));
-            }
-          },
+    Alert.alert(t('feed.deletePost'), t('feed.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.deletePost(postId);
+            emitRefresh('feed');
+            navigation.goBack();
+          } catch {
+            Alert.alert(t('common.error'), t('feed.failedToDelete'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleUserPress = (user: User) => {
     navigation.navigate('UserProfile', { username: user.username });
   };
 
-  const timeAgo = post
-    ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
-    : '';
+  const timeAgo = post ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : '';
 
   const isOwner = post?.is_owner ?? false;
 
@@ -186,7 +188,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
     return (
       <TouchableOpacity
-        style={[styles.activityPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        style={[
+          styles.activityPreview,
+          { backgroundColor: colors.background, borderColor: colors.borderLight },
+        ]}
         onPress={() => navigation.navigate('ActivityDetail', { activityId: activity.id })}
         activeOpacity={0.8}
       >
@@ -230,7 +235,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
                 <>
                   <Text style={[styles.activitySport, { color: colors.textSecondary }]}> · </Text>
                   <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-                  <Text style={[styles.activitySport, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.activitySport, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
                     {activity.location.location_name}
                   </Text>
                 </>
@@ -270,7 +278,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
     return (
       <TouchableOpacity
-        style={[styles.eventPreview, { backgroundColor: colors.background, borderColor: colors.borderLight }]}
+        style={[
+          styles.eventPreview,
+          { backgroundColor: colors.background, borderColor: colors.borderLight },
+        ]}
         onPress={() => navigation.navigate('EventDetail', { eventId: event.id })}
       >
         <View style={styles.eventHeader}>
@@ -288,7 +299,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
             </Text>
             <View style={styles.eventMeta}>
               <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-              <Text style={[styles.eventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text
+                style={[styles.eventLocation, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
                 {event.location_name}
               </Text>
             </View>
@@ -306,11 +320,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
   if (error || !post) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('feed.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('feed.title')} showBack onBack={() => navigation.goBack()} />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
@@ -384,7 +394,9 @@ export function PostDetailScreen({ route, navigation }: Props) {
               >
                 <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
                 <View style={styles.userText}>
-                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                    {post.user?.name}
+                  </Text>
                   <Text style={[styles.userHandle, { color: colors.textSecondary }]}>
                     @{post.user?.username} · {timeAgo}
                   </Text>
@@ -409,7 +421,9 @@ export function PostDetailScreen({ route, navigation }: Props) {
               {post.shared_post && (
                 <SharedPostBlock
                   sharedPost={post.shared_post}
-                  onPress={() => navigation.navigate('PostDetail', { postId: post.shared_post!.id })}
+                  onPress={() =>
+                    navigation.navigate('PostDetail', { postId: post.shared_post!.id })
+                  }
                   onUserPress={(username) => navigation.navigate('UserProfile', { username })}
                 />
               )}
@@ -452,21 +466,29 @@ export function PostDetailScreen({ route, navigation }: Props) {
                   containerStyle={{ marginRight: spacing.xl, paddingHorizontal: 0 }}
                 />
 
-                {!isOwner && !post.shared_post && !post.shared_post_deleted && post.visibility !== 'private' && (
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={isReshared ? handleUnreshare : () => setReshareModalVisible(true)}
-                  >
-                    <Ionicons
-                      name={isReshared ? 'repeat' : 'repeat-outline'}
-                      size={20}
-                      color={isReshared ? '#06b6d4' : colors.textSecondary}
-                    />
-                    <Text style={[styles.actionText, { color: isReshared ? '#06b6d4' : colors.textSecondary }]}>
-                      {resharesCount}
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                {!isOwner &&
+                  !post.shared_post &&
+                  !post.shared_post_deleted &&
+                  post.visibility !== 'private' && (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={isReshared ? handleUnreshare : () => setReshareModalVisible(true)}
+                    >
+                      <Ionicons
+                        name={isReshared ? 'repeat' : 'repeat-outline'}
+                        size={20}
+                        color={isReshared ? '#06b6d4' : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.actionText,
+                          { color: isReshared ? '#06b6d4' : colors.textSecondary },
+                        ]}
+                      >
+                        {resharesCount}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
               </View>
             </Card>
 

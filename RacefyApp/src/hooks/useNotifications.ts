@@ -31,7 +31,7 @@ export function useNotifications(pollInterval = 30000) {
     try {
       await api.markNotificationAsRead(notificationId);
       // Decrement unread count locally
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
       // Marked as read
     } catch (err) {
       logger.error('api', 'Failed to mark notification as read', { error: err });

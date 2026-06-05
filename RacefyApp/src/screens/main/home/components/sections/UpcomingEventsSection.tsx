@@ -30,16 +30,10 @@ export function UpcomingEventsSection({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {section.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
       </View>
       {events.map((event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-          onPress={() => onEventPress(event.id)}
-        />
+        <EventCard key={event.id} event={event} onPress={() => onEventPress(event.id)} />
       ))}
     </View>
   );

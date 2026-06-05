@@ -5,8 +5,7 @@ import type { CommentaryType } from '../types/api';
 export function useGenerateCommentary(eventId: number) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastGenerationType, setLastGenerationType] =
-    useState<CommentaryType | null>(null);
+  const [lastGenerationType, setLastGenerationType] = useState<CommentaryType | null>(null);
 
   const generate = useCallback(
     async (type: CommentaryType) => {
@@ -25,7 +24,7 @@ export function useGenerateCommentary(eventId: number) {
         setIsGenerating(false);
       }
     },
-    [eventId]
+    [eventId],
   );
 
   const clearError = useCallback(() => {

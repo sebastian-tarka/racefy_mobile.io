@@ -1,6 +1,6 @@
-import {getFilename, getImageMimeType, getMediaMimeType} from '../../utils/mime';
+import { getFilename, getImageMimeType, getMediaMimeType } from '../../utils/mime';
 import type * as Types from '../../types/api';
-import type {ApiBase} from './base';
+import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -23,33 +23,23 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getPost(id: number): Promise<Types.Post> {
-      const response =
-        await this.request<Types.ApiResponse<Types.Post>>(`/posts/${id}`);
+      const response = await this.request<Types.ApiResponse<Types.Post>>(`/posts/${id}`);
       return response.data;
     }
 
     async createPost(data: Types.CreatePostRequest): Promise<Types.Post> {
-      const response = await this.request<Types.ApiResponse<Types.Post>>(
-        '/posts',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Post>>('/posts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
-    async updatePost(
-      id: number,
-      data: Partial<Types.CreatePostRequest>
-    ): Promise<Types.Post> {
-      const response = await this.request<Types.ApiResponse<Types.Post>>(
-        `/posts/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
+    async updatePost(id: number, data: Partial<Types.CreatePostRequest>): Promise<Types.Post> {
+      const response = await this.request<Types.ApiResponse<Types.Post>>(`/posts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -75,21 +65,18 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getPostLikers(
       id: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/posts/${id}/likes?page=${page}`
+        `/posts/${id}/likes?page=${page}`,
       );
     }
 
     async resharePost(id: number, data: Types.ReshareRequest = {}): Promise<Types.Post> {
-      const response = await this.request<Types.ApiResponse<Types.Post>>(
-        `/posts/${id}/reshare`,
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Post>>(`/posts/${id}/reshare`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -99,10 +86,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     // ============ DRAFTS ============
 
-    async getDrafts(params?: {
-      page?: number;
-      per_page?: number;
-    }): Promise<Types.DraftsResponse> {
+    async getDrafts(params?: { page?: number; per_page?: number }): Promise<Types.DraftsResponse> {
       const query = new URLSearchParams();
       if (params?.page) query.append('page', String(params.page));
       if (params?.per_page) query.append('per_page', String(params.per_page));
@@ -122,15 +106,12 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getComments(postId: number): Promise<Types.Comment[]> {
       const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
-        `/posts/${postId}/comments`
+        `/posts/${postId}/comments`,
       );
       return response.data;
     }
 
-    async createComment(
-      postId: number,
-      data: Types.CreateCommentRequest
-    ): Promise<Types.Comment> {
+    async createComment(postId: number, data: Types.CreateCommentRequest): Promise<Types.Comment> {
       // Use FormData if photo is included
       if (data.photo) {
         const formData = new FormData();
@@ -148,7 +129,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
         const result = await this.request<Types.ApiResponse<Types.Comment>>(
           `/posts/${postId}/comments`,
-          { method: 'POST', body: formData }
+          { method: 'POST', body: formData },
         );
         return result.data;
       }
@@ -158,7 +139,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         {
           method: 'POST',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.data;
     }
@@ -177,17 +158,17 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getCommentLikers(
       id: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/comments/${id}/likes?page=${page}`
+        `/comments/${id}/likes?page=${page}`,
       );
     }
 
     async updateComment(
       id: number,
       content: string,
-      photo?: Types.MediaItem
+      photo?: Types.MediaItem,
     ): Promise<Types.Comment> {
       // Use FormData if photo is included (replaces existing photos)
       if (photo) {
@@ -201,20 +182,17 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
           type: getImageMimeType(photo.uri),
         } as any);
 
-        const result = await this.request<Types.ApiResponse<Types.Comment>>(
-          `/comments/${id}`,
-          { method: 'PUT', body: formData }
-        );
+        const result = await this.request<Types.ApiResponse<Types.Comment>>(`/comments/${id}`, {
+          method: 'PUT',
+          body: formData,
+        });
         return result.data;
       }
 
-      const response = await this.request<Types.ApiResponse<Types.Comment>>(
-        `/comments/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({ content }),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Comment>>(`/comments/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content }),
+      });
       return response.data;
     }
 
@@ -229,7 +207,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
       const result = await this.request<Types.ApiResponse<Types.Photo>>(
         `/comments/${commentId}/photos`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return result.data;
     }
@@ -241,10 +219,10 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ PHOTOS ============
 
     async uploadPostPhoto(postId: number, formData: FormData): Promise<Types.Photo> {
-      const result = await this.request<Types.ApiResponse<Types.Photo>>(
-        `/posts/${postId}/photos`,
-        { method: 'POST', body: formData }
-      );
+      const result = await this.request<Types.ApiResponse<Types.Photo>>(`/posts/${postId}/photos`, {
+        method: 'POST',
+        body: formData,
+      });
       return result.data;
     }
 
@@ -266,7 +244,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       const mediaEndpoint = mediaItem.type === 'video' ? 'videos' : 'photos';
       const result = await this.request<Types.ApiResponse<Types.Media>>(
         `/posts/${postId}/${mediaEndpoint}`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return result.data;
     }
@@ -292,7 +270,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getPostShareLink(id: number): Promise<Types.ShareLinkResponse> {
       const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-        `/posts/${id}/share-link`
+        `/posts/${id}/share-link`,
       );
       return response.data;
     }
@@ -303,7 +281,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getCommentShareLink(id: number): Promise<Types.ShareLinkResponse> {
       const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-        `/comments/${id}/share-link`
+        `/comments/${id}/share-link`,
       );
       return response.data;
     }

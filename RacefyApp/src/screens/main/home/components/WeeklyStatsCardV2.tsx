@@ -1,16 +1,16 @@
 import React from 'react';
-import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../../../../hooks/useTheme';
-import {useUnits} from '../../../../hooks/useUnits';
-import {useActivityStats} from '../../../../hooks/useActivityStats';
-import {borderRadius, fontSize, fontWeight, spacing} from '../../../../theme';
-import {formatDurationCompact} from '../../../../utils/formatDuration';
-import {StatCard} from './StatCard';
-import type {ActivityStats} from '../../../../types/api';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../../../hooks/useTheme';
+import { useUnits } from '../../../../hooks/useUnits';
+import { useActivityStats } from '../../../../hooks/useActivityStats';
+import { borderRadius, fontSize, fontWeight, spacing } from '../../../../theme';
+import { formatDurationCompact } from '../../../../utils/formatDuration';
+import { StatCard } from './StatCard';
+import type { ActivityStats } from '../../../../types/api';
 
 interface WeeklyStatsCardV2Props {
-  stats?: ActivityStats | null;  // Opcjonalne statystyki z zewnątrz
+  stats?: ActivityStats | null; // Opcjonalne statystyki z zewnątrz
   onPress?: () => void;
 }
 
@@ -36,7 +36,9 @@ export function WeeklyStatsCardV2({ stats: statsFromProps, onPress }: WeeklyStat
   };
 
   // Użyj stats z propa lub pobierz z API
-  const { stats: statsFromApi, isLoading: isLoadingApi } = useActivityStats({ period: 'this_week' });
+  const { stats: statsFromApi, isLoading: isLoadingApi } = useActivityStats({
+    period: 'this_week',
+  });
   const stats = statsFromProps || statsFromApi;
   const isLoading = statsFromProps ? false : isLoadingApi;
 
@@ -112,10 +114,7 @@ export function WeeklyStatsCardV2({ stats: statsFromProps, onPress }: WeeklyStat
         {statItems.map((item, index) => (
           <View
             key={index}
-            style={[
-              styles.gridItem,
-              index % 2 === 0 ? styles.gridItemLeft : styles.gridItemRight,
-            ]}
+            style={[styles.gridItem, index % 2 === 0 ? styles.gridItemLeft : styles.gridItemRight]}
           >
             <StatCard
               icon={item.icon}

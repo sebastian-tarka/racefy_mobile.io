@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,25 +13,32 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {AnimatedListItem, Avatar, EmptyState, FeedCard, Loading, ScreenContainer,} from '../../components';
-import {ActivitiesFeedPreview} from './home/components';
-import {useAuth} from '../../hooks/useAuth';
-import {useFeed} from '../../hooks/useFeed';
-import {useUnreadCount} from '../../hooks/useUnreadCount';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from '../../hooks/useTheme';
-import {useVideoPauseOnBlur} from '../../hooks/useVideoPauseOnBlur';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import type {CompositeNavigationProp} from '@react-navigation/native';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
-import type {Event, Post, User} from '../../types/api';
-import {useRefreshOn} from "../../services/refreshEvents";
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import {
+  AnimatedListItem,
+  Avatar,
+  EmptyState,
+  FeedCard,
+  Loading,
+  ScreenContainer,
+} from '../../components';
+import { ActivitiesFeedPreview } from './home/components';
+import { useAuth } from '../../hooks/useAuth';
+import { useFeed } from '../../hooks/useFeed';
+import { useUnreadCount } from '../../hooks/useUnreadCount';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
+import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import type { Event, Post, User } from '../../types/api';
+import { useRefreshOn } from '../../services/refreshEvents';
 
 type FeedScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Feed'>,
@@ -138,23 +145,26 @@ export function FeedScreen({ navigation, route }: Props) {
   }, []);
 
   // Debounced search
-  const handleSearchChange = useCallback((text: string) => {
-    setSearchQuery(text);
+  const handleSearchChange = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
 
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
 
-    if (text.length >= 2) {
-      setIsSearching(true);
-      searchDebounceRef.current = setTimeout(() => {
-        performSearch(text);
-      }, 300);
-    } else {
-      setSearchResults(null);
-      setIsSearching(false);
-    }
-  }, [performSearch]);
+      if (text.length >= 2) {
+        setIsSearching(true);
+        searchDebounceRef.current = setTimeout(() => {
+          performSearch(text);
+        }, 300);
+      } else {
+        setSearchResults(null);
+        setIsSearching(false);
+      }
+    },
+    [performSearch],
+  );
 
   const toggleSearch = useCallback(() => {
     if (isSearchVisible) {
@@ -166,93 +176,107 @@ export function FeedScreen({ navigation, route }: Props) {
   }, [isSearchVisible]);
 
   const handleDeletePost = (postId: number) => {
-    Alert.alert(
-      t('feed.deletePost'),
-      t('feed.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deletePost(postId);
-            } catch (error) {
-              Alert.alert(t('common.error'), t('feed.failedToDelete'));
-            }
-          },
+    Alert.alert(t('feed.deletePost'), t('feed.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePost(postId);
+          } catch (error) {
+            Alert.alert(t('common.error'), t('feed.failedToDelete'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleReportPost = (postId: number) => {
-    Alert.alert(
-      t('feed.reportPost'),
-      t('feed.reportConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('feed.report'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.reportPost(postId, 'Inappropriate content');
-              Alert.alert(t('common.success'), t('feed.reportSuccess'));
-            } catch (error) {
-              Alert.alert(t('common.error'), t('feed.reportFailed'));
-            }
-          },
+    Alert.alert(t('feed.reportPost'), t('feed.reportConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('feed.report'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.reportPost(postId, 'Inappropriate content');
+            Alert.alert(t('common.success'), t('feed.reportSuccess'));
+          } catch (error) {
+            Alert.alert(t('common.error'), t('feed.reportFailed'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleEditPost = (postId: number) => {
     navigation.navigate('PostForm', { postId });
   };
 
-  const renderFeedItem = useCallback(({ item, index }: { item: Post; index: number }) => (
-    <AnimatedListItem index={index}>
-    <FeedCard
-      post={item}
-      isOwner={item.is_owner ?? item.user_id === user?.id}
-      onLikeChange={(isLiked, count) => applyLikeChange(item.id, isLiked, count)}
-      onBoostChange={(isBoosted, count) => applyBoostChange(item.id, isBoosted, count)}
-      onComment={() => navigation.navigate('PostDetail', { postId: item.id, focusComments: true })}
-      onShareActivity={
-        item.type === 'activity' && item.activity
-          ? () => navigation.navigate('ActivityShare', { activityId: item.activity!.id, hasGpsTrack: item.activity!.has_gps_track, photos: item.activity!.photos })
-          : undefined
-      }
-      onUserPress={() => {
-        if (item.user?.username) {
-          navigation.navigate('UserProfile', { username: item.user.username });
-        }
-      }}
-      onActivityPress={
-        item.type === 'activity' && item.activity
-          ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
-          : undefined
-      }
-      onEventPress={
-        (item.type === 'event' || item.type === 'challenge') && item.event
-          ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
-          : (item as any).tagged_event
-            ? () => navigation.navigate('EventDetail', { eventId: (item as any).tagged_event!.id })
-            : undefined
-      }
-      onReshare={(content, visibility) => resharePost(item.id, { content, visibility: visibility as any })}
-      onUnreshare={() => unresharePost(item.id)}
-      onOriginalPostUserPress={(username) => navigation.navigate('UserProfile', { username })}
-      onMenu={(action) => {
-        if (action === 'delete') handleDeletePost(item.id);
-        else if (action === 'report') handleReportPost(item.id);
-        else if (action === 'edit') handleEditPost(item.id);
-      }}
-    />
-    </AnimatedListItem>
-  ), [user?.id, applyLikeChange, applyBoostChange, navigation, handleDeletePost, handleReportPost, resharePost, unresharePost]);
+  const renderFeedItem = useCallback(
+    ({ item, index }: { item: Post; index: number }) => (
+      <AnimatedListItem index={index}>
+        <FeedCard
+          post={item}
+          isOwner={item.is_owner ?? item.user_id === user?.id}
+          onLikeChange={(isLiked, count) => applyLikeChange(item.id, isLiked, count)}
+          onBoostChange={(isBoosted, count) => applyBoostChange(item.id, isBoosted, count)}
+          onComment={() =>
+            navigation.navigate('PostDetail', { postId: item.id, focusComments: true })
+          }
+          onShareActivity={
+            item.type === 'activity' && item.activity
+              ? () =>
+                  navigation.navigate('ActivityShare', {
+                    activityId: item.activity!.id,
+                    hasGpsTrack: item.activity!.has_gps_track,
+                    photos: item.activity!.photos,
+                  })
+              : undefined
+          }
+          onUserPress={() => {
+            if (item.user?.username) {
+              navigation.navigate('UserProfile', { username: item.user.username });
+            }
+          }}
+          onActivityPress={
+            item.type === 'activity' && item.activity
+              ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
+              : undefined
+          }
+          onEventPress={
+            (item.type === 'event' || item.type === 'challenge') && item.event
+              ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
+              : (item as any).tagged_event
+                ? () =>
+                    navigation.navigate('EventDetail', { eventId: (item as any).tagged_event!.id })
+                : undefined
+          }
+          onReshare={(content, visibility) =>
+            resharePost(item.id, { content, visibility: visibility as any })
+          }
+          onUnreshare={() => unresharePost(item.id)}
+          onOriginalPostUserPress={(username) => navigation.navigate('UserProfile', { username })}
+          onMenu={(action) => {
+            if (action === 'delete') handleDeletePost(item.id);
+            else if (action === 'report') handleReportPost(item.id);
+            else if (action === 'edit') handleEditPost(item.id);
+          }}
+        />
+      </AnimatedListItem>
+    ),
+    [
+      user?.id,
+      applyLikeChange,
+      applyBoostChange,
+      navigation,
+      handleDeletePost,
+      handleReportPost,
+      resharePost,
+      unresharePost,
+    ],
+  );
 
   const renderSearchResults = () => {
     if (!isSearchVisible) return null;
@@ -264,7 +288,12 @@ export function FeedScreen({ navigation, route }: Props) {
 
     return (
       <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
-        <View style={[styles.searchContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <View style={[styles.searchInputContainer, { backgroundColor: colors.background }]}>
             <Ionicons name="search" size={20} color={colors.textMuted} />
             <TextInput
@@ -333,10 +362,7 @@ export function FeedScreen({ navigation, route }: Props) {
     }
 
     return (
-      <ScrollView
-        style={styles.searchResultsScroll}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView style={styles.searchResultsScroll} keyboardShouldPersistTaps="handled">
         {/* Users */}
         {searchResults.users.length > 0 && (
           <View style={styles.searchSection}>
@@ -420,7 +446,10 @@ export function FeedScreen({ navigation, route }: Props) {
               >
                 <Avatar uri={post.user?.avatar_url} name={post.user?.name} size="sm" />
                 <View style={styles.searchResultInfo}>
-                  <Text style={[styles.searchResultName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.searchResultName, { color: colors.textPrimary }]}
+                    numberOfLines={1}
+                  >
                     {post.title || post.content}
                   </Text>
                   <Text style={[styles.searchResultMeta, { color: colors.textMuted }]}>
@@ -438,7 +467,12 @@ export function FeedScreen({ navigation, route }: Props) {
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         </View>
         <EmptyState
@@ -446,9 +480,7 @@ export function FeedScreen({ navigation, route }: Props) {
           title={t('feed.signInRequired')}
           message={t('feed.signInDescription')}
           actionLabel={t('common.signIn')}
-          onAction={() =>
-            navigation.getParent()?.navigate('Auth', { screen: 'Login' })
-          }
+          onAction={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
         />
       </ScreenContainer>
     );
@@ -460,13 +492,15 @@ export function FeedScreen({ navigation, route }: Props) {
 
   return (
     <ScreenContainer>
-      <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('feed.title')}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={toggleSearch}
-          >
+          <TouchableOpacity style={styles.headerButton} onPress={toggleSearch}>
             <Ionicons
               name={isSearchVisible ? 'close' : 'search'}
               size={24}
@@ -477,11 +511,7 @@ export function FeedScreen({ navigation, route }: Props) {
             style={styles.headerButton}
             onPress={() => navigation.navigate('PostForm', {})}
           >
-            <Ionicons
-              name="add-circle-outline"
-              size={26}
-              color={colors.primary}
-            />
+            <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
@@ -514,7 +544,9 @@ export function FeedScreen({ navigation, route }: Props) {
           renderItem={renderFeedItem}
           ListHeaderComponent={
             <ActivitiesFeedPreview
-              onActivityPress={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
+              onActivityPress={(activityId) =>
+                navigation.navigate('ActivityDetail', { activityId })
+              }
               onLoginPress={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
               limit={3}
             />
@@ -537,9 +569,7 @@ export function FeedScreen({ navigation, route }: Props) {
             )
           }
           ListFooterComponent={
-            isLoading && posts.length > 0 ? (
-              <Loading message={t('feed.loadingMore')} />
-            ) : null
+            isLoading && posts.length > 0 ? <Loading message={t('feed.loadingMore')} /> : null
           }
           refreshControl={
             <RefreshControl

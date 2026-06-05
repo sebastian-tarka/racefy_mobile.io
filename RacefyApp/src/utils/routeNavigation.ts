@@ -34,11 +34,11 @@ export function haversine(a: [number, number], b: [number, number]): number {
  */
 export function nearestPointOnRoute(
   position: [number, number], // [lng, lat]
-  coordinates: [number, number][]
+  coordinates: [number, number][],
 ): {
-  index: number;         // segment index (0-based)
+  index: number; // segment index (0-based)
   point: [number, number]; // nearest point [lng, lat]
-  distance: number;      // distance from position to nearest point (meters)
+  distance: number; // distance from position to nearest point (meters)
   distanceAlong: number; // distance along route from start to nearest point (meters)
 } {
   let bestDist = Infinity;
@@ -75,7 +75,7 @@ export function nearestPointOnRoute(
 function projectOntoSegment(
   p: [number, number],
   a: [number, number],
-  b: [number, number]
+  b: [number, number],
 ): { point: [number, number]; fraction: number } {
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
@@ -110,10 +110,7 @@ export function routeTotalDistance(coordinates: [number, number][]): number {
 /**
  * Calculate remaining distance from current position to end of route.
  */
-export function distanceRemaining(
-  distanceAlong: number,
-  totalDistance: number
-): number {
+export function distanceRemaining(distanceAlong: number, totalDistance: number): number {
   return Math.max(0, totalDistance - distanceAlong);
 }
 
@@ -123,10 +120,7 @@ export function distanceRemaining(
  * @param paceSecPerKm - current pace in seconds/km (null if unknown)
  * @returns estimated seconds to finish, or null
  */
-export function estimateETA(
-  remainingMeters: number,
-  paceSecPerKm: number | null
-): number | null {
+export function estimateETA(remainingMeters: number, paceSecPerKm: number | null): number | null {
   if (!paceSecPerKm || paceSecPerKm <= 0 || remainingMeters <= 0) return null;
   return Math.round((remainingMeters / 1000) * paceSecPerKm);
 }
@@ -147,7 +141,7 @@ export function getOffRouteStatus(distanceFromRoute: number): OffRouteStatus {
  */
 export function getNextTurn(
   distanceAlong: number,
-  turnInstructions: RouteTurnInstruction[]
+  turnInstructions: RouteTurnInstruction[],
 ): RouteTurnInstruction | null {
   for (const turn of turnInstructions) {
     if (turn.distance_along > distanceAlong - TURN_PASSED_DISTANCE_M) {
@@ -162,7 +156,7 @@ export function getNextTurn(
  */
 export function distanceToNextTurn(
   distanceAlong: number,
-  nextTurn: RouteTurnInstruction | null
+  nextTurn: RouteTurnInstruction | null,
 ): number | null {
   if (!nextTurn) return null;
   return Math.max(0, nextTurn.distance_along - distanceAlong);
@@ -173,7 +167,7 @@ export function distanceToNextTurn(
  */
 export function shouldAnnounceTurn(
   distanceAlong: number,
-  nextTurn: RouteTurnInstruction | null
+  nextTurn: RouteTurnInstruction | null,
 ): boolean {
   if (!nextTurn) return false;
   const dist = nextTurn.distance_along - distanceAlong;

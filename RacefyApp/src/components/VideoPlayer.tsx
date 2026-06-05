@@ -155,11 +155,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
     <Modal visible={visible} animationType="fade" transparent statusBarTranslucent>
       <StatusBar barStyle="light-content" backgroundColor="black" />
       <View style={styles.container}>
-        <TouchableOpacity
-          style={styles.videoContainer}
-          activeOpacity={1}
-          onPress={toggleControls}
-        >
+        <TouchableOpacity style={styles.videoContainer} activeOpacity={1} onPress={toggleControls}>
           <VideoView
             player={player}
             style={styles.video}
@@ -177,21 +173,16 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
             <View style={styles.loadingContainer}>
               <Text style={styles.errorText}>Failed to load video</Text>
               <Text style={styles.errorDetail}>{error}</Text>
-              <Text style={styles.errorDetail} numberOfLines={2}>{uri}</Text>
+              <Text style={styles.errorDetail} numberOfLines={2}>
+                {uri}
+              </Text>
             </View>
           )}
 
           {showControls && !isLoading && !error && (
             <View style={styles.controlsOverlay}>
-              <TouchableOpacity
-                style={styles.playPauseButton}
-                onPress={togglePlayPause}
-              >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={60}
-                  color="#FFFFFF"
-                />
+              <TouchableOpacity style={styles.playPauseButton} onPress={togglePlayPause}>
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={60} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
@@ -210,12 +201,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
           <View style={[styles.progressContainer, { bottom: insets.bottom + spacing.lg }]}>
             <Text style={styles.timeText}>{formatTime(position)}</Text>
             <View style={styles.progressBarContainer}>
-              <View
-                style={[
-                  styles.progressBar,
-                  { width: `${(position / duration) * 100}%` },
-                ]}
-              />
+              <View style={[styles.progressBar, { width: `${(position / duration) * 100}%` }]} />
             </View>
             <Text style={styles.timeText}>{formatTime(duration)}</Text>
           </View>

@@ -37,9 +37,7 @@ export function QuickActionsSection({
     <View style={styles.container}>
       {section.title && (
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
         </View>
       )}
       <QuickActionsBar

@@ -2,10 +2,10 @@ import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {logger} from './logger';
-import {buildAnnouncementText, buildMilestoneAnnouncement} from './audioCoach/templates';
-import type {GpsProfile} from '../config/gpsProfiles';
-import {syncPointsToServer} from './backgroundApiClient';
+import { logger } from './logger';
+import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
+import type { GpsProfile } from '../config/gpsProfiles';
+import { syncPointsToServer } from './backgroundApiClient';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
@@ -54,7 +54,8 @@ async function getStoredGpsProfile(): Promise<{
         accuracyThreshold: profile.accuracyThreshold,
         minDistanceThreshold: profile.minDistanceThreshold,
         maxRealisticSpeed: profile.maxRealisticSpeed,
-        stationarySpeedThreshold: profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
+        stationarySpeedThreshold:
+          profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
         backgroundSyncInterval: profile.backgroundSyncInterval,
         backgroundSyncEnabled: profile.backgroundSyncEnabled,
       };
@@ -75,7 +76,7 @@ function calculateDistanceBetweenCoords(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371e3; // Earth's radius in meters
   const φ1 = (lat1 * Math.PI) / 180;
@@ -156,7 +157,9 @@ async function performBackgroundSync(): Promise<void> {
         consecutiveFailures: 0,
         totalPointsSynced: syncState.totalPointsSynced + unsyncedPoints.length,
       });
-      logger.gps(`Background sync: SUCCESS (${unsyncedPoints.length} points synced, total: ${buffer.length})`);
+      logger.gps(
+        `Background sync: SUCCESS (${unsyncedPoints.length} points synced, total: ${buffer.length})`,
+      );
     } else {
       // Update failure count
       await updateBackgroundSyncState({
@@ -187,8 +190,13 @@ const BG_AUDIO_MILESTONES_KEY = '@racefy:audioCoach:bgMilestones'; // JSON array
 const BG_AUDIO_PASSED_MILESTONES_KEY = '@racefy:audioCoach:bgPassedMilestones'; // JSON array of already announced
 
 const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-US', pl: 'pl-PL', de: 'de-DE', fr: 'fr-FR',
-  es: 'es-ES', it: 'it-IT', pt: 'pt-PT',
+  en: 'en-US',
+  pl: 'pl-PL',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  it: 'it-IT',
+  pt: 'pt-PT',
 };
 
 /**
@@ -291,7 +299,10 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
             if (milestoneText) {
               passed.push(threshold);
               await AsyncStorage.setItem(BG_AUDIO_PASSED_MILESTONES_KEY, JSON.stringify(passed));
-              logger.info('audioCoach', 'BG milestone reached!', { threshold, totalDistKm: totalDistKm.toFixed(2) });
+              logger.info('audioCoach', 'BG milestone reached!', {
+                threshold,
+                totalDistKm: totalDistKm.toFixed(2),
+              });
               // Speak milestone after a short delay (so km announcement finishes first)
               setTimeout(() => {
                 Speech.speak(milestoneText, {
@@ -365,7 +376,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     logger.error('gps', 'Background location task error', { error });
     // Log to AsyncStorage for debugging (can't use logger in background on some Android versions)
     try {
-      const errorLog = await AsyncStorage.getItem('@racefy_bg_errors') || '[]';
+      const errorLog = (await AsyncStorage.getItem('@racefy_bg_errors')) || '[]';
       const errors = JSON.parse(errorLog);
       errors.push({ timestamp: new Date().toISOString(), error: error.message });
       await AsyncStorage.setItem('@racefy_bg_errors', JSON.stringify(errors.slice(-10)));
@@ -380,7 +391,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
       try {
         // Get GPS profile settings
         const profile = await getStoredGpsProfile();
-        const { accuracyThreshold, minDistanceThreshold, maxRealisticSpeed, stationarySpeedThreshold } = profile;
+        const {
+          accuracyThreshold,
+          minDistanceThreshold,
+          maxRealisticSpeed,
+          stationarySpeedThreshold,
+        } = profile;
 
         // Get existing buffer and last position
         const existingBuffer = await getLocationBuffer();
@@ -396,7 +412,9 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // Filter by accuracy
           const accuracy = location.coords.accuracy;
           if (accuracy && accuracy > accuracyThreshold) {
-            logger.gps(`Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`);
+            logger.gps(
+              `Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`,
+            );
             filteredByAccuracy++;
             continue;
           }
@@ -407,7 +425,8 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
           // Stationary detection: if GPS reports very low speed, use stricter distance threshold
           const gpsSpeed = location.coords.speed;
-          const isLikelyStationary = gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationarySpeedThreshold;
+          const isLikelyStationary =
+            gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationarySpeedThreshold;
           const effectiveMinDistance = isLikelyStationary
             ? Math.max(minDistanceThreshold, 8) // At least 8m when stationary
             : minDistanceThreshold;
@@ -418,12 +437,14 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
               lastPosition.lat,
               lastPosition.lng,
               lat,
-              lng
+              lng,
             );
 
             // Filter small movements (GPS drift)
             if (distance < effectiveMinDistance) {
-              logger.gps(`Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`);
+              logger.gps(
+                `Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`,
+              );
               filteredByDistance++;
               continue;
             }
@@ -433,7 +454,9 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             if (timeDiff > 0) {
               const impliedSpeed = distance / timeDiff; // m/s
               if (impliedSpeed > maxRealisticSpeed) {
-                logger.gps(`Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`);
+                logger.gps(
+                  `Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`,
+                );
                 filteredBySpeed++;
                 continue;
               }
@@ -443,7 +466,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // Track distance for audio coach (before updating lastPosition)
           if (lastPosition) {
             audioCoachDistAdded += calculateDistanceBetweenCoords(
-              lastPosition.lat, lastPosition.lng, lat, lng,
+              lastPosition.lat,
+              lastPosition.lng,
+              lat,
+              lng,
             );
           }
 
@@ -453,7 +479,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             lng,
             ele: location.coords.altitude ?? undefined,
             time: new Date(timestamp).toISOString(),
-            speed: location.coords.speed != null && location.coords.speed >= 0 ? location.coords.speed : undefined,
+            speed:
+              location.coords.speed != null && location.coords.speed >= 0
+                ? location.coords.speed
+                : undefined,
             accuracy: location.coords.accuracy ?? undefined,
           });
 
@@ -471,7 +500,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           const updatedBuffer = [...existingBuffer, ...newPoints];
           await saveLocationBuffer(updatedBuffer);
 
-          logger.gps(`Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
+          logger.gps(
+            `Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`,
+            { filteredByAccuracy, filteredByDistance, filteredBySpeed },
+          );
 
           // Initialize background sync timer on first GPS update if not already running
           if (!backgroundSyncTimer) {
@@ -490,7 +522,11 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             }
           }
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
-          logger.gps(`Background: All ${locations.length} points filtered`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
+          logger.gps(`Background: All ${locations.length} points filtered`, {
+            filteredByAccuracy,
+            filteredByDistance,
+            filteredBySpeed,
+          });
         }
 
         // Audio coach: always check (works for both real GPS and sim mode)
@@ -602,7 +638,10 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
       activityType: Location.ActivityType.Fitness,
     });
 
-    logger.gps(`Background location tracking started`, { timeInterval: profile.timeInterval, distanceInterval: profile.distanceInterval });
+    logger.gps(`Background location tracking started`, {
+      timeInterval: profile.timeInterval,
+      distanceInterval: profile.distanceInterval,
+    });
     return true;
   } catch (error) {
     logger.error('gps', 'Failed to start background location tracking', { error });
@@ -633,8 +672,8 @@ export async function startSimBackgroundTracking(): Promise<boolean> {
 
     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.Lowest,
-      timeInterval: 10000,     // every 10s
-      distanceInterval: 0,     // fire even when stationary
+      timeInterval: 10000, // every 10s
+      distanceInterval: 0, // fire even when stationary
       showsBackgroundLocationIndicator: true,
       foregroundService: {
         notificationTitle: 'Racefy',
@@ -716,10 +755,7 @@ export async function clearForegroundBuffer(): Promise<void> {
 // Get all persisted points (both foreground and background buffers)
 // Use this on app startup to recover any unsent points
 export async function getAllPersistedPoints(): Promise<BufferedLocation[]> {
-  const [foreground, background] = await Promise.all([
-    getForegroundBuffer(),
-    getLocationBuffer(),
-  ]);
+  const [foreground, background] = await Promise.all([getForegroundBuffer(), getLocationBuffer()]);
 
   // Combine and deduplicate by timestamp
   const seen = new Set<string>();
@@ -741,10 +777,7 @@ export async function getAllPersistedPoints(): Promise<BufferedLocation[]> {
 
 // Clear all persisted points (after successful sync)
 export async function clearAllPersistedPoints(): Promise<void> {
-  await Promise.all([
-    clearForegroundBuffer(),
-    clearLocationBuffer(),
-  ]);
+  await Promise.all([clearForegroundBuffer(), clearLocationBuffer()]);
 }
 
 // ============================================
@@ -753,11 +786,11 @@ export async function clearAllPersistedPoints(): Promise<void> {
 // ============================================
 
 export interface SyncStatus {
-  lastAttempt: string | null;     // ISO timestamp
-  lastSuccess: string | null;     // ISO timestamp
-  pendingPoints: number;          // Points waiting to be synced
-  lastError: string | null;       // Last error message if any
-  isOnline: boolean;              // Network status
+  lastAttempt: string | null; // ISO timestamp
+  lastSuccess: string | null; // ISO timestamp
+  pendingPoints: number; // Points waiting to be synced
+  lastError: string | null; // Last error message if any
+  isOnline: boolean; // Network status
 }
 
 export async function getSyncStatus(): Promise<SyncStatus> {
@@ -798,11 +831,11 @@ export async function clearSyncStatus(): Promise<void> {
 // ============================================
 
 export interface BackgroundSyncState {
-  lastSyncAttempt: number | null;    // Timestamp (ms)
-  lastSyncSuccess: number | null;    // Timestamp (ms)
-  syncedPointsCount: number;         // Points already synced from buffer
-  consecutiveFailures: number;       // Failure counter for monitoring
-  totalPointsSynced: number;         // Lifetime counter
+  lastSyncAttempt: number | null; // Timestamp (ms)
+  lastSyncSuccess: number | null; // Timestamp (ms)
+  syncedPointsCount: number; // Points already synced from buffer
+  consecutiveFailures: number; // Failure counter for monitoring
+  totalPointsSynced: number; // Lifetime counter
 }
 
 export async function getBackgroundSyncState(): Promise<BackgroundSyncState> {
@@ -824,7 +857,9 @@ export async function getBackgroundSyncState(): Promise<BackgroundSyncState> {
   };
 }
 
-export async function updateBackgroundSyncState(updates: Partial<BackgroundSyncState>): Promise<void> {
+export async function updateBackgroundSyncState(
+  updates: Partial<BackgroundSyncState>,
+): Promise<void> {
   try {
     const current = await getBackgroundSyncState();
     const updated = { ...current, ...updates };

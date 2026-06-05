@@ -15,7 +15,9 @@ export function Loading({ message, fullScreen = false }: LoadingProps) {
     return (
       <View style={[styles.fullScreen, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
+        {message && (
+          <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
+        )}
       </View>
     );
   }

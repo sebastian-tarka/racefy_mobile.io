@@ -5,7 +5,6 @@ type Constructable<T = object> = new (...args: any[]) => T;
 
 export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
   return class TeamsMixin extends Base {
-
     // ============ STANDALONE TEAMS ============
 
     async getTeams(params?: {
@@ -31,18 +30,18 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async createTeam(data: Types.CreateTeamRequest): Promise<Types.Team> {
-      const response = await this.request<Types.ApiResponse<Types.Team>>(
-        '/teams',
-        { method: 'POST', body: JSON.stringify(data) },
-      );
+      const response = await this.request<Types.ApiResponse<Types.Team>>('/teams', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
     async updateTeam(id: number, data: Types.UpdateTeamRequest): Promise<Types.Team> {
-      const response = await this.request<Types.ApiResponse<Types.Team>>(
-        `/teams/${id}`,
-        { method: 'PUT', body: JSON.stringify(data) },
-      );
+      const response = await this.request<Types.ApiResponse<Types.Team>>(`/teams/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -58,10 +57,10 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         type: mimeType,
         name: `avatar.${imageUri.split('.').pop()}`,
       } as any);
-      const result = await this.request<Types.ApiResponse<Types.Team>>(
-        `/teams/${teamId}/avatar`,
-        { method: 'POST', body: formData },
-      );
+      const result = await this.request<Types.ApiResponse<Types.Team>>(`/teams/${teamId}/avatar`, {
+        method: 'POST',
+        body: formData,
+      });
       return result.data;
     }
 
@@ -91,11 +90,15 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async acceptJoinRequest(teamId: number, membershipId: number): Promise<void> {
-      await this.request(`/teams/${teamId}/join-requests/${membershipId}/accept`, { method: 'POST' });
+      await this.request(`/teams/${teamId}/join-requests/${membershipId}/accept`, {
+        method: 'POST',
+      });
     }
 
     async declineJoinRequest(teamId: number, membershipId: number): Promise<void> {
-      await this.request(`/teams/${teamId}/join-requests/${membershipId}/decline`, { method: 'POST' });
+      await this.request(`/teams/${teamId}/join-requests/${membershipId}/decline`, {
+        method: 'POST',
+      });
     }
 
     async leaveTeam(teamId: number): Promise<void> {
@@ -117,7 +120,7 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getTeamConversation(teamId: number): Promise<Types.Conversation> {
       const response = await this.request<Types.ApiResponse<Types.Conversation>>(
-        `/teams/${teamId}/conversation`
+        `/teams/${teamId}/conversation`,
       );
       return response.data;
     }
@@ -238,7 +241,9 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async removeEventTeamMember(eventId: number, teamId: number, userId: number): Promise<void> {
-      await this.request(`/events/${eventId}/teams/${teamId}/members/${userId}`, { method: 'DELETE' });
+      await this.request(`/events/${eventId}/teams/${teamId}/members/${userId}`, {
+        method: 'DELETE',
+      });
     }
 
     async transferEventTeamCaptain(eventId: number, teamId: number, userId: number): Promise<void> {

@@ -124,10 +124,7 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
     tempFile.write(bytes);
 
     // Play the audio file
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: tempFile.uri },
-      { shouldPlay: true },
-    );
+    const { sound } = await Audio.Sound.createAsync({ uri: tempFile.uri }, { shouldPlay: true });
 
     // Wait for playback to finish
     await new Promise<void>((resolve) => {

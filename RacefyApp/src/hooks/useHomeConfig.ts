@@ -2,7 +2,13 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
-import type { HomeConfigResponse, HomeConfigData, HomeConfigMeta, HomeSection, HomeVersion } from '../types/api';
+import type {
+  HomeConfigResponse,
+  HomeConfigData,
+  HomeConfigMeta,
+  HomeSection,
+  HomeVersion,
+} from '../types/api';
 import { logger } from '../services/logger';
 
 const HOME_CONFIG_CACHE_KEY = '@racefy_home_config';
@@ -151,9 +157,7 @@ export function useHomeConfig(): UseHomeConfigResult {
   }, [fetchConfig]);
 
   // Sort sections by priority (ascending)
-  const sortedSections = (config?.sections || [])
-    .slice()
-    .sort((a, b) => a.priority - b.priority);
+  const sortedSections = (config?.sections || []).slice().sort((a, b) => a.priority - b.priority);
 
   // Default to 'legacy' for backwards compatibility if API doesn't return home_version
   const homeVersion: HomeVersion = config?.home_version || 'legacy';

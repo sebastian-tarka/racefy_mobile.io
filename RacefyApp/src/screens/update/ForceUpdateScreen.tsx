@@ -1,13 +1,13 @@
 import React from 'react';
-import {Alert, Linking, StyleSheet, Text, View} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../../hooks/useTheme';
-import {useAppVersion} from '../../hooks/useAppVersion';
-import {BrandLogo, Button} from '../../components';
-import {logger} from '../../services/logger';
-import {borderRadius, fontSize, spacing} from '../../theme';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../hooks/useTheme';
+import { useAppVersion } from '../../hooks/useAppVersion';
+import { BrandLogo, Button } from '../../components';
+import { logger } from '../../services/logger';
+import { borderRadius, fontSize, spacing } from '../../theme';
 
 /**
  * Full-screen blocker shown when the running native app version is below
@@ -46,7 +46,9 @@ export function ForceUpdateScreen() {
   const message = update?.force_update_message || t('update.requiredMessage');
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}
+    >
       <View style={styles.content}>
         <BrandLogo category="logo-full" width={160} height={44} />
 
@@ -59,7 +61,12 @@ export function ForceUpdateScreen() {
         <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
 
         {update?.current_version && (
-          <View style={[styles.versionRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.versionRow,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.versionItem}>
               <Text style={[styles.versionLabel, { color: colors.textMuted }]}>
                 {t('update.installedVersion')}

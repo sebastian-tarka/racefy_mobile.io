@@ -1,7 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme, useSportTypes, useUnits } from '../../hooks';
@@ -48,18 +46,19 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
   const { ranking, isLoading: rankingLoading } = useTeamRanking(slug, rankingSortBy, period);
   const { trends, isLoading: trendsLoading } = useTeamTrends(slug, granularity);
 
-  const periodOptions = useMemo(() =>
-    PERIOD_OPTIONS.map(o => ({ value: o.value, label: t(o.labelKey) })),
+  const periodOptions = useMemo(
+    () => PERIOD_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
     [t],
   );
 
-  const rankingSortOptions = useMemo(() =>
-    RANKING_SORT_OPTIONS.map(o => ({ value: o.value, label: t(o.labelKey) })),
+  const rankingSortOptions = useMemo(
+    () => RANKING_SORT_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) })),
     [t],
   );
 
   const formatDist = useCallback((meters: number) => {
-    if (meters >= 1000) return `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} km`;
+    if (meters >= 1000)
+      return `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} km`;
     return `${meters} m`;
   }, []);
 
@@ -68,22 +67,33 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
     return String(cal);
   }, []);
 
-  const getRankStyle = useCallback((rank: number) => {
-    if (rank === 1) return { color: '#f59e0b', icon: 'trophy' as const };
-    if (rank === 2) return { color: '#9ca3af', icon: 'medal' as const };
-    if (rank === 3) return { color: '#b45309', icon: 'medal-outline' as const };
-    return { color: colors.textMuted, icon: null };
-  }, [colors]);
+  const getRankStyle = useCallback(
+    (rank: number) => {
+      if (rank === 1) return { color: '#f59e0b', icon: 'trophy' as const };
+      if (rank === 2) return { color: '#9ca3af', icon: 'medal' as const };
+      if (rank === 3) return { color: '#b45309', icon: 'medal-outline' as const };
+      return { color: colors.textMuted, icon: null };
+    },
+    [colors],
+  );
 
-  const getRankingValue = useCallback((member: any) => {
-    switch (rankingSortBy) {
-      case 'distance': return formatDist(member.total_distance);
-      case 'duration': return formatTotalTime(member.total_duration);
-      case 'elevation': return `${member.total_elevation.toLocaleString()} m`;
-      case 'activities': return `${member.activities_count}`;
-      default: return formatDist(member.total_distance);
-    }
-  }, [rankingSortBy, formatDist]);
+  const getRankingValue = useCallback(
+    (member: any) => {
+      switch (rankingSortBy) {
+        case 'distance':
+          return formatDist(member.total_distance);
+        case 'duration':
+          return formatTotalTime(member.total_duration);
+        case 'elevation':
+          return `${member.total_elevation.toLocaleString()} m`;
+        case 'activities':
+          return `${member.activities_count}`;
+        default:
+          return formatDist(member.total_distance);
+      }
+    },
+    [rankingSortBy, formatDist],
+  );
 
   // 403 = private team
   if (statsError === 'private') {
@@ -106,11 +116,7 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
 
   if (statsError) {
     return (
-      <EmptyState
-        icon="alert-circle-outline"
-        title={t('common.error')}
-        message={statsError}
-      />
+      <EmptyState icon="alert-circle-outline" title={t('common.error')} message={statsError} />
     );
   }
 
@@ -121,7 +127,7 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
 
   // Trends chart: simple bar visualization
   const trendData = trends?.trends || [];
-  const maxTrendDistance = Math.max(...trendData.map(d => d.total_distance), 1);
+  const maxTrendDistance = Math.max(...trendData.map((d) => d.total_distance), 1);
 
   return (
     <View>
@@ -138,37 +144,61 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
       <Card style={styles.section}>
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{periodData.activities_count}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.activities')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {periodData.activities_count}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.activities')}
+            </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDist(periodData.total_distance)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.distance')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {formatDist(periodData.total_distance)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.distance')}
+            </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatTotalTime(periodData.total_duration)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.duration')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {formatTotalTime(periodData.total_duration)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.duration')}
+            </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{periodData.total_elevation.toLocaleString()} m</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.elevation')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {periodData.total_elevation.toLocaleString()} m
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.elevation')}
+            </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {periodData.active_members}/{stats.members_count}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.activeMembers')}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.activeMembers')}
+            </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.background }]}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatCalories(periodData.total_calories)}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('teams.calories')}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {formatCalories(periodData.total_calories)}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+              {t('teams.calories')}
+            </Text>
           </View>
         </View>
       </Card>
 
       {/* All Time Summary */}
       <Card style={styles.section}>
-        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>{t('teams.allTime')}</Text>
+        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>
+          {t('teams.allTime')}
+        </Text>
         <Text style={[styles.allTimeSummary, { color: colors.textSecondary }]}>
           {allTimeData.activities_count} {t('teams.activities').toLowerCase()} {' \u2022 '}
           {formatDist(allTimeData.total_distance)} {' \u2022 '}
@@ -179,7 +209,9 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
       {/* Member Ranking */}
       <Card style={styles.section}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('teams.memberRanking')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('teams.memberRanking')}
+          </Text>
         </View>
         <OptionSelector
           value={rankingSortBy}
@@ -190,47 +222,57 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
         />
         {rankingLoading && !ranking ? (
           <ActivityIndicator color={colors.primary} style={{ paddingVertical: spacing.md }} />
-        ) : ranking?.ranking.map((member) => {
-          const rankStyle = getRankStyle(member.rank);
-          return (
-            <TouchableOpacity
-              key={`rank-${member.user.id}`}
-              style={[styles.rankRow, { borderBottomColor: colors.border }]}
-              onPress={() => onUserPress(member.user.username)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.rankNumber}>
-                {member.rank <= 3 ? (
-                  <Text style={[styles.rankMedal, { color: rankStyle.color }]}>
-                    {member.rank === 1 ? '\uD83E\uDD47' : member.rank === 2 ? '\uD83E\uDD48' : '\uD83E\uDD49'}
+        ) : (
+          ranking?.ranking.map((member) => {
+            const rankStyle = getRankStyle(member.rank);
+            return (
+              <TouchableOpacity
+                key={`rank-${member.user.id}`}
+                style={[styles.rankRow, { borderBottomColor: colors.border }]}
+                onPress={() => onUserPress(member.user.username)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.rankNumber}>
+                  {member.rank <= 3 ? (
+                    <Text style={[styles.rankMedal, { color: rankStyle.color }]}>
+                      {member.rank === 1
+                        ? '\uD83E\uDD47'
+                        : member.rank === 2
+                          ? '\uD83E\uDD48'
+                          : '\uD83E\uDD49'}
+                    </Text>
+                  ) : (
+                    <Text style={[styles.rankText, { color: colors.textMuted }]}>
+                      #{member.rank}
+                    </Text>
+                  )}
+                </View>
+                <Avatar uri={member.user.avatar} name={member.user.name} size="sm" />
+                <View style={styles.rankInfo}>
+                  <Text style={[styles.rankName, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {member.user.name}
                   </Text>
-                ) : (
-                  <Text style={[styles.rankText, { color: colors.textMuted }]}>#{member.rank}</Text>
-                )}
-              </View>
-              <Avatar uri={member.user.avatar} name={member.user.name} size="sm" />
-              <View style={styles.rankInfo}>
-                <Text style={[styles.rankName, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {member.user.name}
-                </Text>
-              </View>
-              <View style={styles.rankStats}>
-                <Text style={[styles.rankValue, { color: colors.textPrimary }]}>
-                  {getRankingValue(member)}
-                </Text>
-                <Text style={[styles.rankSub, { color: colors.textMuted }]}>
-                  {member.activities_count} act.
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+                </View>
+                <View style={styles.rankStats}>
+                  <Text style={[styles.rankValue, { color: colors.textPrimary }]}>
+                    {getRankingValue(member)}
+                  </Text>
+                  <Text style={[styles.rankSub, { color: colors.textMuted }]}>
+                    {member.activities_count} act.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })
+        )}
       </Card>
 
       {/* Activity Trends */}
       <Card style={styles.section}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('teams.activityTrends')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('teams.activityTrends')}
+          </Text>
         </View>
         <OptionSelector
           value={granularity}
@@ -248,9 +290,10 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
           <View style={styles.chartContainer}>
             <View style={styles.barsRow}>
               {trendData.map((point, index) => {
-                const height = maxTrendDistance > 0
-                  ? Math.max((point.total_distance / maxTrendDistance) * 100, 4)
-                  : 4;
+                const height =
+                  maxTrendDistance > 0
+                    ? Math.max((point.total_distance / maxTrendDistance) * 100, 4)
+                    : 4;
                 return (
                   <View key={`trend-${index}`} style={styles.barWrapper}>
                     <View style={styles.barContainer}>
@@ -259,7 +302,8 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
                           styles.bar,
                           {
                             height: `${height}%`,
-                            backgroundColor: point.total_distance > 0 ? colors.primary : colors.border,
+                            backgroundColor:
+                              point.total_distance > 0 ? colors.primary : colors.border,
                           },
                         ]}
                       />
@@ -267,7 +311,10 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
                     <Text style={[styles.barLabel, { color: colors.textMuted }]} numberOfLines={1}>
                       {formatTrendLabel(point.period, granularity)}
                     </Text>
-                    <Text style={[styles.barValue, { color: colors.textSecondary }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.barValue, { color: colors.textSecondary }]}
+                      numberOfLines={1}
+                    >
                       {point.total_distance >= 1000
                         ? `${(point.total_distance / 1000).toFixed(0)}`
                         : '0'}
@@ -279,18 +326,25 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
             <Text style={[styles.chartUnit, { color: colors.textMuted }]}>km</Text>
           </View>
         ) : (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('teams.noActivities')}</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            {t('teams.noActivities')}
+          </Text>
         )}
       </Card>
 
       {/* Sport Type Breakdown */}
       {periodData.by_sport_type && periodData.by_sport_type.length > 0 && (
         <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('teams.bySportType')}</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {t('teams.bySportType')}
+          </Text>
           {periodData.by_sport_type.map((sportStat) => {
             const sport = getSportById(sportStat.sport_type_id);
             return (
-              <View key={`sport-${sportStat.sport_type_id}`} style={[styles.sportRow, { borderBottomColor: colors.border }]}>
+              <View
+                key={`sport-${sportStat.sport_type_id}`}
+                style={[styles.sportRow, { borderBottomColor: colors.border }]}
+              >
                 <Ionicons
                   name={(sport?.icon as any) || 'fitness-outline'}
                   size={20}
@@ -324,7 +378,20 @@ function formatTrendLabel(period: string, granularity: TrendGranularity): string
   const match = period.match(/-(\d{2})$/);
   if (match) {
     const monthNum = parseInt(match[1], 10);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[monthNum - 1] || period;
   }
   return period;

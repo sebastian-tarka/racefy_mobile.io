@@ -1,7 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, ActivityIndicator, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,12 +37,27 @@ export function TeamDetailScreen({ route, navigation }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'members');
 
   const {
-    team, isLoading, isRefreshing, isActing, error,
-    isCaptain, isMember, activeMembers, invitations, joinRequests,
-    fetchTeam, onRefresh,
-    handleRequestToJoin, handleAcceptInvitation, handleDeclineInvitation,
-    handleLeave, handleKickMember, handleTransferCaptain,
-    handleAcceptJoinRequest, handleDeclineJoinRequest, handleDelete,
+    team,
+    isLoading,
+    isRefreshing,
+    isActing,
+    error,
+    isCaptain,
+    isMember,
+    activeMembers,
+    invitations,
+    joinRequests,
+    fetchTeam,
+    onRefresh,
+    handleRequestToJoin,
+    handleAcceptInvitation,
+    handleDeclineInvitation,
+    handleLeave,
+    handleKickMember,
+    handleTransferCaptain,
+    handleAcceptJoinRequest,
+    handleDeclineJoinRequest,
+    handleDelete,
   } = useTeamDetail({ slug, isAuthenticated, userId: user?.id, navigateBack });
 
   const membersMax = features.team_members_max;
@@ -88,9 +109,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
     }
   }, [team, isCaptain, pickAvatar, fetchTeam, t]);
 
-  const handleUserPress = useCallback((username: string) => {
-    navigation.navigate('UserProfile', { username });
-  }, [navigation]);
+  const handleUserPress = useCallback(
+    (username: string) => {
+      navigation.navigate('UserProfile', { username });
+    },
+    [navigation],
+  );
 
   const [isOpeningChat, setIsOpeningChat] = useState(false);
   const [teamChatUnavailable, setTeamChatUnavailable] = useState(false);
@@ -132,7 +156,9 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         <ScreenHeader title={t('teams.notFound')} showBack onBack={navigateBack} />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error || t('teams.notFound')}</Text>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {error || t('teams.notFound')}
+          </Text>
         </View>
       </ScreenContainer>
     );
@@ -149,14 +175,16 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         title={team.name}
         showBack
         onBack={navigateBack}
-        rightAction={isCaptain ? (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('TeamForm', { teamId: team.id })}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="create-outline" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        ) : undefined}
+        rightAction={
+          isCaptain ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TeamForm', { teamId: team.id })}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="create-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
 
       <ScrollView
@@ -185,7 +213,9 @@ export function TeamDetailScreen({ route, navigation }: Props) {
             </TouchableOpacity>
             <Text style={[styles.teamName, { color: colors.textPrimary }]}>{team.name}</Text>
             {team.description && (
-              <Text style={[styles.description, { color: colors.textSecondary }]}>{team.description}</Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                {team.description}
+              </Text>
             )}
             <View style={styles.metaRow}>
               <Ionicons
@@ -196,7 +226,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
               <Text style={[styles.metaText, { color: colors.textMuted }]}>
                 {team.visibility === 'public' ? t('teams.public') : t('teams.private')}
               </Text>
-              <Ionicons name="people-outline" size={16} color={colors.textMuted} style={{ marginLeft: spacing.md }} />
+              <Ionicons
+                name="people-outline"
+                size={16}
+                color={colors.textMuted}
+                style={{ marginLeft: spacing.md }}
+              />
               <Text style={[styles.metaText, { color: colors.textMuted }]}>
                 {t('teams.membersCount', { count: team.members_count })}
               </Text>
@@ -205,26 +240,46 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         </Card>
 
         {/* Actions — only show when there's something to display */}
-        {!isMember && !team.has_pending_invitation && !team.has_pending_request && team.visibility === 'public' && isAuthenticated && (
-          <Card style={styles.section}>
-            <Button title={t('teams.requestToJoin')} onPress={handleRequestToJoin} loading={isActing} />
-          </Card>
-        )}
+        {!isMember &&
+          !team.has_pending_invitation &&
+          !team.has_pending_request &&
+          team.visibility === 'public' &&
+          isAuthenticated && (
+            <Card style={styles.section}>
+              <Button
+                title={t('teams.requestToJoin')}
+                onPress={handleRequestToJoin}
+                loading={isActing}
+              />
+            </Card>
+          )}
         {!isMember && team.has_pending_request && (
           <Card style={styles.section}>
             <View style={styles.pendingBadge}>
               <Ionicons name="time-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.pendingText, { color: colors.textSecondary }]}>{t('teams.requestSent')}</Text>
+              <Text style={[styles.pendingText, { color: colors.textSecondary }]}>
+                {t('teams.requestSent')}
+              </Text>
             </View>
           </Card>
         )}
         {!isMember && team.has_pending_invitation && (
           <Card style={styles.section}>
             <View style={styles.invitationActions}>
-              <Text style={[styles.invitationText, { color: colors.textPrimary }]}>{t('teams.invitedToTeam')}</Text>
+              <Text style={[styles.invitationText, { color: colors.textPrimary }]}>
+                {t('teams.invitedToTeam')}
+              </Text>
               <View style={styles.invitationButtons}>
-                <Button title={t('common.accept')} onPress={handleAcceptInvitation} loading={isActing} />
-                <Button title={t('common.decline')} onPress={handleDeclineInvitation} variant="outline" />
+                <Button
+                  title={t('common.accept')}
+                  onPress={handleAcceptInvitation}
+                  loading={isActing}
+                />
+                <Button
+                  title={t('common.decline')}
+                  onPress={handleDeclineInvitation}
+                  variant="outline"
+                />
               </View>
             </View>
           </Card>
@@ -269,10 +324,21 @@ export function TeamDetailScreen({ route, navigation }: Props) {
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab.value}
-              style={[styles.tab, activeTab === tab.value && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+              style={[
+                styles.tab,
+                activeTab === tab.value && {
+                  borderBottomColor: colors.primary,
+                  borderBottomWidth: 2,
+                },
+              ]}
               onPress={() => setActiveTab(tab.value)}
             >
-              <Text style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: activeTab === tab.value ? colors.primary : colors.textSecondary },
+                ]}
+              >
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -285,7 +351,8 @@ export function TeamDetailScreen({ route, navigation }: Props) {
             {/* Members */}
             <Card style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('teams.members')} ({activeMembers.length}/{membersMax === -1 ? '\u221e' : membersMax})
+                {t('teams.members')} ({activeMembers.length}/
+                {membersMax === -1 ? '\u221e' : membersMax})
               </Text>
               {activeMembers.map((member, index) => (
                 <TouchableOpacity
@@ -295,18 +362,26 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                 >
                   <Avatar uri={member.user.avatar} name={member.user.name} size="md" />
                   <View style={styles.memberInfo}>
-                    <Text style={[styles.memberName, { color: colors.textPrimary }]}>{member.user.name}</Text>
-                    <Text style={[styles.memberUsername, { color: colors.textMuted }]}>@{member.user.username}</Text>
+                    <Text style={[styles.memberName, { color: colors.textPrimary }]}>
+                      {member.user.name}
+                    </Text>
+                    <Text style={[styles.memberUsername, { color: colors.textMuted }]}>
+                      @{member.user.username}
+                    </Text>
                   </View>
                   {member.role === 'captain' && (
                     <Ionicons name="star" size={18} color={colors.warning || '#f59e0b'} />
                   )}
                   {isCaptain && member.role !== 'captain' && (
                     <View style={styles.memberActions}>
-                      <TouchableOpacity onPress={() => handleTransferCaptain(member.user.id, member.user.name)}>
+                      <TouchableOpacity
+                        onPress={() => handleTransferCaptain(member.user.id, member.user.name)}
+                      >
                         <Ionicons name="star-outline" size={20} color={colors.textSecondary} />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleKickMember(member.user.id, member.user.name)}>
+                      <TouchableOpacity
+                        onPress={() => handleKickMember(member.user.id, member.user.name)}
+                      >
                         <Ionicons name="close-circle-outline" size={20} color={colors.error} />
                       </TouchableOpacity>
                     </View>
@@ -322,11 +397,18 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                   {t('teams.invited')} ({invitations.length})
                 </Text>
                 {invitations.map((inv, index) => (
-                  <View key={`inv-${inv.id}-${index}`} style={[styles.memberRow, { borderBottomColor: colors.border }]}>
+                  <View
+                    key={`inv-${inv.id}-${index}`}
+                    style={[styles.memberRow, { borderBottomColor: colors.border }]}
+                  >
                     <Avatar uri={inv.user.avatar} name={inv.user.name} size="md" />
                     <View style={styles.memberInfo}>
-                      <Text style={[styles.memberName, { color: colors.textPrimary }]}>{inv.user.name}</Text>
-                      <Text style={[styles.memberUsername, { color: colors.textMuted }]}>{t('teams.pendingInvitation')}</Text>
+                      <Text style={[styles.memberName, { color: colors.textPrimary }]}>
+                        {inv.user.name}
+                      </Text>
+                      <Text style={[styles.memberUsername, { color: colors.textMuted }]}>
+                        {t('teams.pendingInvitation')}
+                      </Text>
                     </View>
                   </View>
                 ))}
@@ -340,10 +422,15 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                   {t('teams.joinRequests')} ({joinRequests.length})
                 </Text>
                 {joinRequests.map((req, index) => (
-                  <View key={`req-${req.id}-${index}`} style={[styles.memberRow, { borderBottomColor: colors.border }]}>
+                  <View
+                    key={`req-${req.id}-${index}`}
+                    style={[styles.memberRow, { borderBottomColor: colors.border }]}
+                  >
                     <Avatar uri={req.user.avatar} name={req.user.name} size="md" />
                     <View style={styles.memberInfo}>
-                      <Text style={[styles.memberName, { color: colors.textPrimary }]}>{req.user.name}</Text>
+                      <Text style={[styles.memberName, { color: colors.textPrimary }]}>
+                        {req.user.name}
+                      </Text>
                     </View>
                     <View style={styles.requestActions}>
                       <TouchableOpacity
@@ -366,9 +453,7 @@ export function TeamDetailScreen({ route, navigation }: Props) {
           </>
         )}
 
-        {activeTab === 'stats' && (
-          <TeamStatsTab slug={slug} onUserPress={handleUserPress} />
-        )}
+        {activeTab === 'stats' && <TeamStatsTab slug={slug} onUserPress={handleUserPress} />}
 
         <View style={{ height: 60 + bottomInset }} />
       </ScrollView>
@@ -381,39 +466,70 @@ const styles = StyleSheet.create({
   section: { marginBottom: spacing.md },
   header: { alignItems: 'center', paddingVertical: spacing.md },
   teamName: { fontSize: fontSize.xl, fontWeight: '700', marginTop: spacing.sm },
-  description: { fontSize: fontSize.sm, textAlign: 'center', marginTop: spacing.xs, paddingHorizontal: spacing.md },
+  description: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.sm },
   metaText: { fontSize: fontSize.sm },
-  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, justifyContent: 'center', paddingVertical: spacing.sm },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+  },
   pendingText: { fontSize: fontSize.sm },
   invitationActions: { alignItems: 'center', gap: spacing.sm },
   invitationText: { fontSize: fontSize.sm, fontWeight: '600' },
   invitationButtons: { flexDirection: 'row', gap: spacing.sm },
   captainActions: { gap: spacing.sm },
-  tabBar: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: spacing.md },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.md,
+  },
   tab: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm },
   tabText: { fontSize: fontSize.sm, fontWeight: '600' },
   sectionTitle: { fontSize: fontSize.md, fontWeight: '700', marginBottom: spacing.sm },
   memberRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   memberInfo: { flex: 1 },
   memberName: { fontSize: fontSize.sm, fontWeight: '600' },
   memberUsername: { fontSize: fontSize.xs },
   memberActions: { flexDirection: 'row', gap: spacing.sm },
   requestActions: { flexDirection: 'row', gap: spacing.xs },
-  requestBtn: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  requestBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   errorContainer: { alignItems: 'center', paddingVertical: spacing.xl * 2, gap: spacing.md },
   errorText: { fontSize: fontSize.md },
   avatarBadge: {
-    position: 'absolute', bottom: 2, right: 2,
-    width: 26, height: 26, borderRadius: 13,
-    justifyContent: 'center', alignItems: 'center',
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center', alignItems: 'center',
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
