@@ -39,7 +39,11 @@ interface LeaderboardItemProps {
   isCurrentUser?: boolean;
 }
 
-const LeaderboardItem = memo(({ entry, onPress, isCurrentUser }: LeaderboardItemProps) => {
+const LeaderboardItem = memo(function LeaderboardItem({
+  entry,
+  onPress,
+  isCurrentUser,
+}: LeaderboardItemProps) {
   const { colors } = useTheme();
   const medalColor = MEDAL_COLORS[entry.rank as keyof typeof MEDAL_COLORS];
   const isTopThree = entry.rank <= 3;

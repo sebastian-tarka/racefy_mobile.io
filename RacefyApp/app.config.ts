@@ -1,4 +1,4 @@
-import {ConfigContext, ExpoConfig} from 'expo/config';
+import { ConfigContext, ExpoConfig } from 'expo/config';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -7,6 +7,9 @@ import * as path from 'path';
 const decodeFirebaseConfig = (envVar: string, outputFile: string): string | undefined => {
   const outputPath = path.resolve(__dirname, outputFile);
   if (fs.existsSync(outputPath)) return `./${outputFile}`;
+  // Dynamic by design: this helper is called with different env var names
+  // (Firebase config keys), so a static process.env.X access isn't possible.
+  // eslint-disable-next-line expo/no-dynamic-env-var
   const base64 = process.env[envVar];
   if (!base64) return undefined;
   try {
@@ -17,8 +20,14 @@ const decodeFirebaseConfig = (envVar: string, outputFile: string): string | unde
   }
 };
 
-const iosGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICE_INFO_PLIST', 'GoogleService-Info.plist');
-const androidGoogleServicesFile = decodeFirebaseConfig('GOOGLE_SERVICES_JSON', 'google-services.json');
+const iosGoogleServicesFile = decodeFirebaseConfig(
+  'GOOGLE_SERVICE_INFO_PLIST',
+  'GoogleService-Info.plist',
+);
+const androidGoogleServicesFile = decodeFirebaseConfig(
+  'GOOGLE_SERVICES_JSON',
+  'google-services.json',
+);
 
 // Determine API URL based on APP_ENV
 const getApiUrl = (): string => {
@@ -54,10 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: 'com.racefy.app',
     buildNumber: '1.13.0',
     ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
-    associatedDomains: [
-      'applinks:racefy.io',
-      'applinks:app.dev.racefy.io',
-    ],
+    associatedDomains: ['applinks:racefy.io', 'applinks:app.dev.racefy.io'],
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Racefy needs access to your location to track your activities and show your route on the map.',
@@ -65,12 +71,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'Racefy needs access to your location to track your activities in the background and show your route on the map.',
       NSLocationAlwaysUsageDescription:
         'Racefy needs access to your location to track your activities in the background.',
-      NSMotionUsageDescription:
-        'Racefy uses motion data to improve activity tracking accuracy.',
+      NSMotionUsageDescription: 'Racefy uses motion data to improve activity tracking accuracy.',
       NSCameraUsageDescription:
         'Racefy needs camera access to take photos and videos for your activities and posts.',
-      NSMicrophoneUsageDescription:
-        'Racefy needs microphone access to record audio with videos.',
+      NSMicrophoneUsageDescription: 'Racefy needs microphone access to record audio with videos.',
       NSPhotoLibraryUsageDescription:
         'Racefy needs photo library access to select photos and videos from your gallery.',
       NSPhotoLibraryAddUsageDescription:
@@ -80,15 +84,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       // Required for background location tracking and push notifications
       UIBackgroundModes: ['location', 'fetch', 'remote-notification', 'audio'],
       // Google Sign-In iOS URL scheme (reversed client ID)
-      ...(process.env.GOOGLE_IOS_CLIENT_ID ? {
-        CFBundleURLTypes: [
-          {
-            CFBundleURLSchemes: [
-              process.env.GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.'),
+      ...(process.env.GOOGLE_IOS_CLIENT_ID
+        ? {
+            CFBundleURLTypes: [
+              {
+                CFBundleURLSchemes: [
+                  process.env.GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.'),
+                ],
+              },
             ],
-          },
-        ],
-      } : {}),
+          }
+        : {}),
     },
     config: {
       usesNonExemptEncryption: false,
@@ -167,18 +173,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         photosPermission:
           'Racefy needs access to your photos to add images to activities and posts.',
-        cameraPermission:
-          'Racefy needs camera access to take photos for your activities.',
+        cameraPermission: 'Racefy needs camera access to take photos for your activities.',
       },
     ],
     '@react-native-community/datetimepicker',
     'expo-video',
     'expo-secure-store',
     '@rnmapbox/maps',
-    [
-      'react-native-health-connect',
-      { requestPermissionsActivity: false },
-    ],
+    ['react-native-health-connect', { requestPermissionsActivity: false }],
     [
       'react-native-health',
       {

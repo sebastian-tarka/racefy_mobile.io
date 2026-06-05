@@ -1291,12 +1291,13 @@ export function SettingsScreen({ navigation }: Props) {
               <View style={{ height: spacing.md }} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
                 Test 1 - Lokalna notyfikacja:{'\n'}
-                1. "Send test notification (5s delay)"{'\n'}
+                1. {'"Send test notification (5s delay)"'}
+                {'\n'}
                 2. Zminimalizuj appkę{'\n'}
                 3. Tapnij powiadomienie{'\n'}
                 {'\n'}
                 Test 2 - Push via Expo Tool:{'\n'}
-                1. "Show Push Token" → skopiuj token{'\n'}
+                1. {'"Show Push Token"'} → skopiuj token{'\n'}
                 2. Wejdź na expo.dev/notifications{'\n'}
                 3. Wklej token i wyślij{'\n'}
                 4. Tapnij powiadomienie

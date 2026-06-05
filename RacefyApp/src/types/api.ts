@@ -113,6 +113,7 @@ export interface BadgeData {
   description: string;
   icon: string | null;
   icon_url: string | null;
+  icon_emoji?: string | null;
   rarity: 'legendary' | 'epic' | 'rare' | 'common';
   rarity_color: string;
 }
@@ -2815,6 +2816,7 @@ export interface BadgeReward {
     description: string;
     icon: string;
     icon_url: string | null;
+    icon_emoji?: string | null;
     rarity: 'common' | 'rare' | 'epic' | 'legendary';
     rarity_color: string;
   };

@@ -42,7 +42,7 @@ interface PointHistoryItemProps {
   transaction: PointTransaction;
 }
 
-const PointHistoryItem = memo(({ transaction }: PointHistoryItemProps) => {
+const PointHistoryItem = memo(function PointHistoryItem({ transaction }: PointHistoryItemProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { icon, color } = getTransactionStyle(transaction.type, colors);
