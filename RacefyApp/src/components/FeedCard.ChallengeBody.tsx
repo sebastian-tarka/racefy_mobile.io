@@ -51,12 +51,11 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
     openGallery,
   } = useImageGallery();
   const event = post.event;
-  if (!event) return null;
 
   const dateFnsLocale = i18n.language === 'pl' ? pl : i18n.language === 'es' ? es : enUS;
 
   const { coverUrl, imageUrls } = useMemo(() => {
-    const cover = event.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
+    const cover = event?.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
     const urls: string[] = [];
     if (cover) urls.push(cover);
     (post.photos || []).forEach((p) => {
@@ -64,7 +63,10 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
       if (url) urls.push(url);
     });
     return { coverUrl: cover, imageUrls: urls };
-  }, [event.cover_image_url, post.photos]);
+  }, [event?.cover_image_url, post.photos]);
+
+  // Hooks above must run unconditionally; guard the missing-event case after them.
+  if (!event) return null;
 
   const accentColor = event.accent_color || post.accent_color || colors.primary;
 

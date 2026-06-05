@@ -25,15 +25,15 @@ export function DebugLogsSection() {
   const [lastSentRef, setLastSentRef] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Don't render if logging is disabled
-  if (!logger.isEnabled()) {
-    return null;
-  }
-
   useEffect(() => {
     // Update logs count
     setLogsCount(logger.getLogsCount());
   }, []);
+
+  // Don't render if logging is disabled (after hooks, to satisfy the Rules of Hooks)
+  if (!logger.isEnabled()) {
+    return null;
+  }
 
   const handleSendLogs = async () => {
     if (logsCount === 0) {

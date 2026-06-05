@@ -351,28 +351,6 @@ export function ProfileScreen({
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
 
-  if (!isAuthenticated) {
-    return (
-      <ScreenContainer>
-        <View
-          style={[
-            styles.header,
-            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
-        </View>
-        <EmptyState
-          icon="person-outline"
-          title={t('profile.signInRequired')}
-          message={t('profile.signInDescription')}
-          actionLabel={t('common.signIn')}
-          onAction={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
-        />
-      </ScreenContainer>
-    );
-  }
-
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
     { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
@@ -642,6 +620,30 @@ export function ProfileScreen({
   const profileHeaderRef = useRef(renderProfileHeader);
   profileHeaderRef.current = renderProfileHeader;
   const stableProfileHeader = useRef(() => profileHeaderRef.current()).current;
+
+  // Not authenticated: render the sign-in prompt. Placed AFTER all hooks above
+  // (including the stable-ref hooks) so the Rules of Hooks hold.
+  if (!isAuthenticated) {
+    return (
+      <ScreenContainer>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
+        </View>
+        <EmptyState
+          icon="person-outline"
+          title={t('profile.signInRequired')}
+          message={t('profile.signInDescription')}
+          actionLabel={t('common.signIn')}
+          onAction={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
+        />
+      </ScreenContainer>
+    );
+  }
 
   const renderFooter = () => {
     const isLoading =

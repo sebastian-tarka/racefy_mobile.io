@@ -48,9 +48,14 @@ export function RecordingMapControls({
 }: RecordingMapControlsProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
-  // Fall back to measured tab bar height if parent didn't provide offset
+  // Fall back to measured tab bar height if parent didn't provide offset.
+  // useBottomTabBarHeight() throws when this screen is not inside a bottom-tab
+  // navigator. The hook itself is still called unconditionally (the underlying
+  // useContext runs before the library throws), so hook order stays stable —
+  // hence the targeted disable rather than a restructure.
   let measuredTabBarHeight = 0;
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     measuredTabBarHeight = useBottomTabBarHeight();
   } catch {
     // Not inside a bottom tab navigator — leave 0

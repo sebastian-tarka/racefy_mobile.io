@@ -76,9 +76,20 @@ export function RoutePreview({
     }
   }, [routeMapUrl, activityId]);
 
+  const scale = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  const [baseScale, setBaseScale] = useState(1);
+  const [lastScale, setLastScale] = useState(1);
+  const [lastTranslateX, setLastTranslateX] = useState(0);
+  const [lastTranslateY, setLastTranslateY] = useState(0);
+
   // Use interactive Mapbox if available and track data is provided.
   // activityId is optional — only required for analytics on the static fallback,
   // not for the interactive map itself (e.g. saved planned routes have no activityId).
+  // NOTE: this early return is placed AFTER all hooks above so the Rules of Hooks
+  // hold (hooks must run unconditionally on every render).
   if (MAPBOX_ACCESS_TOKEN && MapboxRouteMap && trackData && trackData.coordinates.length > 0) {
     return (
       <MapboxRouteMap
@@ -94,14 +105,6 @@ export function RoutePreview({
       />
     );
   }
-  const scale = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-
-  const [baseScale, setBaseScale] = useState(1);
-  const [lastScale, setLastScale] = useState(1);
-  const [lastTranslateX, setLastTranslateX] = useState(0);
-  const [lastTranslateY, setLastTranslateY] = useState(0);
 
   const onPinchEvent = (event: PinchGestureHandlerGestureEvent) => {
     const newScale = baseScale * event.nativeEvent.scale;

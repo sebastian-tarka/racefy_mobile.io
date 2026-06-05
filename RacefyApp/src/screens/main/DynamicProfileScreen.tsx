@@ -460,6 +460,13 @@ export function DynamicProfileScreen({
     }
   };
 
+  // Compute total distance for sport breakdown percentage.
+  // Declared before the early return below so this hook always runs (Rules of Hooks).
+  const totalSportDistance = useMemo(() => {
+    if (!activityStats?.by_sport_type) return 0;
+    return Object.values(activityStats.by_sport_type).reduce((sum, s) => sum + s.distance, 0);
+  }, [activityStats?.by_sport_type]);
+
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
@@ -491,12 +498,6 @@ export function DynamicProfileScreen({
     { label: t('profile.tabs.activities'), value: 'activities', emoji: '💪' },
     { label: t('profile.tabs.events'), value: 'events', emoji: '📅' },
   ];
-
-  // Compute total distance for sport breakdown percentage
-  const totalSportDistance = useMemo(() => {
-    if (!activityStats?.by_sport_type) return 0;
-    return Object.values(activityStats.by_sport_type).reduce((sum, s) => sum + s.distance, 0);
-  }, [activityStats?.by_sport_type]);
 
   const renderCoverImage = () => {
     const coverStyle = [styles.coverImage, { backgroundColor: colors.primary }];

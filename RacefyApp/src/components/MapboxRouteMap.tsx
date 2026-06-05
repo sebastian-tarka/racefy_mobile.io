@@ -129,11 +129,6 @@ export function MapboxRouteMap({
   const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // If MapboxGL is not available, return null
-  if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
-    return null;
-  }
-
   // Use theme-appropriate background if not provided
   const bgColor = backgroundColor || colors.cardBackground;
 
@@ -227,6 +222,12 @@ export function MapboxRouteMap({
     setIsLoading(true);
     fadeAnim.setValue(1);
   }, [sizeCategory, isDark, mapStyle]);
+
+  // If MapboxGL is not available, render nothing. Placed AFTER all hooks so the
+  // Rules of Hooks hold (every hook above runs unconditionally on each render).
+  if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
+    return null;
+  }
 
   // Theme-aware colors - brighter in dark mode for better visibility
   const routeColor = isDark ? '#34d399' : colors.primary; // Brighter emerald in dark mode

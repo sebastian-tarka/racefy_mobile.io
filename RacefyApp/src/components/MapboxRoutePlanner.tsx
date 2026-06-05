@@ -86,20 +86,6 @@ export const MapboxRoutePlanner = forwardRef<MapboxRoutePlannerHandle, MapboxRou
       [],
     );
 
-    if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
-      return (
-        <View
-          style={[
-            styles.fallback,
-            height ? { height } : { flex: 1 },
-            { backgroundColor: colors.cardBackground },
-          ]}
-        >
-          <Text style={{ color: colors.textSecondary }}>Mapbox not available</Text>
-        </View>
-      );
-    }
-
     const handleMapPress = useCallback(
       (event: any) => {
         const { geometry } = event;
@@ -148,6 +134,22 @@ export const MapboxRoutePlanner = forwardRef<MapboxRoutePlannerHandle, MapboxRou
         });
       }
     }, [mapReady, waypoints.length, routeGeometry]);
+
+    // If MapboxGL is not available, render a fallback. Placed AFTER all hooks so
+    // the Rules of Hooks hold (every hook above runs unconditionally each render).
+    if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
+      return (
+        <View
+          style={[
+            styles.fallback,
+            height ? { height } : { flex: 1 },
+            { backgroundColor: colors.cardBackground },
+          ]}
+        >
+          <Text style={{ color: colors.textSecondary }}>Mapbox not available</Text>
+        </View>
+      );
+    }
 
     // Build waypoint markers GeoJSON
     const waypointFeatures: GeoJSON.FeatureCollection = {

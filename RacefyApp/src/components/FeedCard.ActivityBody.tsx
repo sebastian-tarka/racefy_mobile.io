@@ -304,14 +304,8 @@ export function ActivityBody({
     openGallery,
   } = useImageGallery();
   const activity = post.activity;
-  if (!activity) return null;
 
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const truncatedDesc = activity.description
-    ? truncateDescription(activity.description, 120)
-    : { text: '', isTruncated: false };
-
-  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
   const { imageUrls, mediaItems } = useMemo(() => {
     const postVideos = post.videos || [];
@@ -336,6 +330,15 @@ export function ActivityBody({
     );
     return { imageUrls: urls, mediaItems: items };
   }, [post.videos, post.photos]);
+
+  // Hooks above must run unconditionally; guard the missing-activity case after them.
+  if (!activity) return null;
+
+  const truncatedDesc = activity.description
+    ? truncateDescription(activity.description, 120)
+    : { text: '', isTruncated: false };
+
+  const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
 
   const hasMedia = mediaItems.length > 0;
 
