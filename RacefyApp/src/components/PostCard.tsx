@@ -34,7 +34,7 @@ interface PostCardProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 
-export function PostCard({
+function PostCardBase({
   post,
   onPress,
   onLikeChange,
@@ -534,3 +534,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const PostCard = React.memo(PostCardBase);

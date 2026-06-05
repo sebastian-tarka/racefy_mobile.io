@@ -1,20 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Card } from './Card';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { formatDistance, formatTotalTime } from '../utils/formatters';
-import { getSportIcon } from '../utils/sportIcon';
-import type { PlannedRoute } from '../types/api';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {Card} from './Card';
+import {useTranslation} from 'react-i18next';
+import {useTheme} from '../hooks/useTheme';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {formatDistance, formatTotalTime} from '../utils/formatters';
+import {getSportIcon} from '../utils/sportIcon';
+import type {PlannedRoute} from '../types/api';
 
 interface RouteCardProps {
   route: PlannedRoute;
   onPress?: () => void;
 }
 
-export function RouteCard({ route, onPress }: RouteCardProps) {
+function RouteCardBase({ route, onPress }: RouteCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -168,3 +168,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const RouteCard = React.memo(RouteCardBase);

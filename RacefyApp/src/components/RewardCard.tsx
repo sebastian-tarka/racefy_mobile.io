@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { Card } from './Card';
-import { useTheme } from '../hooks/useTheme';
-import { useTranslation } from 'react-i18next';
-import { spacing, fontSize, borderRadius } from '../theme';
-import type { Reward, RewardType } from '../types/api';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {Card} from './Card';
+import {useTheme} from '../hooks/useTheme';
+import {useTranslation} from 'react-i18next';
+import {borderRadius, fontSize, spacing} from '../theme';
+import type {Reward, RewardType} from '../types/api';
 
 interface RewardCardProps {
   reward: Reward;
@@ -58,7 +58,7 @@ const getBadgeRarityColor = (rarity: string, colors: any): string => {
   }
 };
 
-export function RewardCard({ reward, onPress }: RewardCardProps) {
+function RewardCardBase({ reward, onPress }: RewardCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formattedDate = format(new Date(reward.earned_at), 'MMM d, yyyy');
@@ -441,3 +441,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const RewardCard = React.memo(RewardCardBase);

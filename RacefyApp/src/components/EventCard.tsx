@@ -1,22 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { Card } from './Card';
-import { Badge } from './Badge';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
-import { fixStorageUrl } from '../config/api';
-import { getSportIcon } from '../utils/sportIcon';
-import type { Event } from '../types/api';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Ionicons} from '@expo/vector-icons';
+import {format} from 'date-fns';
+import {Card} from './Card';
+import {Badge} from './Badge';
+import {useTranslation} from 'react-i18next';
+import {useTheme} from '../hooks/useTheme';
+import {borderRadius, fontSize, spacing} from '../theme';
+import {fixStorageUrl} from '../config/api';
+import {getSportIcon} from '../utils/sportIcon';
+import type {Event} from '../types/api';
 
 interface EventCardProps {
   event: Event;
   onPress?: () => void;
 }
 
-export function EventCard({ event, onPress }: EventCardProps) {
+function EventCardBase({ event, onPress }: EventCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
@@ -192,3 +192,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const EventCard = React.memo(EventCardBase);

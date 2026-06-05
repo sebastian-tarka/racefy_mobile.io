@@ -1141,9 +1141,11 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     return eventsData.data;
   };
 
-  const getKeyExtractor = (item: Post | Activity | Event) => {
-    return `${activeTab}-${item.id}`;
-  };
+  // NOTE: these are intentionally plain functions, NOT useCallback. There is an
+  // early `return` above (the "sign in" guard ~line 447), so adding hooks here
+  // would violate the Rules of Hooks. Fix the early return first (move it below
+  // all hooks), then these can be memoized with useCallback.
+  const getKeyExtractor = (item: Post | Activity | Event) => `${activeTab}-${item.id}`;
 
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {

@@ -21,7 +21,7 @@ interface ActivityCardProps {
   showEngagement?: boolean;
 }
 
-export function ActivityCard({
+function ActivityCardBase({
   activity,
   onPress,
   showUser = false,
@@ -439,3 +439,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const ActivityCard = React.memo(ActivityCardBase);

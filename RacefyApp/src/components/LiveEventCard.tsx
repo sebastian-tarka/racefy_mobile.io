@@ -17,7 +17,7 @@ interface LiveEventCardProps {
   onBoostComplete?: () => void;
 }
 
-export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCardProps) {
+function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
@@ -256,3 +256,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 });
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const LiveEventCard = React.memo(LiveEventCardBase);
