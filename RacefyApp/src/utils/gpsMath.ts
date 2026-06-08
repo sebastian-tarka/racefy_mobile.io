@@ -17,6 +17,17 @@ export interface SmoothedPosition {
   timestamp: number;
 }
 
+export interface TrackPoint {
+  lat: number;
+  lng: number;
+  ele?: number;
+}
+
+export interface TrackDelta {
+  distance: number;
+  elevationGain: number;
+}
+
 const EARTH_RADIUS_M = 6371e3;
 
 /**
@@ -72,4 +83,42 @@ export function smoothPositionFromBuffer(
   }
 
   return { lat: avgLat, lng: avgLng, ele: avgEle, timestamp };
+}
+
+/**
+ * Accumulate distance + elevation gain over a sequence of points, starting from
+ * `startPoint` (e.g. the last known position). A segment's distance counts only
+ * if it exceeds `minDistanceThreshold` (filters GPS jitter); elevation gain
+ * counts only positive deltas above `minElevationChange`, and only when both
+ * endpoints have an elevation.
+ *
+ * Pure — used by useLiveActivity's foreground reconciliation of background points.
+ */
+export function accumulateTrackDelta(
+  points: TrackPoint[],
+  startPoint: TrackPoint | null,
+  minDistanceThreshold: number,
+  minElevationChange: number,
+): TrackDelta {
+  let distance = 0;
+  let elevationGain = 0;
+  let prev = startPoint;
+
+  for (const point of points) {
+    if (prev) {
+      const dist = haversineDistance(prev.lat, prev.lng, point.lat, point.lng);
+      if (dist > minDistanceThreshold) {
+        distance += dist;
+        if (point.ele && prev.ele) {
+          const elevDiff = point.ele - prev.ele;
+          if (elevDiff > minElevationChange) {
+            elevationGain += elevDiff;
+          }
+        }
+      }
+    }
+    prev = { lat: point.lat, lng: point.lng, ele: point.ele };
+  }
+
+  return { distance, elevationGain };
 }

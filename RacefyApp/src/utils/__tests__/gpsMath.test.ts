@@ -1,4 +1,4 @@
-import { haversineDistance, smoothPositionFromBuffer } from '../gpsMath';
+import { haversineDistance, smoothPositionFromBuffer, accumulateTrackDelta } from '../gpsMath';
 
 describe('haversineDistance', () => {
   it('is zero for identical points', () => {
@@ -91,5 +91,56 @@ describe('smoothPositionFromBuffer', () => {
     );
     // only [100, 200] have elevation → median = 150
     expect(result.ele).toBe(150);
+  });
+});
+
+describe('accumulateTrackDelta', () => {
+  it('returns zero for an empty list', () => {
+    expect(accumulateTrackDelta([], { lat: 52, lng: 21 }, 0, 0)).toEqual({
+      distance: 0,
+      elevationGain: 0,
+    });
+  });
+
+  it('accumulates distance across moving points from the start point', () => {
+    const start = { lat: 52, lng: 21 };
+    const points = [
+      { lat: 52.001, lng: 21 }, // ~111m from start
+      { lat: 52.002, lng: 21 }, // ~111m more
+    ];
+    const { distance } = accumulateTrackDelta(points, start, 1, 1);
+    expect(distance).toBeGreaterThan(220);
+    expect(distance).toBeLessThan(224);
+  });
+
+  it('ignores segments below the distance threshold (jitter)', () => {
+    const start = { lat: 52, lng: 21 };
+    // ~1m apart — below a 5m threshold
+    const points = [{ lat: 52.00001, lng: 21 }];
+    expect(accumulateTrackDelta(points, start, 5, 1).distance).toBe(0);
+  });
+
+  it('counts only positive elevation gain above the threshold', () => {
+    const start = { lat: 52, lng: 21, ele: 100 };
+    const points = [
+      { lat: 52.001, lng: 21, ele: 110 }, // +10 (counts)
+      { lat: 52.002, lng: 21, ele: 108 }, // -2 (ignored, descent)
+      { lat: 52.003, lng: 21, ele: 108.5 }, // +0.5 below threshold (ignored)
+      { lat: 52.004, lng: 21, ele: 120 }, // +11.5 (counts)
+    ];
+    const { elevationGain } = accumulateTrackDelta(points, start, 1, 1);
+    expect(elevationGain).toBeCloseTo(21.5, 5);
+  });
+
+  it('skips elevation when an endpoint lacks one', () => {
+    const start = { lat: 52, lng: 21 }; // no ele
+    const points = [{ lat: 52.001, lng: 21, ele: 200 }];
+    expect(accumulateTrackDelta(points, start, 1, 1).elevationGain).toBe(0);
+  });
+
+  it('accumulates nothing useful when there is no start point and one point', () => {
+    // With a null start, the first point becomes prev with no distance counted.
+    const { distance } = accumulateTrackDelta([{ lat: 52, lng: 21 }], null, 1, 1);
+    expect(distance).toBe(0);
   });
 });

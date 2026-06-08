@@ -37,7 +37,11 @@ import {
   type PaceSegment,
   smoothPace,
 } from '../utils/paceCalculator';
-import { haversineDistance, smoothPositionFromBuffer } from '../utils/gpsMath';
+import {
+  accumulateTrackDelta,
+  haversineDistance,
+  smoothPositionFromBuffer,
+} from '../utils/gpsMath';
 import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
@@ -451,42 +455,23 @@ function useLiveActivityInternal() {
         // This shows distance/elevation updates instantly when returning to foreground
         // instead of waiting 30s for next sync interval
         const profile = currentGpsProfile.current;
-        let additionalDistance = 0;
-        let additionalElevation = 0;
 
         // Start from last known position (or first gap-filtered background point)
-        let prevPoint =
+        const startPoint =
           lastPosition.current ||
           (points.length > 0
-            ? {
-                lat: points[0].lat,
-                lng: points[0].lng,
-                ele: points[0].ele,
-              }
+            ? { lat: points[0].lat, lng: points[0].lng, ele: points[0].ele }
             : null);
 
-        // Iterate only gap-filtered points so no jump distances are counted
-        for (const point of points) {
-          if (prevPoint) {
-            // Calculate distance
-            const dist = calculateDistance(prevPoint.lat, prevPoint.lng, point.lat, point.lng);
-
-            // Only count if moved more than threshold
-            if (dist > profile.minDistanceThreshold) {
-              additionalDistance += dist;
-
-              // Calculate elevation gain
-              if (point.ele && prevPoint.ele) {
-                const elevDiff = point.ele - prevPoint.ele;
-                if (elevDiff > profile.minElevationChange) {
-                  additionalElevation += elevDiff;
-                }
-              }
-            }
-          }
-
-          prevPoint = { lat: point.lat, lng: point.lng, ele: point.ele };
-        }
+        // Iterate only gap-filtered points so no jump distances are counted.
+        // Pure accumulation extracted to utils/gpsMath.accumulateTrackDelta.
+        const { distance: additionalDistance, elevationGain: additionalElevation } =
+          accumulateTrackDelta(
+            points,
+            startPoint,
+            profile.minDistanceThreshold,
+            profile.minElevationChange,
+          );
 
         // Update local stats immediately
         if (additionalDistance > 0) {
