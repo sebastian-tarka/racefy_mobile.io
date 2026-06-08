@@ -1,68 +1,40 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { usePaginatedFetch } from './usePaginatedFetch';
 import type { MediaItem, Post, ReshareRequest } from '../types/api';
 
 export function useFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Refs break the dependency cycle — page/isLoading used only inside fetchFeed
-  const pageRef = useRef(1);
-  const isLoadingRef = useRef(false);
-
-  const fetchFeed = useCallback(async (reset = false) => {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-
-    if (reset) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
-
-    try {
-      const currentPage = reset ? 1 : pageRef.current;
-      const response = await api.getFeed(currentPage);
-      const postsData = response.data;
-      const meta = response.meta;
-
-      setPosts((prev) => {
-        if (reset) return postsData;
-        // Deduplicate by post ID when loading more
-        const existingIds = new Set(prev.map((p) => p.id));
-        const newPosts = postsData.filter((p) => !existingIds.has(p.id));
-        return [...prev, ...newPosts];
-      });
-      setHasMore(meta.current_page < meta.last_page);
-      pageRef.current = currentPage + 1;
-    } catch (err) {
-      logger.error('api', 'Failed to fetch posts', { error: err });
-      setError('Failed to load feed');
-    } finally {
-      isLoadingRef.current = false;
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []); // stable — no deps needed thanks to refs
-
-  const refresh = useCallback(() => fetchFeed(true), [fetchFeed]);
-  // isLoadingRef.current guards against concurrent calls inside fetchFeed
-  const loadMore = useCallback(() => hasMore && fetchFeed(false), [hasMore, fetchFeed]);
+  const {
+    data: posts,
+    isLoading,
+    isRefreshing,
+    hasMore,
+    error,
+    loadMore,
+    refresh,
+    setData: setPosts,
+  } = usePaginatedFetch<Post>((page) => api.getFeed(page), {
+    // FeedScreen drives the initial load itself, so the hook must not auto-fetch.
+    autoLoad: false,
+    dedupeBy: (p) => p.id,
+    errorMessage: 'Failed to load feed',
+  });
 
   /**
    * Pure local state update — applied after the InteractionButton has
    * already confirmed the like/unlike with the server.
    */
-  const applyLikeChange = useCallback((postId: number, isLiked: boolean, likesCount: number) => {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, is_liked: isLiked, likes_count: likesCount } : p)),
-    );
-  }, []);
+  const applyLikeChange = useCallback(
+    (postId: number, isLiked: boolean, likesCount: number) => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, is_liked: isLiked, likes_count: likesCount } : p,
+        ),
+      );
+    },
+    [setPosts],
+  );
 
   /**
    * Pure local state update — applied after the InteractionButton has
@@ -84,7 +56,7 @@ export function useFeed() {
         }),
       );
     },
-    [],
+    [setPosts],
   );
 
   const createPost = useCallback(
@@ -93,65 +65,66 @@ export function useFeed() {
       media?: MediaItem[],
       visibility: 'public' | 'followers' | 'private' = 'public',
     ) => {
-      try {
-        const newPost = await api.createPost({ content: content || ' ', visibility });
+      const newPost = await api.createPost({ content: content || ' ', visibility });
 
-        // Upload media items if provided
-        if (media && media.length > 0) {
-          const uploadedMedia = [];
-          for (const item of media) {
-            try {
-              const uploaded = await api.uploadPostMedia(newPost.id, item);
-              uploadedMedia.push(uploaded);
-            } catch (uploadError) {
-              logger.error('api', 'Failed to upload media item', { error: uploadError });
-              // Continue with other uploads
-            }
+      // Upload media items if provided
+      if (media && media.length > 0) {
+        const uploadedMedia = [];
+        for (const item of media) {
+          try {
+            const uploaded = await api.uploadPostMedia(newPost.id, item);
+            uploadedMedia.push(uploaded);
+          } catch (uploadError) {
+            logger.error('api', 'Failed to upload media item', { error: uploadError });
+            // Continue with other uploads
           }
-          newPost.media = uploadedMedia;
         }
-
-        setPosts((prev) => [newPost, ...prev]);
-        return newPost;
-      } catch (err) {
-        throw err;
+        newPost.media = uploadedMedia;
       }
+
+      setPosts((prev) => [newPost, ...prev]);
+      return newPost;
     },
-    [],
+    [setPosts],
   );
 
-  const deletePost = useCallback(async (postId: number) => {
-    try {
+  const deletePost = useCallback(
+    async (postId: number) => {
       await api.deletePost(postId);
       setPosts((prev) => prev.filter((p) => p.id !== postId));
-    } catch (err) {
-      throw err;
-    }
-  }, []);
+    },
+    [setPosts],
+  );
 
-  const resharePost = useCallback(async (originalPostId: number, data: ReshareRequest = {}) => {
-    const resharedPost = await api.resharePost(originalPostId, data);
-    setPosts((prev) => {
-      const updated = prev.map((p) =>
-        p.id === originalPostId
-          ? { ...p, reshares_count: (p.reshares_count || 0) + 1, is_reshared: true }
-          : p,
-      );
-      return [resharedPost, ...updated];
-    });
-  }, []);
+  const resharePost = useCallback(
+    async (originalPostId: number, data: ReshareRequest = {}) => {
+      const resharedPost = await api.resharePost(originalPostId, data);
+      setPosts((prev) => {
+        const updated = prev.map((p) =>
+          p.id === originalPostId
+            ? { ...p, reshares_count: (p.reshares_count || 0) + 1, is_reshared: true }
+            : p,
+        );
+        return [resharedPost, ...updated];
+      });
+    },
+    [setPosts],
+  );
 
-  const unresharePost = useCallback(async (originalPostId: number) => {
-    await api.unresharePost(originalPostId);
-    setPosts((prev) => {
-      const filtered = prev.filter((p) => !(p.shared_post?.id === originalPostId && p.is_owner));
-      return filtered.map((p) =>
-        p.id === originalPostId
-          ? { ...p, reshares_count: Math.max((p.reshares_count || 0) - 1, 0), is_reshared: false }
-          : p,
-      );
-    });
-  }, []);
+  const unresharePost = useCallback(
+    async (originalPostId: number) => {
+      await api.unresharePost(originalPostId);
+      setPosts((prev) => {
+        const filtered = prev.filter((p) => !(p.shared_post?.id === originalPostId && p.is_owner));
+        return filtered.map((p) =>
+          p.id === originalPostId
+            ? { ...p, reshares_count: Math.max((p.reshares_count || 0) - 1, 0), is_reshared: false }
+            : p,
+        );
+      });
+    },
+    [setPosts],
+  );
 
   return {
     posts,
