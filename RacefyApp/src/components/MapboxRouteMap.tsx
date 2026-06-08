@@ -12,6 +12,7 @@ import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
 import { useMapStyle } from '../hooks/useMapStyle';
+import { haversineDistance as geoDistance } from '../utils/gpsMath';
 import type { GeoJSONLineString } from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
@@ -49,19 +50,9 @@ interface MapboxRouteMapProps {
 /**
  * Calculate distance in meters between two [lng, lat] coordinates using Haversine formula
  */
+// Delegates to the shared utils/gpsMath helper. Coords are GeoJSON [lng, lat].
 function haversineDistance(coord1: number[], coord2: number[]): number {
-  const R = 6371000; // Earth radius in meters
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(coord2[1] - coord1[1]);
-  const dLon = toRad(coord2[0] - coord1[0]);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(coord1[1])) *
-      Math.cos(toRad(coord2[1])) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return geoDistance(coord1[1], coord1[0], coord2[1], coord2[0]);
 }
 
 /**
