@@ -2,7 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DependencyList, Dispatch, SetStateAction } from 'react';
 import { logger } from '../services/logger';
 import type { LogCategory } from '../services/logger';
-import type { PaginatedResponse } from '../types/api';
+
+/**
+ * Minimal page shape the hook needs. A Laravel `PaginatedResponse<T>` satisfies
+ * this structurally (extra meta fields are ignored), and non-standard envelopes
+ * can adapt to it in their `fetchPage` without inventing dummy meta fields.
+ */
+export interface PaginatedFetchPage<T> {
+  data: T[];
+  meta: { current_page: number; last_page: number };
+}
 
 /**
  * Generic paginated list hook. Consolidates the page/hasMore/isLoading/
@@ -55,7 +64,7 @@ interface UsePaginatedFetchResult<T> {
 }
 
 export function usePaginatedFetch<T>(
-  fetchPage: (page: number) => Promise<PaginatedResponse<T>>,
+  fetchPage: (page: number) => Promise<PaginatedFetchPage<T>>,
   options: UsePaginatedFetchOptions<T> = {},
 ): UsePaginatedFetchResult<T> {
   const { enabled = true, deps = [], dedupeBy, logCategory = 'api', errorMessage } = options;

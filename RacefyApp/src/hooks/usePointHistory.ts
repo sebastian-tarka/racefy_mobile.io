@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
-import type { PointTransaction, PointTransactionType, PointHistoryPagination } from '../types/api';
+import { usePaginatedFetch } from './usePaginatedFetch';
+import type { PointTransaction, PointTransactionType } from '../types/api';
 
 interface UsePointHistoryOptions {
   type?: PointTransactionType;
@@ -11,13 +10,12 @@ interface UsePointHistoryOptions {
 
 interface UsePointHistoryResult {
   transactions: PointTransaction[];
-  pagination: PointHistoryPagination | null;
   isLoading: boolean;
   isLoadingMore: boolean;
   error: string | null;
   hasMore: boolean;
   refetch: () => Promise<void>;
-  loadMore: () => Promise<void>;
+  loadMore: () => void;
 }
 
 export function usePointHistory({
@@ -25,72 +23,31 @@ export function usePointHistory({
   limit = 20,
   autoLoad = true,
 }: UsePointHistoryOptions = {}): UsePointHistoryResult {
-  const [transactions, setTransactions] = useState<PointTransaction[]>([]);
-  const [pagination, setPagination] = useState<PointHistoryPagination | null>(null);
-  const [isLoading, setIsLoading] = useState(autoLoad);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchHistory = useCallback(
-    async (page = 1, append = false) => {
-      if (page === 1) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingMore(true);
-      }
-      setError(null);
-
-      try {
-        const response = await api.getPointHistory(page, limit, type);
-
-        if (append) {
-          setTransactions((prev) => [...prev, ...response.transactions]);
-        } else {
-          setTransactions(response.transactions);
-        }
-        setPagination(response.pagination);
-      } catch (err: any) {
-        logger.error('api', 'Failed to fetch point history', { error: err, page, type });
-        setError(err.message || 'Failed to load point history');
-        if (!append) {
-          setTransactions([]);
-          setPagination(null);
-        }
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [type, limit],
-  );
-
-  useEffect(() => {
-    if (autoLoad) {
-      fetchHistory(1, false);
-    }
-  }, [fetchHistory, autoLoad]);
-
-  const refetch = useCallback(async () => {
-    await fetchHistory(1, false);
-  }, [fetchHistory]);
-
-  const loadMore = useCallback(async () => {
-    if (!pagination || pagination.current_page >= pagination.last_page || isLoadingMore) {
-      return;
-    }
-    await fetchHistory(pagination.current_page + 1, true);
-  }, [pagination, isLoadingMore, fetchHistory]);
-
-  const hasMore = pagination ? pagination.current_page < pagination.last_page : false;
+  const { data, isLoading, isLoadingMore, error, hasMore, refresh, loadMore } =
+    usePaginatedFetch<PointTransaction>(
+      // Adapt the {transactions, pagination} envelope to the hook's minimal shape.
+      (page) =>
+        api.getPointHistory(page, limit, type).then((res) => ({
+          data: res.transactions,
+          meta: {
+            current_page: res.pagination.current_page,
+            last_page: res.pagination.last_page,
+          },
+        })),
+      {
+        enabled: autoLoad,
+        deps: [type, limit],
+        errorMessage: 'Failed to load point history',
+      },
+    );
 
   return {
-    transactions,
-    pagination,
+    transactions: data,
     isLoading,
     isLoadingMore,
     error,
     hasMore,
-    refetch,
+    refetch: refresh,
     loadMore,
   };
 }
