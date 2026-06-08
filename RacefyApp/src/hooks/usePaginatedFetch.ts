@@ -36,6 +36,12 @@ export interface PaginatedFetchPage<T> {
 interface UsePaginatedFetchOptions<T> {
   /** When false no request is made (list stays empty). Default true. */
   enabled?: boolean;
+  /**
+   * When false the hook does NOT fetch on mount or on dep changes — the consumer
+   * drives loading via refresh()/loadMore(). Default true. Use this for hooks
+   * whose host screen already triggers the initial load itself.
+   */
+  autoLoad?: boolean;
   /** Reset to page 1 and refetch whenever any of these change. */
   deps?: DependencyList;
   /** De-dupe appended pages by a stable key (guards against overlapping pages). */
@@ -67,12 +73,19 @@ export function usePaginatedFetch<T>(
   fetchPage: (page: number) => Promise<PaginatedFetchPage<T>>,
   options: UsePaginatedFetchOptions<T> = {},
 ): UsePaginatedFetchResult<T> {
-  const { enabled = true, deps = [], dedupeBy, logCategory = 'api', errorMessage } = options;
+  const {
+    enabled = true,
+    autoLoad = true,
+    deps = [],
+    dedupeBy,
+    logCategory = 'api',
+    errorMessage,
+  } = options;
 
   const [data, setData] = useState<T[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState<boolean>(enabled);
+  const [isLoading, setIsLoading] = useState<boolean>(enabled && autoLoad);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +188,8 @@ export function usePaginatedFetch<T>(
       reset();
       return;
     }
+    // Manual mode: the consumer triggers loading via refresh()/loadMore().
+    if (!autoLoad) return;
     pageRef.current = 1;
     hasMoreRef.current = true;
     fetchAt(1, 'replace');

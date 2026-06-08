@@ -90,4 +90,19 @@ describe('usePaginatedFetch', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(fetchPage).not.toHaveBeenCalled();
   });
+
+  it('does not auto-load when autoLoad is false; refresh triggers it', async () => {
+    const fetchPage = jest.fn(async () => page(['a'], 1, 1));
+    const { result } = renderHook(() => usePaginatedFetch(fetchPage, { autoLoad: false }));
+
+    // No fetch on mount, and isLoading starts false.
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(fetchPage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(result.current.data).toEqual(['a']);
+  });
 });
