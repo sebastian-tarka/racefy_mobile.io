@@ -37,6 +37,7 @@ import {
   type PaceSegment,
   smoothPace,
 } from '../utils/paceCalculator';
+import { haversineDistance, smoothPositionFromBuffer } from '../utils/gpsMath';
 import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
@@ -198,56 +199,12 @@ function useLiveActivityInternal() {
       gpsBuffer.current.shift();
     }
 
-    const buffer = gpsBuffer.current;
-
-    // Weighted average: newer points have more influence (linear weights: 1, 2, 3...)
-    let totalWeight = 0;
-    let weightedLat = 0;
-    let weightedLng = 0;
-
-    buffer.forEach((p, i) => {
-      const weight = i + 1; // Linear weight: older=1, newest=bufferSize
-      weightedLat += p.lat * weight;
-      weightedLng += p.lng * weight;
-      totalWeight += weight;
-    });
-
-    const avgLat = weightedLat / totalWeight;
-    const avgLng = weightedLng / totalWeight;
-
-    // For elevation, keep median to reduce outlier impact (more robust for altitude)
-    const elevations = buffer.filter((p) => p.ele !== undefined).map((p) => p.ele!);
-    let avgEle: number | undefined;
-    if (elevations.length > 0) {
-      elevations.sort((a, b) => a - b);
-      const mid = Math.floor(elevations.length / 2);
-      avgEle =
-        elevations.length % 2 === 0 ? (elevations[mid - 1] + elevations[mid]) / 2 : elevations[mid];
-    }
-
-    return {
-      lat: avgLat,
-      lng: avgLng,
-      ele: avgEle,
-      timestamp: newPoint.timestamp,
-    };
+    // Pure smoothing math extracted to utils/gpsMath (buffer push/shift stays here).
+    return smoothPositionFromBuffer(gpsBuffer.current, newPoint.timestamp);
   };
 
-  // Haversine formula for distance calculation (fallback when offline)
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  };
+  // Haversine distance (metres) — pure helper extracted to utils/gpsMath.
+  const calculateDistance = haversineDistance;
 
   // Update current pace based on recent GPS segments
   const updateCurrentPace = () => {
