@@ -1,59 +1,33 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
+import { usePaginatedFetch } from './usePaginatedFetch';
 import type { DraftPost, Post } from '../types/api';
 
 export function useDrafts() {
-  const [drafts, setDrafts] = useState<DraftPost[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: drafts,
+    isLoading,
+    isRefreshing,
+    hasMore,
+    error,
+    loadMore,
+    refresh,
+    setData: setDrafts,
+  } = usePaginatedFetch<DraftPost>((page) => api.getDrafts({ page, per_page: 15 }), {
+    // DraftsTab drives the initial load via fetchDrafts(true).
+    autoLoad: false,
+    dedupeBy: (d) => d.id,
+    errorMessage: 'Failed to load drafts',
+  });
 
+  // Back-compat shim: DraftsTab calls fetchDrafts(true) to (re)load the list.
   const fetchDrafts = useCallback(
-    async (reset = false) => {
-      if (isLoading) return;
-
-      if (reset) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      try {
-        const currentPage = reset ? 1 : page;
-        const response = await api.getDrafts({
-          page: currentPage,
-          per_page: 15,
-        });
-
-        setDrafts((prev) => {
-          if (reset) return response.data;
-          // Deduplicate by draft ID when loading more
-          const existingIds = new Set(prev.map((d) => d.id));
-          const newDrafts = response.data.filter((d) => !existingIds.has(d.id));
-          return [...prev, ...newDrafts];
-        });
-        setHasMore(response.meta.current_page < response.meta.last_page);
-        setPage(currentPage + 1);
-      } catch (err) {
-        setError('Failed to load drafts');
-        logger.error('general', 'Error loading drafts', { error: err });
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
+    (reset = false) => {
+      if (reset) return refresh();
+      loadMore();
+      return Promise.resolve();
     },
-    [page, isLoading],
-  );
-
-  const refresh = useCallback(() => fetchDrafts(true), [fetchDrafts]);
-
-  const loadMore = useCallback(
-    () => hasMore && !isLoading && fetchDrafts(false),
-    [hasMore, isLoading, fetchDrafts],
+    [refresh, loadMore],
   );
 
   const publishDraft = useCallback(
@@ -75,7 +49,7 @@ export function useDrafts() {
         throw err;
       }
     },
-    [drafts],
+    [drafts, setDrafts],
   );
 
   const deleteDraft = useCallback(
@@ -96,7 +70,7 @@ export function useDrafts() {
         throw err;
       }
     },
-    [drafts],
+    [drafts, setDrafts],
   );
 
   return {
