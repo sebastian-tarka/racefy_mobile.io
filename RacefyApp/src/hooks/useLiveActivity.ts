@@ -43,6 +43,12 @@ import {
   smoothPositionFromBuffer,
 } from '../utils/gpsMath';
 import {
+  computeEffectiveMinDistance,
+  computeImpliedSpeed,
+  isGapPoint,
+  isStationary,
+} from '../services/gpsTracking';
+import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
   GPS_GOOD_THRESHOLD_MS,
@@ -599,14 +605,15 @@ function useLiveActivityInternal() {
           return;
         }
 
-        // Stationary detection: if GPS reports very low speed, use stricter distance threshold
-        const gpsSpeed = location.coords.speed;
-        const stationaryThreshold = gpsProfile.stationarySpeedThreshold ?? 0.5;
-        const isLikelyStationary =
-          gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationaryThreshold;
-        const effectiveMinDistance = isLikelyStationary
-          ? Math.max(gpsProfile.minDistanceThreshold, 8) // At least 8m when stationary
-          : gpsProfile.minDistanceThreshold;
+        // Stationary detection: stricter distance threshold while stopped (filters drift).
+        const isLikelyStationary = isStationary(
+          location.coords.speed,
+          gpsProfile.stationarySpeedThreshold ?? 0.5,
+        );
+        const effectiveMinDistance = computeEffectiveMinDistance(
+          isLikelyStationary,
+          gpsProfile.minDistanceThreshold,
+        );
 
         const point: GpsPoint = {
           lat: location.coords.latitude,
@@ -644,7 +651,7 @@ function useLiveActivityInternal() {
             : 3; // fallback to 3 seconds if no timestamp
 
           // Calculate implied speed to filter GPS glitches
-          const impliedSpeed = timeSinceLastPoint > 0 ? dist / timeSinceLastPoint : 999;
+          const impliedSpeed = computeImpliedSpeed(dist, timeSinceLastPoint);
 
           if (dist > effectiveMinDistance && impliedSpeed < gpsProfile.maxRealisticSpeed) {
             // Only count if moved more than threshold AND speed is realistic
@@ -653,11 +660,13 @@ function useLiveActivityInternal() {
             // threshold the GPS route has a discontinuity (app was in background,
             // GPS signal was lost, etc.).  Discard this first "jump" point and
             // reset the gap clock so the very next point is accepted normally.
-            const isGapPoint =
-              lastBufferedPointTime.current !== null &&
-              location.timestamp - lastBufferedPointTime.current > GPS_GAP_THRESHOLD_MS;
+            const isGapPointDetected = isGapPoint(
+              lastBufferedPointTime.current,
+              location.timestamp,
+              GPS_GAP_THRESHOLD_MS,
+            );
 
-            if (isGapPoint) {
+            if (isGapPointDetected) {
               logger.gps('GPS point discarded: route segment break (large time gap)', {
                 gapSeconds: ((location.timestamp - lastBufferedPointTime.current!) / 1000).toFixed(
                   0,
