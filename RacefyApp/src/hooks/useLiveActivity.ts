@@ -31,23 +31,9 @@ import { useSportTypes } from './useSportTypes';
 import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
 import { captureActivityLocation } from '../utils/locationCapture';
-import {
-  addPaceSegment,
-  calculateCurrentPace,
-  type PaceSegment,
-  smoothPace,
-} from '../utils/paceCalculator';
-import {
-  accumulateTrackDelta,
-  haversineDistance,
-  smoothPositionFromBuffer,
-} from '../utils/gpsMath';
-import {
-  computeEffectiveMinDistance,
-  computeImpliedSpeed,
-  isGapPoint,
-  isStationary,
-} from '../services/gpsTracking';
+import { PaceTracker } from '../utils/paceCalculator';
+import { accumulateTrackDelta, haversineDistance } from '../utils/gpsMath';
+import { classifyGpsPoint, GpsSmoothingBuffer } from '../services/gpsTracking';
 import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
@@ -159,10 +145,8 @@ function useLiveActivityInternal() {
   // Location captured at activity start (for sending with finish request)
   const activityLocationRef = useRef<ActivityLocation | null>(null);
 
-  // GPS smoothing buffer - stores last N positions for averaging
-  const gpsBuffer = useRef<Array<{ lat: number; lng: number; ele?: number; timestamp: number }>>(
-    [],
-  );
+  // GPS smoothing buffer — stateful class extracted to services/gpsTracking.
+  const smoothingBuffer = useRef(new GpsSmoothingBuffer()).current;
 
   // Current GPS profile based on activity type
   const currentGpsProfile = useRef<GpsProfile>(DEFAULT_GPS_PROFILE);
@@ -192,9 +176,8 @@ function useLiveActivityInternal() {
   const syncRetryCount = useRef<number>(0);
   const lastSyncAttempt = useRef<number>(0);
 
-  // Pace calculation - stores recent distance snapshots for current pace
-  const paceSegments = useRef<PaceSegment[]>([]);
-  const smoothedPaceRef = useRef<number | null>(null);
+  // Pace calculation — stateful segment buffer + smoothing extracted to utils/paceCalculator.
+  const paceTracker = useRef(new PaceTracker()).current;
 
   // Calculate smoothed position from GPS buffer (with recency weighting)
   const getSmoothedPosition = (newPoint: {
@@ -202,41 +185,10 @@ function useLiveActivityInternal() {
     lng: number;
     ele?: number;
     timestamp: number;
-  }) => {
-    const bufferSize = currentGpsProfile.current.smoothingBufferSize;
-    gpsBuffer.current.push(newPoint);
-    if (gpsBuffer.current.length > bufferSize) {
-      gpsBuffer.current.shift();
-    }
-
-    // Pure smoothing math extracted to utils/gpsMath (buffer push/shift stays here).
-    return smoothPositionFromBuffer(gpsBuffer.current, newPoint.timestamp);
-  };
+  }) => smoothingBuffer.add(newPoint, currentGpsProfile.current.smoothingBufferSize);
 
   // Haversine distance (metres) — pure helper extracted to utils/gpsMath.
   const calculateDistance = haversineDistance;
-
-  // Update current pace based on recent GPS segments
-  const updateCurrentPace = () => {
-    const profile = currentGpsProfile.current;
-
-    // Calculate raw current pace from segments
-    const rawPace = calculateCurrentPace(
-      paceSegments.current,
-      profile.paceWindowSeconds,
-      profile.minSegmentDistance,
-    );
-
-    if (rawPace !== null) {
-      // Apply smoothing for stable display
-      const smoothed = smoothPace(rawPace, smoothedPaceRef.current, profile.paceSmoothingFactor);
-      smoothedPaceRef.current = smoothed;
-      localStatsRef.current.currentPace = smoothed;
-    } else {
-      // Not enough data yet - keep previous value or null
-      localStatsRef.current.currentPace = smoothedPaceRef.current;
-    }
-  };
 
   // Check for existing active activity on mount (only for authenticated users)
   useEffect(() => {
@@ -605,16 +557,6 @@ function useLiveActivityInternal() {
           return;
         }
 
-        // Stationary detection: stricter distance threshold while stopped (filters drift).
-        const isLikelyStationary = isStationary(
-          location.coords.speed,
-          gpsProfile.stationarySpeedThreshold ?? 0.5,
-        );
-        const effectiveMinDistance = computeEffectiveMinDistance(
-          isLikelyStationary,
-          gpsProfile.minDistanceThreshold,
-        );
-
         const point: GpsPoint = {
           lat: location.coords.latitude,
           lng: location.coords.longitude,
@@ -637,95 +579,67 @@ function useLiveActivityInternal() {
 
         // Calculate local distance for immediate UI feedback
         if (lastPosition.current) {
-          // Use smoothed position for distance calculation
-          const dist = calculateDistance(
-            lastPosition.current.lat,
-            lastPosition.current.lng,
-            smoothedPoint.lat,
-            smoothedPoint.lng,
-          );
+          // Classify the point against the last baseline — the pure filter/gap/accept
+          // decision (incl. stationary threshold + glitch rejection) lives in
+          // services/gpsTracking; the hook just applies the returned deltas + effects.
+          const decision = classifyGpsPoint({
+            baseline: lastPosition.current,
+            smoothedPoint,
+            currentTimestamp: location.timestamp,
+            lastBufferedPointTime: lastBufferedPointTime.current,
+            rawSpeed: location.coords.speed,
+            profile: gpsProfile,
+            gapThresholdMs: GPS_GAP_THRESHOLD_MS,
+          });
 
-          // Calculate actual time difference between GPS readings
-          const timeSinceLastPoint = lastPosition.current.timestamp
-            ? (location.timestamp - lastPosition.current.timestamp) / 1000
-            : 3; // fallback to 3 seconds if no timestamp
+          if (decision.outcome === 'accepted') {
+            // Only validated points (moved enough, realistic speed, no gap) count.
+            localStatsRef.current.distance += decision.distanceAdded;
+            localStatsRef.current.elevation_gain += decision.elevationAdded;
 
-          // Calculate implied speed to filter GPS glitches
-          const impliedSpeed = computeImpliedSpeed(dist, timeSinceLastPoint);
-
-          if (dist > effectiveMinDistance && impliedSpeed < gpsProfile.maxRealisticSpeed) {
-            // Only count if moved more than threshold AND speed is realistic
-
-            // Gap detection: if the gap since the last buffered point exceeds the
-            // threshold the GPS route has a discontinuity (app was in background,
-            // GPS signal was lost, etc.).  Discard this first "jump" point and
-            // reset the gap clock so the very next point is accepted normally.
-            const isGapPointDetected = isGapPoint(
-              lastBufferedPointTime.current,
-              location.timestamp,
-              GPS_GAP_THRESHOLD_MS,
+            // Track pace segment and refresh the smoothed current pace.
+            localStatsRef.current.currentPace = paceTracker.record(
+              {
+                timestamp: location.timestamp,
+                distance: localStatsRef.current.distance,
+              },
+              gpsProfile,
+              MAX_PACE_SEGMENTS,
             );
 
-            if (isGapPointDetected) {
-              logger.gps('GPS point discarded: route segment break (large time gap)', {
-                gapSeconds: ((location.timestamp - lastBufferedPointTime.current!) / 1000).toFixed(
-                  0,
-                ),
-                thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
-                lat: point.lat,
-                lng: point.lng,
-              });
-              // Advance the clock so the next point is accepted
-              lastBufferedPointTime.current = location.timestamp;
-            } else {
-              localStatsRef.current.distance += dist;
+            // Store original (non-smoothed) validated point for server sync
+            // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
+            pointsBuffer.current.push(point);
+            allRoutePoints.current.push(point);
+            pointsVersionRef.current++;
+            lastBufferedPointTime.current = location.timestamp;
 
-              // Calculate elevation gain with noise filter
-              if (smoothedPoint.ele && lastPosition.current.ele) {
-                const elevDiff = smoothedPoint.ele - lastPosition.current.ele;
-                // Only count significant elevation changes to filter GPS altitude noise
-                if (elevDiff > gpsProfile.minElevationChange) {
-                  localStatsRef.current.elevation_gain += elevDiff;
-                }
-              }
-
-              // Track pace segment for current pace calculation
-              paceSegments.current = addPaceSegment(
-                paceSegments.current,
-                {
-                  timestamp: location.timestamp,
-                  distance: localStatsRef.current.distance,
-                },
-                MAX_PACE_SEGMENTS,
-              );
-
-              // Update current pace based on recent segments
-              updateCurrentPace();
-
-              // Store original (non-smoothed) validated point for server sync
-              // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
-              pointsBuffer.current.push(point);
-              allRoutePoints.current.push(point);
-              pointsVersionRef.current++;
-              lastBufferedPointTime.current = location.timestamp;
-
-              setState((prev) => ({
-                ...prev,
-                currentStats: { ...localStatsRef.current },
-              }));
-            }
-          } else if (dist > effectiveMinDistance && impliedSpeed >= gpsProfile.maxRealisticSpeed) {
+            setState((prev) => ({
+              ...prev,
+              currentStats: { ...localStatsRef.current },
+            }));
+          } else if (decision.outcome === 'gap') {
+            // Route discontinuity (app was backgrounded, GPS signal lost). Discard
+            // this first "jump" point and advance the clock so the next is accepted.
+            logger.gps('GPS point discarded: route segment break (large time gap)', {
+              gapSeconds: (decision.gapMs / 1000).toFixed(0),
+              thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+              lat: point.lat,
+              lng: point.lng,
+            });
+            lastBufferedPointTime.current = location.timestamp;
+          } else if (decision.outcome === 'filtered-speed') {
             logger.gps('GPS point filtered: unrealistic speed - NOT synced to server', {
-              distance: dist.toFixed(1),
-              timeDelta: timeSinceLastPoint.toFixed(1),
-              speedKmh: (impliedSpeed * 3.6).toFixed(1),
+              distance: decision.distance.toFixed(1),
+              timeDelta: decision.timeSinceLastPoint.toFixed(1),
+              speedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
               maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
             });
-          } else if (dist <= effectiveMinDistance) {
+          } else {
             logger.debug('gps', 'GPS point filtered: small movement - NOT synced to server', {
-              distance: dist.toFixed(1),
-              threshold: effectiveMinDistance,
-              isStationary: isLikelyStationary,
+              distance: decision.distance.toFixed(1),
+              threshold: decision.effectiveMinDistance,
+              isStationary: decision.isStationary,
             });
           }
         }
@@ -854,7 +768,7 @@ function useLiveActivityInternal() {
       }
 
       // 5. Clear GPS smoothing buffer and skip first point to avoid drift
-      gpsBuffer.current = [];
+      smoothingBuffer.clear();
       skipNextGpsPoint.current = true;
 
       // 6. NOW start foreground tracking
@@ -1186,7 +1100,7 @@ function useLiveActivityInternal() {
     // (after successful finish/discard). This prevents data loss if finish API fails.
 
     // Clear GPS smoothing buffer
-    gpsBuffer.current = [];
+    smoothingBuffer.clear();
 
     // Reset app state tracking
     skipNextGpsPoint.current = false;
@@ -1431,8 +1345,7 @@ function useLiveActivityInternal() {
         pointsVersionRef.current++;
         pausedDuration.current = 0;
         trackingStartTime.current = null;
-        paceSegments.current = [];
-        smoothedPaceRef.current = null;
+        paceTracker.reset();
 
         setState((prev) => ({
           ...prev,
@@ -1566,7 +1479,7 @@ function useLiveActivityInternal() {
 
       // Clear GPS smoothing buffer and skip first point after resume
       // to avoid false distance from pre-pause position
-      gpsBuffer.current = [];
+      smoothingBuffer.clear();
       skipNextGpsPoint.current = true;
 
       // Restart GPS tracking with sport-specific profile
@@ -1699,8 +1612,7 @@ function useLiveActivityInternal() {
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,
@@ -1819,8 +1731,7 @@ function useLiveActivityInternal() {
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,
@@ -2010,8 +1921,7 @@ function useLiveActivityInternal() {
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         activityLocationRef.current = null;
-        paceSegments.current = [];
-        smoothedPaceRef.current = null;
+        paceTracker.reset();
 
         setState({
           activity: null,
@@ -2103,8 +2013,7 @@ function useLiveActivityInternal() {
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,

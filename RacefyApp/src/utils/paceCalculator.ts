@@ -208,6 +208,61 @@ export function addPaceSegment(
   return updated;
 }
 
+/** Profile knobs that drive smoothed current-pace calculation. */
+export interface PaceTrackerProfile {
+  paceWindowSeconds: number;
+  minSegmentDistance: number;
+  paceSmoothingFactor: number;
+}
+
+/**
+ * Stateful current-pace tracker: holds the recent (timestamp, cumulative-distance)
+ * segments plus the smoothed pace carried between updates. Extracted from
+ * useLiveActivity so the pace concern is a single plain object (no React/expo).
+ */
+export class PaceTracker {
+  private segments: PaceSegment[] = [];
+  private smoothedPace: number | null = null;
+
+  /**
+   * Record a new (timestamp, cumulative distance) sample and return the smoothed
+   * current pace. When there is not yet enough data the previous smoothed value is
+   * kept (matching the legacy behaviour of holding the last pace rather than nulling).
+   */
+  record(
+    sample: PaceSegment,
+    profile: PaceTrackerProfile,
+    maxSegments: number = 30,
+  ): number | null {
+    this.segments = addPaceSegment(this.segments, sample, maxSegments);
+    const rawPace = calculateCurrentPace(
+      this.segments,
+      profile.paceWindowSeconds,
+      profile.minSegmentDistance,
+    );
+    if (rawPace !== null) {
+      this.smoothedPace = smoothPace(rawPace, this.smoothedPace, profile.paceSmoothingFactor);
+    }
+    return this.smoothedPace;
+  }
+
+  /** The current smoothed pace (null until enough data has accumulated). */
+  get currentPace(): number | null {
+    return this.smoothedPace;
+  }
+
+  /** Number of buffered segments (for diagnostics/tests). */
+  get size(): number {
+    return this.segments.length;
+  }
+
+  /** Reset on finish/discard/pause so the next session starts clean. */
+  reset(): void {
+    this.segments = [];
+    this.smoothedPace = null;
+  }
+}
+
 /**
  * Trim segments to only include those within a time window.
  *
