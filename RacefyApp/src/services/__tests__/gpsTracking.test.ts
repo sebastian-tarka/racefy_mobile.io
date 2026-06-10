@@ -5,6 +5,7 @@ import {
   isGapPoint,
   GpsSmoothingBuffer,
   classifyGpsPoint,
+  GpsTracker,
 } from '../gpsTracking';
 
 describe('isStationary', () => {
@@ -184,5 +185,80 @@ describe('classifyGpsPoint', () => {
     });
     expect(d.outcome).toBe('accepted');
     expect(d.elevationAdded).toBe(0);
+  });
+});
+
+describe('GpsTracker', () => {
+  const DEG_PER_M = 1 / 111_320;
+  // bufferSize 1 → the smoothed point equals the raw point, so distances are predictable.
+  const profile = {
+    smoothingBufferSize: 1,
+    minDistanceThreshold: 4,
+    maxRealisticSpeed: 50,
+    minElevationChange: 1,
+    stationarySpeedThreshold: 0.5,
+  };
+  const feed = (t: GpsTracker, raw: { lat: number; lng: number; ele?: number; timestamp: number }, rawSpeed = 3) =>
+    t.addPoint({ raw, profile, gapThresholdMs: 10_000, rawSpeed });
+
+  it('the first point sets the baseline with no decision', () => {
+    const t = new GpsTracker();
+    const r = feed(t, { lat: 52, lng: 21, ele: 100, timestamp: 0 });
+    expect(r.decision).toBeNull();
+    expect(t.lastPosition).toEqual({ lat: 52, lng: 21, ele: 100, timestamp: 0 });
+    expect(t.lastBufferedTime).toBeNull(); // gap clock only advances once classifying begins
+  });
+
+  it('accepts a realistic second point and advances baseline + gap clock', () => {
+    const t = new GpsTracker();
+    feed(t, { lat: 52, lng: 21, ele: 100, timestamp: 0 });
+    const r = feed(t, { lat: 52 + 10 * DEG_PER_M, lng: 21, ele: 105, timestamp: 3000 });
+    expect(r.decision?.outcome).toBe('accepted');
+    expect(r.decision?.distanceAdded).toBeCloseTo(10, 0);
+    expect(r.decision?.elevationAdded).toBeCloseTo(5, 5);
+    expect(t.lastBufferedTime).toBe(3000); // advanced on accept
+    expect(t.lastPosition?.timestamp).toBe(3000);
+  });
+
+  it('advances the baseline even when the point is distance-filtered (gap clock stays)', () => {
+    const t = new GpsTracker();
+    feed(t, { lat: 52, lng: 21, ele: 100, timestamp: 0 });
+    feed(t, { lat: 52 + 10 * DEG_PER_M, lng: 21, timestamp: 3000 }); // accepted → gap clock 3000
+    const r = feed(t, { lat: 52 + 11 * DEG_PER_M, lng: 21, timestamp: 6000 }); // ~1 m move < 4 m
+    expect(r.decision?.outcome).toBe('filtered-distance');
+    expect(t.lastBufferedTime).toBe(3000); // NOT advanced on a filtered point
+    expect(t.lastPosition?.timestamp).toBe(6000); // baseline still advances
+  });
+
+  it('flags a post-gap jump and advances the gap clock', () => {
+    const t = new GpsTracker();
+    feed(t, { lat: 52, lng: 21, timestamp: 0 });
+    feed(t, { lat: 52 + 10 * DEG_PER_M, lng: 21, timestamp: 3000 }); // gap clock → 3000
+    const r = feed(t, { lat: 52 + 20 * DEG_PER_M, lng: 21, timestamp: 20_000 }); // 17 s > 10 s
+    expect(r.decision?.outcome).toBe('gap');
+    expect(r.decision?.distanceAdded).toBe(0);
+    expect(t.lastBufferedTime).toBe(20_000); // advanced on gap
+  });
+
+  it('exposes currentPosition and supports manual baseline/gap-clock seeding', () => {
+    const t = new GpsTracker();
+    expect(t.currentPosition).toBeNull();
+    t.lastPosition = { lat: 10, lng: 20, timestamp: 500 };
+    t.lastBufferedTime = 500;
+    expect(t.currentPosition).toEqual({ lat: 10, lng: 20 });
+    t.lastPosition = null;
+    expect(t.currentPosition).toBeNull();
+    expect(t.lastBufferedTime).toBe(500);
+  });
+
+  it('clearBuffer() drops the smoothing window without touching the baseline', () => {
+    const t = new GpsTracker();
+    feed(t, { lat: 52, lng: 21, timestamp: 0 });
+    const baseline = t.lastPosition;
+    t.clearBuffer();
+    expect(t.lastPosition).toEqual(baseline); // baseline untouched
+    // after clearBuffer the next point is the only one in the window → smoothed == raw
+    const s = t.smooth({ lat: 60, lng: 30, timestamp: 9 }, 1);
+    expect(s).toEqual({ lat: 60, lng: 30, ele: undefined, timestamp: 9 });
   });
 });

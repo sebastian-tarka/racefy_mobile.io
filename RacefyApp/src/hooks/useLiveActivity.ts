@@ -34,7 +34,7 @@ import { captureActivityLocation } from '../utils/locationCapture';
 import { PaceTracker } from '../utils/paceCalculator';
 import { accumulateRecoveredTrack, accumulateTrackDelta } from '../utils/gpsMath';
 import { computeDurationTick } from '../utils/durationStats';
-import { classifyGpsPoint, GpsSmoothingBuffer } from '../services/gpsTracking';
+import { GpsTracker } from '../services/gpsTracking';
 import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
@@ -126,12 +126,6 @@ function useLiveActivityInternal() {
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
   const backgroundSyncInterval = useRef<NodeJS.Timeout | null>(null);
   const localStatsRef = useRef<LiveActivityStats>({ ...initialStats });
-  const lastPosition = useRef<{
-    lat: number;
-    lng: number;
-    ele?: number;
-    timestamp?: number;
-  } | null>(null);
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
   const currentActivityId = useRef<number | null>(null);
@@ -146,8 +140,9 @@ function useLiveActivityInternal() {
   // Location captured at activity start (for sending with finish request)
   const activityLocationRef = useRef<ActivityLocation | null>(null);
 
-  // GPS smoothing buffer — stateful class extracted to services/gpsTracking.
-  const smoothingBuffer = useRef(new GpsSmoothingBuffer()).current;
+  // GPS positioning tracker — owns the smoothing buffer + last-position baseline +
+  // gap clock (stateful class extracted to services/gpsTracking).
+  const gpsTracker = useRef(new GpsTracker()).current;
 
   // Current GPS profile based on activity type
   const currentGpsProfile = useRef<GpsProfile>(DEFAULT_GPS_PROFILE);
@@ -156,11 +151,6 @@ function useLiveActivityInternal() {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const skipNextGpsPoint = useRef<boolean>(false);
   const appStateSubscription = useRef<any>(null);
-
-  // Timestamp (ms) of the last GPS point actually added to pointsBuffer.
-  // Used for gap detection: if the gap since this point exceeds GPS_GAP_THRESHOLD_MS
-  // the next arriving point is treated as a route-segment break and discarded.
-  const lastBufferedPointTime = useRef<number | null>(null);
 
   // Network status tracking
   const networkSubscription = useRef<any>(null);
@@ -186,8 +176,7 @@ function useLiveActivityInternal() {
     lng: number;
     ele?: number;
     timestamp: number;
-  }) => smoothingBuffer.add(newPoint, currentGpsProfile.current.smoothingBufferSize);
-
+  }) => gpsTracker.smooth(newPoint, currentGpsProfile.current.smoothingBufferSize);
 
   // Check for existing active activity on mount (only for authenticated users)
   useEffect(() => {
@@ -376,7 +365,7 @@ function useLiveActivityInternal() {
         // (it would create a visible jump on the route map).  The gap clock is reset so
         // the next point is accepted as the new segment start.
         const points: GpsPoint[] = [];
-        let prevBufTime = lastBufferedPointTime.current;
+        let prevBufTime = gpsTracker.lastBufferedTime;
 
         for (const p of unsyncedPoints) {
           const pointTime = new Date(p.time).getTime();
@@ -407,7 +396,7 @@ function useLiveActivityInternal() {
           // Update the gap-detection clock to the last accepted background point
           const lastPoint = points[points.length - 1];
           if (lastPoint.time) {
-            lastBufferedPointTime.current = new Date(lastPoint.time).getTime();
+            gpsTracker.lastBufferedTime = new Date(lastPoint.time).getTime();
           }
         }
 
@@ -418,7 +407,7 @@ function useLiveActivityInternal() {
 
         // Start from last known position (or first gap-filtered background point)
         const startPoint =
-          lastPosition.current ||
+          gpsTracker.lastPosition ||
           (points.length > 0
             ? { lat: points[0].lat, lng: points[0].lng, ele: points[0].ele }
             : null);
@@ -548,7 +537,7 @@ function useLiveActivityInternal() {
           });
 
           // Update lastPosition with smoothed values for consistent distance calculation
-          lastPosition.current = {
+          gpsTracker.lastPosition = {
             lat: smoothedBaseline.lat,
             lng: smoothedBaseline.lng,
             ele: smoothedBaseline.ele,
@@ -571,29 +560,23 @@ function useLiveActivityInternal() {
           accuracy: location.coords.accuracy ?? undefined,
         };
 
-        // Apply GPS smoothing to reduce jitter/drift
-        const smoothedPoint = getSmoothedPosition({
-          lat: point.lat,
-          lng: point.lng,
-          ele: point.ele,
-          timestamp: location.timestamp,
+        // Feed the raw reading through the positioning tracker: it smooths, classifies
+        // it against the baseline (filter/gap/accept), and advances the baseline + gap
+        // clock. We just apply the returned stats deltas + side effects. `decision` is
+        // null on the very first point (no baseline to measure against yet).
+        const { decision } = gpsTracker.addPoint({
+          raw: {
+            lat: point.lat,
+            lng: point.lng,
+            ele: point.ele,
+            timestamp: location.timestamp,
+          },
+          profile: gpsProfile,
+          gapThresholdMs: GPS_GAP_THRESHOLD_MS,
+          rawSpeed: location.coords.speed,
         });
 
-        // Calculate local distance for immediate UI feedback
-        if (lastPosition.current) {
-          // Classify the point against the last baseline — the pure filter/gap/accept
-          // decision (incl. stationary threshold + glitch rejection) lives in
-          // services/gpsTracking; the hook just applies the returned deltas + effects.
-          const decision = classifyGpsPoint({
-            baseline: lastPosition.current,
-            smoothedPoint,
-            currentTimestamp: location.timestamp,
-            lastBufferedPointTime: lastBufferedPointTime.current,
-            rawSpeed: location.coords.speed,
-            profile: gpsProfile,
-            gapThresholdMs: GPS_GAP_THRESHOLD_MS,
-          });
-
+        if (decision) {
           if (decision.outcome === 'accepted') {
             // Only validated points (moved enough, realistic speed, no gap) count.
             localStatsRef.current.distance += decision.distanceAdded;
@@ -614,22 +597,20 @@ function useLiveActivityInternal() {
             pointsBuffer.current.push(point);
             allRoutePoints.current.push(point);
             pointsVersionRef.current++;
-            lastBufferedPointTime.current = location.timestamp;
 
             setState((prev) => ({
               ...prev,
               currentStats: { ...localStatsRef.current },
             }));
           } else if (decision.outcome === 'gap') {
-            // Route discontinuity (app was backgrounded, GPS signal lost). Discard
-            // this first "jump" point and advance the clock so the next is accepted.
+            // Route discontinuity (app was backgrounded, GPS signal lost). The first
+            // "jump" point is discarded and the gap clock advanced inside addPoint.
             logger.gps('GPS point discarded: route segment break (large time gap)', {
               gapSeconds: (decision.gapMs / 1000).toFixed(0),
               thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
               lat: point.lat,
               lng: point.lng,
             });
-            lastBufferedPointTime.current = location.timestamp;
           } else if (decision.outcome === 'filtered-speed') {
             logger.gps('GPS point filtered: unrealistic speed - NOT synced to server', {
               distance: decision.distance.toFixed(1),
@@ -645,14 +626,6 @@ function useLiveActivityInternal() {
             });
           }
         }
-
-        // Update last position with smoothed values for next calculation
-        lastPosition.current = {
-          lat: smoothedPoint.lat,
-          lng: smoothedPoint.lng,
-          ele: smoothedPoint.ele,
-          timestamp: location.timestamp,
-        };
 
         // Update GPS signal time (we got a GPS reading, even if filtered)
         lastGpsTime.current = Date.now();
@@ -758,7 +731,7 @@ function useLiveActivityInternal() {
       // 4. Recover last position from background for distance continuity
       const lastBgPosition = await getLastBackgroundPosition();
       if (lastBgPosition) {
-        lastPosition.current = {
+        gpsTracker.lastPosition = {
           lat: lastBgPosition.lat,
           lng: lastBgPosition.lng,
           timestamp: lastBgPosition.timestamp,
@@ -770,7 +743,7 @@ function useLiveActivityInternal() {
       }
 
       // 5. Clear GPS smoothing buffer and skip first point to avoid drift
-      smoothingBuffer.clear();
+      gpsTracker.clearBuffer();
       skipNextGpsPoint.current = true;
 
       // 6. NOW start foreground tracking
@@ -886,7 +859,7 @@ function useLiveActivityInternal() {
           // Seed the gap clock + last position so the very next live GPS sample
           // doesn't add a jump from the recovered tail to the new position.
           if (recovered.lastPoint) {
-            lastPosition.current = {
+            gpsTracker.lastPosition = {
               lat: recovered.lastPoint.lat,
               lng: recovered.lastPoint.lng,
               ele: recovered.lastPoint.ele,
@@ -894,7 +867,7 @@ function useLiveActivityInternal() {
             };
           }
           if (recovered.lastTimestamp) {
-            lastBufferedPointTime.current = recovered.lastTimestamp;
+            gpsTracker.lastBufferedTime = recovered.lastTimestamp;
           }
 
           setState((prevState) => ({
@@ -1080,11 +1053,11 @@ function useLiveActivityInternal() {
     // (after successful finish/discard). This prevents data loss if finish API fails.
 
     // Clear GPS smoothing buffer
-    smoothingBuffer.clear();
+    gpsTracker.clearBuffer();
 
     // Reset app state tracking
     skipNextGpsPoint.current = false;
-    lastBufferedPointTime.current = null;
+    gpsTracker.lastBufferedTime = null;
 
     currentActivityId.current = null;
     stopDurationTimer();
@@ -1319,7 +1292,7 @@ function useLiveActivityInternal() {
 
         // Reset local stats and pace tracking
         localStatsRef.current = { ...initialStats };
-        lastPosition.current = null;
+        gpsTracker.lastPosition = null;
         pointsBuffer.current = [];
         allRoutePoints.current = [];
         pointsVersionRef.current++;
@@ -1459,7 +1432,7 @@ function useLiveActivityInternal() {
 
       // Clear GPS smoothing buffer and skip first point after resume
       // to avoid false distance from pre-pause position
-      smoothingBuffer.clear();
+      gpsTracker.clearBuffer();
       skipNextGpsPoint.current = true;
 
       // Restart GPS tracking with sport-specific profile
@@ -1488,8 +1461,9 @@ function useLiveActivityInternal() {
     try {
       const points = deduplicatePoints(pointsBuffer.current);
       const startedAt = state.activity.started_at;
-      const endedAt = lastPosition.current?.timestamp
-        ? new Date(lastPosition.current.timestamp).toISOString()
+      const lastTimestamp = gpsTracker.lastPosition?.timestamp;
+      const endedAt = lastTimestamp
+        ? new Date(lastTimestamp).toISOString()
         : new Date().toISOString();
 
       await enqueueUnsyncedActivity(
@@ -1550,13 +1524,14 @@ function useLiveActivityInternal() {
       const finalPoints = deduplicatePoints(pointsBuffer.current);
 
       // Use last GPS timestamp as ended_at (instead of current time)
-      const endedAt = lastPosition.current?.timestamp
-        ? new Date(lastPosition.current.timestamp).toISOString()
+      const lastTimestamp = gpsTracker.lastPosition?.timestamp;
+      const endedAt = lastTimestamp
+        ? new Date(lastTimestamp).toISOString()
         : new Date().toISOString();
 
       logger.activity('Using GPS timestamp for ended_at', {
         endedAt,
-        difference: Date.now() - (lastPosition.current?.timestamp || Date.now()),
+        difference: Date.now() - (lastTimestamp || Date.now()),
         finalPointsCount: finalPoints.length,
       });
 
@@ -1585,7 +1560,7 @@ function useLiveActivityInternal() {
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
+      gpsTracker.lastPosition = null;
       pointsBuffer.current = [];
       allRoutePoints.current = [];
       pointsVersionRef.current++;
@@ -1704,7 +1679,7 @@ function useLiveActivityInternal() {
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
+      gpsTracker.lastPosition = null;
       pointsBuffer.current = [];
       allRoutePoints.current = [];
       pointsVersionRef.current++;
@@ -1786,7 +1761,7 @@ function useLiveActivityInternal() {
         logger.activity('Finishing activity', { id: state.activity.id });
 
         // Check if GPS stopped a long time ago (> 2 minutes)
-        const lastGpsTimestamp = lastPosition.current?.timestamp;
+        const lastGpsTimestamp = gpsTracker.lastPosition?.timestamp;
         const now = Date.now();
 
         if (lastGpsTimestamp && now - lastGpsTimestamp > 120000) {
@@ -1894,7 +1869,7 @@ function useLiveActivityInternal() {
 
         // Reset state and pace tracking
         localStatsRef.current = { ...initialStats };
-        lastPosition.current = null;
+        gpsTracker.lastPosition = null;
         pointsBuffer.current = [];
         allRoutePoints.current = [];
         pointsVersionRef.current++;
@@ -1986,7 +1961,7 @@ function useLiveActivityInternal() {
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
+      gpsTracker.lastPosition = null;
       pointsBuffer.current = [];
       allRoutePoints.current = [];
       pointsVersionRef.current++;
@@ -2048,12 +2023,7 @@ function useLiveActivityInternal() {
     // (avoids O(n) array copy on every render from duration timer)
     livePoints: allRoutePoints.current,
     livePointsVersion: pointsVersionRef.current,
-    currentPosition: lastPosition.current
-      ? {
-          lat: lastPosition.current.lat,
-          lng: lastPosition.current.lng,
-        }
-      : null,
+    currentPosition: gpsTracker.currentPosition,
   };
 }
 

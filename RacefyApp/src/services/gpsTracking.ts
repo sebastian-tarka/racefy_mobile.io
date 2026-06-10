@@ -204,3 +204,108 @@ export function classifyGpsPoint(params: {
   }
   return { ...base, outcome: 'accepted', distanceAdded: distance, elevationAdded };
 }
+
+/** Profile knobs the per-point flow needs: smoothing window size + the classify fields. */
+export interface GpsTrackerProfile extends GpsClassifyProfile {
+  smoothingBufferSize: number;
+}
+
+/** Result of feeding one raw point through the tracker. */
+export interface LivePointResult {
+  /** The smoothed position over the current window (buffer always advances). */
+  smoothedPoint: SmoothedPosition;
+  /** The filter/gap/accept verdict, or null when there was no baseline yet (first point). */
+  decision: GpsPointDecision | null;
+}
+
+/**
+ * Stateful GPS positioning tracker: owns the three tightly-coupled pieces of
+ * per-activity positioning state — the smoothing buffer, the last (smoothed)
+ * baseline position, and the gap clock (timestamp of the last buffered point).
+ *
+ * Carved out of useLiveActivity so the per-point trajectory (smooth → classify →
+ * advance baseline / gap clock) is a plain object, testable by feeding point
+ * sequences. The hook keeps the running stats accumulator and side effects
+ * (setState/logging/server buffers); it applies the deltas this returns.
+ */
+export class GpsTracker {
+  private buffer = new GpsSmoothingBuffer();
+  private baseline: GpsBaseline | null = null;
+  private gapClock: number | null = null;
+
+  /**
+   * Feed one raw GPS reading. Always pushes it through the smoothing buffer; if a
+   * baseline exists, classifies the smoothed point against it (and advances the gap
+   * clock on accepted/gap, mirroring the live handler). The baseline is then advanced
+   * to the smoothed position unconditionally, ready for the next reading.
+   */
+  addPoint(params: {
+    raw: GpsBufferPoint;
+    profile: GpsTrackerProfile;
+    gapThresholdMs: number;
+    rawSpeed: number | null | undefined;
+  }): LivePointResult {
+    const { raw, profile, gapThresholdMs, rawSpeed } = params;
+
+    const smoothedPoint = this.buffer.add(raw, profile.smoothingBufferSize);
+
+    let decision: GpsPointDecision | null = null;
+    if (this.baseline) {
+      decision = classifyGpsPoint({
+        baseline: this.baseline,
+        smoothedPoint,
+        currentTimestamp: raw.timestamp,
+        lastBufferedPointTime: this.gapClock,
+        rawSpeed,
+        profile,
+        gapThresholdMs,
+      });
+      // The gap clock advances both when a point is counted and when a post-gap
+      // jump is discarded — but not on speed/distance filtering.
+      if (decision.outcome === 'accepted' || decision.outcome === 'gap') {
+        this.gapClock = raw.timestamp;
+      }
+    }
+
+    // Advance the baseline to the smoothed position for the next reading.
+    this.baseline = {
+      lat: smoothedPoint.lat,
+      lng: smoothedPoint.lng,
+      ele: smoothedPoint.ele,
+      timestamp: raw.timestamp,
+    };
+
+    return { smoothedPoint, decision };
+  }
+
+  /** Push a point through the smoothing buffer without classifying (skip-first-after-resume baseline). */
+  smooth(point: GpsBufferPoint, maxSize: number): SmoothedPosition {
+    return this.buffer.add(point, maxSize);
+  }
+
+  /** The last baseline position (null before the first point / after a reset). */
+  get lastPosition(): GpsBaseline | null {
+    return this.baseline;
+  }
+  set lastPosition(position: GpsBaseline | null) {
+    this.baseline = position;
+  }
+
+  /** The gap clock — timestamp (ms) of the last buffered point (null when unset). */
+  get lastBufferedTime(): number | null {
+    return this.gapClock;
+  }
+  set lastBufferedTime(timestamp: number | null) {
+    this.gapClock = timestamp;
+  }
+
+  /** {lat,lng} of the current baseline, for the hook's currentPosition return value. */
+  get currentPosition(): { lat: number; lng: number } | null {
+    return this.baseline ? { lat: this.baseline.lat, lng: this.baseline.lng } : null;
+  }
+
+  /** Clear only the smoothing buffer (e.g. on start/resume to drop pre-pause positions). */
+  clearBuffer(): void {
+    this.buffer.clear();
+  }
+}
