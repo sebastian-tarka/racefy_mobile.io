@@ -33,6 +33,7 @@ import { logger } from '../services/logger';
 import { captureActivityLocation } from '../utils/locationCapture';
 import { PaceTracker } from '../utils/paceCalculator';
 import { accumulateRecoveredTrack, accumulateTrackDelta } from '../utils/gpsMath';
+import { computeDurationTick } from '../utils/durationStats';
 import { classifyGpsPoint, GpsSmoothingBuffer } from '../services/gpsTracking';
 import {
   CALORIES_PER_SECOND,
@@ -316,21 +317,24 @@ function useLiveActivityInternal() {
 
     durationInterval.current = setInterval(() => {
       if (trackingStartTime.current) {
-        const elapsed = Math.floor((Date.now() - trackingStartTime.current) / 1000);
-        // Calculate calories based on duration
-        const calories = Math.floor(
-          baseCalories + (elapsed - (localStatsRef.current.duration || 0)) * CALORIES_PER_SECOND,
-        );
+        const { duration, calories } = computeDurationTick({
+          trackingStartTime: trackingStartTime.current,
+          now: Date.now(),
+          baseCalories,
+          previousDuration: localStatsRef.current.duration || 0,
+          previousCalories: localStatsRef.current.calories,
+          caloriesPerSecond: CALORIES_PER_SECOND,
+        });
 
-        localStatsRef.current.duration = elapsed;
-        localStatsRef.current.calories = Math.max(localStatsRef.current.calories, calories);
+        localStatsRef.current.duration = duration;
+        localStatsRef.current.calories = calories;
 
         setState((prev) => ({
           ...prev,
           currentStats: {
             ...prev.currentStats,
-            duration: elapsed,
-            calories: localStatsRef.current.calories,
+            duration,
+            calories,
           },
         }));
       }
