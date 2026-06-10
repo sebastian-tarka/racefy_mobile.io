@@ -1,4 +1,9 @@
-import { haversineDistance, smoothPositionFromBuffer, accumulateTrackDelta } from '../gpsMath';
+import {
+  haversineDistance,
+  smoothPositionFromBuffer,
+  accumulateTrackDelta,
+  accumulateRecoveredTrack,
+} from '../gpsMath';
 
 describe('haversineDistance', () => {
   it('is zero for identical points', () => {
@@ -142,5 +147,67 @@ describe('accumulateTrackDelta', () => {
     // With a null start, the first point becomes prev with no distance counted.
     const { distance } = accumulateTrackDelta([{ lat: 52, lng: 21 }], null, 1, 1);
     expect(distance).toBe(0);
+  });
+});
+
+describe('accumulateRecoveredTrack', () => {
+  const iso = (ms: number) => new Date(ms).toISOString();
+
+  it('returns zeros and a null tail for an empty list', () => {
+    expect(accumulateRecoveredTrack([], 1, 1, 5000)).toEqual({
+      distance: 0,
+      elevationGain: 0,
+      lastPoint: null,
+      lastTimestamp: null,
+      count: 0,
+    });
+  });
+
+  it('sorts points by time and accumulates distance within the gap window', () => {
+    const points = [
+      { lat: 52.002, lng: 21, time: iso(2000) },
+      { lat: 52.0, lng: 21, time: iso(0) },
+      { lat: 52.001, lng: 21, time: iso(1000) },
+    ];
+    const r = accumulateRecoveredTrack(points, 1, 1, 5000);
+    expect(r.distance).toBeGreaterThan(220);
+    expect(r.distance).toBeLessThan(224);
+    expect(r.count).toBe(3);
+    expect(r.lastTimestamp).toBe(2000);
+    expect(r.lastPoint).toEqual({ lat: 52.002, lng: 21, ele: undefined, timestamp: 2000 });
+  });
+
+  it('ignores a segment whose time gap exceeds the threshold', () => {
+    const points = [
+      { lat: 52.0, lng: 21, time: iso(0) },
+      { lat: 52.001, lng: 21, time: iso(10_000) }, // 10s gap > 5s threshold
+    ];
+    const r = accumulateRecoveredTrack(points, 1, 1, 5000);
+    expect(r.distance).toBe(0);
+    expect(r.lastTimestamp).toBe(10_000); // tail still tracked for re-seeding
+  });
+
+  it('ignores sub-threshold movement (jitter)', () => {
+    const points = [
+      { lat: 52.0, lng: 21, time: iso(0) },
+      { lat: 52.00001, lng: 21, time: iso(1000) }, // ~1m < 5m threshold
+    ];
+    expect(accumulateRecoveredTrack(points, 5, 1, 5000).distance).toBe(0);
+  });
+
+  it('counts elevation gain from a zero baseline (unlike accumulateTrackDelta)', () => {
+    const points = [
+      { lat: 52.0, lng: 21, ele: 0, time: iso(0) },
+      { lat: 52.001, lng: 21, ele: 5, time: iso(1000) }, // +5 from a 0 baseline
+    ];
+    expect(accumulateRecoveredTrack(points, 1, 1, 5000).elevationGain).toBeCloseTo(5, 5);
+  });
+
+  it('returns the trailing point with no distance for a single recovered point', () => {
+    const r = accumulateRecoveredTrack([{ lat: 52, lng: 21, time: iso(7000) }], 1, 1, 5000);
+    expect(r.distance).toBe(0);
+    expect(r.count).toBe(1);
+    expect(r.lastPoint).toEqual({ lat: 52, lng: 21, ele: undefined, timestamp: 7000 });
+    expect(r.lastTimestamp).toBe(7000);
   });
 });

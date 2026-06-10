@@ -28,6 +28,25 @@ export interface TrackDelta {
   elevationGain: number;
 }
 
+/** A persisted/recovered point that still carries its capture time (ISO string). */
+export interface RecoveredPoint {
+  lat: number;
+  lng: number;
+  ele?: number;
+  time?: string;
+}
+
+export interface RecoveredTrack {
+  distance: number;
+  elevationGain: number;
+  /** Trailing (most recent) point, to re-seed lastPosition; null when there are no points. */
+  lastPoint: { lat: number; lng: number; ele?: number; timestamp: number } | null;
+  /** Timestamp (ms) of the trailing point, to re-seed the gap clock; null when empty. */
+  lastTimestamp: number | null;
+  /** Number of points considered (for logging). */
+  count: number;
+}
+
 const EARTH_RADIUS_M = 6371e3;
 
 /**
@@ -121,4 +140,58 @@ export function accumulateTrackDelta(
   }
 
   return { distance, elevationGain };
+}
+
+/**
+ * Rebuild distance + elevation gain from a set of recovered points (e.g. after an
+ * app kill, or when server-derived stats came back as 0). The points are sorted by
+ * time, then accumulated mirroring live filtering: a segment counts only when the
+ * time gap to the previous point is within `gapThresholdMs` (so far-apart jumps
+ * across a discontinuity are ignored) AND its distance exceeds `minDistanceThreshold`.
+ * Elevation gain counts positive deltas above `minElevationChange` when both
+ * endpoints report an elevation (zero is a valid elevation here, unlike
+ * accumulateTrackDelta).
+ *
+ * Also returns the trailing point + its timestamp so the caller can re-seed
+ * lastPosition and the gap clock. Pure.
+ */
+export function accumulateRecoveredTrack(
+  points: RecoveredPoint[],
+  minDistanceThreshold: number,
+  minElevationChange: number,
+  gapThresholdMs: number,
+): RecoveredTrack {
+  const toMs = (time?: string) => (time ? new Date(time).getTime() : 0);
+  const ordered = [...points].sort((a, b) => toMs(a.time) - toMs(b.time));
+
+  let distance = 0;
+  let elevationGain = 0;
+  let prev: { lat: number; lng: number; ele?: number; t: number } | null = null;
+  let lastTimestamp: number | null = null;
+
+  for (const p of ordered) {
+    const t = toMs(p.time);
+    if (prev && t - prev.t <= gapThresholdMs) {
+      const dist = haversineDistance(prev.lat, prev.lng, p.lat, p.lng);
+      if (dist > minDistanceThreshold) {
+        distance += dist;
+        if (p.ele != null && prev.ele != null) {
+          const elevDiff = p.ele - prev.ele;
+          if (elevDiff > minElevationChange) {
+            elevationGain += elevDiff;
+          }
+        }
+      }
+    }
+    prev = { lat: p.lat, lng: p.lng, ele: p.ele, t };
+    lastTimestamp = t;
+  }
+
+  return {
+    distance,
+    elevationGain,
+    lastPoint: prev ? { lat: prev.lat, lng: prev.lng, ele: prev.ele, timestamp: prev.t } : null,
+    lastTimestamp,
+    count: ordered.length,
+  };
 }

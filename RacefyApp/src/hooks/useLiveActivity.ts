@@ -32,7 +32,7 @@ import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
 import { captureActivityLocation } from '../utils/locationCapture';
 import { PaceTracker } from '../utils/paceCalculator';
-import { accumulateTrackDelta, haversineDistance } from '../utils/gpsMath';
+import { accumulateRecoveredTrack, accumulateTrackDelta } from '../utils/gpsMath';
 import { classifyGpsPoint, GpsSmoothingBuffer } from '../services/gpsTracking';
 import {
   CALORIES_PER_SECOND,
@@ -187,8 +187,6 @@ function useLiveActivityInternal() {
     timestamp: number;
   }) => smoothingBuffer.add(newPoint, currentGpsProfile.current.smoothingBufferSize);
 
-  // Haversine distance (metres) — pure helper extracted to utils/gpsMath.
-  const calculateDistance = haversineDistance;
 
   // Check for existing active activity on mount (only for authenticated users)
   useEffect(() => {
@@ -864,57 +862,35 @@ function useLiveActivityInternal() {
 
         // Rebuild local distance/elevation from the recovered points so the UI
         // doesn't show 0 km after an app kill or after the server-derived
-        // currentStats (which may be 0 if sync was failing) overwrote them.
-        // We mirror the gap- and threshold-filtering used during live tracking
-        // so accidental jumps between far-apart points aren't counted.
-        const ordered = [...recoveredGpsPoints].sort((a, b) => {
-          const ta = a.time ? new Date(a.time).getTime() : 0;
-          const tb = b.time ? new Date(b.time).getTime() : 0;
-          return ta - tb;
-        });
+        // currentStats (which may be 0 if sync was failing) overwrote them. The
+        // gap- and threshold-filtering (mirroring live tracking) plus the trailing
+        // point are computed by gpsMath.accumulateRecoveredTrack.
+        const recovered = accumulateRecoveredTrack(
+          recoveredGpsPoints,
+          profile.minDistanceThreshold,
+          profile.minElevationChange,
+          GPS_GAP_THRESHOLD_MS,
+        );
 
-        let recoveredDistance = 0;
-        let recoveredElevation = 0;
-        let prevRec: { lat: number; lng: number; ele?: number; t: number } | null = null;
-        let lastRecoveredT: number | null = null;
-
-        for (const p of ordered) {
-          const t = p.time ? new Date(p.time).getTime() : 0;
-          if (prevRec && t - prevRec.t <= GPS_GAP_THRESHOLD_MS) {
-            const dist = calculateDistance(prevRec.lat, prevRec.lng, p.lat, p.lng);
-            if (dist > profile.minDistanceThreshold) {
-              recoveredDistance += dist;
-              if (p.ele != null && prevRec.ele != null) {
-                const elevDiff = p.ele - prevRec.ele;
-                if (elevDiff > profile.minElevationChange) {
-                  recoveredElevation += elevDiff;
-                }
-              }
-            }
-          }
-          prevRec = { lat: p.lat, lng: p.lng, ele: p.ele, t };
-          lastRecoveredT = t;
-        }
-
-        if (recoveredDistance > 0) {
+        if (recovered.distance > 0) {
           localStatsRef.current = {
             ...localStatsRef.current,
-            distance: localStatsRef.current.distance + recoveredDistance,
-            elevation_gain: (localStatsRef.current.elevation_gain || 0) + recoveredElevation,
+            distance: localStatsRef.current.distance + recovered.distance,
+            elevation_gain: (localStatsRef.current.elevation_gain || 0) + recovered.elevationGain,
           };
 
           // Seed the gap clock + last position so the very next live GPS sample
           // doesn't add a jump from the recovered tail to the new position.
-          if (prevRec) {
+          if (recovered.lastPoint) {
             lastPosition.current = {
-              lat: prevRec.lat,
-              lng: prevRec.lng,
-              ele: prevRec.ele,
-              timestamp: prevRec.t || Date.now(),
+              lat: recovered.lastPoint.lat,
+              lng: recovered.lastPoint.lng,
+              ele: recovered.lastPoint.ele,
+              timestamp: recovered.lastPoint.timestamp || Date.now(),
             };
           }
-          if (lastRecoveredT) {
-            lastBufferedPointTime.current = lastRecoveredT;
+          if (recovered.lastTimestamp) {
+            lastBufferedPointTime.current = recovered.lastTimestamp;
           }
 
           setState((prevState) => ({
@@ -923,10 +899,10 @@ function useLiveActivityInternal() {
           }));
 
           logger.gps('Restored local stats from recovered points', {
-            recoveredDistance: recoveredDistance.toFixed(1),
-            recoveredElevation: recoveredElevation.toFixed(1),
+            recoveredDistance: recovered.distance.toFixed(1),
+            recoveredElevation: recovered.elevationGain.toFixed(1),
             totalDistance: localStatsRef.current.distance.toFixed(1),
-            recoveredCount: ordered.length,
+            recoveredCount: recovered.count,
           });
         }
 
