@@ -26,6 +26,7 @@ export * from './usePointHistory';
 export * from './useActivityTimer';
 export * from './useDevRunSimulator';
 export * from './useFadeToast';
+export * from './useMapStyleCycler';
 export * from './useMilestoneTracking';
 export * from './useEventCommentaryFeed';
 export * from './useCommentarySettings';

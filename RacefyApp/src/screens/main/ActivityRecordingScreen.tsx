@@ -34,6 +34,7 @@ import {
   useDevRunSimulator,
   useFadeToast,
   useHealthEnrichment,
+  useMapStyleCycler,
   useLiveActivityContext,
   useMilestones,
   useMilestoneTracking,
@@ -85,7 +86,6 @@ const MILESTONE_ORDER = [
 
 const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
 
-type MapStyleType = 'outdoors' | 'streets' | 'satellite';
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
@@ -145,10 +145,13 @@ export function ActivityRecordingScreen() {
   // Map follow user state (false when user pans/zooms the map)
   const [followUser, setFollowUser] = useState(true);
 
-  // Map style selection
-  const [mapStyle, setMapStyle] = useState<MapStyleType>('outdoors');
-  const [showStyleToast, setShowStyleToast] = useState(false);
-  const styleToastOpacity = useRef(new Animated.Value(0)).current;
+  // Map style selection + the self-hiding "style changed" toast (useMapStyleCycler).
+  const {
+    mapStyle,
+    cycle: handleMapStyleToggle,
+    toastVisible: showStyleToast,
+    toastOpacity: styleToastOpacity,
+  } = useMapStyleCycler(viewMode);
 
   // Animation for toggle buttons position
   const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
@@ -531,33 +534,6 @@ export function ActivityRecordingScreen() {
     }
   }, [isTracking, isPaused, showNearbyRoutesToggle, viewMode, toggleButtonsPosition]);
 
-  // Show toast when map style changes
-  useEffect(() => {
-    if (viewMode === 'map') {
-      setShowStyleToast(true);
-
-      // Fade in
-      Animated.timing(styleToastOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-
-      // Auto-hide after 2 seconds
-      const timer = setTimeout(() => {
-        Animated.timing(styleToastOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }).start(() => {
-          setShowStyleToast(false);
-        });
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [mapStyle, viewMode, styleToastOpacity]);
-
   // Existing activity dialog
   useEffect(() => {
     if (hasExistingActivity && activity) {
@@ -787,16 +763,6 @@ export function ActivityRecordingScreen() {
     }
   };
 
-  const handleMapStyleToggle = () => {
-    const styles: MapStyleType[] = ['outdoors', 'streets', 'satellite'];
-    const currentIndex = styles.indexOf(mapStyle);
-    const nextIndex = (currentIndex + 1) % styles.length;
-    const nextStyle = styles[nextIndex];
-
-    setMapStyle(nextStyle);
-    triggerHaptic();
-    logger.info('activity', 'Map style changed', { from: mapStyle, to: nextStyle });
-  };
 
   const handleDiscard = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
