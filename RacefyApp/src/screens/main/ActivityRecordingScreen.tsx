@@ -31,6 +31,7 @@ import {
   useAudioCoachSettings,
   useAuth,
   useDefaultSport,
+  useFadeToast,
   useHealthEnrichment,
   useLiveActivityContext,
   useMilestones,
@@ -151,16 +152,11 @@ export function ActivityRecordingScreen() {
   // Animation for toggle buttons position
   const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
 
-  // Screen lock
+  // Screen lock. The lock + audio-coach toasts share one self-dismissing fade
+  // mechanism (useFadeToast); the boolean payload styles the toast (locked / enabled).
   const [isScreenLocked, setIsScreenLocked] = useState(false);
-  const [showLockToast, setShowLockToast] = useState(false);
-  const [lockToastLocked, setLockToastLocked] = useState(false);
-  const lockToastOpacity = useRef(new Animated.Value(0)).current;
-
-  // Audio coach toast
-  const [showAudioCoachToast, setShowAudioCoachToast] = useState(false);
-  const [audioCoachToastEnabled, setAudioCoachToastEnabled] = useState(false);
-  const audioCoachToastOpacity = useRef(new Animated.Value(0)).current;
+  const lockToast = useFadeToast<boolean>();
+  const audioCoachToast = useFadeToast<boolean>();
 
   // Data hooks
   const { events: ongoingEvents, isLoading: eventsLoading } = useOngoingEvents();
@@ -219,29 +215,15 @@ export function ActivityRecordingScreen() {
       .catch(() => {});
 
     // Show toast
-    setAudioCoachToastEnabled(newEnabled);
-    setShowAudioCoachToast(true);
-    audioCoachToastOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(audioCoachToastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.delay(1800),
-      Animated.timing(audioCoachToastOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setShowAudioCoachToast(false));
-  }, [audioCoachSessionEnabled, audioCoachSettings, audioCoachToastOpacity]);
+    audioCoachToast.show(newEnabled);
+  }, [audioCoachSessionEnabled, audioCoachSettings, audioCoachToast]);
 
   const handleToggleLock = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     const newLocked = !isScreenLocked;
     setIsScreenLocked(newLocked);
-    setLockToastLocked(newLocked);
-    setShowLockToast(true);
-    lockToastOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(lockToastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.delay(1800),
-      Animated.timing(lockToastOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setShowLockToast(false));
-  }, [isScreenLocked, lockToastOpacity]);
+    lockToast.show(newLocked);
+  }, [isScreenLocked, lockToast]);
 
   // ── DEV ONLY: Simulated run for testing audio coach ──
   // Time-based distance: recalculated on every render from elapsed time.
@@ -1463,31 +1445,31 @@ export function ActivityRecordingScreen() {
       )}
 
       {/* Audio coach toast */}
-      {showAudioCoachToast && (
+      {audioCoachToast.visible && (
         <Animated.View
           style={[
             styles.mapStyleToast,
             {
-              backgroundColor: audioCoachToastEnabled ? colors.primary : colors.cardBackground,
-              borderColor: audioCoachToastEnabled ? colors.primary : colors.border,
-              opacity: audioCoachToastOpacity,
+              backgroundColor: audioCoachToast.payload ? colors.primary : colors.cardBackground,
+              borderColor: audioCoachToast.payload ? colors.primary : colors.border,
+              opacity: audioCoachToast.opacity,
             },
           ]}
           pointerEvents="none"
         >
           <Ionicons
-            name={audioCoachToastEnabled ? 'musical-notes' : 'musical-notes-outline'}
+            name={audioCoachToast.payload ? 'musical-notes' : 'musical-notes-outline'}
             size={20}
-            color={audioCoachToastEnabled ? '#ffffff' : colors.textSecondary}
+            color={audioCoachToast.payload ? '#ffffff' : colors.textSecondary}
           />
           <Text
             style={[
               styles.mapStyleToastText,
-              { color: audioCoachToastEnabled ? '#ffffff' : colors.textPrimary },
+              { color: audioCoachToast.payload ? '#ffffff' : colors.textPrimary },
             ]}
           >
             {t(
-              audioCoachToastEnabled
+              audioCoachToast.payload
                 ? 'recording.audioCoachEnabled'
                 : 'recording.audioCoachDisabled',
             )}
@@ -1496,30 +1478,30 @@ export function ActivityRecordingScreen() {
       )}
 
       {/* Lock toast */}
-      {showLockToast && (
+      {lockToast.visible && (
         <Animated.View
           style={[
             styles.mapStyleToast,
             {
-              backgroundColor: lockToastLocked ? '#1f2937' : colors.cardBackground,
-              borderColor: lockToastLocked ? '#374151' : colors.border,
-              opacity: lockToastOpacity,
+              backgroundColor: lockToast.payload ? '#1f2937' : colors.cardBackground,
+              borderColor: lockToast.payload ? '#374151' : colors.border,
+              opacity: lockToast.opacity,
             },
           ]}
           pointerEvents="none"
         >
           <Ionicons
-            name={lockToastLocked ? 'lock-closed' : 'lock-open-outline'}
+            name={lockToast.payload ? 'lock-closed' : 'lock-open-outline'}
             size={20}
-            color={lockToastLocked ? '#f9fafb' : colors.textSecondary}
+            color={lockToast.payload ? '#f9fafb' : colors.textSecondary}
           />
           <Text
             style={[
               styles.mapStyleToastText,
-              { color: lockToastLocked ? '#f9fafb' : colors.textPrimary },
+              { color: lockToast.payload ? '#f9fafb' : colors.textPrimary },
             ]}
           >
-            {t(lockToastLocked ? 'recording.screenLocked' : 'recording.screenUnlocked')}
+            {t(lockToast.payload ? 'recording.screenLocked' : 'recording.screenUnlocked')}
           </Text>
         </Animated.View>
       )}

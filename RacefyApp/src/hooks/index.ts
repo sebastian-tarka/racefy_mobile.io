@@ -24,6 +24,7 @@ export * from './useUserProfile';
 export * from './useLeaderboard';
 export * from './usePointHistory';
 export * from './useActivityTimer';
+export * from './useFadeToast';
 export * from './useMilestoneTracking';
 export * from './useEventCommentaryFeed';
 export * from './useCommentarySettings';
