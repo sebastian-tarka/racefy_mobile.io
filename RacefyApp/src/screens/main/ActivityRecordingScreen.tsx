@@ -31,6 +31,7 @@ import {
   useAudioCoachSettings,
   useAuth,
   useDefaultSport,
+  useDevRunSimulator,
   useFadeToast,
   useHealthEnrichment,
   useLiveActivityContext,
@@ -225,80 +226,20 @@ export function ActivityRecordingScreen() {
     lockToast.show(newLocked);
   }, [isScreenLocked, lockToast]);
 
-  // ── DEV ONLY: Simulated run for testing audio coach ──
-  // Time-based distance: recalculated on every render from elapsed time.
-  // Foreground: setInterval triggers re-renders every 10s.
-  // Background: real GPS tracking triggers re-renders → distance recalculates.
-  //   → Press Start first (real GPS), then SimRun, then lock screen.
-  const [devSimRunning, setDevSimRunning] = useState(false);
-  const devSimStartRef = useRef(0);
-  const [, setDevSimTick] = useState(0);
-  const devSimPace = 5.5; // simulated pace: 5:30 min/km
-  // Distance from elapsed time — correct on every render, even after background resume
-  const devSimDistanceM =
-    devSimRunning && devSimStartRef.current > 0
-      ? Math.floor((Date.now() - devSimStartRef.current) / 10000) * 350
-      : 0;
-  const devSimBgStartedRef = useRef(false);
-  useEffect(() => {
-    if (!__DEV__ || !devSimRunning) return;
-    const startTime = Date.now();
-    devSimStartRef.current = startTime;
-    devSimBgStartedRef.current = false;
-
-    logger.info('audioCoach', 'DEV SimRun: starting...');
-
-    // 1. Write sim flag to AsyncStorage — background task reads it
-    AsyncStorage.setItem('@racefy:audioCoach:bgSimStartTime', startTime.toString())
-      .then(() => logger.info('audioCoach', 'DEV SimRun: sim flag written'))
-      .catch((e) =>
-        logger.error('audioCoach', 'DEV SimRun: failed to write sim flag', { error: e }),
-      );
-
-    // 2. Start lightweight background tracking (foreground service)
-    // Dynamic import — backgroundLocation.ts has TaskManager.defineTask at module level
-    // and cannot be statically imported from React components
-    import('../../services/backgroundLocation')
-      .then((m) => m.startSimBackgroundTracking())
-      .then((ok) => {
-        devSimBgStartedRef.current = ok;
-        logger.info('audioCoach', `DEV SimRun: bg tracking ${ok ? 'STARTED' : 'FAILED'}`);
-      })
-      .catch((e) =>
-        logger.error('audioCoach', 'DEV SimRun: bg tracking error', { error: String(e) }),
-      );
-
-    // 3. Foreground re-render tick
-    const interval = setInterval(() => {
-      setDevSimTick((t) => {
-        const elapsed = Date.now() - devSimStartRef.current;
-        const dist = Math.floor(elapsed / 10000) * 350;
-        logger.info('audioCoach', `DEV SimRun tick: ${dist}m (${(dist / 1000).toFixed(2)}km)`);
-        return t + 1;
-      });
-    }, 10_000);
-
-    return () => {
-      clearInterval(interval);
-      AsyncStorage.removeItem('@racefy:audioCoach:bgSimStartTime');
-      AsyncStorage.setItem('@racefy:audioCoach:bgLastThreshold', '0');
-      if (devSimBgStartedRef.current) {
-        import('../../services/backgroundLocation').then((m) => m.stopBackgroundLocationTracking());
-      }
-    };
-  }, [devSimRunning]);
+  // DEV-only simulated run for testing the audio coach (see useDevRunSimulator).
+  const devSim = useDevRunSimulator();
 
   const audioCoachDistanceKm =
-    __DEV__ && devSimRunning ? devSimDistanceM / 1000 : currentStats.distance / 1000;
+    __DEV__ && devSim.running ? devSim.distanceKm : currentStats.distance / 1000;
   const audioCoachPace =
-    __DEV__ && devSimRunning
-      ? devSimPace
+    __DEV__ && devSim.running
+      ? devSim.pace
       : currentStats.currentPace
         ? currentStats.currentPace / 60
         : 0;
 
   useAudioCoach({
-    settings: { ...audioCoachSettings, enabled: isAudioCoachActive || (__DEV__ && devSimRunning) },
+    settings: { ...audioCoachSettings, enabled: isAudioCoachActive || (__DEV__ && devSim.running) },
     totalDistanceKm: audioCoachDistanceKm,
     currentPaceMinPerKm: audioCoachPace,
     heartRate: currentStats.avg_heart_rate,
@@ -944,12 +885,12 @@ export function ActivityRecordingScreen() {
             }
           : undefined
       }
-      devSimRunning={devSimRunning}
+      devSimRunning={devSim.running}
       onToggleDevSim={() => {
-        setDevSimRunning((prev) => !prev);
+        devSim.toggle();
         triggerHaptic();
       }}
-      devSimDistanceKm={devSimDistanceM / 1000}
+      devSimDistanceKm={devSim.distanceKm}
     />
   );
 
@@ -1153,18 +1094,18 @@ export function ActivityRecordingScreen() {
               <TouchableOpacity
                 style={[
                   styles.mapToolbarIcon,
-                  { backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground },
+                  { backgroundColor: devSim.running ? '#ef4444' : colors.cardBackground },
                 ]}
                 onPress={() => {
-                  setDevSimRunning((v) => !v);
+                  devSim.toggle();
                   triggerHaptic();
                 }}
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={devSimRunning ? 'stop' : 'walk'}
+                  name={devSim.running ? 'stop' : 'walk'}
                   size={24}
-                  color={devSimRunning ? '#ffffff' : colors.textSecondary}
+                  color={devSim.running ? '#ffffff' : colors.textSecondary}
                 />
               </TouchableOpacity>
             )}
@@ -1408,36 +1349,36 @@ export function ActivityRecordingScreen() {
                 style={[
                   styles.mapStyleToggleButton,
                   {
-                    backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground,
+                    backgroundColor: devSim.running ? '#ef4444' : colors.cardBackground,
                   },
                 ]}
                 onPress={() => {
-                  setDevSimRunning((prev) => !prev);
+                  devSim.toggle();
                   triggerHaptic();
                 }}
                 onLongPress={() => {
                   Alert.alert(
                     'Audio Coach Sim',
-                    `Distance: ${(devSimDistanceM / 1000).toFixed(2)} km\nPace: ${devSimPace} min/km\nInterval: ${audioCoachSettings.intervalKm} km\nEnabled: ${isAudioCoachActive || devSimRunning}\nLanguage: ${audioCoachSettings.language}\nStyle: ${audioCoachSettings.style}\n\n+350m every 10s → 1km every ~29s`,
+                    `Distance: ${devSim.distanceKm.toFixed(2)} km\nPace: ${devSim.pace} min/km\nInterval: ${audioCoachSettings.intervalKm} km\nEnabled: ${isAudioCoachActive || devSim.running}\nLanguage: ${audioCoachSettings.language}\nStyle: ${audioCoachSettings.style}\n\n+350m every 10s → 1km every ~29s`,
                   );
                 }}
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={devSimRunning ? 'stop' : 'walk'}
+                  name={devSim.running ? 'stop' : 'walk'}
                   size={28}
-                  color={devSimRunning ? '#fff' : colors.textSecondary}
+                  color={devSim.running ? '#fff' : colors.textSecondary}
                 />
               </TouchableOpacity>
               <Text
                 style={{
-                  color: devSimRunning ? '#ef4444' : colors.textMuted,
+                  color: devSim.running ? '#ef4444' : colors.textMuted,
                   fontSize: 9,
                   textAlign: 'center',
                   marginTop: 2,
                 }}
               >
-                {devSimRunning ? `${(devSimDistanceM / 1000).toFixed(1)}km` : 'SimRun'}
+                {devSim.running ? `${devSim.distanceKm.toFixed(1)}km` : 'SimRun'}
               </Text>
             </View>
           )}
