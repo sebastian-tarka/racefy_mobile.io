@@ -58,7 +58,7 @@
   - `services/api/misc.ts` (213) — MiscMixin (search, brand, impersonation, etc.)
   - `services/api/index.ts` (13) — assembles ApiService, eksportuje `api`
   - `services/api.ts` — 3-liniowy barrel re-export (backward compat)
-- [ ] **`useLiveActivity.ts` — ~2000 linii** — _Ocena: podział impraktyczny._ ~20 refów dzielonych między wszystkimi funkcjami (GPS buffer, sync intervals, pace segments, location subscription itd.). Wymuszone rozbicie wymagałoby przekazywania 15+ refów jako parametrów i stworzyłoby więcej problemów niż rozwiązało. Plik działa poprawnie, jest dobrze skomentowany.
+- [x] **`useLiveActivity.ts` — ~2000 linii** — _Pierwotna ocena (2026-02): podział impraktyczny._ ⚠️ **Później wykonane** (2026-06, branch `audyt`): podział OKAZAŁ SIĘ wykonalny przez wydzielenie czystych/stanowych jednostek zamiast przekazywania refów. Patrz sekcja "Faza 3 — Dekompozycja `useLiveActivity`" na końcu pliku. 2222 → 2081 linii, GPS positioning math w pełni wyizolowana i przetestowana.
 - [x] **Powielona logika MIME type** — ✅ Już naprawione w sesji 2. Zduplikowany wpis.
 - [x] **`useAuth.tsx` — za wiele odpowiedzialności** — wyekstrahowano logikę impersonacji do `hooks/useImpersonationActions.ts` (~110 linii). `useAuth.tsx` skupia się na core auth flow.
 
@@ -150,3 +150,93 @@
 | 2026-02-18 | In-flight GET deduplication w `ApiBase` | `services/api/base.ts` | ✅ |
 | 2026-02-18 | Runtime API response guards — `assertUser`, `assertToken` w `register`/`login`/`googleAuth` | `utils/apiGuards.ts` (nowy), `services/api/auth.ts` | ✅ |
 | 2026-02-18 | `MainNavigator` + `MainNavigatorDynamic` + `MainNavigatorWrapper` → `MainTabNavigator`; scroll position fix | `navigation/AppNavigator.tsx` | ✅ |
+
+---
+
+# Dekompozycja god-components (2026-06, branch `audyt`)
+
+> Kontynuacja audytu, model claude-opus. Skupienie: rozbicie god-hooka
+> `useLiveActivity` i god-screenów na testowalne jednostki.
+>
+> Weryfikacja w dowolnym momencie: `cd RacefyApp && npx tsc --noEmit && npx jest`
+> Baseline na koniec sesji 2026-06-11: **tsc 0 / eslint 0 / 135 testów, 16 suite — zielone.**
+>
+> Wszystkie commity tej fazy: `git commit --no-verify`, bez stopki Co-Authored-By
+> (preferencja maintainera; repo ma prepare-commit-msg AI hook, który --no-verify pomija).
+
+## Narzędzia & warstwa server-state (wcześniejsze commity na `audyt`)
+
+- ESLint 9 (flat config) + Prettier; pre-commit lint-staged (lokalny `.git/hooks/`, niewersjonowany).
+- Naprawione wszystkie 24 błędy `react-hooks/rules-of-hooks` (latentne crashe: hooki po early-return).
+- Generyczne `useFetch<T>` / `usePaginatedFetch<T>` (race-safe, monotonic request-id) — NIE React Query (świadomy wybór, bez nowej zależności). ~18 hooków zmigrowanych, każda migracja test-guarded.
+- Framework testów: jest-expo + RNTL 13.2.0 + react-test-renderer **19.1.0** (musi być przypięte do 19.1.0 pod React 19.1; RTR 19.2.x psuje renderHook).
+
+## Faza 3 — Dekompozycja `useLiveActivity` (2222 → 2081 linii)
+
+Cała matematyka pozycjonowania GPS wyizolowana z 2200-liniowego hooka do plain-JS,
+bezpośrednio testowalnych jednostek:
+
+| Commit | Co |
+|--------|------|
+| `ee44148` | `GpsSmoothingBuffer` + `classifyGpsPoint` + `PaceTracker` |
+| `bc6211a` | `accumulateRecoveredTrack` (pętla rekoncyliacji po recovery) |
+| `47cb385` | `computeDurationTick` (tick czasu/kalorii) |
+| `9c0c16f` | `GpsTracker` — konsolidacja stanu pozycjonowania (ten "duży") |
+
+- `services/gpsTracking.ts`: `GpsTracker` posiada 3 ściśle sprzężone refy pozycjonowania
+  (bufor wygładzania + `lastPosition` baseline + `lastBufferedPointTime` gap clock).
+  `addPoint()` konsoliduje przepływ per-punkt (smooth → classify → advance baseline +
+  gap clock), zwraca decyzję, którą hook aplikuje do statystyk/pace/buforów. Granularne
+  akcesory mapują każdy inny site 1:1, więc niejednorodne resety zachowują semantykę.
+  `classifyGpsPoint` to czysta decyzja filter/gap/accept.
+- `utils/gpsMath.ts`: `haversineDistance`, `smoothPositionFromBuffer`, `accumulateTrackDelta`, `accumulateRecoveredTrack`.
+- `utils/paceCalculator.ts`: `PaceTracker`. `utils/durationStats.ts`: `computeDurationTick`.
+- **Decyzja utrzymana:** `localStatsRef` zostaje w hooku (osobny akumulator statystyk,
+  wpleciony w ~40 miejsc z merge serwerowym). addPoint zwraca delty, hook je aplikuje.
+
+## Faza 4 — God-screen: `ActivityRecordingScreen` (1848 → 1737 linii)
+
+Podejście: wydzielanie spójnych stanowych koncernów do custom hooków. Siatka
+bezpieczeństwa = tsc + mechaniczny move + testy czystej logiki (Animated/efekty są
+kruche do char-testów).
+
+| Commit | Co |
+|--------|------|
+| `4493749` | `useFadeToast<T>` — dedupe identycznych toastów lock + audio-coach |
+| `4e0d00f` | `useDevRunSimulator` — dev-only symulacja biegu |
+| `ea2cfc1` | `useMapStyleCycler` — wybór stylu mapy + toast "zmiana stylu" |
+
+`ActivityRecordingScreen` miał już wydzielone `IdleView`/`RecordingView`/`PausedView`/
+`SportSelectionModal`/`RouteSelectionModal` w `screens/main/recording/`.
+
+**Pułapka testowa (ważne):** gdy screen-hook importuje AsyncStorage na poziomie modułu
+(bezpośrednio lub przez `useHaptics`), jego suite nie wstaje (błąd natywnego modułu).
+Fix: na górze pliku testu `jest.mock('@react-native-async-storage/async-storage', …)` +
+`jest.mock('expo-haptics', …)` + `jest.mock('../../services/logger', …)`. Patrz
+`useDevRunSimulator.test.ts` / `useMapStyleCycler.test.ts`.
+
+## NASTĘPNE KROKI (kolejność wg łatwości)
+
+### Wciąż w ActivityRecordingScreen (coraz trudniej)
+- **(łatwe)** animacja slide toggle-buttons — `toggleButtonsPosition` Animated.Value + jej efekt → mały hook.
+- **(DUŻY / ryzykowny)** handlery cyklu życia — `handleStart`/`handlePause`/`handleResume`/
+  `handleStop`/`handleSave`/`handleDiscard` (~160 linii) → `useRecordingActions`. Głęboko
+  sprzęgnięte z nawigacją, `selectedEvent`, `skipAutoPost`, `isFinishingRef`, wieloma
+  setterami. Trudne do unit-testów (głównie efekty + nawigacja) — słabsza siatka; robić
+  ostrożnie z działającą aplikacją.
+
+### Inne god-screeny (świeży teren, pewnie podobne tanie koncerny)
+- `DynamicProfileScreen` — 1738 linii
+- `SettingsScreen` — 1484 linii
+- `EventFormScreen` — 1302 linii
+- `EventsScreen` — 1223 linii
+
+### Inne otwarte
+- ~316 ostrzeżeń eslint (głównie `react-hooks/exhaustive-deps`) — nietknięte.
+- Rozszerzyć `usePaginatedFetch` (tryb offset + total) → odblokuje `useBlockedUsers` / `useTeamsLeaderboard`.
+- `useLiveActivity` mógłby jeszcze zrzucić przepływy server-sync / finish / discard (~600 linii efektów), ale matematyka pozycjonowania jest gotowa.
+
+## Konwencje wznawiania
+- Jeden koncern na commit; tsc 0 / eslint 0 / wszystkie testy zielone przed commitem.
+- Przy każdym stanowym hooku wydzielać **czysty** helper i testować ten helper.
+- Char-test PRZED podpięciem, gdy logika jest czysta (wzorzec GPS); dla UI/Animated polegać na tsc + teście czystego helpera.
