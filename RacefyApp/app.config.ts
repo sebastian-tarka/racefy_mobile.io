@@ -47,16 +47,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.13.0',
+  version: '1.14.0',
   orientation: 'portrait',
-  icon: './assets/icon.png',
+  icon: './assets/icon-ios.png',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   scheme: 'racefy',
   splash: {
-    image: './assets/splash-icon.png',
+    image: './assets/splash-logo.png',
     resizeMode: 'contain',
-    backgroundColor: 'rgb(0 0 0 / 0.93)',
+    backgroundColor: '#10b981',
   },
   ios: {
     supportsTablet: true,
@@ -102,8 +102,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/splash-icon.png',
-      backgroundColor: '#ffffff',
+      foregroundImage: './assets/icon-foreground.png',
+      backgroundColor: '#10b981',
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',

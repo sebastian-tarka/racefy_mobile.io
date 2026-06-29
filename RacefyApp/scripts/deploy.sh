@@ -193,10 +193,29 @@ build_android_production() {
     fi
 }
 
+build_android_production_apk() {
+    print_step "Android Production APK (link dla testerów, pisze do prod)"
+    print_info "Profil: production-apk"
+    print_info "API: produkcja (https://racefy.io/api)"
+    print_info "Output: APK (distribution internal — link instalacyjny/QR z EAS)"
+    print_info "Bez publikacji w Google Play"
+    echo ""
+    print_info "Komenda: eas build --platform android --profile production-apk"
+
+    if confirm "Rozpocząć build?"; then
+        echo ""
+        eas build --platform android --profile production-apk
+        echo ""
+        print_success "Build zlecony! Po zakończeniu EAS poda link instalacyjny/QR."
+        print_info "Roześlij go testerom — app będzie pisać do bazy produkcyjnej."
+        print_info "https://expo.dev/accounts/sebastiantarka/projects/RacefyApp/builds"
+    fi
+}
+
 build_ios_testflight() {
     print_step "iOS TestFlight (do testów z przyjaciółmi)"
     print_info "Profil: production"
-    print_info "API: staging (https://app.dev.racefy.io/api)"
+    print_info "API: produkcja (https://racefy.io/api)"
     print_info "Dystrybucja: TestFlight (do 10,000 testerów)"
     print_info "Nie wymaga UDID urządzeń"
     echo ""
@@ -552,6 +571,7 @@ show_menu() {
     echo -e " ${BOLD}${GREEN}📱 ANDROID${NC}"
     echo -e "  ${CYAN}1)${NC}  Staging APK ${DIM}— do testów (staging API)${NC}"
     echo -e "  ${CYAN}2)${NC}  Production AAB ${DIM}— do Google Play${NC}"
+    echo -e "  ${CYAN}p)${NC}  Production APK ${DIM}— link dla testerów (prod API, bez sklepu)${NC}"
     echo -e "  ${CYAN}3)${NC}  Lokalny APK ${DIM}— build bez EAS cloud${NC}"
     echo ""
     echo -e " ${BOLD}${GREEN}🍎 iOS${NC}"
@@ -582,6 +602,7 @@ main() {
         case "$option" in
             1) build_android_staging ;;
             2) build_android_production ;;
+            p|P) build_android_production_apk ;;
             3) build_android_local ;;
             4) build_ios_testflight ;;
             5) build_ios_staging ;;

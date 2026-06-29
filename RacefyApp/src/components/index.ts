@@ -7,6 +7,7 @@ export * from './AudioCoachSettings';
 export * from './TierBadge';
 export * from './InteractionButton';
 export * from './InteractorsListModal';
+export * from './AnimatedSplash';
 export * from './Avatar';
 export * from './Badge';
 export { BatteryOptimizationModal } from './BatteryOptimizationModal/BatteryOptimizationModal';
