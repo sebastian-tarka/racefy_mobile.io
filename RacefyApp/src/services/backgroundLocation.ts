@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
 import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
 import type { GpsProfile } from '../config/gpsProfiles';
-import { syncPointsToServer } from './backgroundApiClient';
 import { haversineDistance } from '../utils/gpsMath';
 import * as trackingDb from './trackingDb';
 
@@ -108,51 +107,19 @@ async function clearLastBackgroundPosition(): Promise<void> {
 
 async function performBackgroundSync(): Promise<void> {
   try {
-    // Get activity ID
-    const activityId = await getActiveActivityId();
-    if (!activityId) {
-      logger.gps('Background sync: No active activity');
-      return;
-    }
+    // Single upload path shared with the foreground: drain unsynced rows from
+    // the SQLite log. Idempotent batches + persisted backoff live in the
+    // uploader, so the fragile index-based BackgroundSyncState is not used.
+    const { drainPoints } = await import('./pointsUploader');
+    const result = await drainPoints();
 
-    // Get sync state
-    const syncState = await getBackgroundSyncState();
-
-    // Get buffer and calculate unsynced points
-    const buffer = await getLocationBuffer();
-    const unsyncedPoints = buffer.slice(syncState.syncedPointsCount);
-
-    if (unsyncedPoints.length === 0) {
-      logger.gps('Background sync: No new points to sync');
-      return;
-    }
-
-    // Log attempt
-    logger.gps(`Background sync: Attempting to sync ${unsyncedPoints.length} points`);
-
-    // Call API
-    const result = await syncPointsToServer(activityId, unsyncedPoints);
-
-    if (result.success) {
-      // Update state: increment synced count
-      await updateBackgroundSyncState({
-        lastSyncSuccess: Date.now(),
-        lastSyncAttempt: Date.now(),
-        syncedPointsCount: buffer.length,
-        consecutiveFailures: 0,
-        totalPointsSynced: syncState.totalPointsSynced + unsyncedPoints.length,
-      });
+    if (result.uploaded > 0) {
       logger.gps(
-        `Background sync: SUCCESS (${unsyncedPoints.length} points synced, total: ${buffer.length})`,
+        `Background sync: SUCCESS (${result.uploaded} points synced, remaining: ${result.remaining})`,
       );
-    } else {
-      // Update failure count
-      await updateBackgroundSyncState({
-        lastSyncAttempt: Date.now(),
-        consecutiveFailures: syncState.consecutiveFailures + 1,
-      });
+    } else if (result.error) {
       logger.warn('gps', `Background sync: FAILED - ${result.error}`, {
-        consecutiveFailures: syncState.consecutiveFailures + 1,
+        remaining: result.remaining,
       });
     }
   } catch (err) {

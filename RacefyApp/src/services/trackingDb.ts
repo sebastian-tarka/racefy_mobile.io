@@ -21,7 +21,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { logger } from './logger';
 
 const DB_NAME = 'racefy_tracking.db';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 export type PointSource = 'fg' | 'bg';
 
@@ -119,6 +119,15 @@ function migrate(database: SQLiteDatabase): void {
       database.execSync(`
         CREATE INDEX IF NOT EXISTS idx_points_unsynced
           ON activity_points (client_activity_id, synced, seq);
+      `);
+    }
+    if (version < 2) {
+      // Uploader state (backoff counters) — survives JS context restarts
+      database.execSync(`
+        CREATE TABLE IF NOT EXISTS kv (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
       `);
     }
     database.execSync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
@@ -386,6 +395,36 @@ export function getPointsAfterSeq(clientActivityId: string, seq: number): Stored
   );
 
   return rows.map(rowToPoint);
+}
+
+// ── KV (uploader state) ─────────────────────────────────────────────────────
+
+export function getKv(key: string): string | null {
+  const database = getDb();
+  if (!database) return null;
+
+  const row = database.getFirstSync<{ value: string }>('SELECT value FROM kv WHERE key = ?;', [
+    key,
+  ]);
+
+  return row?.value ?? null;
+}
+
+export function setKv(key: string, value: string): void {
+  const database = getDb();
+  if (!database) return;
+
+  database.runSync(
+    'INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value;',
+    [key, value],
+  );
+}
+
+export function deleteKv(key: string): void {
+  const database = getDb();
+  if (!database) return;
+
+  database.runSync('DELETE FROM kv WHERE key = ?;', [key]);
 }
 
 /** Test-only: reset the cached DB handle (jest mock swaps the underlying store). */

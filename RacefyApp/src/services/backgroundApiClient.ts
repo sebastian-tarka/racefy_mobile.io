@@ -33,7 +33,7 @@ const LEGACY_TOKEN_KEY = '@racefy_token';
  * so background sync MUST check SecureStore first — otherwise it gets stuck
  * logging "No auth token" forever (see logs from user 19, May 2026).
  */
-async function getAuthToken(): Promise<string | null> {
+export async function getAuthToken(): Promise<string | null> {
   try {
     if (await SecureStore.isAvailableAsync()) {
       const secureToken = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);

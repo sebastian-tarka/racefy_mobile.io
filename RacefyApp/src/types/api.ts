@@ -537,7 +537,7 @@ export interface Event {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   ai_commentary_active_now?: boolean;
@@ -609,7 +609,7 @@ export interface CreateEventRequest {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   // GPS Privacy (new in 2026-01)
@@ -664,7 +664,7 @@ export interface UpdateEventRequest {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   // GPS Privacy (new in 2026-01)
@@ -873,6 +873,10 @@ export interface GpsPoint {
   speed?: number;
   cadence?: number;
   accuracy?: number;
+  /** Per-activity monotonic sequence number (idempotent batch uploads) */
+  seq?: number;
+  /** First point after a GPS gap — route rendered as separate segments */
+  segment_break?: boolean;
 }
 
 // Nearby route for shadow track feature
@@ -957,6 +961,8 @@ export interface FinishActivityRequest {
   final_points?: GpsPoint[];
   // Client-calculated distance (meters) - preserved alongside server-calculated distance
   client_distance?: number;
+  // Device-minted UUID of the tracking session (idempotent batch uploads)
+  client_activity_id?: string;
   // Event the activity should be linked to (set/changed at save time)
   event_id?: number | null;
 }
@@ -974,16 +980,16 @@ export interface FinishActivityResponse {
   message: string;
   points_earned?: number;
   splits?: {
-    distance_splits: Array<{
+    distance_splits: {
       distance: number;
       time: number;
       pace: string;
-    }>;
-    time_splits: Array<{
+    }[];
+    time_splits: {
       time: number;
       distance: number;
       speed: number;
-    }>;
+    }[];
   };
   post?: AutoCreatedPost;
 }
@@ -1935,7 +1941,7 @@ export interface CommentarySettings {
   tokens_used: number;
   languages: CommentaryLanguage[];
   force_participants?: boolean;
-  time_windows?: Array<{ start: string; end: string }> | null;
+  time_windows?: { start: string; end: string }[] | null;
   days_of_week?: number[] | null;
   pause_summary_enabled?: boolean;
   available_styles: Record<CommentaryStyle, { name: string; description: string }>;
@@ -1950,7 +1956,7 @@ export interface UpdateCommentarySettingsRequest {
   auto_publish?: boolean;
   languages?: CommentaryLanguage[] | null;
   force_participants?: boolean;
-  time_windows?: Array<{ start: string; end: string }> | null;
+  time_windows?: { start: string; end: string }[] | null;
   days_of_week?: number[] | null;
   pause_summary_enabled?: boolean;
 }
@@ -2179,12 +2185,12 @@ export interface HomeSection {
   /** Additional data for event_results section */
   results?: {
     event: HomeSectionEvent;
-    top_participants?: Array<{
+    top_participants?: {
       user: HomeSectionFriend;
       position: number;
       distance_km?: number;
       duration_minutes?: number;
-    }>;
+    }[];
   };
 
   /** Additional data for nearby_events, friend_events sections */
