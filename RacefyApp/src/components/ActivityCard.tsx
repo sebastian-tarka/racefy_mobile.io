@@ -1,17 +1,17 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Animated, Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {Card} from './Card';
-import {Avatar} from './Avatar';
-import {InteractionButton} from './InteractionButton';
-import {useTheme} from '../hooks/useTheme';
-import {useUnits} from '../hooks/useUnits';
-import {useSportTypes} from '../hooks/useSportTypes';
-import {fixStorageUrl} from '../config/api';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {formatDuration} from '../utils/formatDuration';
-import type {Activity} from '../types/api';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { Card } from './Card';
+import { Avatar } from './Avatar';
+import { InteractionButton } from './InteractionButton';
+import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
+import { useSportTypes } from '../hooks/useSportTypes';
+import { fixStorageUrl } from '../config/api';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { formatDuration } from '../utils/formatDuration';
+import type { Activity } from '../types/api';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -21,7 +21,7 @@ interface ActivityCardProps {
   showEngagement?: boolean;
 }
 
-export function ActivityCard({
+function ActivityCardBase({
   activity,
   onPress,
   showUser = false,
@@ -109,8 +109,6 @@ export function ActivityCard({
     return 'fitness-outline';
   };
 
-
-
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card}>
@@ -118,8 +116,12 @@ export function ActivityCard({
           <View style={[styles.userHeader, { borderBottomColor: colors.borderLight }]}>
             <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
             <View style={styles.userInfo}>
-              <Text style={[styles.userName, { color: colors.textPrimary }]}>{activity.user.name}</Text>
-              <Text style={[styles.userDate, { color: colors.textSecondary }]}>{formattedDate}</Text>
+              <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                {activity.user.name}
+              </Text>
+              <Text style={[styles.userDate, { color: colors.textSecondary }]}>
+                {formattedDate}
+              </Text>
             </View>
           </View>
         )}
@@ -134,10 +136,16 @@ export function ActivityCard({
                 {activity.title}
               </Text>
               {/* Privacy Indicator */}
-              <View style={[
-                styles.privacyBadge,
-                { backgroundColor: activity.is_private ? colors.textMuted + '15' : colors.primary + '15' }
-              ]}>
+              <View
+                style={[
+                  styles.privacyBadge,
+                  {
+                    backgroundColor: activity.is_private
+                      ? colors.textMuted + '15'
+                      : colors.primary + '15',
+                  },
+                ]}
+              >
                 <Ionicons
                   name={activity.is_private ? 'lock-closed' : 'globe-outline'}
                   size={12}
@@ -146,7 +154,8 @@ export function ActivityCard({
               </View>
             </View>
             <Text style={[styles.sportName, { color: colors.textSecondary }]}>
-              {activity.sport_type?.name || 'Activity'}{!showUser ? ` · ${formattedDate}` : ''}
+              {activity.sport_type?.name || 'Activity'}
+              {!showUser ? ` · ${formattedDate}` : ''}
             </Text>
           </View>
         </View>
@@ -155,9 +164,12 @@ export function ActivityCard({
         {(activity.route_map_url || activity.route_preview_url) && (
           <View style={styles.mapContainer}>
             <Image
-              source={{ uri: fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined }}
+              source={{
+                uri:
+                  fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined,
+              }}
               style={styles.mapImage}
-              resizeMode={activity.route_map_url ? "cover" : "contain"}
+              resizeMode={activity.route_map_url ? 'cover' : 'contain'}
             />
             <View style={[styles.mapOverlay, { backgroundColor: colors.primary + '10' }]}>
               <Ionicons name="map-outline" size={16} color={colors.primary} />
@@ -170,7 +182,9 @@ export function ActivityCard({
         <View style={[styles.statsContainer, { borderTopColor: colors.borderLight }]}>
           <View style={styles.statItem}>
             <Ionicons name="navigate-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {formatDistance(activity.distance)}
+            </Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Distance</Text>
           </View>
 
@@ -178,7 +192,9 @@ export function ActivityCard({
 
           <View style={styles.statItem}>
             <Ionicons name="time-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+              {formatDuration(activity.duration)}
+            </Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
           </View>
 
@@ -201,11 +217,7 @@ export function ActivityCard({
             activeOpacity={0.7}
           >
             <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-              <Ionicons
-                name="chevron-down"
-                size={20}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
             </Animated.View>
           </TouchableOpacity>
         )}
@@ -228,20 +240,26 @@ export function ActivityCard({
               {activity.elevation_gain != null && activity.elevation_gain > 0 && (
                 <View style={styles.statItem}>
                   <Ionicons name="trending-up" size={18} color={colors.textSecondary} />
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatElevation(activity.elevation_gain!)}</Text>
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                    {formatElevation(activity.elevation_gain!)}
+                  </Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Elevation</Text>
                 </View>
               )}
 
-              {activity.elevation_gain != null && activity.elevation_gain > 0 &&
-               activity.calories != null && activity.calories > 0 && (
-                <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
-              )}
+              {activity.elevation_gain != null &&
+                activity.elevation_gain > 0 &&
+                activity.calories != null &&
+                activity.calories > 0 && (
+                  <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
+                )}
 
               {activity.calories != null && activity.calories > 0 && (
                 <View style={styles.statItem}>
                   <Ionicons name="flame-outline" size={18} color={colors.textSecondary} />
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{activity.calories}</Text>
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                    {activity.calories}
+                  </Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Calories</Text>
                 </View>
               )}
@@ -439,3 +457,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const ActivityCard = React.memo(ActivityCardBase);

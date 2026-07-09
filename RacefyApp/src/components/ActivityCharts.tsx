@@ -73,7 +73,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
 
   const showAllLabels = splits.length <= 10;
   const labels = splits.map((split, i) =>
-    (showAllLabels || i % 2 === 0) ? `${split.kilometer}` : ''
+    showAllLabels || i % 2 === 0 ? `${split.kilometer}` : '',
   );
 
   return (
@@ -109,9 +109,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
 
       {/* Show actual pace values below chart for clarity */}
       <View style={styles.paceValuesContainer}>
-        <Text style={[styles.paceValuesTitle, { color: colors.textSecondary }]}>
-          Split times:
-        </Text>
+        <Text style={[styles.paceValuesTitle, { color: colors.textSecondary }]}>Split times:</Text>
         <View style={styles.paceValuesGrid}>
           {splits.map((split) => (
             <View key={split.kilometer} style={styles.paceValueItem}>

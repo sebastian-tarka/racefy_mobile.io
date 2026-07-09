@@ -1,20 +1,20 @@
-import React, {useCallback, useState} from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import type {CompositeNavigationProp} from '@react-navigation/native';
-import {useFocusEffect} from '@react-navigation/native';
-import type {BottomTabNavigationProp} from '@react-navigation/bottom-tabs';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import {ProfileSectionCard} from './ProfileSectionCard';
-import {TrainingProgramRow} from './Training/TrainingProgramRow';
-import {TrainingPlansSheet} from './Training/TrainingPlansSheet';
-import {useTheme} from '../hooks/useTheme';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {spacing} from '../theme';
-import type {MainTabParamList, RootStackParamList} from '../navigation/types';
-import type {SubscriptionTier, TrainingProgram} from '../types/api';
+import React, { useCallback, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ProfileSectionCard } from './ProfileSectionCard';
+import { TrainingProgramRow } from './Training/TrainingProgramRow';
+import { TrainingPlansSheet } from './Training/TrainingPlansSheet';
+import { useTheme } from '../hooks/useTheme';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { spacing } from '../theme';
+import type { MainTabParamList, RootStackParamList } from '../navigation/types';
+import type { SubscriptionTier, TrainingProgram } from '../types/api';
 
 type ProfileNavigation = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -56,7 +56,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
   useFocusEffect(
     useCallback(() => {
       loadPrograms();
-    }, [loadPrograms])
+    }, [loadPrograms]),
   );
 
   // Prefer the active program; fall back to the first (e.g. only paused ones exist).
@@ -107,7 +107,9 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
         icon="sparkles"
         accentColor={colors.primary}
         label={t('insights.aiReports.title')}
-        subtitle={isFree ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')}
+        subtitle={
+          isFree ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')
+        }
         locked={isFree}
         onPress={() =>
           isFree

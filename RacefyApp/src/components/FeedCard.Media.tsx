@@ -24,7 +24,15 @@ import {
   styles,
 } from './FeedCard.utils';
 
-export function ExpandableContent({ text, type, mentions }: { text: string; type: FeedPostType; mentions?: MentionMap }) {
+export function ExpandableContent({
+  text,
+  type,
+  mentions,
+}: {
+  text: string;
+  type: FeedPostType;
+  mentions?: MentionMap;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [expanded, setExpanded] = useState(false);
@@ -37,23 +45,47 @@ export function ExpandableContent({ text, type, mentions }: { text: string; type
   return (
     <View>
       {mentions ? (
-        <MentionText text={displayText} mentions={mentions} style={[styles.expandableText, { color: colors.textPrimary }]} />
+        <MentionText
+          text={displayText}
+          mentions={mentions}
+          style={[styles.expandableText, { color: colors.textPrimary }]}
+        />
       ) : (
         <Text style={[styles.expandableText, { color: colors.textPrimary }]}>{displayText}</Text>
       )}
       {isTruncated && !expanded && (
         <TouchableOpacity onPress={() => setExpanded(true)}>
-          <Text style={[styles.expandableToggle, { color: typeColors.expand }]}>{t('feed.showMore')}</Text>
+          <Text style={[styles.expandableToggle, { color: typeColors.expand }]}>
+            {t('feed.showMore')}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
   );
 }
 
-function MediaGridItem({ item, index, onPress }: { item: PostMediaItem; index: number; onPress: () => void }) {
+function MediaGridItem({
+  item,
+  index,
+  onPress,
+}: {
+  item: PostMediaItem;
+  index: number;
+  onPress: () => void;
+}) {
   return (
-    <TouchableOpacity key={item.id + '-' + index} style={styles.mediaGridItem} activeOpacity={0.9} onPress={onPress}>
-      <Image source={{ uri: item.thumbnailUrl || item.url }} style={styles.mediaGridImage} contentFit="cover" cachePolicy="memory-disk" />
+    <TouchableOpacity
+      key={item.id + '-' + index}
+      style={styles.mediaGridItem}
+      activeOpacity={0.9}
+      onPress={onPress}
+    >
+      <Image
+        source={{ uri: item.thumbnailUrl || item.url }}
+        style={styles.mediaGridImage}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
       {item.type === 'video' && (
         <View style={styles.playOverlaySmall}>
           <Ionicons name="play" size={16} color="#FFFFFF" />
@@ -71,19 +103,41 @@ function ImageIndicator({ count }: { count: number }) {
         <Ionicons name="images-outline" size={12} color="#fff" />
         <View style={styles.imageIndicatorText}>
           <Ionicons name="ellipse" size={4} color="#fff" style={{ marginHorizontal: 2 }} />
-          <Ionicons name="ellipse" size={4} color="rgba(255,255,255,0.5)" style={{ marginHorizontal: 2 }} />
-          <Ionicons name="ellipse" size={4} color="rgba(255,255,255,0.5)" style={{ marginHorizontal: 2 }} />
+          <Ionicons
+            name="ellipse"
+            size={4}
+            color="rgba(255,255,255,0.5)"
+            style={{ marginHorizontal: 2 }}
+          />
+          <Ionicons
+            name="ellipse"
+            size={4}
+            color="rgba(255,255,255,0.5)"
+            style={{ marginHorizontal: 2 }}
+          />
         </View>
       </View>
     </View>
   );
 }
 
-function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }: any) {
+function GalleryModals({
+  galleryVisible,
+  setGalleryVisible,
+  galleryIndex,
+  imageUrls,
+  expandedImage,
+  setExpandedImage,
+}: any) {
   return (
     <>
       {galleryVisible && imageUrls.length > 0 && (
-        <ImageGallery images={imageUrls} initialIndex={galleryIndex} visible={galleryVisible} onClose={() => setGalleryVisible(false)} />
+        <ImageGallery
+          images={imageUrls}
+          initialIndex={galleryIndex}
+          visible={galleryVisible}
+          onClose={() => setGalleryVisible(false)}
+        />
       )}
       {expandedImage && (
         <ImageViewer uri={expandedImage} visible={true} onClose={() => setExpandedImage(null)} />
@@ -93,7 +147,14 @@ function GalleryModals({ galleryVisible, setGalleryVisible, galleryIndex, imageU
 }
 
 export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: boolean }) {
-  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const {
+    expandedImage,
+    setExpandedImage,
+    galleryVisible,
+    setGalleryVisible,
+    galleryIndex,
+    openGallery,
+  } = useImageGallery();
   const [expandedVideo, setExpandedVideoRaw] = useState<string | null>(null);
   const setExpandedVideo = (url: string | null) => {
     if (url) VideoPlayerManager.pauseAll();
@@ -102,7 +163,7 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   const items = buildMediaItems(post);
   if (items.length === 0) return null;
 
-  const imageUrls = items.filter(item => item.type === 'image').map(item => item.url);
+  const imageUrls = items.filter((item) => item.type === 'image').map((item) => item.url);
 
   // Use slider for multiple media items
   if (items.length > 1) {
@@ -111,14 +172,24 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
         <MediaSlider
           items={items}
           onImagePress={(index) => {
-            const imageIndex = items.slice(0, index + 1).filter(it => it.type === 'image').length - 1;
+            const imageIndex =
+              items.slice(0, index + 1).filter((it) => it.type === 'image').length - 1;
             if (imageIndex >= 0) {
               imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(items[index].url);
             }
           }}
           onVideoPress={(index) => setExpandedVideo(items[index].url)}
         />
-        <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
+        <GalleryModals
+          {...{
+            galleryVisible,
+            setGalleryVisible,
+            galleryIndex,
+            imageUrls,
+            expandedImage,
+            setExpandedImage,
+          }}
+        />
         {expandedVideo && (
           <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
         )}
@@ -131,7 +202,13 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   if (item.type === 'video') {
     return (
       <View>
-        <FeedVideo key={`post-${post.id}-video-${item.id}`} videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} aspectRatio={item.aspectRatio || 16 / 9} onExpand={() => setExpandedVideo(item.url)} />
+        <FeedVideo
+          key={`post-${post.id}-video-${item.id}`}
+          videoUrl={item.url}
+          thumbnailUrl={item.thumbnailUrl}
+          aspectRatio={item.aspectRatio || 16 / 9}
+          onExpand={() => setExpandedVideo(item.url)}
+        />
         {expandedVideo && (
           <VideoPlayer uri={expandedVideo} visible={true} onClose={() => setExpandedVideo(null)} />
         )}
@@ -148,7 +225,16 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
           previewHeight={300}
         />
       </View>
-      <GalleryModals {...{ galleryVisible, setGalleryVisible, galleryIndex, imageUrls, expandedImage, setExpandedImage }} />
+      <GalleryModals
+        {...{
+          galleryVisible,
+          setGalleryVisible,
+          galleryIndex,
+          imageUrls,
+          expandedImage,
+          setExpandedImage,
+        }}
+      />
     </>
   );
 }

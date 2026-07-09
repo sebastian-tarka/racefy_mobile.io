@@ -10,10 +10,20 @@ import Constants from 'expo-constants';
 // Get config from app.config.ts extra field
 const extra = Constants.expoConfig?.extra ?? {};
 
-
-
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-export type LogCategory = 'gps' | 'api' | 'auth' | 'activity' | 'navigation' | 'general' | 'home' | 'training'| 'commentary' | 'media' | 'profile' | 'audioCoach';
+export type LogCategory =
+  | 'gps'
+  | 'api'
+  | 'auth'
+  | 'activity'
+  | 'navigation'
+  | 'general'
+  | 'home'
+  | 'training'
+  | 'commentary'
+  | 'media'
+  | 'profile'
+  | 'audioCoach';
 
 // Log level priority (lower = more verbose)
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
@@ -45,10 +55,17 @@ export interface LoggerConfig {
 function parseCategories(value: string | undefined): LogCategory[] | 'all' {
   if (!value || value === 'all') return 'all';
 
-  const validCategories: LogCategory[] = ['gps', 'api', 'auth', 'activity', 'navigation', 'general'];
-  const parsed = value.split(',').map(s => s.trim().toLowerCase()) as LogCategory[];
+  const validCategories: LogCategory[] = [
+    'gps',
+    'api',
+    'auth',
+    'activity',
+    'navigation',
+    'general',
+  ];
+  const parsed = value.split(',').map((s) => s.trim().toLowerCase()) as LogCategory[];
 
-  return parsed.filter(cat => validCategories.includes(cat));
+  return parsed.filter((cat) => validCategories.includes(cat));
 }
 
 /**
@@ -66,9 +83,7 @@ function parseLogLevel(value: string | undefined): LogLevel {
  */
 export function getLoggerConfig(): LoggerConfig {
   // Default: enabled in dev mode, disabled in production
-  const enabled = extra.logEnabled !== undefined
-    ? extra.logEnabled === true
-    : __DEV__;
+  const enabled = extra.logEnabled !== undefined ? extra.logEnabled === true : __DEV__;
 
   return {
     enabled,
@@ -83,11 +98,7 @@ export function getLoggerConfig(): LoggerConfig {
 /**
  * Check if a log should be captured based on current config
  */
-export function shouldLog(
-  config: LoggerConfig,
-  level: LogLevel,
-  category: LogCategory
-): boolean {
+export function shouldLog(config: LoggerConfig, level: LogLevel, category: LogCategory): boolean {
   if (!config.enabled) return false;
 
   // Check level

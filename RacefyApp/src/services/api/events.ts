@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type {ApiBase} from './base';
+import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -13,7 +13,8 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getEventOverview(): Promise<Types.EventOverview> {
-      const response = await this.request<Types.ApiResponse<Types.EventOverview>>('/events/overview');
+      const response =
+        await this.request<Types.ApiResponse<Types.EventOverview>>('/events/overview');
       return response.data;
     }
 
@@ -27,45 +28,37 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       const query = new URLSearchParams();
       if (params?.user_id) query.append('user_id', String(params.user_id));
       if (params?.status) query.append('status', params.status);
-      if (params?.sport_type_id)
-        query.append('sport_type_id', String(params.sport_type_id));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
       if (params?.page) query.append('page', String(params.page));
       if (params?.per_page) query.append('per_page', String(params.per_page));
       return this.request(`/events?${query}`);
     }
 
     async getEvent(id: number): Promise<Types.Event> {
-      const response =
-        await this.request<Types.ApiResponse<Types.Event>>(`/events/${id}`);
+      const response = await this.request<Types.ApiResponse<Types.Event>>(`/events/${id}`);
       return response.data;
     }
 
     async getEventRankingModes(): Promise<Types.RankingModeOption[]> {
       const response =
-          await this.request<Types.ApiResponse<Types.RankingModeOption[]>>('/events/ranking-modes');
+        await this.request<Types.ApiResponse<Types.RankingModeOption[]>>('/events/ranking-modes');
 
       return response.data;
     }
 
     async createEvent(data: Types.CreateEventRequest): Promise<Types.Event> {
-      const response = await this.request<Types.ApiResponse<Types.Event>>(
-        '/events',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Event>>('/events', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
     async updateEvent(id: number, data: Types.UpdateEventRequest): Promise<Types.Event> {
-      const response = await this.request<Types.ApiResponse<Types.Event>>(
-        `/events/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Event>>(`/events/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -80,14 +73,14 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * Used during event creation/edit to live-validate point_rewards against pool.
      */
     async previewPointsBudget(
-      payload: Types.EventPointsBudgetPreviewRequest
+      payload: Types.EventPointsBudgetPreviewRequest,
     ): Promise<Types.EventPointsBudget> {
       const response = await this.request<Types.ApiResponse<Types.EventPointsBudget>>(
         '/events/points-budget/preview',
         {
           method: 'POST',
           body: JSON.stringify(payload),
-        }
+        },
       );
       return response.data;
     }
@@ -97,15 +90,16 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getEventPointsBudget(eventId: number): Promise<Types.EventPointsBudget> {
       const response = await this.request<Types.ApiResponse<Types.EventPointsBudget>>(
-        `/events/${eventId}/points-budget`
+        `/events/${eventId}/points-budget`,
       );
       return response.data;
     }
 
     async registerForEvent(eventId: number): Promise<Types.EventRegistration> {
-      const response = await this.request<
-        Types.ApiResponse<Types.EventRegistration>
-      >(`/events/${eventId}/register`, { method: 'POST' });
+      const response = await this.request<Types.ApiResponse<Types.EventRegistration>>(
+        `/events/${eventId}/register`,
+        { method: 'POST' },
+      );
       return response.data;
     }
 
@@ -114,43 +108,38 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getEventParticipants(eventId: number): Promise<Types.EventRegistration[]> {
-      const response = await this.request<
-        Types.ApiResponse<Types.EventRegistration[]>
-      >(`/events/${eventId}/participants`);
+      const response = await this.request<Types.ApiResponse<Types.EventRegistration[]>>(
+        `/events/${eventId}/participants`,
+      );
       return response.data;
     }
 
     async getEventActivities(eventId: number): Promise<Types.Activity[]> {
-      const response = await this.request<
-        Types.ApiResponse<Types.Activity[]>
-      >(`/events/${eventId}/activities`);
+      const response = await this.request<Types.ApiResponse<Types.Activity[]>>(
+        `/events/${eventId}/activities`,
+      );
       return response.data;
     }
 
     async getMyEvents(): Promise<Types.Event[]> {
-      const response =
-        await this.request<Types.ApiResponse<Types.Event[]>>('/my-events');
+      const response = await this.request<Types.ApiResponse<Types.Event[]>>('/my-events');
       return response.data;
     }
 
     async getMyRegistrations(): Promise<Types.EventRegistration[]> {
-      const response = await this.request<
-        Types.ApiResponse<Types.EventRegistration[]>
-      >('/my-registrations');
+      const response =
+        await this.request<Types.ApiResponse<Types.EventRegistration[]>>('/my-registrations');
       return response.data;
     }
 
     async getMyOngoingEvents(): Promise<Types.Event[]> {
       const response = await this.request<Types.ApiResponse<Types.Event[]>>(
-        '/my-registrations/ongoing-events'
+        '/my-registrations/ongoing-events',
       );
       return response.data;
     }
 
-    async uploadEventCoverImage(
-      eventId: number,
-      imageUri: string
-    ): Promise<Types.Event> {
+    async uploadEventCoverImage(eventId: number, imageUri: string): Promise<Types.Event> {
       const formData = new FormData();
 
       // Get file extension from URI
@@ -166,7 +155,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
       const result = await this.request<Types.ApiResponse<Types.Event>>(
         `/events/${eventId}/cover-image`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return result.data;
     }
@@ -179,14 +168,14 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getEventComments(eventId: number): Promise<Types.Comment[]> {
       const response = await this.request<Types.ApiResponse<Types.Comment[]>>(
-        `/events/${eventId}/comments`
+        `/events/${eventId}/comments`,
       );
       return response.data;
     }
 
     async createEventComment(
       eventId: number,
-      data: Types.CreateCommentRequest
+      data: Types.CreateCommentRequest,
     ): Promise<Types.Comment> {
       // Use FormData if photo is included
       if (data.photo) {
@@ -209,7 +198,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
         const result = await this.request<Types.ApiResponse<Types.Comment>>(
           `/events/${eventId}/comments`,
-          { method: 'POST', body: formData }
+          { method: 'POST', body: formData },
         );
         return result.data;
       }
@@ -219,7 +208,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         {
           method: 'POST',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.data;
     }
@@ -227,7 +216,10 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     /**
      * Get event leaderboard (public, no auth required)
      */
-    async getEventLeaderboard(eventId: number, limit = 50): Promise<Types.EventLeaderboardResponse> {
+    async getEventLeaderboard(
+      eventId: number,
+      limit = 50,
+    ): Promise<Types.EventLeaderboardResponse> {
       const query = new URLSearchParams();
       query.append('limit', String(limit));
       return this.request<Types.EventLeaderboardResponse>(`/leaderboard/event/${eventId}?${query}`);
@@ -239,7 +231,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getEventShareLink(id: number): Promise<Types.ShareLinkResponse> {
       const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-        `/events/${id}/share-link`
+        `/events/${id}/share-link`,
       );
       return response.data;
     }
@@ -257,7 +249,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         per_page?: number;
         page?: number;
         language?: Types.CommentaryLanguage;
-      }
+      },
     ): Promise<Types.CommentaryListResponse> {
       const query = new URLSearchParams();
       if (params?.per_page) query.append('per_page', String(params.per_page));
@@ -265,7 +257,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       if (params?.language) query.append('language', params.language);
       const queryString = query.toString();
       return this.request<Types.CommentaryListResponse>(
-        `/events/${eventId}/commentary${queryString ? `?${queryString}` : ''}`
+        `/events/${eventId}/commentary${queryString ? `?${queryString}` : ''}`,
       );
     }
 
@@ -274,12 +266,9 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param eventId - Event ID
      * @param commentaryId - Commentary ID
      */
-    async getCommentary(
-      eventId: number,
-      commentaryId: number
-    ): Promise<Types.EventCommentary> {
+    async getCommentary(eventId: number, commentaryId: number): Promise<Types.EventCommentary> {
       const response = await this.request<Types.ApiResponse<Types.EventCommentary>>(
-        `/events/${eventId}/commentary/${commentaryId}`
+        `/events/${eventId}/commentary/${commentaryId}`,
       );
       return response.data;
     }
@@ -303,9 +292,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param eventId - Event ID
      */
     async getCommentarySettings(eventId: number): Promise<Types.CommentarySettings> {
-      return this.request<Types.CommentarySettings>(
-        `/events/${eventId}/commentary/settings`
-      );
+      return this.request<Types.CommentarySettings>(`/events/${eventId}/commentary/settings`);
     }
 
     /**
@@ -315,15 +302,12 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async updateCommentarySettings(
       eventId: number,
-      settings: Types.UpdateCommentarySettingsRequest
+      settings: Types.UpdateCommentarySettingsRequest,
     ): Promise<Types.CommentarySettings> {
-      return this.request<Types.CommentarySettings>(
-        `/events/${eventId}/commentary/settings`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(settings),
-        }
-      );
+      return this.request<Types.CommentarySettings>(`/events/${eventId}/commentary/settings`, {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      });
     }
 
     /**
@@ -333,14 +317,14 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async generateCommentary(
       eventId: number,
-      type: Types.CommentaryType
+      type: Types.CommentaryType,
     ): Promise<Types.GenerateCommentaryResponse> {
       return this.request<Types.GenerateCommentaryResponse>(
         `/events/${eventId}/commentary/generate`,
         {
           method: 'POST',
           body: JSON.stringify({ type }),
-        }
+        },
       );
     }
 
@@ -362,13 +346,13 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async boostCommentary(
       eventId: number,
-      commentaryId: number
+      commentaryId: number,
     ): Promise<Types.BoostCommentaryResponse> {
       return this.request<Types.BoostCommentaryResponse>(
         `/events/${eventId}/commentary/${commentaryId}/boost`,
         {
           method: 'POST',
-        }
+        },
       );
     }
 
@@ -379,13 +363,13 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async unboostCommentary(
       eventId: number,
-      commentaryId: number
+      commentaryId: number,
     ): Promise<Types.BoostCommentaryResponse> {
       return this.request<Types.BoostCommentaryResponse>(
         `/events/${eventId}/commentary/${commentaryId}/boost`,
         {
           method: 'DELETE',
-        }
+        },
       );
     }
 
@@ -395,10 +379,10 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getCommentaryBoosters(
       eventId: number,
       commentaryId: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/events/${eventId}/commentary/${commentaryId}/boosts?page=${page}`
+        `/events/${eventId}/commentary/${commentaryId}/boosts?page=${page}`,
       );
     }
   };

@@ -13,13 +13,20 @@ interface PointsCardProps {
   onViewLeaderboard?: () => void;
 }
 
-function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboard }: PointsCardProps) {
+function PointsCardComponent({
+  stats,
+  isLoading,
+  onViewHistory,
+  onViewLeaderboard,
+}: PointsCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}
+      >
         <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
@@ -27,7 +34,9 @@ function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboar
 
   if (!stats) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}>
+      <View
+        style={[styles.container, styles.centerContent, { backgroundColor: colors.cardBackground }]}
+      >
         <Ionicons name="trophy-outline" size={32} color={colors.textMuted} />
         <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
           {t('profile.points.noPoints')}
@@ -63,9 +72,7 @@ function PointsCardComponent({ stats, isLoading, onViewHistory, onViewLeaderboar
           <Text style={[styles.periodLabel, { color: colors.textSecondary }]}>
             {t('profile.points.weeklyPoints')}
           </Text>
-          <Text style={[styles.periodRank, { color: colors.textMuted }]}>
-            #{stats.weekly_rank}
-          </Text>
+          <Text style={[styles.periodRank, { color: colors.textMuted }]}>#{stats.weekly_rank}</Text>
         </View>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.periodItem}>

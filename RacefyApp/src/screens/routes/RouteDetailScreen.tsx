@@ -2,14 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  Loading,
-  ScreenHeader,
-  ScreenContainer,
-  Card,
-  LeafletMap,
-} from '../../components';
+import { Button, Loading, ScreenHeader, ScreenContainer, Card, LeafletMap } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -51,23 +44,19 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
   };
 
   const handleDelete = useCallback(() => {
-    Alert.alert(
-      t('routeDetail.delete'),
-      t('routes.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deleteRoute(routeId);
-              navigation.goBack();
-            } catch {}
-          },
+    Alert.alert(t('routeDetail.delete'), t('routes.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.deleteRoute(routeId);
+            navigation.goBack();
+          } catch {}
         },
-      ]
-    );
+      },
+    ]);
   }, [routeId, navigation, t]);
 
   const handleDuplicate = useCallback(async () => {
@@ -99,21 +88,13 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={route.title}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={route.title} showBack onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Map */}
         {route.geometry && (
           <View style={styles.mapContainer}>
-            <LeafletMap
-              trackData={route.geometry}
-              height={250}
-              showKmMarkers
-            />
+            <LeafletMap trackData={route.geometry} height={250} showKmMarkers />
           </View>
         )}
 
@@ -164,11 +145,7 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
             </Text>
             {route.turn_instructions.map((turn, idx) => (
               <View key={idx} style={styles.turnRow}>
-                <Ionicons
-                  name={getTurnIcon(turn.maneuver)}
-                  size={18}
-                  color={colors.primary}
-                />
+                <Ionicons name={getTurnIcon(turn.maneuver)} size={18} color={colors.primary} />
                 <Text style={[styles.turnText, { color: colors.textPrimary }]}>
                   {turn.instruction}
                 </Text>
@@ -190,11 +167,7 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
             />
           )}
           {isOwner && (
-            <Button
-              title={t('routeDetail.delete')}
-              onPress={handleDelete}
-              variant="danger"
-            />
+            <Button title={t('routeDetail.delete')} onPress={handleDelete} variant="danger" />
           )}
         </View>
       </ScrollView>
@@ -202,7 +175,12 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
   );
 }
 
-function StatItem({ icon, label, value, colors }: {
+function StatItem({
+  icon,
+  label,
+  value,
+  colors,
+}: {
   icon: string;
   label: string;
   value: string;

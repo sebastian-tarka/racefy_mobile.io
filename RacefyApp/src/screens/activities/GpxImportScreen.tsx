@@ -44,7 +44,11 @@ export function GpxImportScreen({ navigation }: Props) {
   const [isImporting, setIsImporting] = useState(false);
 
   // Fetch ongoing events where user is registered
-  const { events: ongoingEvents, isLoading: eventsLoading, refresh: refreshEvents } = useOngoingEvents();
+  const {
+    events: ongoingEvents,
+    isLoading: eventsLoading,
+    refresh: refreshEvents,
+  } = useOngoingEvents();
 
   const handleSelectFile = async () => {
     try {
@@ -59,10 +63,7 @@ export function GpxImportScreen({ navigation }: Props) {
         // Validate file extension
         const fileName = file.name.toLowerCase();
         if (!fileName.endsWith('.gpx')) {
-          Alert.alert(
-            t('common.error'),
-            t('gpxImport.invalidFileType')
-          );
+          Alert.alert(t('common.error'), t('gpxImport.invalidFileType'));
           return;
         }
 
@@ -101,38 +102,31 @@ export function GpxImportScreen({ navigation }: Props) {
 
       const activity = await api.importGpx(formData);
 
-      Alert.alert(
-        t('common.success'),
-        t('gpxImport.importSuccess'),
-        [
-          {
-            text: t('gpxImport.viewActivity'),
-            onPress: () => {
-              navigation.replace('ActivityDetail', { activityId: activity.id });
-            },
+      Alert.alert(t('common.success'), t('gpxImport.importSuccess'), [
+        {
+          text: t('gpxImport.viewActivity'),
+          onPress: () => {
+            navigation.replace('ActivityDetail', { activityId: activity.id });
           },
-          {
-            text: t('common.ok'),
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+        },
+        {
+          text: t('common.ok'),
+          onPress: () => navigation.goBack(),
+        },
+      ]);
     } catch (error: any) {
       logger.error('activity', 'GPX import failed', { error });
       // 409: duplicate import (deduped by SHA256 hash + started_at)
       if (error?.status === 409) {
         Alert.alert(
           t('gpxImport.duplicateTitle'),
-          error.message || t('gpxImport.duplicateMessage')
+          error.message || t('gpxImport.duplicateMessage'),
         );
         return;
       }
       // 429 is handled globally via api.setOnRateLimit
       if (error?.status === 429) return;
-      Alert.alert(
-        t('common.error'),
-        error?.message || t('gpxImport.importFailed')
-      );
+      Alert.alert(t('common.error'), error?.message || t('gpxImport.importFailed'));
     } finally {
       setIsImporting(false);
     }
@@ -149,11 +143,7 @@ export function GpxImportScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('gpxImport.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('gpxImport.title')} showBack onBack={() => navigation.goBack()} />
 
       <ScrollView
         style={styles.scrollView}
@@ -190,7 +180,9 @@ export function GpxImportScreen({ navigation }: Props) {
           >
             {selectedFile ? (
               <View style={styles.selectedFileContent}>
-                <View style={[styles.fileIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                <View
+                  style={[styles.fileIconContainer, { backgroundColor: colors.primary + '15' }]}
+                >
                   <Ionicons name="document-text" size={28} color={colors.primary} />
                 </View>
                 <View style={styles.fileInfo}>
@@ -296,18 +288,26 @@ export function GpxImportScreen({ navigation }: Props) {
           >
             {selectedEvent ? (
               <>
-                <View style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}>
+                <View
+                  style={[styles.eventIconContainer, { backgroundColor: colors.primary + '20' }]}
+                >
                   <Ionicons
-                    name={selectedEvent.sport_type?.icon as any || 'calendar-outline'}
+                    name={(selectedEvent.sport_type?.icon as any) || 'calendar-outline'}
                     size={20}
                     color={colors.primary}
                   />
                 </View>
                 <View style={styles.eventSelectorContent}>
-                  <Text style={[styles.eventSelectorTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.eventSelectorTitle, { color: colors.textPrimary }]}
+                    numberOfLines={1}
+                  >
                     {selectedEvent.post?.title || t('eventDetail.untitled')}
                   </Text>
-                  <Text style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.eventSelectorSubtitle, { color: colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
                     {selectedEvent.location_name}
                   </Text>
                 </View>
@@ -320,7 +320,9 @@ export function GpxImportScreen({ navigation }: Props) {
               </>
             ) : (
               <>
-                <View style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}>
+                <View
+                  style={[styles.eventIconContainer, { backgroundColor: colors.textMuted + '20' }]}
+                >
                   <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
                 </View>
                 <Text style={[styles.eventSelectorPlaceholder, { color: colors.textSecondary }]}>

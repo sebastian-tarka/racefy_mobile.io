@@ -8,7 +8,7 @@ type ProfileVisibility = UserProfilePrivacy['profile_visibility'];
 export function canViewFollowersList(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   // Own profile - always allowed
   if (currentUser?.id === profile.id) return true;
@@ -33,7 +33,7 @@ export function canViewFollowersList(
 export function canViewFollowingList(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   return canViewFollowersList(profile, currentUser, isFollowing);
 }
@@ -44,7 +44,7 @@ export function canViewFollowingList(
 export function canViewStats(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   // Own profile - always allowed
   if (currentUser?.id === profile.id) return true;
@@ -62,7 +62,7 @@ export function canViewStats(
 export function canViewActivities(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   // Own profile - always allowed
   if (currentUser?.id === profile.id) return true;
@@ -80,7 +80,7 @@ export function canViewActivities(
 export function canViewPosts(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   // Own profile - always allowed
   if (currentUser?.id === profile.id) return true;
@@ -95,7 +95,7 @@ export function canViewPosts(
 export function canSendMessage(
   profile: UserProfile,
   currentUser: User | null,
-  isFollowing: boolean
+  isFollowing: boolean,
 ): boolean {
   if (!currentUser) return false;
   // Own profile - no self messaging

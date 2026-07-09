@@ -15,7 +15,13 @@ interface Props {
   onSelect: (sport: SportTypeWithIcon) => void;
 }
 
-export function SportSelectionModal({ visible, onClose, sportTypes, selectedSport, onSelect }: Props) {
+export function SportSelectionModal({
+  visible,
+  onClose,
+  sportTypes,
+  selectedSport,
+  onSelect,
+}: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -27,8 +33,15 @@ export function SportSelectionModal({ visible, onClose, sportTypes, selectedSpor
       onRequestClose={onClose}
     >
       <ScreenContainer style={styles.container}>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('recording.selectSport')}</Text>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {t('recording.selectSport')}
+          </Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
@@ -44,20 +57,42 @@ export function SportSelectionModal({ visible, onClose, sportTypes, selectedSpor
                 style={[
                   styles.sportItem,
                   { backgroundColor: colors.cardBackground },
-                  isSelected && { backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary },
+                  isSelected && {
+                    backgroundColor: colors.primary + '15',
+                    borderWidth: 1,
+                    borderColor: colors.primary,
+                  },
                 ]}
                 onPress={() => {
                   onSelect(sport);
                   onClose();
                 }}
               >
-                <View style={[styles.sportIcon, { backgroundColor: colors.background }, isSelected && { backgroundColor: colors.primary + '30' }]}>
-                  <Ionicons name={sport.icon} size={24} color={isSelected ? colors.primary : colors.textSecondary} />
+                <View
+                  style={[
+                    styles.sportIcon,
+                    { backgroundColor: colors.background },
+                    isSelected && { backgroundColor: colors.primary + '30' },
+                  ]}
+                >
+                  <Ionicons
+                    name={sport.icon}
+                    size={24}
+                    color={isSelected ? colors.primary : colors.textSecondary}
+                  />
                 </View>
-                <Text style={[styles.sportName, { color: colors.textPrimary }, isSelected && { fontWeight: '600', color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.sportName,
+                    { color: colors.textPrimary },
+                    isSelected && { fontWeight: '600', color: colors.primary },
+                  ]}
+                >
                   {sport.name}
                 </Text>
-                {isSelected && <Ionicons name="checkmark-circle" size={24} color={colors.primary} />}
+                {isSelected && (
+                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                )}
               </TouchableOpacity>
             );
           }}

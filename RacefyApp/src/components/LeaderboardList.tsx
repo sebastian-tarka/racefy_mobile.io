@@ -39,7 +39,11 @@ interface LeaderboardItemProps {
   isCurrentUser?: boolean;
 }
 
-const LeaderboardItem = memo(({ entry, onPress, isCurrentUser }: LeaderboardItemProps) => {
+const LeaderboardItem = memo(function LeaderboardItem({
+  entry,
+  onPress,
+  isCurrentUser,
+}: LeaderboardItemProps) {
   const { colors } = useTheme();
   const medalColor = MEDAL_COLORS[entry.rank as keyof typeof MEDAL_COLORS];
   const isTopThree = entry.rank <= 3;
@@ -59,25 +63,15 @@ const LeaderboardItem = memo(({ entry, onPress, isCurrentUser }: LeaderboardItem
       <View style={styles.rankContainer}>
         {isTopThree ? (
           <View style={[styles.medalContainer, { backgroundColor: medalColor + '20' }]}>
-            <Ionicons
-              name="trophy"
-              size={16}
-              color={medalColor}
-            />
+            <Ionicons name="trophy" size={16} color={medalColor} />
           </View>
         ) : (
-          <Text style={[styles.rankText, { color: colors.textSecondary }]}>
-            {entry.rank}
-          </Text>
+          <Text style={[styles.rankText, { color: colors.textSecondary }]}>{entry.rank}</Text>
         )}
       </View>
 
       {/* Avatar */}
-      <Avatar
-        uri={fixStorageUrl(entry.user.avatar)}
-        name={entry.user.name}
-        size="md"
-      />
+      <Avatar uri={fixStorageUrl(entry.user.avatar)} name={entry.user.name} size="md" />
 
       {/* User Info */}
       <View style={styles.userInfo}>
@@ -121,11 +115,7 @@ function LeaderboardListComponent({
   const { user } = useAuth();
 
   const renderItem = ({ item }: { item: LeaderboardEntry }) => (
-    <LeaderboardItem
-      entry={item}
-      onPress={onUserPress}
-      isCurrentUser={user?.id === item.user.id}
-    />
+    <LeaderboardItem entry={item} onPress={onUserPress} isCurrentUser={user?.id === item.user.id} />
   );
 
   const renderEmpty = () => {

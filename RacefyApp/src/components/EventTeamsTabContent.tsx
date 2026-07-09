@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  RefreshControl, Modal, TextInput, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -115,11 +122,20 @@ export function EventTeamsTabContent({
             )}
             {canJoinTeam && (
               <TouchableOpacity
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.primary }]}
+                style={[
+                  styles.actionButton,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderWidth: 1,
+                    borderColor: colors.primary,
+                  },
+                ]}
                 onPress={() => setShowJoinModal(true)}
               >
                 <Ionicons name="enter-outline" size={20} color={colors.primary} />
-                <Text style={[styles.actionButtonText, { color: colors.primary }]}>{t('teams.joinTeam')}</Text>
+                <Text style={[styles.actionButtonText, { color: colors.primary }]}>
+                  {t('teams.joinTeam')}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -129,16 +145,25 @@ export function EventTeamsTabContent({
         {createdTeam?.code && (
           <Card style={styles.section}>
             <View style={styles.codeContainer}>
-              <Text style={[styles.codeLabel, { color: colors.textSecondary }]}>{t('teams.teamCreated')}</Text>
-              <Text style={[styles.codeTitle, { color: colors.textPrimary }]}>{t('teams.teamCode')}</Text>
+              <Text style={[styles.codeLabel, { color: colors.textSecondary }]}>
+                {t('teams.teamCreated')}
+              </Text>
+              <Text style={[styles.codeTitle, { color: colors.textPrimary }]}>
+                {t('teams.teamCode')}
+              </Text>
               <TouchableOpacity
-                style={[styles.codeBox, { backgroundColor: colors.background, borderColor: colors.primary }]}
+                style={[
+                  styles.codeBox,
+                  { backgroundColor: colors.background, borderColor: colors.primary },
+                ]}
                 onPress={() => copyCode(createdTeam.code!)}
               >
                 <Text style={[styles.codeText, { color: colors.primary }]}>{createdTeam.code}</Text>
                 <Ionicons name="copy-outline" size={20} color={colors.primary} />
               </TouchableOpacity>
-              <Text style={[styles.codeHint, { color: colors.textMuted }]}>{t('teams.shareCode')}</Text>
+              <Text style={[styles.codeHint, { color: colors.textMuted }]}>
+                {t('teams.shareCode')}
+              </Text>
               <Button title={t('common.ok')} onPress={onClearCreatedTeam} />
             </View>
           </Card>
@@ -155,10 +180,15 @@ export function EventTeamsTabContent({
             </View>
             {myTeam.code && isCaptain && (
               <TouchableOpacity
-                style={[styles.codeBox, { backgroundColor: colors.background, borderColor: colors.border }]}
+                style={[
+                  styles.codeBox,
+                  { backgroundColor: colors.background, borderColor: colors.border },
+                ]}
                 onPress={() => copyCode(myTeam.code!)}
               >
-                <Text style={[styles.codeSmall, { color: colors.textPrimary }]}>{t('teams.teamCode')}: {myTeam.code}</Text>
+                <Text style={[styles.codeSmall, { color: colors.textPrimary }]}>
+                  {t('teams.teamCode')}: {myTeam.code}
+                </Text>
                 <Ionicons name="copy-outline" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             )}
@@ -179,7 +209,9 @@ export function EventTeamsTabContent({
             {t('teams.teams')} ({teams.length})
           </Text>
           {teams.length === 0 && !isLoading && (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('teams.noTeams')}</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              {t('teams.noTeams')}
+            </Text>
           )}
           {teams.map((team) => {
             const isExpanded = expandedTeamId === team.id;
@@ -187,20 +219,35 @@ export function EventTeamsTabContent({
             return (
               <View key={team.id}>
                 <TouchableOpacity
-                  style={[styles.teamRow, { borderBottomColor: colors.border }, isMyTeam && { backgroundColor: colors.primary + '08' }]}
+                  style={[
+                    styles.teamRow,
+                    { borderBottomColor: colors.border },
+                    isMyTeam && { backgroundColor: colors.primary + '08' },
+                  ]}
                   onPress={() => setExpandedTeamId(isExpanded ? null : team.id)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.teamInfo}>
                     <View style={styles.teamNameRow}>
-                      <Ionicons name="shield" size={18} color={isMyTeam ? colors.primary : colors.textSecondary} />
-                      <Text style={[styles.teamName, { color: colors.textPrimary }]}>{team.name}</Text>
+                      <Ionicons
+                        name="shield"
+                        size={18}
+                        color={isMyTeam ? colors.primary : colors.textSecondary}
+                      />
+                      <Text style={[styles.teamName, { color: colors.textPrimary }]}>
+                        {team.name}
+                      </Text>
                     </View>
                     <Text style={[styles.teamMeta, { color: colors.textMuted }]}>
-                      {team.captain.name} {team.is_full ? `(${t('teams.teamFull')})` : `(${team.members_count})`}
+                      {team.captain.name}{' '}
+                      {team.is_full ? `(${t('teams.teamFull')})` : `(${team.members_count})`}
                     </Text>
                   </View>
-                  <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+                  <Ionicons
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={colors.textSecondary}
+                  />
                 </TouchableOpacity>
 
                 {isExpanded && team.members && (
@@ -222,10 +269,18 @@ export function EventTeamsTabContent({
                         {isCaptain && myTeam?.id === team.id && reg.user_id !== team.captain.id && (
                           <View style={styles.memberActions}>
                             <TouchableOpacity onPress={() => onTransferCaptain(reg.user_id)}>
-                              <Ionicons name="star-outline" size={18} color={colors.textSecondary} />
+                              <Ionicons
+                                name="star-outline"
+                                size={18}
+                                color={colors.textSecondary}
+                              />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => onKickMember(reg.user_id)}>
-                              <Ionicons name="close-circle-outline" size={18} color={colors.error} />
+                              <Ionicons
+                                name="close-circle-outline"
+                                size={18}
+                                color={colors.error}
+                              />
                             </TouchableOpacity>
                           </View>
                         )}
@@ -241,10 +296,24 @@ export function EventTeamsTabContent({
       </ScrollView>
 
       {/* Create Team Modal */}
-      <Modal visible={showCreateModal} transparent animationType="fade" onRequestClose={() => setShowCreateModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowCreateModal(false)}>
-          <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('teams.createNewTeam')}</Text>
+      <Modal
+        visible={showCreateModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCreateModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('teams.createNewTeam')}
+            </Text>
             <Input
               label={t('teams.teamName')}
               placeholder={t('teams.teamNamePlaceholder')}
@@ -253,18 +322,41 @@ export function EventTeamsTabContent({
               maxLength={100}
             />
             <View style={styles.modalButtons}>
-              <Button title={t('common.cancel')} onPress={() => setShowCreateModal(false)} variant="outline" />
-              <Button title={t('teams.createTeam')} onPress={handleCreate} loading={isActing} disabled={!teamName.trim()} />
+              <Button
+                title={t('common.cancel')}
+                onPress={() => setShowCreateModal(false)}
+                variant="outline"
+              />
+              <Button
+                title={t('teams.createTeam')}
+                onPress={handleCreate}
+                loading={isActing}
+                disabled={!teamName.trim()}
+              />
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
       {/* Join Team Modal */}
-      <Modal visible={showJoinModal} transparent animationType="fade" onRequestClose={() => setShowJoinModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowJoinModal(false)}>
-          <TouchableOpacity activeOpacity={1} style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('teams.joinTeamModal')}</Text>
+      <Modal
+        visible={showJoinModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowJoinModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowJoinModal(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('teams.joinTeamModal')}
+            </Text>
             <Input
               label={t('teams.teamCode')}
               placeholder={t('teams.teamCodePlaceholder')}
@@ -274,8 +366,17 @@ export function EventTeamsTabContent({
               autoCapitalize="characters"
             />
             <View style={styles.modalButtons}>
-              <Button title={t('common.cancel')} onPress={() => setShowJoinModal(false)} variant="outline" />
-              <Button title={t('teams.joinTeam')} onPress={handleJoin} loading={isActing} disabled={joinCode.length < 4} />
+              <Button
+                title={t('common.cancel')}
+                onPress={() => setShowJoinModal(false)}
+                variant="outline"
+              />
+              <Button
+                title={t('teams.joinTeam')}
+                onPress={handleJoin}
+                loading={isActing}
+                disabled={joinCode.length < 4}
+              />
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -288,44 +389,80 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
   actionRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   actionButton: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: spacing.xs, paddingVertical: spacing.sm, borderRadius: 8,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
   },
   actionButtonText: { color: '#fff', fontWeight: '600', fontSize: fontSize.sm },
   section: { marginBottom: spacing.md },
   sectionTitle: { fontSize: fontSize.lg, fontWeight: '700', marginBottom: spacing.sm },
   emptyText: { textAlign: 'center', paddingVertical: spacing.lg, fontSize: fontSize.sm },
   teamRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   teamInfo: { flex: 1 },
   teamNameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   teamName: { fontSize: fontSize.md, fontWeight: '600' },
   teamMeta: { fontSize: fontSize.sm, marginTop: 2, marginLeft: 22 },
-  membersList: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: 8, marginBottom: spacing.xs },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
+  membersList: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+    marginBottom: spacing.xs,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
   memberName: { flex: 1, fontSize: fontSize.sm },
   memberActions: { flexDirection: 'row', gap: spacing.sm },
   codeContainer: { alignItems: 'center', paddingVertical: spacing.md },
   codeLabel: { fontSize: fontSize.sm, marginBottom: spacing.xs },
   codeTitle: { fontSize: fontSize.md, fontWeight: '600', marginBottom: spacing.sm },
   codeBox: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    paddingHorizontal: spacing.lg, paddingVertical: spacing.sm,
-    borderRadius: 8, borderWidth: 2, marginBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 2,
+    marginBottom: spacing.sm,
   },
   codeText: { fontSize: 24, fontWeight: '700', letterSpacing: 4 },
   codeSmall: { fontSize: fontSize.sm },
   codeHint: { fontSize: fontSize.xs, marginBottom: spacing.md, textAlign: 'center' },
-  myTeamHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.sm },
+  myTeamHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
   myTeamLabel: { fontSize: fontSize.sm, fontWeight: '600' },
   myTeamActions: { marginTop: spacing.sm, flexDirection: 'row', gap: spacing.sm },
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center', alignItems: 'center', padding: spacing.lg,
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
   },
   modalContent: { width: '100%', borderRadius: 12, padding: spacing.lg },
   modalTitle: { fontSize: fontSize.lg, fontWeight: '700', marginBottom: spacing.md },
-  modalButtons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, justifyContent: 'flex-end' },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    justifyContent: 'flex-end',
+  },
 });

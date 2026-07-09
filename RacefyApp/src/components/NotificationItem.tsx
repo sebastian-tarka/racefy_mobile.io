@@ -4,7 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
-import { getNotificationIcon, getNotificationIconColor, getNotificationAvatarUrl } from '../hooks/useNotifications';
+import {
+  getNotificationIcon,
+  getNotificationIconColor,
+  getNotificationAvatarUrl,
+} from '../hooks/useNotifications';
 import { spacing, fontSize } from '../theme';
 import type { Notification } from '../types/api';
 import { API_BASE_URL } from '../config/api';
@@ -53,9 +57,7 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
         </Text>
       </View>
 
-      {isUnread && (
-        <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-      )}
+      {isUnread && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
     </TouchableOpacity>
   );
 }

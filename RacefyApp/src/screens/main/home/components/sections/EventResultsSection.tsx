@@ -17,10 +17,14 @@ interface EventResultsSectionProps {
  */
 function getMedalColor(position: number): string {
   switch (position) {
-    case 1: return '#FFD700'; // Gold
-    case 2: return '#C0C0C0'; // Silver
-    case 3: return '#CD7F32'; // Bronze
-    default: return '#9ca3af';
+    case 1:
+      return '#FFD700'; // Gold
+    case 2:
+      return '#C0C0C0'; // Silver
+    case 3:
+      return '#CD7F32'; // Bronze
+    default:
+      return '#9ca3af';
   }
 }
 
@@ -57,9 +61,7 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
           <Ionicons name="trophy" size={24} color={colors.warning} />
         </View>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           <Text style={[styles.eventName, { color: colors.textSecondary }]} numberOfLines={1}>
             {results.event.title}
           </Text>
@@ -71,7 +73,12 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
         <View style={[styles.podium, { borderTopColor: colors.border }]}>
           {results.top_participants.slice(0, 3).map((participant) => (
             <View key={participant.position} style={styles.podiumItem}>
-              <View style={[styles.positionBadge, { backgroundColor: getMedalColor(participant.position) + '30' }]}>
+              <View
+                style={[
+                  styles.positionBadge,
+                  { backgroundColor: getMedalColor(participant.position) + '30' },
+                ]}
+              >
                 <Text style={[styles.positionText, { color: getMedalColor(participant.position) }]}>
                   {participant.position}
                 </Text>

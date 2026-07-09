@@ -31,7 +31,7 @@ interface SocialShareModalProps {
   onClose: () => void;
   type: ShareableType;
   id: number;
-  title?: string | null
+  title?: string | null;
   description?: string | null;
 }
 
@@ -101,7 +101,7 @@ function SocialShareModalComponent({
           response,
           hasResponse: !!response,
           hasUrl: response?.url,
-          responseKeys: response ? Object.keys(response) : []
+          responseKeys: response ? Object.keys(response) : [],
         });
         throw new Error('Invalid response from server - missing url');
       }
@@ -114,15 +114,11 @@ function SocialShareModalComponent({
         id,
         error: err,
         errorMessage: err?.message,
-        errorStack: err?.stack
+        errorStack: err?.stack,
       });
 
       const errorMessage = err?.message || t('share.fetchError');
-      Alert.alert(
-        t('common.error'),
-        errorMessage,
-        [{ text: t('common.ok'), onPress: onClose }]
-      );
+      Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok'), onPress: onClose }]);
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +179,10 @@ function SocialShareModalComponent({
     }
   };
 
-  const handleShareWithImage = async (imageUrl: string | null, shareDataWithImage: ShareLinkResponse) => {
+  const handleShareWithImage = async (
+    imageUrl: string | null,
+    shareDataWithImage: ShareLinkResponse,
+  ) => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -237,25 +236,16 @@ function SocialShareModalComponent({
   const shareTitle = shareData?.title || title || t('share.defaultTitle');
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.background }]}
-            >
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
               <View style={styles.handleContainer}>
                 <View style={[styles.handle, { backgroundColor: colors.border }]} />
               </View>
 
-              <View
-                style={[styles.modalHeader, { borderBottomColor: colors.border }]}
-              >
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                 {showFormatSelector && (
                   <TouchableOpacity
                     onPress={() => setShowFormatSelector(false)}
@@ -358,12 +348,7 @@ function SocialShareModalComponent({
                   </View>
 
                   {/* Copy link section */}
-                  <View
-                    style={[
-                      styles.copyLinkSection,
-                      { borderTopColor: colors.border },
-                    ]}
-                  >
+                  <View style={[styles.copyLinkSection, { borderTopColor: colors.border }]}>
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
                       {t('share.copyLink')}
                     </Text>
@@ -378,10 +363,7 @@ function SocialShareModalComponent({
                       ]}
                     >
                       <TextInput
-                        style={[
-                          styles.linkInput,
-                          { color: colors.textSecondary },
-                        ]}
+                        style={[styles.linkInput, { color: colors.textSecondary }]}
                         value={shareUrl}
                         editable={false}
                         numberOfLines={1}

@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ImageBackground,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
@@ -98,13 +105,9 @@ export function FriendEventsSection({ section, onPress, onEventPress }: FriendEv
           <Ionicons name="people" size={24} color={colors.info} />
         </View>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           {section.message && (
-            <Text style={[styles.message, { color: colors.textSecondary }]}>
-              {section.message}
-            </Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
           )}
         </View>
         {section.cta && (

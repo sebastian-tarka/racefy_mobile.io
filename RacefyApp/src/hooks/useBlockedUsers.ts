@@ -38,35 +38,32 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
 
   const hasMore = currentPage < lastPage;
 
-  const fetchBlockedUsers = useCallback(
-    async (page: number, append: boolean = false) => {
-      try {
-        const response = await api.getBlockedUsers({ page, per_page: 20 });
+  const fetchBlockedUsers = useCallback(async (page: number, append: boolean = false) => {
+    try {
+      const response = await api.getBlockedUsers({ page, per_page: 20 });
 
-        if (append) {
-          setBlockedUsers((prev) => [...prev, ...response.data]);
-        } else {
-          setBlockedUsers(response.data);
-        }
-
-        setCurrentPage(response.meta.current_page);
-        setLastPage(response.meta.last_page);
-        setTotalUsers(response.meta.total);
-        setError(null);
-
-        logger.debug('auth', 'Fetched blocked users', {
-          page: response.meta.current_page,
-          total: response.meta.total,
-        });
-      } catch (err: any) {
-        const errorMessage = err?.message || 'Failed to load blocked users';
-        setError(errorMessage);
-        logger.error('auth', 'Failed to fetch blocked users', { page, error: err });
-        throw err;
+      if (append) {
+        setBlockedUsers((prev) => [...prev, ...response.data]);
+      } else {
+        setBlockedUsers(response.data);
       }
-    },
-    []
-  );
+
+      setCurrentPage(response.meta.current_page);
+      setLastPage(response.meta.last_page);
+      setTotalUsers(response.meta.total);
+      setError(null);
+
+      logger.debug('auth', 'Fetched blocked users', {
+        page: response.meta.current_page,
+        total: response.meta.total,
+      });
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to load blocked users';
+      setError(errorMessage);
+      logger.error('auth', 'Failed to fetch blocked users', { page, error: err });
+      throw err;
+    }
+  }, []);
 
   const loadInitial = useCallback(async () => {
     setIsLoading(true);

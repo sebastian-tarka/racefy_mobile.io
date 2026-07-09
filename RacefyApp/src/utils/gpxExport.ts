@@ -1,8 +1,8 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import {Platform} from 'react-native';
-import {logger} from '../services/logger';
-import type {GpsPoint} from '../types/api';
+import { Platform } from 'react-native';
+import { logger } from '../services/logger';
+import type { GpsPoint } from '../types/api';
 
 export interface GpxExportInput {
   /** Activity id used in filename and `<trk><name>`. */
@@ -40,8 +40,8 @@ export function buildGpxDocument(input: GpxExportInput): string {
   if (sportType) trkParts.push(`    <type>${escapeXml(sportType)}</type>`);
 
   const trkpts = points
-    .filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng))
-    .map(p => {
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
+    .map((p) => {
       const segments: string[] = [];
       if (p.ele != null) segments.push(`        <ele>${p.ele}</ele>`);
       if (p.time) segments.push(`        <time>${escapeXml(p.time)}</time>`);

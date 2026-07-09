@@ -1,10 +1,17 @@
 import React from 'react';
-import {type StyleProp, StyleSheet, Text, TouchableOpacity, View, type ViewStyle} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {TrainingProgram} from '../../types/api';
+import {
+  type StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  type ViewStyle,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { TrainingProgram } from '../../types/api';
 
 interface TrainingProgramRowProps {
   program: TrainingProgram;
@@ -56,7 +63,7 @@ export function TrainingProgramRow({
   const defaultSubtitle =
     total > 0
       ? t('training.weekOfTotal', { current: Math.max(1, currentWeek), total })
-      : program.template?.name ?? '';
+      : (program.template?.name ?? '');
   const sub =
     subtitle ?? (subtitleSuffix ? `${defaultSubtitle} · ${subtitleSuffix}` : defaultSubtitle);
 
@@ -105,7 +112,9 @@ export function TrainingProgramRow({
 
       <View style={styles.progressRow}>
         <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-          <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${percent}%` }]} />
+          <View
+            style={[styles.progressFill, { backgroundColor: colors.primary, width: `${percent}%` }]}
+          />
         </View>
         <Text style={[styles.percent, { color: colors.textSecondary }]}>{percent}%</Text>
       </View>

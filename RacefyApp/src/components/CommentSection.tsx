@@ -1,17 +1,17 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {CommentItem} from './CommentItem';
-import {CommentInput} from './CommentInput';
-import {Card} from './Card';
-import {useTheme} from '../hooks/useTheme';
-import {useAuth} from '../hooks/useAuth';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {emitRefresh} from '../services/refreshEvents';
-import {fontSize, spacing} from '../theme';
-import type {Comment, CommentableType, MediaItem, User} from '../types/api';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { CommentItem } from './CommentItem';
+import { CommentInput } from './CommentInput';
+import { Card } from './Card';
+import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { emitRefresh } from '../services/refreshEvents';
+import { fontSize, spacing } from '../theme';
+import type { Comment, CommentableType, MediaItem, User } from '../types/api';
 
 interface CommentSectionParts {
   header: React.ReactNode;
@@ -115,10 +115,8 @@ export function CommentSection({
       // Add as reply to parent comment
       setComments((prev) =>
         prev.map((c) =>
-          c.id === replyingTo.id
-            ? { ...c, replies: [...(c.replies || []), newComment] }
-            : c
-        )
+          c.id === replyingTo.id ? { ...c, replies: [...(c.replies || []), newComment] } : c,
+        ),
       );
     } else {
       // Add as top-level comment
@@ -145,58 +143,57 @@ export function CommentSection({
     emitRefresh('feed');
   }, []);
 
-  const handleEditComment = useCallback(async (
-    commentId: number,
-    data: { content: string; deleteMediaId?: number; newMedia?: MediaItem }
-  ) => {
-    // Delete existing media if requested (before update)
-    if (data.deleteMediaId) {
-      try {
-        await api.deleteCommentPhoto(commentId, data.deleteMediaId);
-      } catch (e) {
-        logger.warn('api', 'Failed to delete photo', { error: e });
+  const handleEditComment = useCallback(
+    async (
+      commentId: number,
+      data: { content: string; deleteMediaId?: number; newMedia?: MediaItem },
+    ) => {
+      // Delete existing media if requested (before update)
+      if (data.deleteMediaId) {
+        try {
+          await api.deleteCommentPhoto(commentId, data.deleteMediaId);
+        } catch (e) {
+          logger.warn('api', 'Failed to delete photo', { error: e });
+        }
       }
-    }
 
-    // Update comment content (with optional new photo - replaces existing)
-    const updatedComment = await api.updateComment(
-      commentId,
-      data.content,
-      data.newMedia
-    );
+      // Update comment content (with optional new photo - replaces existing)
+      const updatedComment = await api.updateComment(commentId, data.content, data.newMedia);
 
-    // Update local state with the returned comment data
-    setComments((prev) =>
-      prev.map((c) => {
-        if (c.id === commentId) {
-          return {
-            ...c,
-            content: updatedComment.content,
-            mentions: updatedComment.mentions ?? c.mentions,
-            photos: updatedComment.photos || [],
-          };
-        }
-        // Check in replies
-        if (c.replies) {
-          return {
-            ...c,
-            replies: c.replies.map((r) => {
-              if (r.id === commentId) {
-                return {
-                  ...r,
-                  content: updatedComment.content,
-                  mentions: updatedComment.mentions ?? r.mentions,
-                  photos: updatedComment.photos || [],
-                };
-              }
-              return r;
-            }),
-          };
-        }
-        return c;
-      })
-    );
-  }, []);
+      // Update local state with the returned comment data
+      setComments((prev) =>
+        prev.map((c) => {
+          if (c.id === commentId) {
+            return {
+              ...c,
+              content: updatedComment.content,
+              mentions: updatedComment.mentions ?? c.mentions,
+              photos: updatedComment.photos || [],
+            };
+          }
+          // Check in replies
+          if (c.replies) {
+            return {
+              ...c,
+              replies: c.replies.map((r) => {
+                if (r.id === commentId) {
+                  return {
+                    ...r,
+                    content: updatedComment.content,
+                    mentions: updatedComment.mentions ?? r.mentions,
+                    photos: updatedComment.photos || [],
+                  };
+                }
+                return r;
+              }),
+            };
+          }
+          return c;
+        }),
+      );
+    },
+    [],
+  );
 
   const handleReply = useCallback((comment: Comment) => {
     setReplyingTo(comment);
@@ -210,15 +207,18 @@ export function CommentSection({
     setIsExpanded((prev) => !prev);
   };
 
-  const renderComment = useCallback(({ item }: { item: Comment }) => (
-    <CommentItem
-      comment={item}
-      onDelete={handleDeleteComment}
-      onEdit={handleEditComment}
-      onReply={handleReply}
-      onUserPress={onUserPress}
-    />
-  ), [handleDeleteComment, handleEditComment, handleReply, onUserPress]);
+  const renderComment = useCallback(
+    ({ item }: { item: Comment }) => (
+      <CommentItem
+        comment={item}
+        onDelete={handleDeleteComment}
+        onEdit={handleEditComment}
+        onReply={handleReply}
+        onUserPress={onUserPress}
+      />
+    ),
+    [handleDeleteComment, handleEditComment, handleReply, onUserPress],
+  );
 
   const renderEmpty = () => {
     if (isLoading) {
@@ -234,7 +234,9 @@ export function CommentSection({
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>{error}</Text>
           <TouchableOpacity onPress={fetchComments}>
-            <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.tryAgain')}</Text>
+            <Text style={[styles.retryText, { color: colors.primary }]}>
+              {t('common.tryAgain')}
+            </Text>
           </TouchableOpacity>
         </View>
       );
@@ -280,9 +282,7 @@ export function CommentSection({
         {comments.length === 0
           ? renderEmpty()
           : comments.map((item) => (
-              <React.Fragment key={String(item.id)}>
-                {renderComment({ item })}
-              </React.Fragment>
+              <React.Fragment key={String(item.id)}>{renderComment({ item })}</React.Fragment>
             ))}
       </View>
     ) : (
@@ -298,19 +298,18 @@ export function CommentSection({
     )
   ) : null;
 
-  const commentInputNode = isExpanded && isAuthenticated ? (
-    <CommentInput
-      onSubmit={handleCreateComment}
-      replyingTo={replyingTo}
-      onCancelReply={handleCancelReply}
-      onFocus={onInputFocus}
-      placeholder={
-        replyingTo
-          ? t('comments.replyPlaceholder', { name: replyingTo.user?.name })
-          : undefined
-      }
-    />
-  ) : null;
+  const commentInputNode =
+    isExpanded && isAuthenticated ? (
+      <CommentInput
+        onSubmit={handleCreateComment}
+        replyingTo={replyingTo}
+        onCancelReply={handleCancelReply}
+        onFocus={onInputFocus}
+        placeholder={
+          replyingTo ? t('comments.replyPlaceholder', { name: replyingTo.user?.name }) : undefined
+        }
+      />
+    ) : null;
 
   if (renderLayout) {
     return renderLayout({

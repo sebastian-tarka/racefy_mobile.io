@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type {ApiBase} from './base';
+import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -23,7 +23,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getBrandAsset(
       category: Types.BrandAssetCategory,
-      variant?: Types.BrandAssetVariant
+      variant?: Types.BrandAssetVariant,
     ): Promise<Types.BrandAsset> {
       const endpoint = variant
         ? `/brand-assets/${category}/${variant}`
@@ -57,26 +57,37 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param query - Search query (min 2 characters)
      */
     async searchUsers(query: string): Promise<Types.SearchUsersResponse> {
-      return this.request<Types.SearchUsersResponse>(`/search/users?q=${encodeURIComponent(query)}`);
+      return this.request<Types.SearchUsersResponse>(
+        `/search/users?q=${encodeURIComponent(query)}`,
+      );
     }
 
     // ============ MENTIONS ============
 
-    async searchMentionUsers(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchUser[]>> {
+    async searchMentionUsers(
+      query: string,
+      limit = 10,
+    ): Promise<Types.ApiResponse<Types.MentionSearchUser[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchUser[]>>(
-        `/mentions/search/users?q=${encodeURIComponent(query)}&limit=${limit}`
+        `/mentions/search/users?q=${encodeURIComponent(query)}&limit=${limit}`,
       );
     }
 
-    async searchMentionEvents(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchEvent[]>> {
+    async searchMentionEvents(
+      query: string,
+      limit = 10,
+    ): Promise<Types.ApiResponse<Types.MentionSearchEvent[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchEvent[]>>(
-        `/mentions/search/events?q=${encodeURIComponent(query)}&limit=${limit}`
+        `/mentions/search/events?q=${encodeURIComponent(query)}&limit=${limit}`,
       );
     }
 
-    async searchMentionActivities(query: string, limit = 10): Promise<Types.ApiResponse<Types.MentionSearchActivity[]>> {
+    async searchMentionActivities(
+      query: string,
+      limit = 10,
+    ): Promise<Types.ApiResponse<Types.MentionSearchActivity[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchActivity[]>>(
-        `/mentions/search/activities?q=${encodeURIComponent(query)}&limit=${limit}`
+        `/mentions/search/activities?q=${encodeURIComponent(query)}&limit=${limit}`,
       );
     }
 
@@ -86,11 +97,13 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * Report map usage to backend for cost tracking
      * Helps monitor Mapbox SDK usage and costs
      */
-    async reportMapUsage(reports: Array<{
-      activityId: number;
-      timestamp: string;
-      mapType: 'interactive' | 'static';
-    }>): Promise<void> {
+    async reportMapUsage(
+      reports: {
+        activityId: number;
+        timestamp: string;
+        mapType: 'interactive' | 'static';
+      }[],
+    ): Promise<void> {
       await this.request('/analytics/map-usage', {
         method: 'POST',
         body: JSON.stringify({ reports }),
@@ -121,7 +134,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       }
       const queryString = query.toString();
       const response = await this.request<{ data: Types.HomeData }>(
-        `/home${queryString ? `?${queryString}` : ''}`
+        `/home${queryString ? `?${queryString}` : ''}`,
       );
       return response.data;
     }
@@ -172,7 +185,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async searchUsersForImpersonation(query: string): Promise<Types.User[]> {
       const response = await this.request<Types.ApiResponse<Types.User[]>>(
-        `/admin/users/search?q=${encodeURIComponent(query)}`
+        `/admin/users/search?q=${encodeURIComponent(query)}`,
       );
       return response.data;
     }
@@ -182,41 +195,33 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param userId - ID of user to impersonate
      */
     async startImpersonation(userId: number): Promise<Types.StartImpersonationResponse> {
-      return await this.request<Types.StartImpersonationResponse>(
-        '/admin/impersonate/start',
-        {
-          method: 'POST',
-          body: JSON.stringify({ user_id: userId }),
-        }
-      );
+      return await this.request<Types.StartImpersonationResponse>('/admin/impersonate/start', {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId }),
+      });
     }
 
     /**
      * Stop impersonating and return to admin account
      */
     async stopImpersonation(): Promise<Types.StopImpersonationResponse> {
-      return await this.request<Types.StopImpersonationResponse>(
-        '/admin/impersonate/stop',
-        { method: 'POST' }
-      );
+      return await this.request<Types.StopImpersonationResponse>('/admin/impersonate/stop', {
+        method: 'POST',
+      });
     }
 
     /**
      * Check if currently impersonating
      */
     async getImpersonationStatus(): Promise<Types.ImpersonationStatusResponse> {
-      return await this.request<Types.ImpersonationStatusResponse>(
-        '/admin/impersonate/status'
-      );
+      return await this.request<Types.ImpersonationStatusResponse>('/admin/impersonate/status');
     }
 
     /**
      * Get user rewards
      * @param filters - Optional filters (type, event_id)
      */
-    async getUserRewards(
-      filters?: Types.RewardsQueryParams
-    ): Promise<Types.RewardsResponse> {
+    async getUserRewards(filters?: Types.RewardsQueryParams): Promise<Types.RewardsResponse> {
       const params = new URLSearchParams();
       if (filters?.type) params.append('type', filters.type);
       if (filters?.event_id) params.append('event_id', filters.event_id.toString());

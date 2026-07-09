@@ -83,16 +83,10 @@ export function WeatherInsightSection({ section, onPress }: WeatherInsightSectio
     >
       <View style={styles.content}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor + '30' }]}>
-          <Ionicons
-            name={getWeatherIcon(weather?.condition)}
-            size={28}
-            color={iconColor}
-          />
+          <Ionicons name={getWeatherIcon(weather?.condition)} size={28} color={iconColor} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           {weather && (
             <View style={styles.tempRow}>
               <Text style={[styles.temperature, { color: colors.textPrimary }]}>
@@ -111,9 +105,7 @@ export function WeatherInsightSection({ section, onPress }: WeatherInsightSectio
             </Text>
           )}
         </View>
-        {section.cta && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        )}
+        {section.cta && <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
       </View>
 
       {weather?.recommendation && (

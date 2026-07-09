@@ -2,11 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { nearestPointOnRoute, routeTotalDistance } from '../utils/routeNavigation';
-import type {
-  GeoJSONLineString,
-  RouteTurnInstruction,
-  RoutePreviewResponse,
-} from '../types/api';
+import type { GeoJSONLineString, RouteTurnInstruction, RoutePreviewResponse } from '../types/api';
 
 interface Params {
   /** Original shadow track / route geometry */
@@ -130,7 +126,7 @@ export function useRouteApproachPath({
 
         // Approach turns (already start at 0) + base turns shifted by approachDistance and rebased to nearest.distanceAlong
         const baseTurnsShifted = shiftTurnsAfter(baseTurnInstructions, baseOffsetRemoved).map(
-          (t) => ({ ...t, distance_along: t.distance_along + approachDistance })
+          (t) => ({ ...t, distance_along: t.distance_along + approachDistance }),
         );
 
         setState({
@@ -188,7 +184,7 @@ export function useRouteApproachPath({
 function trimRouteFrom(
   coords: [number, number][],
   index: number,
-  startPoint: [number, number]
+  startPoint: [number, number],
 ): [number, number][] {
   if (coords.length === 0) return [];
   if (index <= 0) return [startPoint, ...coords.slice(1)];
@@ -200,7 +196,7 @@ function trimRouteFrom(
  */
 function shiftTurnsAfter(
   turns: RouteTurnInstruction[],
-  offsetMeters: number
+  offsetMeters: number,
 ): RouteTurnInstruction[] {
   if (!turns?.length) return [];
   return turns

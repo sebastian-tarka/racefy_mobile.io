@@ -43,21 +43,15 @@ function CompareUserSelectorComponent({
         styles.userItem,
         {
           backgroundColor:
-            selectedUser?.id === item.id
-              ? colors.primary + '20'
-              : colors.cardBackground,
+            selectedUser?.id === item.id ? colors.primary + '20' : colors.cardBackground,
         },
       ]}
       onPress={() => handleSelectUser(item)}
     >
       <Avatar uri={item.avatar} name={item.name} size="sm" />
       <View style={styles.userInfo}>
-        <Text style={[styles.userName, { color: colors.textPrimary }]}>
-          {item.name}
-        </Text>
-        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
-          @{item.username}
-        </Text>
+        <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
+        <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
       </View>
       {selectedUser?.id === item.id && (
         <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
@@ -96,11 +90,7 @@ function CompareUserSelectorComponent({
               {t('profile.stats.selectUser')}
             </Text>
           )}
-          <Ionicons
-            name="chevron-down"
-            size={20}
-            color={colors.textSecondary}
-          />
+          <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -111,18 +101,8 @@ function CompareUserSelectorComponent({
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: colors.background },
-            ]}
-          >
-            <View
-              style={[
-                styles.modalHeader,
-                { borderBottomColor: colors.border },
-              ]}
-            >
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 {t('profile.stats.selectUserTitle')}
               </Text>
@@ -137,17 +117,10 @@ function CompareUserSelectorComponent({
             {/* Clear selection option */}
             {selectedUser && (
               <TouchableOpacity
-                style={[
-                  styles.clearButton,
-                  { borderBottomColor: colors.border },
-                ]}
+                style={[styles.clearButton, { borderBottomColor: colors.border }]}
                 onPress={() => handleSelectUser(null)}
               >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={20}
-                  color={colors.textSecondary}
-                />
+                <Ionicons name="close-circle-outline" size={20} color={colors.textSecondary} />
                 <Text style={[styles.clearText, { color: colors.textSecondary }]}>
                   {t('profile.stats.clearComparison')}
                 </Text>
@@ -156,11 +129,7 @@ function CompareUserSelectorComponent({
 
             {following.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons
-                  name="people-outline"
-                  size={48}
-                  color={colors.textMuted}
-                />
+                <Ionicons name="people-outline" size={48} color={colors.textMuted} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                   {t('profile.stats.noFollowing')}
                 </Text>

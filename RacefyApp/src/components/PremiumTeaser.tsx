@@ -76,9 +76,7 @@ export function PremiumTeaser({
         </Text>
         <View style={[styles.badge, { backgroundColor: badgeColor + '15' }]}>
           <Ionicons name="diamond" size={12} color={badgeColor} />
-          <Text style={[styles.badgeText, { color: badgeColor }]}>
-            {badgeTier.toUpperCase()}
-          </Text>
+          <Text style={[styles.badgeText, { color: badgeColor }]}>{badgeTier.toUpperCase()}</Text>
         </View>
         <Text style={[styles.tapHint, { color: colors.textMuted }]}>
           {t('subscription.tapToUpgrade')}

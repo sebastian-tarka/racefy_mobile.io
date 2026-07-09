@@ -24,7 +24,12 @@ export function ProfileTabs({ tabs, activeTab, onTabChange, useEmoji = false }: 
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+    <View
+      style={[
+        styles.tabContainer,
+        { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+      ]}
+    >
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.value}
@@ -41,7 +46,10 @@ export function ProfileTabs({ tabs, activeTab, onTabChange, useEmoji = false }: 
             />
           )}
           <Text
-            style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}
+            style={[
+              styles.tabText,
+              { color: activeTab === tab.value ? colors.primary : colors.textSecondary },
+            ]}
           >
             {tab.label}
           </Text>

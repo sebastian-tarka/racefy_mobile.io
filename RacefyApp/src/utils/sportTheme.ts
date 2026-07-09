@@ -62,9 +62,11 @@ export function getSportTheme(sportName?: string): SportTheme {
   if (name.includes('run') || name.includes('jog')) return sportThemes.running;
   if (name.includes('cycl') || name.includes('bike')) return sportThemes.cycling;
   if (name.includes('swim')) return sportThemes.swimming;
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness')) return sportThemes.gym;
+  if (name.includes('gym') || name.includes('weight') || name.includes('fitness'))
+    return sportThemes.gym;
   if (name.includes('yoga') || name.includes('pilates')) return sportThemes.yoga;
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek')) return sportThemes.hiking;
+  if (name.includes('hik') || name.includes('walk') || name.includes('trek'))
+    return sportThemes.hiking;
 
   return sportThemes.default;
 }

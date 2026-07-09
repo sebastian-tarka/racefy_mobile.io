@@ -13,6 +13,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ScreenContainer, ScreenHeader } from '../components';
+import { useSubscription } from '../hooks/useSubscription';
+import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
+import { getOfferings, purchasePackage, restorePurchases } from '../services/revenuecat';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { formatPrice } from '../utils/formatters';
+import { spacing, fontSize, borderRadius } from '../theme';
+import type { SubscriptionPlan } from '../types/api';
+import type { RootStackParamList } from '../navigation/types';
 // Lazy-loaded — native module not available in Expo Go
 let RevenueCatUI: any = null;
 let PAYWALL_RESULT: any = {};
@@ -23,21 +34,6 @@ try {
 } catch {
   // native module not linked (Expo Go / dev client without rebuild)
 }
-import { ScreenContainer, ScreenHeader } from '../components';
-import { useSubscription } from '../hooks/useSubscription';
-import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
-import {
-  getOfferings,
-  purchasePackage,
-  restorePurchases,
-} from '../services/revenuecat';
-import { api } from '../services/api';
-import { logger } from '../services/logger';
-import { formatPrice } from '../utils/formatters';
-import { spacing, fontSize, borderRadius } from '../theme';
-import type { SubscriptionPlan } from '../types/api';
-import type { RootStackParamList } from '../navigation/types';
 
 // Feature icon mapping (keys match API response from /subscription/features)
 const FEATURE_ICONS: Record<string, string> = {
@@ -89,8 +85,22 @@ const FEATURE_ORDER: string[] = [
 // Key features shown on plan cards (bullet points)
 const KEY_FEATURES_BY_TIER: Record<string, string[]> = {
   free: ['events_monthly', 'training_programs', 'teams_max', 'privacy_zones'],
-  plus: ['ai_posts_monthly', 'events_monthly', 'training_summaries', 'advanced_stats', 'gpx_export', 'audio_coach_ai'],
-  pro: ['events_monthly', 'ai_posts_monthly', 'exclusive_badges', 'points_multiplier', 'coaching_hints_bulk', 'teams_max'],
+  plus: [
+    'ai_posts_monthly',
+    'events_monthly',
+    'training_summaries',
+    'advanced_stats',
+    'gpx_export',
+    'audio_coach_ai',
+  ],
+  pro: [
+    'events_monthly',
+    'ai_posts_monthly',
+    'exclusive_badges',
+    'points_multiplier',
+    'coaching_hints_bulk',
+    'teams_max',
+  ],
 };
 
 // Features data from /subscription/features endpoint
@@ -139,46 +149,57 @@ export function PaywallScreen() {
     load();
   }, []);
 
-  const findPackageForPlan = useCallback((planTier: string, cycle: 'monthly' | 'yearly') => {
-    return packages.find(pkg => {
-      const id = (pkg.identifier || '').toLowerCase();
-      const matchesTier = id.includes(planTier);
-      const matchesCycle = cycle === 'monthly'
-        ? (id.includes('month') || pkg.packageType === 'MONTHLY')
-        : (id.includes('annual') || id.includes('year') || pkg.packageType === 'ANNUAL');
-      return matchesTier && matchesCycle;
-    });
-  }, [packages]);
+  const findPackageForPlan = useCallback(
+    (planTier: string, cycle: 'monthly' | 'yearly') => {
+      return packages.find((pkg) => {
+        const id = (pkg.identifier || '').toLowerCase();
+        const matchesTier = id.includes(planTier);
+        const matchesCycle =
+          cycle === 'monthly'
+            ? id.includes('month') || pkg.packageType === 'MONTHLY'
+            : id.includes('annual') || id.includes('year') || pkg.packageType === 'ANNUAL';
+        return matchesTier && matchesCycle;
+      });
+    },
+    [packages],
+  );
 
-  const handlePurchase = useCallback(async (pkg: any) => {
-    setPurchasing(true);
-    try {
-      const { success } = await purchasePackage(pkg);
-      if (success) {
-        await refreshUser();
-        Alert.alert(
-          t('subscription.purchaseSuccess'),
-          t('subscription.purchaseSuccessDesc'),
-          [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
-        );
+  const handlePurchase = useCallback(
+    async (pkg: any) => {
+      setPurchasing(true);
+      try {
+        const { success } = await purchasePackage(pkg);
+        if (success) {
+          await refreshUser();
+          Alert.alert(t('subscription.purchaseSuccess'), t('subscription.purchaseSuccessDesc'), [
+            { text: t('common.ok'), onPress: () => navigation.goBack() },
+          ]);
+        }
+      } catch {
+        Alert.alert(t('common.error'), t('subscription.purchaseFailed'));
+      } finally {
+        setPurchasing(false);
       }
-    } catch {
-      Alert.alert(t('common.error'), t('subscription.purchaseFailed'));
-    } finally {
-      setPurchasing(false);
-    }
-  }, [refreshUser, navigation, t]);
+    },
+    [refreshUser, navigation, t],
+  );
 
-  const handleSelectPlan = useCallback((plan: SubscriptionPlan) => {
-    if (plan.tier === 'free' || plan.tier === tier) return;
-    const pkg = findPackageForPlan(plan.tier, billingCycle);
-    if (pkg) {
-      handlePurchase(pkg);
-    } else {
-      logger.warn('general', 'No RevenueCat package found for plan', { tier: plan.tier, cycle: billingCycle });
-      Alert.alert(t('common.error'), t('subscription.purchaseFailed'));
-    }
-  }, [tier, billingCycle, findPackageForPlan, handlePurchase, t]);
+  const handleSelectPlan = useCallback(
+    (plan: SubscriptionPlan) => {
+      if (plan.tier === 'free' || plan.tier === tier) return;
+      const pkg = findPackageForPlan(plan.tier, billingCycle);
+      if (pkg) {
+        handlePurchase(pkg);
+      } else {
+        logger.warn('general', 'No RevenueCat package found for plan', {
+          tier: plan.tier,
+          cycle: billingCycle,
+        });
+        Alert.alert(t('common.error'), t('subscription.purchaseFailed'));
+      }
+    },
+    [tier, billingCycle, findPackageForPlan, handlePurchase, t],
+  );
 
   const handleRestore = useCallback(async () => {
     setRestoring(true);
@@ -188,11 +209,9 @@ export function PaywallScreen() {
         await refreshUser();
         const hasActive = Object.keys(customerInfo.entitlements.active).length > 0;
         if (hasActive) {
-          Alert.alert(
-            t('subscription.restoreSuccess'),
-            t('subscription.restoreSuccessDesc'),
-            [{ text: t('common.ok'), onPress: () => navigation.goBack() }]
-          );
+          Alert.alert(t('subscription.restoreSuccess'), t('subscription.restoreSuccessDesc'), [
+            { text: t('common.ok'), onPress: () => navigation.goBack() },
+          ]);
         } else {
           Alert.alert(t('subscription.restoreEmpty'), t('subscription.restoreEmptyDesc'));
         }
@@ -232,13 +251,19 @@ export function PaywallScreen() {
     }
     if (typeof value === 'number') {
       if (value === -1) {
-        return <Text style={[styles.featureValueText, { color: colors.primary }]}>{t('subscription.unlimited')}</Text>;
+        return (
+          <Text style={[styles.featureValueText, { color: colors.primary }]}>
+            {t('subscription.unlimited')}
+          </Text>
+        );
       }
       if (value === 0) {
         return <Ionicons name="close-circle" size={18} color={colors.textMuted} />;
       }
       const displayValue = featureKey === 'points_multiplier' ? `${value}x` : String(value);
-      return <Text style={[styles.featureValueText, { color: colors.primary }]}>{displayValue}</Text>;
+      return (
+        <Text style={[styles.featureValueText, { color: colors.primary }]}>{displayValue}</Text>
+      );
     }
     return null;
   };
@@ -268,15 +293,26 @@ export function PaywallScreen() {
 
   // Sort plans: free, plus, pro
   const tierOrder = { free: 0, plus: 1, pro: 2 };
-  const sortedPlans = [...plans].sort((a, b) => (tierOrder[a.tier] ?? 0) - (tierOrder[b.tier] ?? 0));
+  const sortedPlans = [...plans].sort(
+    (a, b) => (tierOrder[a.tier] ?? 0) - (tierOrder[b.tier] ?? 0),
+  );
 
   return (
     <ScreenContainer>
-      <ScreenHeader title={t('subscription.choosePlan')} showBack onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('subscription.choosePlan')}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Trial banner */}
         {isTrial && remainingDays !== null && (
-          <View style={[styles.trialCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '20' }]}>
+          <View
+            style={[
+              styles.trialCard,
+              { backgroundColor: colors.primary + '10', borderColor: colors.primary + '20' },
+            ]}
+          >
             <Ionicons name="diamond-outline" size={20} color={colors.primary} />
             <Text style={[styles.trialText, { color: colors.primary }]}>
               {t('subscription.trialActive', { days: remainingDays })}
@@ -285,7 +321,11 @@ export function PaywallScreen() {
         )}
 
         {loading ? (
-          <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: spacing.xl }} />
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={{ marginVertical: spacing.xl }}
+          />
         ) : (
           <>
             {/* Billing cycle toggle */}
@@ -299,11 +339,16 @@ export function PaywallScreen() {
                   onPress={() => setBillingCycle('monthly')}
                   activeOpacity={0.7}
                 >
-                  <Text style={[
-                    styles.toggleText,
-                    { color: billingCycle === 'monthly' ? colors.textPrimary : colors.textSecondary },
-                    billingCycle === 'monthly' && styles.toggleTextActive,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      {
+                        color:
+                          billingCycle === 'monthly' ? colors.textPrimary : colors.textSecondary,
+                      },
+                      billingCycle === 'monthly' && styles.toggleTextActive,
+                    ]}
+                  >
                     {t('subscription.monthly')}
                   </Text>
                 </TouchableOpacity>
@@ -315,11 +360,16 @@ export function PaywallScreen() {
                   onPress={() => setBillingCycle('yearly')}
                   activeOpacity={0.7}
                 >
-                  <Text style={[
-                    styles.toggleText,
-                    { color: billingCycle === 'yearly' ? colors.textPrimary : colors.textSecondary },
-                    billingCycle === 'yearly' && styles.toggleTextActive,
-                  ]}>
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      {
+                        color:
+                          billingCycle === 'yearly' ? colors.textPrimary : colors.textSecondary,
+                      },
+                      billingCycle === 'yearly' && styles.toggleTextActive,
+                    ]}
+                  >
                     {t('subscription.yearlyDiscount')}
                   </Text>
                 </TouchableOpacity>
@@ -358,15 +408,18 @@ export function PaywallScreen() {
 
                   {/* Price */}
                   <View style={styles.priceRow}>
-                    <Text style={[
-                      styles.planPrice,
-                      { color: isPopular ? colors.primary : colors.textPrimary },
-                    ]}>
+                    <Text
+                      style={[
+                        styles.planPrice,
+                        { color: isPopular ? colors.primary : colors.textPrimary },
+                      ]}
+                    >
                       {getPlanPrice(plan)}
                     </Text>
                     {plan.tier !== 'free' && (
                       <Text style={[styles.planPeriod, { color: colors.textSecondary }]}>
-                        {' '}{getPlanPeriod()}
+                        {' '}
+                        {getPlanPeriod()}
                       </Text>
                     )}
                   </View>
@@ -382,7 +435,8 @@ export function PaywallScreen() {
                         <View key={featureKey} style={styles.keyFeatureRow}>
                           <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
                           <Text style={[styles.keyFeatureText, { color: colors.textPrimary }]}>
-                            {valueStr ? `${valueStr} ` : ''}{t(`subscription.features.${featureKey}`)}
+                            {valueStr ? `${valueStr} ` : ''}
+                            {t(`subscription.features.${featureKey}`)}
                           </Text>
                         </View>
                       );
@@ -404,11 +458,14 @@ export function PaywallScreen() {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.ctaButton, {
-                        backgroundColor: 'transparent',
-                        borderWidth: 1,
-                        borderColor: colors.primary,
-                      }]}
+                      style={[
+                        styles.ctaButton,
+                        {
+                          backgroundColor: 'transparent',
+                          borderWidth: 1,
+                          borderColor: colors.primary,
+                        },
+                      ]}
                       onPress={() => handleSelectPlan(plan)}
                       disabled={purchasing}
                       activeOpacity={0.7}
@@ -448,20 +505,25 @@ export function PaywallScreen() {
                   <View style={styles.featureLabelCol} />
                   {['free', 'plus', 'pro'].map((planTier) => (
                     <View key={planTier} style={styles.planCol}>
-                      <Text style={[
-                        styles.tableHeaderPlan,
-                        { color: planTier === tier ? colors.primary : colors.textPrimary },
-                      ]}>
-                        {planTier === 'free' ? t('subscription.free') : planTier.charAt(0).toUpperCase() + planTier.slice(1)}
+                      <Text
+                        style={[
+                          styles.tableHeaderPlan,
+                          { color: planTier === tier ? colors.primary : colors.textPrimary },
+                        ]}
+                      >
+                        {planTier === 'free'
+                          ? t('subscription.free')
+                          : planTier.charAt(0).toUpperCase() + planTier.slice(1)}
                       </Text>
                     </View>
                   ))}
                 </View>
 
                 {/* Feature rows */}
-                {FEATURE_ORDER.filter(key => {
+                {FEATURE_ORDER.filter((key) => {
                   // Only show features that exist in API data
-                  const anyTier = featuresPerTier.free || featuresPerTier.plus || featuresPerTier.pro;
+                  const anyTier =
+                    featuresPerTier.free || featuresPerTier.plus || featuresPerTier.pro;
                   return anyTier && key in anyTier;
                 }).map((featureKey) => (
                   <View
@@ -511,11 +573,7 @@ export function PaywallScreen() {
         )}
 
         {/* Restore purchases */}
-        <TouchableOpacity
-          style={styles.restoreLink}
-          onPress={handleRestore}
-          disabled={restoring}
-        >
+        <TouchableOpacity style={styles.restoreLink} onPress={handleRestore} disabled={restoring}>
           {restoring ? (
             <ActivityIndicator size="small" color={colors.textMuted} />
           ) : (

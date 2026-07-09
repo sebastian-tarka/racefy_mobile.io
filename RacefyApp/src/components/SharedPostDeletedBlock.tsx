@@ -20,9 +20,7 @@ export function SharedPostDeletedBlock() {
       ]}
     >
       <Ionicons name="warning-outline" size={20} color={colors.textMuted} />
-      <Text style={[styles.text, { color: colors.textMuted }]}>
-        {t('reshare.originalDeleted')}
-      </Text>
+      <Text style={[styles.text, { color: colors.textMuted }]}>{t('reshare.originalDeleted')}</Text>
     </View>
   );
 }

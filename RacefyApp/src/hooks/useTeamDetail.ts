@@ -12,7 +12,12 @@ interface UseTeamDetailParams {
   navigateBack: () => void;
 }
 
-export function useTeamDetail({ slug, isAuthenticated, userId, navigateBack }: UseTeamDetailParams) {
+export function useTeamDetail({
+  slug,
+  isAuthenticated,
+  userId,
+  navigateBack,
+}: UseTeamDetailParams) {
   const { t } = useTranslation();
 
   const [team, setTeam] = useState<Team | null>(null);
@@ -23,7 +28,14 @@ export function useTeamDetail({ slug, isAuthenticated, userId, navigateBack }: U
 
   const derived = useMemo(() => {
     if (!team) {
-      return { isCaptain: false, isMember: false, canEdit: false, activeMembers: [], invitations: [], joinRequests: [] };
+      return {
+        isCaptain: false,
+        isMember: false,
+        canEdit: false,
+        activeMembers: [],
+        invitations: [],
+        joinRequests: [],
+      };
     }
     // Fallback: check captain.id against current user if is_captain not set by API
     const captainById = userId ? team.captain?.id === userId : false;
@@ -33,7 +45,7 @@ export function useTeamDetail({ slug, isAuthenticated, userId, navigateBack }: U
       isCaptain,
       isMember,
       canEdit: isCaptain,
-      activeMembers: (team.members || []).filter(m => m.status === 'active'),
+      activeMembers: (team.members || []).filter((m) => m.status === 'active'),
       invitations: team.invitations || [],
       joinRequests: team.join_requests || [],
     };
@@ -125,66 +137,78 @@ export function useTeamDetail({ slug, isAuthenticated, userId, navigateBack }: U
     ]);
   }, [team, navigateBack, t]);
 
-  const handleKickMember = useCallback(async (userId: number, userName: string) => {
-    if (!team) return;
-    Alert.alert(t('teams.confirmKick'), t('teams.confirmKickDescription', { name: userName }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('teams.kickMember'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await api.kickTeamMember(team.id, userId);
-            await fetchTeam();
-          } catch {
-            Alert.alert(t('common.error'), t('common.tryAgain'));
-          }
-        },
-      },
-    ]);
-  }, [team, fetchTeam, t]);
-
-  const handleTransferCaptain = useCallback(async (userId: number, userName: string) => {
-    if (!team) return;
-    Alert.alert(
-      t('teams.confirmTransferCaptain'),
-      t('teams.confirmTransferCaptainDescription', { name: userName }),
-      [
+  const handleKickMember = useCallback(
+    async (userId: number, userName: string) => {
+      if (!team) return;
+      Alert.alert(t('teams.confirmKick'), t('teams.confirmKickDescription', { name: userName }), [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('teams.transferCaptain'),
+          text: t('teams.kickMember'),
+          style: 'destructive',
           onPress: async () => {
             try {
-              await api.transferTeamCaptain(team.id, userId);
+              await api.kickTeamMember(team.id, userId);
               await fetchTeam();
             } catch {
               Alert.alert(t('common.error'), t('common.tryAgain'));
             }
           },
         },
-      ],
-    );
-  }, [team, fetchTeam, t]);
+      ]);
+    },
+    [team, fetchTeam, t],
+  );
 
-  const handleAcceptJoinRequest = useCallback(async (membershipId: number) => {
-    if (!team) return;
-    try {
-      await api.acceptJoinRequest(team.id, membershipId);
-      await fetchTeam();
-    } catch {
-      Alert.alert(t('common.error'), t('common.tryAgain'));
-    }
-  }, [team, fetchTeam, t]);
+  const handleTransferCaptain = useCallback(
+    async (userId: number, userName: string) => {
+      if (!team) return;
+      Alert.alert(
+        t('teams.confirmTransferCaptain'),
+        t('teams.confirmTransferCaptainDescription', { name: userName }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('teams.transferCaptain'),
+            onPress: async () => {
+              try {
+                await api.transferTeamCaptain(team.id, userId);
+                await fetchTeam();
+              } catch {
+                Alert.alert(t('common.error'), t('common.tryAgain'));
+              }
+            },
+          },
+        ],
+      );
+    },
+    [team, fetchTeam, t],
+  );
 
-  const handleDeclineJoinRequest = useCallback(async (membershipId: number) => {
-    if (!team) return;
-    try {
-      await api.declineJoinRequest(team.id, membershipId);
-      await fetchTeam();
-    } catch {
-      Alert.alert(t('common.error'), t('common.tryAgain'));
-    }
-  }, [team, fetchTeam, t]);
+  const handleAcceptJoinRequest = useCallback(
+    async (membershipId: number) => {
+      if (!team) return;
+      try {
+        await api.acceptJoinRequest(team.id, membershipId);
+        await fetchTeam();
+      } catch {
+        Alert.alert(t('common.error'), t('common.tryAgain'));
+      }
+    },
+    [team, fetchTeam, t],
+  );
+
+  const handleDeclineJoinRequest = useCallback(
+    async (membershipId: number) => {
+      if (!team) return;
+      try {
+        await api.declineJoinRequest(team.id, membershipId);
+        await fetchTeam();
+      } catch {
+        Alert.alert(t('common.error'), t('common.tryAgain'));
+      }
+    },
+    [team, fetchTeam, t],
+  );
 
   const handleDelete = useCallback(async () => {
     if (!team) return;

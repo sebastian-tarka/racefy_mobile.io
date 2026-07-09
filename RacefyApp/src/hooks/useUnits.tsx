@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useCallback,
-  useMemo,
-} from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../services/logger';
 import {
@@ -123,45 +116,44 @@ export function UnitsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const value = useMemo<UnitsContextType>(() => ({
-    units,
-    setUnits,
-    formatDistance: (meters: number) => _formatDistance(meters, units),
-    formatDistanceShort: (meters: number) => _formatDistanceShort(meters, units),
-    formatTotalDistance: (meters: number) => _formatTotalDistance(meters, units),
-    formatDistanceFromKm: (km: number) => _formatDistanceFromKm(km, units),
-    formatDistanceFromKmRounded: (km: number) => _formatDistanceFromKmRounded(km, units),
-    formatElevation: (meters: number) => _formatElevation(meters, units),
-    formatSpeed: (mps: number) => _formatSpeed(mps, units),
-    formatPaceFromSpeed: (avgSpeedMps: number) => _formatPaceFromSpeed(avgSpeedMps, units),
-    formatPaceFromDistanceTime: (meters: number, seconds: number) =>
-      _formatPaceFromDistanceTime(meters, seconds, units),
-    formatPaceWithUnit: (meters: number, seconds: number) =>
-      _formatPaceWithUnit(meters, seconds, units),
-    formatPaceFromSecPerKm: (secondsPerKm: number | null, placeholder?: string) =>
-      _formatPaceFromSecPerKm(secondsPerKm, units, placeholder),
-    formatTemperature: (celsius: number) => _formatTemperature(celsius, units),
-    getDistanceUnit: () => _getDistanceUnit(units),
-    getSmallDistanceUnit: () => _getSmallDistanceUnit(units),
-    getElevationUnit: () => _getElevationUnit(units),
-    getSpeedUnit: () => _getSpeedUnit(units),
-    getPaceUnit: () => _getPaceUnit(units),
-    getTemperatureUnit: () => _getTemperatureUnit(units),
-    getSplitLabel: () => _getSplitLabel(units),
-    getMilestoneLabel: (key: string) => _getMilestoneLabel(key, units),
-    getDistanceValue: (meters: number) => _getDistanceValue(meters, units),
-    getDistanceValueFromKm: (km: number) => _getDistanceValueFromKm(km, units),
-  }), [units, setUnits]);
+  const value = useMemo<UnitsContextType>(
+    () => ({
+      units,
+      setUnits,
+      formatDistance: (meters: number) => _formatDistance(meters, units),
+      formatDistanceShort: (meters: number) => _formatDistanceShort(meters, units),
+      formatTotalDistance: (meters: number) => _formatTotalDistance(meters, units),
+      formatDistanceFromKm: (km: number) => _formatDistanceFromKm(km, units),
+      formatDistanceFromKmRounded: (km: number) => _formatDistanceFromKmRounded(km, units),
+      formatElevation: (meters: number) => _formatElevation(meters, units),
+      formatSpeed: (mps: number) => _formatSpeed(mps, units),
+      formatPaceFromSpeed: (avgSpeedMps: number) => _formatPaceFromSpeed(avgSpeedMps, units),
+      formatPaceFromDistanceTime: (meters: number, seconds: number) =>
+        _formatPaceFromDistanceTime(meters, seconds, units),
+      formatPaceWithUnit: (meters: number, seconds: number) =>
+        _formatPaceWithUnit(meters, seconds, units),
+      formatPaceFromSecPerKm: (secondsPerKm: number | null, placeholder?: string) =>
+        _formatPaceFromSecPerKm(secondsPerKm, units, placeholder),
+      formatTemperature: (celsius: number) => _formatTemperature(celsius, units),
+      getDistanceUnit: () => _getDistanceUnit(units),
+      getSmallDistanceUnit: () => _getSmallDistanceUnit(units),
+      getElevationUnit: () => _getElevationUnit(units),
+      getSpeedUnit: () => _getSpeedUnit(units),
+      getPaceUnit: () => _getPaceUnit(units),
+      getTemperatureUnit: () => _getTemperatureUnit(units),
+      getSplitLabel: () => _getSplitLabel(units),
+      getMilestoneLabel: (key: string) => _getMilestoneLabel(key, units),
+      getDistanceValue: (meters: number) => _getDistanceValue(meters, units),
+      getDistanceValueFromKm: (km: number) => _getDistanceValueFromKm(km, units),
+    }),
+    [units, setUnits],
+  );
 
   if (!isLoaded) {
     return null;
   }
 
-  return (
-    <UnitsContext.Provider value={value}>
-      {children}
-    </UnitsContext.Provider>
-  );
+  return <UnitsContext.Provider value={value}>{children}</UnitsContext.Provider>;
 }
 
 export const useUnits = () => {

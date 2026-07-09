@@ -44,7 +44,7 @@ function SportStatsChartComponent({
 
   const getValueAndLabel = (
     stats: { distance: number; duration: number; count: number },
-    metricType: Metric
+    metricType: Metric,
   ): { value: number; labelText: string } => {
     switch (metricType) {
       case 'distance':
@@ -79,9 +79,7 @@ function SportStatsChartComponent({
       const myStats = data[sportTypeIdNum];
       const theirStats = compareData?.[sportTypeIdNum];
 
-      const myValues = myStats
-        ? getValueAndLabel(myStats, metric)
-        : { value: 0, labelText: '0' };
+      const myValues = myStats ? getValueAndLabel(myStats, metric) : { value: 0, labelText: '0' };
       const theirValues = theirStats
         ? getValueAndLabel(theirStats, metric)
         : { value: 0, labelText: '0' };
@@ -117,13 +115,13 @@ function SportStatsChartComponent({
     }
 
     // Comparison mode - interleaved bars for grouped effect
-    const result: Array<{
+    const result: {
       value: number;
       label?: string;
       topLabelText?: string;
       frontColor: string;
       spacing?: number;
-    }> = [];
+    }[] = [];
 
     chartData.forEach((item, index) => {
       // My bar
@@ -173,8 +171,7 @@ function SportStatsChartComponent({
             style={[
               styles.metricButton,
               {
-                backgroundColor:
-                  metric === m.key ? colors.primary : colors.background,
+                backgroundColor: metric === m.key ? colors.primary : colors.background,
                 borderColor: colors.primary,
               },
             ]}
@@ -196,17 +193,13 @@ function SportStatsChartComponent({
       {isComparing && (
         <View style={styles.legend}>
           <View style={styles.legendItem}>
-            <View
-              style={[styles.legendColor, { backgroundColor: primaryColor }]}
-            />
+            <View style={[styles.legendColor, { backgroundColor: primaryColor }]} />
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
               {t('profile.stats.you')}
             </Text>
           </View>
           <View style={styles.legendItem}>
-            <View
-              style={[styles.legendColor, { backgroundColor: compareColor }]}
-            />
+            <View style={[styles.legendColor, { backgroundColor: compareColor }]} />
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
               {compareUserName || t('profile.stats.compareUser')}
             </Text>
@@ -301,15 +294,11 @@ const styles = StyleSheet.create({
 });
 
 // Memoize to prevent re-renders when parent state changes
-export const SportStatsChart = memo(
-  SportStatsChartComponent,
-  (prevProps, nextProps) => {
-    return (
-      JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
-      JSON.stringify(prevProps.compareData) ===
-        JSON.stringify(nextProps.compareData) &&
-      prevProps.compareUserName === nextProps.compareUserName &&
-      prevProps.sportTypes.length === nextProps.sportTypes.length
-    );
-  }
-);
+export const SportStatsChart = memo(SportStatsChartComponent, (prevProps, nextProps) => {
+  return (
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
+    JSON.stringify(prevProps.compareData) === JSON.stringify(nextProps.compareData) &&
+    prevProps.compareUserName === nextProps.compareUserName &&
+    prevProps.sportTypes.length === nextProps.sportTypes.length
+  );
+});

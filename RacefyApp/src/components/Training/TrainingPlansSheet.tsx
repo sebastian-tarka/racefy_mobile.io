@@ -1,12 +1,20 @@
 import React from 'react';
-import {Modal, ScrollView, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from '../../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {TrainingProgram} from '../../types/api';
-import {TrainingProgramRow} from './TrainingProgramRow';
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { TrainingProgram } from '../../types/api';
+import { TrainingProgramRow } from './TrainingProgramRow';
 
 interface TrainingPlansSheetProps {
   visible: boolean;
@@ -106,7 +114,10 @@ export function TrainingPlansSheet({
               </ScrollView>
 
               <TouchableOpacity
-                style={[styles.cancelButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : colors.background }]}
+                style={[
+                  styles.cancelButton,
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : colors.background },
+                ]}
                 onPress={onClose}
                 activeOpacity={0.7}
               >

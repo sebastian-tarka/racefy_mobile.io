@@ -41,10 +41,7 @@ export function ScreenContainer({
         end={{ x: 1, y: 1 }}
         style={styles.glowBottomRight}
       />
-      <SafeAreaView
-        style={[styles.container, style]}
-        edges={edges}
-      >
+      <SafeAreaView style={[styles.container, style]} edges={edges}>
         {children}
       </SafeAreaView>
     </View>

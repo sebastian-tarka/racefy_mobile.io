@@ -29,9 +29,10 @@ export function HighlightsGrid({ highlights, consistencyScore }: Props) {
     {
       icon: 'map-outline',
       label: t('training.feedback.highlights.longestDistance'),
-      value: highlights.longest_activity_distance_km != null
-        ? formatDistanceFromKm(highlights.longest_activity_distance_km)
-        : null,
+      value:
+        highlights.longest_activity_distance_km != null
+          ? formatDistanceFromKm(highlights.longest_activity_distance_km)
+          : null,
     },
     {
       icon: 'time-outline',
@@ -41,27 +42,25 @@ export function HighlightsGrid({ highlights, consistencyScore }: Props) {
     {
       icon: 'trending-up-outline',
       label: t('training.feedback.highlights.elevation'),
-      value: highlights.total_elevation_gain > 0
-        ? formatElevation(highlights.total_elevation_gain)
-        : null,
+      value:
+        highlights.total_elevation_gain > 0
+          ? formatElevation(highlights.total_elevation_gain)
+          : null,
     },
     {
       icon: 'flame-outline',
       label: t('training.feedback.highlights.calories'),
-      value: highlights.total_calories > 0
-        ? `${highlights.total_calories} kcal`
-        : null,
+      value: highlights.total_calories > 0 ? `${highlights.total_calories} kcal` : null,
     },
     {
       icon: 'speedometer-outline',
       label: t('training.feedback.highlights.avgPace'),
-      value: highlights.avg_pace != null
-        ? `${highlights.avg_pace.toFixed(2)} ${getPaceUnit()}`
-        : null,
+      value:
+        highlights.avg_pace != null ? `${highlights.avg_pace.toFixed(2)} ${getPaceUnit()}` : null,
     },
   ];
 
-  const visibleStats = stats.filter(s => s.value != null);
+  const visibleStats = stats.filter((s) => s.value != null);
   const barWidth = Math.min(100, Math.max(0, consistencyScore));
 
   return (
@@ -71,12 +70,8 @@ export function HighlightsGrid({ highlights, consistencyScore }: Props) {
           {visibleStats.map((stat, idx) => (
             <View key={idx} style={[styles.statCell, { backgroundColor: colors.border + '40' }]}>
               <Ionicons name={stat.icon} size={20} color={colors.primary} />
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stat.value}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {stat.label}
-              </Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{stat.label}</Text>
             </View>
           ))}
         </View>

@@ -43,11 +43,7 @@ const SENSITIVE_PATTERNS = [
 ];
 
 // Fields that might contain PII but we want to keep type info
-const PII_PATTERNS = [
-  /email/i,
-  /phone/i,
-  /address/i,
-];
+const PII_PATTERNS = [/email/i, /phone/i, /address/i];
 
 const REDACTED = '[REDACTED]';
 
@@ -55,14 +51,14 @@ const REDACTED = '[REDACTED]';
  * Check if a field name matches sensitive patterns
  */
 function isSensitiveField(fieldName: string): boolean {
-  return SENSITIVE_PATTERNS.some(pattern => pattern.test(fieldName));
+  return SENSITIVE_PATTERNS.some((pattern) => pattern.test(fieldName));
 }
 
 /**
  * Check if a field name matches PII patterns
  */
 function isPiiField(fieldName: string): boolean {
-  return PII_PATTERNS.some(pattern => pattern.test(fieldName));
+  return PII_PATTERNS.some((pattern) => pattern.test(fieldName));
 }
 
 /**
@@ -124,13 +120,22 @@ function sanitizeValue(key: string, value: any, depth: number = 0): any {
  */
 function sanitizeString(str: string): string {
   // Redact Bearer tokens
-  let sanitized = str.replace(/Bearer\s+[A-Za-z0-9\-_]+\.?[A-Za-z0-9\-_]*\.?[A-Za-z0-9\-_]*/gi, 'Bearer [REDACTED]');
+  let sanitized = str.replace(
+    /Bearer\s+[A-Za-z0-9\-_]+\.?[A-Za-z0-9\-_]*\.?[A-Za-z0-9\-_]*/gi,
+    'Bearer [REDACTED]',
+  );
 
   // Redact JWT-like patterns (xxx.xxx.xxx)
-  sanitized = sanitized.replace(/eyJ[A-Za-z0-9\-_]+\.eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+/g, '[JWT_REDACTED]');
+  sanitized = sanitized.replace(
+    /eyJ[A-Za-z0-9\-_]+\.eyJ[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+/g,
+    '[JWT_REDACTED]',
+  );
 
   // Redact API key patterns
-  sanitized = sanitized.replace(/api[_-]?key[=:]\s*["']?[A-Za-z0-9\-_]+["']?/gi, 'api_key=[REDACTED]');
+  sanitized = sanitized.replace(
+    /api[_-]?key[=:]\s*["']?[A-Za-z0-9\-_]+["']?/gi,
+    'api_key=[REDACTED]',
+  );
 
   return sanitized;
 }
@@ -138,7 +143,9 @@ function sanitizeString(str: string): string {
 /**
  * Sanitize entire context object
  */
-function sanitizeContext(context: Record<string, any> | undefined): Record<string, any> | undefined {
+function sanitizeContext(
+  context: Record<string, any> | undefined,
+): Record<string, any> | undefined {
   if (!context) return undefined;
   return sanitizeValue('root', context, 0) as Record<string, any>;
 }
@@ -169,13 +176,13 @@ export interface LogsPayload {
     device_id: string;
   };
   session_id: string;
-  logs: Array<{
+  logs: {
     timestamp: string;
     level: LogLevel;
     message: string;
     context?: Record<string, any>;
     stack_trace?: string;
-  }>;
+  }[];
 }
 
 class Logger {
@@ -244,7 +251,12 @@ class Logger {
   /**
    * Core logging method
    */
-  private log(level: LogLevel, category: LogCategory, message: string, context?: Record<string, any>): void {
+  private log(
+    level: LogLevel,
+    category: LogCategory,
+    message: string,
+    context?: Record<string, any>,
+  ): void {
     if (!shouldLog(this.config, level, category)) return;
 
     // Sanitize context and message to remove sensitive data
@@ -390,14 +402,14 @@ class Logger {
    * Get logs filtered by level
    */
   getLogsByLevel(level: LogLevel): LogEntry[] {
-    return this.logs.filter(log => log.level === level);
+    return this.logs.filter((log) => log.level === level);
   }
 
   /**
    * Get logs filtered by category
    */
   getLogsByCategory(category: LogCategory): LogEntry[] {
-    return this.logs.filter(log => log.category === category);
+    return this.logs.filter((log) => log.category === category);
   }
 
   /**
@@ -459,7 +471,7 @@ class Logger {
     const deviceInfo = this.getDeviceInfo();
 
     // Map logs to API format (remove internal category field)
-    const apiLogs = this.logs.map(log => ({
+    const apiLogs = this.logs.map((log) => ({
       timestamp: log.timestamp,
       level: log.level,
       message: log.message,

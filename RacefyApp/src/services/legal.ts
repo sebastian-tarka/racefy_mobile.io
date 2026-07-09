@@ -9,23 +9,15 @@ import type {
 } from '../types/legal';
 
 // Get current documents for consent modal (auth required)
-export const getCurrentDocuments = async (
-  language?: string
-): Promise<CurrentDocumentsResponse> => {
+export const getCurrentDocuments = async (language?: string): Promise<CurrentDocumentsResponse> => {
   const params = language ? `?lang=${language}` : '';
-  return api.request<CurrentDocumentsResponse>(
-    `/legal/documents/current${params}`
-  );
+  return api.request<CurrentDocumentsResponse>(`/legal/documents/current${params}`);
 };
 
 // Get public documents (for legal pages, no auth needed)
-export const getPublicDocuments = async (
-  language?: string
-): Promise<CurrentDocumentsResponse> => {
+export const getPublicDocuments = async (language?: string): Promise<CurrentDocumentsResponse> => {
   const params = language ? `?lang=${language}` : '';
-  return api.request<CurrentDocumentsResponse>(
-    `/legal/documents/public${params}`
-  );
+  return api.request<CurrentDocumentsResponse>(`/legal/documents/public${params}`);
 };
 
 // Get supported languages
@@ -34,9 +26,7 @@ export const getAvailableLanguages = async (): Promise<LanguagesResponse> => {
 };
 
 // Submit consent form
-export const submitConsent = async (
-  consents: SubmitConsentRequest
-): Promise<void> => {
+export const submitConsent = async (consents: SubmitConsentRequest): Promise<void> => {
   await api.request('/legal/consent', {
     method: 'POST',
     body: JSON.stringify(consents),
@@ -59,7 +49,7 @@ export const getUserConsents = async (): Promise<UserConsentsResponse> => {
 // Toggle optional consent (marketing, cookies)
 export const updateOptionalConsent = async (
   versionId: number,
-  accepted: boolean
+  accepted: boolean,
 ): Promise<void> => {
   await api.request(`/user/consents/${versionId}`, {
     method: 'PATCH',

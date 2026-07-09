@@ -13,7 +13,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      */
     async getTrainingGoals(sportTypeId: number): Promise<Types.TrainingGoal[]> {
       const response = await this.request<Types.ApiResponse<Types.TrainingGoal[]>>(
-        `/sport-types/${sportTypeId}/training-goals`
+        `/sport-types/${sportTypeId}/training-goals`,
       );
       return response.data;
     }
@@ -28,7 +28,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         {
           method: 'POST',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.data;
     }
@@ -45,7 +45,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         {
           method: 'POST',
           body: JSON.stringify(data || {}),
-        }
+        },
       );
       // API may wrap in { program: {...} } or { data: {...} }
       return response.program ?? response.data!;
@@ -56,9 +56,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * Use this to poll program status after initialization
      */
     async getProgram(id: number): Promise<Types.TrainingProgram> {
-      const response = await this.request<Types.GetProgramResponse>(
-        `/training/programs/${id}`
-      );
+      const response = await this.request<Types.GetProgramResponse>(`/training/programs/${id}`);
       // API wraps in { program: {...} } or { data: {...} }
       return response.program ?? response.data!;
     }
@@ -70,7 +68,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async getCurrentProgram(): Promise<Types.TrainingProgram | null> {
       try {
         const response = await this.request<Types.GetCurrentProgramResponse>(
-          '/training/programs/current'
+          '/training/programs/current',
         );
         // API wraps in { program: {...} } or { data: {...} }
         const program = response?.program ?? response?.data;
@@ -111,7 +109,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async getCurrentPrograms(): Promise<Types.TrainingProgram[]> {
       try {
         const response = await this.request<Types.GetCurrentProgramResponse>(
-          '/training/programs/current'
+          '/training/programs/current',
         );
         // New API returns { programs: [...], program: ... (backwards compat) }
         if (response?.programs && Array.isArray(response.programs)) {
@@ -157,7 +155,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async completeWeek(weekId: number): Promise<Types.TrainingWeek> {
       const response = await this.request<Types.CompleteWeekResponse>(
         `/training/weeks/${weekId}/complete`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -168,7 +166,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async skipWeek(weekId: number): Promise<Types.TrainingWeek> {
       const response = await this.request<Types.SkipWeekResponse>(
         `/training/weeks/${weekId}/skip`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -182,7 +180,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         {
           method: 'PUT',
           body: JSON.stringify({ notes }),
-        }
+        },
       );
       return response.data;
     }
@@ -196,7 +194,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         {
           method: 'POST',
           body: JSON.stringify({ reason }),
-        }
+        },
       );
       return response.message;
     }
@@ -207,7 +205,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async resumeProgram(programId: number): Promise<string> {
       const response = await this.request<Types.ResumeProgramResponse>(
         `/training/programs/${programId}/resume`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.message;
     }
@@ -218,7 +216,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async abandonProgram(programId: number): Promise<string> {
       const response = await this.request<Types.AbandonProgramResponse>(
         `/training/programs/${programId}/abandon`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.message;
     }
@@ -228,14 +226,14 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      */
     async updateProgramSettings(
       programId: number,
-      settings: Types.UpdateProgramSettingsRequest
+      settings: Types.UpdateProgramSettingsRequest,
     ): Promise<string> {
       const response = await this.request<Types.UpdateProgramSettingsResponse>(
         `/training/programs/${programId}/settings`,
         {
           method: 'PUT',
           body: JSON.stringify(settings),
-        }
+        },
       );
       return response.message;
     }
@@ -245,13 +243,10 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * @param weekId - Training week ID
      * @param activityId - Activity ID to link
      */
-    async linkActivityToWeek(
-      weekId: number,
-      activityId: number
-    ): Promise<Types.TrainingWeek> {
+    async linkActivityToWeek(weekId: number, activityId: number): Promise<Types.TrainingWeek> {
       const response = await this.request<Types.LinkActivityToWeekResponse>(
         `/training/weeks/${weekId}/activities/${activityId}/link`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -261,13 +256,10 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * @param weekId - Training week ID
      * @param activityId - Training activity ID to unlink
      */
-    async unlinkActivityFromWeek(
-      weekId: number,
-      activityId: number
-    ): Promise<Types.TrainingWeek> {
+    async unlinkActivityFromWeek(weekId: number, activityId: number): Promise<Types.TrainingWeek> {
       const response = await this.request<Types.UnlinkActivityFromWeekResponse>(
         `/training/weeks/${weekId}/activities/${activityId}/unlink`,
-        { method: 'DELETE' }
+        { method: 'DELETE' },
       );
       return response.data;
     }
@@ -281,7 +273,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async generateAllHints(programId: number): Promise<Types.GenerateHintsResponse> {
       return this.request<Types.GenerateHintsResponse>(
         `/training/programs/${programId}/generate-hints`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
     }
 
@@ -293,7 +285,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      */
     async getWeekFeedback(weekId: number): Promise<Types.WeekFeedback> {
       const response = await this.request<Types.WeekFeedbackResponse>(
-        `/training/weeks/${weekId}/feedback`
+        `/training/weeks/${weekId}/feedback`,
       );
       return response.data;
     }
@@ -305,9 +297,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * Returns 0-N tips (respects weekly budget)
      */
     async getAvailableTips(): Promise<Types.TrainingTip[]> {
-      const response = await this.request<Types.AvailableTipsResponse>(
-        '/training/tips/available'
-      );
+      const response = await this.request<Types.AvailableTipsResponse>('/training/tips/available');
       return response.data;
     }
 
@@ -317,9 +307,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * @param tipId - Tip ID to retrieve
      */
     async getTip(tipId: number): Promise<Types.TrainingTip> {
-      const response = await this.request<Types.TipDetailResponse>(
-        `/training/tips/${tipId}`
-      );
+      const response = await this.request<Types.TipDetailResponse>(`/training/tips/${tipId}`);
       return response.data;
     }
 
@@ -328,16 +316,13 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * @param tipId - Tip ID
      * @param helpful - Whether the tip was helpful
      */
-    async markTipHelpful(
-      tipId: number,
-      helpful: boolean
-    ): Promise<string> {
+    async markTipHelpful(tipId: number, helpful: boolean): Promise<string> {
       const response = await this.request<Types.MarkTipHelpfulResponse>(
         `/training/tips/${tipId}/helpful`,
         {
           method: 'POST',
           body: JSON.stringify({ helpful }),
-        }
+        },
       );
       return response.message;
     }
@@ -346,9 +331,7 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * Get user's mental budget status
      */
     async getMentalBudget(): Promise<Types.MentalBudget> {
-      const response = await this.request<Types.MentalBudgetResponse>(
-        '/training/mental-budget'
-      );
+      const response = await this.request<Types.MentalBudgetResponse>('/training/mental-budget');
       return response.data;
     }
 
@@ -357,14 +340,14 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
      * @param settings - Budget settings to update
      */
     async updateMentalBudget(
-      settings: Types.UpdateMentalBudgetRequest
+      settings: Types.UpdateMentalBudgetRequest,
     ): Promise<Types.MentalBudget> {
       const response = await this.request<Types.UpdateMentalBudgetResponse>(
         '/training/mental-budget',
         {
           method: 'PUT',
           body: JSON.stringify(settings),
-        }
+        },
       );
       return response.data;
     }

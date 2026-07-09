@@ -44,8 +44,12 @@ export function EditProfileScreen({ navigation }: Props) {
     email: user?.email || '',
     bio: user?.bio || '',
   });
-  const [avatarUri, setAvatarUri] = useState<string | null>(user?.avatar_url || user?.avatar || null);
-  const [backgroundUri, setBackgroundUri] = useState<string | null>(user?.background_image_url || null);
+  const [avatarUri, setAvatarUri] = useState<string | null>(
+    user?.avatar_url || user?.avatar || null,
+  );
+  const [backgroundUri, setBackgroundUri] = useState<string | null>(
+    user?.background_image_url || null,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,9 +67,9 @@ export function EditProfileScreen({ navigation }: Props) {
   }, [user]);
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -103,10 +107,7 @@ export function EditProfileScreen({ navigation }: Props) {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert(
-        t('common.error'),
-        t('editProfile.permissionDenied')
-      );
+      Alert.alert(t('common.error'), t('editProfile.permissionDenied'));
       return;
     }
 
@@ -126,10 +127,7 @@ export function EditProfileScreen({ navigation }: Props) {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert(
-        t('common.error'),
-        t('editProfile.cameraPermissionDenied')
-      );
+      Alert.alert(t('common.error'), t('editProfile.cameraPermissionDenied'));
       return;
     }
 
@@ -187,12 +185,17 @@ export function EditProfileScreen({ navigation }: Props) {
       }
     };
 
-    const title = type === 'avatar' ? t('editProfile.changeAvatar') : t('editProfile.changeBackground');
+    const title =
+      type === 'avatar' ? t('editProfile.changeAvatar') : t('editProfile.changeBackground');
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: [t('common.cancel'), t('editProfile.takePhoto'), t('editProfile.chooseFromGallery')],
+          options: [
+            t('common.cancel'),
+            t('editProfile.takePhoto'),
+            t('editProfile.chooseFromGallery'),
+          ],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -201,18 +204,14 @@ export function EditProfileScreen({ navigation }: Props) {
           } else if (buttonIndex === 2) {
             launchGalleryForType();
           }
-        }
+        },
       );
     } else {
-      Alert.alert(
-        title,
-        '',
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('editProfile.takePhoto'), onPress: launchCameraForType },
-          { text: t('editProfile.chooseFromGallery'), onPress: launchGalleryForType },
-        ]
-      );
+      Alert.alert(title, '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('editProfile.takePhoto'), onPress: launchCameraForType },
+        { text: t('editProfile.chooseFromGallery'), onPress: launchGalleryForType },
+      ]);
     }
   };
 
@@ -267,7 +266,7 @@ export function EditProfileScreen({ navigation }: Props) {
       // Handle validation errors from API
       if (error?.errors) {
         const apiErrors: Record<string, string> = {};
-        Object.keys(error.errors).forEach(key => {
+        Object.keys(error.errors).forEach((key) => {
           apiErrors[key] = error.errors[key][0];
         });
         setErrors(apiErrors);
@@ -281,15 +280,19 @@ export function EditProfileScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior="padding"
-      >
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <KeyboardAvoidingView style={styles.keyboardView} behavior="padding">
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('editProfile.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            {t('editProfile.title')}
+          </Text>
         </View>
 
         <ScrollView
@@ -298,9 +301,19 @@ export function EditProfileScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
         >
           {/* Background Image Section */}
-          <TouchableOpacity onPress={pickBackground} style={[styles.backgroundSection, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity
+            onPress={pickBackground}
+            style={[styles.backgroundSection, { backgroundColor: colors.primary }]}
+          >
             {backgroundUri ? (
-              <Image source={{ uri: isLocalImage(backgroundUri) ? backgroundUri : (fixStorageUrl(backgroundUri) || backgroundUri) }} style={styles.backgroundImage} />
+              <Image
+                source={{
+                  uri: isLocalImage(backgroundUri)
+                    ? backgroundUri
+                    : fixStorageUrl(backgroundUri) || backgroundUri,
+                }}
+                style={styles.backgroundImage}
+              />
             ) : (
               <View style={styles.backgroundPlaceholder}>
                 <Ionicons name="image-outline" size={32} color={colors.white} />
@@ -314,74 +327,92 @@ export function EditProfileScreen({ navigation }: Props) {
 
           {/* Form Fields */}
           <View style={styles.formSection}>
-          {/* Avatar Section */}
-          <View style={styles.avatarSection}>
-            <TouchableOpacity onPress={pickAvatar} style={styles.avatarContainer}>
-              {avatarUri ? (
-                <Image source={{ uri: isLocalImage(avatarUri) ? avatarUri : (fixStorageUrl(avatarUri) || avatarUri) }} style={styles.avatarImage} />
-              ) : (
-                <Avatar name={formData.name} size="xxl" />
-              )}
-              <View style={[styles.cameraButton, { backgroundColor: colors.primary, borderColor: colors.cardBackground }]}>
-                <Ionicons name="camera" size={18} color={colors.white} />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={pickAvatar}>
-              <Text style={[styles.changePhotoText, { color: colors.primary }]}>{t('editProfile.changePhoto')}</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Avatar Section */}
+            <View style={styles.avatarSection}>
+              <TouchableOpacity onPress={pickAvatar} style={styles.avatarContainer}>
+                {avatarUri ? (
+                  <Image
+                    source={{
+                      uri: isLocalImage(avatarUri)
+                        ? avatarUri
+                        : fixStorageUrl(avatarUri) || avatarUri,
+                    }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <Avatar name={formData.name} size="xxl" />
+                )}
+                <View
+                  style={[
+                    styles.cameraButton,
+                    { backgroundColor: colors.primary, borderColor: colors.cardBackground },
+                  ]}
+                >
+                  <Ionicons name="camera" size={18} color={colors.white} />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={pickAvatar}>
+                <Text style={[styles.changePhotoText, { color: colors.primary }]}>
+                  {t('editProfile.changePhoto')}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-          <Input
-            label={t('auth.name')}
-            placeholder={t('auth.namePlaceholder')}
-            value={formData.name}
-            onChangeText={(text) => updateField('name', text)}
-            error={errors.name}
-            leftIcon="person-outline"
-            autoCapitalize="words"
-          />
-
-          <Input
-            label={t('auth.username')}
-            placeholder={t('auth.usernamePlaceholder')}
-            value={formData.username}
-            onChangeText={(text) => updateField('username', text.toLowerCase().replace(/\s/g, ''))}
-            error={errors.username}
-            leftIcon="at"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <Input
-            label={t('auth.email')}
-            placeholder={t('auth.emailPlaceholder')}
-            value={formData.email}
-            onChangeText={(text) => updateField('email', text)}
-            error={errors.email}
-            leftIcon="mail-outline"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <View style={styles.bioContainer}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('editProfile.bio')}</Text>
             <Input
-              placeholder={t('editProfile.bioPlaceholder')}
-              value={formData.bio}
-              onChangeText={(text) => updateField('bio', text)}
-              multiline
-              numberOfLines={4}
-              style={styles.bioInput}
+              label={t('auth.name')}
+              placeholder={t('auth.namePlaceholder')}
+              value={formData.name}
+              onChangeText={(text) => updateField('name', text)}
+              error={errors.name}
+              leftIcon="person-outline"
+              autoCapitalize="words"
             />
-          </View>
 
-          <Button
-            title={t('editProfile.saveButton')}
-            onPress={handleSave}
-            loading={isLoading}
-            style={styles.saveButton}
-          />
+            <Input
+              label={t('auth.username')}
+              placeholder={t('auth.usernamePlaceholder')}
+              value={formData.username}
+              onChangeText={(text) =>
+                updateField('username', text.toLowerCase().replace(/\s/g, ''))
+              }
+              error={errors.username}
+              leftIcon="at"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <Input
+              label={t('auth.email')}
+              placeholder={t('auth.emailPlaceholder')}
+              value={formData.email}
+              onChangeText={(text) => updateField('email', text)}
+              error={errors.email}
+              leftIcon="mail-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <View style={styles.bioContainer}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {t('editProfile.bio')}
+              </Text>
+              <Input
+                placeholder={t('editProfile.bioPlaceholder')}
+                value={formData.bio}
+                onChangeText={(text) => updateField('bio', text)}
+                multiline
+                numberOfLines={4}
+                style={styles.bioInput}
+              />
+            </View>
+
+            <Button
+              title={t('editProfile.saveButton')}
+              onPress={handleSave}
+              loading={isLoading}
+              style={styles.saveButton}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

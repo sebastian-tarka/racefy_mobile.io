@@ -30,11 +30,20 @@ import type { Conversation, ConversationParticipant, Message } from '../../types
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export function ChatScreen({ navigation, route }: Props) {
-  const { conversationId, participant: routeParticipant, conversation: routeConversation } = route.params;
+  const {
+    conversationId,
+    participant: routeParticipant,
+    conversation: routeConversation,
+  } = route.params;
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { messages, isLoading: isLoadingMessages, isSending, sendMessage } = useMessages(conversationId);
+  const {
+    messages,
+    isLoading: isLoadingMessages,
+    isSending,
+    sendMessage,
+  } = useMessages(conversationId);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
@@ -153,28 +162,38 @@ export function ChatScreen({ navigation, route }: Props) {
     const prevMessage = index > 0 ? messages[index - 1] : null;
     const time = format(new Date(item.created_at), 'HH:mm');
     const showDateSeparator =
-      !prevMessage ||
-      !isSameDay(new Date(item.created_at), new Date(prevMessage.created_at));
+      !prevMessage || !isSameDay(new Date(item.created_at), new Date(prevMessage.created_at));
 
     // Show sender attribution: in team chats, for first non-self bubble in a streak.
     const showSender =
       isTeam &&
       !isOwn &&
-      (!prevMessage ||
-        prevMessage.sender.id !== item.sender.id ||
-        prevMessage.is_own);
+      (!prevMessage || prevMessage.sender.id !== item.sender.id || prevMessage.is_own);
 
-    const showAvatar = !isOwn && (showSender || !prevMessage || messages[index - 1]?.is_own !== item.is_own);
+    const showAvatar =
+      !isOwn && (showSender || !prevMessage || messages[index - 1]?.is_own !== item.is_own);
 
     return (
       <>
         {showDateSeparator && (
           <View style={styles.dateSeparator}>
-            <View style={[styles.dateSeparatorLine, { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor }]} />
-            <Text style={[styles.dateSeparatorText, { color: themedStyles.dateSeparatorText.color }]}>
+            <View
+              style={[
+                styles.dateSeparatorLine,
+                { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor },
+              ]}
+            />
+            <Text
+              style={[styles.dateSeparatorText, { color: themedStyles.dateSeparatorText.color }]}
+            >
               {formatDateSeparator(new Date(item.created_at))}
             </Text>
-            <View style={[styles.dateSeparatorLine, { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor }]} />
+            <View
+              style={[
+                styles.dateSeparatorLine,
+                { backgroundColor: themedStyles.dateSeparatorLine.backgroundColor },
+              ]}
+            />
           </View>
         )}
         <View
@@ -186,11 +205,7 @@ export function ChatScreen({ navigation, route }: Props) {
           {!isOwn && (
             <View style={styles.avatarContainer}>
               {showAvatar ? (
-                <Avatar
-                  uri={item.sender.avatar}
-                  name={item.sender.name}
-                  size="sm"
-                />
+                <Avatar uri={item.sender.avatar} name={item.sender.name} size="sm" />
               ) : (
                 <View style={styles.avatarPlaceholder} />
               )}
@@ -203,13 +218,9 @@ export function ChatScreen({ navigation, route }: Props) {
             ]}
           >
             {showSender && (
-              <Text style={[styles.senderName, { color: colors.primary }]}>
-                {item.sender.name}
-              </Text>
+              <Text style={[styles.senderName, { color: colors.primary }]}>{item.sender.name}</Text>
             )}
-            <Text
-              style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}
-            >
+            <Text style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}>
               {item.content}
             </Text>
             <Text style={[themedStyles.messageTime, isOwn && themedStyles.ownMessageTime]}>
@@ -238,12 +249,20 @@ export function ChatScreen({ navigation, route }: Props) {
             placeholder={t('messaging.renamePlaceholder')}
             placeholderTextColor={colors.textMuted}
           />
-          <TouchableOpacity onPress={handleCancelRename} disabled={isSavingRename} style={styles.renameAction}>
+          <TouchableOpacity
+            onPress={handleCancelRename}
+            disabled={isSavingRename}
+            style={styles.renameAction}
+          >
             <Text style={[styles.renameActionText, { color: colors.textSecondary }]}>
               {t('common.cancel')}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSaveRename} disabled={isSavingRename} style={styles.renameAction}>
+          <TouchableOpacity
+            onPress={handleSaveRename}
+            disabled={isSavingRename}
+            style={styles.renameAction}
+          >
             {isSavingRename ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
@@ -257,23 +276,13 @@ export function ChatScreen({ navigation, route }: Props) {
         <>
           <TouchableOpacity style={styles.headerUserInfo} onPress={handleHeaderPress}>
             {isTeam && conversation?.team ? (
-              <Avatar
-                uri={conversation.team.avatar}
-                name={conversation.team.name}
-                size="sm"
-              />
+              <Avatar uri={conversation.team.avatar} name={conversation.team.name} size="sm" />
             ) : headerParticipant ? (
-              <Avatar
-                uri={headerParticipant.avatar}
-                name={headerParticipant.name}
-                size="sm"
-              />
+              <Avatar uri={headerParticipant.avatar} name={headerParticipant.name} size="sm" />
             ) : null}
             <View style={styles.headerTextContainer}>
               <Text style={[styles.headerName, themedStyles.headerName]} numberOfLines={1}>
-                {isTeam
-                  ? conversation?.name || conversation?.team?.name
-                  : headerParticipant?.name}
+                {isTeam ? conversation?.name || conversation?.team?.name : headerParticipant?.name}
               </Text>
               <Text style={[styles.headerUsername, themedStyles.headerUsername]} numberOfLines={1}>
                 {isTeam
@@ -339,12 +348,16 @@ export function ChatScreen({ navigation, route }: Props) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderMessage}
           contentContainerStyle={styles.messagesContent}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: false })
-          }
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
         />
 
-        <View style={[styles.inputContainer, themedStyles.inputContainer, { paddingBottom: spacing.md + insets.bottom }]}>
+        <View
+          style={[
+            styles.inputContainer,
+            themedStyles.inputContainer,
+            { paddingBottom: spacing.md + insets.bottom },
+          ]}
+        >
           <TextInput
             style={[styles.input, themedStyles.input]}
             placeholder={t('messaging.placeholder')}

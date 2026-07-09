@@ -1,8 +1,8 @@
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useState,} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import type {MapStyleConfigResponse} from '../types/api';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import type { MapStyleConfigResponse } from '../types/api';
 
 const MAP_STYLE_STORAGE_KEY = '@racefy_map_style';
 
@@ -131,17 +131,17 @@ export function MapStyleProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [preference]
+    [preference],
   );
 
   const resolveStyleUrl = useCallback(
     (isDark: boolean): string => {
       const fallback = isDark
-        ? config?.dynamic_style_dark ?? FALLBACK_DARK
-        : config?.dynamic_style_light ?? FALLBACK_LIGHT;
+        ? (config?.dynamic_style_dark ?? FALLBACK_DARK)
+        : (config?.dynamic_style_light ?? FALLBACK_LIGHT);
       return `mapbox://styles/${preference ?? fallback}`;
     },
-    [preference, config]
+    [preference, config],
   );
 
   const value = useMemo<MapStyleContextType>(
@@ -153,7 +153,7 @@ export function MapStyleProvider({ children }: { children: React.ReactNode }) {
       setPreference,
       resolveStyleUrl,
     }),
-    [config, preference, setPreference, resolveStyleUrl]
+    [config, preference, setPreference, resolveStyleUrl],
   );
 
   return <MapStyleContext.Provider value={value}>{children}</MapStyleContext.Provider>;

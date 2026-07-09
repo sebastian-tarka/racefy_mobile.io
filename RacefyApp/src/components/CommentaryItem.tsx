@@ -1,12 +1,12 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, spacing} from '../theme';
-import {formatDistanceToNow} from 'date-fns';
-import {enUS, pl} from 'date-fns/locale';
-import {useTranslation} from 'react-i18next';
-import {InteractionButton} from './InteractionButton';
-import type {CommentaryType, EventCommentary} from '../types/api';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, spacing } from '../theme';
+import { formatDistanceToNow } from 'date-fns';
+import { enUS, pl } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { InteractionButton } from './InteractionButton';
+import type { CommentaryType, EventCommentary } from '../types/api';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
@@ -78,10 +78,7 @@ export function CommentaryItem({
   const typeColor = getTypeColor(commentary.type);
   const typeBackground = getTypeBackground(commentary.type);
 
-  const showBoostButton =
-    eventId != null &&
-    isAuthenticated &&
-    commentary.status === 'published';
+  const showBoostButton = eventId != null && isAuthenticated && commentary.status === 'published';
 
   return (
     <View
@@ -108,15 +105,11 @@ export function CommentaryItem({
 
       {/* Title (if present) */}
       {commentary.title && (
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {commentary.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{commentary.title}</Text>
       )}
 
       {/* Content */}
-      <Text style={[styles.content, { color: colors.textSecondary }]}>
-        {commentary.content}
-      </Text>
+      <Text style={[styles.content, { color: colors.textSecondary }]}>{commentary.content}</Text>
 
       {/* Status indicator for pending/processing/failed */}
       {commentary.status !== 'published' && (
@@ -126,9 +119,7 @@ export function CommentaryItem({
               styles.statusBadge,
               {
                 backgroundColor:
-                  commentary.status === 'failed'
-                    ? colors.errorLight
-                    : colors.warningLight,
+                  commentary.status === 'failed' ? colors.errorLight : colors.warningLight,
               },
             ]}
           >
@@ -136,10 +127,7 @@ export function CommentaryItem({
               style={[
                 styles.statusText,
                 {
-                  color:
-                    commentary.status === 'failed'
-                      ? colors.error
-                      : colors.warning,
+                  color: commentary.status === 'failed' ? colors.error : colors.warning,
                 },
               ]}
             >

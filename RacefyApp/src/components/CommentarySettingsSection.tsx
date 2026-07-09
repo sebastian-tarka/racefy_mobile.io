@@ -1,15 +1,15 @@
-import React, {useEffect, useState} from 'react';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {Modal, Platform, StyleSheet, Switch, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {useTheme} from '../hooks';
-import {Card} from './Card';
-import {Input} from './Input';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {CommentaryLanguage, CommentaryStyle,} from '../types/api';
+import React, { useEffect, useState } from 'react';
+import { api } from '../services/api';
+import { logger } from '../services/logger';
+import { Modal, Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTheme } from '../hooks';
+import { Card } from './Card';
+import { Input } from './Input';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { CommentaryLanguage, CommentaryStyle } from '../types/api';
 
 interface CommentarySettingsData {
   enabled: boolean;
@@ -19,7 +19,7 @@ interface CommentarySettingsData {
   auto_publish: boolean;
   languages: CommentaryLanguage[];
   force_participants: boolean;
-  time_windows: Array<{ start: string; end: string }>;
+  time_windows: { start: string; end: string }[];
   days_of_week: number[];
   pause_summary_enabled: boolean;
 }
@@ -112,11 +112,13 @@ export function CommentarySettingsSection({
   } | null>(null);
 
   // Available languages — loaded from backend, fallback to static map
-  const [availableLanguages, setAvailableLanguages] = useState<Record<string, string>>(FALLBACK_LANGUAGES);
+  const [availableLanguages, setAvailableLanguages] =
+    useState<Record<string, string>>(FALLBACK_LANGUAGES);
 
   useEffect(() => {
     let cancelled = false;
-    api.getCommentaryLanguages()
+    api
+      .getCommentaryLanguages()
       .then((response) => {
         if (cancelled) return;
         if (response?.languages && Object.keys(response.languages).length > 0) {
@@ -126,12 +128,14 @@ export function CommentarySettingsSection({
       .catch((err) => {
         logger.debug('api', 'Failed to load commentary languages, using fallback', { error: err });
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateSetting = <K extends keyof CommentarySettingsData>(
     key: K,
-    newValue: CommentarySettingsData[K]
+    newValue: CommentarySettingsData[K],
   ) => {
     onChange({
       ...value,
@@ -166,7 +170,10 @@ export function CommentarySettingsSection({
 
   const removeTimeWindow = (index: number) => {
     const currentWindows = value.time_windows || [];
-    updateSetting('time_windows', currentWindows.filter((_, i) => i !== index));
+    updateSetting(
+      'time_windows',
+      currentWindows.filter((_, i) => i !== index),
+    );
   };
 
   const updateTimeWindow = (index: number, field: 'start' | 'end', text: string) => {
@@ -226,17 +233,26 @@ export function CommentarySettingsSection({
   };
 
   const getDayLabel = (day: number): string => {
-    const keys = ['days.sun', 'days.mon', 'days.tue', 'days.wed', 'days.thu', 'days.fri', 'days.sat'];
+    const keys = [
+      'days.sun',
+      'days.mon',
+      'days.tue',
+      'days.wed',
+      'days.thu',
+      'days.fri',
+      'days.sat',
+    ];
     return t(`commentary.${keys[day]}`, ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]);
   };
 
-  const hasScheduleConfig = (value.time_windows && value.time_windows.length > 0) || (value.days_of_week && value.days_of_week.length > 0);
+  const hasScheduleConfig =
+    (value.time_windows && value.time_windows.length > 0) ||
+    (value.days_of_week && value.days_of_week.length > 0);
 
   return (
     <>
       {/* Section Toggle */}
-      <TouchableOpacity  // @ts-ignore
-
+      <TouchableOpacity // @ts-ignore
         style={styles.sectionToggle}
         onPress={() => setIsExpanded(!isExpanded)}
         activeOpacity={0.7}
@@ -275,10 +291,7 @@ export function CommentarySettingsSection({
                 {t('commentary.enableAI', 'Enable AI Commentary')}
               </Text>
               <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t(
-                  'commentary.enableDescription',
-                  'Generate AI commentary for this event'
-                )}
+                {t('commentary.enableDescription', 'Generate AI commentary for this event')}
               </Text>
             </View>
             <Switch
@@ -313,9 +326,7 @@ export function CommentarySettingsSection({
                         style={[
                           styles.styleOption,
                           {
-                            backgroundColor: isSelected
-                              ? colors.successLight
-                              : colors.transparent,
+                            backgroundColor: isSelected ? colors.successLight : colors.transparent,
                             borderColor: isSelected ? colors.success : colors.border,
                           },
                         ]}
@@ -364,9 +375,7 @@ export function CommentarySettingsSection({
                         style={[
                           styles.languageButton,
                           {
-                            backgroundColor: isSelected
-                              ? colors.primary
-                              : colors.transparent,
+                            backgroundColor: isSelected ? colors.primary : colors.transparent,
                             borderColor: isSelected ? colors.primary : colors.border,
                           },
                         ]}
@@ -411,9 +420,7 @@ export function CommentarySettingsSection({
                         style={[
                           styles.intervalButton,
                           {
-                            backgroundColor: isSelected
-                              ? colors.primary
-                              : colors.transparent,
+                            backgroundColor: isSelected ? colors.primary : colors.transparent,
                             borderColor: isSelected ? colors.primary : colors.border,
                           },
                         ]}
@@ -449,7 +456,7 @@ export function CommentarySettingsSection({
                   <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                     {t(
                       'commentary.autoPublishDescription',
-                      'Automatically publish generated commentary'
+                      'Automatically publish generated commentary',
                     )}
                   </Text>
                 </View>
@@ -474,7 +481,7 @@ export function CommentarySettingsSection({
                   <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                     {t(
                       'commentary.forceParticipantsDescription',
-                      'Override participant AI preferences for this event'
+                      'Override participant AI preferences for this event',
                     )}
                   </Text>
                 </View>
@@ -512,7 +519,10 @@ export function CommentarySettingsSection({
                   <View style={styles.section}>
                     <Input
                       label={t('commentary.tokenLimit', 'Token Limit')}
-                      placeholder={t('commentary.tokenLimitPlaceholder', 'Leave empty for unlimited')}
+                      placeholder={t(
+                        'commentary.tokenLimitPlaceholder',
+                        'Leave empty for unlimited',
+                      )}
                       value={value.token_limit?.toString() || ''}
                       onChangeText={(text) => {
                         const num = parseInt(text, 10);
@@ -525,7 +535,7 @@ export function CommentarySettingsSection({
                     <Text style={[styles.hint, { color: colors.textMuted }]}>
                       {t(
                         'commentary.tokenLimitHint',
-                        'Set a limit to control AI usage costs. Leave empty for unlimited.'
+                        'Set a limit to control AI usage costs. Leave empty for unlimited.',
                       )}
                     </Text>
                   </View>
@@ -539,7 +549,10 @@ export function CommentarySettingsSection({
                       {t('commentary.timeWindows', 'Time Windows')}
                     </Text>
                     <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-                      {t('commentary.timeWindowsHint', 'Restrict commentary to specific hours. Leave empty for always active.')}
+                      {t(
+                        'commentary.timeWindowsHint',
+                        'Restrict commentary to specific hours. Leave empty for always active.',
+                      )}
                     </Text>
                     {(value.time_windows || []).map((window, index) => (
                       <View key={index} style={styles.timeWindowRow}>
@@ -557,7 +570,9 @@ export function CommentarySettingsSection({
                             {window.start || '09:00'}
                           </Text>
                         </TouchableOpacity>
-                        <Text style={[styles.timeWindowSeparator, { color: colors.textSecondary }]}>–</Text>
+                        <Text style={[styles.timeWindowSeparator, { color: colors.textSecondary }]}>
+                          –
+                        </Text>
                         <TouchableOpacity
                           style={[
                             styles.timeButton,
@@ -611,20 +626,39 @@ export function CommentarySettingsSection({
                         onRequestClose={() => setActiveTimePicker(null)}
                       >
                         <View style={styles.timePickerModalOverlay}>
-                          <View style={[styles.timePickerModalContent, { backgroundColor: colors.cardBackground }]}>
-                            <View style={[styles.timePickerModalHeader, { borderBottomColor: colors.border }]}>
+                          <View
+                            style={[
+                              styles.timePickerModalContent,
+                              { backgroundColor: colors.cardBackground },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.timePickerModalHeader,
+                                { borderBottomColor: colors.border },
+                              ]}
+                            >
                               <TouchableOpacity onPress={() => setActiveTimePicker(null)}>
-                                <Text style={[styles.timePickerModalCancel, { color: colors.textSecondary }]}>
+                                <Text
+                                  style={[
+                                    styles.timePickerModalCancel,
+                                    { color: colors.textSecondary },
+                                  ]}
+                                >
                                   {t('common.cancel', 'Cancel')}
                                 </Text>
                               </TouchableOpacity>
-                              <Text style={[styles.timePickerModalTitle, { color: colors.textPrimary }]}>
+                              <Text
+                                style={[styles.timePickerModalTitle, { color: colors.textPrimary }]}
+                              >
                                 {activeTimePicker.field === 'start'
                                   ? t('commentary.timeWindowStart', 'Start')
                                   : t('commentary.timeWindowEnd', 'End')}
                               </Text>
                               <TouchableOpacity onPress={() => setActiveTimePicker(null)}>
-                                <Text style={[styles.timePickerModalDone, { color: colors.primary }]}>
+                                <Text
+                                  style={[styles.timePickerModalDone, { color: colors.primary }]}
+                                >
                                   {t('common.done', 'Done')}
                                 </Text>
                               </TouchableOpacity>
@@ -652,7 +686,10 @@ export function CommentarySettingsSection({
                       {t('commentary.daysOfWeek', 'Days of Week')}
                     </Text>
                     <Text style={[styles.sectionHint, { color: colors.textMuted }]}>
-                      {t('commentary.daysOfWeekHint', 'Select active days. Leave empty for all days.')}
+                      {t(
+                        'commentary.daysOfWeekHint',
+                        'Select active days. Leave empty for all days.',
+                      )}
                     </Text>
                     <View style={styles.daysRow}>
                       {DAYS_OF_WEEK.map((day) => {
@@ -694,16 +731,20 @@ export function CommentarySettingsSection({
                           <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
                             {t('commentary.pauseSummary', 'Pause Summary')}
                           </Text>
-                          <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                          <Text
+                            style={[styles.settingDescription, { color: colors.textSecondary }]}
+                          >
                             {t(
                               'commentary.pauseSummaryDescription',
-                              'Generate a summary when commentary pauses'
+                              'Generate a summary when commentary pauses',
                             )}
                           </Text>
                         </View>
                         <Switch
                           value={value.pause_summary_enabled}
-                          onValueChange={(enabled) => updateSetting('pause_summary_enabled', enabled)}
+                          onValueChange={(enabled) =>
+                            updateSetting('pause_summary_enabled', enabled)
+                          }
                           disabled={disabled}
                           trackColor={{ true: colors.primary, false: colors.border }}
                           thumbColor={colors.white}

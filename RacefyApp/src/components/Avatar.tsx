@@ -64,7 +64,9 @@ export function Avatar({ uri, name, size = 'md', showTierBadge, tier }: AvatarPr
           },
         ]}
       >
-        <Text style={[styles.initial, { fontSize: fontSizeValue, color: colors.white }]}>{getInitial()}</Text>
+        <Text style={[styles.initial, { fontSize: fontSizeValue, color: colors.white }]}>
+          {getInitial()}
+        </Text>
       </View>
       {badge}
     </View>

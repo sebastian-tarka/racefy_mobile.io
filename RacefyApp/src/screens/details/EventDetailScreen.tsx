@@ -1,5 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Animated, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Animated,
+  Platform,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +57,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   const navigateToAuth = useCallback(
     () => navigation.navigate('Auth', { screen: 'Login' }),
-    [navigation]
+    [navigation],
   );
   const navigateBack = useCallback(() => navigation.goBack(), [navigation]);
 
@@ -98,14 +107,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
         navigation.navigate('UserProfile', { username });
       }
     },
-    [isAuthenticated, navigation]
+    [isAuthenticated, navigation],
   );
 
   const handleActivityPress = useCallback(
     (activityId: number) => {
       navigation.navigate('ActivityDetail', { activityId });
     },
-    [navigation]
+    [navigation],
   );
 
   const handleStartActivity = useCallback(() => {
@@ -120,7 +129,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   const onTabChange = useCallback(
     (tab: EventTabType) => handleTabChange(tab, setActiveTab),
-    [handleTabChange]
+    [handleTabChange],
   );
 
   const tabs = useMemo(() => {
@@ -173,11 +182,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   if (error || !event) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('eventDetail.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('eventDetail.title')} showBack onBack={() => navigation.goBack()} />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
@@ -244,8 +249,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
               resizeMode="cover"
             />
           ) : (
-            <View style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
-              <Ionicons name={getSportIcon(event.sport_type?.name)} size={64} color={colors.primary} />
+            <View
+              style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}
+            >
+              <Ionicons
+                name={getSportIcon(event.sport_type?.name)}
+                size={64}
+                color={colors.primary}
+              />
             </View>
           )}
           <View style={styles.badgeContainer}>
@@ -332,7 +343,10 @@ export function EventDetailScreen({ route, navigation }: Props) {
           canCreateTeam={eventTeams.canCreateTeam}
           canJoinTeam={eventTeams.canJoinTeam}
           createdTeam={eventTeams.createdTeam}
-          onRefresh={() => { onRefresh(); eventTeams.fetchTeams(); }}
+          onRefresh={() => {
+            onRefresh();
+            eventTeams.fetchTeams();
+          }}
           onCreateTeam={eventTeams.handleCreateTeam}
           onJoinTeam={eventTeams.handleJoinTeam}
           onLeaveTeam={eventTeams.handleLeaveTeam}

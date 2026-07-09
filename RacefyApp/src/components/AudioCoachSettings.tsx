@@ -1,12 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
@@ -55,24 +48,21 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
   const { colors } = useTheme();
   const { tier } = useSubscription();
 
-  const {
-    settings,
-    planInfo,
-    isLoading,
-    loadSettings,
-    updateSettings,
-    loadPlanInfo,
-  } = useAudioCoachSettings();
+  const { settings, planInfo, isLoading, loadSettings, updateSettings, loadPlanInfo } =
+    useAudioCoachSettings();
 
   useEffect(() => {
     loadSettings();
     loadPlanInfo();
   }, [loadSettings, loadPlanInfo]);
 
-  const handleToggle = useCallback((key: keyof SettingsType, value: any) => {
-    triggerHaptic();
-    updateSettings({ [key]: value });
-  }, [updateSettings]);
+  const handleToggle = useCallback(
+    (key: keyof SettingsType, value: any) => {
+      triggerHaptic();
+      updateSettings({ [key]: value });
+    },
+    [updateSettings],
+  );
 
   const handlePreview = useCallback(() => {
     triggerHaptic();
@@ -100,7 +90,16 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
   const isPro = tier === 'pro';
 
   return (
-    <View style={embedded ? undefined : [styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={
+        embedded
+          ? undefined
+          : [
+              styles.container,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]
+      }
+    >
       {/* Description */}
       <View style={styles.descriptionContainer}>
         <Text style={[styles.description, { color: colors.textSecondary }]}>
@@ -138,7 +137,10 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.language === lang.value && { borderColor: colors.primary, backgroundColor: colors.primary },
+                settings.language === lang.value && {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('language', lang.value)}
@@ -170,7 +172,10 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.intervalKm === km && { borderColor: colors.primary, backgroundColor: colors.primary },
+                settings.intervalKm === km && {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('intervalKm', km)}
@@ -202,7 +207,10 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
               style={[
                 styles.chip,
                 { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                settings.style === style && { borderColor: colors.primary, backgroundColor: colors.primary },
+                settings.style === style && {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                },
                 isDisabled && styles.chipDisabled,
               ]}
               onPress={() => handleToggle('style', style)}
@@ -232,7 +240,11 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
             onPress={() => handleToggle('speechRate', Math.max(0.5, settings.speechRate - 0.1))}
             disabled={isDisabled || settings.speechRate <= 0.5}
           >
-            <Ionicons name="remove-circle-outline" size={24} color={isDisabled ? colors.textMuted : colors.primary} />
+            <Ionicons
+              name="remove-circle-outline"
+              size={24}
+              color={isDisabled ? colors.textMuted : colors.primary}
+            />
           </TouchableOpacity>
           <Text style={[styles.rateValue, { color: colors.textPrimary }]}>
             {settings.speechRate.toFixed(1)}x
@@ -241,7 +253,11 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
             onPress={() => handleToggle('speechRate', Math.min(2.0, settings.speechRate + 0.1))}
             disabled={isDisabled || settings.speechRate >= 2.0}
           >
-            <Ionicons name="add-circle-outline" size={24} color={isDisabled ? colors.textMuted : colors.primary} />
+            <Ionicons
+              name="add-circle-outline"
+              size={24}
+              color={isDisabled ? colors.textMuted : colors.primary}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -281,7 +297,10 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
                 style={[
                   styles.chip,
                   { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                  settings.aiVoice === voice.value && { borderColor: colors.primary, backgroundColor: colors.primary },
+                  settings.aiVoice === voice.value && {
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary,
+                  },
                   isDisabled && styles.chipDisabled,
                 ]}
                 onPress={() => handleToggle('aiVoice', voice.value)}
@@ -366,8 +385,14 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
           onPress={handlePreview}
           disabled={isDisabled}
         >
-          <Ionicons name="volume-high-outline" size={18} color={isDisabled ? colors.textMuted : colors.primary} />
-          <Text style={[styles.previewText, { color: isDisabled ? colors.textMuted : colors.primary }]}>
+          <Ionicons
+            name="volume-high-outline"
+            size={18}
+            color={isDisabled ? colors.textMuted : colors.primary}
+          />
+          <Text
+            style={[styles.previewText, { color: isDisabled ? colors.textMuted : colors.primary }]}
+          >
             {t('settings.audioCoach.preview')}
           </Text>
         </TouchableOpacity>

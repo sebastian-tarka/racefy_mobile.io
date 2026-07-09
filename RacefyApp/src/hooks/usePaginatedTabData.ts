@@ -64,7 +64,7 @@ export function usePaginatedTabData<T>({
         setIsLoading(false);
       }
     },
-    [fetchFunction, userId]
+    [fetchFunction, userId],
   );
 
   const refresh = useCallback(async () => {

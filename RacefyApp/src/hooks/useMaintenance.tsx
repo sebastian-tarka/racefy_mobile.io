@@ -1,4 +1,4 @@
-import {useAppConfig} from '../contexts/AppConfigContext';
+import { useAppConfig } from '../contexts/AppConfigContext';
 
 /**
  * Maintenance mode selector built on top of {@link AppConfigContext}.
@@ -9,12 +9,8 @@ import {useAppConfig} from '../contexts/AppConfigContext';
  * in `AppConfigProvider`.
  */
 export function useMaintenance() {
-  const {
-    isMaintenanceMode,
-    maintenanceMessage,
-    maintenanceEstimatedEnd,
-    refresh,
-  } = useAppConfig();
+  const { isMaintenanceMode, maintenanceMessage, maintenanceEstimatedEnd, refresh } =
+    useAppConfig();
 
   return {
     isMaintenanceMode,

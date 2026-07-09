@@ -79,7 +79,17 @@ export function useEventDetail({
     const canEdit = event.is_owner ?? false;
     const canDelete = canEdit && canModifyStatus;
 
-    return { spotsText, availableSpots, isFull, canRegister, canUnregister, canStartActivity, canEdit, canDelete, eligibility };
+    return {
+      spotsText,
+      availableSpots,
+      isFull,
+      canRegister,
+      canUnregister,
+      canStartActivity,
+      canEdit,
+      canDelete,
+      eligibility,
+    };
   }, [event]);
 
   // Fetchers
@@ -140,7 +150,7 @@ export function useEventDetail({
       setEvent((prev) =>
         prev
           ? { ...prev, is_registered: true, participants_count: prev.participants_count + 1 }
-          : null
+          : null,
       );
       fetchEvent();
       Alert.alert(t('common.success'), t('eventDetail.registrationSuccess'));
@@ -171,7 +181,7 @@ export function useEventDetail({
                     is_registered: false,
                     participants_count: prev.participants_count - 1,
                   }
-                : null
+                : null,
             );
             fetchEvent();
             Alert.alert(t('common.success'), t('eventDetail.cancelSuccess'));

@@ -819,7 +819,50 @@
     "screenLocked": "Screen locked",
     "screenUnlocked": "Screen unlocked",
     "holdToUnlock": "HOLD TO UNLOCK",
-    "lock": "Lock screen"
+    "lock": "Lock screen",
+    "gpsHealth": {
+      "title": "GPS recording may be unreliable — tap to fix",
+      "location": {
+        "title": "Location permission missing",
+        "description": "Allow location access to record your route."
+      },
+      "services": {
+        "title": "Location services are off",
+        "description": "Turn on GPS in system settings."
+      },
+      "precise": {
+        "title": "Approximate location selected",
+        "description": "Choose \"Precise\" location for accurate tracking."
+      },
+      "battery": {
+        "title": "Battery optimization is on",
+        "description": "The system may stop GPS mid-activity. Tap to exclude Racefy."
+      },
+      "notifications": {
+        "title": "Notifications are blocked",
+        "description": "The tracking notification keeps recording alive in background."
+      },
+      "powerSave": {
+        "title": "Power saving mode is on",
+        "description": "Power saving can pause GPS with the screen off."
+      },
+      "oemTitle": "One more step on this device",
+      "openOemSettings": "Open settings",
+      "oem": {
+        "samsung": "Samsung may put Racefy to sleep. In Battery settings, remove Racefy from \"Sleeping apps\" and disable \"Put unused apps to sleep\" for Racefy.",
+        "xiaomi": "Xiaomi (MIUI) kills background apps aggressively. Enable \"Autostart\" for Racefy and set Battery saver to \"No restrictions\".",
+        "huawei": "Huawei stops background apps. In \"App launch\", set Racefy to \"Manage manually\" and enable all three options.",
+        "oneplus": "OnePlus may restrict background activity. Disable battery optimization and enable \"Allow auto-launch\" for Racefy.",
+        "oppo": "Oppo/Realme restrict background apps. Enable \"Auto startup\" for Racefy and disable battery restrictions.",
+        "vivo": "Vivo restricts background apps. Enable \"Autostart\" and allow high background power consumption for Racefy."
+      }
+    },
+    "batteryPrompt": {
+      "title": "Keep GPS running in background",
+      "message": "To record your whole route with the screen off, allow Racefy to ignore battery optimization. Without it the system may stop GPS mid-activity.",
+      "allow": "Allow",
+      "later": "Not now"
+    }
   },
   "gpxImport": {
     "title": "Import GPX",

@@ -65,13 +65,12 @@ export function FeedbackListScreen({ navigation }: Props) {
       setActiveFilter(filter);
       setFilters(filter === 'all' ? {} : { status: filter });
     },
-    [setFilters]
+    [setFilters],
   );
 
   const renderFilterChip = (filter: FeedbackStatus | 'all') => {
     const isActive = activeFilter === filter;
-    const label =
-      filter === 'all' ? t('feedback.allStatuses') : t(`feedback.statuses.${filter}`);
+    const label = filter === 'all' ? t('feedback.allStatuses') : t(`feedback.statuses.${filter}`);
 
     return (
       <TouchableOpacity
@@ -86,10 +85,7 @@ export function FeedbackListScreen({ navigation }: Props) {
         onPress={() => handleFilterPress(filter)}
       >
         <Text
-          style={[
-            styles.filterChipText,
-            { color: isActive ? '#FFFFFF' : colors.textSecondary },
-          ]}
+          style={[styles.filterChipText, { color: isActive ? '#FFFFFF' : colors.textSecondary }]}
         >
           {label}
         </Text>
@@ -105,12 +101,15 @@ export function FeedbackListScreen({ navigation }: Props) {
       item.replies_count === 0
         ? t('feedback.noRepliesShort')
         : item.replies_count === 1
-        ? t('feedback.repliesCountOne')
-        : t('feedback.repliesCount', { count: item.replies_count });
+          ? t('feedback.repliesCountOne')
+          : t('feedback.repliesCount', { count: item.replies_count });
 
     return (
       <TouchableOpacity
-        style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+        ]}
         onPress={() => navigation.navigate('FeedbackDetail', { feedbackId: item.id })}
         activeOpacity={0.7}
       >
@@ -132,14 +131,14 @@ export function FeedbackListScreen({ navigation }: Props) {
               {t(`feedback.priorities.${item.priority}`)}
             </Text>
           </View>
-          <Text style={[styles.repliesText, { color: colors.textSecondary }]}>
-            {repliesText}
-          </Text>
+          <Text style={[styles.repliesText, { color: colors.textSecondary }]}>{repliesText}</Text>
         </View>
 
         {item.latest_reply && (
           <Text style={[styles.latestReply, { color: colors.textSecondary }]} numberOfLines={1}>
-            {item.latest_reply.is_admin_reply ? t('feedback.detail.adminReply') : t('feedback.detail.you')}
+            {item.latest_reply.is_admin_reply
+              ? t('feedback.detail.adminReply')
+              : t('feedback.detail.you')}
             : {item.latest_reply.body}
           </Text>
         )}
@@ -179,7 +178,11 @@ export function FeedbackListScreen({ navigation }: Props) {
       />
 
       <View style={styles.filtersContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtersContent}
+        >
           {STATUS_FILTERS.map(renderFilterChip)}
         </ScrollView>
       </View>
@@ -188,10 +191,7 @@ export function FeedbackListScreen({ navigation }: Props) {
         data={feedbacks}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderFeedbackCard}
-        contentContainerStyle={[
-          styles.listContent,
-          feedbacks.length === 0 && styles.emptyList,
-        ]}
+        contentContainerStyle={[styles.listContent, feedbacks.length === 0 && styles.emptyList]}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -202,11 +202,7 @@ export function FeedbackListScreen({ navigation }: Props) {
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={renderEmpty}
-        ListFooterComponent={
-          isLoading && feedbacks.length > 0 ? (
-            <Loading />
-          ) : null
-        }
+        ListFooterComponent={isLoading && feedbacks.length > 0 ? <Loading /> : null}
       />
     </ScreenContainer>
   );

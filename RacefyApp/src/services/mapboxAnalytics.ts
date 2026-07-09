@@ -23,11 +23,11 @@ function formatMySQLDateTime(date: Date): string {
  * Reports map loads to backend for usage tracking and cost management
  */
 class MapboxAnalytics {
-  private pendingReports: Array<{
+  private pendingReports: {
     activityId: number;
     timestamp: string;
     mapType: 'interactive' | 'static';
-  }> = [];
+  }[] = [];
 
   private reportInterval: NodeJS.Timeout | null = null;
   private readonly BATCH_SIZE = 10;
@@ -54,7 +54,10 @@ class MapboxAnalytics {
     };
 
     this.pendingReports.push(report);
-    logger.debug('api', 'Mapbox map load tracked', { activityId, queueSize: this.pendingReports.length });
+    logger.debug('api', 'Mapbox map load tracked', {
+      activityId,
+      queueSize: this.pendingReports.length,
+    });
 
     // If we hit batch size, send immediately
     if (this.pendingReports.length >= this.BATCH_SIZE) {
@@ -98,7 +101,10 @@ class MapboxAnalytics {
       await api.reportMapUsage(reportsToSend);
       logger.info('api', 'Map usage reports sent', { count: reportsToSend.length });
     } catch (error) {
-      logger.error('api', 'Failed to send map usage reports', { error, count: reportsToSend.length });
+      logger.error('api', 'Failed to send map usage reports', {
+        error,
+        count: reportsToSend.length,
+      });
       // Don't re-queue failed reports to avoid memory buildup
     }
   }

@@ -18,7 +18,11 @@ interface QuickActionsBarProps {
   onFindEvents: () => void;
 }
 
-export function QuickActionsBar({ onStartActivity, onCreatePost, onFindEvents }: QuickActionsBarProps) {
+export function QuickActionsBar({
+  onStartActivity,
+  onCreatePost,
+  onFindEvents,
+}: QuickActionsBarProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 

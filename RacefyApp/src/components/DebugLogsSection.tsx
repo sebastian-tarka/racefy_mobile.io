@@ -6,14 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -32,21 +25,21 @@ export function DebugLogsSection() {
   const [lastSentRef, setLastSentRef] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Don't render if logging is disabled
-  if (!logger.isEnabled()) {
-    return null;
-  }
-
   useEffect(() => {
     // Update logs count
     setLogsCount(logger.getLogsCount());
   }, []);
 
+  // Don't render if logging is disabled (after hooks, to satisfy the Rules of Hooks)
+  if (!logger.isEnabled()) {
+    return null;
+  }
+
   const handleSendLogs = async () => {
     if (logsCount === 0) {
       Alert.alert(
         t('settings.debug.noLogs', 'No Logs'),
-        t('settings.debug.noLogsMessage', 'There are no logs to send.')
+        t('settings.debug.noLogsMessage', 'There are no logs to send.'),
       );
       return;
     }
@@ -90,11 +83,15 @@ export function DebugLogsSection() {
 
       Alert.alert(
         t('settings.debug.sent', 'Logs Sent'),
-        t('settings.debug.sentMessageMultiple', 'Debug logs sent successfully in {{chunks}} request(s).\n\nTotal logs: {{total}}\nReference: {{ref}}', {
-          chunks,
-          total: totalLogs,
-          ref: lastRef,
-        })
+        t(
+          'settings.debug.sentMessageMultiple',
+          'Debug logs sent successfully in {{chunks}} request(s).\n\nTotal logs: {{total}}\nReference: {{ref}}',
+          {
+            chunks,
+            total: totalLogs,
+            ref: lastRef,
+          },
+        ),
       );
 
       logger.info('general', 'Debug logs sent to server', {
@@ -108,7 +105,7 @@ export function DebugLogsSection() {
 
       Alert.alert(
         t('common.error', 'Error'),
-        t('settings.debug.sendFailed', 'Failed to send logs. Please try again.')
+        t('settings.debug.sendFailed', 'Failed to send logs. Please try again.'),
       );
     } finally {
       setIsSending(false);
@@ -131,7 +128,7 @@ export function DebugLogsSection() {
             setLastSentRef(null);
           },
         },
-      ]
+      ],
     );
   };
 
@@ -141,7 +138,7 @@ export function DebugLogsSection() {
     setLogsCount(logger.getLogsCount());
     Alert.alert(
       t('settings.debug.newSession', 'New Session'),
-      t('settings.debug.newSessionMessage', 'A new logging session has been started.')
+      t('settings.debug.newSessionMessage', 'A new logging session has been started.'),
     );
   };
 
@@ -154,7 +151,12 @@ export function DebugLogsSection() {
         {t('settings.debug.title', 'Debug Logs')}
       </Text>
 
-      <View style={[styles.section, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.section,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+        ]}
+      >
         {/* Stats Row */}
         <TouchableOpacity
           style={[styles.row, { borderBottomColor: colors.border }]}
@@ -246,9 +248,10 @@ export function DebugLogsSection() {
             {/* Action Buttons */}
             <View style={styles.actions}>
               <Button
-                title={isSending
-                  ? t('settings.debug.sending', 'Sending...')
-                  : t('settings.debug.sendLogs', 'Send Logs to Server')
+                title={
+                  isSending
+                    ? t('settings.debug.sending', 'Sending...')
+                    : t('settings.debug.sendLogs', 'Send Logs to Server')
                 }
                 onPress={handleSendLogs}
                 loading={isSending}

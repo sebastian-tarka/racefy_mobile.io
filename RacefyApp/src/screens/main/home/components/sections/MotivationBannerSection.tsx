@@ -29,21 +29,15 @@ export function MotivationBannerSection({ section, onPress }: MotivationBannerSe
           <Ionicons name="sparkles" size={24} color={colors.primary} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: colors.primary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{section.title}</Text>
           {section.message && (
-            <Text style={[styles.message, { color: colors.textSecondary }]}>
-              {section.message}
-            </Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
           )}
         </View>
       </View>
       {section.cta && (
         <View style={[styles.ctaContainer, { borderTopColor: colors.primary + '30' }]}>
-          <Text style={[styles.ctaText, { color: colors.primary }]}>
-            {section.cta}
-          </Text>
+          <Text style={[styles.ctaText, { color: colors.primary }]}>{section.cta}</Text>
           <Ionicons name="arrow-forward" size={16} color={colors.primary} />
         </View>
       )}

@@ -11,21 +11,17 @@ import {
   TURN_ANNOUNCE_DISTANCE_M,
   TURN_PASSED_DISTANCE_M,
 } from '../constants/navigation';
+import { haversineDistance } from './gpsMath';
 
-const EARTH_RADIUS_M = 6371000;
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 const toDeg = (rad: number) => (rad * 180) / Math.PI;
 
 /**
  * Haversine distance between two [lng, lat] coordinates in meters.
+ * Delegates to the shared utils/gpsMath helper (which takes scalar lat/lng).
  */
 export function haversine(a: [number, number], b: [number, number]): number {
-  const dLat = toRad(b[1] - a[1]);
-  const dLng = toRad(b[0] - a[0]);
-  const sinLat = Math.sin(dLat / 2);
-  const sinLng = Math.sin(dLng / 2);
-  const h = sinLat * sinLat + Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * sinLng * sinLng;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h));
+  return haversineDistance(a[1], a[0], b[1], b[0]);
 }
 
 /**
@@ -34,11 +30,11 @@ export function haversine(a: [number, number], b: [number, number]): number {
  */
 export function nearestPointOnRoute(
   position: [number, number], // [lng, lat]
-  coordinates: [number, number][]
+  coordinates: [number, number][],
 ): {
-  index: number;         // segment index (0-based)
+  index: number; // segment index (0-based)
   point: [number, number]; // nearest point [lng, lat]
-  distance: number;      // distance from position to nearest point (meters)
+  distance: number; // distance from position to nearest point (meters)
   distanceAlong: number; // distance along route from start to nearest point (meters)
 } {
   let bestDist = Infinity;
@@ -75,7 +71,7 @@ export function nearestPointOnRoute(
 function projectOntoSegment(
   p: [number, number],
   a: [number, number],
-  b: [number, number]
+  b: [number, number],
 ): { point: [number, number]; fraction: number } {
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
@@ -110,10 +106,7 @@ export function routeTotalDistance(coordinates: [number, number][]): number {
 /**
  * Calculate remaining distance from current position to end of route.
  */
-export function distanceRemaining(
-  distanceAlong: number,
-  totalDistance: number
-): number {
+export function distanceRemaining(distanceAlong: number, totalDistance: number): number {
   return Math.max(0, totalDistance - distanceAlong);
 }
 
@@ -123,10 +116,7 @@ export function distanceRemaining(
  * @param paceSecPerKm - current pace in seconds/km (null if unknown)
  * @returns estimated seconds to finish, or null
  */
-export function estimateETA(
-  remainingMeters: number,
-  paceSecPerKm: number | null
-): number | null {
+export function estimateETA(remainingMeters: number, paceSecPerKm: number | null): number | null {
   if (!paceSecPerKm || paceSecPerKm <= 0 || remainingMeters <= 0) return null;
   return Math.round((remainingMeters / 1000) * paceSecPerKm);
 }
@@ -147,7 +137,7 @@ export function getOffRouteStatus(distanceFromRoute: number): OffRouteStatus {
  */
 export function getNextTurn(
   distanceAlong: number,
-  turnInstructions: RouteTurnInstruction[]
+  turnInstructions: RouteTurnInstruction[],
 ): RouteTurnInstruction | null {
   for (const turn of turnInstructions) {
     if (turn.distance_along > distanceAlong - TURN_PASSED_DISTANCE_M) {
@@ -162,7 +152,7 @@ export function getNextTurn(
  */
 export function distanceToNextTurn(
   distanceAlong: number,
-  nextTurn: RouteTurnInstruction | null
+  nextTurn: RouteTurnInstruction | null,
 ): number | null {
   if (!nextTurn) return null;
   return Math.max(0, nextTurn.distance_along - distanceAlong);
@@ -173,7 +163,7 @@ export function distanceToNextTurn(
  */
 export function shouldAnnounceTurn(
   distanceAlong: number,
-  nextTurn: RouteTurnInstruction | null
+  nextTurn: RouteTurnInstruction | null,
 ): boolean {
   if (!nextTurn) return false;
   const dist = nextTurn.distance_along - distanceAlong;

@@ -25,24 +25,18 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async createRoute(data: Types.CreateRouteRequest): Promise<Types.PlannedRoute> {
-      const response = await this.request<Types.ApiResponse<Types.PlannedRoute>>(
-        '/routes',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.PlannedRoute>>('/routes', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
     async updateRoute(id: number, data: Types.UpdateRouteRequest): Promise<Types.PlannedRoute> {
-      const response = await this.request<Types.ApiResponse<Types.PlannedRoute>>(
-        `/routes/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.PlannedRoute>>(`/routes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -50,7 +44,9 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/routes/${id}`, { method: 'DELETE' });
     }
 
-    async searchRoutes(params: Types.RouteSearchParams): Promise<Types.PaginatedResponse<Types.PlannedRoute>> {
+    async searchRoutes(
+      params: Types.RouteSearchParams,
+    ): Promise<Types.PaginatedResponse<Types.PlannedRoute>> {
       const query = new URLSearchParams();
       if (params.lat != null) query.append('lat', String(params.lat));
       if (params.lng != null) query.append('lng', String(params.lng));
@@ -65,7 +61,7 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async duplicateRoute(id: number): Promise<Types.PlannedRoute> {
       const response = await this.request<Types.ApiResponse<Types.PlannedRoute>>(
         `/routes/${id}/duplicate`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -76,7 +72,7 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         {
           method: 'POST',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.data;
     }

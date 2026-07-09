@@ -807,7 +807,50 @@
     "mapError": "No se puede cargar la vista del mapa",
     "backToStats": "Volver a estadísticas",
     "fetchingLocation": "Obteniendo tu ubicación...",
-    "waitingForGPS": "Esperando GPS..."
+    "waitingForGPS": "Esperando GPS...",
+    "gpsHealth": {
+      "title": "La grabación GPS puede fallar — toca para arreglar",
+      "location": {
+        "title": "Falta permiso de ubicación",
+        "description": "Permite el acceso a la ubicación para grabar tu ruta."
+      },
+      "services": {
+        "title": "Servicios de ubicación desactivados",
+        "description": "Activa el GPS en los ajustes del sistema."
+      },
+      "precise": {
+        "title": "Ubicación aproximada seleccionada",
+        "description": "Elige ubicación \"Precisa\" para un registro exacto."
+      },
+      "battery": {
+        "title": "Optimización de batería activada",
+        "description": "El sistema puede detener el GPS durante la actividad. Toca para excluir Racefy."
+      },
+      "notifications": {
+        "title": "Notificaciones bloqueadas",
+        "description": "La notificación de seguimiento mantiene la grabación en segundo plano."
+      },
+      "powerSave": {
+        "title": "Modo de ahorro de energía activo",
+        "description": "El ahorro de energía puede pausar el GPS con la pantalla apagada."
+      },
+      "oemTitle": "Un paso más en este dispositivo",
+      "openOemSettings": "Abrir ajustes",
+      "oem": {
+        "samsung": "Samsung puede suspender Racefy. En ajustes de batería, quita Racefy de \"Aplicaciones en suspensión\" y desactiva la suspensión automática para Racefy.",
+        "xiaomi": "Xiaomi (MIUI) cierra apps en segundo plano agresivamente. Activa \"Inicio automático\" para Racefy y pon el ahorro de batería en \"Sin restricciones\".",
+        "huawei": "Huawei detiene apps en segundo plano. En \"Inicio de aplicaciones\", pon Racefy en \"Gestionar manualmente\" y activa las tres opciones.",
+        "oneplus": "OnePlus puede restringir la actividad en segundo plano. Desactiva la optimización de batería y permite el inicio automático para Racefy.",
+        "oppo": "Oppo/Realme restringen apps en segundo plano. Activa \"Inicio automático\" para Racefy y desactiva las restricciones de batería.",
+        "vivo": "Vivo restringe apps en segundo plano. Activa \"Inicio automático\" y permite alto consumo en segundo plano para Racefy."
+      }
+    },
+    "batteryPrompt": {
+      "title": "Mantén el GPS en segundo plano",
+      "message": "Para grabar toda tu ruta con la pantalla apagada, permite que Racefy ignore la optimización de batería. Sin esto, el sistema puede detener el GPS durante la actividad.",
+      "allow": "Permitir",
+      "later": "Ahora no"
+    }
   },
   "gpxImport": {
     "title": "Importar GPX",

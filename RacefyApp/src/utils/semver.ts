@@ -19,7 +19,6 @@ export function compareVersions(a: string, b: string): -1 | 0 | 1 {
     const stripped = v.split(/[-+]/)[0]; // drop prerelease/build metadata
     const parts = stripped.split('.').map((p) => parseInt(p, 10));
     if (parts.some((n) => Number.isNaN(n))) {
-      // eslint-disable-next-line no-console
       console.warn(`[semver] Invalid version: "${v}"`);
       return [0, 0, 0];
     }

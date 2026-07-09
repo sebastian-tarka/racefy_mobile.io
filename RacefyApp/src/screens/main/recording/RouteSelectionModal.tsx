@@ -21,18 +21,24 @@ interface Props {
 }
 
 export function RouteSelectionModal({
-  visible, onClose, nearbyRoutes, myRoutes, selectedRouteId,
-  onRouteSelect, onNavigateToLibrary, isLoading, error,
+  visible,
+  onClose,
+  nearbyRoutes,
+  myRoutes,
+  selectedRouteId,
+  onRouteSelect,
+  onNavigateToLibrary,
+  isLoading,
+  error,
 }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  const dragGesture = Gesture.Pan()
-    .onEnd((event) => {
-      if (event.translationY > 100 || event.velocityY > 500) {
-        onClose();
-      }
-    });
+  const dragGesture = Gesture.Pan().onEnd((event) => {
+    if (event.translationY > 100 || event.velocityY > 500) {
+      onClose();
+    }
+  });
 
   return (
     <Modal
@@ -53,7 +59,12 @@ export function RouteSelectionModal({
           </TouchableOpacity>
         </GestureDetector>
 
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('recording.selectShadowTrack')}
           </Text>
@@ -90,7 +101,12 @@ export function RouteSelectionModal({
               </View>
 
               {myRoutes.length === 0 && (
-                <View style={[styles.emptyMyRoutes, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.emptyMyRoutes,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                     {t('recording.noSavedRoutes', "You don't have any saved routes yet")}
                   </Text>
@@ -119,7 +135,10 @@ export function RouteSelectionModal({
                       >
                         <Ionicons name="bookmark" size={18} color={colors.primary} />
                         <View style={styles.myRouteInfo}>
-                          <Text style={[styles.myRouteTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                          <Text
+                            style={[styles.myRouteTitle, { color: colors.textPrimary }]}
+                            numberOfLines={1}
+                          >
                             {r.title}
                           </Text>
                           <Text style={[styles.myRouteMeta, { color: colors.textMuted }]}>
@@ -135,14 +154,25 @@ export function RouteSelectionModal({
               )}
 
               <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <Text style={[styles.sectionTitle, styles.nearbySectionTitle, { color: colors.textPrimary }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  styles.nearbySectionTitle,
+                  { color: colors.textPrimary },
+                ]}
+              >
                 {t('recording.nearbyRoutes', 'Nearby routes')}
               </Text>
             </View>
           }
         />
 
-        <View style={[styles.footer, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+        <View
+          style={[
+            styles.footer,
+            { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+          ]}
+        >
           <TouchableOpacity
             style={[styles.cancelButton, { backgroundColor: colors.background }]}
             onPress={onClose}

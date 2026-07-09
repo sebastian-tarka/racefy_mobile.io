@@ -1,45 +1,43 @@
-import React, {createContext, useCallback, useContext, useEffect, useRef, useState,} from "react";
-import {Alert, AppState, AppStateStatus, Platform} from "react-native";
-import * as Location from "expo-location";
-import {api} from "../services/api";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Alert, AppState, AppStateStatus, Platform } from 'react-native';
+import * as Location from 'expo-location';
+import { api } from '../services/api';
 import {
-  type BufferedLocation,
-  clearAllPersistedPoints,
-  clearBackgroundSyncState,
-  clearForegroundBuffer,
-  clearLocationBuffer,
-  getAllPersistedPoints,
-  getBackgroundSyncState,
   getLastBackgroundPosition,
-  getLocationBuffer,
-  saveForegroundBuffer,
-  saveLocationBuffer,
+  migrateLegacyBuffers,
   setActiveActivityId,
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
-  syncAudioCoachForegroundDistance,
-} from "../services/backgroundLocation";
-import {enqueueUnsyncedActivity} from "../services/unsyncedActivities";
-import NetInfo, {NetInfoState} from "@react-native-community/netinfo";
-import type {Activity, ActivityLocation, AutoCreatedPost, GpsPoint,} from "../types/api";
-import {convertToApiGpsProfile, DEFAULT_GPS_PROFILE, type GpsProfile,} from "../config/gpsProfiles";
-import {useSportTypes} from "./useSportTypes";
-import {useAuth} from "./useAuth";
-import {logger} from "../services/logger";
-import {captureActivityLocation} from "../utils/locationCapture";
-import {addPaceSegment, calculateCurrentPace, type PaceSegment, smoothPace,} from "../utils/paceCalculator";
+} from '../services/backgroundLocation';
+import { drainPoints, toGpsPoints } from '../services/pointsUploader';
+import { enqueueUnsyncedActivity } from '../services/unsyncedActivities';
+import * as trackingDb from '../services/trackingDb';
+import * as Crypto from 'expo-crypto';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import type { Activity, ActivityLocation, AutoCreatedPost, GpsPoint } from '../types/api';
+import {
+  convertToApiGpsProfile,
+  DEFAULT_GPS_PROFILE,
+  type GpsProfile,
+} from '../config/gpsProfiles';
+import { useSportTypes } from './useSportTypes';
+import { useAuth } from './useAuth';
+import { logger } from '../services/logger';
+import { captureActivityLocation } from '../utils/locationCapture';
+import { PaceTracker } from '../utils/paceCalculator';
+import { accumulateRecoveredTrack, haversineDistance } from '../utils/gpsMath';
+import { computeDurationTick } from '../utils/durationStats';
+import { GpsTracker } from '../services/gpsTracking';
 import {
   CALORIES_PER_SECOND,
   GPS_GAP_THRESHOLD_MS,
   GPS_GOOD_THRESHOLD_MS,
   GPS_WEAK_THRESHOLD_MS,
-  MAX_BACKOFF_MS,
   MAX_PACE_SEGMENTS,
-  PERSIST_INTERVAL_MS,
   SYNC_INTERVAL_MS,
-} from "../constants/tracking";
+} from '../constants/tracking';
 
-const isWeb = Platform.OS === "web";
+const isWeb = Platform.OS === 'web';
 
 export interface LiveActivityStats {
   distance: number;
@@ -57,7 +55,7 @@ export interface LiveActivityStats {
 
 // GPS and network status for UI feedback
 export interface TrackingStatus {
-  gpsSignal: "good" | "weak" | "lost" | "disabled"; // GPS signal quality or disabled for indoor sports
+  gpsSignal: 'good' | 'weak' | 'lost' | 'disabled'; // GPS signal quality or disabled for indoor sports
   isOnline: boolean; // Network connectivity
   pendingPoints: number; // Points waiting to sync
   lastSyncTime: Date | null; // Last successful sync
@@ -103,7 +101,7 @@ function useLiveActivityInternal() {
     currentStats: { ...initialStats },
     hasExistingActivity: false,
     trackingStatus: {
-      gpsSignal: "good",
+      gpsSignal: 'good',
       isOnline: true,
       pendingPoints: 0,
       lastSyncTime: null,
@@ -111,25 +109,23 @@ function useLiveActivityInternal() {
     },
   });
 
-  const locationSubscription = useRef<Location.LocationSubscription | null>(
-    null,
-  );
-  const pointsBuffer = useRef<GpsPoint[]>([]);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   // Accumulates ALL route points for map visualization (never cleared on sync)
   const allRoutePoints = useRef<GpsPoint[]>([]);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
   const backgroundSyncInterval = useRef<NodeJS.Timeout | null>(null);
   const localStatsRef = useRef<LiveActivityStats>({ ...initialStats });
-  const lastPosition = useRef<{
-    lat: number;
-    lng: number;
-    ele?: number;
-    timestamp?: number;
-  } | null>(null);
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
   const currentActivityId = useRef<number | null>(null);
+
+  // Device-minted UUID of the SQLite tracking session (durable point log).
+  const clientActivityIdRef = useRef<string | null>(null);
+
+  // Highest SQLite seq already reflected in allRoutePoints/local stats —
+  // lets the foreground catch up on background-collected points read-only.
+  const lastRenderedSeqRef = useRef<number>(-1);
 
   // Guard to prevent concurrent finish/discard calls
   const isFinishingOrDiscardingRef = useRef<boolean>(false);
@@ -141,10 +137,9 @@ function useLiveActivityInternal() {
   // Location captured at activity start (for sending with finish request)
   const activityLocationRef = useRef<ActivityLocation | null>(null);
 
-  // GPS smoothing buffer - stores last N positions for averaging
-  const gpsBuffer = useRef<
-    Array<{ lat: number; lng: number; ele?: number; timestamp: number }>
-  >([]);
+  // GPS positioning tracker — owns the smoothing buffer + last-position baseline +
+  // gap clock (stateful class extracted to services/gpsTracking).
+  const gpsTracker = useRef(new GpsTracker()).current;
 
   // Current GPS profile based on activity type
   const currentGpsProfile = useRef<GpsProfile>(DEFAULT_GPS_PROFILE);
@@ -154,29 +149,16 @@ function useLiveActivityInternal() {
   const skipNextGpsPoint = useRef<boolean>(false);
   const appStateSubscription = useRef<any>(null);
 
-  // Timestamp (ms) of the last GPS point actually added to pointsBuffer.
-  // Used for gap detection: if the gap since this point exceeds GPS_GAP_THRESHOLD_MS
-  // the next arriving point is treated as a route-segment break and discarded.
-  const lastBufferedPointTime = useRef<number | null>(null);
-
   // Network status tracking
   const networkSubscription = useRef<any>(null);
   const isOnlineRef = useRef<boolean>(true);
-
-  // Buffer persistence interval
-  const persistInterval = useRef<NodeJS.Timeout | null>(null);
 
   // GPS signal tracking (time since last valid GPS point)
   const lastGpsTime = useRef<number>(Date.now());
   const gpsSignalCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync retry tracking for exponential backoff
-  const syncRetryCount = useRef<number>(0);
-  const lastSyncAttempt = useRef<number>(0);
-
-  // Pace calculation - stores recent distance snapshots for current pace
-  const paceSegments = useRef<PaceSegment[]>([]);
-  const smoothedPaceRef = useRef<number | null>(null);
+  // Pace calculation — stateful segment buffer + smoothing extracted to utils/paceCalculator.
+  const paceTracker = useRef(new PaceTracker()).current;
 
   // Calculate smoothed position from GPS buffer (with recency weighting)
   const getSmoothedPosition = (newPoint: {
@@ -184,98 +166,7 @@ function useLiveActivityInternal() {
     lng: number;
     ele?: number;
     timestamp: number;
-  }) => {
-    const bufferSize = currentGpsProfile.current.smoothingBufferSize;
-    gpsBuffer.current.push(newPoint);
-    if (gpsBuffer.current.length > bufferSize) {
-      gpsBuffer.current.shift();
-    }
-
-    const buffer = gpsBuffer.current;
-
-    // Weighted average: newer points have more influence (linear weights: 1, 2, 3...)
-    let totalWeight = 0;
-    let weightedLat = 0;
-    let weightedLng = 0;
-
-    buffer.forEach((p, i) => {
-      const weight = i + 1; // Linear weight: older=1, newest=bufferSize
-      weightedLat += p.lat * weight;
-      weightedLng += p.lng * weight;
-      totalWeight += weight;
-    });
-
-    const avgLat = weightedLat / totalWeight;
-    const avgLng = weightedLng / totalWeight;
-
-    // For elevation, keep median to reduce outlier impact (more robust for altitude)
-    const elevations = buffer
-      .filter((p) => p.ele !== undefined)
-      .map((p) => p.ele!);
-    let avgEle: number | undefined;
-    if (elevations.length > 0) {
-      elevations.sort((a, b) => a - b);
-      const mid = Math.floor(elevations.length / 2);
-      avgEle =
-        elevations.length % 2 === 0
-          ? (elevations[mid - 1] + elevations[mid]) / 2
-          : elevations[mid];
-    }
-
-    return {
-      lat: avgLat,
-      lng: avgLng,
-      ele: avgEle,
-      timestamp: newPoint.timestamp,
-    };
-  };
-
-  // Haversine formula for distance calculation (fallback when offline)
-  const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ): number => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  };
-
-  // Update current pace based on recent GPS segments
-  const updateCurrentPace = () => {
-    const profile = currentGpsProfile.current;
-
-    // Calculate raw current pace from segments
-    const rawPace = calculateCurrentPace(
-      paceSegments.current,
-      profile.paceWindowSeconds,
-      profile.minSegmentDistance,
-    );
-
-    if (rawPace !== null) {
-      // Apply smoothing for stable display
-      const smoothed = smoothPace(
-        rawPace,
-        smoothedPaceRef.current,
-        profile.paceSmoothingFactor,
-      );
-      smoothedPaceRef.current = smoothed;
-      localStatsRef.current.currentPace = smoothed;
-    } else {
-      // Not enough data yet - keep previous value or null
-      localStatsRef.current.currentPace = smoothedPaceRef.current;
-    }
-  };
+  }) => gpsTracker.smooth(newPoint, currentGpsProfile.current.smoothingBufferSize);
 
   // Check for existing active activity on mount (only for authenticated users)
   useEffect(() => {
@@ -300,7 +191,7 @@ function useLiveActivityInternal() {
 
       // If we came back online and have pending points, trigger sync
       if (!wasOnline && isOnlineRef.current && currentActivityId.current) {
-        logger.gps("Network restored, triggering sync");
+        logger.gps('Network restored, triggering sync');
         syncPoints(currentActivityId.current);
       }
     });
@@ -332,9 +223,6 @@ function useLiveActivityInternal() {
       if (appStateSubscription.current) {
         appStateSubscription.current.remove();
       }
-      if (persistInterval.current) {
-        clearInterval(persistInterval.current);
-      }
       if (gpsSignalCheckInterval.current) {
         clearInterval(gpsSignalCheckInterval.current);
       }
@@ -343,11 +231,11 @@ function useLiveActivityInternal() {
 
   const checkExistingActivity = async () => {
     try {
-      logger.activity("Checking for existing activity");
+      logger.activity('Checking for existing activity');
       setState((prev) => ({ ...prev, isLoading: true }));
       const activity = await api.getCurrentActivity();
       if (activity) {
-        logger.activity("Found existing activity", {
+        logger.activity('Found existing activity', {
           id: activity.id,
           status: activity.status,
           sportTypeId: activity.sport_type_id,
@@ -371,7 +259,7 @@ function useLiveActivityInternal() {
           ...prev,
           activity,
           isTracking: false, // Don't auto-resume, let user decide
-          isPaused: activity.status === "paused",
+          isPaused: activity.status === 'paused',
           currentStats: stats,
           isLoading: false,
           hasExistingActivity: true,
@@ -385,7 +273,7 @@ function useLiveActivityInternal() {
         // - Finish: call finishTracking()
         // - Discard: call discardTracking()
       } else {
-        logger.activity("No existing activity found");
+        logger.activity('No existing activity found');
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -393,43 +281,36 @@ function useLiveActivityInternal() {
         }));
       }
     } catch (error) {
-      logger.error("activity", "Failed to check existing activity", { error });
+      logger.error('activity', 'Failed to check existing activity', { error });
       setState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
   // Start local duration timer for real-time UI updates
-  const startDurationTimer = (
-    initialDuration: number = 0,
-    initialCalories: number = 0,
-  ) => {
+  const startDurationTimer = (initialDuration: number = 0, initialCalories: number = 0) => {
     trackingStartTime.current = Date.now() - initialDuration * 1000;
     const baseCalories = initialCalories;
 
     durationInterval.current = setInterval(() => {
       if (trackingStartTime.current) {
-        const elapsed = Math.floor(
-          (Date.now() - trackingStartTime.current) / 1000,
-        );
-        // Calculate calories based on duration
-        const calories = Math.floor(
-          baseCalories +
-            (elapsed - (localStatsRef.current.duration || 0)) *
-              CALORIES_PER_SECOND,
-        );
+        const { duration, calories } = computeDurationTick({
+          trackingStartTime: trackingStartTime.current,
+          now: Date.now(),
+          baseCalories,
+          previousDuration: localStatsRef.current.duration || 0,
+          previousCalories: localStatsRef.current.calories,
+          caloriesPerSecond: CALORIES_PER_SECOND,
+        });
 
-        localStatsRef.current.duration = elapsed;
-        localStatsRef.current.calories = Math.max(
-          localStatsRef.current.calories,
-          calories,
-        );
+        localStatsRef.current.duration = duration;
+        localStatsRef.current.calories = calories;
 
         setState((prev) => ({
           ...prev,
           currentStats: {
             ...prev.currentStats,
-            duration: elapsed,
-            calories: localStatsRef.current.calories,
+            duration,
+            calories,
           },
         }));
       }
@@ -444,178 +325,112 @@ function useLiveActivityInternal() {
     }
   };
 
-  // Sync points collected by background task (with recovery mechanism)
-  // Respects background sync state to avoid duplicate point uploads
-  const syncBackgroundPoints = async (activityId: number) => {
-    let unsyncedPoints: BufferedLocation[] = [];
+  // Merge points collected by the background task into the UI (map + stats).
+  // READ-ONLY over the SQLite log keyed by seq — nothing is cleared here, so a
+  // crash between merge and upload can no longer lose points (the uploader
+  // drains the same rows independently).
+  const mergeBackgroundPoints = (activityId: number) => {
+    const clientId = clientActivityIdRef.current;
+    if (!clientId) return;
+
     try {
-      // 1. Get background sync state
-      const syncState = await getBackgroundSyncState();
+      const stored = trackingDb.getPointsAfterSeq(clientId, lastRenderedSeqRef.current);
+      if (stored.length === 0) {
+        logger.gps('Foreground: No new background points to merge', { activityId });
+        return;
+      }
 
-      // 2. Get buffer (don't clear yet)
-      const buffer = await getLocationBuffer();
+      lastRenderedSeqRef.current = stored[stored.length - 1].seq;
 
-      // 3. Calculate unsynced points (points not yet sent by background sync)
-      unsyncedPoints = buffer.slice(syncState.syncedPointsCount);
+      // Walk the background points, bridging gaps: a hop > GPS_GAP_THRESHOLD_MS
+      // with a realistic implied speed counts its straight-line distance and is
+      // marked segment_break (map draws separate segments); an unrealistic hop
+      // (glitch) is discarded like before.
+      const profile = currentGpsProfile.current;
+      const points: GpsPoint[] = [];
+      let additionalDistance = 0;
+      let additionalElevation = 0;
+      let prevBufTime = gpsTracker.lastBufferedTime;
+      let prevPos: { lat: number; lng: number; ele?: number } | null = gpsTracker.lastPosition;
 
-      if (unsyncedPoints.length > 0) {
-        logger.gps("Foreground: Syncing remaining background points", {
-          activityId,
-          totalBuffered: buffer.length,
-          alreadySynced: syncState.syncedPointsCount,
-          unsyncedCount: unsyncedPoints.length,
-        });
+      for (const p of stored) {
+        const pointTime = new Date(p.ts).getTime();
+        const dist = prevPos ? haversineDistance(prevPos.lat, prevPos.lng, p.lat, p.lng) : 0;
+        const isGap = prevBufTime !== null && pointTime - prevBufTime > GPS_GAP_THRESHOLD_MS;
+        let segmentBreak = false;
 
-        // 4. Convert to GpsPoint format, applying gap detection, and add to foreground buffer.
-        // The first point that arrives after a gap > GPS_GAP_THRESHOLD_MS is discarded
-        // (it would create a visible jump on the route map).  The gap clock is reset so
-        // the next point is accepted as the new segment start.
-        const points: GpsPoint[] = [];
-        let prevBufTime = lastBufferedPointTime.current;
-
-        for (const p of unsyncedPoints) {
-          const pointTime = new Date(p.time).getTime();
-          if (
-            prevBufTime !== null &&
-            pointTime - prevBufTime > GPS_GAP_THRESHOLD_MS
-          ) {
-            logger.gps(
-              "Background point discarded: route segment break (large time gap)",
-              {
-                gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
-                thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
-              },
-            );
-            // Advance clock: next point is accepted as new segment start
+        if (isGap && prevBufTime !== null) {
+          const impliedSpeed = dist / Math.max((pointTime - prevBufTime) / 1000, 1);
+          if (dist > profile.minDistanceThreshold && impliedSpeed < profile.maxRealisticSpeed) {
+            segmentBreak = true;
+            logger.gps('Background gap bridged: distance counted, segment break marked', {
+              gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
+              bridgedMeters: dist.toFixed(1),
+            });
+          } else {
+            logger.gps('Background point discarded: unrealistic hop across time gap', {
+              gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
+              meters: dist.toFixed(1),
+            });
+            // Advance clock/position: next point starts the new segment
             prevBufTime = pointTime;
+            prevPos = { lat: p.lat, lng: p.lng, ele: p.ele };
             continue;
           }
-          points.push({
-            lat: p.lat,
-            lng: p.lng,
-            ele: p.ele,
-            time: p.time,
-            speed: p.speed,
-            accuracy: p.accuracy,
-          });
-          prevBufTime = pointTime;
         }
 
-        if (points.length > 0) {
-          pointsBuffer.current.push(...points);
-          allRoutePoints.current.push(...points);
-          pointsVersionRef.current++;
-          // Update the gap-detection clock to the last accepted background point
-          const lastPoint = points[points.length - 1];
-          if (lastPoint.time) {
-            lastBufferedPointTime.current = new Date(lastPoint.time).getTime();
-          }
-        }
-
-        // 5. Calculate local stats from background points IMMEDIATELY (UX improvement)
-        // This shows distance/elevation updates instantly when returning to foreground
-        // instead of waiting 30s for next sync interval
-        const profile = currentGpsProfile.current;
-        let additionalDistance = 0;
-        let additionalElevation = 0;
-
-        // Start from last known position (or first gap-filtered background point)
-        let prevPoint =
-          lastPosition.current ||
-          (points.length > 0
-            ? {
-                lat: points[0].lat,
-                lng: points[0].lng,
-                ele: points[0].ele,
-              }
-            : null);
-
-        // Iterate only gap-filtered points so no jump distances are counted
-        for (const point of points) {
-          if (prevPoint) {
-            // Calculate distance
-            const dist = calculateDistance(
-              prevPoint.lat,
-              prevPoint.lng,
-              point.lat,
-              point.lng,
-            );
-
-            // Only count if moved more than threshold
-            if (dist > profile.minDistanceThreshold) {
-              additionalDistance += dist;
-
-              // Calculate elevation gain
-              if (point.ele && prevPoint.ele) {
-                const elevDiff = point.ele - prevPoint.ele;
-                if (elevDiff > profile.minElevationChange) {
-                  additionalElevation += elevDiff;
-                }
-              }
+        if (prevPos && dist > profile.minDistanceThreshold) {
+          additionalDistance += dist;
+          if (p.ele != null && prevPos.ele != null) {
+            const elevDiff = p.ele - prevPos.ele;
+            if (elevDiff > profile.minElevationChange) {
+              additionalElevation += elevDiff;
             }
           }
-
-          prevPoint = { lat: point.lat, lng: point.lng, ele: point.ele };
         }
 
-        // Update local stats immediately
-        if (additionalDistance > 0) {
-          localStatsRef.current.distance += additionalDistance;
-          localStatsRef.current.elevation_gain += additionalElevation;
-
-          logger.gps("Updated local stats from background points", {
-            additionalDistance: additionalDistance.toFixed(1),
-            additionalElevation: additionalElevation.toFixed(1),
-            totalDistance: localStatsRef.current.distance.toFixed(1),
-            totalElevation: localStatsRef.current.elevation_gain.toFixed(1),
-          });
-
-          // Update UI state immediately - user sees distance instantly!
-          setState((prev) => ({
-            ...prev,
-            currentStats: { ...localStatsRef.current },
-          }));
-        }
-
-        // 6. Clear buffer and state after successful addition to foreground buffer
-        await clearLocationBuffer();
-        await clearBackgroundSyncState();
-        logger.gps("Foreground: Cleared background buffer and sync state");
-      } else {
-        logger.gps("Foreground: No unsynced background points", {
-          totalBuffered: buffer.length,
-          alreadySynced: syncState.syncedPointsCount,
+        points.push({
+          lat: p.lat,
+          lng: p.lng,
+          ele: p.ele,
+          time: p.ts,
+          speed: p.speed,
+          accuracy: p.accuracy,
+          segment_break: segmentBreak || undefined,
         });
-        // Still clear the buffer and state even if all points were synced
-        if (buffer.length > 0) {
-          await clearLocationBuffer();
-          await clearBackgroundSyncState();
+        prevBufTime = pointTime;
+        prevPos = { lat: p.lat, lng: p.lng, ele: p.ele };
+      }
+
+      if (points.length > 0) {
+        allRoutePoints.current.push(...points);
+        pointsVersionRef.current++;
+        // Update the gap-detection clock to the last accepted background point
+        const lastPoint = points[points.length - 1];
+        if (lastPoint.time) {
+          gpsTracker.lastBufferedTime = new Date(lastPoint.time).getTime();
         }
+      }
+
+      // Update local stats immediately so distance/elevation reflect the
+      // background segment as soon as the app returns to foreground.
+      if (additionalDistance > 0) {
+        localStatsRef.current.distance += additionalDistance;
+        localStatsRef.current.elevation_gain += additionalElevation;
+
+        logger.gps('Updated local stats from background points', {
+          additionalDistance: additionalDistance.toFixed(1),
+          additionalElevation: additionalElevation.toFixed(1),
+          totalDistance: localStatsRef.current.distance.toFixed(1),
+        });
+
+        setState((prev) => ({
+          ...prev,
+          currentStats: { ...localStatsRef.current },
+        }));
       }
     } catch (error) {
-      logger.error("gps", "Failed to sync background points", {
-        activityId,
-        error,
-      });
-      // Attempt recovery - re-save points if processing failed
-      if (unsyncedPoints.length > 0) {
-        try {
-          // Re-save only the unsynced points
-          const syncState = await getBackgroundSyncState();
-          const existingBuffer = await getLocationBuffer();
-          // Only re-save if buffer was cleared
-          if (existingBuffer.length === 0) {
-            await saveLocationBuffer(unsyncedPoints);
-            logger.gps("Re-saved unsynced background points after failure", {
-              count: unsyncedPoints.length,
-            });
-          }
-        } catch (saveError) {
-          logger.error("gps", "Failed to recover background points", {
-            saveError,
-          });
-        }
-      }
+      logger.error('gps', 'Failed to merge background points', { activityId, error });
     }
   };
 
@@ -624,11 +439,11 @@ function useLiveActivityInternal() {
     const profile = currentGpsProfile.current;
 
     if (locationSubscription.current) {
-      logger.gps("Foreground tracking already running");
+      logger.gps('Foreground tracking already running');
       return;
     }
 
-    logger.gps("Starting foreground GPS tracking");
+    logger.gps('Starting foreground GPS tracking');
 
     locationSubscription.current = await Location.watchPositionAsync(
       {
@@ -642,7 +457,7 @@ function useLiveActivityInternal() {
         // Filter out inaccurate GPS readings first
         const accuracy = location.coords.accuracy;
         if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
-          logger.gps("GPS point filtered: poor accuracy", {
+          logger.gps('GPS point filtered: poor accuracy', {
             accuracy: accuracy.toFixed(1),
             threshold: gpsProfile.accuracyThreshold,
           });
@@ -653,7 +468,7 @@ function useLiveActivityInternal() {
         // BUT update lastPosition so the next point has a valid baseline
         if (skipNextGpsPoint.current) {
           logger.gps(
-            "Skipping first GPS point after returning from background (using as new baseline)",
+            'Skipping first GPS point after returning from background (using as new baseline)',
             {
               accuracy: location.coords.accuracy,
               speed: location.coords.speed,
@@ -673,7 +488,7 @@ function useLiveActivityInternal() {
           });
 
           // Update lastPosition with smoothed values for consistent distance calculation
-          lastPosition.current = {
+          gpsTracker.lastPosition = {
             lat: smoothedBaseline.lat,
             lng: smoothedBaseline.lng,
             ele: smoothedBaseline.ele,
@@ -684,160 +499,128 @@ function useLiveActivityInternal() {
           return;
         }
 
-        // Stationary detection: if GPS reports very low speed, use stricter distance threshold
-        const gpsSpeed = location.coords.speed;
-        const stationaryThreshold = gpsProfile.stationarySpeedThreshold ?? 0.5;
-        const isLikelyStationary =
-          gpsSpeed !== null &&
-          gpsSpeed !== undefined &&
-          gpsSpeed < stationaryThreshold;
-        const effectiveMinDistance = isLikelyStationary
-          ? Math.max(gpsProfile.minDistanceThreshold, 8) // At least 8m when stationary
-          : gpsProfile.minDistanceThreshold;
-
         const point: GpsPoint = {
           lat: location.coords.latitude,
           lng: location.coords.longitude,
           ele: location.coords.altitude ?? undefined,
           time: new Date(location.timestamp).toISOString(),
-          speed: location.coords.speed != null && location.coords.speed >= 0 ? location.coords.speed : undefined,
+          speed:
+            location.coords.speed != null && location.coords.speed >= 0
+              ? location.coords.speed
+              : undefined,
           accuracy: location.coords.accuracy ?? undefined,
         };
 
-        // Apply GPS smoothing to reduce jitter/drift
-        const smoothedPoint = getSmoothedPosition({
-          lat: point.lat,
-          lng: point.lng,
-          ele: point.ele,
-          timestamp: location.timestamp,
+        // Feed the raw reading through the positioning tracker: it smooths, classifies
+        // it against the baseline (filter/gap/accept), and advances the baseline + gap
+        // clock. We just apply the returned stats deltas + side effects. `decision` is
+        // null on the very first point (no baseline to measure against yet).
+        const { decision } = gpsTracker.addPoint({
+          raw: {
+            lat: point.lat,
+            lng: point.lng,
+            ele: point.ele,
+            timestamp: location.timestamp,
+          },
+          profile: gpsProfile,
+          gapThresholdMs: GPS_GAP_THRESHOLD_MS,
+          rawSpeed: location.coords.speed,
         });
 
-        // Calculate local distance for immediate UI feedback
-        if (lastPosition.current) {
-          // Use smoothed position for distance calculation
-          const dist = calculateDistance(
-            lastPosition.current.lat,
-            lastPosition.current.lng,
-            smoothedPoint.lat,
-            smoothedPoint.lng,
-          );
+        if (decision) {
+          if (decision.outcome === 'accepted' || decision.outcome === 'gap-bridged') {
+            // Validated points count; a bridged gap counts its straight-line
+            // distance (like a GPS watch through a tunnel) with a segment break.
+            localStatsRef.current.distance += decision.distanceAdded;
+            localStatsRef.current.elevation_gain += decision.elevationAdded;
 
-          // Calculate actual time difference between GPS readings
-          const timeSinceLastPoint = lastPosition.current.timestamp
-            ? (location.timestamp - lastPosition.current.timestamp) / 1000
-            : 3; // fallback to 3 seconds if no timestamp
-
-          // Calculate implied speed to filter GPS glitches
-          const impliedSpeed =
-            timeSinceLastPoint > 0 ? dist / timeSinceLastPoint : 999;
-
-          if (
-            dist > effectiveMinDistance &&
-            impliedSpeed < gpsProfile.maxRealisticSpeed
-          ) {
-            // Only count if moved more than threshold AND speed is realistic
-
-            // Gap detection: if the gap since the last buffered point exceeds the
-            // threshold the GPS route has a discontinuity (app was in background,
-            // GPS signal was lost, etc.).  Discard this first "jump" point and
-            // reset the gap clock so the very next point is accepted normally.
-            const isGapPoint =
-              lastBufferedPointTime.current !== null &&
-              location.timestamp - lastBufferedPointTime.current >
-                GPS_GAP_THRESHOLD_MS;
-
-            if (isGapPoint) {
-              logger.gps(
-                "GPS point discarded: route segment break (large time gap)",
-                {
-                  gapSeconds: (
-                    (location.timestamp - lastBufferedPointTime.current!) /
-                    1000
-                  ).toFixed(0),
-                  thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
-                  lat: point.lat,
-                  lng: point.lng,
-                },
-              );
-              // Advance the clock so the next point is accepted
-              lastBufferedPointTime.current = location.timestamp;
+            if (decision.segmentBreak) {
+              point.segment_break = true;
+              // A minutes-long hop would poison the smoothed current pace —
+              // restart pace tracking from this point.
+              paceTracker.reset();
+              logger.gps('GPS gap bridged: distance counted, segment break marked', {
+                gapSeconds: (decision.gapMs / 1000).toFixed(0),
+                bridgedMeters: decision.distanceAdded.toFixed(1),
+                impliedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
+              });
             } else {
-              localStatsRef.current.distance += dist;
-
-              // Calculate elevation gain with noise filter
-              if (smoothedPoint.ele && lastPosition.current.ele) {
-                const elevDiff = smoothedPoint.ele - lastPosition.current.ele;
-                // Only count significant elevation changes to filter GPS altitude noise
-                if (elevDiff > gpsProfile.minElevationChange) {
-                  localStatsRef.current.elevation_gain += elevDiff;
-                }
-              }
-
-              // Track pace segment for current pace calculation
-              paceSegments.current = addPaceSegment(
-                paceSegments.current,
+              // Track pace segment and refresh the smoothed current pace.
+              localStatsRef.current.currentPace = paceTracker.record(
                 {
                   timestamp: location.timestamp,
                   distance: localStatsRef.current.distance,
                 },
+                gpsProfile,
                 MAX_PACE_SEGMENTS,
               );
-
-              // Update current pace based on recent segments
-              updateCurrentPace();
-
-              // Store original (non-smoothed) validated point for server sync
-              // IMPORTANT: Only validated points are sent to prevent GPS jumps/glitches
-              pointsBuffer.current.push(point);
-              allRoutePoints.current.push(point);
-              pointsVersionRef.current++;
-              lastBufferedPointTime.current = location.timestamp;
-
-              setState((prev) => ({
-                ...prev,
-                currentStats: { ...localStatsRef.current },
-              }));
             }
-          } else if (
-            dist > effectiveMinDistance &&
-            impliedSpeed >= gpsProfile.maxRealisticSpeed
-          ) {
-            logger.gps(
-              "GPS point filtered: unrealistic speed - NOT synced to server",
-              {
-                distance: dist.toFixed(1),
-                timeDelta: timeSinceLastPoint.toFixed(1),
-                speedKmh: (impliedSpeed * 3.6).toFixed(1),
-                maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
-              },
-            );
-          } else if (dist <= effectiveMinDistance) {
-            logger.debug(
-              "gps",
-              "GPS point filtered: small movement - NOT synced to server",
-              {
-                distance: dist.toFixed(1),
-                threshold: effectiveMinDistance,
-                isStationary: isLikelyStationary,
-              },
-            );
+
+            // Map trail keeps the original (non-smoothed) validated point
+            allRoutePoints.current.push(point);
+            pointsVersionRef.current++;
+
+            // Durable log: the accepted point goes to SQLite with the cumulative
+            // distance — this is the upload queue AND the crash-recovery source.
+            // IMPORTANT: Only validated points are stored/synced to prevent
+            // GPS jumps/glitches from reaching the server.
+            if (clientActivityIdRef.current && point.time) {
+              const range = trackingDb.insertPoints(
+                clientActivityIdRef.current,
+                [
+                  {
+                    lat: point.lat,
+                    lng: point.lng,
+                    ele: point.ele,
+                    ts: point.time,
+                    speed: point.speed,
+                    accuracy: point.accuracy,
+                    cumDist: localStatsRef.current.distance,
+                    segmentBreak: point.segment_break === true,
+                  },
+                ],
+                'fg',
+              );
+              if (range) {
+                lastRenderedSeqRef.current = range.lastSeq;
+              }
+            }
+
+            setState((prev) => ({
+              ...prev,
+              currentStats: { ...localStatsRef.current },
+            }));
+          } else if (decision.outcome === 'gap') {
+            // Route discontinuity (app was backgrounded, GPS signal lost). The first
+            // "jump" point is discarded and the gap clock advanced inside addPoint.
+            logger.gps('GPS point discarded: route segment break (large time gap)', {
+              gapSeconds: (decision.gapMs / 1000).toFixed(0),
+              thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+              lat: point.lat,
+              lng: point.lng,
+            });
+          } else if (decision.outcome === 'filtered-speed') {
+            logger.gps('GPS point filtered: unrealistic speed - NOT synced to server', {
+              distance: decision.distance.toFixed(1),
+              timeDelta: decision.timeSinceLastPoint.toFixed(1),
+              speedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
+              maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
+            });
+          } else {
+            logger.debug('gps', 'GPS point filtered: small movement - NOT synced to server', {
+              distance: decision.distance.toFixed(1),
+              threshold: decision.effectiveMinDistance,
+              isStationary: decision.isStationary,
+            });
           }
         }
-
-        // Update last position with smoothed values for next calculation
-        lastPosition.current = {
-          lat: smoothedPoint.lat,
-          lng: smoothedPoint.lng,
-          ele: smoothedPoint.ele,
-          timestamp: location.timestamp,
-        };
 
         // Update GPS signal time (we got a GPS reading, even if filtered)
         lastGpsTime.current = Date.now();
       },
     );
 
-    logger.gps("Foreground GPS tracking started");
+    logger.gps('Foreground GPS tracking started');
   };
 
   // Stop foreground GPS tracking
@@ -845,7 +628,7 @@ function useLiveActivityInternal() {
     if (locationSubscription.current) {
       locationSubscription.current.remove();
       locationSubscription.current = null;
-      logger.gps("Foreground GPS tracking stopped");
+      logger.gps('Foreground GPS tracking stopped');
     }
   };
 
@@ -859,76 +642,59 @@ function useLiveActivityInternal() {
       return;
     }
 
-    if (
-      previousAppState === "active" &&
-      nextAppState.match(/inactive|background/)
-    ) {
+    if (previousAppState === 'active' && nextAppState.match(/inactive|background/)) {
       // App going to background
-      logger.gps("App going to background - switching to background tracking");
+      logger.gps('App going to background - switching to background tracking');
 
       // Check if background tracking is running
       // On Android: Should always be running (started preemptively, never stopped)
       // On iOS: May have been stopped, need to restart
       const isBackgroundRunning = await Location.hasStartedLocationUpdatesAsync(
-        "background-location-task",
+        'background-location-task',
       ).catch(() => false);
 
       if (!isBackgroundRunning) {
-        logger.gps("Background tracking not running, starting now...");
-        const bgStarted = await startBackgroundLocationTracking(
-          currentGpsProfile.current,
-        );
+        logger.gps('Background tracking not running, starting now...');
+        const bgStarted = await startBackgroundLocationTracking(currentGpsProfile.current);
         if (!bgStarted) {
-          logger.warn(
-            "gps",
-            "Failed to start background tracking - GPS will pause in background",
-          );
+          logger.warn('gps', 'Failed to start background tracking - GPS will pause in background');
         }
       } else {
-        logger.gps("Background tracking already running (continuing)");
+        logger.gps('Background tracking already running (continuing)');
       }
 
-      // Sync foreground distance to background audio coach so it continues
-      // from the correct total distance (not just previous background sessions)
-      await syncAudioCoachForegroundDistance(localStatsRef.current.distance);
+      // NOTE: no distance handoff to the background audio coach — it reads the
+      // cumulative distance (cum_dist) straight from the SQLite point log.
 
       // Stop foreground tracking (background tracking should now be running)
       stopForegroundTracking();
 
       // Verify background tracking is running (final check)
       const isBgRunningFinal = await Location.hasStartedLocationUpdatesAsync(
-        "background-location-task",
+        'background-location-task',
       ).catch(() => false);
 
       if (!isBgRunningFinal) {
-        logger.warn(
-          "gps",
-          "Background tracking not running - GPS will pause in background",
-        );
+        logger.warn('gps', 'Background tracking not running - GPS will pause in background');
         setState((prev) => ({
           ...prev,
           trackingStatus: {
             ...prev.trackingStatus,
-            gpsSignal: "lost",
-            syncError: "Background tracking not available",
+            gpsSignal: 'lost',
+            syncError: 'Background tracking not available',
           },
         }));
       } else {
-        logger.gps("Background tracking confirmed running");
+        logger.gps('Background tracking confirmed running');
       }
-    } else if (
-      previousAppState.match(/inactive|background/) &&
-      nextAppState === "active"
-    ) {
+    } else if (previousAppState.match(/inactive|background/) && nextAppState === 'active') {
       // App returning to foreground
-      logger.gps(
-        "App returning to foreground - switching to foreground tracking",
-      );
+      logger.gps('App returning to foreground - switching to foreground tracking');
 
       // IMPORTANT: On Android, DON'T stop background tracking - keep it running throughout the activity
       // Stopping it would prevent restart when going back to background (foreground service restriction)
       // On iOS, we can stop it since iOS allows starting background tasks when going to background
-      const shouldStopBackground = Platform.OS === "ios";
+      const shouldStopBackground = Platform.OS === 'ios';
 
       if (shouldStopBackground) {
         // 1. Stop background tracking and wait for completion (iOS only)
@@ -936,40 +702,32 @@ function useLiveActivityInternal() {
         // 2. Small delay to ensure background listener is fully stopped (race condition fix)
         await new Promise((resolve) => setTimeout(resolve, 100));
       } else {
-        logger.gps("Keeping background tracking running (Android)");
+        logger.gps('Keeping background tracking running (Android)');
       }
 
-      // 3. Sync background points BEFORE starting foreground
-      await syncBackgroundPoints(activityId);
+      // 3. Merge background points into map/stats (read-only over the SQLite log)
+      mergeBackgroundPoints(activityId);
 
-      // 3b. Immediately sync to server for accurate stats (don't wait 30s)
-      // This updates the server and gets server-calculated distance/elevation
-      if (pointsBuffer.current.length > 0) {
-        logger.gps(
-          "Triggering immediate sync to server after background points",
-        );
-        await syncPoints(activityId);
-      }
+      // 3b. Kick an upload immediately (don't wait for the 30s tick) — the
+      // uploader no-ops if the background task already drained everything.
+      await syncPoints(activityId);
 
       // 4. Recover last position from background for distance continuity
       const lastBgPosition = await getLastBackgroundPosition();
       if (lastBgPosition) {
-        lastPosition.current = {
+        gpsTracker.lastPosition = {
           lat: lastBgPosition.lat,
           lng: lastBgPosition.lng,
           timestamp: lastBgPosition.timestamp,
         };
-        logger.gps(
-          "Recovered last background position for distance continuity",
-          {
-            lat: lastBgPosition.lat,
-            lng: lastBgPosition.lng,
-          },
-        );
+        logger.gps('Recovered last background position for distance continuity', {
+          lat: lastBgPosition.lat,
+          lng: lastBgPosition.lng,
+        });
       }
 
       // 5. Clear GPS smoothing buffer and skip first point to avoid drift
-      gpsBuffer.current = [];
+      gpsTracker.clearBuffer();
       skipNextGpsPoint.current = true;
 
       // 6. NOW start foreground tracking
@@ -980,12 +738,12 @@ function useLiveActivityInternal() {
         ...prev,
         trackingStatus: {
           ...prev.trackingStatus,
-          gpsSignal: "weak", // Set to weak until we get a fresh GPS reading
+          gpsSignal: 'weak', // Set to weak until we get a fresh GPS reading
           syncError: null, // Clear any background tracking errors
         },
       }));
 
-      logger.gps("Switched to foreground tracking mode");
+      logger.gps('Switched to foreground tracking mode');
     }
 
     appState.current = nextAppState;
@@ -993,7 +751,7 @@ function useLiveActivityInternal() {
 
   const startGpsTracking = async (activityId: number, sportTypeId: number) => {
     if (isWeb) {
-      logger.gps("GPS tracking not available on web");
+      logger.gps('GPS tracking not available on web');
       return;
     }
 
@@ -1001,7 +759,7 @@ function useLiveActivityInternal() {
     const profile = getGpsProfileForSport(sportTypeId);
     currentGpsProfile.current = profile;
 
-    logger.info("gps", "GPS profile loaded for activity", {
+    logger.info('gps', 'GPS profile loaded for activity', {
       activityId,
       sportTypeId,
       enabled: profile.enabled,
@@ -1014,7 +772,7 @@ function useLiveActivityInternal() {
 
     // Check if GPS is enabled for this activity type
     if (!profile.enabled) {
-      logger.warn("gps", "GPS tracking disabled for sport type", {
+      logger.warn('gps', 'GPS tracking disabled for sport type', {
         sportTypeId,
         activityId,
         profileEnabled: profile.enabled,
@@ -1025,13 +783,13 @@ function useLiveActivityInternal() {
         ...prev,
         trackingStatus: {
           ...prev.trackingStatus,
-          gpsSignal: "disabled",
+          gpsSignal: 'disabled',
         },
       }));
       return;
     }
 
-    logger.gps("Starting GPS tracking", {
+    logger.gps('Starting GPS tracking', {
       activityId,
       sportTypeId,
       profile: {
@@ -1044,79 +802,87 @@ function useLiveActivityInternal() {
 
     currentActivityId.current = activityId;
 
+    // Ensure a durable SQLite tracking session exists for this activity
+    // (covers fresh start, resume and crash recovery — all paths land here).
+    lastRenderedSeqRef.current = -1;
     try {
-      // Recover any persisted points from previous session (crash recovery)
-      const persistedPoints = await getAllPersistedPoints();
-      if (persistedPoints.length > 0) {
-        logger.gps("Recovered persisted points", {
-          count: persistedPoints.length,
+      const existingSession = trackingDb.getSessionByServerActivityId(activityId);
+      if (existingSession) {
+        clientActivityIdRef.current = existingSession.clientActivityId;
+      } else {
+        const uuid = Crypto.randomUUID();
+        trackingDb.startSession(uuid);
+        trackingDb.bindServerActivity(uuid, activityId);
+        clientActivityIdRef.current = uuid;
+      }
+    } catch (dbErr) {
+      logger.error('gps', 'Failed to ensure tracking DB session', { error: dbErr });
+      clientActivityIdRef.current = null;
+    }
+
+    try {
+      // One-time: fold leftover pre-update AsyncStorage buffers into the SQLite
+      // log (as unsynced) and delete the legacy keys — must run before recovery.
+      await migrateLegacyBuffers(clientActivityIdRef.current);
+
+      // Crash recovery: restore the full route + local stats from the SQLite
+      // point log (survives app kill; superset of the old AsyncStorage buffers).
+      const storedPoints = clientActivityIdRef.current
+        ? trackingDb.getAllPoints(clientActivityIdRef.current)
+        : [];
+      if (storedPoints.length > 0) {
+        logger.gps('Recovered persisted points from tracking DB', {
+          count: storedPoints.length,
         });
-        const recoveredGpsPoints: GpsPoint[] = persistedPoints.map((p) => ({
+        const recoveredGpsPoints: GpsPoint[] = storedPoints.map((p) => ({
           lat: p.lat,
           lng: p.lng,
           ele: p.ele,
-          time: p.time,
+          time: p.ts,
           speed: p.speed,
           accuracy: p.accuracy,
         }));
-        pointsBuffer.current.push(...recoveredGpsPoints);
         allRoutePoints.current.push(...recoveredGpsPoints);
         pointsVersionRef.current++;
+        lastRenderedSeqRef.current = storedPoints[storedPoints.length - 1].seq;
 
-        // Rebuild local distance/elevation from the recovered points so the UI
-        // doesn't show 0 km after an app kill or after the server-derived
-        // currentStats (which may be 0 if sync was failing) overwrote them.
-        // We mirror the gap- and threshold-filtering used during live tracking
-        // so accidental jumps between far-apart points aren't counted.
-        const ordered = [...recoveredGpsPoints].sort((a, b) => {
-          const ta = a.time ? new Date(a.time).getTime() : 0;
-          const tb = b.time ? new Date(b.time).getTime() : 0;
-          return ta - tb;
-        });
-
-        let recoveredDistance = 0;
-        let recoveredElevation = 0;
-        let prevRec: { lat: number; lng: number; ele?: number; t: number } | null = null;
-        let lastRecoveredT: number | null = null;
-
-        for (const p of ordered) {
-          const t = p.time ? new Date(p.time).getTime() : 0;
-          if (prevRec && t - prevRec.t <= GPS_GAP_THRESHOLD_MS) {
-            const dist = calculateDistance(prevRec.lat, prevRec.lng, p.lat, p.lng);
-            if (dist > profile.minDistanceThreshold) {
-              recoveredDistance += dist;
-              if (p.ele != null && prevRec.ele != null) {
-                const elevDiff = p.ele - prevRec.ele;
-                if (elevDiff > profile.minElevationChange) {
-                  recoveredElevation += elevDiff;
-                }
-              }
-            }
-          }
-          prevRec = { lat: p.lat, lng: p.lng, ele: p.ele, t };
-          lastRecoveredT = t;
-        }
+        // Rebuild local distance/elevation. Prefer the durable cumulative
+        // distance snapshot written with each foreground point; fall back to
+        // re-accumulating with the same gap/threshold filters as live tracking
+        // (gpsMath.accumulateRecoveredTrack). Use max() against the current
+        // (server-seeded) value — never regress the displayed distance.
+        const lastCumDist = [...storedPoints].reverse().find((p) => p.cumDist != null)?.cumDist;
+        const recovered = accumulateRecoveredTrack(
+          recoveredGpsPoints,
+          profile.minDistanceThreshold,
+          profile.minElevationChange,
+          GPS_GAP_THRESHOLD_MS,
+          profile.maxRealisticSpeed,
+        );
+        const recoveredDistance = Math.max(lastCumDist ?? 0, recovered.distance);
 
         if (recoveredDistance > 0) {
           localStatsRef.current = {
             ...localStatsRef.current,
-            distance: localStatsRef.current.distance + recoveredDistance,
-            elevation_gain:
-              (localStatsRef.current.elevation_gain || 0) + recoveredElevation,
+            distance: Math.max(localStatsRef.current.distance, recoveredDistance),
+            elevation_gain: Math.max(
+              localStatsRef.current.elevation_gain || 0,
+              recovered.elevationGain,
+            ),
           };
 
           // Seed the gap clock + last position so the very next live GPS sample
           // doesn't add a jump from the recovered tail to the new position.
-          if (prevRec) {
-            lastPosition.current = {
-              lat: prevRec.lat,
-              lng: prevRec.lng,
-              ele: prevRec.ele,
-              timestamp: prevRec.t || Date.now(),
+          if (recovered.lastPoint) {
+            gpsTracker.lastPosition = {
+              lat: recovered.lastPoint.lat,
+              lng: recovered.lastPoint.lng,
+              ele: recovered.lastPoint.ele,
+              timestamp: recovered.lastPoint.timestamp || Date.now(),
             };
           }
-          if (lastRecoveredT) {
-            lastBufferedPointTime.current = lastRecoveredT;
+          if (recovered.lastTimestamp) {
+            gpsTracker.lastBufferedTime = recovered.lastTimestamp;
           }
 
           setState((prevState) => ({
@@ -1124,101 +890,64 @@ function useLiveActivityInternal() {
             currentStats: { ...localStatsRef.current },
           }));
 
-          logger.gps("Restored local stats from recovered points", {
+          logger.gps('Restored local stats from recovered points', {
             recoveredDistance: recoveredDistance.toFixed(1),
-            recoveredElevation: recoveredElevation.toFixed(1),
+            fromCumDist: lastCumDist != null,
             totalDistance: localStatsRef.current.distance.toFixed(1),
-            recoveredCount: ordered.length,
+            recoveredCount: recovered.count,
           });
         }
-
-        await clearAllPersistedPoints();
       }
-
-      // Clear any leftover background points
-      await clearLocationBuffer();
 
       // Store activity ID for background task
       await setActiveActivityId(activityId);
 
       // Set up app state change listener to toggle between foreground/background tracking
-      appStateSubscription.current = AppState.addEventListener(
-        "change",
-        handleAppStateChange,
-      );
+      appStateSubscription.current = AppState.addEventListener('change', handleAppStateChange);
 
       // IMPORTANT: On Android, start background tracking FIRST while app is in foreground
       // This prevents the "foreground service cannot be started in background" error
       // Background tracking runs alongside foreground tracking, ready for when app goes to background
-      if (Platform.OS === "android") {
+      if (Platform.OS === 'android') {
         const bgStarted = await startBackgroundLocationTracking(profile);
         if (!bgStarted) {
           logger.warn(
-            "gps",
-            "Failed to start background tracking preemptively - GPS may not work in background",
+            'gps',
+            'Failed to start background tracking preemptively - GPS may not work in background',
           );
         } else {
-          logger.gps("Background tracking started preemptively (Android)");
+          logger.gps('Background tracking started preemptively (Android)');
         }
       }
 
       // Start foreground tracking for real-time updates
       await startForegroundTracking();
 
-      // Sync points to server every 30 seconds (with exponential backoff on failures)
+      // Upload pending points every 30 seconds. Backoff after failures is
+      // owned by the uploader itself (persisted in the tracking DB), so the
+      // tick can fire unconditionally. The 10s AsyncStorage persist interval is
+      // gone — every accepted point is already durable in SQLite at write time.
       syncInterval.current = setInterval(() => {
-        // Check if we're in a backoff period from previous failures
-        if (syncRetryCount.current > 0) {
-          const backoffMs = Math.min(
-            SYNC_INTERVAL_MS * Math.pow(2, syncRetryCount.current - 1),
-            MAX_BACKOFF_MS,
-          );
-          const timeSinceLastAttempt = Date.now() - lastSyncAttempt.current;
-          if (timeSinceLastAttempt < backoffMs) {
-            // Still in backoff period, skip this sync
-            return;
-          }
-        }
         syncPoints(activityId);
       }, SYNC_INTERVAL_MS);
-
-      // Persist foreground buffer to AsyncStorage every 10 seconds (crash protection)
-      persistInterval.current = setInterval(async () => {
-        if (pointsBuffer.current.length > 0) {
-          const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-            (p) => ({
-              lat: p.lat,
-              lng: p.lng,
-              ele: p.ele,
-              time: p.time || new Date().toISOString(),
-              speed: p.speed,
-              accuracy: p.accuracy,
-            }),
-          );
-          await saveForegroundBuffer(pointsToSave);
-          logger.debug("gps", "Persisted foreground buffer", {
-            count: pointsToSave.length,
-          });
-        }
-      }, PERSIST_INTERVAL_MS);
 
       // Check GPS signal quality every 5 seconds
       lastGpsTime.current = Date.now();
       gpsSignalCheckInterval.current = setInterval(() => {
         const timeSinceLastGps = Date.now() - lastGpsTime.current;
-        let gpsSignal: "good" | "weak" | "lost";
+        let gpsSignal: 'good' | 'weak' | 'lost';
 
         if (timeSinceLastGps < GPS_GOOD_THRESHOLD_MS) {
-          gpsSignal = "good";
+          gpsSignal = 'good';
         } else if (timeSinceLastGps < GPS_WEAK_THRESHOLD_MS) {
-          gpsSignal = "weak";
+          gpsSignal = 'weak';
         } else {
-          gpsSignal = "lost";
+          gpsSignal = 'lost';
         }
 
         setState((prev) => {
           if (prev.trackingStatus.gpsSignal !== gpsSignal) {
-            logger.gps("GPS signal changed", { gpsSignal, timeSinceLastGps });
+            logger.gps('GPS signal changed', { gpsSignal, timeSinceLastGps });
             return {
               ...prev,
               trackingStatus: {
@@ -1232,14 +961,11 @@ function useLiveActivityInternal() {
       }, 5000);
 
       // Start duration timer with current stats (important for crash recovery)
-      startDurationTimer(
-        localStatsRef.current.duration,
-        localStatsRef.current.calories,
-      );
+      startDurationTimer(localStatsRef.current.duration, localStatsRef.current.calories);
 
-      logger.gps("GPS tracking started successfully", {
+      logger.gps('GPS tracking started successfully', {
         activityId,
-        mode: "foreground (will switch to background when app inactive)",
+        mode: 'foreground (will switch to background when app inactive)',
       });
     } catch (error) {
       // Memory leak fix: Clean up any listeners/intervals that may have been set up before the error
@@ -1251,10 +977,6 @@ function useLiveActivityInternal() {
         clearInterval(syncInterval.current);
         syncInterval.current = null;
       }
-      if (persistInterval.current) {
-        clearInterval(persistInterval.current);
-        persistInterval.current = null;
-      }
       if (gpsSignalCheckInterval.current) {
         clearInterval(gpsSignalCheckInterval.current);
         gpsSignalCheckInterval.current = null;
@@ -1265,7 +987,7 @@ function useLiveActivityInternal() {
       }
       currentActivityId.current = null;
 
-      logger.error("gps", "Failed to start GPS tracking", {
+      logger.error('gps', 'Failed to start GPS tracking', {
         error,
         activityId,
       });
@@ -1286,10 +1008,6 @@ function useLiveActivityInternal() {
       clearInterval(backgroundSyncInterval.current);
       backgroundSyncInterval.current = null;
     }
-    if (persistInterval.current) {
-      clearInterval(persistInterval.current);
-      persistInterval.current = null;
-    }
     if (gpsSignalCheckInterval.current) {
       clearInterval(gpsSignalCheckInterval.current);
       gpsSignalCheckInterval.current = null;
@@ -1304,193 +1022,75 @@ function useLiveActivityInternal() {
     // Stop background tracking
     await stopBackgroundLocationTracking();
     await setActiveActivityId(null);
-    await clearLocationBuffer();
 
-    // NOTE: Do NOT clearAllPersistedPoints() here — caller decides when to clear
-    // (after successful finish/discard). This prevents data loss if finish API fails.
+    // NOTE: points stay in the SQLite log — the caller decides when to close
+    // the session (after successful finish/discard). Prevents data loss if the
+    // finish API fails.
 
     // Clear GPS smoothing buffer
-    gpsBuffer.current = [];
+    gpsTracker.clearBuffer();
 
     // Reset app state tracking
     skipNextGpsPoint.current = false;
-    lastBufferedPointTime.current = null;
+    gpsTracker.lastBufferedTime = null;
 
     currentActivityId.current = null;
     stopDurationTimer();
 
-    logger.gps("GPS tracking stopped");
+    logger.gps('GPS tracking stopped');
   };
 
-  // Deduplicate points by timestamp to prevent duplicate GPS data
-  // This handles overlap between foreground and background tracking
-  const deduplicatePoints = (points: GpsPoint[]): GpsPoint[] => {
-    // Sort by timestamp first for proper chronological ordering
-    const sorted = [...points].sort((a, b) => {
-      const timeA = a.time ? new Date(a.time).getTime() : 0;
-      const timeB = b.time ? new Date(b.time).getTime() : 0;
-      return timeA - timeB;
+  // Upload pending points from the SQLite log. The uploader (shared with the
+  // background task) owns batching, idempotency and backoff — this wrapper
+  // only maintains the UI tracking status and server-derived stat fields.
+  const syncPoints = async (_activityId: number) => {
+    if (!clientActivityIdRef.current) return;
+
+    const result = await drainPoints({
+      stats: {
+        calories: localStatsRef.current.calories,
+        clientDistance: Math.round(localStatsRef.current.distance),
+      },
     });
 
-    const seen = new Set<string>();
-    const result: GpsPoint[] = [];
-
-    for (const point of sorted) {
-      // Use timestamp as unique key only - no lat/lng fallback (can cause false deduplication)
-      const key = point.time;
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        result.push(point);
-      } else if (!key) {
-        // Points without timestamp are always included (rare edge case)
-        result.push(point);
-      }
+    // Strava-style: keep local stats during recording, server only stores points
+    // for backup. Only metadata (points count) and server-only values (avg/max
+    // speed) are taken from the sync response.
+    if (result.lastServerStats) {
+      localStatsRef.current = {
+        ...localStatsRef.current,
+        points_count: result.lastServerStats.total_points,
+        avg_speed: result.lastServerStats.avg_speed ?? localStatsRef.current.avg_speed,
+        max_speed: result.lastServerStats.max_speed ?? localStatsRef.current.max_speed,
+      };
     }
 
-    return result;
-  };
-
-  const syncPoints = async (activityId: number) => {
-    if (pointsBuffer.current.length === 0) {
-      // Update tracking status to show no pending points
-      setState((prev) => ({
-        ...prev,
-        trackingStatus: {
-          ...prev.trackingStatus,
-          pendingPoints: 0,
-        },
-      }));
-      return;
-    }
-
-    // Deduplicate points before syncing to prevent duplicate timestamps
-    const deduplicatedPoints = deduplicatePoints(pointsBuffer.current);
-    const duplicatesRemoved =
-      pointsBuffer.current.length - deduplicatedPoints.length;
-
-    // DON'T clear buffer here - wait for successful sync to avoid data loss
-    // pointsBuffer.current = []; // REMOVED: Race condition fix
-
-    if (deduplicatedPoints.length === 0) {
-      logger.gps("All points were duplicates, nothing to sync", { activityId });
-      return;
-    }
-
-    // Copy points for sync - keep originals in buffer until success
-    const pointsToSync = [...deduplicatedPoints];
-
-    // Update tracking status to show pending points
     setState((prev) => ({
       ...prev,
+      currentStats: { ...localStatsRef.current },
       trackingStatus: {
         ...prev.trackingStatus,
-        pendingPoints: pointsToSync.length,
+        pendingPoints: result.remaining,
+        lastSyncTime: result.uploaded > 0 ? new Date() : prev.trackingStatus.lastSyncTime,
+        syncError: result.error ?? (result.backedOff ? prev.trackingStatus.syncError : null),
       },
     }));
 
-    logger.gps("Syncing GPS points to server", {
-      activityId,
-      count: pointsToSync.length,
-      duplicatesRemoved,
-    });
-
-    try {
-      // Send points with current calories and client distance for crash recovery
-      const result = await api.addActivityPoints(activityId, pointsToSync, {
-        calories: localStatsRef.current.calories,
-        client_distance: Math.round(localStatsRef.current.distance),
-      });
-
-      // Strava-style: keep local stats during recording, server only stores points for backup.
-      // Local distance/elevation are the "live truth" — server recalculates final stats on finish.
-      // Only update metadata (points count) and server-only values (avg/max speed) from sync response.
-      localStatsRef.current = {
-        ...localStatsRef.current,
-        points_count: result.total_points,
-        avg_speed: result.stats.avg_speed ?? localStatsRef.current.avg_speed,
-        max_speed: result.stats.max_speed ?? localStatsRef.current.max_speed,
-      };
-
-      // Clear only the successfully synced points from buffer (race condition fix)
-      // Points that arrived during sync will be preserved
-      const syncedTimestamps = new Set(pointsToSync.map((p) => p.time));
-      pointsBuffer.current = pointsBuffer.current.filter(
-        (p) => !syncedTimestamps.has(p.time),
-      );
-
-      // Clear persisted foreground buffer on successful sync
-      await clearForegroundBuffer();
-
-      setState((prev) => ({
-        ...prev,
-        currentStats: { ...localStatsRef.current },
-        trackingStatus: {
-          ...prev.trackingStatus,
-          pendingPoints: 0,
-          lastSyncTime: new Date(),
-          syncError: null,
-        },
-      }));
-
-      // Reset retry count on successful sync
-      syncRetryCount.current = 0;
-
-      logger.gps("GPS points synced successfully", {
-        synced: result.points_count,
-        total: result.total_points,
-        serverDistance: result.stats.distance,
+    if (result.uploaded > 0) {
+      logger.gps('GPS points synced successfully', {
+        uploaded: result.uploaded,
+        remaining: result.remaining,
         localDistance: Math.round(localStatsRef.current.distance),
       });
-    } catch (error: any) {
-      // Increment retry count and calculate backoff
-      syncRetryCount.current += 1;
-      lastSyncAttempt.current = Date.now();
-      const backoffMs = Math.min(
-        30000 * Math.pow(2, syncRetryCount.current - 1),
-        300000,
-      );
-
-      logger.warn("gps", "Sync failed, will retry with backoff", {
-        retryCount: syncRetryCount.current,
-        nextRetryInSeconds: backoffMs / 1000,
-        error: error.message,
-      });
-
-      // Points are still in buffer (we don't clear until success)
-      // Just persist current buffer to AsyncStorage (crash protection)
-      const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-        (p) => ({
-          lat: p.lat,
-          lng: p.lng,
-          ele: p.ele,
-          time: p.time || new Date().toISOString(),
-          speed: p.speed,
-        }),
-      );
-      await saveForegroundBuffer(pointsToSave);
-
-      // Update tracking status with error
-      setState((prev) => ({
-        ...prev,
-        trackingStatus: {
-          ...prev.trackingStatus,
-          pendingPoints: pointsBuffer.current.length,
-          syncError: error.message || "Sync failed",
-        },
-      }));
-
-      logger.error("gps", "Failed to sync GPS points", {
-        activityId,
-        pointsCount: pointsToSync.length,
-        error,
-      });
+    } else if (result.error) {
+      logger.warn('gps', 'Sync failed, uploader backing off', { error: result.error });
     }
   };
 
   const startTracking = useCallback(
     async (sportTypeId: number, title?: string, eventId?: number) => {
       try {
-        logger.activity("Starting activity tracking", {
+        logger.activity('Starting activity tracking', {
           sportTypeId,
           title,
           eventId,
@@ -1521,9 +1121,7 @@ function useLiveActivityInternal() {
             currentStats: stats,
           }));
           localStatsRef.current = stats;
-          throw new Error(
-            "An activity is already in progress. Please finish or discard it first.",
-          );
+          throw new Error('An activity is already in progress. Please finish or discard it first.');
         }
 
         // Capture location at activity start (non-blocking - runs in parallel)
@@ -1531,14 +1129,14 @@ function useLiveActivityInternal() {
         captureActivityLocation()
           .then((location) => {
             activityLocationRef.current = location;
-            logger.activity("Location captured at activity start", {
+            logger.activity('Location captured at activity start', {
               hasLocation: !!location,
               city: location?.city,
               country: location?.country,
             });
           })
           .catch((err) => {
-            logger.debug("activity", "Location capture failed (non-blocking)", {
+            logger.debug('activity', 'Location capture failed (non-blocking)', {
               error: err,
             });
             activityLocationRef.current = null;
@@ -1559,14 +1157,12 @@ function useLiveActivityInternal() {
 
         // Reset local stats and pace tracking
         localStatsRef.current = { ...initialStats };
-        lastPosition.current = null;
-        pointsBuffer.current = [];
+        gpsTracker.lastPosition = null;
         allRoutePoints.current = [];
         pointsVersionRef.current++;
         pausedDuration.current = 0;
         trackingStartTime.current = null;
-        paceSegments.current = [];
-        smoothedPaceRef.current = null;
+        paceTracker.reset();
 
         setState((prev) => ({
           ...prev,
@@ -1581,7 +1177,7 @@ function useLiveActivityInternal() {
         // Start GPS tracking with sport-specific profile
         await startGpsTracking(activity.id, sportTypeId);
 
-        logger.activity("Activity started successfully", {
+        logger.activity('Activity started successfully', {
           id: activity.id,
           sportTypeId,
           eventId,
@@ -1589,14 +1185,14 @@ function useLiveActivityInternal() {
 
         return activity;
       } catch (error: any) {
-        logger.error("activity", "Failed to start activity", {
+        logger.error('activity', 'Failed to start activity', {
           sportTypeId,
           error: error.message,
         });
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error.message || "Failed to start activity",
+          error: error.message || 'Failed to start activity',
         }));
         throw error;
       }
@@ -1608,37 +1204,19 @@ function useLiveActivityInternal() {
     if (!state.activity) return;
 
     try {
-      logger.activity("Pausing activity", { id: state.activity.id });
+      logger.activity('Pausing activity', { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS (no longer clears persisted data — we control that here)
       await stopGpsTracking();
 
-      // Re-persist buffer AFTER stop (crash protection: if syncPoints below fails,
-      // points are still recoverable from AsyncStorage)
-      if (pointsBuffer.current.length > 0) {
-        const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-          (p) => ({
-            lat: p.lat,
-            lng: p.lng,
-            ele: p.ele,
-            time: p.time || new Date().toISOString(),
-            speed: p.speed,
-          }),
-        );
-        await saveForegroundBuffer(pointsToSave);
-        logger.gps("Persisted buffer after stop (before sync)", {
-          count: pointsToSave.length,
-        });
-      }
-
-      // Sync remaining points
+      // Sync remaining points (all accepted points are already durable in SQLite)
       await syncPoints(state.activity.id);
 
       // Pause on server
       const activity = await api.pauseActivity(state.activity.id);
 
-      logger.activity("Activity paused", {
+      logger.activity('Activity paused', {
         id: activity.id,
         duration: activity.duration,
       });
@@ -1651,14 +1229,14 @@ function useLiveActivityInternal() {
         isLoading: false,
       }));
     } catch (error: any) {
-      logger.error("activity", "Failed to pause activity", {
+      logger.error('activity', 'Failed to pause activity', {
         id: state.activity.id,
         error: error.message,
       });
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || "Failed to pause activity",
+        error: error.message || 'Failed to pause activity',
       }));
       throw error;
     }
@@ -1668,7 +1246,7 @@ function useLiveActivityInternal() {
     if (!state.activity) return;
 
     try {
-      logger.activity("Resuming activity", {
+      logger.activity('Resuming activity', {
         id: state.activity.id,
         status: state.activity.status,
       });
@@ -1678,18 +1256,17 @@ function useLiveActivityInternal() {
 
       // Only call API resume if activity is paused
       // If activity is already in_progress (e.g., app crashed), just restart GPS tracking
-      if (state.activity.status === "paused") {
+      if (state.activity.status === 'paused') {
         activity = await api.resumeActivity(state.activity.id);
         // Update paused duration from server
         pausedDuration.current = activity.total_paused_duration || 0;
-        logger.activity("Activity resumed via API", { id: activity.id });
-      } else if (state.activity.status === "in_progress") {
+        logger.activity('Activity resumed via API', { id: activity.id });
+      } else if (state.activity.status === 'in_progress') {
         // Activity is already in progress, just need to restart local GPS tracking
         // No API call needed
-        logger.activity(
-          "Activity already in progress, restarting GPS tracking",
-          { id: activity.id },
-        );
+        logger.activity('Activity already in progress, restarting GPS tracking', {
+          id: activity.id,
+        });
       }
 
       setState((prev) => ({
@@ -1703,7 +1280,7 @@ function useLiveActivityInternal() {
 
       // Clear GPS smoothing buffer and skip first point after resume
       // to avoid false distance from pre-pause position
-      gpsBuffer.current = [];
+      gpsTracker.clearBuffer();
       skipNextGpsPoint.current = true;
 
       // Restart GPS tracking with sport-specific profile
@@ -1711,29 +1288,32 @@ function useLiveActivityInternal() {
       const resumeSportTypeId = activity.sport_type_id ?? state.activity.sport_type_id;
       await startGpsTracking(activity.id, resumeSportTypeId);
     } catch (error: any) {
-      logger.error("activity", "Failed to resume activity", {
+      logger.error('activity', 'Failed to resume activity', {
         id: state.activity.id,
         error: error.message,
       });
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || "Failed to resume activity",
+        error: error.message || 'Failed to resume activity',
       }));
       throw error;
     }
   }, [state.activity]);
 
-  // Snapshot the current activity + buffered points into the unsynced queue.
+  // Snapshot the current activity + pending points into the unsynced queue.
   // Called from finish error paths when the server keeps rejecting /points or
   // /finish — the user can later retry or export GPX from the queue screen.
   const enqueueFailedFinish = async (errorMessage: string): Promise<void> => {
     if (!state.activity) return;
     try {
-      const points = deduplicatePoints(pointsBuffer.current);
+      const points = clientActivityIdRef.current
+        ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
+        : [];
       const startedAt = state.activity.started_at;
-      const endedAt = lastPosition.current?.timestamp
-        ? new Date(lastPosition.current.timestamp).toISOString()
+      const lastTimestamp = gpsTracker.lastPosition?.timestamp;
+      const endedAt = lastTimestamp
+        ? new Date(lastTimestamp).toISOString()
         : new Date().toISOString();
 
       await enqueueUnsyncedActivity(
@@ -1776,51 +1356,56 @@ function useLiveActivityInternal() {
     isFinishingOrDiscardingRef.current = true;
 
     try {
-      logger.activity("Finishing with GPS duration", { id: state.activity.id });
+      logger.activity('Finishing with GPS duration', { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Capture client distance BEFORE sync (sync overwrites local distance with server value)
       const clientDistance = Math.round(localStatsRef.current.distance);
 
-      // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
-      if (pointsBuffer.current.length > 0 && state.activity) {
+      // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
+      if (state.activity) {
         await syncPoints(state.activity.id);
       }
 
       // Stop GPS — no new points arrive after this
       await stopGpsTracking();
 
-      // Prepare remaining points for atomic finish (do NOT clear buffer yet)
-      const finalPoints = deduplicatePoints(pointsBuffer.current);
+      // Remaining unsynced points from the SQLite log go atomically with finish
+      const finalPoints = clientActivityIdRef.current
+        ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
+        : [];
 
       // Use last GPS timestamp as ended_at (instead of current time)
-      const endedAt = lastPosition.current?.timestamp
-        ? new Date(lastPosition.current.timestamp).toISOString()
+      const lastTimestamp = gpsTracker.lastPosition?.timestamp;
+      const endedAt = lastTimestamp
+        ? new Date(lastTimestamp).toISOString()
         : new Date().toISOString();
 
-      logger.activity("Using GPS timestamp for ended_at", {
+      logger.activity('Using GPS timestamp for ended_at', {
         endedAt,
-        difference:
-          Date.now() - (lastPosition.current?.timestamp || Date.now()),
+        difference: Date.now() - (lastTimestamp || Date.now()),
         finalPointsCount: finalPoints.length,
       });
 
-      // Finish on server with GPS timestamp + remaining buffered points
+      // Finish on server with GPS timestamp + remaining pending points
       const response = await api.finishActivity(state.activity.id, {
         ...data,
         ended_at: endedAt,
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
         client_distance: clientDistance,
+        client_activity_id: clientActivityIdRef.current ?? undefined,
       });
 
       const activity = response.data;
 
-      // Success: now safe to clear buffer and persisted data
-      pointsBuffer.current = [];
-      await clearAllPersistedPoints();
+      // Close the durable SQLite session (points purged after retention window)
+      if (clientActivityIdRef.current) {
+        trackingDb.markSessionFinished(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
 
-      logger.activity("Activity finished with GPS duration", {
+      logger.activity('Activity finished with GPS duration', {
         id: activity.id,
         distance: activity.distance,
         client_distance: activity.client_distance,
@@ -1830,15 +1415,13 @@ function useLiveActivityInternal() {
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
-      pointsBuffer.current = [];
+      gpsTracker.lastPosition = null;
       allRoutePoints.current = [];
       pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,
@@ -1849,7 +1432,7 @@ function useLiveActivityInternal() {
         currentStats: { ...initialStats },
         hasExistingActivity: false,
         trackingStatus: {
-          gpsSignal: "good",
+          gpsSignal: 'good',
           isOnline: true,
           pendingPoints: 0,
           lastSyncTime: null,
@@ -1859,31 +1442,19 @@ function useLiveActivityInternal() {
 
       return { activity, post: response.post, points_earned: response.points_earned };
     } catch (error: any) {
-      logger.error("activity", "Failed to finish with GPS duration", {
+      logger.error('activity', 'Failed to finish with GPS duration', {
         id: state.activity.id,
         error: error.message,
       });
 
-      // Re-persist buffer for crash recovery (points still in memory)
-      if (pointsBuffer.current.length > 0) {
-        const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-          (p) => ({
-            lat: p.lat,
-            lng: p.lng,
-            ele: p.ele,
-            time: p.time || new Date().toISOString(),
-            speed: p.speed,
-          }),
-        );
-        await saveForegroundBuffer(pointsToSave).catch(() => {});
-      }
+      // Points remain durable in the SQLite log — recoverable on next start
 
-      await enqueueFailedFinish(error?.message || "Failed to finish activity");
+      await enqueueFailedFinish(error?.message || 'Failed to finish activity');
 
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || "Failed to finish activity",
+        error: error.message || 'Failed to finish activity',
       }));
       throw error;
     } finally {
@@ -1903,7 +1474,7 @@ function useLiveActivityInternal() {
     isFinishingOrDiscardingRef.current = true;
 
     try {
-      logger.activity("Finishing with full timer duration", {
+      logger.activity('Finishing with full timer duration', {
         id: state.activity.id,
       });
       setState((prev) => ({ ...prev, isLoading: true }));
@@ -1911,38 +1482,43 @@ function useLiveActivityInternal() {
       // Capture client distance BEFORE sync (sync overwrites local distance with server value)
       const clientDistance = Math.round(localStatsRef.current.distance);
 
-      // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
-      if (pointsBuffer.current.length > 0 && state.activity) {
+      // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
+      if (state.activity) {
         await syncPoints(state.activity.id);
       }
 
       // Stop GPS — no new points arrive after this
       await stopGpsTracking();
 
-      // Prepare remaining points for atomic finish (do NOT clear buffer yet)
-      const finalPoints = deduplicatePoints(pointsBuffer.current);
+      // Remaining unsynced points from the SQLite log go atomically with finish
+      const finalPoints = clientActivityIdRef.current
+        ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
+        : [];
 
-      logger.activity("Flushing GPS buffer for finish", {
+      logger.activity('Flushing GPS buffer for finish', {
         id: state.activity.id,
         finalPointsCount: finalPoints.length,
       });
 
-      // Finish on server with current time + remaining buffered points
+      // Finish on server with current time + remaining pending points
       const response = await api.finishActivity(state.activity.id, {
         ...data,
         ended_at: new Date().toISOString(),
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
         client_distance: clientDistance,
+        client_activity_id: clientActivityIdRef.current ?? undefined,
       });
 
       const activity = response.data;
 
-      // Success: now safe to clear buffer and persisted data
-      pointsBuffer.current = [];
-      await clearAllPersistedPoints();
+      // Close the durable SQLite session (points purged after retention window)
+      if (clientActivityIdRef.current) {
+        trackingDb.markSessionFinished(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
 
-      logger.activity("Activity finished with full duration", {
+      logger.activity('Activity finished with full duration', {
         id: activity.id,
         distance: activity.distance,
         client_distance: activity.client_distance,
@@ -1952,15 +1528,13 @@ function useLiveActivityInternal() {
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
-      pointsBuffer.current = [];
+      gpsTracker.lastPosition = null;
       allRoutePoints.current = [];
       pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,
@@ -1971,7 +1545,7 @@ function useLiveActivityInternal() {
         currentStats: { ...initialStats },
         hasExistingActivity: false,
         trackingStatus: {
-          gpsSignal: "good",
+          gpsSignal: 'good',
           isOnline: true,
           pendingPoints: 0,
           lastSyncTime: null,
@@ -1981,31 +1555,19 @@ function useLiveActivityInternal() {
 
       return { activity, post: response.post, points_earned: response.points_earned };
     } catch (error: any) {
-      logger.error("activity", "Failed to finish with full duration", {
+      logger.error('activity', 'Failed to finish with full duration', {
         id: state.activity.id,
         error: error.message,
       });
 
-      // Re-persist buffer for crash recovery (points still in memory)
-      if (pointsBuffer.current.length > 0) {
-        const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-          (p) => ({
-            lat: p.lat,
-            lng: p.lng,
-            ele: p.ele,
-            time: p.time || new Date().toISOString(),
-            speed: p.speed,
-          }),
-        );
-        await saveForegroundBuffer(pointsToSave).catch(() => {});
-      }
+      // Points remain durable in the SQLite log — recoverable on next start
 
-      await enqueueFailedFinish(error?.message || "Failed to finish activity");
+      await enqueueFailedFinish(error?.message || 'Failed to finish activity');
 
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || "Failed to finish activity",
+        error: error.message || 'Failed to finish activity',
       }));
       throw error;
     } finally {
@@ -2025,7 +1587,7 @@ function useLiveActivityInternal() {
 
       // Guard: prevent concurrent finish/discard calls
       if (isFinishingOrDiscardingRef.current) {
-        logger.activity("Finish already in progress, ignoring duplicate call", {
+        logger.activity('Finish already in progress, ignoring duplicate call', {
           id: state.activity.id,
         });
         return null;
@@ -2034,16 +1596,16 @@ function useLiveActivityInternal() {
       isFinishingOrDiscardingRef.current = true;
 
       try {
-        logger.activity("Finishing activity", { id: state.activity.id });
+        logger.activity('Finishing activity', { id: state.activity.id });
 
         // Check if GPS stopped a long time ago (> 2 minutes)
-        const lastGpsTimestamp = lastPosition.current?.timestamp;
+        const lastGpsTimestamp = gpsTracker.lastPosition?.timestamp;
         const now = Date.now();
 
         if (lastGpsTimestamp && now - lastGpsTimestamp > 120000) {
           const gapMinutes = Math.floor((now - lastGpsTimestamp) / 60000);
 
-          logger.activity("GPS stopped significantly before finish", {
+          logger.activity('GPS stopped significantly before finish', {
             gapMinutes,
             lastGpsTime: new Date(lastGpsTimestamp).toISOString(),
             finishTime: new Date(now).toISOString(),
@@ -2059,11 +1621,11 @@ function useLiveActivityInternal() {
             points_earned?: number;
           } | null>((resolve) => {
             Alert.alert(
-              "GPS Tracking Stopped",
-              `GPS tracking stopped ${gapMinutes} minute${gapMinutes > 1 ? "s" : ""} ago. The timer kept running after GPS stopped.\n\nWhich duration should be used?`,
+              'GPS Tracking Stopped',
+              `GPS tracking stopped ${gapMinutes} minute${gapMinutes > 1 ? 's' : ''} ago. The timer kept running after GPS stopped.\n\nWhich duration should be used?`,
               [
                 {
-                  text: "Use GPS Time (Recommended)",
+                  text: 'Use GPS Time (Recommended)',
                   onPress: async () => {
                     try {
                       const result = await finishWithGpsDuration(data);
@@ -2075,7 +1637,7 @@ function useLiveActivityInternal() {
                   },
                 },
                 {
-                  text: "Use Full Timer",
+                  text: 'Use Full Timer',
                   onPress: async () => {
                     try {
                       const result = await finishWithFullDuration(data);
@@ -2087,8 +1649,8 @@ function useLiveActivityInternal() {
                   },
                 },
                 {
-                  text: "Cancel",
-                  style: "cancel",
+                  text: 'Cancel',
+                  style: 'cancel',
                   onPress: () => resolve(null),
                 },
               ],
@@ -2101,39 +1663,44 @@ function useLiveActivityInternal() {
         // Capture client distance BEFORE sync (sync overwrites local distance with server value)
         const clientDistance = Math.round(localStatsRef.current.distance);
 
-        // Pre-flush: sync buffered points to server before stopping GPS (reduces final_points payload)
-        if (pointsBuffer.current.length > 0 && state.activity) {
+        // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
+        if (state.activity) {
           await syncPoints(state.activity.id);
         }
 
         // Stop GPS — no new points arrive after this
         await stopGpsTracking();
 
-        // Prepare remaining points for atomic finish (do NOT clear buffer yet)
-        const finalPoints = deduplicatePoints(pointsBuffer.current);
+        // Remaining unsynced points from the SQLite log go atomically with finish
+        const finalPoints = clientActivityIdRef.current
+          ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
+          : [];
 
-        logger.activity("Flushing GPS buffer for finish", {
+        logger.activity('Flushing GPS buffer for finish', {
           id: state.activity.id,
           finalPointsCount: finalPoints.length,
           clientDistance,
         });
 
-        // Finish on server - include location and remaining buffered points
+        // Finish on server - include location and remaining pending points
         const response = await api.finishActivity(state.activity.id, {
           ...data,
           ended_at: new Date().toISOString(),
           location: activityLocationRef.current ?? undefined,
           final_points: finalPoints.length > 0 ? finalPoints : undefined,
           client_distance: clientDistance,
+          client_activity_id: clientActivityIdRef.current ?? undefined,
         });
 
         const activity = response.data;
 
-        // Success: now safe to clear buffer and persisted data
-        pointsBuffer.current = [];
-        await clearAllPersistedPoints();
+        // Close the durable SQLite session (points purged after retention window)
+        if (clientActivityIdRef.current) {
+          trackingDb.markSessionFinished(clientActivityIdRef.current);
+          clientActivityIdRef.current = null;
+        }
 
-        logger.activity("Activity finished successfully", {
+        logger.activity('Activity finished successfully', {
           id: activity.id,
           distance: activity.distance,
           client_distance: activity.client_distance,
@@ -2145,15 +1712,13 @@ function useLiveActivityInternal() {
 
         // Reset state and pace tracking
         localStatsRef.current = { ...initialStats };
-        lastPosition.current = null;
-        pointsBuffer.current = [];
+        gpsTracker.lastPosition = null;
         allRoutePoints.current = [];
         pointsVersionRef.current++;
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         activityLocationRef.current = null;
-        paceSegments.current = [];
-        smoothedPaceRef.current = null;
+        paceTracker.reset();
 
         setState({
           activity: null,
@@ -2164,7 +1729,7 @@ function useLiveActivityInternal() {
           currentStats: { ...initialStats },
           hasExistingActivity: false,
           trackingStatus: {
-            gpsSignal: "good",
+            gpsSignal: 'good',
             isOnline: true,
             pendingPoints: 0,
             lastSyncTime: null,
@@ -2174,32 +1739,19 @@ function useLiveActivityInternal() {
 
         return { activity, post: response.post, points_earned: response.points_earned };
       } catch (error: any) {
-        logger.error("activity", "Failed to finish activity", {
+        logger.error('activity', 'Failed to finish activity', {
           id: state.activity.id,
           error: error.message,
         });
 
-        // Re-persist buffer for crash recovery (points still in memory)
-        if (pointsBuffer.current.length > 0) {
-          const pointsToSave: BufferedLocation[] = pointsBuffer.current.map(
-            (p) => ({
-              lat: p.lat,
-              lng: p.lng,
-              ele: p.ele,
-              time: p.time || new Date().toISOString(),
-              speed: p.speed,
-              accuracy: p.accuracy,
-            }),
-          );
-          await saveForegroundBuffer(pointsToSave).catch(() => {});
-        }
+        // Points remain durable in the SQLite log — recoverable on next start
 
-        await enqueueFailedFinish(error?.message || "Failed to finish activity");
+        await enqueueFailedFinish(error?.message || 'Failed to finish activity');
 
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error.message || "Failed to finish activity",
+          error: error.message || 'Failed to finish activity',
         }));
         throw error;
       } finally {
@@ -2215,7 +1767,7 @@ function useLiveActivityInternal() {
 
     // Guard: prevent concurrent finish/discard calls
     if (isFinishingOrDiscardingRef.current) {
-      logger.activity("Discard already in progress, ignoring duplicate call", {
+      logger.activity('Discard already in progress, ignoring duplicate call', {
         id: state.activity.id,
       });
       return;
@@ -2224,31 +1776,32 @@ function useLiveActivityInternal() {
     isFinishingOrDiscardingRef.current = true;
 
     try {
-      logger.activity("Discarding activity", { id: state.activity.id });
+      logger.activity('Discarding activity', { id: state.activity.id });
       setState((prev) => ({ ...prev, isLoading: true }));
 
       // Stop GPS
       await stopGpsTracking();
 
-      // Clear persisted data (discarding — no need to keep anything)
-      await clearAllPersistedPoints();
+      // Drop the durable SQLite session and its points
+      if (clientActivityIdRef.current) {
+        trackingDb.discardSession(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
 
       // Discard on server
       await api.discardActivity(state.activity.id);
 
-      logger.activity("Activity discarded", { id: state.activity.id });
+      logger.activity('Activity discarded', { id: state.activity.id });
 
       // Reset state and pace tracking
       localStatsRef.current = { ...initialStats };
-      lastPosition.current = null;
-      pointsBuffer.current = [];
+      gpsTracker.lastPosition = null;
       allRoutePoints.current = [];
       pointsVersionRef.current++;
       pausedDuration.current = 0;
       trackingStartTime.current = null;
       activityLocationRef.current = null;
-      paceSegments.current = [];
-      smoothedPaceRef.current = null;
+      paceTracker.reset();
 
       setState({
         activity: null,
@@ -2259,7 +1812,7 @@ function useLiveActivityInternal() {
         currentStats: { ...initialStats },
         hasExistingActivity: false,
         trackingStatus: {
-          gpsSignal: "good",
+          gpsSignal: 'good',
           isOnline: true,
           pendingPoints: 0,
           lastSyncTime: null,
@@ -2267,14 +1820,14 @@ function useLiveActivityInternal() {
         },
       });
     } catch (error: any) {
-      logger.error("activity", "Failed to discard activity", {
+      logger.error('activity', 'Failed to discard activity', {
         id: state.activity.id,
         error: error.message,
       });
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || "Failed to discard activity",
+        error: error.message || 'Failed to discard activity',
       }));
       throw error;
     } finally {
@@ -2303,12 +1856,7 @@ function useLiveActivityInternal() {
     // (avoids O(n) array copy on every render from duration timer)
     livePoints: allRoutePoints.current,
     livePointsVersion: pointsVersionRef.current,
-    currentPosition: lastPosition.current
-      ? {
-          lat: lastPosition.current.lat,
-          lng: lastPosition.current.lng,
-        }
-      : null,
+    currentPosition: gpsTracker.currentPosition,
   };
 }
 
@@ -2350,27 +1898,17 @@ interface LiveActivityContextType {
 const LiveActivityContext = createContext<LiveActivityContextType | null>(null);
 
 // Provider Component
-export function LiveActivityProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function LiveActivityProvider({ children }: { children: React.ReactNode }) {
   const liveActivityState = useLiveActivityInternal();
 
-  return React.createElement(
-    LiveActivityContext.Provider,
-    { value: liveActivityState },
-    children,
-  );
+  return React.createElement(LiveActivityContext.Provider, { value: liveActivityState }, children);
 }
 
 // Hook to use the context (replaces the direct hook usage)
 export function useLiveActivityContext() {
   const context = useContext(LiveActivityContext);
   if (!context) {
-    throw new Error(
-      "useLiveActivityContext must be used within LiveActivityProvider",
-    );
+    throw new Error('useLiveActivityContext must be used within LiveActivityProvider');
   }
   return context;
 }

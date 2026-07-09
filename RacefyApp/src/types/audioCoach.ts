@@ -3,8 +3,16 @@
 export type AudioCoachStyle = 'neutral' | 'motivational' | 'coach' | 'minimal';
 
 export type AudioCoachVoice =
-  | 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo'
-  | 'fable' | 'nova' | 'onyx' | 'sage' | 'shimmer';
+  | 'alloy'
+  | 'ash'
+  | 'ballad'
+  | 'coral'
+  | 'echo'
+  | 'fable'
+  | 'nova'
+  | 'onyx'
+  | 'sage'
+  | 'shimmer';
 
 export type AudioCoachLanguage = 'en' | 'pl' | 'de' | 'fr' | 'es' | 'it' | 'pt';
 

@@ -2,11 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { logger } from '../../../../services/logger';
 import { homeAnalytics } from '../../../../services/homeAnalytics';
-import type {
-  HomeSection,
-  HomeSectionType,
-  Event,
-} from '../../../../types/api';
+import type { HomeSection, HomeSectionType, Event } from '../../../../types/api';
 import {
   // Original section types
   WeatherInsightSection,
@@ -246,11 +242,7 @@ export function SectionRenderer({
     }
   };
 
-  return (
-    <View>
-      {sections.map(renderSection)}
-    </View>
-  );
+  return <View>{sections.map(renderSection)}</View>;
 }
 
 /**

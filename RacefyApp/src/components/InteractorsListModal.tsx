@@ -1,25 +1,25 @@
 import React from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useNavigation} from '@react-navigation/native';
-import {formatDistanceToNow} from 'date-fns';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {Avatar} from './Avatar';
-import {EmptyState} from './EmptyState';
-import {useInteractors} from '../hooks/useInteractors';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {InteractionTargetType,} from './InteractionButton';
-import type {UserInteractor} from '../types/api';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { Avatar } from './Avatar';
+import { EmptyState } from './EmptyState';
+import { useInteractors } from '../hooks/useInteractors';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { InteractionTargetType } from './InteractionButton';
+import type { UserInteractor } from '../types/api';
 
 interface InteractorsListModalProps {
   visible: boolean;
@@ -74,22 +74,14 @@ export function InteractorsListModal({
         uri={item.avatar}
         name={item.name || '?'}
         size="sm"
-        showTierBadge={
-          !!item.subscription?.tier && item.subscription.tier !== 'free'
-        }
+        showTierBadge={!!item.subscription?.tier && item.subscription.tier !== 'free'}
         tier={item.subscription?.tier}
       />
       <View style={styles.userInfo}>
-        <Text
-          style={[styles.userName, { color: colors.textPrimary }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text
-          style={[styles.userUsername, { color: colors.textSecondary }]}
-          numberOfLines={1}
-        >
+        <Text style={[styles.userUsername, { color: colors.textSecondary }]} numberOfLines={1}>
           @{item.username}
         </Text>
       </View>
@@ -158,36 +150,17 @@ export function InteractorsListModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View
-              style={[
-                styles.modalContent,
-                { backgroundColor: colors.background },
-              ]}
-            >
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
               <View style={styles.handleContainer}>
-                <View
-                  style={[styles.handle, { backgroundColor: colors.border }]}
-                />
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
               </View>
 
-              <View
-                style={[
-                  styles.modalHeader,
-                  { borderBottomColor: colors.border },
-                ]}
-              >
-                <Text
-                  style={[styles.modalTitle, { color: colors.textPrimary }]}
-                >
+              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                   {title}
                   {totalCount > 0 ? ` (${totalCount})` : ''}
                 </Text>
@@ -195,11 +168,7 @@ export function InteractorsListModal({
                   onPress={onClose}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons
-                    name="close"
-                    size={24}
-                    color={colors.textSecondary}
-                  />
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 

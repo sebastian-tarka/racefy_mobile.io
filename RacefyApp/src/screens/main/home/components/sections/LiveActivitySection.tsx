@@ -35,9 +35,7 @@ export function LiveActivitySection({ section, onPress }: LiveActivitySectionPro
         </View>
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: colors.error }]}>
-              {section.title}
-            </Text>
+            <Text style={[styles.title, { color: colors.error }]}>{section.title}</Text>
             {activeCount && (
               <View style={[styles.badge, { backgroundColor: colors.error }]}>
                 <Text style={styles.badgeText}>{activeCount}</Text>
@@ -45,14 +43,10 @@ export function LiveActivitySection({ section, onPress }: LiveActivitySectionPro
             )}
           </View>
           {section.message && (
-            <Text style={[styles.message, { color: colors.textSecondary }]}>
-              {section.message}
-            </Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
           )}
         </View>
-        {section.cta && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-        )}
+        {section.cta && <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
       </View>
     </TouchableOpacity>
   );

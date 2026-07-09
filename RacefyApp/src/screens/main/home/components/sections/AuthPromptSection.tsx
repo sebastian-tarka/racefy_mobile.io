@@ -18,11 +18,7 @@ interface AuthPromptSectionProps {
  *
  * Backend decides when to show this section.
  */
-export function AuthPromptSection({
-  section,
-  onSignIn,
-  onSignUp,
-}: AuthPromptSectionProps) {
+export function AuthPromptSection({ section, onSignIn, onSignUp }: AuthPromptSectionProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -32,13 +28,9 @@ export function AuthPromptSection({
         <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}20` }]}>
           <Ionicons name="person-circle" size={32} color={colors.primary} />
         </View>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {section.title}
-        </Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
         {section.message && (
-          <Text style={[styles.message, { color: colors.textSecondary }]}>
-            {section.message}
-          </Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
         )}
         <View style={styles.buttons}>
           <TouchableOpacity
@@ -46,9 +38,7 @@ export function AuthPromptSection({
             onPress={onSignUp}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>
-              {t('common.signUp')}
-            </Text>
+            <Text style={styles.primaryButtonText}>{t('common.signUp')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton, { borderColor: colors.border }]}

@@ -8,9 +8,9 @@ import type { Post } from '../types/api';
 
 const RARITY_CONFIG: Record<string, { border: string; background: string }> = {
   legendary: { border: '#F97316', background: 'rgba(249,115,22,0.1)' },
-  epic:      { border: '#9333EA', background: 'rgba(147,51,234,0.1)' },
-  rare:      { border: '#3B82F6', background: 'rgba(59,130,246,0.1)' },
-  common:    { border: '#6B7280', background: 'rgba(107,114,128,0.1)' },
+  epic: { border: '#9333EA', background: 'rgba(147,51,234,0.1)' },
+  rare: { border: '#3B82F6', background: 'rgba(59,130,246,0.1)' },
+  common: { border: '#6B7280', background: 'rgba(107,114,128,0.1)' },
 };
 
 interface AchievementBodyProps {
@@ -30,7 +30,12 @@ export function AchievementBody({ post }: AchievementBodyProps) {
 
   return (
     <View style={styles.container}>
-      <View style={[styles.card, { borderColor: rarityConfig.border, backgroundColor: rarityConfig.background }]}>
+      <View
+        style={[
+          styles.card,
+          { borderColor: rarityConfig.border, backgroundColor: rarityConfig.background },
+        ]}
+      >
         <View style={styles.row}>
           <View style={[styles.iconContainer, { borderColor: rarityConfig.border }]}>
             {iconUrl ? (
@@ -44,7 +49,12 @@ export function AchievementBody({ post }: AchievementBodyProps) {
             <Text style={[styles.badgeName, { color: colors.textPrimary }]} numberOfLines={2}>
               {badge.name}
             </Text>
-            <View style={[styles.rarityBadge, { backgroundColor: rarityConfig.border + '22', borderColor: rarityConfig.border }]}>
+            <View
+              style={[
+                styles.rarityBadge,
+                { backgroundColor: rarityConfig.border + '22', borderColor: rarityConfig.border },
+              ]}
+            >
               <Text style={[styles.rarityText, { color: rarityConfig.border }]}>
                 {t(`feed.achievement.rarity.${badge.rarity}`)}
               </Text>

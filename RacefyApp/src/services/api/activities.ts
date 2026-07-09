@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type {ApiBase} from './base';
+import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -14,8 +14,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     }): Promise<Types.PaginatedResponse<Types.Activity>> {
       const query = new URLSearchParams();
       if (params?.user_id) query.append('user_id', String(params.user_id));
-      if (params?.sport_type_id)
-        query.append('sport_type_id', String(params.sport_type_id));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
       if (params?.page) query.append('page', String(params.page));
       return this.request(`/activities?${query}`);
     }
@@ -43,36 +42,26 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     }
 
     async getActivity(id: number): Promise<Types.Activity> {
-      const response = await this.request<Types.ApiResponse<Types.Activity>>(
-        `/activities/${id}`
-      );
+      const response = await this.request<Types.ApiResponse<Types.Activity>>(`/activities/${id}`);
       return response.data;
     }
 
-    async createActivity(
-      data: Types.CreateActivityRequest
-    ): Promise<Types.Activity> {
-      const response = await this.request<Types.ApiResponse<Types.Activity>>(
-        '/activities',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+    async createActivity(data: Types.CreateActivityRequest): Promise<Types.Activity> {
+      const response = await this.request<Types.ApiResponse<Types.Activity>>('/activities', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
     async updateActivity(
       id: number,
-      data: Partial<Types.CreateActivityRequest>
+      data: Partial<Types.CreateActivityRequest>,
     ): Promise<Types.Activity> {
-      const response = await this.request<Types.ApiResponse<Types.Activity>>(
-        `/activities/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Activity>>(`/activities/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -83,21 +72,21 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
 
     async updateActivityGpsPrivacy(
       id: number,
-      showStartFinishPoints: boolean
+      showStartFinishPoints: boolean,
     ): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${id}/gps-privacy`,
         {
           method: 'PATCH',
           body: JSON.stringify({ show_start_finish_points: showStartFinishPoints }),
-        }
+        },
       );
       return response.data;
     }
 
     async getActivityTrack(id: number): Promise<Types.GpsTrack> {
       const response = await this.request<Types.ApiResponse<Types.GpsTrack>>(
-        `/activities/${id}/track`
+        `/activities/${id}/track`,
       );
       return response.data;
     }
@@ -105,14 +94,14 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async getActivityTrackPoints(id: number): Promise<Types.TrackPointsResponse> {
       // Note: This endpoint returns data directly, not wrapped in ApiResponse
       const response = await this.request<Types.TrackPointsResponse>(
-        `/activities/${id}/track-points`
+        `/activities/${id}/track-points`,
       );
       return response;
     }
 
     async getActivityAnalysis(id: number): Promise<Types.SingleActivityStats> {
       const response = await this.request<Types.ApiResponse<Types.SingleActivityStats>>(
-        `/activities/${id}/stats`
+        `/activities/${id}/stats`,
       );
       return response.data;
     }
@@ -120,7 +109,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async shareActivity(id: number): Promise<Types.Post> {
       const response = await this.request<Types.ApiResponse<Types.Post>>(
         `/activities/${id}/share`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -131,9 +120,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
      * Get current active activity (if any)
      */
     async getCurrentActivity(): Promise<Types.Activity | null> {
-      const response = await this.request<{ data: Types.Activity | null }>(
-        '/activities/current'
-      );
+      const response = await this.request<{ data: Types.Activity | null }>('/activities/current');
       return response.data;
     }
 
@@ -149,13 +136,10 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       event_id?: number;
       gps_profile?: Types.GpsProfileRequest;
     }): Promise<Types.Activity> {
-      const response = await this.request<Types.ApiResponse<Types.Activity>>(
-        '/activities/start',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.Activity>>('/activities/start', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -171,7 +155,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
         avg_heart_rate?: number;
         max_heart_rate?: number;
         client_distance?: number;
-      }
+      },
     ): Promise<Types.AddActivityPointsResponse> {
       const body: Types.AddActivityPointsRequest = {
         points,
@@ -183,7 +167,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
         {
           method: 'POST',
           body: JSON.stringify(body),
-        }
+        },
       );
       return response;
     }
@@ -194,7 +178,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async pauseActivity(activityId: number): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${activityId}/pause`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -205,7 +189,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async resumeActivity(activityId: number): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${activityId}/resume`,
-        { method: 'POST' }
+        { method: 'POST' },
       );
       return response.data;
     }
@@ -216,14 +200,14 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
      */
     async finishActivity(
       activityId: number,
-      data?: Types.FinishActivityRequest
+      data?: Types.FinishActivityRequest,
     ): Promise<Types.FinishActivityResponse> {
       const response = await this.request<Types.FinishActivityResponse>(
         `/activities/${activityId}/finish`,
         {
           method: 'POST',
           body: JSON.stringify(data || {}),
-        }
+        },
       );
       return response;
     }
@@ -248,7 +232,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       lng: number,
       radius: number = 5000,
       sportTypeId?: number,
-      limit: number = 10
+      limit: number = 10,
     ): Promise<Types.NearbyRoute[]> {
       const params = new URLSearchParams({
         lat: lat.toString(),
@@ -262,7 +246,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       }
 
       const response = await this.request<Types.ApiResponse<Types.NearbyRoute[]>>(
-        `/activities/nearby?${params.toString()}`
+        `/activities/nearby?${params.toString()}`,
       );
 
       return response.data;
@@ -276,20 +260,17 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
      * - event_id (optional): Event ID to link activity to (event must be ongoing, user must be registered)
      */
     async importGpx(file: FormData): Promise<Types.Activity> {
-      const result = await this.request<Types.ApiResponse<Types.Activity>>(
-        '/activities/import',
-        { method: 'POST', body: file }
-      );
+      const result = await this.request<Types.ApiResponse<Types.Activity>>('/activities/import', {
+        method: 'POST',
+        body: file,
+      });
       return result.data;
     }
 
-    async uploadActivityPhoto(
-      activityId: number,
-      formData: FormData
-    ): Promise<Types.Photo> {
+    async uploadActivityPhoto(activityId: number, formData: FormData): Promise<Types.Photo> {
       const result = await this.request<Types.ApiResponse<Types.Photo>>(
         `/activities/${activityId}/photos`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return result.data;
     }
@@ -302,14 +283,14 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
      */
     async sendHealthData(
       activityId: number,
-      data: Types.SendHealthDataRequest
+      data: Types.SendHealthDataRequest,
     ): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${activityId}/health-data`,
         {
           method: 'POST',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.data;
     }
@@ -317,27 +298,25 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     // ============ ACTIVITY BOOSTS ============
 
     async boostActivity(activityId: number): Promise<Types.BoostResponse> {
-      const response = await this.request<Types.BoostResponse>(
-        `/activities/${activityId}/boost`,
-        { method: 'POST' }
-      );
+      const response = await this.request<Types.BoostResponse>(`/activities/${activityId}/boost`, {
+        method: 'POST',
+      });
       return response;
     }
 
     async unboostActivity(activityId: number): Promise<Types.BoostResponse> {
-      const response = await this.request<Types.BoostResponse>(
-        `/activities/${activityId}/boost`,
-        { method: 'DELETE' }
-      );
+      const response = await this.request<Types.BoostResponse>(`/activities/${activityId}/boost`, {
+        method: 'DELETE',
+      });
       return response;
     }
 
     async getActivityBoosters(
       activityId: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/activities/${activityId}/boosts?page=${page}`
+        `/activities/${activityId}/boosts?page=${page}`,
       );
     }
 
@@ -353,10 +332,10 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
 
     async getActivityLikers(
       id: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/activities/${id}/likes?page=${page}`
+        `/activities/${id}/likes?page=${page}`,
       );
     }
 
@@ -371,11 +350,11 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
      */
     async getActivityShareLink(
       id: number,
-      options?: { format?: 'social' | 'story' | 'square' }
+      options?: { format?: 'social' | 'story' | 'square' },
     ): Promise<Types.ShareLinkResponse> {
       const queryParams = options?.format ? `?format=${options.format}` : '';
       const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-        `/activities/${id}/share-link${queryParams}`
+        `/activities/${id}/share-link${queryParams}`,
       );
       return response.data;
     }
@@ -383,14 +362,14 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async generatePhotoOverlay(
       id: number,
       photoId: number,
-      format: Types.PhotoOverlayFormat = 'photo_story'
+      format: Types.PhotoOverlayFormat = 'photo_story',
     ): Promise<Types.PhotoOverlayResponse> {
       const response = await this.request<Types.ApiResponse<Types.PhotoOverlayResponse>>(
         `/activities/${id}/share-photo-overlay`,
         {
           method: 'POST',
           body: JSON.stringify({ photo_id: photoId, format }),
-        }
+        },
       );
       return response.data;
     }
@@ -398,7 +377,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     async generatePhotoOverlayFromFile(
       id: number,
       file: { uri: string; type: string; name: string },
-      format: Types.PhotoOverlayFormat = 'photo_story'
+      format: Types.PhotoOverlayFormat = 'photo_story',
     ): Promise<Types.PhotoOverlayResponse> {
       const formData = new FormData();
       formData.append('photo', {
@@ -409,7 +388,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       formData.append('format', format);
       const response = await this.request<Types.ApiResponse<Types.PhotoOverlayResponse>>(
         `/activities/${id}/share-photo-overlay`,
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return response.data;
     }

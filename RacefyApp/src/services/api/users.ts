@@ -1,5 +1,5 @@
 import type * as Types from '../../types/api';
-import type {ApiBase} from './base';
+import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -17,35 +17,37 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getFollowStatus(userId: number): Promise<Types.FollowStatus> {
       const response = await this.request<Types.ApiResponse<Types.FollowStatus>>(
-        `/users/${userId}/follow-status`
+        `/users/${userId}/follow-status`,
       );
       return response.data;
     }
 
     async getFollowers(userId: number): Promise<Types.User[]> {
       const response = await this.request<Types.ApiResponse<Types.User[]>>(
-        `/users/${userId}/followers`
+        `/users/${userId}/followers`,
       );
       return response.data;
     }
 
     async getFollowing(userId: number): Promise<Types.User[]> {
       const response = await this.request<Types.ApiResponse<Types.User[]>>(
-        `/users/${userId}/following`
+        `/users/${userId}/following`,
       );
       return response.data;
     }
 
     async getFollowRequests(page: number = 1): Promise<Types.ApiListResponse<Types.FollowRequest>> {
       const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
-        `/follow-requests?page=${page}`
+        `/follow-requests?page=${page}`,
       );
       return response;
     }
 
-    async getSentFollowRequests(page: number = 1): Promise<Types.ApiListResponse<Types.FollowRequest>> {
+    async getSentFollowRequests(
+      page: number = 1,
+    ): Promise<Types.ApiListResponse<Types.FollowRequest>> {
       const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
-        `/follow-requests/sent?page=${page}`
+        `/follow-requests/sent?page=${page}`,
       );
       return response;
     }
@@ -81,13 +83,13 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       if (params?.per_page) query.append('per_page', String(params.per_page));
       const queryString = query.toString();
       return this.request<Types.BlockedUsersResponse>(
-        `/blocks${queryString ? `?${queryString}` : ''}`
+        `/blocks${queryString ? `?${queryString}` : ''}`,
       );
     }
 
     async getBlockStatus(userId: number): Promise<Types.BlockStatus> {
       const response = await this.request<Types.ApiResponse<Types.BlockStatus>>(
-        `/users/${userId}/block-status`
+        `/users/${userId}/block-status`,
       );
       return response.data;
     }
@@ -95,42 +97,35 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ CONTENT REPORTING ============
 
     async createReport(data: Types.CreateReportRequest): Promise<Types.ReportResponse> {
-      const response = await this.request<Types.ReportResponse>(
-        '/reports',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ReportResponse>('/reports', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
       return response;
     }
 
     async getUserByUsername(username: string): Promise<Types.UserProfile> {
       const response = await this.request<Types.ApiResponse<Types.UserProfile>>(
-        `/users/username/${username}`
+        `/users/username/${username}`,
       );
       return response.data;
     }
 
     async getUserActivities(
       userId: number,
-      page = 1
+      page = 1,
     ): Promise<Types.PaginatedResponse<Types.Activity>> {
       return this.request(`/users/${userId}/activities?page=${page}`);
     }
 
-    async getUserPosts(
-      userId: number,
-      page = 1
-    ): Promise<Types.PaginatedResponse<Types.Post>> {
+    async getUserPosts(userId: number, page = 1): Promise<Types.PaginatedResponse<Types.Post>> {
       return this.request(`/users/${userId}/posts?page=${page}`);
     }
 
     // ============ STATISTICS ============
 
     async getStats(): Promise<Types.UserStats> {
-      const response =
-        await this.request<Types.ApiResponse<Types.UserStats>>('/stats');
+      const response = await this.request<Types.ApiResponse<Types.UserStats>>('/stats');
       return response.data;
     }
 
@@ -147,10 +142,9 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         if (params?.from) query.append('from', params.from);
         if (params?.to) query.append('to', params.to);
       }
-      if (params?.sport_type_id)
-        query.append('sport_type_id', String(params.sport_type_id));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
       const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
-        `/stats/activities?${query}`
+        `/stats/activities?${query}`,
       );
       return response.data;
     }
@@ -158,7 +152,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getWeeklyStats(sportTypeId?: number): Promise<Types.WeeklyStats> {
       const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.WeeklyStats>>(
-        `/stats/weekly${query}`
+        `/stats/weekly${query}`,
       );
       return response.data;
     }
@@ -166,7 +160,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getMilestones(sportTypeId?: number): Promise<Types.MilestonesData> {
       const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
-        `/stats/milestones${query}`
+        `/stats/milestones${query}`,
       );
       return response.data;
     }
@@ -174,14 +168,14 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getUserMilestones(userId: number, sportTypeId?: number): Promise<Types.MilestonesData> {
       const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
-        `/users/${userId}/stats/milestones${query}`
+        `/users/${userId}/stats/milestones${query}`,
       );
       return response.data;
     }
 
     async getUserActivityStats(userId: number): Promise<Types.ActivityStats> {
       const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
-        `/users/${userId}/stats/activities`
+        `/users/${userId}/stats/activities`,
       );
       return response.data;
     }
@@ -192,13 +186,12 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         from?: string;
         to?: string;
         sport_type_id?: number;
-      }
+      },
     ): Promise<Types.ActivityStats> {
       const query = new URLSearchParams();
       if (params?.from) query.append('from', params.from);
       if (params?.to) query.append('to', params.to);
-      if (params?.sport_type_id)
-        query.append('sport_type_id', String(params.sport_type_id));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
 
       const queryString = query.toString();
       const endpoint = queryString
@@ -221,7 +214,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getGlobalLeaderboard(
       period: Types.LeaderboardPeriod = 'all_time',
       limit = 50,
-      offset = 0
+      offset = 0,
     ): Promise<Types.LeaderboardResponse> {
       const query = new URLSearchParams();
       query.append('period', period);
@@ -235,7 +228,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async getFollowingLeaderboard(
       period: Types.LeaderboardPeriod = 'all_time',
-      limit = 50
+      limit = 50,
     ): Promise<Types.LeaderboardResponse> {
       const query = new URLSearchParams();
       query.append('period', period);
@@ -256,7 +249,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getPointHistory(
       page = 1,
       limit = 20,
-      type?: Types.PointTransactionType
+      type?: Types.PointTransactionType,
     ): Promise<Types.PointHistoryResponse> {
       const query = new URLSearchParams();
       query.append('page', String(page));
@@ -270,8 +263,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ PROFILE ============
 
     async getProfile(): Promise<Types.User> {
-      const response =
-        await this.request<Types.ApiResponse<Types.User>>('/profile');
+      const response = await this.request<Types.ApiResponse<Types.User>>('/profile');
       return response.data;
     }
 
@@ -281,13 +273,10 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       email?: string;
       bio?: string;
     }): Promise<Types.User> {
-      const response = await this.request<Types.ApiResponse<Types.User>>(
-        '/profile',
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
+      const response = await this.request<Types.ApiResponse<Types.User>>('/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
       return response.data;
     }
 
@@ -305,10 +294,10 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         name: `avatar.${fileExtension}`,
       } as any);
 
-      const result = await this.request<Types.ApiResponse<Types.User>>(
-        '/profile/avatar',
-        { method: 'POST', body: formData }
-      );
+      const result = await this.request<Types.ApiResponse<Types.User>>('/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
       return result.data;
     }
 
@@ -327,7 +316,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
       const result = await this.request<Types.ApiResponse<Types.User>>(
         '/profile/background-image',
-        { method: 'POST', body: formData }
+        { method: 'POST', body: formData },
       );
       return result.data;
     }
@@ -364,20 +353,20 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getPreferences(): Promise<Types.UserPreferences> {
       const response = await this.request<{ preferences: Types.UserPreferences }>(
-        '/profile/preferences'
+        '/profile/preferences',
       );
       return response.preferences;
     }
 
     async updatePreferences(
-      data: Partial<Types.UserPreferences> | Record<string, any>
+      data: Partial<Types.UserPreferences> | Record<string, any>,
     ): Promise<Types.UserPreferences> {
       const response = await this.request<{ preferences: Types.UserPreferences }>(
         '/profile/preferences',
         {
           method: 'PUT',
           body: JSON.stringify(data),
-        }
+        },
       );
       return response.preferences;
     }

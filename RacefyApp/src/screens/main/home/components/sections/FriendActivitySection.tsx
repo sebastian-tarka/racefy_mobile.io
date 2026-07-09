@@ -16,7 +16,11 @@ interface FriendActivitySectionProps {
  * Friend Activity section component.
  * Shows recent activities from friends.
  */
-export function FriendActivitySection({ section, onPress, onActivityPress }: FriendActivitySectionProps) {
+export function FriendActivitySection({
+  section,
+  onPress,
+  onActivityPress,
+}: FriendActivitySectionProps) {
   const { colors } = useTheme();
   const { formatDistanceFromKm } = useUnits();
 
@@ -33,13 +37,9 @@ export function FriendActivitySection({ section, onPress, onActivityPress }: Fri
           <Ionicons name="people" size={24} color={colors.info} />
         </View>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {section.title}
-          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
           {section.message && (
-            <Text style={[styles.message, { color: colors.textSecondary }]}>
-              {section.message}
-            </Text>
+            <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
           )}
         </View>
         {section.cta && (
@@ -55,7 +55,10 @@ export function FriendActivitySection({ section, onPress, onActivityPress }: Fri
             key={activity.id}
             style={[
               styles.activityItem,
-              index < activities.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 },
+              index < activities.length - 1 && {
+                borderBottomColor: colors.border,
+                borderBottomWidth: 1,
+              },
             ]}
             onPress={() => onActivityPress?.(activity.id)}
             activeOpacity={0.7}
@@ -71,7 +74,10 @@ export function FriendActivitySection({ section, onPress, onActivityPress }: Fri
               <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {activity.user?.name || 'Unknown'}
               </Text>
-              <Text style={[styles.activityStats, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text
+                style={[styles.activityStats, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
                 {activity.sport_type && `${activity.sport_type} • `}
                 {activity.distance_km && formatDistanceFromKm(activity.distance_km)}
               </Text>

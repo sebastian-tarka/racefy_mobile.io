@@ -1,14 +1,14 @@
-import React, {useState} from 'react';
-import {LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Image} from 'expo-image';
-import {FeedVideo} from './FeedVideo';
-import {AutoDisplayImage} from './AutoDisplayImage';
-import {ImageViewer} from './ImageViewer';
-import {ImageGallery} from './ImageGallery';
-import {VideoPlayer} from './VideoPlayer';
-import {VideoPlayerManager} from '../services/VideoPlayerManager';
-import type {PostMediaItem} from './FeedCard.utils';
-import {useImageGallery} from './FeedCard.utils';
+import React, { useState } from 'react';
+import { LayoutChangeEvent, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { FeedVideo } from './FeedVideo';
+import { AutoDisplayImage } from './AutoDisplayImage';
+import { ImageViewer } from './ImageViewer';
+import { ImageGallery } from './ImageGallery';
+import { VideoPlayer } from './VideoPlayer';
+import { VideoPlayerManager } from '../services/VideoPlayerManager';
+import type { PostMediaItem } from './FeedCard.utils';
+import { useImageGallery } from './FeedCard.utils';
 
 const GRID_GAP = 2;
 
@@ -27,7 +27,14 @@ interface MediaGridProps {
  * 5+ items → 2×2 grid with "+N" overlay on last cell
  */
 export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
-  const { expandedImage, setExpandedImage, galleryVisible, setGalleryVisible, galleryIndex, openGallery } = useImageGallery();
+  const {
+    expandedImage,
+    setExpandedImage,
+    galleryVisible,
+    setGalleryVisible,
+    galleryIndex,
+    openGallery,
+  } = useImageGallery();
   const [expandedVideo, setExpandedVideoRaw] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -41,7 +48,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
     setExpandedVideoRaw(url);
   };
 
-  const imageUrls = items.filter(i => i.type === 'image').map(i => i.url);
+  const imageUrls = items.filter((i) => i.type === 'image').map((i) => i.url);
   const count = items.length;
 
   const handleItemPress = (index: number) => {
@@ -50,7 +57,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
       setExpandedVideo(item.url);
     } else {
       if (imageUrls.length > 1) {
-        const imageIndex = items.slice(0, index + 1).filter(i => i.type === 'image').length - 1;
+        const imageIndex = items.slice(0, index + 1).filter((i) => i.type === 'image').length - 1;
         openGallery(imageIndex);
       } else {
         setExpandedImage(item.url);
@@ -58,7 +65,13 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
     }
   };
 
-  const renderCell = (item: PostMediaItem, index: number, width: number, height: number, style?: any) => {
+  const renderCell = (
+    item: PostMediaItem,
+    index: number,
+    width: number,
+    height: number,
+    style?: any,
+  ) => {
     // Video → inline playback with FeedVideo (autoplay, mute, expand to fullscreen)
     // fillContainer makes FeedVideo stretch to fill the cell instead of sizing via aspectRatio
     if (item.type === 'video') {
@@ -92,7 +105,13 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
     );
   };
 
-  const renderMoreOverlay = (item: PostMediaItem, index: number, width: number, height: number, remaining: number) => {
+  const renderMoreOverlay = (
+    item: PostMediaItem,
+    index: number,
+    width: number,
+    height: number,
+    remaining: number,
+  ) => {
     return (
       <TouchableOpacity
         key={`${item.id}-${index}`}
@@ -102,11 +121,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
       >
         {item.type === 'video' ? (
           <View style={StyleSheet.absoluteFill}>
-            <FeedVideo
-              videoUrl={item.url}
-              thumbnailUrl={item.thumbnailUrl}
-              fillContainer
-            />
+            <FeedVideo videoUrl={item.url} thumbnailUrl={item.thumbnailUrl} fillContainer />
           </View>
         ) : (
           <Image
@@ -201,8 +216,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
           <View style={{ width: GRID_GAP }} />
           {showMore
             ? renderMoreOverlay(items[3], 3, cellW, cellH, remaining)
-            : renderCell(items[3], 3, cellW, cellH)
-          }
+            : renderCell(items[3], 3, cellW, cellH)}
         </View>
       </View>
     );

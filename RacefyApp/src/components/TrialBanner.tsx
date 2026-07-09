@@ -39,7 +39,11 @@ export function TrialBanner() {
       <Text style={[styles.text, { color: isUrgent ? colors.warning : colors.primary }]}>
         {t('subscription.trialEndsIn', { days: remainingDays })}
       </Text>
-      <Ionicons name="chevron-forward" size={16} color={isUrgent ? colors.warning : colors.primary} />
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={isUrgent ? colors.warning : colors.primary}
+      />
     </TouchableOpacity>
   );
 }

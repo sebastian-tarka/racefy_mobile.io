@@ -26,9 +26,7 @@ export function GoalsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * know the goal list and just need fresh numbers (e.g. home widget).
      */
     async getGoalsProgress(): Promise<GoalsProgressMap> {
-      const response = await this.request<Types.ApiResponse<GoalsProgressMap>>(
-        '/goals/progress'
-      );
+      const response = await this.request<Types.ApiResponse<GoalsProgressMap>>('/goals/progress');
       return response.data;
     }
 

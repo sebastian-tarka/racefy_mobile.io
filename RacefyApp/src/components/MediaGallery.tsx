@@ -52,7 +52,11 @@ export function MediaGallery({
   });
 
   // Helper to detect media type from URL or mime_type
-  const detectMediaType = (item: { url?: string; mime_type?: string; type?: string }): 'image' | 'video' => {
+  const detectMediaType = (item: {
+    url?: string;
+    mime_type?: string;
+    type?: string;
+  }): 'image' | 'video' => {
     // If type is already set, use it
     if (item.type === 'video' || item.type === 'image') {
       return item.type;
@@ -70,12 +74,12 @@ export function MediaGallery({
   };
 
   // Combine media, photos, and videos into a unified list
-  const items: Array<{
+  const items: {
     id: number;
     type: 'image' | 'video';
     url: string;
     thumbnailUrl?: string | null;
-  }> = [
+  }[] = [
     ...media.map((m) => {
       const detectedType = detectMediaType(m);
       logger.debug('general', 'MediaGallery media item type detection', {
@@ -83,7 +87,7 @@ export function MediaGallery({
         originalType: m.type,
         mimeType: m.mime_type,
         url: m.url,
-        detectedType
+        detectedType,
       });
       return {
         id: m.id,
@@ -126,7 +130,7 @@ export function MediaGallery({
     setCurrentIndex(index);
   };
 
-  const handleItemPress = (item: typeof items[0]) => {
+  const handleItemPress = (item: (typeof items)[0]) => {
     if (item.type === 'video') {
       setSelectedVideoUri(item.url);
       setSelectedVideoThumbnail(item.thumbnailUrl || null);
@@ -244,9 +248,7 @@ export function MediaGallery({
                   styles.dot,
                   {
                     backgroundColor:
-                      index === currentIndex
-                        ? colors.primary
-                        : 'rgba(255,255,255,0.5)',
+                      index === currentIndex ? colors.primary : 'rgba(255,255,255,0.5)',
                   },
                 ]}
               />

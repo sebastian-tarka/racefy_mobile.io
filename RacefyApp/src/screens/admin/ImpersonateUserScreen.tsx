@@ -76,7 +76,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
                       },
                     },
                   ],
-                })
+                }),
               );
             } catch (error) {
               Alert.alert(t('common.error'), t('admin.impersonate.startError'));
@@ -85,7 +85,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -98,7 +98,12 @@ export function ImpersonateUserScreen({ navigation }: Props) {
       />
 
       <View style={styles.content}>
-        <View style={[styles.warning, { backgroundColor: colors.warningLight, borderColor: colors.warning }]}>
+        <View
+          style={[
+            styles.warning,
+            { backgroundColor: colors.warningLight, borderColor: colors.warning },
+          ]}
+        >
           <Text style={[styles.warningText, { color: colors.textPrimary }]}>
             {t('admin.impersonate.warning')}
           </Text>
@@ -126,7 +131,9 @@ export function ImpersonateUserScreen({ navigation }: Props) {
               <Avatar uri={item.avatar_url} name={item.name} size="lg" />
               <View style={styles.userInfo}>
                 <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
-                <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
+                <Text style={[styles.userUsername, { color: colors.textSecondary }]}>
+                  @{item.username}
+                </Text>
                 <Text style={[styles.userEmail, { color: colors.textMuted }]}>{item.email}</Text>
               </View>
             </TouchableOpacity>

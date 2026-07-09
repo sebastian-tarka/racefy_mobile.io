@@ -1,107 +1,66 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { api } from '../services/api';
+import { usePaginatedFetch } from './usePaginatedFetch';
 import type { Event } from '../types/api';
 
 type EventStatus = 'upcoming' | 'ongoing' | 'completed';
 
 export function useEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(
-    undefined
-  );
+  const [statusFilter, setStatusFilter] = useState<EventStatus | undefined>(undefined);
 
-  const fetchEvents = useCallback(
-    async (reset = false) => {
-      if (isLoading) return;
+  const {
+    data: events,
+    isLoading,
+    isRefreshing,
+    hasMore,
+    error,
+    loadMore,
+    refresh,
+    reset,
+    setData,
+  } = usePaginatedFetch<Event>((page) => api.getEvents({ status: statusFilter, page }), {
+    // EventsScreen drives the initial load and the post-filter refresh itself,
+    // so the hook must not auto-fetch (that would double-request).
+    autoLoad: false,
+    dedupeBy: (e) => e.id,
+    errorMessage: 'Failed to load events',
+  });
 
-      if (reset) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      try {
-        const currentPage = reset ? 1 : page;
-        const response = await api.getEvents({
-          status: statusFilter,
-          page: currentPage,
-        });
-
-        setEvents((prev) => {
-          if (reset) return response.data;
-          // Deduplicate by event ID when loading more
-          const existingIds = new Set(prev.map((e) => e.id));
-          const newEvents = response.data.filter((e) => !existingIds.has(e.id));
-          return [...prev, ...newEvents];
-        });
-        setHasMore(response.meta.current_page < response.meta.last_page);
-        setPage(currentPage + 1);
-      } catch (err) {
-        setError('Failed to load events');
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
+  const changeFilter = useCallback(
+    (status: EventStatus | undefined) => {
+      setStatusFilter(status);
+      reset();
     },
-    [page, isLoading, statusFilter]
+    [reset],
   );
 
-  const refresh = useCallback(() => fetchEvents(true), [fetchEvents]);
-  const loadMore = useCallback(
-    () => hasMore && !isLoading && fetchEvents(false),
-    [hasMore, isLoading, fetchEvents]
-  );
-
-  const changeFilter = useCallback((status: EventStatus | undefined) => {
-    setStatusFilter(status);
-    setPage(1);
-    setEvents([]);
-    setHasMore(true);
-  }, []);
-
-  const registerForEvent = useCallback(async (eventId: number) => {
-    try {
+  const registerForEvent = useCallback(
+    async (eventId: number) => {
       await api.registerForEvent(eventId);
-      setEvents((prev) =>
+      setData((prev) =>
         prev.map((e) =>
           e.id === eventId
-            ? {
-                ...e,
-                is_registered: true,
-                participants_count: e.participants_count + 1,
-              }
-            : e
-        )
+            ? { ...e, is_registered: true, participants_count: e.participants_count + 1 }
+            : e,
+        ),
       );
-    } catch (err) {
-      throw err;
-    }
-  }, []);
+    },
+    [setData],
+  );
 
-  const cancelRegistration = useCallback(async (eventId: number) => {
-    try {
+  const cancelRegistration = useCallback(
+    async (eventId: number) => {
       await api.cancelEventRegistration(eventId);
-      setEvents((prev) =>
+      setData((prev) =>
         prev.map((e) =>
           e.id === eventId
-            ? {
-                ...e,
-                is_registered: false,
-                participants_count: e.participants_count - 1,
-              }
-            : e
-        )
+            ? { ...e, is_registered: false, participants_count: e.participants_count - 1 }
+            : e,
+        ),
       );
-    } catch (err) {
-      throw err;
-    }
-  }, []);
+    },
+    [setData],
+  );
 
   return {
     events,

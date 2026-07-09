@@ -17,8 +17,16 @@ export const appendXdebugTrigger = (url: string): string => {
 export class ApiBase {
   private token: string | null = null;
   private onUnauthorizedCallback: (() => void) | null = null;
-  private onMaintenanceModeCallback: ((data: { message?: string; estimated_end?: string }) => void) | null = null;
-  private onUpgradeRequiredCallback: ((data: { feature?: string; currentTier: Types.SubscriptionTier; limit?: { feature: string; limit: number; current_usage: number; remaining: number } }) => void) | null = null;
+  private onMaintenanceModeCallback:
+    | ((data: { message?: string; estimated_end?: string }) => void)
+    | null = null;
+  private onUpgradeRequiredCallback:
+    | ((data: {
+        feature?: string;
+        currentTier: Types.SubscriptionTier;
+        limit?: { feature: string; limit: number; current_usage: number; remaining: number };
+      }) => void)
+    | null = null;
   private onRateLimitCallback: ((data: { retryAfter?: number }) => void) | null = null;
   /** In-flight GET requests — concurrent identical calls share the same Promise */
   private readonly inflightRequests = new Map<string, Promise<unknown>>();
@@ -42,14 +50,18 @@ export class ApiBase {
   /**
    * Set callback to be invoked when a 503 maintenance mode response is received.
    */
-  setOnMaintenanceMode(callback: ((data: { message?: string; estimated_end?: string }) => void) | null) {
+  setOnMaintenanceMode(
+    callback: ((data: { message?: string; estimated_end?: string }) => void) | null,
+  ) {
     this.onMaintenanceModeCallback = callback;
   }
 
   /**
    * Set callback to be invoked when a 403 response with upgrade_required is received.
    */
-  setOnUpgradeRequired(callback: ((data: { feature?: string; currentTier: string; limit?: any }) => void) | null) {
+  setOnUpgradeRequired(
+    callback: ((data: { feature?: string; currentTier: string; limit?: any }) => void) | null,
+  ) {
     this.onUpgradeRequiredCallback = callback;
   }
 
@@ -76,10 +88,7 @@ export class ApiBase {
    * - Parses JSON response and throws on error
    * - Deduplicates concurrent GET requests (same endpoint → shared Promise)
    */
-  async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const method = options.method || 'GET';
 
     // Deduplicate concurrent GET requests — if the same endpoint is already in-flight,
@@ -99,10 +108,7 @@ export class ApiBase {
     return this.doRequest<T>(endpoint, options);
   }
 
-  private async doRequest<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async doRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const method = options.method || 'GET';
     const startTime = Date.now();
     const isFormData = options.body instanceof FormData;
@@ -166,7 +172,9 @@ export class ApiBase {
         if (response.status === 429) {
           logger.warn('api', 'Rate limit exceeded', { endpoint });
           if (this.onRateLimitCallback) {
-            this.onRateLimitCallback({ retryAfter: Number(response.headers.get('Retry-After')) || undefined });
+            this.onRateLimitCallback({
+              retryAfter: Number(response.headers.get('Retry-After')) || undefined,
+            });
           }
         }
 

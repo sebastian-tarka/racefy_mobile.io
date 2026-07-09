@@ -24,7 +24,7 @@ interface NavigationTarget {
  */
 export function mapCtaActionToNavigation(
   action: HomeCtaAction | string,
-  payload?: HomeActionPayload
+  payload?: HomeActionPayload,
 ): NavigationTarget | null {
   switch (action) {
     case 'start_activity':
@@ -86,7 +86,7 @@ export function mapCtaActionToNavigation(
 export function navigateForCtaAction(
   navigation: any,
   action: HomeCtaAction | string,
-  payload?: HomeActionPayload
+  payload?: HomeActionPayload,
 ): boolean {
   const target = mapCtaActionToNavigation(action, payload);
 
@@ -120,7 +120,7 @@ export function navigateForCtaAction(
 export function navigateForCtaActionFromTab(
   navigation: any,
   action: HomeCtaAction | string,
-  payload?: HomeActionPayload
+  payload?: HomeActionPayload,
 ): boolean {
   const target = mapCtaActionToNavigation(action, payload);
 
@@ -151,7 +151,7 @@ export function navigateForCtaActionFromTab(
 export async function executeCtaActionFromTab(
   navigation: any,
   action: HomeCtaAction | string,
-  payload?: HomeActionPayload
+  payload?: HomeActionPayload,
 ): Promise<boolean> {
   if (action === 'resume_training') {
     const programId = payload?.program_id;

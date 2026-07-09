@@ -11,7 +11,11 @@ interface ComparisonCardProps {
   data: Partial<InsightsComparisons>;
 }
 
-function getDeltaColor(value: number, colors: ReturnType<typeof useTheme>['colors'], invert = false): string {
+function getDeltaColor(
+  value: number,
+  colors: ReturnType<typeof useTheme>['colors'],
+  invert = false,
+): string {
   if (value === 0) return colors.textMuted;
   const isGood = invert ? value < 0 : value > 0;
   return isGood ? colors.success : colors.error;
@@ -26,7 +30,12 @@ function formatDelta(value: number, suffix = '', invert = false): string {
   return `${value > 0 ? '+' : ''}${value}${suffix}`;
 }
 
-function ComparisonBlock({ label, comparison, colors, isDark }: {
+function ComparisonBlock({
+  label,
+  comparison,
+  colors,
+  isDark,
+}: {
   label: string;
   comparison: SnapshotComparison;
   colors: ReturnType<typeof useTheme>['colors'];
@@ -37,20 +46,45 @@ function ComparisonBlock({ label, comparison, colors, isDark }: {
   const deltas: { label: string; value: number; suffix: string; invert: boolean }[] = [];
 
   if (comparison.activity_count_change !== undefined) {
-    deltas.push({ label: t('insights.comparison.activities'), value: comparison.activity_count_change, suffix: '', invert: false });
+    deltas.push({
+      label: t('insights.comparison.activities'),
+      value: comparison.activity_count_change,
+      suffix: '',
+      invert: false,
+    });
   }
   if (comparison.distance_change_pct !== undefined) {
-    deltas.push({ label: t('insights.comparison.distance'), value: comparison.distance_change_pct, suffix: '%', invert: false });
+    deltas.push({
+      label: t('insights.comparison.distance'),
+      value: comparison.distance_change_pct,
+      suffix: '%',
+      invert: false,
+    });
   }
   if (comparison.streak_improvement !== undefined) {
-    deltas.push({ label: t('insights.comparison.streak'), value: comparison.streak_improvement, suffix: '', invert: false });
+    deltas.push({
+      label: t('insights.comparison.streak'),
+      value: comparison.streak_improvement,
+      suffix: '',
+      invert: false,
+    });
   }
   if (comparison.rank_change !== undefined) {
-    deltas.push({ label: t('insights.comparison.rank'), value: comparison.rank_change, suffix: '', invert: true });
+    deltas.push({
+      label: t('insights.comparison.rank'),
+      value: comparison.rank_change,
+      suffix: '',
+      invert: true,
+    });
   }
 
   return (
-    <View style={[styles.block, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+    <View
+      style={[
+        styles.block,
+        { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+      ]}
+    >
       <Text style={[styles.blockLabel, { color: colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.periodText, { color: colors.textMuted }]}>{comparison.period}</Text>
       {deltas.map((d) => (
@@ -72,13 +106,25 @@ export function ComparisonCard({ data }: ComparisonCardProps) {
   const blocks: { key: string; label: string; comparison: SnapshotComparison }[] = [];
 
   if (data.week_over_week) {
-    blocks.push({ key: 'wow', label: t('insights.comparison.vsLastWeek'), comparison: data.week_over_week });
+    blocks.push({
+      key: 'wow',
+      label: t('insights.comparison.vsLastWeek'),
+      comparison: data.week_over_week,
+    });
   }
   if (data.month_over_month) {
-    blocks.push({ key: 'mom', label: t('insights.comparison.vsLastMonth'), comparison: data.month_over_month });
+    blocks.push({
+      key: 'mom',
+      label: t('insights.comparison.vsLastMonth'),
+      comparison: data.month_over_month,
+    });
   }
   if (data.three_month) {
-    blocks.push({ key: '3m', label: t('insights.comparison.vs3Months'), comparison: data.three_month });
+    blocks.push({
+      key: '3m',
+      label: t('insights.comparison.vs3Months'),
+      comparison: data.three_month,
+    });
   }
 
   if (blocks.length === 0) return null;
@@ -87,7 +133,13 @@ export function ComparisonCard({ data }: ComparisonCardProps) {
     <InsightCard title={t('insights.comparison.title')} icon="swap-vertical">
       <View style={styles.blocksContainer}>
         {blocks.map((b) => (
-          <ComparisonBlock key={b.key} label={b.label} comparison={b.comparison} colors={colors} isDark={isDark} />
+          <ComparisonBlock
+            key={b.key}
+            label={b.label}
+            comparison={b.comparison}
+            colors={colors}
+            isDark={isDark}
+          />
         ))}
       </View>
     </InsightCard>

@@ -1,9 +1,9 @@
 import React from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Image} from 'expo-image';
-import {Ionicons} from '@expo/vector-icons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useViewability} from '../hooks/useViewability';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useViewability } from '../hooks/useViewability';
 
 interface AutoDisplayImageProps {
   imageUrl: string;
@@ -28,9 +28,7 @@ export function AutoDisplayImage({
 
   // Placeholder when not visible - no Image loaded, minimal memory
   if (!isViewable) {
-    return (
-      <View ref={viewRef} style={[styles.container, { height: previewHeight }]} />
-    );
+    return <View ref={viewRef} style={[styles.container, { height: previewHeight }]} />;
   }
 
   return (

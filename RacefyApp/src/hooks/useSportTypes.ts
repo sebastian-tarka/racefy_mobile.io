@@ -67,7 +67,11 @@ const DEFAULT_SPORT_ICON: keyof typeof Ionicons.glyphMap = 'fitness-outline';
 
 // Fallback sport definitions (without names - names come from translations)
 // These are used when API is unavailable - IDs should match API IDs
-const FALLBACK_SPORT_DEFINITIONS: Array<{ id: number; slug: string; icon: keyof typeof Ionicons.glyphMap }> = [
+const FALLBACK_SPORT_DEFINITIONS: {
+  id: number;
+  slug: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
   { id: 1, slug: 'running', icon: 'walk-outline' },
   { id: 2, slug: 'cycling', icon: 'bicycle-outline' },
   { id: 3, slug: 'swimming', icon: 'water-outline' },
@@ -132,8 +136,8 @@ export function useSportTypes(): UseSportTypesResult {
   // Get translated fallback sports (memoized to prevent re-render loops)
   const translatedFallbackSports = useMemo(() => getFallbackSports(t), [t]);
 
-  const [sportTypes, setSportTypes] = useState<SportTypeWithIcon[]>(() =>
-    cachedSportTypes || translatedFallbackSports
+  const [sportTypes, setSportTypes] = useState<SportTypeWithIcon[]>(
+    () => cachedSportTypes || translatedFallbackSports,
   );
   const [isLoading, setIsLoading] = useState(!cachedSportTypes);
   const [error, setError] = useState<string | null>(null);
@@ -143,100 +147,108 @@ export function useSportTypes(): UseSportTypesResult {
   const previousLanguage = useRef(currentLanguage);
   const isFetchingRef = useRef(false);
 
-  const fetchSportTypes = useCallback(async (force = false) => {
-    const lang = i18n.language || 'en';
+  const fetchSportTypes = useCallback(
+    async (force = false) => {
+      const lang = i18n.language || 'en';
 
-    // Prevent concurrent fetches
-    if (isFetchingRef.current && !force) {
-      logger.debug('general', 'Fetch already in progress, skipping');
-      return;
-    }
-
-    // Use cache if valid, not forcing refresh, and language hasn't changed
-    if (!force && cachedSportTypes && cachedLanguage === lang && Date.now() - cacheTimestamp < CACHE_DURATION) {
-      // Cache is valid - don't fetch, don't log (hook is called by multiple components)
-      setIsLoading(false);
-      return;
-    }
-
-    isFetchingRef.current = true;
-
-    logger.info('general', 'Fetching sport types from API', { language: lang });
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const apiSports = await api.getSportTypes();
-
-      // Add icons to sports based on slug or API icon field
-      const sportsWithIcons: SportTypeWithIcon[] = apiSports
-        .filter((sport) => sport.is_active)
-        .map((sport) => ({
-          ...sport,
-          icon: getIconForSport(sport),
-        }));
-
-      // Update cache with language tag
-      cachedSportTypes = sportsWithIcons;
-      cacheTimestamp = Date.now();
-      cachedLanguage = lang;
-
-      // Update GPS profile static cache for background service
-      updateGpsProfileCache(apiSports);
-
-      // Log GPS profiles for each sport
-      const sportsWithGps = apiSports.filter(s => s.gps_profile);
-      const sportsWithoutGps = apiSports.filter(s => !s.gps_profile);
-
-      logger.info('gps', 'Sport types loaded with GPS profiles', {
-        totalSports: apiSports.length,
-        withGpsProfiles: sportsWithGps.length,
-        withoutGpsProfiles: sportsWithoutGps.length,
-      });
-
-      // Log each sport's GPS profile details
-      sportsWithGps.forEach(sport => {
-        logger.debug('gps', `GPS profile for ${sport.slug}`, {
-          sportId: sport.id,
-          slug: sport.slug,
-          enabled: sport.gps_profile?.enabled,
-          maxRealisticSpeed: sport.gps_profile?.max_realistic_speed,
-          minDistanceThreshold: sport.gps_profile?.min_distance_threshold,
-          accuracyThreshold: sport.gps_profile?.accuracy_threshold,
-          timeInterval: sport.gps_profile?.time_interval,
-        });
-      });
-
-      // Log sports without GPS profiles (will use fallback)
-      if (sportsWithoutGps.length > 0) {
-        logger.debug('gps', 'Sports without GPS profiles (will use fallback)', {
-          sports: sportsWithoutGps.map(s => ({ id: s.id, slug: s.slug })),
-        });
+      // Prevent concurrent fetches
+      if (isFetchingRef.current && !force) {
+        logger.debug('general', 'Fetch already in progress, skipping');
+        return;
       }
 
-      logger.info('general', 'Sport types loaded', {
-        count: sportsWithIcons.length,
-        withGpsProfiles: sportsWithGps.length,
-        language: lang,
-      });
+      // Use cache if valid, not forcing refresh, and language hasn't changed
+      if (
+        !force &&
+        cachedSportTypes &&
+        cachedLanguage === lang &&
+        Date.now() - cacheTimestamp < CACHE_DURATION
+      ) {
+        // Cache is valid - don't fetch, don't log (hook is called by multiple components)
+        setIsLoading(false);
+        return;
+      }
 
-      setSportTypes(sportsWithIcons);
-    } catch (err: any) {
-      logger.error('general', 'Failed to fetch sport types', { error: err.message });
-      setError(err.message || 'Failed to load sports');
-      // Use translated fallback sports on error (get fresh copy each time)
-      setSportTypes(getFallbackSports(t));
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [t]);  // Only depend on 't'
+      isFetchingRef.current = true;
+
+      logger.info('general', 'Fetching sport types from API', { language: lang });
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const apiSports = await api.getSportTypes();
+
+        // Add icons to sports based on slug or API icon field
+        const sportsWithIcons: SportTypeWithIcon[] = apiSports
+          .filter((sport) => sport.is_active)
+          .map((sport) => ({
+            ...sport,
+            icon: getIconForSport(sport),
+          }));
+
+        // Update cache with language tag
+        cachedSportTypes = sportsWithIcons;
+        cacheTimestamp = Date.now();
+        cachedLanguage = lang;
+
+        // Update GPS profile static cache for background service
+        updateGpsProfileCache(apiSports);
+
+        // Log GPS profiles for each sport
+        const sportsWithGps = apiSports.filter((s) => s.gps_profile);
+        const sportsWithoutGps = apiSports.filter((s) => !s.gps_profile);
+
+        logger.info('gps', 'Sport types loaded with GPS profiles', {
+          totalSports: apiSports.length,
+          withGpsProfiles: sportsWithGps.length,
+          withoutGpsProfiles: sportsWithoutGps.length,
+        });
+
+        // Log each sport's GPS profile details
+        sportsWithGps.forEach((sport) => {
+          logger.debug('gps', `GPS profile for ${sport.slug}`, {
+            sportId: sport.id,
+            slug: sport.slug,
+            enabled: sport.gps_profile?.enabled,
+            maxRealisticSpeed: sport.gps_profile?.max_realistic_speed,
+            minDistanceThreshold: sport.gps_profile?.min_distance_threshold,
+            accuracyThreshold: sport.gps_profile?.accuracy_threshold,
+            timeInterval: sport.gps_profile?.time_interval,
+          });
+        });
+
+        // Log sports without GPS profiles (will use fallback)
+        if (sportsWithoutGps.length > 0) {
+          logger.debug('gps', 'Sports without GPS profiles (will use fallback)', {
+            sports: sportsWithoutGps.map((s) => ({ id: s.id, slug: s.slug })),
+          });
+        }
+
+        logger.info('general', 'Sport types loaded', {
+          count: sportsWithIcons.length,
+          withGpsProfiles: sportsWithGps.length,
+          language: lang,
+        });
+
+        setSportTypes(sportsWithIcons);
+      } catch (err: any) {
+        logger.error('general', 'Failed to fetch sport types', { error: err.message });
+        setError(err.message || 'Failed to load sports');
+        // Use translated fallback sports on error (get fresh copy each time)
+        setSportTypes(getFallbackSports(t));
+      } finally {
+        setIsLoading(false);
+        isFetchingRef.current = false;
+      }
+    },
+    [t],
+  ); // Only depend on 't'
 
   // Initial fetch (only on mount)
   useEffect(() => {
     fetchSportTypes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  // Empty deps - only run on mount
+  }, []); // Empty deps - only run on mount
 
   // Refetch when language changes (only on language change, not on every render)
   useEffect(() => {
@@ -258,20 +270,20 @@ export function useSportTypes(): UseSportTypesResult {
       fetchSportTypes(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLanguage]);  // Only depend on language, call fetchSportTypes directly
+  }, [currentLanguage]); // Only depend on language, call fetchSportTypes directly
 
   const getSportById = useCallback(
     (id: number): SportTypeWithIcon | undefined => {
       return sportTypes.find((sport) => sport.id === id);
     },
-    [sportTypes]
+    [sportTypes],
   );
 
   const getSportBySlug = useCallback(
     (slug: string): SportTypeWithIcon | undefined => {
       return sportTypes.find((sport) => sport.slug === slug);
     },
-    [sportTypes]
+    [sportTypes],
   );
 
   const refetch = useCallback(async () => {
@@ -324,7 +336,7 @@ export function useSportTypes(): UseSportTypesResult {
       });
       return getGpsProfileBySlug('other');
     },
-    [sportTypes]
+    [sportTypes],
   );
 
   return {
@@ -368,7 +380,10 @@ function getIconForSport(sport: SportType): keyof typeof Ionicons.glyphMap {
     }
   }
 
-  logger.debug('general', `No icon found for sport: slug="${sport.slug}", name="${sport.name}" - using default`);
+  logger.debug(
+    'general',
+    `No icon found for sport: slug="${sport.slug}", name="${sport.name}" - using default`,
+  );
   return DEFAULT_SPORT_ICON;
 }
 

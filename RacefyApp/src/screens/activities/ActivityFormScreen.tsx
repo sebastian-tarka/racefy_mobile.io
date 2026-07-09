@@ -14,13 +14,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  Input,
-  Button,
-  ScreenHeader,
-  MentionInput,
-  ScreenContainer,
-} from '../../components';
+import { Input, Button, ScreenHeader, MentionInput, ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
@@ -112,9 +106,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       setShowStartFinishPoints(value);
       Alert.alert(
         t('common.success'),
-        value
-          ? t('activityForm.gpsPrivacyEnabled')
-          : t('activityForm.gpsPrivacyDisabled')
+        value ? t('activityForm.gpsPrivacyEnabled') : t('activityForm.gpsPrivacyDisabled'),
       );
     } catch (error) {
       logger.error('api', 'Failed to update GPS privacy', { error });
@@ -198,49 +190,41 @@ export function ActivityFormScreen({ navigation, route }: Props) {
   };
 
   const handleDeleteExistingPhoto = (photo: Photo) => {
-    Alert.alert(
-      t('activityForm.deletePhoto'),
-      t('activityForm.deletePhotoConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deletePhoto(photo.id);
-              setExistingPhotos((prev) => prev.filter((p) => p.id !== photo.id));
-            } catch (error) {
-              logger.error('api', 'Failed to delete photo', { error });
-              Alert.alert(t('common.error'), t('activityForm.deletePhotoFailed'));
-            }
-          },
+    Alert.alert(t('activityForm.deletePhoto'), t('activityForm.deletePhotoConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.deletePhoto(photo.id);
+            setExistingPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+          } catch (error) {
+            logger.error('api', 'Failed to delete photo', { error });
+            Alert.alert(t('common.error'), t('activityForm.deletePhotoFailed'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDeleteExistingVideo = (video: Video) => {
-    Alert.alert(
-      t('activityForm.deleteVideo'),
-      t('activityForm.deleteVideoConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.deleteVideo(video.id);
-              setExistingVideos((prev) => prev.filter((v) => v.id !== video.id));
-            } catch (error) {
-              logger.error('api', 'Failed to delete video', { error });
-              Alert.alert(t('common.error'), t('activityForm.deleteVideoFailed'));
-            }
-          },
+    Alert.alert(t('activityForm.deleteVideo'), t('activityForm.deleteVideoConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.deleteVideo(video.id);
+            setExistingVideos((prev) => prev.filter((v) => v.id !== video.id));
+          } catch (error) {
+            logger.error('api', 'Failed to delete video', { error });
+            Alert.alert(t('common.error'), t('activityForm.deleteVideoFailed'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleRemoveNewPhoto = (index: number) => {
@@ -313,10 +297,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       logger.error('api', 'Failed to save activity', { error });
-      Alert.alert(
-        t('common.error'),
-        t('activityForm.updateFailed')
-      );
+      Alert.alert(t('common.error'), t('activityForm.updateFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -339,10 +320,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior="padding"
-      >
+      <KeyboardAvoidingView style={styles.keyboardView} behavior="padding">
         <ScreenHeader
           title={t('activityForm.editTitle')}
           showBack
@@ -393,22 +371,31 @@ export function ActivityFormScreen({ navigation, route }: Props) {
               {t('activityForm.visibility')}
             </Text>
             <View style={styles.visibilityContainer}>
-              {([
-                { value: 'public' as ActivityVisibility, label: t('settings.public'), icon: 'globe-outline' },
-                { value: 'followers' as ActivityVisibility, label: t('settings.followersOnly'), icon: 'people-outline' },
-                { value: 'private' as ActivityVisibility, label: t('settings.private'), icon: 'lock-closed-outline' },
-              ]).map((option) => (
+              {[
+                {
+                  value: 'public' as ActivityVisibility,
+                  label: t('settings.public'),
+                  icon: 'globe-outline',
+                },
+                {
+                  value: 'followers' as ActivityVisibility,
+                  label: t('settings.followersOnly'),
+                  icon: 'people-outline',
+                },
+                {
+                  value: 'private' as ActivityVisibility,
+                  label: t('settings.private'),
+                  icon: 'lock-closed-outline',
+                },
+              ].map((option) => (
                 <TouchableOpacity
                   key={option.value}
                   style={[
                     styles.visibilityOption,
                     {
-                      backgroundColor: visibility === option.value
-                        ? colors.primary
-                        : colors.cardBackground,
-                      borderColor: visibility === option.value
-                        ? colors.primary
-                        : colors.border,
+                      backgroundColor:
+                        visibility === option.value ? colors.primary : colors.cardBackground,
+                      borderColor: visibility === option.value ? colors.primary : colors.border,
                     },
                   ]}
                   onPress={() => setVisibility(option.value)}
@@ -435,7 +422,12 @@ export function ActivityFormScreen({ navigation, route }: Props) {
 
           {/* GPS Privacy Toggle (only show if activity has GPS track) */}
           {hasGpsTrack && (
-            <View style={[styles.switchContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.switchContainer,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.switchContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ionicons name="location-outline" size={20} color={colors.primary} />

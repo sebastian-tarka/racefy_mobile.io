@@ -21,7 +21,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
 
   const photos = [
     ...(sharedPost.photos || []),
-    ...(sharedPost.media || []).filter(m => !m.mime_type?.startsWith('video/')),
+    ...(sharedPost.media || []).filter((m) => !m.mime_type?.startsWith('video/')),
   ];
 
   const handleUserPress = () => {
@@ -47,9 +47,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="repeat-outline" size={14} color="#06b6d4" />
-        <Text style={[styles.headerLabel, { color: '#06b6d4' }]}>
-          {t('reshare.resharedPost')}
-        </Text>
+        <Text style={[styles.headerLabel, { color: '#06b6d4' }]}>{t('reshare.resharedPost')}</Text>
       </View>
 
       {/* Author */}
@@ -68,10 +66,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
 
       {/* Content */}
       {sharedPost.content ? (
-        <Text
-          style={[styles.content, { color: colors.textSecondary }]}
-          numberOfLines={4}
-        >
+        <Text style={[styles.content, { color: colors.textSecondary }]} numberOfLines={4}>
           {sharedPost.content}
         </Text>
       ) : null}

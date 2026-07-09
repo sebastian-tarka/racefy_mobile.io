@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   Modal,
@@ -10,19 +10,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
-import {Ionicons} from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useVideoPlayer, VideoView} from 'expo-video';
-import {BrandLogo, Button} from '../../components';
-import {useTheme} from '../../hooks/useTheme';
-import {spacing} from '../../theme';
-import {VideoPlayerManager} from '../../services/VideoPlayerManager';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { BrandLogo, Button } from '../../components';
+import { useTheme } from '../../hooks/useTheme';
+import { spacing } from '../../theme';
+import { VideoPlayerManager } from '../../services/VideoPlayerManager';
 
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../../navigation/types';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
 
 // All available hero videos — one is picked at random each mount
 const HERO_VIDEOS = [
@@ -230,10 +230,7 @@ export function LandingScreen({ navigation }: Props) {
                 <Text style={styles.ctaPrimaryText}>{t('landing.getStartedFree')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handleSignIn}
-                style={styles.ctaOutline}
-              >
+              <TouchableOpacity onPress={handleSignIn} style={styles.ctaOutline}>
                 <Text style={[styles.ctaOutlineText, { color: colors.primary }]}>
                   {t('landing.exploreEvents')}
                 </Text>
@@ -301,10 +298,7 @@ export function LandingScreen({ navigation }: Props) {
         animationType="fade"
         onRequestClose={() => setShowLanguageSelector(false)}
       >
-        <Pressable
-          style={styles.langModalBackdrop}
-          onPress={() => setShowLanguageSelector(false)}
-        >
+        <Pressable style={styles.langModalBackdrop} onPress={() => setShowLanguageSelector(false)}>
           <Pressable
             style={[styles.langModalCard, { backgroundColor: colors.cardBackground }]}
             onPress={(e) => e.stopPropagation()}
@@ -327,9 +321,7 @@ export function LandingScreen({ navigation }: Props) {
                   <Text style={[styles.langModalName, { color: colors.textPrimary }]}>
                     {lang.name}
                   </Text>
-                  {active && (
-                    <Ionicons name="checkmark" size={20} color={colors.primary} />
-                  )}
+                  {active && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                 </TouchableOpacity>
               );
             })}

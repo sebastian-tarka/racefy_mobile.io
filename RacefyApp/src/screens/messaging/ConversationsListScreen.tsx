@@ -13,7 +13,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { format, isToday, isYesterday, isThisWeek, isThisYear } from 'date-fns';
 import { pl, enUS } from 'date-fns/locale';
-import { Avatar, EmptyState, Loading, ScreenHeader, ScreenContainer, Input } from '../../components';
+import {
+  Avatar,
+  EmptyState,
+  Loading,
+  ScreenHeader,
+  ScreenContainer,
+  Input,
+} from '../../components';
 import { useConversations } from '../../hooks/useConversations';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
@@ -91,27 +98,30 @@ export function ConversationsListScreen({ navigation }: Props) {
     setIsSearching(false);
   }, []);
 
-  const handleUserSelect = useCallback(async (user: MentionSearchUser) => {
-    setIsStartingChat(true);
-    try {
-      const conversation = await startConversation(user.id);
-      handleClearSearch();
-      navigation.navigate('Chat', {
-        conversationId: conversation.id,
-        participant: {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          avatar: user.avatar,
-        },
-      });
-    } catch (err) {
-      logger.error('api', 'Failed to start conversation', { error: err });
-      Alert.alert(t('common.error'), t('messaging.failedToLoad'));
-    } finally {
-      setIsStartingChat(false);
-    }
-  }, [startConversation, navigation, t, handleClearSearch]);
+  const handleUserSelect = useCallback(
+    async (user: MentionSearchUser) => {
+      setIsStartingChat(true);
+      try {
+        const conversation = await startConversation(user.id);
+        handleClearSearch();
+        navigation.navigate('Chat', {
+          conversationId: conversation.id,
+          participant: {
+            id: user.id,
+            name: user.name,
+            username: user.username,
+            avatar: user.avatar,
+          },
+        });
+      } catch (err) {
+        logger.error('api', 'Failed to start conversation', { error: err });
+        Alert.alert(t('common.error'), t('messaging.failedToLoad'));
+      } finally {
+        setIsStartingChat(false);
+      }
+    },
+    [startConversation, navigation, t, handleClearSearch],
+  );
 
   const handleConversationPress = (conversation: Conversation) => {
     navigation.navigate('Chat', {
@@ -124,24 +134,20 @@ export function ConversationsListScreen({ navigation }: Props) {
   const handleDeleteConversation = (conversation: Conversation) => {
     // Team chats can't be deleted client-side (backend returns 403); leaving the team handles it.
     if (conversation.type === 'team') return;
-    Alert.alert(
-      t('messaging.deleteConversation'),
-      t('messaging.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteConversation(conversation.id);
-            } catch (err) {
-              Alert.alert(t('common.error'), t('messaging.failedToLoad'));
-            }
-          },
+    Alert.alert(t('messaging.deleteConversation'), t('messaging.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteConversation(conversation.id);
+          } catch (err) {
+            Alert.alert(t('common.error'), t('messaging.failedToLoad'));
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const formatConversationTime = (dateStr: string): string => {
@@ -164,9 +170,7 @@ export function ConversationsListScreen({ navigation }: Props) {
       : '';
 
     const isTeam = item.type === 'team';
-    const title = isTeam
-      ? item.name || item.team?.name || ''
-      : item.participant?.name || '';
+    const title = isTeam ? item.name || item.team?.name || '' : item.participant?.name || '';
     const subtitle = isTeam
       ? item.participants_count
         ? item.participants_count === 1
@@ -176,8 +180,8 @@ export function ConversationsListScreen({ navigation }: Props) {
       : item.participant
         ? `@${item.participant.username}`
         : '';
-    const avatarUri = isTeam ? item.team?.avatar ?? null : item.participant?.avatar ?? null;
-    const avatarName = isTeam ? item.team?.name ?? '' : item.participant?.name ?? '';
+    const avatarUri = isTeam ? (item.team?.avatar ?? null) : (item.participant?.avatar ?? null);
+    const avatarName = isTeam ? (item.team?.name ?? '') : (item.participant?.name ?? '');
 
     return (
       <TouchableOpacity
@@ -192,7 +196,12 @@ export function ConversationsListScreen({ navigation }: Props) {
         <View>
           <Avatar uri={avatarUri} name={avatarName} size="lg" />
           {isTeam && (
-            <View style={[styles.groupOverlay, { backgroundColor: colors.primary, borderColor: colors.cardBackground }]}>
+            <View
+              style={[
+                styles.groupOverlay,
+                { backgroundColor: colors.primary, borderColor: colors.cardBackground },
+              ]}
+            >
               <Ionicons name="people" size={10} color={colors.white} />
             </View>
           )}
@@ -202,10 +211,14 @@ export function ConversationsListScreen({ navigation }: Props) {
             <Text style={[styles.participantName, { color: colors.textPrimary }]} numberOfLines={1}>
               {title}
             </Text>
-            {timeAgo && <Text style={[styles.timeAgo, { color: colors.textMuted }]}>{timeAgo}</Text>}
+            {timeAgo && (
+              <Text style={[styles.timeAgo, { color: colors.textMuted }]}>{timeAgo}</Text>
+            )}
           </View>
           {subtitle ? (
-            <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>{subtitle}</Text>
+            <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>
+              {subtitle}
+            </Text>
           ) : null}
           {lastMessagePreview && (
             <Text style={[styles.lastMessage, { color: colors.textMuted }]} numberOfLines={1}>
@@ -227,11 +240,7 @@ export function ConversationsListScreen({ navigation }: Props) {
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('messaging.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('messaging.title')} showBack onBack={() => navigation.goBack()} />
         <EmptyState
           icon="lock-closed-outline"
           title={t('feed.signInRequired')}
@@ -246,11 +255,7 @@ export function ConversationsListScreen({ navigation }: Props) {
   if (isLoading && conversations.length === 0) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={t('messaging.title')}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={t('messaging.title')} showBack onBack={() => navigation.goBack()} />
         <Loading fullScreen message={t('common.loading')} />
       </ScreenContainer>
     );
@@ -258,11 +263,7 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('messaging.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('messaging.title')} showBack onBack={() => navigation.goBack()} />
 
       <View style={styles.searchContainer}>
         <Input
@@ -283,15 +284,22 @@ export function ConversationsListScreen({ navigation }: Props) {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.searchResultItem, { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight }]}
+              style={[
+                styles.searchResultItem,
+                { backgroundColor: colors.cardBackground, borderBottomColor: colors.borderLight },
+              ]}
               onPress={() => handleUserSelect(item)}
               disabled={isStartingChat}
               activeOpacity={0.7}
             >
               <Avatar uri={item.avatar} name={item.name} size="md" />
               <View style={styles.searchUserInfo}>
-                <Text style={[styles.participantName, { color: colors.textPrimary }]}>{item.name}</Text>
-                <Text style={[styles.username, { color: colors.textSecondary }]}>@{item.username}</Text>
+                <Text style={[styles.participantName, { color: colors.textPrimary }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.username, { color: colors.textSecondary }]}>
+                  @{item.username}
+                </Text>
               </View>
             </TouchableOpacity>
           )}
@@ -300,10 +308,7 @@ export function ConversationsListScreen({ navigation }: Props) {
             isSearching ? (
               <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.primary} />
             ) : (
-              <EmptyState
-                icon="person-outline"
-                title={t('messaging.noSearchResults')}
-              />
+              <EmptyState icon="person-outline" title={t('messaging.noSearchResults')} />
             )
           }
           keyboardShouldPersistTaps="handled"

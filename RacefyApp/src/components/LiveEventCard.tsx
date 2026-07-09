@@ -1,15 +1,15 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {useTranslation} from 'react-i18next';
-import {Card} from './Card';
-import {InteractionButton} from './InteractionButton';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {fixStorageUrl} from '../config/api';
-import {getSportIcon} from '../utils/sportIcon';
-import type {EventWithLatestCommentary} from '../types/api';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { Card } from './Card';
+import { InteractionButton } from './InteractionButton';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { fixStorageUrl } from '../config/api';
+import { getSportIcon } from '../utils/sportIcon';
+import type { EventWithLatestCommentary } from '../types/api';
 
 interface LiveEventCardProps {
   event: EventWithLatestCommentary;
@@ -17,7 +17,7 @@ interface LiveEventCardProps {
   onBoostComplete?: () => void;
 }
 
-export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCardProps) {
+function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
@@ -47,13 +47,12 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
           ) : (
-            <View
-              style={[
-                styles.iconPlaceholder,
-                { backgroundColor: colors.primaryLight + '20' },
-              ]}
-            >
-              <Ionicons name={getSportIcon(event.sport_type?.name)} size={48} color={colors.primary} />
+            <View style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
+              <Ionicons
+                name={getSportIcon(event.sport_type?.name)}
+                size={48}
+                color={colors.primary}
+              />
             </View>
           )}
         </View>
@@ -81,10 +80,7 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
           {event.location_name && (
             <View style={styles.detailRow}>
               <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-              <Text
-                style={[styles.detailText, { color: colors.textSecondary }]}
-                numberOfLines={1}
-              >
+              <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>
                 {event.location_name}
               </Text>
             </View>
@@ -136,10 +132,7 @@ export function LiveEventCard({ event, onPress, onBoostComplete }: LiveEventCard
           {/* No Commentary Fallback */}
           {!hasCommentary && (
             <View
-              style={[
-                styles.noCommentaryContainer,
-                { backgroundColor: colors.cardBackground },
-              ]}
+              style={[styles.noCommentaryContainer, { backgroundColor: colors.cardBackground }]}
             >
               <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
               <Text style={[styles.noCommentaryText, { color: colors.textSecondary }]}>
@@ -256,3 +249,5 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 });
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const LiveEventCard = React.memo(LiveEventCardBase);

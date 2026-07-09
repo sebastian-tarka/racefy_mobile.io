@@ -20,7 +20,12 @@ interface UserProfileHeaderProps {
   isMessageLoading: boolean;
   canMessage: boolean;
   activeTab: TabType;
-  tabs: Array<{ label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap; emoji?: string }>;
+  tabs: {
+    label: string;
+    value: TabType;
+    icon: keyof typeof Ionicons.glyphMap;
+    emoji?: string;
+  }[];
   useEmojiTabs?: boolean;
   onBackPress: () => void;
   onFollowersPress: () => void;
@@ -55,7 +60,12 @@ export function UserProfileHeader({
 
   return (
     <>
-      <View style={[styles.navHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.navHeader,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -77,15 +87,28 @@ export function UserProfileHeader({
         <View style={[styles.coverImage, { backgroundColor: colors.primary }]} />
       )}
 
-      <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.profileHeader,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-          <Avatar uri={profile.avatar} name={profile.name} size="xxl" showTierBadge={!!profile.subscription?.tier && profile.subscription.tier !== 'free'} tier={profile.subscription?.tier} />
+          <Avatar
+            uri={profile.avatar}
+            name={profile.name}
+            size="xxl"
+            showTierBadge={!!profile.subscription?.tier && profile.subscription.tier !== 'free'}
+            tier={profile.subscription?.tier}
+          />
         </View>
 
         <Text style={[styles.name, { color: colors.textPrimary }]}>{profile.name}</Text>
         <Text style={[styles.username, { color: colors.textSecondary }]}>@{profile.username}</Text>
 
-        {profile.bio && <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text>}
+        {profile.bio && (
+          <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text>
+        )}
 
         <ProfileStats
           postsCount={profile.posts_count}
@@ -108,7 +131,12 @@ export function UserProfileHeader({
         )}
       </View>
 
-      <ProfileTabs tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} useEmoji={useEmojiTabs} />
+      <ProfileTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        useEmoji={useEmojiTabs}
+      />
 
       <View style={styles.tabSpacer} />
     </>

@@ -48,12 +48,7 @@ export function EventSelectionSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
@@ -105,12 +100,7 @@ export function EventSelectionSheet({
                     }}
                     activeOpacity={0.7}
                   >
-                    <View
-                      style={[
-                        styles.eventIcon,
-                        { backgroundColor: colors.textMuted + '20' },
-                      ]}
-                    >
+                    <View style={[styles.eventIcon, { backgroundColor: colors.textMuted + '20' }]}>
                       <Ionicons name="remove-circle-outline" size={24} color={colors.textMuted} />
                     </View>
                     <View style={styles.eventInfo}>
@@ -159,13 +149,10 @@ export function EventSelectionSheet({
                         activeOpacity={0.7}
                       >
                         <View
-                          style={[
-                            styles.eventIcon,
-                            { backgroundColor: colors.primary + '20' },
-                          ]}
+                          style={[styles.eventIcon, { backgroundColor: colors.primary + '20' }]}
                         >
                           <Ionicons
-                            name={event.sport_type?.icon as any || 'fitness-outline'}
+                            name={(event.sport_type?.icon as any) || 'fitness-outline'}
                             size={24}
                             color={colors.primary}
                           />
@@ -181,8 +168,18 @@ export function EventSelectionSheet({
                             {event.location_name}
                           </Text>
                           <View style={styles.eventMeta}>
-                            <View style={[styles.statusBadge, { backgroundColor: colors.ongoing?.bg || colors.primary + '20' }]}>
-                              <Text style={[styles.statusText, { color: colors.ongoing?.text || colors.primary }]}>
+                            <View
+                              style={[
+                                styles.statusBadge,
+                                { backgroundColor: colors.ongoing?.bg || colors.primary + '20' },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.statusText,
+                                  { color: colors.ongoing?.text || colors.primary },
+                                ]}
+                              >
                                 {t('status.ongoing')}
                               </Text>
                             </View>

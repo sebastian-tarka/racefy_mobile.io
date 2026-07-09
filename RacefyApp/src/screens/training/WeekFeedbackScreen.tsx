@@ -54,31 +54,34 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
   const [editingNote, setEditingNote] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
 
-  const loadFeedback = useCallback(async (isRefresh = false) => {
-    try {
-      if (!isRefresh) setLoading(true);
-      setError(null);
+  const loadFeedback = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (!isRefresh) setLoading(true);
+        setError(null);
 
-      const [data, weekData] = await Promise.all([
-        api.getWeekFeedback(weekId),
-        api.getWeek(weekId),
-      ]);
-      setFeedback(data);
-      setWeekNotes(weekData.notes || '');
+        const [data, weekData] = await Promise.all([
+          api.getWeekFeedback(weekId),
+          api.getWeek(weekId),
+        ]);
+        setFeedback(data);
+        setWeekNotes(weekData.notes || '');
 
-      logger.info('training', 'Week feedback loaded', {
-        weekId,
-        weekNumber: data.week_number,
-        overallRating: data.overall_rating,
-      });
-    } catch (err: any) {
-      logger.error('training', 'Failed to load week feedback', { error: err, weekId });
-      setError(err.message || t('training.feedback.loadError'));
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [weekId, t]);
+        logger.info('training', 'Week feedback loaded', {
+          weekId,
+          weekNumber: data.week_number,
+          overallRating: data.overall_rating,
+        });
+      } catch (err: any) {
+        logger.error('training', 'Failed to load week feedback', { error: err, weekId });
+        setError(err.message || t('training.feedback.loadError'));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [weekId, t],
+  );
 
   useEffect(() => {
     loadFeedback();
@@ -232,7 +235,12 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
           {t('training.feedback.myNotes')}
         </Text>
         {weekNotes ? (
-          <View style={[styles.noteCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.noteCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.noteText, { color: colors.textPrimary }]}>{weekNotes}</Text>
             <TouchableOpacity
               style={styles.noteEditButton}
@@ -244,7 +252,10 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
           </View>
         ) : (
           <TouchableOpacity
-            style={[styles.addNoteButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            style={[
+              styles.addNoteButton,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
             onPress={openNoteModal}
             activeOpacity={0.7}
           >
@@ -265,90 +276,88 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
         transparent
         onRequestClose={closeNoteModal}
       >
-        <KeyboardAvoidingView
-          style={styles.kavFlex}
-          behavior="padding"
-        >
-        <TouchableWithoutFeedback onPress={closeNoteModal}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-                <View style={styles.handleContainer}>
-                  <View style={[styles.handle, { backgroundColor: colors.border }]} />
-                </View>
-
-                <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                    {t('training.feedback.myNotes')}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={closeNoteModal}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    disabled={isSavingNote}
-                  >
-                    <Ionicons name="close" size={24} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.modalBody}>
-                  <View
-                    style={[
-                      styles.noteInputContainer,
-                      { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                    ]}
-                  >
-                    <TextInput
-                      style={[styles.noteInput, { color: colors.textPrimary }]}
-                      placeholder={t('training.feedback.notePlaceholder')}
-                      placeholderTextColor={colors.textMuted}
-                      value={editingNote}
-                      onChangeText={(text) => {
-                        if (text.length <= MAX_NOTE_LENGTH) {
-                          setEditingNote(text);
-                        }
-                      }}
-                      multiline
-                      maxLength={MAX_NOTE_LENGTH}
-                      editable={!isSavingNote}
-                      textAlignVertical="top"
-                      autoFocus
-                    />
-                    <Text
-                      style={[
-                        styles.charCount,
-                        {
-                          color: editingNote.length === MAX_NOTE_LENGTH
-                            ? colors.error
-                            : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      {editingNote.length}/{MAX_NOTE_LENGTH}
-                    </Text>
+        <KeyboardAvoidingView style={styles.kavFlex} behavior="padding">
+          <TouchableWithoutFeedback onPress={closeNoteModal}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                  <View style={styles.handleContainer}>
+                    <View style={[styles.handle, { backgroundColor: colors.border }]} />
                   </View>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.saveNoteButton,
-                      { backgroundColor: isSavingNote ? colors.border : colors.primary },
-                    ]}
-                    onPress={handleSaveNote}
-                    disabled={isSavingNote}
-                    activeOpacity={0.7}
-                  >
-                    {isSavingNote ? (
-                      <ActivityIndicator color={colors.white} size="small" />
-                    ) : (
-                      <Text style={[styles.saveNoteButtonText, { color: colors.white }]}>
-                        {t('training.feedback.saveNote')}
+                  <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                      {t('training.feedback.myNotes')}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={closeNoteModal}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      disabled={isSavingNote}
+                    >
+                      <Ionicons name="close" size={24} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.modalBody}>
+                    <View
+                      style={[
+                        styles.noteInputContainer,
+                        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                      ]}
+                    >
+                      <TextInput
+                        style={[styles.noteInput, { color: colors.textPrimary }]}
+                        placeholder={t('training.feedback.notePlaceholder')}
+                        placeholderTextColor={colors.textMuted}
+                        value={editingNote}
+                        onChangeText={(text) => {
+                          if (text.length <= MAX_NOTE_LENGTH) {
+                            setEditingNote(text);
+                          }
+                        }}
+                        multiline
+                        maxLength={MAX_NOTE_LENGTH}
+                        editable={!isSavingNote}
+                        textAlignVertical="top"
+                        autoFocus
+                      />
+                      <Text
+                        style={[
+                          styles.charCount,
+                          {
+                            color:
+                              editingNote.length === MAX_NOTE_LENGTH
+                                ? colors.error
+                                : colors.textMuted,
+                          },
+                        ]}
+                      >
+                        {editingNote.length}/{MAX_NOTE_LENGTH}
                       </Text>
-                    )}
-                  </TouchableOpacity>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.saveNoteButton,
+                        { backgroundColor: isSavingNote ? colors.border : colors.primary },
+                      ]}
+                      onPress={handleSaveNote}
+                      disabled={isSavingNote}
+                      activeOpacity={0.7}
+                    >
+                      {isSavingNote ? (
+                        <ActivityIndicator color={colors.white} size="small" />
+                      ) : (
+                        <Text style={[styles.saveNoteButtonText, { color: colors.white }]}>
+                          {t('training.feedback.saveNote')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>

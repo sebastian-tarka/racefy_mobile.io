@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,11 +9,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useTranslation} from 'react-i18next';
-import type {CompositeNavigationProp} from '@react-navigation/native';
-import {useFocusEffect} from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityCard,
   Avatar,
@@ -33,25 +33,25 @@ import {
   TimeRangeFilter,
   UserListModal,
 } from '../../components';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useAuth} from '../../hooks/useAuth';
-import {useSubscription} from '../../hooks/useSubscription';
-import {useTheme} from '../../hooks/useTheme';
-import {useActivityStats} from '../../hooks/useActivityStats';
-import {usePointStats} from '../../hooks/usePointStats';
-import {useSportTypes} from '../../hooks/useSportTypes';
-import {useFollowing} from '../../hooks/useFollowing';
-import {usePaginatedTabData} from '../../hooks/usePaginatedTabData';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {useRefreshOn} from '../../services/refreshEvents';
-import {fixStorageUrl} from '../../config/api';
-import {fontSize, spacing} from '../../theme';
-import {getDateRangeForTimeRange} from '../../utils/dateRanges';
-import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
-import type {Activity, ActivityStats, Event, Post, User, UserStats} from '../../types/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useTheme } from '../../hooks/useTheme';
+import { useActivityStats } from '../../hooks/useActivityStats';
+import { usePointStats } from '../../hooks/usePointStats';
+import { useSportTypes } from '../../hooks/useSportTypes';
+import { useFollowing } from '../../hooks/useFollowing';
+import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
+import { fixStorageUrl } from '../../config/api';
+import { fontSize, spacing } from '../../theme';
+import { getDateRangeForTimeRange } from '../../utils/dateRanges';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import type { Activity, ActivityStats, Event, Post, User, UserStats } from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -72,7 +72,10 @@ const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
   { value: 'week', labelKey: 'profile.stats.timeRange.week' },
 ];
 
-export function ProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
+export function ProfileScreen({
+  navigation,
+  route,
+}: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
@@ -86,7 +89,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   // Modal state
   const [showFollowModal, setShowFollowModal] = useState(false);
-  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
+  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>(
+    'followers',
+  );
   const [pendingFollowCount, setPendingFollowCount] = useState(0);
 
   // Filter state - MUST be declared before dateRange and hooks that use them
@@ -116,12 +121,20 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   }, [selectedTimeRange]);
 
   // Activity stats and points hooks
-  const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats({
+  const {
+    stats: activityStats,
+    isLoading: isLoadingActivityStats,
+    refetch: refetchActivityStats,
+  } = useActivityStats({
     sportTypeId: selectedSportTypeId,
     from: dateRange?.from ?? undefined,
     to: dateRange?.to ?? undefined,
   });
-  const { stats: pointStats, isLoading: isLoadingPointStats, refetch: refetchPointStats } = usePointStats();
+  const {
+    stats: pointStats,
+    isLoading: isLoadingPointStats,
+    refetch: refetchPointStats,
+  } = usePointStats();
   const { sportTypes } = useSportTypes();
   const { following, isLoading: isLoadingFollowing } = useFollowing();
 
@@ -152,7 +165,10 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         });
         setCompareStats(stats);
       } catch (error) {
-        logger.error('api', 'Failed to fetch compare user stats', { error, userId: compareUser.id });
+        logger.error('api', 'Failed to fetch compare user stats', {
+          error,
+          userId: compareUser.id,
+        });
         setCompareStats(null);
       } finally {
         setIsLoadingCompareStats(false);
@@ -167,13 +183,16 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     return api.getPosts({ user_id: userId, page });
   }, []);
 
-  const fetchActivitiesWrapper = useCallback((userId: number, page: number) => {
-    return api.getActivities({
-      user_id: userId,
-      page,
-      ...(selectedSportTypeId && { sport_type_id: selectedSportTypeId }),
-    });
-  }, [selectedSportTypeId]);
+  const fetchActivitiesWrapper = useCallback(
+    (userId: number, page: number) => {
+      return api.getActivities({
+        user_id: userId,
+        page,
+        ...(selectedSportTypeId && { sport_type_id: selectedSportTypeId }),
+      });
+    },
+    [selectedSportTypeId],
+  );
 
   const fetchEventsWrapper = useCallback((userId: number, page: number) => {
     return api.getEvents({ user_id: userId, page });
@@ -251,7 +270,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         fetchDraftsCount();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated])
+    }, [isAuthenticated]),
   );
 
   // Load data when tab changes - ALWAYS refresh when switching tabs
@@ -301,10 +320,7 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     if (activeTab === 'posts') {
       await postsData.refresh();
     } else if (activeTab === 'stats') {
-      await Promise.all([
-        refetchActivityStats(),
-        refetchPointStats(),
-      ]);
+      await Promise.all([refetchActivityStats(), refetchPointStats()]);
     } else if (activeTab === 'activities') {
       await activitiesData.refresh();
     } else if (activeTab === 'events') {
@@ -334,25 +350,6 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
     setShowFollowModal(false);
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
-
-  if (!isAuthenticated) {
-    return (
-      <ScreenContainer>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
-        </View>
-        <EmptyState
-          icon="person-outline"
-          title={t('profile.signInRequired')}
-          message={t('profile.signInDescription')}
-          actionLabel={t('common.signIn')}
-          onAction={() =>
-            navigation.getParent()?.navigate('Auth', { screen: 'Login' })
-          }
-        />
-      </ScreenContainer>
-    );
-  }
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
     { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
@@ -408,43 +405,81 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
   const renderProfileHeader = () => (
     <>
-      <View style={[styles.profileCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+      <View
+        style={[
+          styles.profileCard,
+          { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+        ]}
+      >
         {renderCoverImage()}
 
         <View style={styles.profileBody}>
           <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-            <Avatar uri={user?.avatar} name={user?.name} size="xxl" showTierBadge={tier !== 'free'} tier={tier} />
+            <Avatar
+              uri={user?.avatar}
+              name={user?.name}
+              size="xxl"
+              showTierBadge={tier !== 'free'}
+              tier={tier}
+            />
           </View>
 
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{user?.name}</Text>
-          <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>@{user?.username}</Text>
-          {user?.bio && <Text style={[styles.bio, { color: colors.textPrimary }]} numberOfLines={2}>{user.bio}</Text>}
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            {user?.name}
+          </Text>
+          <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>
+            @{user?.username}
+          </Text>
+          {user?.bio && (
+            <Text style={[styles.bio, { color: colors.textPrimary }]} numberOfLines={2}>
+              {user.bio}
+            </Text>
+          )}
 
           <View style={[styles.statsRow, { borderTopColor: colors.borderLight }]}>
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.activities')}</Text>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.activities?.total ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.activities')}
+              </Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.activities?.total ?? 0}
+              </Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.totalDistance', 'Total')}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.totalDistance', 'Total')}
+              </Text>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats?.activities?.total_distance ? Math.round(stats.activities.total_distance / 1000) : 0} km
+                {stats?.activities?.total_distance
+                  ? Math.round(stats.activities.total_distance / 1000)
+                  : 0}{' '}
+                km
               </Text>
             </View>
             <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.followers')}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.followers')}
+              </Text>
               <View style={styles.statValueRow}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.followers ?? 0}</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                  {stats?.social.followers ?? 0}
+                </Text>
                 {pendingFollowCount > 0 && (
                   <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.statBadgeText}>{pendingFollowCount > 99 ? '99+' : pendingFollowCount}</Text>
+                    <Text style={styles.statBadgeText}>
+                      {pendingFollowCount > 99 ? '99+' : pendingFollowCount}
+                    </Text>
                   </View>
                 )}
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('profile.stats.following')}</Text>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats?.social.following ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.following')}
+              </Text>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.social.following ?? 0}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -453,7 +488,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       {/* Navigation Sections */}
       <ProfileNavigationSections navigation={navigation} tier={tier} />
 
-      <View style={[styles.tabContainer, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.tabContainer,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.value}
@@ -475,7 +515,10 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
               )}
             </View>
             <Text
-              style={[styles.tabText, { color: activeTab === tab.value ? colors.primary : colors.textSecondary }]}
+              style={[
+                styles.tabText,
+                { color: activeTab === tab.value ? colors.primary : colors.textSecondary },
+              ]}
             >
               {tab.label}
             </Text>
@@ -539,7 +582,12 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
           {/* Bar Chart */}
           {activityStats?.by_sport_type && (
-            <View style={[styles.chartCard, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]}>
+            <View
+              style={[
+                styles.chartCard,
+                { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+              ]}
+            >
               <SportStatsChart
                 data={activityStats.by_sport_type}
                 sportTypes={sportTypes}
@@ -573,6 +621,30 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
   profileHeaderRef.current = renderProfileHeader;
   const stableProfileHeader = useRef(() => profileHeaderRef.current()).current;
 
+  // Not authenticated: render the sign-in prompt. Placed AFTER all hooks above
+  // (including the stable-ref hooks) so the Rules of Hooks hold.
+  if (!isAuthenticated) {
+    return (
+      <ScreenContainer>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
+        </View>
+        <EmptyState
+          icon="person-outline"
+          title={t('profile.signInRequired')}
+          message={t('profile.signInDescription')}
+          actionLabel={t('common.signIn')}
+          onAction={() => navigation.getParent()?.navigate('Auth', { screen: 'Login' })}
+        />
+      </ScreenContainer>
+    );
+  }
+
   const renderFooter = () => {
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading) ||
@@ -594,7 +666,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
 
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading && postsData.data.length === 0) ||
-      (activeTab === 'activities' && activitiesData.isLoading && activitiesData.data.length === 0) ||
+      (activeTab === 'activities' &&
+        activitiesData.isLoading &&
+        activitiesData.data.length === 0) ||
       (activeTab === 'events' && eventsData.isLoading && eventsData.data.length === 0);
 
     if (isLoading) return null;
@@ -645,7 +719,9 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
         <PostCard
           post={post}
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
-          onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
+          onComment={() =>
+            navigation.navigate('PostDetail', { postId: post.id, focusComments: true })
+          }
           onUserPress={() => {}}
           onActivityPress={
             post.type === 'activity' && post.activity
@@ -741,7 +817,10 @@ export function ProfileScreen({ navigation, route }: Props & { navigation: Profi
       {user && (
         <UserListModal
           visible={showFollowModal}
-          onClose={() => { setShowFollowModal(false); fetchPendingFollowCount(); }}
+          onClose={() => {
+            setShowFollowModal(false);
+            fetchPendingFollowCount();
+          }}
           userId={user.id}
           initialTab={followModalTab}
           isOwnProfile={true}
@@ -774,7 +853,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    marginHorizontal:0
+    marginHorizontal: 0,
   },
   title: {
     fontSize: fontSize.xl,

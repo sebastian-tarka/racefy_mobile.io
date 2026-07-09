@@ -10,14 +10,24 @@ interface StreakCardProps {
   data: StreakData;
 }
 
-function MiniStatBox({ label, value, colors, isDark }: {
+function MiniStatBox({
+  label,
+  value,
+  colors,
+  isDark,
+}: {
   label: string;
   value: string;
   colors: ReturnType<typeof useTheme>['colors'];
   isDark: boolean;
 }) {
   return (
-    <View style={[styles.miniBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+    <View
+      style={[
+        styles.miniBox,
+        { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+      ]}
+    >
       <Text style={[styles.miniValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.miniLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
@@ -70,9 +80,12 @@ export function StreakCard({ data }: StreakCardProps) {
               style={[
                 styles.consistencySegment,
                 {
-                  backgroundColor: i < consistency
-                    ? colors.primary
-                    : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                  backgroundColor:
+                    i < consistency
+                      ? colors.primary
+                      : isDark
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.06)',
                 },
               ]}
             />

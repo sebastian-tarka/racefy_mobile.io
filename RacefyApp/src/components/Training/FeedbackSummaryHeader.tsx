@@ -22,7 +22,12 @@ const RATING_COLORS: Record<OverallRating, string> = {
   poor: '#ef4444',
 };
 
-export function FeedbackSummaryHeader({ overallRating, programName, weekNumber, programGoal }: Props) {
+export function FeedbackSummaryHeader({
+  overallRating,
+  programName,
+  weekNumber,
+  programGoal,
+}: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const ratingColor = RATING_COLORS[overallRating];
@@ -35,9 +40,7 @@ export function FeedbackSummaryHeader({ overallRating, programName, weekNumber, 
           {t(`training.feedback.summaryHeader.${overallRating}`)}
         </Text>
       </View>
-      <Text style={[styles.programName, { color: colors.textPrimary }]}>
-        {programName}
-      </Text>
+      <Text style={[styles.programName, { color: colors.textPrimary }]}>{programName}</Text>
       <Text style={[styles.weekInfo, { color: colors.textSecondary }]}>
         {t('training.feedback.title', { number: weekNumber })}
         {programGoal ? ` · ${programGoal}` : ''}

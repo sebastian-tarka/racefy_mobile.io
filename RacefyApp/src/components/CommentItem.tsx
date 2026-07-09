@@ -1,30 +1,38 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {formatDistanceToNow} from 'date-fns';
-import {useTranslation} from 'react-i18next';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
-import {Avatar} from './Avatar';
-import {MediaGallery} from './MediaGallery';
-import {MentionText} from './MentionText';
-import {MentionInput as MentionInputComponent} from './MentionInput';
-import {InteractionButton} from './InteractionButton';
-import {useTheme} from '../hooks/useTheme';
-import {useAuth} from '../hooks/useAuth';
-import {apiTokensToLibraryFormat, stripMentionsForApi} from '../utils/mentions';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Comment, MediaItem, Photo, User} from '../types/api';
+import { Avatar } from './Avatar';
+import { MediaGallery } from './MediaGallery';
+import { MentionText } from './MentionText';
+import { MentionInput as MentionInputComponent } from './MentionInput';
+import { InteractionButton } from './InteractionButton';
+import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
+import { apiTokensToLibraryFormat, stripMentionsForApi } from '../utils/mentions';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Comment, MediaItem, Photo, User } from '../types/api';
 
 interface MediaEditState {
-  existingMedia: Photo | null;  // Current media from comment
-  newMedia: MediaItem | null;   // New media to upload
-  shouldDelete: boolean;        // Whether to delete existing media
+  existingMedia: Photo | null; // Current media from comment
+  newMedia: MediaItem | null; // New media to upload
+  shouldDelete: boolean; // Whether to delete existing media
 }
 
 interface CommentEditData {
   content: string;
-  deleteMediaId?: number;       // ID of existing media to delete
-  newMedia?: MediaItem;         // New media to upload
+  deleteMediaId?: number; // ID of existing media to delete
+  newMedia?: MediaItem; // New media to upload
 }
 
 interface CommentItemProps {
@@ -75,18 +83,14 @@ export function CommentItem({
   }, [comment.content, comment.photos]);
 
   const handleDelete = () => {
-    Alert.alert(
-      t('comments.deleteComment'),
-      t('comments.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => onDelete(comment.id),
-        },
-      ]
-    );
+    Alert.alert(t('comments.deleteComment'), t('comments.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => onDelete(comment.id),
+      },
+    ]);
   };
 
   const handleUserPress = () => {
@@ -209,7 +213,9 @@ export function CommentItem({
           uri={comment.user?.avatar}
           name={comment.user?.name || '?'}
           size={isReply ? 'sm' : 'md'}
-          showTierBadge={!!comment.user?.subscription?.tier && comment.user.subscription.tier !== 'free'}
+          showTierBadge={
+            !!comment.user?.subscription?.tier && comment.user.subscription.tier !== 'free'
+          }
           tier={comment.user?.subscription?.tier}
         />
       </TouchableOpacity>
@@ -238,7 +244,7 @@ export function CommentItem({
 
             {/* Media editing section */}
             <View style={styles.editMediaSection}>
-              {(mediaEdit.existingMedia || mediaEdit.newMedia) ? (
+              {mediaEdit.existingMedia || mediaEdit.newMedia ? (
                 <View style={styles.editMediaPreview}>
                   <Image
                     source={{
@@ -298,9 +304,7 @@ export function CommentItem({
                 {isSubmittingEdit ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={[styles.editButtonText, { color: '#fff' }]}>
-                    {t('common.save')}
-                  </Text>
+                  <Text style={[styles.editButtonText, { color: '#fff' }]}>{t('common.save')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -340,10 +344,7 @@ export function CommentItem({
             />
 
             {onReply && !isReply && (
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => onReply(comment)}
-              >
+              <TouchableOpacity style={styles.actionButton} onPress={() => onReply(comment)}>
                 <Ionicons name="chatbubble-outline" size={16} color={colors.textMuted} />
                 <Text style={[styles.actionText, { color: colors.textMuted }]}>
                   {t('comments.reply')}

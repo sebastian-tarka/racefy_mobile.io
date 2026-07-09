@@ -56,15 +56,17 @@ export function useAudioCoach({
 
   // Sync with background task threshold on mount / when distance changes significantly
   useEffect(() => {
-    AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY).then((val) => {
-      if (val) {
-        const bgThreshold = parseFloat(val);
-        if (bgThreshold > lastAnnouncedThreshold.current) {
-          lastAnnouncedThreshold.current = bgThreshold;
-          logger.debug('audioCoach', 'Synced with background threshold', { bgThreshold });
+    AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY)
+      .then((val) => {
+        if (val) {
+          const bgThreshold = parseFloat(val);
+          if (bgThreshold > lastAnnouncedThreshold.current) {
+            lastAnnouncedThreshold.current = bgThreshold;
+            logger.debug('audioCoach', 'Synced with background threshold', { bgThreshold });
+          }
         }
-      }
-    }).catch(() => {});
+      })
+      .catch(() => {});
   }, [Math.floor(totalDistanceKm)]);
 
   // Stop speech only on unmount (not when disabled — preview may be playing from Settings)
@@ -78,7 +80,9 @@ export function useAudioCoach({
   }, [settings.enabled]);
 
   useEffect(() => {
-    return () => { stopSpeaking(); };
+    return () => {
+      stopSpeaking();
+    };
   }, []);
 
   // Check for km threshold crossing
@@ -137,20 +141,17 @@ export function useAudioCoach({
         speakText(milestoneText, settings, userTier, isOnlineRef.current);
       }, 4000);
     }
-  }, [
-    settings,
-    totalDistanceKm,
-    currentPaceMinPerKm,
-    heartRate,
-    previousKmPace,
-    userTier,
-  ]);
+  }, [settings, totalDistanceKm, currentPaceMinPerKm, heartRate, previousKmPace, userTier]);
 }
 
 /**
  * Speak start/end announcements. Call directly from event handlers.
  */
-export function announceStart(settings: AudioCoachSettings, userTier: 'free' | 'plus' | 'pro' = 'free', isOnline = true): void {
+export function announceStart(
+  settings: AudioCoachSettings,
+  userTier: 'free' | 'plus' | 'pro' = 'free',
+  isOnline = true,
+): void {
   if (!settings.enabled) return;
   const text = buildStartAnnouncement(settings.language);
   speakText(text, settings, userTier, isOnline);

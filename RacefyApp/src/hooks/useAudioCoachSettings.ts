@@ -30,7 +30,7 @@ export function useAudioCoachSettings(): UseAudioCoachSettingsResult {
       const cached = await AsyncStorage.getItem(STORAGE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as AudioCoachSettings;
-        setSettings(prev => ({ ...prev, ...parsed }));
+        setSettings((prev) => ({ ...prev, ...parsed }));
       }
 
       // Then fetch from server and merge
@@ -50,10 +50,10 @@ export function useAudioCoachSettings(): UseAudioCoachSettingsResult {
 
   const updateSettings = useCallback((partial: Partial<AudioCoachSettings>) => {
     // Immediate local update
-    setSettings(prev => {
+    setSettings((prev) => {
       const next = { ...prev, ...partial };
       // Persist to AsyncStorage immediately
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch(err => {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next)).catch((err) => {
         logger.error('audioCoach', 'Failed to save settings locally', { error: err });
       });
       return next;

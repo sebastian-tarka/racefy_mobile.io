@@ -2,8 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
-import { CommonActions } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing } from '../../theme';
@@ -42,14 +41,14 @@ export function ImpersonationBanner() {
                       },
                     },
                   ],
-                })
+                }),
               );
             } catch (error) {
               Alert.alert(t('common.error'), t('admin.impersonate.exitError'));
             }
           },
         },
-      ]
+      ],
     );
   };
 

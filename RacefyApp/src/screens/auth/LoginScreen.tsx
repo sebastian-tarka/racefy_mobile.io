@@ -1,16 +1,16 @@
-import React, {useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {KeyboardAvoidingView} from 'react-native-keyboard-controller';
-import {useTranslation} from 'react-i18next';
-import {BrandLogo, Button, Input, ScreenContainer} from '../../components';
-import {useAuth} from '../../hooks/useAuth';
-import {useTheme} from '../../hooks/useTheme';
-import {logger} from '../../services/logger';
-import {isGoogleSignInAvailable, statusCodes} from '../../services/googleSignIn';
-import {fontSize, spacing} from '../../theme';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {AuthStackParamList, RootStackParamList} from '../../navigation/types';
-import type {CompositeScreenProps} from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { useTranslation } from 'react-i18next';
+import { BrandLogo, Button, Input, ScreenContainer } from '../../components';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { logger } from '../../services/logger';
+import { isGoogleSignInAvailable, statusCodes } from '../../services/googleSignIn';
+import { fontSize, spacing } from '../../theme';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
+import type { CompositeScreenProps } from '@react-navigation/native';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<AuthStackParamList, 'Login'>,
@@ -58,8 +58,7 @@ export function LoginScreen({ navigation }: Props) {
       // Navigation handled automatically by AppNavigator's conditional rendering
     } catch (error: any) {
       logger.error('auth', 'Login error', { error });
-      const message =
-        error?.message || t('auth.loginFailedMessage');
+      const message = error?.message || t('auth.loginFailedMessage');
       Alert.alert(t('auth.loginFailed'), message);
     } finally {
       setIsLoading(false);
@@ -85,20 +84,24 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.keyboardView}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
             <BrandLogo category="logo-full" width={200} height={56} />
-            <Text style={[styles.tagline, { color: colors.textSecondary }]}>{t('app.tagline')}</Text>
+            <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+              {t('app.tagline')}
+            </Text>
           </View>
 
-          <View style={[styles.form, { backgroundColor: colors.cardBackground, shadowColor: colors.black }]}>
+          <View
+            style={[
+              styles.form,
+              { backgroundColor: colors.cardBackground, shadowColor: colors.black },
+            ]}
+          >
             <Text style={[styles.title, { color: colors.textPrimary }]}>{t('auth.signIn')}</Text>
 
             <Input
@@ -162,19 +165,31 @@ export function LoginScreen({ navigation }: Props) {
             )}
 
             <View style={styles.footer}>
-              <Text style={[styles.footerText, { color: colors.textSecondary }]}>{t('auth.noAccount')} </Text>
+              <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+                {t('auth.noAccount')}{' '}
+              </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={[styles.footerLink, { color: colors.primary }]}>{t('auth.signUp')}</Text>
+                <Text style={[styles.footerLink, { color: colors.primary }]}>
+                  {t('auth.signUp')}
+                </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.legalLinks}>
-              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}>
-                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.terms')}</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('LegalDocuments', { documentType: 'terms' })}
+              >
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>
+                  {t('legal.terms')}
+                </Text>
               </TouchableOpacity>
               <Text style={[styles.legalSeparator, { color: colors.textMuted }]}> • </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}>
-                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>{t('legal.privacy')}</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('LegalDocuments', { documentType: 'privacy' })}
+              >
+                <Text style={[styles.legalLink, { color: colors.textSecondary }]}>
+                  {t('legal.privacy')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

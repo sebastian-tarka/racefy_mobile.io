@@ -1,15 +1,23 @@
-import React, {useCallback} from 'react';
-import {ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, Text, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {useTheme} from '../../hooks/useTheme';
-import {useUnsyncedActivities} from '../../hooks/useUnsyncedActivities';
-import {exportGpxAndShare} from '../../utils/gpxExport';
-import {getUnsyncedActivity, type UnsyncedActivityMeta} from '../../services/unsyncedActivities';
-import {Button, ScreenContainer, ScreenHeader} from '../../components';
-import {spacing} from '../../theme';
-import type {RootStackParamList} from '../../navigation/types';
+import React, { useCallback } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useTheme } from '../../hooks/useTheme';
+import { useUnsyncedActivities } from '../../hooks/useUnsyncedActivities';
+import { exportGpxAndShare } from '../../utils/gpxExport';
+import { getUnsyncedActivity, type UnsyncedActivityMeta } from '../../services/unsyncedActivities';
+import { Button, ScreenContainer, ScreenHeader } from '../../components';
+import { spacing } from '../../theme';
+import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UnsyncedActivities'>;
 
@@ -36,147 +44,150 @@ function formatFailedAt(iso: string, locale: string): string {
 export function UnsyncedActivitiesScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { items, isLoading, retryingId, refresh, retry, discard } =
-    useUnsyncedActivities();
+  const { items, isLoading, retryingId, refresh, retry, discard } = useUnsyncedActivities();
 
-  const onRetry = useCallback(async (entry: UnsyncedActivityMeta) => {
-    const outcome = await retry(entry.activityId);
-    if (outcome.ok) {
-      Alert.alert(t('unsynced.retrySuccessTitle'), t('unsynced.retrySuccessBody'));
-    } else {
-      Alert.alert(t('unsynced.retryFailedTitle'), outcome.error);
-    }
-  }, [retry, t]);
+  const onRetry = useCallback(
+    async (entry: UnsyncedActivityMeta) => {
+      const outcome = await retry(entry.activityId);
+      if (outcome.ok) {
+        Alert.alert(t('unsynced.retrySuccessTitle'), t('unsynced.retrySuccessBody'));
+      } else {
+        Alert.alert(t('unsynced.retryFailedTitle'), outcome.error);
+      }
+    },
+    [retry, t],
+  );
 
-  const onExport = useCallback(async (entry: UnsyncedActivityMeta) => {
-    const full = await getUnsyncedActivity(entry.activityId);
-    if (!full) {
-      Alert.alert(t('unsynced.exportFailedTitle'), t('unsynced.exportMissing'));
-      return;
-    }
-    const ok = await exportGpxAndShare({
-      activityId: full.activityId,
-      name: full.title || `Racefy activity ${full.activityId}`,
-      startedAt: full.startedAt,
-      sportType: full.sportTypeName,
-      points: full.points,
-    });
-    if (!ok) {
-      Alert.alert(t('unsynced.exportFailedTitle'), t('unsynced.exportFailedBody'));
-    }
-  }, [t]);
+  const onExport = useCallback(
+    async (entry: UnsyncedActivityMeta) => {
+      const full = await getUnsyncedActivity(entry.activityId);
+      if (!full) {
+        Alert.alert(t('unsynced.exportFailedTitle'), t('unsynced.exportMissing'));
+        return;
+      }
+      const ok = await exportGpxAndShare({
+        activityId: full.activityId,
+        name: full.title || `Racefy activity ${full.activityId}`,
+        startedAt: full.startedAt,
+        sportType: full.sportTypeName,
+        points: full.points,
+      });
+      if (!ok) {
+        Alert.alert(t('unsynced.exportFailedTitle'), t('unsynced.exportFailedBody'));
+      }
+    },
+    [t],
+  );
 
-  const onDiscard = useCallback((entry: UnsyncedActivityMeta) => {
-    Alert.alert(
-      t('unsynced.discardConfirmTitle'),
-      t('unsynced.discardConfirmBody'),
-      [
+  const onDiscard = useCallback(
+    (entry: UnsyncedActivityMeta) => {
+      Alert.alert(t('unsynced.discardConfirmTitle'), t('unsynced.discardConfirmBody'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('unsynced.discard'),
           style: 'destructive',
           onPress: () => discard(entry.activityId),
         },
-      ],
-    );
-  }, [discard, t]);
+      ]);
+    },
+    [discard, t],
+  );
 
-  const renderItem = useCallback(({ item }: { item: UnsyncedActivityMeta }) => {
-    const isRetrying = retryingId === item.activityId;
+  const renderItem = useCallback(
+    ({ item }: { item: UnsyncedActivityMeta }) => {
+      const isRetrying = retryingId === item.activityId;
 
-    return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.cardBackground, borderColor: colors.border },
-        ]}
-      >
-        <View style={styles.cardHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-              {item.title || t('unsynced.untitled', { id: item.activityId })}
-            </Text>
-            <Text style={[styles.meta, { color: colors.textSecondary }]}>
-              {item.sportTypeName ? `${item.sportTypeName} • ` : ''}
-              {formatFailedAt(item.failedAt, i18n.language)}
-            </Text>
+      return (
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
+          <View style={styles.cardHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+                {item.title || t('unsynced.untitled', { id: item.activityId })}
+              </Text>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>
+                {item.sportTypeName ? `${item.sportTypeName} • ` : ''}
+                {formatFailedAt(item.failedAt, i18n.language)}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.badge,
+                { backgroundColor: colors.warningLight, borderColor: colors.warning },
+              ]}
+            >
+              <Ionicons name="cloud-offline" size={14} color={colors.warning} />
+              <Text style={[styles.badgeText, { color: colors.warning }]}>
+                {t('unsynced.statusFailed')}
+              </Text>
+            </View>
           </View>
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: colors.warningLight, borderColor: colors.warning },
-            ]}
-          >
-            <Ionicons name="cloud-offline" size={14} color={colors.warning} />
-            <Text style={[styles.badgeText, { color: colors.warning }]}>
-              {t('unsynced.statusFailed')}
+
+          <View style={styles.stats}>
+            <Stat
+              label={t('unsynced.statDistance')}
+              value={formatDistanceKm(item.distance)}
+              colors={colors}
+            />
+            <Stat
+              label={t('unsynced.statDuration')}
+              value={formatDuration(item.duration)}
+              colors={colors}
+            />
+            <Stat
+              label={t('unsynced.statPoints')}
+              value={String(item.pointsCount)}
+              colors={colors}
+            />
+          </View>
+
+          {item.lastError && (
+            <Text style={[styles.errorText, { color: colors.error }]} numberOfLines={2}>
+              {item.lastError}
             </Text>
+          )}
+          {item.retryCount > 0 && (
+            <Text style={[styles.retryText, { color: colors.textMuted }]}>
+              {t('unsynced.retryCount', { count: item.retryCount })}
+            </Text>
+          )}
+
+          <View style={styles.actions}>
+            <Button
+              title={t('unsynced.retry')}
+              onPress={() => onRetry(item)}
+              loading={isRetrying}
+              disabled={isRetrying}
+              style={styles.actionPrimary}
+            />
+            <Button
+              title={t('unsynced.exportGpx')}
+              variant="outline"
+              onPress={() => onExport(item)}
+              disabled={isRetrying || item.pointsCount === 0}
+              style={styles.actionSecondary}
+            />
+            <Button
+              title={t('unsynced.discard')}
+              variant="ghost"
+              onPress={() => onDiscard(item)}
+              disabled={isRetrying}
+              style={styles.actionSecondary}
+            />
           </View>
         </View>
-
-        <View style={styles.stats}>
-          <Stat
-            label={t('unsynced.statDistance')}
-            value={formatDistanceKm(item.distance)}
-            colors={colors}
-          />
-          <Stat
-            label={t('unsynced.statDuration')}
-            value={formatDuration(item.duration)}
-            colors={colors}
-          />
-          <Stat
-            label={t('unsynced.statPoints')}
-            value={String(item.pointsCount)}
-            colors={colors}
-          />
-        </View>
-
-        {item.lastError && (
-          <Text style={[styles.errorText, { color: colors.error }]} numberOfLines={2}>
-            {item.lastError}
-          </Text>
-        )}
-        {item.retryCount > 0 && (
-          <Text style={[styles.retryText, { color: colors.textMuted }]}>
-            {t('unsynced.retryCount', { count: item.retryCount })}
-          </Text>
-        )}
-
-        <View style={styles.actions}>
-          <Button
-            title={t('unsynced.retry')}
-            onPress={() => onRetry(item)}
-            loading={isRetrying}
-            disabled={isRetrying}
-            style={styles.actionPrimary}
-          />
-          <Button
-            title={t('unsynced.exportGpx')}
-            variant="outline"
-            onPress={() => onExport(item)}
-            disabled={isRetrying || item.pointsCount === 0}
-            style={styles.actionSecondary}
-          />
-          <Button
-            title={t('unsynced.discard')}
-            variant="ghost"
-            onPress={() => onDiscard(item)}
-            disabled={isRetrying}
-            style={styles.actionSecondary}
-          />
-        </View>
-      </View>
-    );
-  }, [colors, i18n.language, onDiscard, onExport, onRetry, retryingId, t]);
+      );
+    },
+    [colors, i18n.language, onDiscard, onExport, onRetry, retryingId, t],
+  );
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('unsynced.screenTitle')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('unsynced.screenTitle')} showBack onBack={() => navigation.goBack()} />
       {isLoading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.primary} />
@@ -194,7 +205,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={item => String(item.activityId)}
+          keyExtractor={(item) => String(item.activityId)}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

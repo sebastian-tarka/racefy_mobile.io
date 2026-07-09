@@ -28,12 +28,7 @@ export function EmptyState({
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {message && <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>}
       {actionLabel && onAction && (
-        <Button
-          title={actionLabel}
-          onPress={onAction}
-          variant="primary"
-          style={styles.button}
-        />
+        <Button title={actionLabel} onPress={onAction} variant="primary" style={styles.button} />
       )}
     </View>
   );

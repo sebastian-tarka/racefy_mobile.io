@@ -1,10 +1,10 @@
 import React from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {useTheme} from '../hooks/useTheme';
-import {useUnsyncedActivitiesCount} from '../hooks/useUnsyncedActivities';
-import {spacing} from '../theme';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../hooks/useTheme';
+import { useUnsyncedActivitiesCount } from '../hooks/useUnsyncedActivities';
+import { spacing } from '../theme';
 
 interface Props {
   onPress: () => void;

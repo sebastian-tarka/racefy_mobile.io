@@ -29,26 +29,26 @@ export interface SubscriptionFeatures {
   event_ai_commentary: boolean;
   privacy_zones: number;
   training_programs: number;
-  active_training_programs: number;  // concurrent active/paused limit (-1 = unlimited)
+  active_training_programs: number; // concurrent active/paused limit (-1 = unlimited)
   training_summaries: boolean;
   advanced_stats: boolean;
   share_link_permanent: boolean;
   points_multiplier: number;
   gpx_export: boolean;
   exclusive_badges: boolean;
-  teams_max: number;          // -1 = unlimited
-  team_members_max: number;   // -1 = unlimited
+  teams_max: number; // -1 = unlimited
+  team_members_max: number; // -1 = unlimited
   coaching_hints_bulk: boolean; // Pro only: generate all hints at once
-  live_navigation: boolean;     // Pro only: turn-by-turn navigation during activities
-  saved_routes: number;         // -1 = unlimited, free = 5, plus = 20
+  live_navigation: boolean; // Pro only: turn-by-turn navigation during activities
+  saved_routes: number; // -1 = unlimited, free = 5, plus = 20
   // Training Goals
-  goals_max_active: number;             // free: 1, plus: 5, pro: -1
+  goals_max_active: number; // free: 1, plus: 5, pro: -1
   goals_period_week: boolean;
   goals_period_month: boolean;
   goals_period_year: boolean;
   goals_metrics: import('./goals').GoalMetric[]; // free: ['distance'], plus+: all 4
   goals_per_sport_type: boolean;
-  goals_history_months: number;         // free: 1, plus: 12, pro: -1
+  goals_history_months: number; // free: 1, plus: 12, pro: -1
   goals_smart_suggestions: boolean;
   goals_pace_warning_notifications: boolean;
 }
@@ -113,6 +113,7 @@ export interface BadgeData {
   description: string;
   icon: string | null;
   icon_url: string | null;
+  icon_emoji?: string | null;
   rarity: 'legendary' | 'epic' | 'rare' | 'common';
   rarity_color: string;
 }
@@ -214,7 +215,14 @@ export interface NotificationChannelSettings {
   websocket: boolean;
 }
 
-export type AiPostStyle = 'achievement' | 'statistical' | 'comparison' | 'casual' | 'motivational' | 'technical' | 'social';
+export type AiPostStyle =
+  | 'achievement'
+  | 'statistical'
+  | 'comparison'
+  | 'casual'
+  | 'motivational'
+  | 'technical'
+  | 'social';
 export type AiPostPerspective = 'descriptive' | 'personal';
 
 export interface AiPostsPreferences {
@@ -299,13 +307,13 @@ export interface GpsProfileApiResponse {
   // Stationary detection
   stationary_speed_threshold?: number; // Speed in m/s below which user is considered stationary (0.1-3)
   // Pace display settings (optional - API may not provide these yet)
-  pace_smoothing_factor?: number;     // EMA alpha for pace smoothing (0.1-0.9)
-  pace_window_seconds?: number;       // Time window for current pace calculation (20-120s)
-  min_distance_for_pace?: number;     // Min meters before showing any pace (20-200m)
-  min_segment_distance?: number;      // Min meters in window for valid current pace (10-100m)
+  pace_smoothing_factor?: number; // EMA alpha for pace smoothing (0.1-0.9)
+  pace_window_seconds?: number; // Time window for current pace calculation (20-120s)
+  min_distance_for_pace?: number; // Min meters before showing any pace (20-200m)
+  min_segment_distance?: number; // Min meters in window for valid current pace (10-100m)
   // Background sync settings (optional - API may not provide these yet)
-  background_sync_interval?: number;  // Interval in ms for background GPS sync (60000-600000)
-  background_sync_enabled?: boolean;  // Enable background sync for this sport
+  background_sync_interval?: number; // Interval in ms for background GPS sync (60000-600000)
+  background_sync_enabled?: boolean; // Enable background sync for this sport
 }
 
 // GPS Profile for API requests (snake_case, optional fields)
@@ -449,7 +457,7 @@ export interface DraftsResponse {
 // ============ EVENTS ============
 
 export type EventRankingMode = 'fastest_time' | 'most_distance' | 'most_elevation' | 'first_finish';
-export type RankingModeOption = {description?: string; value: EventRankingMode, name: string};
+export type RankingModeOption = { description?: string; value: EventRankingMode; name: string };
 export type EventTeamScoring = 'sum' | 'average' | 'best_n';
 export type EventVisibility = 'public' | 'followers' | 'private';
 
@@ -529,7 +537,7 @@ export interface Event {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   ai_commentary_active_now?: boolean;
@@ -537,10 +545,10 @@ export interface Event {
   ai_commentary_last_paused_at?: string | null;
   ai_commentary_last_resumed_at?: string | null;
   // GPS Privacy (new in 2026-01)
-  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
-  start_finish_note?: string | null;   // Explanation why markers are shown
+  show_start_finish_points?: boolean; // Override GPS privacy for all participants
+  start_finish_note?: string | null; // Explanation why markers are shown
   // Activity aggregation
-  allow_multiple_activities?: boolean;  // Allow multiple activities to be aggregated
+  allow_multiple_activities?: boolean; // Allow multiple activities to be aggregated
   // Point rewards
   point_rewards?: EventPointRewards;
   // Route planning
@@ -601,12 +609,12 @@ export interface CreateEventRequest {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   // GPS Privacy (new in 2026-01)
-  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
-  start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
+  show_start_finish_points?: boolean; // Override GPS privacy for all participants
+  start_finish_note?: string; // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
   // Auto-finalize results
@@ -656,12 +664,12 @@ export interface UpdateEventRequest {
   ai_commentary_token_limit?: number | null;
   ai_commentary_auto_publish?: boolean;
   ai_commentary_force_participants?: boolean;
-  ai_commentary_time_windows?: Array<{ start: string; end: string }> | null;
+  ai_commentary_time_windows?: { start: string; end: string }[] | null;
   ai_commentary_days_of_week?: number[] | null;
   ai_commentary_pause_summary_enabled?: boolean;
   // GPS Privacy (new in 2026-01)
-  show_start_finish_points?: boolean;  // Override GPS privacy for all participants
-  start_finish_note?: string;          // Explanation why markers are shown (e.g., "Race starts at City Hall")
+  show_start_finish_points?: boolean; // Override GPS privacy for all participants
+  start_finish_note?: string; // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
   // Auto-finalize results
@@ -725,9 +733,9 @@ export interface EventStatusStats {
   event_count: number;
   total_participants: number;
   total_activities: number;
-  total_distance: number;        // meters
-  total_elevation_gain: number;  // meters
-  total_duration: number;        // seconds
+  total_distance: number; // meters
+  total_elevation_gain: number; // meters
+  total_duration: number; // seconds
 }
 
 export interface EventOverview {
@@ -787,9 +795,10 @@ export interface Activity {
   is_private: boolean;
   visibility: 'public' | 'followers' | 'private';
   // GPS Privacy (new in 2026-01)
-  show_start_finish_points: boolean;  // Activity-level privacy override
-  can_view_start_finish: boolean;     // Whether current viewer can see markers
-  privacy_settings?: {                // Only for activity owner
+  show_start_finish_points: boolean; // Activity-level privacy override
+  can_view_start_finish: boolean; // Whether current viewer can see markers
+  privacy_settings?: {
+    // Only for activity owner
     show_start_finish_points: boolean;
     has_privacy_zones: boolean;
   };
@@ -864,28 +873,32 @@ export interface GpsPoint {
   speed?: number;
   cadence?: number;
   accuracy?: number;
+  /** Per-activity monotonic sequence number (idempotent batch uploads) */
+  seq?: number;
+  /** First point after a GPS gap — route rendered as separate segments */
+  segment_break?: boolean;
 }
 
 // Nearby route for shadow track feature
 export interface NearbyRoute {
   id: number;
   title: string;
-  distance: number;  // meters
-  elevation_gain: number;  // meters
-  duration: number;  // seconds
+  distance: number; // meters
+  elevation_gain: number; // meters
+  duration: number; // seconds
   sport_type_id: number;
   user: {
     id: number;
     name: string;
-    username: string;  // @username
-    avatar: string;  // Backend uses 'avatar' not 'avatar_url'
+    username: string; // @username
+    avatar: string; // Backend uses 'avatar' not 'avatar_url'
   };
   stats: {
     likes_count: number;
-    boosts_count: number;  // Backend uses boosts instead of completions
+    boosts_count: number; // Backend uses boosts instead of completions
   };
   track_data: GeoJSONLineString;
-  distance_from_user: number;  // meters from search location
+  distance_from_user: number; // meters from search location
   created_at: string;
 }
 
@@ -903,15 +916,15 @@ export interface AddActivityPointsRequest {
 // Response from adding GPS points to live activity
 export interface AddActivityPointsResponse {
   message: string;
-  points_count: number;    // Points added in this batch
-  total_points: number;    // Total GPS points
+  points_count: number; // Points added in this batch
+  total_points: number; // Total GPS points
   stats: {
-    distance: number;      // Total meters
-    duration: number;      // Total seconds (excludes paused time)
+    distance: number; // Total meters
+    duration: number; // Total seconds (excludes paused time)
     elevation_gain: number; // Total meters climbed
-    calories?: number;     // Current calories (if synced)
-    avg_speed?: number;    // Average speed in m/s (server-calculated)
-    max_speed?: number;    // Maximum speed in m/s (server-calculated)
+    calories?: number; // Current calories (if synced)
+    avg_speed?: number; // Average speed in m/s (server-calculated)
+    max_speed?: number; // Maximum speed in m/s (server-calculated)
   };
 }
 
@@ -948,6 +961,8 @@ export interface FinishActivityRequest {
   final_points?: GpsPoint[];
   // Client-calculated distance (meters) - preserved alongside server-calculated distance
   client_distance?: number;
+  // Device-minted UUID of the tracking session (idempotent batch uploads)
+  client_activity_id?: string;
   // Event the activity should be linked to (set/changed at save time)
   event_id?: number | null;
 }
@@ -965,16 +980,16 @@ export interface FinishActivityResponse {
   message: string;
   points_earned?: number;
   splits?: {
-    distance_splits: Array<{
+    distance_splits: {
       distance: number;
       time: number;
       pace: string;
-    }>;
-    time_splits: Array<{
+    }[];
+    time_splits: {
       time: number;
       distance: number;
       speed: number;
-    }>;
+    }[];
   };
   post?: AutoCreatedPost;
 }
@@ -982,7 +997,7 @@ export interface FinishActivityResponse {
 export interface GpsTrack {
   id: number;
   activity_id: number;
-  track_data: GeoJSONLineString;       // Privacy-aware: trimmed if viewer is not owner
+  track_data: GeoJSONLineString; // Privacy-aware: trimmed if viewer is not owner
   points_count: number;
   bounds: {
     min_lat: number;
@@ -997,9 +1012,9 @@ export interface GpsTrack {
   svg_generated_at: string | null;
   map_generated_at: string | null;
   // GPS Privacy (new in 2026-01)
-  show_start_marker: boolean;          // Whether viewer can see start marker
-  show_finish_marker: boolean;         // Whether viewer can see finish marker
-  start_point: [number, number, number?] | null;  // Start coords [lng, lat, ele?] or null if hidden
+  show_start_marker: boolean; // Whether viewer can see start marker
+  show_finish_marker: boolean; // Whether viewer can see finish marker
+  start_point: [number, number, number?] | null; // Start coords [lng, lat, ele?] or null if hidden
   finish_point: [number, number, number?] | null; // Finish coords [lng, lat, ele?] or null if hidden
 }
 
@@ -1013,10 +1028,10 @@ export interface TrackPoint {
   index: number;
   lat: number;
   lng: number;
-  distance: number;         // Cumulative distance in meters
+  distance: number; // Cumulative distance in meters
   timestamp: string;
-  elevation: number;        // Elevation in meters
-  speed: number;           // Speed in m/s
+  elevation: number; // Elevation in meters
+  speed: number; // Speed in m/s
 }
 
 // Response from /activities/{id}/track-points endpoint
@@ -1035,17 +1050,17 @@ export interface TrackPointsResponse {
 // Split data (per kilometer)
 export interface ActivitySplit {
   kilometer: number;
-  duration: number;                    // seconds for this km
-  pace: string;                        // formatted pace (e.g., "5:42")
-  cumulative_duration: number;         // total seconds up to this km
-  cumulative_distance: number;         // total meters up to this km
-  elevation_gain: number;              // meters gained in this km
-  elevation_loss: number;              // meters lost in this km
-  avg_heart_rate: number | null;       // average bpm for this km
-  max_heart_rate: number | null;       // max bpm for this km
-  avg_speed: number | null;            // m/s average for this km
-  max_speed: number | null;            // m/s max for this km
-  avg_cadence: number | null;          // steps per minute
+  duration: number; // seconds for this km
+  pace: string; // formatted pace (e.g., "5:42")
+  cumulative_duration: number; // total seconds up to this km
+  cumulative_distance: number; // total meters up to this km
+  elevation_gain: number; // meters gained in this km
+  elevation_loss: number; // meters lost in this km
+  avg_heart_rate: number | null; // average bpm for this km
+  max_heart_rate: number | null; // max bpm for this km
+  avg_speed: number | null; // m/s average for this km
+  max_speed: number | null; // m/s max for this km
+  avg_cadence: number | null; // steps per minute
   formatted?: {
     pace: { value: string; unit: string };
     elevation_gain: { value: number; unit: string };
@@ -1075,24 +1090,24 @@ export interface SplitsSummary {
 // Activity stats from /activities/{id}/stats endpoint
 export interface SingleActivityStats {
   primary: {
-    distance: number;           // meters
-    duration: number;           // seconds
-    elevation_gain: number;     // meters
+    distance: number; // meters
+    duration: number; // seconds
+    elevation_gain: number; // meters
   };
   performance: {
     pace: {
-      average: number | null;   // seconds per kilometer
-      formatted: string;        // e.g., "5:42"
+      average: number | null; // seconds per kilometer
+      formatted: string; // e.g., "5:42"
     };
     speed: {
-      average: number | null;   // m/s
-      max: number | null;       // m/s
+      average: number | null; // m/s
+      max: number | null; // m/s
     };
     heart_rate: {
-      average: number | null;   // bpm
-      max: number | null;       // bpm
+      average: number | null; // bpm
+      max: number | null; // bpm
     };
-    calories: number | null;    // kcal
+    calories: number | null; // kcal
   };
   splits: SplitsSummary | null;
   has_data: {
@@ -1207,8 +1222,8 @@ export interface FollowRequest {
 export interface FollowStatus {
   is_following: boolean;
   is_followed_by: boolean;
-  follow_status: FollowStatusValue;  // New field
-  followed_by_status: FollowStatusValue;  // New field
+  follow_status: FollowStatusValue; // New field
+  followed_by_status: FollowStatusValue; // New field
 }
 
 export interface UserWithFollowCounts extends User {
@@ -1238,8 +1253,8 @@ export interface BlockedUser {
 }
 
 export interface BlockStatus {
-  is_blocking: boolean;      // You blocked them
-  is_blocked_by: boolean;    // They blocked you
+  is_blocking: boolean; // You blocked them
+  is_blocked_by: boolean; // They blocked you
   has_relationship: boolean; // Either direction
 }
 
@@ -1454,7 +1469,12 @@ export interface UserStatsResponse {
   stats: UserPointStats;
 }
 
-export type PointTransactionType = 'activity' | 'event_place' | 'event_finish' | 'bonus' | 'adjustment';
+export type PointTransactionType =
+  | 'activity'
+  | 'event_place'
+  | 'event_finish'
+  | 'bonus'
+  | 'adjustment';
 
 export interface PointTransaction {
   id: number;
@@ -1921,7 +1941,7 @@ export interface CommentarySettings {
   tokens_used: number;
   languages: CommentaryLanguage[];
   force_participants?: boolean;
-  time_windows?: Array<{ start: string; end: string }> | null;
+  time_windows?: { start: string; end: string }[] | null;
   days_of_week?: number[] | null;
   pause_summary_enabled?: boolean;
   available_styles: Record<CommentaryStyle, { name: string; description: string }>;
@@ -1936,7 +1956,7 @@ export interface UpdateCommentarySettingsRequest {
   auto_publish?: boolean;
   languages?: CommentaryLanguage[] | null;
   force_participants?: boolean;
-  time_windows?: Array<{ start: string; end: string }> | null;
+  time_windows?: { start: string; end: string }[] | null;
   days_of_week?: number[] | null;
   pause_summary_enabled?: boolean;
 }
@@ -2165,12 +2185,12 @@ export interface HomeSection {
   /** Additional data for event_results section */
   results?: {
     event: HomeSectionEvent;
-    top_participants?: Array<{
+    top_participants?: {
       user: HomeSectionFriend;
       position: number;
       distance_km?: number;
       duration_minutes?: number;
-    }>;
+    }[];
   };
 
   /** Additional data for nearby_events, friend_events sections */
@@ -2313,7 +2333,7 @@ export interface ShareLinkPlatform {
   text?: string;
 }
 
-export interface  ShareLinkResponse {
+export interface ShareLinkResponse {
   url: string;
   title: string;
   description: string;
@@ -2343,7 +2363,14 @@ export interface PhotoOverlayResponse {
 export type ExperienceLevel = 'beginner' | 'recreational' | 'regular';
 export type GuidanceLevel = 'minimal' | 'standard' | 'coach_like';
 export type RecoveryProfile = 'low' | 'medium' | 'high';
-export type ProgramStatus = 'pending' | 'processing' | 'active' | 'paused' | 'abandoned' | 'completed' | 'failed';
+export type ProgramStatus =
+  | 'pending'
+  | 'processing'
+  | 'active'
+  | 'paused'
+  | 'abandoned'
+  | 'completed'
+  | 'failed';
 export type PausedReason = 'injury' | 'vacation' | 'burnout' | 'other';
 export type WeekStatus = 'upcoming' | 'current' | 'active' | 'completed' | 'skipped';
 export type ActivityStatus = 'pending' | 'completed' | 'skipped';
@@ -2795,6 +2822,7 @@ export interface BadgeReward {
     description: string;
     icon: string;
     icon_url: string | null;
+    icon_emoji?: string | null;
     rarity: 'common' | 'rare' | 'epic' | 'legendary';
     rarity_color: string;
   };
@@ -3097,18 +3125,18 @@ export interface DeviceInfoPayload {
 export interface RouteWaypoint {
   lat: number;
   lng: number;
-  label?: string;  // e.g., "Start", "Water Station", "Finish"
+  label?: string; // e.g., "Start", "Water Station", "Finish"
 }
 
 export interface RouteElevationPoint {
-  distance: number;    // meters from start
-  elevation: number;   // meters
+  distance: number; // meters from start
+  elevation: number; // meters
 }
 
 export interface RouteTurnInstruction {
-  distance_along: number;     // meters from start where turn occurs
-  maneuver: string;           // 'turn-left', 'turn-right', 'straight', 'u-turn', etc.
-  instruction: string;        // Human-readable: "Turn left onto Main St"
+  distance_along: number; // meters from start where turn occurs
+  maneuver: string; // 'turn-left', 'turn-right', 'straight', 'u-turn', etc.
+  instruction: string; // Human-readable: "Turn left onto Main St"
   location: [number, number]; // [lng, lat]
 }
 
@@ -3121,10 +3149,10 @@ export interface PlannedRoute {
   profile: 'walking' | 'cycling';
   waypoints: RouteWaypoint[];
   geometry: GeoJSONLineString;
-  distance: number;                  // meters
-  estimated_duration: number;        // seconds
-  elevation_gain: number;            // meters
-  elevation_loss: number;            // meters
+  distance: number; // meters
+  estimated_duration: number; // seconds
+  elevation_gain: number; // meters
+  elevation_loss: number; // meters
   elevation_profile: RouteElevationPoint[];
   turn_instructions: RouteTurnInstruction[];
   bounds: {
@@ -3166,7 +3194,7 @@ export interface UpdateRouteRequest {
 export interface RouteSearchParams {
   lat?: number;
   lng?: number;
-  radius?: number;         // meters
+  radius?: number; // meters
   sport_type_id?: number;
   query?: string;
   page?: number;

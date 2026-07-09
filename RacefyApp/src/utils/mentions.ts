@@ -90,8 +90,7 @@ export function parseMentionTokens(text: string, mentions?: MentionMap): Mention
     const mentionType = TRIGGER_TO_TYPE[trigger] || 'user';
 
     // API returns keys with angle brackets: <@5>, <#12>, <!3>
-    const entity = mentions?.[`<${trigger}${id}>`]
-                || mentions?.[`${trigger}${id}`];
+    const entity = mentions?.[`<${trigger}${id}>`] || mentions?.[`${trigger}${id}`];
 
     if (entity) {
       segments.push({
@@ -136,7 +135,10 @@ export function parseMentionTokens(text: string, mentions?: MentionMap): Mention
 /**
  * Get mention chip color by entity type
  */
-export function getMentionColor(type: MentionEntity['type'], colors: any): { text: string; bg: string } {
+export function getMentionColor(
+  type: MentionEntity['type'],
+  colors: any,
+): { text: string; bg: string } {
   switch (type) {
     case 'user':
       return { text: colors.primary, bg: colors.primary + '18' };

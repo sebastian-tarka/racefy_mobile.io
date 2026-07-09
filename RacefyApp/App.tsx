@@ -1,35 +1,41 @@
-import React, {useEffect} from 'react';
-import {StatusBar} from 'expo-status-bar';
-import {GestureHandlerRootView} from 'react-native-gesture-handler';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {AuthProvider} from './src/hooks/useAuth';
-import {ThemeProvider, useTheme} from './src/hooks/useTheme';
-import {LiveActivityProvider} from './src/hooks/useLiveActivity';
-import {UnitsProvider} from './src/hooks/useUnits';
-import {MapStyleProvider} from './src/hooks/useMapStyle';
-import {AppConfigProvider} from './src/contexts/AppConfigContext';
-import {loadGlobalHapticsPreference} from './src/hooks/useHaptics';
-import {configureRevenueCat} from './src/services/revenuecat';
-import {KeyboardProvider} from 'react-native-keyboard-controller';
-import {AppNavigator} from './src/navigation';
+import React, { useEffect, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AnimatedSplash } from './src/components/AnimatedSplash';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from './src/hooks/useAuth';
+import { ThemeProvider, useTheme } from './src/hooks/useTheme';
+import { LiveActivityProvider } from './src/hooks/useLiveActivity';
+import { UnitsProvider } from './src/hooks/useUnits';
+import { MapStyleProvider } from './src/hooks/useMapStyle';
+import { AppConfigProvider } from './src/contexts/AppConfigContext';
+import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
+import { configureRevenueCat } from './src/services/revenuecat';
+import { purgeFinishedSessions } from './src/services/trackingDb';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { AppNavigator } from './src/navigation';
 
 // Initialize i18n
 import './src/i18n';
-import {loadSavedLanguage} from './src/i18n';
+import { loadSavedLanguage } from './src/i18n';
 
 function AppContent() {
   const { colors, isDark } = useTheme();
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     loadSavedLanguage();
     loadGlobalHapticsPreference();
     configureRevenueCat();
+    // Trim finished tracking sessions past the retention window (7 days)
+    purgeFinishedSessions();
   }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <AppNavigator />
+      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
     </GestureHandlerRootView>
   );
 }

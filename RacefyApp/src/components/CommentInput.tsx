@@ -20,7 +20,13 @@ import { stripMentionsForApi } from '../utils/mentions';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
-import type { Comment, MediaItem, MentionSearchUser, MentionSearchEvent, MentionSearchActivity } from '../types/api';
+import type {
+  Comment,
+  MediaItem,
+  MentionSearchUser,
+  MentionSearchEvent,
+  MentionSearchActivity,
+} from '../types/api';
 
 const DEBOUNCE_MS = 300;
 
@@ -80,12 +86,17 @@ export function CommentInput({
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     const kw = triggers.mention.keyword?.trim();
-    if (!kw || kw.length === 0) { setUserResults([]); return; }
+    if (!kw || kw.length === 0) {
+      setUserResults([]);
+      return;
+    }
     timerRef.current = setTimeout(async () => {
       try {
         const resp = await api.searchMentionUsers(kw);
         setUserResults(resp.data);
-      } catch { setUserResults([]); }
+      } catch {
+        setUserResults([]);
+      }
     }, DEBOUNCE_MS);
   }, [triggers.mention.keyword]);
 
@@ -93,12 +104,17 @@ export function CommentInput({
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     const kw = triggers.event.keyword?.trim();
-    if (!kw || kw.length === 0) { setEventResults([]); return; }
+    if (!kw || kw.length === 0) {
+      setEventResults([]);
+      return;
+    }
     timerRef.current = setTimeout(async () => {
       try {
         const resp = await api.searchMentionEvents(kw);
         setEventResults(resp.data);
-      } catch { setEventResults([]); }
+      } catch {
+        setEventResults([]);
+      }
     }, DEBOUNCE_MS);
   }, [triggers.event.keyword]);
 
@@ -106,12 +122,17 @@ export function CommentInput({
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     const kw = triggers.activity.keyword?.trim();
-    if (!kw || kw.length === 0) { setActivityResults([]); return; }
+    if (!kw || kw.length === 0) {
+      setActivityResults([]);
+      return;
+    }
     timerRef.current = setTimeout(async () => {
       try {
         const resp = await api.searchMentionActivities(kw);
         setActivityResults(resp.data);
-      } catch { setActivityResults([]); }
+      } catch {
+        setActivityResults([]);
+      }
     }, DEBOUNCE_MS);
   }, [triggers.activity.keyword]);
 
@@ -181,59 +202,130 @@ export function CommentInput({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+      ]}
+    >
       {/* Mention suggestions */}
       {showSuggestions && (
-        <View style={[styles.suggestionsContainer, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.suggestionsContainer,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           {showUsers && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {userResults.map((item) => (
                 <TouchableOpacity
                   key={`user-${item.id}`}
                   style={styles.suggestionItem}
-                  onPress={() => { triggers.mention.onSelect({ id: String(item.id), name: item.name }); setUserResults([]); }}
+                  onPress={() => {
+                    triggers.mention.onSelect({ id: String(item.id), name: item.name });
+                    setUserResults([]);
+                  }}
                 >
                   <Avatar uri={item.avatar} name={item.name} size="sm" />
                   <View style={styles.suggestionText}>
-                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.name}</Text>
-                    <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>@{item.username}</Text>
+                    <Text
+                      style={[styles.suggestionName, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                    >
+                      {item.name}
+                    </Text>
+                    <Text
+                      style={[styles.suggestionMeta, { color: colors.textMuted }]}
+                      numberOfLines={1}
+                    >
+                      @{item.username}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           )}
           {showEvents && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {eventResults.map((item) => (
                 <TouchableOpacity
                   key={`event-${item.id}`}
                   style={styles.suggestionItem}
-                  onPress={() => { triggers.event.onSelect({ id: String(item.id), name: item.title || item.name || '' }); setEventResults([]); }}
+                  onPress={() => {
+                    triggers.event.onSelect({
+                      id: String(item.id),
+                      name: item.title || item.name || '',
+                    });
+                    setEventResults([]);
+                  }}
                 >
                   <View style={[styles.triggerIcon, { backgroundColor: colors.info + '18' }]}>
                     <Text style={[styles.triggerIconText, { color: colors.info }]}>#</Text>
                   </View>
                   <View style={styles.suggestionText}>
-                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
-                    {item.location && <Text style={[styles.suggestionMeta, { color: colors.textMuted }]} numberOfLines={1}>{item.location}</Text>}
+                    <Text
+                      style={[styles.suggestionName, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                    >
+                      {item.title || item.name}
+                    </Text>
+                    {item.location && (
+                      <Text
+                        style={[styles.suggestionMeta, { color: colors.textMuted }]}
+                        numberOfLines={1}
+                      >
+                        {item.location}
+                      </Text>
+                    )}
                   </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           )}
           {showActivities && (
-            <ScrollView keyboardShouldPersistTaps="always" style={styles.suggestionList} nestedScrollEnabled>
+            <ScrollView
+              keyboardShouldPersistTaps="always"
+              style={styles.suggestionList}
+              nestedScrollEnabled
+            >
               {activityResults.map((item) => (
                 <TouchableOpacity
                   key={`activity-${item.id}`}
                   style={styles.suggestionItem}
-                  onPress={() => { triggers.activity.onSelect({ id: String(item.id), name: item.title || item.name || '' }); setActivityResults([]); }}
+                  onPress={() => {
+                    triggers.activity.onSelect({
+                      id: String(item.id),
+                      name: item.title || item.name || '',
+                    });
+                    setActivityResults([]);
+                  }}
                 >
-                  <View style={[styles.triggerIcon, { backgroundColor: (colors.ai || '#A855F7') + '18' }]}>
-                    <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>!</Text>
+                  <View
+                    style={[
+                      styles.triggerIcon,
+                      { backgroundColor: (colors.ai || '#A855F7') + '18' },
+                    ]}
+                  >
+                    <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>
+                      !
+                    </Text>
                   </View>
                   <View style={styles.suggestionText}>
-                    <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>{item.title || item.name}</Text>
+                    <Text
+                      style={[styles.suggestionName, { color: colors.textPrimary }]}
+                      numberOfLines={1}
+                    >
+                      {item.title || item.name}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -247,9 +339,14 @@ export function CommentInput({
         <View style={[styles.replyIndicator, { backgroundColor: colors.primaryLight + '20' }]}>
           <Ionicons name="arrow-undo" size={14} color={colors.primary} />
           <Text style={[styles.replyText, { color: colors.textSecondary }]} numberOfLines={1}>
-            {t('comments.replyPlaceholder', { name: replyingTo.user?.name || t('comments.unknownUser') })}
+            {t('comments.replyPlaceholder', {
+              name: replyingTo.user?.name || t('comments.unknownUser'),
+            })}
           </Text>
-          <TouchableOpacity onPress={onCancelReply} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            onPress={onCancelReply}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         </View>

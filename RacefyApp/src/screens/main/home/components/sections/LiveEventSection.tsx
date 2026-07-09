@@ -33,11 +33,7 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       <ImageBackground
         source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
         style={styles.imageBackground}
@@ -51,10 +47,14 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
 
           <View style={styles.content}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+            <Text style={styles.eventTitle} numberOfLines={2}>
+              {event.title}
+            </Text>
 
             {section.message && (
-              <Text style={styles.message} numberOfLines={2}>{section.message}</Text>
+              <Text style={styles.message} numberOfLines={2}>
+                {section.message}
+              </Text>
             )}
 
             <View style={styles.meta}>
@@ -67,7 +67,9 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
               {event.location && (
                 <View style={styles.metaItem}>
                   <Ionicons name="location" size={14} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.metaText} numberOfLines={1}>{event.location}</Text>
+                  <Text style={styles.metaText} numberOfLines={1}>
+                    {event.location}
+                  </Text>
                 </View>
               )}
             </View>

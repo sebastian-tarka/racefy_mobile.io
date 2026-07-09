@@ -1,12 +1,25 @@
-import React, {useCallback, useState} from 'react';
-import {View} from 'react-native';
-import {Card} from './Card';
-import {ReshareModal} from './ReshareModal';
-import {useTheme} from '../hooks/useTheme';
-import {FeedCardHeader} from './FeedCard.Header';
-import {FeedCardActions} from './FeedCard.Actions';
-import {AchievementBody, ActivityBody, ChallengeBody, EventBody, GeneralBody, SponsoredBody} from './FeedCard.Bodies';
-import {type FeedCardProps, type FeedPostType, getEffectiveType, getTypeColors, styles} from './FeedCard.utils';
+import React, { useCallback, useState } from 'react';
+import { View } from 'react-native';
+import { Card } from './Card';
+import { ReshareModal } from './ReshareModal';
+import { useTheme } from '../hooks/useTheme';
+import { FeedCardHeader } from './FeedCard.Header';
+import { FeedCardActions } from './FeedCard.Actions';
+import {
+  AchievementBody,
+  ActivityBody,
+  ChallengeBody,
+  EventBody,
+  GeneralBody,
+  SponsoredBody,
+} from './FeedCard.Bodies';
+import {
+  type FeedCardProps,
+  type FeedPostType,
+  getEffectiveType,
+  getTypeColors,
+  styles,
+} from './FeedCard.utils';
 
 // Re-export types for backward compatibility
 export type { FeedCardProps } from './FeedCard.utils';
@@ -23,7 +36,21 @@ const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   milestone: GeneralBody,
 };
 
-export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, onUserPress, onLikeChange, onBoostChange, onComment, onShareActivity, onActivityPress, onEventPress, onMenu, onReshare, onUnreshare, onOriginalPostUserPress }: FeedCardProps) {
+export const FeedCard = React.memo(function FeedCard({
+  post,
+  isOwner = false,
+  onUserPress,
+  onLikeChange,
+  onBoostChange,
+  onComment,
+  onShareActivity,
+  onActivityPress,
+  onEventPress,
+  onMenu,
+  onReshare,
+  onUnreshare,
+  onOriginalPostUserPress,
+}: FeedCardProps) {
   const { colors } = useTheme();
   const type = getEffectiveType(post);
   const typeColors = getTypeColors(type, colors);
@@ -32,11 +59,14 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
   const [menuOpen, setMenuOpen] = useState(false);
   const [reshareModalVisible, setReshareModalVisible] = useState(false);
 
-  const handleReshareSubmit = useCallback(async (content?: string, visibility?: string) => {
-    if (onReshare) {
-      await onReshare(content, visibility);
-    }
-  }, [onReshare]);
+  const handleReshareSubmit = useCallback(
+    async (content?: string, visibility?: string) => {
+      if (onReshare) {
+        await onReshare(content, visibility);
+      }
+    },
+    [onReshare],
+  );
 
   const handleOriginalPostPress = useCallback(() => {
     if (post.shared_post) {
@@ -46,7 +76,14 @@ export const FeedCard = React.memo(function FeedCard({ post, isOwner = false, on
   }, [post.shared_post]);
 
   return (
-    <Card style={{ marginBottom, position: 'relative', ...(type === 'challenge' && { overflow: 'hidden' }) }} noPadding={type === 'challenge'}>
+    <Card
+      style={{
+        marginBottom,
+        position: 'relative',
+        ...(type === 'challenge' && { overflow: 'hidden' }),
+      }}
+      noPadding={type === 'challenge'}
+    >
       {type !== 'challenge' && typeColors.accent && (
         <View style={[styles.accentBar, { backgroundColor: typeColors.accent, opacity: 0.8 }]} />
       )}

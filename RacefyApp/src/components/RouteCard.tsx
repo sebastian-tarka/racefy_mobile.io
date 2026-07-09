@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDistance, formatTotalTime } from '../utils/formatters';
 import { getSportIcon } from '../utils/sportIcon';
 import type { PlannedRoute } from '../types/api';
@@ -14,20 +14,14 @@ interface RouteCardProps {
   onPress?: () => void;
 }
 
-export function RouteCard({ route, onPress }: RouteCardProps) {
+function RouteCardBase({ route, onPress }: RouteCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  const profileLabel = route.profile === 'cycling'
-    ? t('routes.cycling')
-    : t('routes.walking');
+  const profileLabel = route.profile === 'cycling' ? t('routes.cycling') : t('routes.walking');
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={!onPress}
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight + '20' }]}>
@@ -36,9 +30,7 @@ export function RouteCard({ route, onPress }: RouteCardProps) {
               size={28}
               color={colors.primary}
             />
-            <Text style={[styles.profileBadge, { color: colors.primary }]}>
-              {profileLabel}
-            </Text>
+            <Text style={[styles.profileBadge, { color: colors.primary }]}>{profileLabel}</Text>
           </View>
 
           <View style={styles.info}>
@@ -168,3 +160,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
   },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const RouteCard = React.memo(RouteCardBase);

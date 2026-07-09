@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
+import { useFetch } from './useFetch';
 import type { Event } from '../types/api';
 
 /**
@@ -9,40 +8,17 @@ import type { Event } from '../types/api';
  * Uses the dedicated /my-registrations/ongoing-events endpoint for efficiency.
  */
 export function useOngoingEvents() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchOngoingEvents = useCallback(async () => {
-    if (!api.isAuthenticated()) {
-      setEvents([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const ongoingEvents = await api.getMyOngoingEvents();
-      setEvents(ongoingEvents);
-    } catch (err: any) {
-      logger.error('general', 'Failed to fetch ongoing events', { error: err });
-      setError(err.message || 'Failed to load ongoing events');
-      setEvents([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch on mount
-  useEffect(() => {
-    fetchOngoingEvents();
-  }, [fetchOngoingEvents]);
+  const { data, isLoading, error, refetch } = useFetch<Event[]>(() => api.getMyOngoingEvents(), {
+    enabled: api.isAuthenticated(),
+    initialData: [],
+    logCategory: 'general',
+    errorMessage: 'Failed to load ongoing events',
+  });
 
   return {
-    events,
+    events: data ?? [],
     isLoading,
     error,
-    refresh: fetchOngoingEvents,
+    refresh: refetch,
   };
 }

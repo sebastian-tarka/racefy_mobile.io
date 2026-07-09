@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Switch,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -39,7 +47,10 @@ export function TrainingRemindersScreen({ navigation }: Props) {
         <ScreenHeader
           title={t('settings.trainingReminders.title')}
           showBack
-          onBack={() => { emitRefresh('training'); navigation.goBack(); }}
+          onBack={() => {
+            emitRefresh('training');
+            navigation.goBack();
+          }}
         />
         <Loading />
       </ScreenContainer>
@@ -66,7 +77,10 @@ export function TrainingRemindersScreen({ navigation }: Props) {
       <ScreenHeader
         title={t('settings.trainingReminders.title')}
         showBack
-        onBack={() => { emitRefresh('training'); navigation.goBack(); }}
+        onBack={() => {
+          emitRefresh('training');
+          navigation.goBack();
+        }}
       />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Master Toggle */}
@@ -88,19 +102,27 @@ export function TrainingRemindersScreen({ navigation }: Props) {
         </View>
 
         {/* Training Days */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }, !enabled && styles.disabledCard]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.cardBackground },
+            !enabled && styles.disabledCard,
+          ]}
+        >
           <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
             {t('settings.trainingReminders.trainingDays')}
           </Text>
-          <DayPicker
-            selectedDays={days}
-            onToggle={toggleDay}
-            disabled={!enabled}
-          />
+          <DayPicker selectedDays={days} onToggle={toggleDay} disabled={!enabled} />
         </View>
 
         {/* Reminder Time */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }, !enabled && styles.disabledCard]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.cardBackground },
+            !enabled && styles.disabledCard,
+          ]}
+        >
           <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
             {t('settings.trainingReminders.reminderTime')}
           </Text>
@@ -139,7 +161,13 @@ export function TrainingRemindersScreen({ navigation }: Props) {
         </View>
 
         {/* Push Notifications Toggle */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground }, !enabled && styles.disabledCard]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.cardBackground },
+            !enabled && styles.disabledCard,
+          ]}
+        >
           <View style={styles.toggleRow}>
             <Text style={[styles.toggleLabel, { color: colors.textPrimary }]}>
               {t('settings.trainingReminders.pushNotifications')}

@@ -1,12 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
-import type {
-  LeaderboardEntry,
-  LeaderboardPeriod,
-  LeaderboardResponse,
-  EventLeaderboardResponse,
-} from '../types/api';
+import { useFetch } from './useFetch';
+import type { LeaderboardEntry, LeaderboardPeriod } from '../types/api';
 
 export type LeaderboardType = 'global' | 'following';
 
@@ -32,50 +27,31 @@ export function useLeaderboard({
   limit = 50,
   autoLoad = true,
 }: UseLeaderboardOptions): UseLeaderboardResult {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
-  const [isLoading, setIsLoading] = useState(autoLoad);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchLeaderboard = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      let response: LeaderboardResponse;
-
-      if (type === 'global') {
-        response = await api.getGlobalLeaderboard(period, limit);
-      } else {
-        response = await api.getFollowingLeaderboard(period, limit);
-      }
-
-      setEntries(response.leaderboard);
-    } catch (err: any) {
-      logger.error('api', `Failed to fetch ${type} leaderboard`, { error: err, period });
-      setError(err.message || 'Failed to load leaderboard');
-      setEntries([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [type, period, limit]);
-
-  useEffect(() => {
-    if (autoLoad) {
-      fetchLeaderboard();
-    }
-  }, [fetchLeaderboard, autoLoad]);
+  const { data, isLoading, error, refetch } = useFetch<LeaderboardEntry[]>(
+    () =>
+      (type === 'global'
+        ? api.getGlobalLeaderboard(period, limit)
+        : api.getFollowingLeaderboard(period, limit)
+      ).then((res) => res.leaderboard),
+    {
+      enabled: autoLoad,
+      deps: [type, period, limit],
+      errorMessage: 'Failed to load leaderboard',
+    },
+  );
 
   const changePeriod = useCallback((newPeriod: LeaderboardPeriod) => {
     setPeriod(newPeriod);
   }, []);
 
   return {
-    entries,
+    entries: data ?? [],
     period,
     isLoading,
     error,
-    refetch: fetchLeaderboard,
+    refetch,
     changePeriod,
   };
 }
@@ -99,38 +75,19 @@ export function useEventLeaderboard({
   limit = 50,
   autoLoad = true,
 }: UseEventLeaderboardOptions): UseEventLeaderboardResult {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(autoLoad);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchLeaderboard = useCallback(async () => {
-    if (!eventId) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response: EventLeaderboardResponse = await api.getEventLeaderboard(eventId, limit);
-      setEntries(response.leaderboard);
-    } catch (err: any) {
-      logger.error('api', 'Failed to fetch event leaderboard', { error: err, eventId });
-      setError(err.message || 'Failed to load leaderboard');
-      setEntries([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [eventId, limit]);
-
-  useEffect(() => {
-    if (autoLoad && eventId) {
-      fetchLeaderboard();
-    }
-  }, [fetchLeaderboard, autoLoad, eventId]);
+  const { data, isLoading, error, refetch } = useFetch<LeaderboardEntry[]>(
+    () => api.getEventLeaderboard(eventId, limit).then((res) => res.leaderboard),
+    {
+      enabled: autoLoad && !!eventId,
+      deps: [eventId, limit],
+      errorMessage: 'Failed to load leaderboard',
+    },
+  );
 
   return {
-    entries,
+    entries: data ?? [],
     isLoading,
     error,
-    refetch: fetchLeaderboard,
+    refetch,
   };
 }

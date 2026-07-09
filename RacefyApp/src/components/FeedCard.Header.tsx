@@ -17,7 +17,13 @@ interface MenuBottomSheetProps {
   canEdit?: boolean;
 }
 
-function MenuBottomSheet({ isOwner, visible, onClose, onMenu, canEdit = true }: MenuBottomSheetProps) {
+function MenuBottomSheet({
+  isOwner,
+  visible,
+  onClose,
+  onMenu,
+  canEdit = true,
+}: MenuBottomSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -29,14 +35,12 @@ function MenuBottomSheet({ isOwner, visible, onClose, onMenu, canEdit = true }: 
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={bottomSheetStyles.backdrop} onPress={onClose}>
-        <Pressable style={[bottomSheetStyles.sheet, { backgroundColor: colors.cardBackground }]} onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          style={[bottomSheetStyles.sheet, { backgroundColor: colors.cardBackground }]}
+          onPress={(e) => e.stopPropagation()}
+        >
           <View style={[bottomSheetStyles.handle, { backgroundColor: colors.border }]} />
 
           <Text style={[bottomSheetStyles.title, { color: colors.textPrimary }]}>
@@ -152,21 +156,32 @@ interface FeedCardHeaderProps {
   onMenu?: (action: 'edit' | 'delete' | 'report') => void;
 }
 
-export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, onUserPress, onMenu }: FeedCardHeaderProps) {
+export function FeedCardHeader({
+  post,
+  type,
+  isOwner,
+  menuOpen,
+  onToggleMenu,
+  onUserPress,
+  onMenu,
+}: FeedCardHeaderProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const typeColors = getTypeColors(type, colors);
   const isSponsored = type === 'sponsored';
   const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: false });
 
-  const visibilityConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-    public: { icon: 'eye-outline', label: t('feed.visibility.public') },
-    followers: { icon: 'people-outline', label: t('feed.visibility.followers') },
-    private: { icon: 'lock-closed-outline', label: t('feed.visibility.private') },
-  };
+  const visibilityConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> =
+    {
+      public: { icon: 'eye-outline', label: t('feed.visibility.public') },
+      followers: { icon: 'people-outline', label: t('feed.visibility.followers') },
+      private: { icon: 'lock-closed-outline', label: t('feed.visibility.private') },
+    };
 
   const typeIcon = getTypeIcon(type);
-  const campaignName = isSponsored ? ((post as any).sponsored_data?.campaign_name || t('feed.postTypes.sponsored')) : null;
+  const campaignName = isSponsored
+    ? (post as any).sponsored_data?.campaign_name || t('feed.postTypes.sponsored')
+    : null;
 
   if (isSponsored) {
     return (
@@ -174,9 +189,7 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
         <View style={styles.headerRow}>
           <View style={styles.headerUserBlock}>
             <View style={styles.headerTextBlock}>
-              <Text style={[styles.headerName, { color: colors.textPrimary }]}>
-                {campaignName}
-              </Text>
+              <Text style={[styles.headerName, { color: colors.textPrimary }]}>{campaignName}</Text>
               <View style={styles.headerMetaRow}>
                 {typeIcon && (
                   <View style={styles.typeIndicator}>
@@ -197,7 +210,12 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
             </TouchableOpacity>
           )}
         </View>
-        <MenuBottomSheet isOwner={isOwner} visible={menuOpen} onClose={onToggleMenu} onMenu={onMenu} />
+        <MenuBottomSheet
+          isOwner={isOwner}
+          visible={menuOpen}
+          onClose={onToggleMenu}
+          onMenu={onMenu}
+        />
       </>
     );
   }
@@ -205,10 +223,24 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
   return (
     <>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.headerUserBlock} onPress={onUserPress} disabled={!onUserPress}>
-          <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" showTierBadge={!!post.user?.subscription?.tier && post.user.subscription.tier !== 'free'} tier={post.user?.subscription?.tier} />
+        <TouchableOpacity
+          style={styles.headerUserBlock}
+          onPress={onUserPress}
+          disabled={!onUserPress}
+        >
+          <Avatar
+            uri={post.user?.avatar}
+            name={post.user?.name}
+            size="md"
+            showTierBadge={
+              !!post.user?.subscription?.tier && post.user.subscription.tier !== 'free'
+            }
+            tier={post.user?.subscription?.tier}
+          />
           <View style={styles.headerTextBlock}>
-            <Text style={[styles.headerName, { color: colors.textPrimary }]}>{post.user?.name}</Text>
+            <Text style={[styles.headerName, { color: colors.textPrimary }]}>
+              {post.user?.name}
+            </Text>
             <View style={styles.headerMetaRow}>
               {type !== 'general' && typeIcon && (
                 <>
@@ -224,12 +256,18 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
 
               <Text style={[styles.headerTime, { color: colors.textMuted }]}>{timeAgo}</Text>
               {isOwner && post.visibility && visibilityConfig[post.visibility] && (
-                  <>
-                    <View style={styles.visibilityPill}>
-                      <Ionicons name={visibilityConfig[post.visibility].icon} size={10} color={colors.textMuted} />
-                      <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>{visibilityConfig[post.visibility].label}</Text>
-                    </View>
-                  </>
+                <>
+                  <View style={styles.visibilityPill}>
+                    <Ionicons
+                      name={visibilityConfig[post.visibility].icon}
+                      size={10}
+                      color={colors.textMuted}
+                    />
+                    <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>
+                      {visibilityConfig[post.visibility].label}
+                    </Text>
+                  </View>
+                </>
               )}
             </View>
           </View>
@@ -240,7 +278,13 @@ export function FeedCardHeader({ post, type, isOwner, menuOpen, onToggleMenu, on
           </TouchableOpacity>
         )}
       </View>
-      <MenuBottomSheet isOwner={isOwner} visible={menuOpen} onClose={onToggleMenu} onMenu={onMenu} canEdit={type !== 'achievement'} />
+      <MenuBottomSheet
+        isOwner={isOwner}
+        visible={menuOpen}
+        onClose={onToggleMenu}
+        onMenu={onMenu}
+        canEdit={type !== 'achievement'}
+      />
     </>
   );
 }

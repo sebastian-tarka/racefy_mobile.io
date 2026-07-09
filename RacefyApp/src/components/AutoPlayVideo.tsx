@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Image} from 'expo-image';
-import {useVideoPlayer, VideoView} from 'expo-video';
-import {Ionicons} from '@expo/vector-icons';
-import {VideoPlayerManager} from '../services/VideoPlayerManager';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { Ionicons } from '@expo/vector-icons';
+import { VideoPlayerManager } from '../services/VideoPlayerManager';
 
 interface AutoPlayVideoProps {
   videoUrl: string;
@@ -71,9 +71,7 @@ export function AutoPlayVideo({
     } catch {}
   }, [player]);
 
-  const containerStyle = fillContainer
-    ? styles.fillContainer
-    : [styles.container, { aspectRatio }];
+  const containerStyle = fillContainer ? styles.fillContainer : [styles.container, { aspectRatio }];
 
   return (
     <View style={containerStyle}>
@@ -94,10 +92,17 @@ export function AutoPlayVideo({
         allowsPictureInPicture={false}
       />
 
-      <TouchableOpacity style={styles.controls} activeOpacity={0.9} onPress={onExpand || togglePlayPause}>
+      <TouchableOpacity
+        style={styles.controls}
+        activeOpacity={0.9}
+        onPress={onExpand || togglePlayPause}
+      >
         <TouchableOpacity
           style={styles.muteBtn}
-          onPress={(e) => { e.stopPropagation(); toggleMute(); }}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleMute();
+          }}
         >
           <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={20} color="#fff" />
         </TouchableOpacity>
@@ -137,20 +142,31 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   muteBtn: {
-    position: 'absolute', bottom: 12, right: 12,
-    width: 36, height: 36, borderRadius: 18,
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   playFeedback: {
-    position: 'absolute', width: '100%', height: '100%',
-    justifyContent: 'center', alignItems: 'center',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.2)',
   },
   playIcon: {
-    width: 52, height: 52, borderRadius: 26,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingLeft: 3,
   },
 });

@@ -8,11 +8,11 @@ class UpgradePromptEmitter {
   }
 
   off(event: 'show', handler: Handler) {
-    this.handlers = this.handlers.filter(h => h !== handler);
+    this.handlers = this.handlers.filter((h) => h !== handler);
   }
 
   emit(event: 'show', data: { feature?: string; currentTier?: string }) {
-    this.handlers.forEach(h => h(data));
+    this.handlers.forEach((h) => h(data));
   }
 }
 

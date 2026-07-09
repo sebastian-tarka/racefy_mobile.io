@@ -13,15 +13,8 @@ export function PointHistoryScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
-  const {
-    transactions,
-    isLoading,
-    isLoadingMore,
-    error,
-    hasMore,
-    loadMore,
-    refetch,
-  } = usePointHistory({ autoLoad: true });
+  const { transactions, isLoading, isLoadingMore, error, hasMore, loadMore, refetch } =
+    usePointHistory({ autoLoad: true });
 
   const handleRefresh = useCallback(async () => {
     await refetch();

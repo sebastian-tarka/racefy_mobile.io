@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
-import type { TeamLeaderboardResponse, TeamLeaderboardEntry, LeaderboardSortBy, StatsPeriod } from '../types/api';
+import type {
+  TeamLeaderboardResponse,
+  TeamLeaderboardEntry,
+  LeaderboardSortBy,
+  StatsPeriod,
+} from '../types/api';
 
 interface UseTeamsLeaderboardResult {
   entries: TeamLeaderboardEntry[];
@@ -25,32 +30,35 @@ export function useTeamsLeaderboard(
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
-  const fetchLeaderboard = useCallback(async (reset = true) => {
-    const currentOffset = reset ? 0 : offset;
-    setIsLoading(true);
-    setError(null);
+  const fetchLeaderboard = useCallback(
+    async (reset = true) => {
+      const currentOffset = reset ? 0 : offset;
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const data: TeamLeaderboardResponse = await api.getTeamsLeaderboard({
-        sort_by: sortBy,
-        period,
-        limit: PAGE_SIZE,
-        offset: currentOffset,
-      });
-      if (reset) {
-        setEntries(data.data);
-      } else {
-        setEntries(prev => [...prev, ...data.data]);
+      try {
+        const data: TeamLeaderboardResponse = await api.getTeamsLeaderboard({
+          sort_by: sortBy,
+          period,
+          limit: PAGE_SIZE,
+          offset: currentOffset,
+        });
+        if (reset) {
+          setEntries(data.data);
+        } else {
+          setEntries((prev) => [...prev, ...data.data]);
+        }
+        setTotal(data.total);
+        setOffset(currentOffset + data.data.length);
+      } catch (err: any) {
+        logger.error('general', 'Failed to fetch teams leaderboard', { error: err });
+        setError(err.message || 'Failed to load leaderboard');
+      } finally {
+        setIsLoading(false);
       }
-      setTotal(data.total);
-      setOffset(currentOffset + data.data.length);
-    } catch (err: any) {
-      logger.error('general', 'Failed to fetch teams leaderboard', { error: err });
-      setError(err.message || 'Failed to load leaderboard');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [sortBy, period, offset]);
+    },
+    [sortBy, period, offset],
+  );
 
   useEffect(() => {
     setOffset(0);

@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Switch,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -93,12 +86,16 @@ export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSect
       await updateOptionalConsent(consent.version_id, !consent.accepted);
 
       // Update local state
-      setConsents(prev =>
-        prev.map(c =>
+      setConsents((prev) =>
+        prev.map((c) =>
           c.version_id === consent.version_id
-            ? { ...c, accepted: !c.accepted, accepted_at: !c.accepted ? new Date().toISOString() : null }
-            : c
-        )
+            ? {
+                ...c,
+                accepted: !c.accepted,
+                accepted_at: !c.accepted ? new Date().toISOString() : null,
+              }
+            : c,
+        ),
       );
     } catch (err) {
       logger.error('api', 'Failed to update consent', { error: err });
@@ -163,7 +160,8 @@ export function PrivacyConsentsSection({ embedded = false }: PrivacyConsentsSect
             </Text>
             <Text style={[styles.consentMeta, { color: colors.textSecondary }]}>
               v{consent.version}
-              {consent.accepted_at && ` • ${t('legal.acceptedOn')} ${formatDate(consent.accepted_at)}`}
+              {consent.accepted_at &&
+                ` • ${t('legal.acceptedOn')} ${formatDate(consent.accepted_at)}`}
             </Text>
           </View>
 

@@ -12,7 +12,11 @@ interface Props {
   trends: TrendData;
 }
 
-function TrendRow({ label, changePct, direction }: {
+function TrendRow({
+  label,
+  changePct,
+  direction,
+}: {
   label: string;
   changePct: number | null;
   direction: string | null;
@@ -36,11 +40,10 @@ function TrendRow({ label, changePct, direction }: {
   return (
     <View style={styles.trendRow}>
       <Ionicons name={icon} size={18} color={color} />
-      <Text style={[styles.trendLabel, { color: colors.textSecondary }]}>
-        {label}
-      </Text>
+      <Text style={[styles.trendLabel, { color: colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.trendValue, { color }]}>
-        {changePct > 0 ? '+' : ''}{changePct.toFixed(1)}%
+        {changePct > 0 ? '+' : ''}
+        {changePct.toFixed(1)}%
       </Text>
     </View>
   );

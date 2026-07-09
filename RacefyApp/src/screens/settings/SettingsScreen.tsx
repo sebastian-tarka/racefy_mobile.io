@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,9 +12,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
@@ -31,22 +31,22 @@ import {
   PrivacyConsentsSection,
   ScreenContainer,
   ScreenHeader,
-  SettingsSection
+  SettingsSection,
 } from '../../components';
-import {useAuth} from '../../hooks/useAuth';
-import {useSubscription} from '../../hooks/useSubscription';
-import {useTheme} from '../../hooks/useTheme';
-import {triggerHaptic, useHaptics} from '../../hooks/useHaptics';
-import {type SportTypeWithIcon, useSportTypes} from '../../hooks/useSportTypes';
-import {useHealthSync} from '../../hooks/useHealthSync';
-import {useUnits} from '../../hooks/useUnits';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {changeLanguage, supportedLanguages} from '../../i18n';
-import {fontSize, spacing} from '../../theme';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../../navigation/types';
-import type {NotificationChannelSettings, UserPreferences} from '../../types/api';
+import { useAuth } from '../../hooks/useAuth';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useTheme } from '../../hooks/useTheme';
+import { triggerHaptic, useHaptics } from '../../hooks/useHaptics';
+import { type SportTypeWithIcon, useSportTypes } from '../../hooks/useSportTypes';
+import { useHealthSync } from '../../hooks/useHealthSync';
+import { useUnits } from '../../hooks/useUnits';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { changeLanguage, supportedLanguages } from '../../i18n';
+import { fontSize, spacing } from '../../theme';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import type { NotificationChannelSettings, UserPreferences } from '../../types/api';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
 
@@ -83,7 +83,15 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
           color={danger ? colors.error : colors.textSecondary}
           style={styles.rowIcon}
         />
-        <Text style={[styles.rowLabel, { color: colors.textPrimary }, danger && { color: colors.error }]}>{label}</Text>
+        <Text
+          style={[
+            styles.rowLabel,
+            { color: colors.textPrimary },
+            danger && { color: colors.error },
+          ]}
+        >
+          {label}
+        </Text>
       </View>
       <View style={styles.rowRight}>
         {value && <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>}
@@ -106,16 +114,32 @@ interface NotificationRowProps {
   onPushChange: (value: boolean) => void;
 }
 
-function NotificationRow({ icon, label, description, settings, onEmailChange, onPushChange }: NotificationRowProps) {
+function NotificationRow({
+  icon,
+  label,
+  description,
+  settings,
+  onEmailChange,
+  onPushChange,
+}: NotificationRowProps) {
   const { colors } = useTheme();
 
   return (
     <View style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
       <View style={styles.notificationHeader}>
-        <Ionicons name={icon} size={20} color={colors.textSecondary} style={styles.notificationIcon} />
+        <Ionicons
+          name={icon}
+          size={20}
+          color={colors.textSecondary}
+          style={styles.notificationIcon}
+        />
         <View style={styles.notificationLabelContainer}>
           <Text style={[styles.notificationLabel, { color: colors.textPrimary }]}>{label}</Text>
-          {description && <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>{description}</Text>}
+          {description && (
+            <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>
+              {description}
+            </Text>
+          )}
         </View>
       </View>
       <View style={styles.notificationToggles}>
@@ -255,7 +279,7 @@ export function SettingsScreen({ navigation }: Props) {
         const saved = await AsyncStorage.getItem(SETTINGS_SECTIONS_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          setExpandedSections(prev => ({ ...prev, ...parsed }));
+          setExpandedSections((prev) => ({ ...prev, ...parsed }));
         }
       } catch (error) {
         logger.debug('general', 'Failed to load section states', { error });
@@ -265,10 +289,10 @@ export function SettingsScreen({ navigation }: Props) {
   }, []);
 
   const toggleSection = useCallback(async (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const newState = { ...prev, [section]: !prev[section] };
       // Save to storage (async, don't await)
-      AsyncStorage.setItem(SETTINGS_SECTIONS_KEY, JSON.stringify(newState)).catch(err => {
+      AsyncStorage.setItem(SETTINGS_SECTIONS_KEY, JSON.stringify(newState)).catch((err) => {
         logger.debug('general', 'Failed to save section states', { error: err });
       });
       return newState;
@@ -290,7 +314,9 @@ export function SettingsScreen({ navigation }: Props) {
     const labels = dayLabels[lang] || dayLabels.en;
     const selectedDays = (tr.days || []).map((d: number) => labels[d]).join(', ');
     const time = tr.time || '08:00';
-    return selectedDays ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}` : t('settings.trainingReminders.on', 'On');
+    return selectedDays
+      ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}`
+      : t('settings.trainingReminders.on', 'On');
   })();
 
   useEffect(() => {
@@ -318,11 +344,11 @@ export function SettingsScreen({ navigation }: Props) {
 
   const updatePreference = async <K extends keyof UserPreferences>(
     key: K,
-    value: UserPreferences[K]
+    value: UserPreferences[K],
   ) => {
     triggerHaptic();
     const oldPreferences = { ...preferences };
-    setPreferences(prev => ({ ...prev, [key]: value }));
+    setPreferences((prev) => ({ ...prev, [key]: value }));
 
     try {
       const updatedPrefs = await api.updatePreferences({ [key]: value });
@@ -337,16 +363,16 @@ export function SettingsScreen({ navigation }: Props) {
 
   const updateNestedPreference = async <
     K extends 'notifications' | 'privacy' | 'activity_defaults',
-    NK extends keyof UserPreferences[K]
+    NK extends keyof UserPreferences[K],
   >(
     category: K,
     key: NK,
-    value: UserPreferences[K][NK]
+    value: UserPreferences[K][NK],
   ) => {
     triggerHaptic();
     const oldPreferences = { ...preferences };
     const updatedCategory = { ...preferences[category], [key]: value };
-    setPreferences(prev => ({ ...prev, [category]: updatedCategory }));
+    setPreferences((prev) => ({ ...prev, [category]: updatedCategory }));
 
     try {
       // Use dot notation for partial update
@@ -366,7 +392,7 @@ export function SettingsScreen({ navigation }: Props) {
   const updateNotificationChannel = async (
     notificationType: keyof UserPreferences['notifications'],
     channel: 'email' | 'push',
-    value: boolean
+    value: boolean,
   ) => {
     const oldPreferences = { ...preferences };
     const updatedNotificationType = {
@@ -377,7 +403,7 @@ export function SettingsScreen({ navigation }: Props) {
       ...preferences.notifications,
       [notificationType]: updatedNotificationType,
     };
-    setPreferences(prev => ({ ...prev, notifications: updatedNotifications }));
+    setPreferences((prev) => ({ ...prev, notifications: updatedNotifications }));
 
     try {
       // Use dot notation for partial update as supported by API
@@ -402,7 +428,7 @@ export function SettingsScreen({ navigation }: Props) {
     const keys = key.split('.');
     if (keys.length === 2) {
       // Simple key like 'ai_posts.enabled'
-      setPreferences(prev => ({
+      setPreferences((prev) => ({
         ...prev,
         ai_posts: {
           ...prev.ai_posts,
@@ -411,7 +437,7 @@ export function SettingsScreen({ navigation }: Props) {
       }));
     } else if (keys.length === 3) {
       // Nested key like 'ai_posts.triggers.activity_completion'
-      setPreferences(prev => ({
+      setPreferences((prev) => ({
         ...prev,
         ai_posts: {
           ...prev.ai_posts,
@@ -490,36 +516,32 @@ export function SettingsScreen({ navigation }: Props) {
       return;
     }
 
-    Alert.alert(
-      t('settings.deleteAccount'),
-      t('settings.deleteAccountConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
+    Alert.alert(t('settings.deleteAccount'), t('settings.deleteAccountConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          setIsDeleting(true);
+          triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
 
-            try {
-              await api.deleteAccount(deletePassword);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              await logout();
-            } catch (error: any) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              if (error?.message?.includes('password')) {
-                Alert.alert(t('common.error'), t('settings.incorrectPassword'));
-              } else {
-                Alert.alert(t('common.error'), t('settings.deleteAccountFailed'));
-              }
-            } finally {
-              setIsDeleting(false);
+          try {
+            await api.deleteAccount(deletePassword);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            await logout();
+          } catch (error: any) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            if (error?.message?.includes('password')) {
+              Alert.alert(t('common.error'), t('settings.incorrectPassword'));
+            } else {
+              Alert.alert(t('common.error'), t('settings.deleteAccountFailed'));
             }
-          },
+          } finally {
+            setIsDeleting(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleLogout = () => {
@@ -570,7 +592,7 @@ export function SettingsScreen({ navigation }: Props) {
   const getFavoriteSportLabel = () => {
     const sportId = preferences.activity_defaults.favorite_sport_id;
     if (!sportId) return t('settings.noSportSelected');
-    const sport = sportTypes.find(s => s.id === sportId);
+    const sport = sportTypes.find((s) => s.id === sportId);
     return sport?.name || t('settings.noSportSelected');
   };
 
@@ -588,11 +610,7 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('settings.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('settings.title')} showBack onBack={() => navigation.goBack()} />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* ══════════════════════════════════════════════════════════
@@ -617,7 +635,12 @@ export function SettingsScreen({ navigation }: Props) {
             }}
           />
           {showPasswordChange && (
-            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+            <View
+              style={[
+                styles.formSection,
+                { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+              ]}
+            >
               <Input
                 label={t('settings.currentPassword')}
                 placeholder={t('settings.currentPasswordPlaceholder')}
@@ -651,17 +674,32 @@ export function SettingsScreen({ navigation }: Props) {
             </View>
           )}
           {/* Subscription info */}
-          <View style={[styles.subscriptionCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.subscriptionCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.subscriptionRow}>
               <Text style={[styles.subscriptionLabel, { color: colors.textSecondary }]}>
                 {t('settings.currentPlan')}
               </Text>
               <View style={styles.subscriptionPlanRow}>
-                <Text style={[styles.subscriptionPlanValue, { color: isPremium ? colors.primary : colors.textPrimary }]}>
+                <Text
+                  style={[
+                    styles.subscriptionPlanValue,
+                    { color: isPremium ? colors.primary : colors.textPrimary },
+                  ]}
+                >
                   {t(`settings.plan${tier.charAt(0).toUpperCase() + tier.slice(1)}`)}
                 </Text>
                 {isTrial && (
-                  <View style={[styles.subscriptionTrialBadge, { backgroundColor: colors.primary + '20' }]}>
+                  <View
+                    style={[
+                      styles.subscriptionTrialBadge,
+                      { backgroundColor: colors.primary + '20' },
+                    ]}
+                  >
                     <Text style={[styles.subscriptionTrialBadgeText, { color: colors.primary }]}>
                       {t('settings.trialBadge')}
                     </Text>
@@ -723,10 +761,13 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="language-outline"
             label={t('settings.language')}
-            value={supportedLanguages.find(l => l.code === preferences.language)?.nativeName || 'English'}
+            value={
+              supportedLanguages.find((l) => l.code === preferences.language)?.nativeName ||
+              'English'
+            }
             onPress={() => {
               const langs = supportedLanguages;
-              const currentIndex = langs.findIndex(l => l.code === preferences.language);
+              const currentIndex = langs.findIndex((l) => l.code === preferences.language);
               const nextIndex = (currentIndex + 1) % langs.length;
               const newLang = langs[nextIndex].code as UserPreferences['language'];
               changeLanguage(newLang);
@@ -784,7 +825,13 @@ export function SettingsScreen({ navigation }: Props) {
             icon="globe-outline"
             label={t('settings.defaultVisibility')}
             value={getVisibilityLabel(preferences.activity_defaults.visibility)}
-            onPress={() => updateNestedPreference('activity_defaults', 'visibility', cycleVisibility(preferences.activity_defaults.visibility))}
+            onPress={() =>
+              updateNestedPreference(
+                'activity_defaults',
+                'visibility',
+                cycleVisibility(preferences.activity_defaults.visibility),
+              )
+            }
           />
           <SettingsRow
             icon="share-outline"
@@ -792,14 +839,23 @@ export function SettingsScreen({ navigation }: Props) {
             rightElement={
               <Switch
                 value={preferences.activity_defaults.auto_share}
-                onValueChange={(value) => updateNestedPreference('activity_defaults', 'auto_share', value)}
+                onValueChange={(value) =>
+                  updateNestedPreference('activity_defaults', 'auto_share', value)
+                }
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={preferences.activity_defaults.auto_share ? colors.primary : colors.white}
+                thumbColor={
+                  preferences.activity_defaults.auto_share ? colors.primary : colors.white
+                }
               />
             }
           />
           {/* Health Sync */}
-          <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+          <View
+            style={[
+              styles.formSection,
+              { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+            ]}
+          >
             <Text style={[styles.healthSyncDescription, { color: colors.textSecondary }]}>
               {t('settings.healthSync.description')}
             </Text>
@@ -825,9 +881,9 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.healthSync.status')}
             value={
               healthStatus === 'available'
-                ? (Platform.OS === 'ios'
-                    ? t('settings.healthSync.sourceAppleHealth')
-                    : t('settings.healthSync.sourceHealthConnect'))
+                ? Platform.OS === 'ios'
+                  ? t('settings.healthSync.sourceAppleHealth')
+                  : t('settings.healthSync.sourceHealthConnect')
                 : healthStatus === 'not_installed'
                   ? t('settings.healthSync.statusNotInstalled')
                   : t('settings.healthSync.statusNotAvailable')
@@ -939,7 +995,9 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.notif_activity_reactions')}
             description={t('settings.notif_activity_reactions_desc')}
             settings={preferences.notifications.activity_reactions}
-            onEmailChange={(value) => updateNotificationChannel('activity_reactions', 'email', value)}
+            onEmailChange={(value) =>
+              updateNotificationChannel('activity_reactions', 'email', value)
+            }
             onPushChange={(value) => updateNotificationChannel('activity_reactions', 'push', value)}
           />
           <NotificationRow
@@ -955,8 +1013,12 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.notif_training_week_feedback')}
             description={t('settings.notif_training_week_feedback_desc')}
             settings={preferences.notifications.training_week_feedback}
-            onEmailChange={(value) => updateNotificationChannel('training_week_feedback', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('training_week_feedback', 'push', value)}
+            onEmailChange={(value) =>
+              updateNotificationChannel('training_week_feedback', 'email', value)
+            }
+            onPushChange={(value) =>
+              updateNotificationChannel('training_week_feedback', 'push', value)
+            }
           />
         </SettingsSection>
 
@@ -972,7 +1034,13 @@ export function SettingsScreen({ navigation }: Props) {
             icon="eye-outline"
             label={t('settings.profileVisibility')}
             value={getVisibilityLabel(preferences.privacy.profile_visibility)}
-            onPress={() => updateNestedPreference('privacy', 'profile_visibility', cycleVisibility(preferences.privacy.profile_visibility))}
+            onPress={() =>
+              updateNestedPreference(
+                'privacy',
+                'profile_visibility',
+                cycleVisibility(preferences.privacy.profile_visibility),
+              )
+            }
           />
           <SettingsRow
             icon="fitness-outline"
@@ -980,7 +1048,9 @@ export function SettingsScreen({ navigation }: Props) {
             rightElement={
               <Switch
                 value={preferences.privacy.show_activities}
-                onValueChange={(value) => updateNestedPreference('privacy', 'show_activities', value)}
+                onValueChange={(value) =>
+                  updateNestedPreference('privacy', 'show_activities', value)
+                }
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
                 thumbColor={preferences.privacy.show_activities ? colors.primary : colors.white}
               />
@@ -1002,7 +1072,13 @@ export function SettingsScreen({ navigation }: Props) {
             icon="mail-open-outline"
             label={t('settings.allowMessages')}
             value={getMessagesLabel(preferences.privacy.allow_messages)}
-            onPress={() => updateNestedPreference('privacy', 'allow_messages', cycleMessages(preferences.privacy.allow_messages))}
+            onPress={() =>
+              updateNestedPreference(
+                'privacy',
+                'allow_messages',
+                cycleMessages(preferences.privacy.allow_messages),
+              )
+            }
           />
           <SettingsRow
             icon="trophy-outline"
@@ -1010,9 +1086,13 @@ export function SettingsScreen({ navigation }: Props) {
             rightElement={
               <Switch
                 value={preferences.privacy.share_achievements ?? true}
-                onValueChange={(value) => updateNestedPreference('privacy', 'share_achievements', value)}
+                onValueChange={(value) =>
+                  updateNestedPreference('privacy', 'share_achievements', value)
+                }
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={(preferences.privacy.share_achievements ?? true) ? colors.primary : colors.white}
+                thumbColor={
+                  (preferences.privacy.share_achievements ?? true) ? colors.primary : colors.white
+                }
               />
             }
           />
@@ -1053,7 +1133,12 @@ export function SettingsScreen({ navigation }: Props) {
           onToggle={() => toggleSection('app')}
         >
           <View style={[styles.aboutSection, { borderBottomColor: colors.border }]}>
-            <BrandLogo category="logo-full" variant={isDark ? 'light' : 'dark'} width={160} height={45} />
+            <BrandLogo
+              category="logo-full"
+              variant={isDark ? 'light' : 'dark'}
+              width={160}
+              height={45}
+            />
             <Text style={[styles.versionText, { color: colors.textSecondary }]}>
               {t('settings.version')} {appVersion}
             </Text>
@@ -1061,11 +1146,7 @@ export function SettingsScreen({ navigation }: Props) {
               © {new Date().getFullYear()} Racefy. {t('settings.allRightsReserved')}
             </Text>
           </View>
-          <SettingsRow
-            icon="log-out-outline"
-            label={t('common.logout')}
-            onPress={handleLogout}
-          />
+          <SettingsRow icon="log-out-outline" label={t('common.logout')} onPress={handleLogout} />
         </SettingsSection>
 
         {/* ══════════════════════════════════════════════════════════
@@ -1084,8 +1165,15 @@ export function SettingsScreen({ navigation }: Props) {
             danger
           />
           {showDeleteAccount && (
-            <View style={[styles.formSection, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-              <Text style={[styles.dangerText, { color: colors.error }]}>{t('settings.deleteAccountWarning')}</Text>
+            <View
+              style={[
+                styles.formSection,
+                { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.dangerText, { color: colors.error }]}>
+                {t('settings.deleteAccountWarning')}
+              </Text>
               <Input
                 label={t('settings.confirmPassword')}
                 placeholder={t('settings.enterPasswordToDelete')}
@@ -1139,7 +1227,9 @@ export function SettingsScreen({ navigation }: Props) {
                     await Notifications.scheduleNotificationAsync({
                       content: {
                         title: 'Test Notification',
-                        body: 'Tap this to test if the app opens! Sent at ' + new Date().toLocaleTimeString(),
+                        body:
+                          'Tap this to test if the app opens! Sent at ' +
+                          new Date().toLocaleTimeString(),
                         data: { type: 'test', post_id: 1 },
                         sound: 'default',
                       },
@@ -1148,7 +1238,10 @@ export function SettingsScreen({ navigation }: Props) {
                         seconds: 5,
                       },
                     });
-                    Alert.alert('Scheduled', 'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.');
+                    Alert.alert(
+                      'Scheduled',
+                      'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.',
+                    );
                   } catch (e: any) {
                     Alert.alert('Error', e.message);
                   }
@@ -1182,9 +1275,12 @@ export function SettingsScreen({ navigation }: Props) {
                       projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
                     });
                     Alert.alert('Expo Push Token', token.data, [
-                      { text: 'Copy', onPress: () => {
-                        Clipboard.setStringAsync(token.data);
-                      }},
+                      {
+                        text: 'Copy',
+                        onPress: () => {
+                          Clipboard.setStringAsync(token.data);
+                        },
+                      },
                       { text: 'OK' },
                     ]);
                   } catch (e: any) {
@@ -1195,12 +1291,13 @@ export function SettingsScreen({ navigation }: Props) {
               <View style={{ height: spacing.md }} />
               <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
                 Test 1 - Lokalna notyfikacja:{'\n'}
-                1. "Send test notification (5s delay)"{'\n'}
+                1. {'"Send test notification (5s delay)"'}
+                {'\n'}
                 2. Zminimalizuj appkę{'\n'}
                 3. Tapnij powiadomienie{'\n'}
                 {'\n'}
                 Test 2 - Push via Expo Tool:{'\n'}
-                1. "Show Push Token" → skopiuj token{'\n'}
+                1. {'"Show Push Token"'} → skopiuj token{'\n'}
                 2. Wejdź na expo.dev/notifications{'\n'}
                 3. Wklej token i wyślij{'\n'}
                 4. Tapnij powiadomienie
@@ -1219,10 +1316,15 @@ export function SettingsScreen({ navigation }: Props) {
       >
         <ScreenContainer style={styles.modalContainer}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => setShowSportModal(false)} style={styles.modalCloseButton}>
+            <TouchableOpacity
+              onPress={() => setShowSportModal(false)}
+              style={styles.modalCloseButton}
+            >
               <Ionicons name="close" size={28} color={colors.textPrimary} />
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('settings.selectFavoriteSport')}</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+              {t('settings.selectFavoriteSport')}
+            </Text>
             <View style={styles.modalHeaderSpacer} />
           </View>
           {sportsLoading ? (
@@ -1234,27 +1336,51 @@ export function SettingsScreen({ navigation }: Props) {
             </View>
           ) : (
             <FlatList
-              data={[{ id: null, name: t('settings.noSportSelected'), slug: 'none', icon: 'close-circle-outline' as keyof typeof Ionicons.glyphMap, is_active: true }, ...sportTypes]}
+              data={[
+                {
+                  id: null,
+                  name: t('settings.noSportSelected'),
+                  slug: 'none',
+                  icon: 'close-circle-outline' as keyof typeof Ionicons.glyphMap,
+                  is_active: true,
+                },
+                ...sportTypes,
+              ]}
               keyExtractor={(item) => item.id?.toString() || 'none'}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
                     styles.sportItem,
                     { borderBottomColor: colors.border },
-                    preferences.activity_defaults.favorite_sport_id === item.id && { backgroundColor: colors.successLight }
+                    preferences.activity_defaults.favorite_sport_id === item.id && {
+                      backgroundColor: colors.successLight,
+                    },
                   ]}
-                  onPress={() => handleSelectFavoriteSport(item.id ? item as SportTypeWithIcon : null)}
+                  onPress={() =>
+                    handleSelectFavoriteSport(item.id ? (item as SportTypeWithIcon) : null)
+                  }
                 >
                   <Ionicons
                     name={item.icon}
                     size={24}
-                    color={preferences.activity_defaults.favorite_sport_id === item.id ? colors.primary : colors.textSecondary}
+                    color={
+                      preferences.activity_defaults.favorite_sport_id === item.id
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
                     style={styles.sportIcon}
                   />
-                  <Text style={[
-                    styles.sportName,
-                    { color: preferences.activity_defaults.favorite_sport_id === item.id ? colors.primary : colors.textPrimary }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.sportName,
+                      {
+                        color:
+                          preferences.activity_defaults.favorite_sport_id === item.id
+                            ? colors.primary
+                            : colors.textPrimary,
+                      },
+                    ]}
+                  >
                     {item.name}
                   </Text>
                   {preferences.activity_defaults.favorite_sport_id === item.id && (

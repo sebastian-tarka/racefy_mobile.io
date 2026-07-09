@@ -1,23 +1,23 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    DeviceEventEmitter,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  DeviceEventEmitter,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTranslation} from 'react-i18next';
-import {EmptyState, Loading, RouteCard, ScreenContainer, ScreenHeader} from '../../components';
-import {useRoutes} from '../../hooks/useRoutes';
-import {useTheme} from '../../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import type {RootStackParamList} from '../../navigation/types';
-import type {PlannedRoute} from '../../types/api';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { EmptyState, Loading, RouteCard, ScreenContainer, ScreenHeader } from '../../components';
+import { useRoutes } from '../../hooks/useRoutes';
+import { useTheme } from '../../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import type { PlannedRoute } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RouteLibrary'>;
 
@@ -67,20 +67,21 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
     setActiveFilter(value);
   }, []);
 
-  const handleRoutePress = useCallback((route: PlannedRoute) => {
-    if (selectMode) {
-      DeviceEventEmitter.emit('route:selected', route.id);
-      navigation.goBack();
-      return;
-    }
-    navigation.navigate('RouteDetail', { routeId: route.id });
-  }, [navigation, selectMode]);
+  const handleRoutePress = useCallback(
+    (route: PlannedRoute) => {
+      if (selectMode) {
+        DeviceEventEmitter.emit('route:selected', route.id);
+        navigation.goBack();
+        return;
+      }
+      navigation.navigate('RouteDetail', { routeId: route.id });
+    },
+    [navigation, selectMode],
+  );
 
-  const handleDelete = useCallback(async (routeId: number) => {
-    Alert.alert(
-      t('routeDetail.delete'),
-      t('routes.deleteConfirm'),
-      [
+  const handleDelete = useCallback(
+    async (routeId: number) => {
+      Alert.alert(t('routeDetail.delete'), t('routes.deleteConfirm'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.delete'),
@@ -91,16 +92,17 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
             } catch {}
           },
         },
-      ]
-    );
-  }, [deleteRoute, t]);
+      ]);
+    },
+    [deleteRoute, t],
+  );
 
-  const renderItem = useCallback(({ item }: { item: PlannedRoute }) => (
-    <RouteCard
-      route={item}
-      onPress={() => handleRoutePress(item)}
-    />
-  ), [handleRoutePress]);
+  const renderItem = useCallback(
+    ({ item }: { item: PlannedRoute }) => (
+      <RouteCard route={item} onPress={() => handleRoutePress(item)} />
+    ),
+    [handleRoutePress],
+  );
 
   const renderEmpty = () => {
     if (isLoading) return null;
@@ -119,11 +121,16 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
         title={selectMode ? t('routes.selectRoute', 'Select Route') : t('routes.title')}
         showBack
         onBack={() => navigation.goBack()}
-        rightAction={!selectMode ? (
-          <TouchableOpacity onPress={() => navigation.navigate('RoutePlanner')} style={{ padding: spacing.xs }}>
-            <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        ) : undefined}
+        rightAction={
+          !selectMode ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('RoutePlanner')}
+              style={{ padding: spacing.xs }}
+            >
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          ) : undefined
+        }
       />
 
       {/* Filter tabs */}
@@ -170,11 +177,7 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
         }
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
-        ListFooterComponent={
-          isLoading && routes.length > 0 ? (
-            <Loading />
-          ) : null
-        }
+        ListFooterComponent={isLoading && routes.length > 0 ? <Loading /> : null}
       />
     </ScreenContainer>
   );

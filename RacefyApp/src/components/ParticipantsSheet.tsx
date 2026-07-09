@@ -111,7 +111,10 @@ export function ParticipantsSheet({
             <Text style={[styles.title, { color: colors.textPrimary }]}>
               {t('messaging.viewMembers')}
             </Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="close" size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>

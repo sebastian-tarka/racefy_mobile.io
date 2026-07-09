@@ -1,8 +1,7 @@
-import {useCallback, useEffect, useState} from 'react';
-import {api} from '../services/api';
-import {logger} from '../services/logger';
-import {useAuth} from './useAuth';
-import type {ActivityStats, ActivityStatsPeriod} from '../types/api';
+import { api } from '../services/api';
+import { useAuth } from './useAuth';
+import { useFetch } from './useFetch';
+import type { ActivityStats, ActivityStatsPeriod } from '../types/api';
 
 interface UseActivityStatsResult {
   stats: ActivityStats | null;
@@ -20,27 +19,15 @@ interface UseActivityStatsParams {
 
 export function useActivityStats(params?: UseActivityStatsParams): UseActivityStatsResult {
   const { isAuthenticated } = useAuth();
-  const [stats, setStats] = useState<ActivityStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Extract values for dependencies
+  // Extract values for stable dependencies
   const period = params?.period ?? null;
   const sportTypeId = params?.sportTypeId ?? null;
   const from = params?.from ?? null;
   const to = params?.to ?? null;
 
-  const fetchStats = useCallback(async () => {
-    if (!isAuthenticated) {
-      setStats(null);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const { data, isLoading, error, refetch } = useFetch<ActivityStats>(
+    () => {
       const apiParams: {
         period?: ActivityStatsPeriod;
         from?: string;
@@ -54,38 +41,15 @@ export function useActivityStats(params?: UseActivityStatsParams): UseActivitySt
         if (to) apiParams.to = to;
       }
       if (sportTypeId) apiParams.sport_type_id = sportTypeId;
+      return api.getActivityStats(apiParams);
+    },
+    {
+      enabled: isAuthenticated,
+      deps: [period, sportTypeId, from, to],
+      logCategory: 'activity',
+      errorMessage: 'Failed to load statistics',
+    },
+  );
 
-      logger.info('activity', 'Fetching activity stats', apiParams);
-
-      const data = await api.getActivityStats(apiParams);
-      setStats(data);
-
-      logger.info('activity', 'Activity stats fetched successfully', {
-        hasBySportType: !!data.by_sport_type,
-        count: data.count,
-      });
-    } catch (err: any) {
-      logger.error('activity', 'Failed to fetch activity stats', { error: err });
-      setError(err.message || 'Failed to load statistics');
-      setStats(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [period, sportTypeId, from, to, isAuthenticated]);
-
-  useEffect(() => {
-    logger.debug('activity', 'useActivityStats effect triggered', { period, sportTypeId, from, to });
-    fetchStats();
-  }, [fetchStats]);
-
-  const refetch = useCallback(async () => {
-    await fetchStats();
-  }, [fetchStats]);
-
-  return {
-    stats,
-    isLoading,
-    error,
-    refetch,
-  };
+  return { stats: data, isLoading, error, refetch };
 }

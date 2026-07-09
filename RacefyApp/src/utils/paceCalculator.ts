@@ -32,7 +32,7 @@ export interface PaceSegment {
 export function calculateCurrentPace(
   segments: PaceSegment[],
   windowSeconds: number,
-  minSegmentDistance: number
+  minSegmentDistance: number,
 ): number | null {
   if (segments.length < 2) {
     return null;
@@ -43,7 +43,7 @@ export function calculateCurrentPace(
   const cutoffTime = now - windowMs;
 
   // Filter segments within the time window
-  const windowSegments = segments.filter(s => s.timestamp >= cutoffTime);
+  const windowSegments = segments.filter((s) => s.timestamp >= cutoffTime);
 
   if (windowSegments.length < 2) {
     // Not enough segments in window, fall back to all available segments
@@ -110,7 +110,7 @@ export function calculateCurrentPace(
 export function smoothPace(
   currentPace: number,
   previousSmoothed: number | null,
-  smoothingFactor: number
+  smoothingFactor: number,
 ): number {
   // Clamp smoothing factor to valid range
   const alpha = Math.max(0.1, Math.min(0.9, smoothingFactor));
@@ -134,7 +134,7 @@ export function smoothPace(
 export function formatPaceDisplay(
   secondsPerKm: number | null,
   placeholder: string = '--:--',
-  units: 'metric' | 'imperial' = 'metric'
+  units: 'metric' | 'imperial' = 'metric',
 ): string {
   if (secondsPerKm === null || !isFinite(secondsPerKm)) {
     return placeholder;
@@ -168,7 +168,7 @@ export function formatPaceDisplay(
 export function calculateAveragePace(
   durationSeconds: number,
   distanceMeters: number,
-  minDistance: number = 50
+  minDistance: number = 50,
 ): number | null {
   if (distanceMeters < minDistance || durationSeconds < 1) {
     return null;
@@ -196,7 +196,7 @@ export function calculateAveragePace(
 export function addPaceSegment(
   buffer: PaceSegment[],
   newSegment: PaceSegment,
-  maxSegments: number = 30
+  maxSegments: number = 30,
 ): PaceSegment[] {
   const updated = [...buffer, newSegment];
 
@@ -208,6 +208,61 @@ export function addPaceSegment(
   return updated;
 }
 
+/** Profile knobs that drive smoothed current-pace calculation. */
+export interface PaceTrackerProfile {
+  paceWindowSeconds: number;
+  minSegmentDistance: number;
+  paceSmoothingFactor: number;
+}
+
+/**
+ * Stateful current-pace tracker: holds the recent (timestamp, cumulative-distance)
+ * segments plus the smoothed pace carried between updates. Extracted from
+ * useLiveActivity so the pace concern is a single plain object (no React/expo).
+ */
+export class PaceTracker {
+  private segments: PaceSegment[] = [];
+  private smoothedPace: number | null = null;
+
+  /**
+   * Record a new (timestamp, cumulative distance) sample and return the smoothed
+   * current pace. When there is not yet enough data the previous smoothed value is
+   * kept (matching the legacy behaviour of holding the last pace rather than nulling).
+   */
+  record(
+    sample: PaceSegment,
+    profile: PaceTrackerProfile,
+    maxSegments: number = 30,
+  ): number | null {
+    this.segments = addPaceSegment(this.segments, sample, maxSegments);
+    const rawPace = calculateCurrentPace(
+      this.segments,
+      profile.paceWindowSeconds,
+      profile.minSegmentDistance,
+    );
+    if (rawPace !== null) {
+      this.smoothedPace = smoothPace(rawPace, this.smoothedPace, profile.paceSmoothingFactor);
+    }
+    return this.smoothedPace;
+  }
+
+  /** The current smoothed pace (null until enough data has accumulated). */
+  get currentPace(): number | null {
+    return this.smoothedPace;
+  }
+
+  /** Number of buffered segments (for diagnostics/tests). */
+  get size(): number {
+    return this.segments.length;
+  }
+
+  /** Reset on finish/discard/pause so the next session starts clean. */
+  reset(): void {
+    this.segments = [];
+    this.smoothedPace = null;
+  }
+}
+
 /**
  * Trim segments to only include those within a time window.
  *
@@ -217,8 +272,8 @@ export function addPaceSegment(
  */
 export function trimSegmentsToWindow(
   segments: PaceSegment[],
-  windowSeconds: number
+  windowSeconds: number,
 ): PaceSegment[] {
-  const cutoffTime = Date.now() - (windowSeconds * 1000);
-  return segments.filter(s => s.timestamp >= cutoffTime);
+  const cutoffTime = Date.now() - windowSeconds * 1000;
+  return segments.filter((s) => s.timestamp >= cutoffTime);
 }

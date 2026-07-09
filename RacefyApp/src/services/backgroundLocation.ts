@@ -2,10 +2,12 @@ import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
 import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {logger} from './logger';
-import {buildAnnouncementText, buildMilestoneAnnouncement} from './audioCoach/templates';
-import type {GpsProfile} from '../config/gpsProfiles';
-import {syncPointsToServer} from './backgroundApiClient';
+import { logger } from './logger';
+import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
+import { ensureAudioMode } from './audioCoach/audioSession';
+import type { GpsProfile } from '../config/gpsProfiles';
+import { haversineDistance } from '../utils/gpsMath';
+import * as trackingDb from './trackingDb';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
@@ -54,7 +56,8 @@ async function getStoredGpsProfile(): Promise<{
         accuracyThreshold: profile.accuracyThreshold,
         minDistanceThreshold: profile.minDistanceThreshold,
         maxRealisticSpeed: profile.maxRealisticSpeed,
-        stationarySpeedThreshold: profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
+        stationarySpeedThreshold:
+          profile.stationarySpeedThreshold ?? DEFAULT_STATIONARY_SPEED_THRESHOLD,
         backgroundSyncInterval: profile.backgroundSyncInterval,
         backgroundSyncEnabled: profile.backgroundSyncEnabled,
       };
@@ -71,25 +74,8 @@ async function getStoredGpsProfile(): Promise<{
 }
 
 // Haversine formula to calculate distance between two coordinates
-function calculateDistanceBetweenCoords(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-}
+// Shared with useLiveActivity via utils/gpsMath (identical Haversine).
+const calculateDistanceBetweenCoords = haversineDistance;
 
 // Get and set last background position for distance filtering
 export interface LastPosition {
@@ -122,49 +108,19 @@ async function clearLastBackgroundPosition(): Promise<void> {
 
 async function performBackgroundSync(): Promise<void> {
   try {
-    // Get activity ID
-    const activityId = await getActiveActivityId();
-    if (!activityId) {
-      logger.gps('Background sync: No active activity');
-      return;
-    }
+    // Single upload path shared with the foreground: drain unsynced rows from
+    // the SQLite log. Idempotent batches + persisted backoff live in the
+    // uploader, so the fragile index-based BackgroundSyncState is not used.
+    const { drainPoints } = await import('./pointsUploader');
+    const result = await drainPoints();
 
-    // Get sync state
-    const syncState = await getBackgroundSyncState();
-
-    // Get buffer and calculate unsynced points
-    const buffer = await getLocationBuffer();
-    const unsyncedPoints = buffer.slice(syncState.syncedPointsCount);
-
-    if (unsyncedPoints.length === 0) {
-      logger.gps('Background sync: No new points to sync');
-      return;
-    }
-
-    // Log attempt
-    logger.gps(`Background sync: Attempting to sync ${unsyncedPoints.length} points`);
-
-    // Call API
-    const result = await syncPointsToServer(activityId, unsyncedPoints);
-
-    if (result.success) {
-      // Update state: increment synced count
-      await updateBackgroundSyncState({
-        lastSyncSuccess: Date.now(),
-        lastSyncAttempt: Date.now(),
-        syncedPointsCount: buffer.length,
-        consecutiveFailures: 0,
-        totalPointsSynced: syncState.totalPointsSynced + unsyncedPoints.length,
-      });
-      logger.gps(`Background sync: SUCCESS (${unsyncedPoints.length} points synced, total: ${buffer.length})`);
-    } else {
-      // Update failure count
-      await updateBackgroundSyncState({
-        lastSyncAttempt: Date.now(),
-        consecutiveFailures: syncState.consecutiveFailures + 1,
-      });
+    if (result.uploaded > 0) {
+      logger.gps(
+        `Background sync: SUCCESS (${result.uploaded} points synced, remaining: ${result.remaining})`,
+      );
+    } else if (result.error) {
       logger.warn('gps', `Background sync: FAILED - ${result.error}`, {
-        consecutiveFailures: syncState.consecutiveFailures + 1,
+        remaining: result.remaining,
       });
     }
   } catch (err) {
@@ -187,8 +143,13 @@ const BG_AUDIO_MILESTONES_KEY = '@racefy:audioCoach:bgMilestones'; // JSON array
 const BG_AUDIO_PASSED_MILESTONES_KEY = '@racefy:audioCoach:bgPassedMilestones'; // JSON array of already announced
 
 const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-US', pl: 'pl-PL', de: 'de-DE', fr: 'fr-FR',
-  es: 'es-ES', it: 'it-IT', pt: 'pt-PT',
+  en: 'en-US',
+  pl: 'pl-PL',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  es: 'es-ES',
+  it: 'it-IT',
+  pt: 'pt-PT',
 };
 
 /**
@@ -228,11 +189,29 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
       const simStart = parseInt(simStartStr!, 10);
       totalDistM = Math.floor((Date.now() - simStart) / 10000) * 350;
     } else {
-      // Real mode: accumulate GPS distance
-      const prevDistStr = await AsyncStorage.getItem(BG_AUDIO_DISTANCE_KEY);
-      totalDistM = (prevDistStr ? parseFloat(prevDistStr) : 0) + distanceAddedM;
+      // Real mode: the SQLite point log carries the cumulative distance
+      // (written by both foreground and background) — one source of truth,
+      // no foreground→background handoff needed. Legacy AsyncStorage
+      // accumulator is the fallback when no point has landed yet.
+      let cumDist: number | null = null;
+      try {
+        const activityId = await getActiveActivityId();
+        const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+        cumDist = session
+          ? (trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? null)
+          : null;
+      } catch {
+        cumDist = null;
+      }
+
+      if (cumDist != null) {
+        totalDistM = cumDist;
+      } else {
+        const prevDistStr = await AsyncStorage.getItem(BG_AUDIO_DISTANCE_KEY);
+        totalDistM = (prevDistStr ? parseFloat(prevDistStr) : 0) + distanceAddedM;
+        await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistM.toString());
+      }
     }
-    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistM.toString());
 
     // Check threshold
     const lastThresholdStr = await AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY);
@@ -271,6 +250,9 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
     // expo-speech uses native TTS — works in headless JS context.
     // Android TTS automatically requests AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
     // which ducks (quiets) music instead of pausing it.
+    // iOS: an inactive audio session silences background speech even with
+    // UIBackgroundModes:["audio"] — configure it before every announcement.
+    await ensureAudioMode();
     Speech.speak(text, {
       language: SPEECH_LANG_MAP[language] || 'en-US',
       rate: speechRate,
@@ -291,9 +273,13 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
             if (milestoneText) {
               passed.push(threshold);
               await AsyncStorage.setItem(BG_AUDIO_PASSED_MILESTONES_KEY, JSON.stringify(passed));
-              logger.info('audioCoach', 'BG milestone reached!', { threshold, totalDistKm: totalDistKm.toFixed(2) });
+              logger.info('audioCoach', 'BG milestone reached!', {
+                threshold,
+                totalDistKm: totalDistKm.toFixed(2),
+              });
               // Speak milestone after a short delay (so km announcement finishes first)
-              setTimeout(() => {
+              setTimeout(async () => {
+                await ensureAudioMode();
                 Speech.speak(milestoneText, {
                   language: SPEECH_LANG_MAP[language] || 'en-US',
                   rate: speechRate,
@@ -340,22 +326,9 @@ export async function initAudioCoachBackgroundState(): Promise<void> {
   await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
 }
 
-/**
- * Sync foreground distance to background audio coach state.
- * Called when app transitions to background so that the background task
- * continues accumulating from the correct total distance instead of
- * only counting distance from previous background sessions.
- */
-export async function syncAudioCoachForegroundDistance(totalDistanceM: number): Promise<void> {
-  try {
-    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistanceM.toString());
-    logger.info('audioCoach', 'Synced foreground distance to background', {
-      totalDistanceM: Math.round(totalDistanceM),
-    });
-  } catch (err) {
-    logger.error('audioCoach', 'Failed to sync foreground distance', { error: err });
-  }
-}
+// NOTE: syncAudioCoachForegroundDistance was removed — the background coach
+// reads the cumulative distance (cum_dist) from the SQLite point log, so no
+// foreground→background handoff is needed.
 
 // Define the background task - this must be at module level
 // IMPORTANT: This code runs in a separate JS context when in background
@@ -365,7 +338,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
     logger.error('gps', 'Background location task error', { error });
     // Log to AsyncStorage for debugging (can't use logger in background on some Android versions)
     try {
-      const errorLog = await AsyncStorage.getItem('@racefy_bg_errors') || '[]';
+      const errorLog = (await AsyncStorage.getItem('@racefy_bg_errors')) || '[]';
       const errors = JSON.parse(errorLog);
       errors.push({ timestamp: new Date().toISOString(), error: error.message });
       await AsyncStorage.setItem('@racefy_bg_errors', JSON.stringify(errors.slice(-10)));
@@ -380,13 +353,18 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
       try {
         // Get GPS profile settings
         const profile = await getStoredGpsProfile();
-        const { accuracyThreshold, minDistanceThreshold, maxRealisticSpeed, stationarySpeedThreshold } = profile;
+        const {
+          accuracyThreshold,
+          minDistanceThreshold,
+          maxRealisticSpeed,
+          stationarySpeedThreshold,
+        } = profile;
 
-        // Get existing buffer and last position
-        const existingBuffer = await getLocationBuffer();
+        // Get last position (for distance/speed filters)
         let lastPosition = await getLastBackgroundPosition();
 
         const newPoints: BufferedLocation[] = [];
+        const pointDistances: number[] = []; // per accepted point, metres from previous
         let filteredByAccuracy = 0;
         let filteredByDistance = 0;
         let filteredBySpeed = 0;
@@ -396,7 +374,9 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // Filter by accuracy
           const accuracy = location.coords.accuracy;
           if (accuracy && accuracy > accuracyThreshold) {
-            logger.gps(`Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`);
+            logger.gps(
+              `Background: Filtered inaccurate (${accuracy?.toFixed(1)}m > ${accuracyThreshold}m)`,
+            );
             filteredByAccuracy++;
             continue;
           }
@@ -407,7 +387,8 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
           // Stationary detection: if GPS reports very low speed, use stricter distance threshold
           const gpsSpeed = location.coords.speed;
-          const isLikelyStationary = gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationarySpeedThreshold;
+          const isLikelyStationary =
+            gpsSpeed !== null && gpsSpeed !== undefined && gpsSpeed < stationarySpeedThreshold;
           const effectiveMinDistance = isLikelyStationary
             ? Math.max(minDistanceThreshold, 8) // At least 8m when stationary
             : minDistanceThreshold;
@@ -418,12 +399,14 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
               lastPosition.lat,
               lastPosition.lng,
               lat,
-              lng
+              lng,
             );
 
             // Filter small movements (GPS drift)
             if (distance < effectiveMinDistance) {
-              logger.gps(`Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`);
+              logger.gps(
+                `Background: Filtered small movement (${distance.toFixed(1)}m < ${effectiveMinDistance}m${isLikelyStationary ? ' stationary' : ''})`,
+              );
               filteredByDistance++;
               continue;
             }
@@ -433,19 +416,21 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             if (timeDiff > 0) {
               const impliedSpeed = distance / timeDiff; // m/s
               if (impliedSpeed > maxRealisticSpeed) {
-                logger.gps(`Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`);
+                logger.gps(
+                  `Background: Filtered GPS glitch (${(impliedSpeed * 3.6).toFixed(1)} km/h > ${(maxRealisticSpeed * 3.6).toFixed(0)} km/h max)`,
+                );
                 filteredBySpeed++;
                 continue;
               }
             }
           }
 
-          // Track distance for audio coach (before updating lastPosition)
-          if (lastPosition) {
-            audioCoachDistAdded += calculateDistanceBetweenCoords(
-              lastPosition.lat, lastPosition.lng, lat, lng,
-            );
-          }
+          // Distance from the previous position (audio coach + cum_dist)
+          const pointDist = lastPosition
+            ? calculateDistanceBetweenCoords(lastPosition.lat, lastPosition.lng, lat, lng)
+            : 0;
+          audioCoachDistAdded += pointDist;
+          pointDistances.push(pointDist);
 
           // Point passed all filters, add it
           newPoints.push({
@@ -453,7 +438,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             lng,
             ele: location.coords.altitude ?? undefined,
             time: new Date(timestamp).toISOString(),
-            speed: location.coords.speed != null && location.coords.speed >= 0 ? location.coords.speed : undefined,
+            speed:
+              location.coords.speed != null && location.coords.speed >= 0
+                ? location.coords.speed
+                : undefined,
             accuracy: location.coords.accuracy ?? undefined,
           });
 
@@ -467,11 +455,44 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
         }
 
         if (newPoints.length > 0) {
-          // Add to buffer
-          const updatedBuffer = [...existingBuffer, ...newPoints];
-          await saveLocationBuffer(updatedBuffer);
+          // Durable log: accepted points go straight to SQLite (single source
+          // of truth — the AsyncStorage buffer is gone). cum_dist continues
+          // from the last stored point so the audio coach and crash recovery
+          // have the running total even for background-only stretches.
+          try {
+            const activityId = await getActiveActivityId();
+            const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+            if (session) {
+              let runningDist = trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? 0;
 
-          logger.gps(`Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
+              trackingDb.insertPoints(
+                session.clientActivityId,
+                newPoints.map((p, i) => {
+                  runningDist += pointDistances[i] ?? 0;
+                  return {
+                    lat: p.lat,
+                    lng: p.lng,
+                    ele: p.ele,
+                    ts: p.time,
+                    speed: p.speed,
+                    accuracy: p.accuracy,
+                    cumDist: runningDist,
+                  };
+                }),
+                'bg',
+              );
+            }
+          } catch (dbErr) {
+            logger.error('gps', 'Background: failed to persist points to tracking DB', {
+              error: dbErr,
+            });
+          }
+
+          logger.gps(`Background: Added ${newPoints.length} points`, {
+            filteredByAccuracy,
+            filteredByDistance,
+            filteredBySpeed,
+          });
 
           // Initialize background sync timer on first GPS update if not already running
           if (!backgroundSyncTimer) {
@@ -490,7 +511,11 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             }
           }
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
-          logger.gps(`Background: All ${locations.length} points filtered`, { filteredByAccuracy, filteredByDistance, filteredBySpeed });
+          logger.gps(`Background: All ${locations.length} points filtered`, {
+            filteredByAccuracy,
+            filteredByDistance,
+            filteredBySpeed,
+          });
         }
 
         // Audio coach: always check (works for both real GPS and sim mode)
@@ -509,35 +534,65 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 // Verify task registration
 console.log('[BackgroundLocation] Task defined successfully:', BACKGROUND_LOCATION_TASK);
 
-// Helper functions for managing the location buffer
-export async function getLocationBuffer(): Promise<BufferedLocation[]> {
+// ============================================
+// LEGACY BUFFER MIGRATION (one-time)
+// The AsyncStorage point buffers were replaced by the SQLite tracking DB.
+// On the first start after the update, fold any leftover buffered points into
+// the active session as unsynced rows, then delete the legacy keys.
+// ============================================
+
+export async function migrateLegacyBuffers(clientActivityId: string | null): Promise<void> {
   try {
-    const buffer = await AsyncStorage.getItem(LOCATION_BUFFER_KEY);
-    return buffer ? JSON.parse(buffer) : [];
-  } catch {
-    return [];
-  }
-}
+    const [fgJson, bgJson] = await Promise.all([
+      AsyncStorage.getItem(FOREGROUND_BUFFER_KEY),
+      AsyncStorage.getItem(LOCATION_BUFFER_KEY),
+    ]);
 
-export async function saveLocationBuffer(buffer: BufferedLocation[]): Promise<void> {
-  await AsyncStorage.setItem(LOCATION_BUFFER_KEY, JSON.stringify(buffer));
-}
+    if (!fgJson && !bgJson) return;
 
-export async function clearLocationBuffer(): Promise<void> {
-  await AsyncStorage.removeItem(LOCATION_BUFFER_KEY);
-}
+    const parse = (json: string | null): BufferedLocation[] => {
+      try {
+        return json ? JSON.parse(json) : [];
+      } catch {
+        return [];
+      }
+    };
 
-export async function getAndClearLocationBuffer(): Promise<BufferedLocation[]> {
-  try {
-    const buffer = await getLocationBuffer();
-    // Only clear after successful read to prevent data loss
-    if (buffer.length > 0) {
-      await clearLocationBuffer();
+    const combined = [...parse(fgJson), ...parse(bgJson)];
+
+    if (clientActivityId && combined.length > 0) {
+      // Deduplicate by timestamp and sort chronologically before import
+      const seen = new Set<string>();
+      const points = combined
+        .filter((p) => (seen.has(p.time) ? false : (seen.add(p.time), true)))
+        .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+      trackingDb.insertPoints(
+        clientActivityId,
+        points.map((p) => ({
+          lat: p.lat,
+          lng: p.lng,
+          ele: p.ele,
+          ts: p.time,
+          speed: p.speed,
+          accuracy: p.accuracy,
+        })),
+        'fg',
+      );
+
+      logger.gps('Migrated legacy AsyncStorage buffers into tracking DB', {
+        count: points.length,
+      });
     }
-    return buffer;
+
+    await Promise.all([
+      AsyncStorage.removeItem(FOREGROUND_BUFFER_KEY),
+      AsyncStorage.removeItem(LOCATION_BUFFER_KEY),
+      AsyncStorage.removeItem(BACKGROUND_SYNC_STATE_KEY),
+      AsyncStorage.removeItem(LAST_SYNC_STATUS_KEY),
+    ]);
   } catch (error) {
-    logger.error('gps', 'Failed to get and clear location buffer', { error });
-    return []; // Return empty on error, don't clear
+    logger.error('gps', 'Failed to migrate legacy buffers', { error });
   }
 }
 
@@ -585,24 +640,28 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
     // Initialize audio coach background state for this session
     await initAudioCoachBackgroundState();
 
-    // Start background location updates with profile-specific settings
+    // Start background location updates with profile-specific settings.
+    // NOTE: no deferredUpdates* — batching held points in native memory where
+    // they died with the process; points now land in SQLite per update instead.
     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.BestForNavigation,
       distanceInterval: profile.distanceInterval,
       timeInterval: profile.timeInterval,
-      deferredUpdatesInterval: profile.timeInterval * 3, // Batch updates
-      deferredUpdatesDistance: profile.distanceInterval * 3,
       showsBackgroundLocationIndicator: true, // iOS: show blue bar
       foregroundService: {
         notificationTitle: 'Racefy',
         notificationBody: 'Tracking your activity...',
         notificationColor: '#10b981',
+        killServiceOnDestroy: false, // keep recording when the app is swiped away
       },
       pausesUpdatesAutomatically: false,
       activityType: Location.ActivityType.Fitness,
     });
 
-    logger.gps(`Background location tracking started`, { timeInterval: profile.timeInterval, distanceInterval: profile.distanceInterval });
+    logger.gps(`Background location tracking started`, {
+      timeInterval: profile.timeInterval,
+      distanceInterval: profile.distanceInterval,
+    });
     return true;
   } catch (error) {
     logger.error('gps', 'Failed to start background location tracking', { error });
@@ -633,8 +692,8 @@ export async function startSimBackgroundTracking(): Promise<boolean> {
 
     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.Lowest,
-      timeInterval: 10000,     // every 10s
-      distanceInterval: 0,     // fire even when stationary
+      timeInterval: 10000, // every 10s
+      distanceInterval: 0, // fire even when stationary
       showsBackgroundLocationIndicator: true,
       foregroundService: {
         notificationTitle: 'Racefy',
@@ -684,156 +743,7 @@ export async function isBackgroundLocationTrackingRunning(): Promise<boolean> {
   }
 }
 
-// ============================================
-// FOREGROUND BUFFER PERSISTENCE
-// Protects against app crash/kill during foreground tracking
-// ============================================
-
-// Get foreground buffer from AsyncStorage
-export async function getForegroundBuffer(): Promise<BufferedLocation[]> {
-  try {
-    const buffer = await AsyncStorage.getItem(FOREGROUND_BUFFER_KEY);
-    return buffer ? JSON.parse(buffer) : [];
-  } catch {
-    return [];
-  }
-}
-
-// Save foreground buffer to AsyncStorage (call periodically during tracking)
-export async function saveForegroundBuffer(buffer: BufferedLocation[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(FOREGROUND_BUFFER_KEY, JSON.stringify(buffer));
-  } catch (err) {
-    logger.error('gps', 'Failed to persist foreground buffer', { error: err });
-  }
-}
-
-// Clear foreground buffer (after successful sync or activity end)
-export async function clearForegroundBuffer(): Promise<void> {
-  await AsyncStorage.removeItem(FOREGROUND_BUFFER_KEY);
-}
-
-// Get all persisted points (both foreground and background buffers)
-// Use this on app startup to recover any unsent points
-export async function getAllPersistedPoints(): Promise<BufferedLocation[]> {
-  const [foreground, background] = await Promise.all([
-    getForegroundBuffer(),
-    getLocationBuffer(),
-  ]);
-
-  // Combine and deduplicate by timestamp
-  const seen = new Set<string>();
-  const combined: BufferedLocation[] = [];
-
-  for (const point of [...foreground, ...background]) {
-    const key = point.time;
-    if (!seen.has(key)) {
-      seen.add(key);
-      combined.push(point);
-    }
-  }
-
-  // Sort by time
-  combined.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-
-  return combined;
-}
-
-// Clear all persisted points (after successful sync)
-export async function clearAllPersistedPoints(): Promise<void> {
-  await Promise.all([
-    clearForegroundBuffer(),
-    clearLocationBuffer(),
-  ]);
-}
-
-// ============================================
-// SYNC STATUS TRACKING
-// Track last sync attempt for UI feedback
-// ============================================
-
-export interface SyncStatus {
-  lastAttempt: string | null;     // ISO timestamp
-  lastSuccess: string | null;     // ISO timestamp
-  pendingPoints: number;          // Points waiting to be synced
-  lastError: string | null;       // Last error message if any
-  isOnline: boolean;              // Network status
-}
-
-export async function getSyncStatus(): Promise<SyncStatus> {
-  try {
-    const status = await AsyncStorage.getItem(LAST_SYNC_STATUS_KEY);
-    if (status) {
-      return JSON.parse(status);
-    }
-  } catch {
-    // Ignore
-  }
-  return {
-    lastAttempt: null,
-    lastSuccess: null,
-    pendingPoints: 0,
-    lastError: null,
-    isOnline: true,
-  };
-}
-
-export async function updateSyncStatus(updates: Partial<SyncStatus>): Promise<void> {
-  try {
-    const current = await getSyncStatus();
-    const updated = { ...current, ...updates };
-    await AsyncStorage.setItem(LAST_SYNC_STATUS_KEY, JSON.stringify(updated));
-  } catch (err) {
-    logger.error('gps', 'Failed to update sync status', { error: err });
-  }
-}
-
-export async function clearSyncStatus(): Promise<void> {
-  await AsyncStorage.removeItem(LAST_SYNC_STATUS_KEY);
-}
-
-// ============================================
-// BACKGROUND SYNC STATE MANAGEMENT
-// Tracks which points from the buffer have been synced
-// ============================================
-
-export interface BackgroundSyncState {
-  lastSyncAttempt: number | null;    // Timestamp (ms)
-  lastSyncSuccess: number | null;    // Timestamp (ms)
-  syncedPointsCount: number;         // Points already synced from buffer
-  consecutiveFailures: number;       // Failure counter for monitoring
-  totalPointsSynced: number;         // Lifetime counter
-}
-
-export async function getBackgroundSyncState(): Promise<BackgroundSyncState> {
-  try {
-    const state = await AsyncStorage.getItem(BACKGROUND_SYNC_STATE_KEY);
-    if (state) {
-      return JSON.parse(state);
-    }
-  } catch (err) {
-    logger.error('gps', 'Failed to get background sync state', { error: err });
-  }
-  // Return default state
-  return {
-    lastSyncAttempt: null,
-    lastSyncSuccess: null,
-    syncedPointsCount: 0,
-    consecutiveFailures: 0,
-    totalPointsSynced: 0,
-  };
-}
-
-export async function updateBackgroundSyncState(updates: Partial<BackgroundSyncState>): Promise<void> {
-  try {
-    const current = await getBackgroundSyncState();
-    const updated = { ...current, ...updates };
-    await AsyncStorage.setItem(BACKGROUND_SYNC_STATE_KEY, JSON.stringify(updated));
-  } catch (err) {
-    logger.error('gps', 'Failed to update background sync state', { error: err });
-  }
-}
-
-export async function clearBackgroundSyncState(): Promise<void> {
-  await AsyncStorage.removeItem(BACKGROUND_SYNC_STATE_KEY);
-}
+// NOTE: The AsyncStorage point buffers (foreground/background), SyncStatus and
+// BackgroundSyncState helpers were removed — the SQLite tracking DB
+// (services/trackingDb.ts) is the single durable point store and the uploader
+// (services/pointsUploader.ts) owns sync state. See migrateLegacyBuffers above.

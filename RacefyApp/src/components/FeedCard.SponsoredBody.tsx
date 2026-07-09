@@ -1,14 +1,17 @@
 import React from 'react';
-import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useTheme} from '../hooks/useTheme';
-import {ExpandableContent, PostMedia} from './FeedCard.Media';
-import {styles} from './FeedCard.utils';
-import {borderRadius, fontSize, spacing} from '../theme';
-import type {Post} from '../types/api';
+import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
+import { ExpandableContent, PostMedia } from './FeedCard.Media';
+import { styles } from './FeedCard.utils';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Post } from '../types/api';
 
 export function SponsoredBody({ post }: { post: Post }) {
   const { colors } = useTheme();
-  const hasMedia = (post.videos?.length ?? 0) > 0 || (post.photos?.length ?? 0) > 0 || (post.media?.length ?? 0) > 0;
+  const hasMedia =
+    (post.videos?.length ?? 0) > 0 ||
+    (post.photos?.length ?? 0) > 0 ||
+    (post.media?.length ?? 0) > 0;
   const sponsoredData = post.sponsored_data;
   const ctaText = sponsoredData?.cta_text;
   const ctaUrl = sponsoredData?.promoted_link || sponsoredData?.cta_url;
@@ -29,7 +32,9 @@ export function SponsoredBody({ post }: { post: Post }) {
         {post.title && (
           <Text style={[spStyles.productTitle, { color: colors.textPrimary }]}>{post.title}</Text>
         )}
-        {post.content && <ExpandableContent text={post.content} type="sponsored" mentions={post.mentions} />}
+        {post.content && (
+          <ExpandableContent text={post.content} type="sponsored" mentions={post.mentions} />
+        )}
       </View>
 
       {/* CTA button — full width, prominent */}

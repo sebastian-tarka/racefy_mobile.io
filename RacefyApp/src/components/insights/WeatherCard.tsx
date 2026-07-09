@@ -30,7 +30,12 @@ export function WeatherCard({ data }: WeatherCardProps) {
 
   return (
     <InsightCard title={t('insights.weather.title')} icon="partly-sunny">
-      <View style={[styles.prefBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' }]}>
+      <View
+        style={[
+          styles.prefBox,
+          { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)' },
+        ]}
+      >
         <Text style={[styles.prefLabel, { color: colors.textSecondary }]}>
           {t('insights.weather.preferredTemp')}
         </Text>
@@ -51,7 +56,12 @@ export function WeatherCard({ data }: WeatherCardProps) {
               <Text style={[styles.barLabel, { color: colors.textSecondary }]}>
                 {t(`insights.weather.temp.${temp}`)}
               </Text>
-              <View style={[styles.barBg, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }]}>
+              <View
+                style={[
+                  styles.barBg,
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' },
+                ]}
+              >
                 <View
                   style={[styles.barFill, { width: `${width}%`, backgroundColor: colors.primary }]}
                 />
@@ -69,7 +79,13 @@ export function WeatherCard({ data }: WeatherCardProps) {
           </Text>
           <View style={styles.conditionsRow}>
             {Object.entries(data.top_conditions).map(([condition, count]) => (
-              <View key={condition} style={[styles.conditionChip, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+              <View
+                key={condition}
+                style={[
+                  styles.conditionChip,
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                ]}
+              >
                 <Ionicons
                   name={CONDITION_ICONS[condition] ?? 'ellipse-outline'}
                   size={14}

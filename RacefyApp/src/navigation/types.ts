@@ -1,6 +1,6 @@
-import type {NavigatorScreenParams} from '@react-navigation/native';
-import type {Conversation, ConversationParticipant, Event} from '../types/api';
-import type {LegalDocumentType} from '../types/legal';
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { Conversation, ConversationParticipant, Event } from '../types/api';
+import type { LegalDocumentType } from '../types/legal';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -27,7 +27,11 @@ export type RootStackParamList = {
   PostDetail: { postId: number; focusComments?: boolean };
   EventDetail: { eventId: number };
   ActivityDetail: { activityId: number };
-  ActivityShare: { activityId: number; hasGpsTrack?: boolean; photos?: import('../types/api').Photo[] };
+  ActivityShare: {
+    activityId: number;
+    hasGpsTrack?: boolean;
+    photos?: import('../types/api').Photo[];
+  };
   UserProfile: { username: string };
   Settings: undefined;
   BlockedUsers: undefined;
@@ -36,7 +40,11 @@ export type RootStackParamList = {
   ImpersonateUser: undefined;
   Notifications: undefined;
   ConversationsList: undefined;
-  Chat: { conversationId: number; participant?: ConversationParticipant; conversation?: Conversation };
+  Chat: {
+    conversationId: number;
+    participant?: ConversationParticipant;
+    conversation?: Conversation;
+  };
   Messages: { conversationId?: number };
   EventForm: { eventId?: number };
   EventCommentarySettings: { eventId: number };

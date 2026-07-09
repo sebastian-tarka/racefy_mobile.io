@@ -158,7 +158,7 @@ export function formatPaceFromSpeed(avgSpeedMps: number, units: UnitSystem): str
 export function formatPaceFromDistanceTime(
   meters: number,
   seconds: number,
-  units: UnitSystem
+  units: UnitSystem,
 ): string {
   if (!meters || meters === 0 || !seconds || seconds === 0) return '--:--';
 
@@ -180,11 +180,7 @@ export function formatPaceFromDistanceTime(
 /**
  * Format pace with unit suffix → "5:42 /km" / "9:11 /mi"
  */
-export function formatPaceWithUnit(
-  meters: number,
-  seconds: number,
-  units: UnitSystem
-): string {
+export function formatPaceWithUnit(meters: number, seconds: number, units: UnitSystem): string {
   const pace = formatPaceFromDistanceTime(meters, seconds, units);
   if (pace === '--:--') return pace;
   return `${pace} ${getPaceUnit(units)}`;
@@ -196,7 +192,7 @@ export function formatPaceWithUnit(
 export function formatPaceFromSecPerKm(
   secondsPerKm: number | null,
   units: UnitSystem,
-  placeholder: string = '--:--'
+  placeholder: string = '--:--',
 ): string {
   if (secondsPerKm === null || !isFinite(secondsPerKm)) return placeholder;
   if (secondsPerKm < 60 || secondsPerKm > 1800) return placeholder;
@@ -218,7 +214,7 @@ export function formatPaceFromSecPerKm(
  */
 export function formatTemperature(celsius: number, units: UnitSystem): string {
   if (units === 'imperial') {
-    const fahrenheit = Math.round(celsius * 9 / 5 + 32);
+    const fahrenheit = Math.round((celsius * 9) / 5 + 32);
     return `${fahrenheit}°F`;
   }
   return `${Math.round(celsius)}°C`;

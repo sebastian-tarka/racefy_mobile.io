@@ -19,18 +19,14 @@ function assertObject(value: unknown, context: string): asserts value is Record<
 /** Asserts that a required string field is present and non-empty */
 function assertString(obj: Record<string, unknown>, field: string, context: string): void {
   if (typeof obj[field] !== 'string' || (obj[field] as string).length === 0) {
-    throw new Error(
-      `API response guard: missing or empty string "${field}" in ${context}`
-    );
+    throw new Error(`API response guard: missing or empty string "${field}" in ${context}`);
   }
 }
 
 /** Asserts that a required number field is present and positive */
 function assertPositiveNumber(obj: Record<string, unknown>, field: string, context: string): void {
   if (typeof obj[field] !== 'number' || (obj[field] as number) <= 0) {
-    throw new Error(
-      `API response guard: missing or invalid number "${field}" in ${context}`
-    );
+    throw new Error(`API response guard: missing or invalid number "${field}" in ${context}`);
   }
 }
 
@@ -49,7 +45,10 @@ export function assertUser(value: unknown): void {
  * Validates that an auth token string is present and non-empty.
  * Called when extracting access_token from login / register / googleAuth responses.
  */
-export function assertToken(token: string | undefined | null, context: string): asserts token is string {
+export function assertToken(
+  token: string | undefined | null,
+  context: string,
+): asserts token is string {
   if (!token || token.trim().length === 0) {
     throw new Error(`API response guard: missing access token in ${context} response`);
   }

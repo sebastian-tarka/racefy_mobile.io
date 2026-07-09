@@ -1,10 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import {Platform} from 'react-native';
-import {api} from './api';
-import {logger} from './logger';
-import type {AppConfigPush, DeviceType, PushProvider} from '../types/api';
+import { Platform } from 'react-native';
+import { api } from './api';
+import { logger } from './logger';
+import type { AppConfigPush, DeviceType, PushProvider } from '../types/api';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -82,7 +82,7 @@ class PushNotificationService {
       this.pushToken = token;
       logger.info('general', `Got ${this.pushProvider.toUpperCase()} push token`, {
         provider: this.pushProvider,
-        token: token?.substring(0, 25) + '...'
+        token: token?.substring(0, 25) + '...',
       });
       return token;
     } catch (error) {
@@ -101,7 +101,7 @@ class PushNotificationService {
       this.pushProvider = config.push.provider;
       logger.info('general', 'Fetched push config from server', {
         provider: this.pushProvider,
-        tokenMethod: config.push.token_method
+        tokenMethod: config.push.token_method,
       });
     } catch (error) {
       // Default to expo if config fetch fails
@@ -130,7 +130,7 @@ class PushNotificationService {
       const tokenData = await Notifications.getDevicePushTokenAsync();
       logger.debug('general', 'Got FCM token', {
         type: tokenData.type,
-        tokenPrefix: tokenData.data.substring(0, 20)
+        tokenPrefix: tokenData.data.substring(0, 20),
       });
       return tokenData.data;
     } catch (error: any) {

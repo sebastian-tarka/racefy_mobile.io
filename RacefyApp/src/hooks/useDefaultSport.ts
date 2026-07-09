@@ -18,14 +18,16 @@ export function useDefaultSport(
           const preferences = await api.getPreferences();
           const favoriteSportId = preferences.activity_defaults.favorite_sport_id;
           if (favoriteSportId) {
-            const favoriteSport = sportTypes.find(s => s.id === favoriteSportId);
+            const favoriteSport = sportTypes.find((s) => s.id === favoriteSportId);
             if (favoriteSport) {
               setSelectedSport(favoriteSport);
               return;
             }
           }
         } catch (error) {
-          logger.debug('activity', 'Failed to load favorite sport preference, using fallback', { error });
+          logger.debug('activity', 'Failed to load favorite sport preference, using fallback', {
+            error,
+          });
         }
       }
       setSelectedSport(sportTypes[0]);

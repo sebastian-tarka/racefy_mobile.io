@@ -12,29 +12,17 @@ interface MediaThumbnailProps {
   size?: number;
 }
 
-export function MediaThumbnail({
-  item,
-  onRemove,
-  onPress,
-  size = 80,
-}: MediaThumbnailProps) {
+export function MediaThumbnail({ item, onRemove, onPress, size = 80 }: MediaThumbnailProps) {
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        { width: size, height: size, backgroundColor: colors.background },
-      ]}
+      style={[styles.container, { width: size, height: size, backgroundColor: colors.background }]}
       onPress={onPress}
       activeOpacity={onPress ? 0.8 : 1}
       disabled={!onPress}
     >
-      <Image
-        source={{ uri: item.uri }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+      <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
       {item.type === 'video' && (
         <View style={[styles.playIconContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <Ionicons name="play" size={24} color="#FFFFFF" />

@@ -17,7 +17,10 @@ interface UseUserProfileReturn {
   isMessageLoading: boolean;
   fetchProfile: () => Promise<UserProfile | null>;
   handleFollowToggle: () => Promise<void>;
-  handleStartConversation: () => Promise<{ conversationId: number; participant: ConversationParticipant } | null>;
+  handleStartConversation: () => Promise<{
+    conversationId: number;
+    participant: ConversationParticipant;
+  } | null>;
 }
 
 export function useUserProfile({ username }: UseUserProfileOptions): UseUserProfileReturn {
@@ -42,7 +45,9 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
         setFollowStatus(status.follow_status ?? null);
       } catch (statusErr) {
         // Fallback to is_following from profile if getFollowStatus fails
-        logger.warn('api', 'Failed to fetch follow status, using profile data', { error: statusErr });
+        logger.warn('api', 'Failed to fetch follow status, using profile data', {
+          error: statusErr,
+        });
         setIsFollowing(data.is_following ?? false);
         setFollowStatus(data.is_following ? 'accepted' : null);
       }
@@ -71,7 +76,7 @@ export function useUserProfile({ username }: UseUserProfileOptions): UseUserProf
         setIsFollowing(false);
         setFollowStatus(null);
         setProfile((prev) =>
-          prev ? { ...prev, followers_count: prev.followers_count - 1 } : prev
+          prev ? { ...prev, followers_count: prev.followers_count - 1 } : prev,
         );
       } else {
         // Send new follow request

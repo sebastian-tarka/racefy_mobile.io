@@ -22,7 +22,9 @@ export function UpgradePromptModal() {
       setVisible(true);
     };
     upgradePromptEmitter.on('show', handler);
-    return () => { upgradePromptEmitter.off('show', handler); };
+    return () => {
+      upgradePromptEmitter.off('show', handler);
+    };
   }, []);
 
   const handleUpgrade = useCallback(() => {

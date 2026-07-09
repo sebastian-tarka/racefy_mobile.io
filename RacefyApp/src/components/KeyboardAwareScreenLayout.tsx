@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Platform,
-  RefreshControl,
-} from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, RefreshControl } from 'react-native';
 import type { ScrollViewProps } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,9 +31,7 @@ export function KeyboardAwareScreenLayout({
       style={styles.flex}
       behavior="padding"
       keyboardVerticalOffset={
-        Platform.OS === 'ios'
-          ? keyboardVerticalOffset.ios
-          : keyboardVerticalOffset.android
+        Platform.OS === 'ios' ? keyboardVerticalOffset.ios : keyboardVerticalOffset.android
       }
     >
       <ScrollView
@@ -47,12 +39,7 @@ export function KeyboardAwareScreenLayout({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.scrollContent}
         {...(onRefresh && {
-          refreshControl: (
-            <RefreshControl
-              refreshing={refreshing ?? false}
-              onRefresh={onRefresh}
-            />
-          ),
+          refreshControl: <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} />,
         })}
         {...scrollViewProps}
       >

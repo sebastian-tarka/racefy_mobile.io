@@ -25,8 +25,18 @@ export function LockedInsightCard({ title, icon, requiredTier }: LockedInsightCa
 
   return (
     <Card style={styles.card}>
-      <View style={[styles.overlay, { backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.85)' }]}>
-        <View style={[styles.iconCircle, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+      <View
+        style={[
+          styles.overlay,
+          { backgroundColor: isDark ? 'rgba(15, 23, 42, 0.85)' : 'rgba(255, 255, 255, 0.85)' },
+        ]}
+      >
+        <View
+          style={[
+            styles.iconCircle,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+          ]}
+        >
           <Ionicons name="lock-closed" size={24} color={colors.textMuted} />
         </View>
         <View style={styles.headerRow}>

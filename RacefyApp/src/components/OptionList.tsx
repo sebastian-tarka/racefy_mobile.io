@@ -8,9 +8,9 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import {useTheme} from '../hooks/useTheme';
-import {borderRadius, fontSize, spacing} from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../hooks/useTheme';
+import { borderRadius, fontSize, spacing } from '../theme';
 
 export interface OptionListItem {
   id: string;
@@ -50,7 +50,10 @@ export function OptionList({ options, grouped = false, style }: OptionListProps)
     <View
       style={[
         grouped
-          ? [styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]
+          ? [
+              styles.card,
+              { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+            ]
           : styles.group,
         style,
       ]}
@@ -64,9 +67,15 @@ export function OptionList({ options, grouped = false, style }: OptionListProps)
               grouped
                 ? [
                     styles.groupedRow,
-                    index < options.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderLight },
+                    index < options.length - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.borderLight,
+                    },
                   ]
-                : [styles.row, { backgroundColor: colors.cardBackground, borderColor: colors.borderLight }]
+                : [
+                    styles.row,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
+                  ]
             }
             onPress={opt.onPress}
             disabled={opt.disabled || opt.loading || !opt.onPress}
@@ -76,7 +85,10 @@ export function OptionList({ options, grouped = false, style }: OptionListProps)
               <Ionicons name={opt.icon} size={20} color={accent} />
             </View>
             <View style={styles.text}>
-              <Text style={[styles.title, { color: opt.titleColor ?? colors.textPrimary }]} numberOfLines={1}>
+              <Text
+                style={[styles.title, { color: opt.titleColor ?? colors.textPrimary }]}
+                numberOfLines={1}
+              >
                 {opt.title}
               </Text>
               {!!opt.subtitle && (

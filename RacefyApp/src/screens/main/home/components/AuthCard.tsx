@@ -17,7 +17,9 @@ export function AuthCard({ onSignIn, onSignUp }: AuthCardProps) {
   return (
     <Card style={styles.container}>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('home.getStarted')}</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('home.getStartedMessage')}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        {t('home.getStartedMessage')}
+      </Text>
       <View style={styles.buttons}>
         <Button
           title={t('common.signIn')}

@@ -35,19 +35,24 @@ const LOCALE_TO_LANG: Record<string, AudioCoachSettings['language']> = {
 /**
  * Convert camelCase client settings to snake_case server format
  */
-function toServerSettings(settings: Partial<AudioCoachSettings>): Partial<AudioCoachServerSettings> {
+function toServerSettings(
+  settings: Partial<AudioCoachSettings>,
+): Partial<AudioCoachServerSettings> {
   const result: Record<string, unknown> = {};
 
   if (settings.enabled !== undefined) result.enabled = settings.enabled;
-  if (settings.language !== undefined) result.language = LANG_TO_LOCALE[settings.language] || 'en-US';
+  if (settings.language !== undefined)
+    result.language = LANG_TO_LOCALE[settings.language] || 'en-US';
   if (settings.intervalKm !== undefined) result.interval_km = settings.intervalKm;
   if (settings.style !== undefined) result.voice_style = settings.style;
   if (settings.speechRate !== undefined) result.speech_rate = settings.speechRate;
   if (settings.speechPitch !== undefined) result.speech_pitch = settings.speechPitch;
   if (settings.useAiVoice !== undefined) result.use_ai_voice = settings.useAiVoice;
   if (settings.aiVoice !== undefined) result.ai_voice = settings.aiVoice;
-  if (settings.announceHeartRate !== undefined) result.announce_heart_rate = settings.announceHeartRate;
-  if (settings.announceSplitDelta !== undefined) result.announce_split_comparison = settings.announceSplitDelta;
+  if (settings.announceHeartRate !== undefined)
+    result.announce_heart_rate = settings.announceHeartRate;
+  if (settings.announceSplitDelta !== undefined)
+    result.announce_split_comparison = settings.announceSplitDelta;
 
   return result as Partial<AudioCoachServerSettings>;
 }
@@ -82,13 +87,10 @@ export async function synthesize(
   logger.debug('audioCoach', 'Synthesizing speech', { textLength: text.length, voice, locale });
 
   const body: SynthesizeRequest = { text, voice: voice as any, language: locale as any };
-  const response = await api.request<any>(
-    '/audio-coach/synthesize',
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    },
-  );
+  const response = await api.request<any>('/audio-coach/synthesize', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
   // API may return { data: { audio_base64, ... } } or { audio_base64, ... } directly
   const result = response.data ?? response;
   return result as SynthesizeResponse;
@@ -110,13 +112,10 @@ export async function updateSettings(
   partial: Partial<AudioCoachSettings>,
 ): Promise<AudioCoachSettings> {
   logger.debug('audioCoach', 'Updating audio coach settings', partial);
-  const response = await api.request<any>(
-    '/audio-coach/settings',
-    {
-      method: 'PUT',
-      body: JSON.stringify(toServerSettings(partial)),
-    },
-  );
+  const response = await api.request<any>('/audio-coach/settings', {
+    method: 'PUT',
+    body: JSON.stringify(toServerSettings(partial)),
+  });
   return fromServerSettings(response.data ?? response);
 }
 

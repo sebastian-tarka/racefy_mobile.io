@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize } from '../theme';
+import { fontSize, spacing } from '../theme';
 import type { Team } from '../types/api';
 
 interface TeamCardProps {
@@ -13,7 +13,7 @@ interface TeamCardProps {
   onPress: () => void;
 }
 
-export function TeamCard({ team, onPress }: TeamCardProps) {
+function TeamCardBase({ team, onPress }: TeamCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -61,3 +61,6 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   metaText: { fontSize: fontSize.sm },
 });
+
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const TeamCard = React.memo(TeamCardBase);

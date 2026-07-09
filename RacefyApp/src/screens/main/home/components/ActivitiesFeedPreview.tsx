@@ -150,7 +150,12 @@ export function ActivitiesFeedPreview({
 
   // Manage auto-scroll lifecycle
   useEffect(() => {
-    if (displayMode === 'slider' && activities.length > 1 && !userHasInteracted.current && !isCollapsed) {
+    if (
+      displayMode === 'slider' &&
+      activities.length > 1 &&
+      !userHasInteracted.current &&
+      !isCollapsed
+    ) {
       startAutoScroll();
     } else {
       stopAutoScroll();
@@ -165,13 +170,10 @@ export function ActivitiesFeedPreview({
   }, [stopAutoScroll]);
 
   // Track current index from manual scroll position
-  const onMomentumScrollEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const offsetX = e.nativeEvent.contentOffset.x;
-      currentIndexRef.current = Math.round(offsetX / CARD_TOTAL_WIDTH);
-    },
-    [],
-  );
+  const onMomentumScrollEnd = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    currentIndexRef.current = Math.round(offsetX / CARD_TOTAL_WIDTH);
+  }, []);
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -246,18 +248,14 @@ export function ActivitiesFeedPreview({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-              <Ionicons
-                name="chevron-up"
-                size={16}
-                color={colors.textSecondary}
-              />
+              <Ionicons name="chevron-up" size={16} color={colors.textSecondary} />
             </Animated.View>
           </TouchableOpacity>
         </View>
       </View>
 
-      {!isCollapsed && (
-        displayMode === 'slider' ? (
+      {!isCollapsed &&
+        (displayMode === 'slider' ? (
           <FlatList
             ref={flatListRef}
             data={activities}
@@ -291,8 +289,7 @@ export function ActivitiesFeedPreview({
               </View>
             ))}
           </View>
-        )
-      )}
+        ))}
     </View>
   );
 }

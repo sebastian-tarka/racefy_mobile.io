@@ -26,7 +26,7 @@ interface ReportModalProps {
   onReportSuccess?: () => void;
 }
 
-const REPORT_REASONS: Array<{ key: ReportReason; icon: string }> = [
+const REPORT_REASONS: { key: ReportReason; icon: string }[] = [
   { key: 'spam', icon: '📧' },
   { key: 'harassment', icon: '🚫' },
   { key: 'hate_speech', icon: '⚠️' },
@@ -71,7 +71,7 @@ function ReportModalComponent({
       () => {
         handleClose();
         onReportSuccess?.();
-      }
+      },
     );
   };
 
@@ -83,176 +83,153 @@ function ReportModalComponent({
   const isSubmitDisabled = !selectedReason || isLoading;
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.kavFlex}
-        behavior="padding"
-      >
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View
-              style={[styles.modalContent, { backgroundColor: colors.background }]}
-            >
-              <View style={styles.handleContainer}>
-                <View style={[styles.handle, { backgroundColor: colors.border }]} />
-              </View>
-
-              <View
-                style={[styles.modalHeader, { borderBottomColor: colors.border }]}
-              >
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {t('reporting.title')}
-                </Text>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  disabled={isLoading}
-                >
-                  <Ionicons name="close" size={24} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                  {t('reporting.selectReason')}
-                </Text>
-
-                <View style={styles.reasonsGrid}>
-                  {REPORT_REASONS.map((reason) => {
-                    const isSelected = selectedReason === reason.key;
-                    return (
-                      <TouchableOpacity
-                        key={reason.key}
-                        style={[
-                          styles.reasonButton,
-                          {
-                            backgroundColor: isSelected
-                              ? colors.primary
-                              : colors.cardBackground,
-                            borderColor: isSelected ? colors.primary : colors.border,
-                          },
-                        ]}
-                        onPress={() => handleReasonSelect(reason.key)}
-                        disabled={isLoading}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.reasonIcon}>{reason.icon}</Text>
-                        <Text
-                          style={[
-                            styles.reasonText,
-                            {
-                              color: isSelected
-                                ? colors.background
-                                : colors.textPrimary,
-                            },
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {t(`reporting.reasons.${reason.key}`)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={styles.kavFlex} behavior="padding">
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                <View style={styles.handleContainer}>
+                  <View style={[styles.handle, { backgroundColor: colors.border }]} />
                 </View>
 
-                <Text
-                  style={[
-                    styles.sectionTitle,
-                    { color: colors.textSecondary, marginTop: spacing.lg },
-                  ]}
-                >
-                  {t('reporting.additionalDetails')}
-                </Text>
+                <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                    {t('reporting.title')}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleClose}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    disabled={isLoading}
+                  >
+                    <Ionicons name="close" size={24} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
 
-                <View
-                  style={[
-                    styles.descriptionContainer,
-                    {
-                      backgroundColor: colors.cardBackground,
-                      borderColor: colors.border,
-                    },
-                  ]}
+                <ScrollView
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator={false}
                 >
-                  <TextInput
-                    style={[
-                      styles.descriptionInput,
-                      { color: colors.textPrimary },
-                    ]}
-                    placeholder={t('reporting.descriptionPlaceholder')}
-                    placeholderTextColor={colors.textMuted}
-                    value={description}
-                    onChangeText={(text) => {
-                      if (text.length <= MAX_DESCRIPTION_LENGTH) {
-                        setDescription(text);
-                      }
-                    }}
-                    multiline
-                    maxLength={MAX_DESCRIPTION_LENGTH}
-                    editable={!isLoading}
-                    textAlignVertical="top"
-                  />
+                  <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                    {t('reporting.selectReason')}
+                  </Text>
+
+                  <View style={styles.reasonsGrid}>
+                    {REPORT_REASONS.map((reason) => {
+                      const isSelected = selectedReason === reason.key;
+                      return (
+                        <TouchableOpacity
+                          key={reason.key}
+                          style={[
+                            styles.reasonButton,
+                            {
+                              backgroundColor: isSelected ? colors.primary : colors.cardBackground,
+                              borderColor: isSelected ? colors.primary : colors.border,
+                            },
+                          ]}
+                          onPress={() => handleReasonSelect(reason.key)}
+                          disabled={isLoading}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.reasonIcon}>{reason.icon}</Text>
+                          <Text
+                            style={[
+                              styles.reasonText,
+                              {
+                                color: isSelected ? colors.background : colors.textPrimary,
+                              },
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {t(`reporting.reasons.${reason.key}`)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
                   <Text
                     style={[
-                      styles.characterCount,
+                      styles.sectionTitle,
+                      { color: colors.textSecondary, marginTop: spacing.lg },
+                    ]}
+                  >
+                    {t('reporting.additionalDetails')}
+                  </Text>
+
+                  <View
+                    style={[
+                      styles.descriptionContainer,
                       {
-                        color:
-                          characterCount === MAX_DESCRIPTION_LENGTH
-                            ? colors.error
-                            : colors.textMuted,
+                        backgroundColor: colors.cardBackground,
+                        borderColor: colors.border,
                       },
                     ]}
                   >
-                    {characterCount}/{MAX_DESCRIPTION_LENGTH}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    {
-                      backgroundColor: isSubmitDisabled
-                        ? colors.border
-                        : colors.error,
-                    },
-                  ]}
-                  onPress={handleSubmit}
-                  disabled={isSubmitDisabled}
-                  activeOpacity={0.7}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color={colors.background} size="small" />
-                  ) : (
-                    <Text style={styles.submitButtonText}>
-                      {t('reporting.submitReport')}
+                    <TextInput
+                      style={[styles.descriptionInput, { color: colors.textPrimary }]}
+                      placeholder={t('reporting.descriptionPlaceholder')}
+                      placeholderTextColor={colors.textMuted}
+                      value={description}
+                      onChangeText={(text) => {
+                        if (text.length <= MAX_DESCRIPTION_LENGTH) {
+                          setDescription(text);
+                        }
+                      }}
+                      multiline
+                      maxLength={MAX_DESCRIPTION_LENGTH}
+                      editable={!isLoading}
+                      textAlignVertical="top"
+                    />
+                    <Text
+                      style={[
+                        styles.characterCount,
+                        {
+                          color:
+                            characterCount === MAX_DESCRIPTION_LENGTH
+                              ? colors.error
+                              : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      {characterCount}/{MAX_DESCRIPTION_LENGTH}
                     </Text>
-                  )}
-                </TouchableOpacity>
+                  </View>
 
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={handleClose}
-                  disabled={isLoading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>
-                    {t('common.cancel')}
-                  </Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      {
+                        backgroundColor: isSubmitDisabled ? colors.border : colors.error,
+                      },
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={isSubmitDisabled}
+                    activeOpacity={0.7}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color={colors.background} size="small" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>{t('reporting.submitReport')}</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={handleClose}
+                    disabled={isLoading}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>
+                      {t('common.cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </Modal>
   );

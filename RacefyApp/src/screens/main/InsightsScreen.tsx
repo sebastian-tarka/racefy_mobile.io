@@ -47,55 +47,64 @@ export function InsightsScreen({ navigation }: Props) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    try {
-      const response = await api.getInsights();
-      setData(response.data);
-      setError(null);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('common.error');
-      logger.error('api', 'Failed to load insights', { error: err });
-      setError(message);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [t]);
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      try {
+        const response = await api.getInsights();
+        setData(response.data);
+        setError(null);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : t('common.error');
+        logger.error('api', 'Failed to load insights', { error: err });
+        setError(message);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [t],
+  );
 
   useFocusEffect(
     useCallback(() => {
       loadData();
-    }, [loadData])
+    }, [loadData]),
   );
 
-  const isLocked = useCallback((sectionName: string): LockedSection | undefined => {
-    return data?.locked_sections.find(s => s.name === sectionName);
-  }, [data]);
+  const isLocked = useCallback(
+    (sectionName: string): LockedSection | undefined => {
+      return data?.locked_sections.find((s) => s.name === sectionName);
+    },
+    [data],
+  );
 
-  const renderLockedOrSection = useCallback((
-    sectionName: string,
-    icon: string,
-    titleKey: string,
-    renderContent: () => React.ReactNode,
-  ): React.ReactNode => {
-    const locked = isLocked(sectionName);
-    if (locked) {
-      return (
-        <LockedInsightCard
-          key={sectionName}
-          title={t(titleKey)}
-          icon={icon as never}
-          requiredTier={locked.required_tier}
-        />
-      );
-    }
-    return renderContent();
-  }, [isLocked, t]);
+  const renderLockedOrSection = useCallback(
+    (
+      sectionName: string,
+      icon: string,
+      titleKey: string,
+      renderContent: () => React.ReactNode,
+    ): React.ReactNode => {
+      const locked = isLocked(sectionName);
+      if (locked) {
+        return (
+          <LockedInsightCard
+            key={sectionName}
+            title={t(titleKey)}
+            icon={icon as never}
+            requiredTier={locked.required_tier}
+          />
+        );
+      }
+      return renderContent();
+    },
+    [isLocked, t],
+  );
 
   if (isLoading) {
     return (
@@ -201,9 +210,7 @@ export function InsightsScreen({ navigation }: Props) {
         )}
 
         {/* 1. Activity Summary */}
-        {sections.activity_summary && (
-          <SummaryCard data={sections.activity_summary} />
-        )}
+        {sections.activity_summary && <SummaryCard data={sections.activity_summary} />}
 
         {/* 2. Comparisons */}
         {comparisons && Object.keys(comparisons).length > 0 && (
@@ -211,28 +218,32 @@ export function InsightsScreen({ navigation }: Props) {
         )}
 
         {/* 3. Streak */}
-        {sections.streak_data && (
-          <StreakCard data={sections.streak_data} />
-        )}
+        {sections.streak_data && <StreakCard data={sections.streak_data} />}
 
         {/* 4. Trends */}
         {renderLockedOrSection('trends', 'trending-up', 'insights.trends.title', () =>
-          sections.trends ? <TrendsCard key="trends" data={sections.trends} /> : null
+          sections.trends ? <TrendsCard key="trends" data={sections.trends} /> : null,
         )}
 
         {/* 5. Time Patterns */}
         {renderLockedOrSection('time_patterns', 'time', 'insights.timePatterns.title', () =>
-          sections.time_patterns ? <TimePatternsCard key="time_patterns" data={sections.time_patterns} /> : null
+          sections.time_patterns ? (
+            <TimePatternsCard key="time_patterns" data={sections.time_patterns} />
+          ) : null,
         )}
 
         {/* 6. Milestones */}
         {renderLockedOrSection('milestone_progress', 'trophy', 'insights.milestones.title', () =>
-          sections.milestone_progress ? <MilestonesCard key="milestones" data={sections.milestone_progress} /> : null
+          sections.milestone_progress ? (
+            <MilestonesCard key="milestones" data={sections.milestone_progress} />
+          ) : null,
         )}
 
         {/* 7. Weather */}
         {renderLockedOrSection('weather_profile', 'partly-sunny', 'insights.weather.title', () =>
-          sections.weather_profile ? <WeatherCard key="weather" data={sections.weather_profile} /> : null
+          sections.weather_profile ? (
+            <WeatherCard key="weather" data={sections.weather_profile} />
+          ) : null,
         )}
 
         {/* 8. Routes */}
@@ -243,7 +254,7 @@ export function InsightsScreen({ navigation }: Props) {
               routes={sections.favorite_routes}
               fingerprints={sections.route_fingerprints}
             />
-          ) : null
+          ) : null,
         )}
 
         {/* Also check route_fingerprints locked separately */}

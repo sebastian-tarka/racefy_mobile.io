@@ -144,7 +144,7 @@ export function PostFormScreen({ navigation, route }: Props) {
     if (fetchedPost.media && fetchedPost.media.length > 0) {
       fetchedPost.media.forEach((media: Media) => {
         // Avoid duplicates if both arrays are present
-        if (!mediaItems.some(m => m.id === media.id)) {
+        if (!mediaItems.some((m) => m.id === media.id)) {
           const url = fixStorageUrl(media.url);
           if (url) {
             mediaItems.push({
@@ -160,7 +160,7 @@ export function PostFormScreen({ navigation, route }: Props) {
 
     logger.info('api', 'Populated form with media', {
       existingMediaCount: mediaItems.length,
-      mediaItems: mediaItems.map(m => ({ id: m.id, type: m.type, hasUrl: !!m.url })),
+      mediaItems: mediaItems.map((m) => ({ id: m.id, type: m.type, hasUrl: !!m.url })),
     });
     setExistingMedia(mediaItems);
   };
@@ -171,7 +171,7 @@ export function PostFormScreen({ navigation, route }: Props) {
     // Skip content validation for activity posts (content is read-only)
     // In create mode, allow media-only posts (no content required if media attached)
     const hasMedia = newMedia.length > 0 || existingMedia.length > 0;
-    if (!isActivityPost && !content.trim() && !((!isEditMode) && hasMedia)) {
+    if (!isActivityPost && !content.trim() && !(!isEditMode && hasMedia)) {
       newErrors.content = t('postForm.validation.contentRequired');
     }
 
@@ -180,8 +180,8 @@ export function PostFormScreen({ navigation, route }: Props) {
   };
 
   const handleRemoveExistingMedia = (media: ExistingMedia) => {
-    setExistingMedia(prev => prev.filter(m => m.id !== media.id));
-    setMediaToDelete(prev => [...prev, media]);
+    setExistingMedia((prev) => prev.filter((m) => m.id !== media.id));
+    setMediaToDelete((prev) => [...prev, media]);
   };
 
   const handleSubmit = async () => {
@@ -276,11 +276,7 @@ export function PostFormScreen({ navigation, route }: Props) {
   if (isFetching) {
     return (
       <ScreenContainer>
-        <ScreenHeader
-          title={screenTitle}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+        <ScreenHeader title={screenTitle} showBack onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -290,15 +286,8 @@ export function PostFormScreen({ navigation, route }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior="padding"
-      >
-        <ScreenHeader
-          title={screenTitle}
-          showBack
-          onBack={() => navigation.goBack()}
-        />
+      <KeyboardAvoidingView style={styles.keyboardView} behavior="padding">
+        <ScreenHeader title={screenTitle} showBack onBack={() => navigation.goBack()} />
 
         <ScrollView
           style={styles.scrollView}
@@ -307,8 +296,18 @@ export function PostFormScreen({ navigation, route }: Props) {
         >
           {/* Info banner for activity posts */}
           {isActivityPost && (
-            <View style={[styles.infoBanner, { backgroundColor: colors.infoLight, borderColor: colors.info }]}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.info} style={styles.infoBannerIcon} />
+            <View
+              style={[
+                styles.infoBanner,
+                { backgroundColor: colors.infoLight, borderColor: colors.info },
+              ]}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color={colors.info}
+                style={styles.infoBannerIcon}
+              />
               <View style={styles.infoBannerContent}>
                 <Text style={[styles.infoBannerText, { color: colors.textPrimary }]}>
                   {t('postForm.activityPostInfo')}
@@ -316,7 +315,9 @@ export function PostFormScreen({ navigation, route }: Props) {
                 {post?.activity?.id && (
                   <TouchableOpacity
                     style={[styles.editActivityButton, { backgroundColor: colors.primary }]}
-                    onPress={() => navigation.navigate('ActivityForm', { activityId: post.activity!.id })}
+                    onPress={() =>
+                      navigation.navigate('ActivityForm', { activityId: post.activity!.id })
+                    }
                   >
                     <Ionicons name="pencil" size={14} color="#fff" />
                     <Text style={styles.editActivityButtonText}>{t('postForm.editActivity')}</Text>
@@ -394,12 +395,9 @@ export function PostFormScreen({ navigation, route }: Props) {
                   style={[
                     styles.visibilityOption,
                     {
-                      backgroundColor: visibility === option.value
-                        ? colors.primary
-                        : colors.cardBackground,
-                      borderColor: visibility === option.value
-                        ? colors.primary
-                        : colors.border,
+                      backgroundColor:
+                        visibility === option.value ? colors.primary : colors.cardBackground,
+                      borderColor: visibility === option.value ? colors.primary : colors.border,
                     },
                   ]}
                   onPress={() => setVisibility(option.value)}
@@ -426,9 +424,7 @@ export function PostFormScreen({ navigation, route }: Props) {
 
           {/* Media Section */}
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>
-              {t('postForm.media')}
-            </Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('postForm.media')}</Text>
 
             {/* Existing Media */}
             {existingMedia.length > 0 && (

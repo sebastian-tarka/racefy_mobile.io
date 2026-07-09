@@ -23,11 +23,7 @@ try {
 }
 
 // Re-export types for consumers (types are always safe to import)
-export type {
-  CustomerInfo,
-  PurchasesOffering,
-  PurchasesPackage,
-} from 'react-native-purchases';
+export type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
 // Environment detection
 const APP_ENV = Constants.expoConfig?.extra?.appEnv || 'production';
@@ -58,7 +54,7 @@ let isConfigured = false;
 export async function configureRevenueCat(): Promise<void> {
   if (isConfigured || !Purchases) return;
 
-  if (!REVENUECAT_API_KEY || REVENUECAT_API_KEY === REVENUECAT_TEST_KEY && !__DEV__) {
+  if (!REVENUECAT_API_KEY || (REVENUECAT_API_KEY === REVENUECAT_TEST_KEY && !__DEV__)) {
     logger.info('general', 'RevenueCat skipped — no API key configured', { env: APP_ENV });
     return;
   }
@@ -140,9 +136,7 @@ export async function getOfferings(): Promise<any | null> {
 /**
  * Purchase a package. Returns updated customer info on success.
  */
-export async function purchasePackage(
-  pkg: any
-): Promise<{ customerInfo: any; success: boolean }> {
+export async function purchasePackage(pkg: any): Promise<{ customerInfo: any; success: boolean }> {
   if (!Purchases) return { customerInfo: null, success: false };
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
@@ -181,10 +175,7 @@ export async function restorePurchases(): Promise<any | null> {
 /**
  * Check if user has a specific entitlement active.
  */
-export function hasEntitlement(
-  customerInfo: any,
-  entitlement: string
-): boolean {
+export function hasEntitlement(customerInfo: any, entitlement: string): boolean {
   return entitlement in (customerInfo?.entitlements?.active ?? {});
 }
 

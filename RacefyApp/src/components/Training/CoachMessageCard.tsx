@@ -26,11 +26,14 @@ export function CoachMessageCard({ message }: Props) {
   const icon = getIconForKey(message.key);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+    >
       <Text style={styles.icon}>{icon}</Text>
-      <Text style={[styles.text, { color: colors.textPrimary }]}>
-        {message.message}
-      </Text>
+      <Text style={[styles.text, { color: colors.textPrimary }]}>{message.message}</Text>
     </View>
   );
 }

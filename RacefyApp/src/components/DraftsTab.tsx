@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrafts } from '../hooks/useDrafts';
 import { DraftPostCard } from './DraftPostCard';
@@ -56,33 +50,29 @@ export function DraftsTab({
   }, [isOwnProfile]);
 
   const handlePublish = (draft: DraftPost) => {
-    Alert.alert(
-      t('drafts.confirmPublishTitle'),
-      t('drafts.confirmPublish'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
+    Alert.alert(t('drafts.confirmPublishTitle'), t('drafts.confirmPublish'), [
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('drafts.publish'),
+        onPress: async () => {
+          setPublishingId(draft.id);
+          try {
+            await publishDraft(draft.id);
+            Alert.alert(t('common.success'), t('drafts.published'));
+            onPublishSuccess?.();
+          } catch (error) {
+            Alert.alert(t('common.error'), t('drafts.publishFailed'));
+            logger.error('api', 'DraftsTab publish error', { error });
+          } finally {
+            setPublishingId(null);
+          }
         },
-        {
-          text: t('drafts.publish'),
-          onPress: async () => {
-            setPublishingId(draft.id);
-            try {
-              await publishDraft(draft.id);
-              Alert.alert(t('common.success'), t('drafts.published'));
-              onPublishSuccess?.();
-            } catch (error) {
-              Alert.alert(t('common.error'), t('drafts.publishFailed'));
-              logger.error('api', 'DraftsTab publish error', { error });
-            } finally {
-              setPublishingId(null);
-            }
-          },
-          style: 'default',
-        },
-      ]
-    );
+        style: 'default',
+      },
+    ]);
   };
 
   const handleEdit = (draft: DraftPost) => {
@@ -92,29 +82,25 @@ export function DraftsTab({
   };
 
   const handleDelete = (draft: DraftPost) => {
-    Alert.alert(
-      t('drafts.confirmDeleteTitle'),
-      t('drafts.confirmDelete'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
+    Alert.alert(t('drafts.confirmDeleteTitle'), t('drafts.confirmDelete'), [
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+      },
+      {
+        text: t('common.delete'),
+        onPress: async () => {
+          try {
+            await deleteDraft(draft.id);
+            onDeleteSuccess?.();
+          } catch (error) {
+            Alert.alert(t('common.error'), t('drafts.deleteFailed'));
+            logger.error('api', 'DraftsTab delete error', { error });
+          }
         },
-        {
-          text: t('common.delete'),
-          onPress: async () => {
-            try {
-              await deleteDraft(draft.id);
-              onDeleteSuccess?.();
-            } catch (error) {
-              Alert.alert(t('common.error'), t('drafts.deleteFailed'));
-              logger.error('api', 'DraftsTab delete error', { error });
-            }
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+        style: 'destructive',
+      },
+    ]);
   };
 
   const renderDraft = ({ item }: { item: DraftPost }) => (

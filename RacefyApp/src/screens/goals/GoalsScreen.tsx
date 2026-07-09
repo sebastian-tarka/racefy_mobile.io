@@ -53,7 +53,7 @@ export function GoalsScreen({ navigation }: Props) {
   useFocusEffect(
     useCallback(() => {
       fetchGoals();
-    }, [fetchGoals])
+    }, [fetchGoals]),
   );
 
   useRefreshOn('goals', () => fetchGoals());
@@ -61,9 +61,8 @@ export function GoalsScreen({ navigation }: Props) {
 
   const activeCount = goals.filter((g) => g.is_active).length;
   const max = features.goals_max_active;
-  const slotsLabel = max === -1
-    ? t('goals.unlimited')
-    : t('goals.slotsUsed', { used: activeCount, max });
+  const slotsLabel =
+    max === -1 ? t('goals.unlimited') : t('goals.slotsUsed', { used: activeCount, max });
 
   const renderGoal = ({ item }: { item: UserGoal }) => {
     const target = formatMetricValue(item.target_value, item.metric, units);
@@ -84,7 +83,10 @@ export function GoalsScreen({ navigation }: Props) {
 
     return (
       <TouchableOpacity
-        style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+        style={[
+          styles.card,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+        ]}
         onPress={() => navigation.navigate('GoalDetail', { goalId: item.id })}
         activeOpacity={0.7}
       >
@@ -184,10 +186,7 @@ export function GoalsScreen({ navigation }: Props) {
           data={goals}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderGoal}
-          contentContainerStyle={[
-            styles.listContent,
-            goals.length === 0 && styles.emptyList,
-          ]}
+          contentContainerStyle={[styles.listContent, goals.length === 0 && styles.emptyList]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -197,9 +196,7 @@ export function GoalsScreen({ navigation }: Props) {
           }
           ListHeaderComponent={
             goals.length > 0 ? (
-              <Text style={[styles.slotsLabel, { color: colors.textSecondary }]}>
-                {slotsLabel}
-              </Text>
+              <Text style={[styles.slotsLabel, { color: colors.textSecondary }]}>{slotsLabel}</Text>
             ) : null
           }
           ListEmptyComponent={renderEmpty}

@@ -1,12 +1,12 @@
-import React, {useEffect, useState} from 'react';
-import {Linking, Modal, Platform, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { Linking, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTheme} from '../../hooks/useTheme';
-import {useAuth} from '../../hooks/useAuth';
-import {fontSize, spacing} from '../../theme';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
+import { useAuth } from '../../hooks/useAuth';
+import { fontSize, spacing } from '../../theme';
 
 const STORAGE_KEY = '@racefy_battery_hint_shown';
 
@@ -53,7 +53,12 @@ export function BatteryOptimizationModal() {
       onRequestClose={dismiss}
     >
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.cardBackground, paddingBottom: spacing.xl + insets.bottom }]}>
+        <View
+          style={[
+            styles.sheet,
+            { backgroundColor: colors.cardBackground, paddingBottom: spacing.xl + insets.bottom },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={[styles.iconBadge, { backgroundColor: colors.primary + '22' }]}>

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, BrandLogo, ScreenContainer } from '../../components';
@@ -58,10 +52,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <KeyboardAvoidingView
-        behavior="padding"
-        style={styles.keyboardView}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.keyboardView}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -70,7 +61,12 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             <BrandLogo category="logo-full" width={200} height={56} />
           </View>
 
-          <View style={[styles.form, { backgroundColor: colors.cardBackground, shadowColor: colors.black }]}>
+          <View
+            style={[
+              styles.form,
+              { backgroundColor: colors.cardBackground, shadowColor: colors.black },
+            ]}
+          >
             {isSent ? (
               <View style={styles.successContainer}>
                 <View style={[styles.successIcon, { backgroundColor: `${colors.primary}15` }]}>

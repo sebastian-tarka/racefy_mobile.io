@@ -27,18 +27,18 @@ export function FeaturesList({ features }: FeaturesListProps) {
     <View style={styles.container}>
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('home.features')}</Text>
       {features.map((feature, index) => (
-        <TouchableOpacity
-          key={index}
-          onPress={feature.onPress}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity key={index} onPress={feature.onPress} activeOpacity={0.8}>
           <Card style={styles.featureCard}>
             <View style={[styles.featureIcon, { backgroundColor: colors.primaryLight + '20' }]}>
               <Ionicons name={feature.icon} size={28} color={colors.primary} />
             </View>
             <View style={styles.featureContent}>
-              <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>{t(feature.titleKey)}</Text>
-              <Text style={[styles.featureDescription, { color: colors.textSecondary }]}>{t(feature.descriptionKey)}</Text>
+              <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>
+                {t(feature.titleKey)}
+              </Text>
+              <Text style={[styles.featureDescription, { color: colors.textSecondary }]}>
+                {t(feature.descriptionKey)}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
           </Card>

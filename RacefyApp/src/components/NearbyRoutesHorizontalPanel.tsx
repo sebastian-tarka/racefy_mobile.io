@@ -15,7 +15,7 @@ import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
 
 interface NearbyRoutesHorizontalPanelProps {
-  routes: Array<any>;
+  routes: any[];
   selectedRouteId: number | null;
   onRouteSelect: (route: any) => void;
   onClearRoute: () => void;
@@ -56,7 +56,13 @@ export function NearbyRoutesHorizontalPanel({
 
   if (isLoading) {
     return (
-      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.panel,
+          { backgroundColor: colors.cardBackground, bottom: bottomOffset },
+          animatedStyle,
+        ]}
+      >
         <View style={styles.loading}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
@@ -69,12 +75,16 @@ export function NearbyRoutesHorizontalPanel({
 
   if (error) {
     return (
-      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.panel,
+          { backgroundColor: colors.cardBackground, bottom: bottomOffset },
+          animatedStyle,
+        ]}
+      >
         <View style={styles.error}>
           <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
-          <Text style={[styles.errorText, { color: colors.error }]}>
-            {error}
-          </Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
         </View>
       </Animated.View>
     );
@@ -82,7 +92,13 @@ export function NearbyRoutesHorizontalPanel({
 
   if (routes.length === 0) {
     return (
-      <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.panel,
+          { backgroundColor: colors.cardBackground, bottom: bottomOffset },
+          animatedStyle,
+        ]}
+      >
         <View style={styles.empty}>
           <Ionicons name="map-outline" size={32} color={colors.textMuted} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -100,7 +116,13 @@ export function NearbyRoutesHorizontalPanel({
   const selectedBorderColor = isDark ? '#3B82F6' : '#2563EB';
 
   return (
-    <Animated.View style={[styles.panel, { backgroundColor: colors.cardBackground, bottom: bottomOffset }, animatedStyle]}>
+    <Animated.View
+      style={[
+        styles.panel,
+        { backgroundColor: colors.cardBackground, bottom: bottomOffset },
+        animatedStyle,
+      ]}
+    >
       <View style={styles.header}>
         <Ionicons name="map" size={20} color={colors.primary} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>

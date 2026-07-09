@@ -1,26 +1,26 @@
 import React from 'react';
-import {ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {Ionicons} from '@expo/vector-icons';
-import {format} from 'date-fns';
-import {useTranslation} from 'react-i18next';
-import {Card} from './Card';
-import {Avatar} from './Avatar';
-import {RoutePreview} from './LeafletMap';
-import {CommentSection} from './CommentSection';
-import {KeyboardAwareScreenLayout} from './KeyboardAwareScreenLayout';
-import {CountdownTimer} from './CountdownTimer';
-import {ParticipantAvatarsStack} from './ParticipantAvatarsStack';
-import {LeaderboardEntryRow} from './EventLeaderboardTabContent';
-import {useTheme} from '../hooks/useTheme';
-import {useUnits} from '../hooks/useUnits';
-import {useAuth} from '../hooks/useAuth';
-import {useFeatureFlags} from '../hooks/useFeatureFlags';
-import {useKeyboardVisible} from '../hooks/useKeyboardVisible';
-import {borderRadius, fontSize, spacing} from '../theme';
-import {formatTotalTime} from '../utils/formatters';
-import type {Activity, Event, EventRegistration, LeaderboardEntry, User} from '../types/api';
-import type {ThemeColors} from '../theme/colors';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+import { Card } from './Card';
+import { Avatar } from './Avatar';
+import { RoutePreview } from './LeafletMap';
+import { CommentSection } from './CommentSection';
+import { KeyboardAwareScreenLayout } from './KeyboardAwareScreenLayout';
+import { CountdownTimer } from './CountdownTimer';
+import { ParticipantAvatarsStack } from './ParticipantAvatarsStack';
+import { LeaderboardEntryRow } from './EventLeaderboardTabContent';
+import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
+import { useAuth } from '../hooks/useAuth';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
+import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
+import { borderRadius, fontSize, spacing } from '../theme';
+import { formatTotalTime } from '../utils/formatters';
+import type { Activity, Event, EventRegistration, LeaderboardEntry, User } from '../types/api';
+import type { ThemeColors } from '../theme/colors';
 
 const getDifficultyColors = (colors: ThemeColors): Record<string, string> => ({
   beginner: colors.success,
@@ -84,11 +84,7 @@ export function EventDetailsTabContent({
     <CommentSection
       commentableType="event"
       commentableId={eventId}
-      onUserPress={
-        isAuthenticated
-          ? (user: User) => onUserPress?.(user.username)
-          : undefined
-      }
+      onUserPress={isAuthenticated ? (user: User) => onUserPress?.(user.username) : undefined}
       onInputFocus={onScrollToBottom}
       renderLayout={({ header, commentList, commentInput }) => (
         <KeyboardAwareScreenLayout
@@ -98,370 +94,402 @@ export function EventDetailsTabContent({
           keyboardVerticalOffset={{ ios: 120, android: 0 }}
           scrollViewProps={{ onScroll, scrollEventThrottle: 16 }}
         >
-        {/* About */}
-        {event.post?.content && (
+          {/* About */}
+          {event.post?.content && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.about')}
+              </Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                {event.post.content}
+              </Text>
+            </Card>
+          )}
+
+          {/* Date & Time */}
+          <Card style={styles.section}>
+            <View style={styles.infoRow}>
+              <Ionicons name="calendar-outline" size={24} color={colors.primary} />
+              <View style={styles.infoContent}>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+                  {t('eventDetail.dateTime')}
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                  {format(startDate, 'EEEE, MMMM d, yyyy')}
+                </Text>
+                <Text style={[styles.infoSubvalue, { color: colors.textSecondary }]}>
+                  {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          {/* Location */}
+          <Card style={styles.section}>
+            <View style={styles.infoRow}>
+              <Ionicons name="location-outline" size={24} color={colors.primary} />
+              <View style={styles.infoContent}>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
+                  {t('eventDetail.location')}
+                </Text>
+                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
+                  {event.location_name}
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          {/* Event Route - map + stats */}
+          {event.route && event.route.geometry && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.route', 'Event Route')}
+              </Text>
+              <View style={styles.routeMapContainer}>
+                <RoutePreview
+                  trackData={event.route.geometry}
+                  height={200}
+                  backgroundColor={colors.cardBackground}
+                  showKmMarkers
+                />
+              </View>
+              <View style={styles.routeStats}>
+                <View style={styles.routeStat}>
+                  <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                    {formatDistance(event.route.distance)}
+                  </Text>
+                </View>
+                <View style={styles.routeStat}>
+                  <Ionicons name="trending-up-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                    {event.route.elevation_gain}m
+                  </Text>
+                </View>
+                <View style={styles.routeStat}>
+                  <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
+                    ~{formatTotalTime(event.route.estimated_duration)}
+                  </Text>
+                </View>
+              </View>
+              {event.route.description && (
+                <Text style={[styles.routeDescription, { color: colors.textSecondary }]}>
+                  {event.route.description}
+                </Text>
+              )}
+            </Card>
+          )}
+
+          {/* Details Grid */}
           <Card style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('eventDetail.about')}
+              {t('eventDetail.details')}
             </Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              {event.post.content}
-            </Text>
-          </Card>
-        )}
-
-        {/* Date & Time */}
-        <Card style={styles.section}>
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={24} color={colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                {t('eventDetail.dateTime')}
-              </Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                {format(startDate, 'EEEE, MMMM d, yyyy')}
-              </Text>
-              <Text style={[styles.infoSubvalue, { color: colors.textSecondary }]}>
-                {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Location */}
-        <Card style={styles.section}>
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={24} color={colors.primary} />
-            <View style={styles.infoContent}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>
-                {t('eventDetail.location')}
-              </Text>
-              <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                {event.location_name}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Event Route - map + stats */}
-        {event.route && event.route.geometry && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('eventDetail.route', 'Event Route')}
-            </Text>
-            <View style={styles.routeMapContainer}>
-              <RoutePreview
-                trackData={event.route.geometry}
-                height={200}
-                backgroundColor={colors.cardBackground}
-                showKmMarkers
-              />
-            </View>
-            <View style={styles.routeStats}>
-              <View style={styles.routeStat}>
-                <Ionicons name="resize-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
-                  {formatDistance(event.route.distance)}
-                </Text>
-              </View>
-              <View style={styles.routeStat}>
-                <Ionicons name="trending-up-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
-                  {event.route.elevation_gain}m
-                </Text>
-              </View>
-              <View style={styles.routeStat}>
-                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.routeStatText, { color: colors.textPrimary }]}>
-                  ~{formatTotalTime(event.route.estimated_duration)}
-                </Text>
-              </View>
-            </View>
-            {event.route.description && (
-              <Text style={[styles.routeDescription, { color: colors.textSecondary }]}>
-                {event.route.description}
-              </Text>
-            )}
-          </Card>
-        )}
-
-        {/* Details Grid */}
-        <Card style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            {t('eventDetail.details')}
-          </Text>
-          <View style={styles.detailsGrid}>
-            <View style={styles.detailItem}>
-              <Ionicons name="fitness-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                {t('eventDetail.sport')}
-              </Text>
-              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                {event.sport_type?.name || t('eventDetail.sport')}
-              </Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="speedometer-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                {t('eventDetail.difficulty')}
-              </Text>
-              <Text
-                style={[
-                  styles.detailValue,
-                  { color: difficultyColors[event.difficulty] || colors.textPrimary },
-                ]}
-              >
-                {t(`difficulty.${event.difficulty}`)}
-              </Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="people-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                {t('eventDetail.participants')}
-              </Text>
-              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{spotsText}</Text>
-            </View>
-            {event.distance && (
+            <View style={styles.detailsGrid}>
               <View style={styles.detailItem}>
-                <Ionicons name="map-outline" size={20} color={colors.textSecondary} />
+                <Ionicons name="fitness-outline" size={20} color={colors.textSecondary} />
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                  {t('eventDetail.distance')}
+                  {t('eventDetail.sport')}
                 </Text>
                 <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                  {formatDistanceShort(event.distance)}
+                  {event.sport_type?.name || t('eventDetail.sport')}
                 </Text>
               </View>
-            )}
-            {entryFeeEnabled && event.entry_fee !== null && (
               <View style={styles.detailItem}>
-                <Ionicons name="cash-outline" size={20} color={colors.textSecondary} />
+                <Ionicons name="speedometer-outline" size={20} color={colors.textSecondary} />
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                  {t('eventDetail.entryFee')}
-                </Text>
-                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                  {event.entry_fee === 0 ? t('eventDetail.free') : `$${event.entry_fee}`}
-                </Text>
-              </View>
-            )}
-            {availableSpots !== null && (
-              <View style={styles.detailItem}>
-                <Ionicons name="ticket-outline" size={20} color={colors.textSecondary} />
-                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                  {t('eventDetail.available')}
+                  {t('eventDetail.difficulty')}
                 </Text>
                 <Text
                   style={[
                     styles.detailValue,
-                    { color: isFull ? colors.error : colors.textPrimary },
+                    { color: difficultyColors[event.difficulty] || colors.textPrimary },
                   ]}
                 >
-                  {isFull
-                    ? t('eventDetail.full')
-                    : t('eventDetail.spots', { count: availableSpots })}
+                  {t(`difficulty.${event.difficulty}`)}
                 </Text>
               </View>
-            )}
-          </View>
-        </Card>
-
-        {/* Rewards */}
-        {event.point_rewards && (
-          event.point_rewards.first_place ||
-          event.point_rewards.second_place ||
-          event.point_rewards.third_place ||
-          event.point_rewards.finisher
-        ) && (
-          <Card style={styles.section}>
-            <View style={styles.rewardsHeader}>
-              <Ionicons name="gift-outline" size={22} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0, marginLeft: spacing.sm }]}>
-                {t('eventDetail.rewards')}
-              </Text>
-            </View>
-            <Text style={[styles.rewardsSubtitle, { color: colors.textSecondary }]}>
-              {t('eventDetail.rewardsDescription')}
-            </Text>
-            <View style={styles.rewardsGrid}>
-              {event.point_rewards.first_place != null && event.point_rewards.first_place > 0 && (
-                <View style={[styles.rewardItem, { backgroundColor: '#FFD70015', borderColor: '#FFD700' }]}>
-                  <Text style={styles.rewardMedal}>🥇</Text>
-                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
-                    {t('eventDetail.firstPlace')}
+              <View style={styles.detailItem}>
+                <Ionicons name="people-outline" size={20} color={colors.textSecondary} />
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
+                  {t('eventDetail.participants')}
+                </Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{spotsText}</Text>
+              </View>
+              {event.distance && (
+                <View style={styles.detailItem}>
+                  <Ionicons name="map-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.distance')}
                   </Text>
-                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
-                    +{event.point_rewards.first_place} {t('eventDetail.pts')}
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
+                    {formatDistanceShort(event.distance)}
                   </Text>
                 </View>
               )}
-              {event.point_rewards.second_place != null && event.point_rewards.second_place > 0 && (
-                <View style={[styles.rewardItem, { backgroundColor: '#C0C0C015', borderColor: '#C0C0C0' }]}>
-                  <Text style={styles.rewardMedal}>🥈</Text>
-                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
-                    {t('eventDetail.secondPlace')}
+              {entryFeeEnabled && event.entry_fee !== null && (
+                <View style={styles.detailItem}>
+                  <Ionicons name="cash-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.entryFee')}
                   </Text>
-                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
-                    +{event.point_rewards.second_place} {t('eventDetail.pts')}
-                  </Text>
-                </View>
-              )}
-              {event.point_rewards.third_place != null && event.point_rewards.third_place > 0 && (
-                <View style={[styles.rewardItem, { backgroundColor: '#CD7F3215', borderColor: '#CD7F32' }]}>
-                  <Text style={styles.rewardMedal}>🥉</Text>
-                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
-                    {t('eventDetail.thirdPlace')}
-                  </Text>
-                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
-                    +{event.point_rewards.third_place} {t('eventDetail.pts')}
+                  <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
+                    {event.entry_fee === 0 ? t('eventDetail.free') : `$${event.entry_fee}`}
                   </Text>
                 </View>
               )}
-              {event.point_rewards.finisher != null && event.point_rewards.finisher > 0 && (
-                <View style={[styles.rewardItem, { backgroundColor: colors.primaryLight + '15', borderColor: colors.primary }]}>
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                  <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
-                    {t('eventDetail.finisher')}
+              {availableSpots !== null && (
+                <View style={styles.detailItem}>
+                  <Ionicons name="ticket-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.available')}
                   </Text>
-                  <Text style={[styles.rewardPoints, { color: colors.primary }]}>
-                    +{event.point_rewards.finisher} {t('eventDetail.pts')}
+                  <Text
+                    style={[
+                      styles.detailValue,
+                      { color: isFull ? colors.error : colors.textPrimary },
+                    ]}
+                  >
+                    {isFull
+                      ? t('eventDetail.full')
+                      : t('eventDetail.spots', { count: availableSpots })}
                   </Text>
                 </View>
               )}
             </View>
           </Card>
-        )}
 
-        {/* Registration Info */}
-        {(event.registration_opens_at || event.registration_closes_at) && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('eventDetail.registrationPeriod')}
-            </Text>
-
-            {event.registration_opens_at && (
-              <View style={styles.countdownWrapper}>
-                <CountdownTimer
-                  targetDate={event.registration_opens_at}
-                  title={t('eventDetail.registrationOpensIn')}
-                  onComplete={fetchEvent}
-                />
-              </View>
-            )}
-
-            {event.registration_opens_at && (
-              <View style={styles.registrationRow}>
-                <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>
-                  {t('eventDetail.opens')}:
+          {/* Rewards */}
+          {event.point_rewards &&
+            (event.point_rewards.first_place ||
+              event.point_rewards.second_place ||
+              event.point_rewards.third_place ||
+              event.point_rewards.finisher) && (
+              <Card style={styles.section}>
+                <View style={styles.rewardsHeader}>
+                  <Ionicons name="gift-outline" size={22} color={colors.primary} />
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: colors.textPrimary, marginBottom: 0, marginLeft: spacing.sm },
+                    ]}
+                  >
+                    {t('eventDetail.rewards')}
+                  </Text>
+                </View>
+                <Text style={[styles.rewardsSubtitle, { color: colors.textSecondary }]}>
+                  {t('eventDetail.rewardsDescription')}
                 </Text>
-                <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
-                  {format(new Date(event.registration_opens_at), 'MMM d, yyyy h:mm a')}
-                </Text>
-              </View>
-            )}
-            {event.registration_closes_at && (
-              <View style={styles.registrationRow}>
-                <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>
-                  {t('eventDetail.closes')}:
-                </Text>
-                <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
-                  {format(new Date(event.registration_closes_at), 'MMM d, yyyy h:mm a')}
-                </Text>
-              </View>
-            )}
-          </Card>
-        )}
-
-        {/* Participants preview */}
-        {participants.length > 0 && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('eventDetail.participants')} ({participants.length})
-            </Text>
-            <ParticipantAvatarsStack
-              participants={participants}
-              maxVisible={6}
-              onParticipantPress={isAuthenticated ? onUserPress : undefined}
-            />
-          </Card>
-        )}
-
-        {/* Activities */}
-        {activities.length > 0 && (
-          <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              {t('eventDetail.activities')} ({activities.length})
-            </Text>
-            {activities.slice(0, 5).map((activity) => (
-              <TouchableOpacity
-                key={activity.id}
-                style={[styles.activityItem, { borderBottomColor: colors.border }]}
-                onPress={() => onActivityPress(activity.id)}
-              >
-                <View style={styles.activityLeft}>
-                  <Avatar uri={activity.user?.avatar} name={activity.user?.name || '?'} size="sm" />
-                  <View style={styles.activityInfo}>
-                    <Text style={[styles.activityUser, { color: colors.textPrimary }]}>
-                      {activity.user?.name}
-                    </Text>
-                    <Text
-                      style={[styles.activityTitle, { color: colors.textSecondary }]}
-                      numberOfLines={1}
+                <View style={styles.rewardsGrid}>
+                  {event.point_rewards.first_place != null &&
+                    event.point_rewards.first_place > 0 && (
+                      <View
+                        style={[
+                          styles.rewardItem,
+                          { backgroundColor: '#FFD70015', borderColor: '#FFD700' },
+                        ]}
+                      >
+                        <Text style={styles.rewardMedal}>🥇</Text>
+                        <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                          {t('eventDetail.firstPlace')}
+                        </Text>
+                        <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                          +{event.point_rewards.first_place} {t('eventDetail.pts')}
+                        </Text>
+                      </View>
+                    )}
+                  {event.point_rewards.second_place != null &&
+                    event.point_rewards.second_place > 0 && (
+                      <View
+                        style={[
+                          styles.rewardItem,
+                          { backgroundColor: '#C0C0C015', borderColor: '#C0C0C0' },
+                        ]}
+                      >
+                        <Text style={styles.rewardMedal}>🥈</Text>
+                        <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                          {t('eventDetail.secondPlace')}
+                        </Text>
+                        <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                          +{event.point_rewards.second_place} {t('eventDetail.pts')}
+                        </Text>
+                      </View>
+                    )}
+                  {event.point_rewards.third_place != null &&
+                    event.point_rewards.third_place > 0 && (
+                      <View
+                        style={[
+                          styles.rewardItem,
+                          { backgroundColor: '#CD7F3215', borderColor: '#CD7F32' },
+                        ]}
+                      >
+                        <Text style={styles.rewardMedal}>🥉</Text>
+                        <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                          {t('eventDetail.thirdPlace')}
+                        </Text>
+                        <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                          +{event.point_rewards.third_place} {t('eventDetail.pts')}
+                        </Text>
+                      </View>
+                    )}
+                  {event.point_rewards.finisher != null && event.point_rewards.finisher > 0 && (
+                    <View
+                      style={[
+                        styles.rewardItem,
+                        {
+                          backgroundColor: colors.primaryLight + '15',
+                          borderColor: colors.primary,
+                        },
+                      ]}
                     >
-                      {activity.title}
-                    </Text>
-                  </View>
+                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                      <Text style={[styles.rewardPlace, { color: colors.textPrimary }]}>
+                        {t('eventDetail.finisher')}
+                      </Text>
+                      <Text style={[styles.rewardPoints, { color: colors.primary }]}>
+                        +{event.point_rewards.finisher} {t('eventDetail.pts')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <View style={styles.activityStats}>
-                  <Text style={[styles.activityDistance, { color: colors.primary }]}>
-                    {formatDistance(activity.distance)}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </View>
-              </TouchableOpacity>
-            ))}
-            {activities.length > 5 && (
-              <Text style={[styles.moreActivitiesText, { color: colors.textMuted }]}>
-                {t('eventDetail.moreActivities', { count: activities.length - 5 })}
-              </Text>
+              </Card>
             )}
-          </Card>
-        )}
 
-        {/* Leaderboard preview */}
-        {leaderboard.length > 0 && (
-          <Card style={styles.section}>
-            <View style={styles.leaderboardHeader}>
-              <Text
-                style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}
-              >
-                {t('eventDetail.leaderboard')}
+          {/* Registration Info */}
+          {(event.registration_opens_at || event.registration_closes_at) && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.registrationPeriod')}
               </Text>
-              <Ionicons name="trophy" size={20} color="#FFD700" />
-            </View>
-            {leaderboard.map((entry, index) => (
-              <LeaderboardEntryRow
-                key={`preview-${entry.rank}-${entry.user.id}`}
-                entry={entry}
-                index={index}
-                borderColor={colors.border}
-                isAuthenticated={isAuthenticated}
-                onPress={
-                  isAuthenticated && entry.user.username
-                    ? () => onUserPress?.(entry.user.username)
-                    : undefined
-                }
+
+              {event.registration_opens_at && (
+                <View style={styles.countdownWrapper}>
+                  <CountdownTimer
+                    targetDate={event.registration_opens_at}
+                    title={t('eventDetail.registrationOpensIn')}
+                    onComplete={fetchEvent}
+                  />
+                </View>
+              )}
+
+              {event.registration_opens_at && (
+                <View style={styles.registrationRow}>
+                  <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>
+                    {t('eventDetail.opens')}:
+                  </Text>
+                  <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
+                    {format(new Date(event.registration_opens_at), 'MMM d, yyyy h:mm a')}
+                  </Text>
+                </View>
+              )}
+              {event.registration_closes_at && (
+                <View style={styles.registrationRow}>
+                  <Text style={[styles.registrationLabel, { color: colors.textSecondary }]}>
+                    {t('eventDetail.closes')}:
+                  </Text>
+                  <Text style={[styles.registrationValue, { color: colors.textPrimary }]}>
+                    {format(new Date(event.registration_closes_at), 'MMM d, yyyy h:mm a')}
+                  </Text>
+                </View>
+              )}
+            </Card>
+          )}
+
+          {/* Participants preview */}
+          {participants.length > 0 && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.participants')} ({participants.length})
+              </Text>
+              <ParticipantAvatarsStack
+                participants={participants}
+                maxVisible={6}
+                onParticipantPress={isAuthenticated ? onUserPress : undefined}
               />
-            ))}
-          </Card>
-        )}
+            </Card>
+          )}
 
-        {/* Comments */}
-        <View style={styles.section}>
-          {header}
-          {commentList}
-          {commentInput}
-        </View>
+          {/* Activities */}
+          {activities.length > 0 && (
+            <Card style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                {t('eventDetail.activities')} ({activities.length})
+              </Text>
+              {activities.slice(0, 5).map((activity) => (
+                <TouchableOpacity
+                  key={activity.id}
+                  style={[styles.activityItem, { borderBottomColor: colors.border }]}
+                  onPress={() => onActivityPress(activity.id)}
+                >
+                  <View style={styles.activityLeft}>
+                    <Avatar
+                      uri={activity.user?.avatar}
+                      name={activity.user?.name || '?'}
+                      size="sm"
+                    />
+                    <View style={styles.activityInfo}>
+                      <Text style={[styles.activityUser, { color: colors.textPrimary }]}>
+                        {activity.user?.name}
+                      </Text>
+                      <Text
+                        style={[styles.activityTitle, { color: colors.textSecondary }]}
+                        numberOfLines={1}
+                      >
+                        {activity.title}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.activityStats}>
+                    <Text style={[styles.activityDistance, { color: colors.primary }]}>
+                      {formatDistance(activity.distance)}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              ))}
+              {activities.length > 5 && (
+                <Text style={[styles.moreActivitiesText, { color: colors.textMuted }]}>
+                  {t('eventDetail.moreActivities', { count: activities.length - 5 })}
+                </Text>
+              )}
+            </Card>
+          )}
 
-        {!isKeyboardVisible && <View style={{ height: 100 + bottomInset }} />}
+          {/* Leaderboard preview */}
+          {leaderboard.length > 0 && (
+            <Card style={styles.section}>
+              <View style={styles.leaderboardHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                  {t('eventDetail.leaderboard')}
+                </Text>
+                <Ionicons name="trophy" size={20} color="#FFD700" />
+              </View>
+              {leaderboard.map((entry, index) => (
+                <LeaderboardEntryRow
+                  key={`preview-${entry.rank}-${entry.user.id}`}
+                  entry={entry}
+                  index={index}
+                  borderColor={colors.border}
+                  isAuthenticated={isAuthenticated}
+                  onPress={
+                    isAuthenticated && entry.user.username
+                      ? () => onUserPress?.(entry.user.username)
+                      : undefined
+                  }
+                />
+              ))}
+            </Card>
+          )}
+
+          {/* Comments */}
+          <View style={styles.section}>
+            {header}
+            {commentList}
+            {commentInput}
+          </View>
+
+          {!isKeyboardVisible && <View style={{ height: 100 + bottomInset }} />}
         </KeyboardAwareScreenLayout>
       )}
     />

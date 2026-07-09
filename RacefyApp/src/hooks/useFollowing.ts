@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
+import { useFetch } from './useFetch';
 import type { User } from '../types/api';
 
 interface UseFollowingResult {
@@ -13,39 +12,21 @@ interface UseFollowingResult {
 
 export function useFollowing(): UseFollowingResult {
   const { user, isAuthenticated } = useAuth();
-  const [following, setFollowing] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchFollowing = useCallback(async () => {
-    if (!isAuthenticated || !user?.id) {
-      setFollowing([]);
-      return;
-    }
+  const { data, isLoading, error, refetch } = useFetch<User[]>(
+    () =>
+      api.getFollowing(user!.id).catch(() => {
+        // Preserve the original fixed, user-friendly message regardless of cause.
+        throw new Error('Failed to load following list');
+      }),
+    {
+      enabled: isAuthenticated && !!user?.id,
+      deps: [isAuthenticated, user?.id],
+      initialData: [],
+      logCategory: 'api',
+      errorMessage: 'Failed to load following list',
+    },
+  );
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await api.getFollowing(user.id);
-      setFollowing(data);
-    } catch (err) {
-      logger.error('api', 'Failed to fetch following', { error: err });
-      setError('Failed to load following list');
-      setFollowing([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, user?.id]);
-
-  useEffect(() => {
-    fetchFollowing();
-  }, [fetchFollowing]);
-
-  return {
-    following,
-    isLoading,
-    error,
-    refetch: fetchFollowing,
-  };
+  return { following: data ?? [], isLoading, error, refetch };
 }

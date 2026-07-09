@@ -37,10 +37,7 @@ export function EventTabs({ tabs, activeTab, onTabChange }: EventTabsProps) {
         return (
           <TouchableOpacity
             key={tab.value}
-            style={[
-              styles.tab,
-              isActive && { borderBottomColor: colors.primary },
-            ]}
+            style={[styles.tab, isActive && { borderBottomColor: colors.primary }]}
             onPress={() => onTabChange(tab.value)}
             activeOpacity={0.7}
           >
@@ -51,9 +48,7 @@ export function EventTabs({ tabs, activeTab, onTabChange }: EventTabsProps) {
                 color={isActive ? colors.primary : colors.textSecondary}
               />
               {tab.badge !== undefined && tab.badge > 0 && (
-                <View
-                  style={[styles.badge, { backgroundColor: colors.primary }]}
-                >
+                <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                   <Text style={[styles.badgeText, { color: colors.white }]}>
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </Text>
@@ -61,10 +56,7 @@ export function EventTabs({ tabs, activeTab, onTabChange }: EventTabsProps) {
               )}
             </View>
             <Text
-              style={[
-                styles.tabText,
-                { color: isActive ? colors.primary : colors.textSecondary },
-              ]}
+              style={[styles.tabText, { color: isActive ? colors.primary : colors.textSecondary }]}
               numberOfLines={1}
             >
               {tab.label}

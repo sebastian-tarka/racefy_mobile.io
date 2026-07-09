@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
-  RefreshControl, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -41,9 +47,12 @@ export function TeamsListScreen({ navigation }: Props) {
 
   useRefreshOn('teams', refreshAll);
 
-  const handleTeamPress = useCallback((slug: string) => {
-    navigation.navigate('TeamDetail', { slug });
-  }, [navigation]);
+  const handleTeamPress = useCallback(
+    (slug: string) => {
+      navigation.navigate('TeamDetail', { slug });
+    },
+    [navigation],
+  );
 
   const handleCreate = useCallback(() => {
     if (!hasRemaining('teams_max')) {
@@ -53,10 +62,13 @@ export function TeamsListScreen({ navigation }: Props) {
     navigation.navigate('TeamForm', {});
   }, [navigation, hasRemaining]);
 
-  const handleSearch = useCallback((text: string) => {
-    allTeamsHook.setSearch(text);
-    // Debounced fetch handled by effect or button
-  }, [allTeamsHook]);
+  const handleSearch = useCallback(
+    (text: string) => {
+      allTeamsHook.setSearch(text);
+      // Debounced fetch handled by effect or button
+    },
+    [allTeamsHook],
+  );
 
   useEffect(() => {
     if (activeTab === 'all') {
@@ -67,10 +79,18 @@ export function TeamsListScreen({ navigation }: Props) {
 
   const renderTab = (tab: 'my' | 'all', label: string) => (
     <TouchableOpacity
-      style={[styles.tab, activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
+      style={[
+        styles.tab,
+        activeTab === tab && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+      ]}
       onPress={() => setActiveTab(tab)}
     >
-      <Text style={[styles.tabText, { color: activeTab === tab ? colors.primary : colors.textSecondary }]}>
+      <Text
+        style={[
+          styles.tabText,
+          { color: activeTab === tab ? colors.primary : colors.textSecondary },
+        ]}
+      >
         {label}
       </Text>
     </TouchableOpacity>
@@ -96,7 +116,10 @@ export function TeamsListScreen({ navigation }: Props) {
               <Ionicons name="trophy-outline" size={24} color={colors.primary} />
             </TouchableOpacity>
             {isAuthenticated && (
-              <TouchableOpacity onPress={handleCreate} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <TouchableOpacity
+                onPress={handleCreate}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
               </TouchableOpacity>
             )}
@@ -161,7 +184,9 @@ export function TeamsListScreen({ navigation }: Props) {
             </View>
           ) : null
         }
-        ListFooterComponent={isLoading ? <ActivityIndicator style={{ padding: spacing.lg }} /> : null}
+        ListFooterComponent={
+          isLoading ? <ActivityIndicator style={{ padding: spacing.lg }} /> : null
+        }
       />
     </ScreenContainer>
   );
@@ -172,9 +197,13 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm },
   tabText: { fontSize: fontSize.sm, fontWeight: '600' },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
-    marginHorizontal: spacing.md, marginVertical: spacing.sm,
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: 8,
   },
   searchInput: { flex: 1, fontSize: fontSize.sm, paddingVertical: 4 },

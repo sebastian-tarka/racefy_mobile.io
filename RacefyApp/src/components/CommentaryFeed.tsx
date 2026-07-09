@@ -122,14 +122,21 @@ export function CommentaryFeed({
       <View
         style={[
           styles.fallbackBanner,
-          { backgroundColor: colors.warningLight ?? '#fffbeb', borderColor: colors.warning ?? '#f59e0b' },
+          {
+            backgroundColor: colors.warningLight ?? '#fffbeb',
+            borderColor: colors.warning ?? '#f59e0b',
+          },
         ]}
       >
         <Ionicons name="information-circle-outline" size={16} color={colors.warning ?? '#f59e0b'} />
         <Text style={[styles.fallbackBannerText, { color: colors.warning ?? '#92400e' }]}>
-          {t('commentary.fallbackNotice', 'Commentary not available in your language. Showing in: {{language}}', {
-            language: langName,
-          })}
+          {t(
+            'commentary.fallbackNotice',
+            'Commentary not available in your language. Showing in: {{language}}',
+            {
+              language: langName,
+            },
+          )}
         </Text>
       </View>
     );
@@ -217,10 +224,7 @@ export function CommentaryFeed({
         <EmptyState
           icon="eye-off-outline"
           title={t('commentary.disabledTitle', 'Commentary is disabled')}
-          message={t(
-            'commentary.disabledMessage',
-            'AI commentary is not enabled for this event'
-          )}
+          message={t('commentary.disabledMessage', 'AI commentary is not enabled for this event')}
         />
       );
     }
@@ -230,10 +234,7 @@ export function CommentaryFeed({
         <EmptyState
           icon="chatbubble-ellipses-outline"
           title={t('commentary.emptyTitle', 'No commentary yet')}
-          message={t(
-            'commentary.emptyMessage',
-            'Commentary will appear as the event progresses'
-          )}
+          message={t('commentary.emptyMessage', 'Commentary will appear as the event progresses')}
         />
       );
     }

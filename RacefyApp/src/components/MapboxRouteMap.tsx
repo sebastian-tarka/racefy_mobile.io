@@ -6,13 +6,14 @@
  * if @rnmapbox/maps is not installed.
  */
 
-import React, {useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, Animated, StyleSheet, View} from 'react-native';
-import {mapboxAnalytics} from '../services/mapboxAnalytics';
-import {logger} from '../services/logger';
-import {useTheme} from '../hooks/useTheme';
-import {useMapStyle} from '../hooks/useMapStyle';
-import type {GeoJSONLineString} from '../types/api';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import { mapboxAnalytics } from '../services/mapboxAnalytics';
+import { logger } from '../services/logger';
+import { useTheme } from '../hooks/useTheme';
+import { useMapStyle } from '../hooks/useMapStyle';
+import { haversineDistance as geoDistance } from '../utils/gpsMath';
+import type { GeoJSONLineString } from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -49,27 +50,16 @@ interface MapboxRouteMapProps {
 /**
  * Calculate distance in meters between two [lng, lat] coordinates using Haversine formula
  */
+// Delegates to the shared utils/gpsMath helper. Coords are GeoJSON [lng, lat].
 function haversineDistance(coord1: number[], coord2: number[]): number {
-  const R = 6371000; // Earth radius in meters
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(coord2[1] - coord1[1]);
-  const dLon = toRad(coord2[0] - coord1[0]);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(coord1[1])) * Math.cos(toRad(coord2[1])) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return geoDistance(coord1[1], coord1[0], coord2[1], coord2[0]);
 }
 
 /**
  * Interpolate a point between two coordinates at a given fraction (0-1)
  */
 function interpolateCoord(from: number[], to: number[], fraction: number): [number, number] {
-  return [
-    from[0] + (to[0] - from[0]) * fraction,
-    from[1] + (to[1] - from[1]) * fraction,
-  ];
+  return [from[0] + (to[0] - from[0]) * fraction, from[1] + (to[1] - from[1]) * fraction];
 }
 
 /**
@@ -129,11 +119,6 @@ export function MapboxRouteMap({
   const mapReadyRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  // If MapboxGL is not available, return null
-  if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
-    return null;
-  }
 
   // Use theme-appropriate background if not provided
   const bgColor = backgroundColor || colors.cardBackground;
@@ -229,6 +214,12 @@ export function MapboxRouteMap({
     fadeAnim.setValue(1);
   }, [sizeCategory, isDark, mapStyle]);
 
+  // If MapboxGL is not available, render nothing. Placed AFTER all hooks so the
+  // Rules of Hooks hold (every hook above runs unconditionally on each render).
+  if (!MapboxGL || !MAPBOX_ACCESS_TOKEN) {
+    return null;
+  }
+
   // Theme-aware colors - brighter in dark mode for better visibility
   const routeColor = isDark ? '#34d399' : colors.primary; // Brighter emerald in dark mode
   const startMarkerColor = isDark ? '#4ade80' : '#22c55e'; // Brighter green in dark mode
@@ -254,13 +245,9 @@ export function MapboxRouteMap({
         compassEnabled={false}
         onDidFinishLoadingMap={onMapReady}
       >
-        <MapboxGL.Camera
-          ref={cameraRef}
-          zoomLevel={initialZoom}
-          animationMode="none"
-        />
+        <MapboxGL.Camera ref={cameraRef} zoomLevel={initialZoom} animationMode="none" />
 
-         {/* Route line - must be rendered first to appear below markers */}
+        {/* Route line - must be rendered first to appear below markers */}
         <MapboxGL.ShapeSource id="routeSource" shape={lineGeoJSON}>
           <MapboxGL.LineLayer
             id="routeLine"
@@ -354,10 +341,7 @@ export function MapboxRouteMap({
       {/* Loading overlay with spinner */}
       {isLoading && (
         <Animated.View
-          style={[
-            styles.loadingOverlay,
-            { backgroundColor: bgColor, opacity: fadeAnim },
-          ]}
+          style={[styles.loadingOverlay, { backgroundColor: bgColor, opacity: fadeAnim }]}
         >
           <ActivityIndicator size="large" color={colors.primary} />
         </Animated.View>

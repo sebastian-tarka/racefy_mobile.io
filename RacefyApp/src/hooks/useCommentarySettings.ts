@@ -1,9 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
-import type {
-  CommentarySettings,
-  UpdateCommentarySettingsRequest,
-} from '../types/api';
+import type { CommentarySettings, UpdateCommentarySettingsRequest } from '../types/api';
 
 export function useCommentarySettings(eventId: number) {
   const [settings, setSettings] = useState<CommentarySettings | null>(null);
@@ -43,7 +40,7 @@ export function useCommentarySettings(eventId: number) {
         setIsSaving(false);
       }
     },
-    [eventId]
+    [eventId],
   );
 
   // Load settings on mount
@@ -63,12 +60,8 @@ export function useCommentarySettings(eventId: number) {
     tokensUsed: settings?.tokens_used ?? 0,
     tokenLimit: settings?.token_limit ?? 0,
     tokenUsagePercent:
-      settings && settings.token_limit
-        ? (settings.tokens_used / settings.token_limit) * 100
-        : 0,
+      settings && settings.token_limit ? (settings.tokens_used / settings.token_limit) * 100 : 0,
     isNearLimit:
-      settings && settings.token_limit
-        ? settings.tokens_used / settings.token_limit > 0.8
-        : false,
+      settings && settings.token_limit ? settings.tokens_used / settings.token_limit > 0.8 : false,
   };
 }

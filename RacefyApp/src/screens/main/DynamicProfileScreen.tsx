@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Ionicons} from '@expo/vector-icons';
-import Svg, {Circle} from 'react-native-svg';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import type {CompositeNavigationProp} from '@react-navigation/native';
-import {useFocusEffect} from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityCard,
   Avatar,
@@ -31,25 +31,25 @@ import {
   TimeRangeFilter,
   UserListModal,
 } from '../../components';
-import {useAuth} from '../../hooks/useAuth';
-import {useTheme} from '../../hooks/useTheme';
-import {useActivityStats} from '../../hooks/useActivityStats';
-import {usePointStats} from '../../hooks/usePointStats';
-import {useSportTypes} from '../../hooks/useSportTypes';
-import {useFollowing} from '../../hooks/useFollowing';
-import {usePaginatedTabData} from '../../hooks/usePaginatedTabData';
-import {useWeeklyStreak} from '../../hooks/useWeeklyStreak';
-import {api} from '../../services/api';
-import {logger} from '../../services/logger';
-import {useRefreshOn} from '../../services/refreshEvents';
-import {fixStorageUrl} from '../../config/api';
-import {borderRadius, fontSize, spacing} from '../../theme';
-import {formatTotalTime} from '../../utils/formatters';
-import {getDateRangeForTimeRange} from '../../utils/dateRanges';
-import type {BottomTabNavigationProp, BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import type {MainTabParamList, RootStackParamList} from '../../navigation/types';
-import type {Activity, ActivityStats, Event, Post, User, UserStats} from '../../types/api';
+import { useAuth } from '../../hooks/useAuth';
+import { useTheme } from '../../hooks/useTheme';
+import { useActivityStats } from '../../hooks/useActivityStats';
+import { usePointStats } from '../../hooks/usePointStats';
+import { useSportTypes } from '../../hooks/useSportTypes';
+import { useFollowing } from '../../hooks/useFollowing';
+import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
+import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { useRefreshOn } from '../../services/refreshEvents';
+import { fixStorageUrl } from '../../config/api';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import { formatTotalTime } from '../../utils/formatters';
+import { getDateRangeForTimeRange } from '../../utils/dateRanges';
+import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import type { Activity, ActivityStats, Event, Post, User, UserStats } from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -159,15 +159,16 @@ function CircularProgressRing({
         />
       </Svg>
       <View style={StyleSheet.absoluteFill}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          {children}
-        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>{children}</View>
       </View>
     </View>
   );
 }
 
-export function DynamicProfileScreen({ navigation, route }: Props & { navigation: ProfileScreenNavigationProp }) {
+export function DynamicProfileScreen({
+  navigation,
+  route,
+}: Props & { navigation: ProfileScreenNavigationProp }) {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
@@ -182,7 +183,9 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
 
   // Modal state
   const [showFollowModal, setShowFollowModal] = useState(false);
-  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>('followers');
+  const [followModalTab, setFollowModalTab] = useState<'followers' | 'following' | 'requests'>(
+    'followers',
+  );
 
   // Filter state
   const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
@@ -212,12 +215,20 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
   }, [selectedTimeRange]);
 
   // Activity stats and points hooks
-  const { stats: activityStats, isLoading: isLoadingActivityStats, refetch: refetchActivityStats } = useActivityStats({
+  const {
+    stats: activityStats,
+    isLoading: isLoadingActivityStats,
+    refetch: refetchActivityStats,
+  } = useActivityStats({
     sportTypeId: selectedSportTypeId,
     from: dateRange?.from ?? undefined,
     to: dateRange?.to ?? undefined,
   });
-  const { stats: pointStats, isLoading: isLoadingPointStats, refetch: refetchPointStats } = usePointStats();
+  const {
+    stats: pointStats,
+    isLoading: isLoadingPointStats,
+    refetch: refetchPointStats,
+  } = usePointStats();
   const { sportTypes } = useSportTypes();
   const { following, isLoading: isLoadingFollowing } = useFollowing();
 
@@ -248,7 +259,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         });
         setCompareStats(stats);
       } catch (error) {
-        logger.error('api', 'Failed to fetch compare user stats', { error, userId: compareUser.id });
+        logger.error('api', 'Failed to fetch compare user stats', {
+          error,
+          userId: compareUser.id,
+        });
         setCompareStats(null);
       } finally {
         setIsLoadingCompareStats(false);
@@ -263,13 +277,16 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     return api.getPosts({ user_id: userId, page });
   }, []);
 
-  const fetchActivitiesWrapper = useCallback((userId: number, page: number) => {
-    return api.getActivities({
-      user_id: userId,
-      page,
-      ...(selectedSportTypeId && { sport_type_id: selectedSportTypeId }),
-    });
-  }, [selectedSportTypeId]);
+  const fetchActivitiesWrapper = useCallback(
+    (userId: number, page: number) => {
+      return api.getActivities({
+        user_id: userId,
+        page,
+        ...(selectedSportTypeId && { sport_type_id: selectedSportTypeId }),
+      });
+    },
+    [selectedSportTypeId],
+  );
 
   const fetchEventsWrapper = useCallback((userId: number, page: number) => {
     return api.getEvents({ user_id: userId, page });
@@ -330,7 +347,7 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         fetchDraftsCount();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated])
+    }, [isAuthenticated]),
   );
 
   // Load data when tab changes
@@ -443,11 +460,25 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     }
   };
 
+  // Compute total distance for sport breakdown percentage.
+  // Declared before the early return below so this hook always runs (Rules of Hooks).
+  const totalSportDistance = useMemo(() => {
+    if (!activityStats?.by_sport_type) return 0;
+    return Object.values(activityStats.by_sport_type).reduce((sum, s) => sum + s.distance, 0);
+  }, [activityStats?.by_sport_type]);
+
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
-        <View style={[styles.header, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+            {t('profile.title')}
+          </Text>
         </View>
         <EmptyState
           icon="person-outline"
@@ -467,12 +498,6 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     { label: t('profile.tabs.activities'), value: 'activities', emoji: '💪' },
     { label: t('profile.tabs.events'), value: 'events', emoji: '📅' },
   ];
-
-  // Compute total distance for sport breakdown percentage
-  const totalSportDistance = useMemo(() => {
-    if (!activityStats?.by_sport_type) return 0;
-    return Object.values(activityStats.by_sport_type).reduce((sum, s) => sum + s.distance, 0);
-  }, [activityStats?.by_sport_type]);
 
   const renderCoverImage = () => {
     const coverStyle = [styles.coverImage, { backgroundColor: colors.primary }];
@@ -500,11 +525,7 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
       );
     }
 
-    return (
-      <View style={coverStyle}>
-        {settingsButton}
-      </View>
-    );
+    return <View style={coverStyle}>{settingsButton}</View>;
   };
 
   const renderProfileHeader = () => (
@@ -513,7 +534,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
       {renderCoverImage()}
 
       {/* Compact Profile Header */}
-      <View style={[styles.profileHeader, { backgroundColor: colors.cardBackground, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.profileHeader,
+          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
+        ]}
+      >
         {/* Avatar + Info row */}
         <View style={styles.avatarInfoRow}>
           {/* Avatar with circular progress ring */}
@@ -578,7 +604,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         {/* Quick Stat Badges: Points, Rank, Streak */}
         <View style={styles.badgesRow}>
           <TouchableOpacity
-            style={[styles.badge, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            style={[
+              styles.badge,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
             onPress={() => navigation.navigate('PointHistory')}
             activeOpacity={0.7}
           >
@@ -594,7 +623,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.badge, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+            style={[
+              styles.badge,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
             onPress={() => navigation.navigate('Leaderboard')}
             activeOpacity={0.7}
           >
@@ -609,12 +641,15 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
             </View>
           </TouchableOpacity>
 
-          <View style={[styles.badge, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.badge,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="flame" size={18} color="#EF4444" />
             <View style={styles.badgeTextContainer}>
-              <Text style={[styles.badgeValue, { color: colors.textPrimary }]}>
-                {streakDays}
-              </Text>
+              <Text style={[styles.badgeValue, { color: colors.textPrimary }]}>{streakDays}</Text>
               <Text style={[styles.badgeLabel, { color: colors.textMuted }]}>
                 {t('profile.streak')}
               </Text>
@@ -624,7 +659,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
 
         {/* Training Plans Banner */}
         <TouchableOpacity
-          style={[styles.trainingCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}
+          style={[
+            styles.trainingCard,
+            { backgroundColor: colors.primary + '10', borderColor: colors.primary },
+          ]}
           onPress={handleTrainingPress}
           disabled={loadingTraining}
           activeOpacity={0.7}
@@ -650,7 +688,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         {/* Quick navigation: Insights / Teams / Routes */}
         <View style={styles.quickNavRow}>
           <TouchableOpacity
-            style={[styles.quickNavCard, { backgroundColor: colors.info + '10', borderColor: colors.info + '40' }]}
+            style={[
+              styles.quickNavCard,
+              { backgroundColor: colors.info + '10', borderColor: colors.info + '40' },
+            ]}
             onPress={() => navigation.navigate('Insights')}
             activeOpacity={0.7}
           >
@@ -663,7 +704,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickNavCard, { backgroundColor: '#8b5cf610', borderColor: '#8b5cf640' }]}
+            style={[
+              styles.quickNavCard,
+              { backgroundColor: '#8b5cf610', borderColor: '#8b5cf640' },
+            ]}
             onPress={() => navigation.navigate('TeamsList')}
             activeOpacity={0.7}
           >
@@ -676,7 +720,10 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.quickNavCard, { backgroundColor: '#06b6d410', borderColor: '#06b6d440' }]}
+            style={[
+              styles.quickNavCard,
+              { backgroundColor: '#06b6d410', borderColor: '#06b6d440' },
+            ]}
             onPress={() => navigation.navigate('RouteLibrary')}
             activeOpacity={0.7}
           >
@@ -700,10 +747,13 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
             key={tab.value}
             style={[
               styles.pillTab,
-              activeTab === tab.value && [styles.pillTabActive, {
-                backgroundColor: colors.cardBackground,
-                shadowColor: colors.textPrimary,
-              }],
+              activeTab === tab.value && [
+                styles.pillTabActive,
+                {
+                  backgroundColor: colors.cardBackground,
+                  shadowColor: colors.textPrimary,
+                },
+              ],
             ]}
             onPress={() => setActiveTab(tab.value)}
           >
@@ -743,7 +793,8 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
               style={[
                 styles.emojiFilterItem,
                 {
-                  backgroundColor: selectedSportTypeId === null ? colors.primary : colors.cardBackground,
+                  backgroundColor:
+                    selectedSportTypeId === null ? colors.primary : colors.cardBackground,
                   borderColor: selectedSportTypeId === null ? colors.primary : colors.border,
                 },
               ]}
@@ -752,10 +803,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
               activeOpacity={0.7}
             >
               <Text style={styles.emojiFilterIcon}>{DEFAULT_SPORT_EMOJI}</Text>
-              <Text style={[
-                styles.emojiFilterLabel,
-                { color: selectedSportTypeId === null ? colors.white : colors.textSecondary },
-              ]}>
+              <Text
+                style={[
+                  styles.emojiFilterLabel,
+                  { color: selectedSportTypeId === null ? colors.white : colors.textSecondary },
+                ]}
+              >
                 {t('profile.stats.allSports')}
               </Text>
             </TouchableOpacity>
@@ -776,10 +829,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                   activeOpacity={0.7}
                 >
                   <Text style={styles.emojiFilterIcon}>{getSportEmoji(sport.slug)}</Text>
-                  <Text style={[
-                    styles.emojiFilterLabel,
-                    { color: isSelected ? colors.white : colors.textSecondary },
-                  ]}>
+                  <Text
+                    style={[
+                      styles.emojiFilterLabel,
+                      { color: isSelected ? colors.white : colors.textSecondary },
+                    ]}
+                  >
                     {sport.name}
                   </Text>
                 </TouchableOpacity>
@@ -795,7 +850,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           {/* Summary Cards Row */}
           {activityStats?.totals && (
             <View style={styles.summaryCardsRow}>
-              <View style={[styles.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.summaryCard,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.summaryValue, { color: colors.primary }]}>
                   {(activityStats.totals.distance / 1000).toFixed(1)}
                 </Text>
@@ -803,7 +863,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                   {t('profile.totalKm')}
                 </Text>
               </View>
-              <View style={[styles.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.summaryCard,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
                   {activityStats.count}
                 </Text>
@@ -811,7 +876,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                   {t('profile.totalActivities')}
                 </Text>
               </View>
-              <View style={[styles.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.summaryCard,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.summaryValueSmall, { color: colors.textPrimary }]}>
                   {formatTotalTime(activityStats.totals.duration)}
                 </Text>
@@ -836,7 +906,8 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
               style={[
                 styles.emojiFilterItem,
                 {
-                  backgroundColor: selectedSportTypeId === null ? colors.primary : colors.cardBackground,
+                  backgroundColor:
+                    selectedSportTypeId === null ? colors.primary : colors.cardBackground,
                   borderColor: selectedSportTypeId === null ? colors.primary : colors.border,
                 },
               ]}
@@ -845,10 +916,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
               activeOpacity={0.7}
             >
               <Text style={styles.emojiFilterIcon}>{DEFAULT_SPORT_EMOJI}</Text>
-              <Text style={[
-                styles.emojiFilterLabel,
-                { color: selectedSportTypeId === null ? colors.white : colors.textSecondary },
-              ]}>
+              <Text
+                style={[
+                  styles.emojiFilterLabel,
+                  { color: selectedSportTypeId === null ? colors.white : colors.textSecondary },
+                ]}
+              >
                 {t('profile.stats.allSports')}
               </Text>
             </TouchableOpacity>
@@ -869,10 +942,12 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                   activeOpacity={0.7}
                 >
                   <Text style={styles.emojiFilterIcon}>{getSportEmoji(sport.slug)}</Text>
-                  <Text style={[
-                    styles.emojiFilterLabel,
-                    { color: isSelected ? colors.white : colors.textSecondary },
-                  ]}>
+                  <Text
+                    style={[
+                      styles.emojiFilterLabel,
+                      { color: isSelected ? colors.white : colors.textSecondary },
+                    ]}
+                  >
                     {sport.name}
                   </Text>
                 </TouchableOpacity>
@@ -882,10 +957,15 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
 
           {/* Activity Breakdown Bars */}
           {activityStats?.by_sport_type && totalSportDistance > 0 && (
-            <View style={[styles.breakdownCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.breakdownCard,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+            >
               {Object.entries(activityStats.by_sport_type).map(([sportTypeIdStr, sportData]) => {
                 const sportTypeId = Number(sportTypeIdStr);
-                const sportType = sportTypes.find(s => s.id === sportTypeId);
+                const sportType = sportTypes.find((s) => s.id === sportTypeId);
                 const sportName = sportType?.name ?? t('sports.other');
                 const sportSlug = sportType?.slug ?? 'other';
                 const sportIcon = sportType?.icon ?? null;
@@ -912,7 +992,9 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                         {distanceKm} km
                       </Text>
                     </View>
-                    <View style={[styles.breakdownBarTrack, { backgroundColor: colors.border + '40' }]}>
+                    <View
+                      style={[styles.breakdownBarTrack, { backgroundColor: colors.border + '40' }]}
+                    >
                       <View
                         style={[
                           styles.breakdownBarFill,
@@ -930,13 +1012,15 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
           )}
 
           {/* Expandable Comparison Section */}
-          <View style={[
-            styles.compareCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: compareUser ? colors.primary : colors.border,
-            },
-          ]}>
+          <View
+            style={[
+              styles.compareCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: compareUser ? colors.primary : colors.border,
+              },
+            ]}
+          >
             {/* Toggle Header */}
             <TouchableOpacity
               style={styles.compareHeader}
@@ -986,7 +1070,9 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                     {/* Legend */}
                     <View style={styles.compareLegend}>
                       <View style={styles.compareLegendItem}>
-                        <View style={[styles.compareLegendDot, { backgroundColor: colors.primary }]} />
+                        <View
+                          style={[styles.compareLegendDot, { backgroundColor: colors.primary }]}
+                        />
                         <Text style={[styles.compareLegendText, { color: colors.textSecondary }]}>
                           {t('profile.stats.you')}
                         </Text>
@@ -1005,62 +1091,79 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
                       </View>
                     ) : (
                       <>
-                        {Object.entries(activityStats.by_sport_type).map(([sportTypeIdStr, myData]) => {
-                          const sportTypeId = Number(sportTypeIdStr);
-                          const sportType = sportTypes.find(s => s.id === sportTypeId);
-                          const sportName = sportType?.name ?? t('sports.other');
-                          const sportIcon = sportType?.icon ?? null;
-                          const theirData = compareStats?.by_sport_type?.[sportTypeId];
-                          const myDistKm = myData.distance / 1000;
-                          const theirDistKm = (theirData?.distance ?? 0) / 1000;
-                          const maxDist = Math.max(myDistKm, theirDistKm, 0.1);
-                          const myPct = (myDistKm / maxDist) * 100;
-                          const theirPct = (theirDistKm / maxDist) * 100;
+                        {Object.entries(activityStats.by_sport_type).map(
+                          ([sportTypeIdStr, myData]) => {
+                            const sportTypeId = Number(sportTypeIdStr);
+                            const sportType = sportTypes.find((s) => s.id === sportTypeId);
+                            const sportName = sportType?.name ?? t('sports.other');
+                            const sportIcon = sportType?.icon ?? null;
+                            const theirData = compareStats?.by_sport_type?.[sportTypeId];
+                            const myDistKm = myData.distance / 1000;
+                            const theirDistKm = (theirData?.distance ?? 0) / 1000;
+                            const maxDist = Math.max(myDistKm, theirDistKm, 0.1);
+                            const myPct = (myDistKm / maxDist) * 100;
+                            const theirPct = (theirDistKm / maxDist) * 100;
 
-                          return (
-                            <View key={sportTypeIdStr} style={styles.compareBarItem}>
-                              <View style={styles.compareBarHeader}>
-                                <View style={styles.compareBarLabelRow}>
-                                  {sportIcon && (
-                                    <Ionicons
-                                      name={sportIcon as keyof typeof Ionicons.glyphMap}
-                                      size={14}
-                                      color={colors.textPrimary}
-                                    />
-                                  )}
-                                  <Text style={[styles.compareBarLabel, { color: colors.textPrimary }]}>
-                                    {sportName}
+                            return (
+                              <View key={sportTypeIdStr} style={styles.compareBarItem}>
+                                <View style={styles.compareBarHeader}>
+                                  <View style={styles.compareBarLabelRow}>
+                                    {sportIcon && (
+                                      <Ionicons
+                                        name={sportIcon as keyof typeof Ionicons.glyphMap}
+                                        size={14}
+                                        color={colors.textPrimary}
+                                      />
+                                    )}
+                                    <Text
+                                      style={[
+                                        styles.compareBarLabel,
+                                        { color: colors.textPrimary },
+                                      ]}
+                                    >
+                                      {sportName}
+                                    </Text>
+                                  </View>
+                                  <Text
+                                    style={[
+                                      styles.compareBarValues,
+                                      { color: colors.textSecondary },
+                                    ]}
+                                  >
+                                    {myDistKm.toFixed(1)} vs {theirDistKm.toFixed(1)} km
                                   </Text>
                                 </View>
-                                <Text style={[styles.compareBarValues, { color: colors.textSecondary }]}>
-                                  {myDistKm.toFixed(1)} vs {theirDistKm.toFixed(1)} km
-                                </Text>
-                              </View>
-                              <View style={[styles.compareBarTrack, { backgroundColor: colors.border + '40' }]}>
-                                {/* My bar (top half) */}
                                 <View
                                   style={[
-                                    styles.compareBarMine,
-                                    {
-                                      backgroundColor: colors.primary,
-                                      width: `${Math.max(myPct, myDistKm > 0 ? 3 : 0)}%`,
-                                    },
+                                    styles.compareBarTrack,
+                                    { backgroundColor: colors.border + '40' },
                                   ]}
-                                />
-                                {/* Their bar (bottom half) */}
-                                <View
-                                  style={[
-                                    styles.compareBarTheirs,
-                                    {
-                                      backgroundColor: '#F87171',
-                                      width: `${Math.max(theirPct, theirDistKm > 0 ? 3 : 0)}%`,
-                                    },
-                                  ]}
-                                />
+                                >
+                                  {/* My bar (top half) */}
+                                  <View
+                                    style={[
+                                      styles.compareBarMine,
+                                      {
+                                        backgroundColor: colors.primary,
+                                        width: `${Math.max(myPct, myDistKm > 0 ? 3 : 0)}%`,
+                                      },
+                                    ]}
+                                  />
+                                  {/* Their bar (bottom half) */}
+                                  <View
+                                    style={[
+                                      styles.compareBarTheirs,
+                                      {
+                                        backgroundColor: '#F87171',
+                                        width: `${Math.max(theirPct, theirDistKm > 0 ? 3 : 0)}%`,
+                                      },
+                                    ]}
+                                  />
+                                </View>
                               </View>
-                            </View>
-                          );
-                        })}
+                            );
+                          },
+                        )}
                       </>
                     )}
                   </View>
@@ -1101,7 +1204,9 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
 
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading && postsData.data.length === 0) ||
-      (activeTab === 'activities' && activitiesData.isLoading && activitiesData.data.length === 0) ||
+      (activeTab === 'activities' &&
+        activitiesData.isLoading &&
+        activitiesData.data.length === 0) ||
       (activeTab === 'events' && eventsData.isLoading && eventsData.data.length === 0);
 
     if (isLoading) return null;
@@ -1141,9 +1246,11 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
     return eventsData.data;
   };
 
-  const getKeyExtractor = (item: Post | Activity | Event) => {
-    return `${activeTab}-${item.id}`;
-  };
+  // NOTE: these are intentionally plain functions, NOT useCallback. There is an
+  // early `return` above (the "sign in" guard ~line 447), so adding hooks here
+  // would violate the Rules of Hooks. Fix the early return first (move it below
+  // all hooks), then these can be memoized with useCallback.
+  const getKeyExtractor = (item: Post | Activity | Event) => `${activeTab}-${item.id}`;
 
   const renderItem = ({ item }: { item: Post | Activity | Event }) => {
     if (activeTab === 'posts') {
@@ -1152,7 +1259,9 @@ export function DynamicProfileScreen({ navigation, route }: Props & { navigation
         <PostCard
           post={post}
           onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
-          onComment={() => navigation.navigate('PostDetail', { postId: post.id, focusComments: true })}
+          onComment={() =>
+            navigation.navigate('PostDetail', { postId: post.id, focusComments: true })
+          }
           onUserPress={() => {}}
           onActivityPress={
             post.type === 'activity' && post.activity

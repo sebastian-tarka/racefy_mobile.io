@@ -24,7 +24,8 @@ import type { Photo, PhotoOverlayFormat } from '../types/api';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 2;
 const GRID_COLUMNS = 4;
-const GRID_ITEM_SIZE = (SCREEN_WIDTH - spacing.md * 4 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+const GRID_ITEM_SIZE =
+  (SCREEN_WIDTH - spacing.md * 4 - GRID_GAP * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
 interface PhotoOverlaySelectorProps {
   activityId: number;
@@ -119,7 +120,10 @@ export function PhotoOverlaySelector({
         setOverlayImageUrl(fixedUrl);
         setSelectedPhotoId(response.photo_id);
         onImageGenerated?.(fixedUrl);
-        logger.info('general', 'Photo overlay generated from upload', { activityId, format: selectedFormat });
+        logger.info('general', 'Photo overlay generated from upload', {
+          activityId,
+          format: selectedFormat,
+        });
       } catch (err) {
         logger.error('general', 'Photo overlay from upload failed', { error: err });
         setError(t('share.photoOverlayFailed'));
@@ -253,9 +257,7 @@ export function PhotoOverlaySelector({
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
         {t('share.selectPhoto')}
       </Text>
-      <Text style={[styles.hint, { color: colors.textMuted }]}>
-        {t('share.selectPhotoHint')}
-      </Text>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>{t('share.selectPhotoHint')}</Text>
 
       <View style={styles.photoGrid}>
         {photos.map((photo) => {
@@ -275,11 +277,7 @@ export function PhotoOverlaySelector({
               disabled={isGenerating}
               activeOpacity={0.7}
             >
-              <Image
-                source={{ uri: photoUrl }}
-                style={styles.photoThumbnail}
-                resizeMode="cover"
-              />
+              <Image source={{ uri: photoUrl }} style={styles.photoThumbnail} resizeMode="cover" />
               {isSelected && (
                 <View style={[styles.checkOverlay, { backgroundColor: colors.primary + '80' }]}>
                   <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
@@ -291,11 +289,7 @@ export function PhotoOverlaySelector({
 
         {/* Upload Button */}
         <TouchableOpacity
-          style={[
-            styles.photoItem,
-            styles.uploadButton,
-            { borderColor: colors.border },
-          ]}
+          style={[styles.photoItem, styles.uploadButton, { borderColor: colors.border }]}
           onPress={handlePickPhoto}
           disabled={isGenerating}
           activeOpacity={0.7}
@@ -310,7 +304,9 @@ export function PhotoOverlaySelector({
       {/* Preview / Loading / Error */}
       {(isGenerating || overlayImageUrl || error) && (
         <>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.lg }]}>
+          <Text
+            style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.lg }]}
+          >
             {t('share.preview')}
           </Text>
 
@@ -334,9 +330,7 @@ export function PhotoOverlaySelector({
             ) : error ? (
               <View style={styles.centerContent}>
                 <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
-                <Text style={[styles.errorText, { color: colors.error }]}>
-                  {error}
-                </Text>
+                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
                 {selectedPhotoId && (
                   <TouchableOpacity
                     style={[styles.retryButton, { backgroundColor: colors.primary }]}

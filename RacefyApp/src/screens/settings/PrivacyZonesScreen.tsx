@@ -32,7 +32,7 @@ const ZONE_TYPE_ICONS: Record<string, string> = {
   other: 'location',
 };
 
-const ZONE_TYPES: Array<CreatePrivacyZoneRequest['type']> = ['home', 'work', 'other'];
+const ZONE_TYPES: CreatePrivacyZoneRequest['type'][] = ['home', 'work', 'other'];
 
 export function PrivacyZonesScreen() {
   const { t } = useTranslation();
@@ -67,10 +67,14 @@ export function PrivacyZonesScreen() {
       ]);
       setZones(zonesData);
       // Filter suggestions that are not already zones
-      const existingCoords = new Set(zonesData.map(z => `${z.latitude.toFixed(4)},${z.longitude.toFixed(4)}`));
-      setSuggestions(suggestionsData.filter(s =>
-        !existingCoords.has(`${s.latitude.toFixed(4)},${s.longitude.toFixed(4)}`)
-      ));
+      const existingCoords = new Set(
+        zonesData.map((z) => `${z.latitude.toFixed(4)},${z.longitude.toFixed(4)}`),
+      );
+      setSuggestions(
+        suggestionsData.filter(
+          (s) => !existingCoords.has(`${s.latitude.toFixed(4)},${s.longitude.toFixed(4)}`),
+        ),
+      );
     } catch (err) {
       logger.error('general', 'Failed to load privacy zones', { error: err });
     } finally {
@@ -79,7 +83,9 @@ export function PrivacyZonesScreen() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -90,7 +96,7 @@ export function PrivacyZonesScreen() {
     setTogglingId(zone.id);
     try {
       const updated = await api.togglePrivacyZone(zone.id);
-      setZones(prev => prev.map(z => z.id === zone.id ? updated : z));
+      setZones((prev) => prev.map((z) => (z.id === zone.id ? updated : z)));
     } catch (err) {
       logger.error('general', 'Failed to toggle privacy zone', { error: err });
       Alert.alert(t('common.error'), t('common.genericError'));
@@ -100,29 +106,25 @@ export function PrivacyZonesScreen() {
   };
 
   const handleDelete = (zone: PrivacyZone) => {
-    Alert.alert(
-      t('settings.privacyZones.deleteZone'),
-      t('settings.privacyZones.deleteConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setDeletingId(zone.id);
-            try {
-              await api.deletePrivacyZone(zone.id);
-              setZones(prev => prev.filter(z => z.id !== zone.id));
-            } catch (err) {
-              logger.error('general', 'Failed to delete privacy zone', { error: err });
-              Alert.alert(t('common.error'), t('common.genericError'));
-            } finally {
-              setDeletingId(null);
-            }
-          },
+    Alert.alert(t('settings.privacyZones.deleteZone'), t('settings.privacyZones.deleteConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingId(zone.id);
+          try {
+            await api.deletePrivacyZone(zone.id);
+            setZones((prev) => prev.filter((z) => z.id !== zone.id));
+          } catch (err) {
+            logger.error('general', 'Failed to delete privacy zone', { error: err });
+            Alert.alert(t('common.error'), t('common.genericError'));
+          } finally {
+            setDeletingId(null);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const handleAddPress = () => {
@@ -144,7 +146,9 @@ export function PrivacyZonesScreen() {
         Alert.alert(t('common.error'), t('recording.permissions.locationDenied'));
         return;
       }
-      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
       setNewZoneLocation({ lat: location.coords.latitude, lng: location.coords.longitude });
     } catch (err) {
       logger.error('general', 'Failed to get current location', { error: err });
@@ -172,7 +176,7 @@ export function PrivacyZonesScreen() {
         latitude: newZoneLocation.lat,
         longitude: newZoneLocation.lng,
       });
-      setZones(prev => [...prev, created]);
+      setZones((prev) => [...prev, created]);
       setShowAddModal(false);
       Alert.alert(t('common.success'), t('settings.privacyZones.saved'));
     } catch (err: any) {
@@ -200,10 +204,12 @@ export function PrivacyZonesScreen() {
         latitude: suggestion.latitude,
         longitude: suggestion.longitude,
       });
-      setZones(prev => [...prev, created]);
-      setSuggestions(prev => prev.filter(s =>
-        s.latitude !== suggestion.latitude || s.longitude !== suggestion.longitude
-      ));
+      setZones((prev) => [...prev, created]);
+      setSuggestions((prev) =>
+        prev.filter(
+          (s) => s.latitude !== suggestion.latitude || s.longitude !== suggestion.longitude,
+        ),
+      );
       Alert.alert(t('common.success'), t('settings.privacyZones.saved'));
     } catch (err: any) {
       if (err?.status === 403) {
@@ -216,7 +222,12 @@ export function PrivacyZonesScreen() {
   };
 
   const renderZoneItem = ({ item: zone }: { item: PrivacyZone }) => (
-    <View style={[styles.zoneCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.zoneCard,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+    >
       <View style={styles.zoneRow}>
         <View style={[styles.zoneIcon, { backgroundColor: colors.primary + '15' }]}>
           <Ionicons
@@ -228,9 +239,13 @@ export function PrivacyZonesScreen() {
         <View style={styles.zoneInfo}>
           <Text style={[styles.zoneName, { color: colors.textPrimary }]}>{zone.name}</Text>
           <Text style={[styles.zoneType, { color: colors.textMuted }]}>
-            {t(`settings.privacyZones.type${zone.type.charAt(0).toUpperCase() + zone.type.slice(1)}`)}
+            {t(
+              `settings.privacyZones.type${zone.type.charAt(0).toUpperCase() + zone.type.slice(1)}`,
+            )}
             {' \u2022 '}
-            {zone.is_active ? t('settings.privacyZones.active') : t('settings.privacyZones.inactive')}
+            {zone.is_active
+              ? t('settings.privacyZones.active')
+              : t('settings.privacyZones.inactive')}
           </Text>
         </View>
         <View style={styles.zoneActions}>
@@ -268,7 +283,10 @@ export function PrivacyZonesScreen() {
   const renderSuggestion = (suggestion: PrivacyZoneSuggestion, index: number) => (
     <View
       key={`suggestion-${index}`}
-      style={[styles.suggestionCard, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' }]}
+      style={[
+        styles.suggestionCard,
+        { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' },
+      ]}
     >
       <View style={styles.suggestionRow}>
         <View style={[styles.zoneIcon, { backgroundColor: colors.primary + '15' }]}>
@@ -305,7 +323,12 @@ export function PrivacyZonesScreen() {
       </Text>
 
       {/* Limit indicator */}
-      <View style={[styles.limitRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.limitRow,
+          { backgroundColor: colors.cardBackground, borderColor: colors.border },
+        ]}
+      >
         <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
         <Text style={[styles.limitText, { color: colors.textSecondary }]}>
           {zones.length} / {zonesLimit}
@@ -337,7 +360,11 @@ export function PrivacyZonesScreen() {
   if (isLoading) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('settings.privacyZones.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader
+          title={t('settings.privacyZones.title')}
+          showBack
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -383,7 +410,9 @@ export function PrivacyZonesScreen() {
         onPress={handleAddPress}
         activeOpacity={0.8}
       >
-        {!canAddMore && <Ionicons name="lock-closed" size={14} color={colors.white} style={{ marginRight: 4 }} />}
+        {!canAddMore && (
+          <Ionicons name="lock-closed" size={14} color={colors.white} style={{ marginRight: 4 }} />
+        )}
         <Ionicons name="add" size={24} color={colors.white} />
       </TouchableOpacity>
 
@@ -406,7 +435,9 @@ export function PrivacyZonesScreen() {
               {addLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <Text style={[styles.modalSaveText, { color: colors.primary }]}>{t('common.save')}</Text>
+                <Text style={[styles.modalSaveText, { color: colors.primary }]}>
+                  {t('common.save')}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -417,7 +448,14 @@ export function PrivacyZonesScreen() {
               {t('settings.privacyZones.zoneName')}
             </Text>
             <TextInput
-              style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+              style={[
+                styles.input,
+                {
+                  color: colors.textPrimary,
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
               value={newZoneName}
               onChangeText={setNewZoneName}
               placeholder={t('settings.privacyZones.zoneNamePlaceholder')}
@@ -435,7 +473,10 @@ export function PrivacyZonesScreen() {
                   style={[
                     styles.typeChip,
                     { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                    newZoneType === type && { borderColor: colors.primary, backgroundColor: colors.primary },
+                    newZoneType === type && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary,
+                    },
                   ]}
                   onPress={() => setNewZoneType(type)}
                 >
@@ -444,11 +485,13 @@ export function PrivacyZonesScreen() {
                     size={16}
                     color={newZoneType === type ? colors.white : colors.textSecondary}
                   />
-                  <Text style={[
-                    styles.typeChipText,
-                    { color: colors.textSecondary },
-                    newZoneType === type && { color: colors.white },
-                  ]}>
+                  <Text
+                    style={[
+                      styles.typeChipText,
+                      { color: colors.textSecondary },
+                      newZoneType === type && { color: colors.white },
+                    ]}
+                  >
                     {t(`settings.privacyZones.type${type.charAt(0).toUpperCase() + type.slice(1)}`)}
                   </Text>
                 </TouchableOpacity>
@@ -461,7 +504,10 @@ export function PrivacyZonesScreen() {
             </Text>
 
             <TouchableOpacity
-              style={[styles.locationButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
+              style={[
+                styles.locationButton,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
               onPress={handleUseCurrentLocation}
               disabled={locationLoading}
             >
@@ -476,7 +522,12 @@ export function PrivacyZonesScreen() {
             </TouchableOpacity>
 
             {newZoneLocation && (
-              <View style={[styles.locationPreview, { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' }]}>
+              <View
+                style={[
+                  styles.locationPreview,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' },
+                ]}
+              >
                 <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                 <Text style={[styles.locationPreviewText, { color: colors.textSecondary }]}>
                   {newZoneLocation.lat.toFixed(5)}, {newZoneLocation.lng.toFixed(5)}
@@ -485,8 +536,8 @@ export function PrivacyZonesScreen() {
             )}
 
             <Text style={[styles.radiusHint, { color: colors.textMuted }]}>
-              <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />
-              {' '}{t('settings.privacyZones.radius')}
+              <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />{' '}
+              {t('settings.privacyZones.radius')}
             </Text>
           </ScrollView>
         </ScreenContainer>

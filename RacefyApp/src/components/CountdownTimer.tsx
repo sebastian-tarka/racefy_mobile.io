@@ -40,7 +40,8 @@ export function CountdownTimer({
   const [countdown, setCountdown] = useState<CountdownTime | null>(null);
 
   const calculateCountdown = useCallback(() => {
-    const target = typeof targetDate === 'string' ? new Date(targetDate).getTime() : targetDate.getTime();
+    const target =
+      typeof targetDate === 'string' ? new Date(targetDate).getTime() : targetDate.getTime();
     const now = Date.now();
     const diff = target - now;
 
@@ -101,9 +102,7 @@ export function CountdownTimer({
       {showTitle && (
         <View style={styles.header}>
           <Ionicons name={icon} size={20} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.primary }]}>
-            {displayTitle}
-          </Text>
+          <Text style={[styles.title, { color: colors.primary }]}>{displayTitle}</Text>
         </View>
       )}
       <View style={styles.grid}>
@@ -111,9 +110,7 @@ export function CountdownTimer({
           <Text style={[styles.value, { color: colors.textPrimary }]}>
             {countdown.days.toString().padStart(2, '0')}
           </Text>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>
-            {t('countdown.days')}
-          </Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('countdown.days')}</Text>
         </View>
         <Text style={[styles.separator, { color: colors.textPrimary }]}>:</Text>
         <View style={styles.item}>

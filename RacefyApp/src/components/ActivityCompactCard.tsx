@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDurationCompact } from '../utils/formatDuration';
 import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
@@ -20,8 +15,7 @@ interface ActivityCompactCardProps {
   isAuthenticated?: boolean;
 }
 
-
-export function ActivityCompactCard({
+function ActivityCompactCardBase({
   activity,
   onPress,
   isAuthenticated = true,
@@ -77,11 +71,7 @@ export function ActivityCompactCard({
       {/* User avatar */}
       {activity.user && (
         <View style={styles.avatarContainer}>
-          <Avatar
-            uri={activity.user.avatar}
-            name={activity.user.name}
-            size="sm"
-          />
+          <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
         </View>
       )}
 
@@ -162,3 +152,5 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
   },
 });
+// Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
+export const ActivityCompactCard = React.memo(ActivityCompactCardBase);

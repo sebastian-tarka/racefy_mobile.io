@@ -51,7 +51,8 @@ export function DynamicGreeting({ userName, isAuthenticated }: DynamicGreetingPr
       <View style={styles.greetingRow}>
         <Ionicons name={icon} size={24} color={colors.primary} style={styles.icon} />
         <Text style={[styles.greeting, { color: colors.textPrimary }]}>
-          {greeting}{displayName ? `, ${displayName}` : ''}!
+          {greeting}
+          {displayName ? `, ${displayName}` : ''}!
         </Text>
       </View>
       <Text style={[styles.motivation, { color: colors.textSecondary }]}>

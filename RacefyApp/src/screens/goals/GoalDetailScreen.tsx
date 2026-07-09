@@ -11,7 +11,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
-import { BottomSheet, type BottomSheetOption, ScreenContainer, ScreenHeader } from '../../components';
+import {
+  BottomSheet,
+  type BottomSheetOption,
+  ScreenContainer,
+  ScreenHeader,
+} from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
@@ -63,7 +68,7 @@ export function GoalDetailScreen({ navigation, route }: Props) {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData])
+    }, [fetchData]),
   );
 
   useRefreshOn('goals', fetchData);
@@ -116,9 +121,10 @@ export function GoalDetailScreen({ navigation, route }: Props) {
 
   const meta = history?.meta;
   const historyMonths = meta?.history_months ?? 1;
-  const historyRangeLabel = historyMonths === -1
-    ? t('goals.detail.historyAll')
-    : t('goals.detail.historyRange', { months: historyMonths });
+  const historyRangeLabel =
+    historyMonths === -1
+      ? t('goals.detail.historyAll')
+      : t('goals.detail.historyRange', { months: historyMonths });
 
   const sheetOptions: BottomSheetOption[] = [
     {
@@ -154,7 +160,12 @@ export function GoalDetailScreen({ navigation, route }: Props) {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Hero card */}
-        <View style={[styles.heroCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.heroCard,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+        >
           <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
             {t(`goals.period.${goal.period}`)} · {t(`goals.metric.${goal.metric}`)} · {sportLabel}
           </Text>
@@ -183,22 +194,49 @@ export function GoalDetailScreen({ navigation, route }: Props) {
           </View>
 
           <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-            <View style={[styles.progressFill, { backgroundColor: statusColor, width: `${Math.min(percent, 100)}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { backgroundColor: statusColor, width: `${Math.min(percent, 100)}%` },
+              ]}
+            />
           </View>
 
           <Text style={[styles.heroPeriodRange, { color: colors.textMuted }]}>
-            {goal.current_period_start} — {goal.current_period_end} · {t('goals.detail.linearExpected', { percent: expected })}
+            {goal.current_period_start} — {goal.current_period_end} ·{' '}
+            {t('goals.detail.linearExpected', { percent: expected })}
           </Text>
         </View>
 
         {/* Aggregates row */}
         {meta && meta.count > 0 && (
-          <View style={[styles.aggregatesCard, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-            <Stat label={t('goals.detail.metRatio')} value={`${meta.met_count}/${meta.count}`} colors={colors} />
-            <Stat label={t('goals.detail.avgPercent')} value={`${meta.avg_percent}%`} colors={colors} />
-            <Stat label={t('goals.detail.streak')} value={String(meta.current_streak)} colors={colors} />
+          <View
+            style={[
+              styles.aggregatesCard,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
+            <Stat
+              label={t('goals.detail.metRatio')}
+              value={`${meta.met_count}/${meta.count}`}
+              colors={colors}
+            />
+            <Stat
+              label={t('goals.detail.avgPercent')}
+              value={`${meta.avg_percent}%`}
+              colors={colors}
+            />
+            <Stat
+              label={t('goals.detail.streak')}
+              value={String(meta.current_streak)}
+              colors={colors}
+            />
             {meta.best && (
-              <Stat label={t('goals.detail.bestPeriod')} value={`${meta.best.progress_percent}%`} colors={colors} />
+              <Stat
+                label={t('goals.detail.bestPeriod')}
+                value={`${meta.best.progress_percent}%`}
+                colors={colors}
+              />
             )}
           </View>
         )}
@@ -219,9 +257,7 @@ export function GoalDetailScreen({ navigation, route }: Props) {
               {t('goals.detail.historyEmpty')}
             </Text>
           ) : (
-            history.data.map((row) => (
-              <HistoryRow key={row.id} row={row} colors={colors} t={t} />
-            ))
+            history.data.map((row) => <HistoryRow key={row.id} row={row} colors={colors} t={t} />)
           )}
         </View>
       </ScrollView>
@@ -261,14 +297,17 @@ function HistoryRow({
 }) {
   const statusColor = STATUS_COLORS[row.status];
   return (
-    <View style={[styles.historyRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.historyRow,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+    >
       <View style={styles.historyRowHeader}>
         <Text style={[styles.historyDate, { color: colors.textPrimary }]}>
           {row.period_start} → {row.period_end}
         </Text>
-        <Text style={[styles.historyPercent, { color: statusColor }]}>
-          {row.progress_percent}%
-        </Text>
+        <Text style={[styles.historyPercent, { color: statusColor }]}>{row.progress_percent}%</Text>
       </View>
       <View style={[styles.historyBar, { backgroundColor: colors.border }]}>
         <View

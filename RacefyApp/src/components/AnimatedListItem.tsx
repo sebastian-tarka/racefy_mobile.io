@@ -37,7 +37,7 @@ export function AnimatedListItem({
       withTiming(1, {
         duration,
         easing: Easing.out(Easing.ease),
-      })
+      }),
     );
 
     translateY.value = withDelay(
@@ -45,7 +45,7 @@ export function AnimatedListItem({
       withTiming(0, {
         duration,
         easing: Easing.out(Easing.ease),
-      })
+      }),
     );
   }, []);
 
@@ -54,9 +54,5 @@ export function AnimatedListItem({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return (
-    <Animated.View style={[style, animatedStyle]}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

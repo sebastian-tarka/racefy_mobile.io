@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Text,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -98,7 +91,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
                 await shareToApp('messenger', currentImageUrl, currentShareData);
               },
             },
-          ]
+          ],
         );
         return;
       }
@@ -108,7 +101,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
         await shareToApp(
           platformId as 'whatsapp' | 'telegram' | 'messenger',
           currentImageUrl,
-          currentShareData
+          currentShareData,
         );
       } else {
         await shareActivityWithImage({
@@ -145,11 +138,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={t('share.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('share.title')} showBack onBack={() => navigation.goBack()} />
 
       <ScrollView
         style={styles.scrollView}
@@ -158,7 +147,12 @@ export function ActivityShareScreen({ route, navigation }: Props) {
       >
         {/* Mode Toggle - only shown when GPS track exists */}
         {canUsePhotoOverlay && (
-          <View style={[styles.modeToggle, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.modeToggle,
+              { backgroundColor: colors.cardBackground, borderColor: colors.border },
+            ]}
+          >
             <TouchableOpacity
               style={[
                 styles.modeButton,
@@ -209,10 +203,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
 
         {/* Content based on mode */}
         {shareMode === 'photo' && canUsePhotoOverlay ? (
-          <PhotoOverlaySelector
-            activityId={activityId}
-            photos={photos}
-          />
+          <PhotoOverlaySelector activityId={activityId} photos={photos} />
         ) : (
           <>
             {/* Existing Route Map share flow */}
@@ -246,12 +237,7 @@ export function ActivityShareScreen({ route, navigation }: Props) {
                   disabled={!currentShareData}
                   activeOpacity={0.7}
                 >
-                  <View
-                    style={[
-                      styles.platformIconContainer,
-                      { backgroundColor: platform.color },
-                    ]}
-                  >
+                  <View style={[styles.platformIconContainer, { backgroundColor: platform.color }]}>
                     <Ionicons name={platform.icon} size={24} color="#FFFFFF" />
                   </View>
                   <Text
