@@ -14,11 +14,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from '../config/api';
-import { appendXdebugTrigger } from './api';
 import { logger } from './logger';
-import { getCurrentLanguage } from '../i18n';
-import type { BufferedLocation } from './backgroundLocation';
 
 // Must match secureStorage.ts TOKEN_KEY and its '@secure_' AsyncStorage fallback prefix.
 const SECURE_TOKEN_KEY = 'racefy_auth_token';
@@ -61,114 +57,5 @@ export async function getAuthToken(): Promise<string | null> {
   }
 }
 
-/**
- * Get API base URL from config
- */
-function getApiBaseUrl(): string {
-  return API_BASE_URL;
-}
-
-/**
- * Sync GPS points to server
- *
- * @param activityId - Activity ID to sync points to
- * @param points - GPS points to upload
- * @returns Result object with success status and optional error
- */
-export async function syncPointsToServer(
-  activityId: number,
-  points: BufferedLocation[],
-): Promise<{ success: boolean; error?: string }> {
-  const startTime = Date.now();
-
-  try {
-    // Get auth token
-    const token = await getAuthToken();
-    if (!token) {
-      logger.error('api', 'Background sync: No auth token available');
-      return { success: false, error: 'No auth token' };
-    }
-
-    // Build endpoint
-    const endpoint = `/activities/${activityId}/points`;
-    const url = appendXdebugTrigger(`${getApiBaseUrl()}${endpoint}`);
-
-    // Convert BufferedLocation to GpsPoint format
-    const gpsPoints = points.map((point) => ({
-      lat: point.lat,
-      lng: point.lng,
-      ele: point.ele,
-      time: point.time,
-      speed: point.speed,
-    }));
-
-    // Build request body
-    const body = JSON.stringify({ points: gpsPoints });
-
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    logger.gps(`Background sync: Sending ${points.length} points to ${endpoint}`);
-
-    // Make request
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        'Accept-Language': getCurrentLanguage(),
-        Authorization: `Bearer ${token}`,
-      },
-      body,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    const duration = Date.now() - startTime;
-
-    // Parse response
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorMsg = data.message || `HTTP ${response.status}`;
-      logger.error('api', `Background sync failed: ${errorMsg}`, {
-        status: response.status,
-        duration,
-        pointCount: points.length,
-      });
-
-      // Handle 401 specifically (token expired)
-      if (response.status === 401) {
-        return { success: false, error: 'Unauthorized (token expired)' };
-      }
-
-      return { success: false, error: errorMsg };
-    }
-
-    logger.gps(`Background sync: SUCCESS (${points.length} points, ${duration}ms)`);
-    return { success: true };
-  } catch (error: any) {
-    const duration = Date.now() - startTime;
-
-    // Check if it's a timeout
-    if (error.name === 'AbortError') {
-      logger.error('api', 'Background sync: Request timeout (30s)', {
-        duration,
-        pointCount: points.length,
-      });
-      return { success: false, error: 'Request timeout' };
-    }
-
-    // Network error or other exception
-    const errorMsg = error.message || 'Network error';
-    logger.error('api', `Background sync: Exception - ${errorMsg}`, {
-      duration,
-      pointCount: points.length,
-      error,
-    });
-
-    return { success: false, error: errorMsg };
-  }
-}
+// NOTE: syncPointsToServer was removed — the SQLite-backed uploader
+// (services/pointsUploader.ts) is the single upload path for both contexts.

@@ -3,9 +3,8 @@ import { Alert, AppState, AppStateStatus, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
 import {
-  clearAllPersistedPoints,
-  clearLocationBuffer,
   getLastBackgroundPosition,
+  migrateLegacyBuffers,
   setActiveActivityId,
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
@@ -792,6 +791,10 @@ function useLiveActivityInternal() {
     }
 
     try {
+      // One-time: fold leftover pre-update AsyncStorage buffers into the SQLite
+      // log (as unsynced) and delete the legacy keys — must run before recovery.
+      await migrateLegacyBuffers(clientActivityIdRef.current);
+
       // Crash recovery: restore the full route + local stats from the SQLite
       // point log (survives app kill; superset of the old AsyncStorage buffers).
       const storedPoints = clientActivityIdRef.current
@@ -864,12 +867,6 @@ function useLiveActivityInternal() {
           });
         }
       }
-
-      // Clear legacy AsyncStorage snapshots (superseded by the SQLite log)
-      await clearAllPersistedPoints();
-
-      // Clear any leftover background points
-      await clearLocationBuffer();
 
       // Store activity ID for background task
       await setActiveActivityId(activityId);
@@ -994,10 +991,10 @@ function useLiveActivityInternal() {
     // Stop background tracking
     await stopBackgroundLocationTracking();
     await setActiveActivityId(null);
-    await clearLocationBuffer();
 
-    // NOTE: Do NOT clearAllPersistedPoints() here — caller decides when to clear
-    // (after successful finish/discard). This prevents data loss if finish API fails.
+    // NOTE: points stay in the SQLite log — the caller decides when to close
+    // the session (after successful finish/discard). Prevents data loss if the
+    // finish API fails.
 
     // Clear GPS smoothing buffer
     gpsTracker.clearBuffer();
@@ -1371,9 +1368,6 @@ function useLiveActivityInternal() {
 
       const activity = response.data;
 
-      // Success: now safe to clear persisted data
-      await clearAllPersistedPoints();
-
       // Close the durable SQLite session (points purged after retention window)
       if (clientActivityIdRef.current) {
         trackingDb.markSessionFinished(clientActivityIdRef.current);
@@ -1486,9 +1480,6 @@ function useLiveActivityInternal() {
       });
 
       const activity = response.data;
-
-      // Success: now safe to clear persisted data
-      await clearAllPersistedPoints();
 
       // Close the durable SQLite session (points purged after retention window)
       if (clientActivityIdRef.current) {
@@ -1672,9 +1663,6 @@ function useLiveActivityInternal() {
 
         const activity = response.data;
 
-        // Success: now safe to clear persisted data
-        await clearAllPersistedPoints();
-
         // Close the durable SQLite session (points purged after retention window)
         if (clientActivityIdRef.current) {
           trackingDb.markSessionFinished(clientActivityIdRef.current);
@@ -1762,9 +1750,6 @@ function useLiveActivityInternal() {
 
       // Stop GPS
       await stopGpsTracking();
-
-      // Clear persisted data (discarding — no need to keep anything)
-      await clearAllPersistedPoints();
 
       // Drop the durable SQLite session and its points
       if (clientActivityIdRef.current) {
