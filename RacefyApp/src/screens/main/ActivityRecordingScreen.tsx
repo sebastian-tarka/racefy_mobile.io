@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -33,6 +34,7 @@ import {
   useDefaultSport,
   useDevRunSimulator,
   useFadeToast,
+  useGpsHealthCheck,
   useHealthEnrichment,
   useMapStyleCycler,
   useLiveActivityContext,
@@ -53,11 +55,16 @@ import {
   type BottomSheetOption,
   EventSelectionSheet,
   FeatureGate,
+  GpsHealthCheckCard,
   MapboxLiveMap,
   NearbyRoutesHorizontalPanel,
   RecordingMapControls,
   ScreenContainer,
 } from '../../components';
+import {
+  isBatteryOptimized,
+  requestIgnoreBatteryOptimizations,
+} from '../../services/batteryOptimization';
 import { NavigationOverlay } from '../../components/NavigationOverlay';
 import { useLiveNavigation } from '../../hooks/useLiveNavigation';
 import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
@@ -192,6 +199,11 @@ export function ActivityRecordingScreen() {
 
   const isIdle = !isTracking && !isPaused;
 
+  // Pre-run GPS health check (permissions, battery optimization, notifications)
+  const { health: gpsHealth, refresh: refreshGpsHealth } = useGpsHealthCheck(
+    isIdle && (gpsProfile?.enabled ?? false),
+  );
+
   // Audio Coach — session-level toggle (overrides settings.enabled for this session only)
   const { settings: audioCoachSettings, loadSettings: loadAudioCoachSettings } =
     useAudioCoachSettings();
@@ -221,6 +233,33 @@ export function ActivityRecordingScreen() {
     // Show toast
     audioCoachToast.show(newEnabled);
   }, [audioCoachSessionEnabled, audioCoachSettings, audioCoachToast]);
+
+  // Persist the EFFECTIVE coach state (settings.enabled overridden by the
+  // session toggle) at activity start — the background task reads AsyncStorage,
+  // so without this a session-enabled coach stays silent in background.
+  const persistEffectiveAudioCoachEnabled = useCallback(() => {
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY)
+      .then((json) => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = isAudioCoachActive;
+        return AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      })
+      .catch(() => {});
+  }, [audioCoachSettings, isAudioCoachActive]);
+
+  // Undo the session override in AsyncStorage (write back the persisted
+  // setting) so a session-only mute/unmute doesn't leak into the next run.
+  const restoreAudioCoachSettings = useCallback(() => {
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY)
+      .then((json) => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = audioCoachSettings.enabled;
+        return AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      })
+      .catch(() => {});
+    setAudioCoachSessionEnabled(null);
+    loadAudioCoachSettings();
+  }, [audioCoachSettings, loadAudioCoachSettings]);
 
   const handleToggleLock = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -602,6 +641,36 @@ export function ActivityRecordingScreen() {
     }
   }, [hasExistingActivity, activity]);
 
+  // One-time (per install) battery-optimization prompt before the first
+  // recording on Android — an optimized app risks the OS killing GPS mid-run.
+  // Never blocks the start: declining just skips the exemption.
+  const maybePromptBatteryExemption = async (): Promise<void> => {
+    if (Platform.OS !== 'android') return;
+    try {
+      const alreadyShown = await AsyncStorage.getItem('@racefy_battery_prompt_shown');
+      if (alreadyShown) return;
+      if (!(await isBatteryOptimized())) return;
+
+      await AsyncStorage.setItem('@racefy_battery_prompt_shown', '1');
+
+      await new Promise<void>((resolve) => {
+        Alert.alert(t('recording.batteryPrompt.title'), t('recording.batteryPrompt.message'), [
+          { text: t('recording.batteryPrompt.later'), style: 'cancel', onPress: () => resolve() },
+          {
+            text: t('recording.batteryPrompt.allow'),
+            onPress: async () => {
+              await requestIgnoreBatteryOptimizations();
+              refreshGpsHealth();
+              resolve();
+            },
+          },
+        ]);
+      });
+    } catch (err) {
+      logger.warn('activity', 'Battery exemption prompt failed', { error: err });
+    }
+  };
+
   // Action handlers
   const handleStart = async () => {
     logger.debug('activity', 'Start button pressed');
@@ -618,13 +687,17 @@ export function ActivityRecordingScreen() {
       logger.error('activity', 'Permission error', { error: err });
     }
 
+    await maybePromptBatteryExemption();
+
     try {
       await startTracking(selectedSport.id, `${selectedSport.name} Activity`, selectedEvent?.id);
       resetMilestones();
       // Keep selectedEvent in state — user may want to change it at save time in PausedView
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
 
-      // Audio coach: announce start
+      // Audio coach: announce start + sync the effective session state to
+      // AsyncStorage for the background task
+      persistEffectiveAudioCoachEnabled();
       announceStart(audioCoachSettings, tier as any);
 
       // Store milestone thresholds for background audio coach
@@ -715,10 +788,7 @@ export function ActivityRecordingScreen() {
       setSkipAutoPost(false);
 
       // Restore original audio coach settings in AsyncStorage (undo session toggle)
-      if (audioCoachSessionEnabled !== null) {
-        setAudioCoachSessionEnabled(null);
-        loadAudioCoachSettings();
-      }
+      restoreAudioCoachSettings();
 
       // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
       const pointsEarned = result?.points_earned;
@@ -763,7 +833,6 @@ export function ActivityRecordingScreen() {
     }
   };
 
-
   const handleDiscard = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(t('recording.discardActivity'), t('recording.discardConfirm'), [
@@ -776,10 +845,7 @@ export function ActivityRecordingScreen() {
             await discardTracking();
             resetMilestones();
             // Restore original audio coach settings in AsyncStorage
-            if (audioCoachSessionEnabled !== null) {
-              setAudioCoachSessionEnabled(null);
-              loadAudioCoachSettings();
-            }
+            restoreAudioCoachSettings();
             logger.activity('Activity discarded from UI');
           } catch (err) {
             logger.error('activity', 'Failed to discard activity from UI', { error: err });
@@ -1226,7 +1292,14 @@ export function ActivityRecordingScreen() {
         </View>
       ) : (
         <>
-          {status === 'idle' && renderIdleLayout()}
+          {status === 'idle' && (
+            <>
+              {gpsProfile?.enabled && (
+                <GpsHealthCheckCard health={gpsHealth} onRefresh={refreshGpsHealth} />
+              )}
+              {renderIdleLayout()}
+            </>
+          )}
           {status === 'recording' && renderRecordingLayout()}
           {status === 'paused' && renderPausedLayout()}
         </>

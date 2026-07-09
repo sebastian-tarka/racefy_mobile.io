@@ -100,7 +100,12 @@ export class GpsSmoothingBuffer {
 }
 
 /** The classification verdict for a single live GPS point relative to the last baseline. */
-export type GpsPointOutcome = 'accepted' | 'gap' | 'filtered-speed' | 'filtered-distance';
+export type GpsPointOutcome =
+  | 'accepted'
+  | 'gap-bridged'
+  | 'gap'
+  | 'filtered-speed'
+  | 'filtered-distance';
 
 /** Position baseline the new point is measured against (smoothed lat/lng/ele + capture time). */
 export interface GpsBaseline {
@@ -138,6 +143,9 @@ export interface GpsPointDecision {
   isStationary: boolean;
   /** Milliseconds since the last buffered point — drives gap detection and logging. */
   gapMs: number;
+  /** True when this point starts a new route segment (bridged gap) — the map
+   * must not draw a line across it even though its distance is counted. */
+  segmentBreak: boolean;
 }
 
 /**
@@ -168,10 +176,20 @@ export function classifyGpsPoint(params: {
   } = params;
 
   const stationary = isStationary(rawSpeed, profile.stationarySpeedThreshold ?? 0.5);
-  const effectiveMinDistance = computeEffectiveMinDistance(stationary, profile.minDistanceThreshold);
+  const effectiveMinDistance = computeEffectiveMinDistance(
+    stationary,
+    profile.minDistanceThreshold,
+  );
 
-  const distance = haversineDistance(baseline.lat, baseline.lng, smoothedPoint.lat, smoothedPoint.lng);
-  const timeSinceLastPoint = baseline.timestamp ? (currentTimestamp - baseline.timestamp) / 1000 : 3;
+  const distance = haversineDistance(
+    baseline.lat,
+    baseline.lng,
+    smoothedPoint.lat,
+    smoothedPoint.lng,
+  );
+  const timeSinceLastPoint = baseline.timestamp
+    ? (currentTimestamp - baseline.timestamp) / 1000
+    : 3;
   const impliedSpeed = computeImpliedSpeed(distance, timeSinceLastPoint);
   const gapMs = lastBufferedPointTime !== null ? currentTimestamp - lastBufferedPointTime : 0;
 
@@ -182,7 +200,36 @@ export function classifyGpsPoint(params: {
     effectiveMinDistance,
     isStationary: stationary,
     gapMs,
+    segmentBreak: false,
   };
+
+  const elevationGain = (): number => {
+    if (smoothedPoint.ele && baseline.ele) {
+      const elevDiff = smoothedPoint.ele - baseline.ele;
+      if (elevDiff > profile.minElevationChange) {
+        return elevDiff;
+      }
+    }
+    return 0;
+  };
+
+  // Gap (route discontinuity: backgrounded, signal lost) is checked FIRST.
+  // If the straight-line hop over the gap implies a realistic speed, BRIDGE it:
+  // count the distance (like a GPS watch does through a tunnel) but mark a
+  // segment break so the map doesn't draw a line across the gap. Unrealistic
+  // hops (glitch jumps) and negligible movement are still discarded.
+  if (isGapPoint(lastBufferedPointTime, currentTimestamp, gapThresholdMs)) {
+    if (distance > effectiveMinDistance && impliedSpeed < profile.maxRealisticSpeed) {
+      return {
+        ...base,
+        outcome: 'gap-bridged',
+        distanceAdded: distance,
+        elevationAdded: elevationGain(),
+        segmentBreak: true,
+      };
+    }
+    return { ...base, outcome: 'gap', distanceAdded: 0, elevationAdded: 0 };
+  }
 
   if (distance <= effectiveMinDistance) {
     return { ...base, outcome: 'filtered-distance', distanceAdded: 0, elevationAdded: 0 };
@@ -190,19 +237,9 @@ export function classifyGpsPoint(params: {
   if (impliedSpeed >= profile.maxRealisticSpeed) {
     return { ...base, outcome: 'filtered-speed', distanceAdded: 0, elevationAdded: 0 };
   }
-  if (isGapPoint(lastBufferedPointTime, currentTimestamp, gapThresholdMs)) {
-    return { ...base, outcome: 'gap', distanceAdded: 0, elevationAdded: 0 };
-  }
 
   // Accepted: count the distance, plus elevation gain above the noise floor.
-  let elevationAdded = 0;
-  if (smoothedPoint.ele && baseline.ele) {
-    const elevDiff = smoothedPoint.ele - baseline.ele;
-    if (elevDiff > profile.minElevationChange) {
-      elevationAdded = elevDiff;
-    }
-  }
-  return { ...base, outcome: 'accepted', distanceAdded: distance, elevationAdded };
+  return { ...base, outcome: 'accepted', distanceAdded: distance, elevationAdded: elevationGain() };
 }
 
 /** Profile knobs the per-point flow needs: smoothing window size + the classify fields. */
@@ -260,9 +297,13 @@ export class GpsTracker {
         profile,
         gapThresholdMs,
       });
-      // The gap clock advances both when a point is counted and when a post-gap
-      // jump is discarded — but not on speed/distance filtering.
-      if (decision.outcome === 'accepted' || decision.outcome === 'gap') {
+      // The gap clock advances when a point is counted (accepted/bridged) and
+      // when a post-gap jump is discarded — but not on speed/distance filtering.
+      if (
+        decision.outcome === 'accepted' ||
+        decision.outcome === 'gap-bridged' ||
+        decision.outcome === 'gap'
+      ) {
         this.gapClock = raw.timestamp;
       }
     }

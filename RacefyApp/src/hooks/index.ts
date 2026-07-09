@@ -55,3 +55,4 @@ export * from './useEventTeams';
 export * from './useMyPlannedRoutes';
 export * from './useActiveWeek';
 export * from './useDefaultSport';
+export * from './useGpsHealthCheck';

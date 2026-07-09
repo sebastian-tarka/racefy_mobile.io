@@ -120,6 +120,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'VIBRATE',
       'POST_NOTIFICATIONS',
       'android.permission.health.READ_HEART_RATE',
+      // Battery-optimization exemption prompt for reliable background GPS
+      // (allowed by Play policy for fitness trackers — declare in Play Console)
+      'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
     ],
     intentFilters: [
       {
@@ -144,6 +147,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     './plugins/withLargeHeap',
+    'expo-sqlite',
     [
       'expo-build-properties',
       {

@@ -819,7 +819,50 @@
     "screenLocked": "Ekran zablokowany",
     "screenUnlocked": "Ekran odblokowany",
     "holdToUnlock": "PRZYTRZYMAJ ABY ODBLOKOWAĆ",
-    "lock": "Zablokuj ekran"
+    "lock": "Zablokuj ekran",
+    "gpsHealth": {
+      "title": "Zapis GPS może być zawodny — dotknij, aby naprawić",
+      "location": {
+        "title": "Brak uprawnienia do lokalizacji",
+        "description": "Zezwól na dostęp do lokalizacji, aby zapisać trasę."
+      },
+      "services": {
+        "title": "Usługi lokalizacji wyłączone",
+        "description": "Włącz GPS w ustawieniach systemu."
+      },
+      "precise": {
+        "title": "Wybrano lokalizację przybliżoną",
+        "description": "Wybierz lokalizację \"Dokładną\", aby zapis był precyzyjny."
+      },
+      "battery": {
+        "title": "Optymalizacja baterii włączona",
+        "description": "System może zatrzymać GPS w trakcie aktywności. Dotknij, aby wykluczyć Racefy."
+      },
+      "notifications": {
+        "title": "Powiadomienia zablokowane",
+        "description": "Powiadomienie o śledzeniu utrzymuje zapis w tle."
+      },
+      "powerSave": {
+        "title": "Tryb oszczędzania energii",
+        "description": "Oszczędzanie energii może wstrzymać GPS przy zgaszonym ekranie."
+      },
+      "oemTitle": "Jeszcze jeden krok na tym urządzeniu",
+      "openOemSettings": "Otwórz ustawienia",
+      "oem": {
+        "samsung": "Samsung może usypiać Racefy. W ustawieniach baterii usuń Racefy z \"Aplikacji uśpionych\" i wyłącz \"Uśpij nieużywane aplikacje\" dla Racefy.",
+        "xiaomi": "Xiaomi (MIUI) agresywnie zamyka aplikacje w tle. Włącz \"Autostart\" dla Racefy i ustaw oszczędzanie baterii na \"Bez ograniczeń\".",
+        "huawei": "Huawei zatrzymuje aplikacje w tle. W \"Uruchamianie aplikacji\" ustaw Racefy na \"Zarządzaj ręcznie\" i włącz wszystkie trzy opcje.",
+        "oneplus": "OnePlus może ograniczać działanie w tle. Wyłącz optymalizację baterii i włącz \"Zezwól na automatyczne uruchamianie\" dla Racefy.",
+        "oppo": "Oppo/Realme ograniczają aplikacje w tle. Włącz \"Automatyczne uruchamianie\" dla Racefy i wyłącz ograniczenia baterii.",
+        "vivo": "Vivo ogranicza aplikacje w tle. Włącz \"Autostart\" i zezwól na wysokie zużycie energii w tle dla Racefy."
+      }
+    },
+    "batteryPrompt": {
+      "title": "Utrzymaj GPS w tle",
+      "message": "Aby zapisać całą trasę przy zgaszonym ekranie, zezwól Racefy na ignorowanie optymalizacji baterii. Bez tego system może zatrzymać GPS w trakcie aktywności.",
+      "allow": "Zezwól",
+      "later": "Nie teraz"
+    }
   },
   "gpxImport": {
     "title": "Importuj GPX",

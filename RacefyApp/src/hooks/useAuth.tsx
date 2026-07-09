@@ -15,11 +15,10 @@ import {
 import { IMPERSONATION_SESSION_KEY, useImpersonationActions } from './useImpersonationActions';
 import { revenueCatLogIn, revenueCatLogOut } from '../services/revenuecat';
 import {
-  clearAllPersistedPoints,
-  getAllPersistedPoints,
   setActiveActivityId,
   stopBackgroundLocationTracking,
 } from '../services/backgroundLocation';
+import * as trackingDb from '../services/trackingDb';
 import type { ImpersonationSession, LoginRequest, RegisterRequest, User } from '../types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -290,15 +289,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // id stays in AsyncStorage, and the background sync timer keeps firing — once the
     // token is gone it spams "Background sync: FAILED - No auth token" for hours.
     try {
-      const pending = await getAllPersistedPoints();
-      if (pending.length > 0) {
-        logger.warn('gps', 'Logout with unsynced GPS points — discarding buffered track', {
-          pendingPoints: pending.length,
-        });
+      const session = trackingDb.getActiveSession();
+      if (session) {
+        const pending = trackingDb.countUnsynced(session.clientActivityId);
+        if (pending > 0) {
+          logger.warn('gps', 'Logout with unsynced GPS points — discarding tracked session', {
+            pendingPoints: pending,
+          });
+        }
+        // Drop the session so a future login (possibly another user) can't
+        // upload these points to a stale activity.
+        trackingDb.discardSession(session.clientActivityId);
       }
       await stopBackgroundLocationTracking();
       await setActiveActivityId(null);
-      await clearAllPersistedPoints();
     } catch (error) {
       logger.warn('gps', 'Failed to tear down background tracking during logout', { error });
     }
