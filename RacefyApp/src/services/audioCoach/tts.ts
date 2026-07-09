@@ -3,29 +3,14 @@ import { Audio } from 'expo-av';
 import { File, Paths } from 'expo-file-system';
 import { logger } from '../logger';
 import { synthesize } from './api';
+import { ensureAudioMode } from './audioSession';
 import type { AudioCoachSettings } from '../../types/audioCoach';
 
 const SYNTH_TIMEOUT_MS = 8000;
 
-/** Ensure audio session is configured for background playback (locked screen, silent mode) */
-let audioModeConfigured = false;
-async function ensureAudioMode() {
-  if (audioModeConfigured) return;
-  try {
-    await Audio.setAudioModeAsync({
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-    });
-    audioModeConfigured = true;
-  } catch (err) {
-    logger.warn('audioCoach', 'Failed to set audio mode', { error: err });
-  }
-}
-
 /** Simple queue to prevent overlapping announcements */
 let isSpeaking = false;
-const queue: Array<() => Promise<void>> = [];
+const queue: (() => Promise<void>)[] = [];
 
 async function processQueue() {
   if (isSpeaking || queue.length === 0) return;

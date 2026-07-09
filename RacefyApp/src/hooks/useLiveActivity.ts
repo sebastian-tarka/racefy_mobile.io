@@ -8,7 +8,6 @@ import {
   setActiveActivityId,
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
-  syncAudioCoachForegroundDistance,
 } from '../services/backgroundLocation';
 import { drainPoints, toGpsPoints } from '../services/pointsUploader';
 import { enqueueUnsyncedActivity } from '../services/unsyncedActivities';
@@ -664,9 +663,8 @@ function useLiveActivityInternal() {
         logger.gps('Background tracking already running (continuing)');
       }
 
-      // Sync foreground distance to background audio coach so it continues
-      // from the correct total distance (not just previous background sessions)
-      await syncAudioCoachForegroundDistance(localStatsRef.current.distance);
+      // NOTE: no distance handoff to the background audio coach — it reads the
+      // cumulative distance (cum_dist) straight from the SQLite point log.
 
       // Stop foreground tracking (background tracking should now be running)
       stopForegroundTracking();

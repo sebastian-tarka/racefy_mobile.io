@@ -234,6 +234,33 @@ export function ActivityRecordingScreen() {
     audioCoachToast.show(newEnabled);
   }, [audioCoachSessionEnabled, audioCoachSettings, audioCoachToast]);
 
+  // Persist the EFFECTIVE coach state (settings.enabled overridden by the
+  // session toggle) at activity start — the background task reads AsyncStorage,
+  // so without this a session-enabled coach stays silent in background.
+  const persistEffectiveAudioCoachEnabled = useCallback(() => {
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY)
+      .then((json) => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = isAudioCoachActive;
+        return AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      })
+      .catch(() => {});
+  }, [audioCoachSettings, isAudioCoachActive]);
+
+  // Undo the session override in AsyncStorage (write back the persisted
+  // setting) so a session-only mute/unmute doesn't leak into the next run.
+  const restoreAudioCoachSettings = useCallback(() => {
+    AsyncStorage.getItem(AUDIO_COACH_SETTINGS_KEY)
+      .then((json) => {
+        const stored = json ? JSON.parse(json) : { ...audioCoachSettings };
+        stored.enabled = audioCoachSettings.enabled;
+        return AsyncStorage.setItem(AUDIO_COACH_SETTINGS_KEY, JSON.stringify(stored));
+      })
+      .catch(() => {});
+    setAudioCoachSessionEnabled(null);
+    loadAudioCoachSettings();
+  }, [audioCoachSettings, loadAudioCoachSettings]);
+
   const handleToggleLock = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     const newLocked = !isScreenLocked;
@@ -668,7 +695,9 @@ export function ActivityRecordingScreen() {
       // Keep selectedEvent in state — user may want to change it at save time in PausedView
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
 
-      // Audio coach: announce start
+      // Audio coach: announce start + sync the effective session state to
+      // AsyncStorage for the background task
+      persistEffectiveAudioCoachEnabled();
       announceStart(audioCoachSettings, tier as any);
 
       // Store milestone thresholds for background audio coach
@@ -759,10 +788,7 @@ export function ActivityRecordingScreen() {
       setSkipAutoPost(false);
 
       // Restore original audio coach settings in AsyncStorage (undo session toggle)
-      if (audioCoachSessionEnabled !== null) {
-        setAudioCoachSessionEnabled(null);
-        loadAudioCoachSettings();
-      }
+      restoreAudioCoachSettings();
 
       // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
       const pointsEarned = result?.points_earned;
@@ -819,10 +845,7 @@ export function ActivityRecordingScreen() {
             await discardTracking();
             resetMilestones();
             // Restore original audio coach settings in AsyncStorage
-            if (audioCoachSessionEnabled !== null) {
-              setAudioCoachSessionEnabled(null);
-              loadAudioCoachSettings();
-            }
+            restoreAudioCoachSettings();
             logger.activity('Activity discarded from UI');
           } catch (err) {
             logger.error('activity', 'Failed to discard activity from UI', { error: err });

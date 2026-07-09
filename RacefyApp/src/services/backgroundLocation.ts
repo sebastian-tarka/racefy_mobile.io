@@ -4,6 +4,7 @@ import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
 import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
+import { ensureAudioMode } from './audioCoach/audioSession';
 import type { GpsProfile } from '../config/gpsProfiles';
 import { haversineDistance } from '../utils/gpsMath';
 import * as trackingDb from './trackingDb';
@@ -188,11 +189,29 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
       const simStart = parseInt(simStartStr!, 10);
       totalDistM = Math.floor((Date.now() - simStart) / 10000) * 350;
     } else {
-      // Real mode: accumulate GPS distance
-      const prevDistStr = await AsyncStorage.getItem(BG_AUDIO_DISTANCE_KEY);
-      totalDistM = (prevDistStr ? parseFloat(prevDistStr) : 0) + distanceAddedM;
+      // Real mode: the SQLite point log carries the cumulative distance
+      // (written by both foreground and background) — one source of truth,
+      // no foreground→background handoff needed. Legacy AsyncStorage
+      // accumulator is the fallback when no point has landed yet.
+      let cumDist: number | null = null;
+      try {
+        const activityId = await getActiveActivityId();
+        const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+        cumDist = session
+          ? (trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? null)
+          : null;
+      } catch {
+        cumDist = null;
+      }
+
+      if (cumDist != null) {
+        totalDistM = cumDist;
+      } else {
+        const prevDistStr = await AsyncStorage.getItem(BG_AUDIO_DISTANCE_KEY);
+        totalDistM = (prevDistStr ? parseFloat(prevDistStr) : 0) + distanceAddedM;
+        await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistM.toString());
+      }
     }
-    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistM.toString());
 
     // Check threshold
     const lastThresholdStr = await AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY);
@@ -231,6 +250,9 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
     // expo-speech uses native TTS — works in headless JS context.
     // Android TTS automatically requests AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
     // which ducks (quiets) music instead of pausing it.
+    // iOS: an inactive audio session silences background speech even with
+    // UIBackgroundModes:["audio"] — configure it before every announcement.
+    await ensureAudioMode();
     Speech.speak(text, {
       language: SPEECH_LANG_MAP[language] || 'en-US',
       rate: speechRate,
@@ -256,7 +278,8 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
                 totalDistKm: totalDistKm.toFixed(2),
               });
               // Speak milestone after a short delay (so km announcement finishes first)
-              setTimeout(() => {
+              setTimeout(async () => {
+                await ensureAudioMode();
                 Speech.speak(milestoneText, {
                   language: SPEECH_LANG_MAP[language] || 'en-US',
                   rate: speechRate,
@@ -303,22 +326,9 @@ export async function initAudioCoachBackgroundState(): Promise<void> {
   await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
 }
 
-/**
- * Sync foreground distance to background audio coach state.
- * Called when app transitions to background so that the background task
- * continues accumulating from the correct total distance instead of
- * only counting distance from previous background sessions.
- */
-export async function syncAudioCoachForegroundDistance(totalDistanceM: number): Promise<void> {
-  try {
-    await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, totalDistanceM.toString());
-    logger.info('audioCoach', 'Synced foreground distance to background', {
-      totalDistanceM: Math.round(totalDistanceM),
-    });
-  } catch (err) {
-    logger.error('audioCoach', 'Failed to sync foreground distance', { error: err });
-  }
-}
+// NOTE: syncAudioCoachForegroundDistance was removed — the background coach
+// reads the cumulative distance (cum_dist) from the SQLite point log, so no
+// foreground→background handoff is needed.
 
 // Define the background task - this must be at module level
 // IMPORTANT: This code runs in a separate JS context when in background
@@ -354,6 +364,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
         let lastPosition = await getLastBackgroundPosition();
 
         const newPoints: BufferedLocation[] = [];
+        const pointDistances: number[] = []; // per accepted point, metres from previous
         let filteredByAccuracy = 0;
         let filteredByDistance = 0;
         let filteredBySpeed = 0;
@@ -414,15 +425,12 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
             }
           }
 
-          // Track distance for audio coach (before updating lastPosition)
-          if (lastPosition) {
-            audioCoachDistAdded += calculateDistanceBetweenCoords(
-              lastPosition.lat,
-              lastPosition.lng,
-              lat,
-              lng,
-            );
-          }
+          // Distance from the previous position (audio coach + cum_dist)
+          const pointDist = lastPosition
+            ? calculateDistanceBetweenCoords(lastPosition.lat, lastPosition.lng, lat, lng)
+            : 0;
+          audioCoachDistAdded += pointDist;
+          pointDistances.push(pointDist);
 
           // Point passed all filters, add it
           newPoints.push({
@@ -448,21 +456,29 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 
         if (newPoints.length > 0) {
           // Durable log: accepted points go straight to SQLite (single source
-          // of truth — the AsyncStorage buffer is gone).
+          // of truth — the AsyncStorage buffer is gone). cum_dist continues
+          // from the last stored point so the audio coach and crash recovery
+          // have the running total even for background-only stretches.
           try {
             const activityId = await getActiveActivityId();
             const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
             if (session) {
+              let runningDist = trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? 0;
+
               trackingDb.insertPoints(
                 session.clientActivityId,
-                newPoints.map((p) => ({
-                  lat: p.lat,
-                  lng: p.lng,
-                  ele: p.ele,
-                  ts: p.time,
-                  speed: p.speed,
-                  accuracy: p.accuracy,
-                })),
+                newPoints.map((p, i) => {
+                  runningDist += pointDistances[i] ?? 0;
+                  return {
+                    lat: p.lat,
+                    lng: p.lng,
+                    ele: p.ele,
+                    ts: p.time,
+                    speed: p.speed,
+                    accuracy: p.accuracy,
+                    cumDist: runningDist,
+                  };
+                }),
                 'bg',
               );
             }
