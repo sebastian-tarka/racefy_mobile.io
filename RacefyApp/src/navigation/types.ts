@@ -48,6 +48,9 @@ export type RootStackParamList = {
   Messages: { conversationId?: number };
   EventForm: { eventId?: number };
   EventCommentarySettings: { eventId: number };
+  EventCommentary: { eventId: number };
+  EventLive: { eventId: number };
+  EventResults: { eventId: number };
   PostForm: { postId?: number };
   ActivityForm: { activityId?: number };
   GpxImport: undefined;

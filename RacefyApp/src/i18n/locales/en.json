@@ -37,7 +37,8 @@
     "sat": "Sat",
     "sun": "Sun",
     "notNow": "Not now",
-    "options": "Options"
+    "options": "Options",
+    "view": "View"
   },
   "sports": {
     "running": "Running",
@@ -524,9 +525,9 @@
     "createEvent": "Create Event",
     "failedToLoad": "Failed to load events",
     "filters": {
-      "all": "General",
+      "all": "All",
       "upcoming": "Upcoming",
-      "ongoing": "Ongoing",
+      "ongoing": "Live",
       "completed": "Completed"
     },
     "stats": {
@@ -544,7 +545,8 @@
     },
     "happeningNow": "Happening Now",
     "upcomingEvents": "Upcoming Events",
-    "completedEvents": "Recently Completed"
+    "completedEvents": "Recently Completed",
+    "featured": "Featured"
   },
   "eventDetail": {
     "title": "Event Details",
@@ -613,7 +615,57 @@
     "registrationTooLate": "Registration closed (event starts soon)",
     "registrationNotOpened": "Registration not opened yet",
     "registrationOpensOn": "Registration opens on {{date}}",
-    "registrationClosedOn": "Registration closed on {{date}}"
+    "registrationClosedOn": "Registration closed on {{date}}",
+    "register": "Register",
+    "watchingReminder": "Watching · you'll get reminders before it starts",
+    "youRaced": "You raced this event",
+    "youreRegistered": "You're registered",
+    "statusLabel": "Status",
+    "bib": "BIB",
+    "youOwn": "You own this event",
+    "editDetails": "Edit details",
+    "coverPhoto": "Cover photo",
+    "aiCommentary": "AI commentary",
+    "pointBudget": "Point budget",
+    "finalizeResults": "Finalize results",
+    "finalize": "Finalize",
+    "finalizeConfirm": "Calculate final placements and award points? This cannot be undone.",
+    "finalizeFailed": "Could not finalize results",
+    "registrationOpen": "Registration open",
+    "closesOn": "Closes {{date}}",
+    "opensOn": "Opens {{date}}",
+    "ofSpots": "{{taken}} of {{max}} spots",
+    "spotsLeft": "{{count}} left",
+    "presentedBy": "Presented by",
+    "gallery": "Gallery",
+    "route": "Route",
+    "liveNow": "LIVE NOW",
+    "viewLiveStandings": "View live standings",
+    "finalResults": "Final results",
+    "resultsSubline": "Podium, full standings & points awarded",
+    "racingNow": "{{count}} racing",
+    "racingNowLabel": "Racing now",
+    "finishedPct": "{{pct}}% finished",
+    "finished": "Finished",
+    "liveStandings": "Live standings",
+    "autoRefresh": "Updating live · auto-refresh 30s",
+    "noStandingsYet": "No results yet — the race just started.",
+    "finishers": "Finishers",
+    "resultsFinalized": "Results finalized · points awarded",
+    "commentaryUpdating": "Updating live · tap for full timeline",
+    "commentaryTapTimeline": "Tap for full timeline",
+    "watchFailed": "Could not update watch status",
+    "totalDist": "Total dist",
+    "totalClimb": "Total climb",
+    "endsIn": "Ends in",
+    "nFinished": "{{count}} finished",
+    "individual": "Individual",
+    "teams": "Teams",
+    "podium": "Podium",
+    "finalStandings": "Final standings",
+    "noResultsTitle": "Results not final yet",
+    "noResultsMessage": "Final placements will appear once the organizer finalizes them.",
+    "trigger": "Trigger"
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -1520,7 +1572,8 @@
     },
     "boostCommentary": "Boost commentary",
     "removeCommentaryBoost": "Remove commentary boost",
-    "boostFailed": "Failed to boost commentary. Please try again."
+    "boostFailed": "Failed to boost commentary. Please try again.",
+    "raceCommentary": "Race commentary"
   },
   "blocking": {
     "title": "Blocked Users",
@@ -2488,5 +2541,46 @@
     "discardConfirmTitle": "Discard this activity?",
     "discardConfirmBody": "The local GPS track will be removed and cannot be recovered. Export GPX first if you want to keep it.",
     "untitled": "Activity #{{id}}"
+  },
+  "eventStatus": {
+    "upcoming": "Upcoming",
+    "ongoing": "Live",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "eventRanking": {
+    "fastestTime": "Fastest time",
+    "mostDistance": "Most distance",
+    "mostElevation": "Most elevation",
+    "firstFinish": "First finish"
+  },
+  "eventInfo": {
+    "date": "Date",
+    "start": "Start",
+    "distance": "Distance",
+    "ascent": "Ascent",
+    "entry": "Entry",
+    "level": "Level",
+    "cutoff": "Cut-off",
+    "ranking": "Ranking"
+  },
+  "eventRegistrationStatus": {
+    "registered": "Registered",
+    "waitlisted": "Waitlisted",
+    "cancelled": "Cancelled",
+    "attended": "Attended"
+  },
+  "courseIntel": {
+    "title": "Course intel",
+    "maxGrade": "Max grade",
+    "highPoint": "High pt",
+    "terrain": {
+      "flat": "Flat",
+      "rolling": "Rolling",
+      "hilly": "Hilly"
+    }
+  },
+  "eventCard": {
+    "going": "{{count}} going"
   }
 }

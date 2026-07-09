@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../hooks/useAuth';
@@ -15,6 +7,7 @@ import { useEventCommentaryFeed } from '../hooks/useEventCommentaryFeed';
 import { useTranslation } from 'react-i18next';
 import { CommentaryItem } from './CommentaryItem';
 import { EmptyState } from './EmptyState';
+import { LanguageDropdown } from './LanguageDropdown';
 import { spacing } from '../theme';
 import type { CommentaryLanguage } from '../types/api';
 
@@ -144,35 +137,17 @@ export function CommentaryFeed({
 
   const renderLanguageSwitcher = () => {
     if (languagesWithContent.length <= 1) return null;
+    const options = languagesWithContent.map((lang) => ({
+      code: lang,
+      label: availableLanguages[lang] ?? lang.toUpperCase(),
+    }));
     return (
       <View style={styles.languageSwitcher}>
-        {languagesWithContent.map((lang) => {
-          const isActive = lang === activeLanguage;
-          const langName = availableLanguages[lang] ?? lang.toUpperCase();
-          return (
-            <TouchableOpacity
-              key={lang}
-              style={[
-                styles.languageButton,
-                {
-                  backgroundColor: isActive ? colors.primary : colors.cardBackground,
-                  borderColor: isActive ? colors.primary : colors.border,
-                },
-              ]}
-              onPress={() => changeLanguage(lang)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.languageButtonText,
-                  { color: isActive ? '#fff' : colors.textSecondary },
-                ]}
-              >
-                {langName}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <LanguageDropdown
+          value={activeLanguage}
+          options={options}
+          onChange={(code) => changeLanguage(code as CommentaryLanguage)}
+        />
       </View>
     );
   };
@@ -389,17 +364,7 @@ const styles = StyleSheet.create({
   },
   languageSwitcher: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    justifyContent: 'flex-end',
     marginBottom: spacing.md,
-  },
-  languageButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  languageButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

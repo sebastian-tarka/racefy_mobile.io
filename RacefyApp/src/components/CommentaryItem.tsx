@@ -1,10 +1,12 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useCallback } from 'react';
+import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
-import { borderRadius, spacing } from '../theme';
+import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, pl } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { logger } from '../services/logger';
 import { InteractionButton } from './InteractionButton';
 import type { CommentaryType, EventCommentary } from '../types/api';
 
@@ -22,7 +24,16 @@ export function CommentaryItem({
   onBoostChange,
 }: CommentaryItemProps) {
   const { colors } = useTheme();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const handleShare = useCallback(async () => {
+    try {
+      const message = [commentary.title, commentary.content].filter(Boolean).join('\n\n');
+      await Share.share({ message });
+    } catch (err) {
+      logger.error('general', 'Commentary share failed', { error: err });
+    }
+  }, [commentary.title, commentary.content]);
 
   const getTypeIcon = (type: CommentaryType): string => {
     switch (type) {
@@ -144,22 +155,44 @@ export function CommentaryItem({
         </View>
       )}
 
-      {/* Boost button footer */}
-      {showBoostButton && (
+      {/* Footer: trigger + boost/share actions */}
+      {(showBoostButton || commentary.trigger) && (
         <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
-          <InteractionButton
-            variant="boost"
-            targetType="commentary"
-            targetId={commentary.id}
-            parentId={eventId}
-            count={commentary.boosts_count ?? 0}
-            isActive={commentary.user_boosted ?? false}
-            size="md"
-            pill
-            onChange={(isBoosted, newBoostsCount) =>
-              onBoostChange?.(commentary.id, isBoosted, newBoostsCount)
-            }
-          />
+          {commentary.trigger ? (
+            <Text style={[styles.trigger, { color: colors.textMuted }]} numberOfLines={1}>
+              {t('eventDetail.trigger', 'Trigger')} ·{' '}
+              {String(commentary.trigger).replace(/_/g, ' ')}
+            </Text>
+          ) : (
+            <View style={styles.triggerSpacer} />
+          )}
+          <View style={styles.actions}>
+            {showBoostButton && (
+              <InteractionButton
+                variant="boost"
+                targetType="commentary"
+                targetId={commentary.id}
+                parentId={eventId}
+                count={commentary.boosts_count ?? 0}
+                isActive={commentary.user_boosted ?? false}
+                size="md"
+                pill
+                onChange={(isBoosted, newBoostsCount) =>
+                  onBoostChange?.(commentary.id, isBoosted, newBoostsCount)
+                }
+              />
+            )}
+            <TouchableOpacity
+              style={[styles.shareButton, { borderColor: colors.border }]}
+              onPress={handleShare}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
+              <Text style={[styles.shareText, { color: colors.textSecondary }]}>
+                {t('common.share', 'Share')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -230,6 +263,33 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  trigger: {
+    flex: 1,
+    fontSize: fontSize.xs,
+  },
+  triggerSpacer: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  shareText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });

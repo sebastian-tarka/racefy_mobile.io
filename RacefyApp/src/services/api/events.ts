@@ -121,6 +121,67 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return response.data;
     }
 
+    // ============ EVENT STANDINGS / RESULTS ============
+
+    /**
+     * Get live standings for an ongoing event (public).
+     * Returns individual (+ team when a team event) standings.
+     */
+    async getEventStandings(eventId: number): Promise<Types.EventStandingsResponse> {
+      return this.request<Types.EventStandingsResponse>(`/events/${eventId}/standings`);
+    }
+
+    /**
+     * Get finalized results for a completed event (public).
+     */
+    async getEventResults(eventId: number): Promise<Types.EventResultsResponse> {
+      return this.request<Types.EventResultsResponse>(`/events/${eventId}/results`);
+    }
+
+    /**
+     * Calculate and finalize event results (organizer only).
+     */
+    async finalizeEventResults(eventId: number): Promise<Types.EventResultsResponse> {
+      return this.request<Types.EventResultsResponse>(`/events/${eventId}/finalize-results`, {
+        method: 'POST',
+      });
+    }
+
+    // ============ EVENT WATCH ============
+
+    /**
+     * Watch an event (get reminders). Not allowed once registered.
+     */
+    async watchEvent(eventId: number): Promise<Types.EventWatchResponse> {
+      return this.request<Types.EventWatchResponse>(`/events/${eventId}/watch`, {
+        method: 'POST',
+      });
+    }
+
+    /**
+     * Stop watching an event.
+     */
+    async unwatchEvent(eventId: number): Promise<Types.EventWatchResponse> {
+      return this.request<Types.EventWatchResponse>(`/events/${eventId}/watch`, {
+        method: 'DELETE',
+      });
+    }
+
+    /**
+     * Get watch status for an event (authenticated).
+     */
+    async getEventWatchStatus(eventId: number): Promise<Types.EventWatchStatus> {
+      return this.request<Types.EventWatchStatus>(`/events/${eventId}/watch-status`);
+    }
+
+    /**
+     * Get events the current user is watching.
+     */
+    async getMyWatchedEvents(): Promise<Types.Event[]> {
+      const response = await this.request<Types.ApiResponse<Types.Event[]>>('/my-watched-events');
+      return response.data;
+    }
+
     async getMyEvents(): Promise<Types.Event[]> {
       const response = await this.request<Types.ApiResponse<Types.Event[]>>('/my-events');
       return response.data;

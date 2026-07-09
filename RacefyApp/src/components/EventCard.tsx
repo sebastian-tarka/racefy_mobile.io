@@ -1,13 +1,12 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
-import { Badge } from './Badge';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { borderRadius, fontSize, spacing } from '../theme';
-import { fixStorageUrl } from '../config/api';
 import { getSportIcon } from '../utils/sportIcon';
 import type { Event } from '../types/api';
 
@@ -16,88 +15,80 @@ interface EventCardProps {
   onPress?: () => void;
 }
 
+function DateBadge({ event }: { event: Event }) {
+  const { colors } = useTheme();
+  const start = new Date(event.starts_at);
+
+  if (event.status === 'ongoing') {
+    return (
+      <View style={[styles.badge, { backgroundColor: colors.error + '18' }]}>
+        <Ionicons name="radio" size={20} color={colors.error} />
+        <Text style={[styles.badgeSub, { color: colors.error }]}>LIVE</Text>
+      </View>
+    );
+  }
+  if (event.status === 'completed' || event.status === 'cancelled') {
+    return (
+      <View style={[styles.badge, { backgroundColor: colors.borderLight }]}>
+        <Ionicons
+          name={event.status === 'cancelled' ? 'close' : 'checkmark'}
+          size={22}
+          color={colors.textMuted}
+        />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.badge, { backgroundColor: colors.primaryLight + '22' }]}>
+      <Text style={[styles.badgeMonth, { color: colors.primary }]}>
+        {format(start, 'MMM').toUpperCase()}
+      </Text>
+      <Text style={[styles.badgeDay, { color: colors.primary }]}>{format(start, 'd')}</Text>
+    </View>
+  );
+}
+
 function EventCardBase({ event, onPress }: EventCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
+  const { formatDistanceShort } = useUnits();
 
-  // Use cover_image_url as primary, fallback to first photo
-  const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
-
-  const spotsText =
-    event.max_participants !== null
-      ? `${event.participants_count}/${event.max_participants}`
-      : `${event.participants_count}`;
+  const distanceMeters = event.distance ?? event.route?.distance ?? null;
+  const meta = [
+    event.location_name,
+    distanceMeters != null ? formatDistanceShort(distanceMeters) : null,
+    t('eventCard.going', {
+      count: event.participants_count,
+      defaultValue: `${event.participants_count} going`,
+    }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
-      <Card style={styles.card} noPadding>
-        <View style={styles.content}>
-          <View style={styles.imageContainer}>
-            {imageUrl ? (
-              <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
-            ) : (
-              <View
-                style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}
-              >
-                <Ionicons
-                  name={getSportIcon(event.sport_type?.name)}
-                  size={32}
-                  color={colors.primary}
-                />
-              </View>
-            )}
-          </View>
-
+      <Card style={styles.card}>
+        <View style={styles.row}>
+          <DateBadge event={event} />
           <View style={styles.info}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
               {event.post?.title || t('eventDetail.untitled')}
             </Text>
-
-            <View style={styles.detailRow}>
-              <Ionicons name="fitness-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {event.sport_type?.name || t('eventDetail.sport')}
-              </Text>
-              <Text style={[styles.separator, { color: colors.textSecondary }]}>·</Text>
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {t(`difficulty.${event.difficulty}`)}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]} numberOfLines={1}>
-                {event.location_name}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {formattedDate}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-                {spotsText} {t('eventDetail.participants').toLowerCase()}
+            <View style={styles.metaRow}>
+              <Ionicons
+                name={getSportIcon(event.sport_type?.name)}
+                size={13}
+                color={colors.primary}
+              />
+              <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+                {meta}
               </Text>
             </View>
           </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Badge label={event.status} variant={event.status} />
           {event.is_registered && (
-            <View style={styles.registeredBadge}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-              <Text style={[styles.registeredText, { color: colors.primary }]}>
-                {t('eventDetail.registered')}
-              </Text>
-            </View>
+            <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
           )}
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
         </View>
       </Card>
     </TouchableOpacity>
@@ -108,64 +99,49 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.md,
   },
-  content: {
+  row: {
     flexDirection: 'row',
-    padding: spacing.md,
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  imageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    marginRight: spacing.md,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  iconPlaceholder: {
-    width: '100%',
-    height: '100%',
+  badge: {
+    width: 52,
+    height: 52,
+    borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  badgeMonth: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  badgeDay: {
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    marginTop: -2,
+  },
+  badgeSub: {
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 1,
+  },
   info: {
     flex: 1,
-    justifyContent: 'space-between',
+    gap: 3,
   },
   title: {
     fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
+    fontWeight: '700',
   },
-  detailRow: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    gap: spacing.xs,
   },
-  detailText: {
+  meta: {
     fontSize: fontSize.sm,
-    marginLeft: spacing.xs,
     flex: 1,
-  },
-  separator: {
-    marginHorizontal: spacing.xs,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  registeredBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  registeredText: {
-    fontSize: fontSize.sm,
-    marginLeft: spacing.xs,
-    fontWeight: '500',
   },
 });
 

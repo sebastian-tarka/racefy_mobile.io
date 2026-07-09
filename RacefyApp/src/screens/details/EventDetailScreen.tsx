@@ -1,59 +1,55 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Animated,
-  Platform,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
+  Card,
+  CommentSection,
+  KeyboardAwareScreenLayout,
   Loading,
-  Badge,
-  ScreenHeader,
-  CommentaryTabContent,
-  EventTabs,
-  SocialShareModal,
+  ParticipantAvatarsStack,
   ScreenContainer,
-  EventDetailsTabContent,
-  EventParticipantsTabContent,
-  EventLeaderboardTabContent,
-  EventTeamsTabContent,
+  ScreenHeader,
+  SocialShareModal,
 } from '../../components';
-import type { EventTabType } from '../../components/EventTabs';
+import { RoutePreview } from '../../components/LeafletMap';
+import {
+  CommentaryPreviewCard,
+  EventActionSection,
+  EventCourseIntel,
+  EventGallery,
+  EventHero,
+  EventInfoGrid,
+  EventRegistrationProgress,
+  type OwnerAction,
+  SponsorRow,
+} from '../../components/event';
 import { useAuth } from '../../hooks/useAuth';
-import { useEventTeams } from '../../hooks/useEventTeams';
 import { useTheme } from '../../hooks/useTheme';
-import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
-import { useCollapsibleHeader } from '../../hooks/useCollapsibleHeader';
+import { useUnits } from '../../hooks/useUnits';
 import { useEventDetail } from '../../hooks/useEventDetail';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import { fixStorageUrl } from '../../config/api';
-import { getSportIcon } from '../../utils/sportIcon';
+import { useEventWatch } from '../../hooks/useEventWatch';
+import { api } from '../../services/api';
+import { logger } from '../../services/logger';
+import { fontSize, spacing } from '../../theme';
+import { formatTotalTime } from '../../utils/formatters';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import type { User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
 
 export function EventDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
+  const { formatDistance, formatElevation } = useUnits();
   const { eventId } = route.params;
   const { isAuthenticated } = useAuth();
   const scrollViewRef = useRef<ScrollView>(null);
-  const isKeyboardVisible = useKeyboardVisible();
-  const { collapsibleHeight, collapsibleOpacity, handleTabScroll, handleTabChange } =
-    useCollapsibleHeader();
 
-  const [activeTab, setActiveTab] = useState<EventTabType>('details');
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
 
   const navigateToAuth = useCallback(
     () => navigation.navigate('Auth', { screen: 'Login' }),
@@ -64,116 +60,140 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const {
     event,
     participants,
-    activities,
-    leaderboard,
-    commentaryCount,
     isLoading,
     isRefreshing,
     isRegistering,
     error,
-    spotsText,
-    availableSpots,
-    isFull,
     canRegister,
     canUnregister,
-    canStartActivity,
     canEdit,
-    canDelete,
     fetchEvent,
     onRefresh,
     handleRegister,
     handleCancelRegistration,
-    handleDeleteEvent,
     getRegistrationClosedMessage,
   } = useEventDetail({ eventId, isAuthenticated, navigateToAuth, navigateBack });
 
-  const eventTeams = useEventTeams({
-    eventId,
-    isTeamEvent: event?.is_team_event ?? false,
-    isAuthenticated,
-    isRegistered: event?.is_registered ?? false,
-  });
+  const canWatch =
+    event?.status === 'upcoming' && !(event?.is_registered ?? false) && !(event?.is_owner ?? false);
 
-  const scrollToBottom = useCallback(() => {
-    const delay = Platform.OS === 'ios' ? 300 : 150;
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, delay);
-  }, []);
+  const watch = useEventWatch({
+    eventId,
+    isAuthenticated,
+    initialIsWatching: event?.is_watching ?? false,
+    onChange: () => fetchEvent(),
+    navigateToAuth,
+  });
 
   const handleUserPress = useCallback(
     (username: string) => {
-      if (isAuthenticated) {
-        navigation.navigate('UserProfile', { username });
-      }
+      if (isAuthenticated) navigation.navigate('UserProfile', { username });
     },
     [isAuthenticated, navigation],
   );
 
-  const handleActivityPress = useCallback(
-    (activityId: number) => {
-      navigation.navigate('ActivityDetail', { activityId });
-    },
-    [navigation],
+  const handleFinalizeResults = useCallback(() => {
+    if (!event) return;
+    Alert.alert(
+      t('eventDetail.finalizeResults', 'Finalize results'),
+      t(
+        'eventDetail.finalizeConfirm',
+        'Calculate final placements and award points? This cannot be undone.',
+      ),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('eventDetail.finalize', 'Finalize'),
+          style: 'destructive',
+          onPress: async () => {
+            setIsFinalizing(true);
+            try {
+              await api.finalizeEventResults(event.id);
+              await fetchEvent();
+              Alert.alert(
+                t('common.success'),
+                t('eventDetail.resultsFinalized', 'Results finalized · points awarded'),
+              );
+            } catch (err: unknown) {
+              const message =
+                err instanceof Error
+                  ? err.message
+                  : t('eventDetail.finalizeFailed', 'Could not finalize results');
+              logger.error('api', 'Finalize results failed', { eventId: event.id, error: err });
+              Alert.alert(t('common.error'), message);
+            } finally {
+              setIsFinalizing(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [event, fetchEvent, t]);
+
+  const goToForm = useCallback(
+    () => event && navigation.navigate('EventForm', { eventId: event.id }),
+    [event, navigation],
+  );
+  const goToCommentarySettings = useCallback(
+    () => event && navigation.navigate('EventCommentarySettings', { eventId: event.id }),
+    [event, navigation],
+  );
+  const goToCommentary = useCallback(
+    () => navigation.navigate('EventCommentary', { eventId }),
+    [navigation, eventId],
+  );
+  const goToLive = useCallback(
+    () => navigation.navigate('EventLive', { eventId }),
+    [navigation, eventId],
+  );
+  const goToResults = useCallback(
+    () => navigation.navigate('EventResults', { eventId }),
+    [navigation, eventId],
   );
 
-  const handleStartActivity = useCallback(() => {
-    if (!event) return;
-    navigation.navigate('Main', { screen: 'Record', params: { preselectedEvent: event } });
-  }, [event, navigation]);
-
-  const handleOpenCommentarySettings = useCallback(() => {
-    if (!event) return;
-    navigation.navigate('EventCommentarySettings', { eventId: event.id });
-  }, [event, navigation]);
-
-  const onTabChange = useCallback(
-    (tab: EventTabType) => handleTabChange(tab, setActiveTab),
-    [handleTabChange],
-  );
-
-  const tabs = useMemo(() => {
-    const tabConfig = [
+  const ownerActions = useMemo<OwnerAction[]>(() => {
+    if (!event) return [];
+    const stage = event.status;
+    const actions: OwnerAction[] = [
       {
-        label: t('eventDetail.tabs.details', 'Details'),
-        value: 'details' as EventTabType,
-        icon: 'information-circle-outline' as keyof typeof Ionicons.glyphMap,
+        key: 'edit',
+        icon: 'create-outline',
+        label: t('eventDetail.editDetails', 'Edit details'),
+        onPress: goToForm,
       },
       {
-        label: t('eventDetail.tabs.commentary', 'Commentary'),
-        value: 'commentary' as EventTabType,
-        icon: 'mic-outline' as keyof typeof Ionicons.glyphMap,
-        badge: commentaryCount,
+        key: 'cover',
+        icon: 'image-outline',
+        label: t('eventDetail.coverPhoto', 'Cover photo'),
+        onPress: goToForm,
       },
     ];
-
-    if (participants.length > 0) {
-      tabConfig.push({
-        label: t('eventDetail.tabs.participants', 'Participants'),
-        value: 'participants' as EventTabType,
-        icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
-        badge: participants.length,
+    if (stage === 'completed' && !event.results_finalized) {
+      actions.push({
+        key: 'finalize',
+        icon: 'trophy-outline',
+        label: t('eventDetail.finalizeResults', 'Finalize results'),
+        onPress: handleFinalizeResults,
+        highlighted: true,
+        loading: isFinalizing,
+      });
+    } else {
+      actions.push({
+        key: 'ai',
+        icon: 'sparkles-outline',
+        label: t('eventDetail.aiCommentary', 'AI commentary'),
+        onPress: goToCommentarySettings,
+        highlighted: stage === 'ongoing',
       });
     }
-
-    if (leaderboard.length > 0) {
-      tabConfig.push({
-        label: t('eventDetail.tabs.leaderboard', 'Leaderboard'),
-        value: 'leaderboard' as EventTabType,
-        icon: 'trophy-outline' as keyof typeof Ionicons.glyphMap,
-      });
-    }
-
-    if (event?.is_team_event) {
-      tabConfig.push({
-        label: t('eventDetail.tabs.teams', 'Teams'),
-        value: 'teams' as EventTabType,
-        icon: 'shield-outline' as keyof typeof Ionicons.glyphMap,
-      });
-    }
-
-    return tabConfig;
-  }, [t, participants.length, leaderboard.length, commentaryCount, event?.is_team_event]);
+    actions.push({
+      key: 'points',
+      icon: 'cash-outline',
+      label: t('eventDetail.pointBudget', 'Point budget'),
+      onPress: goToForm,
+    });
+    return actions;
+  }, [event, t, goToForm, goToCommentarySettings, handleFinalizeResults, isFinalizing]);
 
   if (isLoading) {
     return <Loading fullScreen message={t('eventDetail.loading')} />;
@@ -182,7 +202,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   if (error || !event) {
     return (
       <ScreenContainer>
-        <ScreenHeader title={t('eventDetail.title')} showBack onBack={() => navigation.goBack()} />
+        <ScreenHeader title={t('eventDetail.title')} showBack onBack={navigateBack} />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
           <Text style={[styles.errorText, { color: colors.textSecondary }]}>
@@ -194,302 +214,236 @@ export function EventDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const isUpcoming = event.status === 'upcoming';
+  const isOngoing = event.status === 'ongoing';
+  const isCompleted = event.status === 'completed';
+  const showRegistrationProgress =
+    isUpcoming &&
+    (event.max_participants != null ||
+      event.registration_closes_at != null ||
+      event.registration_opens_at != null);
+  const galleryPhotos = event.gallery_photos ?? event.post?.photos;
+
   return (
-    <ScreenContainer>
-      <ScreenHeader
-        title={t('eventDetail.title')}
-        showBack
-        onBack={() => navigation.goBack()}
-        rightAction={
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => setShareModalVisible(true)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="share-social-outline" size={24} color={colors.textPrimary} />
-            </TouchableOpacity>
-            {canEdit && (
-              <>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('EventForm', { eventId: event.id })}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="create-outline" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-                {canDelete && (
-                  <TouchableOpacity
-                    onPress={handleDeleteEvent}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={styles.deleteButton}
-                  >
-                    <Ionicons name="trash-outline" size={24} color={colors.error} />
-                  </TouchableOpacity>
-                )}
-              </>
-            )}
-          </View>
-        }
-      />
-
-      {/* Collapsible Event Image + Title */}
-      <Animated.View
-        style={[
-          styles.collapsibleHeader,
-          { height: collapsibleHeight, opacity: collapsibleOpacity },
-        ]}
-      >
-        <View style={[styles.imageContainer, { backgroundColor: colors.border }]}>
-          {event.cover_image_url || event.post?.photos?.[0]?.url ? (
-            <Image
-              source={{
-                uri:
-                  fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url) || undefined,
-              }}
-              style={styles.image}
-              resizeMode="cover"
+    <ScreenContainer edges={['bottom']}>
+      <CommentSection
+        commentableType="event"
+        commentableId={eventId}
+        onUserPress={isAuthenticated ? (u: User) => handleUserPress(u.username) : undefined}
+        renderLayout={({ header, commentList, commentInput }) => (
+          <KeyboardAwareScreenLayout
+            scrollViewRef={scrollViewRef}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            keyboardVerticalOffset={{ ios: 120, android: 0 }}
+          >
+            <EventHero
+              event={event}
+              onBack={navigateBack}
+              onShare={() => setShareModalVisible(true)}
+              onEdit={canEdit ? goToForm : undefined}
             />
-          ) : (
-            <View
-              style={[styles.imagePlaceholder, { backgroundColor: colors.primaryLight + '20' }]}
-            >
-              <Ionicons
-                name={getSportIcon(event.sport_type?.name)}
-                size={64}
-                color={colors.primary}
+
+            <View style={styles.sections}>
+              <EventActionSection
+                event={event}
+                isAuthenticated={isAuthenticated}
+                canRegister={canRegister}
+                canCancel={canUnregister}
+                isRegistering={isRegistering}
+                onRegister={handleRegister}
+                onCancelRegistration={handleCancelRegistration}
+                registrationClosedMessage={getRegistrationClosedMessage()}
+                isWatching={watch.isWatching}
+                isWatchToggling={watch.isToggling}
+                canWatch={canWatch}
+                onToggleWatch={watch.toggleWatch}
+                ownerActions={ownerActions}
+                onViewStandings={goToLive}
+                onViewResults={goToResults}
               />
+
+              {(isOngoing || isCompleted) && (
+                <View style={styles.padded}>
+                  <CommentaryPreviewCard
+                    eventId={eventId}
+                    isLive={isOngoing}
+                    onPress={goToCommentary}
+                  />
+                </View>
+              )}
+
+              <SponsorRow sponsor={event.sponsor} />
+
+              <View style={styles.padded}>
+                <EventInfoGrid event={event} />
+              </View>
+
+              {showRegistrationProgress && (
+                <View style={styles.padded}>
+                  <EventRegistrationProgress event={event} />
+                </View>
+              )}
+
+              {/* Route */}
+              {event.route?.geometry && (
+                <View style={styles.padded}>
+                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.route', 'Route').toUpperCase()}
+                  </Text>
+                  <Card style={styles.routeCard} noPadding>
+                    <View style={styles.routeMap}>
+                      <RoutePreview
+                        trackData={event.route.geometry}
+                        height={200}
+                        backgroundColor={colors.cardBackground}
+                        showKmMarkers
+                      />
+                    </View>
+                    <View style={styles.routeStats}>
+                      <RouteStat
+                        icon="resize-outline"
+                        value={formatDistance(event.route.distance)}
+                        color={colors.textSecondary}
+                        textColor={colors.textPrimary}
+                      />
+                      <RouteStat
+                        icon="trending-up-outline"
+                        value={formatElevation(event.route.elevation_gain)}
+                        color={colors.textSecondary}
+                        textColor={colors.textPrimary}
+                      />
+                      <RouteStat
+                        icon="time-outline"
+                        value={`~${formatTotalTime(event.route.estimated_duration)}`}
+                        color={colors.textSecondary}
+                        textColor={colors.textPrimary}
+                      />
+                    </View>
+                  </Card>
+                </View>
+              )}
+
+              {/* Course intel */}
+              {event.route?.elevation_profile && event.route.elevation_profile.length > 1 && (
+                <View style={styles.padded}>
+                  <EventCourseIntel route={event.route} />
+                </View>
+              )}
+
+              {/* About */}
+              {event.post?.content ? (
+                <View style={styles.padded}>
+                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.about', 'About').toUpperCase()}
+                  </Text>
+                  <Card>
+                    <Text style={[styles.about, { color: colors.textSecondary }]}>
+                      {event.post.content}
+                    </Text>
+                  </Card>
+                </View>
+              ) : null}
+
+              {/* Gallery */}
+              <EventGallery photos={galleryPhotos} />
+
+              {/* Participants preview */}
+              {participants.length > 0 && (
+                <View style={styles.padded}>
+                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.participants', 'Participants').toUpperCase()} ·{' '}
+                    {participants.length}
+                  </Text>
+                  <Card>
+                    <ParticipantAvatarsStack
+                      participants={participants}
+                      maxVisible={8}
+                      onParticipantPress={isAuthenticated ? handleUserPress : undefined}
+                    />
+                  </Card>
+                </View>
+              )}
+
+              {/* Comments */}
+              <View style={styles.padded}>
+                {header}
+                {commentList}
+                {commentInput}
+              </View>
             </View>
-          )}
-          <View style={styles.badgeContainer}>
-            <Badge label={event.status} variant={event.status} />
-          </View>
-        </View>
-
-        <View style={[styles.titleSection, { backgroundColor: colors.cardBackground }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {event.post?.title || t('eventDetail.untitled')}
-          </Text>
-          {event.is_registered && (
-            <View style={styles.registeredTag}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-              <Text style={[styles.registeredText, { color: colors.primary }]}>
-                {t('eventDetail.registered')}
-              </Text>
-            </View>
-          )}
-        </View>
-      </Animated.View>
-
-      <EventTabs tabs={tabs} activeTab={activeTab} onTabChange={onTabChange} />
-
-      {activeTab === 'details' && (
-        <EventDetailsTabContent
-          event={event}
-          eventId={eventId}
-          participants={participants}
-          activities={activities}
-          leaderboard={leaderboard}
-          spotsText={spotsText}
-          availableSpots={availableSpots}
-          isFull={isFull}
-          isRefreshing={isRefreshing}
-          onRefresh={onRefresh}
-          scrollViewRef={scrollViewRef}
-          onScrollToBottom={scrollToBottom}
-          fetchEvent={fetchEvent}
-          onUserPress={handleUserPress}
-          onActivityPress={handleActivityPress}
-          onScroll={handleTabScroll}
-          onCommentInputReady={undefined}
-        />
-      )}
-
-      {activeTab === 'commentary' && (
-        <CommentaryTabContent
-          event={event}
-          onOpenSettings={canEdit ? handleOpenCommentarySettings : undefined}
-        />
-      )}
-
-      {activeTab === 'participants' && participants.length > 0 && (
-        <EventParticipantsTabContent
-          participants={participants}
-          isRefreshing={isRefreshing}
-          onRefresh={onRefresh}
-          onParticipantPress={isAuthenticated ? handleUserPress : undefined}
-          onScroll={handleTabScroll}
-        />
-      )}
-
-      {activeTab === 'leaderboard' && leaderboard.length > 0 && (
-        <EventLeaderboardTabContent
-          leaderboard={leaderboard}
-          isRefreshing={isRefreshing}
-          onRefresh={onRefresh}
-          onUserPress={handleUserPress}
-          isAuthenticated={isAuthenticated}
-          onScroll={handleTabScroll}
-        />
-      )}
-
-      {activeTab === 'teams' && event?.is_team_event && (
-        <EventTeamsTabContent
-          teams={eventTeams.teams}
-          myTeam={eventTeams.myTeam}
-          isInTeam={eventTeams.isInTeam}
-          isCaptain={eventTeams.isCaptain}
-          isLoading={eventTeams.isLoading}
-          isActing={eventTeams.isActing}
-          isRefreshing={isRefreshing}
-          canCreateTeam={eventTeams.canCreateTeam}
-          canJoinTeam={eventTeams.canJoinTeam}
-          createdTeam={eventTeams.createdTeam}
-          onRefresh={() => {
-            onRefresh();
-            eventTeams.fetchTeams();
-          }}
-          onCreateTeam={eventTeams.handleCreateTeam}
-          onJoinTeam={eventTeams.handleJoinTeam}
-          onLeaveTeam={eventTeams.handleLeaveTeam}
-          onDeleteTeam={eventTeams.handleDeleteTeam}
-          onKickMember={eventTeams.handleKickMember}
-          onTransferCaptain={eventTeams.handleTransferCaptain}
-          onClearCreatedTeam={eventTeams.clearCreatedTeam}
-          onUserPress={isAuthenticated ? handleUserPress : undefined}
-          onScroll={handleTabScroll}
-        />
-      )}
-
-      {/* Bottom Action Button — hidden when keyboard is visible */}
-      {!isKeyboardVisible && (
-        <View
-          style={[
-            styles.bottomAction,
-            {
-              backgroundColor: colors.cardBackground,
-              borderTopColor: colors.border,
-              paddingBottom: spacing.md + insets.bottom,
-            },
-          ]}
-        >
-          {canStartActivity ? (
-            <Button
-              title={t('eventDetail.startActivity')}
-              onPress={handleStartActivity}
-              variant="primary"
-              style={styles.actionButton}
-            />
-          ) : canUnregister ? (
-            <Button
-              title={t('eventDetail.cancelRegistration')}
-              onPress={handleCancelRegistration}
-              variant="outline"
-              loading={isRegistering}
-              style={styles.actionButton}
-            />
-          ) : canRegister ? (
-            <Button
-              title={
-                isAuthenticated
-                  ? t('eventDetail.registerForEvent')
-                  : t('eventDetail.signInToRegister')
-              }
-              onPress={handleRegister}
-              variant="primary"
-              loading={isRegistering}
-              style={styles.actionButton}
-            />
-          ) : (
-            <View style={[styles.statusBanner, { backgroundColor: colors.border }]}>
-              <Ionicons name="alert-circle-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-                {getRegistrationClosedMessage()}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
+          </KeyboardAwareScreenLayout>
+        )}
+      />
 
       <SocialShareModal
         visible={shareModalVisible}
         onClose={() => setShareModalVisible(false)}
         type="event"
         id={eventId}
-        title={event?.post?.title}
-        description={event?.post?.content}
+        title={event.post?.title}
+        description={event.post?.content}
       />
     </ScreenContainer>
   );
 }
 
+function RouteStat({
+  icon,
+  value,
+  color,
+  textColor,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  value: string;
+  color: string;
+  textColor: string;
+}) {
+  return (
+    <View style={styles.routeStat}>
+      <Ionicons name={icon} size={16} color={color} />
+      <Text style={[styles.routeStatText, { color: textColor }]}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  sections: {
     gap: spacing.md,
+    paddingTop: spacing.md,
   },
-  deleteButton: {
-    marginLeft: spacing.xs,
+  padded: {
+    paddingHorizontal: spacing.md,
   },
-  collapsibleHeader: {
-    overflow: 'hidden',
-  },
-  imageContainer: {
-    height: 200,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeContainer: {
-    position: 'absolute',
-    bottom: spacing.md,
-    left: spacing.md,
-  },
-  titleSection: {
-    padding: spacing.lg,
-  },
-  title: {
-    fontSize: fontSize.xxl,
+  sectionLabel: {
+    fontSize: fontSize.xs,
     fontWeight: '700',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
-  registeredTag: {
+  routeCard: {
+    overflow: 'hidden',
+  },
+  routeMap: {
+    height: 200,
+  },
+  routeStats: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    padding: spacing.md,
+  },
+  routeStat: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.xs,
   },
-  registeredText: {
+  routeStatText: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
-    marginLeft: spacing.xs,
+    fontWeight: '600',
   },
-  bottomAction: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.md,
-    borderTopWidth: 1,
-  },
-  actionButton: {
-    width: '100%',
-  },
-  statusBanner: {
-    flexDirection: 'row',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  statusText: {
+  about: {
     fontSize: fontSize.md,
-    flex: 1,
+    lineHeight: 22,
   },
   errorContainer: {
     flex: 1,

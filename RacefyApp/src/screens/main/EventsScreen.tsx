@@ -14,13 +14,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AnimatedListItem,
-  Card,
   EmptyState,
   EventCard,
+  FeaturedEventCard,
   LiveEventCard,
   Loading,
   RewardCard,
@@ -77,10 +76,10 @@ export function EventsScreen({ navigation, route }: Props) {
   } = useEvents();
 
   const filters: { label: string; value: FilterOption }[] = [
-    { label: t('events.filters.all'), value: 'all' },
     { label: t('events.filters.upcoming'), value: 'upcoming' },
     { label: t('events.filters.ongoing'), value: 'ongoing' },
     { label: t('events.filters.completed'), value: 'completed' },
+    { label: t('events.filters.all'), value: 'all' },
   ];
 
   const [activeFilter, setActiveFilter] = useState<FilterOption>(
@@ -750,47 +749,11 @@ export function EventsScreen({ navigation, route }: Props) {
                 ))
               : // Compact view (default)
                 ongoingEvents.map((event) => (
-                  <TouchableOpacity
+                  <EventCard
                     key={event.id}
+                    event={event}
                     onPress={() => handleEventPress(event.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Card style={styles.overviewEventCard}>
-                      <View style={[styles.overviewLiveBadge, { backgroundColor: colors.error }]}>
-                        <Ionicons name="radio" size={18} color={colors.white} />
-                        <Text style={[styles.overviewLiveText, { color: colors.white }]}>
-                          {t('home.live')}
-                        </Text>
-                      </View>
-                      <View style={styles.overviewEventContent}>
-                        <Text
-                          style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
-                          numberOfLines={1}
-                        >
-                          {event.post?.title || t('eventDetail.untitled')}
-                        </Text>
-                        <View style={styles.overviewEventMeta}>
-                          <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                          <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
-                            {event.participants_count}
-                          </Text>
-                          <Ionicons
-                            name="location-outline"
-                            size={14}
-                            color={colors.textMuted}
-                            style={{ marginLeft: spacing.sm }}
-                          />
-                          <Text
-                            style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
-                            numberOfLines={1}
-                          >
-                            {event.location_name}
-                          </Text>
-                        </View>
-                      </View>
-                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                    </Card>
-                  </TouchableOpacity>
+                  />
                 ))}
           </View>
         )}
@@ -811,49 +774,7 @@ export function EventsScreen({ navigation, route }: Props) {
               )}
             </View>
             {upcomingEvents.map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                onPress={() => handleEventPress(event.id)}
-                activeOpacity={0.8}
-              >
-                <Card style={styles.overviewEventCard}>
-                  <View style={[styles.overviewDateBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.overviewDateDay, { color: colors.white }]}>
-                      {format(new Date(event.starts_at), 'd')}
-                    </Text>
-                    <Text style={[styles.overviewDateMonth, { color: colors.white }]}>
-                      {format(new Date(event.starts_at), 'MMM')}
-                    </Text>
-                  </View>
-                  <View style={styles.overviewEventContent}>
-                    <Text
-                      style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
-                      numberOfLines={1}
-                    >
-                      {event.post?.title || t('eventDetail.untitled')}
-                    </Text>
-                    <View style={styles.overviewEventMeta}>
-                      <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
-                        {event.participants_count}
-                      </Text>
-                      <Ionicons
-                        name="location-outline"
-                        size={14}
-                        color={colors.textMuted}
-                        style={{ marginLeft: spacing.sm }}
-                      />
-                      <Text
-                        style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
-                        numberOfLines={1}
-                      >
-                        {event.location_name}
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </Card>
-              </TouchableOpacity>
+              <EventCard key={event.id} event={event} onPress={() => handleEventPress(event.id)} />
             ))}
           </View>
         )}
@@ -874,44 +795,7 @@ export function EventsScreen({ navigation, route }: Props) {
               )}
             </View>
             {completedEvents.map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                onPress={() => handleEventPress(event.id)}
-                activeOpacity={0.8}
-              >
-                <Card style={styles.overviewEventCard}>
-                  <View style={[styles.overviewDateBadge, { backgroundColor: colors.textMuted }]}>
-                    <Ionicons name="checkmark" size={22} color={colors.white} />
-                  </View>
-                  <View style={styles.overviewEventContent}>
-                    <Text
-                      style={[styles.overviewEventTitle, { color: colors.textPrimary }]}
-                      numberOfLines={1}
-                    >
-                      {event.post?.title || t('eventDetail.untitled')}
-                    </Text>
-                    <View style={styles.overviewEventMeta}>
-                      <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                      <Text style={[styles.overviewEventMetaText, { color: colors.textMuted }]}>
-                        {event.participants_count}
-                      </Text>
-                      <Ionicons
-                        name="location-outline"
-                        size={14}
-                        color={colors.textMuted}
-                        style={{ marginLeft: spacing.sm }}
-                      />
-                      <Text
-                        style={[styles.overviewEventMetaText, { color: colors.textMuted }]}
-                        numberOfLines={1}
-                      >
-                        {event.location_name}
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </Card>
-              </TouchableOpacity>
+              <EventCard key={event.id} event={event} onPress={() => handleEventPress(event.id)} />
             ))}
           </View>
         )}
@@ -1070,7 +954,11 @@ export function EventsScreen({ navigation, route }: Props) {
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item, index }) => (
                 <AnimatedListItem index={index}>
-                  <EventCard event={item} onPress={() => handleEventPress(item.id)} />
+                  {index === 0 && activeFilter === 'upcoming' ? (
+                    <FeaturedEventCard event={item} onPress={() => handleEventPress(item.id)} />
+                  ) : (
+                    <EventCard event={item} onPress={() => handleEventPress(item.id)} />
+                  )}
                 </AnimatedListItem>
               )}
               ListHeaderComponent={() => renderStats()}
@@ -1325,57 +1213,5 @@ const styles = StyleSheet.create({
   overviewViewAll: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-  },
-  overviewEventCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  overviewLiveBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  overviewLiveText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  overviewDateBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  overviewDateDay: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-  },
-  overviewDateMonth: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-  },
-  overviewEventContent: {
-    flex: 1,
-  },
-  overviewEventTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  overviewEventMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  overviewEventMetaText: {
-    fontSize: fontSize.sm,
-    marginLeft: 4,
   },
 });

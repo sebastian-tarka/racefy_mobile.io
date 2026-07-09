@@ -37,7 +37,8 @@
     "sat": "Sáb",
     "sun": "Dom",
     "notNow": "Ahora no",
-    "options": "Opciones"
+    "options": "Opciones",
+    "view": "Ver"
   },
   "sports": {
     "running": "Correr",
@@ -518,9 +519,9 @@
     "createEvent": "Crear evento",
     "failedToLoad": "Error al cargar eventos",
     "filters": {
-      "all": "General",
+      "all": "Todos",
       "upcoming": "Próximos",
-      "ongoing": "En curso",
+      "ongoing": "En vivo",
       "completed": "Completados"
     },
     "stats": {
@@ -538,7 +539,8 @@
     },
     "happeningNow": "En curso ahora",
     "upcomingEvents": "Próximos eventos",
-    "completedEvents": "Completados recientemente"
+    "completedEvents": "Completados recientemente",
+    "featured": "Destacado"
   },
   "eventDetail": {
     "title": "Detalles del evento",
@@ -607,7 +609,57 @@
     "registrationTooLate": "Inscripción cerrada (el evento comienza pronto)",
     "registrationNotOpened": "La inscripción aún no está abierta",
     "registrationOpensOn": "La inscripción abre el {{date}}",
-    "registrationClosedOn": "La inscripción cerró el {{date}}"
+    "registrationClosedOn": "La inscripción cerró el {{date}}",
+    "register": "Inscribirse",
+    "watchingReminder": "Siguiendo · recibirás recordatorios antes del inicio",
+    "youRaced": "Participaste en este evento",
+    "youreRegistered": "Estás inscrito",
+    "statusLabel": "Estado",
+    "bib": "DORSAL",
+    "youOwn": "Eres el organizador",
+    "editDetails": "Editar detalles",
+    "coverPhoto": "Foto de portada",
+    "aiCommentary": "Comentario IA",
+    "pointBudget": "Presupuesto de puntos",
+    "finalizeResults": "Finalizar resultados",
+    "finalize": "Finalizar",
+    "finalizeConfirm": "¿Calcular las posiciones finales y otorgar puntos? Esto no se puede deshacer.",
+    "finalizeFailed": "No se pudieron finalizar los resultados",
+    "registrationOpen": "Inscripción abierta",
+    "closesOn": "Cierra {{date}}",
+    "opensOn": "Abre {{date}}",
+    "ofSpots": "{{taken}} de {{max}} plazas",
+    "spotsLeft": "quedan {{count}}",
+    "presentedBy": "Presentado por",
+    "gallery": "Galería",
+    "route": "Recorrido",
+    "liveNow": "EN VIVO",
+    "viewLiveStandings": "Ver clasificación en vivo",
+    "finalResults": "Resultados finales",
+    "resultsSubline": "Podio, clasificación completa y puntos otorgados",
+    "racingNow": "{{count}} corriendo",
+    "racingNowLabel": "Corriendo ahora",
+    "finishedPct": "{{pct}}% finalizado",
+    "finished": "Finalizado",
+    "liveStandings": "Clasificación en vivo",
+    "autoRefresh": "En vivo · actualización cada 30s",
+    "noStandingsYet": "Aún sin resultados — la carrera acaba de empezar.",
+    "finishers": "Finalistas",
+    "resultsFinalized": "Resultados finalizados · puntos otorgados",
+    "commentaryUpdating": "En vivo · toca para ver la cronología",
+    "commentaryTapTimeline": "Toca para ver la cronología",
+    "watchFailed": "No se pudo actualizar el seguimiento",
+    "totalDist": "Distancia total",
+    "totalClimb": "Desnivel total",
+    "endsIn": "Termina en",
+    "nFinished": "{{count}} finalizaron",
+    "individual": "Individual",
+    "teams": "Equipos",
+    "podium": "Podio",
+    "finalStandings": "Clasificación final",
+    "noResultsTitle": "Resultados aún no definitivos",
+    "noResultsMessage": "Las posiciones finales aparecerán cuando el organizador las finalice.",
+    "trigger": "Motivo"
   },
   "activityDetail": {
     "title": "Detalles de la actividad",
@@ -1508,7 +1560,8 @@
     },
     "boostCommentary": "Impulsar comentario",
     "removeCommentaryBoost": "Quitar impulso al comentario",
-    "boostFailed": "Error al impulsar el comentario. Por favor intenta de nuevo."
+    "boostFailed": "Error al impulsar el comentario. Por favor intenta de nuevo.",
+    "raceCommentary": "Comentario de carrera"
   },
   "blocking": {
     "title": "Usuarios bloqueados",
@@ -2406,5 +2459,46 @@
     "discardConfirmTitle": "¿Descartar esta actividad?",
     "discardConfirmBody": "El recorrido GPS local se eliminará y no podrá recuperarse. Exporta el GPX antes si quieres conservarlo.",
     "untitled": "Actividad #{{id}}"
+  },
+  "eventStatus": {
+    "upcoming": "Próximo",
+    "ongoing": "En vivo",
+    "completed": "Finalizado",
+    "cancelled": "Cancelado"
+  },
+  "eventRanking": {
+    "fastestTime": "Tiempo más rápido",
+    "mostDistance": "Mayor distancia",
+    "mostElevation": "Mayor desnivel",
+    "firstFinish": "Primero en meta"
+  },
+  "eventInfo": {
+    "date": "Fecha",
+    "start": "Inicio",
+    "distance": "Distancia",
+    "ascent": "Ascenso",
+    "entry": "Inscripción",
+    "level": "Nivel",
+    "cutoff": "Tiempo límite",
+    "ranking": "Clasificación"
+  },
+  "eventRegistrationStatus": {
+    "registered": "Inscrito",
+    "waitlisted": "Lista de espera",
+    "cancelled": "Cancelado",
+    "attended": "Participó"
+  },
+  "courseIntel": {
+    "title": "Análisis del recorrido",
+    "maxGrade": "Pendiente máx.",
+    "highPoint": "Punto alto",
+    "terrain": {
+      "flat": "Llano",
+      "rolling": "Ondulado",
+      "hilly": "Montañoso"
+    }
+  },
+  "eventCard": {
+    "going": "{{count}} inscritos"
   }
 }

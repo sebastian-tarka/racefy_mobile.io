@@ -51,7 +51,13 @@ import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { ActivityShareScreen } from '../screens/details/ActivityShareScreen';
 import { PostDetailScreen } from '../screens/details/PostDetailScreen';
 import { ChatScreen, ConversationsListScreen } from '../screens/messaging';
-import { EventCommentarySettingsScreen, EventFormScreen } from '../screens/events';
+import {
+  EventCommentaryScreen,
+  EventCommentarySettingsScreen,
+  EventFormScreen,
+  EventLiveScreen,
+  EventResultsScreen,
+} from '../screens/events';
 import { PostFormScreen } from '../screens/posts';
 import { ActivityFormScreen, GpxImportScreen } from '../screens/activities';
 import { PaywallScreen } from '../screens/PaywallScreen';
@@ -262,35 +268,92 @@ function AnimatedTabIcon({
 }
 
 /**
- * Custom tab button for the Record tab. Tap behaves like a normal tab
- * (navigation + auth-guard listener fire via the passed `onPress`); a long
- * press opens the start-actions sheet instead.
+ * Central floating action button for the Record tab: an elevated green circle
+ * with a play glyph and a soft glow ring, matching the app's bottom-nav design.
+ * Tap behaves like a normal tab (navigation + auth-guard listener fire via the
+ * passed `onPress`); a long press opens the start-actions sheet. When an activity
+ * is in progress the button switches to an active (record/pause) state.
  */
 function RecordTabButton({
-  children,
-  style,
   onPress,
   onLongPress,
   accessibilityState,
   accessibilityLabel,
   testID,
-}: BottomTabBarButtonProps) {
+  primaryColor,
+  activity,
+  isTracking,
+}: BottomTabBarButtonProps & {
+  primaryColor: string;
+  activity: boolean;
+  isTracking: boolean;
+}) {
+  const background = activity ? (isTracking ? '#ef4444' : '#f97316') : primaryColor;
+  const iconName: keyof typeof Ionicons.glyphMap = activity
+    ? isTracking
+      ? 'stop'
+      : 'pause'
+    : 'play';
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={accessibilityState}
-      accessibilityLabel={accessibilityLabel}
-      testID={testID}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      delayLongPress={350}
-      android_ripple={{ color: 'rgba(16,185,129,0.18)', borderless: true }}
-      style={style as any}
-    >
-      {children}
-    </Pressable>
+    <View style={fabStyles.slot} pointerEvents="box-none">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={accessibilityState}
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={350}
+        android_ripple={{ color: 'rgba(16,185,129,0.25)', borderless: true, radius: 34 }}
+        style={fabStyles.pressable}
+      >
+        <View style={[fabStyles.glow, { backgroundColor: background + '22' }]} />
+        <View style={[fabStyles.fab, { backgroundColor: background, shadowColor: background }]}>
+          <Ionicons
+            name={iconName}
+            size={26}
+            color="#fff"
+            style={iconName === 'play' ? fabStyles.playOffset : undefined}
+          />
+        </View>
+      </Pressable>
+    </View>
   );
 }
+
+const fabStyles = StyleSheet.create({
+  slot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  pressable: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -22,
+  },
+  glow: {
+    position: 'absolute',
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  playOffset: {
+    marginLeft: 3, // optical centering of the triangle
+  },
+});
 
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
@@ -347,7 +410,7 @@ function MainTabNavigator() {
                 iconColor = activity ? (isTracking ? '#ef4444' : '#f97316') : color;
                 break;
               case 'Events':
-                iconName = focused ? 'calendar' : 'calendar-outline';
+                iconName = focused ? 'location' : 'location-outline';
                 break;
               case 'Profile':
                 iconName = focused ? 'person' : 'person-outline';
@@ -366,7 +429,7 @@ function MainTabNavigator() {
               />
             );
           },
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.textPrimary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarBackground: () => <TabBarBackground colors={colors} isDark={isDark} />,
           tabBarStyle: {
@@ -395,7 +458,15 @@ function MainTabNavigator() {
           options={{
             tabBarLabel: 'Record',
             tabBarAccessibilityLabel: 'Nagraj aktywność',
-            tabBarButton: (props) => <RecordTabButton {...props} onLongPress={openStartSheet} />,
+            tabBarButton: (props) => (
+              <RecordTabButton
+                {...props}
+                onLongPress={openStartSheet}
+                primaryColor={colors.primary}
+                activity={!!activity}
+                isTracking={isTracking}
+              />
+            ),
           }}
           listeners={authGuardListener}
         />
@@ -408,7 +479,7 @@ function MainTabNavigator() {
         <MainTab.Screen
           name="Profile"
           component={ProfileScreenWrapper}
-          options={{ tabBarLabel: 'Profile', tabBarAccessibilityLabel: 'Profil użytkownika' }}
+          options={{ tabBarLabel: 'You', tabBarAccessibilityLabel: 'Profil użytkownika' }}
           listeners={authGuardListener}
         />
       </MainTab.Navigator>
@@ -561,6 +632,9 @@ export function AppNavigator() {
                 name="EventCommentarySettings"
                 component={EventCommentarySettingsScreen}
               />
+              <RootStack.Screen name="EventCommentary" component={EventCommentaryScreen} />
+              <RootStack.Screen name="EventLive" component={EventLiveScreen} />
+              <RootStack.Screen name="EventResults" component={EventResultsScreen} />
               <RootStack.Screen name="PostForm" component={PostFormScreen} />
               <RootStack.Screen name="ActivityForm" component={ActivityFormScreen} />
               <RootStack.Screen name="GpxImport" component={GpxImportScreen} />

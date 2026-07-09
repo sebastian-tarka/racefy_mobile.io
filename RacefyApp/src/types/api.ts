@@ -558,14 +558,67 @@ export interface Event {
   is_registration_open?: boolean; // DEPRECATED: Use registration_eligibility instead
   is_full?: boolean;
   registration_eligibility?: RegistrationEligibility;
+  // Sponsoring / prizes
+  prizes?: EventPrize[];
+  coupons?: EventCoupon[];
+  sponsor?: EventSponsor | null;
+  // Visual / content
+  cover_variants?: EventCoverVariants | null;
+  has_custom_page?: boolean;
+  custom_page_url?: string | null;
+  videos?: Video[];
+  gallery_photos?: Photo[];
+  gallery_videos?: Video[];
+  tagged_posts?: EventTaggedPost[];
   // Relations
   sport_type?: SportType;
   post?: Post;
   is_registered?: boolean;
   is_owner?: boolean;
   is_watching?: boolean;
+  /** Embedded registration for the current viewer (bib number, status, notes). */
+  user_registration?: EventRegistration | null;
   created_at?: string;
   updated_at?: string;
+}
+
+/** Map of cover image variant name (e.g. `mobile`, `desktop`) to its URL. */
+export type EventCoverVariants = Record<string, string>;
+
+export interface EventPrize {
+  id: number;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  prize_type: string;
+  value_usd: number | null;
+  place: number;
+  affiliate_url: string | null;
+}
+
+export interface EventCoupon {
+  id: number;
+  title: string;
+  description: string | null;
+  discount_type: string;
+  discount_value: number | null;
+  currency: string | null;
+  place: number;
+  promoted_link: string | null;
+  expires_at: string | null;
+}
+
+export interface EventSponsor {
+  name: string;
+}
+
+export interface EventTaggedPost {
+  id: number;
+  content: string | null;
+  user: Pick<User, 'id' | 'name' | 'username'> & { avatar: string | null };
+  photos: Photo[];
+  videos: Video[];
+  created_at: string;
 }
 
 export interface CreateEventRequest {
@@ -690,6 +743,96 @@ export interface EventRegistration {
   registered_at: string;
   event?: Event;
   user?: User;
+}
+
+// ============ EVENT STANDINGS (live) & RESULTS (finalized) ============
+
+/** Minimal user shape returned inside standings/results rows. */
+export interface EventStandingUser {
+  id: number;
+  name: string;
+  username: string;
+  avatar?: string | null;
+  avatar_url?: string | null;
+}
+
+/**
+ * One live-standings row. In single-activity mode `activity` carries the metrics;
+ * in aggregated mode (`allow_multiple_activities`) the `total_*` fields are set and
+ * `activity` is null. Use `normalizeStanding()` to read metrics uniformly.
+ */
+export interface EventStandingEntry {
+  position: number;
+  user: EventStandingUser;
+  activity: {
+    id: number;
+    distance: number | null;
+    duration: number | null;
+    elevation_gain: number | null;
+    status?: string;
+  } | null;
+  is_finished: boolean;
+  // aggregated mode
+  activities_count?: number;
+  total_distance?: number | null;
+  total_duration?: number | null;
+  total_elevation_gain?: number | null;
+}
+
+export interface EventTeamStandingEntry {
+  position: number;
+  team: EventTeam;
+  members: EventStandingEntry[];
+  total_distance: number | null;
+  total_duration: number | null;
+  total_elevation: number | null;
+  finished_count: number;
+}
+
+export interface EventStandingsResponse {
+  event_status: Event['status'];
+  ranking_mode?: EventRankingMode;
+  is_team_event: boolean;
+  individual_standings: EventStandingEntry[];
+  team_standings?: EventTeamStandingEntry[];
+}
+
+/** One finalized result row (EventResultResource). */
+export interface EventResult {
+  id: number;
+  place: number;
+  place_label: string;
+  user?: User;
+  team?: EventTeam;
+  activity_id: number | null;
+  duration: number | null;
+  formatted_duration: string | null;
+  distance: number | null;
+  formatted_distance: string | null;
+  elevation_gain: number | null;
+  finished_at: string | null;
+  is_team_result: boolean;
+  activities_count: number;
+  created_at: string | null;
+}
+
+export interface EventResultsResponse {
+  results_finalized: boolean;
+  ranking_mode?: EventRankingMode;
+  is_team_event: boolean;
+  individual_results: EventResult[];
+  team_results: EventResult[];
+}
+
+export interface EventWatchStatus {
+  is_watching: boolean;
+  is_registered: boolean;
+  can_watch: boolean;
+}
+
+export interface EventWatchResponse {
+  message: string;
+  is_watching: boolean;
 }
 
 // ============ EVENT STATS ============
