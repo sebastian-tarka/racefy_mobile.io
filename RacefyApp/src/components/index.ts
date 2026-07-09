@@ -120,3 +120,4 @@ export { MapStylePicker } from './MapStylePicker';
 export { TrainingProgramRow } from './Training/TrainingProgramRow';
 export { TrainingPlansSheet } from './Training/TrainingPlansSheet';
 export { OptionList, type OptionListItem } from './OptionList';
+export * from './GpsHealthCheckCard';
