@@ -26,7 +26,7 @@ import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
 import { captureActivityLocation } from '../utils/locationCapture';
 import { PaceTracker } from '../utils/paceCalculator';
-import { accumulateRecoveredTrack, accumulateTrackDelta } from '../utils/gpsMath';
+import { accumulateRecoveredTrack, haversineDistance } from '../utils/gpsMath';
 import { computeDurationTick } from '../utils/durationStats';
 import { GpsTracker } from '../services/gpsTracking';
 import {
@@ -343,24 +343,53 @@ function useLiveActivityInternal() {
 
       lastRenderedSeqRef.current = stored[stored.length - 1].seq;
 
-      // Convert to GpsPoint format, applying gap detection. The first point that
-      // arrives after a gap > GPS_GAP_THRESHOLD_MS is discarded (it would create
-      // a visible jump on the route map); the gap clock is reset so the next
-      // point is accepted as the new segment start.
+      // Walk the background points, bridging gaps: a hop > GPS_GAP_THRESHOLD_MS
+      // with a realistic implied speed counts its straight-line distance and is
+      // marked segment_break (map draws separate segments); an unrealistic hop
+      // (glitch) is discarded like before.
+      const profile = currentGpsProfile.current;
       const points: GpsPoint[] = [];
+      let additionalDistance = 0;
+      let additionalElevation = 0;
       let prevBufTime = gpsTracker.lastBufferedTime;
+      let prevPos: { lat: number; lng: number; ele?: number } | null = gpsTracker.lastPosition;
 
       for (const p of stored) {
         const pointTime = new Date(p.ts).getTime();
-        if (prevBufTime !== null && pointTime - prevBufTime > GPS_GAP_THRESHOLD_MS) {
-          logger.gps('Background point discarded: route segment break (large time gap)', {
-            gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
-            thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
-          });
-          // Advance clock: next point is accepted as new segment start
-          prevBufTime = pointTime;
-          continue;
+        const dist = prevPos ? haversineDistance(prevPos.lat, prevPos.lng, p.lat, p.lng) : 0;
+        const isGap = prevBufTime !== null && pointTime - prevBufTime > GPS_GAP_THRESHOLD_MS;
+        let segmentBreak = false;
+
+        if (isGap && prevBufTime !== null) {
+          const impliedSpeed = dist / Math.max((pointTime - prevBufTime) / 1000, 1);
+          if (dist > profile.minDistanceThreshold && impliedSpeed < profile.maxRealisticSpeed) {
+            segmentBreak = true;
+            logger.gps('Background gap bridged: distance counted, segment break marked', {
+              gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
+              bridgedMeters: dist.toFixed(1),
+            });
+          } else {
+            logger.gps('Background point discarded: unrealistic hop across time gap', {
+              gapSeconds: ((pointTime - prevBufTime) / 1000).toFixed(0),
+              meters: dist.toFixed(1),
+            });
+            // Advance clock/position: next point starts the new segment
+            prevBufTime = pointTime;
+            prevPos = { lat: p.lat, lng: p.lng, ele: p.ele };
+            continue;
+          }
         }
+
+        if (prevPos && dist > profile.minDistanceThreshold) {
+          additionalDistance += dist;
+          if (p.ele != null && prevPos.ele != null) {
+            const elevDiff = p.ele - prevPos.ele;
+            if (elevDiff > profile.minElevationChange) {
+              additionalElevation += elevDiff;
+            }
+          }
+        }
+
         points.push({
           lat: p.lat,
           lng: p.lng,
@@ -368,8 +397,10 @@ function useLiveActivityInternal() {
           time: p.ts,
           speed: p.speed,
           accuracy: p.accuracy,
+          segment_break: segmentBreak || undefined,
         });
         prevBufTime = pointTime;
+        prevPos = { lat: p.lat, lng: p.lng, ele: p.ele };
       }
 
       if (points.length > 0) {
@@ -384,19 +415,6 @@ function useLiveActivityInternal() {
 
       // Update local stats immediately so distance/elevation reflect the
       // background segment as soon as the app returns to foreground.
-      const profile = currentGpsProfile.current;
-      const startPoint =
-        gpsTracker.lastPosition ||
-        (points.length > 0 ? { lat: points[0].lat, lng: points[0].lng, ele: points[0].ele } : null);
-
-      const { distance: additionalDistance, elevationGain: additionalElevation } =
-        accumulateTrackDelta(
-          points,
-          startPoint,
-          profile.minDistanceThreshold,
-          profile.minElevationChange,
-        );
-
       if (additionalDistance > 0) {
         localStatsRef.current.distance += additionalDistance;
         localStatsRef.current.elevation_gain += additionalElevation;
@@ -511,20 +529,33 @@ function useLiveActivityInternal() {
         });
 
         if (decision) {
-          if (decision.outcome === 'accepted') {
-            // Only validated points (moved enough, realistic speed, no gap) count.
+          if (decision.outcome === 'accepted' || decision.outcome === 'gap-bridged') {
+            // Validated points count; a bridged gap counts its straight-line
+            // distance (like a GPS watch through a tunnel) with a segment break.
             localStatsRef.current.distance += decision.distanceAdded;
             localStatsRef.current.elevation_gain += decision.elevationAdded;
 
-            // Track pace segment and refresh the smoothed current pace.
-            localStatsRef.current.currentPace = paceTracker.record(
-              {
-                timestamp: location.timestamp,
-                distance: localStatsRef.current.distance,
-              },
-              gpsProfile,
-              MAX_PACE_SEGMENTS,
-            );
+            if (decision.segmentBreak) {
+              point.segment_break = true;
+              // A minutes-long hop would poison the smoothed current pace —
+              // restart pace tracking from this point.
+              paceTracker.reset();
+              logger.gps('GPS gap bridged: distance counted, segment break marked', {
+                gapSeconds: (decision.gapMs / 1000).toFixed(0),
+                bridgedMeters: decision.distanceAdded.toFixed(1),
+                impliedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
+              });
+            } else {
+              // Track pace segment and refresh the smoothed current pace.
+              localStatsRef.current.currentPace = paceTracker.record(
+                {
+                  timestamp: location.timestamp,
+                  distance: localStatsRef.current.distance,
+                },
+                gpsProfile,
+                MAX_PACE_SEGMENTS,
+              );
+            }
 
             // Map trail keeps the original (non-smoothed) validated point
             allRoutePoints.current.push(point);
@@ -546,6 +577,7 @@ function useLiveActivityInternal() {
                     speed: point.speed,
                     accuracy: point.accuracy,
                     cumDist: localStatsRef.current.distance,
+                    segmentBreak: point.segment_break === true,
                   },
                 ],
                 'fg',
@@ -827,6 +859,7 @@ function useLiveActivityInternal() {
           profile.minDistanceThreshold,
           profile.minElevationChange,
           GPS_GAP_THRESHOLD_MS,
+          profile.maxRealisticSpeed,
         );
         const recoveredDistance = Math.max(lastCumDist ?? 0, recovered.distance);
 

@@ -164,18 +164,34 @@ export function MapboxLiveMap({
   // Use preview location if tracking hasn't started, otherwise use live position
   const displayPosition = currentPosition || previewLocation;
 
-  // Build GeoJSON LineString from livePoints
+  // Build GeoJSON from livePoints as a MultiLineString split at segment_break
+  // points (bridged GPS gaps) — the distance across a gap is counted in stats,
+  // but the map must not draw a straight line through it.
   // Depends on livePointsVersion (cheap number comparison) instead of array reference
   // to avoid O(n) copy on every render from duration timer
   const routeGeoJSON = useMemo(() => {
     if (livePoints.length < 2) return null;
 
+    const segments: [number, number][][] = [];
+    let current: [number, number][] = [];
+
+    for (const p of livePoints) {
+      if (p.segment_break && current.length > 0) {
+        if (current.length >= 2) segments.push(current);
+        current = [];
+      }
+      current.push([p.lng, p.lat]);
+    }
+    if (current.length >= 2) segments.push(current);
+
+    if (segments.length === 0) return null;
+
     return {
       type: 'Feature' as const,
       properties: {},
       geometry: {
-        type: 'LineString' as const,
-        coordinates: livePoints.map((p) => [p.lng, p.lat]),
+        type: 'MultiLineString' as const,
+        coordinates: segments,
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

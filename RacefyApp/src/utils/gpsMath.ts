@@ -145,12 +145,13 @@ export function accumulateTrackDelta(
 /**
  * Rebuild distance + elevation gain from a set of recovered points (e.g. after an
  * app kill, or when server-derived stats came back as 0). The points are sorted by
- * time, then accumulated mirroring live filtering: a segment counts only when the
- * time gap to the previous point is within `gapThresholdMs` (so far-apart jumps
- * across a discontinuity are ignored) AND its distance exceeds `minDistanceThreshold`.
- * Elevation gain counts positive deltas above `minElevationChange` when both
- * endpoints report an elevation (zero is a valid elevation here, unlike
- * accumulateTrackDelta).
+ * time, then accumulated mirroring live filtering: a segment counts when its
+ * distance exceeds `minDistanceThreshold` and either the time gap to the previous
+ * point is within `gapThresholdMs`, or — when `maxRealisticSpeed` is provided —
+ * the straight-line hop over a larger gap implies a realistic speed (gap
+ * bridging, mirroring the live `gap-bridged` outcome). Unrealistic hops are
+ * ignored. Elevation gain counts positive deltas above `minElevationChange` when
+ * both endpoints report an elevation.
  *
  * Also returns the trailing point + its timestamp so the caller can re-seed
  * lastPosition and the gap clock. Pure.
@@ -160,6 +161,7 @@ export function accumulateRecoveredTrack(
   minDistanceThreshold: number,
   minElevationChange: number,
   gapThresholdMs: number,
+  maxRealisticSpeed?: number,
 ): RecoveredTrack {
   const toMs = (time?: string) => (time ? new Date(time).getTime() : 0);
   const ordered = [...points].sort((a, b) => toMs(a.time) - toMs(b.time));
@@ -171,9 +173,16 @@ export function accumulateRecoveredTrack(
 
   for (const p of ordered) {
     const t = toMs(p.time);
-    if (prev && t - prev.t <= gapThresholdMs) {
+    if (prev) {
+      const gapMs = t - prev.t;
       const dist = haversineDistance(prev.lat, prev.lng, p.lat, p.lng);
-      if (dist > minDistanceThreshold) {
+      const withinGap = gapMs <= gapThresholdMs;
+      const bridgeable =
+        !withinGap &&
+        maxRealisticSpeed != null &&
+        dist / Math.max(gapMs / 1000, 1) < maxRealisticSpeed;
+
+      if ((withinGap || bridgeable) && dist > minDistanceThreshold) {
         distance += dist;
         if (p.ele != null && prev.ele != null) {
           const elevDiff = p.ele - prev.ele;
