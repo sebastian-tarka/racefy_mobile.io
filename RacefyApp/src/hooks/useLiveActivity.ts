@@ -20,6 +20,8 @@ import {
   syncAudioCoachForegroundDistance,
 } from '../services/backgroundLocation';
 import { enqueueUnsyncedActivity } from '../services/unsyncedActivities';
+import * as trackingDb from '../services/trackingDb';
+import * as Crypto from 'expo-crypto';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import type { Activity, ActivityLocation, AutoCreatedPost, GpsPoint } from '../types/api';
 import {
@@ -129,6 +131,9 @@ function useLiveActivityInternal() {
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
   const currentActivityId = useRef<number | null>(null);
+
+  // Device-minted UUID of the SQLite tracking session (durable point log).
+  const clientActivityIdRef = useRef<string | null>(null);
 
   // Guard to prevent concurrent finish/discard calls
   const isFinishingOrDiscardingRef = useRef<boolean>(false);
@@ -598,6 +603,26 @@ function useLiveActivityInternal() {
             allRoutePoints.current.push(point);
             pointsVersionRef.current++;
 
+            // Durable log: mirror the accepted point into SQLite with the
+            // cumulative distance (survives process death, unlike this buffer).
+            if (clientActivityIdRef.current && point.time) {
+              trackingDb.insertPoints(
+                clientActivityIdRef.current,
+                [
+                  {
+                    lat: point.lat,
+                    lng: point.lng,
+                    ele: point.ele,
+                    ts: point.time,
+                    speed: point.speed,
+                    accuracy: point.accuracy,
+                    cumDist: localStatsRef.current.distance,
+                  },
+                ],
+                'fg',
+              );
+            }
+
             setState((prev) => ({
               ...prev,
               currentStats: { ...localStatsRef.current },
@@ -817,6 +842,23 @@ function useLiveActivityInternal() {
     });
 
     currentActivityId.current = activityId;
+
+    // Ensure a durable SQLite tracking session exists for this activity
+    // (covers fresh start, resume and crash recovery — all paths land here).
+    try {
+      const existingSession = trackingDb.getSessionByServerActivityId(activityId);
+      if (existingSession) {
+        clientActivityIdRef.current = existingSession.clientActivityId;
+      } else {
+        const uuid = Crypto.randomUUID();
+        trackingDb.startSession(uuid);
+        trackingDb.bindServerActivity(uuid, activityId);
+        clientActivityIdRef.current = uuid;
+      }
+    } catch (dbErr) {
+      logger.error('gps', 'Failed to ensure tracking DB session', { error: dbErr });
+      clientActivityIdRef.current = null;
+    }
 
     try {
       // Recover any persisted points from previous session (crash recovery)
@@ -1550,6 +1592,12 @@ function useLiveActivityInternal() {
       pointsBuffer.current = [];
       await clearAllPersistedPoints();
 
+      // Close the durable SQLite session (points purged after retention window)
+      if (clientActivityIdRef.current) {
+        trackingDb.markSessionFinished(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
+
       logger.activity('Activity finished with GPS duration', {
         id: activity.id,
         distance: activity.distance,
@@ -1668,6 +1716,12 @@ function useLiveActivityInternal() {
       // Success: now safe to clear buffer and persisted data
       pointsBuffer.current = [];
       await clearAllPersistedPoints();
+
+      // Close the durable SQLite session (points purged after retention window)
+      if (clientActivityIdRef.current) {
+        trackingDb.markSessionFinished(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
 
       logger.activity('Activity finished with full duration', {
         id: activity.id,
@@ -1857,6 +1911,12 @@ function useLiveActivityInternal() {
         pointsBuffer.current = [];
         await clearAllPersistedPoints();
 
+        // Close the durable SQLite session (points purged after retention window)
+        if (clientActivityIdRef.current) {
+          trackingDb.markSessionFinished(clientActivityIdRef.current);
+          clientActivityIdRef.current = null;
+        }
+
         logger.activity('Activity finished successfully', {
           id: activity.id,
           distance: activity.distance,
@@ -1953,6 +2013,12 @@ function useLiveActivityInternal() {
 
       // Clear persisted data (discarding — no need to keep anything)
       await clearAllPersistedPoints();
+
+      // Drop the durable SQLite session and its points
+      if (clientActivityIdRef.current) {
+        trackingDb.discardSession(clientActivityIdRef.current);
+        clientActivityIdRef.current = null;
+      }
 
       // Discard on server
       await api.discardActivity(state.activity.id);

@@ -7,6 +7,7 @@ import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/
 import type { GpsProfile } from '../config/gpsProfiles';
 import { syncPointsToServer } from './backgroundApiClient';
 import { haversineDistance } from '../utils/gpsMath';
+import * as trackingDb from './trackingDb';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
@@ -483,6 +484,31 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // Add to buffer
           const updatedBuffer = [...existingBuffer, ...newPoints];
           await saveLocationBuffer(updatedBuffer);
+
+          // Durable log: mirror accepted points into SQLite (single source of
+          // truth — survives process death, unlike the AsyncStorage buffer).
+          try {
+            const activityId = await getActiveActivityId();
+            const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+            if (session) {
+              trackingDb.insertPoints(
+                session.clientActivityId,
+                newPoints.map((p) => ({
+                  lat: p.lat,
+                  lng: p.lng,
+                  ele: p.ele,
+                  ts: p.time,
+                  speed: p.speed,
+                  accuracy: p.accuracy,
+                })),
+                'bg',
+              );
+            }
+          } catch (dbErr) {
+            logger.error('gps', 'Background: failed to persist points to tracking DB', {
+              error: dbErr,
+            });
+          }
 
           logger.gps(
             `Background: Added ${newPoints.length} points, total: ${updatedBuffer.length}`,

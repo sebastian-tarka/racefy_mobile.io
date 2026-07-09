@@ -144,6 +144,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     './plugins/withLargeHeap',
+    'expo-sqlite',
     [
       'expo-build-properties',
       {
