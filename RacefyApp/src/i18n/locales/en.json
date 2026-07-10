@@ -1213,7 +1213,8 @@
       "suggestionsHint": "Based on your activity patterns, we suggest these locations:",
       "addSuggestion": "Add",
       "activities": "{{count}} activities",
-      "confidence": "{{value}}% confidence"
+      "confidence": "{{value}}% confidence",
+      "mapUnavailable": "Map unavailable — use current location instead"
     },
     "updateFailed": "Failed to update settings",
     "aiPostsUpdated": "AI posts preference updated",

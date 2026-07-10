@@ -1201,7 +1201,8 @@
       "suggestionsHint": "Basándonos en tus patrones de actividad, sugerimos estas ubicaciones:",
       "addSuggestion": "Agregar",
       "activities": "{{count}} actividades",
-      "confidence": "{{value}}% de confianza"
+      "confidence": "{{value}}% de confianza",
+      "mapUnavailable": "Mapa no disponible — usa la ubicación actual"
     },
     "updateFailed": "Error al actualizar la configuración",
     "aiPostsUpdated": "Preferencia de publicaciones IA actualizada",

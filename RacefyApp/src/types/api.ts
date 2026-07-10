@@ -3167,7 +3167,6 @@ export interface TeamLeaderboardResponse {
 export interface PrivacyZone {
   id: number;
   name: string;
-  type: 'home' | 'work' | 'other';
   latitude: number;
   longitude: number;
   radius_meters: number;
@@ -3178,25 +3177,26 @@ export interface PrivacyZone {
 
 export interface PrivacyZoneSuggestion {
   name: string;
-  type: 'home' | 'work' | 'other';
-  latitude: number;
-  longitude: number;
-  activity_count: number;
-  confidence: number;
+  // Coordinates may arrive as strings (uncast DB decimals) — coerce with Number() before use.
+  latitude: number | string;
+  longitude: number | string;
+  occurrences: number;
+  radius_meters: number;
 }
 
 export interface CreatePrivacyZoneRequest {
   name: string;
-  type: 'home' | 'work' | 'other';
   latitude: number;
   longitude: number;
+  radius_meters?: number;
 }
 
 export interface UpdatePrivacyZoneRequest {
   name?: string;
-  type?: 'home' | 'work' | 'other';
   latitude?: number;
   longitude?: number;
+  radius_meters?: number;
+  is_active?: boolean;
 }
 
 // ============ FEEDBACK ============

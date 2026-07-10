@@ -1213,7 +1213,8 @@
       "suggestionsHint": "Na podstawie Twoich aktywności sugerujemy te lokalizacje:",
       "addSuggestion": "Dodaj",
       "activities": "{{count}} aktywności",
-      "confidence": "{{value}}% pewności"
+      "confidence": "{{value}}% pewności",
+      "mapUnavailable": "Mapa niedostępna — użyj bieżącej lokalizacji"
     },
     "updateFailed": "Nie udało się zaktualizować ustawień",
     "aiPostsUpdated": "Preferencja postów AI zaktualizowana",

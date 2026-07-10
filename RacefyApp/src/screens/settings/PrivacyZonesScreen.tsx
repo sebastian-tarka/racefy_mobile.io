@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
   ActivityIndicator,
-  RefreshControl,
   Alert,
-  Switch,
-  TextInput,
+  FlatList,
   Modal,
+  RefreshControl,
   ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -19,20 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
-import { ScreenHeader, EmptyState, ScreenContainer } from '../../components';
+import { EmptyState, PrivacyZoneMapPicker, ScreenContainer, ScreenHeader } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
-import { spacing, fontSize, borderRadius } from '../../theme';
-import type { PrivacyZone, PrivacyZoneSuggestion, CreatePrivacyZoneRequest } from '../../types/api';
-
-const ZONE_TYPE_ICONS: Record<string, string> = {
-  home: 'home',
-  work: 'briefcase',
-  other: 'location',
-};
-
-const ZONE_TYPES: CreatePrivacyZoneRequest['type'][] = ['home', 'work', 'other'];
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { PrivacyZone, PrivacyZoneSuggestion } from '../../types/api';
 
 export function PrivacyZonesScreen() {
   const { t } = useTranslation();
@@ -47,11 +39,11 @@ export function PrivacyZonesScreen() {
   const [togglingId, setTogglingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // Add/Edit modal state
+  // Add/Edit modal state (editingZoneId === null → creating a new zone)
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingZoneId, setEditingZoneId] = useState<number | null>(null);
   const [addLoading, setAddLoading] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
-  const [newZoneType, setNewZoneType] = useState<CreatePrivacyZoneRequest['type']>('home');
   const [newZoneLocation, setNewZoneLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -66,14 +58,13 @@ export function PrivacyZonesScreen() {
         api.getPrivacyZoneSuggestions().catch(() => [] as PrivacyZoneSuggestion[]),
       ]);
       setZones(zonesData);
-      // Filter suggestions that are not already zones
-      const existingCoords = new Set(
-        zonesData.map((z) => `${z.latitude.toFixed(4)},${z.longitude.toFixed(4)}`),
-      );
+      // Filter suggestions that are not already zones. Coordinates may arrive as
+      // strings (unc­ast DB decimals), so coerce before formatting.
+      const coordKey = (lat: number | string, lng: number | string) =>
+        `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
+      const existingCoords = new Set(zonesData.map((z) => coordKey(z.latitude, z.longitude)));
       setSuggestions(
-        suggestionsData.filter(
-          (s) => !existingCoords.has(`${s.latitude.toFixed(4)},${s.longitude.toFixed(4)}`),
-        ),
+        suggestionsData.filter((s) => !existingCoords.has(coordKey(s.latitude, s.longitude))),
       );
     } catch (err) {
       logger.error('general', 'Failed to load privacy zones', { error: err });
@@ -132,9 +123,16 @@ export function PrivacyZonesScreen() {
       upgradePromptEmitter.emit('show', { feature: 'privacy_zones' });
       return;
     }
+    setEditingZoneId(null);
     setNewZoneName('');
-    setNewZoneType('home');
     setNewZoneLocation(null);
+    setShowAddModal(true);
+  };
+
+  const handleEditPress = (zone: PrivacyZone) => {
+    setEditingZoneId(zone.id);
+    setNewZoneName(zone.name);
+    setNewZoneLocation({ lat: Number(zone.latitude), lng: Number(zone.longitude) });
     setShowAddModal(true);
   };
 
@@ -170,13 +168,21 @@ export function PrivacyZonesScreen() {
 
     setAddLoading(true);
     try {
-      const created = await api.createPrivacyZone({
-        name: newZoneName.trim(),
-        type: newZoneType,
-        latitude: newZoneLocation.lat,
-        longitude: newZoneLocation.lng,
-      });
-      setZones((prev) => [...prev, created]);
+      if (editingZoneId !== null) {
+        const updated = await api.updatePrivacyZone(editingZoneId, {
+          name: newZoneName.trim(),
+          latitude: newZoneLocation.lat,
+          longitude: newZoneLocation.lng,
+        });
+        setZones((prev) => prev.map((z) => (z.id === editingZoneId ? updated : z)));
+      } else {
+        const created = await api.createPrivacyZone({
+          name: newZoneName.trim(),
+          latitude: newZoneLocation.lat,
+          longitude: newZoneLocation.lng,
+        });
+        setZones((prev) => [...prev, created]);
+      }
       setShowAddModal(false);
       Alert.alert(t('common.success'), t('settings.privacyZones.saved'));
     } catch (err: any) {
@@ -200,9 +206,8 @@ export function PrivacyZonesScreen() {
     try {
       const created = await api.createPrivacyZone({
         name: suggestion.name,
-        type: suggestion.type,
-        latitude: suggestion.latitude,
-        longitude: suggestion.longitude,
+        latitude: Number(suggestion.latitude),
+        longitude: Number(suggestion.longitude),
       });
       setZones((prev) => [...prev, created]);
       setSuggestions((prev) =>
@@ -230,19 +235,11 @@ export function PrivacyZonesScreen() {
     >
       <View style={styles.zoneRow}>
         <View style={[styles.zoneIcon, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons
-            name={(ZONE_TYPE_ICONS[zone.type] || 'location') as any}
-            size={20}
-            color={colors.primary}
-          />
+          <Ionicons name="location" size={20} color={colors.primary} />
         </View>
         <View style={styles.zoneInfo}>
           <Text style={[styles.zoneName, { color: colors.textPrimary }]}>{zone.name}</Text>
           <Text style={[styles.zoneType, { color: colors.textMuted }]}>
-            {t(
-              `settings.privacyZones.type${zone.type.charAt(0).toUpperCase() + zone.type.slice(1)}`,
-            )}
-            {' \u2022 '}
             {zone.is_active
               ? t('settings.privacyZones.active')
               : t('settings.privacyZones.inactive')}
@@ -261,22 +258,31 @@ export function PrivacyZonesScreen() {
           )}
         </View>
       </View>
-      <TouchableOpacity
-        style={[styles.deleteButton, { borderTopColor: colors.border }]}
-        onPress={() => handleDelete(zone)}
-        disabled={deletingId === zone.id}
-      >
-        {deletingId === zone.id ? (
-          <ActivityIndicator size="small" color={colors.error} />
-        ) : (
-          <>
-            <Ionicons name="trash-outline" size={16} color={colors.error} />
-            <Text style={[styles.deleteText, { color: colors.error }]}>
-              {t('settings.privacyZones.deleteZone')}
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
+      <View style={[styles.zoneFooter, { borderTopColor: colors.border }]}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleEditPress(zone)}>
+          <Ionicons name="create-outline" size={16} color={colors.primary} />
+          <Text style={[styles.deleteText, { color: colors.primary }]}>
+            {t('common.edit', 'Edit')}
+          </Text>
+        </TouchableOpacity>
+        <View style={[styles.footerDivider, { backgroundColor: colors.border }]} />
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => handleDelete(zone)}
+          disabled={deletingId === zone.id}
+        >
+          {deletingId === zone.id ? (
+            <ActivityIndicator size="small" color={colors.error} />
+          ) : (
+            <>
+              <Ionicons name="trash-outline" size={16} color={colors.error} />
+              <Text style={[styles.deleteText, { color: colors.error }]}>
+                {t('settings.privacyZones.deleteZone')}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -290,18 +296,12 @@ export function PrivacyZonesScreen() {
     >
       <View style={styles.suggestionRow}>
         <View style={[styles.zoneIcon, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons
-            name={(ZONE_TYPE_ICONS[suggestion.type] || 'location') as any}
-            size={20}
-            color={colors.primary}
-          />
+          <Ionicons name="location" size={20} color={colors.primary} />
         </View>
         <View style={styles.zoneInfo}>
           <Text style={[styles.zoneName, { color: colors.textPrimary }]}>{suggestion.name}</Text>
           <Text style={[styles.zoneType, { color: colors.textMuted }]}>
-            {t('settings.privacyZones.activities', { count: suggestion.activity_count })}
-            {' \u2022 '}
-            {t('settings.privacyZones.confidence', { value: suggestion.confidence })}
+            {t('settings.privacyZones.activities', { count: suggestion.occurrences })}
           </Text>
         </View>
         <TouchableOpacity
@@ -429,7 +429,9 @@ export function PrivacyZonesScreen() {
               <Ionicons name="close" size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {t('settings.privacyZones.addZone')}
+              {editingZoneId !== null
+                ? t('settings.privacyZones.editZone', 'Edit zone')
+                : t('settings.privacyZones.addZone')}
             </Text>
             <TouchableOpacity onPress={handleSaveZone} disabled={addLoading}>
               {addLoading ? (
@@ -462,46 +464,19 @@ export function PrivacyZonesScreen() {
               placeholderTextColor={colors.textMuted}
             />
 
-            {/* Zone Type */}
-            <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
-              {t('settings.privacyZones.zoneType')}
-            </Text>
-            <View style={styles.typeRow}>
-              {ZONE_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.typeChip,
-                    { borderColor: colors.border, backgroundColor: colors.cardBackground },
-                    newZoneType === type && {
-                      borderColor: colors.primary,
-                      backgroundColor: colors.primary,
-                    },
-                  ]}
-                  onPress={() => setNewZoneType(type)}
-                >
-                  <Ionicons
-                    name={(ZONE_TYPE_ICONS[type] || 'location') as any}
-                    size={16}
-                    color={newZoneType === type ? colors.white : colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.typeChipText,
-                      { color: colors.textSecondary },
-                      newZoneType === type && { color: colors.white },
-                    ]}
-                  >
-                    {t(`settings.privacyZones.type${type.charAt(0).toUpperCase() + type.slice(1)}`)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             {/* Location */}
             <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
               {t('settings.privacyZones.location')}
             </Text>
+
+            <View style={styles.mapPickerWrapper}>
+              <PrivacyZoneMapPicker
+                value={
+                  newZoneLocation ? { lat: newZoneLocation.lat, lng: newZoneLocation.lng } : null
+                }
+                onChange={(lat, lng) => setNewZoneLocation({ lat, lng })}
+              />
+            </View>
 
             <TouchableOpacity
               style={[
@@ -644,13 +619,21 @@ const styles = StyleSheet.create({
   zoneActions: {
     alignItems: 'flex-end',
   },
-  deleteButton: {
+  zoneFooter: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    borderTopWidth: 1,
+  },
+  footerButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
+  },
+  footerDivider: {
+    width: 1,
   },
   deleteText: {
     fontSize: fontSize.sm,
@@ -707,23 +690,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: fontSize.md,
   },
-  typeRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  typeChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-  },
-  typeChipText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+  mapPickerWrapper: {
+    marginBottom: spacing.sm,
   },
   locationButton: {
     flexDirection: 'row',

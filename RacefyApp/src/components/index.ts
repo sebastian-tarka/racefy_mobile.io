@@ -43,6 +43,7 @@ export * from './ImagePickerButton';
 export * from './Input';
 export * from './LeaderboardList';
 export * from './LeafletMap';
+export * from './PrivacyZoneMapPicker';
 // MapboxRouteMap is lazy-loaded by LeafletMap when @rnmapbox/maps is available
 export * from './Loading';
 export * from './LanguageDropdown';
