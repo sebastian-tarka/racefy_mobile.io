@@ -1154,6 +1154,8 @@
     "allowMessagesDesc": "Quién puede enviarte mensajes",
     "shareAchievements": "Compartir logros en el feed",
     "shareAchievementsDesc": "Cuando obtienes una insignia, una publicación aparecerá automáticamente en el feed",
+    "showStartFinish": "Mostrar puntos de inicio/fin",
+    "showStartFinishDesc": "Permite que otros vean dónde comienzan y terminan tus actividades. Ocultos por defecto por privacidad.",
     "activityDefaults": "Valores predeterminados de actividad",
     "favoriteSport": "Deporte favorito",
     "favoriteSportDesc": "Tipo de deporte predeterminado para nuevas actividades",

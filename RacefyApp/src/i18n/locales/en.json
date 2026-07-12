@@ -1166,6 +1166,8 @@
     "allowMessagesDesc": "Who can send you messages",
     "shareAchievements": "Share Achievements in Feed",
     "shareAchievementsDesc": "When you earn a badge, a post will appear automatically in the feed",
+    "showStartFinish": "Show Start/Finish Points",
+    "showStartFinishDesc": "Let others see where your activities start and end. Hidden by default for privacy.",
     "activityDefaults": "Activity Defaults",
     "favoriteSport": "Favorite Sport",
     "favoriteSportDesc": "Default sport type for new activities",

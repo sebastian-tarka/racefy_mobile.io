@@ -1166,6 +1166,8 @@
     "allowMessagesDesc": "Kto może wysyłać Ci wiadomości",
     "shareAchievements": "Udostępniaj osiągnięcia w feedzie",
     "shareAchievementsDesc": "Gdy zdobędziesz odznakę, post pojawi się automatycznie w feedzie",
+    "showStartFinish": "Pokaż punkty startu i mety",
+    "showStartFinishDesc": "Pozwól innym zobaczyć, gdzie Twoje aktywności się zaczynają i kończą. Domyślnie ukryte dla prywatności.",
     "activityDefaults": "Domyślne ustawienia aktywności",
     "favoriteSport": "Ulubiony sport",
     "favoriteSportDesc": "Domyślny typ sportu dla nowych aktywności",

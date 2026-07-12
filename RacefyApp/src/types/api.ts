@@ -105,6 +105,7 @@ export interface UserProfilePrivacy {
   show_stats: boolean;
   allow_messages: 'everyone' | 'followers' | 'none';
   share_achievements?: boolean;
+  show_start_finish_points?: boolean;
 }
 
 export interface BadgeData {
@@ -264,6 +265,7 @@ export interface UserPreferences {
     show_stats: boolean;
     allow_messages: 'everyone' | 'followers' | 'none';
     share_achievements?: boolean;
+    show_start_finish_points?: boolean;
   };
   activity_defaults: {
     visibility: 'public' | 'followers' | 'private';

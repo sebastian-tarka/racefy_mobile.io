@@ -200,6 +200,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     show_stats: true,
     allow_messages: 'everyone',
     share_achievements: true,
+    show_start_finish_points: true,
   },
   activity_defaults: {
     visibility: 'public',
@@ -1092,6 +1093,24 @@ export function SettingsScreen({ navigation }: Props) {
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
                 thumbColor={
                   (preferences.privacy.share_achievements ?? true) ? colors.primary : colors.white
+                }
+              />
+            }
+          />
+          <SettingsRow
+            icon="flag-outline"
+            label={t('settings.showStartFinish')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.show_start_finish_points ?? true}
+                onValueChange={(value) =>
+                  updateNestedPreference('privacy', 'show_start_finish_points', value)
+                }
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={
+                  (preferences.privacy.show_start_finish_points ?? true)
+                    ? colors.primary
+                    : colors.white
                 }
               />
             }
