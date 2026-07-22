@@ -1674,10 +1674,6 @@
       "crossTrainingSelected": "{{count}} deporte(s) seleccionado(s)",
       "selectCrossTrainingSports": "Seleccionar deportes de entrenamiento cruzado"
     },
-    "loading": {
-      "title": "Generando tu plan",
-      "subtitle": "Nuestra IA está creando un programa de entrenamiento personalizado solo para ti. Esto generalmente toma de 5 a 10 segundos."
-    },
     "programSelector": {
       "weekProgress": "Semana {{current}}/{{total}}",
       "active": "activo",
@@ -1724,7 +1720,10 @@
       "autoLinkTitle": "Vinculación automática de actividades",
       "autoLinkEnabled": "Vinculación automática habilitada",
       "autoLinkDisabled": "Vinculación automática deshabilitada",
-      "settingsUpdated": "Configuración actualizada exitosamente"
+      "settingsUpdated": "Configuración actualizada exitosamente",
+      "startsOn": "Empieza el {{date}}",
+      "planRegeneratedTitle": "Plan reconstruido",
+      "planRegeneratedMessage": "Tu pausa fue lo bastante larga como para que el plan anterior terminara después de tu carrera, así que se reconstruyó con el tiempo que te queda. Tus semanas anteriores se conservan como historial."
     },
     "weekDetail": {
       "title": "Semana {{number}}",
@@ -1770,9 +1769,7 @@
       "targetDateRequired": "Por favor selecciona una fecha objetivo",
       "loadGoalsFailed": "Error al cargar los objetivos de entrenamiento",
       "creationFailed": "Error al crear la calibración de entrenamiento",
-      "generationFailed": "La generación del programa de entrenamiento falló. Por favor intenta de nuevo.",
       "loadingFailed": "Error al cargar los datos de entrenamiento",
-      "timeout": "La generación del programa está tomando más tiempo del esperado. Por favor revisa en unos minutos.",
       "programNotFound": "Programa de entrenamiento no encontrado",
       "weekNotFound": "Semana no encontrada",
       "completeFailed": "Error al completar la semana",
@@ -1876,6 +1873,19 @@
       "retry": "Reintentar",
       "loadError": "Error al cargar feedback",
       "weekOf": "Semana {{number}} de {{total}}"
+    },
+    "scheduledBadge": "Programado",
+    "warnings": {
+      "title": "Sobre tu plan",
+      "fallback": "Tu plan se ajustó para encajar con tu objetivo.",
+      "plan_start_deferred": "Tu carrera aún está lejos, así que el plan empieza el {{start_date}} (dentro de {{weeks_until_start}} semanas) para que la puesta a punto caiga en la semana de la carrera.",
+      "plan_shorter_than_recommended": "Este objetivo suele prepararse en {{recommended_weeks}} semanas, pero tu carrera deja espacio para {{actual_weeks}}. El plan se acortó.",
+      "plan_extends_beyond_target_date": "El plan se extiende más allá de tu carrera del {{target_date}}: tu carrera cae en la semana {{race_week_number}}.",
+      "plan_ends_before_target_date": "El plan termina {{weeks_before_target}} semanas antes del {{target_date}}, así que queda un hueco antes de tu carrera.",
+      "insufficient_history_for_scaling": "Tienes {{active_weeks}} de las {{required_weeks}} semanas de entrenamiento necesarias para ajustar la carga, así que el plan usa volúmenes estándar por ahora.",
+      "goal_demands_more_sessions": "Este objetivo suele entrenarse con al menos {{recommended_min_sessions}} sesiones por semana y elegiste {{sessions_per_week}}, así que la sesión larga dominará tu semana. Añadir otro deporte en ajustes es una forma más segura de sumar carga.",
+      "plan_regenerated_on_resume": "El plan se reconstruyó tras una pausa de {{paused_weeks}} semanas para que siga llegando a tiempo.",
+      "target_date_passed": "La fecha de tu carrera ya pasó, así que el plan ya no apunta a ella."
     }
   },
   "rewards": {

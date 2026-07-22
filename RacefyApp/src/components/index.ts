@@ -123,5 +123,6 @@ export * from './TeamCard';
 export { MapStylePicker } from './MapStylePicker';
 export { TrainingProgramRow } from './Training/TrainingProgramRow';
 export { TrainingPlansSheet } from './Training/TrainingPlansSheet';
+export { PlanWarningsBanner } from './Training/PlanWarningsBanner';
 export { OptionList, type OptionListItem } from './OptionList';
 export * from './GpsHealthCheckCard';

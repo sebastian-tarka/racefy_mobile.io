@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -33,19 +34,23 @@ import {
   ScreenHeader,
 } from '../../components';
 import { TrainingPlansSheet } from '../../components/Training/TrainingPlansSheet';
+import { PlanWarningsBanner } from '../../components/Training/PlanWarningsBanner';
 import type { RootStackParamList } from '../../navigation/types';
 import type {
   AiMode,
   MentalBudget,
   PausedReason,
+  PlanWarning,
   TrainingProgram,
   TrainingWeek,
 } from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeeksList'>;
 
 interface Props {
   navigation: NavigationProp;
+  route: RoutePropType;
 }
 
 const fmtDay = (d: string) =>
@@ -61,6 +66,8 @@ interface UISession {
   durationMinutes: number;
   status: 'completed' | 'skipped' | 'pending';
   iconType: string;
+  /** Per-session discipline; only set on multi-sport (triathlon) plans. */
+  sportSlug?: string | null;
 }
 
 /**
@@ -95,6 +102,7 @@ function getSessions(week: TrainingWeek): UISession[] {
     durationMinutes: s.target_duration_minutes || 0,
     status: 'pending' as const,
     iconType: s.activity_type,
+    sportSlug: s.sport_slug,
   }));
 }
 
@@ -115,7 +123,17 @@ function weekStats(week: TrainingWeek) {
   return { sessions, completed, total, plannedMinutes, percent };
 }
 
-function activityIcon(type: string): keyof typeof Ionicons.glyphMap {
+/**
+ * `sportSlug` is the session's own discipline and is authoritative when present
+ * — in a triathlon plan one week mixes swims, rides and runs, which the
+ * name-sniffing fallback below cannot reliably tell apart.
+ */
+function activityIcon(type: string, sportSlug?: string | null): keyof typeof Ionicons.glyphMap {
+  const slug = (sportSlug || '').toLowerCase();
+  if (slug.includes('swim')) return 'water';
+  if (slug.includes('cycl') || slug.includes('bike')) return 'bicycle';
+  if (slug.includes('run') || slug.includes('walk')) return 'walk';
+
   const t = (type || '').toLowerCase();
   if (t.includes('rest')) return 'bed-outline';
   if (t.includes('hill') || t.includes('interval') || t.includes('tempo') || t.includes('speed'))
@@ -131,7 +149,7 @@ function humanize(text: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function WeeksListScreen({ navigation }: Props) {
+export function WeeksListScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { sportTypes } = useSportTypes();
@@ -144,6 +162,12 @@ export function WeeksListScreen({ navigation }: Props) {
   const [selectedWeekId, setSelectedWeekId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPlansSheet, setShowPlansSheet] = useState(false);
+  /**
+   * Warnings explaining the trade-offs the planner made. Seeded from the
+   * `initialize` response we were navigated with, and replaced by `resume`'s
+   * own warnings. Dismissible — they describe the plan, not a pending problem.
+   */
+  const [planWarnings, setPlanWarnings] = useState<PlanWarning[]>(route.params?.warnings ?? []);
 
   const program = programs.find((p) => p.id === selectedProgramId) ?? programs[0] ?? null;
 
@@ -351,7 +375,11 @@ export function WeeksListScreen({ navigation }: Props) {
     try {
       await api.updateProgramSettings(program.id, {
         auto_link_activities: autoLinkActivities,
-        allowed_sport_types: allowedSportTypes.length > 0 ? allowedSportTypes : undefined,
+        // null (not undefined, not []) is how "every sport counts" is expressed.
+        // Sending undefined omits the field, which left the user unable to clear
+        // a restriction once set; [] persists something that reads as a
+        // restriction but enforces nothing.
+        allowed_sport_types: allowedSportTypes.length > 0 ? allowedSportTypes : null,
       });
       logger.info('training', 'Program settings updated', {
         programId: program.id,
@@ -379,8 +407,27 @@ export function WeeksListScreen({ navigation }: Props) {
     if (!program) return;
     setActionLoading(true);
     try {
-      await api.resumeProgram(program.id);
-      logger.info('training', 'Program resumed', { programId: program.id });
+      const result = await api.resumeProgram(program.id);
+      logger.info('training', 'Program resumed', {
+        programId: program.id,
+        regenerated: result.regenerated,
+        newProgramId: result.program?.id,
+        warnings: result.warnings.map((w) => w.code),
+      });
+
+      setPlanWarnings(result.warnings);
+
+      // A long pause against a race date rebuilds the plan: `program` is then a
+      // NEW program and the old id is abandoned. Re-point the selection at the
+      // returned program instead of assuming the id survived.
+      if (result.regenerated && result.program) {
+        setSelectedProgramId(result.program.id);
+        Alert.alert(
+          t('training.weeksList.planRegeneratedTitle'),
+          t('training.weeksList.planRegeneratedMessage'),
+        );
+      }
+
       loadData(true);
     } catch (err: any) {
       logger.error('training', 'Failed to resume program', { error: err });
@@ -538,6 +585,15 @@ export function WeeksListScreen({ navigation }: Props) {
   })();
 
   const isPaused = program.status === 'paused';
+  // Deferred plan: dated but not started yet, so the taper lands in race week.
+  // Not an error and not a generation state — it just has no active week yet.
+  const isScheduled = program.status === 'scheduled';
+  const statusColor = isPaused ? colors.warning : isScheduled ? colors.info : colors.success;
+  const statusLabel = isPaused
+    ? t('training.pausedBadge')
+    : isScheduled
+      ? t('training.scheduledBadge')
+      : t('training.activeBadge');
   const selectedWeek = weeks.find((w) => w.id === selectedWeekId) ?? null;
   const hasOtherPrograms = programs.length > 1;
 
@@ -616,7 +672,7 @@ export function WeeksListScreen({ navigation }: Props) {
           ]}
         >
           <Ionicons
-            name={done ? 'checkmark' : activityIcon(session.iconType)}
+            name={done ? 'checkmark' : activityIcon(session.iconType, session.sportSlug)}
             size={18}
             color={done ? colors.white : colors.primary}
           />
@@ -767,28 +823,27 @@ export function WeeksListScreen({ navigation }: Props) {
           />
         }
       >
+        <PlanWarningsBanner warnings={planWarnings} onDismiss={() => setPlanWarnings([])} />
+
         {/* ---- Program overview card ---- */}
         <Card style={styles.programCard}>
           <View style={styles.programTitleRow}>
             <Text style={[styles.programName, { color: colors.textPrimary }]} numberOfLines={1}>
               {program.name}
             </Text>
-            <View
-              style={[
-                styles.statusPill,
-                { backgroundColor: (isPaused ? colors.warning : colors.success) + '1f' },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusPillText,
-                  { color: isPaused ? colors.warning : colors.success },
-                ]}
-              >
-                {isPaused ? t('training.pausedBadge') : t('training.activeBadge')}
-              </Text>
+            <View style={[styles.statusPill, { backgroundColor: statusColor + '1f' }]}>
+              <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
             </View>
           </View>
+
+          {isScheduled && (
+            <View style={styles.goalRow}>
+              <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.goalText, { color: colors.textSecondary }]}>
+                {t('training.weeksList.startsOn', { date: fmtFull(program.start_date) })}
+              </Text>
+            </View>
+          )}
 
           {!!program.template?.name && (
             <View style={styles.goalRow}>

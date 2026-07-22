@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
-import type { Conversation, ConversationParticipant, Event } from '../types/api';
+import type { Conversation, ConversationParticipant, Event, PlanWarning } from '../types/api';
 import type { LegalDocumentType } from '../types/legal';
 
 export type AuthStackParamList = {
@@ -61,8 +61,9 @@ export type RootStackParamList = {
   Insights: undefined;
   // Training Plans
   TrainingCalibration: undefined;
-  ProgramLoading: { programId: number };
-  TrainingWeeksList: undefined;
+  // No ProgramLoading route: /training/programs/initialize is synchronous,
+  // so there is no generation status to poll while a spinner shows.
+  TrainingWeeksList: { warnings?: PlanWarning[] } | undefined;
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
   WeekFeedback: { weekId: number };

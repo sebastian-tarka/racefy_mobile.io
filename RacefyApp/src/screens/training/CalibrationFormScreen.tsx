@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Platform,
   ActivityIndicator,
   Alert,
-  Modal,
   FlatList,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -22,14 +22,14 @@ import { useSportTypes } from '../../hooks/useSportTypes';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { borderRadius, fontSize, spacing } from '../../theme';
 import {
-  ScreenHeader,
   Button,
-  Loading,
   Input,
-  SportTypeSelector,
+  Loading,
   ScreenContainer,
+  ScreenHeader,
+  SportTypeSelector,
 } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type {
@@ -250,8 +250,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
 
       logger.info('training', 'Calibration created', { calibrationId: calibration.id });
 
-      // Initialize program with activity linking settings
-      const program = await api.initProgram({
+      // Initialize program with activity linking settings.
+      // Synchronous: the finished plan comes back here, so there is nothing to poll.
+      const { program, warnings } = await api.initProgram({
         auto_link_activities: autoLinkActivities,
         ...(autoLinkActivities && allowedSportTypes.length > 0
           ? { allowed_sport_types: allowedSportTypes }
@@ -261,12 +262,17 @@ export function CalibrationFormScreen({ navigation }: Props) {
       logger.info('training', 'Program initialized', {
         programId: program.id,
         status: program.status,
+        totalWeeks: program.total_weeks,
+        startDate: program.start_date,
+        volumeFactor: program.volume_factor,
+        warnings: warnings.map((w) => w.code),
         autoLinkActivities,
         allowedSportTypes: allowedSportTypes.length > 0 ? allowedSportTypes : 'none',
       });
 
-      // Navigate to loading screen with program ID
-      navigation.replace('ProgramLoading', { programId: program.id });
+      // The plan is ready — go straight to it. A `scheduled` status is expected
+      // for a deferred plan and is rendered by the weeks list, not an error.
+      navigation.replace('TrainingWeeksList', warnings.length > 0 ? { warnings } : undefined);
     } catch (error: any) {
       logger.error('training', 'Failed to create calibration', { error });
       // Handle 403 feature-gating for active_training_programs limit

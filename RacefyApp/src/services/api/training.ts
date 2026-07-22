@@ -34,12 +34,19 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     }
 
     /**
-     * Initialize a training program based on current calibration
-     * This is async - program will be "pending" or "processing" initially
-     * Poll getProgram() until status becomes "active"
-     * @param data - Optional settings for activity linking
+     * Initialize a training program from the user's current calibration.
+     *
+     * SYNCHRONOUS — the finished plan comes back in the response, with all its
+     * weeks. There is no background job and no status to poll. A first-of-its-kind
+     * plan makes an AI call inline (a few seconds); identical plans hit the cache.
+     *
+     * The returned program may be `scheduled` rather than `active` — that means
+     * the plan is deferred so its taper lands in race week, not that it failed.
+     *
+     * @param data - Optional start_date / activity-linking settings. Never send
+     *               calibration_id; the calibration is resolved server-side.
      */
-    async initProgram(data?: Types.InitProgramRequest): Promise<Types.TrainingProgram> {
+    async initProgram(data?: Types.InitProgramRequest): Promise<Types.InitProgramResult> {
       const response = await this.request<Types.InitProgramResponse>(
         '/training/programs/initialize',
         {
@@ -47,8 +54,9 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
           body: JSON.stringify(data || {}),
         },
       );
-      // API may wrap in { program: {...} } or { data: {...} }
-      return response.program ?? response.data!;
+      // `program` is the legacy envelope; current API returns `data`.
+      const program = response.data ?? response.program!;
+      return { program, warnings: response.warnings ?? [] };
     }
 
     /**
@@ -200,14 +208,27 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     }
 
     /**
-     * Resume a paused training program
+     * Resume a paused training program.
+     *
+     * May hand back a DIFFERENT plan: if the program has a race date and the
+     * pause was long enough that resuming would push the taper past the race,
+     * the plan is rebuilt for the time actually left. In that case
+     * `regenerated` is true, `program` has a NEW id, and the old program
+     * (`previousProgramId`) is abandoned. Callers must re-read `program` and
+     * evict any cache keyed on the old id.
      */
-    async resumeProgram(programId: number): Promise<string> {
+    async resumeProgram(programId: number): Promise<Types.ResumeProgramResult> {
       const response = await this.request<Types.ResumeProgramResponse>(
         `/training/programs/${programId}/resume`,
         { method: 'POST' },
       );
-      return response.message;
+      return {
+        message: response.message,
+        regenerated: response.regenerated ?? false,
+        previousProgramId: response.previous_program_id ?? null,
+        program: response.program ?? null,
+        warnings: response.warnings ?? [],
+      };
     }
 
     /**

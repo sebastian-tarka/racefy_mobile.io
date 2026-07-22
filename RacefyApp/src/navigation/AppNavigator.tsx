@@ -75,7 +75,6 @@ import { LandingScreen } from '../screens/landing';
 import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
 import {
   CalibrationFormScreen,
-  ProgramLoadingScreen,
   TipDetailScreen,
   WeekDetailScreen,
   WeekFeedbackScreen,
@@ -666,13 +665,6 @@ export function AppNavigator() {
               <RootStack.Screen name="GoalDetail" component={GoalDetailScreen} />
               <RootStack.Screen name="GoalForm" component={GoalFormScreen} />
               <RootStack.Screen name="TrainingCalibration" component={CalibrationFormScreen} />
-              <RootStack.Screen
-                name="ProgramLoading"
-                component={ProgramLoadingScreen}
-                options={{
-                  gestureEnabled: false,
-                }}
-              />
               <RootStack.Screen name="TrainingWeeksList" component={WeeksListScreen} />
               <RootStack.Screen name="TrainingWeekDetail" component={WeekDetailScreen} />
               <RootStack.Screen name="TipDetail" component={TipDetailScreen} />

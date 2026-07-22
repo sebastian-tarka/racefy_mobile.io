@@ -1695,10 +1695,6 @@
       "crossTrainingSelected": "{{count}} sport(ów) wybranych",
       "selectCrossTrainingSports": "Wybierz Sporty Dodatkowe"
     },
-    "loading": {
-      "title": "Generowanie Twojego Planu",
-      "subtitle": "Nasza AI tworzy spersonalizowany plan treningowy specjalnie dla Ciebie. Zwykle trwa to 5-10 sekund."
-    },
     "programSelector": {
       "weekProgress": "Tydzień {{current}}/{{total}}",
       "active": "aktywny",
@@ -1761,7 +1757,10 @@
       "autoLinkTitle": "Auto-Łączenie Aktywności",
       "autoLinkEnabled": "Auto-łączenie włączone",
       "autoLinkDisabled": "Auto-łączenie wyłączone",
-      "settingsUpdated": "Ustawienia zaktualizowane pomyślnie"
+      "settingsUpdated": "Ustawienia zaktualizowane pomyślnie",
+      "startsOn": "Start {{date}}",
+      "planRegeneratedTitle": "Plan przebudowany",
+      "planRegeneratedMessage": "Przerwa była na tyle długa, że stary plan skończyłby się po Twoich zawodach, więc został przebudowany na pozostały czas. Poprzednie tygodnie zostają w historii."
     },
     "weekDetail": {
       "title": "Tydzień {{number}}",
@@ -1807,9 +1806,7 @@
       "targetDateRequired": "Wybierz docelową datę",
       "loadGoalsFailed": "Nie udało się załadować celów treningowych",
       "creationFailed": "Nie udało się utworzyć kalibracji treningowej",
-      "generationFailed": "Generowanie planu treningowego nie powiodło się. Spróbuj ponownie.",
       "loadingFailed": "Nie udało się załadować danych treningowych",
-      "timeout": "Generowanie programu trwa dłużej niż oczekiwano. Sprawdź ponownie za kilka minut.",
       "programNotFound": "Nie znaleziono programu treningowego",
       "weekNotFound": "Nie znaleziono tygodnia",
       "completeFailed": "Nie udało się ukończyć tygodnia",
@@ -1913,6 +1910,19 @@
       "retry": "Ponów",
       "loadError": "Nie udało się załadować podsumowania",
       "weekOf": "Tydzień {{number}} z {{total}}"
+    },
+    "scheduledBadge": "Zaplanowany",
+    "warnings": {
+      "title": "O Twoim planie",
+      "fallback": "Plan został dopasowany do Twojego celu.",
+      "plan_start_deferred": "Do zawodów jest jeszcze daleko, więc plan startuje {{start_date}} (za {{weeks_until_start}} tyg.) — dzięki temu tydzień startowy wypadnie na końcu.",
+      "plan_shorter_than_recommended": "Ten cel realizuje się zwykle przez {{recommended_weeks}} tyg., a do zawodów zostało miejsca na {{actual_weeks}}. Plan został skrócony.",
+      "plan_extends_beyond_target_date": "Plan wykracza poza datę zawodów ({{target_date}}) — start wypada w tygodniu {{race_week_number}}.",
+      "plan_ends_before_target_date": "Plan kończy się {{weeks_before_target}} tyg. przed {{target_date}}, więc przed zawodami zostaje luka.",
+      "insufficient_history_for_scaling": "Masz {{active_weeks}} z {{required_weeks}} tygodni treningu potrzebnych do dopasowania obciążenia, więc plan korzysta na razie ze standardowych objętości.",
+      "goal_demands_more_sessions": "Ten cel trenuje się zwykle przy co najmniej {{recommended_min_sessions}} sesjach w tygodniu, a wybrano {{sessions_per_week}}, więc długa sesja zdominuje tydzień. Bezpieczniej dołożyć obciążenie, dodając w ustawieniach inny sport.",
+      "plan_regenerated_on_resume": "Plan został przebudowany po {{paused_weeks}}-tygodniowej przerwie, żeby zdążyć na czas.",
+      "target_date_passed": "Data zawodów już minęła, więc plan nie jest już pod nią ułożony."
     }
   },
   "rewards": {

@@ -1693,10 +1693,6 @@
       "crossTrainingSelected": "{{count}} sport(s) selected",
       "selectCrossTrainingSports": "Select Cross-Training Sports"
     },
-    "loading": {
-      "title": "Generating Your Plan",
-      "subtitle": "Our AI is creating a personalized training program just for you. This usually takes 5-10 seconds."
-    },
     "programSelector": {
       "weekProgress": "Week {{current}}/{{total}}",
       "active": "active",
@@ -1759,7 +1755,10 @@
       "autoLinkTitle": "Activity Auto-Linking",
       "autoLinkEnabled": "Auto-link enabled",
       "autoLinkDisabled": "Auto-link disabled",
-      "settingsUpdated": "Settings updated successfully"
+      "settingsUpdated": "Settings updated successfully",
+      "startsOn": "Starts on {{date}}",
+      "planRegeneratedTitle": "Plan rebuilt",
+      "planRegeneratedMessage": "Your break was long enough that the old plan would have finished after your race, so it was rebuilt for the time you have left. Your previous weeks are kept as history."
     },
     "weekDetail": {
       "title": "Week {{number}}",
@@ -1805,9 +1804,7 @@
       "targetDateRequired": "Please select a target date",
       "loadGoalsFailed": "Failed to load training goals",
       "creationFailed": "Failed to create training calibration",
-      "generationFailed": "Training program generation failed. Please try again.",
       "loadingFailed": "Failed to load training data",
-      "timeout": "Program generation is taking longer than expected. Please check back in a few minutes.",
       "programNotFound": "Training program not found",
       "weekNotFound": "Week not found",
       "completeFailed": "Failed to complete week",
@@ -1911,6 +1908,19 @@
       "retry": "Retry",
       "loadError": "Failed to load feedback",
       "weekOf": "Week {{number}} of {{total}}"
+    },
+    "scheduledBadge": "Scheduled",
+    "warnings": {
+      "title": "About your plan",
+      "fallback": "Your plan was adjusted to fit your goal.",
+      "plan_start_deferred": "Your race is still far off, so the plan starts on {{start_date}} ({{weeks_until_start}} weeks from now) — that way the taper lands in race week.",
+      "plan_shorter_than_recommended": "This goal is usually built over {{recommended_weeks}} weeks, but your race leaves room for {{actual_weeks}}. The plan was shortened to fit.",
+      "plan_extends_beyond_target_date": "The plan runs past your race on {{target_date}} — your race falls in week {{race_week_number}}.",
+      "plan_ends_before_target_date": "The plan ends {{weeks_before_target}} weeks before {{target_date}}, so there is a gap before your race.",
+      "insufficient_history_for_scaling": "You have {{active_weeks}} of the {{required_weeks}} training weeks needed to tailor the load, so the plan uses standard volumes for now.",
+      "goal_demands_more_sessions": "This goal is usually trained on at least {{recommended_min_sessions}} sessions a week and you chose {{sessions_per_week}}, so the long session will dominate your week. Adding another sport in settings is a safer way to add load.",
+      "plan_regenerated_on_resume": "The plan was rebuilt after a {{paused_weeks}}-week break so it still finishes on time.",
+      "target_date_passed": "Your race date has already passed, so the plan is no longer aimed at it."
     }
   },
   "rewards": {
