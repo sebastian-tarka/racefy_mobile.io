@@ -36,8 +36,9 @@ import {
   useFadeToast,
   useGpsHealthCheck,
   useHealthEnrichment,
-  useMapStyleCycler,
   useLiveActivityContext,
+  useLivePreferences,
+  useMapStyleCycler,
   useMilestones,
   useMilestoneTracking,
   useMyPlannedRoutes,
@@ -56,6 +57,8 @@ import {
   EventSelectionSheet,
   FeatureGate,
   GpsHealthCheckCard,
+  LiveAthleteInbox,
+  LiveBroadcastControl,
   MapboxLiveMap,
   NearbyRoutesHorizontalPanel,
   RecordingMapControls,
@@ -198,6 +201,21 @@ export function ActivityRecordingScreen() {
   } = useLiveActivityContext();
 
   const isIdle = !isTracking && !isPaused;
+
+  // Live broadcasting: state is owned here so the toggle and the incoming
+  // message inbox stay in step.
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const { preferences: livePreferences } = useLivePreferences();
+  /**
+   * Height of the broadcast row, measured rather than assumed.
+   *
+   * The row sits in normal flow and pushes the map down, but the floating map
+   * controls are positioned absolutely against the screen and know nothing
+   * about it — so without this offset they land on top of the broadcast pill.
+   * Measured because the row's height depends on the visibility label and on
+   * whether the "share link" button and message inbox are present.
+   */
+  const [liveRowHeight, setLiveRowHeight] = useState(0);
 
   // Pre-run GPS health check (permissions, battery optimization, notifications)
   const { health: gpsHealth, refresh: refreshGpsHealth } = useGpsHealthCheck(
@@ -1207,6 +1225,27 @@ export function ActivityRecordingScreen() {
         </View>
       )}
 
+      {/* Live broadcasting: deliberately on the recording screen itself, not in
+          settings — the athlete must be able to stop sharing their real-time
+          position in one tap while running. */}
+      {status === 'recording' && !isScreenLocked && (
+        <View
+          style={styles.liveBroadcastRow}
+          onLayout={(e) => setLiveRowHeight(e.nativeEvent.layout.height)}
+        >
+          <LiveBroadcastControl
+            activityId={activity?.id ?? null}
+            onBroadcastingChange={setIsBroadcasting}
+          />
+          {/* Spectator messages reach the athlete only while broadcasting. */}
+          <LiveAthleteInbox
+            activityId={activity?.id ?? null}
+            isBroadcasting={isBroadcasting}
+            ttsIncoming={livePreferences.tts_incoming}
+          />
+        </View>
+      )}
+
       {/* Main Content Based on Status and View Mode */}
       {viewMode === 'map' ? (
         <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
@@ -1322,7 +1361,13 @@ export function ActivityRecordingScreen() {
           {/* Top-right controls row — re-center + view toggle + map style.
               Hidden during paused stats view (no map → buttons would overlap the timer). */}
           {!isIdle && !isScreenLocked && !(status === 'paused' && viewMode === 'stats') && (
-            <View style={[styles.topRightControls, { top: insets.top + 68 + spacing.sm }]}>
+            <View
+              style={[
+                styles.topRightControls,
+                // Clear the broadcast row, which sits between the header and the map.
+                { top: insets.top + 68 + spacing.sm + liveRowHeight },
+              ]}
+            >
               <TouchableOpacity
                 style={[
                   styles.mapStyleToggleButton,
@@ -1574,6 +1619,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: fontSize.xl,
     fontWeight: '700',
+  },
+  liveBroadcastRow: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   backButton: {
     width: 36,

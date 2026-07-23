@@ -135,6 +135,15 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       started_at?: string;
       event_id?: number;
       gps_profile?: Types.GpsProfileRequest;
+      /**
+       * Opt-in live broadcasting. OMIT this object when not broadcasting —
+       * absence is the canonical "off", and sending `{enabled: false}`
+       * defensively is not how the other clients behave.
+       *
+       * Note the response does NOT echo any live fields back, so a `selected`
+       * broadcast's share token must be read from `toggleLiveBroadcast`.
+       */
+      live?: Types.LiveBroadcastSettings;
     }): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>('/activities/start', {
         method: 'POST',

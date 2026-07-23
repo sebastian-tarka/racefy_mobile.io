@@ -1,9 +1,8 @@
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
-import { File, Paths } from 'expo-file-system';
 import { logger } from '../logger';
 import { synthesize } from './api';
 import { ensureAudioMode } from './audioSession';
+import { playBase64Mp3 } from '../audio/playBase64Mp3';
 import type { AudioCoachSettings } from '../../types/audioCoach';
 
 const SYNTH_TIMEOUT_MS = 8000;
@@ -99,30 +98,7 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
       return false;
     }
 
-    // Decode base64 to bytes and write to temp file
-    const tempFile = new File(Paths.cache, `audiocoach_${Date.now()}.mp3`);
-    const binaryString = atob(result.audio_base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    tempFile.write(bytes);
-
-    // Play the audio file
-    const { sound } = await Audio.Sound.createAsync({ uri: tempFile.uri }, { shouldPlay: true });
-
-    // Wait for playback to finish
-    await new Promise<void>((resolve) => {
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if ('didJustFinish' in status && status.didJustFinish) {
-          resolve();
-        }
-      });
-    });
-
-    // Cleanup
-    await sound.unloadAsync();
-    tempFile.delete();
+    await playBase64Mp3(result.audio_base64, `audiocoach_${Date.now()}`);
 
     return true;
   } catch (error: any) {

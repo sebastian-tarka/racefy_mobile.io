@@ -2601,5 +2601,89 @@
   },
   "eventCard": {
     "going": "{{count}} zapisanych"
+  },
+  "live": {
+    "visibility": {
+      "followers": "Obserwujący",
+      "public": "Wszyscy",
+      "selected": "Tylko link"
+    },
+    "visibilityDesc": {
+      "followers": "Osoby, które Cię obserwują, zobaczą Twoją pozycję na żywo.",
+      "public": "Każdy w Racefy zobaczy Twoją pozycję na żywo.",
+      "selected": "Zobaczą tylko te osoby, którym wyślesz link."
+    },
+    "broadcast": {
+      "start": "Udostępnij na żywo",
+      "startA11y": "Zacznij udostępniać pozycję na żywo",
+      "stopA11y": "Przestań udostępniać pozycję na żywo",
+      "pickAudience": "Kto może Cię oglądać?",
+      "startSharing": "Zacznij udostępniać",
+      "confirmTitle": "Udostępnić pozycję na żywo?",
+      "confirmMessage": {
+        "followers": "Każdy, kto Cię obserwuje, będzie widział gdzie jesteś, w czasie rzeczywistym, dopóki nie przerwiesz. Twoje strefy prywatności pozostaną ukryte.",
+        "public": "Każdy w Racefy będzie widział gdzie jesteś, w czasie rzeczywistym, dopóki nie przerwiesz. Twoje strefy prywatności pozostaną ukryte.",
+        "selected": "Każdy, komu dasz link, będzie widział gdzie jesteś, w czasie rzeczywistym, dopóki nie przerwiesz. Twoje strefy prywatności pozostaną ukryte."
+      },
+      "liveWith": {
+        "followers": "NA ŻYWO · Obserwujący",
+        "public": "NA ŻYWO · Wszyscy",
+        "selected": "NA ŻYWO · Link"
+      },
+      "shareLink": "Wyślij link",
+      "shareMessage": "Oglądaj mnie na żywo: {{url}}",
+      "enableFailed": "Nie udało się rozpocząć udostępniania. Nic nie zostało udostępnione.",
+      "disableFailed": "Nie udało się przerwać udostępniania. Spróbuj ponownie."
+    },
+    "positionHidden": "Pozycja ukryta",
+    "list": {
+      "title": "Na żywo",
+      "badge": "NA ŻYWO",
+      "countSubtitle": "{{count}} osoba nadaje teraz",
+      "countSubtitle_few": "{{count}} osoby nadają teraz",
+      "countSubtitle_many": "{{count}} osób nadaje teraz",
+      "emptySubtitle": "Nikt teraz nie nadaje",
+      "emptyTitle": "Nikt nie jest na żywo",
+      "emptyMessage": "Gdy ktoś, kogo możesz oglądać, zacznie nadawać, pojawi się tutaj."
+    },
+    "nowCard": {
+      "title": "Nadaje na żywo",
+      "subtitle": "Dotknij, żeby śledzić na żywo"
+    },
+    "spectator": {
+      "title": "Na żywo",
+      "connecting": "Łączenie…",
+      "endedTitle": "Transmisja zakończona",
+      "endedMessage": "Ta osoba już nie nadaje.",
+      "errorTitle": "Nie można wczytać transmisji",
+      "errorMessage": "Sprawdź połączenie i spróbuj ponownie.",
+      "distance": "Dystans",
+      "duration": "Czas",
+      "pace": "Tempo"
+    },
+    "messages": {
+      "placeholder": "Wyślij wiadomość…",
+      "empty": "Jeszcze nie ma wiadomości.",
+      "private": "Tylko ta osoba",
+      "public": "Wszyscy",
+      "disabled": "Ta osoba wyłączyła wiadomości na żywo.",
+      "tooLong": "Wiadomość może mieć najwyżej 280 znaków.",
+      "throttled": "Zwolnij na moment przed kolejną wiadomością.",
+      "unavailable": "Ta transmisja nie jest już dostępna.",
+      "sendFailed": "Nie udało się wysłać wiadomości. Spróbuj ponownie."
+    },
+    "tts": {
+      "limitReached": "Czytanie wiadomości na głos jest wstrzymane do przyszłego miesiąca — wyczerpano tegomiesięczny limit. Wiadomości nadal przychodzą.",
+      "notAvailable": "Czytanie wiadomości na głos jest teraz niedostępne."
+    },
+    "settings": {
+      "title": "Transmisje na żywo",
+      "intro": "Gdy nadajesz, inni widzą na mapie gdzie jesteś, w czasie rzeczywistym, dopóki nie przerwiesz. Transmisję włączasz i wyłączasz z ekranu nagrywania; te ustawienia decydują, co się wtedy dzieje.",
+      "visibilityLabel": "Kto domyślnie może oglądać",
+      "commentsLabel": "Pozwól widzom pisać do Ciebie",
+      "commentsDescription": "Osoby oglądające mogą wysłać Ci wiadomość. Prywatne trafiają tylko do Ciebie, publiczne widzą też pozostali widzowie.",
+      "ttsLabel": "Czytaj wiadomości na głos w trakcie ruchu",
+      "ttsDescription": "Przychodzące wiadomości są czytane w słuchawkach, przyciszając muzykę zamiast ją zatrzymywać. Wymaga płatnego planu."
+    }
   }
 }

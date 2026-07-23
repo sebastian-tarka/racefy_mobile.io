@@ -73,6 +73,7 @@ import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
 import { LandingScreen } from '../screens/landing';
 import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
+import { LiveBroadcastsScreen, LiveSpectatorScreen } from '../screens/live';
 import {
   CalibrationFormScreen,
   TipDetailScreen,
@@ -664,6 +665,8 @@ export function AppNavigator() {
               <RootStack.Screen name="Goals" component={GoalsScreen} />
               <RootStack.Screen name="GoalDetail" component={GoalDetailScreen} />
               <RootStack.Screen name="GoalForm" component={GoalFormScreen} />
+              <RootStack.Screen name="LiveBroadcasts" component={LiveBroadcastsScreen} />
+              <RootStack.Screen name="LiveSpectator" component={LiveSpectatorScreen} />
               <RootStack.Screen name="TrainingCalibration" component={CalibrationFormScreen} />
               <RootStack.Screen name="TrainingWeeksList" component={WeeksListScreen} />
               <RootStack.Screen name="TrainingWeekDetail" component={WeekDetailScreen} />

@@ -2595,5 +2595,88 @@
   },
   "eventCard": {
     "going": "{{count}} going"
+  },
+  "live": {
+    "visibility": {
+      "followers": "Followers",
+      "public": "Everyone",
+      "selected": "Just a link"
+    },
+    "visibilityDesc": {
+      "followers": "People who follow you can watch your position live.",
+      "public": "Anyone on Racefy can watch your position live.",
+      "selected": "Only people you send the link to can watch."
+    },
+    "broadcast": {
+      "start": "Share live",
+      "startA11y": "Start sharing your live position",
+      "stopA11y": "Stop sharing your live position",
+      "pickAudience": "Who can watch you?",
+      "startSharing": "Start sharing",
+      "confirmTitle": "Share your live position?",
+      "confirmMessage": {
+        "followers": "Everyone who follows you will see where you are, in real time, until you stop. Your saved privacy zones stay hidden.",
+        "public": "Anyone on Racefy will see where you are, in real time, until you stop. Your saved privacy zones stay hidden.",
+        "selected": "Anyone you give the link to will see where you are, in real time, until you stop. Your saved privacy zones stay hidden."
+      },
+      "liveWith": {
+        "followers": "LIVE · Followers",
+        "public": "LIVE · Everyone",
+        "selected": "LIVE · Link"
+      },
+      "shareLink": "Send the link",
+      "shareMessage": "Watch me live: {{url}}",
+      "enableFailed": "Could not start sharing. Nothing was shared.",
+      "disableFailed": "Could not stop sharing. Try again."
+    },
+    "positionHidden": "Position hidden",
+    "list": {
+      "title": "Live now",
+      "badge": "LIVE",
+      "countSubtitle": "{{count}} athlete broadcasting right now",
+      "countSubtitle_other": "{{count}} athletes broadcasting right now",
+      "emptySubtitle": "Nobody is broadcasting right now",
+      "emptyTitle": "Nobody is live",
+      "emptyMessage": "When someone you can watch starts broadcasting, they will show up here."
+    },
+    "nowCard": {
+      "title": "Broadcasting now",
+      "subtitle": "Tap to follow along live"
+    },
+    "spectator": {
+      "title": "Live",
+      "connecting": "Connecting…",
+      "endedTitle": "Broadcast ended",
+      "endedMessage": "This athlete is no longer broadcasting.",
+      "errorTitle": "Cannot load the broadcast",
+      "errorMessage": "Check your connection and try again.",
+      "distance": "Distance",
+      "duration": "Time",
+      "pace": "Pace"
+    },
+    "messages": {
+      "placeholder": "Send a message…",
+      "empty": "No messages yet.",
+      "private": "Only them",
+      "public": "Everyone",
+      "disabled": "This athlete has turned off live messages.",
+      "tooLong": "Messages can be at most 280 characters.",
+      "throttled": "Slow down a moment before sending again.",
+      "unavailable": "This broadcast is no longer available.",
+      "sendFailed": "Could not send the message. Try again."
+    },
+    "tts": {
+      "limitReached": "Reading messages aloud is paused until next month — you have reached this month’s limit. Messages still arrive.",
+      "notAvailable": "Reading messages aloud is not available right now."
+    },
+    "settings": {
+      "title": "Live broadcasting",
+      "intro": "When you broadcast, people can see where you are on a map in real time, until you stop. You start and stop a broadcast from the recording screen; these settings decide what happens when you do.",
+      "visibilityLabel": "Who can watch by default",
+      "commentsLabel": "Let viewers send you messages",
+      "commentsDescription": "People watching can send you a message. Private messages only reach you; public ones are visible to other viewers too.",
+      "ttsLabel": "Read messages aloud while I move",
+      "ttsDescription": "Incoming messages are spoken through your headphones, ducking your music instead of stopping it. Requires a paid plan."
+    }
   }
 }

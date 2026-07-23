@@ -26,6 +26,7 @@ import {
   Button,
   DebugLogsSection,
   Input,
+  LiveBroadcastSettings,
   MapStylePicker,
   PremiumTeaser,
   PrivacyConsentsSection,
@@ -266,6 +267,7 @@ export function SettingsScreen({ navigation }: Props) {
     activityTraining: false,
     notifications: false,
     privacySafety: false,
+    liveBroadcasting: false,
     legalSupport: false,
     app: true,
     dangerZone: false,
@@ -1125,6 +1127,20 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.privacySafety.blockedUsers')}
             onPress={() => navigation.navigate('BlockedUsers')}
           />
+        </SettingsSection>
+
+        {/* ══════════════════════════════════════════════════════════
+            5b. LIVE BROADCASTING
+            Its own section rather than a row inside privacy: these are
+            consents about sharing real-time location, and burying them
+            would understate what they permit.
+            ══════════════════════════════════════════════════════════ */}
+        <SettingsSection
+          title={t('live.settings.title')}
+          isExpanded={expandedSections.liveBroadcasting}
+          onToggle={() => toggleSection('liveBroadcasting')}
+        >
+          <LiveBroadcastSettings />
         </SettingsSection>
 
         {/* ══════════════════════════════════════════════════════════

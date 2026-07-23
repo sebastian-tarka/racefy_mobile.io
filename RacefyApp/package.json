@@ -65,6 +65,8 @@
     "expo-task-manager": "~14.0.9",
     "expo-video": "~3.0.15",
     "i18next": "^25.7.3",
+    "laravel-echo": "^2.4.0",
+    "pusher-js": "^8.5.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.69.0",

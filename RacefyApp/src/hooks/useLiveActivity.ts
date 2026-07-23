@@ -14,6 +14,7 @@ import { enqueueUnsyncedActivity } from '../services/unsyncedActivities';
 import * as trackingDb from '../services/trackingDb';
 import * as Crypto from 'expo-crypto';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import type * as Types from '../types/api';
 import type { Activity, ActivityLocation, AutoCreatedPost, GpsPoint } from '../types/api';
 import {
   convertToApiGpsProfile,
@@ -1088,12 +1089,18 @@ function useLiveActivityInternal() {
   };
 
   const startTracking = useCallback(
-    async (sportTypeId: number, title?: string, eventId?: number) => {
+    async (
+      sportTypeId: number,
+      title?: string,
+      eventId?: number,
+      live?: Types.LiveBroadcastSettings,
+    ) => {
       try {
         logger.activity('Starting activity tracking', {
           sportTypeId,
           title,
           eventId,
+          broadcasting: live?.enabled ?? false,
         });
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
@@ -1153,6 +1160,9 @@ function useLiveActivityInternal() {
           started_at: new Date().toISOString(),
           event_id: eventId,
           gps_profile: gpsProfileRequest,
+          // Omitted entirely when not broadcasting — absence is the canonical
+          // "off", and this must never default to enabled.
+          ...(live?.enabled ? { live } : {}),
         });
 
         // Reset local stats and pace tracking
@@ -1875,6 +1885,8 @@ interface LiveActivityContextType {
     sportTypeId: number,
     title?: string,
     eventId?: number,
+    /** Opt-in live broadcasting. Omit to start without broadcasting. */
+    live?: Types.LiveBroadcastSettings,
   ) => Promise<Activity | undefined>;
   pauseTracking: () => Promise<void>;
   resumeTracking: () => Promise<void>;

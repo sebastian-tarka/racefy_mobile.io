@@ -10,6 +10,7 @@ import { ProfileSectionCard } from './ProfileSectionCard';
 import { TrainingProgramRow } from './Training/TrainingProgramRow';
 import { TrainingPlansSheet } from './Training/TrainingPlansSheet';
 import { useTheme } from '../hooks/useTheme';
+import { useLiveBroadcasts } from '../hooks/useLiveBroadcasts';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { spacing } from '../theme';
@@ -38,6 +39,8 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
   const [loadingTraining, setLoadingTraining] = useState(true);
   const [sheetVisible, setSheetVisible] = useState(false);
+  // `total` (server-side), not the page length — the list is paginated at 20.
+  const { total: liveCount } = useLiveBroadcasts();
 
   const isFree = tier === 'free';
 
@@ -94,6 +97,20 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
           loading={loadingTraining}
         />
       )}
+
+      {/* The count IS the discovery mechanism — an entry that never says how
+          many people are live gives nobody a reason to open it. */}
+      <ProfileSectionCard
+        icon="radio"
+        accentColor={colors.error}
+        label={t('live.list.title')}
+        subtitle={
+          liveCount > 0
+            ? t('live.list.countSubtitle', { count: liveCount })
+            : t('live.list.emptySubtitle')
+        }
+        onPress={() => navigation.navigate('LiveBroadcasts')}
+      />
 
       <ProfileSectionCard
         icon="bar-chart"

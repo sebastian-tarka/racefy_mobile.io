@@ -2513,5 +2513,88 @@
   },
   "eventCard": {
     "going": "{{count}} inscritos"
+  },
+  "live": {
+    "visibility": {
+      "followers": "Seguidores",
+      "public": "Todos",
+      "selected": "Solo un enlace"
+    },
+    "visibilityDesc": {
+      "followers": "Quienes te siguen podrán ver tu posición en directo.",
+      "public": "Cualquiera en Racefy podrá ver tu posición en directo.",
+      "selected": "Solo quienes reciban el enlace podrán verte."
+    },
+    "broadcast": {
+      "start": "Compartir en directo",
+      "startA11y": "Empezar a compartir tu posición en directo",
+      "stopA11y": "Dejar de compartir tu posición en directo",
+      "pickAudience": "¿Quién puede verte?",
+      "startSharing": "Empezar a compartir",
+      "confirmTitle": "¿Compartir tu posición en directo?",
+      "confirmMessage": {
+        "followers": "Todos los que te siguen verán dónde estás, en tiempo real, hasta que lo detengas. Tus zonas de privacidad seguirán ocultas.",
+        "public": "Cualquiera en Racefy verá dónde estás, en tiempo real, hasta que lo detengas. Tus zonas de privacidad seguirán ocultas.",
+        "selected": "Cualquiera a quien des el enlace verá dónde estás, en tiempo real, hasta que lo detengas. Tus zonas de privacidad seguirán ocultas."
+      },
+      "liveWith": {
+        "followers": "EN DIRECTO · Seguidores",
+        "public": "EN DIRECTO · Todos",
+        "selected": "EN DIRECTO · Enlace"
+      },
+      "shareLink": "Enviar el enlace",
+      "shareMessage": "Sígueme en directo: {{url}}",
+      "enableFailed": "No se pudo empezar a compartir. No se compartió nada.",
+      "disableFailed": "No se pudo detener. Inténtalo de nuevo."
+    },
+    "positionHidden": "Posición oculta",
+    "list": {
+      "title": "En directo",
+      "badge": "EN DIRECTO",
+      "countSubtitle": "{{count}} atleta emitiendo ahora",
+      "countSubtitle_other": "{{count}} atletas emitiendo ahora",
+      "emptySubtitle": "Nadie está emitiendo ahora",
+      "emptyTitle": "Nadie está en directo",
+      "emptyMessage": "Cuando alguien a quien puedas ver empiece a emitir, aparecerá aquí."
+    },
+    "nowCard": {
+      "title": "Emitiendo ahora",
+      "subtitle": "Toca para seguirlo en directo"
+    },
+    "spectator": {
+      "title": "En directo",
+      "connecting": "Conectando…",
+      "endedTitle": "Emisión finalizada",
+      "endedMessage": "Este atleta ya no está emitiendo.",
+      "errorTitle": "No se puede cargar la emisión",
+      "errorMessage": "Comprueba tu conexión e inténtalo de nuevo.",
+      "distance": "Distancia",
+      "duration": "Tiempo",
+      "pace": "Ritmo"
+    },
+    "messages": {
+      "placeholder": "Envía un mensaje…",
+      "empty": "Aún no hay mensajes.",
+      "private": "Solo esa persona",
+      "public": "Todos",
+      "disabled": "Este atleta ha desactivado los mensajes en directo.",
+      "tooLong": "Los mensajes pueden tener 280 caracteres como máximo.",
+      "throttled": "Espera un momento antes de volver a enviar.",
+      "unavailable": "Esta emisión ya no está disponible.",
+      "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo."
+    },
+    "tts": {
+      "limitReached": "La lectura en voz alta está pausada hasta el mes que viene: has alcanzado el límite de este mes. Los mensajes siguen llegando.",
+      "notAvailable": "La lectura en voz alta no está disponible ahora mismo."
+    },
+    "settings": {
+      "title": "Emisión en directo",
+      "intro": "Cuando emites, otras personas ven en un mapa dónde estás, en tiempo real, hasta que lo detengas. La emisión se inicia y se detiene desde la pantalla de grabación; estos ajustes deciden qué ocurre cuando lo haces.",
+      "visibilityLabel": "Quién puede verte por defecto",
+      "commentsLabel": "Permitir que los espectadores te escriban",
+      "commentsDescription": "Quienes te vean podrán enviarte un mensaje. Los privados solo llegan a ti; los públicos también los ven los demás espectadores.",
+      "ttsLabel": "Leer los mensajes en voz alta mientras me muevo",
+      "ttsDescription": "Los mensajes entrantes se leen por tus auriculares, bajando el volumen de la música en vez de detenerla. Requiere un plan de pago."
+    }
   }
 }

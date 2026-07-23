@@ -1,26 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
 import {
-  EmptyState,
-  PostCard,
   ActivityCard,
-  EventCard,
-  UserListModal,
-  UserProfileHeader,
-  ScreenHeader,
-  PointsCard,
   BottomSheet,
+  EmptyState,
+  EventCard,
+  LiveNowCard,
+  PointsCard,
+  PostCard,
   ReportModal,
   ScreenContainer,
+  ScreenHeader,
+  UserListModal,
+  UserProfileHeader,
 } from '../../components';
 import type { TabType } from '../../components/ProfileTabs';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,11 +23,11 @@ import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
 import { useBlockUser } from '../../hooks/useBlockUser';
 import { api } from '../../services/api';
-import { canViewFollowersList, canViewFollowingList, canSendMessage } from '../../utils/privacy';
+import { canSendMessage, canViewFollowersList, canViewFollowingList } from '../../utils/privacy';
 import { spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { Post, Activity, Event, User } from '../../types/api';
+import type { Activity, Event, Post, User } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -251,6 +244,10 @@ export function UserProfileScreen({ navigation, route }: Props) {
           onMessagePress={handleMessagePress}
           onTabChange={setActiveTab}
           onMenuPress={() => setShowActionSheet(true)}
+        />
+        <LiveNowCard
+          userId={profile.id}
+          onPress={(activityId) => navigation.navigate('LiveSpectator', { activityId })}
         />
         {activeTab === 'stats' && (
           <View style={styles.statsTabContent}>

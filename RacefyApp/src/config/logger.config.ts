@@ -23,7 +23,8 @@ export type LogCategory =
   | 'commentary'
   | 'media'
   | 'profile'
-  | 'audioCoach';
+  | 'audioCoach'
+  | 'live';
 
 // Log level priority (lower = more verbose)
 const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {

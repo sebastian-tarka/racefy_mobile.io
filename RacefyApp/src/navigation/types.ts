@@ -59,6 +59,9 @@ export type RootStackParamList = {
   Leaderboard: undefined;
   PointHistory: undefined;
   Insights: undefined;
+  // Live broadcasting
+  LiveBroadcasts: undefined;
+  LiveSpectator: { activityId: number; shareToken?: string };
   // Training Plans
   TrainingCalibration: undefined;
   // No ProgramLoading route: /training/programs/initialize is synchronous,
