@@ -1,10 +1,11 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
-import * as Speech from 'expo-speech';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
 import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
-import { ensureAudioMode } from './audioCoach/audioSession';
+import { speakText } from './audioCoach/tts';
+import type { AudioCoachSettings } from '../types/audioCoach';
+import { DEFAULT_AUDIO_COACH_SETTINGS } from '../types/audioCoach';
 import type { GpsProfile } from '../config/gpsProfiles';
 import { haversineDistance } from '../utils/gpsMath';
 import * as trackingDb from './trackingDb';
@@ -140,17 +141,8 @@ const BG_AUDIO_START_TIME_KEY = '@racefy:audioCoach:bgStartTime';
 const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
 const BG_AUDIO_SIM_KEY = '@racefy:audioCoach:bgSimStartTime'; // DEV sim mode
 const BG_AUDIO_MILESTONES_KEY = '@racefy:audioCoach:bgMilestones'; // JSON array of unachieved thresholds (km)
+const BG_AUDIO_TIER_KEY = '@racefy:audioCoach:tier'; // written by useAudioCoach so AI voice works here
 const BG_AUDIO_PASSED_MILESTONES_KEY = '@racefy:audioCoach:bgPassedMilestones'; // JSON array of already announced
-
-const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-US',
-  pl: 'pl-PL',
-  de: 'de-DE',
-  fr: 'fr-FR',
-  es: 'es-ES',
-  it: 'it-IT',
-  pt: 'pt-PT',
-};
 
 /**
  * Called from the background task on every GPS event (even filtered ones).
@@ -158,7 +150,9 @@ const SPEECH_LANG_MAP: Record<string, string> = {
  * In sim mode (DEV): calculates distance from elapsed time (~350m/10s).
  *
  * Key: this runs in a headless JS context — no React, no hooks, no component tree.
- * Speech.speak() works here because expo-speech uses native TTS directly.
+ * speakText() works here: AI synthesis is a plain fetch + expo-av playback, and
+ * its offline fallback uses native TTS directly. Both paths configure the audio
+ * session and hold focus so music ducks/pauses per the user's preference.
  */
 async function handleAudioCoachBackground(distanceAddedM: number): Promise<void> {
   try {
@@ -179,8 +173,17 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
     const language = settings?.language || 'pl';
     const style = settings?.style || 'neutral';
     const intervalKm = settings?.intervalKm || 1;
-    const speechRate = settings?.speechRate || 1.0;
-    const speechPitch = settings?.speechPitch || 1.0;
+
+    // Full settings object for speakText — same speech path as the foreground
+    // hook, so the AI voice keeps working when this task wins the announcement
+    // race. Tier is mirrored into storage by useAudioCoach (no auth context here).
+    const coachSettings: AudioCoachSettings = {
+      ...DEFAULT_AUDIO_COACH_SETTINGS,
+      ...(settings ?? {}),
+      language,
+    };
+    const tierStr = await AsyncStorage.getItem(BG_AUDIO_TIER_KEY);
+    const tier = tierStr === 'plus' || tierStr === 'pro' ? tierStr : 'free';
 
     // Calculate distance
     let totalDistM: number;
@@ -247,17 +250,12 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
       sim: isSimMode,
     });
 
-    // expo-speech uses native TTS — works in headless JS context.
-    // Android TTS automatically requests AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
-    // which ducks (quiets) music instead of pausing it.
-    // iOS: an inactive audio session silences background speech even with
-    // UIBackgroundModes:["audio"] — configure it before every announcement.
-    await ensureAudioMode();
-    Speech.speak(text, {
-      language: SPEECH_LANG_MAP[language] || 'en-US',
-      rate: speechRate,
-      pitch: speechPitch,
-    });
+    // Same queue-based path as the foreground hook: tries the AI voice for
+    // Plus/Pro (falling back to offline TTS on any failure), configures the
+    // audio session and holds focus so music ducks/pauses per the preference.
+    // isOnline=true: no NetInfo here — an offline device just fails the synth
+    // call fast and falls back.
+    speakText(text, coachSettings, tier, true);
 
     // Check milestone announcements (premium feature — thresholds stored by UI)
     try {
@@ -277,15 +275,10 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
                 threshold,
                 totalDistKm: totalDistKm.toFixed(2),
               });
-              // Speak milestone after a short delay (so km announcement finishes first)
-              setTimeout(async () => {
-                await ensureAudioMode();
-                Speech.speak(milestoneText, {
-                  language: SPEECH_LANG_MAP[language] || 'en-US',
-                  rate: speechRate,
-                  pitch: speechPitch,
-                });
-              }, 4000);
+              // No setTimeout: speakText's queue already serializes this
+              // after the km announcement, and a headless task may die
+              // before a 4s timer ever fires.
+              speakText(milestoneText, coachSettings, tier, true);
             }
           }
         }

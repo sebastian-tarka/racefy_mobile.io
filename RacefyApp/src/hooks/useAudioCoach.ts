@@ -1,18 +1,19 @@
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { logger } from '../services/logger';
 import {
   buildAnnouncementText,
-  buildStartAnnouncement,
   buildEndAnnouncement,
   buildMilestoneAnnouncement,
+  buildStartAnnouncement,
 } from '../services/audioCoach/templates';
 import { speakText, stopSpeaking } from '../services/audioCoach/tts';
 import type { AudioCoachSettings } from '../types/audioCoach';
 
-/** Shared AsyncStorage key — same as in backgroundLocation.ts */
+/** Shared AsyncStorage keys — same as in backgroundLocation.ts */
 const BG_AUDIO_THRESHOLD_KEY = '@racefy:audioCoach:bgLastThreshold';
+const BG_AUDIO_TIER_KEY = '@racefy:audioCoach:tier';
 
 interface UseAudioCoachParams {
   settings: AudioCoachSettings;
@@ -53,6 +54,13 @@ export function useAudioCoach({
     });
     return () => unsubscribe();
   }, []);
+
+  // Mirror the subscription tier for the background task — it has no auth
+  // context, and without the tier it would always announce with the offline
+  // system voice even when the user configured an AI voice.
+  useEffect(() => {
+    AsyncStorage.setItem(BG_AUDIO_TIER_KEY, userTier).catch(() => {});
+  }, [userTier]);
 
   // Sync with background task threshold on mount / when distance changes significantly
   useEffect(() => {

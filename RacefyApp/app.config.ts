@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.15.0',
+  version: '1.16.0',
   orientation: 'portrait',
   icon: './assets/icon-ios.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1.15.0',
+    buildNumber: '1.16.0',
     ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
     associatedDomains: ['applinks:racefy.io', 'applinks:app.dev.racefy.io'],
     infoPlist: {
@@ -107,7 +107,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 21,
+    versionCode: 22,
     ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [
       'ACCESS_FINE_LOCATION',

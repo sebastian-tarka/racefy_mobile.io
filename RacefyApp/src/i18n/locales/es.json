@@ -1253,6 +1253,15 @@
         "minimal": "Mínimo"
       },
       "speechRate": "Velocidad del habla",
+      "audioFocus": "Audio de otras apps",
+      "audioFocusHint": "Qué ocurre con la música o el pódcast mientras suena un aviso.",
+      "audioFocusModes": {
+        "duck": "Bajar la música",
+        "pause": "Pausar la música",
+        "mix": "No hacer nada"
+      },
+      "announcementVolume": "Volumen de los avisos",
+      "announcementVolumeHint": "Se aplica a la voz con IA.",
       "aiVoice": "Voz IA",
       "aiVoiceHint": "Usa voces naturales de IA en lugar de TTS del dispositivo",
       "heartRate": "Anunciar frecuencia cardíaca",

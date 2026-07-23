@@ -1,13 +1,12 @@
 import { api } from '../api';
 import { logger } from '../logger';
 import type {
-  AudioCoachSettings,
-  AudioCoachServerSettings,
   AudioCoachPlanInfo,
+  AudioCoachServerSettings,
+  AudioCoachSettings,
   SynthesizeRequest,
   SynthesizeResponse,
 } from '../../types/audioCoach';
-import type { ApiResponse } from '../../types/api';
 
 /**
  * Map short language codes (used in UI/templates) to full locale codes (used by API)
@@ -82,6 +81,7 @@ export async function synthesize(
   text: string,
   voice: string,
   language: string,
+  signal?: AbortSignal,
 ): Promise<SynthesizeResponse> {
   const locale = LANG_TO_LOCALE[language] || 'en-US';
   logger.debug('audioCoach', 'Synthesizing speech', { textLength: text.length, voice, locale });
@@ -90,6 +90,7 @@ export async function synthesize(
   const response = await api.request<any>('/audio-coach/synthesize', {
     method: 'POST',
     body: JSON.stringify(body),
+    signal,
   });
   // API may return { data: { audio_base64, ... } } or { audio_base64, ... } directly
   const result = response.data ?? response;

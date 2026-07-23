@@ -1265,6 +1265,15 @@
         "minimal": "Minimal"
       },
       "speechRate": "Speech Rate",
+      "audioFocus": "Other apps’ audio",
+      "audioFocusHint": "What happens to music or podcasts while an announcement plays.",
+      "audioFocusModes": {
+        "duck": "Lower music",
+        "pause": "Pause music",
+        "mix": "Do nothing"
+      },
+      "announcementVolume": "Announcement volume",
+      "announcementVolumeHint": "Applies to AI voice playback.",
       "aiVoice": "AI Voice",
       "aiVoiceHint": "Use natural AI voices instead of device TTS",
       "heartRate": "Announce Heart Rate",

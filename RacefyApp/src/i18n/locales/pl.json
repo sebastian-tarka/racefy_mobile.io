@@ -1265,6 +1265,15 @@
         "minimal": "Minimalny"
       },
       "speechRate": "Szybkość mowy",
+      "audioFocus": "Dźwięk innych aplikacji",
+      "audioFocusHint": "Co dzieje się z muzyką lub podcastem w trakcie komunikatu.",
+      "audioFocusModes": {
+        "duck": "Ścisz muzykę",
+        "pause": "Zatrzymaj muzykę",
+        "mix": "Nic nie rób"
+      },
+      "announcementVolume": "Głośność komunikatów",
+      "announcementVolumeHint": "Dotyczy odtwarzania głosu AI.",
       "aiVoice": "Głos AI",
       "aiVoiceHint": "Użyj naturalnych głosów AI zamiast syntezatora urządzenia",
       "heartRate": "Ogłaszaj tętno",

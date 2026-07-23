@@ -1,22 +1,26 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useSubscription } from '../hooks/useSubscription';
 import { triggerHaptic } from '../hooks/useHaptics';
 import { useAudioCoachSettings } from '../hooks/useAudioCoachSettings';
+import { useAudioFocusPrefs } from '../hooks/useAudioFocusPrefs';
 import { buildAnnouncementText } from '../services/audioCoach/templates';
 import { speakText } from '../services/audioCoach/tts';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { AudioFocusMode } from '../services/audioCoach/audioSession';
 import type {
+  AudioCoachLanguage,
   AudioCoachSettings as SettingsType,
   AudioCoachStyle,
-  AudioCoachLanguage,
   AudioCoachVoice,
 } from '../types/audioCoach';
 
 const INTERVAL_OPTIONS = [0.5, 1, 2, 5];
+
+const AUDIO_FOCUS_OPTIONS: AudioFocusMode[] = ['duck', 'pause', 'mix'];
 
 const STYLE_OPTIONS: AudioCoachStyle[] = ['neutral', 'motivational', 'coach', 'minimal'];
 
@@ -50,6 +54,7 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
 
   const { settings, planInfo, isLoading, loadSettings, updateSettings, loadPlanInfo } =
     useAudioCoachSettings();
+  const { prefs: audioFocus, updatePrefs: updateAudioFocus } = useAudioFocusPrefs();
 
   useEffect(() => {
     loadSettings();
@@ -62,6 +67,24 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
       updateSettings({ [key]: value });
     },
     [updateSettings],
+  );
+
+  const handleAudioFocusMode = useCallback(
+    (mode: AudioFocusMode) => {
+      triggerHaptic();
+      updateAudioFocus({ mode });
+    },
+    [updateAudioFocus],
+  );
+
+  const handleVolumeStep = useCallback(
+    (delta: number) => {
+      triggerHaptic();
+      // Rounded because repeated float steps otherwise drift to 0.7000000000001.
+      const next = Math.round(Math.min(1, Math.max(0.3, audioFocus.volume + delta)) * 10) / 10;
+      updateAudioFocus({ volume: next });
+    },
+    [audioFocus.volume, updateAudioFocus],
   );
 
   const handlePreview = useCallback(() => {
@@ -364,6 +387,76 @@ export function AudioCoachSettings({ embedded = true }: AudioCoachSettingsProps)
           thumbColor={settings.announceSplitDelta ? colors.primary : colors.white}
           disabled={isDisabled || !isPro}
         />
+      </View>
+
+      {/* Other apps' audio (music ducking) */}
+      <View style={[styles.section, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+          {t('settings.audioCoach.audioFocus')}
+        </Text>
+        <Text style={[styles.hint, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
+          {t('settings.audioCoach.audioFocusHint')}
+        </Text>
+        <View style={styles.chipRow}>
+          {AUDIO_FOCUS_OPTIONS.map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.chip,
+                { borderColor: colors.border, backgroundColor: colors.cardBackground },
+                audioFocus.mode === mode && {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary,
+                },
+              ]}
+              onPress={() => handleAudioFocusMode(mode)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: colors.textSecondary },
+                  audioFocus.mode === mode && { color: colors.white },
+                ]}
+              >
+                {t(`settings.audioCoach.audioFocusModes.${mode}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Announcement volume (AI voice playback) */}
+      <View style={[styles.row, { borderBottomColor: colors.border }]}>
+        <View style={styles.textColumn}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('settings.audioCoach.announcementVolume')}
+          </Text>
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>
+            {t('settings.audioCoach.announcementVolumeHint')}
+          </Text>
+        </View>
+        <View style={styles.rateControls}>
+          <TouchableOpacity
+            onPress={() => handleVolumeStep(-0.1)}
+            disabled={audioFocus.volume <= 0.3}
+          >
+            <Ionicons
+              name="remove-circle-outline"
+              size={24}
+              color={audioFocus.volume <= 0.3 ? colors.textMuted : colors.primary}
+            />
+          </TouchableOpacity>
+          <Text style={[styles.rateValue, { color: colors.textPrimary }]}>
+            {Math.round(audioFocus.volume * 100)}%
+          </Text>
+          <TouchableOpacity onPress={() => handleVolumeStep(0.1)} disabled={audioFocus.volume >= 1}>
+            <Ionicons
+              name="add-circle-outline"
+              size={24}
+              color={audioFocus.volume >= 1 ? colors.textMuted : colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Usage info */}

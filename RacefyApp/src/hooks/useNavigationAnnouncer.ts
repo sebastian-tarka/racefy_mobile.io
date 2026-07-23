@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as Speech from 'expo-speech';
 import i18n from 'i18next';
 import { logger } from '../services/logger';
+import { speakDucked } from '../services/audioCoach/audioSession';
 import type { RouteTurnInstruction } from '../types/api';
 
 interface Params {
@@ -14,6 +15,7 @@ interface Params {
 
 /**
  * Speaks turn instructions and off-route alerts via expo-speech.
+ * - Goes through speakDucked so music ducks (or pauses) around each prompt
  * - Announces each upcoming turn at most once
  * - Speaks "off route" once per off-route entry (not on every reading)
  */
@@ -52,7 +54,9 @@ export function useNavigationAnnouncer({
     Speech.stop()
       .catch(() => {})
       .finally(() => {
-        Speech.speak(phrase, {
+        // Ducks/pauses the athlete's music for the turn prompt, per their
+        // audio preference — same path as the audio coach.
+        void speakDucked(phrase, {
           language: i18n.language || 'en',
           rate: 1.0,
           pitch: 1.0,
@@ -67,12 +71,12 @@ export function useNavigationAnnouncer({
     if (isOffRoute && !lastOffRouteRef.current) {
       lastOffRouteRef.current = true;
       const phrase = i18n.t('navigation.offRoute', { defaultValue: 'Off route' });
-      Speech.speak(phrase, { language: i18n.language || 'en' });
+      void speakDucked(phrase, { language: i18n.language || 'en' });
       logger.debug('activity', 'Navigation TTS off-route');
     } else if (!isOffRoute && lastOffRouteRef.current) {
       lastOffRouteRef.current = false;
       const phrase = i18n.t('navigation.backOnRoute', { defaultValue: 'Back on route' });
-      Speech.speak(phrase, { language: i18n.language || 'en' });
+      void speakDucked(phrase, { language: i18n.language || 'en' });
     }
   }, [isOffRoute, isActive]);
 }

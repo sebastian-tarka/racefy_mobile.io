@@ -1,7 +1,7 @@
 import * as Speech from 'expo-speech';
 import { logger } from '../logger';
 import { synthesize } from './api';
-import { ensureAudioMode } from './audioSession';
+import { ensureAudioMode, speakDucked, withAudioFocus } from './audioSession';
 import { playBase64Mp3 } from '../audio/playBase64Mp3';
 import type { AudioCoachSettings } from '../../types/audioCoach';
 
@@ -51,34 +51,18 @@ const SPEECH_LANG_MAP: Record<string, string> = {
  * Speak text using offline expo-speech as fallback
  */
 async function speakOffline(text: string, settings: AudioCoachSettings): Promise<void> {
-  await ensureAudioMode();
   logger.debug('audioCoach', 'speakOffline: starting', {
     text: text.substring(0, 80),
     language: settings.language,
   });
-  return new Promise((resolve) => {
-    // Safety timeout — some Android TTS engines never fire onDone
-    const safetyTimeout = setTimeout(() => {
-      logger.warn('audioCoach', 'speakOffline: safety timeout (15s), resolving');
-      resolve();
-    }, 15_000);
-
-    Speech.speak(text, {
-      language: SPEECH_LANG_MAP[settings.language] || 'en-US',
-      rate: settings.speechRate,
-      pitch: settings.speechPitch,
-      onDone: () => {
-        clearTimeout(safetyTimeout);
-        logger.debug('audioCoach', 'speakOffline: done');
-        resolve();
-      },
-      onError: (err) => {
-        clearTimeout(safetyTimeout);
-        logger.error('audioCoach', 'Offline speech failed', { error: err });
-        resolve(); // resolve instead of reject to not block queue
-      },
-    });
+  // speakDucked holds audio focus for the utterance (platform TTS does not
+  // request it on Android) and never rejects, so the queue keeps draining.
+  await speakDucked(text, {
+    language: SPEECH_LANG_MAP[settings.language] || 'en-US',
+    rate: settings.speechRate,
+    pitch: settings.speechPitch,
   });
+  logger.debug('audioCoach', 'speakOffline: done');
 }
 
 /**
@@ -90,7 +74,7 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
 
   try {
     await ensureAudioMode();
-    const result = await synthesize(text, settings.aiVoice, settings.language);
+    const result = await synthesize(text, settings.aiVoice, settings.language, controller.signal);
     clearTimeout(timeout);
 
     if (!result.audio_base64) {
@@ -98,7 +82,9 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
       return false;
     }
 
-    await playBase64Mp3(result.audio_base64, `audiocoach_${Date.now()}`);
+    // Focus is held only around playback, not the synth network call — the
+    // music must not dip while we wait for the backend.
+    await withAudioFocus(() => playBase64Mp3(result.audio_base64, `audiocoach_${Date.now()}`));
 
     return true;
   } catch (error: any) {

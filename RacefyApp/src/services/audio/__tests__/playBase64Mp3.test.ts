@@ -5,6 +5,12 @@ const mockDelete = jest.fn();
 const mockUnload = jest.fn().mockResolvedValue(undefined);
 let statusCallback: ((status: any) => void) | null = null;
 
+// Only the volume preference is consumed here, and the real module pulls in
+// AsyncStorage's native bridge, which does not exist under Jest.
+jest.mock('../../audioCoach/audioSession', () => ({
+  getAudioFocusPrefs: () => ({ mode: 'duck', volume: 1 }),
+}));
+
 jest.mock('expo-file-system', () => ({
   Paths: { cache: '/cache' },
   File: jest.fn().mockImplementation(() => ({

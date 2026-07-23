@@ -1,6 +1,6 @@
 import { api } from './api';
 import { logger } from './logger';
-import { ensureAudioMode } from './audioCoach/audioSession';
+import { withAudioFocus } from './audioCoach/audioSession';
 import { playBase64Mp3 } from './audio/playBase64Mp3';
 
 /**
@@ -23,7 +23,6 @@ export type LiveTtsResult = { ok: true } | { ok: false; reason: LiveTtsFailure }
  */
 export async function playLiveMessageTts(commentId: number): Promise<LiveTtsResult> {
   try {
-    await ensureAudioMode();
     const result = await api.getLiveMessageTts(commentId);
 
     if (!result?.audio_base64) {
@@ -31,7 +30,9 @@ export async function playLiveMessageTts(commentId: number): Promise<LiveTtsResu
       return { ok: false, reason: 'failed' };
     }
 
-    await playBase64Mp3(result.audio_base64, `live_msg_${commentId}`);
+    // Focus held only around playback (not the fetch): music ducks/pauses per
+    // the user's preference and comes back when the message ends.
+    await withAudioFocus(() => playBase64Mp3(result.audio_base64, `live_msg_${commentId}`));
     return { ok: true };
   } catch (error: any) {
     const status = error?.status;

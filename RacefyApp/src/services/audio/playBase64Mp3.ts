@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av';
 import { File, Paths } from 'expo-file-system';
+import { getAudioFocusPrefs } from '../audioCoach/audioSession';
 
 /**
  * Decode a base64 MP3 to a temp file, play it to completion, then clean up.
@@ -14,8 +15,13 @@ import { File, Paths } from 'expo-file-system';
  *
  * @param base64 - Raw base64 MP3 payload.
  * @param fileTag - Distinguishes temp files between concurrent callers.
+ * @param volume - 0..1; defaults to the user's announcement volume preference.
  */
-export async function playBase64Mp3(base64: string, fileTag: string): Promise<void> {
+export async function playBase64Mp3(
+  base64: string,
+  fileTag: string,
+  volume?: number,
+): Promise<void> {
   const tempFile = new File(Paths.cache, `${fileTag}.mp3`);
 
   const binaryString = atob(base64);
@@ -25,7 +31,10 @@ export async function playBase64Mp3(base64: string, fileTag: string): Promise<vo
   }
   tempFile.write(bytes);
 
-  const { sound } = await Audio.Sound.createAsync({ uri: tempFile.uri }, { shouldPlay: true });
+  const { sound } = await Audio.Sound.createAsync(
+    { uri: tempFile.uri },
+    { shouldPlay: true, volume: volume ?? getAudioFocusPrefs().volume },
+  );
   try {
     await new Promise<void>((resolve) => {
       sound.setOnPlaybackStatusUpdate((status) => {
