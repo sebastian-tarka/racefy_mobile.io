@@ -1,3 +1,7 @@
+# Local working notes (prompts for the API team, analyses, scratch findings).
+# Kept in the project so they survive /tmp cleanup, but never committed.
+.notes/
+
 # IDE
 .idea/
 *.iml
