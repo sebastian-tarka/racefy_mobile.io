@@ -31,19 +31,6 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 - [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
 - [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
 
-### `feature/live-messages-archive` — commit `b0d027a` (od `main`/`4f63fd7`)
-
-Karta „Doping z transmisji" na szczegółach aktywności: zawodnik czyta wiadomości
-od widzów po zakończeniu biegu (wcześniej znikały z widoku razem z transmisją).
-Zmiana **wyłącznie mobilna** — API już to obsługuje. 9 plików, 6 testów hooka.
-tsc 0 · eslint 0 błędów · jest 199/199.
-
-- [x] Potwierdzone na lokalnym API: właściciel dostaje 200 z wiadomościami (także prywatnymi) **po** `finish`, postronny 404
-- [ ] Odpalić na urządzeniu: własna zakończona aktywność z transmisją → karta z wiadomościami, prywatne z kłódką
-- [ ] Zwykła aktywność bez transmisji → **żadnego** zapytania do `/live/*` (bramka na `live_started_at`) i brak karty
-- [ ] Cudza aktywność → brak karty
-- [ ] Transmisja z >50 wiadomościami → licznik i lista pokazują wszystkie (paginacja po `after`)
-
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
@@ -71,6 +58,14 @@ weryfikacją na urządzeniu — checklista zostaje otwarta.
 Priorytet: wiersze 1 i 2 (mały ekran + duża czcionka) — to realny profil użytkownika
 Racefy, nie przypadek brzegowy. Zacząć od `ActivityRecordingScreen`, bo tam
 użytkownik patrzy w ekran w biegu.
+
+### Wiadomości z transmisji po biegu (zmergowane 2026-08-26, `cb15f08`)
+
+Karta „Doping z transmisji" na szczegółach aktywności. Zmiana wyłącznie mobilna —
+API obsługiwało to od początku (`GET /live/{id}/messages` autoryzuje właściciela
+niezależnie od `is_live`).
+
+
 
 ### Redesign eventów (zmergowany)
 - [ ] Przejście wizualne: EventDetail single-scroll, EventLive, EventResults, Commentary, lista z FeaturedEventCard
@@ -124,6 +119,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-08-26 | `feature/live-messages-archive` | Podgląd wiadomości od widzów po zakończeniu aktywności (karta na szczegółach) |
 | 2026-08-26 | `responsywnosc` | Clamp skali, cap fontScale, minHeight, tab bar, klawiatura, aspectRatio/flexBasis, sprzątanie martwego kodu |
 | 2026-07-09 | `feat/tracking-db` → `develop` → `main` | SQLite point log, idempotentny uploader, gap-bridging, battery UX, audio coach w tle |
 | 2026-06 | `audyt` | ESLint/Prettier, testy (jest+RNTL), `useFetch`/`usePaginatedFetch`, dekompozycja `useLiveActivity` |
