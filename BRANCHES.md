@@ -39,6 +39,19 @@ Priorytet: wiersze 1 i 2 (mały ekran + duża czcionka) — to realny profil uż
 Racefy, nie przypadek brzegowy. Zacząć od `ActivityRecordingScreen`, bo tam
 użytkownik patrzy w ekran w biegu.
 
+### `feature/live-trail-backfill` — commit `1dec08b` (od `main`/`2a7a7e0`)
+
+Widz dołączający do trwającej transmisji dostaje przebytą trasę zamiast pustej
+mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
+(`GET /live/{id}?include=track`), dalej dokłada punkty na żywo jak dotąd.
+8 plików, 5 nowych testów. tsc 0 · eslint 0 błędów · jest 193/193.
+
+- [ ] **BLOKADA: wymaga zmiany w API** — pole `snapshot.track` jeszcze nie istnieje. Spec dla backendu: `.notes/prompt-backend-live-trail.md`. Do czasu deployu zmiana jest bezczynna (pole opcjonalne, zachowanie bez zmian)
+- [ ] Po deployu API: wejść w podgląd transmisji zawodnika, który ma już przebiegnięte kilka km — trasa ma być widoczna od razu
+- [ ] Zawodnik z aktywną strefą prywatności na trasie — sprawdzić, że linia jest **rozspojona**, a nie poprowadzona skrótem przez strefę
+- [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
+- [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
