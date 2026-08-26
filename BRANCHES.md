@@ -22,8 +22,11 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 (`GET /live/{id}?include=track`), dalej dokłada punkty na żywo jak dotąd.
 8 plików, 5 nowych testów. tsc 0 · eslint 0 błędów · jest 193/193.
 
-- [ ] **BLOKADA: wymaga zmiany w API** — pole `snapshot.track` jeszcze nie istnieje. Spec dla backendu: `.notes/prompt-backend-live-trail.md`. Do czasu deployu zmiana jest bezczynna (pole opcjonalne, zachowanie bez zmian)
-- [ ] Po deployu API: wejść w podgląd transmisji zawodnika, który ma już przebiegnięte kilka km — trasa ma być widoczna od razu
+- [x] **API gotowe lokalnie** (2026-08-26) — `?include=track` + `LiveActivityService::visibleTrack()` w `racefy_api.io`, **jeszcze niezacommitowane**. Kontrakt zgodny z mobilką co do znaku: `MultiLineString`, `point_count`, `simplified`, `null` bez fixa, `[]` gdy wszystko ukryte
+- [x] Testy API `LiveTrackBackfillTest` — 10/10, w tym rozspojenie na strefie, cap segmentu, brak `track` bez `include`
+- [x] Smoke e2e na lokalnym API (port **8080**): 12 punktów → `include=track` zwraca trasę, tick bez `include` jej nie niesie; strefa prywatności na środku trasy → **2 segmenty**. Dane testowe posprzątane (strefa usunięta, aktywność porzucona)
+- [ ] **Zostaje: commit + deploy API na dev** — do tego czasu mobilka jest bezczynna (pole opcjonalne)
+- [ ] Po deployu: wejść w podgląd transmisji zawodnika, który ma już przebiegnięte kilka km — trasa ma być widoczna od razu
 - [ ] Zawodnik z aktywną strefą prywatności na trasie — sprawdzić, że linia jest **rozspojona**, a nie poprowadzona skrótem przez strefę
 - [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
 - [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
