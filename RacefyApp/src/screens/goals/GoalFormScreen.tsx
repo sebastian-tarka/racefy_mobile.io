@@ -9,6 +9,7 @@ import {
   Switch,
   Platform,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -228,167 +229,177 @@ export function GoalFormScreen({ navigation, route }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Sport — disabled in edit mode (immutable) */}
-        {!isEdit && (
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* Sport — disabled in edit mode (immutable) */}
+          {!isEdit && (
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {t('goals.form.sport')}
+              </Text>
+              <View style={styles.sportRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.sportChip,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    sportTypeId === null && {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                  onPress={() => handleSelectSport(null)}
+                >
+                  <Text
+                    style={[
+                      styles.sportChipText,
+                      sportTypeId === null
+                        ? styles.sportChipTextSelected
+                        : { color: colors.textSecondary },
+                    ]}
+                  >
+                    {t('goals.allSports')}
+                  </Text>
+                </TouchableOpacity>
+                {sportTypes.map((s) => {
+                  const isSelected = sportTypeId === s.id;
+                  const isLocked = isFreeLocked('sport');
+                  return (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[
+                        styles.sportChip,
+                        { backgroundColor: colors.background, borderColor: colors.border },
+                        isSelected && {
+                          backgroundColor: colors.primary,
+                          borderColor: colors.primary,
+                        },
+                      ]}
+                      onPress={() => handleSelectSport(s.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.sportChipText,
+                          isSelected
+                            ? styles.sportChipTextSelected
+                            : { color: colors.textSecondary },
+                        ]}
+                      >
+                        {s.name}
+                        {isLocked ? ' 🔒' : ''}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {!isEdit && (
+            <OptionSelector
+              label={t('goals.form.metric')}
+              value={metric}
+              onChange={handleSelectMetric}
+              options={metricOptions}
+            />
+          )}
+
+          {!isEdit && (
+            <OptionSelector
+              label={t('goals.form.period')}
+              value={period}
+              onChange={handleSelectPeriod}
+              options={periodOptions}
+            />
+          )}
+
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>
-              {t('goals.form.sport')}
-            </Text>
-            <View style={styles.sportRow}>
+            <Input
+              label={`${t('goals.form.target')} (${inputUnitLabel(metric, units) || t(`goals.metric.${metric}`)})`}
+              value={target}
+              onChangeText={setTarget}
+              keyboardType="decimal-pad"
+              placeholder="0"
+              error={fieldErrors.target_value}
+            />
+          </View>
+
+          {!isEdit && (
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {t('goals.form.startDate')}
+              </Text>
               <TouchableOpacity
                 style={[
-                  styles.sportChip,
-                  { backgroundColor: colors.background, borderColor: colors.border },
-                  sportTypeId === null && {
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                  },
+                  styles.dateButton,
+                  { borderColor: colors.border, backgroundColor: colors.background },
                 ]}
-                onPress={() => handleSelectSport(null)}
+                onPress={() => setDatePickerField('start')}
               >
-                <Text
-                  style={[
-                    styles.sportChipText,
-                    sportTypeId === null
-                      ? styles.sportChipTextSelected
-                      : { color: colors.textSecondary },
-                  ]}
-                >
-                  {t('goals.allSports')}
+                <Text style={[styles.dateText, { color: colors.textPrimary }]}>
+                  {startDate.toISOString().slice(0, 10)}
                 </Text>
+                <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
-              {sportTypes.map((s) => {
-                const isSelected = sportTypeId === s.id;
-                const isLocked = isFreeLocked('sport');
-                return (
-                  <TouchableOpacity
-                    key={s.id}
-                    style={[
-                      styles.sportChip,
-                      { backgroundColor: colors.background, borderColor: colors.border },
-                      isSelected && {
-                        backgroundColor: colors.primary,
-                        borderColor: colors.primary,
-                      },
-                    ]}
-                    onPress={() => handleSelectSport(s.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.sportChipText,
-                        isSelected ? styles.sportChipTextSelected : { color: colors.textSecondary },
-                      ]}
-                    >
-                      {s.name}
-                      {isLocked ? ' 🔒' : ''}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
             </View>
-          </View>
-        )}
+          )}
 
-        {!isEdit && (
-          <OptionSelector
-            label={t('goals.form.metric')}
-            value={metric}
-            onChange={handleSelectMetric}
-            options={metricOptions}
-          />
-        )}
-
-        {!isEdit && (
-          <OptionSelector
-            label={t('goals.form.period')}
-            value={period}
-            onChange={handleSelectPeriod}
-            options={periodOptions}
-          />
-        )}
-
-        <View style={styles.field}>
-          <Input
-            label={`${t('goals.form.target')} (${inputUnitLabel(metric, units) || t(`goals.metric.${metric}`)})`}
-            value={target}
-            onChangeText={setTarget}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            error={fieldErrors.target_value}
-          />
-        </View>
-
-        {!isEdit && (
           <View style={styles.field}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>
-              {t('goals.form.startDate')}
+              {t('goals.form.endDate')}
             </Text>
             <TouchableOpacity
               style={[
                 styles.dateButton,
                 { borderColor: colors.border, backgroundColor: colors.background },
               ]}
-              onPress={() => setDatePickerField('start')}
+              onPress={() => setDatePickerField('end')}
             >
               <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-                {startDate.toISOString().slice(0, 10)}
+                {endDate ? endDate.toISOString().slice(0, 10) : t('common.optional')}
               </Text>
-              <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+              <View style={styles.endDateActions}>
+                {endDate && (
+                  <TouchableOpacity
+                    onPress={() => setEndDate(null)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )}
+                <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+              </View>
             </TouchableOpacity>
           </View>
-        )}
 
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textPrimary }]}>
-            {t('goals.form.endDate')}
-          </Text>
-          <TouchableOpacity
-            style={[
-              styles.dateButton,
-              { borderColor: colors.border, backgroundColor: colors.background },
-            ]}
-            onPress={() => setDatePickerField('end')}
-          >
-            <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-              {endDate ? endDate.toISOString().slice(0, 10) : t('common.optional')}
-            </Text>
-            <View style={styles.endDateActions}>
-              {endDate && (
-                <TouchableOpacity
-                  onPress={() => setEndDate(null)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
-              <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+          <View style={[styles.field, styles.switchRow]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>
+                {t('goals.rolling')}
+              </Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                {t('goals.form.repeating')}
+              </Text>
             </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={[styles.field, styles.switchRow]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.label, { color: colors.textPrimary }]}>{t('goals.rolling')}</Text>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>
-              {t('goals.form.repeating')}
-            </Text>
+            <Switch
+              value={isRepeating}
+              onValueChange={setIsRepeating}
+              trackColor={{ true: colors.primary, false: colors.border }}
+            />
           </View>
-          <Switch
-            value={isRepeating}
-            onValueChange={setIsRepeating}
-            trackColor={{ true: colors.primary, false: colors.border }}
-          />
-        </View>
 
-        <Button
-          title={isEdit ? t('goals.actions.save') : t('goals.actions.create')}
-          onPress={handleSubmit}
-          loading={submitting}
-          variant="primary"
-          style={styles.submitButton}
-        />
-      </ScrollView>
+          <Button
+            title={isEdit ? t('goals.actions.save') : t('goals.actions.create')}
+            onPress={handleSubmit}
+            loading={submitting}
+            variant="primary"
+            style={styles.submitButton}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {datePickerField && (
         <DateTimePicker
@@ -404,6 +415,9 @@ export function GoalFormScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   scroll: {
     padding: spacing.md,
     paddingBottom: spacing.xl,

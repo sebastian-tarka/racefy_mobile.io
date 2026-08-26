@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   tierBadgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   usageContainer: {

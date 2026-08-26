@@ -173,13 +173,13 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     width: 24,
-    height: 24,
+    minHeight: 24,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepNumberText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   stepIcon: {

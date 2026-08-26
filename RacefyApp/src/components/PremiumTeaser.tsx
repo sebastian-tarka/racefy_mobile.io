@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { upgradePromptEmitter } from '../services/upgradePromptEmitter';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../theme';
 import type { SubscriptionFeatures } from '../types/api';
 
 interface PremiumTeaserProps {
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
   },
   tapHint: {

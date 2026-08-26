@@ -38,7 +38,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { useSportTypes } from '../../hooks/useSportTypes';
-import { fontSize, spacing } from '../../theme';
+import { fontSize, spacing, msFont } from '../../theme';
 import {
   ApiError,
   CreateEventRequest,
@@ -764,7 +764,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                   style={{
                     color: isActive ? '#fff' : colors.textPrimary,
                     fontWeight: '600',
-                    fontSize: 14,
+                    fontSize: fontSize.md,
                   }}
                 >
                   {t(`eventForm.tabs.${tab}`)}
@@ -781,7 +781,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>
+                    <Text style={{ color: '#fff', fontSize: msFont(11), fontWeight: '700' }}>
                       {errCount}
                     </Text>
                   </View>

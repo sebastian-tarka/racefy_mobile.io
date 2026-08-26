@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from 'react-i18next';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Reward, RewardType } from '../types/api';
 
 interface RewardCardProps {
@@ -394,10 +394,10 @@ const styles = StyleSheet.create({
   },
   // Badge
   badgeIconEmoji: {
-    fontSize: 24,
+    fontSize: fontSize.xxxl,
   },
   badgeEmojiLarge: {
-    fontSize: 40,
+    fontSize: msFont(40),
     marginBottom: spacing.sm,
   },
   badgeContainer: {

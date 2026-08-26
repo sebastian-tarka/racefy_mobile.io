@@ -32,6 +32,24 @@ module.exports = defineConfig([
     },
   },
   {
+    // Theme-system rules — scoped to app source. Design mockups under refactor/
+    // don't consume the theme, so the rule would only produce noise there.
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      // A literal font size bypasses the system-font-scale cap baked into the
+      // `fontSize` tokens (see src/theme/scale.ts), so it will overflow its
+      // container once the user enlarges text. The tree is clean, hence 'error'.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "Property[key.name='fontSize'] > Literal[raw=/^[0-9.]+$/]",
+          message:
+            'Use a fontSize token from the theme (fontSize.md, …) or msFont(n) — a raw number skips the fontScale cap.',
+        },
+      ],
+    },
+  },
+  {
     // TypeScript-only overrides (the @typescript-eslint plugin is registered by
     // eslint-config-expo only for these files, so the rules must be scoped too).
     files: ['**/*.ts', '**/*.tsx'],

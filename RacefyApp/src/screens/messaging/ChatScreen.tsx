@@ -21,7 +21,7 @@ import { useMessages } from '../../hooks/useMessages';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import type { ThemeColors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   dateSeparatorText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '500',
     marginHorizontal: spacing.sm,
     textTransform: 'uppercase',

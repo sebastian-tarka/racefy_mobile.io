@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rewardMedal: {
-    fontSize: 28,
+    fontSize: fontSize.title,
   },
   rewardPlace: {
     fontSize: fontSize.sm,

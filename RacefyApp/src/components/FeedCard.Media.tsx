@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Image } from 'expo-image';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
@@ -15,7 +13,6 @@ import type { Post, MentionMap } from '../types/api';
 import { MentionText } from './MentionText';
 import {
   type FeedPostType,
-  type PostMediaItem,
   TEXT_TRUNCATION,
   truncateText,
   getTypeColors,
@@ -60,63 +57,6 @@ export function ExpandableContent({
           </Text>
         </TouchableOpacity>
       )}
-    </View>
-  );
-}
-
-function MediaGridItem({
-  item,
-  index,
-  onPress,
-}: {
-  item: PostMediaItem;
-  index: number;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      key={item.id + '-' + index}
-      style={styles.mediaGridItem}
-      activeOpacity={0.9}
-      onPress={onPress}
-    >
-      <Image
-        source={{ uri: item.thumbnailUrl || item.url }}
-        style={styles.mediaGridImage}
-        contentFit="cover"
-        cachePolicy="memory-disk"
-      />
-      {item.type === 'video' && (
-        <View style={styles.playOverlaySmall}>
-          <Ionicons name="play" size={16} color="#FFFFFF" />
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-}
-
-function ImageIndicator({ count }: { count: number }) {
-  if (count <= 1) return null;
-  return (
-    <View style={styles.imageIndicator}>
-      <View style={styles.imageIndicatorBadge}>
-        <Ionicons name="images-outline" size={12} color="#fff" />
-        <View style={styles.imageIndicatorText}>
-          <Ionicons name="ellipse" size={4} color="#fff" style={{ marginHorizontal: 2 }} />
-          <Ionicons
-            name="ellipse"
-            size={4}
-            color="rgba(255,255,255,0.5)"
-            style={{ marginHorizontal: 2 }}
-          />
-          <Ionicons
-            name="ellipse"
-            size={4}
-            color="rgba(255,255,255,0.5)"
-            style={{ marginHorizontal: 2 }}
-          />
-        </View>
-      </View>
     </View>
   );
 }
@@ -175,7 +115,11 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
             const imageIndex =
               items.slice(0, index + 1).filter((it) => it.type === 'image').length - 1;
             if (imageIndex >= 0) {
-              imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(items[index].url);
+              if (imageUrls.length > 1) {
+                openGallery(imageIndex);
+              } else {
+                setExpandedImage(items[index].url);
+              }
             }
           }}
           onVideoPress={(index) => setExpandedVideo(items[index].url)}

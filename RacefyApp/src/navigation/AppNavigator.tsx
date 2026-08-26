@@ -171,8 +171,9 @@ function AuthNavigator() {
   );
 }
 
-// Tab bar constants for layout calculations (imported from constants.ts to avoid circular deps)
-export { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from './constants';
+// Tab bar layout helpers (kept in separate modules to avoid circular deps)
+export { TAB_BAR_CONTENT_GAP } from './constants';
+export { useTabBarPadding } from './useTabBarPadding';
 
 // Animated Tab Icon wrapper for smooth transitions (Classic Nav)
 function AnimatedTabIcon({

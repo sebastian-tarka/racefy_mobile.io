@@ -366,7 +366,10 @@ export function RoutePlannerScreen({ navigation }: Props) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.saveForm}
         >
-          <ScrollView contentContainerStyle={styles.saveFormContent}>
+          <ScrollView
+            contentContainerStyle={styles.saveFormContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <Input
               label={t('common.title', 'Title')}
               value={title}

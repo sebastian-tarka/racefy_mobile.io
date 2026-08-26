@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   icon: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
   },
   text: {
     flex: 1,

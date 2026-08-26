@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { formatDistance, formatTotalTime } from '../utils/formatters';
 import { getSportIcon } from '../utils/sportIcon';
 import type { PlannedRoute } from '../types/api';
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   profileBadge: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '700',
     textTransform: 'uppercase',
     marginTop: 2,

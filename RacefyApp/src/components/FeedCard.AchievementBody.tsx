@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import type { Post } from '../types/api';
 
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     height: 48,
   },
   iconEmoji: {
-    fontSize: 32,
+    fontSize: msFont(32),
   },
   content: {
     flex: 1,

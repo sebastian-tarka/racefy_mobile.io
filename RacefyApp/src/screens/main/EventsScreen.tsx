@@ -27,7 +27,7 @@ import {
 } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -60,8 +60,7 @@ type RewardFilterOption = 'all' | 'points' | 'coupon' | 'badge' | 'prize';
 export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
+  const tabBarPaddingBottom = useTabBarPadding();
   const { isAuthenticated } = useAuth();
   const {
     events,

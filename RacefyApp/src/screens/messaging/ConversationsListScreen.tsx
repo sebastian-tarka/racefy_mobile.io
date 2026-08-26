@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     minWidth: 24,
-    height: 24,
+    minHeight: 24,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',

@@ -218,8 +218,6 @@
       "paused": "Actividad en pausa",
       "tap": "Toca para ver"
     },
-    "heroTitle": "Comunidad deportiva y fitness",
-    "heroSubtitle": "Registra actividades, únete a eventos y conecta con entusiastas del fitness",
     "getStarted": "Comenzar",
     "getStartedMessage": "Únete a Racefy para registrar tus actividades y conectar con otros",
     "features": "Funciones",
@@ -833,7 +831,6 @@
     },
     "plannedThisWeek": "Planificado esta semana",
     "session": "Sesión",
-    "viewMap": "Vista de mapa",
     "viewStats": "Vista de estadísticas",
     "toggleView": "Cambiar vista",
     "routes": "Rutas",

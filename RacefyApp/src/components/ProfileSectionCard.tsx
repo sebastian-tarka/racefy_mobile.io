@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
-import { spacing } from '../theme';
+import { spacing, fontSize, msFont } from '../theme';
 
 interface ProfileSectionCardProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -90,11 +90,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   label: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   sub: {
-    fontSize: 11,
+    fontSize: msFont(11),
     marginTop: 1,
   },
 });

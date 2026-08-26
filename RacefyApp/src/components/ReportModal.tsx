@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useReportContent } from '../hooks/useReportContent';
-import { spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../theme';
 import type { ReportableType, ReportReason } from '../types/api';
 
 interface ReportModalProps {
@@ -110,6 +110,7 @@ function ReportModalComponent({
                   style={styles.scrollView}
                   contentContainerStyle={styles.scrollContent}
                   showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
                 >
                   <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
                     {t('reporting.selectReason')}
@@ -291,7 +292,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   reasonButton: {
-    width: '48%',
+    // flexBasis rather than width — the parent is a flex row with a gap, so the
+    // sizing belongs to the flex axis, not to the box model.
+    flexBasis: '48%',
     aspectRatio: 1.5,
     borderRadius: borderRadius.md,
     borderWidth: 2,
@@ -300,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   reasonIcon: {
-    fontSize: 32,
+    fontSize: msFont(32),
     marginBottom: spacing.xs,
   },
   reasonText: {

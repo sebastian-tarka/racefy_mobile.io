@@ -15,7 +15,7 @@ import { logger } from '../../services/logger';
 import { useCommentarySettings } from '../../hooks/useCommentarySettings';
 import { useGenerateCommentary } from '../../hooks/useGenerateCommentary';
 import { useTranslation } from 'react-i18next';
-import { spacing, borderRadius, fontSize } from '../../theme';
+import { spacing, borderRadius, fontSize, msFont } from '../../theme';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     textAlign: 'center',
   },
   readOnlyNotice: {
@@ -558,12 +558,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
     marginBottom: spacing.sm,
   },
   sectionDescription: {
-    fontSize: 13,
+    fontSize: msFont(13),
     marginBottom: spacing.md,
     lineHeight: 18,
   },
@@ -573,11 +573,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tokenValue: {
-    fontSize: 24,
+    fontSize: fontSize.xxxl,
     fontWeight: '700',
   },
   tokenPercent: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     marginLeft: spacing.sm,
   },
   progressBar: {
@@ -600,12 +600,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   settingLabel: {
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
     marginBottom: 2,
   },
   settingDescription: {
-    fontSize: 13,
+    fontSize: msFont(13),
     lineHeight: 18,
   },
   styleOption: {
@@ -621,16 +621,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   styleName: {
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
     marginBottom: 2,
   },
   styleDescription: {
-    fontSize: 13,
+    fontSize: msFont(13),
     lineHeight: 18,
   },
   checkmark: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
   },
   divider: {
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   intervalText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   generateButtons: {

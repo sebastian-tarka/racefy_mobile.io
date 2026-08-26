@@ -22,7 +22,7 @@ import { triggerHaptic } from '../../hooks/useHaptics';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import { formatDurationCompact } from '../../utils/formatDuration';
 import type { OptionListItem } from '../../components';
 import {
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -1358,7 +1358,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   weekTileLabel: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -1494,7 +1494,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   sessionStatus: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,

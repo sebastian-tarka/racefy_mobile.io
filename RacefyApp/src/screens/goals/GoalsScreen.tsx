@@ -18,7 +18,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import { formatMetricValue, paceStatusColor } from '../../utils/goalHelpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   emptyEmoji: {
-    fontSize: 64,
+    fontSize: msFont(64),
     marginBottom: spacing.sm,
   },
   emptyTitle: {

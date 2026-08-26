@@ -163,6 +163,7 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

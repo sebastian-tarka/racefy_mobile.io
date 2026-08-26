@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   ownerButton: {
     flexGrow: 1,
     flexBasis: '46%',
-    height: 48,
+    minHeight: 48,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   // Closed box
   closedPill: {
-    height: 52,
+    minHeight: 52,
     borderRadius: borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',

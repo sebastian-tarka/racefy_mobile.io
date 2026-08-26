@@ -15,7 +15,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { AiActivityReport, AiActivityReportStatus } from '../../types/reports';
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   freeEmoji: {
-    fontSize: 64,
+    fontSize: msFont(64),
     marginBottom: spacing.sm,
   },
   freeTitle: {

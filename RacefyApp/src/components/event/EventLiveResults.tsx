@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     bottom: -2,
     right: -2,
     width: 20,
-    height: 20,
+    minHeight: 20,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',

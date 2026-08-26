@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   tabBadge: {
     minWidth: 18,
-    height: 18,
+    minHeight: 18,
     borderRadius: 9,
     paddingHorizontal: 4,
     justifyContent: 'center',
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   },
   tabBadgeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   loadingContainer: {

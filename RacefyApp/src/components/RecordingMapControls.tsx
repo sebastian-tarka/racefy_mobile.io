@@ -12,6 +12,7 @@ import { useTheme } from '../hooks/useTheme';
 import { spacing, borderRadius } from '../theme/spacing';
 import { formatTime, formatDistance } from '../utils/formatters';
 import { formatPaceDisplay, calculateAveragePace } from '../utils/paceCalculator';
+import { fontSize, msFont } from '../theme';
 
 interface RecordingMapControlsProps {
   duration: number;
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   },
   shadowTrackText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '500',
   },
   shadowTrackSelectButton: {
@@ -214,11 +215,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   shadowTrackSelectText: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '500',
   },
   timer: {
-    fontSize: 48,
+    fontSize: msFont(48),
     fontWeight: '200',
     textAlign: 'center',
     marginBottom: spacing.sm,
@@ -232,11 +233,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     fontWeight: '600',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     marginTop: 2,
   },
   controlsRow: {

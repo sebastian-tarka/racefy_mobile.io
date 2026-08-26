@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { CommentaryItem } from './CommentaryItem';
 import { EmptyState } from './EmptyState';
 import { LanguageDropdown } from './LanguageDropdown';
-import { spacing } from '../theme';
+import { spacing, fontSize, msFont } from '../theme';
 import type { CommentaryLanguage } from '../types/api';
 
 interface CommentaryFeedProps {
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
   liveIndicator: {
     flexDirection: 'row',
@@ -304,11 +304,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   liveText: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '600',
   },
   countdownText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '500',
     marginTop: 2,
     opacity: 0.8,
@@ -326,11 +326,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tokenUsageLabel: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '500',
   },
   tokenUsageValue: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '700',
   },
   progressBar: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   },
   fallbackBannerText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '500',
     lineHeight: 18,
   },

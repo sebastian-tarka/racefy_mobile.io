@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import type { SubscriptionTier } from '../types/api';
+import { msFont } from '../theme';
 
 interface TierBadgeConfig {
   label: string;
@@ -15,8 +16,8 @@ const TIER_CONFIG: Record<SubscriptionTier, TierBadgeConfig | null> = {
 };
 
 const SIZES = {
-  sm: { dimension: 12, fontSize: 7, borderWidth: 1.5, bottom: -1, right: -1 },
-  md: { dimension: 16, fontSize: 9, borderWidth: 2, bottom: -2, right: -2 },
+  sm: { dimension: 12, fontSize: msFont(7), borderWidth: 1.5, bottom: -1, right: -1 },
+  md: { dimension: 16, fontSize: msFont(9), borderWidth: 2, bottom: -2, right: -2 },
 };
 
 interface TierBadgeProps {

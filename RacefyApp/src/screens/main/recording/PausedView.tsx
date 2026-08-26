@@ -13,7 +13,7 @@ import type { GpsProfile } from '../../../config/gpsProfiles';
 import type { Event, GpsPoint } from '../../../types/api';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
-import { spacing, fontSize, borderRadius } from '../../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   gpsSignalText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '600',
   },
   heroTimerContainer: {
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   heroTimer: {
-    fontSize: 72,
+    fontSize: msFont(72),
     fontWeight: '200',
     fontVariant: ['tabular-nums'],
     letterSpacing: -2,

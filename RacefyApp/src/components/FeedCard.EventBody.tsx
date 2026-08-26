@@ -12,7 +12,7 @@ import { ImageGallery } from './ImageGallery';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import { styles, useImageGallery } from './FeedCard.utils';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post } from '../types/api';
 
 function GalleryModals({
@@ -227,7 +227,7 @@ const evStyles = StyleSheet.create({
   },
   heroTitle: {
     color: '#fff',
-    fontSize: 22,
+    fontSize: msFont(22),
     fontWeight: '800',
     letterSpacing: -0.3,
     textShadowColor: 'rgba(0,0,0,0.4)',
@@ -259,7 +259,7 @@ const evStyles = StyleSheet.create({
   },
   newBadgeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -272,7 +272,7 @@ const evStyles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   newBadgeInlineText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',

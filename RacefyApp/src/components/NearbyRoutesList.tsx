@@ -18,6 +18,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { spacing, borderRadius } from '../theme/spacing';
 import type { NearbyRoute } from './MapboxLiveMap';
+import { fontSize } from '../theme';
 
 interface NearbyRoutesListProps {
   routes: NearbyRoute[];
@@ -216,11 +217,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
   headerText: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
   countText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
   },
   listContent: {
     padding: spacing.md,
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '600',
   },
   statsRow: {
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   statValue: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   elevationBadge: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   elevationText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
   },
   metaRow: {
     flexDirection: 'row',
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   metaText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     maxWidth: 120,
   },
   likesContainer: {
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   likesText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
   },
   loadingState: {
     flex: 1,
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   loadingText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
   errorState: {
     flex: 1,
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     textAlign: 'center',
   },
   emptyState: {
@@ -311,12 +312,12 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     textAlign: 'center',
   },
   emptyDescription: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     textAlign: 'center',
   },
 });

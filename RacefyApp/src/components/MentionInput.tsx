@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   triggerIconText: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
   },
 });

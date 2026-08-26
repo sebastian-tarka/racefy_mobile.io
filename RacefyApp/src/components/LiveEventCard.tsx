@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { InteractionButton } from './InteractionButton';
 import { useTheme } from '../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import { getSportIcon } from '../utils/sportIcon';
 import type { EventWithLatestCommentary } from '../types/api';
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   liveBadgeText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
     letterSpacing: 0.5,
   },

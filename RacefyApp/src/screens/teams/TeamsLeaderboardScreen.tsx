@@ -21,7 +21,7 @@ import {
   OptionSelector,
   EmptyState,
 } from '../../components';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import { formatTotalTime } from '../../utils/formatters';
 import type { StatsPeriod, LeaderboardSortBy, TeamLeaderboardEntry } from '../../types/api';
 
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankEmoji: {
-    fontSize: 22,
+    fontSize: msFont(22),
   },
   rankBold: {
     fontSize: fontSize.md,

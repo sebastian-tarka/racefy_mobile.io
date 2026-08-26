@@ -6,7 +6,7 @@ import { Card } from './Card';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { getSportIcon } from '../utils/sportIcon';
 import type { Event } from '../types/api';
 
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     width: 52,
-    height: 52,
+    minHeight: 52,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   badgeSub: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '800',
     marginTop: 1,
   },

@@ -9,7 +9,7 @@ import { SharedPostBlock } from './SharedPostBlock';
 import { SharedPostDeletedBlock } from './SharedPostDeletedBlock';
 import { YouTubeEmbed } from './YouTubeEmbed';
 import { buildMediaItems, styles } from './FeedCard.utils';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post, TaggedEvent } from '../types/api';
 
 const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
@@ -62,7 +62,7 @@ function TaggedEventBlock({
             <Ionicons name="calendar-outline" size={14} color={tc.accent} />
             <Text
               style={{
-                fontSize: 11,
+                fontSize: msFont(11),
                 fontWeight: '700',
                 color: tc.accent,
                 textTransform: 'uppercase',
@@ -73,7 +73,7 @@ function TaggedEventBlock({
             </Text>
           </View>
           {taggedEvent.status && (
-            <Text style={{ fontSize: 10, fontWeight: '600', color: tc.accent }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: tc.accent }}>
               {taggedEvent.status}
             </Text>
           )}

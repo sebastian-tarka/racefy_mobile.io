@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     marginTop: 2,
   },
   progressContainer: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   progressText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     marginTop: 2,
   },
 });

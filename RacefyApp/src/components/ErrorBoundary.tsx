@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { logger } from '../services/logger';
+import { fontSize, msFont } from '../theme';
 
 interface Props {
   children: React.ReactNode;
@@ -68,13 +69,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#111827',
   },
   title: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
     color: '#f9fafb',
     marginBottom: 8,
   },
   message: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     color: '#9ca3af',
     textAlign: 'center',
     marginBottom: 24,
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
     color: '#ffffff',
   },

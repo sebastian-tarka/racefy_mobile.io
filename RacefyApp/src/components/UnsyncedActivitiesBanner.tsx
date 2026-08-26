@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useUnsyncedActivitiesCount } from '../hooks/useUnsyncedActivities';
-import { spacing } from '../theme';
+import { spacing, msFont } from '../theme';
 
 interface Props {
   onPress: () => void;
@@ -62,11 +62,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: msFont(13),
     marginTop: 2,
   },
 });

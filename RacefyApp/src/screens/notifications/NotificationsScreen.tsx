@@ -19,7 +19,7 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
-import { spacing } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { Notification } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   unreadText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   markAllButton: {
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   markAllText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
     marginLeft: 4,
   },

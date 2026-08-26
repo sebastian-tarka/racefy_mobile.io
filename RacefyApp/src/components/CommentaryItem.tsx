@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { formatDistanceToNow } from 'date-fns';
 import { enUS, pl } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
@@ -220,25 +220,25 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   typeIcon: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     marginRight: spacing.xs,
   },
   typeText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   time: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
   },
   title: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
     marginBottom: spacing.sm,
     lineHeight: 22,
   },
   content: {
-    fontSize: 15,
+    fontSize: msFont(15),
     lineHeight: 22,
   },
   statusContainer: {
@@ -251,11 +251,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   statusText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   errorMessage: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     marginTop: spacing.xs,
   },
   footer: {
