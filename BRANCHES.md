@@ -15,30 +15,6 @@ Stan na: **2026-08-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `responsywnosc` — commit `3af83fe` (od `main`/`b548374`)
-
-Clamp `ms()`, cap `fontScale` na tokenach, `minHeight`, tab bar z kontekstu,
-klawiatura, `aspectRatio`/`flexBasis`, usunięte 4 martwe komponenty, `knip.json`.
-103 pliki. Plan i uzasadnienia: `.notes/RESPONSYWNOSC_PLAN.md`.
-
-Zielone: tsc 0 · eslint 0 błędów (257 warningów) · jest 189/189.
-
-Do weryfikacji **runtime** (nic nie odpalone na urządzeniu):
-
-- [ ] iPhone SE2 375×667, locale **pl**, fontScale **1.3** — worst case: krótki ekran + długie stringi
-- [ ] Pixel 7 412×915, fontScale **2.0** (a11y max) — obcinanie w kontenerach o stałej wysokości
-- [ ] Pixel 7, fontScale 1.0 — padding pod tab barem (`useTabBarPadding`)
-- [ ] **Kryterium akceptacji:** przejście Home / Feed / Events / Profile / Recording na 375pt @ fontScale 1.0 **nie pokazuje żadnej różnicy wizualnej** względem `main`. Jeśli pokazuje → clamp albo cap źle skalibrowany.
-- [ ] `MediaGallery` — media w komentarzach niższe o 39–71px, wymaga akceptacji wzrokowej
-- [ ] `minWidth` w siatkach na 320pt
-- [ ] Hitbox FAB-a w tab barze na 320pt (`marginTop: -22`, glow 72×72 przy `width/height: 56`)
-- [ ] Pixel Fold: złożony → rozłożony **bez restartu** (clamp + zamrożone `Dimensions`) — opcjonalne, wystarczy raz przed release
-- [ ] Android split-screen 50/50 — opcjonalne
-
-Priorytet: wiersze 1 i 2 (mały ekran + duża czcionka) — to realny profil użytkownika
-Racefy, nie przypadek brzegowy. Zacząć od `ActivityRecordingScreen`, bo tam
-użytkownik patrzy w ekran w biegu.
-
 ### `feature/live-trail-backfill` — commit `1dec08b` (od `main`/`2a7a7e0`)
 
 Widz dołączający do trwającej transmisji dostaje przebytą trasę zamiast pustej
@@ -58,6 +34,27 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Responsywność (zmergowana 2026-08-26, `6ddc070`)
+
+Clamp `ms()`, cap `fontScale` na tokenach, `minHeight`, tab bar z kontekstu,
+klawiatura, `aspectRatio`/`flexBasis`, 4 usunięte martwe komponenty, `knip.json`.
+Plan i uzasadnienia: `.notes/RESPONSYWNOSC_PLAN.md`. Weszła na `main` **przed**
+weryfikacją na urządzeniu — checklista zostaje otwarta.
+
+- [ ] iPhone SE2 375×667, locale **pl**, fontScale **1.3** — worst case: krótki ekran + długie stringi
+- [ ] Pixel 7 412×915, fontScale **2.0** (a11y max) — obcinanie w kontenerach o stałej wysokości
+- [ ] Pixel 7, fontScale 1.0 — padding pod tab barem (`useTabBarPadding`)
+- [ ] **Kryterium akceptacji:** przejście Home / Feed / Events / Profile / Recording na 375pt @ fontScale 1.0 **nie pokazuje żadnej różnicy wizualnej** względem stanu sprzed `6ddc070` (czyli `b548374`). Jeśli pokazuje → clamp albo cap źle skalibrowany.
+- [ ] `MediaGallery` — media w komentarzach niższe o 39–71px, wymaga akceptacji wzrokowej
+- [ ] `minWidth` w siatkach na 320pt
+- [ ] Hitbox FAB-a w tab barze na 320pt (`marginTop: -22`, glow 72×72 przy `width/height: 56`)
+- [ ] Pixel Fold: złożony → rozłożony **bez restartu** (clamp + zamrożone `Dimensions`) — opcjonalne, wystarczy raz przed release
+- [ ] Android split-screen 50/50 — opcjonalne
+
+Priorytet: wiersze 1 i 2 (mały ekran + duża czcionka) — to realny profil użytkownika
+Racefy, nie przypadek brzegowy. Zacząć od `ActivityRecordingScreen`, bo tam
+użytkownik patrzy w ekran w biegu.
 
 ### Redesign eventów (zmergowany)
 - [ ] Przejście wizualne: EventDetail single-scroll, EventLive, EventResults, Commentary, lista z FeaturedEventCard
@@ -111,6 +108,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-08-26 | `responsywnosc` | Clamp skali, cap fontScale, minHeight, tab bar, klawiatura, aspectRatio/flexBasis, sprzątanie martwego kodu |
 | 2026-07-09 | `feat/tracking-db` → `develop` → `main` | SQLite point log, idempotentny uploader, gap-bridging, battery UX, audio coach w tle |
 | 2026-06 | `audyt` | ESLint/Prettier, testy (jest+RNTL), `useFetch`/`usePaginatedFetch`, dekompozycja `useLiveActivity` |
 | 2026-04 | `feature/route-planning` | Fazy 1–5: API routes, biblioteka, planner, trasy eventów, nawigacja live (Pro) |
