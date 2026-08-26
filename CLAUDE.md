@@ -6,6 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Racefy Mobile is a React Native/Expo fitness and sports community app. It connects to a Laravel API backend and provides features for activity tracking (GPS), social feed, events, and user profiles.
 
+## Branch Tracker (`BRANCHES.md`)
+
+`BRANCHES.md` in the repo root tracks which branches are waiting to be merged into
+`main` and what still needs to be verified **on a device** before that happens. This
+codebase regularly reaches "green tsc/eslint/jest but never opened on a phone" — the
+tracker exists so that gap stays visible.
+
+**Read it** at the start of any session that asks "what's left to do", before merging
+anything into `main`, and before planning a release. It is more current than the git
+log, because it also records what is already on `main` but unverified.
+
+**Update it** in the same change that:
+- merges a branch into `main` → move the entry from "W toku" to "Historia" with a date
+- creates a branch that will need runtime verification → add the entry immediately
+- finishes a verification step → tick the checkbox (only after checking on a device)
+
+Edit it on `main` at merge time, not on feature branches — that avoids conflicts.
+Private/working notes (raw analyses, prompts for the API team) stay in the gitignored
+`.notes/`; `BRANCHES.md` holds only what everyone cloning the repo should see.
+
 ## Quick Reference & Shortcuts
 
 **NEW: PHPStorm Users** → See `RacefyApp/QUICKSTART_PHPSTORM.md` for 2-minute setup guide!
