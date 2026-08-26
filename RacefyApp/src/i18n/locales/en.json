@@ -2671,6 +2671,15 @@
       "unavailable": "This broadcast is no longer available.",
       "sendFailed": "Could not send the message. Try again."
     },
+    "archive": {
+      "title": "Cheers from your broadcast",
+      "count": "{{count}} message while you were live",
+      "count_other": "{{count}} messages while you were live",
+      "countWithPrivate": "{{count}} message while you were live · {{private}} just for you",
+      "countWithPrivate_other": "{{count}} messages while you were live · {{private}} just for you",
+      "privateNote": "Only you saw this",
+      "loadFailed": "Could not load the messages from your broadcast. Tap to retry."
+    },
     "tts": {
       "limitReached": "Reading messages aloud is paused until next month — you have reached this month’s limit. Messages still arrive.",
       "notAvailable": "Reading messages aloud is not available right now."

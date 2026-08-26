@@ -2589,6 +2589,15 @@
       "unavailable": "Esta emisión ya no está disponible.",
       "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo."
     },
+    "archive": {
+      "title": "Ánimos de tu directo",
+      "count": "{{count}} mensaje durante tu directo",
+      "count_other": "{{count}} mensajes durante tu directo",
+      "countWithPrivate": "{{count}} mensaje durante tu directo · {{private}} solo para ti",
+      "countWithPrivate_other": "{{count}} mensajes durante tu directo · {{private}} solo para ti",
+      "privateNote": "Solo tú lo viste",
+      "loadFailed": "No se pudieron cargar los mensajes de tu directo. Toca para reintentar."
+    },
     "tts": {
       "limitReached": "La lectura en voz alta está pausada hasta el mes que viene: has alcanzado el límite de este mes. Los mensajes siguen llegando.",
       "notAvailable": "La lectura en voz alta no está disponible ahora mismo."

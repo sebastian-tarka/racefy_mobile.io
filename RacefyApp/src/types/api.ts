@@ -963,6 +963,13 @@ export interface Activity {
   photos?: Photo[];
   user?: User;
   is_owner?: boolean;
+  /** True only while broadcasting; cleared the moment the broadcast ends. */
+  is_live?: boolean;
+  /**
+   * When the activity was first broadcast. Never cleared, so this — not
+   * `is_live` — is what says "this activity was live" after the fact.
+   */
+  live_started_at?: string | null;
   duration_formatted?: string;
   distance_formatted?: string;
   pace?: string | null;

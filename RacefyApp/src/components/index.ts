@@ -1,4 +1,5 @@
 export * from './ActivityCard';
+export * from './ActivityLiveMessages';
 export { PaceChart, ElevationChart, HeartRateChart } from './ActivityCharts';
 export * from './ActivityCompactCard';
 export * from './ActivitySliderCard';

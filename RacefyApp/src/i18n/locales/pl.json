@@ -2678,6 +2678,17 @@
       "unavailable": "Ta transmisja nie jest już dostępna.",
       "sendFailed": "Nie udało się wysłać wiadomości. Spróbuj ponownie."
     },
+    "archive": {
+      "title": "Doping z transmisji",
+      "count": "{{count}} wiadomość w trakcie transmisji",
+      "count_few": "{{count}} wiadomości w trakcie transmisji",
+      "count_many": "{{count}} wiadomości w trakcie transmisji",
+      "countWithPrivate": "{{count}} wiadomość w trakcie transmisji · {{private}} tylko dla Ciebie",
+      "countWithPrivate_few": "{{count}} wiadomości w trakcie transmisji · {{private}} tylko dla Ciebie",
+      "countWithPrivate_many": "{{count}} wiadomości w trakcie transmisji · {{private}} tylko dla Ciebie",
+      "privateNote": "Widoczne tylko dla Ciebie",
+      "loadFailed": "Nie udało się wczytać wiadomości z transmisji. Dotknij, aby spróbować ponownie."
+    },
     "tts": {
       "limitReached": "Czytanie wiadomości na głos jest wstrzymane do przyszłego miesiąca — wyczerpano tegomiesięczny limit. Wiadomości nadal przychodzą.",
       "notAvailable": "Czytanie wiadomości na głos jest teraz niedostępne."
