@@ -49,7 +49,6 @@ export * from './Loading';
 export * from './LanguageDropdown';
 export * from './MapboxLiveMap';
 export * from './RecordingMapControls';
-export * from './ViewToggleButton';
 export * from './NearbyRoutesList';
 export * from './NearbyRoutesHorizontalPanel';
 export * from './MediaGallery';

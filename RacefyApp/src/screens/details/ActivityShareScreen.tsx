@@ -351,7 +351,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   platformButton: {
-    width: '48%',
+    // flexBasis rather than width — the parent is a flex row with a gap, so the
+    // sizing belongs to the flex axis, not to the box model.
+    flexBasis: '48%',
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.sm,

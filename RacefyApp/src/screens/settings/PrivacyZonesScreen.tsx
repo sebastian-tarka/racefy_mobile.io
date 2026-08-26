@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -444,77 +445,83 @@ export function PrivacyZonesScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalContentInner}>
-            {/* Zone Name */}
-            <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
-              {t('settings.privacyZones.zoneName')}
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: colors.textPrimary,
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.border,
-                },
-              ]}
-              value={newZoneName}
-              onChangeText={setNewZoneName}
-              placeholder={t('settings.privacyZones.zoneNamePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-            />
-
-            {/* Location */}
-            <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
-              {t('settings.privacyZones.location')}
-            </Text>
-
-            <View style={styles.mapPickerWrapper}>
-              <PrivacyZoneMapPicker
-                value={
-                  newZoneLocation ? { lat: newZoneLocation.lat, lng: newZoneLocation.lng } : null
-                }
-                onChange={(lat, lng) => setNewZoneLocation({ lat, lng })}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.locationButton,
-                { backgroundColor: colors.cardBackground, borderColor: colors.border },
-              ]}
-              onPress={handleUseCurrentLocation}
-              disabled={locationLoading}
+          <KeyboardAvoidingView style={styles.flex} behavior="padding">
+            <ScrollView
+              style={styles.modalContent}
+              contentContainerStyle={styles.modalContentInner}
+              keyboardShouldPersistTaps="handled"
             >
-              {locationLoading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Ionicons name="navigate" size={20} color={colors.primary} />
-              )}
-              <Text style={[styles.locationButtonText, { color: colors.primary }]}>
-                {t('settings.privacyZones.useCurrentLocation')}
+              {/* Zone Name */}
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
+                {t('settings.privacyZones.zoneName')}
               </Text>
-            </TouchableOpacity>
-
-            {newZoneLocation && (
-              <View
+              <TextInput
                 style={[
-                  styles.locationPreview,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' },
+                  styles.input,
+                  {
+                    color: colors.textPrimary,
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
                 ]}
-              >
-                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-                <Text style={[styles.locationPreviewText, { color: colors.textSecondary }]}>
-                  {newZoneLocation.lat.toFixed(5)}, {newZoneLocation.lng.toFixed(5)}
-                </Text>
-              </View>
-            )}
+                value={newZoneName}
+                onChangeText={setNewZoneName}
+                placeholder={t('settings.privacyZones.zoneNamePlaceholder')}
+                placeholderTextColor={colors.textMuted}
+              />
 
-            <Text style={[styles.radiusHint, { color: colors.textMuted }]}>
-              <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />{' '}
-              {t('settings.privacyZones.radius')}
-            </Text>
-          </ScrollView>
+              {/* Location */}
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>
+                {t('settings.privacyZones.location')}
+              </Text>
+
+              <View style={styles.mapPickerWrapper}>
+                <PrivacyZoneMapPicker
+                  value={
+                    newZoneLocation ? { lat: newZoneLocation.lat, lng: newZoneLocation.lng } : null
+                  }
+                  onChange={(lat, lng) => setNewZoneLocation({ lat, lng })}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.locationButton,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                ]}
+                onPress={handleUseCurrentLocation}
+                disabled={locationLoading}
+              >
+                {locationLoading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons name="navigate" size={20} color={colors.primary} />
+                )}
+                <Text style={[styles.locationButtonText, { color: colors.primary }]}>
+                  {t('settings.privacyZones.useCurrentLocation')}
+                </Text>
+              </TouchableOpacity>
+
+              {newZoneLocation && (
+                <View
+                  style={[
+                    styles.locationPreview,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.primary + '30' },
+                  ]}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                  <Text style={[styles.locationPreviewText, { color: colors.textSecondary }]}>
+                    {newZoneLocation.lat.toFixed(5)}, {newZoneLocation.lng.toFixed(5)}
+                  </Text>
+                </View>
+              )}
+
+              <Text style={[styles.radiusHint, { color: colors.textMuted }]}>
+                <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />{' '}
+                {t('settings.privacyZones.radius')}
+              </Text>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </ScreenContainer>
       </Modal>
     </ScreenContainer>
@@ -670,6 +677,9 @@ const styles = StyleSheet.create({
   modalSaveText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  flex: {
+    flex: 1,
   },
   modalContent: {
     flex: 1,

@@ -14,7 +14,7 @@ import { Input, Avatar, ScreenHeader, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
-import { spacing } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { User } from '../../types/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: spacing.md,
   },
-  warningText: { fontSize: 14, lineHeight: 20 },
+  warningText: { fontSize: fontSize.md, lineHeight: 20 },
   loader: { marginVertical: spacing.lg },
   userCard: {
     flexDirection: 'row',
@@ -178,9 +178,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   userInfo: { marginLeft: spacing.md, flex: 1, justifyContent: 'center' },
-  userName: { fontSize: 16, fontWeight: '600' },
-  userUsername: { fontSize: 14, marginTop: 2 },
-  userEmail: { fontSize: 12, marginTop: 2 },
+  userName: { fontSize: fontSize.lg, fontWeight: '600' },
+  userUsername: { fontSize: fontSize.md, marginTop: 2 },
+  userEmail: { fontSize: fontSize.sm, marginTop: 2 },
   emptyText: { textAlign: 'center', marginTop: spacing.xl },
   overlay: {
     ...StyleSheet.absoluteFillObject,
@@ -188,5 +188,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  overlayText: { marginTop: spacing.md, fontSize: 16 },
+  overlayText: { marginTop: spacing.md, fontSize: fontSize.lg },
 });

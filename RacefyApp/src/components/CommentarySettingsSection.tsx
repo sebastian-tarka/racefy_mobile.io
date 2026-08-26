@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   languageFlag: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     marginRight: spacing.sm,
   },
   languageName: {

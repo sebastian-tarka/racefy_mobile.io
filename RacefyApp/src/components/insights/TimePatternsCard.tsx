@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { InsightCard } from './InsightCard';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
+import { spacing, fontSize, fontWeight, borderRadius, msFont } from '../../theme';
 import type { TimePatterns } from '../../types/insights';
 
 interface TimePatternsCardProps {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   hourLabel: {
-    fontSize: 9,
+    fontSize: msFont(9),
   },
   dayRow: {
     flexDirection: 'row',

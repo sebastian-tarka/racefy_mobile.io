@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   eventDateBadge: {
     width: 44,
-    height: 44,
+    minHeight: 44,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',

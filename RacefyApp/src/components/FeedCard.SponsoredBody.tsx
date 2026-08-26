@@ -55,7 +55,7 @@ export function SponsoredBody({ post }: { post: Post }) {
 
 const spStyles = StyleSheet.create({
   productTitle: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     letterSpacing: -0.3,
     marginBottom: spacing.xs,

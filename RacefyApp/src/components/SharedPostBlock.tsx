@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   morePhotos: {
     width: 60,
-    height: 60,
+    minHeight: 60,
     borderRadius: borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',

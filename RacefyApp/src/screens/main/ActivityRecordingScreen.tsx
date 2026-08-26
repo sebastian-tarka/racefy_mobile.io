@@ -80,7 +80,7 @@ import { RouteSelectionModal } from './recording/RouteSelectionModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import type { MainTabParamList, RootStackParamList } from '../../navigation';
 import { logger } from '../../services/logger';
 import { formatTime } from '../../utils/formatters';
@@ -1457,7 +1457,7 @@ export function ActivityRecordingScreen() {
               <Text
                 style={{
                   color: devSim.running ? '#ef4444' : colors.textMuted,
-                  fontSize: 9,
+                  fontSize: msFont(9),
                   textAlign: 'center',
                   marginTop: 2,
                 }}
@@ -1690,7 +1690,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
 
-  // Nearby routes toggle container and button (matching ViewToggleButton style)
+  // Nearby routes toggle container and button
   routesToggleContainer: {
     position: 'absolute',
     right: spacing.lg,

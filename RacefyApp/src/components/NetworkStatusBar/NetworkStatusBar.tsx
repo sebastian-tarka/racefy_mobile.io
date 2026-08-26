@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
+import { msFont } from '../../theme';
 
 const ONLINE_DISMISS_DELAY = 2500;
 const BAR_CONTENT_HEIGHT = 32;
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   text: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '600',
   },
 });

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { fontSize } from '../theme';
 import Animated, {
   Easing,
   runOnJS,
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   wordmark: {
     marginTop: 20,
     color: '#ffffff',
-    fontSize: 28,
+    fontSize: fontSize.title,
     fontWeight: '700',
     letterSpacing: 1,
   },

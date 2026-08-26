@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Dimensions,
   Image,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,9 +49,10 @@ import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export function ActivityDetailScreen({ route, navigation }: Props) {
+  // Read live: a frozen module-level width would desync the pager's index from
+  // its scroll offset if the window resizes (foldable, split-screen).
+  const { width: windowWidth } = useWindowDimensions();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { canUse, tier } = useSubscription();
@@ -788,17 +789,20 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                       horizontal
                       pagingEnabled
                       showsHorizontalScrollIndicator={false}
-                      contentOffset={{ x: selectedPhotoIndex * SCREEN_WIDTH, y: 0 }}
+                      contentOffset={{ x: selectedPhotoIndex * windowWidth, y: 0 }}
                       onMomentumScrollEnd={(e) => {
-                        const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                        const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
                         setSelectedPhotoIndex(newIndex);
                       }}
                     >
                       {activity.photos.map((photo) => (
-                        <View key={photo.id} style={styles.modalImageContainer}>
+                        <View
+                          key={photo.id}
+                          style={[styles.modalImageContainer, { width: windowWidth }]}
+                        >
                           <Image
                             source={{ uri: fixStorageUrl(photo.url) || '' }}
-                            style={styles.modalImage}
+                            style={{ width: windowWidth, height: windowWidth }}
                             resizeMode="contain"
                           />
                         </View>
@@ -1147,13 +1151,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   modalImageContainer: {
-    width: SCREEN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  modalImage: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH,
   },
   photoCounter: {
     position: 'absolute',

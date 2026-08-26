@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   overflowBubble: {
     width: 40,
-    height: 40,
+    minHeight: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',

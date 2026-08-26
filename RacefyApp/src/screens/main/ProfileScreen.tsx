@@ -33,7 +33,7 @@ import {
   TimeRangeFilter,
   UserListModal,
 } from '../../components';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
@@ -46,7 +46,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
-import { fontSize, spacing } from '../../theme';
+import { fontSize, spacing, msFont } from '../../theme';
 import { getDateRangeForTimeRange } from '../../utils/dateRanges';
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -80,8 +80,7 @@ export function ProfileScreen({
   const { user, isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
   const { canUse, tier } = useSubscription();
-  const insets = useSafeAreaInsets();
-  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
+  const tabBarPaddingBottom = useTabBarPadding();
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -934,7 +933,7 @@ const styles = StyleSheet.create({
   },
   statBadge: {
     minWidth: 18,
-    height: 18,
+    minHeight: 18,
     borderRadius: 9,
     paddingHorizontal: 4,
     justifyContent: 'center',
@@ -942,7 +941,7 @@ const styles = StyleSheet.create({
   },
   statBadgeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   statValue: {
@@ -950,7 +949,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: msFont(11),
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
@@ -977,14 +976,14 @@ const styles = StyleSheet.create({
     top: -6,
     right: -10,
     minWidth: 16,
-    height: 16,
+    minHeight: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
   },
   draftsBadgeText: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -1005,7 +1004,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   activitiesFilterTitle: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
   },
   chartCard: {

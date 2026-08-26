@@ -1,4 +1,4 @@
-import { ms } from './scale';
+import { FONT_CAP, ms, msFont } from './scale';
 
 export const spacing = {
   xs: ms(4),
@@ -18,15 +18,22 @@ export const borderRadius = {
   full: 9999,
 };
 
+/**
+ * Text sizes. All steps share the same font-scale cap so the hierarchy scales as
+ * one — see `FONT_CAP` in ./scale for why per-step caps are a trap.
+ *
+ * Always prefer these over a raw number: a hardcoded `fontSize: 14` bypasses the
+ * cap and will overflow its container at large system font sizes.
+ */
 export const fontSize = {
-  xs: ms(10),
-  sm: ms(12),
-  md: ms(14),
-  lg: ms(16),
-  xl: ms(18),
-  xxl: ms(20),
-  xxxl: ms(24),
-  title: ms(28),
+  xs: msFont(10),
+  sm: msFont(12),
+  md: msFont(14),
+  lg: msFont(16),
+  xl: msFont(18),
+  xxl: msFont(20),
+  xxxl: msFont(24),
+  title: msFont(28),
 };
 
 export const fontWeight = {
@@ -56,13 +63,13 @@ export const iconSize = {
 export const componentSize = {
   buttonMinHeight: ms(48),
   inputHeight: ms(48),
-  tabBarHeight: ms(60),
   controlButton: ms(88),
   startButton: ms(160),
   cardWidth: ms(200),
   cardWidthSm: ms(160),
   sportBadge: ms(36),
-  heroTimerFont: ms(72),
-  heroStatFont: ms(48),
+  // Standalone hero numbers — tighter cap, they break layout before anything else.
+  heroTimerFont: msFont(72, FONT_CAP.display),
+  heroStatFont: msFont(48, FONT_CAP.display),
   platformIcon: ms(40),
 };

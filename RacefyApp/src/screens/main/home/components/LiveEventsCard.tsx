@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
-import { spacing, borderRadius, fontSize, fontWeight } from '../../../../theme';
+import { spacing, borderRadius, fontSize, fontWeight, msFont } from '../../../../theme';
 import { fixStorageUrl } from '../../../../config/api';
 import type { EventWithLatestCommentary } from '../../../../types/api';
 
@@ -217,13 +217,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f43f5e',
   },
   liveText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
     color: '#f43f5e',
     letterSpacing: 0.5,
   },
   emoji: {
-    fontSize: 32,
+    fontSize: msFont(32),
   },
   emojiCorner: {
     position: 'absolute',
@@ -237,14 +237,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emojiSmall: {
-    fontSize: 24,
+    fontSize: fontSize.xxxl,
   },
   content: {
     padding: 14,
     paddingHorizontal: 18,
   },
   statusLabel: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,

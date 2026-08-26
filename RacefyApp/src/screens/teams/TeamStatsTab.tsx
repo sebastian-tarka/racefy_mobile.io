@@ -7,7 +7,7 @@ import { useTeamStats } from '../../hooks/useTeamStats';
 import { useTeamRanking } from '../../hooks/useTeamRanking';
 import { useTeamTrends } from '../../hooks/useTeamTrends';
 import { Card, Avatar, OptionSelector, EmptyState } from '../../components';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import { formatTime, formatTotalTime } from '../../utils/formatters';
 import type { StatsPeriod, RankingSortBy, TrendGranularity } from '../../types/api';
 
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankMedal: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
   },
   rankText: {
     fontSize: fontSize.sm,
@@ -509,11 +509,11 @@ const styles = StyleSheet.create({
     minHeight: 4,
   },
   barLabel: {
-    fontSize: 9,
+    fontSize: msFont(9),
     marginTop: 4,
   },
   barValue: {
-    fontSize: 8,
+    fontSize: msFont(8),
   },
   chartUnit: {
     fontSize: fontSize.xs,

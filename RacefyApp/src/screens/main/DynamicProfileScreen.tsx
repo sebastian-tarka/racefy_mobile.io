@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -43,7 +43,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import { formatTotalTime } from '../../utils/formatters';
 import { getDateRangeForTimeRange } from '../../utils/dateRanges';
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -172,8 +172,7 @@ export function DynamicProfileScreen({
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
-  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
+  const tabBarPaddingBottom = useTabBarPadding();
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -1441,7 +1440,7 @@ const styles = StyleSheet.create({
     bottom: -2,
     right: -2,
     width: 24,
-    height: 24,
+    minHeight: 24,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1449,7 +1448,7 @@ const styles = StyleSheet.create({
     borderColor: 'white',
   },
   levelBadgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '800',
   },
   infoColumn: {
@@ -1478,7 +1477,7 @@ const styles = StyleSheet.create({
     lineHeight: fontSize.lg * 1.1,
   },
   compactStatLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '500',
     marginTop: 2,
   },
@@ -1507,7 +1506,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   badgeLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
   },
 
   // Training Card
@@ -1606,19 +1605,19 @@ const styles = StyleSheet.create({
     top: -6,
     right: -10,
     minWidth: 16,
-    height: 16,
+    minHeight: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
   },
   draftsBadgeText: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '700',
     textAlign: 'center',
   },
   pillTabEmoji: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     lineHeight: 20,
   },
   pillTabText: {
@@ -1643,7 +1642,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   emojiFilterIcon: {
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     lineHeight: 24,
   },
   emojiFilterLabel: {
@@ -1683,7 +1682,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   summaryLabel: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -1762,7 +1761,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   compareEmoji: {
-    fontSize: 18,
+    fontSize: fontSize.xl,
   },
   compareTitle: {
     fontSize: fontSize.md,

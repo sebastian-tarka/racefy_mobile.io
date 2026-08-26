@@ -1,10 +1,10 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
-  Dimensions,
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
   ViewToken,
 } from 'react-native';
@@ -31,11 +31,7 @@ import {
   truncateDescription,
   useImageGallery,
 } from './FeedCard.utils';
-import { borderRadius, fontSize, spacing } from '../theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-/** Width of media area inside card padding (Card has padding: spacing.lg on each side + card border) */
-const MEDIA_WIDTH = SCREEN_WIDTH - spacing.lg * 2 - 2;
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 
 /* ──────────────────────────────────────────────────────────
  * Activity Stats — Prominent horizontal bar under the map
@@ -161,6 +157,11 @@ function ActivityMediaSlider({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { formatDistance: fmtDistance } = useUnits();
+  // Slide width must match snapToInterval, so both derive from the live window
+  // width — a frozen value would break paging after a window resize.
+  const { width: windowWidth } = useWindowDimensions();
+  const mediaWidth = windowWidth - spacing.lg * 2 - 2;
+  const slideStyle = { width: mediaWidth };
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
@@ -182,7 +183,7 @@ function ActivityMediaSlider({
   }) => {
     if (item.type === 'route' && hasRouteMap) {
       return (
-        <View style={sliderStyles.slide}>
+        <View style={slideStyle}>
           <TouchableOpacity
             style={sliderStyles.routeContainer}
             onPress={onActivityPress}
@@ -229,7 +230,7 @@ function ActivityMediaSlider({
     const mediaItem = item as PostMediaItem;
     if (mediaItem.type === 'video') {
       return (
-        <View style={sliderStyles.slide}>
+        <View style={slideStyle}>
           <FeedVideo
             videoUrl={mediaItem.url}
             thumbnailUrl={mediaItem.thumbnailUrl}
@@ -241,7 +242,7 @@ function ActivityMediaSlider({
 
     const imageIndex = mediaItems.slice(0, index).filter((it) => it.type === 'image').length;
     return (
-      <View style={sliderStyles.slide}>
+      <View style={slideStyle}>
         <AutoDisplayImage
           imageUrl={mediaItem.url}
           onExpand={() =>
@@ -268,7 +269,7 @@ function ActivityMediaSlider({
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         decelerationRate="fast"
-        snapToInterval={MEDIA_WIDTH}
+        snapToInterval={mediaWidth}
         snapToAlignment="center"
         removeClippedSubviews
       />
@@ -497,12 +498,12 @@ const actStyles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 18,
+    fontSize: fontSize.xl,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '500',
     marginTop: 2,
     textTransform: 'uppercase',
@@ -538,7 +539,7 @@ const actStyles = StyleSheet.create({
   },
   distanceValue: {
     color: '#fff',
-    fontSize: 26,
+    fontSize: msFont(26),
     fontWeight: '800',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0,0,0,0.5)',
@@ -586,7 +587,8 @@ const actStyles = StyleSheet.create({
 
 const sliderStyles = StyleSheet.create({
   container: { position: 'relative' },
-  slide: { width: MEDIA_WIDTH },
+  // `slide` lives inline in ActivityMediaSlider — its width comes from the live
+  // window size (media area = window minus the Card's spacing.lg padding + border).
   routeContainer: { height: 280, position: 'relative', overflow: 'hidden' },
   pagination: {
     position: 'absolute',

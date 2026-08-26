@@ -218,8 +218,6 @@
       "paused": "Aktywność wstrzymana",
       "tap": "Dotknij, aby zobaczyć"
     },
-    "heroTitle": "Społeczność sportowa i fitness",
-    "heroSubtitle": "Śledź aktywności, dołączaj do wydarzeń i łącz się z entuzjastami fitnessu",
     "getStarted": "Rozpocznij",
     "getStartedMessage": "Dołącz do Racefy, aby śledzić aktywności i łączyć się z innymi",
     "features": "Funkcje",
@@ -839,7 +837,6 @@
     },
     "plannedThisWeek": "Zaplanowane w tym tygodniu",
     "session": "Sesja",
-    "viewMap": "Widok mapy",
     "viewStats": "Widok statystyk",
     "toggleView": "Przełącz widok",
     "routes": "Trasy",

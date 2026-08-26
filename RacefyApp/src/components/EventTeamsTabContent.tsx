@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     marginBottom: spacing.sm,
   },
-  codeText: { fontSize: 24, fontWeight: '700', letterSpacing: 4 },
+  codeText: { fontSize: fontSize.xxxl, fontWeight: '700', letterSpacing: 4 },
   codeSmall: { fontSize: fontSize.sm },
   codeHint: { fontSize: fontSize.xs, marginBottom: spacing.md, textAlign: 'center' },
   myTeamHeader: {

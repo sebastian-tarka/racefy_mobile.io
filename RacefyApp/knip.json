@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "App.tsx",
+    "plugins/*.js",
+    "scripts/*.js",
+    "src/**/__tests__/**/*.{ts,tsx}"
+  ],
+  "project": ["*.{ts,tsx}", "src/**/*.{ts,tsx}", "plugins/**/*.js"],
+  "ignoreDependencies": [
+    "lint-staged"
+  ]
+}

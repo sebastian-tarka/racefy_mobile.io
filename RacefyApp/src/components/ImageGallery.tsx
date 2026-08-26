@@ -5,13 +5,13 @@ import {
   TouchableOpacity,
   Modal,
   StatusBar,
-  Dimensions,
   FlatList,
+  useWindowDimensions,
   ViewToken,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from '../theme';
+import { spacing, fontSize } from '../theme';
 import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -22,9 +22,10 @@ interface ImageGalleryProps {
   onClose: () => void;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
 function GalleryImage({ uri }: { uri: string }) {
+  // Slide size must match the FlatList's getItemLayout below, so both read the
+  // live window size rather than a value frozen at module load.
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -83,10 +84,10 @@ function GalleryImage({ uri }: { uri: string }) {
 
   return (
     <GestureDetector gesture={composed}>
-      <Animated.View style={styles.imageContainer}>
+      <Animated.View style={[styles.imageContainer, { width: screenWidth, height: screenHeight }]}>
         <Animated.Image
           source={{ uri }}
-          style={[styles.image, animatedStyle]}
+          style={[{ width: screenWidth, height: screenHeight }, animatedStyle]}
           resizeMode="contain"
         />
       </Animated.View>
@@ -95,6 +96,7 @@ function GalleryImage({ uri }: { uri: string }) {
 }
 
 export function ImageGallery({ images, initialIndex = 0, visible, onClose }: ImageGalleryProps) {
+  const { width: screenWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
@@ -177,14 +179,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   imageContainer: {
-    width: screenWidth,
-    height: screenHeight,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  image: {
-    width: screenWidth,
-    height: screenHeight,
   },
   closeButton: {
     position: 'absolute',
@@ -229,7 +225,7 @@ const styles = StyleSheet.create({
   },
   counterText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 });

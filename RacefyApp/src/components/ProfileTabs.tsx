@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabEmoji: {
-    fontSize: 18,
+    fontSize: fontSize.xl,
     lineHeight: 22,
   },
   tabText: {

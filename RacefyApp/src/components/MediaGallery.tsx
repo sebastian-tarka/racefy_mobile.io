@@ -28,6 +28,16 @@ interface MediaGalleryProps {
 const { width: screenWidth } = Dimensions.get('window');
 const DEFAULT_WIDTH = screenWidth - spacing.lg * 4;
 
+/**
+ * Media keeps one shape everywhere instead of a hardcoded 200pt height.
+ *
+ * The old fixed height meant the same photo was letterboxed differently on every
+ * screen size (256x200 on a 320pt phone, 366x200 on a 430pt one) and differently
+ * again per call site. 1.55 is the ratio the feed renders today on the 375pt
+ * baseline, so the most-seen surface is unchanged.
+ */
+const MEDIA_ASPECT_RATIO = 1.55;
+
 export function MediaGallery({
   media = [],
   photos = [],
@@ -300,7 +310,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   singleContainer: {
-    height: 200,
+    aspectRatio: MEDIA_ASPECT_RATIO,
     marginTop: spacing.md,
     borderRadius: 0,
     overflow: 'hidden',
@@ -311,7 +321,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   itemContainer: {
-    height: 200,
+    aspectRatio: MEDIA_ASPECT_RATIO,
     position: 'relative',
   },
   image: {

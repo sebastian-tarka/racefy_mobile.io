@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
@@ -15,14 +15,24 @@ interface PaceChartProps extends BaseChartProps {}
 interface ElevationChartProps extends BaseChartProps {}
 interface HeartRateChartProps extends BaseChartProps {}
 
-const CHART_WIDTH = Dimensions.get('window').width - spacing.md * 2 - 32;
 const CHART_HEIGHT = 220;
+
+/**
+ * react-native-chart-kit needs an explicit pixel width, so it cannot simply
+ * flex. Reading the live window width keeps the charts correct after a window
+ * resize (foldable, split-screen) instead of freezing at launch size.
+ */
+function useChartWidth(): number {
+  const { width } = useWindowDimensions();
+  return width - spacing.md * 2 - 32;
+}
 
 /**
  * Pace Chart - Shows time per kilometer
  * Line going down = getting faster (better performance)
  */
 export function PaceChart({ splits, title }: PaceChartProps) {
+  const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel, getDistanceUnit } = useUnits();
 
@@ -88,7 +98,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
             },
           ],
         }}
-        width={CHART_WIDTH}
+        width={chartWidth}
         height={CHART_HEIGHT}
         chartConfig={chartConfig}
         bezier
@@ -152,6 +162,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
  * Elevation Chart - Shows elevation gain/loss per kilometer
  */
 export function ElevationChart({ splits, title }: ElevationChartProps) {
+  const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel, getElevationUnit, formatElevation } = useUnits();
 
@@ -201,7 +212,7 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
             },
           ],
         }}
-        width={CHART_WIDTH}
+        width={chartWidth}
         height={CHART_HEIGHT}
         chartConfig={chartConfig}
         bezier
@@ -245,6 +256,7 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
  * Heart Rate Chart - Shows average heart rate per kilometer
  */
 export function HeartRateChart({ splits, title }: HeartRateChartProps) {
+  const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel } = useUnits();
 
@@ -295,7 +307,7 @@ export function HeartRateChart({ splits, title }: HeartRateChartProps) {
             },
           ],
         }}
-        width={CHART_WIDTH}
+        width={chartWidth}
         height={CHART_HEIGHT}
         chartConfig={chartConfig}
         bezier

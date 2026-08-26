@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import type { TrainingProgram } from '../../types/api';
 
 interface TrainingProgramRowProps {
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   name: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '700',
     flexShrink: 1,
   },
@@ -162,13 +162,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: msFont(9),
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sub: {
-    fontSize: 11,
+    fontSize: msFont(11),
     marginTop: 1,
   },
   progressRow: {

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 
 export function ImpersonationBanner() {
   const { t } = useTranslation();
@@ -93,11 +93,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   text: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   subtext: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     marginTop: 2,
     opacity: 0.9,
   },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.15)',
   },
   exitText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 });

@@ -16,7 +16,7 @@ import { useUnsyncedActivities } from '../../hooks/useUnsyncedActivities';
 import { exportGpxAndShare } from '../../utils/gpxExport';
 import { getUnsyncedActivity, type UnsyncedActivityMeta } from '../../services/unsyncedActivities';
 import { Button, ScreenContainer, ScreenHeader } from '../../components';
-import { spacing } from '../../theme';
+import { spacing, fontSize, msFont } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UnsyncedActivities'>;
@@ -251,12 +251,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: fontSize.xl,
     fontWeight: '600',
     marginTop: spacing.md,
   },
   emptyBody: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
@@ -271,11 +271,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   title: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
   },
   meta: {
-    fontSize: 13,
+    fontSize: msFont(13),
     marginTop: 2,
   },
   badge: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
     marginLeft: 4,
   },
@@ -300,19 +300,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     marginTop: 2,
   },
   errorText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
     marginTop: spacing.sm,
   },
   retryText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     marginTop: 2,
   },
   actions: {

@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import type { TrainingProgram } from '../../types/api';
 import { TrainingProgramRow } from './TrainingProgramRow';
 
@@ -193,11 +193,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   createTitle: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   createSub: {
-    fontSize: 11,
+    fontSize: msFont(11),
     marginTop: 1,
   },
   cancelButton: {

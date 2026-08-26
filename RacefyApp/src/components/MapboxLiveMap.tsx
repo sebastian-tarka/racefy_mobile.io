@@ -12,6 +12,7 @@ import * as Location from 'expo-location';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
 import type { GpsPoint, GeoJSONLineString } from '../types/api';
+import { fontSize } from '../theme';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -568,6 +569,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
 });

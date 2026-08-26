@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   eventDateBadge: {
     width: 48,
-    height: 48,
+    minHeight: 48,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',

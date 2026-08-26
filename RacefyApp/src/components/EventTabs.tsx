@@ -91,14 +91,14 @@ const styles = StyleSheet.create({
     top: -4,
     right: -8,
     minWidth: 16,
-    height: 16,
+    minHeight: 16,
     borderRadius: 8,
     paddingHorizontal: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   tabText: {

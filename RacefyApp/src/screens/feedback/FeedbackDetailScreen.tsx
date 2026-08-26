@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   teamBadgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     color: '#10B981',
   },

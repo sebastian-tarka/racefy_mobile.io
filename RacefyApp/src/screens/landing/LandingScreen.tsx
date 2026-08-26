@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Dimensions,
   Modal,
   Pressable,
   ScrollView,
@@ -8,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { BrandLogo, Button } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing } from '../../theme';
+import { spacing, fontSize, msFont } from '../../theme';
 import { VideoPlayerManager } from '../../services/VideoPlayerManager';
 
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -36,8 +36,6 @@ const HERO_VIDEOS = [
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Landing'>;
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 let landingPlayerIdCounter = 0;
 
 // ---------- Sub-components ----------
@@ -50,8 +48,9 @@ interface FeatureItemProps {
 }
 
 function FeatureItem({ icon, title, description, colors }: FeatureItemProps) {
+  const { width } = useWindowDimensions();
   return (
-    <View style={styles.featureItem}>
+    <View style={[styles.featureItem, { maxWidth: width / 3 }]}>
       <View style={[styles.featureIconCircle, { backgroundColor: `${colors.primary}20` }]}>
         <Ionicons name={icon} size={26} color={colors.primary} />
       </View>
@@ -79,6 +78,9 @@ const LANGUAGES: LanguageOption[] = [
 export function LandingScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
+  // The hero is a full-viewport splash, so its height has to follow the window
+  // rather than whatever the window happened to be when the module loaded.
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const playerIdRef = useRef<string>(`landing-video-${++landingPlayerIdCounter}-${Date.now()}`);
@@ -162,7 +164,7 @@ export function LandingScreen({ navigation }: Props) {
         bounces={false}
       >
         {/* ===== HERO — full screen with video ===== */}
-        <View style={[styles.hero, { height: SCREEN_HEIGHT }]}>
+        <View style={[styles.hero, { height: windowHeight }]}>
           {/* Video */}
           <VideoView
             player={player}
@@ -219,7 +221,9 @@ export function LandingScreen({ navigation }: Props) {
                 {t('landing.heroTitleHighlight')}
               </Text>
             </Text>
-            <Text style={styles.heroSubtitle}>{t('landing.heroSubtitle')}</Text>
+            <Text style={[styles.heroSubtitle, { maxWidth: windowWidth * 0.9 }]}>
+              {t('landing.heroSubtitle')}
+            </Text>
 
             {/* CTA buttons */}
             <View style={styles.heroCtas}>
@@ -368,7 +372,7 @@ const styles = StyleSheet.create({
   },
   langSelectorText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   langModalBackdrop: {
@@ -385,7 +389,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   langModalTitle: {
-    fontSize: 16,
+    fontSize: fontSize.lg,
     fontWeight: '700',
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -399,11 +403,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   langModalFlag: {
-    fontSize: 22,
+    fontSize: msFont(22),
   },
   langModalName: {
     flex: 1,
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
   },
   loginBtn: {
@@ -412,7 +416,7 @@ const styles = StyleSheet.create({
   },
   loginBtnText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '500',
   },
   signUpBtn: {
@@ -422,7 +426,7 @@ const styles = StyleSheet.create({
   },
   signUpBtnText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 
@@ -433,7 +437,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   heroTitle: {
-    fontSize: 30,
+    fontSize: msFont(30),
     fontWeight: '800',
     color: '#fff',
     textAlign: 'center',
@@ -441,11 +445,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   heroSubtitle: {
-    fontSize: 15,
+    fontSize: msFont(15),
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 22,
-    maxWidth: SCREEN_WIDTH * 0.9,
     marginBottom: spacing.xl,
   },
   heroCtas: {
@@ -459,7 +462,7 @@ const styles = StyleSheet.create({
   },
   ctaPrimaryText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '700',
   },
   ctaOutline: {
@@ -470,7 +473,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
   },
   ctaOutlineText: {
-    fontSize: 15,
+    fontSize: msFont(15),
     fontWeight: '600',
   },
 
@@ -490,7 +493,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xs,
-    maxWidth: SCREEN_WIDTH / 3,
   },
   featureIconCircle: {
     width: 52,
@@ -501,13 +503,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   featureItemTitle: {
-    fontSize: 13,
+    fontSize: msFont(13),
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 4,
   },
   featureItemDesc: {
-    fontSize: 11,
+    fontSize: msFont(11),
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -519,13 +521,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ctaBottomTitle: {
-    fontSize: 22,
+    fontSize: msFont(22),
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   ctaBottomDesc: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -536,10 +538,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   signInText: {
-    fontSize: 14,
+    fontSize: fontSize.md,
   },
   signInLink: {
-    fontSize: 14,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
 
@@ -549,6 +551,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: fontSize.sm,
   },
 });

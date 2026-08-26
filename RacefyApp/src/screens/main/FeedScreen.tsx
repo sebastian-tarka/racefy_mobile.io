@@ -27,7 +27,7 @@ import { ActivitiesFeedPreview } from './home/components';
 import { useAuth } from '../../hooks/useAuth';
 import { useFeed } from '../../hooks/useFeed';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useTheme } from '../../hooks/useTheme';
 import { useVideoPauseOnBlur } from '../../hooks/useVideoPauseOnBlur';
 import { api } from '../../services/api';
@@ -58,8 +58,7 @@ interface SearchResults {
 export function FeedScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
-  const tabBarPaddingBottom = 60 + insets.bottom + spacing.md;
+  const tabBarPaddingBottom = useTabBarPadding();
   const { user, isAuthenticated } = useAuth();
   const { count: unreadCount, refresh: refreshUnreadCount } = useUnreadCount();
   const {
@@ -619,13 +618,13 @@ const styles = StyleSheet.create({
     right: 0,
     borderRadius: 10,
     minWidth: 18,
-    height: 18,
+    minHeight: 18,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
   },
   unreadBadgeText: {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   // Search styles

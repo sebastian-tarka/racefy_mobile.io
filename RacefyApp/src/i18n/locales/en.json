@@ -218,8 +218,6 @@
       "paused": "Activity Paused",
       "tap": "Tap to view"
     },
-    "heroTitle": "Sports & Fitness Community",
-    "heroSubtitle": "Track activities, join events, and connect with fitness enthusiasts",
     "getStarted": "Get Started",
     "getStartedMessage": "Join Racefy to track your activities and connect with others",
     "features": "Features",
@@ -839,7 +837,6 @@
     },
     "plannedThisWeek": "Planned This Week",
     "session": "Session",
-    "viewMap": "Map View",
     "viewStats": "Stats View",
     "toggleView": "Toggle View",
     "routes": "Routes",

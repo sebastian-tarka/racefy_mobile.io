@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     minWidth: 20,
-    height: 20,
+    minHeight: 20,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',

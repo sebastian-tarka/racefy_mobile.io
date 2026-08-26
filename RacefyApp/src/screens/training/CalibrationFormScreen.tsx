@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
@@ -305,375 +306,388 @@ export function CalibrationFormScreen({ navigation }: Props) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Sport Type */}
-        <SportTypeSelector
-          value={sportTypeId}
-          onChange={setSportTypeId}
-          error={errors.sportTypeId}
-        />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Sport Type */}
+          <SportTypeSelector
+            value={sportTypeId}
+            onChange={setSportTypeId}
+            error={errors.sportTypeId}
+          />
 
-        {/* Training Goals (dynamic based on sport) */}
-        {sportTypeId && (
+          {/* Training Goals (dynamic based on sport) */}
+          {sportTypeId && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+                {t('training.calibration.trainingGoal')}
+              </Text>
+              {loadingGoals ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+                    {t('training.calibration.loadingGoals')}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.optionsList}>
+                  {trainingGoals.map((goal) => (
+                    <TouchableOpacity
+                      key={goal.id}
+                      style={[
+                        styles.listOption,
+                        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                        selectedGoal?.id === goal.id && {
+                          borderColor: colors.primary,
+                          backgroundColor: colors.primary + '15',
+                        },
+                      ]}
+                      onPress={() => setSelectedGoal(goal)}
+                    >
+                      <View style={styles.listOptionContent}>
+                        <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
+                          {goal.name}
+                        </Text>
+                        <Text
+                          style={[styles.listOptionDescription, { color: colors.textSecondary }]}
+                        >
+                          {goal.description}
+                        </Text>
+                      </View>
+                      {selectedGoal?.id === goal.id && (
+                        <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {errors.trainingGoal && (
+                <Text style={[styles.errorText, { color: colors.error }]}>
+                  {errors.trainingGoal}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {/* Experience Level */}
           <View style={styles.section}>
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-              {t('training.calibration.trainingGoal')}
+              {t('training.calibration.experienceLevel')}
             </Text>
-            {loadingGoals ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                  {t('training.calibration.loadingGoals')}
+            <View style={styles.optionsList}>
+              {EXPERIENCE_LEVELS.map((level) => (
+                <TouchableOpacity
+                  key={level.value}
+                  style={[
+                    styles.listOption,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    experienceLevel === level.value && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + '15',
+                    },
+                  ]}
+                  onPress={() => setExperienceLevel(level.value)}
+                >
+                  <View style={styles.listOptionContent}>
+                    <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
+                      {level.label}
+                    </Text>
+                    <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
+                      {level.description}
+                    </Text>
+                  </View>
+                  {experienceLevel === level.value && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            {errors.experienceLevel && (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                {errors.experienceLevel}
+              </Text>
+            )}
+          </View>
+
+          {/* Sessions Per Week */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+              {t('training.calibration.sessionsPerWeek')}
+            </Text>
+            <View style={[styles.sliderContainer, { backgroundColor: colors.cardBackground }]}>
+              <Text style={[styles.frequencyValue, { color: colors.primary }]}>
+                {sessionsPerWeek} {t('training.calibration.sessionsPerWeekLabel')}
+              </Text>
+              <Slider
+                style={styles.slider}
+                minimumValue={1}
+                maximumValue={7}
+                step={1}
+                value={sessionsPerWeek}
+                onValueChange={setSessionsPerWeek}
+                minimumTrackTintColor={colors.primary}
+                maximumTrackTintColor={colors.border}
+                thumbTintColor={colors.primary}
+              />
+              <View style={styles.sliderLabels}>
+                <Text style={[styles.sliderLabel, { color: colors.textMuted }]}>1</Text>
+                <Text style={[styles.sliderLabel, { color: colors.textMuted }]}>7</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Guidance Level */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+              {t('training.calibration.guidanceLevel')}
+            </Text>
+            <View style={styles.optionsList}>
+              {GUIDANCE_LEVELS.map((level) => (
+                <TouchableOpacity
+                  key={level.value}
+                  style={[
+                    styles.listOption,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    guidanceLevel === level.value && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + '15',
+                    },
+                  ]}
+                  onPress={() => setGuidanceLevel(level.value)}
+                >
+                  <View style={styles.listOptionContent}>
+                    <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
+                      {level.label}
+                    </Text>
+                    <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
+                      {level.description}
+                    </Text>
+                  </View>
+                  {guidanceLevel === level.value && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            {errors.guidanceLevel && (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                {errors.guidanceLevel}
+              </Text>
+            )}
+          </View>
+
+          {/* Recovery Profile */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+              {t('training.calibration.recoveryProfile')}
+            </Text>
+            <View style={styles.optionsList}>
+              {RECOVERY_PROFILES.map((profile) => (
+                <TouchableOpacity
+                  key={profile.value}
+                  style={[
+                    styles.listOption,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    recoveryProfile === profile.value && {
+                      borderColor: colors.primary,
+                      backgroundColor: colors.primary + '15',
+                    },
+                  ]}
+                  onPress={() => setRecoveryProfile(profile.value)}
+                >
+                  <View style={styles.listOptionContent}>
+                    <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
+                      {profile.label}
+                    </Text>
+                    <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
+                      {profile.description}
+                    </Text>
+                  </View>
+                  {recoveryProfile === profile.value && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+            {errors.recoveryProfile && (
+              <Text style={[styles.errorText, { color: colors.error }]}>
+                {errors.recoveryProfile}
+              </Text>
+            )}
+          </View>
+
+          {/* Injury History */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[
+                styles.checkboxContainer,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+              onPress={() => setInjuryHistory(!injuryHistory)}
+            >
+              <Ionicons
+                name={injuryHistory ? 'checkbox' : 'square-outline'}
+                size={24}
+                color={injuryHistory ? colors.primary : colors.textSecondary}
+              />
+              <View style={styles.checkboxContent}>
+                <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
+                  {t('training.calibration.injuryHistory')}
+                </Text>
+                <Text style={[styles.checkboxDescription, { color: colors.textSecondary }]}>
+                  {t('training.calibration.injuryHistoryDescription')}
                 </Text>
               </View>
-            ) : (
-              <View style={styles.optionsList}>
-                {trainingGoals.map((goal) => (
-                  <TouchableOpacity
-                    key={goal.id}
-                    style={[
-                      styles.listOption,
-                      { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                      selectedGoal?.id === goal.id && {
-                        borderColor: colors.primary,
-                        backgroundColor: colors.primary + '15',
-                      },
-                    ]}
-                    onPress={() => setSelectedGoal(goal)}
-                  >
-                    <View style={styles.listOptionContent}>
-                      <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
-                        {goal.name}
-                      </Text>
-                      <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
-                        {goal.description}
-                      </Text>
-                    </View>
-                    {selectedGoal?.id === goal.id && (
-                      <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                ))}
+            </TouchableOpacity>
+          </View>
+
+          {/* Auto-Link Activities */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[
+                styles.checkboxContainer,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                autoLinkActivities && {
+                  borderColor: colors.primary,
+                  backgroundColor: colors.primary + '15',
+                },
+              ]}
+              onPress={() => setAutoLinkActivities(!autoLinkActivities)}
+            >
+              <Ionicons
+                name={autoLinkActivities ? 'checkbox' : 'square-outline'}
+                size={24}
+                color={autoLinkActivities ? colors.primary : colors.textSecondary}
+              />
+              <View style={styles.checkboxContent}>
+                <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
+                  {t('training.calibration.autoLinkActivities')}
+                </Text>
+                <Text style={[styles.checkboxDescription, { color: colors.textSecondary }]}>
+                  {t('training.calibration.autoLinkActivitiesDescription')}
+                </Text>
               </View>
-            )}
-            {errors.trainingGoal && (
-              <Text style={[styles.errorText, { color: colors.error }]}>{errors.trainingGoal}</Text>
-            )}
-          </View>
-        )}
-
-        {/* Experience Level */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-            {t('training.calibration.experienceLevel')}
-          </Text>
-          <View style={styles.optionsList}>
-            {EXPERIENCE_LEVELS.map((level) => (
-              <TouchableOpacity
-                key={level.value}
-                style={[
-                  styles.listOption,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  experienceLevel === level.value && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '15',
-                  },
-                ]}
-                onPress={() => setExperienceLevel(level.value)}
-              >
-                <View style={styles.listOptionContent}>
-                  <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
-                    {level.label}
-                  </Text>
-                  <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
-                    {level.description}
-                  </Text>
-                </View>
-                {experienceLevel === level.value && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          {errors.experienceLevel && (
-            <Text style={[styles.errorText, { color: colors.error }]}>
-              {errors.experienceLevel}
-            </Text>
-          )}
-        </View>
-
-        {/* Sessions Per Week */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-            {t('training.calibration.sessionsPerWeek')}
-          </Text>
-          <View style={[styles.sliderContainer, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.frequencyValue, { color: colors.primary }]}>
-              {sessionsPerWeek} {t('training.calibration.sessionsPerWeekLabel')}
-            </Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={1}
-              maximumValue={7}
-              step={1}
-              value={sessionsPerWeek}
-              onValueChange={setSessionsPerWeek}
-              minimumTrackTintColor={colors.primary}
-              maximumTrackTintColor={colors.border}
-              thumbTintColor={colors.primary}
-            />
-            <View style={styles.sliderLabels}>
-              <Text style={[styles.sliderLabel, { color: colors.textMuted }]}>1</Text>
-              <Text style={[styles.sliderLabel, { color: colors.textMuted }]}>7</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Guidance Level */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-            {t('training.calibration.guidanceLevel')}
-          </Text>
-          <View style={styles.optionsList}>
-            {GUIDANCE_LEVELS.map((level) => (
-              <TouchableOpacity
-                key={level.value}
-                style={[
-                  styles.listOption,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  guidanceLevel === level.value && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '15',
-                  },
-                ]}
-                onPress={() => setGuidanceLevel(level.value)}
-              >
-                <View style={styles.listOptionContent}>
-                  <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
-                    {level.label}
-                  </Text>
-                  <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
-                    {level.description}
-                  </Text>
-                </View>
-                {guidanceLevel === level.value && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          {errors.guidanceLevel && (
-            <Text style={[styles.errorText, { color: colors.error }]}>{errors.guidanceLevel}</Text>
-          )}
-        </View>
-
-        {/* Recovery Profile */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-            {t('training.calibration.recoveryProfile')}
-          </Text>
-          <View style={styles.optionsList}>
-            {RECOVERY_PROFILES.map((profile) => (
-              <TouchableOpacity
-                key={profile.value}
-                style={[
-                  styles.listOption,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  recoveryProfile === profile.value && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '15',
-                  },
-                ]}
-                onPress={() => setRecoveryProfile(profile.value)}
-              >
-                <View style={styles.listOptionContent}>
-                  <Text style={[styles.listOptionLabel, { color: colors.textPrimary }]}>
-                    {profile.label}
-                  </Text>
-                  <Text style={[styles.listOptionDescription, { color: colors.textSecondary }]}>
-                    {profile.description}
-                  </Text>
-                </View>
-                {recoveryProfile === profile.value && (
-                  <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          {errors.recoveryProfile && (
-            <Text style={[styles.errorText, { color: colors.error }]}>
-              {errors.recoveryProfile}
-            </Text>
-          )}
-        </View>
-
-        {/* Injury History */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[
-              styles.checkboxContainer,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
-            ]}
-            onPress={() => setInjuryHistory(!injuryHistory)}
-          >
-            <Ionicons
-              name={injuryHistory ? 'checkbox' : 'square-outline'}
-              size={24}
-              color={injuryHistory ? colors.primary : colors.textSecondary}
-            />
-            <View style={styles.checkboxContent}>
-              <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
-                {t('training.calibration.injuryHistory')}
-              </Text>
-              <Text style={[styles.checkboxDescription, { color: colors.textSecondary }]}>
-                {t('training.calibration.injuryHistoryDescription')}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Auto-Link Activities */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[
-              styles.checkboxContainer,
-              { backgroundColor: colors.cardBackground, borderColor: colors.border },
-              autoLinkActivities && {
-                borderColor: colors.primary,
-                backgroundColor: colors.primary + '15',
-              },
-            ]}
-            onPress={() => setAutoLinkActivities(!autoLinkActivities)}
-          >
-            <Ionicons
-              name={autoLinkActivities ? 'checkbox' : 'square-outline'}
-              size={24}
-              color={autoLinkActivities ? colors.primary : colors.textSecondary}
-            />
-            <View style={styles.checkboxContent}>
-              <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
-                {t('training.calibration.autoLinkActivities')}
-              </Text>
-              <Text style={[styles.checkboxDescription, { color: colors.textSecondary }]}>
-                {t('training.calibration.autoLinkActivitiesDescription')}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Cross-Training Sports (only when auto-link is on) */}
-        {autoLinkActivities && sportTypeId && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-              {t('training.calibration.crossTrainingSports')}
-            </Text>
-            <Text style={[styles.crossTrainingDescription, { color: colors.textSecondary }]}>
-              {t('training.calibration.crossTrainingSportsDescription')}
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.dateButton,
-                { backgroundColor: colors.cardBackground, borderColor: colors.border },
-              ]}
-              onPress={() => setShowCrossTrainingModal(true)}
-            >
-              <Ionicons name="fitness-outline" size={20} color={colors.textSecondary} />
-              <Text
-                style={[
-                  styles.dateText,
-                  {
-                    color: allowedSportTypes.length > 0 ? colors.textPrimary : colors.textMuted,
-                  },
-                ]}
-              >
-                {allowedSportTypes.length > 0
-                  ? t('training.calibration.crossTrainingSelected', {
-                      count: allowedSportTypes.length,
-                    })
-                  : t('training.calibration.primarySportOnly')}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
-        )}
 
-        {/* Conditional: Target Distance (if goal requires it) */}
-        {selectedGoal?.requires_target_distance && (
-          <View style={styles.section}>
-            <Input
-              label={t('training.calibration.targetDistance')}
-              placeholder={t('training.calibration.targetDistancePlaceholder')}
-              value={targetDistance}
-              onChangeText={setTargetDistance}
-              keyboardType="numeric"
-              leftIcon="flag"
-              error={errors.targetDistance}
-            />
-          </View>
-        )}
-
-        {/* Conditional: Target Date (if goal requires it) */}
-        {selectedGoal?.requires_target_date && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
-              {t('training.calibration.targetDate')}
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.dateButton,
-                { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                errors.targetDate && { borderColor: colors.error },
-              ]}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-              <Text
+          {/* Cross-Training Sports (only when auto-link is on) */}
+          {autoLinkActivities && sportTypeId && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+                {t('training.calibration.crossTrainingSports')}
+              </Text>
+              <Text style={[styles.crossTrainingDescription, { color: colors.textSecondary }]}>
+                {t('training.calibration.crossTrainingSportsDescription')}
+              </Text>
+              <TouchableOpacity
                 style={[
-                  styles.dateText,
-                  { color: targetDate ? colors.textPrimary : colors.textMuted },
+                  styles.dateButton,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
                 ]}
+                onPress={() => setShowCrossTrainingModal(true)}
               >
-                {targetDate
-                  ? targetDate.toLocaleDateString()
-                  : t('training.calibration.selectDate')}
+                <Ionicons name="fitness-outline" size={20} color={colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.dateText,
+                    {
+                      color: allowedSportTypes.length > 0 ? colors.textPrimary : colors.textMuted,
+                    },
+                  ]}
+                >
+                  {allowedSportTypes.length > 0
+                    ? t('training.calibration.crossTrainingSelected', {
+                        count: allowedSportTypes.length,
+                      })
+                    : t('training.calibration.primarySportOnly')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Conditional: Target Distance (if goal requires it) */}
+          {selectedGoal?.requires_target_distance && (
+            <View style={styles.section}>
+              <Input
+                label={t('training.calibration.targetDistance')}
+                placeholder={t('training.calibration.targetDistancePlaceholder')}
+                value={targetDistance}
+                onChangeText={setTargetDistance}
+                keyboardType="numeric"
+                leftIcon="flag"
+                error={errors.targetDistance}
+              />
+            </View>
+          )}
+
+          {/* Conditional: Target Date (if goal requires it) */}
+          {selectedGoal?.requires_target_date && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
+                {t('training.calibration.targetDate')}
               </Text>
-            </TouchableOpacity>
-            {selectedGoal.default_duration_weeks && !errors.targetDate && (
-              <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                {t('training.calibration.suggestedDate', {
-                  weeks: selectedGoal.default_duration_weeks,
-                })}
-              </Text>
-            )}
-            {errors.targetDate && (
-              <Text style={[styles.errorText, { color: colors.error }]}>{errors.targetDate}</Text>
-            )}
-          </View>
-        )}
+              <TouchableOpacity
+                style={[
+                  styles.dateButton,
+                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  errors.targetDate && { borderColor: colors.error },
+                ]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.dateText,
+                    { color: targetDate ? colors.textPrimary : colors.textMuted },
+                  ]}
+                >
+                  {targetDate
+                    ? targetDate.toLocaleDateString()
+                    : t('training.calibration.selectDate')}
+                </Text>
+              </TouchableOpacity>
+              {selectedGoal.default_duration_weeks && !errors.targetDate && (
+                <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                  {t('training.calibration.suggestedDate', {
+                    weeks: selectedGoal.default_duration_weeks,
+                  })}
+                </Text>
+              )}
+              {errors.targetDate && (
+                <Text style={[styles.errorText, { color: colors.error }]}>{errors.targetDate}</Text>
+              )}
+            </View>
+          )}
 
-        {/* Error message */}
-        {errors.submit && (
-          <View style={[styles.errorContainer, { backgroundColor: colors.error + '15' }]}>
-            <Ionicons name="alert-circle" size={20} color={colors.error} />
-            <Text style={[styles.errorMessage, { color: colors.error }]}>{errors.submit}</Text>
-          </View>
-        )}
+          {/* Error message */}
+          {errors.submit && (
+            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15' }]}>
+              <Ionicons name="alert-circle" size={20} color={colors.error} />
+              <Text style={[styles.errorMessage, { color: colors.error }]}>{errors.submit}</Text>
+            </View>
+          )}
 
-        {/* Submit Button */}
-        <Button
-          title={t('training.calibration.createProgram')}
-          onPress={handleSubmit}
-          disabled={loading}
-          loading={loading}
-          fullWidth
-        />
+          {/* Submit Button */}
+          <Button
+            title={t('training.calibration.createProgram')}
+            onPress={handleSubmit}
+            disabled={loading}
+            loading={loading}
+            fullWidth
+          />
 
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Date Picker */}
       {showDatePicker && (
@@ -757,6 +771,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  flex: {
     flex: 1,
   },
   scrollView: {

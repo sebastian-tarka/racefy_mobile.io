@@ -11,7 +11,7 @@ import { ImageGallery } from './ImageGallery';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import { useImageGallery } from './FeedCard.utils';
-import { borderRadius, fontSize, spacing } from '../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post } from '../types/api';
 
 function GalleryModals({
@@ -189,7 +189,7 @@ const chStyles = StyleSheet.create({
   },
   sportBadgeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.8,
   },
@@ -201,7 +201,7 @@ const chStyles = StyleSheet.create({
   },
   heroTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     letterSpacing: -0.3,
     textShadowColor: 'rgba(0,0,0,0.4)',
@@ -231,7 +231,7 @@ const chStyles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: msFont(11),
     fontWeight: '700',
     letterSpacing: 0.5,
   },

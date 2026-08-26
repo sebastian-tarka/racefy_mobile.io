@@ -9,6 +9,7 @@ import { VideoPlayer } from './VideoPlayer';
 import { VideoPlayerManager } from '../services/VideoPlayerManager';
 import type { PostMediaItem } from './FeedCard.utils';
 import { useImageGallery } from './FeedCard.utils';
+import { fontSize } from '../theme';
 
 const GRID_GAP = 2;
 
@@ -257,7 +258,7 @@ const gridStyles = StyleSheet.create({
   },
   moreText: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: fontSize.title,
     fontWeight: '700',
     letterSpacing: 1,
   },

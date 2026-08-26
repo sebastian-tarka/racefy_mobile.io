@@ -114,7 +114,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   statCell: {
-    width: '48%',
+    // flexBasis, not width: inside a flex container `width` + `flexGrow` are
+    // contradictory declarations that happen to work. Basis states the intent.
+    flexBasis: '48%',
     flexGrow: 1,
     padding: spacing.md,
     borderRadius: borderRadius.md,

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { MainTabParamList } from '../../navigation/types';
@@ -11,7 +10,7 @@ import type {
   TodaysTrainingSessionMeta,
   TrainingTip,
 } from '../../types/api';
-import { TAB_BAR_BOTTOM_MARGIN, TAB_BAR_HEIGHT } from '../../navigation/constants';
+import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';
@@ -81,7 +80,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const weeklyStreakData = useWeeklyStreak();
   const trainingReminders = useTrainingReminders();
   const [plannedTrainingDays, setPlannedTrainingDays] = useState<number[]>([]);
-  const insets = useSafeAreaInsets();
 
   // Listen for notification refresh events
   useRefreshOn('notifications', refreshNotifications);
@@ -110,8 +108,8 @@ export function DynamicHomeScreen({ navigation }: Props) {
   }, [isAuthenticated]);
 
   // Calculate padding to prevent content from being hidden under floating tab bar
-  const tabBarTotalHeight = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + insets.bottom;
-  const scrollPaddingBottom = tabBarTotalHeight + spacing.lg; // Tab bar height + extra spacing
+  // Home carries an extra gap: its last section is a card, not a list row.
+  const scrollPaddingBottom = useTabBarPadding(spacing.lg);
 
   // Config from /home/config endpoint
   const {
