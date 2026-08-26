@@ -65,7 +65,11 @@ Karta „Doping z transmisji" na szczegółach aktywności. Zmiana wyłącznie m
 API obsługiwało to od początku (`GET /live/{id}/messages` autoryzuje właściciela
 niezależnie od `is_live`).
 
-
+- [x] Potwierdzone na lokalnym API: właściciel dostaje 200 z wiadomościami (także prywatnymi) **po** `finish`, postronny 404
+- [ ] Odpalić na urządzeniu: własna zakończona aktywność z transmisją → karta z wiadomościami, prywatne z kłódką
+- [ ] Zwykła aktywność bez transmisji → **żadnego** zapytania do `/live/*` (bramka na `live_started_at`) i brak karty
+- [ ] Cudza aktywność → brak karty
+- [ ] Transmisja z >50 wiadomościami → licznik i lista pokazują wszystkie (paginacja po `after`)
 
 ### Redesign eventów (zmergowany)
 - [ ] Przejście wizualne: EventDetail single-scroll, EventLive, EventResults, Commentary, lista z FeaturedEventCard
