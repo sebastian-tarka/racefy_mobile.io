@@ -31,6 +31,19 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 - [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
 - [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
 
+### `feature/live-messages-archive` — commit `b0d027a` (od `main`/`4f63fd7`)
+
+Karta „Doping z transmisji" na szczegółach aktywności: zawodnik czyta wiadomości
+od widzów po zakończeniu biegu (wcześniej znikały z widoku razem z transmisją).
+Zmiana **wyłącznie mobilna** — API już to obsługuje. 9 plików, 6 testów hooka.
+tsc 0 · eslint 0 błędów · jest 199/199.
+
+- [x] Potwierdzone na lokalnym API: właściciel dostaje 200 z wiadomościami (także prywatnymi) **po** `finish`, postronny 404
+- [ ] Odpalić na urządzeniu: własna zakończona aktywność z transmisją → karta z wiadomościami, prywatne z kłódką
+- [ ] Zwykła aktywność bez transmisji → **żadnego** zapytania do `/live/*` (bramka na `live_started_at`) i brak karty
+- [ ] Cudza aktywność → brak karty
+- [ ] Transmisja z >50 wiadomościami → licznik i lista pokazują wszystkie (paginacja po `after`)
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
