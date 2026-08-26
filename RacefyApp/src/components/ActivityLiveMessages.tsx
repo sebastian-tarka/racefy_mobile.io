@@ -1,0 +1,181 @@
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
+
+import { Avatar } from './Avatar';
+import { Card } from './Card';
+import { useTheme } from '../hooks/useTheme';
+import { useLiveMessageArchive } from '../hooks/useLiveMessageArchive';
+import { borderRadius, fontSize, spacing } from '../theme';
+import type { Activity, User } from '../types/api';
+
+interface Props {
+  activity: Activity | null;
+  onUserPress?: (user: User) => void;
+}
+
+/**
+ * The cheers and private notes a spectator sent during the broadcast, shown on
+ * the finished activity.
+ *
+ * The athlete sees these while running, one line at a time on the recording
+ * screen, and until now that was the only chance to read them — the messages
+ * outlived the broadcast in the database but had no surface afterwards.
+ *
+ * Renders nothing at all when there is nothing to say: not the owner, never
+ * broadcast, still loading, or broadcast with no messages. An empty "no cheers"
+ * card on every activity would be worse than the gap it fills.
+ */
+export function ActivityLiveMessages({ activity, onUserPress }: Props) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const { messages, privateCount, isLoading, error, retry, isAvailable } =
+    useLiveMessageArchive(activity);
+
+  if (!isAvailable) return null;
+
+  if (error) {
+    return (
+      <Card style={styles.section}>
+        <TouchableOpacity onPress={retry} style={styles.errorRow} accessibilityRole="button">
+          <Ionicons name="refresh-outline" size={16} color={colors.textSecondary} />
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            {t('live.archive.loadFailed')}
+          </Text>
+        </TouchableOpacity>
+      </Card>
+    );
+  }
+
+  // Nothing to show yet, and possibly nothing ever: staying invisible until the
+  // messages are in avoids a card that pops in and then disappears.
+  if (isLoading || messages.length === 0) return null;
+
+  return (
+    <Card style={styles.section}>
+      <View style={styles.header}>
+        <Ionicons name="megaphone-outline" size={18} color={colors.primary} />
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('live.archive.title')}</Text>
+      </View>
+
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        {privateCount > 0
+          ? t('live.archive.countWithPrivate', { count: messages.length, private: privateCount })
+          : t('live.archive.count', { count: messages.length })}
+      </Text>
+
+      {messages.map((message) => {
+        const author = message.user;
+        const isPrivate = message.live_visibility === 'private';
+
+        return (
+          <View
+            key={message.id}
+            style={[styles.messageRow, { borderBottomColor: colors.borderLight }]}
+          >
+            <TouchableOpacity
+              disabled={!author || !onUserPress}
+              onPress={() => author && onUserPress?.(author)}
+              accessibilityRole={author && onUserPress ? 'button' : undefined}
+            >
+              {/* `avatar`, like CommentItem: `avatar_url` is the field the feed
+                  endpoints use, and comments carry the plain one. */}
+              <Avatar uri={author?.avatar} name={author?.name || '?'} size="sm" />
+            </TouchableOpacity>
+
+            <View style={styles.messageBody}>
+              <View style={styles.messageMeta}>
+                <Text style={[styles.author, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {author?.name ?? author?.username ?? ''}
+                </Text>
+                <Text style={[styles.time, { color: colors.textMuted }]}>
+                  {format(new Date(message.created_at), 'p')}
+                </Text>
+              </View>
+
+              <Text style={[styles.content, { color: colors.textPrimary }]}>{message.content}</Text>
+
+              {isPrivate && (
+                <View style={styles.privateRow}>
+                  <Ionicons name="lock-closed" size={11} color={colors.textMuted} />
+                  <Text style={[styles.privateLabel, { color: colors.textMuted }]}>
+                    {t('live.archive.privateNote')}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: {
+    marginHorizontal: spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  title: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  messageBody: {
+    flex: 1,
+  },
+  messageMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  author: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  time: {
+    fontSize: fontSize.xs,
+  },
+  content: {
+    fontSize: fontSize.md,
+    marginTop: 2,
+  },
+  privateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  privateLabel: {
+    fontSize: fontSize.xs,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+  },
+});

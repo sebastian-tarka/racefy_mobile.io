@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityLiveMessages,
   Avatar,
   BottomSheet,
   type BottomSheetOption,
@@ -861,6 +862,16 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 </View>
               )}
             </Card>
+
+            {/* Messages the athlete received while broadcasting. Renders
+                nothing unless this is their own, once-live activity that
+                actually collected some. */}
+            <ActivityLiveMessages
+              activity={activity}
+              onUserPress={(user: User) =>
+                navigation.navigate('UserProfile', { username: user.username })
+              }
+            />
 
             {/* Comments Section */}
             <View style={styles.commentsSection}>
