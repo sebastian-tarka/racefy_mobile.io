@@ -21,12 +21,19 @@ export function createPollingTransport({
   /** Guards against overlapping ticks when a request outlives the interval. */
   let inFlight = false;
   let lastMessageId = 0;
+  /**
+   * The covered route is fetched with the FIRST successful tick only. It dwarfs
+   * the snapshot, and this endpoint is hit every `pollIntervalMs` — re-sending
+   * it on every tick would turn a cheap poll into a few hundred KB a minute.
+   */
+  let trackRequested = false;
 
   const tick = async () => {
     if (stopped || inFlight) return;
     inFlight = true;
     try {
-      const result = await api.getLiveBroadcast(activityId);
+      const withTrack = !trackRequested;
+      const result = await api.getLiveBroadcast(activityId, { includeTrack: withTrack });
       if (stopped) return;
 
       if (!result) {
@@ -34,6 +41,9 @@ export function createPollingTransport({
         stop();
         return;
       }
+
+      // Only after a response: a failed first tick must still be able to ask.
+      if (withTrack) trackRequested = true;
 
       const { data, snapshot } = result;
       handlers.onUpdate({
@@ -43,6 +53,7 @@ export function createPollingTransport({
         stats: snapshot?.stats ?? data.stats,
         status: snapshot?.status ?? data.status,
         broadcast: data,
+        track: withTrack ? (snapshot?.track ?? null) : undefined,
       });
 
       if (withMessages) {

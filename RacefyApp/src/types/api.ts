@@ -3523,6 +3523,26 @@ export interface LiveBroadcast {
   live_share_token?: string | null;
 }
 
+/**
+ * The route covered before the spectator joined, for back-filling the map.
+ *
+ * `MultiLineString`, not `LineString`, because stretches that fall inside the
+ * athlete's privacy zones are removed server-side: the remaining pieces must
+ * stay separate, or the map draws a straight chord across the hidden area and
+ * gives away roughly where it is.
+ *
+ * Optional throughout — an API that predates `?include=track` simply omits it,
+ * and the feed degrades to stitching the trail live.
+ */
+export interface LiveTrack {
+  type: 'MultiLineString';
+  /** Segments of `[lng, lat]` pairs — GeoJSON order, longitude FIRST. */
+  coordinates: [number, number][][];
+  point_count?: number;
+  /** True when the server thinned the track: fine to draw, not to measure. */
+  simplified?: boolean;
+}
+
 /** Compact duplicate of the broadcast returned alongside it by `GET /live/{id}`. */
 export interface LiveBroadcastSnapshot {
   activity_id: number;
@@ -3532,6 +3552,8 @@ export interface LiveBroadcastSnapshot {
   started_at: string;
   position: LivePosition;
   stats: LiveBroadcastStats;
+  /** Only present when the request asked for it (`?include=track`). */
+  track?: LiveTrack | null;
 }
 
 export interface LiveBroadcastDetailResponse {

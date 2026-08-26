@@ -64,9 +64,11 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
     return [...messages, ...localMessages.filter((m) => !seen.has(m.id))];
   }, [messages, localMessages]);
 
-  // The map component speaks {lat, lng}; the API speaks [lng, lat].
+  // The map component speaks {lat, lng}; the API speaks [lng, lat]. The break
+  // flag has to travel with the point: MapboxLiveMap splits the polyline on it,
+  // which is what keeps privacy-zone gaps from being drawn as shortcuts.
   const livePoints = useMemo<GpsPoint[]>(
-    () => trail.map((p) => ({ lat: p.lat, lng: p.lng })),
+    () => trail.map((p) => ({ lat: p.lat, lng: p.lng, segment_break: p.segmentBreak })),
     [trail],
   );
 
