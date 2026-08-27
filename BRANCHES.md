@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-08-26**
+Stan na: **2026-08-27**
 
 ---
 
@@ -25,11 +25,28 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 - [x] **API gotowe lokalnie** (2026-08-26) — `?include=track` + `LiveActivityService::visibleTrack()` w `racefy_api.io`, **jeszcze niezacommitowane**. Kontrakt zgodny z mobilką co do znaku: `MultiLineString`, `point_count`, `simplified`, `null` bez fixa, `[]` gdy wszystko ukryte
 - [x] Testy API `LiveTrackBackfillTest` — 10/10, w tym rozspojenie na strefie, cap segmentu, brak `track` bez `include`
 - [x] Smoke e2e na lokalnym API (port **8080**): 12 punktów → `include=track` zwraca trasę, tick bez `include` jej nie niesie; strefa prywatności na środku trasy → **2 segmenty**. Dane testowe posprzątane (strefa usunięta, aktywność porzucona)
-- [ ] **Zostaje: commit + deploy API na dev** — do tego czasu mobilka jest bezczynna (pole opcjonalne)
+- [x] API zacommitowane i wypchnięte na `main` (`a5636e58`, 2026-08-27); docs zsynchronizowane (`racefy-api-docs` `e57f4fd`)
+- [ ] **Zostaje: deploy API na dev** — do tego czasu mobilka jest bezczynna (pole opcjonalne)
 - [ ] Po deployu: wejść w podgląd transmisji zawodnika, który ma już przebiegnięte kilka km — trasa ma być widoczna od razu
 - [ ] Zawodnik z aktywną strefą prywatności na trasie — sprawdzić, że linia jest **rozspojona**, a nie poprowadzona skrótem przez strefę
 - [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
 - [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
+
+### `feature/live-cheer-pins` — commit `34b9980` (od `main`/`8c1dc57`)
+
+Pinezki dopingów na trasie zakończonej aktywności: karta „Doping z transmisji"
+pokazuje „na 1,73 km · 8:47", wiersz z pozycją fokusuje pinezkę na mapie
+(`MapboxRouteMap.cheerPins`), przełącznik „Doping" obok „km". Wymaga pól
+`live_distance` / `live_duration` / `live_position` z API (`main` `a5636e58`) —
+starsze wiadomości mają `null` i zostają bez pinezki, to zamierzone.
+11 plików, 1 nowy test. tsc 0 · eslint 0 błędów · jest 196/196. `docs/api` → `e57f4fd`.
+
+- [ ] Własna zakończona aktywność z transmisją na **lokalnym API** (`live:simulate` + `live:cheer` po migracji `add_live_position_to_comments`) → pinezki na mapie, dotknięcie wiersza przewija do mapy i podświetla pinezkę, dymek z treścią, ✕ zamyka
+- [ ] Przełącznik „Doping" chowa pinezki i czyści zaznaczenie; nie pokazuje się, gdy żadna wiadomość nie ma pozycji
+- [ ] Wiadomości sprzed migracji (bez `live_distance`) — wiersz bez etykiety dystansu i niedotykalny, brak błędu
+- [ ] Zawodnik ze strefą prywatności: jako właściciel widzi pinezkę w strefie (API nie filtruje dla właściciela)
+- [ ] Mapa w trybie fallback (obraz/SVG bez tokenu Mapbox) — pinezek brak, karta dalej działa
+- [ ] Rozmiary dymka na 375pt @ fontScale 1.3 — `numberOfLines={3}` ma wystarczyć
 
 ---
 
