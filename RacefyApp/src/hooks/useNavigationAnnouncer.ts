@@ -47,7 +47,7 @@ export function useNavigationAnnouncer({
 
     const distText =
       distanceToTurn != null && distanceToTurn > 0
-        ? `${i18n.t('navigation.in', { defaultValue: 'In' })} ${formatDistance(distanceToTurn)}, `
+        ? `${i18n.t('navigation.in')} ${formatSpokenDistance(distanceToTurn)}, `
         : '';
     const phrase = `${distText}${nextTurn.instruction}`.trim();
 
@@ -70,22 +70,29 @@ export function useNavigationAnnouncer({
     if (!isActive) return;
     if (isOffRoute && !lastOffRouteRef.current) {
       lastOffRouteRef.current = true;
-      const phrase = i18n.t('navigation.offRoute', { defaultValue: 'Off route' });
+      const phrase = i18n.t('navigation.offRoute');
       void speakDucked(phrase, { language: i18n.language || 'en' });
       logger.debug('activity', 'Navigation TTS off-route');
     } else if (!isOffRoute && lastOffRouteRef.current) {
       lastOffRouteRef.current = false;
-      const phrase = i18n.t('navigation.backOnRoute', { defaultValue: 'Back on route' });
+      const phrase = i18n.t('navigation.backOnRoute');
       void speakDucked(phrase, { language: i18n.language || 'en' });
     }
   }, [isOffRoute, isActive]);
 }
 
-function formatDistance(meters: number): string {
+/**
+ * Distance phrased for TTS, with locale plural forms ("2 kilometry", "200 metrów").
+ * Kilometres are rounded to 0.1 below 10 km; metres to the nearest 10.
+ */
+export function formatSpokenDistance(meters: number): string {
   if (meters >= 1000) {
     const km = meters / 1000;
-    return `${km.toFixed(km < 10 ? 1 : 0)} ${i18n.t('units.km', { defaultValue: 'kilometers' })}`;
+    const count = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+    const decimalSep = (i18n.language || 'en').startsWith('pl') ? ',' : '.';
+    const value = String(count).replace('.', decimalSep);
+    return i18n.t('navigation.spokenKilometers', { count, value });
   }
-  const rounded = Math.round(meters / 10) * 10;
-  return `${rounded} ${i18n.t('units.m', { defaultValue: 'meters' })}`;
+  const count = Math.max(10, Math.round(meters / 10) * 10);
+  return i18n.t('navigation.spokenMeters', { count, value: String(count) });
 }

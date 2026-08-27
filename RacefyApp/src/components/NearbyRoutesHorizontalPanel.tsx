@@ -13,10 +13,11 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { routeKey } from '../utils/routeKey';
 
 interface NearbyRoutesHorizontalPanelProps {
   routes: any[];
-  selectedRouteId: number | null;
+  selectedRouteKey: string | null;
   onRouteSelect: (route: any) => void;
   onClearRoute: () => void;
   isLoading: boolean;
@@ -28,7 +29,7 @@ const PANEL_MAX_HEIGHT = 200;
 
 export function NearbyRoutesHorizontalPanel({
   routes,
-  selectedRouteId,
+  selectedRouteKey,
   onRouteSelect,
   onClearRoute,
   isLoading,
@@ -135,9 +136,9 @@ export function NearbyRoutesHorizontalPanel({
       <FlatList
         horizontal
         data={routes}
-        keyExtractor={(item) => `route-${item.id}`}
+        keyExtractor={(item) => `route-${routeKey(item)}`}
         renderItem={({ item: route }) => {
-          const isSelected = selectedRouteId === route.id;
+          const isSelected = selectedRouteKey === routeKey(route);
 
           return (
             <TouchableOpacity

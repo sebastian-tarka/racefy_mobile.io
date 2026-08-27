@@ -72,6 +72,8 @@ import { NavigationOverlay } from '../../components/NavigationOverlay';
 import { useLiveNavigation } from '../../hooks/useLiveNavigation';
 import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
 import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
+import { useRouteTurnInstructions } from '../../hooks/useRouteTurnInstructions';
+import { routeKey } from '../../utils/routeKey';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
@@ -324,11 +326,15 @@ export function ActivityRecordingScreen() {
 
   // Merged list (my routes first, then nearby) used by both the inline horizontal
   // panel and the full-screen route-selection modal.
+  // Dedup by routeKey (source + id): activity ids and planned-route ids come from
+  // different tables, so a bare id would hide unrelated nearby routes.
   const mergedRoutesForPanel = useMemo(() => {
-    const myIds = new Set(myPlannedRoutes.map((r) => r.id));
-    const nearbyDeduped = nearbyRoutes.filter((r) => !myIds.has(r.id));
+    const seen = new Set(myPlannedRoutes.map(routeKey));
+    const nearbyDeduped = nearbyRoutes.filter((r) => !seen.has(routeKey(r)));
     return [...myPlannedRoutes, ...nearbyDeduped];
   }, [myPlannedRoutes, nearbyRoutes]);
+
+  const selectedShadowTrackKey = selectedShadowTrack ? routeKey(selectedShadowTrack) : null;
 
   // Get ordered distance milestones
   const distanceMilestones = useMemo(() => {
@@ -375,11 +381,16 @@ export function ActivityRecordingScreen() {
       : 'walking';
   }, [selectedSport?.name]);
 
+  // Turn-by-turn data for the shadow track: router turns for planned/event routes
+  // (fetched from /routes/{id} if the list omitted them), derived from geometry
+  // for raw GPS tracks. Feeds NavigationOverlay + voice prompts.
+  const shadowTrackTurns = useRouteTurnInstructions(selectedShadowTrack);
+
   // Re-route from start position to nearest point on shadow track + merge geometries
   const approach = useRouteApproachPath({
     baseGeometry: selectedShadowTrack?.track_data ?? null,
-    baseTurnInstructions: [],
-    routeId: selectedShadowTrack?.id ?? null,
+    baseTurnInstructions: shadowTrackTurns,
+    routeId: selectedShadowTrackKey,
     startPosition: recordingStartPosition,
     isRecording: status === 'recording',
     profile: approachProfile,
@@ -505,6 +516,8 @@ export function ActivityRecordingScreen() {
               track_data: eventRoute.geometry,
               distance_from_user: 0,
               created_at: eventRoute.created_at,
+              source: 'event',
+              turn_instructions: eventRoute.turn_instructions ?? [],
             });
           }
         }
@@ -1258,7 +1271,7 @@ export function ActivityRecordingScreen() {
             mapStyle={mapStyle}
             nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
             shadowTrack={selectedShadowTrack?.track_data || null}
-            selectedRouteId={selectedShadowTrack?.id || null}
+            selectedRouteKey={selectedShadowTrackKey}
             onRouteSelect={handleRouteSelect}
             onFollowUserChanged={setFollowUser}
             plannedRoute={selectedShadowTrack?.track_data || null}
@@ -1278,7 +1291,7 @@ export function ActivityRecordingScreen() {
           {isIdle && showNearbyRoutesToggle && (
             <NearbyRoutesHorizontalPanel
               routes={mergedRoutesForPanel}
-              selectedRouteId={selectedShadowTrack?.id ?? null}
+              selectedRouteKey={selectedShadowTrackKey}
               onRouteSelect={handleRouteSelect}
               onClearRoute={handleClearShadowTrack}
               isLoading={loadingRoutes}
@@ -1590,7 +1603,7 @@ export function ActivityRecordingScreen() {
         onClose={() => setRouteSelectionModalVisible(false)}
         nearbyRoutes={nearbyRoutes}
         myRoutes={myPlannedRoutes}
-        selectedRouteId={selectedShadowTrack?.id ?? null}
+        selectedRouteKey={selectedShadowTrackKey}
         onRouteSelect={handleRouteSelect}
         onNavigateToLibrary={() => navigation.navigate('RouteLibrary')}
         isLoading={loadingRoutes}

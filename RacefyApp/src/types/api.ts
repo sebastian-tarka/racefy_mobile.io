@@ -1054,6 +1054,14 @@ export interface NearbyRoute {
   track_data: GeoJSONLineString;
   distance_from_user: number; // meters from search location
   created_at: string;
+  /**
+   * Where the entry came from. `activity` (default) = raw GPS track from
+   * /activities/nearby (no router turns); `planned_route` = /routes;
+   * `event` = event's planned route.
+   */
+  source?: import('../utils/routeKey').RouteSource;
+  /** Router-generated turns (planned routes only). Empty/missing → derived from geometry. */
+  turn_instructions?: RouteTurnInstruction[];
 }
 
 // Request for adding GPS points to live activity

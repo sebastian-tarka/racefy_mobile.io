@@ -1,4 +1,5 @@
 import React from 'react';
+import { routeKey } from '../../../utils/routeKey';
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +14,7 @@ interface Props {
   onClose: () => void;
   nearbyRoutes: NearbyRoute[];
   myRoutes: NearbyRoute[];
-  selectedRouteId: number | null;
+  selectedRouteKey: string | null;
   onRouteSelect: (route: NearbyRoute) => void;
   onNavigateToLibrary: () => void;
   isLoading: boolean;
@@ -25,7 +26,7 @@ export function RouteSelectionModal({
   onClose,
   nearbyRoutes,
   myRoutes,
-  selectedRouteId,
+  selectedRouteKey,
   onRouteSelect,
   onNavigateToLibrary,
   isLoading,
@@ -79,7 +80,7 @@ export function RouteSelectionModal({
 
         <NearbyRoutesList
           routes={nearbyRoutes}
-          selectedRouteId={selectedRouteId}
+          selectedRouteKey={selectedRouteKey}
           onRouteSelect={(route) => {
             onRouteSelect(route);
             onClose();
@@ -116,10 +117,10 @@ export function RouteSelectionModal({
               {myRoutes.length > 0 && (
                 <View>
                   {myRoutes.map((r) => {
-                    const isSelected = selectedRouteId === r.id;
+                    const isSelected = selectedRouteKey === routeKey(r);
                     return (
                       <TouchableOpacity
-                        key={`my-${r.id}`}
+                        key={`my-${routeKey(r)}`}
                         style={[
                           styles.myRouteItem,
                           {

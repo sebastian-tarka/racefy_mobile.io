@@ -7,6 +7,7 @@
  */
 
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import { routeKey, type RouteSource } from '../utils/routeKey';
 import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-native';
 import * as Location from 'expo-location';
 import { logger } from '../services/logger';
@@ -34,6 +35,8 @@ try {
 
 export interface NearbyRoute {
   id: number;
+  /** Origin table — see utils/routeKey */
+  source?: RouteSource;
   title: string;
   distance: number;
   elevation_gain: number;
@@ -76,7 +79,8 @@ export interface MapboxLiveMapProps {
   // Shadow track feature
   nearbyRoutes?: NearbyRoute[];
   shadowTrack?: GeoJSONLineString | null;
-  selectedRouteId?: number | null;
+  /** routeKey() of the selected route (ids collide across sources) */
+  selectedRouteKey?: string | null;
   onRouteSelect?: (route: NearbyRoute) => void;
   onFollowUserChanged?: (following: boolean) => void;
 
@@ -105,7 +109,7 @@ export function MapboxLiveMap({
   mapStyle: mapStyleProp = 'outdoors',
   nearbyRoutes,
   shadowTrack,
-  selectedRouteId,
+  selectedRouteKey,
   onFollowUserChanged,
   plannedRoute,
   athlete = null,
@@ -344,8 +348,8 @@ export function MapboxLiveMap({
           const unselectedColor = isDark ? '#9CA3AF' : '#6B7280';
           return (
             <MapboxGL.ShapeSource
-              key={`nearby-base-${route.id}`}
-              id={`nearby-base-${route.id}`}
+              key={`nearby-base-${routeKey(route)}`}
+              id={`nearby-base-${routeKey(route)}`}
               shape={{
                 type: 'Feature',
                 properties: {},
@@ -356,7 +360,7 @@ export function MapboxLiveMap({
               }}
             >
               <MapboxGL.LineLayer
-                id={`nearby-base-line-${route.id}`}
+                id={`nearby-base-line-${routeKey(route)}`}
                 style={{
                   lineColor: unselectedColor,
                   lineWidth: 2.5,
@@ -370,10 +374,10 @@ export function MapboxLiveMap({
         })}
 
         {/* Selected route overlay (blue with border) - rendered on top */}
-        {selectedRouteId &&
-          validNearbyRoutes.find((r) => r.id === selectedRouteId) &&
+        {selectedRouteKey &&
+          validNearbyRoutes.find((r) => routeKey(r) === selectedRouteKey) &&
           (() => {
-            const selected = validNearbyRoutes.find((r) => r.id === selectedRouteId)!;
+            const selected = validNearbyRoutes.find((r) => routeKey(r) === selectedRouteKey)!;
             return (
               <MapboxGL.ShapeSource
                 id="selected-route-overlay"
