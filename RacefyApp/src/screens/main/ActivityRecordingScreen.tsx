@@ -72,6 +72,7 @@ import { NavigationOverlay } from '../../components/NavigationOverlay';
 import { useLiveNavigation } from '../../hooks/useLiveNavigation';
 import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
 import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
+import { useRouteTurnInstructions } from '../../hooks/useRouteTurnInstructions';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
@@ -375,10 +376,15 @@ export function ActivityRecordingScreen() {
       : 'walking';
   }, [selectedSport?.name]);
 
+  // Turn-by-turn data for the shadow track: router turns for planned/event routes
+  // (fetched from /routes/{id} if the list omitted them), derived from geometry
+  // for raw GPS tracks. Feeds NavigationOverlay + voice prompts.
+  const shadowTrackTurns = useRouteTurnInstructions(selectedShadowTrack);
+
   // Re-route from start position to nearest point on shadow track + merge geometries
   const approach = useRouteApproachPath({
     baseGeometry: selectedShadowTrack?.track_data ?? null,
-    baseTurnInstructions: [],
+    baseTurnInstructions: shadowTrackTurns,
     routeId: selectedShadowTrack?.id ?? null,
     startPosition: recordingStartPosition,
     isRecording: status === 'recording',
@@ -505,6 +511,8 @@ export function ActivityRecordingScreen() {
               track_data: eventRoute.geometry,
               distance_from_user: 0,
               created_at: eventRoute.created_at,
+              source: 'event',
+              turn_instructions: eventRoute.turn_instructions ?? [],
             });
           }
         }

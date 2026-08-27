@@ -2524,6 +2524,14 @@
     "noElevationData": "No elevation data available"
   },
   "navigation": {
+    "in": "In",
+    "backOnRoute": "Back on route",
+    "spokenMeters_one": "{{value}} meter",
+    "spokenMeters_other": "{{value}} meters",
+    "spokenKilometers_one": "{{value}} kilometer",
+    "spokenKilometers_other": "{{value}} kilometers",
+    "sharpLeft": "Turn sharp left",
+    "sharpRight": "Turn sharp right",
     "offRoute": "Off route",
     "remaining": "Remaining",
     "eta": "ETA",

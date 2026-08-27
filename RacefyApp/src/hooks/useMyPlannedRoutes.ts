@@ -25,6 +25,9 @@ export function useMyPlannedRoutes(isAuthenticated: boolean, user: User | null):
               stats: { likes_count: 0, completion_count: 0 },
               track_data: r.geometry,
               created_at: r.created_at,
+              source: 'planned_route',
+              // Index responses may omit turns — useRouteTurnInstructions fetches the detail then.
+              turn_instructions: r.turn_instructions ?? [],
             }) as unknown as NearbyRoute,
         ),
       ),

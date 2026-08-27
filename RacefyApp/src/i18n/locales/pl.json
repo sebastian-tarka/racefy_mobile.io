@@ -2526,6 +2526,18 @@
     "noElevationData": "Brak danych o wysokości"
   },
   "navigation": {
+    "in": "Za",
+    "backOnRoute": "Powrót na trasę",
+    "spokenMeters_one": "{{value}} metr",
+    "spokenMeters_few": "{{value}} metry",
+    "spokenMeters_many": "{{value}} metrów",
+    "spokenMeters_other": "{{value}} metra",
+    "spokenKilometers_one": "{{value}} kilometr",
+    "spokenKilometers_few": "{{value}} kilometry",
+    "spokenKilometers_many": "{{value}} kilometrów",
+    "spokenKilometers_other": "{{value}} kilometra",
+    "sharpLeft": "Skręć ostro w lewo",
+    "sharpRight": "Skręć ostro w prawo",
     "offRoute": "Poza trasą",
     "remaining": "Pozostało",
     "eta": "ETA",
