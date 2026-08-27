@@ -1,4 +1,10 @@
-import type { LiveBroadcast, LiveBroadcastStats, LiveMessage, LivePosition } from '../../types/api';
+import type {
+  LiveBroadcast,
+  LiveBroadcastStats,
+  LiveMessage,
+  LivePosition,
+  LiveTrack,
+} from '../../types/api';
 
 /** One tick of broadcast state, whichever transport produced it. */
 export interface LiveFeedUpdate {
@@ -7,6 +13,12 @@ export interface LiveFeedUpdate {
   status: string;
   /** Full broadcast record — only the polling transport has it; Echo sends deltas. */
   broadcast?: LiveBroadcast;
+  /**
+   * Route covered before the spectator joined. Sent on the FIRST update only —
+   * every transport fetches it once and then stops asking, so a later tick
+   * carrying `undefined` here means "nothing new", never "the track is gone".
+   */
+  track?: LiveTrack | null;
 }
 
 export interface LiveTransportHandlers {

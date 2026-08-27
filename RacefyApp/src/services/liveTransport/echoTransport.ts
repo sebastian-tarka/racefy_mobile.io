@@ -43,7 +43,7 @@ export function createEchoTransport(
 
   /**
    * Echo only ever delivers deltas, so the screen would otherwise have no
-   * athlete, no sport and no stats until the first throttled position event
+   * athlete, no sport, no stats and no route until the first throttled position event
    * (~10s away, and never at all if the athlete is standing still). This is
    * exactly what `GET /live/{id}` exists for — "snapshot for a joining
    * spectator" — and it also catches a broadcast that ended before we
@@ -51,7 +51,7 @@ export function createEchoTransport(
    */
   const loadInitialSnapshot = async () => {
     try {
-      const result = await api.getLiveBroadcast(activityId);
+      const result = await api.getLiveBroadcast(activityId, { includeTrack: true });
       if (stopped) return;
       if (!result) {
         handlers.onEnded();
@@ -64,6 +64,9 @@ export function createEchoTransport(
         stats: snapshot?.stats ?? data.stats,
         status: snapshot?.status ?? data.status,
         broadcast: data,
+        // This is the only REST call Echo makes, so it is the only chance to
+        // pick up the route covered before the spectator subscribed.
+        track: snapshot?.track ?? null,
       });
 
       // The channel only carries messages sent from now on, so anything said

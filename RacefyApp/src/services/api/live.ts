@@ -47,10 +47,21 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      *
      * Returns null on 404, which means "ended, or you may not watch it" — both
      * are normal outcomes the UI renders as "broadcast ended", not as an error.
+     *
+     * `includeTrack` asks for the route covered so far (`snapshot.track`), which
+     * is what stops a joining spectator from staring at an empty map. Ask for it
+     * ONCE per broadcast: it is orders of magnitude larger than the snapshot,
+     * and the polling transport hits this same endpoint every few seconds.
      */
-    async getLiveBroadcast(activityId: number): Promise<Types.LiveBroadcastDetailResponse | null> {
+    async getLiveBroadcast(
+      activityId: number,
+      options?: { includeTrack?: boolean },
+    ): Promise<Types.LiveBroadcastDetailResponse | null> {
+      const suffix = options?.includeTrack ? '?include=track' : '';
       try {
-        return await this.request<Types.LiveBroadcastDetailResponse>(`/live/${activityId}`);
+        return await this.request<Types.LiveBroadcastDetailResponse>(
+          `/live/${activityId}${suffix}`,
+        );
       } catch (error: any) {
         if (isNotFound(error)) return null;
         throw error;
