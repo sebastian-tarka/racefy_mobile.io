@@ -15,7 +15,19 @@ Stan na: **2026-08-27**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka — oba branche live zmergowane 2026-08-27 (patrz sekcja poniżej)._
+### `feature/live-athlete-avatar` — commit `9c9c5c3` (od `main`/`8c9b1eb`)
+
+Widz widzi na mapie avatar zawodnika zamiast zielonej kropki: `MapboxLiveMap`
+dostał opcjonalny prop `athlete` → `MarkerView` z `<Avatar>` w pierścieniu koloru
+sygnału GPS. Ekran nagrywania nic nie przekazuje — tam kropka zostaje.
+2 pliki. tsc 0 · eslint 0 błędów. **Pierwsze użycie `MarkerView` w repo** —
+to warstwa natywna, jest/tsc nic o niej nie mówią.
+
+- [ ] Android + iOS: avatar pojawia się na pozycji zawodnika i **porusza się** z nią (MarkerView aktualizuje `coordinate` bez remountu)
+- [ ] Zawodnik bez avatara → inicjał, nie pusty krążek
+- [ ] Pierścień sygnału (CircleLayer) nadal widoczny pod avatarem
+- [ ] Wydajność przy 3 s ticku pollingu — MarkerView na Androidzie bywa cięższy od warstwy; obserwować klatki na słabszym telefonie
+- [ ] Ekran nagrywania: bez zmian (kropka)
 
 ---
 
