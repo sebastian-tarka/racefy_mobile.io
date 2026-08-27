@@ -15,7 +15,16 @@ Stan na: **2026-08-27**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/live-athlete-avatar` — commit `9c9c5c3` (od `main`/`8c9b1eb`)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Avatar zawodnika na mapie widza (zmergowana 2026-08-27, `a6f76f5`)
 
 Widz widzi na mapie avatar zawodnika zamiast zielonej kropki: `MapboxLiveMap`
 dostał opcjonalny prop `athlete` → `MarkerView` z `<Avatar>` w pierścieniu koloru
@@ -28,13 +37,6 @@ to warstwa natywna, jest/tsc nic o niej nie mówią.
 - [ ] Pierścień sygnału (CircleLayer) nadal widoczny pod avatarem
 - [ ] Wydajność przy 3 s ticku pollingu — MarkerView na Androidzie bywa cięższy od warstwy; obserwować klatki na słabszym telefonie
 - [ ] Ekran nagrywania: bez zmian (kropka)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Trasa dla widza dołączającego w trakcie (zmergowana 2026-08-27, `6c84476`)
 
@@ -154,6 +156,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-08-27 | `feature/live-athlete-avatar` | Avatar zawodnika (MarkerView) zamiast kropki na mapie widza |
 | 2026-08-27 | `feature/live-cheer-pins` | Pinezki dopingów na trasie zakończonej aktywności + „na X km · m:ss” w karcie; `docs/api` → `e57f4fd` |
 | 2026-08-27 | `feature/live-trail-backfill` | Widz dołączający w trakcie dostaje przebytą trasę (`GET /live/{id}?include=track`, MultiLineString, luki po strefach) |
 | 2026-08-26 | `feature/live-messages-archive` | Podgląd wiadomości od widzów po zakończeniu aktywności (karta na szczegółach) |
