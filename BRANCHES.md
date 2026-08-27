@@ -15,7 +15,16 @@ Stan na: **2026-08-27**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/voice-turn-instructions` — komendy głosowe skrętów na ekranie aktywności (od 2026-08-27, `be5bca6`)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Komendy głosowe skrętów na ekranie aktywności (zmergowana 2026-08-27, `6ecddb9`)
 
 Announcer TTS (`useNavigationAnnouncer`) i overlay z następnym skrętem istniały od
 route-planningu, ale wybrana trasa-cień zawsze trafiała do nawigacji z pustą listą
@@ -41,13 +50,6 @@ numerze. 20 plików. tsc 0 · eslint 0 błędów · jest 219/219 (19 nowych test
 - [ ] Odcinek dojścia (start >30 m od trasy): skręty z `/routes/preview` + skręty trasy w poprawnej kolejności i z poprawnym dystansem (offset)
 - [ ] „Poza trasą" / „Powrót na trasę" — raz na wejście/wyjście, nie przy każdym odczycie
 - [ ] Panel tras: moja trasa z plannera i aktywność z okolicy o tym samym `id` pokazują się obie; wybór jednej nie podświetla drugiej (ani na mapie, ani w liście/modalu)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Avatar zawodnika na mapie widza (zmergowana 2026-08-27, `a6f76f5`)
 
@@ -172,7 +174,7 @@ im dłużej wiszą, tym droższy rebase.
 | `refactor-feed-card` | 2026-02-03 | `changes for feed screan` |
 | `fix-video-player` | 2026-02-02 | `some refactor` |
 
-Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning`,
+Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions`, `audyt`, `feature/route-planning`,
 `feat/tracking-db`, `refactor`, `refactor-trenings`, `release/1.13`.
 
 ---
@@ -181,6 +183,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-08-27 | `feature/voice-turn-instructions` | Głosowe „za 200 metrów, skręć w lewo” dla trasy-cienia (skręty routera z plannera/eventu, heurystyka z geometrii dla śladów GPS), odmiana jednostek w mowie, `routeKey` zamiast gołego `id` |
 | 2026-08-27 | `feature/live-athlete-avatar` | Avatar zawodnika (MarkerView) zamiast kropki na mapie widza |
 | 2026-08-27 | `feature/live-cheer-pins` | Pinezki dopingów na trasie zakończonej aktywności + „na X km · m:ss” w karcie; `docs/api` → `e57f4fd` |
 | 2026-08-27 | `feature/live-trail-backfill` | Widz dołączający w trakcie dostaje przebytą trasę (`GET /live/{id}?include=track`, MultiLineString, luki po strefach) |
