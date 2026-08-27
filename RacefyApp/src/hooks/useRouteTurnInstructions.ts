@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { deriveTurnInstructions } from '../utils/turnDetection';
+import { routeKey } from '../utils/routeKey';
 import type { NearbyRoute, RouteTurnInstruction } from '../types/api';
 
 const EMPTY: RouteTurnInstruction[] = [];
@@ -20,17 +21,18 @@ const EMPTY: RouteTurnInstruction[] = [];
  */
 export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnInstruction[] {
   const { t } = useTranslation();
-  const [fetched, setFetched] = useState<{ id: number; turns: RouteTurnInstruction[] } | null>(
+  const [fetched, setFetched] = useState<{ key: string; turns: RouteTurnInstruction[] } | null>(
     null,
   );
 
   const routeId = route?.id ?? null;
+  const key = route ? routeKey(route) : null;
   const ownTurns = route?.turn_instructions;
   const needsFetch = !!route && route.source === 'planned_route' && !ownTurns?.length;
 
   useEffect(() => {
-    if (!needsFetch || routeId === null) return;
-    if (fetched?.id === routeId) return;
+    if (!needsFetch || routeId === null || key === null) return;
+    if (fetched?.key === key) return;
 
     let cancelled = false;
     api
@@ -38,7 +40,7 @@ export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnIn
       .then((full) => {
         if (cancelled) return;
         const turns = full.turn_instructions ?? [];
-        setFetched({ id: routeId, turns });
+        setFetched({ key, turns });
         logger.info('activity', 'Planned route turn instructions fetched', {
           routeId,
           turns: turns.length,
@@ -47,7 +49,7 @@ export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnIn
       .catch((err: any) => {
         if (cancelled) return;
         // Mark as attempted so we don't retry in a loop; caller falls back to derivation.
-        setFetched({ id: routeId, turns: [] });
+        setFetched({ key, turns: [] });
         logger.warn('activity', 'Failed to fetch planned route turns, deriving from geometry', {
           routeId,
           error: err?.message,
@@ -56,7 +58,7 @@ export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnIn
     return () => {
       cancelled = true;
     };
-  }, [needsFetch, routeId, fetched?.id]);
+  }, [needsFetch, routeId, key, fetched?.key]);
 
   const labels = useMemo(
     () => ({
@@ -72,10 +74,10 @@ export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnIn
   return useMemo(() => {
     if (!route?.track_data?.coordinates) return EMPTY;
     if (ownTurns?.length) return ownTurns;
-    if (fetched?.id === route.id && fetched.turns.length) return fetched.turns;
+    if (fetched?.key === key && fetched.turns.length) return fetched.turns;
     // Planned route still loading — don't announce geometry-derived turns that
     // will be replaced a moment later.
-    if (needsFetch && fetched?.id !== route.id) return EMPTY;
+    if (needsFetch && fetched?.key !== key) return EMPTY;
 
     const coords = route.track_data.coordinates as [number, number][];
     const derived = deriveTurnInstructions(coords, labels);
@@ -85,5 +87,5 @@ export function useRouteTurnInstructions(route: NearbyRoute | null): RouteTurnIn
       turns: derived.length,
     });
     return derived;
-  }, [route, ownTurns, fetched, needsFetch, labels]);
+  }, [route, key, ownTurns, fetched, needsFetch, labels]);
 }

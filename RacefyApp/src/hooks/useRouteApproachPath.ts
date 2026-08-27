@@ -9,8 +9,8 @@ interface Params {
   baseGeometry: GeoJSONLineString | null | undefined;
   /** Original turn instructions for the base route (if any) */
   baseTurnInstructions?: RouteTurnInstruction[];
-  /** Stable id of the base route — used to invalidate cache */
-  routeId: number | null | undefined;
+  /** Stable identity of the base route (utils/routeKey) — used to invalidate cache */
+  routeId: string | null | undefined;
   /** GPS position at the moment recording starts */
   startPosition: { lat: number; lng: number } | null;
   /** True once recording has started — triggers the fetch one time */

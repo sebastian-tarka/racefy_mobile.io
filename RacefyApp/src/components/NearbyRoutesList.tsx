@@ -19,10 +19,11 @@ import { useUnits } from '../hooks/useUnits';
 import { spacing, borderRadius } from '../theme/spacing';
 import type { NearbyRoute } from './MapboxLiveMap';
 import { fontSize } from '../theme';
+import { routeKey } from '../utils/routeKey';
 
 interface NearbyRoutesListProps {
   routes: NearbyRoute[];
-  selectedRouteId: number | null;
+  selectedRouteKey: string | null;
   onRouteSelect: (route: NearbyRoute) => void;
   isLoading: boolean;
   error: string | null;
@@ -34,7 +35,7 @@ interface NearbyRoutesListProps {
 
 export function NearbyRoutesList({
   routes,
-  selectedRouteId,
+  selectedRouteKey,
   onRouteSelect,
   isLoading,
   error,
@@ -116,7 +117,7 @@ export function NearbyRoutesList({
 
   // Render route card
   const renderRouteCard = ({ item }: { item: NearbyRoute }) => {
-    const isSelected = item.id === selectedRouteId;
+    const isSelected = routeKey(item) === selectedRouteKey;
 
     return (
       <TouchableOpacity
@@ -193,7 +194,7 @@ export function NearbyRoutesList({
       <FlatList
         data={routes}
         renderItem={renderRouteCard}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => routeKey(item)}
         horizontal={false}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={styles.listContent}

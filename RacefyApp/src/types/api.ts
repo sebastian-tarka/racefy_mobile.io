@@ -1059,7 +1059,7 @@ export interface NearbyRoute {
    * /activities/nearby (no router turns); `planned_route` = /routes;
    * `event` = event's planned route.
    */
-  source?: 'activity' | 'planned_route' | 'event';
+  source?: import('../utils/routeKey').RouteSource;
   /** Router-generated turns (planned routes only). Empty/missing → derived from geometry. */
   turn_instructions?: RouteTurnInstruction[];
 }
