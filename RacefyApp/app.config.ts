@@ -154,6 +154,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         android: {
           minSdkVersion: 26,
         },
+        ios: {
+          // GoogleSignIn 9.2+ -> AppCheckCore 11.3 pulls in Swift deps that don't define
+          // modules; without modular headers `pod install` fails on EAS (static libs).
+          extraPods: [
+            { name: 'GoogleUtilities', modular_headers: true },
+            { name: 'RecaptchaInterop', modular_headers: true },
+          ],
+        },
       },
     ],
     'expo-font',
