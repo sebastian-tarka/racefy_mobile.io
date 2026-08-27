@@ -15,7 +15,7 @@ import { MAPBOX_ACCESS_TOKEN } from '../config/api';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { useTheme } from '../hooks/useTheme';
 import { useViewability } from '../hooks/useViewability';
-import type { GeoJSONLineString } from '../types/api';
+import type { GeoJSONLineString, LiveMessagePin } from '../types/api';
 
 // Lazy load MapboxRouteMap to avoid import errors if @rnmapbox/maps is not installed
 let MapboxRouteMap: any = null;
@@ -40,6 +40,10 @@ interface RoutePreviewProps {
   showFinishMarker?: boolean;
   startPoint?: [number, number, number?] | null;
   finishPoint?: [number, number, number?] | null;
+  /** Live-message pins — only the interactive map can draw them; the image fallbacks ignore them. */
+  cheerPins?: LiveMessagePin[];
+  selectedCheerId?: number | null;
+  onSelectCheer?: (id: number | null) => void;
 }
 
 /**
@@ -63,6 +67,9 @@ export function RoutePreview({
   showFinishMarker = true,
   startPoint = null,
   finishPoint = null,
+  cheerPins,
+  selectedCheerId,
+  onSelectCheer,
 }: RoutePreviewProps) {
   const { colors } = useTheme();
 
@@ -102,6 +109,9 @@ export function RoutePreview({
         showFinishMarker={showFinishMarker}
         startPoint={startPoint}
         finishPoint={finishPoint}
+        cheerPins={cheerPins}
+        selectedCheerId={selectedCheerId}
+        onSelectCheer={onSelectCheer}
       />
     );
   }

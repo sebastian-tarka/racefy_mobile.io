@@ -41,6 +41,7 @@ import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useUnits } from '../../hooks/useUnits';
+import { useLiveMessageArchive } from '../../hooks/useLiveMessageArchive';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import { getSportIcon } from '../../utils/sportIcon';
 import { exportGpxAndShare } from '../../utils/gpxExport';
@@ -73,7 +74,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [likesCount, setLikesCount] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showKmMarkers, setShowKmMarkers] = useState(false);
+  // Cheers pinned on the route (owner's finished broadcast). On by default —
+  // seeing where they landed is the point; the toggle declutters a busy map.
+  const [showCheerPins, setShowCheerPins] = useState(true);
+  const [selectedCheerId, setSelectedCheerId] = useState<number | null>(null);
   const mapHeightAnim = useRef(new Animated.Value(250)).current;
+  // One fetch shared by the card below and the pins on the map.
+  const liveArchive = useLiveMessageArchive(activity);
+  const cheerPins = showCheerPins ? liveArchive.pins : [];
 
   const scrollToComments = useCallback(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -371,6 +379,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                     showFinishMarker={gpsTrack?.show_finish_marker ?? true}
                     startPoint={gpsTrack?.start_point ?? null}
                     finishPoint={gpsTrack?.finish_point ?? null}
+                    cheerPins={cheerPins}
+                    selectedCheerId={selectedCheerId}
+                    onSelectCheer={setSelectedCheerId}
                   />
                   {/* Map control buttons */}
                   <View style={styles.mapControlsRow}>
@@ -412,6 +423,37 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                         km
                       </Text>
                     </TouchableOpacity>
+                    {liveArchive.pins.length > 0 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.mapKmButton,
+                          {
+                            backgroundColor: showCheerPins ? colors.primary : colors.cardBackground,
+                          },
+                        ]}
+                        onPress={() => {
+                          setShowCheerPins(!showCheerPins);
+                          setSelectedCheerId(null);
+                        }}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: showCheerPins }}
+                      >
+                        <Ionicons
+                          name="chatbubble-ellipses-outline"
+                          size={16}
+                          color={showCheerPins ? '#ffffff' : colors.textSecondary}
+                        />
+                        <Text
+                          style={[
+                            styles.mapKmButtonText,
+                            { color: showCheerPins ? '#ffffff' : colors.textSecondary },
+                          ]}
+                        >
+                          {t('live.archive.pins')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   {/* GPS Privacy Indicator */}
@@ -868,6 +910,14 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 actually collected some. */}
             <ActivityLiveMessages
               activity={activity}
+              archive={liveArchive}
+              selectedMessageId={selectedCheerId}
+              onSelectMessage={(message) => {
+                // Focus the pin: make sure pins are on, select it, bring the map into view.
+                setShowCheerPins(true);
+                setSelectedCheerId(message.id);
+                scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+              }}
               onUserPress={(user: User) =>
                 navigation.navigate('UserProfile', { username: user.username })
               }

@@ -8,12 +8,21 @@ import { Avatar } from './Avatar';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveMessageArchive } from '../hooks/useLiveMessageArchive';
+import { useUnits } from '../hooks/useUnits';
 import { borderRadius, fontSize, spacing } from '../theme';
-import type { Activity, User } from '../types/api';
+import type { Activity, LiveMessage, User } from '../types/api';
+import { formatDuration } from '../utils/formatDuration';
 
 interface Props {
   activity: Activity | null;
-  onUserPress?: (user: User) => void;
+  onUserPress?: (user: User) => void; /**
+   * Pass the screen's own archive when it also draws the pins, so the list and
+   * the map share one fetch. Without it the card fetches for itself.
+   */
+  archive?: ReturnType<typeof useLiveMessageArchive>;
+  /** Tap on a message that has a position — the screen focuses its pin. */
+  onSelectMessage?: (message: LiveMessage) => void;
+  selectedMessageId?: number | null;
 }
 
 /**
@@ -28,11 +37,20 @@ interface Props {
  * broadcast, still loading, or broadcast with no messages. An empty "no cheers"
  * card on every activity would be worse than the gap it fills.
  */
-export function ActivityLiveMessages({ activity, onUserPress }: Props) {
+export function ActivityLiveMessages({
+  activity,
+  onUserPress,
+  archive,
+  onSelectMessage,
+  selectedMessageId = null,
+}: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { messages, privateCount, isLoading, error, retry, isAvailable } =
-    useLiveMessageArchive(activity);
+  const { formatDistance } = useUnits();
+  // A null activity keeps the hook idle, so a screen-provided archive is the
+  // only fetch in flight.
+  const own = useLiveMessageArchive(archive ? null : activity);
+  const { messages, privateCount, isLoading, error, retry, isAvailable } = archive ?? own;
 
   if (!isAvailable) return null;
 
@@ -69,11 +87,25 @@ export function ActivityLiveMessages({ activity, onUserPress }: Props) {
       {messages.map((message) => {
         const author = message.user;
         const isPrivate = message.live_visibility === 'private';
+        // Distance survives a privacy zone (only the pin is withheld); both are
+        // null for messages from before the API recorded them.
+        const hasDistance = typeof message.live_distance === 'number';
+        const hasPin = Array.isArray(message.live_position);
+        const isSelected = selectedMessageId === message.id;
 
         return (
-          <View
+          <TouchableOpacity
             key={message.id}
-            style={[styles.messageRow, { borderBottomColor: colors.borderLight }]}
+            style={[
+              styles.messageRow,
+              { borderBottomColor: colors.borderLight },
+              isSelected && { backgroundColor: colors.primaryLight ?? colors.borderLight },
+            ]}
+            disabled={!hasPin || !onSelectMessage}
+            onPress={() => onSelectMessage?.(message)}
+            activeOpacity={0.7}
+            accessibilityRole={hasPin && onSelectMessage ? 'button' : undefined}
+            accessibilityHint={hasPin && onSelectMessage ? t('live.archive.showOnMap') : undefined}
           >
             <TouchableOpacity
               disabled={!author || !onUserPress}
@@ -97,6 +129,23 @@ export function ActivityLiveMessages({ activity, onUserPress }: Props) {
 
               <Text style={[styles.content, { color: colors.textPrimary }]}>{message.content}</Text>
 
+              {hasDistance && (
+                <View style={styles.whereRow}>
+                  <Ionicons
+                    name={hasPin ? 'location' : 'location-outline'}
+                    size={11}
+                    color={hasPin ? colors.primary : colors.textMuted}
+                  />
+                  <Text style={[styles.whereLabel, { color: colors.textMuted }]}>
+                    {t('live.archive.atDistance', {
+                      distance: formatDistance(message.live_distance as number),
+                    })}
+                    {typeof message.live_duration === 'number' &&
+                      ` · ${formatDuration(message.live_duration)}`}
+                  </Text>
+                </View>
+              )}
+
               {isPrivate && (
                 <View style={styles.privateRow}>
                   <Ionicons name="lock-closed" size={11} color={colors.textMuted} />
@@ -106,7 +155,7 @@ export function ActivityLiveMessages({ activity, onUserPress }: Props) {
                 </View>
               )}
             </View>
-          </View>
+          </TouchableOpacity>
         );
       })}
     </Card>
@@ -158,6 +207,16 @@ const styles = StyleSheet.create({
   content: {
     fontSize: fontSize.md,
     marginTop: 2,
+  },
+  whereRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  whereLabel: {
+    fontSize: fontSize.xs,
+    fontVariant: ['tabular-nums'],
   },
   privateRow: {
     flexDirection: 'row',

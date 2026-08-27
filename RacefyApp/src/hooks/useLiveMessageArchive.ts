@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 
 import { useFetch } from './useFetch';
 import { api } from '../services/api';
-import type { Activity, LiveMessage } from '../types/api';
+import type { Activity, LiveMessage, LiveMessagePin } from '../types/api';
 
 interface Result {
   /** Chronological, oldest first — the order they arrived during the run. */
   messages: LiveMessage[];
+  /** The subset with a position, ready for the route map. Same order. */
+  pins: LiveMessagePin[];
   publicCount: number;
   privateCount: number;
   isLoading: boolean;
@@ -47,6 +49,29 @@ async function fetchAllMessages(activityId: number): Promise<LiveMessage[]> {
 }
 
 /**
+ * Messages that know where they landed. `live_position` is absent on messages
+ * from before the API recorded it and null when there was no GPS fix yet, so
+ * a card can list every message while the map only pins the ones it can place.
+ */
+export function toPins(messages: LiveMessage[]): LiveMessagePin[] {
+  return messages.flatMap((m) => {
+    const position = m.live_position;
+    if (!Array.isArray(position) || position.length < 2) return [];
+    const [lng, lat] = position;
+    if (typeof lng !== 'number' || typeof lat !== 'number') return [];
+
+    return [
+      {
+        id: m.id,
+        coordinate: [lng, lat] as [number, number],
+        content: m.content,
+        authorName: m.user?.name ?? m.user?.username ?? '',
+      },
+    ];
+  });
+}
+
+/**
  * The messages a spectator sent while the athlete was broadcasting, read back
  * after the activity is over.
  *
@@ -81,8 +106,11 @@ export function useLiveMessageArchive(activity: Activity | null): Result {
     [messages],
   );
 
+  const pins = useMemo(() => toPins(messages), [messages]);
+
   return {
     messages,
+    pins,
     publicCount,
     privateCount: messages.length - publicCount,
     isLoading,

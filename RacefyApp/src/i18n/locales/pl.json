@@ -2687,7 +2687,10 @@
       "countWithPrivate_few": "{{count}} wiadomości w trakcie transmisji · {{private}} tylko dla Ciebie",
       "countWithPrivate_many": "{{count}} wiadomości w trakcie transmisji · {{private}} tylko dla Ciebie",
       "privateNote": "Widoczne tylko dla Ciebie",
-      "loadFailed": "Nie udało się wczytać wiadomości z transmisji. Dotknij, aby spróbować ponownie."
+      "loadFailed": "Nie udało się wczytać wiadomości z transmisji. Dotknij, aby spróbować ponownie.",
+      "atDistance": "na {{distance}}",
+      "pins": "Doping",
+      "showOnMap": "Pokazuje na trasie, gdzie to dotarło"
     },
     "tts": {
       "limitReached": "Czytanie wiadomości na głos jest wstrzymane do przyszłego miesiąca — wyczerpano tegomiesięczny limit. Wiadomości nadal przychodzą.",

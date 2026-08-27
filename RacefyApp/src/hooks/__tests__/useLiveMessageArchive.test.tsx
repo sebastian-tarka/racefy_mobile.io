@@ -70,6 +70,34 @@ describe('useLiveMessageArchive', () => {
     expect(result.current.privateCount).toBe(1);
   });
 
+  it('pins only the messages that carry a position', async () => {
+    mockedApi.getLiveMessages.mockResolvedValue([
+      {
+        ...message(1, 'public'),
+        live_distance: 1730,
+        live_duration: 527,
+        live_position: [19.9424, 50.0662],
+        user: { name: 'Ania' },
+      } as LiveMessage,
+      // Inside a privacy zone for this viewer, or sent before the first fix: distance, no pin.
+      {
+        ...message(2, 'public'),
+        live_distance: 2100,
+        live_duration: 640,
+        live_position: null,
+      } as LiveMessage,
+      // From before the API recorded any of it.
+      message(3, 'private'),
+    ]);
+
+    const { result } = renderHook(() => useLiveMessageArchive(activity()));
+
+    await waitFor(() => expect(result.current.messages).toHaveLength(3));
+    expect(result.current.pins).toEqual([
+      { id: 1, coordinate: [19.9424, 50.0662], content: 'msg 1', authorName: 'Ania' },
+    ]);
+  });
+
   it('does not call the API for an activity that was never broadcast', async () => {
     const { result } = renderHook(() => useLiveMessageArchive(activity({ live_started_at: null })));
 
