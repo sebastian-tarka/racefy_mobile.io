@@ -13,6 +13,7 @@ import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
 import type { GpsPoint, GeoJSONLineString } from '../types/api';
 import { fontSize } from '../theme';
+import { Avatar } from './Avatar';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -81,6 +82,12 @@ export interface MapboxLiveMapProps {
 
   // Planned route (for live navigation)
   plannedRoute?: GeoJSONLineString | null;
+
+  /**
+   * Spectator view: draw the athlete as their avatar instead of the position
+   * dot. The recording screen leaves this unset — you know who you are.
+   */
+  athlete?: { avatar?: string | null; name?: string } | null;
 }
 
 /**
@@ -101,6 +108,7 @@ export function MapboxLiveMap({
   selectedRouteId,
   onFollowUserChanged,
   plannedRoute,
+  athlete = null,
 }: MapboxLiveMapProps) {
   const { colors, isDark } = useTheme();
   const cameraRef = useRef<any>(null);
@@ -515,28 +523,51 @@ export function MapboxLiveMap({
           />
         </MapboxGL.ShapeSource>
 
-        {/* User position dot - separate ShapeSource */}
-        <MapboxGL.ShapeSource
-          id="userLocation"
-          shape={{
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [displayPosition.lng, displayPosition.lat],
-            },
-            properties: {},
-          }}
-        >
-          <MapboxGL.CircleLayer
-            id="userCircle"
-            style={{
-              circleRadius: 10,
-              circleColor: colors.primary || '#10b981',
-              circleStrokeWidth: 3,
-              circleStrokeColor: '#ffffff',
+        {/* Position marker. A spectator sees the athlete's face (MarkerView —
+            a native view pinned to the coordinate, so it can hold an <Image>);
+            the athlete's own recording screen keeps the plain dot. The signal
+            ring above stays under both. */}
+        {athlete && MapboxGL.MarkerView ? (
+          <MapboxGL.MarkerView
+            id="athleteAvatar"
+            coordinate={[displayPosition.lng, displayPosition.lat]}
+            anchor={{ x: 0.5, y: 0.5 }}
+            allowOverlap
+          >
+            <View
+              style={[
+                styles.athleteAvatar,
+                { borderColor: signalColor || colors.primary || '#10b981' },
+              ]}
+              accessible
+              accessibilityLabel={athlete.name}
+            >
+              <Avatar uri={athlete.avatar} name={athlete.name || '?'} size="sm" />
+            </View>
+          </MapboxGL.MarkerView>
+        ) : (
+          <MapboxGL.ShapeSource
+            id="userLocation"
+            shape={{
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [displayPosition.lng, displayPosition.lat],
+              },
+              properties: {},
             }}
-          />
-        </MapboxGL.ShapeSource>
+          >
+            <MapboxGL.CircleLayer
+              id="userCircle"
+              style={{
+                circleRadius: 10,
+                circleColor: colors.primary || '#10b981',
+                circleStrokeWidth: 3,
+                circleStrokeColor: '#ffffff',
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        )}
       </MapboxGL.MapView>
 
       {/* Loading overlay with spinner */}
@@ -555,6 +586,16 @@ export function MapboxLiveMap({
 }
 
 const styles = StyleSheet.create({
+  athleteAvatar: {
+    borderWidth: 3,
+    borderRadius: 999,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
   container: {
     width: '100%',
     overflow: 'hidden',

@@ -152,6 +152,8 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
             // Keep the camera on the athlete: fitting once on first render leaves
             // the runner walking off the screen a few minutes later.
             followUser
+            // Their face on the map, not an anonymous dot.
+            athlete={{ avatar: broadcast?.user?.avatar, name: athleteName }}
           />
 
           {isPositionHidden && (
