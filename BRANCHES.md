@@ -26,7 +26,7 @@ pominęła), a dla surowych śladów GPS wylicza je z geometrii (`utils/turnDete
 Douglas-Peucker + zmiany azymutu ≥45°, klastrowanie łuków w oknie 30 m — bez nazw
 ulic, tylko „skręć w lewo/prawo/ostro/zawróć"). Do tego brakujące klucze i18n
 (`navigation.in`, `backOnRoute`) i odmiana jednostek w mowie („za 200 metrów",
-„za 1,5 kilometra"). Przy okazji (`c2`): tożsamość trasy-cienia to teraz
+„za 1,5 kilometra"). Przy okazji (`bce0f8b`): tożsamość trasy-cienia to teraz
 `routeKey` = `source:id` (`utils/routeKey.ts`) — id aktywności z `/activities/nearby`
 i id tras z `/routes` pochodzą z różnych tabel, więc dedup, klucze list,
 podświetlenie i cache dojścia mogły pomylić trasę z aktywnością o tym samym
