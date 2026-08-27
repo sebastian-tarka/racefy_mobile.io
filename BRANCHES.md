@@ -26,8 +26,11 @@ pominęła), a dla surowych śladów GPS wylicza je z geometrii (`utils/turnDete
 Douglas-Peucker + zmiany azymutu ≥45°, klastrowanie łuków w oknie 30 m — bez nazw
 ulic, tylko „skręć w lewo/prawo/ostro/zawróć"). Do tego brakujące klucze i18n
 (`navigation.in`, `backOnRoute`) i odmiana jednostek w mowie („za 200 metrów",
-„za 1,5 kilometra"). 11 plików. tsc 0 · eslint 0 błędów · jest 217/217
-(17 nowych testów).
+„za 1,5 kilometra"). Przy okazji (`c2`): tożsamość trasy-cienia to teraz
+`routeKey` = `source:id` (`utils/routeKey.ts`) — id aktywności z `/activities/nearby`
+i id tras z `/routes` pochodzą z różnych tabel, więc dedup, klucze list,
+podświetlenie i cache dojścia mogły pomylić trasę z aktywnością o tym samym
+numerze. 20 plików. tsc 0 · eslint 0 błędów · jest 219/219 (19 nowych testów).
 
 - [ ] Trasa z plannera (moje trasy): wybrać na ekranie start/stop, ruszyć — 200 m przed skrętem słychać „Za 200 metrów, skręć w lewo w …" (treść z Mapbox) + wibracja; overlay pokazuje strzałkę i dystans
 - [ ] Trasa „w pobliżu" (ślad GPS): to samo, ale komunikat bez nazwy ulicy; sprawdzić, czy na prostej z szumem GPS **nie** ma fałszywych skrętów i czy na zakrętach ulicznych są (progi w `utils/turnDetection.ts` DEFAULTS — jeśli za dużo/za mało, kręcić `minAngleDeg` / `simplifyToleranceM`)
@@ -37,6 +40,7 @@ ulic, tylko „skręć w lewo/prawo/ostro/zawróć"). Do tego brakujące klucze 
 - [ ] Muzyka z innej apki ścisza się na komunikat i wraca (`speakDucked`)
 - [ ] Odcinek dojścia (start >30 m od trasy): skręty z `/routes/preview` + skręty trasy w poprawnej kolejności i z poprawnym dystansem (offset)
 - [ ] „Poza trasą" / „Powrót na trasę" — raz na wejście/wyjście, nie przy każdym odczycie
+- [ ] Panel tras: moja trasa z plannera i aktywność z okolicy o tym samym `id` pokazują się obie; wybór jednej nie podświetla drugiej (ani na mapie, ani w liście/modalu)
 
 ---
 
