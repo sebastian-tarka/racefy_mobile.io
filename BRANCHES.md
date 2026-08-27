@@ -15,7 +15,16 @@ Stan na: **2026-08-27**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/live-trail-backfill` — commit `1dec08b` (od `main`/`2a7a7e0`)
+_Nic nie czeka — oba branche live zmergowane 2026-08-27 (patrz sekcja poniżej)._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Trasa dla widza dołączającego w trakcie (zmergowana 2026-08-27, `6c84476`)
 
 Widz dołączający do trwającej transmisji dostaje przebytą trasę zamiast pustej
 mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
@@ -26,20 +35,20 @@ mapy: `useLiveBroadcastFeed` zasiewa `trail` z `snapshot.track`
 - [x] Testy API `LiveTrackBackfillTest` — 10/10, w tym rozspojenie na strefie, cap segmentu, brak `track` bez `include`
 - [x] Smoke e2e na lokalnym API (port **8080**): 12 punktów → `include=track` zwraca trasę, tick bez `include` jej nie niesie; strefa prywatności na środku trasy → **2 segmenty**. Dane testowe posprzątane (strefa usunięta, aktywność porzucona)
 - [x] API zacommitowane i wypchnięte na `main` (`a5636e58`, 2026-08-27); docs zsynchronizowane (`racefy-api-docs` `e57f4fd`)
-- [ ] **Zostaje: deploy API na dev** — do tego czasu mobilka jest bezczynna (pole opcjonalne)
+- [ ] **Deploy API na dev** — do tego czasu obie funkcje na dev są bezczynne (pola opcjonalne, brak = stare zachowanie). Zmergowane na `main` **przed** weryfikacją na urządzeniu, świadomie (2026-08-27) — checklisty zostają otwarte
 - [ ] Po deployu: wejść w podgląd transmisji zawodnika, który ma już przebiegnięte kilka km — trasa ma być widoczna od razu
 - [ ] Zawodnik z aktywną strefą prywatności na trasie — sprawdzić, że linia jest **rozspojona**, a nie poprowadzona skrótem przez strefę
 - [ ] Sprawdzić w logach/sieci, że `include=track` leci **raz**, a nie co tick pollingu
 - [ ] Transport `reverb` (jeśli włączony serwerowo) — ten sam scenariusz co wyżej
 
-### `feature/live-cheer-pins` — commit `34b9980` (od `main`/`8c1dc57`)
+### Pinezki dopingów na trasie (zmergowana 2026-08-27, `3aafad8`)
 
 Pinezki dopingów na trasie zakończonej aktywności: karta „Doping z transmisji"
 pokazuje „na 1,73 km · 8:47", wiersz z pozycją fokusuje pinezkę na mapie
 (`MapboxRouteMap.cheerPins`), przełącznik „Doping" obok „km". Wymaga pól
 `live_distance` / `live_duration` / `live_position` z API (`main` `a5636e58`) —
 starsze wiadomości mają `null` i zostają bez pinezki, to zamierzone.
-11 plików, 1 nowy test. tsc 0 · eslint 0 błędów · jest 196/196. `docs/api` → `e57f4fd`.
+11 plików, 1 nowy test. Po obu merge'ach na `main`: tsc 0 · eslint 0 błędów · jest 200/200. `docs/api` → `e57f4fd`.
 
 - [ ] Własna zakończona aktywność z transmisją na **lokalnym API** (`live:simulate` + `live:cheer` po migracji `add_live_position_to_comments`) → pinezki na mapie, dotknięcie wiersza przewija do mapy i podświetla pinezkę, dymek z treścią, ✕ zamyka
 - [ ] Przełącznik „Doping" chowa pinezki i czyści zaznaczenie; nie pokazuje się, gdy żadna wiadomość nie ma pozycji
@@ -47,13 +56,6 @@ starsze wiadomości mają `null` i zostają bez pinezki, to zamierzone.
 - [ ] Zawodnik ze strefą prywatności: jako właściciel widzi pinezkę w strefie (API nie filtruje dla właściciela)
 - [ ] Mapa w trybie fallback (obraz/SVG bez tokenu Mapbox) — pinezek brak, karta dalej działa
 - [ ] Rozmiary dymka na 375pt @ fontScale 1.3 — `numberOfLines={3}` ma wystarczyć
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Responsywność (zmergowana 2026-08-26, `6ddc070`)
 
@@ -140,6 +142,8 @@ Zmergowane i bezpieczne do skasowania lokalnie: `audyt`, `feature/route-planning
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-08-27 | `feature/live-cheer-pins` | Pinezki dopingów na trasie zakończonej aktywności + „na X km · m:ss” w karcie; `docs/api` → `e57f4fd` |
+| 2026-08-27 | `feature/live-trail-backfill` | Widz dołączający w trakcie dostaje przebytą trasę (`GET /live/{id}?include=track`, MultiLineString, luki po strefach) |
 | 2026-08-26 | `feature/live-messages-archive` | Podgląd wiadomości od widzów po zakończeniu aktywności (karta na szczegółach) |
 | 2026-08-26 | `responsywnosc` | Clamp skali, cap fontScale, minHeight, tab bar, klawiatura, aspectRatio/flexBasis, sprzątanie martwego kodu |
 | 2026-07-09 | `feat/tracking-db` → `develop` → `main` | SQLite point log, idempotentny uploader, gap-bridging, battery UX, audio coach w tle |
