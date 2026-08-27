@@ -2596,7 +2596,10 @@
       "countWithPrivate": "{{count}} mensaje durante tu directo · {{private}} solo para ti",
       "countWithPrivate_other": "{{count}} mensajes durante tu directo · {{private}} solo para ti",
       "privateNote": "Solo tú lo viste",
-      "loadFailed": "No se pudieron cargar los mensajes de tu directo. Toca para reintentar."
+      "loadFailed": "No se pudieron cargar los mensajes de tu directo. Toca para reintentar.",
+      "atDistance": "en {{distance}}",
+      "pins": "Ánimos",
+      "showOnMap": "Muestra en la ruta dónde llegó"
     },
     "tts": {
       "limitReached": "La lectura en voz alta está pausada hasta el mes que viene: has alcanzado el límite de este mes. Los mensajes siguen llegando.",

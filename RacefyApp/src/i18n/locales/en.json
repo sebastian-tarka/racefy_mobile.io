@@ -2678,7 +2678,10 @@
       "countWithPrivate": "{{count}} message while you were live · {{private}} just for you",
       "countWithPrivate_other": "{{count}} messages while you were live · {{private}} just for you",
       "privateNote": "Only you saw this",
-      "loadFailed": "Could not load the messages from your broadcast. Tap to retry."
+      "loadFailed": "Could not load the messages from your broadcast. Tap to retry.",
+      "atDistance": "at {{distance}}",
+      "pins": "Cheers",
+      "showOnMap": "Shows where this arrived on the route"
     },
     "tts": {
       "limitReached": "Reading messages aloud is paused until next month — you have reached this month’s limit. Messages still arrive.",

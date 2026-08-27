@@ -3573,6 +3573,23 @@ export interface LiveMessage extends Comment {
   live_visibility: 'private' | 'public';
   /** Set once TTS has played it to the athlete — use it to never read a message twice. */
   audio_played_at: string | null;
+  /**
+   * Where the athlete was when the message arrived, captured server-side at
+   * send time. All three are null for messages from before this was recorded
+   * (no backfill) and for messages sent before the first GPS fix.
+   */
+  live_distance?: number | null; // metres into the activity
+  live_duration?: number | null; // seconds into the activity
+  /** [lng, lat]. Null for non-owners while inside a privacy zone — never filtered for the owner. */
+  live_position?: [number, number] | null;
+}
+
+/** A live message pinned on the finished route — only messages that carry a position. */
+export interface LiveMessagePin {
+  id: number;
+  coordinate: [number, number]; // [lng, lat]
+  content: string;
+  authorName: string;
 }
 
 export interface SendLiveMessageRequest {

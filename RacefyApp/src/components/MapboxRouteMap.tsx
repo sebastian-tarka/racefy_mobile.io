@@ -7,13 +7,21 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
 import { useMapStyle } from '../hooks/useMapStyle';
+import { fontSize } from '../theme';
 import { haversineDistance as geoDistance } from '../utils/gpsMath';
-import type { GeoJSONLineString } from '../types/api';
+import type { LiveMessagePin, GeoJSONLineString } from '../types/api';
 
 // Conditional import - only loads if @rnmapbox/maps is installed
 let MapboxGL: any = null;
@@ -45,6 +53,11 @@ interface MapboxRouteMapProps {
   showFinishMarker?: boolean;
   startPoint?: [number, number, number?] | null;
   finishPoint?: [number, number, number?] | null;
+  /** Live messages pinned where the athlete was when each arrived (owner's finished activity). */
+  cheerPins?: LiveMessagePin[];
+  selectedCheerId?: number | null;
+  /** Tap on a pin (or its callout's close) — null clears the selection. */
+  onSelectCheer?: (id: number | null) => void;
 }
 
 /**
@@ -112,6 +125,9 @@ export function MapboxRouteMap({
   showFinishMarker = true,
   startPoint = null,
   finishPoint = null,
+  cheerPins = [],
+  selectedCheerId = null,
+  onSelectCheer,
 }: MapboxRouteMapProps) {
   const { colors, isDark } = useTheme();
   const { resolveStyleUrl } = useMapStyle();
@@ -226,6 +242,25 @@ export function MapboxRouteMap({
   const endMarkerColor = isDark ? '#fb7185' : '#ef4444'; // Warmer red in dark mode
   const kmMarkerColor = isDark ? '#34d399' : '#10b981'; // Emerald for km markers
 
+  const cheerColor = isDark ? '#38bdf8' : '#0ea5e9'; // sky — distinct from km (emerald) and start/finish
+  const cheerPinsGeoJSON: GeoJSON.FeatureCollection | null =
+    cheerPins.length > 0
+      ? {
+          type: 'FeatureCollection',
+          features: cheerPins.map((pin) => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: pin.coordinate },
+            properties: { id: pin.id, selected: pin.id === selectedCheerId },
+          })),
+        }
+      : null;
+  const selectedCheer = cheerPins.find((pin) => pin.id === selectedCheerId) ?? null;
+
+  const onCheerPress = (event: { features?: GeoJSON.Feature[] }) => {
+    const id = event.features?.[0]?.properties?.id;
+    if (typeof id === 'number') onSelectCheer?.(id === selectedCheerId ? null : id);
+  };
+
   // Compute km marker points
   const kmMarkersGeoJSON: GeoJSON.FeatureCollection | null = showKmMarkers
     ? {
@@ -287,6 +322,30 @@ export function MapboxRouteMap({
           </MapboxGL.ShapeSource>
         )}
 
+        {/* Cheer pins — one circle per message with a position. The selected
+            one grows; its text is shown in the callout below the map view
+            rather than as a symbol layer, which would need map-style glyphs
+            and would overlap on a busy route. */}
+        {cheerPinsGeoJSON && (
+          <MapboxGL.ShapeSource
+            id="cheerPinsSource"
+            shape={cheerPinsGeoJSON}
+            hitbox={{ width: 28, height: 28 }}
+            onPress={onCheerPress}
+          >
+            <MapboxGL.CircleLayer
+              id="cheerPinCircles"
+              style={{
+                circleRadius: ['case', ['get', 'selected'], 12, 8],
+                circleColor: cheerColor,
+                circleStrokeWidth: ['case', ['get', 'selected'], 3, 2],
+                circleStrokeColor: '#ffffff',
+                circleOpacity: ['case', ['get', 'selected'], 1, 0.9],
+              }}
+            />
+          </MapboxGL.ShapeSource>
+        )}
+
         {/* Start marker - only show if privacy allows */}
         {showStartMarker && startPoint && (
           <MapboxGL.ShapeSource
@@ -338,6 +397,27 @@ export function MapboxRouteMap({
         )}
       </MapboxGL.MapView>
 
+      {/* Callout for the selected cheer */}
+      {selectedCheer && (
+        <View
+          style={[styles.cheerCallout, { backgroundColor: colors.cardBackground }]}
+          accessibilityRole="text"
+        >
+          <View style={[styles.cheerCalloutDot, { backgroundColor: cheerColor }]} />
+          <Text style={[styles.cheerCalloutText, { color: colors.textPrimary }]} numberOfLines={3}>
+            <Text style={styles.cheerCalloutAuthor}>{selectedCheer.authorName} </Text>
+            {selectedCheer.content}
+          </Text>
+          <TouchableOpacity
+            onPress={() => onSelectCheer?.(null)}
+            hitSlop={8}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.cheerCalloutClose, { color: colors.textSecondary }]}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Loading overlay with spinner */}
       {isLoading && (
         <Animated.View
@@ -351,6 +431,40 @@ export function MapboxRouteMap({
 }
 
 const styles = StyleSheet.create({
+  cheerCallout: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  cheerCalloutDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  cheerCalloutText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    lineHeight: fontSize.sm * 1.4,
+  },
+  cheerCalloutAuthor: {
+    fontWeight: '600',
+  },
+  cheerCalloutClose: {
+    fontSize: fontSize.md,
+    paddingHorizontal: 4,
+  },
   container: {
     width: '100%',
     overflow: 'hidden',
