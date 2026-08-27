@@ -15,7 +15,28 @@ Stan na: **2026-08-27**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `feature/voice-turn-instructions` — komendy głosowe skrętów na ekranie aktywności (od 2026-08-27, `be5bca6`)
+
+Announcer TTS (`useNavigationAnnouncer`) i overlay z następnym skrętem istniały od
+route-planningu, ale wybrana trasa-cień zawsze trafiała do nawigacji z pustą listą
+skrętów (`baseTurnInstructions: []`, `useMyPlannedRoutes` gubił `turn_instructions`,
+ślady GPS z `/activities/nearby` w ogóle ich nie mają). Nowy `useRouteTurnInstructions`:
+skręty routera dla tras z plannera/eventu (dociąga `/routes/{id}`, gdy lista je
+pominęła), a dla surowych śladów GPS wylicza je z geometrii (`utils/turnDetection`:
+Douglas-Peucker + zmiany azymutu ≥45°, klastrowanie łuków w oknie 30 m — bez nazw
+ulic, tylko „skręć w lewo/prawo/ostro/zawróć"). Do tego brakujące klucze i18n
+(`navigation.in`, `backOnRoute`) i odmiana jednostek w mowie („za 200 metrów",
+„za 1,5 kilometra"). 11 plików. tsc 0 · eslint 0 błędów · jest 217/217
+(17 nowych testów).
+
+- [ ] Trasa z plannera (moje trasy): wybrać na ekranie start/stop, ruszyć — 200 m przed skrętem słychać „Za 200 metrów, skręć w lewo w …" (treść z Mapbox) + wibracja; overlay pokazuje strzałkę i dystans
+- [ ] Trasa „w pobliżu" (ślad GPS): to samo, ale komunikat bez nazwy ulicy; sprawdzić, czy na prostej z szumem GPS **nie** ma fałszywych skrętów i czy na zakrętach ulicznych są (progi w `utils/turnDetection.ts` DEFAULTS — jeśli za dużo/za mało, kręcić `minAngleDeg` / `simplifyToleranceM`)
+- [ ] Trasa eventu (preselekcja z detalu eventu): skręty routera z `event.route.turn_instructions`
+- [ ] Język: przy polskim UI TTS mówi po polsku; jeśli treść z Mapbox („Turn left onto …") jest po angielsku → to strona API (patrz `.notes/prompt-backend-turn-instructions.md`)
+- [ ] Ekran zgaszony / apka w tle (Android z foreground service, iOS): komunikaty nadal się odzywają — announcer żyje w React effect, więc wymaga działającego JS w tle
+- [ ] Muzyka z innej apki ścisza się na komunikat i wraca (`speakDucked`)
+- [ ] Odcinek dojścia (start >30 m od trasy): skręty z `/routes/preview` + skręty trasy w poprawnej kolejności i z poprawnym dystansem (offset)
+- [ ] „Poza trasą" / „Powrót na trasę" — raz na wejście/wyjście, nie przy każdym odczycie
 
 ---
 
