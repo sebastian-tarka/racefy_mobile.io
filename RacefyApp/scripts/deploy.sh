@@ -103,21 +103,42 @@ check_git_status() {
     fi
 }
 
+# Wersja user-facing żyje w package.json — app.config.ts tylko ją czyta.
+current_version() {
+    node -p "require('./package.json').version" 2>/dev/null
+}
+
+# Liczniki buildów trzyma EAS (eas.json: appVersionSource=remote), więc pytamy serwer.
+# Pusto = nie ma sieci/loginu albo liczniki nie są jeszcze zasiane — to tylko
+# informacja na ekranie, nie blokujemy nią deployu.
+remote_build_version() {
+    local platform="$1"
+    timeout 60 eas build:version:get --platform "$platform" --json --non-interactive 2>/dev/null \
+        | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const v=Object.values(JSON.parse(s))[0];if(v)process.stdout.write(String(v))}catch{}})" 2>/dev/null
+}
+
 show_app_config() {
     print_step "Konfiguracja aplikacji"
 
-    # Parse from app.config.ts
-    local version=$(grep -oP "version:\s*'[^']*'" app.config.ts | head -1 | grep -oP "'[^']*'" | tr -d "'")
-    local build_number=$(grep -oP "buildNumber:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
-    local version_code=$(grep -oP "versionCode:\s*\d+" app.config.ts | grep -oP "\d+")
+    local version=$(current_version)
     local bundle_id=$(grep -oP "bundleIdentifier:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
     local package_name=$(grep -oP "package:\s*'[^']*'" app.config.ts | grep -oP "'[^']*'" | tr -d "'")
 
-    echo -e "  ${BOLD}Version:${NC}         ${version:-?}"
-    echo -e "  ${BOLD}iOS Build:${NC}       ${build_number:-?}"
-    echo -e "  ${BOLD}Android Code:${NC}    ${version_code:-?}"
+    print_info "pobieram liczniki buildów z EAS..."
+    local build_number=$(remote_build_version ios)
+    local version_code=$(remote_build_version android)
+
+    echo -e "  ${BOLD}Version:${NC}         ${version:-?} ${DIM}(package.json)${NC}"
+    echo -e "  ${BOLD}iOS Build:${NC}       ${build_number:-?} ${DIM}(EAS, auto +1)${NC}"
+    echo -e "  ${BOLD}Android Code:${NC}    ${version_code:-?} ${DIM}(EAS, auto +1)${NC}"
     echo -e "  ${BOLD}iOS Bundle:${NC}      ${bundle_id:-?}"
     echo -e "  ${BOLD}Android Pkg:${NC}     ${package_name:-?}"
+
+    if [[ -z "$build_number" || -z "$version_code" ]]; then
+        echo ""
+        print_warn "Liczniki buildów nie są jeszcze ustawione w EAS."
+        print_info "Menu → 's' zasieje je jednorazowo (albo: eas build:version:set)."
+    fi
 
     # EAS env from eas.json per profile
     echo ""
@@ -330,6 +351,92 @@ show_env_vars() {
         2) eas env:list production --include-sensitive ;;
         3) eas env:list development --include-sensitive ;;
     esac
+}
+
+# ── Release ──────────────────────────────────────────────────
+
+bump_version() {
+    print_step "Podbij wersję aplikacji"
+
+    local version
+    version=$(current_version) || true
+    if [[ -z "$version" ]]; then
+        print_error "Nie mogę odczytać wersji z package.json"
+        return 1
+    fi
+
+    # npm version odmawia pracy na brudnym drzewie — sprawdźmy to zawczasu.
+    if [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
+        print_error "Masz niezacommitowane zmiany — npm version tego nie ruszy."
+        print_info "Zacommituj je i wróć tutaj."
+        return 1
+    fi
+
+    local next_patch next_minor next_major
+    next_patch=$(node -p "const [a,b,c]='$version'.split('.').map(Number); \`\${a}.\${b}.\${c+1}\`") || true
+    next_minor=$(node -p "const [a,b]='$version'.split('.').map(Number); \`\${a}.\${b+1}.0\`") || true
+    next_major=$(node -p "const [a]='$version'.split('.').map(Number); \`\${a+1}.0.0\`") || true
+
+    echo ""
+    echo -e "  ${BOLD}Obecna wersja:${NC} $version"
+    print_info "Liczniki buildów (iOS/Android) podbija EAS sam — tu chodzi tylko o wersję w sklepie."
+    echo ""
+    echo -e "  ${CYAN}1)${NC} patch → ${BOLD}$next_patch${NC} ${DIM}— poprawki${NC}"
+    echo -e "  ${CYAN}2)${NC} minor → ${BOLD}$next_minor${NC} ${DIM}— nowe funkcje${NC}"
+    echo -e "  ${CYAN}3)${NC} major → ${BOLD}$next_major${NC} ${DIM}— zmiany łamiące${NC}"
+    echo -e "  ${CYAN}0)${NC} anuluj"
+    echo -e -n "\n  Wybierz [1/2/3/0]: "
+    read -r choice
+
+    local level
+    case "$choice" in
+        1) level="patch" ;;
+        2) level="minor" ;;
+        3) level="major" ;;
+        *) print_info "Anulowano."; return 0 ;;
+    esac
+
+    if ! confirm "Podbić ${level} i otagować commit?"; then
+        print_info "Anulowano."
+        return 0
+    fi
+
+    echo ""
+    npm run "release:${level}"
+    local new_version
+    new_version=$(current_version) || true
+    print_success "Wersja: $version → $new_version (commit + tag v$new_version)"
+
+    if confirm "Wypchnąć commit i tag na zdalne repo?"; then
+        git push --follow-tags
+        print_success "Wypchnięte."
+    else
+        print_info "Pamiętaj: git push --follow-tags"
+    fi
+}
+
+seed_remote_versions() {
+    print_step "Zasiej liczniki buildów w EAS (jednorazowo)"
+    print_info "eas.json ma appVersionSource=remote, więc versionCode/buildNumber"
+    print_info "trzyma EAS i podbija je sam przy każdym buildzie."
+    print_warn "Zrób to RAZ. Podaj wartości wyższe niż ostatnie wysłane do sklepów:"
+    print_info "  Android: ostatni versionCode w Google Play (przed migracją: 22)"
+    print_info "  iOS:     liczba całkowita, wyższa niż dotychczasowy build number"
+    echo ""
+
+    if ! confirm "Ustawic teraz?"; then
+        print_info "Anulowano."
+        return 0
+    fi
+
+    echo ""
+    print_step "Android"
+    eas build:version:set --platform android
+    echo ""
+    print_step "iOS"
+    eas build:version:set --platform ios
+    echo ""
+    print_success "Gotowe — od teraz liczniki rosną same przy każdym buildzie."
 }
 
 # ── Local Build ──────────────────────────────────────────────
@@ -579,6 +686,10 @@ show_menu() {
     echo -e "  ${CYAN}5)${NC}  Staging Ad-Hoc ${DIM}— .ipa (wymaga UDID urządzeń)${NC}"
     echo -e "  ${CYAN}6)${NC}  Submit do TestFlight ${DIM}— wyślij istniejący build${NC}"
     echo ""
+    echo -e " ${BOLD}${GREEN}🔖 WERSJA${NC}"
+    echo -e "  ${CYAN}v)${NC}  Podbij wersję ${DIM}— patch/minor/major + commit i tag${NC}"
+    echo -e "  ${CYAN}s)${NC}  Zasiej liczniki EAS ${DIM}— jednorazowo, po migracji na remote${NC}"
+    echo ""
     echo -e " ${BOLD}${GREEN}🛠  DEV & STATUS${NC}"
     echo -e "  ${CYAN}7)${NC}  Start dev server ${DIM}— uruchom Expo (USB/standard/clear)${NC}"
     echo -e "  ${CYAN}e)${NC}  Emulator Android ${DIM}— uruchom app na emulatorze${NC}"
@@ -607,6 +718,8 @@ main() {
             4) build_ios_testflight ;;
             5) build_ios_staging ;;
             6) submit_ios_testflight ;;
+            v|V) bump_version ;;
+            s|S) seed_remote_versions ;;
             7) start_dev_server ;;
             e|E) run_android_emulator ;;
             d|D) install_android_dev ;;

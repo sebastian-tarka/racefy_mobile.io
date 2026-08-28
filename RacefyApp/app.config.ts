@@ -1,6 +1,7 @@
 import { ConfigContext, ExpoConfig } from 'expo/config';
 import * as fs from 'fs';
 import * as path from 'path';
+import { version as appVersion } from './package.json';
 
 // Decode Firebase config files from base64 EAS env vars (or use existing local files).
 // Runs both locally (when files exist on disk) and on EAS servers (when env vars are set).
@@ -47,7 +48,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Racefy',
   slug: 'RacefyApp',
-  version: '1.16.0',
+  // Single source of truth - bump it with `npm run release:{patch,minor,major}`,
+  // which also commits and tags. iOS buildNumber / Android versionCode are NOT
+  // here on purpose: eas.json has `appVersionSource: "remote"`, so EAS keeps
+  // those counters and increments them itself (`eas build:version:get`).
+  version: appVersion,
   orientation: 'portrait',
   icon: './assets/icon-ios.png',
   userInterfaceStyle: 'automatic',
@@ -61,7 +66,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.racefy.app',
-    buildNumber: '1.16.0',
     ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
     associatedDomains: ['applinks:racefy.io', 'applinks:app.dev.racefy.io'],
     infoPlist: {
@@ -107,7 +111,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.racefy.app',
-    versionCode: 22,
     ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [
       'ACCESS_FINE_LOCATION',

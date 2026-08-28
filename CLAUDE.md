@@ -285,6 +285,43 @@ cd RacefyApp && eas build --platform ios --profile staging
 cd RacefyApp && eas build --platform ios --profile production
 ```
 
+### Versioning (do NOT edit versions by hand)
+
+Two separate things, handled two different ways:
+
+| What | Where it lives | Who bumps it |
+|---|---|---|
+| `version` (e.g. `1.16.0`) — what users see in the store | `package.json`; `app.config.ts` imports it | you, via `npm run release:*` |
+| `ios.buildNumber` / `android.versionCode` — upload counters | EAS servers (`eas.json` → `cli.appVersionSource: "remote"`) | EAS, automatically on every build |
+
+`app.config.ts` deliberately has **no** `buildNumber` / `versionCode`: with a
+remote version source they would be ignored, so leaving them there only misleads.
+Build profiles `staging`, `production` and `production-apk` set
+`autoIncrement: true`.
+
+```bash
+cd RacefyApp
+npm run release:patch     # 1.16.0 → 1.16.1, commits and tags v1.16.1
+npm run release:minor     # 1.16.0 → 1.17.0
+npm run release:major     # 1.16.0 → 2.0.0
+git push --follow-tags
+
+npm run deploy            # menu: 'v' does the bump interactively, 's' seeds EAS counters,
+                          # and the header shows the current version + both counters
+
+eas build:version:get --platform all    # what EAS will use next
+eas build:version:set --platform ios    # one-off, only when seeding or fixing a counter
+```
+
+One-off migration step (needed once per project, and once more if the counters
+are ever reset): `eas build:version:set` for both platforms, with values higher
+than whatever was last uploaded to the stores — Android was at `versionCode 22`.
+`npm run deploy` → `s` walks through it.
+
+Note for local Gradle builds (`docs/LOCAL_BUILD_SETUP.md`): `eas build:version:sync`
+writes into a static `app.json`, which this project does not have. Those APKs never
+reach a store, so their build number does not matter.
+
 ### EAS Secrets Setup
 
 EAS secrets are secure environment variables that get injected into your builds. They are **not** committed to git and are managed through the EAS CLI.
