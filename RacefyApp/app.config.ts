@@ -233,8 +233,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // RevenueCat
     revenueCatAppleApiKey: process.env.REVENUECAT_APPLE_API_KEY || '',
     revenueCatGoogleApiKey: process.env.REVENUECAT_GOOGLE_API_KEY || '',
-    // Feature flags
-    useDynamicHome: process.env.USE_DYNAMIC_HOME === 'true',
     eas: {
       projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
     },

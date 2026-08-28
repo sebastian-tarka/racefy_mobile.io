@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-08-27**
+Stan na: **2026-08-28**
 
 ---
 
@@ -23,6 +23,32 @@ _Nic nie czeka._
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Brakujące sekcje ekranu Home (2026-08-28)
+
+`/home/config` zwracał dla konta z aktywnym programem 5 sekcji, a ekran rysował
+1 — reszta ginęła bez śladu. Trzy przyczyny: (1) `SectionRenderer` nie miał
+`case` dla `weekly_training_progress`, `training_goal_progress`
+i `program_phase_intro` (leciały w `default:` → `logger.warn` + `null`),
+(2) `friend_activity` przychodzi z API jako sama treść AI, bez tablicy
+`friend_activities`, a komponent bez listy zwracał `null`, (3) `weather_insight`
+trzyma dane w `meta`, a komponent czytał nieistniejące `section.weather` —
+stąd brak temperatury, zawsze domyślna ikona i neutralny kolor tła.
+Dorobione trzy komponenty sekcji, fallback tekstowy dla `friend_activity`,
+`getSectionWeather()` czytający `meta` z fallbackiem na stare `weather`,
+deterministyczna mapa `condition` → ikona (OpenWeather `main` — `Drizzle` nie
+zawiera „rain") i podpięcie `section.action` do `executeCtaActionFromTab`, więc
+CTA sekcji trafia w `TrainingWeekDetail`/`GoalDetail` z właściwym id.
+Przy okazji usunięty martwy flag `USE_DYNAMIC_HOME` (+ `src/config/features.ts`,
+którego komentarz opisywał nieistniejący `HomeScreenWrapper`).
+tsc 0 · eslint 0 błędów · jest 227/227 (8 nowych, na prawdziwym payloadzie ze stage).
+
+- [ ] Konto z aktywnym programem treningowym: na Home widać kartę „Ten tydzień" z paskiem postępu i streakiem oraz kartę celu z paskiem i statusem tempa
+- [ ] Karta pogody pokazuje temperaturę i „odczuwalną", ikona zgadza się z pogodą, tło zielone/pomarańczowe tylko gdy API poda `is_good_for_outdoor`
+- [ ] Tap w „Przejrzyj plan" otwiera właściwy tydzień treningowy, tap w cel — właściwy cel
+- [ ] Sekcja o znajomym („X trenuje teraz") jest widoczna mimo braku listy aktywności i klika się w całości
+- [ ] Program w pauzie: sprawdzić, co przychodzi jako `resume_training` — sekcji o tym typie **nadal nie ma** (jest tylko akcja CTA), więc jeśli backend ją wysyła, wciąż zniknie
+- [ ] Liczby w `training_goal_progress` przy jednostkach imperialnych (konto z `units: imperial`)
 
 ### Komendy głosowe skrętów na ekranie aktywności (zmergowana 2026-08-27, `6ecddb9`)
 

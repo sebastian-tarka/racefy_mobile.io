@@ -1,11 +1,16 @@
 // Original section types
-export { WeatherInsightSection } from './WeatherInsightSection';
+export { WeatherInsightSection, getSectionWeather } from './WeatherInsightSection';
 export { FriendActivitySection } from './FriendActivitySection';
 export { LiveActivitySection } from './LiveActivitySection';
 export { UpcomingEventSection } from './UpcomingEventSection';
 export { LastActivitySummarySection } from './LastActivitySummarySection';
 export { WeeklyInsightSection } from './WeeklyInsightSection';
 export { MotivationBannerSection } from './MotivationBannerSection';
+
+// Training-related section types
+export { WeeklyTrainingProgressSection } from './WeeklyTrainingProgressSection';
+export { TrainingGoalProgressSection } from './TrainingGoalProgressSection';
+export { ProgramPhaseIntroSection } from './ProgramPhaseIntroSection';
 
 // New event-related section types
 export { LiveEventSection } from './LiveEventSection';

@@ -242,7 +242,25 @@
     "noLiveEventsMessage": "Vuelve más tarde o explora los próximos eventos",
     "browseUpcoming": "Ver próximos eventos",
     "recentActivities": "Actividades recientes",
-    "checkConnection": "Verifica tu conexión a internet"
+    "checkConnection": "Verifica tu conexión a internet",
+    "weather": {
+      "feelsLike": "(sensación {{value}})"
+    },
+    "training": {
+      "sessionsDone": "{{completed}} de {{planned}} sesiones",
+      "streakWeeks_one": "Racha de {{count}} semana",
+      "streakWeeks_other": "Racha de {{count}} semanas",
+      "daysLeft_one": "Queda {{count}} día",
+      "daysLeft_other": "Quedan {{count}} días",
+      "weekOf": "Semana {{week}} de {{total}}",
+      "week": "Semana {{week}}",
+      "pace": {
+        "ahead": "Por delante",
+        "on_track": "Según lo previsto",
+        "behind": "Por detrás",
+        "completed": "Completado"
+      }
+    }
   },
   "network": {
     "offline": "Sin conexión a internet",

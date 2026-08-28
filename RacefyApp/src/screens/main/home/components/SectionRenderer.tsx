@@ -12,6 +12,10 @@ import {
   LastActivitySummarySection,
   WeeklyInsightSection,
   MotivationBannerSection,
+  // Training-related section types
+  WeeklyTrainingProgressSection,
+  TrainingGoalProgressSection,
+  ProgramPhaseIntroSection,
   // New event-related section types
   LiveEventSection,
   EventResultsSection,
@@ -158,6 +162,33 @@ export function SectionRenderer({
           />
         );
 
+      case 'weekly_training_progress':
+        return (
+          <WeeklyTrainingProgressSection
+            key={section.type}
+            section={section}
+            onPress={section.cta ? handleCtaPress : undefined}
+          />
+        );
+
+      case 'training_goal_progress':
+        return (
+          <TrainingGoalProgressSection
+            key={section.type}
+            section={section}
+            onPress={section.cta ? handleCtaPress : undefined}
+          />
+        );
+
+      case 'program_phase_intro':
+        return (
+          <ProgramPhaseIntroSection
+            key={section.type}
+            section={section}
+            onPress={section.cta ? handleCtaPress : undefined}
+          />
+        );
+
       case 'live_event':
         return (
           <LiveEventSection
@@ -264,7 +295,8 @@ export function getSectionComponentName(type: HomeSectionType): string {
     event_results: 'EventResultsSection',
     nearby_events: 'NearbyEventsSection',
     friend_events: 'FriendEventsSection',
-    // Training-related section types (handled outside SectionRenderer)
+    // Training-related section types
+    // (todays_training_session is handled outside SectionRenderer)
     todays_training_session: 'PrimaryCTAHero',
     weekly_training_progress: 'WeeklyTrainingProgressSection',
     training_goal_progress: 'TrainingGoalProgressSection',

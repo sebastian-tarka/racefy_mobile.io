@@ -15,6 +15,10 @@ interface FriendActivitySectionProps {
 /**
  * Friend Activity section component.
  * Shows recent activities from friends.
+ *
+ * The API often sends this section as text only (AI-written title + message,
+ * no `friend_activities`), so the list is optional — dropping the whole card
+ * when it is missing loses a section the backend meant to show.
  */
 export function FriendActivitySection({
   section,
@@ -25,12 +29,9 @@ export function FriendActivitySection({
   const { formatDistanceFromKm } = useUnits();
 
   const activities = section.friend_activities || [];
+  const hasActivities = activities.length > 0;
 
-  if (activities.length === 0) {
-    return null;
-  }
-
-  return (
+  const card = (
     <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: colors.info + '20' }]}>
@@ -42,52 +43,70 @@ export function FriendActivitySection({
             <Text style={[styles.message, { color: colors.textSecondary }]}>{section.message}</Text>
           )}
         </View>
-        {section.cta && (
-          <TouchableOpacity onPress={onPress}>
+        {section.cta &&
+          (hasActivities ? (
+            // With a list the card itself is not tappable, so the header CTA is.
+            <TouchableOpacity onPress={onPress}>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ) : (
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+          ))}
       </View>
 
-      <View style={[styles.activitiesList, { borderTopColor: colors.border }]}>
-        {activities.slice(0, 3).map((activity, index) => (
-          <TouchableOpacity
-            key={activity.id}
-            style={[
-              styles.activityItem,
-              index < activities.length - 1 && {
-                borderBottomColor: colors.border,
-                borderBottomWidth: 1,
-              },
-            ]}
-            onPress={() => onActivityPress?.(activity.id)}
-            activeOpacity={0.7}
-          >
-            {activity.user?.avatar_url ? (
-              <Image source={{ uri: activity.user.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.border }]}>
-                <Ionicons name="person" size={16} color={colors.textSecondary} />
+      {hasActivities && (
+        <View style={[styles.activitiesList, { borderTopColor: colors.border }]}>
+          {activities.slice(0, 3).map((activity, index) => (
+            <TouchableOpacity
+              key={activity.id}
+              style={[
+                styles.activityItem,
+                index < activities.length - 1 && {
+                  borderBottomColor: colors.border,
+                  borderBottomWidth: 1,
+                },
+              ]}
+              onPress={() => onActivityPress?.(activity.id)}
+              activeOpacity={0.7}
+            >
+              {activity.user?.avatar_url ? (
+                <Image source={{ uri: activity.user.avatar_url }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.border }]}>
+                  <Ionicons name="person" size={16} color={colors.textSecondary} />
+                </View>
+              )}
+              <View style={styles.activityContent}>
+                <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {activity.user?.name || 'Unknown'}
+                </Text>
+                <Text
+                  style={[styles.activityStats, { color: colors.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  {activity.sport_type && `${activity.sport_type} • `}
+                  {activity.distance_km && formatDistanceFromKm(activity.distance_km)}
+                </Text>
               </View>
-            )}
-            <View style={styles.activityContent}>
-              <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {activity.user?.name || 'Unknown'}
-              </Text>
-              <Text
-                style={[styles.activityStats, { color: colors.textSecondary }]}
-                numberOfLines={1}
-              >
-                {activity.sport_type && `${activity.sport_type} • `}
-                {activity.distance_km && formatDistanceFromKm(activity.distance_km)}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
+
+  // Without a list there is nothing to tap inside the card, so the whole card
+  // carries the section CTA instead.
+  if (!hasActivities && onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {card}
+      </TouchableOpacity>
+    );
+  }
+
+  return card;
 }
 
 const styles = StyleSheet.create({

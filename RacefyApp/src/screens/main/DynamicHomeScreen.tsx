@@ -11,6 +11,7 @@ import type {
   TrainingTip,
 } from '../../types/api';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
+import { executeCtaActionFromTab } from '../../utils/homeNavigation';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';
@@ -32,6 +33,7 @@ import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing } from '../../theme';
 
 // Components
+import { getSectionWeather } from './home/components/sections';
 import {
   CollapsibleTipCard,
   HomeHeader,
@@ -252,10 +254,10 @@ export function DynamicHomeScreen({ navigation }: Props) {
     [sortedSections],
   );
 
-  const primaryCtaWeather = useMemo(() => {
-    const section = sortedSections.find((s) => s.type === 'weather_insight');
-    return section?.meta as HomeSection['weather'] | undefined;
-  }, [sortedSections]);
+  const primaryCtaWeather = useMemo(
+    () => getSectionWeather(sortedSections.find((s) => s.type === 'weather_insight')),
+    [sortedSections],
+  );
 
   // Hide the section from the generic SectionRenderer — it's rendered as part
   // of the primary CTA hero instead.
@@ -295,10 +297,28 @@ export function DynamicHomeScreen({ navigation }: Props) {
     setIsStartActionsSheetVisible(true);
   }, []);
 
-  // Handle section CTA press - navigate based on section type
+  // Handle section CTA press - deep link when the backend gave us one,
+  // otherwise fall back to a per-type destination.
   const handleSectionCtaPress = useCallback(
-    (section: any) => {
+    async (section: HomeSection) => {
       homeAnalytics.sectionCtaClicked(section.type, section.cta || 'tap');
+
+      // `action` carries the ids (training week, goal, program) that the
+      // section type alone cannot express - prefer it whenever it is present.
+      if (section.action?.type) {
+        const handled = await executeCtaActionFromTab(
+          navigation,
+          section.action.type,
+          section.action.payload,
+        );
+        if (handled) {
+          if (section.action.type === 'resume_training') {
+            // Side-effectful action - the config it was based on is now stale.
+            await refetchConfig();
+          }
+          return;
+        }
+      }
 
       // Navigate based on section type
       switch (section.type) {
@@ -323,7 +343,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
           break;
       }
     },
-    [navigation],
+    [navigation, refetchConfig],
   );
 
   // Quick actions callbacks

@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
-import type { HomeSection } from '../../../../../types/api';
+import type { HomeSection, HomeWeatherInfo } from '../../../../../types/api';
 
 interface WeatherInsightSectionProps {
   section: HomeSection;
@@ -12,36 +13,49 @@ interface WeatherInsightSectionProps {
 }
 
 /**
- * Get weather icon based on condition string.
+ * Read the weather payload of a `weather_insight` section.
+ *
+ * The API puts it in `meta` (see docs/api/mobile/API_ENDPOINTS.md); the
+ * top-level `weather` field is an older shape we still accept. Exported so the
+ * primary CTA can tint its gradient from the same source.
  */
+export function getSectionWeather(section?: HomeSection): HomeWeatherInfo | undefined {
+  if (!section) return undefined;
+  const meta = section.meta as HomeWeatherInfo | undefined;
+  if (meta && (meta.temperature !== undefined || meta.condition !== undefined)) {
+    // `weather` wins per-field so a backend sending both keeps its extras.
+    return { ...meta, ...section.weather };
+  }
+  return section.weather;
+}
+
+/**
+ * Map an OpenWeather `weather[0].main` value to an icon.
+ *
+ * Exact match on the documented enum — a substring check gives false hits
+ * ('Drizzle' has no 'rain' in it, 'Squall' has no 'wind').
+ */
+const CONDITION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Clear: 'sunny',
+  Clouds: 'cloudy',
+  Rain: 'rainy',
+  Drizzle: 'rainy',
+  Thunderstorm: 'thunderstorm',
+  Snow: 'snow',
+  Mist: 'cloud-outline',
+  Fog: 'cloud-outline',
+  Haze: 'cloud-outline',
+  Smoke: 'cloud-outline',
+  Dust: 'cloud-outline',
+  Sand: 'cloud-outline',
+  Ash: 'cloud-outline',
+  Squall: 'flag',
+  Tornado: 'thunderstorm',
+};
+
 function getWeatherIcon(condition?: string): keyof typeof Ionicons.glyphMap {
-  if (!condition) return 'cloud-outline';
-
-  const lowerCondition = condition.toLowerCase();
-
-  if (lowerCondition.includes('sun') || lowerCondition.includes('clear')) {
-    return 'sunny';
-  }
-  if (lowerCondition.includes('cloud') || lowerCondition.includes('overcast')) {
-    return 'cloudy';
-  }
-  if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
-    return 'rainy';
-  }
-  if (lowerCondition.includes('snow')) {
-    return 'snow';
-  }
-  if (lowerCondition.includes('thunder') || lowerCondition.includes('storm')) {
-    return 'thunderstorm';
-  }
-  if (lowerCondition.includes('fog') || lowerCondition.includes('mist')) {
-    return 'cloud-outline';
-  }
-  if (lowerCondition.includes('wind')) {
-    return 'flag';
-  }
-
-  return 'partly-sunny';
+  if (!condition) return 'partly-sunny';
+  return CONDITION_ICONS[condition] ?? 'partly-sunny';
 }
 
 /**
@@ -64,15 +78,19 @@ function getWeatherColor(colors: any, isGoodForOutdoor?: boolean): string {
  */
 export function WeatherInsightSection({ section, onPress }: WeatherInsightSectionProps) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { formatTemperature } = useUnits();
 
-  const weather = section.weather;
+  const weather = getSectionWeather(section);
   const bgColor = getWeatherColor(colors, weather?.is_good_for_outdoor);
   const iconColor = weather?.is_good_for_outdoor
     ? colors.success
     : weather?.is_good_for_outdoor === false
       ? colors.warning
       : colors.info;
+
+  const temperature = weather?.temperature;
+  const feelsLike = weather?.feels_like;
 
   return (
     <TouchableOpacity
@@ -87,14 +105,14 @@ export function WeatherInsightSection({ section, onPress }: WeatherInsightSectio
         </View>
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{section.title}</Text>
-          {weather && (
+          {temperature !== undefined && (
             <View style={styles.tempRow}>
               <Text style={[styles.temperature, { color: colors.textPrimary }]}>
-                {formatTemperature(weather.temperature)}
+                {formatTemperature(temperature)}
               </Text>
-              {weather.feels_like !== weather.temperature && (
+              {feelsLike !== undefined && feelsLike !== null && feelsLike !== temperature && (
                 <Text style={[styles.feelsLike, { color: colors.textSecondary }]}>
-                  (odczuwalna {formatTemperature(weather.feels_like)})
+                  {t('home.weather.feelsLike', { value: formatTemperature(feelsLike) })}
                 </Text>
               )}
             </View>
@@ -119,7 +137,6 @@ export function WeatherInsightSection({ section, onPress }: WeatherInsightSectio
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     borderRadius: borderRadius.lg,

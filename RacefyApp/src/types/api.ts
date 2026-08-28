@@ -2260,6 +2260,61 @@ export interface TodaysTrainingSessionMeta {
   program_name?: string;
 }
 
+/**
+ * Meta for `weather_insight`.
+ *
+ * This is where the API actually puts the weather payload (the older
+ * top-level `weather` field is still accepted as a fallback).
+ */
+export interface HomeWeatherInfo {
+  temperature?: number;
+  /**
+   * OpenWeather `weather[0].main` — ALWAYS English, never localized by
+   * `Accept-Language`. Map it with an exact-match lookup, not a substring
+   * check ('Drizzle' does not contain 'rain').
+   */
+  condition?: string;
+  feels_like?: number | null;
+  icon?: string;
+  is_good_for_outdoor?: boolean;
+  recommendation?: string;
+}
+
+/** Meta for `weekly_training_progress`. */
+export interface WeeklyTrainingProgressMeta {
+  completed?: number;
+  planned?: number;
+  remaining?: number;
+  all_done?: boolean;
+  streak_weeks?: number;
+}
+
+/** How the user is pacing against a goal. */
+export type GoalPaceStatus = 'ahead' | 'on_track' | 'behind';
+
+/** Unit of `achieved_value` / `target_value` in `training_goal_progress`. */
+export type GoalMetricUnit = 'meters' | 'seconds' | 'count';
+
+/** Meta for `training_goal_progress`. */
+export interface TrainingGoalProgressMeta {
+  achieved_value?: number;
+  target_value?: number;
+  unit?: GoalMetricUnit;
+  percent?: number;
+  pace_status?: GoalPaceStatus;
+  days_left?: number;
+  metric?: string;
+  period?: string;
+}
+
+/** Meta for `program_phase_intro`. */
+export interface ProgramPhaseIntroMeta {
+  program_name?: string;
+  phase_name?: string;
+  week_number?: number;
+  total_weeks?: number;
+}
+
 export interface HomeSectionEvent {
   id: number;
   title: string;
@@ -2305,15 +2360,14 @@ export interface HomeSection {
   /** Structured render data — shape depends on `type`. */
   meta?: Record<string, unknown>;
 
-  /** Additional data for weather_insight section */
-  weather?: {
-    temperature: number;
-    feels_like: number;
-    condition: string;
-    icon?: string;
-    is_good_for_outdoor?: boolean;
-    recommendation?: string;
-  };
+  /**
+   * Additional data for weather_insight section.
+   *
+   * The API sends this payload inside `meta` — see `HomeWeatherInfo`. This
+   * top-level field is kept for older backends; read both via
+   * `getSectionWeather()`.
+   */
+  weather?: HomeWeatherInfo;
 
   /** Additional data for last_activity_summary section */
   activity?: {

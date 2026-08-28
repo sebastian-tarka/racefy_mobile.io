@@ -242,7 +242,29 @@
     "noLiveEventsMessage": "Sprawdź później lub przeglądaj nadchodzące wydarzenia",
     "browseUpcoming": "Przeglądaj nadchodzące",
     "live": "NA ŻYWO",
-    "recentActivities": "Ostatnie aktywności"
+    "recentActivities": "Ostatnie aktywności",
+    "weather": {
+      "feelsLike": "(odczuwalna {{value}})"
+    },
+    "training": {
+      "sessionsDone": "{{completed}} z {{planned}} sesji",
+      "streakWeeks_one": "Streak: {{count}} tydzień",
+      "streakWeeks_few": "Streak: {{count}} tygodnie",
+      "streakWeeks_many": "Streak: {{count}} tygodni",
+      "streakWeeks_other": "Streak: {{count}} tygodnia",
+      "daysLeft_one": "Został {{count}} dzień",
+      "daysLeft_few": "Zostały {{count}} dni",
+      "daysLeft_many": "Zostało {{count}} dni",
+      "daysLeft_other": "Zostało {{count}} dnia",
+      "weekOf": "Tydzień {{week}} z {{total}}",
+      "week": "Tydzień {{week}}",
+      "pace": {
+        "ahead": "Przed planem",
+        "on_track": "Zgodnie z planem",
+        "behind": "W tyle",
+        "completed": "Ukończony"
+      }
+    }
   },
   "network": {
     "offline": "Brak połączenia z internetem",
