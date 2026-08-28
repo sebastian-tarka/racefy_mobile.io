@@ -736,6 +736,41 @@
     "linkedToTrainingPlanMessage": "This activity is linked to your training plan. Deleting it will update your training week statistics. Are you sure you want to delete it?",
     "forceDelete": "Delete & Update Stats"
   },
+  "activities": {
+    "effortAnalysis": {
+      "title": "Effort breakdown",
+      "pending": "The analysis is being computed — check back shortly.",
+      "evenEffort": "Even effort throughout — well paced.",
+      "summary": "Session structure: {{phases}}",
+      "lowQuality": "uncertain data",
+      "baseline": "typical effort for this session",
+      "pacing": "Pacing",
+      "decoupling": "Cardiac drift",
+      "decouplingHint": "above 5% means rising fatigue",
+      "terrain": "Terrain",
+      "terrainHint": "of time on a gradient",
+      "split": {
+        "negative": "Stronger finish",
+        "even": "Even",
+        "positive": "Weaker finish"
+      },
+      "phase": {
+        "warmup": "Warm-up",
+        "steady": "Steady",
+        "peak": "Hard effort",
+        "decline": "Decline",
+        "cooldown": "Cool-down",
+        "intervals": "Intervals"
+      }
+    },
+    "verdict": {
+      "strongFinish": "Strong finish",
+      "intervals": "Intervals",
+      "hardEffort": "Hard effort",
+      "evenPacing": "Even pacing",
+      "fadedFinish": "Faded finish"
+    }
+  },
   "activityForm": {
     "editTitle": "Edit Activity",
     "title": "Title",

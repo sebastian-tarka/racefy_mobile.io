@@ -22,6 +22,7 @@ import {
   Button,
   Card,
   CommentSection,
+  EffortBreakdownCard,
   ElevationChart,
   HeartRateChart,
   InteractionButton,
@@ -40,6 +41,10 @@ import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
+import {
+  qualifiesForEffortAnalysis,
+  useActivityEffortAnalysis,
+} from '../../hooks/useActivityEffortAnalysis';
 import { useUnits } from '../../hooks/useUnits';
 import { useLiveMessageArchive } from '../../hooks/useLiveMessageArchive';
 import { borderRadius, fontSize, spacing } from '../../theme';
@@ -66,6 +71,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
   const [activityStats, setActivityStats] = useState<SingleActivityStats | null>(null);
+
+  // Effort breakdown. Not gated by tier and identical for the owner and for
+  // anyone else who can see the activity - visibility follows the activity
+  // itself. The pre-check mirrors the backend rule so activities that could
+  // only answer 204 never cost a request.
+  const { analysis: effortAnalysis, isPending: isEffortAnalysisPending } =
+    useActivityEffortAnalysis(activity?.id, {
+      enabled: !!activity && qualifiesForEffortAnalysis(activity),
+    });
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -753,6 +767,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             ) : (
               <PremiumTeaser feature="advanced_stats" style={styles.section} />
             )}
+
+            {/* Effort breakdown - phases of the recorded effort. Sits above the
+                performance charts because it reads the whole session, while
+                they read per-kilometre splits. */}
+            <EffortBreakdownCard
+              analysis={effortAnalysis}
+              isPending={isEffortAnalysisPending}
+              style={styles.section}
+            />
 
             {/* Charts Section - Performance Analysis */}
             {canUse('advanced_stats') ? (

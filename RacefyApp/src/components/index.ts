@@ -132,3 +132,4 @@ export { LiveAthleteInbox } from './LiveAthleteInbox';
 export { LiveBroadcastSettings } from './settings/LiveBroadcastSettings';
 export { OptionList, type OptionListItem } from './OptionList';
 export * from './GpsHealthCheckCard';
+export { EffortBreakdownCard } from './activity/EffortBreakdownCard';

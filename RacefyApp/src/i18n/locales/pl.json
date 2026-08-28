@@ -740,6 +740,41 @@
     "linkedToTrainingPlanMessage": "Ta aktywność jest powiązana z Twoim planem treningowym. Usunięcie jej zaktualizuje statystyki tygodnia treningowego. Czy na pewno chcesz ją usunąć?",
     "forceDelete": "Usuń i zaktualizuj statystyki"
   },
+  "activities": {
+    "effortAnalysis": {
+      "title": "Rozkład wysiłku",
+      "pending": "Analiza jest przeliczana — zajrzyj tu za chwilę.",
+      "evenEffort": "Równomierny wysiłek przez cały trening — dobrze rozłożone siły.",
+      "summary": "Struktura treningu: {{phases}}",
+      "lowQuality": "dane niepewne",
+      "baseline": "typowy wysiłek tej sesji",
+      "pacing": "Rozkład sił",
+      "decoupling": "Dryf tętna",
+      "decouplingHint": "powyżej 5% = rosnące zmęczenie",
+      "terrain": "Teren",
+      "terrainHint": "czasu na nachyleniu",
+      "split": {
+        "negative": "Mocniejsza końcówka",
+        "even": "Równo",
+        "positive": "Słabsza końcówka"
+      },
+      "phase": {
+        "warmup": "Rozgrzewka",
+        "steady": "Stały wysiłek",
+        "peak": "Mocny odcinek",
+        "decline": "Spadek",
+        "cooldown": "Schłodzenie",
+        "intervals": "Interwały"
+      }
+    },
+    "verdict": {
+      "strongFinish": "Mocna końcówka",
+      "intervals": "Interwały",
+      "hardEffort": "Mocny odcinek",
+      "evenPacing": "Równe tempo",
+      "fadedFinish": "Słabsza końcówka"
+    }
+  },
   "activityForm": {
     "editTitle": "Edytuj aktywność",
     "title": "Tytuł",

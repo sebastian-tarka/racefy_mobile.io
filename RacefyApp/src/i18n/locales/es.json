@@ -730,6 +730,41 @@
     "linkedToTrainingPlanMessage": "Esta actividad está vinculada a tu plan de entrenamiento. Eliminarla actualizará las estadísticas de tu semana de entrenamiento. ¿Estás seguro de que quieres eliminarla?",
     "forceDelete": "Eliminar y actualizar estadísticas"
   },
+  "activities": {
+    "effortAnalysis": {
+      "title": "Distribución del esfuerzo",
+      "pending": "El análisis se está calculando: vuelve dentro de un momento.",
+      "evenEffort": "Esfuerzo constante de principio a fin: bien dosificado.",
+      "summary": "Estructura de la sesión: {{phases}}",
+      "lowQuality": "datos inciertos",
+      "baseline": "esfuerzo típico de esta sesión",
+      "pacing": "Dosificación",
+      "decoupling": "Deriva cardíaca",
+      "decouplingHint": "por encima del 5% indica fatiga creciente",
+      "terrain": "Terreno",
+      "terrainHint": "del tiempo en pendiente",
+      "split": {
+        "negative": "Final más fuerte",
+        "even": "Constante",
+        "positive": "Final más débil"
+      },
+      "phase": {
+        "warmup": "Calentamiento",
+        "steady": "Ritmo constante",
+        "peak": "Esfuerzo fuerte",
+        "decline": "Caída",
+        "cooldown": "Vuelta a la calma",
+        "intervals": "Series"
+      }
+    },
+    "verdict": {
+      "strongFinish": "Final fuerte",
+      "intervals": "Series",
+      "hardEffort": "Esfuerzo fuerte",
+      "evenPacing": "Ritmo constante",
+      "fadedFinish": "Final más débil"
+    }
+  },
   "activityForm": {
     "editTitle": "Editar actividad",
     "title": "Título",

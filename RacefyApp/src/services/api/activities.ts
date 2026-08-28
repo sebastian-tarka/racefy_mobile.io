@@ -304,6 +304,43 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       return response.data;
     }
 
+    /**
+     * Effort-phase analysis for a single activity.
+     *
+     * The HTTP status is the answer, so this must not be routed through the
+     * plain `request()` helper:
+     * - 200 - analysis ready
+     * - 202 - the activity qualifies but nothing is computed yet (a job was
+     *         just queued); transient, retry later
+     * - 204 - the activity can never produce one (too short, no GPS, indoor)
+     * - 404 - no access to the activity (private / not following / blocked)
+     *
+     * 204 and 404 both mean "never render the card", but only 202 is worth
+     * retrying - collapsing them would make the client poll forever for a
+     * treadmill run's analysis.
+     */
+    async getActivityEffortAnalysis(activityId: number): Promise<Types.EffortAnalysisResult> {
+      try {
+        const { status, data } = await this.requestWithStatus<
+          Types.ApiResponse<Types.ActivityEffortAnalysis>
+        >(`/activities/${activityId}/analysis`);
+
+        if (status === 200 && data?.data) {
+          return { state: 'ready', analysis: data.data };
+        }
+        if (status === 202) {
+          return { state: 'pending' };
+        }
+        return { state: 'unavailable' };
+      } catch (err) {
+        const status = (err as Types.ApiError).status;
+        if (status === 404) {
+          return { state: 'unavailable' };
+        }
+        throw err;
+      }
+    }
+
     // ============ ACTIVITY BOOSTS ============
 
     async boostActivity(activityId: number): Promise<Types.BoostResponse> {

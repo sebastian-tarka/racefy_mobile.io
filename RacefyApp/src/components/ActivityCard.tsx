@@ -5,12 +5,14 @@ import { format } from 'date-fns';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { InteractionButton } from './InteractionButton';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { useSportTypes } from '../hooks/useSportTypes';
 import { fixStorageUrl } from '../config/api';
 import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDuration } from '../utils/formatDuration';
+import { getActivityVerdict, VERDICT_COLORS } from '../utils/activityVerdict';
 import type { Activity } from '../types/api';
 
 interface ActivityCardProps {
@@ -27,10 +29,12 @@ function ActivityCardBase({
   showUser = false,
   showEngagement = false,
 }: ActivityCardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const { formatDistance, formatPaceWithUnit, formatElevation } = useUnits();
   const { getSportById } = useSportTypes();
   const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
+  const verdict = getActivityVerdict(activity);
 
   // Engagement state — local copies so the buttons can update independently
   const [boostsCount, setBoostsCount] = useState(activity.boosts_count || 0);
@@ -153,10 +157,26 @@ function ActivityCardBase({
                 />
               </View>
             </View>
-            <Text style={[styles.sportName, { color: colors.textSecondary }]}>
-              {activity.sport_type?.name || 'Activity'}
-              {!showUser ? ` · ${formattedDate}` : ''}
-            </Text>
+            <View style={styles.metaRow}>
+              <Text style={[styles.sportName, { color: colors.textSecondary }]}>
+                {activity.sport_type?.name || 'Activity'}
+                {!showUser ? ` · ${formattedDate}` : ''}
+              </Text>
+              {/* Read off the recorded track, so it leads any wording derived
+                  from average pace alone. */}
+              {verdict && (
+                <View
+                  style={[
+                    styles.verdictBadge,
+                    { backgroundColor: VERDICT_COLORS[verdict] + (isDark ? '2e' : '1f') },
+                  ]}
+                >
+                  <Text style={[styles.verdictText, { color: VERDICT_COLORS[verdict] }]}>
+                    {t(`activities.verdict.${verdict}`)}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -340,6 +360,21 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  verdictBadge: {
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  verdictText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
   sportBadge: {
     width: 40,

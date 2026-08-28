@@ -108,7 +108,31 @@ export class ApiBase {
     return this.doRequest<T>(endpoint, options);
   }
 
+  /**
+   * Like `request()`, but hands back the HTTP status alongside the body.
+   *
+   * Needed by endpoints where the status *is* the answer - e.g.
+   * `/activities/{id}/analysis` returns 200 (ready), 202 (being computed) and
+   * 204 (will never exist), and collapsing those would make the client poll
+   * forever for an analysis that is never coming. `data` is null for empty
+   * bodies. Not deduplicated: callers that need it own their caching.
+   */
+  async requestWithStatus<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<{ status: number; data: T | null }> {
+    return this.doRequestWithStatus<T>(endpoint, options);
+  }
+
   private async doRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const { data } = await this.doRequestWithStatus<T>(endpoint, options);
+    return data as T;
+  }
+
+  private async doRequestWithStatus<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<{ status: number; data: T | null }> {
     const method = options.method || 'GET';
     const startTime = Date.now();
     const isFormData = options.body instanceof FormData;
@@ -140,14 +164,24 @@ export class ApiBase {
       });
 
       const duration = Date.now() - startTime;
-      const data = await response.json();
+      const body = await response.text();
+      let data: any = null;
+      if (body) {
+        try {
+          data = JSON.parse(body);
+        } catch {
+          // Non-JSON body (HTML error page, proxy response) - keep it as null
+          // and let the status carry the meaning.
+          data = null;
+        }
+      }
 
       if (!response.ok) {
         if (shouldLog) {
           logger.error('api', `${method} ${endpoint} failed`, {
             status: response.status,
             duration,
-            error: (data as Types.ApiError).message,
+            error: (data as Types.ApiError | null)?.message,
           });
         }
 
@@ -196,8 +230,9 @@ export class ApiBase {
         }
 
         // Attach HTTP status so callers can branch on it (409, 429, etc.)
-        (data as Types.ApiError).status = response.status;
-        throw data as Types.ApiError;
+        const error: Types.ApiError = data ?? { message: `HTTP ${response.status}` };
+        error.status = response.status;
+        throw error;
       }
 
       if (shouldLog) {
@@ -207,7 +242,7 @@ export class ApiBase {
         });
       }
 
-      return data;
+      return { status: response.status, data: data as T | null };
     } catch (error: any) {
       const duration = Date.now() - startTime;
       if (shouldLog && !error.status) {

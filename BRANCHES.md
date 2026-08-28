@@ -24,6 +24,25 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Rozkład wysiłku na ekranie aktywności (2026-08-28)
+
+Nowa karta `EffortBreakdownCard` (SVG, bez biblioteki wykresów) pod statystykami,
+nad wykresami wydajności: krzywa znormalizowanego wysiłku, pasma faz, linia
+odniesienia 1.0, metryki pacingu. Do tego badge werdyktu na `ActivityCard`
+z `analysis_summary`. Endpoint `/activities/{id}/analysis` rozgałęzia się po
+statusie HTTP, więc `ApiBase` dostał `requestWithStatus()` — `request()` robił
+`response.json()` bezwarunkowo i wykrzaczał się na pustym body 204.
+tsc 0 · eslint 0 błędów · jest 266/266 (34 nowe testy, w tym render karty).
+
+- [ ] Aktywność z programem/GPS ≥ 8 min i ≥ 1 km: karta się pokazuje, krzywa i pasma faz czytelne w light i dark
+- [ ] Aktywność < 8 min / < 1 km / bieżnia: karty **nie ma** (204) — i nie leci pętla requestów
+- [ ] Świeżo zakończona aktywność: widać stan „przeliczanie", po wyjściu i powrocie na ekran karta sama się dolicza (202 → 200)
+- [ ] Cudza publiczna aktywność: identyczna karta co u właściciela; cudza prywatna: brak karty (404)
+- [ ] Aktywność z pauzą: krzywa ma przerwę, nie prostą przez wykres
+- [ ] Konto z jednostkami imperialnymi: oś dystansu w milach
+- [ ] Po dogrywce tętna z Health Connect / Apple Health pojawia się metryka dryfu tętna (cache analizy jest invalidowany)
+- [ ] Badge werdyktu na kartach w feedzie i liście aktywności — i **brak** badge'a przy `quality: low`
+
 ### Brakujące sekcje ekranu Home (2026-08-28)
 
 `/home/config` zwracał dla konta z aktywnym programem 5 sekcji, a ekran rysował

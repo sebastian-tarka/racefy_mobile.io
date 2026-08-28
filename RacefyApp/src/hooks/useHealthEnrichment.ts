@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { healthService, isHealthSyncEnabled } from '../services/healthService';
 import { logger } from '../services/logger';
 import type { Activity } from '../types/api';
+import { invalidateEffortAnalysis } from './useActivityEffortAnalysis';
 
 /**
  * Hook for enriching a completed activity with heart rate data
@@ -72,6 +73,10 @@ export function useHealthEnrichment() {
         heart_rate_samples: samples,
         source: healthService.getSource(),
       });
+
+      // Heart rate is what unlocks `aerobic_decoupling_pct`, so the backend
+      // recomputes the effort analysis - the cached copy is now wrong.
+      invalidateEffortAnalysis(activity.id);
 
       logger.info('activity', 'Activity enriched with HR data', {
         activityId: enrichedActivity.id,
