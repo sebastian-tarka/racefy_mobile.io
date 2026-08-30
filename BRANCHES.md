@@ -24,6 +24,39 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Profil: przyklejone zakładki, siatka skrótów, cache zakładek (2026-08-30)
+
+Kolejne punkty z analizy profilu. Nagłówek listy miał ~900 px (cover, karta
+profilu, siedem kart nawigacyjnych, pasek zakładek), więc zakładki startowały
+poniżej pierwszego ekranu, a przełączenie którejkolwiek wymagało powrotu na górę.
+`FlatList` zamieniony na `SectionList`: nagłówek to profil plus skróty, a pasek
+zakładek jest przyklejonym nagłówkiem sekcji (`stickySectionHeadersEnabled`).
+Treść zależna od zakładki (filtr sportów, cały blok statystyk) jedzie jako
+pierwszy wiersz danych, żeby przewijała się pod paskiem zamiast być z nim
+przypięta — w konsekwencji pusty stan przeniósł się z `ListEmptyComponent` do
+stopki, bo zakładka z wierszem extras nigdy nie jest dla listy „pusta".
+Sześć skrótów (poza treningiem, który niesie postęp) to teraz siatka 2 kolumny —
+nowy wariant `layout="tile"` w `ProfileSectionCard`. Zakładki mają cache: dane
+starsze niż 2 minuty ładują się od nowa, świeższe są reużywane, a pull-to-refresh
+i zdarzenia mutacji omijają cache. Przy zmianie zakładki, gdy scroll był poniżej
+nagłówka, lista przypina się do jego końca.
+
+Do tego zgłoszony problem ze szkicami: nowy szkic (post AI po aktywności) powstaje
+po stronie serwera i klient nie ma o tym żadnego sygnału, więc trzeba było ręcznie
+pociągnąć palcem. Teraz otwarta zakładka Szkice przeładowuje się przy powrocie na
+ekran, a licznik w badge'u służy za wykrywacz nieaktualności: gdy total różni się
+od liczby wczytanych szkiców, cache tej zakładki jest kasowany.
+
+- [ ] Pasek zakładek faktycznie przykleja się do góry przy przewijaniu (Android **i** iOS — `stickySectionHeadersEnabled` ma różne domyślne)
+- [ ] Wiersze nie prześwitują przez pasek ani przez odstęp pod nim
+- [ ] Siatka skrótów: dwie kolumny, teksty się nie ucinają, kafelek „Live" nadal pokazuje licznik
+- [ ] Zakładka Statystyki i Aktywności: filtry i wykresy na miejscu, przewijają się pod paskiem
+- [ ] Puste stany (brak postów / szkiców / aktywności / wydarzeń) nadal się pokazują — przeniosły się do stopki listy
+- [ ] Przełączanie zakładek w obie strony w ciągu 2 minut nie pokazuje spinnera i nie gubi pozycji
+- [ ] Zmiana zakładki przy przewinięciu w dół ląduje na początku treści, nie w pustce (`getScrollResponder().scrollTo` — w jest niedostępne, więc to działa tylko na urządzeniu)
+- [ ] Nowy szkic AI po aktywności: wejście na profil pokazuje go bez ręcznego pull-to-refresh
+- [ ] Pull-to-refresh nadal działa na każdej zakładce
+
 ### Profil: jedna lista i jednostki wg preferencji (2026-08-30)
 
 Dwie rzeczy z analizy ekranu profilu. (1) Dystans w wierszu statystyk był liczony

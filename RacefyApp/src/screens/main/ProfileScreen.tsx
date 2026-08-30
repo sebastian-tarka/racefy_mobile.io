@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   ImageBackground,
   RefreshControl,
+  SectionList,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -72,6 +72,20 @@ type ProfileScreenNavigationProp = CompositeNavigationProp<
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
 type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
+
+/**
+ * Sentinel row carrying whatever the active tab needs above its content
+ * (sport filter, the whole stats block). It rides in the data instead of the
+ * header so the sticky tab bar stays a tab bar and nothing else.
+ */
+const EXTRAS_ROW = { id: -1, extras: true } as const;
+type ExtrasRow = typeof EXTRAS_ROW;
+type ListRow = Post | Activity | Event | DraftPost | ExtrasRow;
+
+const isExtrasRow = (row: ListRow): row is ExtrasRow => 'extras' in row;
+
+/** How long a loaded tab is reused before a switch back refetches it. */
+const TAB_STALE_MS = 2 * 60 * 1000;
 
 const INITIAL_PAGE = 1;
 const SETTINGS_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -231,6 +245,14 @@ export function ProfileScreen({
   const draftsData = useDrafts();
   const [publishingDraftId, setPublishingDraftId] = useState<number | null>(null);
 
+  const listRef = useRef<SectionList<ListRow>>(null);
+  const scrollOffsetRef = useRef(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  /** When each tab last loaded — a tab switch inside the window reuses what it has. */
+  const lastLoadedRef = useRef<Partial<Record<TabType, number>>>({});
+  /** Mirrors the loaded drafts count so the badge can spot a stale list. */
+  const loadedDraftsCountRef = useRef(0);
+
   // Reset paginated data when user logs out
   useEffect(() => {
     if (!isAuthenticated) {
@@ -268,6 +290,12 @@ export function ProfileScreen({
     try {
       const response = await api.getDrafts({ page: 1, per_page: 1 });
       setDraftsCount(response.meta.total);
+      // The badge is the cheapest staleness check we have: a total that no
+      // longer matches the loaded list means a draft appeared (or went) behind
+      // our back, so the cached tab must not be reused.
+      if (response.meta.total !== loadedDraftsCountRef.current) {
+        delete lastLoadedRef.current.drafts;
+      }
     } catch (error) {
       logger.error('api', 'Failed to fetch drafts count', { error });
     }
@@ -283,49 +311,108 @@ export function ProfileScreen({
 
   useFocusEffect(
     useCallback(() => {
-      if (isAuthenticated) {
-        fetchDraftsCount();
+      if (!isAuthenticated) return;
+      fetchDraftsCount();
+      // A draft can appear without the app doing anything — the server writes
+      // one after an activity when AI posts are on. Coming back to the screen
+      // is the only signal we get, so the open drafts tab reloads on focus
+      // rather than waiting for someone to pull down.
+      if (activeTab === 'drafts') {
+        loadTab('drafts', { force: true });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated]),
+    }, [isAuthenticated, activeTab]),
   );
 
-  // Load data when tab changes - ALWAYS refresh when switching tabs
+  /**
+   * Load a tab, reusing what it already holds when that is recent enough.
+   *
+   * Refetching on every switch meant a trip to Stats and back threw away a
+   * list that was seconds old, and paid for it with a spinner. `force` is for
+   * pull-to-refresh and for data we know has changed underneath us.
+   */
+  const loadTab = useCallback(
+    (tab: TabType, { force = false }: { force?: boolean } = {}) => {
+      const source = {
+        posts: {
+          isLoading: postsData.isLoading,
+          count: postsData.data.length,
+          refresh: postsData.refresh,
+        },
+        drafts: {
+          isLoading: draftsData.isLoading,
+          count: draftsData.drafts.length,
+          refresh: draftsData.refresh,
+        },
+        activities: {
+          isLoading: activitiesData.isLoading,
+          count: activitiesData.data.length,
+          refresh: activitiesData.refresh,
+        },
+        events: {
+          isLoading: eventsData.isLoading,
+          count: eventsData.data.length,
+          refresh: eventsData.refresh,
+        },
+        stats: {
+          isLoading: isLoadingActivityStats,
+          count: activityStats ? 1 : 0,
+          refresh: () => {
+            refetchActivityStats();
+            refetchPointStats();
+          },
+        },
+      }[tab];
+
+      if (source.isLoading) return;
+
+      const loadedAt = lastLoadedRef.current[tab];
+      const isFresh = loadedAt !== undefined && Date.now() - loadedAt < TAB_STALE_MS;
+      if (!force && isFresh && source.count > 0) {
+        logger.debug('profile', 'Tab still fresh, keeping what it has', { tab });
+        return;
+      }
+
+      logger.info('profile', 'Loading tab data', { tab, force });
+      lastLoadedRef.current[tab] = Date.now();
+      source.refresh();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      postsData.isLoading,
+      postsData.data.length,
+      draftsData.isLoading,
+      draftsData.drafts.length,
+      activitiesData.isLoading,
+      activitiesData.data.length,
+      eventsData.isLoading,
+      eventsData.data.length,
+      isLoadingActivityStats,
+      activityStats,
+    ],
+  );
+
+  useEffect(() => {
+    loadedDraftsCountRef.current = draftsData.drafts.length;
+  }, [draftsData.drafts.length]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    logger.debug('profile', 'Tab changed, loading fresh data', { activeTab });
-
-    if (activeTab === 'posts') {
-      if (!postsData.isLoading) {
-        logger.info('profile', 'Refreshing posts data');
-        postsData.refresh();
-      }
-    } else if (activeTab === 'activities') {
-      if (!activitiesData.isLoading) {
-        logger.info('profile', 'Refreshing activities data');
-        activitiesData.refresh();
-      }
-    } else if (activeTab === 'events') {
-      if (!eventsData.isLoading) {
-        logger.info('profile', 'Refreshing events data');
-        eventsData.refresh();
-      }
-    } else if (activeTab === 'drafts') {
-      if (!draftsData.isLoading) {
-        logger.info('profile', 'Refreshing drafts data');
-        draftsData.refresh();
-      }
-    } else if (activeTab === 'stats') {
-      // Refresh activity stats and point stats
-      if (!isLoadingActivityStats) {
-        logger.info('profile', 'Refreshing stats data');
-        refetchActivityStats();
-        refetchPointStats();
-      }
-    }
+    loadTab(activeTab);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, isAuthenticated]);
+
+  // Switching tabs while scrolled deep used to leave you staring at whatever
+  // offset the previous tab happened to be at. Pin to the top of the content
+  // instead — the sticky bar is already there.
+  useEffect(() => {
+    if (headerHeight > 0 && scrollOffsetRef.current > headerHeight) {
+      // Optional all the way down: the scroll responder is not there in every
+      // environment, and a tab switch must never be able to throw.
+      listRef.current?.getScrollResponder()?.scrollTo?.({ y: headerHeight, animated: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Refresh activities when sport type filter changes
   useEffect(() => {
@@ -337,6 +424,7 @@ export function ProfileScreen({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    lastLoadedRef.current[activeTab] = Date.now();
     await fetchStats();
 
     if (activeTab === 'drafts') {
@@ -471,8 +559,10 @@ export function ProfileScreen({
     );
   };
 
+  // Wrapped in a measured View: knowing where the header ends is what lets a
+  // tab switch land on the content instead of somewhere in the middle of it.
   const renderProfileHeader = () => (
-    <>
+    <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
       <View
         style={[
           styles.profileCard,
@@ -552,7 +642,13 @@ export function ProfileScreen({
 
       {/* Navigation Sections */}
       <ProfileNavigationSections navigation={navigation} tier={tier} />
+    </View>
+  );
 
+  // Sticky section header: once you have scrolled past the profile, the tabs
+  // stay within reach instead of forcing a trip back to the top.
+  const renderTabBar = () => (
+    <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
       <View
         style={[
           styles.tabContainer,
@@ -584,20 +680,22 @@ export function ProfileScreen({
                 styles.tabText,
                 { color: activeTab === tab.value ? colors.primary : colors.textSecondary },
               ]}
+              numberOfLines={1}
             >
               {tab.label}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
-      <View style={styles.tabSpacer} />
+    </View>
+  );
 
-      {/* Activities Tab Content - Sport Filter (inside section) */}
+  // Whatever the active tab needs above its rows. Rendered as the first row so
+  // it scrolls away under the sticky tab bar instead of being pinned with it.
+  const renderTabExtras = () => (
+    <>
       {activeTab === 'activities' && (
         <View style={styles.activitiesFilterContent}>
-          <Text style={[styles.activitiesFilterTitle, { color: colors.textPrimary }]}>
-            {t('profile.tabs.activities')}
-          </Text>
           <SportTypeFilter
             sportTypes={sportTypes}
             selectedSportTypeId={selectedSportTypeId}
@@ -710,18 +808,29 @@ export function ProfileScreen({
       (activeTab === 'activities' && activitiesData.isLoading) ||
       (activeTab === 'events' && eventsData.isLoading);
 
-    if (!isLoading) return null;
+    if (isLoading) {
+      return (
+        <View style={styles.footer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      );
+    }
 
-    return (
-      <View style={styles.footer}>
-        <ActivityIndicator size="small" color={colors.primary} />
-      </View>
-    );
+    // The empty state lives here rather than in `ListEmptyComponent`: tabs that
+    // carry an extras row are never "empty" as far as the list is concerned.
+    return renderEmpty();
   };
 
   const renderEmpty = () => {
-    // Stats tab content is rendered in header
+    // The stats tab renders its whole content as the extras row.
     if (activeTab === 'stats') return null;
+
+    const hasRows =
+      (activeTab === 'posts' && postsData.data.length > 0) ||
+      (activeTab === 'drafts' && draftsData.drafts.length > 0) ||
+      (activeTab === 'activities' && activitiesData.data.length > 0) ||
+      (activeTab === 'events' && eventsData.data.length > 0);
+    if (hasRows) return null;
 
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading && postsData.data.length === 0) ||
@@ -769,19 +878,22 @@ export function ProfileScreen({
     );
   };
 
-  const getData = (): (Post | Activity | Event | DraftPost)[] => {
+  const getData = (): ListRow[] => {
+    if (activeTab === 'stats') return [EXTRAS_ROW];
+    if (activeTab === 'activities') return [EXTRAS_ROW, ...activitiesData.data];
     if (activeTab === 'posts') return postsData.data;
     if (activeTab === 'drafts') return draftsData.drafts;
-    if (activeTab === 'stats') return []; // Stats content rendered in header
-    if (activeTab === 'activities') return activitiesData.data;
     return eventsData.data;
   };
 
-  const getKeyExtractor = (item: Post | Activity | Event | DraftPost) => {
+  const getKeyExtractor = (item: ListRow) => {
     return `${activeTab}-${item.id}`;
   };
 
-  const renderItem = ({ item }: { item: Post | Activity | Event | DraftPost }) => {
+  const renderItem = ({ item }: { item: ListRow }) => {
+    if (isExtrasRow(item)) {
+      return renderTabExtras();
+    }
     if (activeTab === 'drafts') {
       const draft = item as DraftPost;
       return (
@@ -856,13 +968,15 @@ export function ProfileScreen({
       {/* One list for every tab, drafts included. Two lists meant the profile
           header — cover, avatar and the whole navigation block — was mounted
           twice, so its data hooks fired twice on every visit. */}
-      <FlatList
-        data={getData()}
+      <SectionList
+        ref={listRef}
+        sections={[{ data: getData() }]}
         keyExtractor={getKeyExtractor}
         renderItem={renderItem}
+        renderSectionHeader={renderTabBar}
+        stickySectionHeadersEnabled
         ListHeaderComponent={renderProfileHeader()}
         ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmpty}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
         refreshControl={
           <RefreshControl
@@ -870,8 +984,13 @@ export function ProfileScreen({
             onRefresh={handleRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}
+            progressViewOffset={0}
           />
         }
+        onScroll={(e) => {
+          scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
       />
@@ -915,9 +1034,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-  },
-  tabSpacer: {
-    height: spacing.md,
   },
   coverImage: {
     height: 160,
@@ -1006,6 +1122,11 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
+  stickyTabs: {
+    // The bar is pinned by SectionList, so the gap below it has to be opaque
+    // padding on the pinned element — with a margin the rows show through it.
+    paddingBottom: spacing.md,
+  },
   tabContainer: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -1055,10 +1176,6 @@ const styles = StyleSheet.create({
   activitiesFilterContent: {
     marginTop: spacing.sm,
     gap: spacing.xs,
-  },
-  activitiesFilterTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
   },
   chartCard: {
     borderRadius: 16,

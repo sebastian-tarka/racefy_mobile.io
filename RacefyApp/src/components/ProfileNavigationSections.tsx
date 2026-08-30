@@ -98,66 +98,74 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
         />
       )}
 
-      {/* The count IS the discovery mechanism — an entry that never says how
+      <View style={styles.grid}>
+        {/* The count IS the discovery mechanism — an entry that never says how
           many people are live gives nobody a reason to open it. */}
-      <ProfileSectionCard
-        icon="radio"
-        accentColor={colors.error}
-        label={t('live.list.title')}
-        subtitle={
-          liveCount > 0
-            ? t('live.list.countSubtitle', { count: liveCount })
-            : t('live.list.emptySubtitle')
-        }
-        onPress={() => navigation.navigate('LiveBroadcasts')}
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="radio"
+          accentColor={colors.error}
+          label={t('live.list.title')}
+          subtitle={
+            liveCount > 0
+              ? t('live.list.countSubtitle', { count: liveCount })
+              : t('live.list.emptySubtitle')
+          }
+          onPress={() => navigation.navigate('LiveBroadcasts')}
+        />
 
-      <ProfileSectionCard
-        icon="bar-chart"
-        accentColor={colors.info}
-        label={t('insights.title')}
-        subtitle={t('insights.subtitle')}
-        onPress={() => navigation.navigate('Insights')}
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="bar-chart"
+          accentColor={colors.info}
+          label={t('insights.title')}
+          subtitle={t('insights.subtitle')}
+          onPress={() => navigation.navigate('Insights')}
+        />
 
-      <ProfileSectionCard
-        icon="sparkles"
-        accentColor={colors.primary}
-        label={t('insights.aiReports.title')}
-        subtitle={
-          isFree ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')
-        }
-        locked={isFree}
-        onPress={() =>
-          isFree
-            ? navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
-            : navigation.navigate('AiActivityReports')
-        }
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="sparkles"
+          accentColor={colors.primary}
+          label={t('insights.aiReports.title')}
+          subtitle={
+            isFree ? t('insights.aiReports.premiumRequired') : t('insights.aiReports.subtitle')
+          }
+          locked={isFree}
+          onPress={() =>
+            isFree
+              ? navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
+              : navigation.navigate('AiActivityReports')
+          }
+        />
 
-      <ProfileSectionCard
-        icon="flag"
-        accentColor="#f59e0b"
-        label={t('goals.title')}
-        subtitle={t('goals.subtitle')}
-        onPress={() => navigation.navigate('Goals')}
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="flag"
+          accentColor="#f59e0b"
+          label={t('goals.title')}
+          subtitle={t('goals.subtitle')}
+          onPress={() => navigation.navigate('Goals')}
+        />
 
-      <ProfileSectionCard
-        icon="shield"
-        accentColor="#8b5cf6"
-        label={t('teams.teams')}
-        subtitle={t('teams.profileSubtitle')}
-        onPress={() => navigation.navigate('TeamsList')}
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="shield"
+          accentColor="#8b5cf6"
+          label={t('teams.teams')}
+          subtitle={t('teams.profileSubtitle')}
+          onPress={() => navigation.navigate('TeamsList')}
+        />
 
-      <ProfileSectionCard
-        icon="map"
-        accentColor="#06b6d4"
-        label={t('routes.title')}
-        subtitle={t('routes.subtitle')}
-        onPress={() => navigation.navigate('RouteLibrary')}
-      />
+        <ProfileSectionCard
+          layout="tile"
+          icon="map"
+          accentColor="#06b6d4"
+          label={t('routes.title')}
+          subtitle={t('routes.subtitle')}
+          onPress={() => navigation.navigate('RouteLibrary')}
+        />
+      </View>
 
       <TrainingPlansSheet
         visible={sheetVisible}
@@ -176,6 +184,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: spacing.lg,
     marginHorizontal: spacing.sm,
+    gap: 10,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   switchBtn: {
