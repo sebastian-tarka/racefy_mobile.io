@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   ImageBackground,
   RefreshControl,
@@ -18,7 +19,7 @@ import {
   ActivityCard,
   Avatar,
   CompareUserSelector,
-  DraftsTab,
+  DraftPostCard,
   EmptyState,
   EventCard,
   type PeriodOption,
@@ -37,11 +38,13 @@ import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useActivityStats } from '../../hooks/useActivityStats';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
+import { useDrafts } from '../../hooks/useDrafts';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
@@ -51,7 +54,15 @@ import { getDateRangeForTimeRange } from '../../utils/dateRanges';
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import type { Activity, ActivityStats, Event, Post, User, UserStats } from '../../types/api';
+import type {
+  Activity,
+  ActivityStats,
+  DraftPost,
+  Event,
+  Post,
+  User,
+  UserStats,
+} from '../../types/api';
 
 type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -79,6 +90,7 @@ export function ProfileScreen({
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
+  const { formatTotalDistance } = useUnits();
   const { canUse, tier } = useSubscription();
   const tabBarPaddingBottom = useTabBarPadding();
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
@@ -213,6 +225,12 @@ export function ProfileScreen({
     userId: user?.id ?? null,
   });
 
+  // Drafts live in the same list as every other tab. `useDrafts` does not
+  // auto-load, so nothing is fetched until the tab is actually opened — the
+  // badge count comes from its own one-item request.
+  const draftsData = useDrafts();
+  const [publishingDraftId, setPublishingDraftId] = useState<number | null>(null);
+
   // Reset paginated data when user logs out
   useEffect(() => {
     if (!isAuthenticated) {
@@ -293,6 +311,11 @@ export function ProfileScreen({
         logger.info('profile', 'Refreshing events data');
         eventsData.refresh();
       }
+    } else if (activeTab === 'drafts') {
+      if (!draftsData.isLoading) {
+        logger.info('profile', 'Refreshing drafts data');
+        draftsData.refresh();
+      }
     } else if (activeTab === 'stats') {
       // Refresh activity stats and point stats
       if (!isLoadingActivityStats) {
@@ -316,7 +339,9 @@ export function ProfileScreen({
     setIsRefreshing(true);
     await fetchStats();
 
-    if (activeTab === 'posts') {
+    if (activeTab === 'drafts') {
+      await draftsData.refresh();
+    } else if (activeTab === 'posts') {
       await postsData.refresh();
     } else if (activeTab === 'stats') {
       await Promise.all([refetchActivityStats(), refetchPointStats()]);
@@ -357,6 +382,50 @@ export function ProfileScreen({
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
+
+  const handlePublishDraft = (draft: DraftPost) => {
+    Alert.alert(t('drafts.confirmPublishTitle'), t('drafts.confirmPublish'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('drafts.publish'),
+        onPress: async () => {
+          setPublishingDraftId(draft.id);
+          try {
+            await draftsData.publishDraft(draft.id);
+            Alert.alert(t('common.success'), t('drafts.published'));
+            // The draft is a post now - it belongs in the tab we send them to.
+            postsData.refresh();
+            fetchDraftsCount();
+            setActiveTab('posts');
+          } catch (error) {
+            Alert.alert(t('common.error'), t('drafts.publishFailed'));
+            logger.error('api', 'Profile draft publish error', { error });
+          } finally {
+            setPublishingDraftId(null);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleDeleteDraft = (draft: DraftPost) => {
+    Alert.alert(t('drafts.confirmDeleteTitle'), t('drafts.confirmDelete'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await draftsData.deleteDraft(draft.id);
+            fetchDraftsCount();
+          } catch (error) {
+            Alert.alert(t('common.error'), t('drafts.deleteFailed'));
+            logger.error('api', 'Profile draft delete error', { error });
+          }
+        },
+      },
+    ]);
+  };
 
   // Extract settings button to avoid duplication
   const renderSettingsButton = () => (
@@ -449,10 +518,7 @@ export function ProfileScreen({
                 {t('profile.stats.totalDistance', 'Total')}
               </Text>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats?.activities?.total_distance
-                  ? Math.round(stats.activities.total_distance / 1000)
-                  : 0}{' '}
-                km
+                {formatTotalDistance(stats?.activities?.total_distance ?? 0)}
               </Text>
             </View>
             <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
@@ -613,15 +679,8 @@ export function ProfileScreen({
     </>
   );
 
-  // Stable ref pattern: FlatList/DraftsTab always receive the same function reference,
-  // preventing header unmount/remount (and avatar flicker) on every re-render.
-  // The ref is updated each render so the content inside is always fresh.
-  const profileHeaderRef = useRef(renderProfileHeader);
-  profileHeaderRef.current = renderProfileHeader;
-  const stableProfileHeader = useRef(() => profileHeaderRef.current()).current;
-
   // Not authenticated: render the sign-in prompt. Placed AFTER all hooks above
-  // (including the stable-ref hooks) so the Rules of Hooks hold.
+  // so the Rules of Hooks hold.
   if (!isAuthenticated) {
     return (
       <ScreenContainer>
@@ -647,6 +706,7 @@ export function ProfileScreen({
   const renderFooter = () => {
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading) ||
+      (activeTab === 'drafts' && draftsData.isLoading) ||
       (activeTab === 'activities' && activitiesData.isLoading) ||
       (activeTab === 'events' && eventsData.isLoading);
 
@@ -665,6 +725,7 @@ export function ProfileScreen({
 
     const isLoading =
       (activeTab === 'posts' && postsData.isLoading && postsData.data.length === 0) ||
+      (activeTab === 'drafts' && draftsData.isLoading && draftsData.drafts.length === 0) ||
       (activeTab === 'activities' &&
         activitiesData.isLoading &&
         activitiesData.data.length === 0) ||
@@ -678,6 +739,15 @@ export function ProfileScreen({
           icon="newspaper-outline"
           title={t('profile.empty.noPosts')}
           message={t('profile.empty.noPostsMessage')}
+        />
+      );
+    }
+    if (activeTab === 'drafts') {
+      return (
+        <EmptyState
+          icon="document-outline"
+          title={t('drafts.noDrafts')}
+          message={t('drafts.noDraftsDesc')}
         />
       );
     }
@@ -699,19 +769,31 @@ export function ProfileScreen({
     );
   };
 
-  const getData = () => {
+  const getData = (): (Post | Activity | Event | DraftPost)[] => {
     if (activeTab === 'posts') return postsData.data;
-    if (activeTab === 'drafts') return []; // Drafts content rendered separately
+    if (activeTab === 'drafts') return draftsData.drafts;
     if (activeTab === 'stats') return []; // Stats content rendered in header
     if (activeTab === 'activities') return activitiesData.data;
     return eventsData.data;
   };
 
-  const getKeyExtractor = (item: Post | Activity | Event) => {
+  const getKeyExtractor = (item: Post | Activity | Event | DraftPost) => {
     return `${activeTab}-${item.id}`;
   };
 
-  const renderItem = ({ item }: { item: Post | Activity | Event }) => {
+  const renderItem = ({ item }: { item: Post | Activity | Event | DraftPost }) => {
+    if (activeTab === 'drafts') {
+      const draft = item as DraftPost;
+      return (
+        <DraftPostCard
+          post={draft}
+          onPublish={() => handlePublishDraft(draft)}
+          onEdit={() => navigation.navigate('PostForm', { postId: draft.id })}
+          onDelete={() => handleDeleteDraft(draft)}
+          isPublishing={publishingDraftId === draft.id}
+        />
+      );
+    }
     if (activeTab === 'posts') {
       const post = item as Post;
       return (
@@ -758,7 +840,9 @@ export function ProfileScreen({
   };
 
   const handleEndReached = () => {
-    if (activeTab === 'posts') {
+    if (activeTab === 'drafts') {
+      draftsData.loadMore();
+    } else if (activeTab === 'posts') {
       postsData.loadMore();
     } else if (activeTab === 'activities') {
       activitiesData.loadMore();
@@ -769,49 +853,28 @@ export function ProfileScreen({
 
   return (
     <ScreenContainer>
-      {/* Keep DraftsTab mounted but hidden to prevent blinking on tab switch */}
-      <View style={[styles.tabContent, activeTab !== 'drafts' && styles.hiddenTab]}>
-        <DraftsTab
-          isOwnProfile={true}
-          ListHeaderComponent={stableProfileHeader}
-          contentPaddingBottom={tabBarPaddingBottom}
-          onPublishSuccess={() => {
-            // Refresh posts tab after successful publish
-            postsData.refresh();
-            fetchDraftsCount();
-            // Switch to posts tab
-            setActiveTab('posts');
-          }}
-          onDeleteSuccess={() => {
-            fetchDraftsCount();
-          }}
-          onEditDraft={(draft) => {
-            // Navigate to PostForm for editing
-            navigation.navigate('PostForm', { postId: draft.id });
-          }}
-        />
-      </View>
-      <View style={[styles.tabContent, activeTab === 'drafts' && styles.hiddenTab]}>
-        <FlatList
-          data={getData()}
-          keyExtractor={getKeyExtractor}
-          renderItem={renderItem}
-          ListHeaderComponent={stableProfileHeader}
-          ListFooterComponent={renderFooter}
-          ListEmptyComponent={renderEmpty}
-          contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.primary]}
-              tintColor={colors.primary}
-            />
-          }
-          onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
-        />
-      </View>
+      {/* One list for every tab, drafts included. Two lists meant the profile
+          header — cover, avatar and the whole navigation block — was mounted
+          twice, so its data hooks fired twice on every visit. */}
+      <FlatList
+        data={getData()}
+        keyExtractor={getKeyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={renderProfileHeader()}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
+      />
 
       {user && (
         <UserListModal
@@ -834,16 +897,6 @@ export function ProfileScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  tabContent: {
-    flex: 1,
-  },
-  hiddenTab: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    overflow: 'hidden',
-    opacity: 0,
   },
   header: {
     flexDirection: 'row',

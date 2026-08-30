@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-08-28**
+Stan na: **2026-08-30**
 
 ---
 
@@ -23,6 +23,29 @@ _Nic nie czeka._
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Profil: jedna lista i jednostki wg preferencji (2026-08-30)
+
+Dwie rzeczy z analizy ekranu profilu. (1) Dystans w wierszu statystyk był liczony
+`total_distance / 1000` z dosłownym „km" w JSX — ekran w ogóle nie importował
+`useUnits`, więc konto imperialne widziało kilometry. (2) `ProfileScreen` trzymał
+**dwie** listy naraz (`DraftsTab` zamontowany i schowany „żeby nie mrugało"), obie
+z tym samym `ListHeaderComponent` — nagłówek renderował się dwa razy, a wraz z nim
+`ProfileNavigationSections`, więc `getCurrentPrograms()` leciało 2× przy każdym
+focusie, `/live/broadcasts` 2× przy wejściu, a szkice pobierały się przy każdej
+wizycie na profilu, nawet gdy nikt nie otwierał tej zakładki. Teraz jest jedna
+lista obsługująca też szkice (`useDrafts` ma `autoLoad: false`, więc ładują się
+dopiero po wejściu w zakładkę), a nagłówek jest przekazywany jako element —
+podwójny ref-hack wokół `stableProfileHeader` zniknął. Zmierzone: stary układ
+renderował nagłówek 2×, forma elementowa nie remountuje go przy re-renderze
+(mounts=1 przy 3 renderach), więc awatar nie ma prawa mrugać.
+
+- [ ] Konto imperialne: w wierszu statystyk profilu są mile, nie kilometry
+- [ ] Zakładka Szkice: lista się ładuje po wejściu, publikacja przenosi do Postów, usuwanie zdejmuje badge
+- [ ] Przełączanie zakładek tam i z powrotem — awatar i cover nie mrugają
+- [ ] Pull-to-refresh działa na każdej zakładce, w tym na Szkicach
+- [ ] Pusty stan Szkiców wygląda jak pozostałe zakładki (nie jest już centrowany w pionie — to zmiana)
+- [ ] Doładowywanie kolejnych stron szkiców przy scrollu
 
 ### Rozkład wysiłku na ekranie aktywności (2026-08-28)
 
