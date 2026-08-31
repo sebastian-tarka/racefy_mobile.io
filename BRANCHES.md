@@ -24,6 +24,35 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Doping z transmisji: odstęp karty, czytelność zaznaczenia, kolizja na mapie (2026-08-31)
+
+Trzy rzeczy zgłoszone ze zrzutów ekranu.
+
+1. Karta „Doping z transmisji" miała `marginHorizontal` bez `marginTop`, podczas
+   gdy wszystkie pozostałe karty na ekranie aktywności używają `styles.section`
+   z obydwoma — stąd inny odstęp od karty powyżej.
+2. Zaznaczona wiadomość dostawała pełne tło w `colors.primaryLight`, a teksty
+   drugoplanowe (godzina, „na 2.57 km · 19:21", „Widoczne tylko dla Ciebie")
+   zostawały w `textMuted` — na zielonym bloku praktycznie nieczytelne. Teraz
+   zaznaczenie to tint `primary` z alfą, zaokrąglony róg i akcentowa krawędź po
+   lewej; kolory tekstu nie zmieniają się, więc kontrast zostaje.
+3. Na mapie dymek wybranego dopingu (`left/right/bottom: 12` w `MapboxRouteMap`)
+   lądował dokładnie na wskaźniku prywatności („Start/meta ukryte przed innymi",
+   `bottom/left: spacing.md` w ekranie). Wskaźnik i kontrolki mapy siedziały
+   zresztą w dwóch niezależnych absolutach na tej samej wysokości i przy dłuższej
+   etykiecie potrafiły najechać na siebie. Teraz oba są w jednym pasie
+   (`space-between`, etykieta kurczy się i skraca do jednej linii), pas jest
+   mierzony, a jego wysokość idzie do mapy jako `calloutBottomInset` — dymek
+   ustawia się nad nim. Pusty „pill" prywatności (ikona bez tekstu, dla
+   oglądającego z dostępem do startu/mety) przestał się renderować.
+
+- [ ] Tap w wiadomość na karcie: dymek na mapie **nad** paskiem, nic nie zasłania „Start/meta ukryte przed innymi" ani przycisków
+- [ ] To samo po rozwinięciu mapy (500 px) i po zmianie orientacji
+- [ ] Zaznaczona wiadomość na karcie: godzina, dystans i „Widoczne tylko dla Ciebie" czytelne w light i dark
+- [ ] Odstęp karty „Doping z transmisji" taki sam jak między pozostałymi kartami
+- [ ] Długa etykieta prywatności nie nachodzi na „Rozwiń mapę" (skraca się wielokropkiem)
+- [ ] Cudza aktywność z widocznym startem/metą: pilla prywatności nie ma wcale, kontrolki mają całą szerokość
+
 ### Usunięty martwy profil + widget „trenują teraz" prowadzi do transmisji (2026-08-31)
 
 `DynamicProfileScreen` (1846 linii) nie był importowany znikąd — redesign, który

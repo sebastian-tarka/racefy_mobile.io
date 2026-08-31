@@ -56,6 +56,12 @@ interface MapboxRouteMapProps {
   /** Live messages pinned where the athlete was when each arrived (owner's finished activity). */
   cheerPins?: LiveMessagePin[];
   selectedCheerId?: number | null;
+  /**
+   * Space at the bottom of the map already taken by the host screen's own
+   * overlays. The cheer callout is lifted above it instead of landing on top
+   * of whatever is down there.
+   */
+  calloutBottomInset?: number;
   /** Tap on a pin (or its callout's close) — null clears the selection. */
   onSelectCheer?: (id: number | null) => void;
 }
@@ -127,6 +133,7 @@ export function MapboxRouteMap({
   finishPoint = null,
   cheerPins = [],
   selectedCheerId = null,
+  calloutBottomInset = 0,
   onSelectCheer,
 }: MapboxRouteMapProps) {
   const { colors, isDark } = useTheme();
@@ -400,7 +407,10 @@ export function MapboxRouteMap({
       {/* Callout for the selected cheer */}
       {selectedCheer && (
         <View
-          style={[styles.cheerCallout, { backgroundColor: colors.cardBackground }]}
+          style={[
+            styles.cheerCallout,
+            { backgroundColor: colors.cardBackground, bottom: 12 + calloutBottomInset },
+          ]}
           accessibilityRole="text"
         >
           <View style={[styles.cheerCalloutDot, { backgroundColor: cheerColor }]} />

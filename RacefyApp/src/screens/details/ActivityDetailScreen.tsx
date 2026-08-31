@@ -71,6 +71,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
   const [activityStats, setActivityStats] = useState<SingleActivityStats | null>(null);
+  /** Height of the map's bottom overlay row, so the cheer callout clears it. */
+  const [mapOverlayHeight, setMapOverlayHeight] = useState(0);
 
   // Effort breakdown. Not gated by tier and identical for the owner and for
   // anyone else who can see the activity - visibility follows the activity
@@ -96,6 +98,18 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   // One fetch shared by the card below and the pins on the map.
   const liveArchive = useLiveMessageArchive(activity);
   const cheerPins = showCheerPins ? liveArchive.pins : [];
+
+  // Null for a viewer who is allowed to see the start and finish — there is
+  // simply nothing to tell them.
+  const gpsPrivacyLabel = !activity
+    ? null
+    : activity.is_owner
+      ? activity.show_start_finish_points
+        ? t('activityDetail.gpsPrivacyVisible')
+        : t('activityDetail.gpsPrivacyHidden')
+      : !activity.can_view_start_finish
+        ? t('activityDetail.gpsPrivacyViewerHidden')
+        : null;
 
   const scrollToComments = useCallback(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -396,104 +410,119 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                     cheerPins={cheerPins}
                     selectedCheerId={selectedCheerId}
                     onSelectCheer={setSelectedCheerId}
+                    calloutBottomInset={mapOverlayHeight + spacing.md}
                   />
-                  {/* Map control buttons */}
-                  <View style={styles.mapControlsRow}>
-                    <TouchableOpacity
-                      style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
-                      onPress={toggleMapExpand}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
-                        size={20}
-                        color={colors.textPrimary}
-                      />
-                      <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
-                        {isMapExpanded
-                          ? t('activityDetail.collapseMap')
-                          : t('activityDetail.expandMap')}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.mapKmButton,
-                        { backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground },
-                      ]}
-                      onPress={() => setShowKmMarkers(!showKmMarkers)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name="flag-outline"
-                        size={16}
-                        color={showKmMarkers ? '#ffffff' : colors.textSecondary}
-                      />
-                      <Text
+                  {/* Everything that lives at the bottom of the map shares one
+                      row, so a long privacy label cannot collide with the
+                      controls and the cheer callout has a height to clear. */}
+                  <View
+                    style={styles.mapBottomOverlay}
+                    onLayout={(e) => setMapOverlayHeight(e.nativeEvent.layout.height)}
+                    pointerEvents="box-none"
+                  >
+                    {/* GPS privacy — a pill with nothing to say used to render
+                        anyway, an icon taking room from the controls. */}
+                    {gpsPrivacyLabel ? (
+                      <View
                         style={[
-                          styles.mapKmButtonText,
-                          { color: showKmMarkers ? '#ffffff' : colors.textSecondary },
+                          styles.privacyIndicator,
+                          {
+                            backgroundColor: colors.cardBackground + '80',
+                            borderColor: colors.borderLight,
+                          },
                         ]}
                       >
-                        km
-                      </Text>
-                    </TouchableOpacity>
-                    {liveArchive.pins.length > 0 && (
+                        <Ionicons
+                          name={activity.can_view_start_finish ? 'eye-outline' : 'shield-outline'}
+                          size={16}
+                          color={activity.is_owner ? colors.primary : colors.textSecondary}
+                        />
+                        <Text
+                          style={[styles.privacyText, { color: colors.textSecondary }]}
+                          numberOfLines={1}
+                        >
+                          {gpsPrivacyLabel}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View />
+                    )}
+
+                    <View style={styles.mapControlsRow}>
+                      <TouchableOpacity
+                        style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
+                        onPress={toggleMapExpand}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
+                          size={20}
+                          color={colors.textPrimary}
+                        />
+                        <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
+                          {isMapExpanded
+                            ? t('activityDetail.collapseMap')
+                            : t('activityDetail.expandMap')}
+                        </Text>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         style={[
                           styles.mapKmButton,
                           {
-                            backgroundColor: showCheerPins ? colors.primary : colors.cardBackground,
+                            backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground,
                           },
                         ]}
-                        onPress={() => {
-                          setShowCheerPins(!showCheerPins);
-                          setSelectedCheerId(null);
-                        }}
+                        onPress={() => setShowKmMarkers(!showKmMarkers)}
                         activeOpacity={0.8}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: showCheerPins }}
                       >
                         <Ionicons
-                          name="chatbubble-ellipses-outline"
+                          name="flag-outline"
                           size={16}
-                          color={showCheerPins ? '#ffffff' : colors.textSecondary}
+                          color={showKmMarkers ? '#ffffff' : colors.textSecondary}
                         />
                         <Text
                           style={[
                             styles.mapKmButtonText,
-                            { color: showCheerPins ? '#ffffff' : colors.textSecondary },
+                            { color: showKmMarkers ? '#ffffff' : colors.textSecondary },
                           ]}
                         >
-                          {t('live.archive.pins')}
+                          km
                         </Text>
                       </TouchableOpacity>
-                    )}
-                  </View>
-
-                  {/* GPS Privacy Indicator */}
-                  <View
-                    style={[
-                      styles.privacyIndicator,
-                      {
-                        backgroundColor: colors.cardBackground + '80',
-                        borderColor: colors.borderLight,
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name={activity.can_view_start_finish ? 'eye-outline' : 'shield-outline'}
-                      size={16}
-                      color={activity.is_owner ? colors.primary : colors.textSecondary}
-                    />
-                    <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
-                      {activity.is_owner
-                        ? activity.show_start_finish_points
-                          ? t('activityDetail.gpsPrivacyVisible')
-                          : t('activityDetail.gpsPrivacyHidden')
-                        : !activity.can_view_start_finish
-                          ? t('activityDetail.gpsPrivacyViewerHidden')
-                          : null}
-                    </Text>
+                      {liveArchive.pins.length > 0 && (
+                        <TouchableOpacity
+                          style={[
+                            styles.mapKmButton,
+                            {
+                              backgroundColor: showCheerPins
+                                ? colors.primary
+                                : colors.cardBackground,
+                            },
+                          ]}
+                          onPress={() => {
+                            setShowCheerPins(!showCheerPins);
+                            setSelectedCheerId(null);
+                          }}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: showCheerPins }}
+                        >
+                          <Ionicons
+                            name="chatbubble-ellipses-outline"
+                            size={16}
+                            color={showCheerPins ? '#ffffff' : colors.textSecondary}
+                          />
+                          <Text
+                            style={[
+                              styles.mapKmButtonText,
+                              { color: showCheerPins ? '#ffffff' : colors.textSecondary },
+                            ]}
+                          >
+                            {t('live.archive.pins')}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 </Animated.View>
               )}
@@ -1257,10 +1286,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   // Map toggle button styles
-  mapControlsRow: {
+  mapBottomOverlay: {
     position: 'absolute',
-    bottom: spacing.md,
+    left: spacing.md,
     right: spacing.md,
+    bottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  mapControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -1300,9 +1336,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   privacyIndicator: {
-    position: 'absolute',
-    bottom: spacing.md,
-    left: spacing.md,
+    // Shrinks first: the controls next to it are actions, this is a label.
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

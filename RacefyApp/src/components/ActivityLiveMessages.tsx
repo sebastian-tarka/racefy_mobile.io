@@ -13,6 +13,8 @@ import { borderRadius, fontSize, spacing } from '../theme';
 import type { Activity, LiveMessage, User } from '../types/api';
 import { formatDuration } from '../utils/formatDuration';
 
+const hairline = StyleSheet.hairlineWidth;
+
 interface Props {
   activity: Activity | null;
   onUserPress?: (user: User) => void; /**
@@ -92,14 +94,23 @@ export function ActivityLiveMessages({
         const hasDistance = typeof message.live_distance === 'number';
         const hasPin = Array.isArray(message.live_position);
         const isSelected = selectedMessageId === message.id;
+        const isLast = message.id === messages[messages.length - 1]?.id;
 
         return (
           <TouchableOpacity
             key={message.id}
             style={[
               styles.messageRow,
-              { borderBottomColor: colors.borderLight },
-              isSelected && { backgroundColor: colors.primaryLight ?? colors.borderLight },
+              !isLast && { borderBottomColor: colors.borderLight, borderBottomWidth: hairline },
+              // A solid brand-coloured block made the secondary text (time,
+              // distance, "private") unreadable on top of it. A tint plus an
+              // accent edge says "this one" and leaves every colour legible.
+              isSelected && {
+                backgroundColor: colors.primary + '1f',
+                borderLeftColor: colors.primary,
+                borderBottomWidth: 0,
+              },
+              isSelected && styles.messageRowSelected,
             ]}
             disabled={!hasPin || !onSelectMessage}
             onPress={() => onSelectMessage?.(message)}
@@ -164,7 +175,10 @@ export function ActivityLiveMessages({
 
 const styles = StyleSheet.create({
   section: {
+    // Matches `styles.section` on the activity detail screen — without the top
+    // margin this card sat tighter to the one above than every other card.
     marginHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
   header: {
     flexDirection: 'row',
@@ -185,7 +199,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    // Pulled back out by the negative margin so the text still lines up with
+    // the card title while a highlighted row gets room to breathe.
+    paddingHorizontal: spacing.sm,
+    marginHorizontal: -spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: 'transparent',
+  },
+  messageRowSelected: {
+    borderRadius: borderRadius.md,
   },
   messageBody: {
     flex: 1,

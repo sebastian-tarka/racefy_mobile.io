@@ -43,6 +43,8 @@ interface RoutePreviewProps {
   /** Live-message pins — only the interactive map can draw them; the image fallbacks ignore them. */
   cheerPins?: LiveMessagePin[];
   selectedCheerId?: number | null;
+  /** Bottom space reserved by the host screen's map overlays. */
+  calloutBottomInset?: number;
   onSelectCheer?: (id: number | null) => void;
 }
 
@@ -69,6 +71,7 @@ export function RoutePreview({
   finishPoint = null,
   cheerPins,
   selectedCheerId,
+  calloutBottomInset,
   onSelectCheer,
 }: RoutePreviewProps) {
   const { colors } = useTheme();
@@ -111,6 +114,7 @@ export function RoutePreview({
         finishPoint={finishPoint}
         cheerPins={cheerPins}
         selectedCheerId={selectedCheerId}
+        calloutBottomInset={calloutBottomInset}
         onSelectCheer={onSelectCheer}
       />
     );
