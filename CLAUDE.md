@@ -301,9 +301,9 @@ Build profiles `staging`, `production` and `production-apk` set
 
 ```bash
 cd RacefyApp
-npm run release:patch     # 1.16.0 → 1.16.1, commits and tags v1.16.1
-npm run release:minor     # 1.16.0 → 1.17.0
-npm run release:major     # 1.16.0 → 2.0.0
+npm run release:patch     # 1.17.0 → 1.17.1, commits and tags v1.17.1
+npm run release:minor     # 1.17.0 → 1.18.0
+npm run release:major     # 1.17.0 → 2.0.0
 git push --follow-tags
 
 npm run deploy            # menu: 'v' does the bump interactively, 's' seeds EAS counters,
@@ -312,6 +312,14 @@ npm run deploy            # menu: 'v' does the bump interactively, 's' seeds EAS
 eas build:version:get --platform all    # what EAS will use next
 eas build:version:set --platform ios    # one-off, only when seeding or fixing a counter
 ```
+
+**Why `release:*` is a script and not plain `npm version`:** `npm version` does
+create the commit and the tag itself — but only when `package.json` sits at the
+root of the git repository. Here it lives in `RacefyApp/` while `.git` is one
+level up, so npm decides it is not in a repo, silently bumps the file and exits.
+That left the version uncommitted and the repo without a single tag. Verified
+both ways: package.json at the repo root → commit + tag; in a subdirectory →
+changed file only. `scripts/release.sh` therefore does the git half explicitly.
 
 One-off migration step (needed once per project, and once more if the counters
 are ever reset): `eas build:version:set` for both platforms, with values higher
