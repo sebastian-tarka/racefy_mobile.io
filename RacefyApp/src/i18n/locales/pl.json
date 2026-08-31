@@ -420,6 +420,12 @@
     "stats": {
       "posts": "Posty",
       "activities": "Aktywności",
+      "distance": "Dystans",
+      "time": "Czas",
+      "thisMonth_one": "{{count}} aktywność w tym miesiącu",
+      "thisMonth_few": "{{count}} aktywności w tym miesiącu",
+      "thisMonth_many": "{{count}} aktywności w tym miesiącu",
+      "thisMonth_other": "{{count}} aktywności w tym miesiącu",
       "totalDistance": "Łącznie",
       "followers": "Obserwujący",
       "following": "Obserwowani",

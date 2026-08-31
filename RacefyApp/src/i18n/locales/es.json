@@ -415,6 +415,11 @@
     },
     "stats": {
       "posts": "Publicaciones",
+      "activities": "Actividades",
+      "distance": "Distancia",
+      "time": "Tiempo",
+      "thisMonth_one": "{{count}} actividad este mes",
+      "thisMonth_other": "{{count}} actividades este mes",
       "totalDistance": "Total",
       "followers": "Seguidores",
       "following": "Siguiendo",

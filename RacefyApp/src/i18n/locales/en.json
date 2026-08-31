@@ -416,6 +416,10 @@
     "stats": {
       "posts": "Posts",
       "activities": "Activities",
+      "distance": "Distance",
+      "time": "Time",
+      "thisMonth_one": "{{count}} activity this month",
+      "thisMonth_other": "{{count}} activities this month",
       "totalDistance": "Total",
       "followers": "Followers",
       "following": "Following",

@@ -49,8 +49,9 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
-import { fontSize, spacing, msFont } from '../../theme';
+import { borderRadius, fontSize, spacing, msFont } from '../../theme';
 import { getDateRangeForTimeRange } from '../../utils/dateRanges';
+import { formatDurationCompact } from '../../utils/formatDuration';
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
@@ -448,6 +449,8 @@ export function ProfileScreen({
   useRefreshOn('events', eventsData.refresh);
   useRefreshOn('profile', handleRefresh);
 
+  const openEditProfile = () => navigation.navigate('EditProfile');
+
   const handleFollowersPress = () => {
     setFollowModalTab('followers');
     setShowFollowModal(true);
@@ -572,14 +575,36 @@ export function ProfileScreen({
         {renderCoverImage()}
 
         <View style={styles.profileBody}>
-          <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
-            <Avatar
-              uri={user?.avatar}
-              name={user?.name}
-              size="xxl"
-              showTierBadge={tier !== 'free'}
-              tier={tier}
-            />
+          {/* The avatar is the thing people reach for when they want to change
+              it, so it goes where the edit screen is — three taps through
+              Settings was the old route. */}
+          <View style={styles.identityRow}>
+            <TouchableOpacity
+              style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}
+              onPress={openEditProfile}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('editProfile.title')}
+            >
+              <Avatar
+                uri={user?.avatar}
+                name={user?.name}
+                size="xxl"
+                showTierBadge={tier !== 'free'}
+                tier={tier}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.editButton, { borderColor: colors.border }]}
+              onPress={openEditProfile}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="create-outline" size={16} color={colors.textPrimary} />
+              <Text style={[styles.editButtonText, { color: colors.textPrimary }]}>
+                {t('editProfile.title')}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -594,6 +619,9 @@ export function ProfileScreen({
             </Text>
           )}
 
+          {/* Training and social used to share one row of four columns, with
+              the distance labelled "Total" — total of what was anyone's guess.
+              Three named training metrics, then the social pair on its own. */}
           <View style={[styles.statsRow, { borderTopColor: colors.borderLight }]}>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
@@ -605,35 +633,52 @@ export function ProfileScreen({
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.totalDistance', 'Total')}
+                {t('profile.stats.distance')}
               </Text>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {formatTotalDistance(stats?.activities?.total_distance ?? 0)}
               </Text>
             </View>
-            <TouchableOpacity style={styles.statItem} onPress={handleFollowersPress}>
+            <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.followers')}
-              </Text>
-              <View style={styles.statValueRow}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                  {stats?.social.followers ?? 0}
-                </Text>
-                {pendingFollowCount > 0 && (
-                  <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.statBadgeText}>
-                      {pendingFollowCount > 99 ? '99+' : pendingFollowCount}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.statItem} onPress={handleFollowingPress}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.following')}
+                {t('profile.stats.time')}
               </Text>
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {formatDurationCompact(stats?.activities?.total_duration ?? 0)}
+              </Text>
+            </View>
+          </View>
+
+          {/* All-time numbers say nothing about how it is going right now. */}
+          {(stats?.activities?.this_month ?? 0) > 0 && (
+            <Text style={[styles.thisMonth, { color: colors.textSecondary }]}>
+              {t('profile.stats.thisMonth', { count: stats?.activities?.this_month ?? 0 })}
+            </Text>
+          )}
+
+          <View style={[styles.socialRow, { borderTopColor: colors.borderLight }]}>
+            <TouchableOpacity style={styles.socialItem} onPress={handleFollowersPress}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stats?.social.followers ?? 0}
+              </Text>
+              <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.followers')}
+              </Text>
+              {pendingFollowCount > 0 && (
+                <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
+                  <Text style={styles.statBadgeText}>
+                    {pendingFollowCount > 99 ? '99+' : pendingFollowCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <View style={[styles.socialDivider, { backgroundColor: colors.borderLight }]} />
+            <TouchableOpacity style={styles.socialItem} onPress={handleFollowingPress}>
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                 {stats?.social.following ?? 0}
+              </Text>
+              <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>
+                {t('profile.stats.following')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1063,11 +1108,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
+  identityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
   avatarContainer: {
-    alignSelf: 'flex-start',
     marginTop: -44,
     borderWidth: 4,
     borderRadius: 44,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 7,
+  },
+  editButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  thisMonth: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.sm,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  socialItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: spacing.md,
+  },
+  socialLabel: {
+    fontSize: fontSize.sm,
+  },
+  socialDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 16,
+    marginRight: spacing.md,
   },
   name: {
     fontSize: fontSize.xl,
@@ -1093,11 +1180,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    gap: 4,
-  },
-  statValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 4,
   },
   statBadge: {

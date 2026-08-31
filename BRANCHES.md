@@ -24,6 +24,34 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Profil: edycja z karty i rozdzielone statystyki (2026-08-31)
+
+Punkty E i F z analizy. Edycja profilu była dostępna wyłącznie przez koło zębate
+→ Settings → Edytuj profil, a awatar i cover nie reagowały na dotyk — trzy kroki
+do zmiany zdjęcia na ekranie, który jest o tym zdjęciu. Teraz w karcie profilu
+jest przycisk „Edytuj profil" obok awatara, a sam awatar też prowadzi do
+`EditProfile`. Cover celowo został nieklikalny: siedzi na nim absolutnie
+pozycjonowane koło zębate i zagnieżdżony touchable potrafiłby przechwycić ten tap
+na Androidzie.
+
+Wiersz statystyk mieszał dwa światy w czterech kolumnach (aktywności, „Łącznie",
+obserwujący, obserwowani), przy czym „Łącznie" nie mówiło łącznie czego. Teraz
+trzy nazwane metryki treningowe (Aktywności / Dystans / Czas — wszystkie już były
+w `UserStats`, żadnego nowego zapytania), pod nimi linia o bieżącej formie
+(`this_month`, ukrywana przy zerze), a para społecznościowa w osobnym wierszu,
+nadal klikalna, z badge'em oczekujących próśb.
+
+Przy okazji: `es.json` nie miało w `profile.stats` nawet klucza `activities`,
+więc pierwsze podejście do tłumaczeń w ogóle tam nie weszło. Sprawdzone
+w runtime i18next dla wszystkich trzech języków, łącznie z polskimi liczebnikami.
+
+- [ ] Przycisk „Edytuj profil" widoczny i wyrównany do dołu awatara (light i dark, długie nazwy użytkownika)
+- [ ] Tap w awatar otwiera edycję; koło zębate na coverze **nadal** otwiera ustawienia
+- [ ] Trzy metryki treningowe mieszczą się w jednym wierszu na wąskim ekranie (dłuższe wartości: „1234 km", „567h 12m")
+- [ ] Linia „N aktywności w tym miesiącu" pokazuje się tylko przy N > 0 i ma poprawną odmianę po polsku
+- [ ] Obserwujący/Obserwowani nadal otwierają modal, badge oczekujących próśb na miejscu
+- [ ] Hiszpański UI: Distancia / Tiempo / „N actividades este mes"
+
 ### Profil: przyklejone zakładki, siatka skrótów, cache zakładek (2026-08-30)
 
 Kolejne punkty z analizy profilu. Nagłówek listy miał ~900 px (cover, karta
