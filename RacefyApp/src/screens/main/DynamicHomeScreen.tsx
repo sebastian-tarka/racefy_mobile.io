@@ -323,7 +323,9 @@ export function DynamicHomeScreen({ navigation }: Props) {
       // Navigate based on section type
       switch (section.type) {
         case 'live_activity':
-          navigation.navigate('Feed');
+          // People training right now — that is the broadcasts screen, not the
+          // feed, which lists activities that are already over.
+          navigation.getParent()?.navigate('LiveBroadcasts');
           break;
         case 'last_activity_summary':
           // Navigate to activity detail or activities list

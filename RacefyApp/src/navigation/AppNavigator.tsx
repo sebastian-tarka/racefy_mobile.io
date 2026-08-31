@@ -44,7 +44,7 @@ import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { DynamicHomeScreen } from '../screens/main/DynamicHomeScreen';
 import { ActivityRecordingScreen } from '../screens/main/ActivityRecordingScreen';
 import { EventsScreen } from '../screens/main/EventsScreen';
-import { ProfileScreenWrapper } from '../screens/main/ProfileScreenWrapper';
+import { ProfileScreen } from '../screens/main/ProfileScreen';
 import { EventDetailScreen } from '../screens/details/EventDetailScreen';
 import { UserProfileScreen } from '../screens/details/UserProfileScreen';
 import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
@@ -479,7 +479,7 @@ function MainTabNavigator() {
         />
         <MainTab.Screen
           name="Profile"
-          component={ProfileScreenWrapper}
+          component={ProfileScreen}
           options={{ tabBarLabel: 'You', tabBarAccessibilityLabel: 'Profil użytkownika' }}
           listeners={authGuardListener}
         />

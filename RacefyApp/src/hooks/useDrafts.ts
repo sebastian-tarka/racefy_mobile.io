@@ -14,13 +14,14 @@ export function useDrafts() {
     refresh,
     setData: setDrafts,
   } = usePaginatedFetch<DraftPost>((page) => api.getDrafts({ page, per_page: 15 }), {
-    // DraftsTab drives the initial load via fetchDrafts(true).
+    // The profile loads drafts when its tab is opened, not on mount.
     autoLoad: false,
     dedupeBy: (d) => d.id,
     errorMessage: 'Failed to load drafts',
   });
 
-  // Back-compat shim: DraftsTab calls fetchDrafts(true) to (re)load the list.
+  // Kept for callers that ask for a reload explicitly; `refresh`/`loadMore`
+  // are the direct route.
   const fetchDrafts = useCallback(
     (reset = false) => {
       if (reset) return refresh();

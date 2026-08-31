@@ -24,6 +24,29 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Usunięty martwy profil + widget „trenują teraz" prowadzi do transmisji (2026-08-31)
+
+`DynamicProfileScreen` (1846 linii) nie był importowany znikąd — redesign, który
+nigdy nie został podpięty, ten sam wzorzec co usunięty wcześniej
+`USE_DYNAMIC_HOME`. Poszedł, a z nim `ProfileScreenWrapper` (istniał tylko po to,
+żeby przepchnąć propsy przez `as any` — teraz `AppNavigator` renderuje
+`ProfileScreen` wprost, a rzutowanie na złożony typ nawigacji siedzi w samym
+ekranie) i `DraftsTab`, który po zwinięciu profilu do jednej listy stracił
+ostatniego użytkownika. Razem 2079 linii mniej.
+
+Osobno: widget „X osób trenuje teraz" na Home prowadził do zakładki Feed, czyli
+do listy **zakończonych** aktywności. Teraz otwiera ekran transmisji na żywo.
+
+- [ ] Zakładka Profil otwiera się i działa jak przed usunięciem wrappera (zwłaszcza nawigacja do ekranów root stacka: Ustawienia, Edytuj profil, Powiadomienia)
+- [ ] Zakładka Szkice nadal działa (publikacja, edycja, usuwanie) po usunięciu `DraftsTab`
+- [ ] Tap w widget „trenują teraz" na Home otwiera listę transmisji
+- [ ] Sprawdzić, czy licznik w widgecie zgadza się z tym, co widać na ekranie transmisji — patrz uwaga niżej
+
+**Uwaga:** `active_users_count` w sekcji `live_activity` liczy osoby **trenujące**,
+a ekran transmisji pokazuje tylko tych, którzy faktycznie **nadają**. Jeśli te
+liczby rozjeżdżają się w praktyce (widget mówi 12, lista pokazuje 2), to temat na
+rozmowę z backendem, a nie do naprawy po stronie mobile.
+
 ### Profil: edycja z karty i rozdzielone statystyki (2026-08-31)
 
 Punkty E i F z analizy. Edycja profilu była dostępna wyłącznie przez koło zębate

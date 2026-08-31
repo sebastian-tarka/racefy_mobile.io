@@ -88,7 +88,6 @@ const isExtrasRow = (row: ListRow): row is ExtrasRow => 'extras' in row;
 /** How long a loaded tab is reused before a switch back refetches it. */
 const TAB_STALE_MS = 2 * 60 * 1000;
 
-const INITIAL_PAGE = 1;
 const SETTINGS_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
@@ -98,10 +97,11 @@ const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
   { value: 'week', labelKey: 'profile.stats.timeRange.week' },
 ];
 
-export function ProfileScreen({
-  navigation,
-  route,
-}: Props & { navigation: ProfileScreenNavigationProp }) {
+export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
+  // The screen reaches both the tab navigator and the root stack; the tab
+  // navigator's own prop type only knows about the former.
+  const navigation = tabNavigation as unknown as ProfileScreenNavigationProp;
+
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
   const { colors, isDark } = useTheme();
