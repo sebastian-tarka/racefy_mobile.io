@@ -15,7 +15,33 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `workout-intervals` — interwały (Faza 2) + tło pod kaflami sportów (2026-09-05)
+
+Faza 2 z `.notes/KONFIGURATOR_TRENINGU_PLAN.md`: w arkuszu celu kafel „Interwały" jest
+aktywny — presety (8 × 400 m / 200 m, 10 × 1 min / 1 min, 4 × 5 min / 90 s) i builder
+(powtórzenia, praca, odpoczynek, rozgrzewka, schłodzenie; każdy krok czasem albo dystansem;
+pasek planu i szacowany czas). Karta HUD w trakcie pokazuje odcinek, pozostały
+czas/dystans, „Następnie", pasek odcinka i pasek planu z pozycją; „Pomiń" kończy odcinek.
+Sygnały: odliczanie 3-2-1 (beepy, tylko foreground), „za 100 m: odpoczynek", ton + głos
+na każdej granicy, fanfara + „Trening ukończony" na końcu. Zmiana planu interwałów w
+trakcie startuje od teraz (cel prosty dalej liczy od startu). Tło: granice odcinków w
+tasku GPS; granica czasowa zabezpieczona lokalnym powiadomieniem jak cel czasowy.
+
+Osobno: siatka kafli sportów na Idle (stats i map) dostała półprzezroczysty panel pod
+spodem — kafle nie leżą już luzem na mapie.
+
+- [ ] Arkusz: preset zaznacza się z ptaszkiem, builder rozpina preset (presetId znika po edycji), „≈ 45 min" liczy się z presetu i z buildera
+- [ ] Zapis: stopka „Zapisz cel · 8 × 400 m / 200 m", wiersz GOAL na Idle pokazuje ten sam opis
+- [ ] Start (symulator DEV): rozgrzewka → beepy 3-2-1 → ton + „Praca 1 z 8: 400 metrów" → „za 100 metrów: odpoczynek" → ton niski + „Odpoczynek: 200 metrów" → … → fanfara + „Trening ukończony", aktywność liczy dalej
+- [ ] Karta: kolor odcinka (praca = primary, odpoczynek = bursztyn, rozgrzewka/schłodzenie = niebieski), pozostały czas pulsuje w ostatnich 3 s, pasek planu przesuwa się
+- [ ] „Pomiń" kończy bieżący odcinek natychmiast, bez odliczania; na odcinku „open" to jedyna droga dalej
+- [ ] Ekran zablokowany: wiersz „PRACA 3/8 · 0:47"
+- [ ] Tryb mapy: linia „PRACA 3/8 · 0:47 → 200 m odpoczynek"
+- [ ] Android, ekran wyłączony, odcinek czasowy 30 s: granica słyszalna (task GPS w ruchu / powiadomienie w bezruchu); iOS: zapisać opóźnienie
+- [ ] Pauza w środku odcinka → wznowienie liczy od miejsca pauzy; powiadomienie nie strzela w pauzie
+- [ ] Zmiana planu w trakcie: nowy plan startuje od teraz, stare odcinki nie wracają
+- [ ] Split km tuż przy granicy odcinka: słychać tylko granicę
+- [ ] Tło pod kaflami sportów czytelne w light i dark, na mapie satelitarnej i outdoors
 
 ---
 
