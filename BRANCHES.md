@@ -9,13 +9,36 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-08-30**
+Stan na: **2026-09-05**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `workout-configurator` — konfigurator treningu: cel czasu/dystansu + sygnały (2026-09-05)
+
+Faza 0 + 1 z `.notes/KONFIGURATOR_TRENINGU_PLAN.md`: model `WorkoutPlan`, czysty silnik
+odcinków (`services/workout/engine.ts`, testy Jest), krótkie dźwięki (earcony) przez
+`expo-av`, arkusz „Szybki cel" (czas albo dystans) na ekranie aktywności, karta postępu
+w trakcie nagrywania, komunikat głosowy + sygnał + wibracja na połowie i na mecie celu.
+Bez autostopu po celu (decyzja). Wszystko free. Interwały to osobna faza.
+
+Tło: cel dystansowy oceniany w zadaniu GPS w tle (ten sam mechanizm co komunikaty
+co kilometr); cel czasowy w tle zabezpieczony lokalnym powiadomieniem z dźwiękiem
+zaplanowanym na moment mety (przeplanowanie przy pauzie/wznowieniu).
+
+- [ ] Idle: ikona flagi w toolbarze (stats i map) otwiera arkusz; chip z celem pod siatką sportów; „×" czyści
+- [ ] Arkusz: chipy presetów, stepper, wartość własna; mile dla użytkownika imperial
+- [ ] Start z celem dystansowym (symulator DEV): karta postępu liczy, „połowa" i „cel osiągnięty" — głos + sygnał + wibracja, aktywność liczy dalej
+- [ ] Start z celem czasowym: to samo z ekranem włączonym
+- [ ] Cel czasowy, ekran wyłączony, Android: sygnał na mecie słyszalny (task GPS lub powiadomienie); iOS: to samo — zapisać faktyczne opóźnienie
+- [ ] Muzyka ze Spotify: komunikat ścisza, muzyka wraca
+- [ ] Split „kilometr N" tuż przy mecie celu: nie nakładają się (split pominięty w oknie 3 s)
+- [ ] Pauza przed metą → wznowienie → cel liczy od miejsca pauzy; powiadomienie nie odpala w trakcie pauzy
+- [ ] Restart apki w trakcie: karta wraca, komunikat „cel osiągnięty" nie powtarza się
+- [ ] Ekran zablokowany: wiersz celu widoczny nad timerem
+- [ ] PausedView: wiersz „Cel: 5 km — 3,2 km (64 %)"; po zapisie/odrzuceniu cel znika z Idle
+- [ ] Głos AI (Plus/Pro) włączony: komunikaty celu grają natychmiast (głos systemowy), splity dalej głosem AI
 
 ---
 
