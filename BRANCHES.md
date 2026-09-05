@@ -15,7 +15,16 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `strength-workouts` — plany siłowe (mobile M1: przeglądanie, edycja, biblioteka, import XLSX) (2026-09-05)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Plany siłowe — mobile M1: przeglądanie, edycja, biblioteka, import XLSX (zmergowane 2026-09-05, tag `pre-strength-workouts` = main sprzed merge)
 
 Mobilna strona backendowej funkcji „Strength Workout Plans" (`/workout-plans`,
 `/workouts`, `/workout-exercises`, `/exercises`; API gotowe lokalnie). Wejście:
@@ -39,13 +48,6 @@ usuń z blokadą 409), import XLSX (podgląd: podsumowanie, ostrzeżenia, nowe/i
 - [ ] Ćwiczenie globalne: bez przycisku edycji dla zwykłego użytkownika, widoczne w wyborze
 - [ ] Duplikacja planu tworzy szkic z kopią treningów
 - [ ] Dark mode: karty, badge statusu, pasek tygodnia czytelne
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Interwały (Faza 2) + panel pod kaflami sportów (zmergowane 2026-09-05, tag `pre-workout-intervals` = main sprzed merge)
 
