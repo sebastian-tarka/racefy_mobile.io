@@ -15,7 +15,16 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `workout-intervals` — interwały (Faza 2) + tło pod kaflami sportów (2026-09-05)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Interwały (Faza 2) + panel pod kaflami sportów (zmergowane 2026-09-05, tag `pre-workout-intervals` = main sprzed merge)
 
 Faza 2 z `.notes/KONFIGURATOR_TRENINGU_PLAN.md`: w arkuszu celu kafel „Interwały" jest
 aktywny — presety (8 × 400 m / 200 m, 10 × 1 min / 1 min, 4 × 5 min / 90 s) i builder
@@ -42,13 +51,6 @@ spodem — kafle nie leżą już luzem na mapie.
 - [ ] Zmiana planu w trakcie: nowy plan startuje od teraz, stare odcinki nie wracają
 - [ ] Split km tuż przy granicy odcinka: słychać tylko granicę
 - [ ] Tło pod kaflami sportów czytelne w light i dark, na mapie satelitarnej i outdoors
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Konfigurator treningu: cel czasu/dystansu + sygnały + kafle sportów (zmergowane 2026-09-05, tag `pre-workout-configurator` = main sprzed merge)
 
