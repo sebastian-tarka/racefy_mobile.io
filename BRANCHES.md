@@ -15,7 +15,32 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `strength-sessions` — wykonywanie treningu siłowego (sesje) (2026-09-05)
+
+Backend faza 4 (`/workout-sessions`, `/workout-session-sets`, `/workout-plans/{id}/sessions`,
+`/exercises/{id}/history`). Ekrany: kalendarz planu (dni z treningiem lub notatką, dziś
+podświetlone, Start / Wznów / Pomiń, badge completed/skipped ze statystykami), ekran sesji
+(stoper od `started_at`, lista ćwiczeń z rozwiniętym bieżącym, wiersze serii z ciężarem i
+powtórzeniami/sekundami, Start → Gotowe → cofnij, timer przerwy z sygnałem i wibracją,
+automatyczne przejście do kolejnej serii i ćwiczenia, „+ seria", historia ćwiczenia),
+zakończenie (RPE 1–10, notatka, widoczność → aktywność) z podsumowaniem i linkiem do
+aktywności, pominięcie. Żądania serii idą przez kolejkę (jedno na raz), UI optymistyczne
+z cofnięciem przy błędzie. Wznawianie: baner „Sesja w toku" na liście planów, w planie
+i w kalendarzu (GET /workout-sessions/current). Ekran nie gaśnie (expo-keep-awake, moduł
+z paczki `expo`, bez przebudowy klienta).
+
+- [ ] Kalendarz: dziś podświetlone, dni z notatką bez treningu widoczne, „Start" tworzy sesję i otwiera ekran sesji
+- [ ] 409 `in_progress_exists` proponuje wznowienie tej sesji; `already_logged` pokazuje komunikat
+- [ ] Sesja: „Start" stempluje serię, „Gotowe" zapisuje ciężar i powtórzenia, pasek postępu i objętość rosną
+- [ ] Przerwa: odliczanie od `rest_started_at`, sygnał + wibracja na końcu (także przy wyłączonym ekranie — powiadomienie), następna seria zaznacza się sama
+- [ ] Ostatnia seria ćwiczenia → rozwija się następne ćwiczenie; „+ seria" dodaje wiersz z ostatnim ciężarem
+- [ ] Szybkie klikanie kilku „Gotowe" pod rząd: żadne żądanie nie ginie, kolejność serii zachowana
+- [ ] Błąd sieci przy „Gotowe": wiersz wraca do stanu sprzed, komunikat widoczny
+- [ ] Restart aplikacji w trakcie: baner „Sesja w toku", wejście odtwarza stoper i przerwę z serwera
+- [ ] Zakończenie z RPE i notatką: podsumowanie (czas, serie, objętość), link otwiera aktywność `strength-training` w feedzie
+- [ ] Pominięcie sesji w toku i pominięcie zaplanowanego treningu bez startu: kalendarz pokazuje „pominięte"
+- [ ] Historia ćwiczenia z ekranu sesji: ostatnie sesje i najlepszy ciężar, sugerowany ciężar w wierszu serii = ostatni zalogowany
+- [ ] Ekran nie gaśnie podczas sesji; po wyjściu z sesji gaśnie normalnie
 
 ---
 
