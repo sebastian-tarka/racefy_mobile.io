@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Dimensions,
   Platform,
   ScrollView,
   StyleSheet,
@@ -79,6 +80,15 @@ import { RecordingView } from './recording/RecordingView';
 import { PausedView } from './recording/PausedView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
 import { RouteSelectionModal } from './recording/RouteSelectionModal';
+import { WorkoutConfigModal, type QuickGoalType } from './recording/WorkoutConfigModal';
+import { WorkoutGoalRow } from './recording/WorkoutGoalRow';
+import { SportTile } from '../../components/SportTile';
+import { useWorkoutEngine } from '../../hooks/useWorkoutEngine';
+import { useWorkoutCuePrefs } from '../../hooks/useWorkoutCuePrefs';
+import { clearWorkoutSession } from '../../services/workout/storage';
+import { cancelGoalNotification } from '../../services/workout/goalNotification';
+import type { WorkoutPlan } from '../../types/workout';
+import { formatPlanLabel, formatRemainingShort } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
@@ -98,13 +108,18 @@ const MILESTONE_ORDER = [
 
 const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
 
+/** Three illustrated sport tiles per row in the map-mode overlay. */
+const MAP_SPORT_TILE_SIZE = Math.floor(
+  (Dimensions.get('window').width - spacing.lg * 2 - spacing.sm * 2) / 3,
+);
+
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 export function ActivityRecordingScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { formatDistance: fmtDistance } = useUnits();
+  const { formatDistance: fmtDistance, units } = useUnits();
 
   // Tab bar is hidden on this screen, so offset is just safe areawymoge
   const tabBarHeight = insets.bottom;
@@ -136,6 +151,14 @@ export function ActivityRecordingScreen() {
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
   const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
+
+  // Training goal (distance / time). The plan lives here; the engine hook
+  // below turns it into cues and progress once recording starts.
+  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
+  const [workoutModalVisible, setWorkoutModalVisible] = useState(false);
+  const [workoutModalType, setWorkoutModalType] = useState<QuickGoalType | undefined>(undefined);
+  const { prefs: workoutCuePrefs, updatePrefs: updateWorkoutCuePrefs } = useWorkoutCuePrefs();
+  const workoutToast = useFadeToast<string>();
 
   // Activity options
   const [selectedSport, setSelectedSport] = useDefaultSport(
@@ -487,6 +510,60 @@ export function ActivityRecordingScreen() {
   // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
   const { resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
+
+  const workout = useWorkoutEngine({
+    plan: workoutPlan,
+    status,
+    activityId: activity?.id ?? null,
+    activeSeconds: localDuration,
+    // DEV: the simulated run feeds the goal exactly like it feeds the km coach.
+    distanceM: __DEV__ && devSim.running ? devSim.distanceM : distance,
+    cuePrefs: workoutCuePrefs,
+    coachSettings: audioCoachSettings,
+    tier: tier as 'free' | 'plus' | 'pro',
+    isOnline: trackingStatus?.isOnline ?? true,
+    units,
+    onRestorePlan: setWorkoutPlan,
+  });
+  const workoutLabel = workoutPlan ? formatPlanLabel(workoutPlan, fmtDistance) : null;
+  const workoutMapLine = (() => {
+    if (!workoutPlan || !workoutLabel) return null;
+    const p = workout.progress;
+    if (p?.overshoot) return t('recording.workout.reached');
+    const remaining = p?.remaining
+      ? t('recording.workout.remaining', { value: formatRemainingShort(p.remaining, fmtDistance) })
+      : '';
+    return `${t('recording.workout.goalLabel', { goal: workoutLabel })} · ${remaining}`;
+  })();
+
+  const openWorkoutModal = useCallback((type?: QuickGoalType) => {
+    setWorkoutModalType(type);
+    setWorkoutModalVisible(true);
+  }, []);
+
+  const handleApplyWorkout = useCallback(
+    (plan: WorkoutPlan) => {
+      setWorkoutPlan(plan);
+      setWorkoutModalVisible(false);
+      triggerHaptic();
+      workoutToast.show(
+        t('recording.workout.toastSet', { goal: formatPlanLabel(plan, fmtDistance) }),
+      );
+    },
+    [workoutToast, t, fmtDistance],
+  );
+
+  const handleClearWorkout = useCallback(() => {
+    const hadPlan = workoutPlan != null;
+    setWorkoutPlan(null);
+    setWorkoutModalVisible(false);
+    if (!hadPlan) return;
+    triggerHaptic();
+    // Mid-run: the engine drops its state via the plan effect; storage goes here.
+    void clearWorkoutSession();
+    void cancelGoalNotification();
+    workoutToast.show(t('recording.workout.toastCleared'));
+  }, [workoutPlan, workoutToast, t]);
   const { enrichActivityWithHeartRate } = useHealthEnrichment();
 
   // Handle preselected event
@@ -821,6 +898,11 @@ export function ActivityRecordingScreen() {
       // Restore original audio coach settings in AsyncStorage (undo session toggle)
       restoreAudioCoachSettings();
 
+      // The goal belonged to this recording; forget it (and its background state).
+      setWorkoutPlan(null);
+      void clearWorkoutSession();
+      void cancelGoalNotification();
+
       // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
       const pointsEarned = result?.points_earned;
       const successMessage =
@@ -877,6 +959,9 @@ export function ActivityRecordingScreen() {
             resetMilestones();
             // Restore original audio coach settings in AsyncStorage
             restoreAudioCoachSettings();
+            setWorkoutPlan(null);
+            void clearWorkoutSession();
+            void cancelGoalNotification();
             logger.activity('Activity discarded from UI');
           } catch (err) {
             logger.error('activity', 'Failed to discard activity from UI', { error: err });
@@ -954,6 +1039,9 @@ export function ActivityRecordingScreen() {
         triggerHaptic();
       }}
       devSimDistanceKm={devSim.distanceKm}
+      workoutLabel={workoutLabel}
+      onOpenWorkout={openWorkoutModal}
+      onClearWorkout={handleClearWorkout}
     />
   );
 
@@ -982,6 +1070,9 @@ export function ActivityRecordingScreen() {
       onToggleLock={handleToggleLock}
       onPause={handlePause}
       onStop={handleStop}
+      workoutPlan={workoutPlan}
+      workoutProgress={workout.progress}
+      onOpenWorkout={() => openWorkoutModal()}
     />
   );
 
@@ -1012,6 +1103,9 @@ export function ActivityRecordingScreen() {
       onSave={handleSave}
       onDiscard={handleDiscard}
       onSkipAutoPostChange={setSkipAutoPost}
+      workoutPlan={workoutPlan}
+      workoutProgress={workout.progress}
+      onOpenWorkout={() => openWorkoutModal()}
     />
   );
 
@@ -1045,48 +1139,23 @@ export function ActivityRecordingScreen() {
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
           ) : (
             <View style={styles.mapSportGrid}>
-              {sportTypes.map((sport) => {
-                const isSelected = selectedSport?.id === sport.id;
-                return (
-                  <TouchableOpacity
-                    key={sport.id}
-                    style={[
-                      styles.mapSportCard,
-                      {
-                        backgroundColor: colors.cardBackground,
-                        borderColor: isSelected ? colors.primary : 'transparent',
-                        borderWidth: isSelected ? 2 : 0,
-                      },
-                    ]}
-                    onPress={() => setSelectedSport(sport)}
-                    activeOpacity={0.75}
-                  >
-                    <View
-                      style={[
-                        styles.mapSportCardIcon,
-                        { backgroundColor: isSelected ? colors.primary + '18' : colors.background },
-                      ]}
-                    >
-                      <Ionicons
-                        name={sport.icon}
-                        size={22}
-                        color={isSelected ? colors.primary : colors.textSecondary}
-                      />
-                    </View>
-                    <Text
-                      style={[
-                        styles.mapSportCardName,
-                        { color: isSelected ? colors.primary : colors.textSecondary },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {sport.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {sportTypes.map((sport) => (
+                <SportTile
+                  key={sport.id}
+                  sport={sport}
+                  selected={selectedSport?.id === sport.id}
+                  onPress={() => setSelectedSport(sport)}
+                  size={MAP_SPORT_TILE_SIZE}
+                />
+              ))}
             </View>
           )}
+
+          <WorkoutGoalRow
+            label={workoutLabel}
+            onOpen={openWorkoutModal}
+            onClear={handleClearWorkout}
+          />
 
           {/* Icon toolbar – centered */}
           <View style={styles.mapIconToolbar}>
@@ -1339,6 +1408,7 @@ export function ActivityRecordingScreen() {
               shadowTrackTitle={selectedShadowTrack?.title || null}
               onClearShadowTrack={handleClearShadowTrack}
               onSelectShadowTrack={() => setRouteSelectionModalVisible(true)}
+              workoutLine={workoutMapLine}
             />
           )}
         </View>
@@ -1572,6 +1642,39 @@ export function ActivityRecordingScreen() {
           </Text>
         </Animated.View>
       )}
+
+      {/* Goal toast */}
+      {workoutToast.visible && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.primary,
+              opacity: workoutToast.opacity,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons name="flag" size={20} color={colors.primary} />
+          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
+            {workoutToast.payload}
+          </Text>
+        </Animated.View>
+      )}
+
+      <WorkoutConfigModal
+        visible={workoutModalVisible}
+        onClose={() => setWorkoutModalVisible(false)}
+        plan={workoutPlan}
+        onApply={handleApplyWorkout}
+        onClear={handleClearWorkout}
+        cuePrefs={workoutCuePrefs}
+        onCuePrefsChange={updateWorkoutCuePrefs}
+        sportTypeId={selectedSport?.id}
+        initialType={workoutModalType}
+        inProgress={!isIdle}
+      />
 
       <SportSelectionModal
         visible={sportModalVisible}
@@ -1817,31 +1920,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.sm,
-  },
-  mapSportCard: {
-    width: 76,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    borderRadius: borderRadius.lg,
-    gap: spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  mapSportCardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapSportCardName: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    textAlign: 'center',
   },
   mapIconToolbar: {
     flexDirection: 'row',

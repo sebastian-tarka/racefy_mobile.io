@@ -50,6 +50,39 @@ All card components include consistent bottom margin for list spacing:
 | `EventCard` | `marginBottom: spacing.md` | Event listings |
 | `ActivityCard` | `marginBottom: spacing.md` | Activity listings |
 
+### Sport tiles (`SportTile`)
+
+Illustrated sport picker used on the recording screen (idle overlay, map overlay) and as
+thumbnails in `SportSelectionModal`. Illustrations live in `assets/sports/{dark,light}/`
+(256 px squares, no caption) and are resolved by slug in `config/sportTiles.ts` — unknown
+sports fall back to the "R" tile, so a new backend sport never renders broken.
+
+```tsx
+<SportTile sport={sport} selected={isSelected} onPress={() => select(sport)} size={tileSize} />
+```
+
+- Three tiles per row: `size = floor((width − 2·spacing.lg − 2·spacing.sm) / 3)`.
+- The translated name sits on a bottom gradient; selection = primary ring + check badge.
+- Add a new sport: drop `dark/<slug>.jpg` + `light/<slug>.jpg`, register both in `sportTiles.ts`.
+
+### Training goal (`WorkoutGoalRow`, `WorkoutConfigModal`, `WorkoutProgressCard`)
+
+Mockup: Racefy v2 "Set a goal". One sheet, distance or time, presets + stepper, alert
+toggles; on the idle screen a segmented `Open | Distance | Time` that becomes a row card
+once a goal is set; during recording a HUD card with the remaining value, a progress bar
+and an "Edit" affordance (or a dashed "Set a goal mid-run" row when there is none).
+
+```tsx
+<WorkoutGoalRow label={goalLabel} onOpen={(type) => openSheet(type)} onClear={clearGoal} />
+<WorkoutProgressCard plan={plan} progress={engine.progress} variant="recording" formatDistance={fmtDistance} onPress={openSheet} />
+```
+
+- `variant="recording"` uses the light frosted palette of `RecordingView` (fixed light
+  colors over the map); `variant="paused"` uses theme tokens.
+- Selected type tile / preset chip = "ink" `#0A1A14` with white text in light theme, a
+  primary tint in dark theme.
+- Cues (voice / tone / haptics / halfway) are local prefs: `useWorkoutCuePrefs()`.
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:

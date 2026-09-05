@@ -31,6 +31,9 @@ interface RecordingMapControlsProps {
 
   // Offset from screen bottom (e.g. tab bar height + safe area inset)
   bottomOffset?: number;
+
+  /** One-line workout status ("Goal · 5 km · 1.8 km to go"); null when no goal is set. */
+  workoutLine?: string | null;
 }
 
 export function RecordingMapControls({
@@ -46,6 +49,7 @@ export function RecordingMapControls({
   onClearShadowTrack,
   onSelectShadowTrack,
   bottomOffset,
+  workoutLine,
 }: RecordingMapControlsProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
@@ -105,6 +109,16 @@ export function RecordingMapControls({
             {t('recording.selectShadowTrack')}
           </Text>
         </TouchableOpacity>
+      ) : null}
+
+      {/* Workout goal — one line, the map leaves no room for a bar */}
+      {workoutLine ? (
+        <View style={styles.workoutRow}>
+          <Ionicons name="flag" size={13} color={colors.primary} />
+          <Text style={[styles.workoutText, { color: colors.textSecondary }]} numberOfLines={1}>
+            {workoutLine}
+          </Text>
+        </View>
       ) : null}
 
       {/* Timer display (large, centered) */}
@@ -217,6 +231,18 @@ const styles = StyleSheet.create({
   shadowTrackSelectText: {
     fontSize: msFont(13),
     fontWeight: '500',
+  },
+  workoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  workoutText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   timer: {
     fontSize: msFont(48),

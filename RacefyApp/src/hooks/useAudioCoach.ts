@@ -9,6 +9,7 @@ import {
   buildStartAnnouncement,
 } from '../services/audioCoach/templates';
 import { speakText, stopSpeaking } from '../services/audioCoach/tts';
+import { isSplitSuppressed } from '../services/workout/audioArbiter';
 import type { AudioCoachSettings } from '../types/audioCoach';
 
 /** Shared AsyncStorage keys — same as in backgroundLocation.ts */
@@ -111,6 +112,13 @@ export function useAudioCoach({
 
     // Write to AsyncStorage so background task knows not to re-announce
     AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, currentThreshold.toString()).catch(() => {});
+
+    // A workout cue ("goal reached") just played — one sentence, not two.
+    // The threshold is already marked, so the split is dropped rather than delayed.
+    if (isSplitSuppressed()) {
+      logger.info('audioCoach', 'Split suppressed by workout cue', { km: currentThreshold });
+      return;
+    }
 
     logger.info('audioCoach', 'Threshold crossed, announcing', {
       km: currentThreshold,

@@ -19,6 +19,8 @@ import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { TrackingStatus } from '../../../hooks/useLiveActivity';
 import { MapboxLiveMap } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
+import { WorkoutGoalRow } from './WorkoutGoalRow';
+import { SportTile } from '../../../components/SportTile';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -44,7 +46,14 @@ interface IdleViewProps {
   devSimRunning?: boolean;
   onToggleDevSim?: () => void;
   devSimDistanceKm?: number;
+  // Training goal
+  workoutLabel?: string | null;
+  onOpenWorkout?: (type?: 'distance' | 'time') => void;
+  onClearWorkout?: () => void;
 }
+
+/** Three illustrated tiles per row inside the overlay padding. */
+const SPORT_TILE_SIZE = Math.floor((SCREEN_WIDTH - spacing.lg * 2 - spacing.sm * 2) / 3);
 
 export function IdleView({
   selectedSport,
@@ -67,6 +76,9 @@ export function IdleView({
   devSimRunning,
   onToggleDevSim,
   devSimDistanceKm,
+  workoutLabel,
+  onOpenWorkout,
+  onClearWorkout,
 }: IdleViewProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -119,47 +131,25 @@ export function IdleView({
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
         ) : (
           <View style={styles.sportGrid}>
-            {sportTypes.map((sport) => {
-              const isSelected = selectedSport?.id === sport.id;
-              return (
-                <TouchableOpacity
-                  key={sport.id}
-                  style={[
-                    styles.sportCard,
-                    {
-                      backgroundColor: colors.cardBackground,
-                      borderColor: isSelected ? colors.primary : 'transparent',
-                      borderWidth: isSelected ? 2 : 0,
-                    },
-                  ]}
-                  onPress={() => onSelectSport(sport)}
-                  activeOpacity={0.75}
-                >
-                  <View
-                    style={[
-                      styles.sportCardIcon,
-                      { backgroundColor: isSelected ? colors.primary + '18' : colors.background },
-                    ]}
-                  >
-                    <Ionicons
-                      name={sport.icon}
-                      size={22}
-                      color={isSelected ? colors.primary : colors.textSecondary}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.sportCardName,
-                      { color: isSelected ? colors.primary : colors.textSecondary },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {sport.name}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {sportTypes.map((sport) => (
+              <SportTile
+                key={sport.id}
+                sport={sport}
+                selected={selectedSport?.id === sport.id}
+                onPress={() => onSelectSport(sport)}
+                size={SPORT_TILE_SIZE}
+              />
+            ))}
           </View>
+        )}
+
+        {/* Goal — segmented Open / Distance / Time, or the set-goal row */}
+        {onOpenWorkout !== undefined && onClearWorkout !== undefined && (
+          <WorkoutGoalRow
+            label={workoutLabel ?? null}
+            onOpen={onOpenWorkout}
+            onClear={onClearWorkout}
+          />
         )}
 
         {/* Icon toolbar – centered below sport grid */}
@@ -286,7 +276,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 20,
-    maxHeight: '55%',
+    maxHeight: '62%',
   },
   topOverlayContent: {
     paddingHorizontal: spacing.lg,
@@ -298,31 +288,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.sm,
-  },
-  sportCard: {
-    width: 76,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    borderRadius: borderRadius.lg,
-    gap: spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sportCardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sportCardName: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    textAlign: 'center',
+    marginBottom: spacing.xs,
   },
   iconToolbar: {
     flexDirection: 'row',

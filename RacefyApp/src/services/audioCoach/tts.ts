@@ -35,6 +35,20 @@ function enqueue(task: () => Promise<void>) {
 }
 
 /**
+ * Run an arbitrary audio task (an earcon, a pre-recorded clip) through the
+ * same serial queue as speech, so it never overlaps an announcement and plays
+ * in the order it was requested — a workout tone followed by its sentence.
+ */
+export function enqueueAudioTask(task: () => Promise<void>): void {
+  enqueue(task);
+}
+
+/** Whether an announcement is playing or waiting. */
+export function isSpeechQueueBusy(): boolean {
+  return isSpeaking || queue.length > 0;
+}
+
+/**
  * Language code mapping for expo-speech
  */
 const SPEECH_LANG_MAP: Record<string, string> = {

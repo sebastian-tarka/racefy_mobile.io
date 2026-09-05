@@ -15,6 +15,10 @@ import { formatTime } from '../../../utils/formatters';
 import { logger } from '../../../services/logger';
 import { MapboxLiveMap } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
+import { WorkoutProgressCard } from './WorkoutProgressCard';
+import type { WorkoutPlan } from '../../../types/workout';
+import type { SegmentProgress } from '../../../services/workout/engine';
+import { formatPlanLabel, formatRemainingShort } from '../../../utils/workoutFormat';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
@@ -40,6 +44,10 @@ interface RecordingViewProps {
   onToggleLock?: () => void;
   onPause: () => void;
   onStop: () => void;
+  // Training goal
+  workoutPlan?: WorkoutPlan | null;
+  workoutProgress?: SegmentProgress | null;
+  onOpenWorkout?: () => void;
 }
 
 export function RecordingView({
@@ -62,6 +70,9 @@ export function RecordingView({
   onToggleLock,
   onPause,
   onStop,
+  workoutPlan,
+  workoutProgress,
+  onOpenWorkout,
 }: RecordingViewProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -107,6 +118,19 @@ export function RecordingView({
   };
 
   const calories = Math.floor(localDuration * 0.15);
+
+  // One-line goal status for the lock overlay (the athlete glances, not reads).
+  const workoutLockLine = (() => {
+    if (!workoutPlan?.goal || !workoutProgress) return null;
+    const goal = formatPlanLabel(workoutPlan, fmtDistance);
+    if (workoutProgress.overshoot) return t('recording.workout.reached').toUpperCase();
+    const remaining = workoutProgress.remaining
+      ? t('recording.workout.remaining', {
+          value: formatRemainingShort(workoutProgress.remaining, fmtDistance),
+        })
+      : '';
+    return `${t('recording.workout.goalLabel', { goal })} · ${remaining}`.toUpperCase();
+  })();
 
   return (
     <View style={styles.container}>
@@ -160,6 +184,16 @@ export function RecordingView({
                 <Text style={styles.metricUnit}> {getPaceUnit()}</Text>
               </Text>
             </View>
+          </View>
+
+          <View style={styles.workoutCard}>
+            <WorkoutProgressCard
+              plan={workoutPlan ?? null}
+              progress={workoutProgress ?? null}
+              variant="recording"
+              formatDistance={fmtDistance}
+              onPress={onOpenWorkout}
+            />
           </View>
 
           <View style={styles.caloriesRow}>
@@ -248,6 +282,14 @@ export function RecordingView({
           accessibilityLabel={t('recording.holdToUnlock')}
         >
           <Text style={styles.lockedTimer}>{formatTime(localDuration)}</Text>
+          {workoutLockLine && (
+            <View style={styles.lockedWorkoutRow}>
+              <Ionicons name="flag" size={14} color="rgba(255,255,255,0.8)" />
+              <Text style={styles.lockedWorkoutText} numberOfLines={1}>
+                {workoutLockLine}
+              </Text>
+            </View>
+          )}
           <Ionicons
             name="lock-closed"
             size={52}
@@ -343,6 +385,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
+  workoutCard: {
+    alignSelf: 'stretch',
+    paddingHorizontal: spacing.lg,
+  },
   caloriesRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -426,6 +472,19 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     letterSpacing: -1,
     color: '#ffffff',
+  },
+  lockedWorkoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+  },
+  lockedWorkoutText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    letterSpacing: 1,
+    fontVariant: ['tabular-nums'],
+    color: 'rgba(255,255,255,0.85)',
   },
   lockedHintRow: {
     flexDirection: 'row',

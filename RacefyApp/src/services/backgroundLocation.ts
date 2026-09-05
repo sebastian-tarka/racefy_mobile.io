@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from './logger';
 import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/templates';
 import { speakText } from './audioCoach/tts';
+import { evaluateWorkoutInBackground } from './workout/background';
+import { isSplitSuppressedAsync } from './workout/audioArbiter';
 import type { AudioCoachSettings } from '../types/audioCoach';
 import { DEFAULT_AUDIO_COACH_SETTINGS } from '../types/audioCoach';
 import type { GpsProfile } from '../config/gpsProfiles';
@@ -228,6 +230,14 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
     // Threshold crossed!
     await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, currentThreshold.toString());
 
+    // A workout cue ("goal reached") just played or is about to — one
+    // sentence beats two. The threshold is already recorded, so this split
+    // is dropped, not delayed.
+    if (await isSplitSuppressedAsync()) {
+      logger.info('audioCoach', 'BG split suppressed by workout cue', { km: currentThreshold });
+      return;
+    }
+
     // Calculate average pace (min/km) from elapsed time
     const startTimeStr = await AsyncStorage.getItem(BG_AUDIO_START_TIME_KEY);
     const startTime = startTimeStr ? parseInt(startTimeStr, 10) : Date.now();
@@ -289,6 +299,21 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
   } catch (err) {
     // Silent fail — never break GPS tracking for audio
     logger.error('audioCoach', 'BG audio coach error', { error: err });
+  }
+}
+
+/**
+ * Cumulative recorded distance for the active activity, from the SQLite point
+ * log (written by both foreground and background). Null when nothing has been
+ * recorded yet or no activity is active.
+ */
+async function readCumulativeDistanceM(): Promise<number | null> {
+  try {
+    const activityId = await getActiveActivityId();
+    const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+    return session ? (trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? null) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -517,6 +542,10 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           newPts: newPoints.length,
         });
         await handleAudioCoachBackground(audioCoachDistAdded);
+
+        // Workout goal / intervals: same cumulative distance the audio coach
+        // uses (SQLite point log), evaluated even when the km coach is off.
+        await evaluateWorkoutInBackground(await readCumulativeDistanceM());
       } catch (err) {
         logger.error('gps', 'Failed to save background location', { error: err });
       }

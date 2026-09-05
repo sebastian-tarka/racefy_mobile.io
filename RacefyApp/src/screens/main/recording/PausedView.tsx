@@ -5,6 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Badge, MapboxLiveMap, PremiumTeaser } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
+import { WorkoutProgressCard } from './WorkoutProgressCard';
+import type { WorkoutPlan } from '../../../types/workout';
+import type { SegmentProgress } from '../../../services/workout/engine';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
 import type { LiveActivityStats, TrackingStatus } from '../../../hooks/useLiveActivity';
@@ -40,6 +43,9 @@ interface PausedViewProps {
   onSave: () => void;
   onDiscard: () => void;
   onSkipAutoPostChange: (value: boolean) => void;
+  workoutPlan?: WorkoutPlan | null;
+  workoutProgress?: SegmentProgress | null;
+  onOpenWorkout?: () => void;
 }
 
 export function PausedView({
@@ -65,6 +71,9 @@ export function PausedView({
   onSave,
   onDiscard,
   onSkipAutoPostChange,
+  workoutPlan,
+  workoutProgress,
+  onOpenWorkout,
 }: PausedViewProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -199,6 +208,18 @@ export function PausedView({
             </Text>
           </View>
         </View>
+
+        {workoutPlan && (
+          <View style={styles.workoutCard}>
+            <WorkoutProgressCard
+              plan={workoutPlan}
+              progress={workoutProgress ?? null}
+              variant="paused"
+              formatDistance={fmtDistance}
+              onPress={onOpenWorkout}
+            />
+          </View>
+        )}
 
         <View style={styles.actionRow}>
           <TouchableOpacity
@@ -454,6 +475,10 @@ const styles = StyleSheet.create({
   liveStatDivider: {
     width: 1,
     marginVertical: spacing.xs,
+  },
+  workoutCard: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
   actionRow: {
     flexDirection: 'row',
