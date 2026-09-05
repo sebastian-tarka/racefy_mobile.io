@@ -70,6 +70,16 @@ export type RootStackParamList = {
   TrainingWeekDetail: { weekId: number };
   TipDetail: { tipId: number };
   WeekFeedback: { weekId: number };
+  // Strength workout plans
+  WorkoutPlans: undefined;
+  WorkoutPlanDetail: { planId: number };
+  WorkoutPlanForm: { planId?: number } | undefined;
+  WorkoutPlanImport: undefined;
+  WorkoutForm: { planId: number; workoutId?: number };
+  WorkoutDetail: { planId: number; workoutId: number };
+  WorkoutExerciseForm: { planId: number; workoutId: number; workoutExerciseId?: number };
+  ExerciseLibrary: undefined;
+  ExerciseForm: { exerciseId?: number } | undefined;
   // Training Reminders
   TrainingReminders: undefined;
   // Teams

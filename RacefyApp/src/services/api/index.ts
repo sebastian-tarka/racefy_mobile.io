@@ -16,21 +16,24 @@ import { RoutesMixin } from './routes';
 import { ReportsMixin } from './reports';
 import { GoalsMixin } from './goals';
 import { LiveMixin } from './live';
+import { WorkoutsMixin } from './workouts';
 
-class ApiService extends LiveMixin(
-  GoalsMixin(
-    ReportsMixin(
-      RoutesMixin(
-        FeedbackMixin(
-          PrivacyZonesMixin(
-            TeamsMixin(
-              InsightsMixin(
-                AuthMixin(
-                  PostsMixin(
-                    ActivitiesMixin(
-                      EventsMixin(
-                        UsersMixin(
-                          TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))),
+class ApiService extends WorkoutsMixin(
+  LiveMixin(
+    GoalsMixin(
+      ReportsMixin(
+        RoutesMixin(
+          FeedbackMixin(
+            PrivacyZonesMixin(
+              TeamsMixin(
+                InsightsMixin(
+                  AuthMixin(
+                    PostsMixin(
+                      ActivitiesMixin(
+                        EventsMixin(
+                          UsersMixin(
+                            TrainingMixin(MessagingMixin(SubscriptionMixin(MiscMixin(ApiBase)))),
+                          ),
                         ),
                       ),
                     ),

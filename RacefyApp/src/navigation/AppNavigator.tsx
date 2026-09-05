@@ -103,6 +103,17 @@ import { AiActivityReportDetailScreen } from '../screens/insights/AiActivityRepo
 import { GoalsScreen } from '../screens/goals/GoalsScreen';
 import { GoalDetailScreen } from '../screens/goals/GoalDetailScreen';
 import { GoalFormScreen } from '../screens/goals/GoalFormScreen';
+import {
+  ExerciseFormScreen,
+  ExerciseLibraryScreen,
+  WorkoutDetailScreen,
+  WorkoutExerciseFormScreen,
+  WorkoutFormScreen,
+  WorkoutPlanDetailScreen,
+  WorkoutPlanFormScreen,
+  WorkoutPlanImportScreen,
+  WorkoutPlansScreen,
+} from '../screens/workouts';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -666,6 +677,15 @@ export function AppNavigator() {
               <RootStack.Screen name="Goals" component={GoalsScreen} />
               <RootStack.Screen name="GoalDetail" component={GoalDetailScreen} />
               <RootStack.Screen name="GoalForm" component={GoalFormScreen} />
+              <RootStack.Screen name="WorkoutPlans" component={WorkoutPlansScreen} />
+              <RootStack.Screen name="WorkoutPlanDetail" component={WorkoutPlanDetailScreen} />
+              <RootStack.Screen name="WorkoutPlanForm" component={WorkoutPlanFormScreen} />
+              <RootStack.Screen name="WorkoutPlanImport" component={WorkoutPlanImportScreen} />
+              <RootStack.Screen name="WorkoutForm" component={WorkoutFormScreen} />
+              <RootStack.Screen name="WorkoutDetail" component={WorkoutDetailScreen} />
+              <RootStack.Screen name="WorkoutExerciseForm" component={WorkoutExerciseFormScreen} />
+              <RootStack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
+              <RootStack.Screen name="ExerciseForm" component={ExerciseFormScreen} />
               <RootStack.Screen name="LiveBroadcasts" component={LiveBroadcastsScreen} />
               <RootStack.Screen name="LiveSpectator" component={LiveSpectatorScreen} />
               <RootStack.Screen name="TrainingCalibration" component={CalibrationFormScreen} />
