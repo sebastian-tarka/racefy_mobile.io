@@ -80,6 +80,8 @@ export type RootStackParamList = {
   WorkoutExerciseForm: { planId: number; workoutId: number; workoutExerciseId?: number };
   ExerciseLibrary: undefined;
   ExerciseForm: { exerciseId?: number } | undefined;
+  WorkoutSchedule: { planId: number };
+  WorkoutSession: { sessionId: number };
   // Training Reminders
   TrainingReminders: undefined;
   // Teams

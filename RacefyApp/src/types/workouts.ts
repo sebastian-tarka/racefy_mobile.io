@@ -236,3 +236,187 @@ export interface WorkoutPlanImportPreview {
     scheduled_workouts: number;
   };
 }
+
+// ── sessions (phase 4) ──────────────────────────────────────────────────────
+
+export type WorkoutSessionStatus = 'in_progress' | 'completed' | 'skipped';
+
+export interface WorkoutSessionStats {
+  sets_total: number;
+  sets_completed: number;
+  volume_kg: number;
+  exercises: number;
+}
+
+export interface WorkoutSessionSetPlanned {
+  target_type: WorkoutTargetType;
+  reps_min: number | null;
+  reps_max: number | null;
+  rest_seconds: number | null;
+  /** Weight from the plan, else the last logged one. */
+  suggested_weight_kg: number | null;
+}
+
+export interface WorkoutSessionSet {
+  id: number;
+  workout_session_id: number;
+  workout_exercise_id: number | null;
+  exercise_id: number;
+  exercise_order: number;
+  set_number: number;
+  planned: WorkoutSessionSetPlanned;
+  reps: number | null;
+  weight_kg: number | null;
+  duration_seconds: number | null;
+  is_completed: boolean;
+  started_at: string | null;
+  completed_at: string | null;
+  rest_started_at: string | null;
+  /** Actual rest length, when known. */
+  rest_seconds: number | null;
+  notes: string | null;
+}
+
+export interface WorkoutSessionExercise {
+  exercise_order: number;
+  workout_exercise_id: number | null;
+  exercise: Pick<Exercise, 'id' | 'name' | 'muscle_group' | 'video_url' | 'is_global'> | null;
+  video_url: string | null;
+  /** Prescription notes. */
+  notes: string | null;
+  load_note: string | null;
+  planned: {
+    sets: number;
+    target_type: WorkoutTargetType;
+    reps_min: number | null;
+    reps_max: number | null;
+    rest_seconds: number | null;
+  };
+  sets: WorkoutSessionSet[];
+}
+
+export interface WorkoutSession {
+  id: number;
+  status: WorkoutSessionStatus;
+  /** YYYY-MM-DD */
+  scheduled_for: string;
+  workout_name: string;
+  day_label: string | null;
+  workout_plan_id: number | null;
+  workout_id: number | null;
+  activity_id: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  duration_seconds: number | null;
+  rpe: number | null;
+  notes: string | null;
+  /** Present when sets are loaded. */
+  stats?: WorkoutSessionStats;
+  exercises?: WorkoutSessionExercise[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** PUT /workout-session-sets/{id} */
+export interface WorkoutSessionSetUpdate {
+  /** Stamps started_at now. */
+  start?: true;
+  /** Stamps rest_started_at now. */
+  rest?: true;
+  reps?: number | null;
+  weight_kg?: number | null;
+  duration_seconds?: number | null;
+  /** true stamps completed_at, false clears it. */
+  is_completed?: boolean;
+  rest_seconds?: number | null;
+  notes?: string | null;
+  started_at?: string;
+  completed_at?: string;
+  rest_started_at?: string;
+}
+
+export interface WorkoutSessionSetResponse {
+  message?: string;
+  data: WorkoutSessionSet;
+  stats: WorkoutSessionStats;
+}
+
+/** POST /workout-sessions/{id}/sets */
+export type WorkoutSessionAddSetInput =
+  | { workout_exercise_id: number }
+  | {
+      exercise_id: number;
+      planned_reps_min?: number | null;
+      planned_reps_max?: number | null;
+      planned_rest_seconds?: number | null;
+      planned_target_type?: WorkoutTargetType;
+    };
+
+export type ActivityVisibility = 'public' | 'followers' | 'private';
+
+export interface WorkoutSessionCompleteInput {
+  duration_seconds?: number;
+  /** 1–10 */
+  rpe?: number;
+  notes?: string | null;
+  visibility?: ActivityVisibility;
+}
+
+export interface WorkoutSessionCompleteResponse {
+  message?: string;
+  data: WorkoutSession;
+  activity_id: number;
+}
+
+/** GET /workout-plans/{id}/sessions */
+export interface PlannedSession {
+  date: string;
+  weekday: Weekday;
+  note: string | null;
+  workout:
+    | (Pick<Workout, 'id' | 'name' | 'day_label' | 'weekday' | 'estimated_duration_minutes'> & {
+        exercises_count: number | null;
+        exercises: WorkoutExercise[];
+      })
+    | null;
+  session:
+    | (Pick<
+        WorkoutSession,
+        'id' | 'status' | 'started_at' | 'completed_at' | 'duration_seconds' | 'activity_id'
+      > & { stats: WorkoutSessionStats | null })
+    | null;
+}
+
+/** 409 from POST /workout-sessions or /workout-sessions/skip */
+export interface WorkoutSessionConflict {
+  message: string;
+  reason: 'in_progress_exists' | 'already_logged';
+  session: WorkoutSession;
+}
+
+/** GET /exercises/{id}/history */
+export interface ExerciseHistoryEntry {
+  session_id: number;
+  date: string;
+  workout_name: string;
+  best_weight_kg: number | null;
+  volume_kg: number;
+  sets: {
+    set_number: number;
+    reps: number | null;
+    weight_kg: number | null;
+    duration_seconds: number | null;
+  }[];
+}
+
+export interface WorkoutSessionListParams {
+  status?: WorkoutSessionStatus;
+  plan_id?: number;
+  per_page?: number;
+  page?: number;
+}
+
+export interface WorkoutSessionListResponse {
+  data: WorkoutSession[];
+  meta?: { current_page: number; last_page: number; per_page: number; total: number };
+}

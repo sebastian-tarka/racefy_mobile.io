@@ -23,6 +23,7 @@ import type { Workout } from '../../types/workouts';
 import { WEEKDAYS } from '../../types/workouts';
 import { formatDurationMinutes, weekdayShort } from '../../utils/workoutPlanFormat';
 import { PlanStatusPill } from './components/PlanStatusPill';
+import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutPlanDetail'>;
 
@@ -179,6 +180,14 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
         <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.primary} />
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
+          <ResumeSessionBanner />
+          {plan.status === 'active' && (
+            <Button
+              title={t('strengthPlans.schedule.openSchedule')}
+              onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
+              fullWidth
+            />
+          )}
           {/* Header card */}
           <View
             style={[
@@ -208,6 +217,15 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
               </Text>
             )}
           </View>
+
+          {plan.status !== 'active' && (
+            <Button
+              title={t('strengthPlans.schedule.openSchedule')}
+              variant="outline"
+              onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
+              fullWidth
+            />
+          )}
 
           {/* Week strip */}
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
