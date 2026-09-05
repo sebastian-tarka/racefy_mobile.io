@@ -40,6 +40,14 @@ zaplanowanym na moment mety (przeplanowanie przy pauzie/wznowieniu).
 - [ ] PausedView: wiersz „Cel: 5 km — 3,2 km (64 %)"; po zapisie/odrzuceniu cel znika z Idle
 - [ ] Głos AI (Plus/Pro) włączony: komunikaty celu grają natychmiast (głos systemowy), splity dalej głosem AI
 
+Dołożone w trakcie (mockupy „Racefy v2" + arkusz kafli sportów):
+
+- [ ] Idle: sekcja GOAL — segment „Bez celu | Dystans | Czas" bez celu, wiersz „5,0 km · Dotknij, aby zmienić" z celem; to samo w trybie mapy
+- [ ] Arkusz „Ustaw cel": kafle typu (Interwały wyszarzone „Wkrótce"), stepper + presety (Półmaraton/Maraton), sygnały z podpisami, stopka „Zapisz cel · 5,0 km"; w trakcie: „Zmień cel" + „Usuń cel / Zastosuj"
+- [ ] Karta HUD w trakcie: duża wartość „zostało", pasek, „Edytuj"; bez celu — przerywany wiersz „Ustaw cel w trakcie"
+- [ ] Ilustrowane kafle sportów (3 w rzędzie) na Idle i w trybie mapy, miniatury w modalu wyboru sportu; dark i light; sport bez ilustracji dostaje kafel „R"
+- [ ] Kafle na małym ekranie: siatka przewija się, przycisk START nie zasłania sekcji GOAL
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
