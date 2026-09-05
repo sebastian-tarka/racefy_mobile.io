@@ -165,6 +165,15 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
           subtitle={t('routes.subtitle')}
           onPress={() => navigation.navigate('RouteLibrary')}
         />
+
+        <ProfileSectionCard
+          layout="tile"
+          icon="barbell"
+          accentColor="#f97316"
+          label={t('strengthPlans.title')}
+          subtitle={t('strengthPlans.subtitle')}
+          onPress={() => navigation.navigate('WorkoutPlans')}
+        />
       </View>
 
       <TrainingPlansSheet

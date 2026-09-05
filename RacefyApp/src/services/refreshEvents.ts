@@ -11,7 +11,8 @@ export type RefreshEventType =
   | 'messages'
   | 'teams'
   | 'training'
-  | 'goals';
+  | 'goals'
+  | 'workouts';
 
 const REFRESH_EVENT_PREFIX = 'refresh:';
 
