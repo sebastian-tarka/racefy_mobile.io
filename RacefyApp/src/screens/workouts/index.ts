@@ -7,3 +7,5 @@ export { WorkoutDetailScreen } from './WorkoutDetailScreen';
 export { WorkoutExerciseFormScreen } from './WorkoutExerciseFormScreen';
 export { ExerciseLibraryScreen } from './ExerciseLibraryScreen';
 export { ExerciseFormScreen } from './ExerciseFormScreen';
+export { WorkoutScheduleScreen } from './WorkoutScheduleScreen';
+export { WorkoutSessionScreen } from './WorkoutSessionScreen';

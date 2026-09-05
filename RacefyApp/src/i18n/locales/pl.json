@@ -3091,6 +3091,89 @@
       "pickAnother": "Wybierz inny plik",
       "fileTooLarge": "Plik jest większy niż 5 MB",
       "failed": "Nie udało się odczytać pliku"
+    },
+    "resume": {
+      "title": "Sesja w toku",
+      "subtitle": "{{name}} · start {{time}}",
+      "cta": "Wznów"
+    },
+    "schedule": {
+      "title": "Kalendarz",
+      "today": "Dziś",
+      "start": "Start",
+      "resume": "Wznów",
+      "skip": "Pomiń",
+      "skipped": "Pominięty",
+      "completed": "Zrobiony",
+      "inProgress": "W toku",
+      "noteOnly": "Notatka",
+      "empty": "Nic nie zaplanowano na najbliższe dwa tygodnie",
+      "statsLine": "{{sets}} serii · {{volume}} kg · {{duration}}",
+      "confirmSkip": "Pominąć ten trening? Zostanie zapisany jako pominięty.",
+      "conflictInProgress": "Inna sesja jest w toku: {{name}}. Wznowić ją?",
+      "conflictLogged": "Ten trening jest już zapisany tego dnia.",
+      "openActivity": "Otwórz aktywność",
+      "openSchedule": "Kalendarz i start",
+      "range": "Najbliższe 14 dni"
+    },
+    "session": {
+      "progress": "{{done}}/{{total}} serii",
+      "volume": "{{kg}} kg",
+      "setNo": "Seria {{n}}",
+      "kg": "kg",
+      "reps": "powt.",
+      "sec": "s",
+      "start": "Start",
+      "done": "Gotowe",
+      "undo": "Cofnij",
+      "addSet": "+ seria",
+      "removeSet": "Usuń serię",
+      "rest": "Przerwa",
+      "restLeft": "zostało {{time}}",
+      "skipRest": "Pomiń przerwę",
+      "plus30": "+30 s",
+      "finish": "Zakończ trening",
+      "skipSession": "Pomiń sesję",
+      "confirmSkip": "Pominąć tę sesję? Nic nie zapisze się jako aktywność.",
+      "history": "Historia",
+      "suggested": "ostatnio {{kg}} kg",
+      "target": "{{target}}",
+      "leaveHint": "Wyjście nie kończy sesji — wznowisz ją z planu.",
+      "nextExercise": "Dalej: {{name}}",
+      "collapsedDone": "{{done}}/{{total}} zrobione",
+      "notification": {
+        "title": "Koniec przerwy",
+        "body": "Następna seria: {{exercise}}"
+      },
+      "deleteSetConfirm": "Usunąć tę serię?"
+    },
+    "complete": {
+      "title": "Zakończ trening",
+      "rpe": "Wysiłek (RPE)",
+      "rpeHint": "1 = bardzo lekko · 10 = maksymalnie",
+      "notes": "Notatka",
+      "visibility": "Widoczność",
+      "visibilityOptions": {
+        "public": "Publiczna",
+        "followers": "Obserwujący",
+        "private": "Prywatna"
+      },
+      "submit": "Zapisz jako aktywność",
+      "summaryTitle": "Trening zapisany",
+      "time": "Czas",
+      "sets": "Serie",
+      "volume": "Objętość",
+      "openActivity": "Otwórz aktywność",
+      "backToPlan": "Wróć do planu",
+      "skippedTitle": "Sesja pominięta"
+    },
+    "history": {
+      "title": "Historia",
+      "empty": "Brak zapisanych sesji",
+      "best": "najlepiej {{kg}} kg",
+      "volume": "{{kg}} kg",
+      "setLine": "{{reps}} × {{kg}} kg",
+      "setLineSeconds": "{{seconds}} s"
     }
   }
 }

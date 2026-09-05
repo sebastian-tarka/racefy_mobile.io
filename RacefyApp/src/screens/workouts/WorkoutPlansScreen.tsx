@@ -23,6 +23,7 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutPlan } from '../../types/workouts';
 import { PlanStatusPill } from './components/PlanStatusPill';
+import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutPlans'>;
 
@@ -196,6 +197,7 @@ export function WorkoutPlansScreen({ navigation }: Props) {
           keyExtractor={(item) => String(item.id)}
           renderItem={renderPlan}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={<ResumeSessionBanner />}
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={() => fetchPlans('refresh')} />
           }

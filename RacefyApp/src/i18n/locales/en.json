@@ -3072,6 +3072,89 @@
       "pickAnother": "Choose another file",
       "fileTooLarge": "The file is larger than 5 MB",
       "failed": "Could not read this file"
+    },
+    "resume": {
+      "title": "Session in progress",
+      "subtitle": "{{name}} · started {{time}}",
+      "cta": "Resume"
+    },
+    "schedule": {
+      "title": "Schedule",
+      "today": "Today",
+      "start": "Start",
+      "resume": "Resume",
+      "skip": "Skip",
+      "skipped": "Skipped",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "noteOnly": "Note",
+      "empty": "Nothing planned in the next two weeks",
+      "statsLine": "{{sets}} sets · {{volume}} kg · {{duration}}",
+      "confirmSkip": "Skip this workout? It will be logged as skipped.",
+      "conflictInProgress": "Another session is in progress: {{name}}. Resume it?",
+      "conflictLogged": "This workout is already logged for that day.",
+      "openActivity": "Open activity",
+      "openSchedule": "Schedule & start",
+      "range": "Next 14 days"
+    },
+    "session": {
+      "progress": "{{done}}/{{total}} sets",
+      "volume": "{{kg}} kg",
+      "setNo": "Set {{n}}",
+      "kg": "kg",
+      "reps": "reps",
+      "sec": "s",
+      "start": "Start",
+      "done": "Done",
+      "undo": "Undo",
+      "addSet": "+ set",
+      "removeSet": "Remove set",
+      "rest": "Rest",
+      "restLeft": "{{time}} left",
+      "skipRest": "Skip rest",
+      "plus30": "+30 s",
+      "finish": "Finish workout",
+      "skipSession": "Skip session",
+      "confirmSkip": "Skip this session? Nothing will be saved as an activity.",
+      "history": "History",
+      "suggested": "last {{kg}} kg",
+      "target": "{{target}}",
+      "leaveHint": "Leaving keeps the session in progress — resume it from the plan.",
+      "nextExercise": "Next: {{name}}",
+      "collapsedDone": "{{done}}/{{total}} done",
+      "notification": {
+        "title": "Rest over",
+        "body": "Next set: {{exercise}}"
+      },
+      "deleteSetConfirm": "Remove this set?"
+    },
+    "complete": {
+      "title": "Finish workout",
+      "rpe": "Effort (RPE)",
+      "rpeHint": "1 = very easy · 10 = all out",
+      "notes": "Notes",
+      "visibility": "Visibility",
+      "visibilityOptions": {
+        "public": "Public",
+        "followers": "Followers",
+        "private": "Private"
+      },
+      "submit": "Save as activity",
+      "summaryTitle": "Workout saved",
+      "time": "Time",
+      "sets": "Sets",
+      "volume": "Volume",
+      "openActivity": "Open activity",
+      "backToPlan": "Back to plan",
+      "skippedTitle": "Session skipped"
+    },
+    "history": {
+      "title": "History",
+      "empty": "No logged sessions yet",
+      "best": "best {{kg}} kg",
+      "volume": "{{kg}} kg",
+      "setLine": "{{reps}} × {{kg}} kg",
+      "setLineSeconds": "{{seconds}} s"
     }
   }
 }

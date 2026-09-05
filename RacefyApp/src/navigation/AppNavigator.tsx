@@ -113,6 +113,8 @@ import {
   WorkoutPlanFormScreen,
   WorkoutPlanImportScreen,
   WorkoutPlansScreen,
+  WorkoutScheduleScreen,
+  WorkoutSessionScreen,
 } from '../screens/workouts';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
@@ -686,6 +688,12 @@ export function AppNavigator() {
               <RootStack.Screen name="WorkoutExerciseForm" component={WorkoutExerciseFormScreen} />
               <RootStack.Screen name="ExerciseLibrary" component={ExerciseLibraryScreen} />
               <RootStack.Screen name="ExerciseForm" component={ExerciseFormScreen} />
+              <RootStack.Screen name="WorkoutSchedule" component={WorkoutScheduleScreen} />
+              <RootStack.Screen
+                name="WorkoutSession"
+                component={WorkoutSessionScreen}
+                options={{ gestureEnabled: false }}
+              />
               <RootStack.Screen name="LiveBroadcasts" component={LiveBroadcastsScreen} />
               <RootStack.Screen name="LiveSpectator" component={LiveSpectatorScreen} />
               <RootStack.Screen name="TrainingCalibration" component={CalibrationFormScreen} />
