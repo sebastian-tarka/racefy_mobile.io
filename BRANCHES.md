@@ -15,7 +15,16 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `workout-configurator` — konfigurator treningu: cel czasu/dystansu + sygnały (2026-09-05)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Konfigurator treningu: cel czasu/dystansu + sygnały + kafle sportów (zmergowane 2026-09-05, tag `pre-workout-configurator` = main sprzed merge)
 
 Faza 0 + 1 z `.notes/KONFIGURATOR_TRENINGU_PLAN.md`: model `WorkoutPlan`, czysty silnik
 odcinków (`services/workout/engine.ts`, testy Jest), krótkie dźwięki (earcony) przez
@@ -47,13 +56,6 @@ Dołożone w trakcie (mockupy „Racefy v2" + arkusz kafli sportów):
 - [ ] Karta HUD w trakcie: duża wartość „zostało", pasek, „Edytuj"; bez celu — przerywany wiersz „Ustaw cel w trakcie"
 - [ ] Ilustrowane kafle sportów (3 w rzędzie) na Idle i w trybie mapy, miniatury w modalu wyboru sportu; dark i light; sport bez ilustracji dostaje kafel „R"
 - [ ] Kafle na małym ekranie: siatka przewija się, przycisk START nie zasłania sekcji GOAL
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Doping z transmisji: odstęp karty, czytelność zaznaczenia, kolizja na mapie (2026-08-31)
 
