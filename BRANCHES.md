@@ -15,7 +15,30 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `strength-workouts` — plany siłowe (mobile M1: przeglądanie, edycja, biblioteka, import XLSX) (2026-09-05)
+
+Mobilna strona backendowej funkcji „Strength Workout Plans" (`/workout-plans`,
+`/workouts`, `/workout-exercises`, `/exercises`; API gotowe lokalnie). Wejście:
+Profil → „Plany siłowe". Ekrany: lista planów (aktywny pierwszy; aktywuj / duplikuj /
+usuń), szczegóły planu (tydzień Pn–Nd z treningami i notatkami dni, lista treningów,
+kolejność góra/dół), formularz planu, formularz treningu (nazwa, etykieta dnia, dzień
+tygodnia, focus, notatki), szczegóły treningu (lista ćwiczeń „4 × 6–10 · 120 s", link
+YouTube, kolejność, usuwanie), formularz ćwiczenia w treningu (wybór z biblioteki albo
+nowe po nazwie, serie, typ celu, zakres, przerwa, tempo, superset, obciążenie, notatki,
+własny link), biblioteka ćwiczeń (szukaj, grupa mięśniowa, moje/globalne, dodaj/edytuj/
+usuń z blokadą 409), import XLSX (podgląd: podsumowanie, ostrzeżenia, nowe/istniejące
+ćwiczenia, zapis). Sesje treningowe (logowanie serii) czekają na backend.
+
+- [ ] Profil → „Plany siłowe" otwiera listę; pusta lista pokazuje CTA „Nowy plan" i „Import XLSX"
+- [ ] Import arkusza z Google Sheets (PLAN TRENINGOWY — …, DZIEŃ N, UKŁAD TYGODNIA): podgląd zgadza się z arkuszem, ostrzeżenia czytelne, zapis tworzy plan i otwiera jego szczegóły
+- [ ] Aktywacja planu archiwizuje poprzedni aktywny (lista odświeża się, badge „Aktywny" przeskakuje)
+- [ ] Dwa treningi na ten sam dzień tygodnia: 422 pokazane przy polu, nie jako crash
+- [ ] Ćwiczenie z listy: tap → edycja, long-press → góra / dół / usuń; kolejność zapisuje się (reorder)
+- [ ] Link YouTube z ćwiczenia otwiera się w przeglądarce/aplikacji YT
+- [ ] Biblioteka: usunięcie ćwiczenia użytego w planie daje komunikat 409 z liczbą użyć, nie generyczny błąd
+- [ ] Ćwiczenie globalne: bez przycisku edycji dla zwykłego użytkownika, widoczne w wyborze
+- [ ] Duplikacja planu tworzy szkic z kopią treningów
+- [ ] Dark mode: karty, badge statusu, pasek tygodnia czytelne
 
 ---
 
