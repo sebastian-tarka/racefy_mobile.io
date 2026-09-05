@@ -144,6 +144,7 @@ export function handleWorkoutEvents(events: WorkoutEngineEvent[], ctx: WorkoutCu
   for (const event of events) {
     switch (event.type) {
       case 'countdown': {
+        if (!prefs.countdown) break;
         // Timing-critical: straight to the speaker, never behind a queued sentence.
         if (prefs.tone) void playCue('beep');
         if (prefs.haptics) haptic('light');

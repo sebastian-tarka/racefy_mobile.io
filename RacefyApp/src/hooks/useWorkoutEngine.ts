@@ -22,7 +22,7 @@ import {
   saveWorkoutEngineState,
   saveWorkoutSession,
 } from '../services/workout/storage';
-import type { SpokenUnits } from '../services/workout/templates';
+import { buildSegmentStartText, type SpokenUnits } from '../services/workout/templates';
 import type { AudioCoachSettings } from '../types/audioCoach';
 import type { WorkoutCuePrefs, WorkoutPlan } from '../types/workout';
 
@@ -101,24 +101,46 @@ export function useWorkoutEngine({
     if (next) void saveWorkoutEngineState(next);
   }, []);
 
-  const notificationContent = useCallback(() => {
-    const p = planRef.current;
-    const goalLabel = p?.name || i18n.t('recording.workout.notification.goal');
-    return {
-      title: i18n.t('recording.workout.notification.title'),
-      body: i18n.t('recording.workout.notification.body', { goal: goalLabel }),
-    };
-  }, []);
-
-  /** Time goals only: schedule the suspended-app safety net for the remaining seconds. */
+  /**
+   * Suspended-app safety net: a local notification for the end of the current
+   * TIME-based segment (the goal itself, or an interval boundary). Distance
+   * boundaries are covered by the GPS task and need nothing here.
+   */
   const armTimeGoalNotification = useCallback(
     (current: WorkoutEngineState, now: EngineSnapshot) => {
       const p = planRef.current;
-      if (!p || p.mode !== 'goal' || p.goal?.type !== 'time' || current.completed) return;
-      const remaining = p.goal.seconds - (now.activeSeconds - current.segmentStart.activeSeconds);
-      void scheduleGoalNotification(remaining, notificationContent());
+      if (!p || current.completed) {
+        void cancelGoalNotification();
+        return;
+      }
+      const segment = current.segments[current.currentIndex];
+      if (!segment || segment.end.type !== 'time') {
+        void cancelGoalNotification();
+        return;
+      }
+      const remaining =
+        segment.end.seconds - (now.activeSeconds - current.segmentStart.activeSeconds);
+      const next = current.segments[current.currentIndex + 1];
+      const content =
+        p.mode === 'goal'
+          ? {
+              title: i18n.t('recording.workout.notification.title'),
+              body: i18n.t('recording.workout.notification.body', {
+                goal: p.name || i18n.t('recording.workout.notification.goal'),
+              }),
+            }
+          : next
+            ? {
+                title: i18n.t('recording.workout.notification.segmentTitle'),
+                body: buildSegmentStartText(next, cueCtxRef.current.coachSettings.language, units),
+              }
+            : {
+                title: i18n.t('recording.workout.notification.title'),
+                body: i18n.t('recording.workout.notification.completeBody'),
+              };
+      void scheduleGoalNotification(remaining, content);
     },
-    [notificationContent],
+    [units],
   );
 
   // ── session lifecycle: start / restore / pause / resume / end ─────────────
@@ -187,10 +209,11 @@ export function useWorkoutEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, activityId, commit, armTimeGoalNotification, onRestorePlan]);
 
-  // Plan changed or cleared mid-run. A new goal restarts the engine from the
+  // Plan changed or cleared mid-run. A new GOAL restarts the engine from the
   // ACTIVITY start (not from now): "change to 10 km" after 4 km means 10 km
-  // total, which is what anyone means by it. Clearing drops the engine; the
-  // screen wipes storage.
+  // total, which is what anyone means by it. A new INTERVAL plan starts from
+  // now — the mockup's "the plan starts from now". Clearing drops the engine;
+  // the screen wipes storage.
   useEffect(() => {
     const current = stateRef.current;
     if (!current) return;
@@ -201,10 +224,14 @@ export function useWorkoutEngine({
       return;
     }
     if (plan.id === current.planId) return;
-    const replaced: WorkoutEngineState = {
-      ...createWorkoutEngine(plan, current.segmentStart),
-      lastSnapshot: current.lastSnapshot,
-    };
+    const nowSnap: EngineSnapshot = { activeSeconds, distanceM };
+    const replaced: WorkoutEngineState =
+      plan.mode === 'intervals'
+        ? createWorkoutEngine(plan, nowSnap)
+        : {
+            ...createWorkoutEngine(plan, current.segmentStart),
+            lastSnapshot: current.lastSnapshot,
+          };
     commit(replaced);
     void (async () => {
       const session = await loadWorkoutSession();
@@ -249,23 +276,28 @@ export function useWorkoutEngine({
       return;
     }
 
-    if (events.some((e) => e.type === 'goal_reached' || e.type === 'workout_complete')) {
-      void cancelGoalNotification();
-    }
     handleWorkoutEvents(events, cueCtxRef.current);
     commit(next);
-  }, [activeSeconds, distanceM, status, commit]);
+    // A boundary passed (or the plan ended): the safety-net notification
+    // must now point at the NEW current segment, or go away.
+    if (
+      events.some(
+        (e) =>
+          e.type === 'segment_start' || e.type === 'goal_reached' || e.type === 'workout_complete',
+      )
+    ) {
+      armTimeGoalNotification(next, { activeSeconds, distanceM });
+    }
+  }, [activeSeconds, distanceM, status, commit, armTimeGoalNotification]);
 
   const skip = useCallback(() => {
     const current = stateRef.current;
     if (!current || current.completed) return;
     const { state: next, events } = skipWorkoutSegment(current, { activeSeconds, distanceM });
-    if (events.some((e) => e.type === 'goal_reached' || e.type === 'workout_complete')) {
-      void cancelGoalNotification();
-    }
     handleWorkoutEvents(events, cueCtxRef.current);
     commit(next);
-  }, [activeSeconds, distanceM, commit]);
+    armTimeGoalNotification(next, { activeSeconds, distanceM });
+  }, [activeSeconds, distanceM, commit, armTimeGoalNotification]);
 
   const progress = state ? getWorkoutProgress(state, { activeSeconds, distanceM }) : null;
 

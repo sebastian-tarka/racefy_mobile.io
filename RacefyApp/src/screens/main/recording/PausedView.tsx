@@ -7,7 +7,7 @@ import { Badge, MapboxLiveMap, PremiumTeaser } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 import { WorkoutProgressCard } from './WorkoutProgressCard';
 import type { WorkoutPlan } from '../../../types/workout';
-import type { SegmentProgress } from '../../../services/workout/engine';
+import type { SegmentProgress, WorkoutEngineState } from '../../../services/workout/engine';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
 import type { LiveActivityStats, TrackingStatus } from '../../../hooks/useLiveActivity';
@@ -45,7 +45,9 @@ interface PausedViewProps {
   onSkipAutoPostChange: (value: boolean) => void;
   workoutPlan?: WorkoutPlan | null;
   workoutProgress?: SegmentProgress | null;
+  workoutState?: WorkoutEngineState | null;
   onOpenWorkout?: () => void;
+  onSkipSegment?: () => void;
 }
 
 export function PausedView({
@@ -73,6 +75,7 @@ export function PausedView({
   onSkipAutoPostChange,
   workoutPlan,
   workoutProgress,
+  workoutState,
   onOpenWorkout,
 }: PausedViewProps) {
   const { colors } = useTheme();
@@ -214,6 +217,7 @@ export function PausedView({
             <WorkoutProgressCard
               plan={workoutPlan}
               progress={workoutProgress ?? null}
+              state={workoutState ?? null}
               variant="paused"
               formatDistance={fmtDistance}
               onPress={onOpenWorkout}

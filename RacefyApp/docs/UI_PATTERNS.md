@@ -81,7 +81,14 @@ and an "Edit" affordance (or a dashed "Set a goal mid-run" row when there is non
   colors over the map); `variant="paused"` uses theme tokens.
 - Selected type tile / preset chip = "ink" `#0A1A14` with white text in light theme, a
   primary tint in dark theme.
-- Cues (voice / tone / haptics / halfway) are local prefs: `useWorkoutCuePrefs()`.
+- Cues (voice / tone / haptics / halfway / countdown) are local prefs: `useWorkoutCuePrefs()`.
+- Intervals: the sheet shows presets (`services/workout/presets.ts`) and a "build your own"
+  form (repeats, work, recovery, optional warm-up / cool-down, each by time or distance) with
+  a plan strip preview. The card then shows the current segment (work = primary, recovery =
+  `colors.warning`, warm/cool = sky `#0EA5E9`), the remaining value, "Next · …", a segment bar,
+  the plan strip with position and a "Skip ▸" action; the big number pulses in the last 3 s.
+- Sport tile grids sit on a frosted panel (`cardBackground + 'B8'`, `borderRadius.xl`) so the
+  tiles don't float loose over the map.
 
 ### List Content Styling
 

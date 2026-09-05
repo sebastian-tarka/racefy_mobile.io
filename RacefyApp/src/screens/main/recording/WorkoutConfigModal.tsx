@@ -14,11 +14,31 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import { useUnits } from '../../../hooks/useUnits';
 import { ScreenContainer } from '../../../components';
-import { makeQuickGoalPlan } from '../../../services/workout/compile';
+import {
+  estimateWorkoutTotals,
+  makeQuickGoalPlan,
+  compileWorkout,
+} from '../../../services/workout/compile';
+import {
+  INTERVAL_PRESETS,
+  buildIntervalPlan,
+  defaultIntervalDraft,
+  draftFromPlan,
+  matchPreset,
+  presetDraft,
+  type IntervalDraft,
+  type IntervalStepDraft,
+} from '../../../services/workout/presets';
 import { loadLastQuickGoal, saveLastQuickGoal } from '../../../services/workout/storage';
 import type { WorkoutCuePrefs, WorkoutGoal, WorkoutPlan } from '../../../types/workout';
 import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
-import { formatGoalShort, formatGoalTime } from '../../../utils/workoutFormat';
+import {
+  describeIntervals,
+  formatGoalShort,
+  formatGoalTime,
+  formatStepEnd,
+  segmentWeight,
+} from '../../../utils/workoutFormat';
 
 const METERS_PER_MILE = 1609.344;
 
@@ -26,6 +46,7 @@ const METERS_PER_MILE = 1609.344;
 const INK = '#0A1A14';
 const PRIMARY_SOFT = '#E6F6F0';
 const PRIMARY_DEEP = '#0A8C68';
+const SKY = '#0EA5E9';
 
 /** Distance presets in display units; the last two are half / full marathon. */
 const DISTANCE_PRESETS: Record<
@@ -54,6 +75,16 @@ const TIME_STEP_MIN = 5;
 const MAX_DISTANCE_UNITS = 300;
 const MAX_TIME_MIN = 24 * 60;
 
+/** Interval step steppers. */
+const STEP_TIME_S = 15;
+const STEP_TIME_MIN_S = 15;
+const STEP_TIME_MAX_S = 3600;
+const STEP_DIST_M = 100;
+const STEP_DIST_MIN_M = 100;
+const STEP_DIST_MAX_M = 20_000;
+const STEP_DIST_MI = 0.1;
+const MAX_REPS = 30;
+
 export type QuickGoalType = WorkoutGoal['type'];
 type TypeChoice = 'open' | QuickGoalType | 'intervals';
 
@@ -78,8 +109,8 @@ function round1(n: number): number {
 
 /**
  * "Set a goal" sheet (mockup: Racefy v2). Goal type tiles → target card with
- * stepper and presets → alerts. Open = no goal. Intervals is shown but not
- * yet available (next phase).
+ * stepper and presets (or the interval presets + builder) → alerts. Open = no
+ * goal.
  */
 export function WorkoutConfigModal({
   visible,
@@ -105,6 +136,7 @@ export function WorkoutConfigModal({
   const [timeMinutes, setTimeMinutes] = useState(30);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  const [intervals, setIntervals] = useState<IntervalDraft>(defaultIntervalDraft);
 
   // Seed from the current plan, else the last quick goal, else defaults.
   useEffect(() => {
@@ -114,7 +146,10 @@ export function WorkoutConfigModal({
       if (goal.type === 'distance') setDistanceValue(round1(goal.meters / unitFactor));
       else setTimeMinutes(Math.max(1, Math.round(goal.seconds / 60)));
     };
-    if (plan?.mode === 'goal' && plan.goal) {
+    if (plan?.mode === 'intervals') {
+      setIntervals(draftFromPlan(plan) ?? defaultIntervalDraft());
+      setType(initialType ?? 'intervals');
+    } else if (plan?.mode === 'goal' && plan.goal) {
       seed(plan.goal);
       setType(initialType ?? plan.goal.type);
     } else {
@@ -137,7 +172,15 @@ export function WorkoutConfigModal({
     return null;
   }, [type, distanceValue, timeMinutes, unitFactor]);
 
-  const goalLabel = goal ? formatGoalShort(goal, formatDistance) : null;
+  // The interval plan as it stands; its label doubles as the footer text.
+  const intervalPlan: WorkoutPlan | null = useMemo(() => {
+    if (type !== 'intervals') return null;
+    const p = buildIntervalPlan(intervals, '', sportTypeId);
+    p.name = describeIntervals(p, formatDistance, t);
+    return p;
+  }, [type, intervals, sportTypeId, formatDistance, t]);
+
+  const goalLabel = goal ? formatGoalShort(goal, formatDistance) : (intervalPlan?.name ?? null);
 
   const step = (dir: 1 | -1) => {
     setEditing(false);
@@ -164,7 +207,19 @@ export function WorkoutConfigModal({
     setEditing(false);
   };
 
+  /** Edit the interval form; any change un-links the preset unless it matches one again. */
+  const editIntervals = (patch: Partial<IntervalDraft>) => {
+    setIntervals((prev) => {
+      const next = { ...prev, ...patch, presetId: null };
+      return { ...next, presetId: matchPreset(next) };
+    });
+  };
+
   const apply = () => {
+    if (intervalPlan) {
+      onApply(intervalPlan);
+      return;
+    }
     if (!goal) {
       onClear();
       return;
@@ -182,7 +237,6 @@ export function WorkoutConfigModal({
     icon: keyof typeof Ionicons.glyphMap;
     label: string;
     hint: string;
-    disabled?: boolean;
   }[] = [
     {
       id: 'open',
@@ -207,15 +261,17 @@ export function WorkoutConfigModal({
       icon: 'sparkles-outline',
       label: t('recording.workout.typeIntervals'),
       hint: t('recording.workout.typeIntervalsHint'),
-      disabled: true,
     },
   ];
 
+  const isIntervals = type === 'intervals';
   const cueRows: { key: keyof WorkoutCuePrefs; label: string; hint: string }[] = [
     {
       key: 'voice',
       label: t('recording.workout.cueVoice'),
-      hint: t('recording.workout.cueVoiceHint'),
+      hint: t(
+        isIntervals ? 'recording.workout.cueVoiceHintIntervals' : 'recording.workout.cueVoiceHint',
+      ),
     },
     {
       key: 'tone',
@@ -227,11 +283,21 @@ export function WorkoutConfigModal({
       label: t('recording.workout.cueHaptics'),
       hint: t('recording.workout.cueHapticsHint'),
     },
-    {
-      key: 'halfway',
-      label: t('recording.workout.cueHalfway'),
-      hint: t('recording.workout.cueHalfwayHint'),
-    },
+    ...(isIntervals
+      ? [
+          {
+            key: 'countdown' as const,
+            label: t('recording.workout.cueCountdown'),
+            hint: t('recording.workout.cueCountdownHint'),
+          },
+        ]
+      : [
+          {
+            key: 'halfway' as const,
+            label: t('recording.workout.cueHalfway'),
+            hint: t('recording.workout.cueHalfwayHint'),
+          },
+        ]),
   ];
 
   const valueText =
@@ -262,6 +328,133 @@ export function WorkoutConfigModal({
 
   const surface = colors.cardBackground;
   const inkTile = isDark ? colors.primary + '26' : INK;
+  const inkBorder = isDark ? colors.primary : INK;
+
+  const estimate = intervalPlan ? estimateWorkoutTotals(intervalPlan, 360) : null;
+  const previewSegments = intervalPlan ? compileWorkout(intervalPlan) : [];
+
+  const stepLabel = (s: IntervalStepDraft) =>
+    formatStepEnd(
+      s.mode === 'time'
+        ? { type: 'time', seconds: s.value }
+        : { type: 'distance', meters: s.value },
+      formatDistance,
+      t,
+    );
+
+  const bumpStep = (s: IntervalStepDraft, dir: 1 | -1): IntervalStepDraft => {
+    if (s.mode === 'time') {
+      return {
+        ...s,
+        value: Math.min(STEP_TIME_MAX_S, Math.max(STEP_TIME_MIN_S, s.value + dir * STEP_TIME_S)),
+      };
+    }
+    const inc = isImperial ? STEP_DIST_MI * METERS_PER_MILE : STEP_DIST_M;
+    const min = isImperial ? STEP_DIST_MI * METERS_PER_MILE : STEP_DIST_MIN_M;
+    return {
+      ...s,
+      value: Math.round(Math.min(STEP_DIST_MAX_M, Math.max(min, s.value + dir * inc))),
+    };
+  };
+
+  const switchMode = (s: IntervalStepDraft, mode: IntervalStepDraft['mode']): IntervalStepDraft => {
+    if (s.mode === mode) return s;
+    // Keep the effort comparable: 60 s ≈ 200 m at the 6:00/km estimate pace.
+    return mode === 'time'
+      ? { mode, value: Math.max(STEP_TIME_MIN_S, Math.round(((s.value / 1000) * 360) / 15) * 15) }
+      : {
+          mode,
+          value: Math.max(STEP_DIST_MIN_M, Math.round(((s.value / 360) * 1000) / 100) * 100),
+        };
+  };
+
+  const renderSegRow = (
+    title: string,
+    key: 'work' | 'rest' | 'warm' | 'cool',
+    value: IntervalStepDraft | null,
+    optional: boolean,
+  ) => {
+    if (!value) {
+      return (
+        <TouchableOpacity
+          key={key}
+          style={[styles.segRow, { backgroundColor: surface, borderColor: colors.border }]}
+          onPress={() => editIntervals({ [key]: { mode: 'time', value: 600 } })}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.segTitle, { color: colors.textMuted }]}>{title}</Text>
+          <Text style={[styles.segAdd, { color: PRIMARY_DEEP }]}>
+            + {t('recording.workout.stepAdd')}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    return (
+      <View
+        key={key}
+        style={[styles.segRow, { backgroundColor: surface, borderColor: colors.border }]}
+      >
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text style={[styles.segTitle, { color: colors.textPrimary }]}>{title}</Text>
+          <View style={styles.modeRow}>
+            {(['time', 'distance'] as const).map((mode) => {
+              const active = value.mode === mode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.modeChip,
+                    {
+                      backgroundColor: active ? inkTile : 'transparent',
+                      borderColor: active ? inkBorder : colors.border,
+                    },
+                  ]}
+                  onPress={() => editIntervals({ [key]: switchMode(value, mode) })}
+                >
+                  <Text
+                    style={[styles.modeText, { color: active ? '#ffffff' : colors.textSecondary }]}
+                  >
+                    {t(
+                      mode === 'time'
+                        ? 'recording.workout.modeTime'
+                        : 'recording.workout.modeDistance',
+                    )}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            {optional && (
+              <TouchableOpacity
+                onPress={() => editIntervals({ [key]: null })}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={[styles.modeText, { color: colors.error }]}>
+                  {t('recording.workout.stepRemove')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+        <View style={styles.miniStepper}>
+          <TouchableOpacity
+            style={[styles.miniButton, { borderColor: colors.border }]}
+            onPress={() => editIntervals({ [key]: bumpStep(value, -1) })}
+            accessibilityLabel="−"
+          >
+            <Ionicons name="remove" size={16} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.miniValue, { color: colors.textPrimary }]}>{stepLabel(value)}</Text>
+          <TouchableOpacity
+            style={[styles.miniButton, { borderColor: colors.border }]}
+            onPress={() => editIntervals({ [key]: bumpStep(value, 1) })}
+            accessibilityLabel="+"
+          >
+            <Ionicons name="add" size={16} color={colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <Modal
@@ -272,7 +465,7 @@ export function WorkoutConfigModal({
       transparent={false}
     >
       <ScreenContainer>
-        {/* Header: back · title · Clear   /   in-run: Adjust goal · Activity keeps running · × */}
+        {/* Header */}
         <View style={styles.header}>
           {inProgress ? (
             <>
@@ -349,19 +542,16 @@ export function WorkoutConfigModal({
                       styles.typeTile,
                       {
                         backgroundColor: active ? inkTile : surface,
-                        borderColor: active ? (isDark ? colors.primary : INK) : colors.border,
-                        opacity: tile.disabled ? 0.55 : 1,
+                        borderColor: active ? inkBorder : colors.border,
                       },
                     ]}
                     onPress={() => {
-                      if (tile.disabled) return;
                       setEditing(false);
                       setType(tile.id);
                     }}
-                    disabled={tile.disabled}
                     activeOpacity={0.85}
                     accessibilityRole="radio"
-                    accessibilityState={{ selected: active, disabled: tile.disabled }}
+                    accessibilityState={{ selected: active }}
                   >
                     <View
                       style={[
@@ -375,23 +565,11 @@ export function WorkoutConfigModal({
                         color={active ? '#ffffff' : PRIMARY_DEEP}
                       />
                     </View>
-                    <View style={styles.typeTextRow}>
-                      <Text
-                        style={[
-                          styles.typeLabel,
-                          { color: active ? '#ffffff' : colors.textPrimary },
-                        ]}
-                      >
-                        {tile.label}
-                      </Text>
-                      {tile.disabled && (
-                        <View style={[styles.soonBadge, { backgroundColor: PRIMARY_SOFT }]}>
-                          <Text style={[styles.soonText, { color: PRIMARY_DEEP }]}>
-                            {t('recording.workout.comingSoon')}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                    <Text
+                      style={[styles.typeLabel, { color: active ? '#ffffff' : colors.textPrimary }]}
+                    >
+                      {tile.label}
+                    </Text>
                     <Text
                       style={[
                         styles.typeHint,
@@ -407,7 +585,7 @@ export function WorkoutConfigModal({
             </View>
           </View>
 
-          {/* Target */}
+          {/* Target (distance / time) */}
           {goal && (
             <View>
               <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
@@ -476,7 +654,7 @@ export function WorkoutConfigModal({
                         styles.chip,
                         {
                           backgroundColor: p.active ? inkTile : surface,
-                          borderColor: p.active ? (isDark ? colors.primary : INK) : colors.border,
+                          borderColor: p.active ? inkBorder : colors.border,
                         },
                       ]}
                       onPress={() => {
@@ -500,8 +678,149 @@ export function WorkoutConfigModal({
             </View>
           )}
 
+          {/* Intervals: presets */}
+          {isIntervals && (
+            <View>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                {t('recording.workout.presets').toUpperCase()}
+              </Text>
+              <View style={{ gap: spacing.sm }}>
+                {INTERVAL_PRESETS.map((preset) => {
+                  const active = intervals.presetId === preset.id;
+                  const p = buildIntervalPlan(presetDraft(preset), '');
+                  const name = describeIntervals(p, formatDistance, t);
+                  return (
+                    <TouchableOpacity
+                      key={preset.id}
+                      style={[
+                        styles.presetRow,
+                        {
+                          backgroundColor: surface,
+                          borderColor: active ? colors.primary : colors.border,
+                          shadowColor: colors.primary,
+                          shadowOpacity: active ? 0.25 : 0,
+                        },
+                      ]}
+                      onPress={() => setIntervals(presetDraft(preset))}
+                      activeOpacity={0.85}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: active }}
+                    >
+                      <View style={[styles.typeIcon, { backgroundColor: PRIMARY_SOFT }]}>
+                        <Ionicons name="sparkles-outline" size={16} color={PRIMARY_DEEP} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.presetName, { color: colors.textPrimary }]}>
+                          {name}
+                        </Text>
+                        <Text style={[styles.presetSub, { color: colors.textMuted }]}>
+                          {t(`recording.workout.presetSub.${preset.id}`)}
+                        </Text>
+                      </View>
+                      {active && <Ionicons name="checkmark" size={18} color={colors.textPrimary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Intervals: build your own */}
+          {isIntervals && (
+            <View>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                  {t('recording.workout.buildYourOwn').toUpperCase()}
+                </Text>
+                {estimate && (
+                  <Text style={[styles.estimate, { color: colors.textMuted }]}>
+                    {t('recording.workout.estimated', {
+                      time: `${Math.round(estimate.seconds / 60)} ${t('recording.workout.minutesShort')}`,
+                    })}
+                  </Text>
+                )}
+              </View>
+              <View style={{ gap: spacing.sm }}>
+                <View
+                  style={[styles.segRow, { backgroundColor: surface, borderColor: colors.border }]}
+                >
+                  <Text style={[styles.segTitle, { flex: 1, color: colors.textPrimary }]}>
+                    {t('recording.workout.repeats')}
+                  </Text>
+                  <View style={styles.miniStepper}>
+                    <TouchableOpacity
+                      style={[styles.miniButton, { borderColor: colors.border }]}
+                      onPress={() => editIntervals({ reps: Math.max(1, intervals.reps - 1) })}
+                      accessibilityLabel="−"
+                    >
+                      <Ionicons name="remove" size={16} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                    <Text style={[styles.repsValue, { color: colors.textPrimary }]}>
+                      {intervals.reps}×
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.miniButton, { borderColor: colors.border }]}
+                      onPress={() =>
+                        editIntervals({ reps: Math.min(MAX_REPS, intervals.reps + 1) })
+                      }
+                      accessibilityLabel="+"
+                    >
+                      <Ionicons name="add" size={16} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {renderSegRow(t('recording.workout.stepWork'), 'work', intervals.work, false)}
+                {renderSegRow(t('recording.workout.stepRecovery'), 'rest', intervals.rest, false)}
+                {renderSegRow(t('recording.workout.stepWarmup'), 'warm', intervals.warm, true)}
+                {renderSegRow(t('recording.workout.stepCooldown'), 'cool', intervals.cool, true)}
+              </View>
+            </View>
+          )}
+
+          {/* Intervals: plan strip preview */}
+          {isIntervals && previewSegments.length > 0 && (
+            <View>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                {t('recording.workout.plan').toUpperCase()}
+              </Text>
+              <View style={[styles.planStrip, { backgroundColor: colors.background }]}>
+                {previewSegments.map((s) => (
+                  <View
+                    key={s.index}
+                    style={{
+                      flexGrow: Math.max(0.6, segmentWeight(s) / 60),
+                      minWidth: 3,
+                      backgroundColor:
+                        s.kind === 'work'
+                          ? colors.primary
+                          : s.kind === 'recovery'
+                            ? colors.warning + '66'
+                            : SKY + '55',
+                    }}
+                  />
+                ))}
+              </View>
+              <View style={styles.legend}>
+                {(
+                  [
+                    ['legendWork', colors.primary],
+                    ['legendRecovery', colors.warning + '66'],
+                    ['legendWarmCool', SKY + '55'],
+                  ] as const
+                ).map(([key, color]) => (
+                  <View key={key} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: color }]} />
+                    <Text style={[styles.legendText, { color: colors.textMuted }]}>
+                      {t(`recording.workout.${key}`)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Alerts */}
-          {goal && (
+          {(goal || intervalPlan) && (
             <View>
               <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
                 {t('recording.workout.alerts').toUpperCase()}
@@ -544,13 +863,17 @@ export function WorkoutConfigModal({
             </View>
           )}
 
-          {inProgress && goal && (
+          {inProgress && (goal || intervalPlan) && (
             <View style={[styles.liveNote, { backgroundColor: colors.aiLight }]}>
               <View style={[styles.liveNoteIcon, { backgroundColor: colors.ai }]}>
                 <Ionicons name="sparkles" size={13} color="#ffffff" />
               </View>
               <Text style={[styles.liveNoteText, { color: colors.textPrimary }]}>
-                {t('recording.workout.liveNote')}
+                {t(
+                  isIntervals
+                    ? 'recording.workout.liveNoteIntervals'
+                    : 'recording.workout.liveNote',
+                )}
               </Text>
             </View>
           )}
@@ -591,7 +914,7 @@ export function WorkoutConfigModal({
               onPress={apply}
               activeOpacity={0.85}
             >
-              <Text style={styles.primaryText}>
+              <Text style={styles.primaryText} numberOfLines={1}>
                 {goalLabel
                   ? t('recording.workout.saveGoal', { goal: goalLabel })
                   : t('recording.workout.typeOpen')}
@@ -657,6 +980,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: spacing.sm,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  estimate: {
+    fontSize: fontSize.xs,
+    fontVariant: ['tabular-nums'],
+  },
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -677,11 +1009,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  typeTextRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
   typeLabel: {
     fontSize: fontSize.md,
     fontWeight: '700',
@@ -690,16 +1017,6 @@ const styles = StyleSheet.create({
   typeHint: {
     fontSize: fontSize.xs,
     lineHeight: 15,
-  },
-  soonBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  soonText: {
-    fontSize: msFont(10),
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
   card: {
     borderRadius: 14,
@@ -754,6 +1071,109 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
+  presetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+    padding: spacing.md - 2,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 6,
+  },
+  presetName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  presetSub: {
+    fontSize: fontSize.xs,
+    marginTop: 1,
+  },
+  segRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md - 2,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  segTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  segAdd: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  modeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+  },
+  modeChip: {
+    paddingVertical: 3,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  modeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  miniStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+  },
+  miniButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniValue: {
+    minWidth: 64,
+    textAlign: 'center',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  repsValue: {
+    minWidth: 48,
+    textAlign: 'center',
+    fontSize: msFont(22),
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  planStrip: {
+    flexDirection: 'row',
+    gap: 2,
+    height: 34,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  legend: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 3,
+  },
+  legendText: {
+    fontSize: fontSize.xs,
+  },
   alertsCard: {
     paddingVertical: 0,
   },
@@ -805,6 +1225,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing.md,
     shadowColor: '#10b981',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
