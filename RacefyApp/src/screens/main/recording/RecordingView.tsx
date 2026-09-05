@@ -17,8 +17,8 @@ import { MapboxLiveMap } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 import { WorkoutProgressCard } from './WorkoutProgressCard';
 import type { WorkoutPlan } from '../../../types/workout';
-import type { SegmentProgress } from '../../../services/workout/engine';
-import { formatPlanLabel, formatRemainingShort } from '../../../utils/workoutFormat';
+import type { SegmentProgress, WorkoutEngineState } from '../../../services/workout/engine';
+import { workoutStatusLine } from '../../../utils/workoutFormat';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../theme';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
@@ -47,7 +47,9 @@ interface RecordingViewProps {
   // Training goal
   workoutPlan?: WorkoutPlan | null;
   workoutProgress?: SegmentProgress | null;
+  workoutState?: WorkoutEngineState | null;
   onOpenWorkout?: () => void;
+  onSkipSegment?: () => void;
 }
 
 export function RecordingView({
@@ -72,7 +74,9 @@ export function RecordingView({
   onStop,
   workoutPlan,
   workoutProgress,
+  workoutState,
   onOpenWorkout,
+  onSkipSegment,
 }: RecordingViewProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -120,17 +124,15 @@ export function RecordingView({
   const calories = Math.floor(localDuration * 0.15);
 
   // One-line goal status for the lock overlay (the athlete glances, not reads).
-  const workoutLockLine = (() => {
-    if (!workoutPlan?.goal || !workoutProgress) return null;
-    const goal = formatPlanLabel(workoutPlan, fmtDistance);
-    if (workoutProgress.overshoot) return t('recording.workout.reached').toUpperCase();
-    const remaining = workoutProgress.remaining
-      ? t('recording.workout.remaining', {
-          value: formatRemainingShort(workoutProgress.remaining, fmtDistance),
-        })
-      : '';
-    return `${t('recording.workout.goalLabel', { goal })} · ${remaining}`.toUpperCase();
-  })();
+  const workoutLockLine = workoutPlan
+    ? workoutStatusLine(
+        workoutPlan,
+        workoutProgress ?? null,
+        workoutState ?? null,
+        fmtDistance,
+        t,
+      ).toUpperCase()
+    : null;
 
   return (
     <View style={styles.container}>
@@ -190,9 +192,11 @@ export function RecordingView({
             <WorkoutProgressCard
               plan={workoutPlan ?? null}
               progress={workoutProgress ?? null}
+              state={workoutState ?? null}
               variant="recording"
               formatDistance={fmtDistance}
               onPress={onOpenWorkout}
+              onSkip={onSkipSegment}
             />
           </View>
 

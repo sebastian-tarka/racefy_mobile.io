@@ -88,7 +88,7 @@ import { useWorkoutCuePrefs } from '../../hooks/useWorkoutCuePrefs';
 import { clearWorkoutSession } from '../../services/workout/storage';
 import { cancelGoalNotification } from '../../services/workout/goalNotification';
 import type { WorkoutPlan } from '../../types/workout';
-import { formatPlanLabel, formatRemainingShort } from '../../utils/workoutFormat';
+import { formatPlanLabel, workoutStatusLine } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
@@ -525,16 +525,10 @@ export function ActivityRecordingScreen() {
     units,
     onRestorePlan: setWorkoutPlan,
   });
-  const workoutLabel = workoutPlan ? formatPlanLabel(workoutPlan, fmtDistance) : null;
-  const workoutMapLine = (() => {
-    if (!workoutPlan || !workoutLabel) return null;
-    const p = workout.progress;
-    if (p?.overshoot) return t('recording.workout.reached');
-    const remaining = p?.remaining
-      ? t('recording.workout.remaining', { value: formatRemainingShort(p.remaining, fmtDistance) })
-      : '';
-    return `${t('recording.workout.goalLabel', { goal: workoutLabel })} · ${remaining}`;
-  })();
+  const workoutLabel = workoutPlan ? formatPlanLabel(workoutPlan, fmtDistance, t) : null;
+  const workoutMapLine = workoutPlan
+    ? workoutStatusLine(workoutPlan, workout.progress, workout.state, fmtDistance, t)
+    : null;
 
   const openWorkoutModal = useCallback((type?: QuickGoalType) => {
     setWorkoutModalType(type);
@@ -547,7 +541,7 @@ export function ActivityRecordingScreen() {
       setWorkoutModalVisible(false);
       triggerHaptic();
       workoutToast.show(
-        t('recording.workout.toastSet', { goal: formatPlanLabel(plan, fmtDistance) }),
+        t('recording.workout.toastSet', { goal: formatPlanLabel(plan, fmtDistance, t) }),
       );
     },
     [workoutToast, t, fmtDistance],
@@ -1072,7 +1066,9 @@ export function ActivityRecordingScreen() {
       onStop={handleStop}
       workoutPlan={workoutPlan}
       workoutProgress={workout.progress}
+      workoutState={workout.state}
       onOpenWorkout={() => openWorkoutModal()}
+      onSkipSegment={workout.skip}
     />
   );
 
@@ -1105,7 +1101,9 @@ export function ActivityRecordingScreen() {
       onSkipAutoPostChange={setSkipAutoPost}
       workoutPlan={workoutPlan}
       workoutProgress={workout.progress}
+      workoutState={workout.state}
       onOpenWorkout={() => openWorkoutModal()}
+      onSkipSegment={workout.skip}
     />
   );
 
@@ -1138,7 +1136,7 @@ export function ActivityRecordingScreen() {
           {sportsLoading ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
           ) : (
-            <View style={styles.mapSportGrid}>
+            <View style={[styles.mapSportGrid, { backgroundColor: colors.cardBackground + 'B8' }]}>
               {sportTypes.map((sport) => (
                 <SportTile
                   key={sport.id}
@@ -1920,6 +1918,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: borderRadius.xl,
   },
   mapIconToolbar: {
     flexDirection: 'row',

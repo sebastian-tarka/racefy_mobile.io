@@ -130,7 +130,12 @@ export function IdleView({
         {sportsLoading ? (
           <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
         ) : (
-          <View style={styles.sportGrid}>
+          <View
+            style={[
+              styles.sportGrid,
+              { backgroundColor: colors.cardBackground + (gpsEnabled ? 'B8' : '00') },
+            ]}
+          >
             {sportTypes.map((sport) => (
               <SportTile
                 key={sport.id}
@@ -289,6 +294,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     marginBottom: spacing.xs,
+    // Frosted panel so the tiles don't float loose over the map.
+    padding: spacing.sm,
+    borderRadius: borderRadius.xl,
   },
   iconToolbar: {
     flexDirection: 'row',
