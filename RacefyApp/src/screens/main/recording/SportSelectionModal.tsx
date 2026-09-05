@@ -1,6 +1,8 @@
 import React from 'react';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { getSportTile } from '../../../config/sportTiles';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks';
 import { ScreenContainer } from '../../../components';
@@ -23,7 +25,7 @@ export function SportSelectionModal({
   onSelect,
 }: Props) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Modal
@@ -72,13 +74,13 @@ export function SportSelectionModal({
                   style={[
                     styles.sportIcon,
                     { backgroundColor: colors.background },
-                    isSelected && { backgroundColor: colors.primary + '30' },
+                    isSelected && { borderWidth: 2, borderColor: colors.primary },
                   ]}
                 >
-                  <Ionicons
-                    name={sport.icon}
-                    size={24}
-                    color={isSelected ? colors.primary : colors.textSecondary}
+                  <Image
+                    source={getSportTile(sport, isDark)}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
                   />
                 </View>
                 <Text
@@ -134,10 +136,11 @@ const styles = StyleSheet.create({
   sportIcon: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
+    overflow: 'hidden',
   },
   sportName: {
     flex: 1,
