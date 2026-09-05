@@ -15,7 +15,16 @@ Stan na: **2026-09-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `strength-sessions` — wykonywanie treningu siłowego (sesje) (2026-09-05)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Sesje treningu siłowego — kalendarz, ekran sesji, przerwy, zakończenie (zmergowane 2026-09-05, tag `pre-strength-sessions` = main sprzed merge)
 
 Backend faza 4 (`/workout-sessions`, `/workout-session-sets`, `/workout-plans/{id}/sessions`,
 `/exercises/{id}/history`). Ekrany: kalendarz planu (dni z treningiem lub notatką, dziś
@@ -41,13 +50,6 @@ z paczki `expo`, bez przebudowy klienta).
 - [ ] Pominięcie sesji w toku i pominięcie zaplanowanego treningu bez startu: kalendarz pokazuje „pominięte"
 - [ ] Historia ćwiczenia z ekranu sesji: ostatnie sesje i najlepszy ciężar, sugerowany ciężar w wierszu serii = ostatni zalogowany
 - [ ] Ekran nie gaśnie podczas sesji; po wyjściu z sesji gaśnie normalnie
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Plany siłowe — mobile M1: przeglądanie, edycja, biblioteka, import XLSX (zmergowane 2026-09-05, tag `pre-strength-workouts` = main sprzed merge)
 
