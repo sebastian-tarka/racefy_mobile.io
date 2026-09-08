@@ -3178,7 +3178,10 @@
         "title": "Rest over",
         "body": "Next set: {{exercise}}"
       },
-      "deleteSetConfirm": "Remove this set?"
+      "deleteSetConfirm": "Remove this set?",
+      "exerciseOf": "Exercise {{index}} of {{total}}",
+      "next": "Next · {{name}}",
+      "prevExercise": "Previous exercise"
     },
     "complete": {
       "title": "Finish workout",

@@ -3199,7 +3199,10 @@
         "title": "Koniec przerwy",
         "body": "Następna seria: {{exercise}}"
       },
-      "deleteSetConfirm": "Usunąć tę serię?"
+      "deleteSetConfirm": "Usunąć tę serię?",
+      "exerciseOf": "Ćwiczenie {{index}} z {{total}}",
+      "next": "Dalej · {{name}}",
+      "prevExercise": "Poprzednie ćwiczenie"
     },
     "complete": {
       "title": "Zakończ trening",
