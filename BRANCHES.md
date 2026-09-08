@@ -61,6 +61,7 @@ paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
 - [ ] Konto free: wiersz „Raporty AI" ma plakietkę PLUS i prowadzi do paywalla
 - [ ] Statystyki: przełącznik Dystans / Aktywności / Czas zmienia dużą liczbę, paski wg sportu i podpisy
 - [ ] Statystyki: delta „vs poprzedni okres" pojawia się dla tygodnia/miesiąca/roku i **znika dla „cały czas"** (nie ma z czym porównać)
+- [ ] Statystyki: **paski „Wg sportu" mają nazwy sportów, nie „Inne"** (API zwraca listę wpisów z `name`, nie mapę po id)
 - [ ] Statystyki: filtr sportu przygasza pozostałe paski, nie usuwa ich
 - [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
 - [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"

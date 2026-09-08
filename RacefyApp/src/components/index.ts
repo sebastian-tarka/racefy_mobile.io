@@ -73,7 +73,6 @@ export * from './SettingsSection';
 export * from './SocialShareModal';
 export * from './ShareFormatSelector';
 export * from './PhotoOverlaySelector';
-export * from './SportStatsChart';
 export * from './SportTypeSelector';
 export * from './SportTypeFilter';
 export * from './TimeRangeFilter';

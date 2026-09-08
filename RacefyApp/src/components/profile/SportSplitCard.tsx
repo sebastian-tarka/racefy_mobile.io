@@ -7,6 +7,7 @@ import { useUnits } from '../../hooks/useUnits';
 import type { SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { formatDurationCompact } from '../../utils/formatDuration';
 import { borderRadius, fontSize, msFont, spacing } from '../../theme';
+import { findSportTypeStat, normalizeSportTypeStats } from '../../utils/sportTypeStats';
 import type { ActivityStats } from '../../types/api';
 import type { StatsMetric } from './StatsHeadlineCard';
 
@@ -40,15 +41,15 @@ export function SportSplitCard({
   const { t } = useTranslation();
   const { formatDistance } = useUnits();
 
-  const rows = Object.entries(stats?.by_sport_type ?? {})
-    .map(([id, row]) => {
-      const sportId = Number(id);
-      const sport = sportTypes.find((s) => s.id === sportId);
+  // The API names each sport itself; the local catalogue only has to supply an
+  // icon, and covers the older response shape that carried the id alone.
+  const rows = normalizeSportTypeStats(stats?.by_sport_type)
+    .map((entry) => {
+      const sport = sportTypes.find((s) => s.id === entry.sportTypeId);
       const value =
-        metric === 'count' ? row.count : metric === 'time' ? row.duration : row.distance;
-      return { sportId, sport, ...row, value };
+        metric === 'count' ? entry.count : metric === 'time' ? entry.duration : entry.distance;
+      return { ...entry, name: entry.name ?? sport?.name, icon: sport?.icon, value };
     })
-    .filter((row) => row.count > 0)
     .sort((a, b) => b.value - a.value);
 
   if (rows.length === 0) return null;
@@ -58,9 +59,7 @@ export function SportSplitCard({
 
   const total = rows.reduce((sum, r) => sum + r.value, 0) || 1;
   // The scale has to cover both athletes, or the comparison lies.
-  const compareValues = compareStats
-    ? Object.values(compareStats.by_sport_type ?? {}).map(valueOf)
-    : [];
+  const compareValues = normalizeSportTypeStats(compareStats?.by_sport_type).map(valueOf);
   const max = Math.max(...rows.map((r) => r.value), ...compareValues, 1);
 
   const label = (value: number, row: (typeof rows)[number]) =>
@@ -88,19 +87,19 @@ export function SportSplitCard({
       </View>
 
       {rows.map((row) => {
-        const dimmed = selectedSportTypeId != null && selectedSportTypeId !== row.sportId;
+        const dimmed = selectedSportTypeId != null && selectedSportTypeId !== row.sportTypeId;
+        const compareRow = findSportTypeStat(compareStats?.by_sport_type, row.sportTypeId);
         return (
-          <View key={row.sportId} style={[styles.row, dimmed && styles.rowDimmed]}>
+          <View
+            key={row.sportTypeId ?? row.slug ?? row.name}
+            style={[styles.row, dimmed && styles.rowDimmed]}
+          >
             <View style={styles.rowHead}>
               <View style={[styles.icon, { backgroundColor: colors.primary + '1A' }]}>
-                <Ionicons
-                  name={row.sport?.icon ?? 'fitness-outline'}
-                  size={14}
-                  color={colors.primary}
-                />
+                <Ionicons name={row.icon ?? 'fitness-outline'} size={14} color={colors.primary} />
               </View>
               <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-                {row.sport?.name ?? t('profile.stats.otherSport')}
+                {row.name ?? t('profile.stats.otherSport')}
               </Text>
               <Text style={[styles.value, { color: colors.textPrimary }]}>
                 {label(row.value, row)}
@@ -133,14 +132,7 @@ export function SportSplitCard({
                       width: `${Math.max(
                         1,
                         Math.round(
-                          (valueOf(
-                            compareStats.by_sport_type?.[row.sportId] ?? {
-                              count: 0,
-                              duration: 0,
-                              distance: 0,
-                            },
-                          ) /
-                            max) *
+                          (valueOf(compareRow ?? { count: 0, duration: 0, distance: 0 }) / max) *
                             100,
                         ),
                       )}%`,
