@@ -3158,9 +3158,12 @@
       "failed": "Could not read this file"
     },
     "resume": {
-      "title": "Session in progress",
-      "subtitle": "{{name}} · started {{time}}",
-      "cta": "Resume"
+      "title": "Resume {{name}}",
+      "hint": "Trained it on another day? Pick the day it should count towards.",
+      "keep": "Leave on {{date}}",
+      "today": "Move to today",
+      "other": "Another day",
+      "confirm": "Resume workout"
     },
     "schedule": {
       "title": "Schedule",
@@ -3180,7 +3183,11 @@
       "openActivity": "Open activity",
       "openSchedule": "Schedule & start",
       "range": "Next 14 days",
-      "undoSkip": "Undo"
+      "undoSkip": "Undo",
+      "moveTo": "Move to another day",
+      "movedFrom": "moved from {{date}}",
+      "resumeSkipped": "Resume",
+      "alreadyOnDay": "This workout is already on {{date}}."
     },
     "session": {
       "progress": "{{done}}/{{total}} sets",
@@ -3252,7 +3259,15 @@
     "sessionsCount_other": "{{count}} sessions",
     "sessionsPerWeek_one": "{{count}} session per week",
     "sessionsPerWeek_other": "{{count}} sessions per week",
-    "dayNumber": "Day {{number}}"
+    "dayNumber": "Day {{number}}",
+    "conflict": {
+      "inProgressTitle": "{{name}} is still open",
+      "inProgressBody": "Finish or skip it before starting another one.",
+      "loggedTitle": "This workout is already logged on {{date}}",
+      "loggedBody": "Open it to see what was recorded, or pick another day.",
+      "open": "Open",
+      "view": "View"
+    }
   },
   "tabs": {
     "home": "Home",

@@ -239,7 +239,12 @@ export interface WorkoutPlanImportPreview {
 
 // ── sessions (phase 4) ──────────────────────────────────────────────────────
 
-export type WorkoutSessionStatus = 'in_progress' | 'completed' | 'skipped';
+/**
+ * `planned` is the only status with no log behind it: it exists solely because a
+ * day was moved, and carries `moved_from`. History (`GET /workout-sessions`)
+ * skips those rows unless asked for them explicitly.
+ */
+export type WorkoutSessionStatus = 'planned' | 'in_progress' | 'completed' | 'skipped';
 
 export interface WorkoutSessionStats {
   sets_total: number;
@@ -300,6 +305,8 @@ export interface WorkoutSession {
   status: WorkoutSessionStatus;
   /** YYYY-MM-DD */
   scheduled_for: string;
+  /** The plan day this session was moved off, when it was moved. */
+  moved_from: string | null;
   workout_name: string;
   day_label: string | null;
   workout_plan_id: number | null;
@@ -382,9 +389,24 @@ export interface PlannedSession {
   session:
     | (Pick<
         WorkoutSession,
-        'id' | 'status' | 'started_at' | 'completed_at' | 'duration_seconds' | 'activity_id'
+        | 'id'
+        | 'status'
+        | 'moved_from'
+        | 'started_at'
+        | 'completed_at'
+        | 'duration_seconds'
+        | 'activity_id'
       > & { stats: WorkoutSessionStats | null })
     | null;
+}
+
+/** POST /workout-sessions/move — one occurrence of a day, not the plan. */
+export interface WorkoutSessionMoveInput {
+  workout_id: number;
+  /** YYYY-MM-DD the day currently sits on. */
+  from: string;
+  /** YYYY-MM-DD it should sit on. */
+  to: string;
 }
 
 /** 409 from POST /workout-sessions or /workout-sessions/skip */

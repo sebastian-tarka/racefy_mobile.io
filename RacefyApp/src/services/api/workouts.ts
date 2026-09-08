@@ -18,6 +18,7 @@ import type {
   WorkoutSession,
   WorkoutSessionAddSetInput,
   WorkoutSessionCompleteInput,
+  WorkoutSessionMoveInput,
   WorkoutSessionCompleteResponse,
   WorkoutSessionListParams,
   WorkoutSessionListResponse,
@@ -283,6 +284,40 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         },
       );
       return response.data;
+    }
+
+    /**
+     * Bring a SKIPPED session back. Without `scheduledFor` it stays on its own
+     * day; with it, it moves. The server resets the clock, keeps the sets logged
+     * before the skip, and builds the exercise snapshot if the session was
+     * skipped before it ever started.
+     *
+     * 409 carries `reason` (`in_progress_exists` / `already_logged`) plus the
+     * offending `session`, or only a translated `message` when the session is
+     * not skipped or the workout has left the plan.
+     */
+    async resumeWorkoutSession(id: number, scheduledFor?: string): Promise<WorkoutSession> {
+      const response = await this.request<Types.ApiResponse<WorkoutSession>>(
+        `/workout-sessions/${id}/resume`,
+        { method: 'POST', body: JSON.stringify({ scheduled_for: scheduledFor }) },
+      );
+      return response.data;
+    }
+
+    /**
+     * Move one occurrence of a planned day to another date. The plan keeps its
+     * weekday, so the workout returns to its usual slot next week.
+     *
+     * Returns null when `to` falls on the workout's own weekday: the server drops
+     * the row and the day goes back to being derived from the plan. That is the
+     * undo, and it is a success — not an empty response.
+     */
+    async moveWorkoutSession(input: WorkoutSessionMoveInput): Promise<WorkoutSession | null> {
+      const response = await this.request<Types.ApiResponse<WorkoutSession | null>>(
+        '/workout-sessions/move',
+        { method: 'POST', body: JSON.stringify(input) },
+      );
+      return response.data ?? null;
     }
 
     async updateWorkoutSession(

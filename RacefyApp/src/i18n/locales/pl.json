@@ -3187,9 +3187,12 @@
       "failed": "Nie udało się odczytać pliku"
     },
     "resume": {
-      "title": "Sesja w toku",
-      "subtitle": "{{name}} · start {{time}}",
-      "cta": "Wznów"
+      "title": "Wznów: {{name}}",
+      "hint": "Trenowałeś to innego dnia? Wybierz dzień, na który ma się liczyć.",
+      "keep": "Zostaw {{date}}",
+      "today": "Przenieś na dziś",
+      "other": "Inny dzień",
+      "confirm": "Wznów trening"
     },
     "schedule": {
       "title": "Kalendarz",
@@ -3209,7 +3212,11 @@
       "openActivity": "Otwórz aktywność",
       "openSchedule": "Kalendarz i start",
       "range": "Najbliższe 14 dni",
-      "undoSkip": "Cofnij"
+      "undoSkip": "Cofnij",
+      "moveTo": "Przenieś na inny dzień",
+      "movedFrom": "przeniesiony z {{date}}",
+      "resumeSkipped": "Wznów",
+      "alreadyOnDay": "Ten trening jest już w dniu {{date}}."
     },
     "session": {
       "progress": "{{done}}/{{total}} serii",
@@ -3289,7 +3296,15 @@
     "sessionsPerWeek_few": "{{count}} sesje w tygodniu",
     "sessionsPerWeek_many": "{{count}} sesji w tygodniu",
     "sessionsPerWeek_other": "{{count}} sesji w tygodniu",
-    "dayNumber": "Dzień {{number}}"
+    "dayNumber": "Dzień {{number}}",
+    "conflict": {
+      "inProgressTitle": "{{name}} jest wciąż otwarty",
+      "inProgressBody": "Zakończ go albo pomiń, zanim zaczniesz kolejny.",
+      "loggedTitle": "Ten trening jest już zapisany na {{date}}",
+      "loggedBody": "Otwórz go, żeby zobaczyć zapis, albo wybierz inny dzień.",
+      "open": "Otwórz",
+      "view": "Zobacz"
+    }
   },
   "tabs": {
     "home": "Start",
