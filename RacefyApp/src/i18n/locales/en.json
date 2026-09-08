@@ -1102,7 +1102,8 @@
       "moveDown": "Move down",
       "remove": "Remove from the rail",
       "full": "The rail holds {{max}} sports. Remove one to add another."
-    }
+    },
+    "pausedHint": "Paused — resume or finish"
   },
   "gpxImport": {
     "title": "Import GPX",

@@ -300,29 +300,47 @@ export function RecordingView({
 
       {/* ── Controls ── */}
       <View style={styles.controls}>
-        <TouchableOpacity
-          style={styles.stopButton}
-          onLongPress={onStop}
-          delayLongPress={HOLD_TO_STOP_MS}
-          onPressIn={handleHoldStart}
-          onPressOut={handleHoldEnd}
-          disabled={isLoading}
-          activeOpacity={1}
-          accessibilityLabel={t('recording.holdToFinish')}
-        >
-          <Animated.View
-            style={[
-              styles.stopFill,
-              {
-                height: fillAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, CONTROL_SECONDARY],
-                }),
-              },
-            ]}
-          />
-          <Ionicons name="stop" size={22} color="#ffffff" />
-        </TouchableOpacity>
+        {/* Holding is a guard against a mis-tap mid-run. Once the athlete has
+            already paused, that guard costs them a hunt for the save button, so
+            paused turns the same control into a labelled one-tap finish. */}
+        {paused ? (
+          <TouchableOpacity
+            style={styles.finishButton}
+            onPress={onStop}
+            disabled={isLoading}
+            activeOpacity={0.85}
+            accessibilityLabel={t('recording.finish.title')}
+          >
+            <Ionicons name="stop" size={20} color="#ffffff" />
+            <Text style={styles.finishText} numberOfLines={1}>
+              {t('recording.finish.title')}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.stopButton}
+            onLongPress={onStop}
+            delayLongPress={HOLD_TO_STOP_MS}
+            onPressIn={handleHoldStart}
+            onPressOut={handleHoldEnd}
+            disabled={isLoading}
+            activeOpacity={1}
+            accessibilityLabel={t('recording.holdToFinish')}
+          >
+            <Animated.View
+              style={[
+                styles.stopFill,
+                {
+                  height: fillAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, CONTROL_SECONDARY],
+                  }),
+                },
+              ]}
+            />
+            <Ionicons name="stop" size={22} color="#ffffff" />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={[
@@ -352,7 +370,7 @@ export function RecordingView({
       </View>
 
       <Text style={[styles.holdHint, { paddingBottom: insets.bottom + spacing.md }]}>
-        {t('recording.holdToFinish')}
+        {paused ? t('recording.pausedHint') : t('recording.holdToFinish')}
       </Text>
 
       {/* ── Lock overlay ── */}
@@ -519,6 +537,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: heroColors.red,
     overflow: 'hidden',
+  },
+  finishButton: {
+    height: CONTROL_SECONDARY,
+    paddingHorizontal: spacing.lg,
+    borderRadius: CONTROL_SECONDARY / 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: heroColors.red,
+  },
+  finishText: {
+    color: '#ffffff',
+    fontSize: fontSize.md,
+    fontWeight: '700',
   },
   stopFill: {
     position: 'absolute',

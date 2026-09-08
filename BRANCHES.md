@@ -32,7 +32,9 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Pre-start: mapa widoczna od razu (preview location bez włączania trybu mapy), pasek skrótów przewija się, „Wszystkie sporty" otwiera pełną listę
 - [ ] Skróty: dodanie / usunięcie / kolejność zapisują się i przeżywają restart aplikacji; limit 6 działa
 - [ ] Chip „Cel" otwiera konfigurator, „x" czyści; chip „Trasa" otwiera wybór trasy, wybrana trasa rysuje się na mapie
-- [ ] Przełącznik Mapa/Trasa: w trybie Trasa widać trasy w pobliżu, w trybie Mapa znikają
+- [ ] Przełącznik Mapa/Trasa: w trybie Trasa widać trasy w pobliżu, w trybie Mapa znikają; **wybrana trasa porównawcza rysuje się w obu trybach**
+- [ ] Kafle sportów: sporty z grafiką marki pokazują ilustrację, reszta ikonę Ionicons (pasek skrótów i manager)
+- [ ] Pauza: widoczny przycisk „Zakończ" obok wznowienia (bez przytrzymywania)
 - [ ] START: uruchamia nagrywanie wybranego sportu; sport indoor (bez GPS) nie pokazuje mapy ani chipu trasy
 - [ ] Live: stoper, dystans, tempo i kalorie liczą się jak wcześniej; kafelek tętna pojawia się tylko z czujnikiem, inaczej przewyższenie
 - [ ] Live: pauza i wznowienie **nie zmieniają układu ekranu** (zmienia się badge i środkowy przycisk)

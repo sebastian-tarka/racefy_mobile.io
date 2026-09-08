@@ -188,9 +188,6 @@ export function ActivityRecordingScreen() {
     toastOpacity: styleToastOpacity,
   } = useMapStyleCycler(viewMode);
 
-  // Animation for toggle buttons position
-  const toggleButtonsPosition = useRef(new Animated.Value(0)).current;
-
   // Screen lock. The lock + audio-coach toasts share one self-dismissing fade
   // mechanism (useFadeToast); the boolean payload styles the toast (locked / enabled).
   const [isScreenLocked, setIsScreenLocked] = useState(false);
@@ -645,41 +642,14 @@ export function ActivityRecordingScreen() {
     }
   }, [status, selectedSport, ongoingEvents, selectedEvent]);
 
-  // Reset routes toggle when leaving idle map view
+  // The route layer is a pre-start decision: drop it once the activity starts.
+  // It deliberately does NOT depend on viewMode — the pre-start screen is a map
+  // whatever the stats/map toggle (which now only applies while recording) says.
   useEffect(() => {
-    const isIdleMapView = isIdle && viewMode === 'map';
-
-    if (!isIdleMapView && showNearbyRoutesToggle) {
-      // Hide routes panel when switching away from idle map view
+    if (!isIdle && showNearbyRoutesToggle) {
       setShowNearbyRoutesToggle(false);
     }
-  }, [isTracking, isPaused, viewMode, showNearbyRoutesToggle]);
-
-  // Animate toggle buttons position when routes panel visibility changes
-  useEffect(() => {
-    // Only animate when in idle map view
-    const isIdleMapView = isIdle && viewMode === 'map';
-
-    if (isIdleMapView) {
-      // When routes panel is visible, move buttons up above it
-      // Just enough to clear the panel with spacing.lg margin
-      const targetPosition = showNearbyRoutesToggle ? -140 : 0;
-
-      Animated.spring(toggleButtonsPosition, {
-        toValue: targetPosition,
-        useNativeDriver: true,
-        tension: 50,
-        friction: 8,
-      }).start();
-    } else {
-      // Reset to 0 immediately when leaving idle map view
-      Animated.timing(toggleButtonsPosition, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [isTracking, isPaused, showNearbyRoutesToggle, viewMode, toggleButtonsPosition]);
+  }, [isIdle, showNearbyRoutesToggle]);
 
   // Existing activity dialog
   useEffect(() => {
@@ -1223,16 +1193,10 @@ export function ActivityRecordingScreen() {
       {renderLoadingOverlay()}
 
       {/* View toggle buttons - visible for GPS-enabled activities only */}
-      {/* Animated container to move buttons above routes panel */}
       {gpsProfile?.enabled && (
-        <Animated.View
+        <View
           pointerEvents="box-none"
-          style={{
-            ...StyleSheet.absoluteFillObject,
-            zIndex: 50,
-            elevation: 50,
-            transform: [{ translateY: toggleButtonsPosition }],
-          }}
+          style={{ ...StyleSheet.absoluteFillObject, zIndex: 50, elevation: 50 }}
         >
           {/* Top-right controls row — re-center + view toggle + map style.
               Hidden during paused stats view (no map → buttons would overlap the timer). */}
@@ -1337,7 +1301,7 @@ export function ActivityRecordingScreen() {
               </Text>
             </View>
           )}
-        </Animated.View>
+        </View>
       )}
 
       {/* Audio coach toast */}

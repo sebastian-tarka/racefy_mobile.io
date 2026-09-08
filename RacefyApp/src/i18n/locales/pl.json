@@ -1108,7 +1108,8 @@
       "moveDown": "W dół",
       "remove": "Usuń z paska",
       "full": "Pasek mieści {{max}} sportów. Usuń jeden, aby dodać kolejny."
-    }
+    },
+    "pausedHint": "Wstrzymane — wznów albo zakończ"
   },
   "gpxImport": {
     "title": "Importuj GPX",

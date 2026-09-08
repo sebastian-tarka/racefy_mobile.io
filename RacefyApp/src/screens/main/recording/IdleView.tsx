@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../hooks/useTheme';
+import { getSportTile, hasSportTile } from '../../../config/sportTiles';
 import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
 import type { GeoJSONLineString, GpsPoint, NearbyRoute } from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
@@ -113,7 +115,7 @@ export function IdleView({
   devSimRunning,
   onToggleDevSim,
 }: IdleViewProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -150,8 +152,8 @@ export function IdleView({
           nearbyRoutes={routeLayerActive ? nearbyRoutes : undefined}
           selectedRouteKey={selectedRouteKey}
           onRouteSelect={onRouteSelect}
-          shadowTrack={routeLayerActive ? plannedRoute : null}
-          plannedRoute={routeLayerActive ? plannedRoute : null}
+          shadowTrack={plannedRoute}
+          plannedRoute={plannedRoute}
         />
       ) : (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />
@@ -331,11 +333,20 @@ export function IdleView({
                       { backgroundColor: active ? colors.primary : colors.primary + '1A' },
                     ]}
                   >
-                    <Ionicons
-                      name={sport.icon}
-                      size={20}
-                      color={active ? '#ffffff' : colors.primary}
-                    />
+                    {hasSportTile(sport) ? (
+                      <Image
+                        source={getSportTile(sport, isDark)}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                        transition={120}
+                      />
+                    ) : (
+                      <Ionicons
+                        name={sport.icon}
+                        size={20}
+                        color={active ? '#ffffff' : colors.primary}
+                      />
+                    )}
                   </View>
                   <Text
                     style={[
@@ -664,6 +675,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   sportChipText: {
     fontSize: msFont(11),

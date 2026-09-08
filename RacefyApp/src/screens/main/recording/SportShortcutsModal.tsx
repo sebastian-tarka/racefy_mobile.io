@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks';
+import { getSportTile, hasSportTile } from '../../../config/sportTiles';
 import { MAX_SPORT_SHORTCUTS } from '../../../hooks/useSportShortcuts';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import { ScreenContainer } from '../../../components';
@@ -34,7 +36,7 @@ interface Props {
  * reader, which a drag handle does not.
  */
 export function SportShortcutsModal({ visible, onClose, sportTypes, shortcuts, onSave }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const [ids, setIds] = useState<number[]>([]);
   const [query, setQuery] = useState('');
@@ -126,7 +128,15 @@ export function SportShortcutsModal({ visible, onClose, sportTypes, shortcuts, o
               ]}
             >
               <View style={[styles.rowIcon, { backgroundColor: colors.primary + '1F' }]}>
-                <Ionicons name={sport.icon} size={19} color={colors.primary} />
+                {hasSportTile(sport) ? (
+                  <Image
+                    source={getSportTile(sport, isDark)}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Ionicons name={sport.icon} size={19} color={colors.primary} />
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -209,7 +219,15 @@ export function SportShortcutsModal({ visible, onClose, sportTypes, shortcuts, o
               activeOpacity={0.8}
             >
               <View style={[styles.rowIcon, { backgroundColor: colors.background }]}>
-                <Ionicons name={sport.icon} size={19} color={colors.textSecondary} />
+                {hasSportTile(sport) ? (
+                  <Image
+                    source={getSportTile(sport, isDark)}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Ionicons name={sport.icon} size={19} color={colors.textSecondary} />
+                )}
               </View>
               <Text
                 style={[styles.rowTitle, { color: colors.textPrimary, flex: 1 }]}
@@ -277,6 +295,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   rowTitle: {
     fontSize: fontSize.md,
