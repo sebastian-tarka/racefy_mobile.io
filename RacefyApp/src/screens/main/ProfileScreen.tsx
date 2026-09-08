@@ -30,6 +30,7 @@ import {
   ScreenContainer,
   SportSplitCard,
   StatsHeadlineCard,
+  StatsTrendCard,
   type StatsMetric,
   PersonalBestsCard,
   SegmentedControl,
@@ -43,6 +44,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { useActivityStats } from '../../hooks/useActivityStats';
+import { useActivityTrends } from '../../hooks/useActivityTrends';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
@@ -174,6 +176,11 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     refetch: refetchPointStats,
   } = usePointStats();
   const { sportTypes } = useSportTypes();
+  const {
+    trends,
+    granularity: trendGranularity,
+    isLoading: isLoadingTrends,
+  } = useActivityTrends(selectedTimeRange, selectedSportTypeId);
   const { following, isLoading: isLoadingFollowing } = useFollowing();
 
   // Debug: Log filter changes
@@ -815,6 +822,13 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
             comparesToPrevious={previousRange != null}
           />
 
+          <StatsTrendCard
+            trends={trends}
+            granularity={trendGranularity}
+            metric={statsMetric}
+            isLoading={isLoadingTrends}
+          />
+
           <SportSplitCard
             stats={activityStats}
             sportTypes={sportTypes}
@@ -1354,9 +1368,11 @@ const styles = StyleSheet.create({
   },
   statsTabContent: {
     marginTop: spacing.sm,
+    gap: spacing.md,
   },
   activitiesFilterContent: {
     marginTop: spacing.sm,
+    marginBottom: spacing.md,
     gap: spacing.xs,
   },
 });

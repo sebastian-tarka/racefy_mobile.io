@@ -95,6 +95,10 @@ paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
 - [ ] Chipy sportów: ikona w kolorze sportu, zaznaczony chip na ciemnym tle; ten sam sport ma ten sam kolor na pasku i na słupku poniżej
 - [ ] Ikony zakładek profilu: słupki / serce / linie / ołówek / kalendarz (jak na zrzucie z designu)
 - [ ] Podsumowanie pod dużą liczbą kończy się „vs poprzedni okres" — poza „cały czas", gdzie nie ma z czym porównywać
+- [ ] Statystyki: wykres trendu (`/stats/trends`) rysuje kolumny, najwyższą wypełnia i podpisuje wartością; puste okresy zostają jako kikuty, nie znikają
+- [ ] Trend reaguje na przełącznik metryki i na filtr sportu; przy „rok"/„cały czas" podpisy to miesiące, przy „tydzień"/„miesiąc" numery tygodni
+- [ ] Odstępy między sekcjami zakładki Statystyki są równe (także nad kartą nagłówkową, gdzie wcześniej odstęp dawał margines filtra sportów)
+- [ ] Zakładka Aktywności: filtr sportów nadal ma odstęp do pierwszej karty
 - [ ] Statystyki: filtr sportu przygasza pozostałe paski, nie usuwa ich
 - [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
 - [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"

@@ -482,7 +482,11 @@
         "cta": "Ulepsz"
       },
       "comparedWith": "vs {{name}}",
-      "vsPrevious": "vs poprzedni okres"
+      "vsPrevious": "vs poprzedni okres",
+      "trend": {
+        "title": "Trend",
+        "best": "najwięcej {{value}} · {{period}}"
+      }
     },
     "empty": {
       "noPosts": "Brak postów",

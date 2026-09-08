@@ -472,7 +472,11 @@
         "cta": "Upgrade"
       },
       "comparedWith": "vs {{name}}",
-      "vsPrevious": "vs previous period"
+      "vsPrevious": "vs previous period",
+      "trend": {
+        "title": "Trend",
+        "best": "best {{value}} · {{period}}"
+      }
     },
     "empty": {
       "noPosts": "No posts yet",

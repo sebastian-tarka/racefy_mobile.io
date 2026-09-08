@@ -109,9 +109,7 @@ export function SportTypeFilter({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
+  container: {},
   scrollContent: {
     paddingHorizontal: spacing.md,
     gap: spacing.sm,

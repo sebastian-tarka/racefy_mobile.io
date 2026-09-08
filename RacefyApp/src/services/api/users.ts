@@ -149,6 +149,23 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return response.data;
     }
 
+    /**
+     * Activity buckets for the trend chart. `periods` is 2–52 and the response
+     * is zero-filled, so `trends.length === periods` whatever was recorded.
+     */
+    async getActivityTrends(params?: {
+      granularity?: Types.TrendGranularity;
+      periods?: number;
+      sport_type_id?: number;
+    }): Promise<Types.ActivityTrendsResponse> {
+      const query = new URLSearchParams();
+      if (params?.granularity) query.append('granularity', params.granularity);
+      if (params?.periods) query.append('periods', String(params.periods));
+      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
+      const qs = query.toString();
+      return this.request<Types.ActivityTrendsResponse>(`/stats/trends${qs ? `?${qs}` : ''}`);
+    }
+
     async getWeeklyStats(sportTypeId?: number): Promise<Types.WeeklyStats> {
       const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.WeeklyStats>>(

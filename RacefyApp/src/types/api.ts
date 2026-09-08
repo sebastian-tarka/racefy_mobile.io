@@ -3401,6 +3401,22 @@ export interface TrendDataPoint {
   total_calories: number;
 }
 
+/** GET /stats/trends — one bucket per week or month, zero-filled. */
+export interface ActivityTrendPoint {
+  /** "2026-W13" or "2026-03" */
+  period: string;
+  activities_count: number;
+  total_distance: number;
+  total_duration: number;
+  total_elevation: number;
+  total_calories: number;
+}
+
+export interface ActivityTrendsResponse {
+  granularity: TrendGranularity;
+  trends: ActivityTrendPoint[];
+}
+
 export interface TeamTrendsResponse {
   team_id: number;
   team_name: string;

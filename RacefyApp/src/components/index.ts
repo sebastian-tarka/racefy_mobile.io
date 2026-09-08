@@ -141,3 +141,4 @@ export { StatsHeadlineCard, type StatsMetric } from './profile/StatsHeadlineCard
 export { SportSplitCard } from './profile/SportSplitCard';
 export { PersonalBestsCard } from './profile/PersonalBestsCard';
 export { SegmentedControl, type SegmentOption } from './SegmentedControl';
+export { StatsTrendCard } from './profile/StatsTrendCard';
