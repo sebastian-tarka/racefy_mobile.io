@@ -39,7 +39,16 @@
     "notNow": "Nie teraz",
     "options": "Opcje",
     "view": "Zobacz",
-    "clear": "Wyczyść"
+    "clear": "Wyczyść",
+    "accept": "Akceptuj",
+    "copied": "Skopiowano",
+    "decline": "Odrzuć",
+    "fieldRequired": "To pole jest wymagane",
+    "genericError": "Coś poszło nie tak",
+    "noResults": "Brak wyników",
+    "permissionDenied": "Nie masz do tego uprawnień",
+    "retry": "Ponów",
+    "selectLanguage": "Wybierz język"
   },
   "sports": {
     "running": "Bieganie",
@@ -387,7 +396,11 @@
     "reminderTitle": "Masz nieopublikowane wersje robocze",
     "reminderSubtitle": "Przejrzyj i opublikuj swoje wersje robocze",
     "viewAll": "Zobacz wszystkie wersje robocze",
-    "dismissReminder": "Później"
+    "dismissReminder": "Później",
+    "unpublishedNote_one": "{{count}} nagrana aktywność jest nieopublikowana. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_few": "{{count}} nagrane aktywności są nieopublikowane. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_many": "{{count}} nagranych aktywności jest nieopublikowanych. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_other": "{{count}} nagranych aktywności jest nieopublikowanych. Publikacja zachowuje statystyki i punkty."
   },
   "profile": {
     "title": "Profil",
@@ -468,7 +481,12 @@
         "body": "Strefy, obciążenie treningowe i porównanie z innymi",
         "cta": "Ulepsz"
       },
-      "comparedWith": "vs {{name}}"
+      "comparedWith": "vs {{name}}",
+      "vsPrevious": "vs poprzedni okres",
+      "trend": {
+        "title": "Trend",
+        "best": "najwięcej {{value}} · {{period}}"
+      }
     },
     "empty": {
       "noPosts": "Brak postów",
@@ -1147,7 +1165,10 @@
       "remove": "Usuń z paska",
       "full": "Pasek mieści {{max}} sportów. Usuń jeden, aby dodać kolejny."
     },
-    "pausedHint": "Wstrzymane — wznów albo zakończ"
+    "pausedHint": "Wstrzymane — wznów albo zakończ",
+    "permissions": {
+      "locationDenied": "Wymagana jest zgoda na dostęp do lokalizacji."
+    }
   },
   "gpxImport": {
     "title": "Importuj GPX",
@@ -1325,7 +1346,8 @@
   },
   "permissions": {
     "gallery": "Wymagane jest pozwolenie na dostęp do zdjęć.",
-    "camera": "Wymagane jest pozwolenie na dostęp do aparatu."
+    "camera": "Wymagane jest pozwolenie na dostęp do aparatu.",
+    "mediaLibrary": "Dostęp do galerii jest potrzebny, aby wybrać zdjęcie."
   },
   "settings": {
     "title": "Ustawienia",
@@ -3205,7 +3227,11 @@
       "openActivity": "Otwórz aktywność",
       "openSchedule": "Kalendarz i start",
       "range": "Najbliższe 14 dni",
-      "undoSkip": "Cofnij"
+      "undoSkip": "Cofnij",
+      "moveTo": "Przenieś na inny dzień",
+      "movedFrom": "przeniesiony z {{date}}",
+      "resumeSkipped": "Wznów",
+      "alreadyOnDay": "Ten trening jest już w dniu {{date}}."
     },
     "session": {
       "progress": "{{done}}/{{total}} serii",
@@ -3239,7 +3265,8 @@
       "deleteSetConfirm": "Usunąć tę serię?",
       "exerciseOf": "Ćwiczenie {{index}} z {{total}}",
       "next": "Dalej · {{name}}",
-      "prevExercise": "Poprzednie ćwiczenie"
+      "prevExercise": "Poprzednie ćwiczenie",
+      "setColumn": "Seria"
     },
     "complete": {
       "title": "Zakończ trening",
@@ -3285,6 +3312,36 @@
     "sessionsPerWeek_few": "{{count}} sesje w tygodniu",
     "sessionsPerWeek_many": "{{count}} sesji w tygodniu",
     "sessionsPerWeek_other": "{{count}} sesji w tygodniu",
-    "dayNumber": "Dzień {{number}}"
+    "dayNumber": "Dzień {{number}}",
+    "conflict": {
+      "inProgressTitle": "{{name}} jest wciąż otwarty",
+      "inProgressBody": "Zakończ go albo pomiń, zanim zaczniesz kolejny.",
+      "loggedTitle": "Ten trening jest już zapisany na {{date}}",
+      "loggedBody": "Otwórz go, żeby zobaczyć zapis, albo wybierz inny dzień.",
+      "open": "Otwórz",
+      "view": "Zobacz"
+    },
+    "resumeSheet": {
+      "title": "Wznów: {{name}}",
+      "hint": "Trenowałeś to innego dnia? Wybierz dzień, na który ma się liczyć.",
+      "keep": "Zostaw {{date}}",
+      "today": "Przenieś na dziś",
+      "other": "Inny dzień",
+      "confirm": "Wznów trening"
+    }
+  },
+  "tabs": {
+    "home": "Start",
+    "feed": "Aktualności",
+    "record": "Nagrywaj",
+    "events": "Wydarzenia",
+    "profile": "Ty",
+    "a11y": {
+      "home": "Strona główna",
+      "feed": "Aktywności znajomych",
+      "record": "Nagraj aktywność",
+      "events": "Wydarzenia",
+      "profile": "Profil użytkownika"
+    }
   }
 }

@@ -39,7 +39,16 @@
     "notNow": "Not now",
     "options": "Options",
     "view": "View",
-    "clear": "Clear"
+    "clear": "Clear",
+    "accept": "Accept",
+    "copied": "Copied",
+    "decline": "Decline",
+    "fieldRequired": "This field is required",
+    "genericError": "Something went wrong",
+    "noResults": "No results",
+    "permissionDenied": "You don't have permission to do that",
+    "retry": "Retry",
+    "selectLanguage": "Select language"
   },
   "sports": {
     "running": "Running",
@@ -383,7 +392,9 @@
     "reminderTitle": "You have unpublished drafts",
     "reminderSubtitle": "Review and publish your drafts",
     "viewAll": "View all drafts",
-    "dismissReminder": "Later"
+    "dismissReminder": "Later",
+    "unpublishedNote_one": "{{count}} recorded activity is unpublished. Publishing keeps your stats and points.",
+    "unpublishedNote_other": "{{count}} recorded activities are unpublished. Publishing keeps your stats and points."
   },
   "profile": {
     "title": "Profile",
@@ -460,7 +471,12 @@
         "body": "Zones, training load and athlete compare",
         "cta": "Upgrade"
       },
-      "comparedWith": "vs {{name}}"
+      "comparedWith": "vs {{name}}",
+      "vsPrevious": "vs previous period",
+      "trend": {
+        "title": "Trend",
+        "best": "best {{value}} · {{period}}"
+      }
     },
     "empty": {
       "noPosts": "No posts yet",
@@ -1135,7 +1151,10 @@
       "remove": "Remove from the rail",
       "full": "The rail holds {{max}} sports. Remove one to add another."
     },
-    "pausedHint": "Paused — resume or finish"
+    "pausedHint": "Paused — resume or finish",
+    "permissions": {
+      "locationDenied": "Location permission is required."
+    }
   },
   "gpxImport": {
     "title": "Import GPX",
@@ -1313,7 +1332,8 @@
   },
   "permissions": {
     "gallery": "Permission to access photos is required to select an image.",
-    "camera": "Permission to access camera is required to take a photo."
+    "camera": "Permission to access camera is required to take a photo.",
+    "mediaLibrary": "Photo library access is needed to pick an image."
   },
   "settings": {
     "title": "Settings",
@@ -3178,7 +3198,11 @@
       "openActivity": "Open activity",
       "openSchedule": "Schedule & start",
       "range": "Next 14 days",
-      "undoSkip": "Undo"
+      "undoSkip": "Undo",
+      "moveTo": "Move to another day",
+      "movedFrom": "moved from {{date}}",
+      "resumeSkipped": "Resume",
+      "alreadyOnDay": "This workout is already on {{date}}."
     },
     "session": {
       "progress": "{{done}}/{{total}} sets",
@@ -3212,7 +3236,8 @@
       "deleteSetConfirm": "Remove this set?",
       "exerciseOf": "Exercise {{index}} of {{total}}",
       "next": "Next · {{name}}",
-      "prevExercise": "Previous exercise"
+      "prevExercise": "Previous exercise",
+      "setColumn": "Set"
     },
     "complete": {
       "title": "Finish workout",
@@ -3250,6 +3275,36 @@
     "sessionsCount_other": "{{count}} sessions",
     "sessionsPerWeek_one": "{{count}} session per week",
     "sessionsPerWeek_other": "{{count}} sessions per week",
-    "dayNumber": "Day {{number}}"
+    "dayNumber": "Day {{number}}",
+    "conflict": {
+      "inProgressTitle": "{{name}} is still open",
+      "inProgressBody": "Finish or skip it before starting another one.",
+      "loggedTitle": "This workout is already logged on {{date}}",
+      "loggedBody": "Open it to see what was recorded, or pick another day.",
+      "open": "Open",
+      "view": "View"
+    },
+    "resumeSheet": {
+      "title": "Resume {{name}}",
+      "hint": "Trained it on another day? Pick the day it should count towards.",
+      "keep": "Leave on {{date}}",
+      "today": "Move to today",
+      "other": "Another day",
+      "confirm": "Resume workout"
+    }
+  },
+  "tabs": {
+    "home": "Home",
+    "feed": "Feed",
+    "record": "Record",
+    "events": "Events",
+    "profile": "You",
+    "a11y": {
+      "home": "Home screen",
+      "feed": "Friends' activities",
+      "record": "Record an activity",
+      "events": "Events",
+      "profile": "Your profile"
+    }
   }
 }

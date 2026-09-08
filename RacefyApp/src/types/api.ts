@@ -1606,14 +1606,25 @@ export interface ActivityStats {
     longest_duration: ActivityBest | null;
     fastest_speed: ActivityBest | null;
   };
-  by_sport_type: Record<
-    number,
-    {
-      count: number;
-      distance: number;
-      duration: number;
-    }
-  >;
+  /**
+   * Per-sport breakdown. The API moved from a map keyed by sport-type id to a
+   * list of self-describing entries (sorted by distance), so both shapes are
+   * accepted and `normalizeSportTypeStats` flattens them — see
+   * docs/api/mobile/API_ENDPOINTS.md → "GET /stats/activities — periods".
+   */
+  by_sport_type: Record<string, SportTypeStat> | SportTypeStat[];
+}
+
+export interface SportTypeStat {
+  /** Absent on the old map shape, where the key carried the id. */
+  sport_type_id?: number;
+  name?: string;
+  slug?: string;
+  icon?: string;
+  count: number;
+  distance: number;
+  duration: number;
+  elevation_gain?: number;
 }
 
 export interface ActivityBest {
@@ -3388,6 +3399,22 @@ export interface TrendDataPoint {
   total_duration: number;
   total_elevation: number;
   total_calories: number;
+}
+
+/** GET /stats/trends — one bucket per week or month, zero-filled. */
+export interface ActivityTrendPoint {
+  /** "2026-W13" or "2026-03" */
+  period: string;
+  activities_count: number;
+  total_distance: number;
+  total_duration: number;
+  total_elevation: number;
+  total_calories: number;
+}
+
+export interface ActivityTrendsResponse {
+  granularity: TrendGranularity;
+  trends: ActivityTrendPoint[];
 }
 
 export interface TeamTrendsResponse {

@@ -4,6 +4,7 @@ import {
   Alert,
   ImageBackground,
   RefreshControl,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -29,11 +30,12 @@ import {
   ScreenContainer,
   SportSplitCard,
   StatsHeadlineCard,
+  StatsTrendCard,
   type StatsMetric,
   PersonalBestsCard,
+  SegmentedControl,
   SportTypeFilter,
   type TimeRange,
-  TimeRangeFilter,
   UserListModal,
 } from '../../components';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
@@ -42,6 +44,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { useActivityStats } from '../../hooks/useActivityStats';
+import { useActivityTrends } from '../../hooks/useActivityTrends';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
@@ -173,6 +176,11 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     refetch: refetchPointStats,
   } = usePointStats();
   const { sportTypes } = useSportTypes();
+  const {
+    trends,
+    granularity: trendGranularity,
+    isLoading: isLoadingTrends,
+  } = useActivityTrends(selectedTimeRange, selectedSportTypeId);
   const { following, isLoading: isLoadingFollowing } = useFollowing();
 
   // Debug: Log filter changes
@@ -478,10 +486,10 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   };
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart' },
-    { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
-    { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
-    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
+    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart-outline' },
+    { label: t('profile.tabs.activities'), value: 'activities', icon: 'heart-outline' },
+    { label: t('profile.tabs.posts'), value: 'posts', icon: 'reorder-three-outline' },
+    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'create-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 
@@ -705,43 +713,53 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // stay within reach instead of forcing a trip back to the top.
   const renderTabBar = () => (
     <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.tabContainer,
-          { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-        ]}
-      >
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.value}
-            style={[styles.tab, activeTab === tab.value && { borderBottomColor: colors.primary }]}
-            onPress={() => setActiveTab(tab.value)}
-          >
-            <View style={styles.tabIconContainer}>
-              <Ionicons
-                name={tab.icon}
-                size={20}
-                color={activeTab === tab.value ? colors.primary : colors.textSecondary}
-              />
-              {tab.value === 'drafts' && draftsCount > 0 && (
-                <View style={[styles.draftsBadge, { backgroundColor: colors.error }]}>
-                  <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
-                    {draftsCount > 99 ? '99+' : draftsCount}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <Text
-              style={[
-                styles.tabText,
-                { color: activeTab === tab.value ? colors.primary : colors.textSecondary },
-              ]}
-              numberOfLines={1}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+        {/* Packed to the left and scrollable rather than five equal columns:
+            the labels are different lengths, and stretching them apart makes
+            the marker under the active one harder to attach to a word. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tabScroll}
+        >
+          {tabs.map((tab) => {
+            const active = activeTab === tab.value;
+            return (
+              <TouchableOpacity
+                key={tab.value}
+                style={[styles.tab, active && { borderBottomColor: colors.primary }]}
+                onPress={() => setActiveTab(tab.value)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={18}
+                  color={active ? colors.primaryDark : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: active ? colors.primaryDark : colors.textSecondary,
+                      fontWeight: active ? '700' : '600',
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {tab.label}
+                </Text>
+                {tab.value === 'drafts' && draftsCount > 0 && (
+                  <View style={[styles.draftsBadge, { backgroundColor: colors.error }]}>
+                    <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
+                      {draftsCount > 99 ? '99+' : draftsCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
     </View>
   );
@@ -750,6 +768,18 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // it scrolls away under the sticky tab bar instead of being pinned with it.
   const renderTabExtras = () => (
     <>
+      {/* Unpublished activities are easy to forget about, and forgetting costs
+          points — so the drafts tab opens by saying how many there are and what
+          publishing is worth (design "Racefy v2" → DraftsTab). */}
+      {activeTab === 'drafts' && draftsCount > 0 && (
+        <View style={[styles.draftsNote, { backgroundColor: colors.warningLight }]}>
+          <Ionicons name="create-outline" size={16} color={colors.warning} />
+          <Text style={[styles.draftsNoteText, { color: colors.warning }]}>
+            {t('drafts.unpublishedNote', { count: draftsCount })}
+          </Text>
+        </View>
+      )}
+
       {activeTab === 'activities' && (
         <View style={styles.activitiesFilterContent}>
           <SportTypeFilter
@@ -766,11 +796,13 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
         <View style={styles.statsTabContent}>
           {/* Period and sport apply to everything below; the metric switch
               lives on the card it changes. */}
-          <TimeRangeFilter
-            options={TIME_RANGE_OPTIONS}
-            selectedValue={selectedTimeRange}
-            onSelectValue={setSelectedTimeRange}
-            isLoading={isLoadingActivityStats}
+          <SegmentedControl
+            options={TIME_RANGE_OPTIONS.map((option) => ({
+              value: option.value,
+              label: t(option.labelKey),
+            }))}
+            value={selectedTimeRange}
+            onChange={setSelectedTimeRange}
           />
           <SportTypeFilter
             sportTypes={sportTypes}
@@ -787,6 +819,14 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
             periodLabel={t(
               TIME_RANGE_OPTIONS.find((o) => o.value === selectedTimeRange)?.labelKey ?? '',
             )}
+            comparesToPrevious={previousRange != null}
+          />
+
+          <StatsTrendCard
+            trends={trends}
+            granularity={trendGranularity}
+            metric={statsMetric}
+            isLoading={isLoadingTrends}
           />
 
           <SportSplitCard
@@ -1238,42 +1278,55 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   tabContainer: {
-    flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
     marginHorizontal: -spacing.md,
   },
-  tab: {
+  draftsNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.sm,
+  },
+  draftsNoteText: {
     flex: 1,
-    flexDirection: 'column',
+    fontSize: fontSize.sm,
+    lineHeight: 18,
+  },
+  tabScroll: {
+    paddingHorizontal: spacing.md,
+    gap: 2,
+  },
+  tab: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    gap: 2,
+    gap: spacing.xs,
+    paddingTop: spacing.sm + 2,
+    paddingBottom: spacing.sm + 1,
+    paddingHorizontal: spacing.md,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabIconContainer: {
-    position: 'relative',
-  },
   draftsBadge: {
     position: 'absolute',
-    top: -6,
-    right: -10,
-    minWidth: 16,
-    minHeight: 16,
-    borderRadius: 8,
+    top: 4,
+    right: 4,
+    minWidth: 17,
+    minHeight: 17,
+    borderRadius: 9,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   draftsBadgeText: {
     fontSize: msFont(9),
     fontWeight: '700',
     textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   tabText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
+    fontSize: msFont(11),
     textAlign: 'center',
   },
   footer: {
@@ -1315,9 +1368,11 @@ const styles = StyleSheet.create({
   },
   statsTabContent: {
     marginTop: spacing.sm,
+    gap: spacing.md,
   },
   activitiesFilterContent: {
     marginTop: spacing.sm,
+    marginBottom: spacing.md,
     gap: spacing.xs,
   },
 });

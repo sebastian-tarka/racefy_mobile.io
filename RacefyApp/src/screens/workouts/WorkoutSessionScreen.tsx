@@ -28,7 +28,10 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutSessionExercise, WorkoutSessionSet } from '../../types/workouts';
 import { formatTime } from '../../utils/formatters';
 import { formatTarget } from '../../utils/workoutPlanFormat';
+import { api } from '../../services/api';
+import { emitRefresh } from '../../services/refreshEvents';
 import { CompleteSessionSheet } from './components/CompleteSessionSheet';
+import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
@@ -48,7 +51,7 @@ function num(text: string): number | null {
  */
 export function WorkoutSessionScreen({ navigation, route }: Props) {
   const { sessionId } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   useKeepAwake();
 
@@ -66,6 +69,36 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   const [completeOpen, setCompleteOpen] = useState(false);
   const [history, setHistory] = useState<{ id: number; name: string } | null>(null);
   const [result, setResult] = useState<{ activityId: number | null } | null>(null);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [isResuming, setIsResuming] = useState(false);
+
+  const formatDay = useCallback(
+    (iso: string) =>
+      new Date(iso).toLocaleDateString(i18n.language, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      }),
+    [i18n.language],
+  );
+
+  /** A skipped session is not the end of it — it can be brought back, here or
+   *  from the calendar, onto its own day or onto today. */
+  const resume = async (scheduledFor?: string) => {
+    if (!session) return;
+    setIsResuming(true);
+    try {
+      await api.resumeWorkoutSession(session.id, scheduledFor);
+      emitRefresh('workouts');
+      setResumeOpen(false);
+      setResult(null);
+      await s.reload();
+    } catch (error: any) {
+      Alert.alert('', error?.message || t('common.error'));
+    } finally {
+      setIsResuming(false);
+    }
+  };
 
   const inProgress = session?.status === 'in_progress';
 
@@ -423,6 +456,13 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
           <View style={{ flex: 1 }} />
 
+          {skipped && (
+            <Button
+              title={t('strengthPlans.schedule.resumeSkipped')}
+              onPress={() => setResumeOpen(true)}
+              fullWidth
+            />
+          )}
           {activityId != null && (
             <Button
               title={t('strengthPlans.complete.openActivity')}
@@ -437,6 +477,16 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             fullWidth
           />
         </View>
+
+        <ResumeSessionSheet
+          visible={resumeOpen}
+          skippedOn={session.scheduled_for}
+          workoutName={session.workout_name}
+          isBusy={isResuming}
+          onClose={() => setResumeOpen(false)}
+          onConfirm={(scheduledFor) => void resume(scheduledFor)}
+          formatDate={formatDay}
+        />
       </ScreenContainer>
     );
   }
@@ -574,7 +624,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
           {current && (
             <View style={styles.columns}>
               <Text style={[styles.column, styles.columnNo, { color: colors.textMuted }]}>
-                {t('strengthPlans.session.setNo')}
+                {t('strengthPlans.session.setColumn')}
               </Text>
               <Text style={[styles.column, { color: colors.textMuted }]}>
                 {t(

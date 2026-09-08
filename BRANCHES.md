@@ -15,7 +15,58 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `tabbar-design-v2` — dolny pasek zakładek wg designu „Racefy v2"
+
+Design: `TabBar` w `racefy-app.jsx`. Jeden zestaw ikon outline w obu stanach
+(stan niosą kolor i waga etykiety), lity pasek z włosową kreską zamiast blura,
+podniesiony przycisk środkowy 58 px z 4-pikselowym pierścieniem w kolorze paska,
+bursztyn gdy aktywność jest otwarta (kwadrat = zatrzymaj, play = wznów).
+Przy okazji: etykiety zakładek i etykiety dla czytnika ekranu przeszły na i18n —
+były zaszyte po angielsku i po polsku niezależnie od języka aplikacji.
+
+- [ ] Wszystkie pięć zakładek: ikona nie zmienia kształtu przy przełączeniu, zmienia się kolor i grubość podpisu
+- [ ] Pasek jest lity (bez blura) i ma cienką kreskę u góry — w trybie jasnym i ciemnym
+- [ ] Przycisk środkowy: emerald z play gdy nic nie biegnie; bursztyn z białym kwadratem podczas nagrywania; bursztyn z play przy wstrzymanej aktywności
+- [ ] Pierścień wokół przycisku ma kolor paska (przycisk „wystaje" z paska, a nie unosi się nad tłem ekranu)
+- [ ] Przytrzymanie przycisku nadal otwiera arkusz startu; tknięcie wchodzi na ekran nagrywania
+- [ ] Ekran nagrywania nadal chowa pasek i przywraca go po wyjściu
+- [ ] Zmiana języka aplikacji zmienia podpisy zakładek (dotąd były zaszyte)
+- [ ] Czytnik ekranu czyta etykiety w języku aplikacji
+- [ ] Treść ekranów nie chowa się pod paskiem (padding z `useTabBarPadding` liczy się jak wcześniej)
+- [ ] Pasek zakładek w profilu: zakładki upakowane od lewej i przewijalne w poziomie, nie pięć równych kolumn
+- [ ] Aktywna zakładka: kreska 2 px **tylko pod nią**, ikona i podpis w ciemniejszej zieleni, podpis grubszy
+- [ ] Badge szkiców siedzi w prawym górnym rogu zakładki (nie nachodzi na sąsiednią) i znika, gdy szkiców nie ma
+- [ ] Zakładka Szkice otwiera się bursztynową notką z liczbą nieopublikowanych aktywności
+- [ ] Przy dużej systemowej czcionce zakładki dają się przewinąć i nie ucinają podpisów
+
+### `strength-move-resume` — przekładanie dni i wznawianie pominiętych sesji
+
+Odgałęziony od `tabbar-design-v2`, więc niesie też jego commity. Odpowiednik
+tego, co robi już web (`PlannedSessionsList`, `ResumeSessionModal`,
+`SessionConflictModal`): status sesji `planned` + `moved_from`,
+`POST /workout-sessions/{id}/resume`, `POST /workout-sessions/move`, kalendarz
+w zakresie dziś−7 → dziś+13, arkusz akcji dnia, arkusz wyboru dnia przy
+wznowieniu, wspólny dialog kolizji 409, chip „przeniesiony z…".
+
+**Przeciąganie wierszy NIE jest zrobione** — jest tylko ścieżka z menu (długie
+przytrzymanie wiersza). Szczegóły: `.notes/SILOWNIA_PRZEKLADANIE.md`.
+
+- [ ] Kalendarz sięga tydzień wstecz — zaległy poniedziałek jest widoczny i da się go wznowić
+- [ ] Długie przytrzymanie wiersza otwiera arkusz z akcjami właściwymi dla stanu dnia (przenieś / wznów / zacznij / pomiń)
+- [ ] Dzień w toku i dzień zapisany **nie** oferują przeniesienia
+- [ ] Przeniesienie na wolny dzień: wiersz znika ze źródła i pojawia się w celu z chipem „przeniesiony z…"
+- [ ] Przeniesienie z powrotem na dzień tygodnia z planu: serwer zwraca `data: null`, aplikacja traktuje to jako sukces
+- [ ] Wybór dnia, który już ma ten trening: komunikat lokalny, **żadne żądanie nie leci**
+- [ ] Pominięty dzień: „Wznów" otwiera arkusz z domyślnym „Przenieś na dziś"; potwierdzenie wchodzi na ekran sesji, zegar rusza od zera
+- [ ] „Zostaw {data}" nie pokazuje się, gdy pominięcie było dzisiaj
+- [ ] 409 `already_logged` przy wznawianiu **nie zamyka arkusza**
+- [ ] 409 `in_progress_exists` pokazuje dialog z „Otwórz"; tamta sesja nie zostaje porzucona
+- [ ] 409 `already_logged` na sesji pominiętej daje w dialogu dodatkowo „Wznów"
+- [ ] 409 bez `reason` i 429 pokazują komunikat z serwera i nie wyrzucają z ekranu
+- [ ] Ekran pominiętej sesji ma przycisk „Wznów" (ta sama ścieżka co z kalendarza)
+- [ ] Przeniesiony dzień **nie** pojawia się w historii treningów
+- [ ] Baner „Sesja w toku" na liście planów i w planie ma znowu poprawny tekst i przycisk „Wznów" (był nadpisany kluczami arkusza)
+- [ ] Nagłówek kolumny w sesji to „Seria", a nie „SERIA {{n}}"
 
 ---
 
@@ -39,6 +90,15 @@ paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
 - [ ] Konto free: wiersz „Raporty AI" ma plakietkę PLUS i prowadzi do paywalla
 - [ ] Statystyki: przełącznik Dystans / Aktywności / Czas zmienia dużą liczbę, paski wg sportu i podpisy
 - [ ] Statystyki: delta „vs poprzedni okres" pojawia się dla tygodnia/miesiąca/roku i **znika dla „cały czas"** (nie ma z czym porównać)
+- [ ] Statystyki: **paski „Wg sportu" mają nazwy sportów, nie „Inne"** (API zwraca listę wpisów z `name`, nie mapę po id)
+- [ ] Statystyki: wybór okresu to jeden segmentowany pasek (nie luźne pigułki), a przełącznik metryki na karcie wygląda tak samo, tylko mniejszy
+- [ ] Chipy sportów: ikona w kolorze sportu, zaznaczony chip na ciemnym tle; ten sam sport ma ten sam kolor na pasku i na słupku poniżej
+- [ ] Ikony zakładek profilu: słupki / serce / linie / ołówek / kalendarz (jak na zrzucie z designu)
+- [ ] Podsumowanie pod dużą liczbą kończy się „vs poprzedni okres" — poza „cały czas", gdzie nie ma z czym porównywać
+- [ ] Statystyki: wykres trendu (`/stats/trends`) rysuje kolumny, najwyższą wypełnia i podpisuje wartością; puste okresy zostają jako kikuty, nie znikają
+- [ ] Trend reaguje na przełącznik metryki i na filtr sportu; przy „rok"/„cały czas" podpisy to miesiące, przy „tydzień"/„miesiąc" numery tygodni
+- [ ] Odstępy między sekcjami zakładki Statystyki są równe (także nad kartą nagłówkową, gdzie wcześniej odstęp dawał margines filtra sportów)
+- [ ] Zakładka Aktywności: filtr sportów nadal ma odstęp do pierwszej karty
 - [ ] Statystyki: filtr sportu przygasza pozostałe paski, nie usuwa ich
 - [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
 - [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"

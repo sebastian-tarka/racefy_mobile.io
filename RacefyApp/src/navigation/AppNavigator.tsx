@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   createNavigationContainerRef,
   DarkTheme,
@@ -14,9 +14,8 @@ import {
 } from '@react-navigation/native-stack';
 import { BottomTabBarButtonProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { BlurView } from 'expo-blur';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
@@ -24,6 +23,7 @@ import { useMaintenance } from '../hooks/useMaintenance';
 import { useAppVersion } from '../hooks/useAppVersion';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { triggerHaptic } from '../hooks/useHaptics';
+import { msFont } from '../theme';
 import {
   BatteryOptimizationModal,
   BottomSheet,
@@ -147,25 +147,6 @@ const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
 // Custom Tab Bar Background with glass blur effect
-function TabBarBackground({ colors, isDark }: { colors: any; isDark: boolean }) {
-  return (
-    <BlurView
-      intensity={isDark ? 80 : 90}
-      tint={isDark ? 'dark' : 'light'}
-      style={StyleSheet.absoluteFill}
-    >
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            backgroundColor: isDark ? 'rgba(11, 18, 32, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-          },
-        ]}
-      />
-    </BlurView>
-  );
-}
-
 function AuthNavigator() {
   const { colors } = useTheme();
   return (
@@ -188,105 +169,17 @@ function AuthNavigator() {
 export { TAB_BAR_CONTENT_GAP } from './constants';
 export { useTabBarPadding } from './useTabBarPadding';
 
-// Animated Tab Icon wrapper for smooth transitions (Classic Nav)
-function AnimatedTabIcon({
-  iconName,
-  focused,
-  size,
-  color,
-  pulse,
-  pulseColor,
-}: {
-  iconName: keyof typeof Ionicons.glyphMap;
-  focused: boolean;
-  size: number;
-  color: string;
-  /** When true, a looping "radar" glow plays behind the icon to invite a tap. */
-  pulse?: boolean;
-  pulseColor?: string;
-}) {
-  const scaleAnim = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (focused) {
-      // Pop in effect: grow bigger, then settle
-      Animated.sequence([
-        Animated.spring(scaleAnim, {
-          toValue: 1.3,
-          useNativeDriver: true,
-          tension: 180,
-          friction: 5,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1.1,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }),
-      ]).start();
-    } else {
-      // Shrink back to normal
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [focused, scaleAnim]);
-
-  useEffect(() => {
-    if (!pulse) {
-      pulseAnim.stopAnimation();
-      pulseAnim.setValue(0);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.timing(pulseAnim, {
-        toValue: 1,
-        duration: 1900,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse, pulseAnim]);
-
-  const glowSize = size + 6;
-  const glowScale = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.9] });
-  const glowOpacity = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] });
-
-  return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      {pulse && (
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            width: glowSize,
-            height: glowSize,
-            borderRadius: glowSize / 2,
-            backgroundColor: pulseColor ?? color,
-            transform: [{ scale: glowScale }],
-            opacity: glowOpacity,
-          }}
-        />
-      )}
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <Ionicons name={iconName} size={size} color={color} />
-      </Animated.View>
-    </View>
-  );
-}
-
 /**
- * Central floating action button for the Record tab: an elevated green circle
- * with a play glyph and a soft glow ring, matching the app's bottom-nav design.
+ * The raised centre button (design "Racefy v2" → TabBar). A circle lifted out of
+ * the bar and ringed in the bar's own colour, so it reads as sitting on top of
+ * the navigation rather than inside it.
+ *
+ * Emerald means "nothing running, start something". Amber means an activity is
+ * open, and the glyph says what the tap does next: a square stops the one that
+ * is recording, a play resumes the one that is paused.
+ *
  * Tap behaves like a normal tab (navigation + auth-guard listener fire via the
- * passed `onPress`); a long press opens the start-actions sheet. When an activity
- * is in progress the button switches to an active (record/pause) state.
+ * passed `onPress`); a long press opens the start-actions sheet.
  */
 function RecordTabButton({
   onPress,
@@ -295,19 +188,17 @@ function RecordTabButton({
   accessibilityLabel,
   testID,
   primaryColor,
+  ringColor,
   activity,
   isTracking,
 }: BottomTabBarButtonProps & {
   primaryColor: string;
+  /** The bar's own colour — the ring is what lifts the button off it. */
+  ringColor: string;
   activity: boolean;
   isTracking: boolean;
 }) {
-  const background = activity ? (isTracking ? '#ef4444' : '#f97316') : primaryColor;
-  const iconName: keyof typeof Ionicons.glyphMap = activity
-    ? isTracking
-      ? 'stop'
-      : 'pause'
-    : 'play';
+  const background = activity ? ACTIVITY_AMBER : primaryColor;
 
   return (
     <View style={fabStyles.slot} pointerEvents="box-none">
@@ -322,19 +213,25 @@ function RecordTabButton({
         android_ripple={{ color: 'rgba(16,185,129,0.25)', borderless: true, radius: 34 }}
         style={fabStyles.pressable}
       >
-        <View style={[fabStyles.glow, { backgroundColor: background + '22' }]} />
-        <View style={[fabStyles.fab, { backgroundColor: background, shadowColor: background }]}>
-          <Ionicons
-            name={iconName}
-            size={26}
-            color="#fff"
-            style={iconName === 'play' ? fabStyles.playOffset : undefined}
-          />
+        <View
+          style={[
+            fabStyles.fab,
+            { backgroundColor: background, borderColor: ringColor, shadowColor: background },
+          ]}
+        >
+          {activity && isTracking ? (
+            <View style={fabStyles.stopGlyph} />
+          ) : (
+            <Ionicons name="play" size={24} color="#fff" style={fabStyles.playOffset} />
+          )}
         </View>
       </Pressable>
     </View>
   );
 }
+
+/** An activity is open — the design's one "something is running" colour. */
+const ACTIVITY_AMBER = '#F59E0B';
 
 const fabStyles = StyleSheet.create({
   slot: {
@@ -345,18 +242,13 @@ const fabStyles = StyleSheet.create({
   pressable: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -22,
-  },
-  glow: {
-    position: 'absolute',
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    marginTop: -18,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
     shadowOffset: { width: 0, height: 6 },
@@ -367,11 +259,32 @@ const fabStyles = StyleSheet.create({
   playOffset: {
     marginLeft: 3, // optical centering of the triangle
   },
+  stopGlyph: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: '#ffffff',
+  },
+});
+
+/** One outline glyph per tab — the design's icon set, mapped to Ionicons. */
+const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  Home: 'home-outline',
+  Feed: 'reorder-three-outline',
+  Events: 'location-outline',
+  Profile: 'person-outline',
+};
+
+const styles = StyleSheet.create({
+  tabLabel: {
+    fontSize: msFont(10),
+    fontWeight: '600',
+  },
 });
 
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isTracking, activity } = useLiveActivityContext();
@@ -409,47 +322,23 @@ function MainTabNavigator() {
       <MainTab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap;
-            let iconColor = color;
-            switch (route.name) {
-              case 'Home':
-                iconName = focused ? 'home' : 'home-outline';
-                break;
-              case 'Feed':
-                iconName = focused ? 'list' : 'list-outline';
-                break;
-              case 'Record':
-                iconName = activity ? 'radio-button-on' : 'add-circle';
-                iconColor = activity ? (isTracking ? '#ef4444' : '#f97316') : color;
-                break;
-              case 'Events':
-                iconName = focused ? 'location' : 'location-outline';
-                break;
-              case 'Profile':
-                iconName = focused ? 'person' : 'person-outline';
-                break;
-              default:
-                iconName = 'help-circle-outline';
-            }
-            return (
-              <AnimatedTabIcon
-                iconName={iconName}
-                focused={focused}
-                size={size}
-                color={iconColor}
-                pulse={route.name === 'Record' && !activity && !focused}
-                pulseColor={colors.primary}
-              />
-            );
-          },
+          // One outline set for every tab, in both states. Swapping to a filled
+          // glyph on focus changed the shape under the thumb on every tap; the
+          // ink/mute colour and the label weight carry the state instead.
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name={TAB_ICONS[route.name] ?? 'help-circle-outline'}
+              size={size}
+              color={color}
+            />
+          ),
           tabBarActiveTintColor: colors.textPrimary,
           tabBarInactiveTintColor: colors.textMuted,
-          tabBarBackground: () => <TabBarBackground colors={colors} isDark={isDark} />,
+          tabBarLabelStyle: styles.tabLabel,
           tabBarStyle: {
-            backgroundColor: 'transparent',
-            borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-            borderTopWidth: 1,
+            backgroundColor: colors.cardBackground,
+            borderTopColor: colors.border,
+            borderTopWidth: StyleSheet.hairlineWidth,
             position: 'absolute' as const,
           },
         })}
@@ -457,26 +346,27 @@ function MainTabNavigator() {
         <MainTab.Screen
           name="Home"
           component={DynamicHomeScreen}
-          options={{ tabBarLabel: 'Home', tabBarAccessibilityLabel: 'Strona główna' }}
+          options={{ tabBarLabel: t('tabs.home'), tabBarAccessibilityLabel: t('tabs.a11y.home') }}
           listeners={hapticListener}
         />
         <MainTab.Screen
           name="Feed"
           component={FeedScreen}
-          options={{ tabBarLabel: 'Feed', tabBarAccessibilityLabel: 'Aktywności znajomych' }}
+          options={{ tabBarLabel: t('tabs.feed'), tabBarAccessibilityLabel: t('tabs.a11y.feed') }}
           listeners={authGuardListener}
         />
         <MainTab.Screen
           name="Record"
           component={ActivityRecordingScreen}
           options={{
-            tabBarLabel: 'Record',
-            tabBarAccessibilityLabel: 'Nagraj aktywność',
+            tabBarLabel: t('tabs.record'),
+            tabBarAccessibilityLabel: t('tabs.a11y.record'),
             tabBarButton: (props) => (
               <RecordTabButton
                 {...props}
                 onLongPress={openStartSheet}
                 primaryColor={colors.primary}
+                ringColor={colors.cardBackground}
                 activity={!!activity}
                 isTracking={isTracking}
               />
@@ -487,13 +377,19 @@ function MainTabNavigator() {
         <MainTab.Screen
           name="Events"
           component={EventsScreen}
-          options={{ tabBarLabel: 'Events', tabBarAccessibilityLabel: 'Wydarzenia' }}
+          options={{
+            tabBarLabel: t('tabs.events'),
+            tabBarAccessibilityLabel: t('tabs.a11y.events'),
+          }}
           listeners={authGuardListener}
         />
         <MainTab.Screen
           name="Profile"
           component={ProfileScreen}
-          options={{ tabBarLabel: 'You', tabBarAccessibilityLabel: 'Profil użytkownika' }}
+          options={{
+            tabBarLabel: t('tabs.profile'),
+            tabBarAccessibilityLabel: t('tabs.a11y.profile'),
+          }}
           listeners={authGuardListener}
         />
       </MainTab.Navigator>

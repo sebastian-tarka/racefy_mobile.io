@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { sportColor } from '../utils/sportColor';
 import type { SportTypeWithIcon } from '../hooks/useSportTypes';
 
 interface SportTypeFilterProps {
@@ -13,6 +14,11 @@ interface SportTypeFilterProps {
   isLoading?: boolean;
 }
 
+/**
+ * Sport chips (design "Racefy v2" → SportFilter): a row of pills, each carrying
+ * its sport's own colour so the same sport reads the same here and in the bars
+ * below. Selection is the ink fill — the colour is identity, not state.
+ */
 export function SportTypeFilter({
   sportTypes,
   selectedSportTypeId,
@@ -36,23 +42,25 @@ export function SportTypeFilter({
           style={[
             styles.sportItem,
             {
-              backgroundColor: isAllSelected ? colors.primary : colors.background,
-              borderColor: isAllSelected ? colors.primary : colors.border,
+              backgroundColor: isAllSelected ? colors.textPrimary : colors.cardBackground,
+              borderColor: isAllSelected ? colors.textPrimary : colors.border,
             },
           ]}
           onPress={() => onSelectSportType(null)}
           disabled={isLoading}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
+          accessibilityRole="radio"
+          accessibilityState={{ selected: isAllSelected }}
         >
           <Ionicons
-            name="apps-outline"
-            size={24}
-            color={isAllSelected ? colors.white : colors.textSecondary}
+            name="grid-outline"
+            size={16}
+            color={isAllSelected ? colors.cardBackground : colors.primary}
           />
           <Text
             style={[
               styles.sportLabel,
-              { color: isAllSelected ? colors.white : colors.textSecondary },
+              { color: isAllSelected ? colors.cardBackground : colors.textSecondary },
             ]}
           >
             {t('profile.stats.allSports')}
@@ -62,29 +70,32 @@ export function SportTypeFilter({
         {/* Individual Sport Types */}
         {sportTypes.map((sport) => {
           const isSelected = selectedSportTypeId === sport.id;
+          const tone = sportColor(sport);
           return (
             <TouchableOpacity
               key={sport.id}
               style={[
                 styles.sportItem,
                 {
-                  backgroundColor: isSelected ? colors.primary : colors.background,
-                  borderColor: isSelected ? colors.primary : colors.border,
+                  backgroundColor: isSelected ? colors.textPrimary : colors.cardBackground,
+                  borderColor: isSelected ? colors.textPrimary : colors.border,
                 },
               ]}
               onPress={() => onSelectSportType(sport.id)}
               disabled={isLoading}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
             >
               <Ionicons
                 name={sport.icon}
-                size={24}
-                color={isSelected ? colors.white : colors.textSecondary}
+                size={16}
+                color={isSelected ? colors.cardBackground : tone}
               />
               <Text
                 style={[
                   styles.sportLabel,
-                  { color: isSelected ? colors.white : colors.textSecondary },
+                  { color: isSelected ? colors.cardBackground : colors.textSecondary },
                 ]}
               >
                 {sport.name}
@@ -98,27 +109,24 @@ export function SportTypeFilter({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
+  container: {},
   scrollContent: {
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
   sportItem: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
+    height: 38,
+    paddingLeft: spacing.md - 2,
+    paddingRight: spacing.md,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
-    minWidth: 80,
-    gap: spacing.xs,
+    gap: spacing.xs + 2,
   },
   sportLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontSize: fontSize.sm,
+    fontWeight: '600',
   },
 });
