@@ -108,7 +108,7 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   const { formatTotalDistance } = useUnits();
   const { canUse, tier } = useSubscription();
   const tabBarPaddingBottom = useTabBarPadding();
-  const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'posts');
+  const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'stats');
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [draftsCount, setDraftsCount] = useState(0);
@@ -467,10 +467,10 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   };
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
-    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
     { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart' },
     { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
+    { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
+    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 

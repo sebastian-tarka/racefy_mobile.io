@@ -137,3 +137,4 @@ export { StatBlock, type StatBlockSize } from './recording/StatBlock';
 export { NavBanner } from './recording/NavBanner';
 export { NavPreview } from './recording/NavPreview';
 export { NavCueListSheet } from './recording/NavCueListSheet';
+export * from './ProfileToolRow';

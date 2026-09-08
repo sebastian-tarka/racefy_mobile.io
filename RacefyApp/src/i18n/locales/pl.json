@@ -498,7 +498,19 @@
     "streakDays": "seria dni",
     "totalKm": "KM ŁĄCZNIE",
     "totalActivities": "AKTYWNOŚCI",
-    "totalTime": "CZAS"
+    "totalTime": "CZAS",
+    "tools": {
+      "training": "Trening",
+      "community": "Społeczność i miejsca",
+      "goalsStatus_one": "{{count}} aktywny · {{percent}}% wykonane",
+      "goalsStatus_few": "{{count}} aktywne · {{percent}}% wykonane",
+      "goalsStatus_many": "{{count}} aktywnych · {{percent}}% wykonane",
+      "goalsStatus_other": "{{count}} aktywnych · {{percent}}% wykonane",
+      "routesStatus_one": "{{count}} zapisana trasa",
+      "routesStatus_few": "{{count}} zapisane trasy",
+      "routesStatus_many": "{{count}} zapisanych tras",
+      "routesStatus_other": "{{count}} zapisanych tras"
+    }
   },
   "editProfile": {
     "title": "Edytuj profil",

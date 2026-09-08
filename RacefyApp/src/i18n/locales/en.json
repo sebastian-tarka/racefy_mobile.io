@@ -492,7 +492,15 @@
     "streakDays": "day streak",
     "totalKm": "TOTAL KM",
     "totalActivities": "ACTIVITIES",
-    "totalTime": "TIME"
+    "totalTime": "TIME",
+    "tools": {
+      "training": "Training",
+      "community": "Community & places",
+      "goalsStatus_one": "{{count}} active · {{percent}}% done",
+      "goalsStatus_other": "{{count}} active · {{percent}}% done",
+      "routesStatus_one": "{{count}} saved route",
+      "routesStatus_other": "{{count}} saved routes"
+    }
   },
   "editProfile": {
     "title": "Edit Profile",
