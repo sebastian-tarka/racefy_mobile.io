@@ -91,6 +91,10 @@ paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
 - [ ] Statystyki: przełącznik Dystans / Aktywności / Czas zmienia dużą liczbę, paski wg sportu i podpisy
 - [ ] Statystyki: delta „vs poprzedni okres" pojawia się dla tygodnia/miesiąca/roku i **znika dla „cały czas"** (nie ma z czym porównać)
 - [ ] Statystyki: **paski „Wg sportu" mają nazwy sportów, nie „Inne"** (API zwraca listę wpisów z `name`, nie mapę po id)
+- [ ] Statystyki: wybór okresu to jeden segmentowany pasek (nie luźne pigułki), a przełącznik metryki na karcie wygląda tak samo, tylko mniejszy
+- [ ] Chipy sportów: ikona w kolorze sportu, zaznaczony chip na ciemnym tle; ten sam sport ma ten sam kolor na pasku i na słupku poniżej
+- [ ] Ikony zakładek profilu: słupki / serce / linie / ołówek / kalendarz (jak na zrzucie z designu)
+- [ ] Podsumowanie pod dużą liczbą kończy się „vs poprzedni okres" — poza „cały czas", gdzie nie ma z czym porównywać
 - [ ] Statystyki: filtr sportu przygasza pozostałe paski, nie usuwa ich
 - [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
 - [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"

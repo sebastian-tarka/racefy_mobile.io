@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { formatDurationCompact } from '../../utils/formatDuration';
+import { SegmentedControl } from '../SegmentedControl';
 import { borderRadius, fontSize, msFont, spacing, FONT_CAP } from '../../theme';
 import type { ActivityStats } from '../../types/api';
 
@@ -19,6 +20,8 @@ interface Props {
   metric: StatsMetric;
   onMetricChange: (metric: StatsMetric) => void;
   periodLabel: string;
+  /** False for all-time, where there is no earlier window to measure against. */
+  comparesToPrevious?: boolean;
 }
 
 /**
@@ -29,7 +32,14 @@ interface Props {
  * against the one before it. The metric switch sits on the card it changes
  * rather than floating above the whole tab.
  */
-export function StatsHeadlineCard({ stats, previous, metric, onMetricChange, periodLabel }: Props) {
+export function StatsHeadlineCard({
+  stats,
+  previous,
+  metric,
+  onMetricChange,
+  periodLabel,
+  comparesToPrevious,
+}: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { formatDistance } = useUnits();
@@ -94,31 +104,21 @@ export function StatsHeadlineCard({ stats, previous, metric, onMetricChange, per
           formatDistance(stats?.totals.distance ?? 0),
           formatDurationCompact(stats?.totals.duration ?? 0),
         ].join(' · ')}
+        {comparesToPrevious && (
+          <Text style={{ color: colors.textMuted }}>
+            {' · '}
+            {t('profile.stats.vsPrevious')}
+          </Text>
+        )}
       </Text>
 
-      <View style={[styles.segmented, { backgroundColor: colors.background }]}>
-        {METRICS.map((m) => {
-          const active = m === metric;
-          return (
-            <TouchableOpacity
-              key={m}
-              style={[styles.segment, active && { backgroundColor: colors.cardBackground }]}
-              onPress={() => onMetricChange(m)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: active }}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  { color: active ? colors.textPrimary : colors.textSecondary },
-                ]}
-              >
-                {t(`profile.stats.metric.${m}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <SegmentedControl
+        compact
+        style={styles.segmented}
+        options={METRICS.map((m) => ({ value: m, label: t(`profile.stats.metric.${m}`) }))}
+        value={metric}
+        onChange={onMetricChange}
+      />
     </View>
   );
 }
@@ -166,20 +166,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   segmented: {
-    flexDirection: 'row',
-    gap: 3,
-    padding: 3,
-    borderRadius: borderRadius.lg,
     marginTop: spacing.md,
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  segmentText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
 });

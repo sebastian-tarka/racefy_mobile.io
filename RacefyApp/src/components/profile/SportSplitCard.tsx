@@ -8,6 +8,7 @@ import type { SportTypeWithIcon } from '../../hooks/useSportTypes';
 import { formatDurationCompact } from '../../utils/formatDuration';
 import { borderRadius, fontSize, msFont, spacing } from '../../theme';
 import { findSportTypeStat, normalizeSportTypeStats } from '../../utils/sportTypeStats';
+import { sportColor } from '../../utils/sportColor';
 import type { ActivityStats } from '../../types/api';
 import type { StatsMetric } from './StatsHeadlineCard';
 
@@ -48,7 +49,14 @@ export function SportSplitCard({
       const sport = sportTypes.find((s) => s.id === entry.sportTypeId);
       const value =
         metric === 'count' ? entry.count : metric === 'time' ? entry.duration : entry.distance;
-      return { ...entry, name: entry.name ?? sport?.name, icon: sport?.icon, value };
+      return {
+        ...entry,
+        name: entry.name ?? sport?.name,
+        icon: sport?.icon,
+        // Same colour the chip above uses, so a sport is recognisable by hue.
+        tone: sportColor({ slug: entry.slug ?? sport?.slug, id: entry.sportTypeId ?? undefined }),
+        value,
+      };
     })
     .sort((a, b) => b.value - a.value);
 
@@ -95,8 +103,8 @@ export function SportSplitCard({
             style={[styles.row, dimmed && styles.rowDimmed]}
           >
             <View style={styles.rowHead}>
-              <View style={[styles.icon, { backgroundColor: colors.primary + '1A' }]}>
-                <Ionicons name={row.icon ?? 'fitness-outline'} size={14} color={colors.primary} />
+              <View style={[styles.icon, { backgroundColor: row.tone + '1A' }]}>
+                <Ionicons name={row.icon ?? 'fitness-outline'} size={14} color={row.tone} />
               </View>
               <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
                 {row.name ?? t('profile.stats.otherSport')}
@@ -115,7 +123,7 @@ export function SportSplitCard({
                   styles.fill,
                   {
                     width: `${Math.max(2, Math.round((row.value / max) * 100))}%`,
-                    backgroundColor: colors.primary,
+                    backgroundColor: row.tone,
                   },
                 ]}
               />

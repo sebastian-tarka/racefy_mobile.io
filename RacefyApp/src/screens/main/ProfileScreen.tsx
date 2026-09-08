@@ -32,9 +32,9 @@ import {
   StatsHeadlineCard,
   type StatsMetric,
   PersonalBestsCard,
+  SegmentedControl,
   SportTypeFilter,
   type TimeRange,
-  TimeRangeFilter,
   UserListModal,
 } from '../../components';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
@@ -479,10 +479,10 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   };
 
   const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart' },
-    { label: t('profile.tabs.activities'), value: 'activities', icon: 'fitness-outline' },
-    { label: t('profile.tabs.posts'), value: 'posts', icon: 'newspaper-outline' },
-    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'document-outline' },
+    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart-outline' },
+    { label: t('profile.tabs.activities'), value: 'activities', icon: 'heart-outline' },
+    { label: t('profile.tabs.posts'), value: 'posts', icon: 'reorder-three-outline' },
+    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'create-outline' },
     { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
   ];
 
@@ -789,11 +789,13 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
         <View style={styles.statsTabContent}>
           {/* Period and sport apply to everything below; the metric switch
               lives on the card it changes. */}
-          <TimeRangeFilter
-            options={TIME_RANGE_OPTIONS}
-            selectedValue={selectedTimeRange}
-            onSelectValue={setSelectedTimeRange}
-            isLoading={isLoadingActivityStats}
+          <SegmentedControl
+            options={TIME_RANGE_OPTIONS.map((option) => ({
+              value: option.value,
+              label: t(option.labelKey),
+            }))}
+            value={selectedTimeRange}
+            onChange={setSelectedTimeRange}
           />
           <SportTypeFilter
             sportTypes={sportTypes}
@@ -810,6 +812,7 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
             periodLabel={t(
               TIME_RANGE_OPTIONS.find((o) => o.value === selectedTimeRange)?.labelKey ?? '',
             )}
+            comparesToPrevious={previousRange != null}
           />
 
           <SportSplitCard

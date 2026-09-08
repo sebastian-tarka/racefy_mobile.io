@@ -481,7 +481,8 @@
         "body": "Strefy, obciążenie treningowe i porównanie z innymi",
         "cta": "Ulepsz"
       },
-      "comparedWith": "vs {{name}}"
+      "comparedWith": "vs {{name}}",
+      "vsPrevious": "vs poprzedni okres"
     },
     "empty": {
       "noPosts": "Brak postów",

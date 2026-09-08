@@ -471,7 +471,8 @@
         "body": "Zones, training load and athlete compare",
         "cta": "Upgrade"
       },
-      "comparedWith": "vs {{name}}"
+      "comparedWith": "vs {{name}}",
+      "vsPrevious": "vs previous period"
     },
     "empty": {
       "noPosts": "No posts yet",
