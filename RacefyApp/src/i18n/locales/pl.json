@@ -443,7 +443,32 @@
         "month": "Miesiąc",
         "year": "Rok",
         "allTime": "Cały czas"
-      }
+      },
+      "metric": {
+        "distance": "Dystans",
+        "count": "Aktywności",
+        "time": "Czas"
+      },
+      "bySport": "Wg sportu",
+      "shareOf": "udział w kategorii {{metric}}",
+      "otherSport": "Inne",
+      "activitiesCount_one": "{{count}} aktywność",
+      "activitiesCount_few": "{{count}} aktywności",
+      "activitiesCount_many": "{{count}} aktywności",
+      "activitiesCount_other": "{{count}} aktywności",
+      "bests": {
+        "title": "Rekordy",
+        "inPeriod": "w tym okresie",
+        "longestDistance": "Najdłuższy",
+        "longestDuration": "Najdłuższy czas",
+        "fastestSpeed": "Najszybszy"
+      },
+      "advanced": {
+        "title": "Statystyki zaawansowane",
+        "body": "Strefy, obciążenie treningowe i porównanie z innymi",
+        "cta": "Ulepsz"
+      },
+      "comparedWith": "vs {{name}}"
     },
     "empty": {
       "noPosts": "Brak postów",
@@ -498,7 +523,19 @@
     "streakDays": "seria dni",
     "totalKm": "KM ŁĄCZNIE",
     "totalActivities": "AKTYWNOŚCI",
-    "totalTime": "CZAS"
+    "totalTime": "CZAS",
+    "tools": {
+      "training": "Trening",
+      "community": "Społeczność i miejsca",
+      "goalsStatus_one": "{{count}} aktywny · {{percent}}% wykonane",
+      "goalsStatus_few": "{{count}} aktywne · {{percent}}% wykonane",
+      "goalsStatus_many": "{{count}} aktywnych · {{percent}}% wykonane",
+      "goalsStatus_other": "{{count}} aktywnych · {{percent}}% wykonane",
+      "routesStatus_one": "{{count}} zapisana trasa",
+      "routesStatus_few": "{{count}} zapisane trasy",
+      "routesStatus_many": "{{count}} zapisanych tras",
+      "routesStatus_other": "{{count}} zapisanych tras"
+    }
   },
   "editProfile": {
     "title": "Edytuj profil",

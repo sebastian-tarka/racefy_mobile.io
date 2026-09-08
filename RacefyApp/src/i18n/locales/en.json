@@ -437,7 +437,30 @@
         "month": "Month",
         "year": "Year",
         "allTime": "All Time"
-      }
+      },
+      "metric": {
+        "distance": "Distance",
+        "count": "Activities",
+        "time": "Time"
+      },
+      "bySport": "By sport",
+      "shareOf": "share of {{metric}}",
+      "otherSport": "Other",
+      "activitiesCount_one": "{{count}} activity",
+      "activitiesCount_other": "{{count}} activities",
+      "bests": {
+        "title": "Personal bests",
+        "inPeriod": "in this period",
+        "longestDistance": "Longest",
+        "longestDuration": "Longest time",
+        "fastestSpeed": "Fastest"
+      },
+      "advanced": {
+        "title": "Advanced stats",
+        "body": "Zones, training load and athlete compare",
+        "cta": "Upgrade"
+      },
+      "comparedWith": "vs {{name}}"
     },
     "empty": {
       "noPosts": "No posts yet",
@@ -492,7 +515,15 @@
     "streakDays": "day streak",
     "totalKm": "TOTAL KM",
     "totalActivities": "ACTIVITIES",
-    "totalTime": "TIME"
+    "totalTime": "TIME",
+    "tools": {
+      "training": "Training",
+      "community": "Community & places",
+      "goalsStatus_one": "{{count}} active · {{percent}}% done",
+      "goalsStatus_other": "{{count}} active · {{percent}}% done",
+      "routesStatus_one": "{{count}} saved route",
+      "routesStatus_other": "{{count}} saved routes"
+    }
   },
   "editProfile": {
     "title": "Edit Profile",

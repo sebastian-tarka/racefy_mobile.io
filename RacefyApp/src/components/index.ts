@@ -137,3 +137,7 @@ export { StatBlock, type StatBlockSize } from './recording/StatBlock';
 export { NavBanner } from './recording/NavBanner';
 export { NavPreview } from './recording/NavPreview';
 export { NavCueListSheet } from './recording/NavCueListSheet';
+export * from './ProfileToolRow';
+export { StatsHeadlineCard, type StatsMetric } from './profile/StatsHeadlineCard';
+export { SportSplitCard } from './profile/SportSplitCard';
+export { PersonalBestsCard } from './profile/PersonalBestsCard';
