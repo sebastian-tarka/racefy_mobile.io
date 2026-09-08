@@ -94,7 +94,12 @@ export function RouteSelectionModal({
                 <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                   {t('recording.myRoutes', 'My routes')} ({myRoutes.length})
                 </Text>
-                <TouchableOpacity onPress={onNavigateToLibrary}>
+                <TouchableOpacity
+                  onPress={() => {
+                    onClose();
+                    onNavigateToLibrary();
+                  }}
+                >
                   <Text style={[styles.libraryLink, { color: colors.primary }]}>
                     {t('routes.openLibrary', 'Library →')}
                   </Text>

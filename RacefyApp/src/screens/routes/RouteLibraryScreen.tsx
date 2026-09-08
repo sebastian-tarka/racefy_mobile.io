@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { EmptyState, Loading, RouteCard, ScreenContainer, ScreenHeader } from '../../components';
 import { useRoutes } from '../../hooks/useRoutes';
+import { useSportTypes } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -27,6 +28,9 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
   const selectMode = navRoute.params?.selectMode ?? false;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  // `/routes` may omit `sport_type`; the cached catalogue fills the gap so every
+  // card shows its sport rather than the generic fallback icon.
+  const { getSportById } = useSportTypes();
   const {
     routes,
     isLoading,
@@ -99,9 +103,13 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
 
   const renderItem = useCallback(
     ({ item }: { item: PlannedRoute }) => (
-      <RouteCard route={item} onPress={() => handleRoutePress(item)} />
+      <RouteCard
+        route={item}
+        sport={item.sport_type ?? getSportById(item.sport_type_id) ?? null}
+        onPress={() => handleRoutePress(item)}
+      />
     ),
-    [handleRoutePress],
+    [handleRoutePress, getSportById],
   );
 
   const renderEmpty = () => {

@@ -110,6 +110,7 @@ export function MapboxLiveMap({
   nearbyRoutes,
   shadowTrack,
   selectedRouteKey,
+  onRouteSelect,
   onFollowUserChanged,
   plannedRoute,
   athlete = null,
@@ -350,6 +351,11 @@ export function MapboxLiveMap({
             <MapboxGL.ShapeSource
               key={`nearby-base-${routeKey(route)}`}
               id={`nearby-base-${routeKey(route)}`}
+              // A route you can see is a route you can pick. Without this the
+              // drawn lines were decoration and selection only worked from the
+              // list. The hitbox is generous — a 2.5 px line is not a tap target.
+              onPress={onRouteSelect ? () => onRouteSelect(route) : undefined}
+              hitbox={{ width: 24, height: 24 }}
               shape={{
                 type: 'Feature',
                 properties: {},

@@ -348,7 +348,17 @@ export function ActivityRecordingScreen() {
     handleClearShadowTrack,
   } = useNearbyRoutes(selectedSport?.id, currentPosition, previewLocation, viewMode);
 
-  const myPlannedRoutes = useMyPlannedRoutes(isAuthenticated, user);
+  const { routes: myPlannedRoutes, refetch: refetchMyRoutes } = useMyPlannedRoutes(
+    isAuthenticated,
+    user,
+  );
+
+  // Coming back from the route library, where a route may have just been drawn.
+  useFocusEffect(
+    useCallback(() => {
+      refetchMyRoutes();
+    }, [refetchMyRoutes]),
+  );
 
   // Merged list (my routes first, then nearby) used by both the inline horizontal
   // panel and the full-screen route-selection modal.
