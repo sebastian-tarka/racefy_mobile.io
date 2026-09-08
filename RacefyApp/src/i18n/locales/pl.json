@@ -3286,5 +3286,19 @@
     "sessionsPerWeek_many": "{{count}} sesji w tygodniu",
     "sessionsPerWeek_other": "{{count}} sesji w tygodniu",
     "dayNumber": "Dzień {{number}}"
+  },
+  "tabs": {
+    "home": "Start",
+    "feed": "Aktualności",
+    "record": "Nagrywaj",
+    "events": "Wydarzenia",
+    "profile": "Ty",
+    "a11y": {
+      "home": "Strona główna",
+      "feed": "Aktywności znajomych",
+      "record": "Nagraj aktywność",
+      "events": "Wydarzenia",
+      "profile": "Profil użytkownika"
+    }
   }
 }

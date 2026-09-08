@@ -3251,5 +3251,19 @@
     "sessionsPerWeek_one": "{{count}} session per week",
     "sessionsPerWeek_other": "{{count}} sessions per week",
     "dayNumber": "Day {{number}}"
+  },
+  "tabs": {
+    "home": "Home",
+    "feed": "Feed",
+    "record": "Record",
+    "events": "Events",
+    "profile": "You",
+    "a11y": {
+      "home": "Home screen",
+      "feed": "Friends' activities",
+      "record": "Record an activity",
+      "events": "Events",
+      "profile": "Your profile"
+    }
   }
 }

@@ -15,7 +15,24 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `tabbar-design-v2` — dolny pasek zakładek wg designu „Racefy v2"
+
+Design: `TabBar` w `racefy-app.jsx`. Jeden zestaw ikon outline w obu stanach
+(stan niosą kolor i waga etykiety), lity pasek z włosową kreską zamiast blura,
+podniesiony przycisk środkowy 58 px z 4-pikselowym pierścieniem w kolorze paska,
+bursztyn gdy aktywność jest otwarta (kwadrat = zatrzymaj, play = wznów).
+Przy okazji: etykiety zakładek i etykiety dla czytnika ekranu przeszły na i18n —
+były zaszyte po angielsku i po polsku niezależnie od języka aplikacji.
+
+- [ ] Wszystkie pięć zakładek: ikona nie zmienia kształtu przy przełączeniu, zmienia się kolor i grubość podpisu
+- [ ] Pasek jest lity (bez blura) i ma cienką kreskę u góry — w trybie jasnym i ciemnym
+- [ ] Przycisk środkowy: emerald z play gdy nic nie biegnie; bursztyn z białym kwadratem podczas nagrywania; bursztyn z play przy wstrzymanej aktywności
+- [ ] Pierścień wokół przycisku ma kolor paska (przycisk „wystaje" z paska, a nie unosi się nad tłem ekranu)
+- [ ] Przytrzymanie przycisku nadal otwiera arkusz startu; tknięcie wchodzi na ekran nagrywania
+- [ ] Ekran nagrywania nadal chowa pasek i przywraca go po wyjściu
+- [ ] Zmiana języka aplikacji zmienia podpisy zakładek (dotąd były zaszyte)
+- [ ] Czytnik ekranu czyta etykiety w języku aplikacji
+- [ ] Treść ekranów nie chowa się pod paskiem (padding z `useTabBarPadding` liczy się jak wcześniej)
 
 ---
 
