@@ -134,3 +134,4 @@ export * from './GpsHealthCheckCard';
 export { EffortBreakdownCard } from './activity/EffortBreakdownCard';
 export { LivePulse } from './recording/LivePulse';
 export { StatBlock, type StatBlockSize } from './recording/StatBlock';
+export { NavBanner } from './recording/NavBanner';

@@ -45,6 +45,13 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Live: przytrzymanie stopu (1,2 s) otwiera ekran zakończenia; krótkie tknięcie nic nie robi
 - [ ] Live: blokada ekranu i odblokowanie przytrzymaniem działa; pasek transmisji na żywo nie rozjeżdża ciemnego tła
 - [ ] Live: tknięcie w pasek mapy przełącza na pełną mapę, powrót „Stats" wraca do ciemnego panelu
+- [ ] Live z wybraną trasą: baner nawigacji nad kartą celu pokazuje najbliższy manewr i dystans do niego; pasek dojazdu rośnie
+- [ ] Baner ≤ 120 m od zakrętu robi się niebieski (stan „teraz"), po zakręcie wraca do ciemnego
+- [ ] „Potem …" pokazuje kolejny manewr, „do końca …" maleje; po ostatniej wskazówce baner mówi „Trasa ukończona"
+- [ ] Wyjście poza trasę: czerwony pas nad banerem z odległością od trasy
+- [ ] Przycisk głośnika wycisza zapowiedzi (i ucina trwającą), stan przeżywa restart aplikacji
+- [ ] Konto bez Pro z wybraną trasą: przerywana ramka „Nawigacja … — Pro" prowadzi do paywalla
+- [ ] Ekran live scrolluje, gdy baner + cel + staty + mapa nie mieszczą się; pauza i stop zostają przyklejone na dole
 - [ ] Zakończenie: „wstecz" wraca do wstrzymanej aktywności (nic nie ginie), „Odrzuć" pyta o potwierdzenie
 - [ ] Zakończenie: tytuł trafia do zapisanej aktywności; „Zapisz prywatnie" na koncie free pokazuje upsell (`ai_post_on_finish`), na płatnym zapisuje bez posta
 - [ ] Zakończenie: podpięcie eventu działa tak jak wcześniej na ekranie pauzy

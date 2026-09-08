@@ -40,6 +40,7 @@ import {
   useMilestones,
   useMilestoneTracking,
   useMyPlannedRoutes,
+  useNavVoicePref,
   useNearbyRoutes,
   useOngoingEvents,
   usePermissions,
@@ -72,6 +73,7 @@ import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
 import { useNavigationAnnouncer } from '../../hooks/useNavigationAnnouncer';
 import { useRouteTurnInstructions } from '../../hooks/useRouteTurnInstructions';
 import { routeKey } from '../../utils/routeKey';
+import { navBannerState } from '../../utils/navigationCues';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { FinishView } from './recording/FinishView';
@@ -485,7 +487,22 @@ export function ActivityRecordingScreen() {
   });
 
   // Voice + haptic announcements for upcoming turns and off-route warnings
+  const { voiceEnabled: navVoiceEnabled, toggleVoice: toggleNavVoice } = useNavVoicePref();
+  const canUseLiveNavigation = canUse('live_navigation');
+
+  // One instruction at a time for the live screen's banner. Built from the same
+  // merged route the navigation itself runs on, so the "then …" peek matches
+  // what will actually be announced.
+  const navBanner = useMemo(
+    () =>
+      canUseLiveNavigation
+        ? navBannerState(plannedRouteForNav?.turn_instructions ?? [], liveNav)
+        : null,
+    [canUseLiveNavigation, plannedRouteForNav?.turn_instructions, liveNav],
+  );
+
   useNavigationAnnouncer({
+    enabled: navVoiceEnabled,
     nextTurn: liveNav.nextTurn,
     distanceToTurn: liveNav.distanceToTurn,
     shouldAnnounce: liveNav.shouldAnnounce,
@@ -1069,6 +1086,11 @@ export function ActivityRecordingScreen() {
       onResume={handleResume}
       onStop={handleStop}
       onExpandMap={gpsProfile?.enabled ? () => setViewMode('map') : undefined}
+      navigation={navBanner}
+      navVoiceEnabled={navVoiceEnabled}
+      onToggleNavVoice={toggleNavVoice}
+      navLocked={!canUseLiveNavigation && shadowTrackTurns.length > 0}
+      onUnlockNav={() => navigation.navigate('Paywall', { feature: 'live_navigation' })}
       workoutPlan={workoutPlan}
       workoutProgress={workout.progress}
       workoutState={workout.state}

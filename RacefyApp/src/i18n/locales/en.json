@@ -2731,7 +2731,16 @@
     "turnLeft": "Turn left",
     "turnRight": "Turn right",
     "goStraight": "Go straight",
-    "uTurn": "U-turn"
+    "uTurn": "U-turn",
+    "routeComplete": "Route complete",
+    "arrive": "Arrive",
+    "then": "Then",
+    "lastInstruction": "Last instruction",
+    "left": "{{distance}} left",
+    "voiceOn": "Voice cues on",
+    "voiceOff": "Voice cues off",
+    "allDirections": "All directions",
+    "upsell": "Turn-by-turn navigation — Pro"
   },
   "unsynced": {
     "screenTitle": "Unsynced activities",

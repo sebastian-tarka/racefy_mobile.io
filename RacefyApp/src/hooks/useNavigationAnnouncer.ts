@@ -11,6 +11,12 @@ interface Params {
   shouldAnnounce: boolean;
   isOffRoute: boolean;
   isActive: boolean;
+  /**
+   * Spoken prompts on/off. Turning them off leaves navigation running — the
+   * banner still counts down, it just stops talking, which is what an athlete
+   * running with music or in company actually wants.
+   */
+  enabled?: boolean;
 }
 
 /**
@@ -25,22 +31,24 @@ export function useNavigationAnnouncer({
   shouldAnnounce,
   isOffRoute,
   isActive,
+  enabled = true,
 }: Params) {
+  const speaks = isActive && enabled;
   const lastAnnouncedTurnIdRef = useRef<number | null>(null);
   const lastOffRouteRef = useRef<boolean>(false);
 
-  // Stop any in-flight speech when navigation deactivates
+  // Stop any in-flight speech when navigation deactivates or is muted
   useEffect(() => {
-    if (!isActive) {
+    if (!speaks) {
       lastAnnouncedTurnIdRef.current = null;
       lastOffRouteRef.current = false;
       Speech.stop().catch(() => {});
     }
-  }, [isActive]);
+  }, [speaks]);
 
   // Announce turn
   useEffect(() => {
-    if (!isActive || !shouldAnnounce || !nextTurn) return;
+    if (!speaks || !shouldAnnounce || !nextTurn) return;
     const turnId = nextTurn.distance_along;
     if (lastAnnouncedTurnIdRef.current === turnId) return;
     lastAnnouncedTurnIdRef.current = turnId;
@@ -63,11 +71,11 @@ export function useNavigationAnnouncer({
         });
         logger.debug('activity', 'Navigation TTS', { phrase });
       });
-  }, [shouldAnnounce, nextTurn, distanceToTurn, isActive]);
+  }, [shouldAnnounce, nextTurn, distanceToTurn, speaks]);
 
   // Announce off-route entry/exit
   useEffect(() => {
-    if (!isActive) return;
+    if (!speaks) return;
     if (isOffRoute && !lastOffRouteRef.current) {
       lastOffRouteRef.current = true;
       const phrase = i18n.t('navigation.offRoute');
@@ -78,7 +86,7 @@ export function useNavigationAnnouncer({
       const phrase = i18n.t('navigation.backOnRoute');
       void speakDucked(phrase, { language: i18n.language || 'en' });
     }
-  }, [isOffRoute, isActive]);
+  }, [isOffRoute, speaks]);
 }
 
 /**

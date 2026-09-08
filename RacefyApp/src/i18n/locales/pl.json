@@ -2743,7 +2743,16 @@
     "turnLeft": "Skręć w lewo",
     "turnRight": "Skręć w prawo",
     "goStraight": "Jedź prosto",
-    "uTurn": "Zawróć"
+    "uTurn": "Zawróć",
+    "routeComplete": "Trasa ukończona",
+    "arrive": "Meta",
+    "then": "Potem",
+    "lastInstruction": "Ostatnia wskazówka",
+    "left": "do końca {{distance}}",
+    "voiceOn": "Zapowiedzi włączone",
+    "voiceOff": "Zapowiedzi wyłączone",
+    "allDirections": "Wszystkie wskazówki",
+    "upsell": "Nawigacja zakręt po zakręcie — Pro"
   },
   "unsynced": {
     "screenTitle": "Niezsynchronizowane aktywności",

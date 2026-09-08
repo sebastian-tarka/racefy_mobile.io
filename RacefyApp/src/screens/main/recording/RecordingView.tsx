@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,8 @@ import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
-import { LivePulse, MapboxLiveMap, StatBlock } from '../../../components';
+import { LivePulse, MapboxLiveMap, NavBanner, StatBlock } from '../../../components';
+import type { NavBannerState } from '../../../utils/navigationCues';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 import { WorkoutProgressCard } from './WorkoutProgressCard';
 import type { WorkoutPlan } from '../../../types/workout';
@@ -48,6 +49,15 @@ interface RecordingViewProps {
   onStop: () => void;
   /** Tapping the map strip opens the full-screen map view. */
   onExpandMap?: () => void;
+  // Turn-by-turn navigation for the chosen route
+  /** Null when no route is being followed, or the athlete has no Pro. */
+  navigation?: NavBannerState | null;
+  navVoiceEnabled?: boolean;
+  onToggleNavVoice?: () => void;
+  onOpenCueList?: () => void;
+  /** A route with directions is loaded, but navigation is a paid feature. */
+  navLocked?: boolean;
+  onUnlockNav?: () => void;
   // Training goal
   workoutPlan?: WorkoutPlan | null;
   workoutProgress?: SegmentProgress | null;
@@ -88,6 +98,12 @@ export function RecordingView({
   onResume,
   onStop,
   onExpandMap,
+  navigation,
+  navVoiceEnabled,
+  onToggleNavVoice,
+  onOpenCueList,
+  navLocked,
+  onUnlockNav,
   workoutPlan,
   workoutProgress,
   workoutState,
@@ -130,6 +146,9 @@ export function RecordingView({
   };
 
   const calories = Math.floor(localDuration * 0.15);
+  // The map is proof the track is being recorded, not the thing being read —
+  // it gives way to whatever else is on screen (design: 72 / 84 / 120 px).
+  const mapHeight = navigation ? 120 : workoutPlan ? 140 : 180;
   // The design's fourth readout is heart rate. Without a paired sensor there is
   // nothing to show, so elevation — which every GPS activity has — takes the
   // tile instead of a permanently empty one.
@@ -186,192 +205,229 @@ export function RecordingView({
         </View>
       </View>
 
-      {/* ── Sport pill ── */}
-      {selectedSport && (
-        <View style={styles.sportPillRow}>
-          <View style={styles.sportPill}>
-            <Ionicons name={selectedSport.icon} size={13} color={heroColors.ink} />
-            <Text style={styles.sportPillText} numberOfLines={1}>
-              {selectedSport.name}
-            </Text>
-          </View>
-          {trackingStatus?.gpsSignal === 'lost' && (
-            <View style={[styles.sportPill, { backgroundColor: heroColors.red + '2E' }]}>
-              <Ionicons name="warning" size={13} color={heroColors.red} />
-              <Text style={[styles.sportPillText, { color: heroColors.red }]}>
-                {t('recording.gpsSignal.lost')}
+      {/* Everything above the controls scrolls; pause and stop never leave the
+          screen, however much the goal card and the nav banner take up. */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Sport pill ── */}
+        {selectedSport && (
+          <View style={styles.sportPillRow}>
+            <View style={styles.sportPill}>
+              <Ionicons name={selectedSport.icon} size={13} color={heroColors.ink} />
+              <Text style={styles.sportPillText} numberOfLines={1}>
+                {selectedSport.name}
               </Text>
             </View>
-          )}
-        </View>
-      )}
-
-      {/* ── Hero duration ── */}
-      <View style={styles.heroBlock}>
-        <Text style={styles.heroLabel}>{t('recording.duration').toUpperCase()}</Text>
-        <Text style={styles.heroTimer} numberOfLines={1} adjustsFontSizeToFit>
-          {formatTime(localDuration)}
-        </Text>
-      </View>
-
-      {/* ── Goal HUD ── */}
-      <View style={styles.goalBlock}>
-        <WorkoutProgressCard
-          plan={workoutPlan ?? null}
-          progress={workoutProgress ?? null}
-          state={workoutState ?? null}
-          variant="live"
-          formatDistance={fmtDistance}
-          onPress={onOpenWorkout}
-          onSkip={onSkipSegment}
-        />
-      </View>
-
-      {/* ── Stats grid ── */}
-      <View style={styles.statsGrid}>
-        <StatBlock
-          style={styles.statCell}
-          dark
-          size="lg"
-          label={t('recording.distance').toUpperCase()}
-          value={fmtDistance(distance)}
-        />
-        <StatBlock
-          style={styles.statCell}
-          dark
-          size="lg"
-          label={t('recording.avgPace').toUpperCase()}
-          value={formatAvgPace()}
-          unit={getPaceUnit()}
-        />
-        {hasHeartRate ? (
-          <StatBlock
-            style={styles.statCell}
-            dark
-            size="lg"
-            label={t('recording.heartRate').toUpperCase()}
-            value={String(Math.round(currentStats.avg_heart_rate ?? 0))}
-            unit={t('recording.bpm')}
-          />
-        ) : (
-          <StatBlock
-            style={styles.statCell}
-            dark
-            size="lg"
-            label={t('recording.elevation').toUpperCase()}
-            value={String(Math.round(currentStats.elevation_gain ?? 0))}
-            unit="m"
-          />
+            {trackingStatus?.gpsSignal === 'lost' && (
+              <View style={[styles.sportPill, { backgroundColor: heroColors.red + '2E' }]}>
+                <Ionicons name="warning" size={13} color={heroColors.red} />
+                <Text style={[styles.sportPillText, { color: heroColors.red }]}>
+                  {t('recording.gpsSignal.lost')}
+                </Text>
+              </View>
+            )}
+          </View>
         )}
-        <StatBlock
-          style={styles.statCell}
-          dark
-          size="lg"
-          label={t('recording.calories').toUpperCase()}
-          value={String(calories)}
-          unit={t('recording.kcal')}
-        />
-      </View>
 
-      {/* ── Map strip — proof the track is being recorded; tap for the full map ── */}
-      {gpsProfile?.enabled !== false && (
-        <View style={styles.mapStrip}>
-          <MapboxLiveMap
-            livePoints={livePoints}
-            livePointsVersion={livePointsVersion}
-            currentPosition={currentPosition}
-            gpsSignalQuality={trackingStatus?.gpsSignal ?? 'disabled'}
-            followUser={followUser}
-            onFollowUserChanged={onFollowUserChanged}
-            mapStyle={mapStyle}
-          />
-          {onExpandMap && (
-            <TouchableOpacity
-              style={styles.expandMapButton}
-              onPress={onExpandMap}
-              activeOpacity={0.8}
-              accessibilityLabel={t('recording.toggleView')}
-            >
-              <Ionicons name="expand-outline" size={16} color={heroColors.ink} />
-            </TouchableOpacity>
-          )}
+        {/* ── Hero duration ── */}
+        <View style={styles.heroBlock}>
+          <Text style={styles.heroLabel}>{t('recording.duration').toUpperCase()}</Text>
+          <Text style={styles.heroTimer} numberOfLines={1} adjustsFontSizeToFit>
+            {formatTime(localDuration)}
+          </Text>
         </View>
-      )}
+
+        {/* ── Next instruction — the thing to read while moving ── */}
+        {navigation && (
+          <View style={styles.navBlock}>
+            <NavBanner
+              state={navigation}
+              voiceEnabled={navVoiceEnabled}
+              onToggleVoice={onToggleNavVoice}
+              onOpenCueList={onOpenCueList}
+            />
+          </View>
+        )}
+
+        {navLocked && !navigation && (
+          <TouchableOpacity
+            style={styles.navLockedRow}
+            onPress={onUnlockNav}
+            activeOpacity={0.8}
+            accessibilityLabel={t('navigation.upsell')}
+          >
+            <Ionicons name="navigate-outline" size={16} color={heroColors.inkSoft} />
+            <Text style={styles.navLockedText} numberOfLines={1}>
+              {t('navigation.upsell')}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={heroColors.inkSoft} />
+          </TouchableOpacity>
+        )}
+
+        {/* ── Goal HUD ── */}
+        <View style={styles.goalBlock}>
+          <WorkoutProgressCard
+            plan={workoutPlan ?? null}
+            progress={workoutProgress ?? null}
+            state={workoutState ?? null}
+            variant="live"
+            formatDistance={fmtDistance}
+            onPress={onOpenWorkout}
+            onSkip={onSkipSegment}
+          />
+        </View>
+
+        {/* ── Stats grid ── */}
+        <View style={styles.statsGrid}>
+          <StatBlock
+            style={styles.statCell}
+            dark
+            size="lg"
+            label={t('recording.distance').toUpperCase()}
+            value={fmtDistance(distance)}
+          />
+          <StatBlock
+            style={styles.statCell}
+            dark
+            size="lg"
+            label={t('recording.avgPace').toUpperCase()}
+            value={formatAvgPace()}
+            unit={getPaceUnit()}
+          />
+          {hasHeartRate ? (
+            <StatBlock
+              style={styles.statCell}
+              dark
+              size="lg"
+              label={t('recording.heartRate').toUpperCase()}
+              value={String(Math.round(currentStats.avg_heart_rate ?? 0))}
+              unit={t('recording.bpm')}
+            />
+          ) : (
+            <StatBlock
+              style={styles.statCell}
+              dark
+              size="lg"
+              label={t('recording.elevation').toUpperCase()}
+              value={String(Math.round(currentStats.elevation_gain ?? 0))}
+              unit="m"
+            />
+          )}
+          <StatBlock
+            style={styles.statCell}
+            dark
+            size="lg"
+            label={t('recording.calories').toUpperCase()}
+            value={String(calories)}
+            unit={t('recording.kcal')}
+          />
+        </View>
+
+        {/* ── Map strip — proof the track is being recorded; tap for the full map ── */}
+        {gpsProfile?.enabled !== false && (
+          <View style={[styles.mapStrip, { height: mapHeight }]}>
+            <MapboxLiveMap
+              livePoints={livePoints}
+              livePointsVersion={livePointsVersion}
+              currentPosition={currentPosition}
+              gpsSignalQuality={trackingStatus?.gpsSignal ?? 'disabled'}
+              followUser={followUser}
+              onFollowUserChanged={onFollowUserChanged}
+              mapStyle={mapStyle}
+            />
+            {onExpandMap && (
+              <TouchableOpacity
+                style={styles.expandMapButton}
+                onPress={onExpandMap}
+                activeOpacity={0.8}
+                accessibilityLabel={t('recording.toggleView')}
+              >
+                <Ionicons name="expand-outline" size={16} color={heroColors.ink} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </ScrollView>
 
       {/* ── Controls ── */}
-      <View style={styles.controls}>
-        {/* Holding is a guard against a mis-tap mid-run. Once the athlete has
+      <View style={styles.controlsFooter}>
+        <View style={styles.controls}>
+          {/* Holding is a guard against a mis-tap mid-run. Once the athlete has
             already paused, that guard costs them a hunt for the save button, so
             paused turns the same control into a labelled one-tap finish. */}
-        {paused ? (
+          {paused ? (
+            <TouchableOpacity
+              style={styles.finishButton}
+              onPress={onStop}
+              disabled={isLoading}
+              activeOpacity={0.85}
+              accessibilityLabel={t('recording.finish.title')}
+            >
+              <Ionicons name="stop" size={20} color="#ffffff" />
+              <Text style={styles.finishText} numberOfLines={1}>
+                {t('recording.finish.title')}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.stopButton}
+              onLongPress={onStop}
+              delayLongPress={HOLD_TO_STOP_MS}
+              onPressIn={handleHoldStart}
+              onPressOut={handleHoldEnd}
+              disabled={isLoading}
+              activeOpacity={1}
+              accessibilityLabel={t('recording.holdToFinish')}
+            >
+              <Animated.View
+                style={[
+                  styles.stopFill,
+                  {
+                    height: fillAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, CONTROL_SECONDARY],
+                    }),
+                  },
+                ]}
+              />
+              <Ionicons name="stop" size={22} color="#ffffff" />
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
-            style={styles.finishButton}
-            onPress={onStop}
+            style={[
+              styles.primaryButton,
+              {
+                backgroundColor: paused ? heroColors.primary : heroColors.amber,
+                shadowColor: paused ? heroColors.primary : heroColors.amber,
+              },
+            ]}
+            onPress={paused ? onResume : onPause}
             disabled={isLoading}
             activeOpacity={0.85}
-            accessibilityLabel={t('recording.finish.title')}
+            accessibilityLabel={paused ? t('recording.resume') : t('recording.pause')}
           >
-            <Ionicons name="stop" size={20} color="#ffffff" />
-            <Text style={styles.finishText} numberOfLines={1}>
-              {t('recording.finish.title')}
-            </Text>
+            <Ionicons name={paused ? 'play' : 'pause'} size={30} color="#ffffff" />
           </TouchableOpacity>
-        ) : (
+
           <TouchableOpacity
-            style={styles.stopButton}
-            onLongPress={onStop}
-            delayLongPress={HOLD_TO_STOP_MS}
-            onPressIn={handleHoldStart}
-            onPressOut={handleHoldEnd}
-            disabled={isLoading}
-            activeOpacity={1}
-            accessibilityLabel={t('recording.holdToFinish')}
+            style={styles.goalButton}
+            onPress={onOpenWorkout}
+            disabled={!onOpenWorkout}
+            activeOpacity={0.7}
+            accessibilityLabel={t('recording.workout.openConfig')}
           >
-            <Animated.View
-              style={[
-                styles.stopFill,
-                {
-                  height: fillAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, CONTROL_SECONDARY],
-                  }),
-                },
-              ]}
-            />
-            <Ionicons name="stop" size={22} color="#ffffff" />
+            <Ionicons name="flag-outline" size={22} color={heroColors.ink} />
           </TouchableOpacity>
-        )}
+        </View>
 
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            {
-              backgroundColor: paused ? heroColors.primary : heroColors.amber,
-              shadowColor: paused ? heroColors.primary : heroColors.amber,
-            },
-          ]}
-          onPress={paused ? onResume : onPause}
-          disabled={isLoading}
-          activeOpacity={0.85}
-          accessibilityLabel={paused ? t('recording.resume') : t('recording.pause')}
-        >
-          <Ionicons name={paused ? 'play' : 'pause'} size={30} color="#ffffff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.goalButton}
-          onPress={onOpenWorkout}
-          disabled={!onOpenWorkout}
-          activeOpacity={0.7}
-          accessibilityLabel={t('recording.workout.openConfig')}
-        >
-          <Ionicons name="flag-outline" size={22} color={heroColors.ink} />
-        </TouchableOpacity>
+        <Text style={[styles.holdHint, { paddingBottom: insets.bottom + spacing.md }]}>
+          {paused ? t('recording.pausedHint') : t('recording.holdToFinish')}
+        </Text>
       </View>
-
-      <Text style={[styles.holdHint, { paddingBottom: insets.bottom + spacing.md }]}>
-        {paused ? t('recording.pausedHint') : t('recording.holdToFinish')}
-      </Text>
 
       {/* ── Lock overlay ── */}
       {isLocked && (
@@ -449,11 +505,40 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: heroColors.line,
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing.md,
+  },
   sportPillRow: {
     flexDirection: 'row',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
+  },
+  navBlock: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  navLockedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: heroColors.line,
+  },
+  navLockedText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: heroColors.inkSoft,
   },
   sportPill: {
     flexDirection: 'row',
@@ -513,14 +598,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10,26,20,0.72)',
   },
   mapStrip: {
-    flex: 1,
-    minHeight: 90,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     borderRadius: borderRadius.xl,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: heroColors.line,
+  },
+  controlsFooter: {
+    borderTopWidth: 1,
+    borderTopColor: heroColors.line,
+    backgroundColor: heroColors.bg,
   },
   controls: {
     flexDirection: 'row',
