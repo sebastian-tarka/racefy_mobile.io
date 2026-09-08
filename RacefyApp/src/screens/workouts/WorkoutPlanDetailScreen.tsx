@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BottomSheet, Button, ScreenContainer, ScreenHeader } from '../../components';
+import { BottomSheet, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useWorkoutPlan } from '../../hooks/useWorkoutPlan';
@@ -21,7 +21,12 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Workout } from '../../types/workouts';
 import { WEEKDAYS } from '../../types/workouts';
-import { formatDurationMinutes, weekdayShort } from '../../utils/workoutPlanFormat';
+import {
+  estimateWorkoutMinutes,
+  formatDurationMinutes,
+  weekdayShort,
+} from '../../utils/workoutPlanFormat';
+import { GhostButton } from './components/GhostButton';
 import { PlanStatusPill } from './components/PlanStatusPill';
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 
@@ -165,6 +170,7 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
     <ScreenContainer edges={['top']}>
       <ScreenHeader
         title={plan?.name ?? t('strengthPlans.title')}
+        subtitle={plan ? t('strengthPlans.sessionsPerWeek', { count: workouts.length }) : undefined}
         showBack
         onBack={() => navigation.goBack()}
         rightAction={
@@ -181,13 +187,18 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <ResumeSessionBanner />
-          {plan.status === 'active' && (
-            <Button
-              title={t('strengthPlans.schedule.openSchedule')}
-              onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
-              fullWidth
-            />
-          )}
+
+          {/* The calendar is the only way into a session, so it is the one
+              primary action on this screen — whatever the plan's status. */}
+          <TouchableOpacity
+            style={[styles.cta, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+            onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="calendar-outline" size={18} color="#ffffff" />
+            <Text style={styles.ctaText}>{t('strengthPlans.schedule.openSchedule')}</Text>
+          </TouchableOpacity>
+
           {/* Header card */}
           <View
             style={[
@@ -217,15 +228,6 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
               </Text>
             )}
           </View>
-
-          {plan.status !== 'active' && (
-            <Button
-              title={t('strengthPlans.schedule.openSchedule')}
-              variant="outline"
-              onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
-              fullWidth
-            />
-          )}
 
           {/* Week strip */}
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
@@ -274,7 +276,7 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
               {t('strengthPlans.noWorkouts')}
             </Text>
           )}
-          {workouts.map((w) => (
+          {workouts.map((w, index) => (
             <TouchableOpacity
               key={w.id}
               style={[
@@ -291,18 +293,23 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.workoutName, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {w.day_label ? `${w.day_label} · ` : ''}
-                  {w.name}
+                <Text style={[styles.workoutName, { color: colors.textPrimary }]} numberOfLines={2}>
+                  {w.day_label || t('strengthPlans.dayNumber', { number: index + 1 })} · {w.name}
                 </Text>
                 <Text style={[styles.meta, { color: colors.textMuted }]} numberOfLines={1}>
-                  {t('strengthPlans.exercisesCount', {
-                    count: w.exercises?.length ?? w.exercises_count ?? 0,
-                  })}
-                  {w.estimated_duration_minutes
-                    ? ` · ${formatDurationMinutes(w.estimated_duration_minutes, t)}`
-                    : ''}
-                  {w.focus ? ` · ${w.focus}` : ''}
+                  {[
+                    t('strengthPlans.exercisesCount', {
+                      count: w.exercises?.length ?? w.exercises_count ?? 0,
+                    }),
+                    formatDurationMinutes(
+                      w.estimated_duration_minutes ??
+                        (w.exercises ? estimateWorkoutMinutes(w.exercises) : null),
+                      t,
+                    ),
+                    w.focus,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setWorkoutSheet(w)} hitSlop={10}>
@@ -311,9 +318,8 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           ))}
 
-          <Button
+          <GhostButton
             title={t('strengthPlans.addWorkout')}
-            variant="outline"
             onPress={() => navigation.navigate('WorkoutForm', { planId })}
             style={{ marginTop: spacing.sm }}
           />
@@ -339,6 +345,23 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  cta: {
+    height: 54,
+    borderRadius: borderRadius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm + 1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  ctaText: {
+    color: '#ffffff',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xl,

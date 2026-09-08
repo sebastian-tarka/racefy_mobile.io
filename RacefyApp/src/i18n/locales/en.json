@@ -3034,7 +3034,9 @@
       "superset": "Superset {{group}}",
       "tempo": "Tempo {{tempo}}",
       "weight": "{{kg}} kg",
-      "holdHint": "Hold an exercise to reorder or remove it"
+      "holdHint": "Hold an exercise to reorder or remove it",
+      "start": "Start workout",
+      "noExercisesHint": "Add the lifts you want in this session — sets, reps and weight are editable per exercise."
     },
     "exerciseForm": {
       "titleNew": "Add exercise",
@@ -3144,7 +3146,8 @@
       "conflictLogged": "This workout is already logged for that day.",
       "openActivity": "Open activity",
       "openSchedule": "Schedule & start",
-      "range": "Next 14 days"
+      "range": "Next 14 days",
+      "undoSkip": "Undo"
     },
     "session": {
       "progress": "{{done}}/{{total}} sets",
@@ -3204,6 +3207,15 @@
       "volume": "{{kg}} kg",
       "setLine": "{{reps}} × {{kg}} kg",
       "setLineSeconds": "{{seconds}} s"
-    }
+    },
+    "plansCount_one": "{{count}} plan",
+    "plansCount_other": "{{count}} plans",
+    "activeCount_one": "{{count}} active",
+    "activeCount_other": "{{count}} active",
+    "sessionsCount_one": "{{count}} session",
+    "sessionsCount_other": "{{count}} sessions",
+    "sessionsPerWeek_one": "{{count}} session per week",
+    "sessionsPerWeek_other": "{{count}} sessions per week",
+    "dayNumber": "Day {{number}}"
   }
 }

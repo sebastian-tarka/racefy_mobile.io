@@ -19,9 +19,12 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, msFont, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutPlan } from '../../types/workouts';
+import { WEEKDAYS } from '../../types/workouts';
+import { STRENGTH_ACCENT, weekdayShort } from '../../utils/workoutPlanFormat';
+import { GhostButton } from './components/GhostButton';
 import { PlanStatusPill } from './components/PlanStatusPill';
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 
@@ -141,45 +144,91 @@ export function WorkoutPlansScreen({ navigation }: Props) {
     },
   ];
 
-  const renderPlan = ({ item }: { item: WorkoutPlan }) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: item.status === 'active' ? colors.primary : colors.border,
-        },
-      ]}
-      onPress={() => navigation.navigate('WorkoutPlanDetail', { planId: item.id })}
-      onLongPress={() => setPlanSheet(item)}
-      activeOpacity={0.8}
-    >
-      <View style={[styles.iconCircle, { backgroundColor: colors.primary + '22' }]}>
-        <Ionicons name="barbell" size={20} color={colors.primary} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <Text style={[styles.cardSub, { color: colors.textSecondary }]} numberOfLines={1}>
-          {t('strengthPlans.workoutsCount', { count: item.workouts_count ?? 0 })}
-          {item.goal ? ` · ${item.goal}` : ''}
-        </Text>
-      </View>
-      <PlanStatusPill status={item.status} />
+  const renderPlan = ({ item }: { item: WorkoutPlan }) => {
+    // The list endpoint carries `workouts_count`; the week strip and the
+    // exercise total need the workouts themselves, so both appear only when the
+    // response happens to include them.
+    const workouts = item.workouts;
+    const exercises = workouts?.reduce((sum, w) => sum + (w.exercises_count ?? 0), 0);
+
+    return (
       <TouchableOpacity
-        onPress={() => setPlanSheet(item)}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.cardBackground,
+            borderColor: item.status === 'active' ? colors.primary : colors.border,
+          },
+        ]}
+        onPress={() => navigation.navigate('WorkoutPlanDetail', { planId: item.id })}
+        onLongPress={() => setPlanSheet(item)}
+        activeOpacity={0.8}
       >
-        <Ionicons name="ellipsis-vertical" size={18} color={colors.textMuted} />
+        <View style={styles.cardHead}>
+          <View style={[styles.iconCircle, { backgroundColor: STRENGTH_ACCENT + '1F' }]}>
+            <Ionicons name="barbell" size={20} color={STRENGTH_ACCENT} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={2}>
+              {item.name}
+            </Text>
+            <Text style={[styles.cardSub, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('strengthPlans.sessionsCount', {
+                count: item.workouts_count ?? workouts?.length ?? 0,
+              })}
+              {exercises != null
+                ? ` · ${t('strengthPlans.exercisesCount', { count: exercises })}`
+                : ''}
+              {item.goal ? ` · ${item.goal}` : ''}
+            </Text>
+          </View>
+          <PlanStatusPill status={item.status} />
+          <TouchableOpacity
+            onPress={() => setPlanSheet(item)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="ellipsis-vertical" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
+        {workouts && workouts.length > 0 && (
+          <View style={styles.weekStrip}>
+            {WEEKDAYS.map((day) => {
+              const on = workouts.some((w) => w.weekday === day);
+              return (
+                <View
+                  key={day}
+                  style={[
+                    styles.weekCell,
+                    { backgroundColor: on ? colors.primary + '1F' : colors.background },
+                  ]}
+                >
+                  <Text
+                    style={[styles.weekText, { color: on ? colors.primary : colors.textMuted }]}
+                    numberOfLines={1}
+                  >
+                    {weekdayShort(day, t)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const activeCount = plans.filter((p) => p.status === 'active').length;
 
   return (
     <ScreenContainer edges={['top']}>
       <ScreenHeader
         title={t('strengthPlans.title')}
+        subtitle={
+          plans.length
+            ? `${t('strengthPlans.plansCount', { count: plans.length })} · ${t('strengthPlans.activeCount', { count: activeCount })}`
+            : undefined
+        }
         showBack
         onBack={() => navigation.goBack()}
         rightAction={
@@ -198,6 +247,15 @@ export function WorkoutPlansScreen({ navigation }: Props) {
           renderItem={renderPlan}
           contentContainerStyle={styles.list}
           ListHeaderComponent={<ResumeSessionBanner />}
+          ListFooterComponent={
+            plans.length ? (
+              <GhostButton
+                title={t('strengthPlans.newPlan')}
+                onPress={() => navigation.navigate('WorkoutPlanForm')}
+                style={{ marginTop: spacing.xs }}
+              />
+            ) : null
+          }
           refreshControl={
             <RefreshControl refreshing={isRefreshing} onRefresh={() => fetchPlans('refresh')} />
           }
@@ -245,17 +303,35 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
+    gap: spacing.md,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
   },
+  cardHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+  },
+  weekStrip: {
+    flexDirection: 'row',
+    gap: spacing.xs + 1,
+  },
+  weekCell: {
+    flex: 1,
+    height: 26,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekText: {
+    fontSize: msFont(10),
+    fontWeight: '600',
+  },
   iconCircle: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },

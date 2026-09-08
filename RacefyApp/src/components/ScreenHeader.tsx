@@ -6,6 +6,8 @@ import { spacing, fontSize } from '../theme';
 
 interface ScreenHeaderProps {
   title: string;
+  /** Second line under the title — a count, a date range, the parent's name. */
+  subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
   rightAction?: React.ReactNode;
@@ -14,6 +16,7 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({
   title,
+  subtitle,
   showBack = false,
   onBack,
   rightAction,
@@ -42,9 +45,16 @@ export function ScreenHeader({
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
-        <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.titleBlock}>
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+            {title}
+          </Text>
+          {!!subtitle && (
+            <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          )}
+        </View>
       </View>
 
       {rightAction && <View style={styles.rightSection}>{rightAction}</View>}
@@ -70,10 +80,16 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     marginRight: spacing.sm,
   },
+  titleBlock: {
+    flex: 1,
+  },
   title: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    flex: 1,
+  },
+  subtitle: {
+    fontSize: fontSize.xs,
+    marginTop: 1,
   },
   rightSection: {
     marginLeft: spacing.md,
