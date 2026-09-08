@@ -51,6 +51,10 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Wyjście poza trasę: czerwony pas nad banerem z odległością od trasy
 - [ ] Przycisk głośnika wycisza zapowiedzi (i ucina trwającą), stan przeżywa restart aplikacji
 - [ ] Konto bez Pro z wybraną trasą: przerywana ramka „Nawigacja … — Pro" prowadzi do paywalla
+- [ ] Pre-start z trasą ze wskazówkami: karta „Nawigacja gotowa" z licznikiem, przełącznikiem zapowiedzi i trzema pierwszymi manewrami; podsumowanie pod START mówi o zapowiedziach
+- [ ] „Wszystkie (N)" i przycisk listy w banerze otwierają ten sam arkusz wskazówek
+- [ ] Arkusz w trakcie biegu: przebyte wskazówki wyszarzone, następna z plakietką; po pauzie lista nie „cofa się" na początek
+- [ ] Trasa bez wskazówek (surowy ślad GPS bez wykrytych zakrętów): karta i przycisk listy w ogóle się nie pokazują
 - [ ] Ekran live scrolluje, gdy baner + cel + staty + mapa nie mieszczą się; pauza i stop zostają przyklejone na dole
 - [ ] Zakończenie: „wstecz" wraca do wstrzymanej aktywności (nic nie ginie), „Odrzuć" pyta o potwierdzenie
 - [ ] Zakończenie: tytuł trafia do zapisanej aktywności; „Zapisz prywatnie" na koncie free pokazuje upsell (`ai_post_on_finish`), na płatnym zapisuje bez posta

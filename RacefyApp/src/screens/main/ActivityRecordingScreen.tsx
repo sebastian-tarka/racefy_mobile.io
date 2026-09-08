@@ -60,6 +60,7 @@ import {
   LiveAthleteInbox,
   LiveBroadcastControl,
   MapboxLiveMap,
+  NavCueListSheet,
   RecordingMapControls,
   ScreenContainer,
 } from '../../components';
@@ -143,6 +144,7 @@ export function ActivityRecordingScreen() {
   const [showAddOptions, setShowAddOptions] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
   const [shortcutsModalVisible, setShortcutsModalVisible] = useState(false);
+  const [cueListVisible, setCueListVisible] = useState(false);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
   const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
 
@@ -500,6 +502,13 @@ export function ActivityRecordingScreen() {
         : null,
     [canUseLiveNavigation, plannedRouteForNav?.turn_instructions, liveNav],
   );
+
+  // Pausing deactivates navigation, which resets its state to zero. The
+  // directions list still has to know how far along the route the athlete is,
+  // so the last live reading is kept.
+  const distanceAlongRef = useRef(0);
+  if (liveNav.isActive) distanceAlongRef.current = liveNav.distanceAlong;
+  if (isIdle) distanceAlongRef.current = 0;
 
   useNavigationAnnouncer({
     enabled: navVoiceEnabled,
@@ -1048,6 +1057,10 @@ export function ActivityRecordingScreen() {
       onRouteSelect={handleRouteSelect}
       onOpenRoutePicker={() => setRouteSelectionModalVisible(true)}
       onClearRoute={handleClearShadowTrack}
+      navTurns={shadowTrackTurns}
+      navVoiceEnabled={navVoiceEnabled}
+      onToggleNavVoice={toggleNavVoice}
+      onOpenCueList={() => setCueListVisible(true)}
       workoutLabel={workoutLabel}
       onOpenWorkout={openWorkoutModal}
       onClearWorkout={handleClearWorkout}
@@ -1089,6 +1102,7 @@ export function ActivityRecordingScreen() {
       navigation={navBanner}
       navVoiceEnabled={navVoiceEnabled}
       onToggleNavVoice={toggleNavVoice}
+      onOpenCueList={shadowTrackTurns.length > 0 ? () => setCueListVisible(true) : undefined}
       navLocked={!canUseLiveNavigation && shadowTrackTurns.length > 0}
       onUnlockNav={() => navigation.navigate('Paywall', { feature: 'live_navigation' })}
       workoutPlan={workoutPlan}
@@ -1464,6 +1478,19 @@ export function ActivityRecordingScreen() {
         sportTypes={sportTypes}
         selectedSport={selectedSport}
         onSelect={setSelectedSport}
+      />
+
+      {/* While recording, navigation runs on the approach-merged route, so the
+          list has to be that one — otherwise the distances would not line up
+          with what the banner counts down. */}
+      <NavCueListSheet
+        visible={cueListVisible}
+        onClose={() => setCueListVisible(false)}
+        title={selectedShadowTrack?.title ?? t('navigation.allDirections')}
+        turns={
+          isIdle ? shadowTrackTurns : (plannedRouteForNav?.turn_instructions ?? shadowTrackTurns)
+        }
+        distanceAlong={distanceAlongRef.current}
       />
 
       <SportShortcutsModal

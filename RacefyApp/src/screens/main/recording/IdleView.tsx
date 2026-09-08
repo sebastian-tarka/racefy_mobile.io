@@ -15,10 +15,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../hooks/useTheme';
 import { getSportTile, hasSportTile } from '../../../config/sportTiles';
 import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
-import type { GeoJSONLineString, GpsPoint, NearbyRoute } from '../../../types/api';
+import type {
+  GeoJSONLineString,
+  GpsPoint,
+  NearbyRoute,
+  RouteTurnInstruction,
+} from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { TrackingStatus } from '../../../hooks/useLiveActivity';
-import { LivePulse, MapboxLiveMap } from '../../../components';
+import { LivePulse, MapboxLiveMap, NavPreview } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 
 /** The route layer paints planned routes in blue — the design's own accent. */
@@ -64,6 +69,11 @@ interface IdleViewProps {
   onRouteSelect: (route: NearbyRoute) => void;
   onOpenRoutePicker: () => void;
   onClearRoute: () => void;
+  /** Turn-by-turn instructions of the chosen route; empty when it has none. */
+  navTurns: RouteTurnInstruction[];
+  navVoiceEnabled: boolean;
+  onToggleNavVoice: () => void;
+  onOpenCueList: () => void;
   // Training goal
   workoutLabel?: string | null;
   onOpenWorkout?: (type?: 'distance' | 'time') => void;
@@ -116,6 +126,10 @@ export function IdleView({
   onRouteSelect,
   onOpenRoutePicker,
   onClearRoute,
+  navTurns,
+  navVoiceEnabled,
+  onToggleNavVoice,
+  onOpenCueList,
   workoutLabel,
   onOpenWorkout,
   onClearWorkout,
@@ -413,6 +427,16 @@ export function IdleView({
           />
         </View>
 
+        {/* Turn-by-turn preview — only when the chosen route has directions */}
+        {navTurns.length > 0 && (
+          <NavPreview
+            turns={navTurns}
+            voiceEnabled={navVoiceEnabled}
+            onToggleVoice={onToggleNavVoice}
+            onOpenAll={onOpenCueList}
+          />
+        )}
+
         {/* START */}
         <TouchableOpacity
           style={[
@@ -443,7 +467,13 @@ export function IdleView({
         </TouchableOpacity>
 
         <Text style={[styles.startSummary, { color: colors.textSecondary }]} numberOfLines={1}>
-          {[workoutLabel ?? t('recording.workout.typeOpen'), selectedRouteTitle]
+          {[
+            workoutLabel ?? t('recording.workout.typeOpen'),
+            selectedRouteTitle,
+            navTurns.length > 0
+              ? t(navVoiceEnabled ? 'navigation.previewVoice' : 'navigation.previewSilent')
+              : null,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </Text>

@@ -2740,7 +2740,15 @@
     "voiceOn": "Voice cues on",
     "voiceOff": "Voice cues off",
     "allDirections": "All directions",
-    "upsell": "Turn-by-turn navigation — Pro"
+    "upsell": "Turn-by-turn navigation — Pro",
+    "readyTitle": "Turn-by-turn ready",
+    "cueCount_one": "{{count}} cue",
+    "cueCount_other": "{{count}} cues",
+    "previewVoice": "voice cues",
+    "previewSilent": "cues on screen only",
+    "allCount": "All {{count}}",
+    "next": "Next",
+    "noCues": "This route has no directions"
   },
   "unsynced": {
     "screenTitle": "Unsynced activities",

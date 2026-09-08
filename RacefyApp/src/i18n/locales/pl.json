@@ -2752,7 +2752,17 @@
     "voiceOn": "Zapowiedzi włączone",
     "voiceOff": "Zapowiedzi wyłączone",
     "allDirections": "Wszystkie wskazówki",
-    "upsell": "Nawigacja zakręt po zakręcie — Pro"
+    "upsell": "Nawigacja zakręt po zakręcie — Pro",
+    "readyTitle": "Nawigacja gotowa",
+    "cueCount_one": "{{count}} wskazówka",
+    "cueCount_few": "{{count}} wskazówki",
+    "cueCount_many": "{{count}} wskazówek",
+    "cueCount_other": "{{count}} wskazówki",
+    "previewVoice": "zapowiedzi głosowe",
+    "previewSilent": "wskazówki tylko na ekranie",
+    "allCount": "Wszystkie ({{count}})",
+    "next": "Następna",
+    "noCues": "Ta trasa nie ma wskazówek"
   },
   "unsynced": {
     "screenTitle": "Niezsynchronizowane aktywności",
