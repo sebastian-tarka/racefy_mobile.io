@@ -15,11 +15,20 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `activity-redesign-v2` — ekran aktywności wg designów „Racefy v2"
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Ekran aktywności wg designów „Racefy v2" — pre-start, live, zakończenie, nawigacja (zmergowane 2026-09-08, tag `pre-activity-redesign-v2` = main sprzed merge)
 
 Design: https://claude.ai/design/p/2a667d94-af0d-4282-b356-1427830dc56c (pliki
-`racefy-prestart.jsx`, `racefy-record.jsx`, `racefy-theme.jsx`). Plan i decyzje:
-`.notes/AKTYWNOSC_REDESIGN_V2.md`.
+`racefy-prestart.jsx`, `racefy-record.jsx`, `racefy-nav.jsx`, `racefy-theme.jsx`).
+Plan, odstępstwa i prompty do backendu: `.notes/AKTYWNOSC_REDESIGN_V2.md`.
 
 Trzy ekrany przebudowane: **pre-start** (mapa na pełno, pasek skrótów sportów zamiast
 siatki wszystkich, chipy Cel/Trasa, START z podsumowaniem, przełącznik warstwy Mapa/Trasa,
@@ -28,6 +37,12 @@ mapa jako pasek; nagrywanie i pauza to jeden ekran — `PausedView` usunięty) o
 **ekran zakończenia** (tytuł, mapa, staty, event, „Zapisz prywatnie" / „Zapisz i udostępnij")
 zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStorage) +
 `SportShortcutsModal`. Idle nie ma już trybu „mapa" — jest mapą.
+
+Nawigacja zakręt-po-zakręcie z aktualizacji designu: `NavBanner` na ekranie live
+(dotąd nawigacja pokazywała się wyłącznie w trybie pełnej mapy), `NavPreview` na
+pre-start i wspólny `NavCueListSheet`. `useNavigationAnnouncer` dostał flagę
+`enabled` + `useNavVoicePref` — wcześniej zapowiedzi nawigacji nie dało się
+wyciszyć.
 
 - [ ] Pre-start: mapa widoczna od razu (preview location bez włączania trybu mapy), pasek skrótów przewija się, „Wszystkie sporty" otwiera pełną listę
 - [ ] Skróty: dodanie / usunięcie / kolejność zapisują się i przeżywają restart aplikacji; limit 6 działa
@@ -61,13 +76,6 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Zakończenie: podpięcie eventu działa tak jak wcześniej na ekranie pauzy
 - [ ] Zakończenie: mapa pokazuje **cały zapisany ślad** ze znacznikami startu i mety (a nie pustą mapę); przy braku śladu zamiast ramki jest komunikat
 - [ ] Tryb ciemny i jasny: pre-start i zakończenie czytelne w obu; live jest ciemny w obu (celowo)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Sesje treningu siłowego — kalendarz, ekran sesji, przerwy, zakończenie (zmergowane 2026-09-05, tag `pre-strength-sessions` = main sprzed merge)
 
