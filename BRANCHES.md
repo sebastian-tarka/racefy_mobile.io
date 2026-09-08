@@ -65,6 +65,8 @@ przytrzymanie wiersza). Szczegóły: `.notes/SILOWNIA_PRZEKLADANIE.md`.
 - [ ] 409 bez `reason` i 429 pokazują komunikat z serwera i nie wyrzucają z ekranu
 - [ ] Ekran pominiętej sesji ma przycisk „Wznów" (ta sama ścieżka co z kalendarza)
 - [ ] Przeniesiony dzień **nie** pojawia się w historii treningów
+- [ ] Baner „Sesja w toku" na liście planów i w planie ma znowu poprawny tekst i przycisk „Wznów" (był nadpisany kluczami arkusza)
+- [ ] Nagłówek kolumny w sesji to „Seria", a nie „SERIA {{n}}"
 
 ---
 

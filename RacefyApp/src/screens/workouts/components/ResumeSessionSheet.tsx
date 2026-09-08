@@ -90,11 +90,15 @@ export function ResumeSessionSheet({
       : [
           {
             id: 'keep' as const,
-            label: t('strengthPlans.resume.keep', { date: formatDate(skippedOn) }),
+            label: t('strengthPlans.resumeSheet.keep', { date: formatDate(skippedOn) }),
           },
         ]),
-    { id: 'today', label: t('strengthPlans.resume.today') },
-    { id: 'other', label: t('strengthPlans.resume.other'), hint: formatDate(isoDate(otherDate)) },
+    { id: 'today', label: t('strengthPlans.resumeSheet.today') },
+    {
+      id: 'other',
+      label: t('strengthPlans.resumeSheet.other'),
+      hint: formatDate(isoDate(otherDate)),
+    },
   ];
 
   return (
@@ -109,10 +113,10 @@ export function ResumeSessionSheet({
         <View style={[styles.grabber, { backgroundColor: colors.border }]} />
 
         <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
-          {t('strengthPlans.resume.title', { name: workoutName })}
+          {t('strengthPlans.resumeSheet.title', { name: workoutName })}
         </Text>
         <Text style={[styles.body, { color: colors.textSecondary }]}>
-          {t('strengthPlans.resume.hint')}
+          {t('strengthPlans.resumeSheet.hint')}
         </Text>
 
         <View style={styles.options}>
@@ -172,7 +176,7 @@ export function ResumeSessionSheet({
           {isBusy ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.confirmText}>{t('strengthPlans.resume.confirm')}</Text>
+            <Text style={styles.confirmText}>{t('strengthPlans.resumeSheet.confirm')}</Text>
           )}
         </TouchableOpacity>
       </View>

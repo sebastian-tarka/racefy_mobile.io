@@ -39,7 +39,16 @@
     "notNow": "Nie teraz",
     "options": "Opcje",
     "view": "Zobacz",
-    "clear": "Wyczyść"
+    "clear": "Wyczyść",
+    "accept": "Akceptuj",
+    "copied": "Skopiowano",
+    "decline": "Odrzuć",
+    "fieldRequired": "To pole jest wymagane",
+    "genericError": "Coś poszło nie tak",
+    "noResults": "Brak wyników",
+    "permissionDenied": "Nie masz do tego uprawnień",
+    "retry": "Ponów",
+    "selectLanguage": "Wybierz język"
   },
   "sports": {
     "running": "Bieganie",
@@ -1151,7 +1160,10 @@
       "remove": "Usuń z paska",
       "full": "Pasek mieści {{max}} sportów. Usuń jeden, aby dodać kolejny."
     },
-    "pausedHint": "Wstrzymane — wznów albo zakończ"
+    "pausedHint": "Wstrzymane — wznów albo zakończ",
+    "permissions": {
+      "locationDenied": "Wymagana jest zgoda na dostęp do lokalizacji."
+    }
   },
   "gpxImport": {
     "title": "Importuj GPX",
@@ -1329,7 +1341,8 @@
   },
   "permissions": {
     "gallery": "Wymagane jest pozwolenie na dostęp do zdjęć.",
-    "camera": "Wymagane jest pozwolenie na dostęp do aparatu."
+    "camera": "Wymagane jest pozwolenie na dostęp do aparatu.",
+    "mediaLibrary": "Dostęp do galerii jest potrzebny, aby wybrać zdjęcie."
   },
   "settings": {
     "title": "Ustawienia",
@@ -3187,12 +3200,9 @@
       "failed": "Nie udało się odczytać pliku"
     },
     "resume": {
-      "title": "Wznów: {{name}}",
-      "hint": "Trenowałeś to innego dnia? Wybierz dzień, na który ma się liczyć.",
-      "keep": "Zostaw {{date}}",
-      "today": "Przenieś na dziś",
-      "other": "Inny dzień",
-      "confirm": "Wznów trening"
+      "title": "Sesja w toku",
+      "subtitle": "{{name}} · start {{time}}",
+      "cta": "Wznów"
     },
     "schedule": {
       "title": "Kalendarz",
@@ -3250,7 +3260,8 @@
       "deleteSetConfirm": "Usunąć tę serię?",
       "exerciseOf": "Ćwiczenie {{index}} z {{total}}",
       "next": "Dalej · {{name}}",
-      "prevExercise": "Poprzednie ćwiczenie"
+      "prevExercise": "Poprzednie ćwiczenie",
+      "setColumn": "Seria"
     },
     "complete": {
       "title": "Zakończ trening",
@@ -3304,6 +3315,14 @@
       "loggedBody": "Otwórz go, żeby zobaczyć zapis, albo wybierz inny dzień.",
       "open": "Otwórz",
       "view": "Zobacz"
+    },
+    "resumeSheet": {
+      "title": "Wznów: {{name}}",
+      "hint": "Trenowałeś to innego dnia? Wybierz dzień, na który ma się liczyć.",
+      "keep": "Zostaw {{date}}",
+      "today": "Przenieś na dziś",
+      "other": "Inny dzień",
+      "confirm": "Wznów trening"
     }
   },
   "tabs": {

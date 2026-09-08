@@ -624,7 +624,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
           {current && (
             <View style={styles.columns}>
               <Text style={[styles.column, styles.columnNo, { color: colors.textMuted }]}>
-                {t('strengthPlans.session.setNo')}
+                {t('strengthPlans.session.setColumn')}
               </Text>
               <Text style={[styles.column, { color: colors.textMuted }]}>
                 {t(
