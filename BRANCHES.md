@@ -15,7 +15,31 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `strength-design-v2` — trening siłowy wg designów „Racefy v2"
+
+Design: `racefy-strength.jsx` + `racefy-strength-session.jsx` w projekcie
+2a667d94-af0d-4282-b356-1427830dc56c. Ekrany siłowe istniały (M1 + sesje);
+to jest dociągnięcie ich do designu, nie budowa od zera.
+
+Lista planów (podtytuł, pasek dni, dashed „Nowy plan"), detal planu (jeden duży
+CTA „Kalendarz i start", „Dzień N · nazwa", szacowany czas), kalendarz (cofnięcie
+pominięcia, przekreślony tytuł, Start/Skip w rzędzie), ekran treningu
+(„Rozpocznij trening" + `useStartWorkoutSession`), sesja live (ciemny nagłówek
+z czasem, objętością i paskami per ćwiczenie, jedno ćwiczenie naraz, stopka
+Dalej/Zakończ) i podsumowanie na ciemnym nagłówku z trzema kaflami.
+
+- [ ] Lista planów: podtytuł „N planów · M aktywnych", dashed „Nowy plan" na dole; pasek dni pokazuje się tylko, gdy API zwróci treningi w indeksie
+- [ ] Detal planu: „Kalendarz i start" otwiera kalendarz niezależnie od statusu planu; sesje mają „Dzień N · nazwa" i „~M min" nawet bez `estimated_duration_minutes`
+- [ ] Kalendarz: Skip przekreśla tytuł i daje „Cofnij"; cofnięcie przywraca dzień z przyciskiem Start
+- [ ] Kalendarz: Start i Skip stoją obok siebie pod opisem, nie w kolumnie z boku
+- [ ] Ekran treningu: „Rozpocznij trening" startuje sesję; przy otwartej innej sesji proponuje jej wznowienie (409), przy zalogowanym dniu pokazuje komunikat
+- [ ] Ekran treningu: przycisk wyszarzony, gdy trening nie ma ćwiczeń; pusta lista pokazuje kartę z podpowiedzią
+- [ ] Sesja: ciemny nagłówek pokazuje czas, objętość i „Ćwiczenie i z N"; tknięcie paska przełącza na to ćwiczenie
+- [ ] Sesja: widać jedno ćwiczenie naraz, po ukończeniu ostatniej serii kolejne wchodzi samo
+- [ ] Sesja: stopka — wstecz, „Dalej · <ćwiczenie>", a na ostatnim ćwiczeniu „Zakończ"; nie znika przy otwartej klawiaturze
+- [ ] Sesja: kolejność kolumn to seria · powtórzenia/sekundy · kg (zamieniona względem poprzedniej wersji) — sprawdzić, czy Start/Gotowe nadal zapisuje właściwe wartości
+- [ ] Sesja: karta przerwy z odliczaniem, +30 s i pominięciem działa jak wcześniej
+- [ ] Podsumowanie: ciemny nagłówek + trzy kafle (serie, objętość, czas), link do aktywności
 
 ---
 

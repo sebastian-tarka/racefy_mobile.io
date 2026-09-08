@@ -3055,7 +3055,9 @@
       "superset": "Superseria {{group}}",
       "tempo": "Tempo {{tempo}}",
       "weight": "{{kg}} kg",
-      "holdHint": "Przytrzymaj ćwiczenie, aby zmienić kolejność lub usunąć"
+      "holdHint": "Przytrzymaj ćwiczenie, aby zmienić kolejność lub usunąć",
+      "start": "Rozpocznij trening",
+      "noExercisesHint": "Dodaj ćwiczenia do tej sesji — serie, powtórzenia i ciężar ustawisz osobno dla każdego."
     },
     "exerciseForm": {
       "titleNew": "Dodaj ćwiczenie",
@@ -3165,7 +3167,8 @@
       "conflictLogged": "Ten trening jest już zapisany tego dnia.",
       "openActivity": "Otwórz aktywność",
       "openSchedule": "Kalendarz i start",
-      "range": "Najbliższe 14 dni"
+      "range": "Najbliższe 14 dni",
+      "undoSkip": "Cofnij"
     },
     "session": {
       "progress": "{{done}}/{{total}} serii",
@@ -3196,7 +3199,10 @@
         "title": "Koniec przerwy",
         "body": "Następna seria: {{exercise}}"
       },
-      "deleteSetConfirm": "Usunąć tę serię?"
+      "deleteSetConfirm": "Usunąć tę serię?",
+      "exerciseOf": "Ćwiczenie {{index}} z {{total}}",
+      "next": "Dalej · {{name}}",
+      "prevExercise": "Poprzednie ćwiczenie"
     },
     "complete": {
       "title": "Zakończ trening",
@@ -3225,6 +3231,23 @@
       "volume": "{{kg}} kg",
       "setLine": "{{reps}} × {{kg}} kg",
       "setLineSeconds": "{{seconds}} s"
-    }
+    },
+    "plansCount_one": "{{count}} plan",
+    "plansCount_few": "{{count}} plany",
+    "plansCount_many": "{{count}} planów",
+    "plansCount_other": "{{count}} planu",
+    "activeCount_one": "{{count}} aktywny",
+    "activeCount_few": "{{count}} aktywne",
+    "activeCount_many": "{{count}} aktywnych",
+    "activeCount_other": "{{count}} aktywnego",
+    "sessionsCount_one": "{{count}} sesja",
+    "sessionsCount_few": "{{count}} sesje",
+    "sessionsCount_many": "{{count}} sesji",
+    "sessionsCount_other": "{{count}} sesji",
+    "sessionsPerWeek_one": "{{count}} sesja w tygodniu",
+    "sessionsPerWeek_few": "{{count}} sesje w tygodniu",
+    "sessionsPerWeek_many": "{{count}} sesji w tygodniu",
+    "sessionsPerWeek_other": "{{count}} sesji w tygodniu",
+    "dayNumber": "Dzień {{number}}"
   }
 }

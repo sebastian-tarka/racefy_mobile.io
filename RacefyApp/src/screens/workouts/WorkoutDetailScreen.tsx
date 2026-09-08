@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,8 +12,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BottomSheet, Button, ScreenContainer, ScreenHeader } from '../../components';
+import { BottomSheet, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
+import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
 import { useTheme } from '../../hooks/useTheme';
 import { useWorkoutPlan } from '../../hooks/useWorkoutPlan';
 import { api } from '../../services/api';
@@ -22,10 +23,12 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutExercise } from '../../types/workouts';
 import {
+  estimateWorkoutMinutes,
   formatDurationMinutes,
   formatPrescription,
   weekdayLong,
 } from '../../utils/workoutPlanFormat';
+import { GhostButton } from './components/GhostButton';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutDetail'>;
 
@@ -42,6 +45,12 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
 
   const workout = plan?.workouts?.find((w) => w.id === workoutId) ?? null;
   const rows = [...(workout?.exercises ?? [])].sort((a, b) => a.display_order - b.display_order);
+
+  const openSession = useCallback(
+    (sessionId: number) => navigation.navigate('WorkoutSession', { sessionId }),
+    [navigation],
+  );
+  const { start: startSession, busyWorkoutId } = useStartWorkoutSession(openSession);
 
   const run = async (action: () => Promise<unknown>, toast?: string) => {
     try {
@@ -136,6 +145,20 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
     <ScreenContainer edges={['top']}>
       <ScreenHeader
         title={workout?.name ?? ''}
+        subtitle={
+          workout
+            ? [
+                workout.day_label,
+                workout.weekday ? weekdayLong(workout.weekday, t) : null,
+                formatDurationMinutes(
+                  workout.estimated_duration_minutes ?? estimateWorkoutMinutes(rows),
+                  t,
+                ),
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : undefined
+        }
         showBack
         onBack={() => navigation.goBack()}
         rightAction={
@@ -154,6 +177,36 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
         <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.primary} />
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
+          <TouchableOpacity
+            style={[
+              styles.cta,
+              {
+                backgroundColor: rows.length ? colors.primary : colors.background,
+                shadowColor: colors.primary,
+              },
+            ]}
+            onPress={() => void startSession(workoutId)}
+            disabled={!rows.length || busyWorkoutId === workoutId}
+            activeOpacity={0.85}
+          >
+            {busyWorkoutId === workoutId ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <>
+                <Ionicons
+                  name="play"
+                  size={17}
+                  color={rows.length ? '#ffffff' : colors.textMuted}
+                />
+                <Text
+                  style={[styles.ctaText, { color: rows.length ? '#ffffff' : colors.textMuted }]}
+                >
+                  {t('strengthPlans.workout.start')}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+
           <View
             style={[
               styles.card,
@@ -180,9 +233,19 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
             {t('strengthPlans.workout.exercises').toUpperCase()}
           </Text>
           {rows.length === 0 && (
-            <Text style={[styles.empty, { color: colors.textSecondary }]}>
-              {t('strengthPlans.workout.noExercises')}
-            </Text>
+            <View
+              style={[
+                styles.emptyCard,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                {t('strengthPlans.workout.noExercises')}
+              </Text>
+              <Text style={[styles.empty, { color: colors.textSecondary }]}>
+                {t('strengthPlans.workout.noExercisesHint')}
+              </Text>
+            </View>
           )}
           {rows.map((row, index) => (
             <TouchableOpacity
@@ -247,9 +310,8 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
             </Text>
           )}
 
-          <Button
+          <GhostButton
             title={t('strengthPlans.workout.addExercise')}
-            variant="outline"
             onPress={() => navigation.navigate('WorkoutExerciseForm', { planId, workoutId })}
             style={{ marginTop: spacing.sm }}
           />
@@ -267,6 +329,33 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  cta: {
+    height: 54,
+    borderRadius: borderRadius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm + 1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  ctaText: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+  },
+  emptyCard: {
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  emptyTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xl,
@@ -294,7 +383,7 @@ const styles = StyleSheet.create({
   },
   empty: {
     fontSize: fontSize.sm,
-    paddingVertical: spacing.sm,
+    textAlign: 'center',
   },
   row: {
     flexDirection: 'row',

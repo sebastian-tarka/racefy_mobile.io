@@ -23,7 +23,7 @@ import {
   cancelRestEndNotification,
   scheduleRestEndNotification,
 } from '../../services/strength/restTimerNotification';
-import { borderRadius, fontSize, msFont, spacing } from '../../theme';
+import { borderRadius, fontSize, heroColors, msFont, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutSessionExercise, WorkoutSessionSet } from '../../types/workouts';
 import { formatTime } from '../../utils/formatters';
@@ -57,7 +57,12 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   const { session, rest, restRemaining, activeSetId } = s;
 
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
-  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
+  /**
+   * One exercise fills the screen at a time (design "Racefy v2" →
+   * StrengthSessionScreen). It follows the next open set on its own; the
+   * progress segments in the header let the athlete override that.
+   */
+  const [currentOrder, setCurrentOrder] = useState<number | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [history, setHistory] = useState<{ id: number; name: string } | null>(null);
   const [result, setResult] = useState<{ activityId: number | null } | null>(null);
@@ -72,7 +77,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (activeOrder !== lastActiveOrderRef.current) {
       lastActiveOrderRef.current = activeOrder;
-      setExpandedOrder(activeOrder);
+      setCurrentOrder(activeOrder);
     }
   }, [activeOrder]);
 
@@ -212,20 +217,6 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
         <View style={styles.inputBox}>
           <TextInput
-            value={draft.weight}
-            onChangeText={(v) => setDraft(set.id, { weight: v }, draft)}
-            keyboardType="decimal-pad"
-            editable={inProgress && !set.is_completed}
-            style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
-            placeholder="—"
-            placeholderTextColor={colors.textMuted}
-          />
-          <Text style={[styles.unit, { color: colors.textMuted }]}>
-            {t('strengthPlans.session.kg')}
-          </Text>
-        </View>
-        <View style={styles.inputBox}>
-          <TextInput
             value={draft.reps}
             onChangeText={(v) => setDraft(set.id, { reps: v }, draft)}
             keyboardType="number-pad"
@@ -236,6 +227,20 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
           />
           <Text style={[styles.unit, { color: colors.textMuted }]}>
             {t(timed ? 'strengthPlans.session.sec' : 'strengthPlans.session.reps')}
+          </Text>
+        </View>
+        <View style={styles.inputBox}>
+          <TextInput
+            value={draft.weight}
+            onChangeText={(v) => setDraft(set.id, { weight: v }, draft)}
+            keyboardType="decimal-pad"
+            editable={inProgress && !set.is_completed}
+            style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
+            placeholder="—"
+            placeholderTextColor={colors.textMuted}
+          />
+          <Text style={[styles.unit, { color: colors.textMuted }]}>
+            {t('strengthPlans.session.kg')}
           </Text>
         </View>
 
@@ -296,10 +301,8 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
     );
   };
 
-  const renderExercise = (ex: WorkoutSessionExercise) => {
-    const done = ex.sets.filter((x) => x.is_completed).length;
-    const expanded = expandedOrder === ex.exercise_order;
-    const isCurrent = activeOrder === ex.exercise_order;
+  /** Heading for the exercise currently on screen — no accordion, no chevron. */
+  const renderExerciseHead = (ex: WorkoutSessionExercise) => {
     const target = `${ex.planned.sets} × ${formatTarget(ex.planned.target_type, ex.planned.reps_min, ex.planned.reps_max, t)}${
       ex.planned.rest_seconds
         ? ` · ${ex.planned.rest_seconds} ${t('strengthPlans.session.sec')}`
@@ -308,92 +311,44 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
     const lastWeight = ex.sets[0]?.planned.suggested_weight_kg;
 
     return (
-      <View
-        key={ex.exercise_order}
-        style={[
-          styles.exercise,
-          {
-            backgroundColor: colors.cardBackground,
-            borderColor: isCurrent ? colors.primary : colors.border,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.exerciseHeader}
-          onPress={() => setExpandedOrder(expanded ? null : ex.exercise_order)}
-          activeOpacity={0.8}
-        >
-          <View
-            style={[
-              styles.orderBadge,
-              { backgroundColor: done === ex.sets.length ? colors.primary : colors.background },
-            ]}
-          >
-            {done === ex.sets.length && ex.sets.length > 0 ? (
-              <Ionicons name="checkmark" size={14} color="#ffffff" />
-            ) : (
-              <Text style={[styles.orderText, { color: colors.textSecondary }]}>
-                {ex.exercise_order}
-              </Text>
-            )}
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.exerciseName, { color: colors.textPrimary }]} numberOfLines={2}>
-              {ex.exercise?.name ?? '—'}
+      <View style={styles.exerciseHead}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.exerciseName, { color: colors.textPrimary }]}>
+            {ex.exercise?.name ?? '—'}
+          </Text>
+          <Text style={[styles.exerciseTarget, { color: colors.primary }]}>
+            {target}
+            {lastWeight != null
+              ? ` · ${t('strengthPlans.session.suggested', { kg: lastWeight })}`
+              : ''}
+          </Text>
+          {(ex.load_note || ex.notes) && (
+            <Text style={[styles.exerciseNotes, { color: colors.textSecondary }]}>
+              {[ex.load_note, ex.notes].filter(Boolean).join(' · ')}
             </Text>
-            <Text style={[styles.exerciseMeta, { color: colors.textMuted }]} numberOfLines={1}>
-              {target}
-              {lastWeight != null
-                ? ` · ${t('strengthPlans.session.suggested', { kg: lastWeight })}`
-                : ''}
-              {!expanded
-                ? ` · ${t('strengthPlans.session.collapsedDone', { done, total: ex.sets.length })}`
-                : ''}
-            </Text>
-          </View>
+          )}
+        </View>
+
+        <View style={styles.exerciseActions}>
           {ex.video_url ? (
-            <TouchableOpacity onPress={() => openVideo(ex.video_url as string)} hitSlop={8}>
+            <TouchableOpacity
+              style={[styles.squareButton, { borderColor: colors.border }]}
+              onPress={() => openVideo(ex.video_url as string)}
+              accessibilityLabel={t('strengthPlans.actions.openVideo')}
+            >
               <Ionicons name="logo-youtube" size={20} color={colors.error} />
             </TouchableOpacity>
           ) : null}
           {ex.exercise && (
             <TouchableOpacity
+              style={[styles.squareButton, { borderColor: colors.border }]}
               onPress={() => setHistory({ id: ex.exercise!.id, name: ex.exercise!.name })}
-              hitSlop={8}
               accessibilityLabel={t('strengthPlans.session.history')}
             >
               <Ionicons name="stats-chart-outline" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
-          <Ionicons
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color={colors.textMuted}
-          />
-        </TouchableOpacity>
-
-        {expanded && (
-          <View style={styles.exerciseBody}>
-            {(ex.notes || ex.load_note) && (
-              <Text style={[styles.exerciseNotes, { color: colors.textSecondary }]}>
-                {[ex.load_note, ex.notes].filter(Boolean).join(' · ')}
-              </Text>
-            )}
-            {ex.sets.map((set) => renderSet(ex, set))}
-            {inProgress && ex.workout_exercise_id != null && (
-              <TouchableOpacity
-                style={styles.addSet}
-                onPress={() =>
-                  void s.addSet({ workout_exercise_id: ex.workout_exercise_id as number })
-                }
-              >
-                <Text style={[styles.addSetText, { color: colors.primary }]}>
-                  {t('strengthPlans.session.addSet')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        </View>
       </View>
     );
   };
@@ -412,38 +367,62 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   if (result || session.status !== 'in_progress') {
     const skipped = session.status === 'skipped';
     const activityId = result?.activityId ?? session.activity_id;
+    const summary: [string, string][] = [
+      [
+        t('strengthPlans.complete.sets'),
+        `${session.stats?.sets_completed ?? 0}/${session.stats?.sets_total ?? 0}`,
+      ],
+      [t('strengthPlans.complete.volume'), `${Math.round(session.stats?.volume_kg ?? 0)} kg`],
+      [t('strengthPlans.complete.time'), formatTime(session.duration_seconds ?? s.elapsedSeconds)],
+    ];
+
     return (
-      <ScreenContainer edges={['top']}>
-        <ScreenHeader title={session.workout_name} showBack onBack={() => navigation.goBack()} />
-        <View style={styles.summary}>
-          <Ionicons
-            name={skipped ? 'remove-circle-outline' : 'checkmark-circle'}
-            size={64}
-            color={skipped ? colors.textMuted : colors.primary}
-          />
-          <Text style={[styles.summaryTitle, { color: colors.textPrimary }]}>
+      <ScreenContainer edges={['top']} style={{ backgroundColor: heroColors.bg }}>
+        <View style={styles.summaryHero}>
+          <View
+            style={[
+              styles.summaryIcon,
+              { backgroundColor: skipped ? heroColors.surfaceStrong : heroColors.primary },
+            ]}
+          >
+            <Ionicons
+              name={skipped ? 'remove-circle-outline' : 'checkmark'}
+              size={24}
+              color="#ffffff"
+            />
+          </View>
+          <Text style={styles.summaryTitle}>
             {t(
               skipped
                 ? 'strengthPlans.complete.skippedTitle'
                 : 'strengthPlans.complete.summaryTitle',
             )}
           </Text>
+          <Text style={styles.summarySubtitle} numberOfLines={2}>
+            {session.workout_name}
+          </Text>
+        </View>
+
+        <View style={[styles.summaryBody, { backgroundColor: colors.background }]}>
           {!skipped && (
             <View style={styles.summaryStats}>
-              <Stat
-                label={t('strengthPlans.complete.time')}
-                value={formatTime(session.duration_seconds ?? s.elapsedSeconds)}
-              />
-              <Stat
-                label={t('strengthPlans.complete.sets')}
-                value={`${session.stats?.sets_completed ?? 0}/${session.stats?.sets_total ?? 0}`}
-              />
-              <Stat
-                label={t('strengthPlans.complete.volume')}
-                value={`${Math.round(session.stats?.volume_kg ?? 0)} kg`}
-              />
+              {summary.map(([label, value]) => (
+                <View
+                  key={label}
+                  style={[
+                    styles.summaryCard,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                  ]}
+                >
+                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
+                </View>
+              ))}
             </View>
           )}
+
+          <View style={{ flex: 1 }} />
+
           {activityId != null && (
             <Button
               title={t('strengthPlans.complete.openActivity')}
@@ -463,103 +442,222 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   }
 
   const stats = session.stats;
-  const progress = stats && stats.sets_total > 0 ? stats.sets_completed / stats.sets_total : 0;
+  const exercises = session.exercises ?? [];
+  const index = Math.max(
+    0,
+    exercises.findIndex((ex) => ex.exercise_order === currentOrder),
+  );
+  const current = exercises[index] ?? exercises[0];
+  const next = exercises[index + 1];
+  const currentDone = current ? current.sets.every((x) => x.is_completed) : false;
 
   return (
-    <ScreenContainer edges={['top']}>
-      <ScreenHeader
-        title={session.workout_name}
-        showBack
-        onBack={leave}
-        rightAction={
-          <Text style={[styles.clock, { color: colors.textPrimary }]}>
-            {formatTime(s.elapsedSeconds)}
-          </Text>
-        }
-      />
+    <ScreenContainer edges={['top']} style={{ backgroundColor: heroColors.bg }}>
+      {/* Dark session header: what, how far in, how long, how much moved. */}
+      <View style={styles.sessionHeader}>
+        <View style={styles.sessionHeaderRow}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={leave}
+            accessibilityLabel={t('common.close')}
+          >
+            <Ionicons name="close" size={18} color={heroColors.ink} />
+          </TouchableOpacity>
 
-      {/* Progress */}
-      <View style={styles.progressWrap}>
-        <View style={styles.progressRow}>
-          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-            {t('strengthPlans.session.progress', {
-              done: stats?.sets_completed ?? 0,
-              total: stats?.sets_total ?? 0,
-            })}
-          </Text>
-          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-            {t('strengthPlans.session.volume', { kg: Math.round(stats?.volume_kg ?? 0) })}
-          </Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.sessionName} numberOfLines={1}>
+              {session.workout_name}
+            </Text>
+            <Text style={styles.sessionMeta} numberOfLines={1}>
+              {t('strengthPlans.session.exerciseOf', {
+                index: index + 1,
+                total: exercises.length,
+              })}{' '}
+              ·{' '}
+              {t('strengthPlans.session.progress', {
+                done: stats?.sets_completed ?? 0,
+                total: stats?.sets_total ?? 0,
+              })}
+            </Text>
+          </View>
+
+          <View style={styles.sessionClockBlock}>
+            <Text style={styles.sessionClock}>{formatTime(s.elapsedSeconds)}</Text>
+            <Text style={styles.sessionVolume}>
+              {t('strengthPlans.session.volume', { kg: Math.round(stats?.volume_kg ?? 0) })}
+            </Text>
+          </View>
         </View>
-        <View style={[styles.track, { backgroundColor: colors.border }]}>
-          <View
-            style={[
-              styles.fill,
-              { backgroundColor: colors.primary, width: `${Math.round(progress * 100)}%` },
-            ]}
-          />
+
+        {/* One segment per exercise — how much of each is logged, and a way in. */}
+        <View style={styles.segments}>
+          {exercises.map((ex) => {
+            const done = ex.sets.filter((x) => x.is_completed).length;
+            const pct = ex.sets.length ? done / ex.sets.length : 0;
+            const isCurrent = ex.exercise_order === current?.exercise_order;
+            return (
+              <TouchableOpacity
+                key={ex.exercise_order}
+                style={[
+                  styles.segment,
+                  {
+                    height: isCurrent ? 10 : 6,
+                    backgroundColor: isCurrent
+                      ? 'rgba(250,250,247,0.32)'
+                      : 'rgba(250,250,247,0.18)',
+                  },
+                ]}
+                onPress={() => setCurrentOrder(ex.exercise_order)}
+                accessibilityLabel={ex.exercise?.name ?? undefined}
+              >
+                <View
+                  style={[
+                    styles.segmentFill,
+                    { width: `${Math.round(pct * 100)}%`, backgroundColor: heroColors.primary },
+                  ]}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
-      {/* Rest */}
-      {rest && restRemaining != null && restRemaining > 0 && (
-        <View
-          style={[
-            styles.restBar,
-            { backgroundColor: colors.warning + '22', borderColor: colors.warning },
-          ]}
-        >
-          <Ionicons name="hourglass-outline" size={18} color={colors.warning} />
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.restTitle, { color: colors.textPrimary }]}>
-              {t('strengthPlans.session.rest')} ·{' '}
-              {t('strengthPlans.session.restLeft', { time: formatTime(restRemaining) })}
-            </Text>
-            <View style={[styles.restTrack, { backgroundColor: colors.warning + '33' }]}>
-              <View
-                style={[
-                  styles.fill,
-                  {
-                    backgroundColor: colors.warning,
-                    width: `${Math.round((restRemaining / rest.seconds) * 100)}%`,
-                  },
-                ]}
-              />
+      <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+        {/* Rest */}
+        {rest && restRemaining != null && restRemaining > 0 && (
+          <View style={[styles.restBar, { backgroundColor: colors.warningLight }]}>
+            <View style={[styles.restIcon, { backgroundColor: colors.warning }]}>
+              <Ionicons name="hourglass-outline" size={17} color="#ffffff" />
             </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.restTitle, { color: colors.warning }]}>
+                {t('strengthPlans.session.rest')}
+              </Text>
+              <View style={[styles.restTrack, { backgroundColor: colors.warning + '33' }]}>
+                <View
+                  style={[
+                    styles.fill,
+                    {
+                      backgroundColor: colors.warning,
+                      width: `${Math.round((restRemaining / rest.seconds) * 100)}%`,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+            <Text style={[styles.restClock, { color: colors.warning }]}>
+              {formatTime(restRemaining)}
+            </Text>
+            <TouchableOpacity onPress={() => s.extendRest(30)} hitSlop={6}>
+              <Text style={[styles.restAction, { color: colors.textSecondary }]}>
+                {t('strengthPlans.session.plus30')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                void cancelRestEndNotification();
+                s.finishRest(rest.seconds - restRemaining);
+              }}
+              hitSlop={6}
+            >
+              <Text style={[styles.restAction, { color: colors.warning }]}>
+                {t('strengthPlans.session.skipRest')}
+              </Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => s.extendRest(30)} hitSlop={6}>
-            <Text style={[styles.restAction, { color: colors.textPrimary }]}>
-              {t('strengthPlans.session.plus30')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              void cancelRestEndNotification();
-              s.finishRest(rest.seconds - restRemaining);
-            }}
-            hitSlop={6}
-          >
-            <Text style={[styles.restAction, { color: colors.warning }]}>
-              {t('strengthPlans.session.skipRest')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {session.exercises?.map(renderExercise)}
-        <Button
-          title={t('strengthPlans.session.finish')}
-          onPress={() => setCompleteOpen(true)}
-          fullWidth
-        />
-        <Button
-          title={t('strengthPlans.session.skipSession')}
-          variant="ghost"
-          onPress={skipSession}
-          fullWidth
-        />
-      </ScrollView>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {current && renderExerciseHead(current)}
+
+          {/* Column headers make the two number fields unambiguous. */}
+          {current && (
+            <View style={styles.columns}>
+              <Text style={[styles.column, styles.columnNo, { color: colors.textMuted }]}>
+                {t('strengthPlans.session.setNo')}
+              </Text>
+              <Text style={[styles.column, { color: colors.textMuted }]}>
+                {t(
+                  current.planned.target_type === 'seconds'
+                    ? 'strengthPlans.session.sec'
+                    : 'strengthPlans.session.reps',
+                )}
+              </Text>
+              <Text style={[styles.column, { color: colors.textMuted }]}>
+                {t('strengthPlans.session.kg')}
+              </Text>
+              <View style={styles.columnAction} />
+            </View>
+          )}
+
+          {current?.sets.map((set) => renderSet(current, set))}
+
+          {inProgress && current?.workout_exercise_id != null && (
+            <TouchableOpacity
+              style={[styles.addSet, { borderColor: colors.border }]}
+              onPress={() =>
+                void s.addSet({ workout_exercise_id: current.workout_exercise_id as number })
+              }
+            >
+              <Ionicons name="add" size={16} color={colors.textSecondary} />
+              <Text style={[styles.addSetText, { color: colors.textSecondary }]}>
+                {t('strengthPlans.session.addSet')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity onPress={skipSession} style={styles.skipSession}>
+            <Text style={[styles.skipSessionText, { color: colors.textMuted }]}>
+              {t('strengthPlans.session.skipSession')}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* Footer: moving on and finishing never scroll out of reach. */}
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
+          <TouchableOpacity
+            style={[
+              styles.footerBack,
+              { borderColor: colors.border, opacity: index === 0 ? 0.5 : 1 },
+            ]}
+            onPress={() => setCurrentOrder(exercises[index - 1]?.exercise_order ?? null)}
+            disabled={index === 0}
+            accessibilityLabel={t('strengthPlans.session.prevExercise')}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
+          </TouchableOpacity>
+
+          {next ? (
+            <TouchableOpacity
+              style={[
+                styles.footerPrimary,
+                { backgroundColor: currentDone ? colors.primary : colors.textPrimary },
+              ]}
+              onPress={() => setCurrentOrder(next.exercise_order)}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[styles.footerPrimaryText, { color: colors.cardBackground }]}
+                numberOfLines={1}
+              >
+                {t('strengthPlans.session.next', { name: next.exercise?.name ?? '' })}
+              </Text>
+              <Ionicons name="chevron-forward" size={17} color={colors.cardBackground} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.footerPrimary,
+                { backgroundColor: colors.primary, shadowColor: colors.primary },
+              ]}
+              onPress={() => setCompleteOpen(true)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.footerPrimaryText}>{t('strengthPlans.session.finish')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
 
       <CompleteSessionSheet
         visible={completeOpen}
@@ -575,40 +673,198 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  clock: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  progressWrap: {
+  // ── dark session header ──
+  sessionHeader: {
+    backgroundColor: heroColors.bg,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    gap: spacing.xs,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
-  progressRow: {
+  sessionHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
   },
-  progressText: {
+  headerButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: heroColors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: heroColors.line,
+  },
+  sessionName: {
+    color: heroColors.ink,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
+  sessionMeta: {
+    color: heroColors.inkSoft,
     fontSize: fontSize.xs,
+    marginTop: 1,
+  },
+  sessionClockBlock: {
+    alignItems: 'flex-end',
+  },
+  sessionClock: {
+    color: heroColors.ink,
+    fontSize: msFont(19),
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
-  track: {
-    height: 6,
-    borderRadius: 3,
+  sessionVolume: {
+    color: heroColors.inkSoft,
+    fontSize: msFont(10),
+    fontVariant: ['tabular-nums'],
+  },
+  segments: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    height: 10,
+  },
+  segment: {
+    flex: 1,
+    borderRadius: 5,
     overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  segmentFill: {
+    height: '100%',
+  },
+  sheet: {
+    flex: 1,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    overflow: 'hidden',
+  },
+  // ── current exercise ──
+  exerciseHead: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm + 2,
+  },
+  exerciseTarget: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    marginTop: 3,
+  },
+  exerciseActions: {
+    flexDirection: 'row',
+    gap: spacing.xs + 2,
+  },
+  squareButton: {
+    width: 42,
+    height: 42,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  columns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs + 2,
+    marginTop: spacing.sm,
+  },
+  column: {
+    flex: 1,
+    fontSize: msFont(10),
+    fontWeight: '600',
+    letterSpacing: 1,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  columnNo: {
+    flex: 0,
+    width: 44,
+  },
+  columnAction: {
+    width: 52,
+  },
+  skipSession: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  skipSessionText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  // ── footer ──
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    borderTopWidth: 1,
+  },
+  footerBack: {
+    width: 56,
+    height: 52,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerPrimary: {
+    flex: 1,
+    height: 52,
+    borderRadius: borderRadius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  footerPrimaryText: {
+    color: '#ffffff',
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  // ── summary ──
+  summaryHero: {
+    backgroundColor: heroColors.bg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
+  },
+  summaryIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summarySubtitle: {
+    color: heroColors.inkSoft,
+    fontSize: fontSize.sm,
+    marginTop: spacing.xs,
+  },
+  summaryBody: {
+    flex: 1,
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+  },
+  summaryCard: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
   },
   fill: {
     height: '100%',
@@ -619,10 +875,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     padding: spacing.sm + 2,
     borderRadius: borderRadius.lg,
-    borderWidth: 1,
+  },
+  restIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restClock: {
+    fontSize: msFont(20),
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   restTitle: {
     fontSize: fontSize.sm,
@@ -645,40 +912,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl * 2,
     gap: spacing.sm,
   },
-  exercise: {
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  exerciseHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm + 2,
-  },
-  orderBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  orderText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
   exerciseName: {
     fontSize: fontSize.md,
     fontWeight: '700',
-  },
-  exerciseMeta: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  exerciseBody: {
-    paddingHorizontal: spacing.sm + 2,
-    paddingBottom: spacing.sm + 2,
-    gap: spacing.xs + 2,
   },
   exerciseNotes: {
     fontSize: fontSize.xs,
@@ -738,31 +974,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   addSet: {
-    alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs + 2,
+    height: 44,
+    marginTop: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
   addSetText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
-  summary: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.md,
-  },
   summaryTitle: {
-    fontSize: fontSize.xl,
+    color: heroColors.ink,
+    fontSize: msFont(24),
     fontWeight: '700',
+    letterSpacing: -0.6,
+    marginTop: spacing.md,
   },
   summaryStats: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    marginVertical: spacing.sm,
-  },
-  stat: {
-    alignItems: 'center',
+    gap: spacing.sm,
   },
   statValue: {
     fontSize: fontSize.xxl,

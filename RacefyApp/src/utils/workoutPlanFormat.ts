@@ -57,3 +57,23 @@ export function formatDurationMinutes(minutes: number | null | undefined, t: TFu
   if (!minutes) return '';
   return t('strengthPlans.durationMinutes', { minutes });
 }
+
+/**
+ * Rough length of a session when the plan does not state one: 45 s of work per
+ * set plus the prescribed rest (design "Racefy v2" → workoutMinutes).
+ *
+ * Deliberately crude — it exists so a session row can say "~40 min" instead of
+ * nothing, not to be a stopwatch.
+ */
+export function estimateWorkoutMinutes(
+  exercises: Pick<WorkoutExercise, 'sets' | 'rest_seconds'>[],
+): number {
+  const seconds = exercises.reduce(
+    (total, e) => total + e.sets * 45 + e.sets * (e.rest_seconds ?? 0),
+    0,
+  );
+  return Math.round(seconds / 60);
+}
+
+/** Brand accent for strength: the design paints every dumbbell tile in it. */
+export const STRENGTH_ACCENT = '#EF4444';

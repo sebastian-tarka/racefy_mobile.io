@@ -14,13 +14,14 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, ScreenHeader } from '../../components';
+import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import type { PlannedSession, WorkoutSessionConflict } from '../../types/workouts';
+import type { PlannedSession } from '../../types/workouts';
 import { formatTime } from '../../utils/formatters';
 import { formatDurationMinutes, weekdayShort } from '../../utils/workoutPlanFormat';
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
@@ -43,7 +44,6 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
   const [days, setDays] = useState<PlannedSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [busyWorkoutId, setBusyWorkoutId] = useState<number | null>(null);
   const today = isoDate(new Date());
 
   const load = useCallback(
@@ -69,35 +69,14 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
   );
   useRefreshOn('workouts', () => void load());
 
-  const openSession = (sessionId: number) => navigation.navigate('WorkoutSession', { sessionId });
+  const openSession = useCallback(
+    (sessionId: number) => navigation.navigate('WorkoutSession', { sessionId }),
+    [navigation],
+  );
 
-  const start = async (day: PlannedSession) => {
-    if (!day.workout) return;
-    setBusyWorkoutId(day.workout.id);
-    try {
-      const session = await api.startWorkoutSession(day.workout.id, day.date);
-      emitRefresh('workouts');
-      openSession(session.id);
-    } catch (error: any) {
-      const conflict = error as Partial<WorkoutSessionConflict> & { status?: number };
-      if (error.status === 409 && conflict.reason === 'in_progress_exists' && conflict.session) {
-        const open = conflict.session;
-        Alert.alert(
-          '',
-          t('strengthPlans.schedule.conflictInProgress', { name: open.workout_name }),
-          [
-            { text: t('common.cancel'), style: 'cancel' },
-            { text: t('strengthPlans.schedule.resume'), onPress: () => openSession(open.id) },
-          ],
-        );
-      } else if (error.status === 409 && conflict.reason === 'already_logged') {
-        Alert.alert('', t('strengthPlans.schedule.conflictLogged'));
-      } else {
-        Alert.alert('', error.message || t('common.error'));
-      }
-    } finally {
-      setBusyWorkoutId(null);
-    }
+  const { start: startSession, busyWorkoutId } = useStartWorkoutSession(openSession);
+  const start = (day: PlannedSession) => {
+    if (day.workout) void startSession(day.workout.id, day.date);
   };
 
   const skip = (day: PlannedSession) => {
@@ -118,6 +97,16 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
         },
       },
     ]);
+  };
+
+  /** Undo a skip: the skipped session is the only record of it, so it goes. */
+  const undoSkip = async (sessionId: number) => {
+    try {
+      await api.deleteWorkoutSession(sessionId);
+      emitRefresh('workouts');
+    } catch (error: any) {
+      Alert.alert('', error.message || t('common.error'));
+    }
   };
 
   const renderDay = ({ item }: { item: PlannedSession }) => {
@@ -150,7 +139,14 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
         <View style={{ flex: 1, gap: 4 }}>
           {item.workout ? (
             <>
-              <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={2}>
+              <Text
+                style={[
+                  styles.name,
+                  { color: colors.textPrimary },
+                  status === 'skipped' && styles.nameSkipped,
+                ]}
+                numberOfLines={2}
+              >
                 {item.workout.day_label ? `${item.workout.day_label} · ` : ''}
                 {item.workout.name}
               </Text>
@@ -197,6 +193,13 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
                   )}
                 </Text>
               </View>
+              {status === 'skipped' && (
+                <TouchableOpacity onPress={() => undoSkip(session.id)} hitSlop={8}>
+                  <Text style={[styles.link, { color: colors.primary }]}>
+                    {t('strengthPlans.schedule.undoSkip')}
+                  </Text>
+                </TouchableOpacity>
+              )}
               {status === 'completed' && session.stats && (
                 <Text style={[styles.meta, { color: colors.textMuted }]} numberOfLines={1}>
                   {t('strengthPlans.schedule.statsLine', {
@@ -219,42 +222,46 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
               </Text>
             </TouchableOpacity>
           )}
-        </View>
 
-        {item.workout && (!session || status === 'in_progress') && (
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.startButton, { backgroundColor: colors.primary }]}
-              onPress={() =>
-                status === 'in_progress' && session ? openSession(session.id) : start(item)
-              }
-              disabled={busyWorkoutId === item.workout.id}
-              activeOpacity={0.85}
-            >
-              {busyWorkoutId === item.workout.id ? (
-                <ActivityIndicator color="#ffffff" size="small" />
-              ) : (
-                <>
-                  <Ionicons name="play" size={14} color="#ffffff" />
-                  <Text style={styles.startText}>
-                    {t(
-                      status === 'in_progress'
-                        ? 'strengthPlans.schedule.resume'
-                        : 'strengthPlans.schedule.start',
-                    )}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-            {!session && (
-              <TouchableOpacity onPress={() => skip(item)} hitSlop={8}>
-                <Text style={[styles.skipText, { color: colors.textMuted }]}>
-                  {t('strengthPlans.schedule.skip')}
-                </Text>
+          {item.workout && (!session || status === 'in_progress') && (
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={[styles.startButton, { backgroundColor: colors.primary }]}
+                onPress={() =>
+                  status === 'in_progress' && session ? openSession(session.id) : start(item)
+                }
+                disabled={busyWorkoutId === item.workout.id}
+                activeOpacity={0.85}
+              >
+                {busyWorkoutId === item.workout.id ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="play" size={14} color="#ffffff" />
+                    <Text style={styles.startText}>
+                      {t(
+                        status === 'in_progress'
+                          ? 'strengthPlans.schedule.resume'
+                          : 'strengthPlans.schedule.start',
+                      )}
+                    </Text>
+                  </>
+                )}
               </TouchableOpacity>
-            )}
-          </View>
-        )}
+              {!session && (
+                <TouchableOpacity
+                  style={[styles.skipButton, { borderColor: colors.border }]}
+                  onPress={() => skip(item)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.skipText, { color: colors.textSecondary }]}>
+                    {t('strengthPlans.schedule.skip')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
       </View>
     );
   };
@@ -332,6 +339,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '700',
   },
+  nameSkipped: {
+    textDecorationLine: 'line-through',
+  },
   note: {
     fontSize: fontSize.sm,
     lineHeight: 18,
@@ -362,18 +372,26 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actions: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xs + 2,
   },
   startButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: spacing.sm,
+    gap: spacing.xs + 2,
+    height: 40,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+  },
+  skipButton: {
+    height: 40,
     paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
-    minWidth: 84,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   startText: {
@@ -382,7 +400,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   skipText: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   empty: {
