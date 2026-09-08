@@ -15,7 +15,16 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `tabbar-design-v2` — dolny pasek zakładek wg designu „Racefy v2"
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Paski zakładek i zakładka Statystyki wg designu „Racefy v2" (zmergowane 2026-09-08, tag `pre-strength-move-resume` = main sprzed merge)
 
 Design: `TabBar` w `racefy-app.jsx`. Jeden zestaw ikon outline w obu stanach
 (stan niosą kolor i waga etykiety), lity pasek z włosową kreską zamiast blura,
@@ -39,9 +48,9 @@ były zaszyte po angielsku i po polsku niezależnie od języka aplikacji.
 - [ ] Zakładka Szkice otwiera się bursztynową notką z liczbą nieopublikowanych aktywności
 - [ ] Przy dużej systemowej czcionce zakładki dają się przewinąć i nie ucinają podpisów
 
-### `strength-move-resume` — przekładanie dni i wznawianie pominiętych sesji
+### Przekładanie dni siłowni i wznawianie pominiętych sesji (zmergowane 2026-09-08, ten sam tag)
 
-Odgałęziony od `tabbar-design-v2`, więc niesie też jego commity. Odpowiednik
+Odpowiednik
 tego, co robi już web (`PlannedSessionsList`, `ResumeSessionModal`,
 `SessionConflictModal`): status sesji `planned` + `moved_from`,
 `POST /workout-sessions/{id}/resume`, `POST /workout-sessions/move`, kalendarz
@@ -67,13 +76,6 @@ przytrzymanie wiersza). Szczegóły: `.notes/SILOWNIA_PRZEKLADANIE.md`.
 - [ ] Przeniesiony dzień **nie** pojawia się w historii treningów
 - [ ] Baner „Sesja w toku" na liście planów i w planie ma znowu poprawny tekst i przycisk „Wznów" (był nadpisany kluczami arkusza)
 - [ ] Nagłówek kolumny w sesji to „Seria", a nie „SERIA {{n}}"
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Ekran profilu wg designów „Racefy v2" — narzędzia, zakładki, statystyki (zmergowane 2026-09-08, tag `pre-profile-design-v2` = main sprzed merge)
 
