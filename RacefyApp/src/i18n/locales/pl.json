@@ -443,7 +443,32 @@
         "month": "Miesiąc",
         "year": "Rok",
         "allTime": "Cały czas"
-      }
+      },
+      "metric": {
+        "distance": "Dystans",
+        "count": "Aktywności",
+        "time": "Czas"
+      },
+      "bySport": "Wg sportu",
+      "shareOf": "udział w kategorii {{metric}}",
+      "otherSport": "Inne",
+      "activitiesCount_one": "{{count}} aktywność",
+      "activitiesCount_few": "{{count}} aktywności",
+      "activitiesCount_many": "{{count}} aktywności",
+      "activitiesCount_other": "{{count}} aktywności",
+      "bests": {
+        "title": "Rekordy",
+        "inPeriod": "w tym okresie",
+        "longestDistance": "Najdłuższy",
+        "longestDuration": "Najdłuższy czas",
+        "fastestSpeed": "Najszybszy"
+      },
+      "advanced": {
+        "title": "Statystyki zaawansowane",
+        "body": "Strefy, obciążenie treningowe i porównanie z innymi",
+        "cta": "Ulepsz"
+      },
+      "comparedWith": "vs {{name}}"
     },
     "empty": {
       "noPosts": "Brak postów",

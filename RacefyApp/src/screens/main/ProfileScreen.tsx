@@ -25,10 +25,12 @@ import {
   type PeriodOption,
   PointsCard,
   PostCard,
-  PremiumTeaser,
   ProfileNavigationSections,
   ScreenContainer,
-  SportStatsChart,
+  SportSplitCard,
+  StatsHeadlineCard,
+  type StatsMetric,
+  PersonalBestsCard,
   SportTypeFilter,
   type TimeRange,
   TimeRangeFilter,
@@ -50,7 +52,7 @@ import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
 import { borderRadius, fontSize, spacing, msFont } from '../../theme';
-import { getDateRangeForTimeRange } from '../../utils/dateRanges';
+import { getDateRangeForTimeRange, getPreviousDateRange } from '../../utils/dateRanges';
 import { formatDurationCompact } from '../../utils/formatDuration';
 import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -123,6 +125,7 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // Filter state - MUST be declared before dateRange and hooks that use them
   const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('all_time');
+  const [statsMetric, setStatsMetric] = useState<StatsMetric>('distance');
 
   // Comparison state
   const [compareUser, setCompareUser] = useState<User | null>(null);
@@ -155,6 +158,14 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     sportTypeId: selectedSportTypeId,
     from: dateRange?.from ?? undefined,
     to: dateRange?.to ?? undefined,
+  });
+  // The same window one period back, so the headline can say whether this
+  // period is up or down. All-time has nothing before it — the hook is idle.
+  const previousRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
+  const { stats: previousStats } = useActivityStats({
+    sportTypeId: selectedSportTypeId,
+    from: previousRange?.from ?? undefined,
+    to: previousRange?.to ?? undefined,
   });
   const {
     stats: pointStats,
@@ -753,70 +764,87 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
       {/* Stats Tab Content */}
       {activeTab === 'stats' && (
         <View style={styles.statsTabContent}>
-          {/* User Comparison Selector */}
-          {canUse('advanced_stats') ? (
-            <CompareUserSelector
-              following={following}
-              selectedUser={compareUser}
-              onSelectUser={setCompareUser}
-              isLoading={isLoadingFollowing}
-            />
-          ) : (
-            <PremiumTeaser feature="advanced_stats" style={{ marginBottom: spacing.md }}>
-              <CompareUserSelector
-                following={following}
-                selectedUser={null}
-                onSelectUser={() => {}}
-                isLoading={false}
-              />
-            </PremiumTeaser>
-          )}
-
-          {/* Time Range Filter */}
+          {/* Period and sport apply to everything below; the metric switch
+              lives on the card it changes. */}
           <TimeRangeFilter
             options={TIME_RANGE_OPTIONS}
             selectedValue={selectedTimeRange}
             onSelectValue={setSelectedTimeRange}
-            isLoading={isLoadingActivityStats || isLoadingCompareStats}
+            isLoading={isLoadingActivityStats}
           />
-
-          {/* Sport Type Filter */}
           <SportTypeFilter
             sportTypes={sportTypes}
             selectedSportTypeId={selectedSportTypeId}
             onSelectSportType={setSelectedSportTypeId}
-            isLoading={isLoadingActivityStats || isLoadingCompareStats}
+            isLoading={isLoadingActivityStats}
           />
 
-          {/* Bar Chart */}
-          {activityStats?.by_sport_type && (
-            <View
-              style={[
-                styles.chartCard,
-                { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
-              ]}
-            >
-              <SportStatsChart
-                data={activityStats.by_sport_type}
-                sportTypes={sportTypes}
-                compareData={compareStats?.by_sport_type}
-                compareUserName={compareUser?.name}
-              />
-              {isLoadingCompareStats && (
-                <View style={styles.chartLoadingOverlay}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              )}
-            </View>
-          )}
+          <StatsHeadlineCard
+            stats={activityStats}
+            previous={previousStats}
+            metric={statsMetric}
+            onMetricChange={setStatsMetric}
+            periodLabel={t(
+              TIME_RANGE_OPTIONS.find((o) => o.value === selectedTimeRange)?.labelKey ?? '',
+            )}
+          />
 
-          {/* Points Card */}
+          <SportSplitCard
+            stats={activityStats}
+            sportTypes={sportTypes}
+            metric={statsMetric}
+            selectedSportTypeId={selectedSportTypeId}
+            compareStats={compareStats}
+            compareUserName={compareUser?.name}
+          />
+
+          <PersonalBestsCard
+            stats={activityStats}
+            onOpenActivity={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
+          />
+
           <PointsCard
             stats={pointStats}
             isLoading={isLoadingPointStats}
             onViewHistory={() => navigation.navigate('PointHistory')}
             onViewLeaderboard={() => navigation.navigate('Leaderboard')}
           />
+
+          {/* Comparing against another athlete is the paid part. It used to be a
+              full locked card at the top of the tab, before anyone had seen a
+              single number of their own; now it closes the tab as one row. */}
+          {canUse('advanced_stats') ? (
+            <CompareUserSelector
+              following={following}
+              selectedUser={compareUser}
+              onSelectUser={setCompareUser}
+              isLoading={isLoadingFollowing || isLoadingCompareStats}
+            />
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.advancedRow,
+                { backgroundColor: colors.aiLight, borderColor: colors.ai + '33' },
+              ]}
+              onPress={() => navigation.navigate('Paywall', { feature: 'advanced_stats' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.advancedIcon, { backgroundColor: colors.ai }]}>
+                <Ionicons name="lock-closed" size={15} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.advancedTitle, { color: colors.textPrimary }]}>
+                  {t('profile.stats.advanced.title')}
+                </Text>
+                <Text style={[styles.advancedBody, { color: colors.ai }]} numberOfLines={2}>
+                  {t('profile.stats.advanced.body')}
+                </Text>
+              </View>
+              <View style={[styles.advancedBadge, { backgroundColor: colors.ai }]}>
+                <Text style={styles.advancedBadgeText}>{t('profile.stats.advanced.cta')}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </>
@@ -1252,29 +1280,44 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: 'center',
   },
+  advancedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+    padding: spacing.md,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+  },
+  advancedIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  advancedTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
+  advancedBody: {
+    fontSize: fontSize.xs,
+    marginTop: 1,
+  },
+  advancedBadge: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+  },
+  advancedBadgeText: {
+    color: '#ffffff',
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
   statsTabContent: {
     marginTop: spacing.sm,
   },
   activitiesFilterContent: {
     marginTop: spacing.sm,
     gap: spacing.xs,
-  },
-  chartCard: {
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    position: 'relative',
-  },
-  chartLoadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
   },
 });

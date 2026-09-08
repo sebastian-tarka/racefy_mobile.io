@@ -15,7 +15,25 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `profile-design-v2` — ekran profilu wg designów „Racefy v2"
+
+Design: `racefy-profile.jsx` + `racefy-stats.jsx`. Lista narzędzi (7 kafli →
+2 grupy wierszy ze statusami), kolejność zakładek (Statystyki pierwsze
+i domyślne) oraz przebudowana zakładka Statystyki: karta nagłówkowa z jedną
+liczbą, deltą względem poprzedniego okresu i przełącznikiem metryki, opisane
+paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
+„Statystyki zaawansowane" zszedł na koniec jako jeden wiersz.
+
+- [ ] Profil otwiera się na zakładce Statystyki; kolejność zakładek to Statystyki, Aktywności, Posty, Szkice, Wydarzenia; badge szkiców nadal działa
+- [ ] Wiersze narzędzi pokazują żywe statusy: liczba aktywnych celów i %, aktywny plan siłowy z liczbą sesji, liczba zapisanych tras, transmisje na żywo
+- [ ] Brak sieci / błąd API: wiersz zostaje przy zwykłym opisie, nic nie wygląda na zepsute
+- [ ] Konto free: wiersz „Raporty AI" ma plakietkę PLUS i prowadzi do paywalla
+- [ ] Statystyki: przełącznik Dystans / Aktywności / Czas zmienia dużą liczbę, paski wg sportu i podpisy
+- [ ] Statystyki: delta „vs poprzedni okres" pojawia się dla tygodnia/miesiąca/roku i **znika dla „cały czas"** (nie ma z czym porównać)
+- [ ] Statystyki: filtr sportu przygasza pozostałe paski, nie usuwa ich
+- [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
+- [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"
+- [ ] Konto bez `advanced_stats`: na końcu zakładki jest jeden wiersz „Statystyki zaawansowane" prowadzący do paywalla (a nie duża zablokowana karta na górze)
 
 ---
 

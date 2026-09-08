@@ -60,3 +60,24 @@ export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null
   logger.debug('profile', 'getDateRangeForTimeRange called', { timeRange, result });
   return result;
 }
+
+/**
+ * The window of the same length immediately before `range` — what "vs last
+ * month" compares against (design "Racefy v2" → StatsTab headline delta).
+ *
+ * Null for all-time: there is nothing before everything.
+ */
+export function getPreviousDateRange(range: DateRange | null): DateRange | null {
+  if (!range) return null;
+  const from = new Date(range.from);
+  const to = new Date(range.to);
+  const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
+  const prevTo = new Date(from);
+  prevTo.setDate(prevTo.getDate() - 1);
+  const prevFrom = new Date(prevTo);
+  prevFrom.setDate(prevFrom.getDate() - days);
+  return {
+    from: prevFrom.toISOString().split('T')[0],
+    to: prevTo.toISOString().split('T')[0],
+  };
+}
