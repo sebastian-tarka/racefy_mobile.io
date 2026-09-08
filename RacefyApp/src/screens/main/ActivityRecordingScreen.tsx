@@ -1091,9 +1091,6 @@ export function ActivityRecordingScreen() {
       canSkipAutoPost={canUseAiPostOnFinish}
       gpsProfile={gpsProfile}
       livePoints={livePoints}
-      livePointsVersion={livePointsVersion}
-      currentPosition={currentPosition}
-      mapStyle={mapStyle}
       selectedEvent={selectedEvent}
       onShowEventSheet={() => setEventSheetVisible(true)}
       onClearEvent={() => setSelectedEvent(null)}

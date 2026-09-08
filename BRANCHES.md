@@ -48,6 +48,7 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Zakończenie: „wstecz" wraca do wstrzymanej aktywności (nic nie ginie), „Odrzuć" pyta o potwierdzenie
 - [ ] Zakończenie: tytuł trafia do zapisanej aktywności; „Zapisz prywatnie" na koncie free pokazuje upsell (`ai_post_on_finish`), na płatnym zapisuje bez posta
 - [ ] Zakończenie: podpięcie eventu działa tak jak wcześniej na ekranie pauzy
+- [ ] Zakończenie: mapa pokazuje **cały zapisany ślad** ze znacznikami startu i mety (a nie pustą mapę); przy braku śladu zamiast ramki jest komunikat
 - [ ] Tryb ciemny i jasny: pre-start i zakończenie czytelne w obu; live jest ciemny w obu (celowo)
 
 ---

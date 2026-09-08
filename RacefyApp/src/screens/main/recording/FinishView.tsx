@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,9 +17,8 @@ import { useUnits } from '../../../hooks/useUnits';
 import type { LiveActivityStats } from '../../../hooks/useLiveActivity';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { GpsProfile } from '../../../config/gpsProfiles';
-import type { Event, GpsPoint } from '../../../types/api';
-import { MapboxLiveMap, StatBlock } from '../../../components';
-import type { MapStyleType } from '../../../components/MapboxLiveMap';
+import type { Event, GeoJSONLineString, GpsPoint } from '../../../types/api';
+import { RoutePreview, StatBlock } from '../../../components';
 import { calculateAveragePace } from '../../../utils/paceCalculator';
 import { formatTime } from '../../../utils/formatters';
 import { upgradePromptEmitter } from '../../../services/upgradePromptEmitter';
@@ -37,9 +36,6 @@ interface FinishViewProps {
   canSkipAutoPost: boolean;
   gpsProfile: GpsProfile | null;
   livePoints: GpsPoint[];
-  livePointsVersion: number;
-  currentPosition: { lat: number; lng: number } | null;
-  mapStyle: MapStyleType;
   selectedEvent: Event | null;
   onShowEventSheet: () => void;
   onClearEvent: () => void;
@@ -72,9 +68,6 @@ export function FinishView({
   canSkipAutoPost,
   gpsProfile,
   livePoints,
-  livePointsVersion,
-  currentPosition,
-  mapStyle,
   selectedEvent,
   onShowEventSheet,
   onClearEvent,
@@ -101,6 +94,17 @@ export function FinishView({
         );
   const calories = Math.floor(localDuration * 0.15);
   const hasHeartRate = (currentStats.avg_heart_rate ?? 0) > 0;
+
+  // The summary map frames the whole track, the way the saved activity will
+  // show it — a live map centred on the athlete would just be a dot, and with
+  // following switched off it has no camera target at all.
+  const track = useMemo<GeoJSONLineString | null>(() => {
+    if (livePoints.length < 2) return null;
+    return {
+      type: 'LineString',
+      coordinates: livePoints.map((p) => [p.lng, p.lat] as [number, number]),
+    };
+  }, [livePoints]);
 
   // Free accounts get the auto-post either way; "save private" is the upsell.
   const savePrivate = () => {
@@ -170,16 +174,33 @@ export function FinishView({
             />
           </View>
 
-          {gpsProfile?.enabled !== false && (
+          {track && (
             <View style={[styles.map, { borderColor: colors.border }]}>
-              <MapboxLiveMap
-                livePoints={livePoints}
-                livePointsVersion={livePointsVersion}
-                currentPosition={currentPosition}
-                gpsSignalQuality="disabled"
-                followUser={false}
-                mapStyle={mapStyle}
+              <RoutePreview
+                trackData={track}
+                height={MAP_HEIGHT}
+                backgroundColor={colors.background}
+                showStartMarker
+                showFinishMarker
+                startPoint={track.coordinates[0] as [number, number]}
+                finishPoint={track.coordinates[track.coordinates.length - 1] as [number, number]}
               />
+            </View>
+          )}
+
+          {/* Indoor sports and activities that never got a fix have no track to
+              show; an empty map frame would only look broken. */}
+          {!track && gpsProfile?.enabled !== false && (
+            <View
+              style={[
+                styles.noTrack,
+                { backgroundColor: colors.background, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="location-outline" size={18} color={colors.textMuted} />
+              <Text style={[styles.noTrackText, { color: colors.textMuted }]}>
+                {t('recording.finish.noTrack')}
+              </Text>
             </View>
           )}
 
@@ -309,6 +330,9 @@ export function FinishView({
   );
 }
 
+/** Tall enough for a fitted track to read as a shape, not a squiggle. */
+const MAP_HEIGHT = 190;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -367,12 +391,26 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   map: {
-    height: 150,
+    height: MAP_HEIGHT,
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  noTrack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  noTrackText: {
+    fontSize: fontSize.sm,
   },
   statsGrid: {
     flexDirection: 'row',

@@ -1085,7 +1085,8 @@
       "defaultTitle": "{{sport}} activity",
       "titlePlaceholder": "Name this activity",
       "savePrivate": "Save private",
-      "saveAndShare": "Save & share"
+      "saveAndShare": "Save & share",
+      "noTrack": "No GPS track recorded"
     },
     "allSports": "All sports",
     "startSport": "Start {{sport}}",
