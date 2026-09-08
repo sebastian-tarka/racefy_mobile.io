@@ -11,9 +11,13 @@ interface PreviewLocationResult {
 /**
  * Fetches and caches the user's current location for map preview (before tracking starts).
  * Clears the cached location when tracking or pausing begins.
+ *
+ * `enabled` is whatever the caller considers "a map is on screen". The pre-start
+ * screen is map-first, so it asks for a preview regardless of the stats/map view
+ * mode that only recording and paused still use.
  */
 export function usePreviewLocation(
-  viewMode: 'stats' | 'map',
+  enabled: boolean,
   isTracking: boolean,
   isPaused: boolean,
   currentPosition: { lat: number; lng: number } | null,
@@ -26,7 +30,7 @@ export function usePreviewLocation(
   useEffect(() => {
     const fetchPreviewLocation = async () => {
       if (
-        viewMode === 'map' &&
+        enabled &&
         !isTracking &&
         !isPaused &&
         !currentPosition &&
@@ -67,7 +71,7 @@ export function usePreviewLocation(
 
     fetchPreviewLocation();
   }, [
-    viewMode,
+    enabled,
     isTracking,
     isPaused,
     currentPosition,

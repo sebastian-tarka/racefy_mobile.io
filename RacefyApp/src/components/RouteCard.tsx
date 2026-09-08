@@ -1,5 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from './Card';
 import { useTranslation } from 'react-i18next';
@@ -7,30 +9,68 @@ import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { formatDistance, formatTotalTime } from '../utils/formatters';
 import { getSportIcon } from '../utils/sportIcon';
-import type { PlannedRoute } from '../types/api';
+import { getSportTile, hasSportTile } from '../config/sportTiles';
+import type { PlannedRoute, SportType } from '../types/api';
 
 interface RouteCardProps {
   route: PlannedRoute;
+  /**
+   * The route's sport, when the caller can resolve it. `/routes` does not always
+   * embed `sport_type`, and without it every card falls back to the generic
+   * icon — which is why the library used to be a wall of identical tiles.
+   */
+  sport?: Pick<SportType, 'slug' | 'name'> | null;
   onPress?: () => void;
 }
 
-function RouteCardBase({ route, onPress }: RouteCardProps) {
+function RouteCardBase({ route, sport, onPress }: RouteCardProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const profileLabel = route.profile === 'cycling' ? t('routes.cycling') : t('routes.walking');
+  const routeSport = sport ?? route.sport_type ?? null;
+  const tile = routeSport && hasSportTile(routeSport) ? getSportTile(routeSport, isDark) : null;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight + '20' }]}>
-            <Ionicons
-              name={getSportIcon(route.sport_type?.name)}
-              size={28}
-              color={colors.primary}
-            />
-            <Text style={[styles.profileBadge, { color: colors.primary }]}>{profileLabel}</Text>
+            {tile ? (
+              <>
+                <Image
+                  source={tile}
+                  style={StyleSheet.absoluteFill}
+                  contentFit="cover"
+                  transition={120}
+                />
+                <LinearGradient
+                  colors={
+                    isDark
+                      ? ['transparent', 'rgba(0,0,0,0.8)']
+                      : ['transparent', 'rgba(255,255,255,0.92)']
+                  }
+                  locations={[0.5, 1]}
+                  style={StyleSheet.absoluteFill}
+                  pointerEvents="none"
+                />
+                <Text
+                  style={[
+                    styles.profileBadge,
+                    styles.profileBadgeOverArt,
+                    { color: isDark ? '#ffffff' : '#0A1A14' },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {profileLabel}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name={getSportIcon(routeSport?.name)} size={28} color={colors.primary} />
+                <Text style={[styles.profileBadge, { color: colors.primary }]}>{profileLabel}</Text>
+              </>
+            )}
           </View>
 
           <View style={styles.info}>
@@ -109,12 +149,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
+    overflow: 'hidden',
   },
   profileBadge: {
     fontSize: msFont(9),
     fontWeight: '700',
     textTransform: 'uppercase',
     marginTop: 2,
+  },
+  profileBadgeOverArt: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 4,
+    marginTop: 0,
+    textAlign: 'center',
+    paddingHorizontal: 2,
   },
   info: {
     flex: 1,

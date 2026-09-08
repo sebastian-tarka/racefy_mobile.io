@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import type { SegmentProgress, WorkoutEngineState } from '../../../services/workout/engine';
 import type { CompiledSegment, WorkoutPlan } from '../../../types/workout';
-import { fontSize, msFont, spacing } from '../../../theme';
+import { fontSize, heroColors, msFont, spacing } from '../../../theme';
 import {
   formatGoalTime,
   formatPlanLabel,
@@ -16,8 +16,10 @@ import {
 } from '../../../utils/workoutFormat';
 
 type Variant =
-  /** On the recording map overlay — light frosted card, dark text (matches RecordingView's metric cards). */
+  /** On the recording map overlay — light frosted card, dark text. */
   | 'recording'
+  /** On the dark recording ground (design: GoalHUD on LiveScreen). */
+  | 'live'
   /** Paused screen — themed card. */
   | 'paused';
 
@@ -56,10 +58,19 @@ export function WorkoutProgressCard({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const light = variant === 'recording';
+  const hero = variant === 'live';
 
-  const ink = light ? '#0A1A14' : colors.textPrimary;
-  const muted = light ? '#5E6B65' : colors.textMuted;
-  const trackBg = light ? 'rgba(10,26,20,0.1)' : colors.border;
+  const ink = hero ? heroColors.ink : light ? '#0A1A14' : colors.textPrimary;
+  const muted = hero ? heroColors.inkSoft : light ? '#5E6B65' : colors.textMuted;
+  const trackBg = hero ? heroColors.track : light ? 'rgba(10,26,20,0.1)' : colors.border;
+  /** Card ground when nothing special is going on (goal not reached yet). */
+  const restBg = hero
+    ? heroColors.surface
+    : light
+      ? 'rgba(255,255,255,0.78)'
+      : colors.cardBackground;
+  const restBorder = hero ? heroColors.line : light ? 'rgba(10,26,20,0.08)' : colors.border;
+  const accent = hero ? heroColors.primary : colors.primary;
 
   // Pulse the big number through the last three seconds of a timed segment.
   const pulse = useRef(new Animated.Value(1)).current;
@@ -85,8 +96,16 @@ export function WorkoutProgressCard({
         style={[
           styles.emptyRow,
           {
-            borderColor: light ? 'rgba(10,26,20,0.22)' : colors.border,
-            backgroundColor: light ? 'rgba(255,255,255,0.5)' : colors.cardBackground,
+            borderColor: hero
+              ? 'rgba(250,250,247,0.22)'
+              : light
+                ? 'rgba(10,26,20,0.22)'
+                : colors.border,
+            backgroundColor: hero
+              ? 'rgba(250,250,247,0.06)'
+              : light
+                ? 'rgba(255,255,255,0.5)'
+                : colors.cardBackground,
           },
         ]}
         onPress={onPress}
@@ -96,7 +115,13 @@ export function WorkoutProgressCard({
         <View
           style={[
             styles.emptyIcon,
-            { backgroundColor: light ? 'rgba(10,26,20,0.08)' : colors.background },
+            {
+              backgroundColor: hero
+                ? heroColors.surfaceStrong
+                : light
+                  ? 'rgba(10,26,20,0.08)'
+                  : colors.background,
+            },
           ]}
         >
           <Ionicons name="flag-outline" size={14} color={ink} />
@@ -116,19 +141,17 @@ export function WorkoutProgressCard({
     const done = progress?.overshoot != null;
     const next = current && !done ? segments[current.index + 1] : undefined;
     const segColor = !current
-      ? colors.primary
+      ? accent
       : current.kind === 'work'
-        ? colors.primary
+        ? accent
         : current.kind === 'recovery'
-          ? colors.warning
+          ? hero
+            ? heroColors.amber
+            : colors.warning
           : SKY;
     const fraction = done ? 1 : (progress?.fraction ?? 0);
-    const cardBg = done
-      ? colors.primary + (light ? '2E' : '22')
-      : light
-        ? 'rgba(255,255,255,0.78)'
-        : colors.cardBackground;
-    const border = done ? colors.primary : light ? 'rgba(10,26,20,0.08)' : colors.border;
+    const cardBg = done ? accent + (light ? '2E' : '22') : restBg;
+    const border = done ? accent : restBorder;
 
     const header = done
       ? t('recording.workout.planComplete')
@@ -158,11 +181,8 @@ export function WorkoutProgressCard({
         accessibilityLabel={`${header}. ${big}. ${sub}`}
       >
         <View style={styles.headerRow}>
-          <View style={[styles.dot, { backgroundColor: done ? colors.primary : segColor }]} />
-          <Text
-            style={[styles.headerText, { color: done ? colors.primary : muted }]}
-            numberOfLines={1}
-          >
+          <View style={[styles.dot, { backgroundColor: done ? accent : segColor }]} />
+          <Text style={[styles.headerText, { color: done ? accent : muted }]} numberOfLines={1}>
             {header.toUpperCase()}
           </Text>
           {canSkip && (
@@ -205,7 +225,7 @@ export function WorkoutProgressCard({
               </Text>
             </View>
           )}
-          {done && <Ionicons name="checkmark-circle" size={26} color={colors.primary} />}
+          {done && <Ionicons name="checkmark-circle" size={26} color={accent} />}
         </View>
 
         {/* Current segment bar */}
@@ -225,7 +245,13 @@ export function WorkoutProgressCard({
               const isDone = done || (current ? s.index < current.index : false);
               const isCurrent = !done && current?.index === s.index;
               const base =
-                s.kind === 'work' ? colors.primary : s.kind === 'recovery' ? colors.warning : SKY;
+                s.kind === 'work'
+                  ? accent
+                  : s.kind === 'recovery'
+                    ? hero
+                      ? heroColors.amber
+                      : colors.warning
+                    : SKY;
               return (
                 <View
                   key={s.index}
@@ -252,12 +278,8 @@ export function WorkoutProgressCard({
   const reached = progress?.overshoot != null;
   const fraction = progress?.fraction ?? 0;
   const label = formatPlanLabel(plan, formatDistance, t);
-  const cardBg = reached
-    ? colors.primary + (light ? '2E' : '22')
-    : light
-      ? 'rgba(255,255,255,0.78)'
-      : colors.cardBackground;
-  const border = reached ? colors.primary : light ? 'rgba(10,26,20,0.08)' : colors.border;
+  const cardBg = reached ? accent + (light ? '2E' : '22') : restBg;
+  const border = reached ? accent : restBorder;
 
   let big: string;
   let sub: string;
@@ -289,11 +311,8 @@ export function WorkoutProgressCard({
       accessibilityLabel={`${t('recording.workout.goalLabel', { goal: label })}. ${sub}`}
     >
       <View style={styles.headerRow}>
-        <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-        <Text
-          style={[styles.headerText, { color: reached ? colors.primary : muted }]}
-          numberOfLines={1}
-        >
+        <View style={[styles.dot, { backgroundColor: accent }]} />
+        <Text style={[styles.headerText, { color: reached ? accent : muted }]} numberOfLines={1}>
           {(reached
             ? t('recording.workout.reached')
             : t('recording.workout.goalLabel', { goal: label })
@@ -316,14 +335,14 @@ export function WorkoutProgressCard({
         {!reached && (
           <Text style={[styles.percent, { color: muted }]}>{Math.round(fraction * 100)}%</Text>
         )}
-        {reached && <Ionicons name="checkmark-circle" size={26} color={colors.primary} />}
+        {reached && <Ionicons name="checkmark-circle" size={26} color={accent} />}
       </View>
 
       <View style={[styles.track, { backgroundColor: trackBg }]}>
         <View
           style={[
             styles.fill,
-            { backgroundColor: colors.primary, width: `${Math.round(fraction * 100)}%` },
+            { backgroundColor: accent, width: `${Math.round(fraction * 100)}%` },
           ]}
         />
       </View>

@@ -2,8 +2,18 @@ import { api } from '../services/api';
 import { useFetch } from './useFetch';
 import type { NearbyRoute, User } from '../types/api';
 
-export function useMyPlannedRoutes(isAuthenticated: boolean, user: User | null): NearbyRoute[] {
-  const { data } = useFetch<NearbyRoute[]>(
+interface MyPlannedRoutes {
+  routes: NearbyRoute[];
+  /**
+   * The list is fetched once. Routes are created on a different screen (the
+   * route library), so whoever shows this list has to ask for it again when the
+   * athlete comes back — otherwise a route they just drew is missing.
+   */
+  refetch: () => void;
+}
+
+export function useMyPlannedRoutes(isAuthenticated: boolean, user: User | null): MyPlannedRoutes {
+  const { data, refetch } = useFetch<NearbyRoute[]>(
     () =>
       api.getRoutes({ page: 1, per_page: 50 }).then((response) =>
         response.data.map(
@@ -40,5 +50,5 @@ export function useMyPlannedRoutes(isAuthenticated: boolean, user: User | null):
     },
   );
 
-  return data ?? [];
+  return { routes: data ?? [], refetch };
 }

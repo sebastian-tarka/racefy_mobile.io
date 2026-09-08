@@ -9,13 +9,58 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-05**
+Stan na: **2026-09-08**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `activity-redesign-v2` — ekran aktywności wg designów „Racefy v2"
+
+Design: https://claude.ai/design/p/2a667d94-af0d-4282-b356-1427830dc56c (pliki
+`racefy-prestart.jsx`, `racefy-record.jsx`, `racefy-theme.jsx`). Plan i decyzje:
+`.notes/AKTYWNOSC_REDESIGN_V2.md`.
+
+Trzy ekrany przebudowane: **pre-start** (mapa na pełno, pasek skrótów sportów zamiast
+siatki wszystkich, chipy Cel/Trasa, START z podsumowaniem, przełącznik warstwy Mapa/Trasa,
+prawy rail narzędzi), **live** (ciemny panel `heroColors`, hero-stoper, GoalHUD, 2×2 staty,
+mapa jako pasek; nagrywanie i pauza to jeden ekran — `PausedView` usunięty) oraz nowy
+**ekran zakończenia** (tytuł, mapa, staty, event, „Zapisz prywatnie" / „Zapisz i udostępnij")
+zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStorage) +
+`SportShortcutsModal`. Idle nie ma już trybu „mapa" — jest mapą.
+
+- [ ] Pre-start: mapa widoczna od razu (preview location bez włączania trybu mapy), pasek skrótów przewija się, „Wszystkie sporty" otwiera pełną listę
+- [ ] Skróty: dodanie / usunięcie / kolejność zapisują się i przeżywają restart aplikacji; limit 6 działa
+- [ ] Chip „Cel" otwiera konfigurator, „x" czyści; chip „Trasa" otwiera wybór trasy, wybrana trasa rysuje się na mapie
+- [ ] Przełącznik Mapa/Trasa: w trybie Trasa widać trasy w pobliżu, w trybie Mapa znikają; **wybrana trasa porównawcza rysuje się w obu trybach**
+- [ ] Kafle sportów: sporty z grafiką marki pokazują ilustrację, reszta ikonę Ionicons (pasek skrótów i manager)
+- [ ] Pauza: widoczny przycisk „Zakończ" obok wznowienia (bez przytrzymywania)
+- [ ] Tknięcie w trasę narysowaną na mapie ustawia ją jako trasę porównawczą (wcześniej `onRouteSelect` nie było w ogóle podpięte)
+- [ ] Re-centrowanie: po przesunięciu mapy ikona lokalizacji podświetla się, a tknięcie wraca kamerą na pozycję (działa też za drugim i trzecim razem)
+- [ ] „Library →" zamyka arkusz wyboru trasy i otwiera bibliotekę; po powrocie nowa trasa jest na liście „Moje trasy" i da się ją wybrać
+- [ ] Biblioteka tras: kafel pokazuje grafikę sportu (fallback: ikona), także gdy `/routes` nie zwraca `sport_type`
+- [ ] START: uruchamia nagrywanie wybranego sportu; sport indoor (bez GPS) nie pokazuje mapy ani chipu trasy
+- [ ] Live: stoper, dystans, tempo i kalorie liczą się jak wcześniej; kafelek tętna pojawia się tylko z czujnikiem, inaczej przewyższenie
+- [ ] Live: pauza i wznowienie **nie zmieniają układu ekranu** (zmienia się badge i środkowy przycisk)
+- [ ] Live: przytrzymanie stopu (1,2 s) otwiera ekran zakończenia; krótkie tknięcie nic nie robi
+- [ ] Live: blokada ekranu i odblokowanie przytrzymaniem działa; pasek transmisji na żywo nie rozjeżdża ciemnego tła
+- [ ] Live: tknięcie w pasek mapy przełącza na pełną mapę, powrót „Stats" wraca do ciemnego panelu
+- [ ] Live z wybraną trasą: baner nawigacji nad kartą celu pokazuje najbliższy manewr i dystans do niego; pasek dojazdu rośnie
+- [ ] Baner ≤ 120 m od zakrętu robi się niebieski (stan „teraz"), po zakręcie wraca do ciemnego
+- [ ] „Potem …" pokazuje kolejny manewr, „do końca …" maleje; po ostatniej wskazówce baner mówi „Trasa ukończona"
+- [ ] Wyjście poza trasę: czerwony pas nad banerem z odległością od trasy
+- [ ] Przycisk głośnika wycisza zapowiedzi (i ucina trwającą), stan przeżywa restart aplikacji
+- [ ] Konto bez Pro z wybraną trasą: przerywana ramka „Nawigacja … — Pro" prowadzi do paywalla
+- [ ] Pre-start z trasą ze wskazówkami: karta „Nawigacja gotowa" z licznikiem, przełącznikiem zapowiedzi i trzema pierwszymi manewrami; podsumowanie pod START mówi o zapowiedziach
+- [ ] „Wszystkie (N)" i przycisk listy w banerze otwierają ten sam arkusz wskazówek
+- [ ] Arkusz w trakcie biegu: przebyte wskazówki wyszarzone, następna z plakietką; po pauzie lista nie „cofa się" na początek
+- [ ] Trasa bez wskazówek (surowy ślad GPS bez wykrytych zakrętów): karta i przycisk listy w ogóle się nie pokazują
+- [ ] Ekran live scrolluje, gdy baner + cel + staty + mapa nie mieszczą się; pauza i stop zostają przyklejone na dole
+- [ ] Zakończenie: „wstecz" wraca do wstrzymanej aktywności (nic nie ginie), „Odrzuć" pyta o potwierdzenie
+- [ ] Zakończenie: tytuł trafia do zapisanej aktywności; „Zapisz prywatnie" na koncie free pokazuje upsell (`ai_post_on_finish`), na płatnym zapisuje bez posta
+- [ ] Zakończenie: podpięcie eventu działa tak jak wcześniej na ekranie pauzy
+- [ ] Zakończenie: mapa pokazuje **cały zapisany ślad** ze znacznikami startu i mety (a nie pustą mapę); przy braku śladu zamiast ramki jest komunikat
+- [ ] Tryb ciemny i jasny: pre-start i zakończenie czytelne w obu; live jest ciemny w obu (celowo)
 
 ---
 

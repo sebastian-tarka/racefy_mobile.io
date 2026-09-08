@@ -132,3 +132,8 @@ export { LiveBroadcastSettings } from './settings/LiveBroadcastSettings';
 export { OptionList, type OptionListItem } from './OptionList';
 export * from './GpsHealthCheckCard';
 export { EffortBreakdownCard } from './activity/EffortBreakdownCard';
+export { LivePulse } from './recording/LivePulse';
+export { StatBlock, type StatBlockSize } from './recording/StatBlock';
+export { NavBanner } from './recording/NavBanner';
+export { NavPreview } from './recording/NavPreview';
+export { NavCueListSheet } from './recording/NavCueListSheet';
