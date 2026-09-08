@@ -15,7 +15,16 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `strength-design-v2` — trening siłowy wg designów „Racefy v2"
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Trening siłowy wg designów „Racefy v2" — plany, kalendarz, sesja (zmergowane 2026-09-08, tag `pre-strength-design-v2` = main sprzed merge)
 
 Design: `racefy-strength.jsx` + `racefy-strength-session.jsx` w projekcie
 2a667d94-af0d-4282-b356-1427830dc56c. Ekrany siłowe istniały (M1 + sesje);
@@ -40,13 +49,6 @@ Dalej/Zakończ) i podsumowanie na ciemnym nagłówku z trzema kaflami.
 - [ ] Sesja: kolejność kolumn to seria · powtórzenia/sekundy · kg (zamieniona względem poprzedniej wersji) — sprawdzić, czy Start/Gotowe nadal zapisuje właściwe wartości
 - [ ] Sesja: karta przerwy z odliczaniem, +30 s i pominięciem działa jak wcześniej
 - [ ] Podsumowanie: ciemny nagłówek + trzy kafle (serie, objętość, czas), link do aktywności
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Ekran aktywności wg designów „Racefy v2" — pre-start, live, zakończenie, nawigacja (zmergowane 2026-09-08, tag `pre-activity-redesign-v2` = main sprzed merge)
 
