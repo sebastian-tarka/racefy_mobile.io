@@ -39,6 +39,33 @@ były zaszyte po angielsku i po polsku niezależnie od języka aplikacji.
 - [ ] Zakładka Szkice otwiera się bursztynową notką z liczbą nieopublikowanych aktywności
 - [ ] Przy dużej systemowej czcionce zakładki dają się przewinąć i nie ucinają podpisów
 
+### `strength-move-resume` — przekładanie dni i wznawianie pominiętych sesji
+
+Odgałęziony od `tabbar-design-v2`, więc niesie też jego commity. Odpowiednik
+tego, co robi już web (`PlannedSessionsList`, `ResumeSessionModal`,
+`SessionConflictModal`): status sesji `planned` + `moved_from`,
+`POST /workout-sessions/{id}/resume`, `POST /workout-sessions/move`, kalendarz
+w zakresie dziś−7 → dziś+13, arkusz akcji dnia, arkusz wyboru dnia przy
+wznowieniu, wspólny dialog kolizji 409, chip „przeniesiony z…".
+
+**Przeciąganie wierszy NIE jest zrobione** — jest tylko ścieżka z menu (długie
+przytrzymanie wiersza). Szczegóły: `.notes/SILOWNIA_PRZEKLADANIE.md`.
+
+- [ ] Kalendarz sięga tydzień wstecz — zaległy poniedziałek jest widoczny i da się go wznowić
+- [ ] Długie przytrzymanie wiersza otwiera arkusz z akcjami właściwymi dla stanu dnia (przenieś / wznów / zacznij / pomiń)
+- [ ] Dzień w toku i dzień zapisany **nie** oferują przeniesienia
+- [ ] Przeniesienie na wolny dzień: wiersz znika ze źródła i pojawia się w celu z chipem „przeniesiony z…"
+- [ ] Przeniesienie z powrotem na dzień tygodnia z planu: serwer zwraca `data: null`, aplikacja traktuje to jako sukces
+- [ ] Wybór dnia, który już ma ten trening: komunikat lokalny, **żadne żądanie nie leci**
+- [ ] Pominięty dzień: „Wznów" otwiera arkusz z domyślnym „Przenieś na dziś"; potwierdzenie wchodzi na ekran sesji, zegar rusza od zera
+- [ ] „Zostaw {data}" nie pokazuje się, gdy pominięcie było dzisiaj
+- [ ] 409 `already_logged` przy wznawianiu **nie zamyka arkusza**
+- [ ] 409 `in_progress_exists` pokazuje dialog z „Otwórz"; tamta sesja nie zostaje porzucona
+- [ ] 409 `already_logged` na sesji pominiętej daje w dialogu dodatkowo „Wznów"
+- [ ] 409 bez `reason` i 429 pokazują komunikat z serwera i nie wyrzucają z ekranu
+- [ ] Ekran pominiętej sesji ma przycisk „Wznów" (ta sama ścieżka co z kalendarza)
+- [ ] Przeniesiony dzień **nie** pojawia się w historii treningów
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
