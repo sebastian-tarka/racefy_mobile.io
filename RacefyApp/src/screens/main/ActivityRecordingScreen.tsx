@@ -1011,6 +1011,7 @@ export function ActivityRecordingScreen() {
       onManageShortcuts={() => setShortcutsModalVisible(true)}
       onClose={() => navigation.dispatch(TabActions.jumpTo('Home'))}
       followUser={followUser}
+      onFollowUserChanged={setFollowUser}
       onRecenter={() => {
         setFollowUser(true);
         triggerHaptic();

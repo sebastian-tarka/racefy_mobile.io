@@ -36,6 +36,7 @@ zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStor
 - [ ] Kafle sportów: sporty z grafiką marki pokazują ilustrację, reszta ikonę Ionicons (pasek skrótów i manager)
 - [ ] Pauza: widoczny przycisk „Zakończ" obok wznowienia (bez przytrzymywania)
 - [ ] Tknięcie w trasę narysowaną na mapie ustawia ją jako trasę porównawczą (wcześniej `onRouteSelect` nie było w ogóle podpięte)
+- [ ] Re-centrowanie: po przesunięciu mapy ikona lokalizacji podświetla się, a tknięcie wraca kamerą na pozycję (działa też za drugim i trzecim razem)
 - [ ] „Library →" zamyka arkusz wyboru trasy i otwiera bibliotekę; po powrocie nowa trasa jest na liście „Moje trasy" i da się ją wybrać
 - [ ] Biblioteka tras: kafel pokazuje grafikę sportu (fallback: ikona), także gdy `/routes` nie zwraca `sport_type`
 - [ ] START: uruchamia nagrywanie wybranego sportu; sport indoor (bez GPS) nie pokazuje mapy ani chipu trasy

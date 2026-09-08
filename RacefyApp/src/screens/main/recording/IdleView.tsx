@@ -44,6 +44,12 @@ interface IdleViewProps {
   onClose: () => void;
   // Map tools
   followUser: boolean;
+  /**
+   * The map stops following as soon as the athlete pans it. Without this the
+   * parent keeps thinking it still follows, and the re-center button — which
+   * only works by flipping that flag — goes dead after the first pan.
+   */
+  onFollowUserChanged: (following: boolean) => void;
   onRecenter: () => void;
   onCycleMapStyle: () => void;
   audioCoachActive?: boolean;
@@ -96,6 +102,7 @@ export function IdleView({
   onManageShortcuts,
   onClose,
   followUser,
+  onFollowUserChanged,
   onRecenter,
   onCycleMapStyle,
   audioCoachActive,
@@ -148,6 +155,7 @@ export function IdleView({
           currentPosition={currentPosition ?? previewLocation}
           gpsSignalQuality={gpsSignal ?? 'disabled'}
           followUser={followUser}
+          onFollowUserChanged={onFollowUserChanged}
           mapStyle={mapStyle}
           nearbyRoutes={routeLayerActive ? nearbyRoutes : undefined}
           selectedRouteKey={selectedRouteKey}
