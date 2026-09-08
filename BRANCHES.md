@@ -15,7 +15,16 @@ Stan na: **2026-09-08**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `profile-design-v2` — ekran profilu wg designów „Racefy v2"
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Ekran profilu wg designów „Racefy v2" — narzędzia, zakładki, statystyki (zmergowane 2026-09-08, tag `pre-profile-design-v2` = main sprzed merge)
 
 Design: `racefy-profile.jsx` + `racefy-stats.jsx`. Lista narzędzi (7 kafli →
 2 grupy wierszy ze statusami), kolejność zakładek (Statystyki pierwsze
@@ -34,13 +43,6 @@ paski wg sportu (zamiast nieopisanego wykresu), rekordy z `bests`, a upsell
 - [ ] Rekordy: kafle otwierają aktywność, która ustanowiła rekord; brak rekordów = karta się nie pokazuje
 - [ ] Konto z `advanced_stats`: wybór atlety rysuje drugi, szary pasek pod każdym sportem i podpis „vs <imię>"
 - [ ] Konto bez `advanced_stats`: na końcu zakładki jest jeden wiersz „Statystyki zaawansowane" prowadzący do paywalla (a nie duża zablokowana karta na górze)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Trening siłowy wg designów „Racefy v2" — plany, kalendarz, sesja (zmergowane 2026-09-08, tag `pre-strength-design-v2` = main sprzed merge)
 
