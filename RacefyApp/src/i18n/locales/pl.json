@@ -387,7 +387,11 @@
     "reminderTitle": "Masz nieopublikowane wersje robocze",
     "reminderSubtitle": "Przejrzyj i opublikuj swoje wersje robocze",
     "viewAll": "Zobacz wszystkie wersje robocze",
-    "dismissReminder": "Później"
+    "dismissReminder": "Później",
+    "unpublishedNote_one": "{{count}} nagrana aktywność jest nieopublikowana. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_few": "{{count}} nagrane aktywności są nieopublikowane. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_many": "{{count}} nagranych aktywności jest nieopublikowanych. Publikacja zachowuje statystyki i punkty.",
+    "unpublishedNote_other": "{{count}} nagranych aktywności jest nieopublikowanych. Publikacja zachowuje statystyki i punkty."
   },
   "profile": {
     "title": "Profil",

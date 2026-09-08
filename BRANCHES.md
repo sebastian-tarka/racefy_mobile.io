@@ -33,6 +33,11 @@ były zaszyte po angielsku i po polsku niezależnie od języka aplikacji.
 - [ ] Zmiana języka aplikacji zmienia podpisy zakładek (dotąd były zaszyte)
 - [ ] Czytnik ekranu czyta etykiety w języku aplikacji
 - [ ] Treść ekranów nie chowa się pod paskiem (padding z `useTabBarPadding` liczy się jak wcześniej)
+- [ ] Pasek zakładek w profilu: zakładki upakowane od lewej i przewijalne w poziomie, nie pięć równych kolumn
+- [ ] Aktywna zakładka: kreska 2 px **tylko pod nią**, ikona i podpis w ciemniejszej zieleni, podpis grubszy
+- [ ] Badge szkiców siedzi w prawym górnym rogu zakładki (nie nachodzi na sąsiednią) i znika, gdy szkiców nie ma
+- [ ] Zakładka Szkice otwiera się bursztynową notką z liczbą nieopublikowanych aktywności
+- [ ] Przy dużej systemowej czcionce zakładki dają się przewinąć i nie ucinają podpisów
 
 ---
 

@@ -383,7 +383,9 @@
     "reminderTitle": "You have unpublished drafts",
     "reminderSubtitle": "Review and publish your drafts",
     "viewAll": "View all drafts",
-    "dismissReminder": "Later"
+    "dismissReminder": "Later",
+    "unpublishedNote_one": "{{count}} recorded activity is unpublished. Publishing keeps your stats and points.",
+    "unpublishedNote_other": "{{count}} recorded activities are unpublished. Publishing keeps your stats and points."
   },
   "profile": {
     "title": "Profile",
