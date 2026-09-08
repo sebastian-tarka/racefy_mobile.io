@@ -38,7 +38,8 @@
     "sun": "Ndz",
     "notNow": "Nie teraz",
     "options": "Opcje",
-    "view": "Zobacz"
+    "view": "Zobacz",
+    "clear": "Wyczyść"
   },
   "sports": {
     "running": "Bieganie",
@@ -1078,6 +1079,35 @@
       "allSegmentsDone": "Wszystkie odcinki za Tobą",
       "skip": "Pomiń",
       "skipSegment": "Pomiń ten odcinek"
+    },
+    "heartRate": "Tętno",
+    "bpm": "bpm",
+    "elevation": "Przewyższenie",
+    "kcal": "kcal",
+    "holdToFinish": "Przytrzymaj stop, aby zakończyć",
+    "holdToLock": "Przytrzymaj, aby zablokować ekran",
+    "finish": {
+      "title": "Zakończ",
+      "defaultTitle": "Aktywność: {{sport}}",
+      "titlePlaceholder": "Nazwij tę aktywność",
+      "savePrivate": "Zapisz prywatnie",
+      "saveAndShare": "Zapisz i udostępnij"
+    },
+    "allSports": "Wszystkie sporty",
+    "startSport": "Start: {{sport}}",
+    "layerMap": "Mapa",
+    "layerRoute": "Trasa",
+    "shortcuts": {
+      "title": "Skróty sportów",
+      "edit": "Edytuj skróty",
+      "counter": "{{count}} z {{max}} na ekranie startu",
+      "onTheRail": "Na pasku · kolejność",
+      "defaultSport": "Sport domyślny",
+      "search": "Szukaj sportów",
+      "moveUp": "W górę",
+      "moveDown": "W dół",
+      "remove": "Usuń z paska",
+      "full": "Pasek mieści {{max}} sportów. Usuń jeden, aby dodać kolejny."
     }
   },
   "gpxImport": {

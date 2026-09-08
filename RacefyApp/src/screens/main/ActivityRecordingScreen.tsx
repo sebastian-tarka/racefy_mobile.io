@@ -4,15 +4,12 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  Dimensions,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +44,7 @@ import {
   useOngoingEvents,
   usePermissions,
   usePreviewLocation,
+  useSportShortcuts,
   useSportTypes,
   useSubscription,
   useTheme,
@@ -61,7 +59,6 @@ import {
   LiveAthleteInbox,
   LiveBroadcastControl,
   MapboxLiveMap,
-  NearbyRoutesHorizontalPanel,
   RecordingMapControls,
   ScreenContainer,
 } from '../../components';
@@ -77,12 +74,11 @@ import { useRouteTurnInstructions } from '../../hooks/useRouteTurnInstructions';
 import { routeKey } from '../../utils/routeKey';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
-import { PausedView } from './recording/PausedView';
+import { FinishView } from './recording/FinishView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
+import { SportShortcutsModal } from './recording/SportShortcutsModal';
 import { RouteSelectionModal } from './recording/RouteSelectionModal';
 import { WorkoutConfigModal, type QuickGoalType } from './recording/WorkoutConfigModal';
-import { WorkoutGoalRow } from './recording/WorkoutGoalRow';
-import { SportTile } from '../../components/SportTile';
 import { useWorkoutEngine } from '../../hooks/useWorkoutEngine';
 import { useWorkoutCuePrefs } from '../../hooks/useWorkoutCuePrefs';
 import { clearWorkoutSession } from '../../services/workout/storage';
@@ -92,7 +88,7 @@ import { formatPlanLabel, workoutStatusLine } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import { borderRadius, fontSize, spacing, msFont } from '../../theme';
+import { borderRadius, fontSize, heroColors, spacing, msFont } from '../../theme';
 import type { MainTabParamList, RootStackParamList } from '../../navigation';
 import { logger } from '../../services/logger';
 import { formatTime } from '../../utils/formatters';
@@ -107,11 +103,6 @@ const MILESTONE_ORDER = [
 ];
 
 const AUDIO_COACH_SETTINGS_KEY = '@racefy:audioCoach:settings';
-
-/** Three illustrated sport tiles per row in the map-mode overlay. */
-const MAP_SPORT_TILE_SIZE = Math.floor(
-  (Dimensions.get('window').width - spacing.lg * 2 - spacing.sm * 2) / 3,
-);
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
@@ -149,6 +140,7 @@ export function ActivityRecordingScreen() {
   // Bottom sheets & modals
   const [showAddOptions, setShowAddOptions] = useState(false);
   const [sportModalVisible, setSportModalVisible] = useState(false);
+  const [shortcutsModalVisible, setShortcutsModalVisible] = useState(false);
   const [eventSheetVisible, setEventSheetVisible] = useState(false);
   const [routeSelectionModalVisible, setRouteSelectionModalVisible] = useState(false);
 
@@ -166,8 +158,16 @@ export function ActivityRecordingScreen() {
     isAuthenticated,
     sportsLoading,
   );
+  const { shortcuts: shortcutSports, setIds: setShortcutIds } = useSportShortcuts(sportTypes);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [skipAutoPost, setSkipAutoPost] = useState(false);
+  /**
+   * Stop no longer saves on the spot — it pauses and hands over to the finish
+   * screen, where the athlete names the activity and picks private vs. shared
+   * (design "Racefy v2" → FinishScreen). Backing out of it resumes nothing but
+   * loses nothing either: the activity stays paused.
+   */
+  const [showFinish, setShowFinish] = useState(false);
   const preselectedEventHandled = useRef(false);
   const isFinishingRef = useRef(false);
 
@@ -333,7 +333,13 @@ export function ActivityRecordingScreen() {
   });
 
   // Preview location for map view (before tracking starts)
-  const { previewLocation } = usePreviewLocation(viewMode, isTracking, isPaused, currentPosition);
+  // The pre-start screen is map-first, so it always wants a preview position.
+  const { previewLocation } = usePreviewLocation(
+    isIdle || viewMode === 'map',
+    isTracking,
+    isPaused,
+    currentPosition,
+  );
 
   // Nearby routes and shadow track
   const {
@@ -838,29 +844,33 @@ export function ActivityRecordingScreen() {
 
   const handleStop = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
-    // Pause first (if still tracking) to stop the timer, then immediately save
+    // Pause the timer, then let the athlete review before anything is written.
     try {
       if (isTracking) {
         await pauseTracking();
       }
-      await handleSave();
+      setShowFinish(true);
     } catch (err) {
-      logger.error('activity', 'Failed to stop and save activity', { error: err });
+      logger.error('activity', 'Failed to stop activity', { error: err });
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (options?: { title?: string; share?: boolean }) => {
     if (!activity || !selectedSport) return;
     if (isFinishingRef.current) return;
 
     isFinishingRef.current = true;
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
 
+    // "Save private" on the finish screen is the same thing the old paused
+    // screen called "Don't share to feed".
+    const skip = options?.share === undefined ? skipAutoPost : !options.share;
+
     try {
       const result = await finishTracking({
-        title: `${selectedSport.name} Activity`,
+        title: options?.title?.trim() || `${selectedSport.name} Activity`,
         calories: Math.floor(localDuration * 0.15),
-        skip_auto_post: skipAutoPost,
+        skip_auto_post: skip,
         event_id: selectedEvent?.id ?? null,
       });
 
@@ -888,6 +898,7 @@ export function ActivityRecordingScreen() {
 
       resetMilestones();
       setSkipAutoPost(false);
+      setShowFinish(false);
 
       // Restore original audio coach settings in AsyncStorage (undo session toggle)
       restoreAudioCoachSettings();
@@ -951,6 +962,7 @@ export function ActivityRecordingScreen() {
           try {
             await discardTracking();
             resetMilestones();
+            setShowFinish(false);
             // Restore original audio coach settings in AsyncStorage
             restoreAudioCoachSettings();
             setWorkoutPlan(null);
@@ -1003,11 +1015,9 @@ export function ActivityRecordingScreen() {
   const renderIdleLayout = () => (
     <IdleView
       selectedSport={selectedSport}
-      sportTypes={sportTypes}
+      shortcutSports={shortcutSports}
       sportsLoading={sportsLoading}
       isLoading={isLoading}
-      audioCoachActive={isAudioCoachActive}
-      onToggleAudioCoach={handleToggleAudioCoach}
       gpsSignal={trackingStatus?.gpsSignal ?? null}
       currentPosition={currentPosition}
       previewLocation={previewLocation}
@@ -1017,25 +1027,37 @@ export function ActivityRecordingScreen() {
       gpsEnabled={gpsProfile?.enabled ?? false}
       onStart={handleStart}
       onSelectSport={(sport) => setSelectedSport(sport)}
-      viewMode={viewMode}
-      onToggleView={
-        gpsProfile?.enabled
-          ? () => {
-              const newMode = viewMode === 'stats' ? 'map' : 'stats';
-              logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
-              setViewMode(newMode);
-            }
-          : undefined
-      }
+      onOpenAllSports={() => setSportModalVisible(true)}
+      onManageShortcuts={() => setShortcutsModalVisible(true)}
+      onClose={() => navigation.dispatch(TabActions.jumpTo('Home'))}
+      followUser={followUser}
+      onRecenter={() => {
+        setFollowUser(true);
+        triggerHaptic();
+      }}
+      onCycleMapStyle={handleMapStyleToggle}
+      audioCoachActive={isAudioCoachActive}
+      onToggleAudioCoach={handleToggleAudioCoach}
+      routeLayerActive={showNearbyRoutesToggle}
+      onRouteLayerChange={(active) => {
+        setShowNearbyRoutesToggle(active);
+        triggerHaptic();
+      }}
+      nearbyRoutes={mergedRoutesForPanel}
+      selectedRouteKey={selectedShadowTrackKey}
+      selectedRouteTitle={selectedShadowTrack?.title ?? null}
+      plannedRoute={selectedShadowTrack?.track_data ?? null}
+      onRouteSelect={handleRouteSelect}
+      onOpenRoutePicker={() => setRouteSelectionModalVisible(true)}
+      onClearRoute={handleClearShadowTrack}
+      workoutLabel={workoutLabel}
+      onOpenWorkout={openWorkoutModal}
+      onClearWorkout={handleClearWorkout}
       devSimRunning={devSim.running}
       onToggleDevSim={() => {
         devSim.toggle();
         triggerHaptic();
       }}
-      devSimDistanceKm={devSim.distanceKm}
-      workoutLabel={workoutLabel}
-      onOpenWorkout={openWorkoutModal}
-      onClearWorkout={handleClearWorkout}
     />
   );
 
@@ -1063,7 +1085,9 @@ export function ActivityRecordingScreen() {
       isLocked={isScreenLocked}
       onToggleLock={handleToggleLock}
       onPause={handlePause}
+      onResume={handleResume}
       onStop={handleStop}
+      onExpandMap={gpsProfile?.enabled ? () => setViewMode('map') : undefined}
       workoutPlan={workoutPlan}
       workoutProgress={workout.progress}
       workoutState={workout.state}
@@ -1073,20 +1097,17 @@ export function ActivityRecordingScreen() {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Paused Layout
+  // RENDER: Finish Layout
   // ═══════════════════════════════════════════════════════════════════════════
-  const renderPausedLayout = () => (
-    <PausedView
+  const renderFinishLayout = () => (
+    <FinishView
       selectedSport={selectedSport}
-      status={status}
-      trackingStatus={trackingStatus}
       localDuration={localDuration}
       currentStats={currentStats}
       distance={distance}
       isLoading={isLoading}
       isAuthenticated={isAuthenticated}
-      skipAutoPost={skipAutoPost}
-      canUseAiPostOnFinish={canUseAiPostOnFinish}
+      canSkipAutoPost={canUseAiPostOnFinish}
       gpsProfile={gpsProfile}
       livePoints={livePoints}
       livePointsVersion={livePointsVersion}
@@ -1095,155 +1116,11 @@ export function ActivityRecordingScreen() {
       selectedEvent={selectedEvent}
       onShowEventSheet={() => setEventSheetVisible(true)}
       onClearEvent={() => setSelectedEvent(null)}
-      onResume={handleResume}
+      onBack={() => setShowFinish(false)}
       onSave={handleSave}
       onDiscard={handleDiscard}
-      onSkipAutoPostChange={setSkipAutoPost}
-      workoutPlan={workoutPlan}
-      workoutProgress={workout.progress}
-      workoutState={workout.state}
-      onOpenWorkout={() => openWorkoutModal()}
-      onSkipSegment={workout.skip}
     />
   );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // RENDER: Map Top Overlay (idle + map mode) — sport grid + icon toolbar
-  // ═══════════════════════════════════════════════════════════════════════════
-  const renderMapTopOverlay = () => {
-    if (!isIdle) return null;
-    const mapStyleIcon =
-      mapStyle === 'satellite'
-        ? 'globe-outline'
-        : mapStyle === 'streets'
-          ? 'car-outline'
-          : 'trail-sign-outline';
-
-    return (
-      <>
-        <LinearGradient
-          colors={['rgba(0,0,0,0.60)', 'transparent']}
-          style={styles.mapTopGradient}
-          pointerEvents="none"
-        />
-        <ScrollView
-          style={styles.mapTopOverlay}
-          contentContainerStyle={styles.mapTopOverlayContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Sport grid – centered wrapping tiles */}
-          {sportsLoading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
-          ) : (
-            <View style={[styles.mapSportGrid, { backgroundColor: colors.cardBackground + 'B8' }]}>
-              {sportTypes.map((sport) => (
-                <SportTile
-                  key={sport.id}
-                  sport={sport}
-                  selected={selectedSport?.id === sport.id}
-                  onPress={() => setSelectedSport(sport)}
-                  size={MAP_SPORT_TILE_SIZE}
-                />
-              ))}
-            </View>
-          )}
-
-          <WorkoutGoalRow
-            label={workoutLabel}
-            onOpen={openWorkoutModal}
-            onClear={handleClearWorkout}
-          />
-
-          {/* Icon toolbar – centered */}
-          <View style={styles.mapIconToolbar}>
-            {/* Audio coach */}
-            <TouchableOpacity
-              style={[
-                styles.mapToolbarIcon,
-                { backgroundColor: isAudioCoachActive ? colors.primary : colors.cardBackground },
-              ]}
-              onPress={handleToggleAudioCoach}
-              activeOpacity={0.7}
-              accessibilityLabel={t('recording.audioCoach')}
-            >
-              <Ionicons
-                name={isAudioCoachActive ? 'musical-notes' : 'musical-notes-outline'}
-                size={24}
-                color={isAudioCoachActive ? '#ffffff' : colors.textSecondary}
-              />
-            </TouchableOpacity>
-
-            {/* View toggle → back to stats */}
-            <TouchableOpacity
-              style={[styles.mapToolbarIcon, { backgroundColor: colors.primary }]}
-              onPress={() => {
-                setViewMode('stats');
-                triggerHaptic();
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel={t('recording.viewStats')}
-            >
-              <Ionicons name="list-outline" size={24} color="#ffffff" />
-            </TouchableOpacity>
-
-            {/* Routes toggle */}
-            <TouchableOpacity
-              style={[
-                styles.mapToolbarIcon,
-                {
-                  backgroundColor: showNearbyRoutesToggle ? colors.primary : colors.cardBackground,
-                },
-              ]}
-              onPress={() => {
-                setShowNearbyRoutesToggle((v) => !v);
-                triggerHaptic();
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel={t('recording.routes')}
-            >
-              <Ionicons
-                name={showNearbyRoutesToggle ? 'map' : 'map-outline'}
-                size={24}
-                color={showNearbyRoutesToggle ? '#ffffff' : colors.textSecondary}
-              />
-            </TouchableOpacity>
-
-            {/* Map style */}
-            <TouchableOpacity
-              style={[styles.mapToolbarIcon, { backgroundColor: colors.cardBackground }]}
-              onPress={handleMapStyleToggle}
-              activeOpacity={0.7}
-              accessibilityLabel={t('recording.mapStyle')}
-            >
-              <Ionicons name={mapStyleIcon} size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
-
-            {/* DEV sim */}
-            {__DEV__ && (
-              <TouchableOpacity
-                style={[
-                  styles.mapToolbarIcon,
-                  { backgroundColor: devSim.running ? '#ef4444' : colors.cardBackground },
-                ]}
-                onPress={() => {
-                  devSim.toggle();
-                  triggerHaptic();
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={devSim.running ? 'stop' : 'walk'}
-                  size={24}
-                  color={devSim.running ? '#ffffff' : colors.textSecondary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        </ScrollView>
-      </>
-    );
-  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Loading Overlay
@@ -1265,52 +1142,12 @@ export function ActivityRecordingScreen() {
   // ═══════════════════════════════════════════════════════════════════════════
   return (
     <ScreenContainer edges={['top']}>
-      {/* Header — idle + recording only (paused has its own header in PausedView) */}
-      {(status === 'idle' || status === 'recording') && !isScreenLocked && (
-        <View
-          style={[
-            styles.idleHeader,
-            { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={() => navigation.dispatch(TabActions.jumpTo('Home'))}
-            style={styles.backButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="chevron-back" size={26} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.idleTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {status === 'recording' && selectedSport ? selectedSport.name : t('recording.title')}
-          </Text>
-          {(() => {
-            const sig = trackingStatus?.gpsSignal ?? null;
-            const gpsColor =
-              sig === 'good'
-                ? colors.success
-                : sig === 'weak'
-                  ? colors.warning
-                  : sig === 'lost'
-                    ? colors.error
-                    : colors.textMuted;
-            const gpsLabel =
-              sig === 'good' ? 'READY' : sig === 'weak' ? 'WEAK' : sig === 'lost' ? 'LOST' : 'GPS';
-            return (
-              <View style={[styles.gpsHeaderBadge, { backgroundColor: gpsColor + '20' }]}>
-                <Ionicons name="locate" size={12} color={gpsColor} />
-                <Text style={[styles.gpsHeaderText, { color: gpsColor }]}>{gpsLabel}</Text>
-              </View>
-            );
-          })()}
-        </View>
-      )}
-
       {/* Live broadcasting: deliberately on the recording screen itself, not in
           settings — the athlete must be able to stop sharing their real-time
           position in one tap while running. */}
       {status === 'recording' && !isScreenLocked && (
         <View
-          style={styles.liveBroadcastRow}
+          style={[styles.liveBroadcastRow, { backgroundColor: heroColors.bg }]}
           onLayout={(e) => setLiveRowHeight(e.nativeEvent.layout.height)}
         >
           <LiveBroadcastControl
@@ -1327,7 +1164,7 @@ export function ActivityRecordingScreen() {
       )}
 
       {/* Main Content Based on Status and View Mode */}
-      {viewMode === 'map' ? (
+      {viewMode === 'map' && !isIdle ? (
         <View style={[styles.mapContainer, { backgroundColor: colors.background }]}>
           <MapboxLiveMap
             livePoints={livePoints}
@@ -1336,7 +1173,6 @@ export function ActivityRecordingScreen() {
             gpsSignalQuality={trackingStatus?.gpsSignal || 'disabled'}
             followUser={followUser}
             mapStyle={mapStyle}
-            nearbyRoutes={isIdle && showNearbyRoutesToggle ? nearbyRoutes : undefined}
             shadowTrack={selectedShadowTrack?.track_data || null}
             selectedRouteKey={selectedShadowTrackKey}
             onRouteSelect={handleRouteSelect}
@@ -1344,52 +1180,11 @@ export function ActivityRecordingScreen() {
             plannedRoute={selectedShadowTrack?.track_data || null}
           />
 
-          {/* Top overlay: sport grid + icon toolbar (idle map mode) */}
-          {renderMapTopOverlay()}
-
           {/* Live Navigation Overlay (Pro only) */}
           {liveNav.isActive && status === 'recording' && (
             <FeatureGate feature="live_navigation">
               <NavigationOverlay navigation={liveNav} />
             </FeatureGate>
-          )}
-
-          {/* Nearby routes list (idle state only) */}
-          {isIdle && showNearbyRoutesToggle && (
-            <NearbyRoutesHorizontalPanel
-              routes={mergedRoutesForPanel}
-              selectedRouteKey={selectedShadowTrackKey}
-              onRouteSelect={handleRouteSelect}
-              onClearRoute={handleClearShadowTrack}
-              isLoading={loadingRoutes}
-              error={routesError}
-              bottomOffset={tabBarHeight - spacing.md}
-            />
-          )}
-
-          {/* Start button (idle state, map view) */}
-          {isIdle && (
-            <View
-              pointerEvents="box-none"
-              style={[
-                styles.mapStartButtonContainer,
-                { bottom: tabBarHeight + spacing.lg + (showNearbyRoutesToggle ? 180 : 0) },
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.mapStartButton,
-                  { backgroundColor: colors.primary, shadowColor: colors.primary },
-                ]}
-                onPress={handleStart}
-                disabled={isLoading || !selectedSport}
-                activeOpacity={0.85}
-                accessibilityLabel={t('recording.start')}
-              >
-                <Ionicons name="play" size={36} color="#fff" />
-                <Text style={styles.mapStartButtonText}>{t('recording.start')}</Text>
-              </TouchableOpacity>
-            </View>
           )}
 
           {/* Recording controls (recording/paused state) */}
@@ -1421,7 +1216,7 @@ export function ActivityRecordingScreen() {
             </>
           )}
           {status === 'recording' && renderRecordingLayout()}
-          {status === 'paused' && renderPausedLayout()}
+          {status === 'paused' && (showFinish ? renderFinishLayout() : renderRecordingLayout())}
         </>
       )}
 
@@ -1441,7 +1236,7 @@ export function ActivityRecordingScreen() {
         >
           {/* Top-right controls row — re-center + view toggle + map style.
               Hidden during paused stats view (no map → buttons would overlap the timer). */}
-          {!isIdle && !isScreenLocked && !(status === 'paused' && viewMode === 'stats') && (
+          {!isIdle && !isScreenLocked && viewMode === 'map' && (
             <View
               style={[
                 styles.topRightControls,
@@ -1471,19 +1266,14 @@ export function ActivityRecordingScreen() {
               <TouchableOpacity
                 style={[styles.mapStyleToggleButton, { backgroundColor: colors.primary }]}
                 onPress={() => {
-                  const newMode = viewMode === 'stats' ? 'map' : 'stats';
-                  logger.info('activity', 'Toggling view mode', { from: viewMode, to: newMode });
-                  setViewMode(newMode);
+                  logger.info('activity', 'Toggling view mode', { from: viewMode, to: 'stats' });
+                  setViewMode('stats');
                   triggerHaptic();
                 }}
                 activeOpacity={0.7}
-                accessibilityLabel={t('recording.toggleView')}
+                accessibilityLabel={t('recording.viewStats')}
               >
-                <Ionicons
-                  name={viewMode === 'stats' ? 'map-outline' : 'list-outline'}
-                  size={26}
-                  color="#ffffff"
-                />
+                <Ionicons name="list-outline" size={26} color="#ffffff" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1680,6 +1470,14 @@ export function ActivityRecordingScreen() {
         sportTypes={sportTypes}
         selectedSport={selectedSport}
         onSelect={setSelectedSport}
+      />
+
+      <SportShortcutsModal
+        visible={shortcutsModalVisible}
+        onClose={() => setShortcutsModalVisible(false)}
+        sportTypes={sportTypes}
+        shortcuts={shortcutSports}
+        onSave={setShortcutIds}
       />
 
       {/* Bottom Sheets */}

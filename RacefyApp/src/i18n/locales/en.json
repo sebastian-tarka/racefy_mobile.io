@@ -38,7 +38,8 @@
     "sun": "Sun",
     "notNow": "Not now",
     "options": "Options",
-    "view": "View"
+    "view": "View",
+    "clear": "Clear"
   },
   "sports": {
     "running": "Running",
@@ -1072,6 +1073,35 @@
       "allSegmentsDone": "All segments done",
       "skip": "Skip",
       "skipSegment": "Skip this segment"
+    },
+    "heartRate": "Heart",
+    "bpm": "bpm",
+    "elevation": "Elevation",
+    "kcal": "kcal",
+    "holdToFinish": "Hold stop to finish",
+    "holdToLock": "Hold to lock the screen",
+    "finish": {
+      "title": "Finish",
+      "defaultTitle": "{{sport}} activity",
+      "titlePlaceholder": "Name this activity",
+      "savePrivate": "Save private",
+      "saveAndShare": "Save & share"
+    },
+    "allSports": "All sports",
+    "startSport": "Start {{sport}}",
+    "layerMap": "Map",
+    "layerRoute": "Route",
+    "shortcuts": {
+      "title": "Sport shortcuts",
+      "edit": "Edit shortcuts",
+      "counter": "{{count}} of {{max}} on the start screen",
+      "onTheRail": "On the rail · in order",
+      "defaultSport": "Default sport",
+      "search": "Search sports",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove from the rail",
+      "full": "The rail holds {{max}} sports. Remove one to add another."
     }
   },
   "gpxImport": {

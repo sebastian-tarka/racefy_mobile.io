@@ -131,3 +131,28 @@ export const colors = lightColors;
 
 export type ThemeColors = typeof lightColors;
 export type ColorName = keyof typeof lightColors;
+
+/**
+ * Live-recording surface ("hero") — from the Racefy v2 design, LiveScreen.
+ *
+ * Deliberately identical in light and dark themes: the recording screen is a
+ * dark instrument panel in both. Outdoors one bright number on a dark ground is
+ * what stays readable, and it does not flash white when the athlete wakes the
+ * phone mid-run at night.
+ */
+export const heroColors = {
+  bg: '#0A1A14',
+  ink: '#FAFAF7',
+  /** Labels and secondary lines on the hero ground. */
+  inkSoft: 'rgba(250,250,247,0.55)',
+  inkFaint: 'rgba(250,250,247,0.35)',
+  /** Cards floating on the hero ground. */
+  surface: 'rgba(250,250,247,0.07)',
+  surfaceStrong: 'rgba(250,250,247,0.12)',
+  line: 'rgba(250,250,247,0.13)',
+  track: 'rgba(250,250,247,0.14)',
+  primary: '#10B981',
+  amber: '#F59E0B',
+  red: '#EF4444',
+  sky: '#0EA5E9',
+} as const;

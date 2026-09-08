@@ -9,13 +9,40 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-05**
+Stan na: **2026-09-08**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `activity-redesign-v2` — ekran aktywności wg designów „Racefy v2"
+
+Design: https://claude.ai/design/p/2a667d94-af0d-4282-b356-1427830dc56c (pliki
+`racefy-prestart.jsx`, `racefy-record.jsx`, `racefy-theme.jsx`). Plan i decyzje:
+`.notes/AKTYWNOSC_REDESIGN_V2.md`.
+
+Trzy ekrany przebudowane: **pre-start** (mapa na pełno, pasek skrótów sportów zamiast
+siatki wszystkich, chipy Cel/Trasa, START z podsumowaniem, przełącznik warstwy Mapa/Trasa,
+prawy rail narzędzi), **live** (ciemny panel `heroColors`, hero-stoper, GoalHUD, 2×2 staty,
+mapa jako pasek; nagrywanie i pauza to jeden ekran — `PausedView` usunięty) oraz nowy
+**ekran zakończenia** (tytuł, mapa, staty, event, „Zapisz prywatnie" / „Zapisz i udostępnij")
+zamiast natychmiastowego zapisu i `Alert`a. Nowe: `useSportShortcuts` (AsyncStorage) +
+`SportShortcutsModal`. Idle nie ma już trybu „mapa" — jest mapą.
+
+- [ ] Pre-start: mapa widoczna od razu (preview location bez włączania trybu mapy), pasek skrótów przewija się, „Wszystkie sporty" otwiera pełną listę
+- [ ] Skróty: dodanie / usunięcie / kolejność zapisują się i przeżywają restart aplikacji; limit 6 działa
+- [ ] Chip „Cel" otwiera konfigurator, „x" czyści; chip „Trasa" otwiera wybór trasy, wybrana trasa rysuje się na mapie
+- [ ] Przełącznik Mapa/Trasa: w trybie Trasa widać trasy w pobliżu, w trybie Mapa znikają
+- [ ] START: uruchamia nagrywanie wybranego sportu; sport indoor (bez GPS) nie pokazuje mapy ani chipu trasy
+- [ ] Live: stoper, dystans, tempo i kalorie liczą się jak wcześniej; kafelek tętna pojawia się tylko z czujnikiem, inaczej przewyższenie
+- [ ] Live: pauza i wznowienie **nie zmieniają układu ekranu** (zmienia się badge i środkowy przycisk)
+- [ ] Live: przytrzymanie stopu (1,2 s) otwiera ekran zakończenia; krótkie tknięcie nic nie robi
+- [ ] Live: blokada ekranu i odblokowanie przytrzymaniem działa; pasek transmisji na żywo nie rozjeżdża ciemnego tła
+- [ ] Live: tknięcie w pasek mapy przełącza na pełną mapę, powrót „Stats" wraca do ciemnego panelu
+- [ ] Zakończenie: „wstecz" wraca do wstrzymanej aktywności (nic nie ginie), „Odrzuć" pyta o potwierdzenie
+- [ ] Zakończenie: tytuł trafia do zapisanej aktywności; „Zapisz prywatnie" na koncie free pokazuje upsell (`ai_post_on_finish`), na płatnym zapisuje bez posta
+- [ ] Zakończenie: podpięcie eventu działa tak jak wcześniej na ekranie pauzy
+- [ ] Tryb ciemny i jasny: pre-start i zakończenie czytelne w obu; live jest ciemny w obu (celowo)
 
 ---
 

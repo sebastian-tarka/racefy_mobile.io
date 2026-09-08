@@ -67,3 +67,4 @@ export * from './useRouteTurnInstructions';
 export * from './useActiveWeek';
 export * from './useDefaultSport';
 export * from './useGpsHealthCheck';
+export * from './useSportShortcuts';
