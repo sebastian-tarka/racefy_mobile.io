@@ -123,6 +123,8 @@ Do przetestowania bez czekania na prawdziwą transmisję: poproś backend o
 - [ ] Wiadomość prywatna od wyciszonej osoby **nadal** przychodzi
 - [ ] Lista powiadomień w aplikacji: tknięcie wpisu o transmisji otwiera ekran widza, a nie alert „Unknown notification URL format"
 - [ ] Lista powiadomień: wpis o rozpoczętym treningu otwiera aktywność
+- [ ] Po scaleniu routerów: stare typy powiadomień (polubienia, komentarze, wiadomości, eventy, cele, raporty AI) nadal prowadzą tam gdzie wcześniej — i z pusha, i z listy
+- [ ] Powiadomienie o feedbacku tygodnia bez `week_id` nadal rozwiązuje tydzień i otwiera właściwy ekran
 
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 

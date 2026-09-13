@@ -4,9 +4,8 @@ import { type EventSubscription } from 'expo-modules-core';
 import { NavigationContainerRefWithCurrent, ParamListBase } from '@react-navigation/native';
 import { pushNotificationService } from '../services/pushNotifications';
 import { logger } from '../services/logger';
-import type { RootStackParamList } from '../navigation/types';
-import type { PushNotificationData, NotificationType } from '../types/api';
-import { pushId } from '../utils/pushPayload';
+import type { PushNotificationData } from '../types/api';
+import { resolveNotificationTarget } from '../utils/notificationRouting';
 
 export interface UsePushNotificationsOptions {
   /**
@@ -98,7 +97,6 @@ export function usePushNotifications(
 
       const { type, url } = data;
 
-      // Skip navigation if type is undefined or null
       if (!type) {
         logger.warn('general', 'Notification has no type, skipping navigation', { data });
         return;
@@ -106,242 +104,18 @@ export function usePushNotifications(
 
       logger.info('general', 'Handling notification navigation', { type, url, data });
 
-      // Activity pushes route on the id, not on the path. `deep_link_path` and
-      // `url` exist for generic handlers and the web app; the id is already in
-      // the payload and survives a route rename. Handled before the URL branch
-      // so `/live/247` is never parsed when the number is right there.
-      if (type === 'activity_live_started' || type === 'activity_started') {
-        const activityId = pushId(data.activity_id);
-        if (!activityId) {
-          logger.warn('general', 'Activity notification without a usable id', { data });
-          return;
-        }
-        // A live push is stale by nature — the athlete may have finished hours
-        // before the phone was picked up. Navigate straight to the live screen
-        // anyway; it falls back to the activity when the broadcast is gone.
-        // Pre-checking would double the latency on the case that works.
-        if (type === 'activity_live_started') {
-          navigation.navigate('LiveSpectator', { activityId });
-        } else {
-          navigation.navigate('ActivityDetail', { activityId });
-        }
+      // Where a notification leads is decided in one place, shared with the
+      // in-app notifications list — see resolveNotificationTarget for why.
+      const target = resolveNotificationTarget({ type, url, data });
+      if (!target) {
+        logger.warn('general', 'No route for notification', { type, url, data });
         return;
       }
 
-      // PRIORITY 1: Use backend-provided URL if available
-      if (url) {
-        const navigated = navigateFromUrl(url, navigation);
-        if (navigated) {
-          return;
-        }
-        // If URL navigation failed, fall through to type-based navigation
-        logger.warn('general', 'Failed to navigate from URL, trying type-based navigation', {
-          url,
-        });
-      }
-
-      // PRIORITY 2: Fallback to type-based navigation
-      switch (type as NotificationType) {
-        case 'likes':
-        case 'comments':
-        case 'mentions':
-          // Navigate to the liked/commented item
-          if (data.likeable_type === 'post' || data.commentable_type === 'post' || data.post_id) {
-            const postId = data.post_id || data.likeable_id || data.commentable_id;
-            if (postId) {
-              navigation.navigate('PostDetail', {
-                postId: postId,
-                focusComments: type === 'comments' || type === 'mentions',
-              });
-            }
-          } else if (
-            data.likeable_type === 'activity' ||
-            data.commentable_type === 'activity' ||
-            data.activity_id
-          ) {
-            const activityId = data.activity_id || data.likeable_id || data.commentable_id;
-            if (activityId) {
-              navigation.navigate('ActivityDetail', {
-                activityId: activityId,
-              });
-            }
-          }
-          break;
-
-        case 'follows':
-          // Navigate to the follower's profile
-          if (data.actor_username) {
-            navigation.navigate('UserProfile', {
-              username: data.actor_username,
-            });
-          } else {
-            logger.warn('general', 'Follow notification missing actor_username', { data });
-          }
-          break;
-
-        case 'messages':
-          // If the push carries a conversation_id, open the chat directly.
-          // ChatScreen fetches the conversation when neither participant nor conversation
-          // is provided, so we can deep-link straight in (works for direct and team chats).
-          if (data.conversation_id) {
-            navigation.navigate('Chat', { conversationId: data.conversation_id });
-          } else {
-            navigation.navigate('ConversationsList');
-          }
-          break;
-
-        case 'event_reminders':
-          // Navigate to the event
-          if (data.event_id) {
-            navigation.navigate('EventDetail', {
-              eventId: data.event_id,
-            });
-          }
-          break;
-
-        case 'ai_post_ready':
-          // Navigate to the draft post or post detail
-          if (data.post_id) {
-            navigation.navigate('PostDetail', {
-              postId: data.post_id,
-            });
-          }
-          break;
-
-        case 'activity_reactions':
-        case 'boosts':
-          // Navigate to the activity
-          if (pushId(data.activity_id)) {
-            navigation.navigate('ActivityDetail', {
-              activityId: pushId(data.activity_id),
-            });
-          }
-          break;
-
-        case 'points_awarded':
-          // Navigate to the event where points were awarded
-          if (data.event_id) {
-            navigation.navigate('EventDetail', {
-              eventId: data.event_id,
-            });
-          }
-          break;
-
-        case 'weekly_summary':
-          // Navigate to user's own profile with stats tab
-          navigation.navigate('Main', { screen: 'Profile', params: { initialTab: 'stats' } });
-          break;
-
-        case 'training_week_feedback':
-          // Navigate to week feedback if week_id available, otherwise to weeks list
-          if (data.week_id) {
-            navigation.navigate('WeekFeedback', { weekId: data.week_id });
-          } else {
-            navigation.navigate('TrainingWeeksList');
-          }
-          break;
-
-        case 'activity_report_ready':
-          if (data.report_id) {
-            navigation.navigate('AiActivityReportDetail', { reportId: data.report_id });
-          } else {
-            navigation.navigate('AiActivityReports');
-          }
-          break;
-
-        case 'goal_achieved':
-        case 'goal_period_completed':
-        case 'goal_pace_warning':
-          if (data.goal_id) {
-            navigation.navigate('GoalDetail', { goalId: data.goal_id });
-          } else {
-            navigation.navigate('Goals');
-          }
-          break;
-
-        case 'reshares':
-          if (data.post_id) {
-            navigation.navigate('PostDetail', { postId: data.post_id });
-          }
-          break;
-
-        default:
-          logger.warn('general', 'Unhandled notification type', { type });
-        // Don't navigate for unhandled types - just log the warning
-      }
+      navigation.navigate(target.screen, 'params' in target ? target.params : undefined);
     },
     [navigationRef],
   );
-
-  /**
-   * Navigate based on backend-provided URL
-   * Returns true if navigation succeeded, false otherwise
-   */
-  const navigateFromUrl = (url: string, navigation: any): boolean => {
-    try {
-      // Profile: /@username
-      if (url.match(/^\/@[\w-]+$/)) {
-        const username = url.substring(2);
-        navigation.navigate('UserProfile', { username });
-        return true;
-      }
-
-      // Post: /posts/{id}
-      const postMatch = url.match(/^\/posts\/(\d+)$/);
-      if (postMatch) {
-        navigation.navigate('PostDetail', { postId: parseInt(postMatch[1]) });
-        return true;
-      }
-
-      // Activity: /activities/{id}
-      const activityMatch = url.match(/^\/activities\/(\d+)$/);
-      if (activityMatch) {
-        navigation.navigate('ActivityDetail', { activityId: parseInt(activityMatch[1]) });
-        return true;
-      }
-
-      // Event: /events/{id}
-      const eventMatch = url.match(/^\/events\/(\d+)$/);
-      if (eventMatch) {
-        navigation.navigate('EventDetail', { eventId: parseInt(eventMatch[1]) });
-        return true;
-      }
-
-      // Goal: /goals/{id} or /goals
-      const goalMatch = url.match(/^\/goals\/(\d+)$/);
-      if (goalMatch) {
-        navigation.navigate('GoalDetail', { goalId: parseInt(goalMatch[1]) });
-        return true;
-      }
-      if (url === '/goals') {
-        navigation.navigate('Goals');
-        return true;
-      }
-
-      // Messages: /messages?conversation={id} or /messages/{id}
-      const messagesQueryMatch = url.match(/^\/messages\?(?:.*&)?conversation=(\d+)/);
-      const messagesPathMatch = url.match(/^\/messages\/(\d+)$/);
-      const conversationIdFromUrl = messagesQueryMatch
-        ? parseInt(messagesQueryMatch[1])
-        : messagesPathMatch
-          ? parseInt(messagesPathMatch[1])
-          : null;
-      if (conversationIdFromUrl) {
-        navigation.navigate('Chat', { conversationId: conversationIdFromUrl });
-        return true;
-      }
-      if (url.startsWith('/messages')) {
-        navigation.navigate('ConversationsList');
-        return true;
-      }
-
-      logger.warn('general', 'Unknown URL pattern', { url });
-      return false;
-    } catch (error) {
-      logger.error('general', 'Error parsing notification URL', { url, error });
-      return false;
-    }
-  };
 
   // Stable ref to the latest handleNotificationNavigation — avoids recreating listeners
   // when the callback identity changes (e.g. after auth state update)
