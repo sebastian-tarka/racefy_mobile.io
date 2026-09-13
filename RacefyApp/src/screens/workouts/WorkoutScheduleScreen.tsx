@@ -64,6 +64,22 @@ function readConflict(error: any): SessionConflict | null {
  * highlighted; a workout row starts a session (or resumes the open one),
  * a logged one shows its outcome and stats.
  */
+/**
+ * A day can hold more than one planned workout, so the date alone is not a key
+ * — the API happily returns three rows for the same date and React then drops
+ * all but one of them. The session id identifies a logged occurrence, the
+ * workout id a planned one; the index closes the remaining case of the same
+ * workout planned twice on one day.
+ */
+function plannedSessionKey(item: PlannedSession, index: number): string {
+  const owner = item.session?.id
+    ? `s${item.session.id}`
+    : item.workout?.id
+      ? `w${item.workout.id}`
+      : 'note';
+  return `${item.date}-${owner}-${index}`;
+}
+
 export function WorkoutScheduleScreen({ navigation, route }: Props) {
   const { planId } = route.params;
   const { t, i18n } = useTranslation();
@@ -485,7 +501,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
       ) : (
         <FlatList
           data={days}
-          keyExtractor={(item) => item.date}
+          keyExtractor={plannedSessionKey}
           renderItem={renderDay}
           contentContainerStyle={styles.list}
           ListHeaderComponent={

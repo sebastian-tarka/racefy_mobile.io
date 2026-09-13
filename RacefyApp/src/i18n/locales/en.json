@@ -3281,7 +3281,8 @@
       "exerciseOf": "Exercise {{index}} of {{total}}",
       "next": "Next · {{name}}",
       "prevExercise": "Previous exercise",
-      "setColumn": "Set"
+      "setColumn": "Set",
+      "skipExercise": "Skip · {{name}}"
     },
     "complete": {
       "title": "Finish workout",

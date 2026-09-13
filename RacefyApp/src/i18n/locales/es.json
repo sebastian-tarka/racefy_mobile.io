@@ -3336,7 +3336,8 @@
       "exerciseOf": "Ejercicio {{index}} de {{total}}",
       "next": "Siguiente · {{name}}",
       "prevExercise": "Ejercicio anterior",
-      "setColumn": "Serie"
+      "setColumn": "Serie",
+      "skipExercise": "Saltar · {{name}}"
     },
     "complete": {
       "title": "Terminar entrenamiento",

@@ -513,6 +513,11 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   const current = exercises[index] ?? exercises[0];
   const next = exercises[index + 1];
   const currentDone = current ? current.sets.every((x) => x.is_completed) : false;
+  // Nothing logged yet: moving on is a skip, and the button should say so.
+  // There is no per-exercise "skipped" state to write — the API skips whole
+  // sessions, not exercises — so the exercise simply stays at zero sets, which
+  // is what the summary already shows.
+  const currentUntouched = current ? current.sets.every((x) => !x.is_completed) : false;
 
   return (
     <ScreenContainer edges={['top']} style={{ backgroundColor: heroColors.bg }}>
@@ -703,7 +708,12 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
                 style={[styles.footerPrimaryText, { color: colors.cardBackground }]}
                 numberOfLines={1}
               >
-                {t('strengthPlans.session.next', { name: next.exercise?.name ?? '' })}
+                {t(
+                  currentUntouched
+                    ? 'strengthPlans.session.skipExercise'
+                    : 'strengthPlans.session.next',
+                  { name: next.exercise?.name ?? '' },
+                )}
               </Text>
               <Ionicons name="chevron-forward" size={17} color={colors.cardBackground} />
             </TouchableOpacity>

@@ -78,6 +78,16 @@ nadal potrafi zapisać zdjęcie na poście.
 - [ ] Post udostępniony (reshare) aktywności też pokazuje zdjęcia
 - [ ] Post ogólny ze zdjęciami na poście działa jak dotąd (ścieżka fallbacku)
 
+### Kalendarz siłowni i pomijanie ćwiczenia (branch `rywalizacja-i-silownia`)
+
+Z logów z urządzenia: lista dni w harmonogramie była kluczowana samą datą, a API
+zwraca po kilka wpisów na ten sam dzień (2026-09-08 trzy razy) — React gubił
+wtedy wszystkie poza jednym.
+
+- [ ] Harmonogram: dzień z kilkoma treningami pokazuje wszystkie, bez ostrzeżeń o kluczach w konsoli
+- [ ] Przeniesienie treningu na inny dzień nadal działa po zmianie klucza
+- [ ] Sesja: przycisk stopki mówi „Pomiń · X", gdy w bieżącym ćwiczeniu nic nie zapisano, i „Następne · X", gdy coś jest
+
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 
 Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;
