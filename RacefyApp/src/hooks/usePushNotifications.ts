@@ -6,6 +6,7 @@ import { pushNotificationService } from '../services/pushNotifications';
 import { logger } from '../services/logger';
 import type { RootStackParamList } from '../navigation/types';
 import type { PushNotificationData, NotificationType } from '../types/api';
+import { pushId } from '../utils/pushPayload';
 
 export interface UsePushNotificationsOptions {
   /**
@@ -105,6 +106,28 @@ export function usePushNotifications(
 
       logger.info('general', 'Handling notification navigation', { type, url, data });
 
+      // Activity pushes route on the id, not on the path. `deep_link_path` and
+      // `url` exist for generic handlers and the web app; the id is already in
+      // the payload and survives a route rename. Handled before the URL branch
+      // so `/live/247` is never parsed when the number is right there.
+      if (type === 'activity_live_started' || type === 'activity_started') {
+        const activityId = pushId(data.activity_id);
+        if (!activityId) {
+          logger.warn('general', 'Activity notification without a usable id', { data });
+          return;
+        }
+        // A live push is stale by nature — the athlete may have finished hours
+        // before the phone was picked up. Navigate straight to the live screen
+        // anyway; it falls back to the activity when the broadcast is gone.
+        // Pre-checking would double the latency on the case that works.
+        if (type === 'activity_live_started') {
+          navigation.navigate('LiveSpectator', { activityId });
+        } else {
+          navigation.navigate('ActivityDetail', { activityId });
+        }
+        return;
+      }
+
       // PRIORITY 1: Use backend-provided URL if available
       if (url) {
         const navigated = navigateFromUrl(url, navigation);
@@ -188,9 +211,9 @@ export function usePushNotifications(
         case 'activity_reactions':
         case 'boosts':
           // Navigate to the activity
-          if (data.activity_id) {
+          if (pushId(data.activity_id)) {
             navigation.navigate('ActivityDetail', {
-              activityId: data.activity_id,
+              activityId: pushId(data.activity_id),
             });
           }
           break;

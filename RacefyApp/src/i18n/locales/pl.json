@@ -1622,7 +1622,11 @@
     "adminTools": {
       "title": "Narzędzia administratora",
       "impersonate": "Podszywaj się pod użytkownika"
-    }
+    },
+    "notif_activity_started": "Rozpoczęty trening",
+    "notif_activity_started_desc": "Ktoś, kogo obserwujesz, właśnie zaczął trening.",
+    "notif_activity_live_started": "Transmisja na żywo",
+    "notif_activity_live_started_desc": "Ktoś, kogo obserwujesz, nadaje na żywo — możesz dołączyć."
   },
   "comments": {
     "title": "Komentarze",
@@ -3441,5 +3445,12 @@
         "event": "Wydarzenia"
       }
     }
+  },
+  "notificationMute": {
+    "muteAction": "Wycisz powiadomienia",
+    "muteDescription": "Nadal obserwujesz i widzisz posty. Milkną tylko powiadomienia o treningach, transmisjach i wpisach. Ta osoba się o tym nie dowie.",
+    "unmuteAction": "Włącz powiadomienia",
+    "unmuteDescription": "Znów będziesz dostawać powiadomienia o treningach, transmisjach i wpisach.",
+    "failed": "Nie udało się zmienić ustawienia powiadomień"
   }
 }

@@ -1600,7 +1600,11 @@
     "adminTools": {
       "title": "Herramientas de administrador",
       "impersonate": "Suplantar usuario"
-    }
+    },
+    "notif_activity_started": "Sesión iniciada",
+    "notif_activity_started_desc": "Alguien a quien sigues acaba de empezar una sesión.",
+    "notif_activity_live_started": "Retransmisión en directo",
+    "notif_activity_live_started_desc": "Alguien a quien sigues está retransmitiendo y puedes unirte."
   },
   "comments": {
     "title": "Comentarios",
@@ -3392,5 +3396,12 @@
       "other": "Otro día",
       "confirm": "Reanudar entrenamiento"
     }
+  },
+  "notificationMute": {
+    "muteAction": "Silenciar notificaciones",
+    "muteDescription": "Sigues siguiéndole y viendo sus publicaciones. Solo dejan de llegar los avisos de sesión, directo y publicación. No se le informa.",
+    "unmuteAction": "Reactivar notificaciones",
+    "unmuteDescription": "Vuelve a recibir sus avisos de sesión, directo y publicación.",
+    "failed": "No se ha podido cambiar el ajuste de notificaciones"
   }
 }

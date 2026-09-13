@@ -102,6 +102,26 @@ włączonym ograniczeniu ruchu w systemie.
 - [ ] Włączone „ogranicz ruch" w systemie wyłącza rotację całkowicie
 - [ ] Kropki paginacji śledzą automatyczną zmianę, nie tylko ręczną
 
+### Powiadomienia o treningu i transmisji (branch `rywalizacja-i-silownia`)
+
+Wg `docs/mobile/prompts/activity-notifications-implementation.md` z repo API.
+Dwa nowe typy push, dwa przełączniki w ustawieniach, wyciszanie pojedynczej osoby.
+Do przetestowania bez czekania na prawdziwą transmisję: poproś backend o
+`live:simulate --user=<ty> --visibility=followers --minutes=3`.
+
+- [ ] Tknięcie powiadomienia o transmisji przy **zabitej** aplikacji otwiera ekran widza
+- [ ] Powiadomienie o transmisji, która już się skończyła, otwiera ekran aktywności — nie błąd, nie pusty stan
+- [ ] Transmisja zakończona **w trakcie oglądania** nadal pokazuje stan „zakończono", nie przerzuca na aktywność
+- [ ] Powiadomienie „rozpoczął trening" otwiera ekran aktywności
+- [ ] Odebranie przy aplikacji na wierzchu pokazuje baner, który da się tknąć
+- [ ] Ustawienia: dwa przełączniki na górze sekcji powiadomień, po jednym przełączniku każdy
+- [ ] Przełącznik zapisuje push i websocket razem (sprawdź w logach sieci dwa klucze w jednym żądaniu)
+- [ ] Stan przełączników przetrwa restart aplikacji
+- [ ] Profil obcej osoby: „Wycisz powiadomienia" nad „Zablokuj", z opisem różnicy
+- [ ] Etykieta zmienia się na „Włącz powiadomienia" po wyciszeniu i przetrwa ponowne wejście na profil
+- [ ] Na własnym profilu pozycji wyciszenia nie ma wcale
+- [ ] Wiadomość prywatna od wyciszonej osoby **nadal** przychodzi
+
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 
 Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;

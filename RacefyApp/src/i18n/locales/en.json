@@ -1600,7 +1600,11 @@
     "adminTools": {
       "title": "Admin Tools",
       "impersonate": "Impersonate User"
-    }
+    },
+    "notif_activity_started": "Session started",
+    "notif_activity_started_desc": "Someone you follow has just started a session.",
+    "notif_activity_live_started": "Live broadcast",
+    "notif_activity_live_started_desc": "Someone you follow is broadcasting live and you can join."
   },
   "comments": {
     "title": "Comments",
@@ -3392,5 +3396,12 @@
         "event": "Events"
       }
     }
+  },
+  "notificationMute": {
+    "muteAction": "Mute notifications",
+    "muteDescription": "You still follow them and see their posts. Only their session, live and post pings stop. They are not told.",
+    "unmuteAction": "Unmute notifications",
+    "unmuteDescription": "Start getting their session, live and post notifications again.",
+    "failed": "Could not change the notification setting"
   }
 }

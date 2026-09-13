@@ -87,6 +87,30 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       );
     }
 
+    // ============ NOTIFICATION MUTES ============
+
+    /**
+     * Stop this athlete's broadcast pings — session started, went live, new
+     * activity, new post. Their direct messages and their comments on your
+     * posts still arrive: muting that silenced everything would quietly become
+     * a block nobody asked for. Idempotent, and muting yourself returns 422.
+     */
+    async muteUserNotifications(userId: number): Promise<void> {
+      await this.request(`/users/${userId}/mute-notifications`, { method: 'POST' });
+    }
+
+    async unmuteUserNotifications(userId: number): Promise<void> {
+      await this.request(`/users/${userId}/mute-notifications`, { method: 'DELETE' });
+    }
+
+    /**
+     * Deliberately not part of the profile payload: this is a preference of the
+     * person looking, not a property of the person being looked at.
+     */
+    async getUserNotificationMuteStatus(userId: number): Promise<{ muted: boolean }> {
+      return this.request<{ muted: boolean }>(`/users/${userId}/mute-notifications/status`);
+    }
+
     async getBlockStatus(userId: number): Promise<Types.BlockStatus> {
       const response = await this.request<Types.ApiResponse<Types.BlockStatus>>(
         `/users/${userId}/block-status`,

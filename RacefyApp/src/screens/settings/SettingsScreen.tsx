@@ -106,6 +106,62 @@ function SettingsRow({ icon, label, value, onPress, rightElement, danger }: Sett
 }
 
 // Notification row with email and push toggles
+interface LiveNotificationRowProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  description?: string;
+  settings: NotificationChannelSettings;
+  onChange: (value: boolean) => void;
+}
+
+/**
+ * A category with one switch instead of two (design + mobile spec).
+ *
+ * To someone silencing a category, "stop telling me" does not mean "stop
+ * telling me through one of two channels I have never heard of" — so push and
+ * websocket move together and neither is named. There is no email row because
+ * the backend never sends these by mail.
+ */
+function LiveNotificationRow({
+  icon,
+  label,
+  description,
+  settings,
+  onChange,
+}: LiveNotificationRowProps) {
+  const { colors } = useTheme();
+
+  return (
+    <View style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
+      <View style={styles.notificationHeader}>
+        <Ionicons
+          name={icon}
+          size={20}
+          color={colors.textSecondary}
+          style={styles.notificationIcon}
+        />
+        <View style={styles.notificationLabelContainer}>
+          <Text style={[styles.notificationLabel, { color: colors.textPrimary }]}>{label}</Text>
+          {description && (
+            <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>
+              {description}
+            </Text>
+          )}
+        </View>
+        <Switch
+          value={settings.push}
+          onValueChange={(value) => {
+            triggerHaptic();
+            onChange(value);
+          }}
+          trackColor={{ false: colors.border, true: colors.primaryLight }}
+          thumbColor={settings.push ? colors.primary : colors.white}
+        />
+      </View>
+    </View>
+  );
+}
+
 interface NotificationRowProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -194,6 +250,10 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     activity_reactions: { ...DEFAULT_CHANNEL_SETTINGS },
     mentions: { ...DEFAULT_CHANNEL_SETTINGS },
     training_week_feedback: { ...DEFAULT_CHANNEL_SETTINGS },
+    // Neither sends email — both are about something happening now, and mail
+    // arrives once it is over.
+    activity_started: { email: false, push: true, websocket: true },
+    activity_live_started: { email: false, push: true, websocket: true },
   },
   privacy: {
     profile_visibility: 'public',
@@ -417,6 +477,43 @@ export function SettingsScreen({ navigation }: Props) {
       setPreferences(updatedPrefs);
     } catch (error) {
       logger.error('api', 'Failed to update notification preference', { error });
+      setPreferences(oldPreferences);
+      Alert.alert(t('common.error'), t('settings.updateFailed'));
+    }
+  };
+
+  /**
+   * Silence or unsilence a whole "happening now" category.
+   *
+   * Push and websocket are written in the same request so the two can never
+   * drift apart — a category that is off for push but still arriving over the
+   * socket is the bug this prevents.
+   */
+  const updateLiveNotification = async (
+    notificationType: 'activity_started' | 'activity_live_started',
+    value: boolean,
+  ) => {
+    const oldPreferences = preferences;
+    setPreferences((prev) => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [notificationType]: {
+          ...prev.notifications[notificationType],
+          push: value,
+          websocket: value,
+        },
+      },
+    }));
+
+    try {
+      const updatedPrefs = await api.updatePreferences({
+        [`notifications.${notificationType}.push`]: value,
+        [`notifications.${notificationType}.websocket`]: value,
+      });
+      setPreferences(updatedPrefs);
+    } catch (error) {
+      logger.error('api', 'Failed to update live notification preference', { error });
       setPreferences(oldPreferences);
       Alert.alert(t('common.error'), t('settings.updateFailed'));
     }
@@ -945,6 +1042,20 @@ export function SettingsScreen({ navigation }: Props) {
           isExpanded={expandedSections.notifications}
           onToggle={() => toggleSection('notifications')}
         >
+          <LiveNotificationRow
+            icon="radio-outline"
+            label={t('settings.notif_activity_live_started')}
+            description={t('settings.notif_activity_live_started_desc')}
+            settings={preferences.notifications.activity_live_started}
+            onChange={(value) => updateLiveNotification('activity_live_started', value)}
+          />
+          <LiveNotificationRow
+            icon="play-circle-outline"
+            label={t('settings.notif_activity_started')}
+            description={t('settings.notif_activity_started_desc')}
+            settings={preferences.notifications.activity_started}
+            onChange={(value) => updateLiveNotification('activity_started', value)}
+          />
           <NotificationRow
             icon="heart-outline"
             label={t('settings.notif_likes')}
