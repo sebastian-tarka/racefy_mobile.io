@@ -20,6 +20,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
 import { spacing, fontSize } from '../../theme';
+import { resolveNotificationTarget } from '../../utils/notificationRouting';
 import type { Notification } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
@@ -87,99 +88,32 @@ export function NotificationsScreen({ navigation }: Props) {
     }
   }, [hasMore, loading, loadNotifications]);
 
-  const navigateToUrl = useCallback(
-    (url: string, fallbackData?: Notification['data']['data']) => {
-      logger.nav('Navigating from notification', { url, fallbackData });
-      try {
-        // Profile: /@username
-        if (url.startsWith('/@')) {
-          const username = url.substring(2);
-          logger.nav('Opening user profile', { username });
-          navigation.navigate('UserProfile', { username });
-        }
-        // Post detail: /posts/{id}
-        else if (url.startsWith('/posts/')) {
-          const postId = parseInt(url.split('/')[2]);
-          const focusComments = url.includes('#comments') || url.includes('?comments=true');
-          logger.nav('Opening post detail', { postId, focusComments });
-          navigation.navigate('PostDetail', { postId, focusComments });
-        }
-        // Activity detail: /activities/{id}
-        else if (url.startsWith('/activities/')) {
-          const activityId = parseInt(url.split('/')[2]);
-          logger.nav('Opening activity detail', { activityId });
-          navigation.navigate('ActivityDetail', { activityId });
-        }
-        // Event detail: /events/{id}
-        else if (url.startsWith('/events/')) {
-          const eventId = parseInt(url.split('/')[2]);
-          logger.nav('Opening event detail', { eventId });
-          navigation.navigate('EventDetail', { eventId });
-        }
-        // Messages: /messages?conversation={id}
-        else if (url.startsWith('/messages')) {
-          const conversationId = url.includes('?conversation=')
-            ? parseInt(url.split('?conversation=')[1])
-            : undefined;
-          logger.nav('Opening messages', { conversationId });
-          navigation.navigate('Messages', { conversationId });
-        } else {
-          logger.warn('navigation', 'Unknown notification URL format', { url });
-          Alert.alert(t('common.error'), t('notifications.navigationError'));
-        }
-      } catch (error) {
-        logger.error('navigation', 'Failed to navigate from notification', { error, url });
-
-        // Try fallback navigation using notification data
-        if (fallbackData) {
-          logger.info('navigation', 'Attempting fallback navigation', { fallbackData });
-          try {
-            // Handle likes, comments, and other reactions
-            if (fallbackData.likeable_type === 'post' && fallbackData.likeable_id) {
-              navigation.navigate('PostDetail', { postId: fallbackData.likeable_id });
-              return;
-            }
-            if (fallbackData.likeable_type === 'activity' && fallbackData.likeable_id) {
-              navigation.navigate('ActivityDetail', { activityId: fallbackData.likeable_id });
-              return;
-            }
-            if (fallbackData.likeable_type === 'comment' && fallbackData.post_id) {
-              navigation.navigate('PostDetail', {
-                postId: fallbackData.post_id,
-                focusComments: true,
-              });
-              return;
-            }
-            if (fallbackData.commentable_type === 'post' && fallbackData.commentable_id) {
-              navigation.navigate('PostDetail', {
-                postId: fallbackData.commentable_id,
-                focusComments: true,
-              });
-              return;
-            }
-            if (fallbackData.commentable_type === 'activity' && fallbackData.commentable_id) {
-              navigation.navigate('ActivityDetail', { activityId: fallbackData.commentable_id });
-              return;
-            }
-            if (fallbackData.post_id) {
-              navigation.navigate('PostDetail', { postId: fallbackData.post_id });
-              return;
-            }
-            if (fallbackData.activity_id) {
-              navigation.navigate('ActivityDetail', { activityId: fallbackData.activity_id });
-              return;
-            }
-            if (fallbackData.event_id) {
-              navigation.navigate('EventDetail', { eventId: fallbackData.event_id });
-              return;
-            }
-          } catch (fallbackError) {
-            logger.error('navigation', 'Fallback navigation also failed', { error: fallbackError });
-          }
-        }
-
+  /**
+   * Open whatever a notification points at.
+   *
+   * The decision lives in `resolveNotificationTarget`, shared with the push
+   * handler — the two used to route independently and drifted apart, which is
+   * how a live broadcast opened from the lock screen but produced an error
+   * alert from this list.
+   */
+  const openNotification = useCallback(
+    (
+      type: string | undefined,
+      url: string | null | undefined,
+      data?: Notification['data']['data'],
+    ) => {
+      logger.nav('Navigating from notification', { type, url, data });
+      const target = resolveNotificationTarget({ type, url, data });
+      if (!target) {
+        logger.warn('navigation', 'No route for notification', { type, url, data });
         Alert.alert(t('common.error'), t('notifications.navigationError'));
+        return;
       }
+      // The union is exhaustive over RootStackParamList, but the pair
+      // (screen, params) cannot be correlated through a variable — navigate is
+      // overloaded per screen name.
+      const navigateAny = navigation.navigate as (screen: string, params?: object) => void;
+      navigateAny(target.screen, 'params' in target ? target.params : undefined);
     },
     [navigation, t],
   );
@@ -251,28 +185,9 @@ export function NotificationsScreen({ navigation }: Props) {
         return;
       }
 
-      // Handle weekly_summary - navigate to Profile with stats tab
-      if (notification.type === 'weekly_summary') {
-        navigation.navigate('Main', { screen: 'Profile', params: { initialTab: 'stats' } });
-        return;
-      }
-
-      // Navigate if URL exists, pass notification data for fallback
-      if (url) {
-        navigateToUrl(url, notificationData);
-      } else {
-        logger.warn('navigation', 'Notification has no URL, attempting fallback navigation', {
-          notificationId: notification.id,
-          type: notification.type,
-          data: notificationData,
-        });
-        // Try fallback navigation even without URL
-        if (notificationData) {
-          navigateToUrl('', notificationData);
-        }
-      }
+      openNotification(notification.type, url, notificationData);
     },
-    [markAsRead, navigateToUrl],
+    [markAsRead, openNotification, handleTrainingWeekFeedbackNavigation],
   );
 
   const handleMarkAllAsRead = useCallback(async () => {

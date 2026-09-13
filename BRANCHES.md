@@ -9,13 +9,149 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-08**
+Stan na: **2026-09-13**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### Warstwa rywalizacji wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+
+Design: `racefy-compete.jsx`, `racefy-rewards.jsx`, `racefy-teams.jsx` oraz zmiany
+w `racefy-profile.jsx`, `racefy-events.jsx`, `racefy-screens.jsx`. Ranking, punkty,
+odznaki i drużyny leżały 3–4 poziomy głęboko albo nie miały widoku wcale; to jest
+wyciągnięcie ich na wierzch. Nowe ekrany: `Rewards`. Przebudowane: `Leaderboard`,
+`PointHistory`. Nowe komponenty: `StandingBlock`, `RankDelta`, `BadgeCabinet`,
+`BadgeTile`, `BadgeSheet`, `LeaderboardRow`, `EventStakes`, `EventRewardsCard`,
+`CompetitionStandingSection`. Poświata `ScreenContainer` ma teraz prop `glow`.
+
+- [ ] Profil: blok pozycji w karcie tożsamości pokazuje rangę tygodniową i punkty; strzałka zmiany pojawia się dopiero przy drugim wejściu (delta liczy się lokalnie z `@racefy_seen_ranks`)
+- [ ] Profil: konto bez punktów pokazuje wariant „jeszcze bez pozycji", nie zero
+- [ ] Profil: gablota odznak renderuje się nad zakładkami i znika, gdy nie ma żadnej odznaki
+- [ ] Profil: odznaka legendarna odróżnia się od epickiej z odległości (gradient + grubszy pierścień)
+- [ ] Profil: grupa „Rywalizacja" — wszystkie trzy wiersze mają liczby, także Drużyny
+- [ ] Ranking: domyślnie Obserwowani + Tydzień; przełączniki zakresu i okresu działają
+- [ ] Ranking: własny wiersz przyklejony na dole i znikający, gdy prawdziwy wiersz wjedzie na ekran (nie może być widoczny dwa razy)
+- [ ] Ranking: sekcja „W twojej okolicy" pojawia się na globalnym, gdy pozycja jest poza czołówką
+- [ ] Ranking: pusty stan Obserwowanych, gdy nikogo nie obserwujesz
+- [ ] Punkty: karta sumy z podziałem na aktywności i wydarzenia; filtry działają (uwaga: filtrują to, co wczytane, nie zapytanie)
+- [ ] Nagrody: ekran otwiera się z profilu i z gabloty; sumy u góry zgadzają się z listą
+- [ ] Nagrody: kupon pokazuje kod i datę ważności
+- [ ] Drużyny: karta pozycji nad listą i `#pozycja · aktywni` na kartach drużyn
+- [ ] Wydarzenia: pasek stawek na karcie listy i na karcie wyróżnionej — punkty, nagroda, kupon, tryb rankingu
+- [ ] Wydarzenia: blok „O co gramy" nad przyciskiem zapisu w detalu (wcześniej nagrody nie renderowały się nigdzie)
+- [ ] Home: sekcja rywalizacji pojawia się po zdobyciu odznaki albo zmianie pozycji i milczy, gdy nic się nie zmieniło
+- [ ] Profil bez poświaty: sticky pasek zakładek nie odcina się jaśniejszym prostokątem
+- [ ] Tryb ciemny: blok pozycji i przyklejony wiersz rankingu (ciemne tło „hero") czytelne na ciemnym motywie
+
+### Trening siłowy: usuwanie serii i wychodzenie z sesji (branch `rywalizacja-i-silownia`)
+
+Zgłoszone z urządzenia. Serię dało się dodać, ale nie usunąć — kasowanie wisiało
+na przytrzymaniu „ptaszka" **już ukończonej** serii, więc świeżo dodanej nie dało
+się cofnąć wcale. Wyjście z sesji pytało dialogiem, a poza ekranami siłowni nic
+nie przypominało o otwartej sesji — inaczej niż przy aktywności biegowej.
+
+- [ ] Każdy wiersz serii ma widoczny × podczas trwania sesji; potwierdzenie usuwa serię (także nieukończoną)
+- [ ] Usunięcie serii aktualizuje licznik serii w podsumowaniu sesji
+- [ ] Przytrzymanie ptaszka na ukończonej serii nadal usuwa (stara ścieżka)
+- [ ] Cofnięcie z sesji wychodzi od razu, bez dialogu, i nie kończy sesji
+- [ ] Na Home pojawia się pasek „Sesja w toku — Wznów" i wraca do właściwej sesji
+- [ ] Wznowienie z Home odtwarza stan serii (nic nie ginie)
+- [ ] Przycisk Record na dolnym pasku w czasie sesji siłowej: bursztyn + sztanga, tknięcie wraca do sesji (z każdej zakładki)
+- [ ] Aktywność biegowa ma pierwszeństwo: gdy biegną obie, przycisk pokazuje kwadrat/play i prowadzi na ekran nagrywania
+- [ ] Po zakończeniu lub pominięciu sesji przycisk wraca do emeraldu z play bez restartu aplikacji
+- [ ] Etykieta „Dodaj serię" bez podwójnego plusa (ikona + tekst, nie „+ + seria")
+- [ ] Sesję można zakończyć z każdego ćwiczenia (przycisk z flagą w stopce), nie tylko z ostatniego
+- [ ] Zakończenie w połowie zapisuje aktywność z tym, co już zrobione — nie kasuje sesji jak „Saltar”/„Pomiń”
+- [ ] Na ostatnim ćwiczeniu stopka ma jeden przycisk „Zakończ”, bez zdublowanej flagi
+
+### Media aktywności po migracji backendu (branch `rywalizacja-i-silownia`)
+
+Backend przeniósł zdjęcia postu aktywnościowego na aktywność: `post.photos` jest
+puste, komplet siedzi w `activity.photos` z ciągłą kolejnością. Mobile czytał
+wyłącznie stronę postu, więc karta aktywności w feedzie **nie pokazałaby żadnego
+zdjęcia**. Scalanie obu stron zostaje na stałe — fallback `Post::mediaOwner()`
+nadal potrafi zapisać zdjęcie na poście.
+
+- [ ] Feed: post aktywnościowy z czterema zdjęciami pokazuje cztery, w kolejności 0–3
+- [ ] Strona aktywności pokazuje ten sam komplet co karta w feedzie
+- [ ] Post udostępniony (reshare) aktywności też pokazuje zdjęcia
+- [ ] Post ogólny ze zdjęciami na poście działa jak dotąd (ścieżka fallbacku)
+
+### Kalendarz siłowni i pomijanie ćwiczenia (branch `rywalizacja-i-silownia`)
+
+Z logów z urządzenia: lista dni w harmonogramie była kluczowana samą datą, a API
+zwraca po kilka wpisów na ten sam dzień (2026-09-08 trzy razy) — React gubił
+wtedy wszystkie poza jednym.
+
+- [ ] Harmonogram: dzień z kilkoma treningami pokazuje wszystkie, bez ostrzeżeń o kluczach w konsoli
+- [ ] Przeniesienie treningu na inny dzień nadal działa po zmianie klucza
+- [ ] Sesja: przycisk stopki mówi „Pomiń · X", gdy w bieżącym ćwiczeniu nic nie zapisano, i „Następne · X", gdy coś jest
+
+### Auto-rotacja mediów na karcie feedu (branch `rywalizacja-i-silownia`)
+
+Karta z kilkoma zdjęciami przewija się sama co 4,5 s, ręczne przesuwanie działa
+jak dotąd. Zatrzymuje się na slajdzie z wideo, poza aktywnym ekranem i przy
+włączonym ograniczeniu ruchu w systemie.
+
+- [ ] Karta z 2+ mediami przewija się sama i zawija z ostatniego na pierwszy
+- [ ] Karta z jednym medium nie rusza się wcale
+- [ ] Przesunięcie palcem zatrzymuje rotację na czas gestu i daje wybranemu slajdowi pełne 4,5 s
+- [ ] Slajd z wideo nie jest automatycznie zmieniany
+- [ ] Wejście na inny ekran zatrzymuje rotację kart w feedzie
+- [ ] Włączone „ogranicz ruch" w systemie wyłącza rotację całkowicie
+- [ ] Kropki paginacji śledzą automatyczną zmianę, nie tylko ręczną
+
+### Powiadomienia o treningu i transmisji (branch `rywalizacja-i-silownia`)
+
+Wg `docs/mobile/prompts/activity-notifications-implementation.md` z repo API.
+Dwa nowe typy push, dwa przełączniki w ustawieniach, wyciszanie pojedynczej osoby.
+Do przetestowania bez czekania na prawdziwą transmisję: poproś backend o
+`live:simulate --user=<ty> --visibility=followers --minutes=3`.
+
+- [ ] Tknięcie powiadomienia o transmisji przy **zabitej** aplikacji otwiera ekran widza
+- [ ] Powiadomienie o transmisji, która już się skończyła, otwiera ekran aktywności — nie błąd, nie pusty stan
+- [ ] Transmisja zakończona **w trakcie oglądania** nadal pokazuje stan „zakończono", nie przerzuca na aktywność
+- [ ] Powiadomienie „rozpoczął trening" otwiera ekran aktywności
+- [ ] Odebranie przy aplikacji na wierzchu pokazuje baner, który da się tknąć
+- [ ] Ustawienia: dwa przełączniki na górze sekcji powiadomień, po jednym przełączniku każdy
+- [ ] Przełącznik zapisuje push i websocket razem (sprawdź w logach sieci dwa klucze w jednym żądaniu)
+- [ ] Stan przełączników przetrwa restart aplikacji
+- [ ] Profil obcej osoby: „Wycisz powiadomienia" nad „Zablokuj", z opisem różnicy
+- [ ] Etykieta zmienia się na „Włącz powiadomienia" po wyciszeniu i przetrwa ponowne wejście na profil
+- [ ] Na własnym profilu pozycji wyciszenia nie ma wcale
+- [ ] Wiadomość prywatna od wyciszonej osoby **nadal** przychodzi
+- [ ] Lista powiadomień w aplikacji: tknięcie wpisu o transmisji otwiera ekran widza, a nie alert „Unknown notification URL format"
+- [ ] Lista powiadomień: wpis o rozpoczętym treningu otwiera aktywność
+- [ ] Po scaleniu routerów: stare typy powiadomień (polubienia, komentarze, wiadomości, eventy, cele, raporty AI) nadal prowadzą tam gdzie wcześniej — i z pusha, i z listy
+- [ ] Powiadomienie o feedbacku tygodnia bez `week_id` nadal rozwiązuje tydzień i otwiera właściwy ekran
+
+### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+
+Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;
+domknięte różnice układu i jedna rzecz, która była zbudowana, ale niepodłączona:
+`StageCtaCard` miał propsy na liczbę ścigających się i procent ukończonych, a ekran
+nigdy ich nie przekazywał — podtytuł karty „Na żywo" był pusty.
+
+- [ ] Trwający event: ciemna karta „Na żywo" ma podtytuł z liczbą ścigających się i procentem ukończonych
+- [ ] Zakończony event: karta „Wyniki końcowe" bez zmian
+- [ ] Nadchodzący event: żadne standings nie są pobierane (sprawdź w logach sieci)
+- [ ] Uczestnicy są nad trasą i opisem, nie pod galerią
+- [ ] Lista: aktywny filtr to jeden ciemny chip, reszta obrysy; emerald został akcjom
+- [ ] Lista: pigułka „Utwórz" w nagłówku, tylko na zakładce wydarzeń i po zalogowaniu
+- [ ] Karty wydarzeń i karta wyróżniona: pasek stawek nie rozjedzie układu, gdy event nie ma żadnych nagród
+
+Braki po stronie API spisane w `.notes/prompt-backend-eventy-brakujace-dane.md`
+(liczba znajomych zapisanych, agregaty live na zasobie eventu, etykieta dyscypliny).
+
+### Hiszpański uzupełniony (branch `rywalizacja-i-silownia`)
+
+`es.json` nie miał 537 kluczy z 2816 — w tym **całego** treningu siłowego (272)
+i prawie całego nagrywania (132) — więc spadały na angielski. Uzupełnione;
+parzystość kluczów i placeholderów z `en.json` sprawdzona maszynowo.
+
+- [ ] Przełączenie języka na hiszpański: ekran nagrywania i sesja siłowa bez wtrętów angielskich
+- [ ] Liczba mnoga po hiszpańsku (`_one`/`_other`) działa tam, gdzie polski ma `_few`/`_many`
 
 ---
 

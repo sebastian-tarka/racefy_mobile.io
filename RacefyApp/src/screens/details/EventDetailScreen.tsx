@@ -17,6 +17,7 @@ import { RoutePreview } from '../../components/LeafletMap';
 import {
   CommentaryPreviewCard,
   EventActionSection,
+  EventRewardsCard,
   EventCourseIntel,
   EventGallery,
   EventHero,
@@ -30,6 +31,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { useEventDetail } from '../../hooks/useEventDetail';
 import { useEventWatch } from '../../hooks/useEventWatch';
+import { useEventStandings } from '../../hooks/useEventStandings';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { fontSize, spacing } from '../../theme';
@@ -76,6 +78,13 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   const canWatch =
     event?.status === 'upcoming' && !(event?.is_registered ?? false) && !(event?.is_owner ?? false);
+
+  // The live CTA promises "N racing · M% finished" — the standings endpoint is
+  // the only place those numbers exist, so it is fetched while the event runs
+  // and skipped entirely otherwise.
+  const { aggregates: standingsAggregates } = useEventStandings(eventId, {
+    enabled: event?.status === 'ongoing',
+  });
 
   const watch = useEventWatch({
     eventId,
@@ -245,6 +254,12 @@ export function EventDetailScreen({ route, navigation }: Props) {
             />
 
             <View style={styles.sections}>
+              {/* What the event is worth, above the button that asks for a
+                  commitment — not below the description, after it. */}
+              <View style={styles.padded}>
+                <EventRewardsCard event={event} />
+              </View>
+
               <EventActionSection
                 event={event}
                 isAuthenticated={isAuthenticated}
@@ -261,6 +276,8 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 ownerActions={ownerActions}
                 onViewStandings={goToLive}
                 onViewResults={goToResults}
+                standingsRacingCount={isOngoing ? standingsAggregates.racingCount : undefined}
+                standingsFinishedPct={isOngoing ? standingsAggregates.finishedPct : undefined}
               />
 
               {(isOngoing || isCompleted) && (
@@ -282,6 +299,25 @@ export function EventDetailScreen({ route, navigation }: Props) {
               {showRegistrationProgress && (
                 <View style={styles.padded}>
                   <EventRegistrationProgress event={event} />
+                </View>
+              )}
+
+              {/* Who else is going, before the course and the write-up: the
+                  design puts the field above the detail, because "is anyone I
+                  know in this" is answered earlier than "what is the route". */}
+              {participants.length > 0 && (
+                <View style={styles.padded}>
+                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                    {t('eventDetail.participants', 'Participants').toUpperCase()} ·{' '}
+                    {participants.length}
+                  </Text>
+                  <Card>
+                    <ParticipantAvatarsStack
+                      participants={participants}
+                      maxVisible={8}
+                      onParticipantPress={isAuthenticated ? handleUserPress : undefined}
+                    />
+                  </Card>
                 </View>
               )}
 
@@ -347,23 +383,6 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
               {/* Gallery */}
               <EventGallery photos={galleryPhotos} />
-
-              {/* Participants preview */}
-              {participants.length > 0 && (
-                <View style={styles.padded}>
-                  <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                    {t('eventDetail.participants', 'Participants').toUpperCase()} ·{' '}
-                    {participants.length}
-                  </Text>
-                  <Card>
-                    <ParticipantAvatarsStack
-                      participants={participants}
-                      maxVisible={8}
-                      onParticipantPress={isAuthenticated ? handleUserPress : undefined}
-                    />
-                  </Card>
-                </View>
-              )}
 
               {/* Comments */}
               <View style={styles.padded}>

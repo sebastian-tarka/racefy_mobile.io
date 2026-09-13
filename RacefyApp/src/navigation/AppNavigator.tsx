@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityContext } from '../hooks/useLiveActivity';
+import { useCurrentWorkoutSession } from '../hooks/useCurrentWorkoutSession';
 import { useMaintenance } from '../hooks/useMaintenance';
 import { useAppVersion } from '../hooks/useAppVersion';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -73,6 +74,7 @@ import { ImpersonateUserScreen } from '../screens/admin/ImpersonateUserScreen';
 import { NotificationsScreen } from '../screens/notifications';
 import { LandingScreen } from '../screens/landing';
 import { LeaderboardScreen, PointHistoryScreen } from '../screens/leaderboard';
+import { RewardsScreen } from '../screens/rewards/RewardsScreen';
 import { LiveBroadcastsScreen, LiveSpectatorScreen } from '../screens/live';
 import {
   CalibrationFormScreen,
@@ -174,12 +176,18 @@ export { useTabBarPadding } from './useTabBarPadding';
  * the bar and ringed in the bar's own colour, so it reads as sitting on top of
  * the navigation rather than inside it.
  *
- * Emerald means "nothing running, start something". Amber means an activity is
- * open, and the glyph says what the tap does next: a square stops the one that
- * is recording, a play resumes the one that is paused.
+ * Emerald means "nothing running, start something". Amber means something is
+ * open, and the glyph says what the tap does next: a square stops the outdoor
+ * activity that is recording, a play resumes the one that is paused, a barbell
+ * returns to an open strength session.
+ *
+ * An outdoor activity outranks a strength session when both are open: it is
+ * the one recording GPS, and its glyph is a stop control.
  *
  * Tap behaves like a normal tab (navigation + auth-guard listener fire via the
- * passed `onPress`); a long press opens the start-actions sheet.
+ * passed `onPress`), except while a strength session is the only thing running
+ * — then it goes back to that session, because the Record tab has nothing to
+ * say about it.
  */
 function RecordTabButton({
   onPress,
@@ -191,23 +199,32 @@ function RecordTabButton({
   ringColor,
   activity,
   isTracking,
+  strengthSession,
+  onResumeStrength,
+  strengthLabel,
 }: BottomTabBarButtonProps & {
   primaryColor: string;
   /** The bar's own colour — the ring is what lifts the button off it. */
   ringColor: string;
   activity: boolean;
   isTracking: boolean;
+  /** A strength session is open and no outdoor activity is. */
+  strengthSession: boolean;
+  onResumeStrength: () => void;
+  /** Replaces the tab's label while the button means "back to the session". */
+  strengthLabel: string;
 }) {
-  const background = activity ? ACTIVITY_AMBER : primaryColor;
+  const busy = activity || strengthSession;
+  const background = busy ? ACTIVITY_AMBER : primaryColor;
 
   return (
     <View style={fabStyles.slot} pointerEvents="box-none">
       <Pressable
         accessibilityRole="button"
         accessibilityState={accessibilityState}
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={strengthSession ? strengthLabel : accessibilityLabel}
         testID={testID}
-        onPress={onPress}
+        onPress={strengthSession ? onResumeStrength : onPress}
         onLongPress={onLongPress}
         delayLongPress={350}
         android_ripple={{ color: 'rgba(16,185,129,0.25)', borderless: true, radius: 34 }}
@@ -221,6 +238,8 @@ function RecordTabButton({
         >
           {activity && isTracking ? (
             <View style={fabStyles.stopGlyph} />
+          ) : strengthSession ? (
+            <Ionicons name="barbell" size={24} color="#fff" />
           ) : (
             <Ionicons name="play" size={24} color="#fff" style={fabStyles.playOffset} />
           )}
@@ -288,7 +307,19 @@ function MainTabNavigator() {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isTracking, activity } = useLiveActivityContext();
+  // An open strength session has to be reachable from every tab, not just from
+  // the strength screens — the same promise the Record button already makes
+  // for an outdoor activity.
+  const { current: workoutSession } = useCurrentWorkoutSession(isAuthenticated);
+  const strengthOnly = !activity && !!workoutSession;
   const [startSheetVisible, setStartSheetVisible] = useState(false);
+
+  const resumeStrength = useCallback(() => {
+    triggerHaptic();
+    if (workoutSession) {
+      navigation.navigate('WorkoutSession', { sessionId: workoutSession.id });
+    }
+  }, [navigation, workoutSession]);
 
   // Long-pressing the Record tab opens the start-actions sheet, mirroring the
   // Home primary CTA. Tap still navigates to the Record screen as usual.
@@ -369,6 +400,9 @@ function MainTabNavigator() {
                 ringColor={colors.cardBackground}
                 activity={!!activity}
                 isTracking={isTracking}
+                strengthSession={strengthOnly}
+                onResumeStrength={resumeStrength}
+                strengthLabel={t('tabs.a11y.resumeStrength')}
               />
             ),
           }}
@@ -566,6 +600,7 @@ export function AppNavigator() {
               <RootStack.Screen name="LegalDocuments" component={LegalDocumentsScreen} />
               <RootStack.Screen name="Leaderboard" component={LeaderboardScreen} />
               <RootStack.Screen name="PointHistory" component={PointHistoryScreen} />
+              <RootStack.Screen name="Rewards" component={RewardsScreen} />
               <RootStack.Screen name="Insights" component={InsightsScreen} />
               <RootStack.Screen name="AiActivityReports" component={AiActivityReportsScreen} />
               <RootStack.Screen

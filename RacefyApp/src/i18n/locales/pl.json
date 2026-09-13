@@ -274,6 +274,19 @@
         "behind": "W tyle",
         "completed": "Ukończony"
       }
+    },
+    "competition": {
+      "badgeTitle": "Nowa odznaka: {{name}}",
+      "badgeBody": "Dotknij, żeby zobaczyć ją w gablocie",
+      "movedUp_one": "Awans o {{count}} miejsce w tym tygodniu",
+      "movedUp_few": "Awans o {{count}} miejsca w tym tygodniu",
+      "movedUp_many": "Awans o {{count}} miejsc w tym tygodniu",
+      "movedUp_other": "Awans o {{count}} miejsc w tym tygodniu",
+      "movedDown_one": "Spadek o {{count}} miejsce w tym tygodniu",
+      "movedDown_few": "Spadek o {{count}} miejsca w tym tygodniu",
+      "movedDown_many": "Spadek o {{count}} miejsc w tym tygodniu",
+      "movedDown_other": "Spadek o {{count}} miejsc w tym tygodniu",
+      "rankNow": "#{{rank}} z {{points}} pkt — zobacz, kto jest blisko"
     }
   },
   "network": {
@@ -552,7 +565,16 @@
       "routesStatus_one": "{{count}} zapisana trasa",
       "routesStatus_few": "{{count}} zapisane trasy",
       "routesStatus_many": "{{count}} zapisanych tras",
-      "routesStatus_other": "{{count}} zapisanych tras"
+      "routesStatus_other": "{{count}} zapisanych tras",
+      "competition": "Rywalizacja",
+      "rankStatus": "#{{weekly}} w tym tygodniu · {{points}} pkt · #{{global}} ogółem",
+      "rankStatusEmpty": "Jeszcze bez pozycji · jedna aktywność wystarczy",
+      "rewardsStatus": "Odznaki: {{badges}} · kupony: {{coupons}} · {{points}} pkt",
+      "teamsStatusMember": "{{name}} · {{members}} członków",
+      "teamsStatusNone_one": "{{count}} drużyna czeka na członków",
+      "teamsStatusNone_few": "{{count}} drużyny czekają na członków",
+      "teamsStatusNone_many": "{{count}} drużyn czeka na członków",
+      "teamsStatusNone_other": "{{count}} drużyn czeka na członków"
     }
   },
   "editProfile": {
@@ -628,7 +650,20 @@
     "happeningNow": "Trwają teraz",
     "upcomingEvents": "Nadchodzące wydarzenia",
     "completedEvents": "Ostatnio zakończone",
-    "featured": "Wyróżnione"
+    "featured": "Wyróżnione",
+    "stakes": {
+      "points_one": "{{count}} pkt",
+      "points_few": "{{count}} pkt",
+      "points_many": "{{count}} pkt",
+      "points_other": "{{count}} pkt",
+      "coupon": "Kupon"
+    },
+    "rewards": {
+      "title": "O co gramy",
+      "finisher": "Za ukończenie",
+      "pointsOnly": "Tylko punkty"
+    },
+    "create": "Utwórz"
   },
   "eventDetail": {
     "title": "Szczegóły wydarzenia",
@@ -1587,7 +1622,11 @@
     "adminTools": {
       "title": "Narzędzia administratora",
       "impersonate": "Podszywaj się pod użytkownika"
-    }
+    },
+    "notif_activity_started": "Rozpoczęty trening",
+    "notif_activity_started_desc": "Ktoś, kogo obserwujesz, właśnie zaczął trening.",
+    "notif_activity_live_started": "Transmisja na żywo",
+    "notif_activity_live_started_desc": "Ktoś, kogo obserwujesz, nadaje na żywo — możesz dołączyć."
   },
   "comments": {
     "title": "Komentarze",
@@ -2231,7 +2270,23 @@
     "noRewards": "Brak nagród",
     "noRewardsMessage": "Ukończ wydarzenia, aby zdobywać nagrody, punkty i ekskluzywne prezenty!",
     "loadingRewards": "Ładowanie nagród...",
-    "failedToLoad": "Nie udało się załadować nagród"
+    "failedToLoad": "Nie udało się załadować nagród",
+    "cabinet": {
+      "label": "Odznaki · {{count}}",
+      "labelWithNew": "Odznaki · {{count}} · {{fresh}} nowe",
+      "allRewards": "Wszystkie nagrody",
+      "seeAll": "Zobacz wszystkie odznaki ({{count}})"
+    },
+    "badgeSheet": {
+      "earned": "Zdobyta",
+      "from": "Skąd",
+      "fromEvent": "Wydarzenie"
+    },
+    "sections": {
+      "couponsHint": "Kody tracą ważność — wykorzystaj je",
+      "badgesHint": "Według daty zdobycia",
+      "pointsRow": "Pełna historia każdego zdobytego punktu"
+    }
   },
   "reshare": {
     "title": "Udostępnij post",
@@ -2675,7 +2730,9 @@
     "periodThisMonth": "Ten miesiąc",
     "periodLastMonth": "Ostatni miesiąc",
     "periodThisYear": "Ten rok",
-    "periodLastYear": "Ostatni rok"
+    "periodLastYear": "Ostatni rok",
+    "standingMeta": "#{{rank}} w tym miesiącu · {{active}} aktywnych w tym tygodniu",
+    "standingSummary": "#{{rank}} z {{total}} drużyn · {{active}} z {{members}} trenowało w tym tygodniu"
   },
   "feedback": {
     "title": "Opinie i zgłoszenia błędów",
@@ -3243,7 +3300,7 @@
       "start": "Start",
       "done": "Gotowe",
       "undo": "Cofnij",
-      "addSet": "+ seria",
+      "addSet": "Dodaj serię",
       "removeSet": "Usuń serię",
       "rest": "Przerwa",
       "restLeft": "zostało {{time}}",
@@ -3255,7 +3312,6 @@
       "history": "Historia",
       "suggested": "ostatnio {{kg}} kg",
       "target": "{{target}}",
-      "leaveHint": "Wyjście nie kończy sesji — wznowisz ją z planu.",
       "nextExercise": "Dalej: {{name}}",
       "collapsedDone": "{{done}}/{{total}} zrobione",
       "notification": {
@@ -3266,7 +3322,8 @@
       "exerciseOf": "Ćwiczenie {{index}} z {{total}}",
       "next": "Dalej · {{name}}",
       "prevExercise": "Poprzednie ćwiczenie",
-      "setColumn": "Seria"
+      "setColumn": "Seria",
+      "skipExercise": "Pomiń · {{name}}"
     },
     "complete": {
       "title": "Zakończ trening",
@@ -3341,7 +3398,59 @@
       "feed": "Aktywności znajomych",
       "record": "Nagraj aktywność",
       "events": "Wydarzenia",
-      "profile": "Profil użytkownika"
+      "profile": "Profil użytkownika",
+      "resumeStrength": "Wróć do trwającej sesji siłowej"
     }
+  },
+  "compete": {
+    "standing": {
+      "rankWeek": "Pozycja · tydzień",
+      "points": "Punkty",
+      "thisWeek": "w tym tygodniu",
+      "notRanked": "Jeszcze bez pozycji",
+      "notRankedHint": "Każda ukończona aktywność daje punkty — jedna wystarczy, żeby wejść do rankingu",
+      "a11y": "Pozycja {{rank}} w tym tygodniu, {{points}} punktów"
+    },
+    "periods": {
+      "weekly": "Tydzień",
+      "monthly": "Miesiąc",
+      "allTime": "Wszystkie"
+    },
+    "aroundYou": "W twojej okolicy",
+    "gapToNext": "{{points}} pkt do #{{rank}}",
+    "pointsAction": "Punkty",
+    "emptyFollowing": "Nie masz z kim rywalizować",
+    "emptyFollowingBody": "Zaobserwuj kilku zawodników, a ranking wypełni się ludźmi, z którymi naprawdę się ścigasz.",
+    "findPeople": "Znajdź ludzi do obserwowania",
+    "seeGlobal": "Zobacz ranking globalny",
+    "footerWeekly": "Ranking globalny · reset w poniedziałek 00:00",
+    "footerMonthly": "Ranking globalny · reset pierwszego dnia miesiąca",
+    "footerAllTime": "Ranking globalny · wszystkie zdobyte punkty",
+    "footerFollowing_one": "{{count}} obserwowany zawodnik ma punkty",
+    "footerFollowing_few": "{{count}} obserwowanych zawodników ma punkty",
+    "footerFollowing_many": "{{count}} obserwowanych zawodników ma punkty",
+    "footerFollowing_other": "{{count}} obserwowanych zawodników ma punkty",
+    "you": "Ty",
+    "history": {
+      "total": "Łącznie",
+      "entries_one": "pkt · {{count}} wpis",
+      "entries_few": "pkt · {{count}} wpisy",
+      "entries_many": "pkt · {{count}} wpisów",
+      "entries_other": "pkt · {{count}} wpisów",
+      "fromActivities": "Z aktywności",
+      "fromEvents": "Z wydarzeń",
+      "filters": {
+        "all": "Wszystko",
+        "activity": "Aktywności",
+        "event": "Wydarzenia"
+      }
+    }
+  },
+  "notificationMute": {
+    "muteAction": "Wycisz powiadomienia",
+    "muteDescription": "Nadal obserwujesz i widzisz posty. Milkną tylko powiadomienia o treningach, transmisjach i wpisach. Ta osoba się o tym nie dowie.",
+    "unmuteAction": "Włącz powiadomienia",
+    "unmuteDescription": "Znów będziesz dostawać powiadomienia o treningach, transmisjach i wpisach.",
+    "failed": "Nie udało się zmienić ustawienia powiadomień"
   }
 }

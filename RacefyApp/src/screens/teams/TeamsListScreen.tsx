@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useTeams, useMyTeams, useAuth, useTheme, useSubscription } from '../../hooks';
+import { useTeamsStanding } from '../../hooks/useTeamsStanding';
 import { ScreenContainer, ScreenHeader, TeamCard } from '../../components';
 import { useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize } from '../../theme';
@@ -30,6 +31,8 @@ export function TeamsListScreen({ navigation }: Props) {
 
   const myTeamsHook = useMyTeams();
   const allTeamsHook = useTeams();
+  // Every row states where its team actually stands this month.
+  const { byTeamId, total: rankedTeams } = useTeamsStanding();
 
   useEffect(() => {
     if (activeTab === 'my' && isAuthenticated) {
@@ -95,6 +98,9 @@ export function TeamsListScreen({ navigation }: Props) {
       </Text>
     </TouchableOpacity>
   );
+
+  const topStanding =
+    myTeamsHook.teams.map((team) => byTeamId.get(team.id)).find((entry) => !!entry) ?? null;
 
   const teams = activeTab === 'my' ? myTeamsHook.teams : allTeamsHook.teams;
   const isLoading = activeTab === 'my' ? myTeamsHook.isLoading : allTeamsHook.isLoading;
@@ -164,11 +170,51 @@ export function TeamsListScreen({ navigation }: Props) {
         </View>
       )}
 
+      {/* Where my team stands — the answer people open this screen for, and
+          the entry into the team-vs-team board that previously hid behind a
+          bare trophy icon in the header. */}
+      {activeTab === 'my' && isAuthenticated && topStanding && (
+        <TouchableOpacity
+          style={[
+            styles.standing,
+            { backgroundColor: colors.cardBackground, borderColor: colors.border },
+          ]}
+          onPress={() => navigation.navigate('TeamsLeaderboard')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.standingBody}>
+            <Text style={[styles.standingTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              {topStanding.team_name}
+            </Text>
+            <Text style={[styles.standingMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('teams.standingSummary', {
+                rank: topStanding.rank,
+                total: rankedTeams,
+                active: topStanding.active_members,
+                members: topStanding.members_count,
+              })}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
+      )}
+
       <FlatList
         data={teams}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <TeamCard team={item} onPress={() => handleTeamPress(item.slug)} />
+          <TeamCard
+            team={item}
+            standing={
+              byTeamId.has(item.id)
+                ? {
+                    rank: byTeamId.get(item.id)!.rank,
+                    activeMembers: byTeamId.get(item.id)!.active_members,
+                  }
+                : null
+            }
+            onPress={() => handleTeamPress(item.slug)}
+          />
         )}
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
@@ -210,6 +256,20 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
   empty: { alignItems: 'center', paddingVertical: spacing.xl * 2, gap: spacing.md },
   emptyText: { fontSize: fontSize.md },
+  standing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  standingBody: { flex: 1, minWidth: 0 },
+  standingTitle: { fontSize: fontSize.md, fontWeight: '700' },
+  standingMeta: { fontSize: fontSize.sm, marginTop: 2 },
   limitInfo: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   limitText: { fontSize: fontSize.xs, textAlign: 'right' },
 });

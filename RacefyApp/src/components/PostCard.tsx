@@ -15,6 +15,7 @@ import { borderRadius, fontSize, spacing } from '../theme';
 import { logger } from '../services/logger';
 import { formatDuration } from '../utils/formatDuration';
 import { getSportIcon } from '../utils/sportIcon';
+import { mergeActivityPhotos, mergeActivityVideos } from '../utils/activityMedia';
 import type { Post } from '../types/api';
 
 interface PostCardProps {
@@ -254,8 +255,11 @@ function PostCardBase({
   const renderMedia = () => {
     // Check for media, photos, or videos
     const hasMedia = post.media && post.media.length > 0;
-    const hasPhotos = post.photos && post.photos.length > 0;
-    const hasVideos = post.videos && post.videos.length > 0;
+    // Activity media lives on the activity now, with the post as a fallback.
+    const photos = mergeActivityPhotos(post);
+    const videos = mergeActivityVideos(post);
+    const hasPhotos = photos.length > 0;
+    const hasVideos = videos.length > 0;
 
     // Debug: Log post media data
     logger.debug('general', 'PostCard media check', {
@@ -264,22 +268,15 @@ function PostCardBase({
       hasPhotos,
       hasVideos,
       media: post.media,
-      photos: post.photos,
-      videos: post.videos,
+      photos,
+      videos,
     });
 
     if (!hasMedia && !hasPhotos && !hasVideos) return null;
 
     const mediaWidth = screenWidth - spacing.lg * 4;
 
-    return (
-      <MediaGallery
-        media={post.media}
-        photos={post.photos}
-        videos={post.videos}
-        width={mediaWidth}
-      />
-    );
+    return <MediaGallery media={post.media} photos={photos} videos={videos} width={mediaWidth} />;
   };
 
   return (

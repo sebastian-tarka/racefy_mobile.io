@@ -111,15 +111,19 @@ export function SportTypeFilter({
 const styles = StyleSheet.create({
   container: {},
   scrollContent: {
-    paddingHorizontal: spacing.md,
+    // Równo z kartami listy profilu (parent znosi to wcięcie `filterBleed`),
+    // żeby chipy scrollowały do krawędzi ekranu, a nie kończyły się w marginesie.
+    paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
   sportItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 38,
-    paddingLeft: spacing.md - 2,
+    // Design "Racefy v2" (SportFilterRow): 36 wysokości, wcięcie 9/12 —
+    // ikona siedzi bliżej lewej krawędzi niż etykieta prawej.
+    height: 36,
+    paddingLeft: spacing.md - 3,
     paddingRight: spacing.md,
     borderRadius: borderRadius.full,
     borderWidth: 1,

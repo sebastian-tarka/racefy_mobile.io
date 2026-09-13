@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 // Same import as ChatScreen and PostFormScreen: the react-native version does
 // not handle Android, which is exactly how the input ended up under the keyboard.
@@ -59,6 +59,24 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
   /** Messages sent from this device, echoed until the next poll picks them up. */
   const [localMessages, setLocalMessages] = useState<LiveMessage[]>([]);
 
+  /**
+   * Arrived after the finish.
+   *
+   * A live notification is stale by nature — the athlete can finish between the
+   * push going out and the phone being picked up. Someone who tapped "they are
+   * running right now" wanted that session, so hand them the activity rather
+   * than an empty state explaining they are late.
+   *
+   * Only when there was never a broadcast to show: if it ended while they were
+   * watching, they were there for it and the ended state is the honest answer.
+   */
+  const arrivedAfterTheEnd = status === 'ended' && !broadcast;
+  useEffect(() => {
+    if (arrivedAfterTheEnd) {
+      navigation.replace('ActivityDetail', { activityId });
+    }
+  }, [arrivedAfterTheEnd, navigation, activityId]);
+
   const allMessages = useMemo(() => {
     const seen = new Set(messages.map((m) => m.id));
     return [...messages, ...localMessages.filter((m) => !seen.has(m.id))];
@@ -78,6 +96,10 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
   );
 
   const athleteName = broadcast?.user?.name ?? broadcast?.user?.username ?? '';
+
+  // While `replace` is in flight the screen still renders once — showing the
+  // ended state for a frame would flash content the athlete never asked for.
+  if (arrivedAfterTheEnd) return null;
 
   if (status === 'ended') {
     return (

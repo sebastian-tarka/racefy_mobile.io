@@ -258,6 +258,10 @@ export interface UserPreferences {
     activity_reactions: NotificationChannelSettings;
     mentions: NotificationChannelSettings;
     training_week_feedback: NotificationChannelSettings;
+    /** Someone you follow started recording. Push + websocket only. */
+    activity_started: NotificationChannelSettings;
+    /** Someone you follow is broadcasting and you can join. Push + websocket only. */
+    activity_live_started: NotificationChannelSettings;
   };
   privacy: {
     profile_visibility: 'public' | 'followers' | 'private';
@@ -961,6 +965,7 @@ export interface Activity {
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
+  videos?: Video[];
   user?: User;
   is_owner?: boolean;
   /** True only while broadcasting; cleared the moment the broadcast ends. */
@@ -1410,6 +1415,8 @@ export interface CreateCommentRequest {
 export interface Photo {
   id: number;
   user_id: number;
+  /** Position within the owner's media set; continuous across post + activity. */
+  order?: number;
   path: string;
   filename: string;
   mime_type: string;
@@ -2052,7 +2059,11 @@ export type NotificationType =
   | 'activity_report_ready'
   | 'goal_achieved'
   | 'goal_period_completed'
-  | 'goal_pace_warning';
+  | 'goal_pace_warning'
+  /** Someone you follow started recording, without broadcasting. */
+  | 'activity_started'
+  /** Someone you follow opened their session for spectating. */
+  | 'activity_live_started';
 
 export interface NotificationData {
   type: NotificationType;
@@ -2619,13 +2630,17 @@ export interface PushNotificationData {
   // Backend-provided URL for navigation (priority source)
   url?: string;
   timestamp?: string;
-  // Navigation data (fallback if URL not provided)
-  post_id?: number;
-  activity_id?: number;
-  event_id?: number;
-  user_id?: number;
-  conversation_id?: number;
-  comment_id?: number;
+  /**
+   * Navigation data. FCM requires every value in `data` to be a string, so
+   * these arrive as `"247"`, not `247` — read them through `pushId()` rather
+   * than trusting the declared type.
+   */
+  post_id?: number | string;
+  activity_id?: number | string;
+  event_id?: number | string;
+  user_id?: number | string;
+  conversation_id?: number | string;
+  comment_id?: number | string;
   // Type-specific data
   likeable_type?: 'post' | 'activity' | 'comment';
   likeable_id?: number;
@@ -2638,7 +2653,7 @@ export interface PushNotificationData {
   // Message data (FCM uses app_ prefix for reserved keys)
   app_message_type?: string;
   // Actor info
-  actor_id?: number;
+  actor_id?: number | string;
   actor_name?: string;
   actor_username?: string;
   actor_avatar?: string;
@@ -2650,7 +2665,12 @@ export interface PushNotificationData {
   // AI activity report data
   report_id?: number;
   // Training goals data
-  goal_id?: number;
+  goal_id?: number | string;
+  // Live broadcast data
+  live_visibility?: string;
+  sport_type?: string;
+  sport_type_slug?: string;
+  deep_link_path?: string;
 }
 
 // ============ SOCIAL SHARING ============

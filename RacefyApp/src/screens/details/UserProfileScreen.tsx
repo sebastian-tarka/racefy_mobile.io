@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityCard,
@@ -22,6 +22,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useUserPointStats } from '../../hooks/usePointStats';
 import { useBlockUser } from '../../hooks/useBlockUser';
+import { useNotificationMute } from '../../hooks/useNotificationMute';
 import { api } from '../../services/api';
 import { canSendMessage, canViewFollowersList, canViewFollowingList } from '../../utils/privacy';
 import { spacing } from '../../theme';
@@ -153,6 +154,22 @@ export function UserProfileScreen({ navigation, route }: Props) {
   const handleFollowingPress = () => {
     setFollowModalTab('following');
     setShowFollowModal(true);
+  };
+
+  /**
+   * Muting yourself is a 422 on the server, so the control is simply absent on
+   * your own profile — the status is not even asked for.
+   */
+  const mute = useNotificationMute(profile?.id ?? null, !isOwnProfile && isAuthenticated);
+
+  const handleToggleMute = async () => {
+    if (mute.isToggling) return;
+    setShowActionSheet(false);
+    try {
+      await mute.toggle();
+    } catch {
+      Alert.alert(t('common.error'), t('notificationMute.failed'));
+    }
   };
 
   const handleBlockUser = async () => {
@@ -420,6 +437,21 @@ export function UserProfileScreen({ navigation, route }: Props) {
                     icon: 'flag-outline',
                     onPress: handleReportUser,
                     color: colors.warning,
+                  },
+                  {
+                    // Next to Block, not instead of it. Muting keeps the follow,
+                    // the feed and their messages — only the "started a
+                    // session / is live / posted" pings stop, and they are
+                    // never told.
+                    id: 'mute',
+                    title: mute.isMuted
+                      ? t('notificationMute.unmuteAction')
+                      : t('notificationMute.muteAction'),
+                    description: mute.isMuted
+                      ? t('notificationMute.unmuteDescription')
+                      : t('notificationMute.muteDescription'),
+                    icon: mute.isMuted ? 'notifications-outline' : 'notifications-off-outline',
+                    onPress: handleToggleMute,
                   },
                   {
                     id: 'block',

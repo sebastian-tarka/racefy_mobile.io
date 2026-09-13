@@ -16,7 +16,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { borderRadius, msFont, spacing } from '../theme';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import type { SubscriptionTier, TrainingProgram } from '../types/api';
+import type { SubscriptionTier, Team, TrainingProgram, UserPointStats } from '../types/api';
 import type { UserGoal } from '../types/goals';
 import type { WorkoutPlan } from '../types/workouts';
 
@@ -48,6 +48,12 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
   const [goals, setGoals] = useState<UserGoal[] | null>(null);
   const [strengthPlans, setStrengthPlans] = useState<WorkoutPlan[] | null>(null);
   const [routeCount, setRouteCount] = useState<number | null>(null);
+  const [points, setPoints] = useState<UserPointStats | null>(null);
+  const [rewardTotals, setRewardTotals] = useState<{ badges: number; coupons: number } | null>(
+    null,
+  );
+  const [myTeams, setMyTeams] = useState<Team[] | null>(null);
+  const [openTeamCount, setOpenTeamCount] = useState<number | null>(null);
   // `total` (server-side), not the page length — the list is paginated at 20.
   const { total: liveCount } = useLiveBroadcasts();
 
@@ -70,15 +76,38 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
    * description — a tool list must not turn into an error report.
    */
   const loadStatuses = useCallback(async () => {
-    const [goalsResult, plansResult, routesResult] = await Promise.allSettled([
+    const [
+      goalsResult,
+      plansResult,
+      routesResult,
+      pointsResult,
+      rewardsResult,
+      myTeamsResult,
+      teamsResult,
+    ] = await Promise.allSettled([
       api.listGoals(),
       api.listWorkoutPlans(),
       api.getRoutes({ page: 1, per_page: 1 }),
+      api.getMyPointStats(),
+      api.getUserRewards(),
+      api.getMyTeams(),
+      api.getTeams({ page: 1, per_page: 1 }),
     ]);
     if (goalsResult.status === 'fulfilled') setGoals(goalsResult.value);
     if (plansResult.status === 'fulfilled') setStrengthPlans(plansResult.value);
     if (routesResult.status === 'fulfilled') {
       setRouteCount(routesResult.value.meta?.total ?? routesResult.value.data.length);
+    }
+    if (pointsResult.status === 'fulfilled') setPoints(pointsResult.value);
+    if (rewardsResult.status === 'fulfilled') {
+      setRewardTotals({
+        badges: rewardsResult.value.total_badges,
+        coupons: rewardsResult.value.total_coupons,
+      });
+    }
+    if (myTeamsResult.status === 'fulfilled') setMyTeams(myTeamsResult.value);
+    if (teamsResult.status === 'fulfilled') {
+      setOpenTeamCount(teamsResult.value.meta?.total ?? teamsResult.value.data.length);
     }
   }, []);
 
@@ -120,6 +149,36 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
     routeCount != null
       ? t('profile.tools.routesStatus', { count: routeCount })
       : t('routes.subtitle');
+
+  // Every row in this list states a number — that is what gives anyone a
+  // reason to open it. Teams was the one row that did not, which is why the
+  // most competitive feature in the app read as the least alive.
+  const competeStatus =
+    points && (points.weekly_rank > 0 || points.global_rank > 0)
+      ? t('profile.tools.rankStatus', {
+          weekly: points.weekly_rank.toLocaleString(),
+          points: points.weekly_points.toLocaleString(),
+          global: points.global_rank.toLocaleString(),
+        })
+      : t('profile.tools.rankStatusEmpty');
+
+  const rewardsStatus = rewardTotals
+    ? t('profile.tools.rewardsStatus', {
+        badges: rewardTotals.badges,
+        coupons: rewardTotals.coupons,
+        points: (points?.total_points ?? 0).toLocaleString(),
+      })
+    : t('rewards.subtitle');
+
+  const myTeam = myTeams?.[0] ?? null;
+  const teamsStatus = myTeam
+    ? t('profile.tools.teamsStatusMember', {
+        name: myTeam.name,
+        members: myTeam.members_count,
+      })
+    : openTeamCount != null && openTeamCount > 0
+      ? t('profile.tools.teamsStatusNone', { count: openTeamCount })
+      : t('teams.profileSubtitle');
 
   const aiReportsStatus = isFree
     ? t('insights.aiReports.premiumRequired')
@@ -210,6 +269,39 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
         </>,
       )}
 
+      {/* Competition earns its own group: ranking, rewards and teams all answer
+          "where do I stand", which is a different question from the training
+          tools above and the places below. Before this, the leaderboard had a
+          single entry point — buried in the Stats tab, four screens of scroll
+          down — and rewards had none at all outside the Events tab. */}
+      {group(
+        t('profile.tools.competition'),
+        <>
+          <ProfileToolRow
+            first
+            icon="trophy"
+            tone={colors.warning}
+            title={t('leaderboard.title')}
+            status={competeStatus}
+            onPress={() => navigation.navigate('Leaderboard')}
+          />
+          <ProfileToolRow
+            icon="star"
+            tone={colors.ai}
+            title={t('rewards.title')}
+            status={rewardsStatus}
+            onPress={() => navigation.navigate('Rewards')}
+          />
+          <ProfileToolRow
+            icon="shield"
+            tone="#8b5cf6"
+            title={t('teams.teams')}
+            status={teamsStatus}
+            onPress={() => navigation.navigate('TeamsList')}
+          />
+        </>,
+      )}
+
       {group(
         t('profile.tools.community'),
         <>
@@ -226,13 +318,6 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
                 : t('live.list.emptySubtitle')
             }
             onPress={() => navigation.navigate('LiveBroadcasts')}
-          />
-          <ProfileToolRow
-            icon="shield"
-            tone="#8b5cf6"
-            title={t('teams.teams')}
-            status={t('teams.profileSubtitle')}
-            onPress={() => navigation.navigate('TeamsList')}
           />
           <ProfileToolRow
             icon="map"
@@ -260,7 +345,7 @@ const styles = StyleSheet.create({
   group: {
     alignSelf: 'stretch',
     marginTop: spacing.lg,
-    marginHorizontal: spacing.sm,
+    // Bez własnego wcięcia — karty narzędzi stoją w jednej linii z resztą listy.
     gap: spacing.md,
   },
   groupBlock: {

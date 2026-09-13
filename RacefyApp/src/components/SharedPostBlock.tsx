@@ -7,6 +7,7 @@ import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { formatDuration, getSportIcon } from './FeedCard.utils';
+import { mergeActivityPhotos } from '../utils/activityMedia';
 import type { SharedPost } from '../types/api';
 
 interface SharedPostBlockProps {
@@ -19,8 +20,10 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
   const { colors } = useTheme();
   const { t } = useTranslation();
 
+  // A reshared activity post carries its media on the activity, same as the
+  // original does.
   const photos = [
-    ...(sharedPost.photos || []),
+    ...mergeActivityPhotos(sharedPost),
     ...(sharedPost.media || []).filter((m) => !m.mime_type?.startsWith('video/')),
   ];
 

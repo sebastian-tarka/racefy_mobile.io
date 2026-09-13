@@ -270,6 +270,15 @@
         "behind": "Behind",
         "completed": "Completed"
       }
+    },
+    "competition": {
+      "badgeTitle": "New badge: {{name}}",
+      "badgeBody": "Tap to see it in your cabinet",
+      "movedUp_one": "Up {{count}} place this week",
+      "movedUp_other": "Up {{count}} places this week",
+      "movedDown_one": "Down {{count}} place this week",
+      "movedDown_other": "Down {{count}} places this week",
+      "rankNow": "#{{rank}} with {{points}} pts — see who is close"
     }
   },
   "network": {
@@ -538,7 +547,14 @@
       "goalsStatus_one": "{{count}} active · {{percent}}% done",
       "goalsStatus_other": "{{count}} active · {{percent}}% done",
       "routesStatus_one": "{{count}} saved route",
-      "routesStatus_other": "{{count}} saved routes"
+      "routesStatus_other": "{{count}} saved routes",
+      "competition": "Competition",
+      "rankStatus": "#{{weekly}} this week · {{points}} pts · #{{global}} all time",
+      "rankStatusEmpty": "Not ranked yet · one activity puts you on the board",
+      "rewardsStatus": "{{badges}} badges · {{coupons}} coupons · {{points}} pts",
+      "teamsStatusMember": "{{name}} · {{members}} members",
+      "teamsStatusNone_one": "{{count}} team is open to join",
+      "teamsStatusNone_other": "{{count}} teams are open to join"
     }
   },
   "editProfile": {
@@ -614,7 +630,18 @@
     "happeningNow": "Happening Now",
     "upcomingEvents": "Upcoming Events",
     "completedEvents": "Recently Completed",
-    "featured": "Featured"
+    "featured": "Featured",
+    "stakes": {
+      "points_one": "{{count}} pt",
+      "points_other": "{{count}} pts",
+      "coupon": "Coupon"
+    },
+    "rewards": {
+      "title": "What's on the line",
+      "finisher": "Finisher",
+      "pointsOnly": "Points only"
+    },
+    "create": "Create"
   },
   "eventDetail": {
     "title": "Event Details",
@@ -1573,7 +1600,11 @@
     "adminTools": {
       "title": "Admin Tools",
       "impersonate": "Impersonate User"
-    }
+    },
+    "notif_activity_started": "Session started",
+    "notif_activity_started_desc": "Someone you follow has just started a session.",
+    "notif_activity_live_started": "Live broadcast",
+    "notif_activity_live_started_desc": "Someone you follow is broadcasting live and you can join."
   },
   "comments": {
     "title": "Comments",
@@ -2215,7 +2246,23 @@
     "noRewards": "No rewards yet",
     "noRewardsMessage": "Complete events to earn rewards, points, and exclusive prizes!",
     "loadingRewards": "Loading rewards...",
-    "failedToLoad": "Failed to load rewards"
+    "failedToLoad": "Failed to load rewards",
+    "cabinet": {
+      "label": "Badges · {{count}}",
+      "labelWithNew": "Badges · {{count}} · {{fresh}} new",
+      "allRewards": "All rewards",
+      "seeAll": "See all {{count}} badges"
+    },
+    "badgeSheet": {
+      "earned": "Earned",
+      "from": "From",
+      "fromEvent": "An event"
+    },
+    "sections": {
+      "couponsHint": "Codes expire — use them or lose them",
+      "badgesHint": "Ordered by date earned",
+      "pointsRow": "Full history of every point earned"
+    }
   },
   "reshare": {
     "title": "Reshare Post",
@@ -2659,7 +2706,9 @@
     "periodThisMonth": "This month",
     "periodLastMonth": "Last month",
     "periodThisYear": "This year",
-    "periodLastYear": "Last year"
+    "periodLastYear": "Last year",
+    "standingMeta": "#{{rank}} this month · {{active}} active this week",
+    "standingSummary": "#{{rank}} of {{total}} teams · {{active}} of {{members}} trained this week"
   },
   "feedback": {
     "title": "Feedback & Bug Reports",
@@ -3214,7 +3263,7 @@
       "start": "Start",
       "done": "Done",
       "undo": "Undo",
-      "addSet": "+ set",
+      "addSet": "Add set",
       "removeSet": "Remove set",
       "rest": "Rest",
       "restLeft": "{{time}} left",
@@ -3226,7 +3275,6 @@
       "history": "History",
       "suggested": "last {{kg}} kg",
       "target": "{{target}}",
-      "leaveHint": "Leaving keeps the session in progress — resume it from the plan.",
       "nextExercise": "Next: {{name}}",
       "collapsedDone": "{{done}}/{{total}} done",
       "notification": {
@@ -3237,7 +3285,8 @@
       "exerciseOf": "Exercise {{index}} of {{total}}",
       "next": "Next · {{name}}",
       "prevExercise": "Previous exercise",
-      "setColumn": "Set"
+      "setColumn": "Set",
+      "skipExercise": "Skip · {{name}}"
     },
     "complete": {
       "title": "Finish workout",
@@ -3304,7 +3353,55 @@
       "feed": "Friends' activities",
       "record": "Record an activity",
       "events": "Events",
-      "profile": "Your profile"
+      "profile": "Your profile",
+      "resumeStrength": "Back to the strength session in progress"
     }
+  },
+  "compete": {
+    "standing": {
+      "rankWeek": "Rank · week",
+      "points": "Points",
+      "thisWeek": "this week",
+      "notRanked": "Not ranked yet",
+      "notRankedHint": "Every finished activity earns points — one puts you on the board",
+      "a11y": "Rank {{rank}} this week, {{points}} points"
+    },
+    "periods": {
+      "weekly": "Week",
+      "monthly": "Month",
+      "allTime": "All time"
+    },
+    "aroundYou": "Around you",
+    "gapToNext": "{{points}} pts to #{{rank}}",
+    "pointsAction": "Points",
+    "emptyFollowing": "Nobody to race yet",
+    "emptyFollowingBody": "Follow a few athletes and this board fills with people you actually run against.",
+    "findPeople": "Find people to follow",
+    "seeGlobal": "See the global board instead",
+    "footerWeekly": "Global board · resets Monday 00:00",
+    "footerMonthly": "Global board · resets on the 1st",
+    "footerAllTime": "Global board · all points ever earned",
+    "footerFollowing_one": "{{count}} athlete you follow has points",
+    "footerFollowing_other": "{{count}} athletes you follow have points",
+    "you": "You",
+    "history": {
+      "total": "Total",
+      "entries_one": "pts · {{count}} entry",
+      "entries_other": "pts · {{count}} entries",
+      "fromActivities": "From activities",
+      "fromEvents": "From events",
+      "filters": {
+        "all": "All",
+        "activity": "Activities",
+        "event": "Events"
+      }
+    }
+  },
+  "notificationMute": {
+    "muteAction": "Mute notifications",
+    "muteDescription": "You still follow them and see their posts. Only their session, live and post pings stop. They are not told.",
+    "unmuteAction": "Unmute notifications",
+    "unmuteDescription": "Start getting their session, live and post notifications again.",
+    "failed": "Could not change the notification setting"
   }
 }
