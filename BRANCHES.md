@@ -15,7 +15,16 @@ Stan na: **2026-09-13**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Warstwa rywalizacji wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Warstwa rywalizacji wg designu „Racefy v2" (zmergowane 2026-09-13, tag `pre-rywalizacja-i-silownia` = main sprzed merge)
 
 Design: `racefy-compete.jsx`, `racefy-rewards.jsx`, `racefy-teams.jsx` oraz zmiany
 w `racefy-profile.jsx`, `racefy-events.jsx`, `racefy-screens.jsx`. Ranking, punkty,
@@ -44,7 +53,7 @@ wyciągnięcie ich na wierzch. Nowe ekrany: `Rewards`. Przebudowane: `Leaderboar
 - [ ] Profil bez poświaty: sticky pasek zakładek nie odcina się jaśniejszym prostokątem
 - [ ] Tryb ciemny: blok pozycji i przyklejony wiersz rankingu (ciemne tło „hero") czytelne na ciemnym motywie
 
-### Trening siłowy: usuwanie serii i wychodzenie z sesji (branch `rywalizacja-i-silownia`)
+### Trening siłowy: usuwanie serii i wychodzenie z sesji (zmergowane 2026-09-13, ten sam tag)
 
 Zgłoszone z urządzenia. Serię dało się dodać, ale nie usunąć — kasowanie wisiało
 na przytrzymaniu „ptaszka" **już ukończonej** serii, więc świeżo dodanej nie dało
@@ -65,7 +74,7 @@ nie przypominało o otwartej sesji — inaczej niż przy aktywności biegowej.
 - [ ] Zakończenie w połowie zapisuje aktywność z tym, co już zrobione — nie kasuje sesji jak „Saltar”/„Pomiń”
 - [ ] Na ostatnim ćwiczeniu stopka ma jeden przycisk „Zakończ”, bez zdublowanej flagi
 
-### Media aktywności po migracji backendu (branch `rywalizacja-i-silownia`)
+### Media aktywności po migracji backendu (zmergowane 2026-09-13, ten sam tag)
 
 Backend przeniósł zdjęcia postu aktywnościowego na aktywność: `post.photos` jest
 puste, komplet siedzi w `activity.photos` z ciągłą kolejnością. Mobile czytał
@@ -78,7 +87,7 @@ nadal potrafi zapisać zdjęcie na poście.
 - [ ] Post udostępniony (reshare) aktywności też pokazuje zdjęcia
 - [ ] Post ogólny ze zdjęciami na poście działa jak dotąd (ścieżka fallbacku)
 
-### Kalendarz siłowni i pomijanie ćwiczenia (branch `rywalizacja-i-silownia`)
+### Kalendarz siłowni i pomijanie ćwiczenia (zmergowane 2026-09-13, ten sam tag)
 
 Z logów z urządzenia: lista dni w harmonogramie była kluczowana samą datą, a API
 zwraca po kilka wpisów na ten sam dzień (2026-09-08 trzy razy) — React gubił
@@ -88,7 +97,7 @@ wtedy wszystkie poza jednym.
 - [ ] Przeniesienie treningu na inny dzień nadal działa po zmianie klucza
 - [ ] Sesja: przycisk stopki mówi „Pomiń · X", gdy w bieżącym ćwiczeniu nic nie zapisano, i „Następne · X", gdy coś jest
 
-### Auto-rotacja mediów na karcie feedu (branch `rywalizacja-i-silownia`)
+### Auto-rotacja mediów na karcie feedu (zmergowane 2026-09-13, ten sam tag)
 
 Karta z kilkoma zdjęciami przewija się sama co 4,5 s, ręczne przesuwanie działa
 jak dotąd. Zatrzymuje się na slajdzie z wideo, poza aktywnym ekranem i przy
@@ -102,7 +111,7 @@ włączonym ograniczeniu ruchu w systemie.
 - [ ] Włączone „ogranicz ruch" w systemie wyłącza rotację całkowicie
 - [ ] Kropki paginacji śledzą automatyczną zmianę, nie tylko ręczną
 
-### Powiadomienia o treningu i transmisji (branch `rywalizacja-i-silownia`)
+### Powiadomienia o treningu i transmisji (zmergowane 2026-09-13, ten sam tag)
 
 Wg `docs/mobile/prompts/activity-notifications-implementation.md` z repo API.
 Dwa nowe typy push, dwa przełączniki w ustawieniach, wyciszanie pojedynczej osoby.
@@ -126,7 +135,7 @@ Do przetestowania bez czekania na prawdziwą transmisję: poproś backend o
 - [ ] Po scaleniu routerów: stare typy powiadomień (polubienia, komentarze, wiadomości, eventy, cele, raporty AI) nadal prowadzą tam gdzie wcześniej — i z pusha, i z listy
 - [ ] Powiadomienie o feedbacku tygodnia bez `week_id` nadal rozwiązuje tydzień i otwiera właściwy ekran
 
-### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+### Eventy wg designu „Racefy v2" (zmergowane 2026-09-13, ten sam tag)
 
 Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;
 domknięte różnice układu i jedna rzecz, która była zbudowana, ale niepodłączona:
@@ -144,7 +153,7 @@ nigdy ich nie przekazywał — podtytuł karty „Na żywo" był pusty.
 Braki po stronie API spisane w `.notes/prompt-backend-eventy-brakujace-dane.md`
 (liczba znajomych zapisanych, agregaty live na zasobie eventu, etykieta dyscypliny).
 
-### Hiszpański uzupełniony (branch `rywalizacja-i-silownia`)
+### Hiszpański uzupełniony (zmergowane 2026-09-13, ten sam tag)
 
 `es.json` nie miał 537 kluczy z 2816 — w tym **całego** treningu siłowego (272)
 i prawie całego nagrywania (132) — więc spadały na angielski. Uzupełnione;
@@ -153,12 +162,6 @@ parzystość kluczów i placeholderów z `en.json` sprawdzona maszynowo.
 - [ ] Przełączenie języka na hiszpański: ekran nagrywania i sesja siłowa bez wtrętów angielskich
 - [ ] Liczba mnoga po hiszpańsku (`_one`/`_other`) działa tam, gdzie polski ma `_few`/`_many`
 
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Paski zakładek i zakładka Statystyki wg designu „Racefy v2" (zmergowane 2026-09-08, tag `pre-strength-move-resume` = main sprzed merge)
 
