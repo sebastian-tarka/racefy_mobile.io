@@ -121,6 +121,8 @@ Do przetestowania bez czekania na prawdziwą transmisję: poproś backend o
 - [ ] Etykieta zmienia się na „Włącz powiadomienia" po wyciszeniu i przetrwa ponowne wejście na profil
 - [ ] Na własnym profilu pozycji wyciszenia nie ma wcale
 - [ ] Wiadomość prywatna od wyciszonej osoby **nadal** przychodzi
+- [ ] Lista powiadomień w aplikacji: tknięcie wpisu o transmisji otwiera ekran widza, a nie alert „Unknown notification URL format"
+- [ ] Lista powiadomień: wpis o rozpoczętym treningu otwiera aktywność
 
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 

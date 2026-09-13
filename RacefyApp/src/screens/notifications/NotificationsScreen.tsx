@@ -20,6 +20,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
 import { spacing, fontSize } from '../../theme';
+import { pushId } from '../../utils/pushPayload';
 import type { Notification } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
@@ -109,6 +110,12 @@ export function NotificationsScreen({ navigation }: Props) {
           const activityId = parseInt(url.split('/')[2]);
           logger.nav('Opening activity detail', { activityId });
           navigation.navigate('ActivityDetail', { activityId });
+        }
+        // Live broadcast: /live/{id}
+        else if (url.startsWith('/live/')) {
+          const activityId = parseInt(url.split('/')[2]);
+          logger.nav('Opening live spectator', { activityId });
+          navigation.navigate('LiveSpectator', { activityId });
         }
         // Event detail: /events/{id}
         else if (url.startsWith('/events/')) {
@@ -249,6 +256,25 @@ export function NotificationsScreen({ navigation }: Props) {
       if (notification.type === 'training_week_feedback' && notificationData) {
         handleTrainingWeekFeedbackNavigation(notificationData);
         return;
+      }
+
+      // Activity pushes route on the id, before the URL is looked at — the
+      // same rule the push handler follows. Without this the list falls through
+      // to URL parsing, which does not know `/live/{id}` and ends in an error
+      // alert on a notification that carried everything it needed.
+      if (
+        notification.type === 'activity_live_started' ||
+        notification.type === 'activity_started'
+      ) {
+        const activityId = pushId(notificationData?.activity_id);
+        if (activityId) {
+          if (notification.type === 'activity_live_started') {
+            navigation.navigate('LiveSpectator', { activityId });
+          } else {
+            navigation.navigate('ActivityDetail', { activityId });
+          }
+          return;
+        }
       }
 
       // Handle weekly_summary - navigate to Profile with stats tab
