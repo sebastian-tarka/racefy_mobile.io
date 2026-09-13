@@ -11,12 +11,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { useIsFocused } from '@react-navigation/native';
 import { LazyRoutePreview as RoutePreview } from './LeafletMap';
 import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { MediaGrid } from './MediaGrid';
 import { MentionText } from './MentionText';
 import { mergeActivityPhotos, mergeActivityVideos } from '../utils/activityMedia';
+import { useAutoAdvance } from '../hooks/useAutoAdvance';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { useTheme } from '../hooks/useTheme';
@@ -175,6 +178,21 @@ function ActivityMediaSlider({
 
   const slides = hasRouteMap ? [{ type: 'route' as const }, ...mediaItems] : mediaItems;
 
+  // Cards with more than one thing to show move on by themselves, so a photo
+  // set is seen without asking anyone to swipe. A video slide holds: pulling
+  // the view away from something that is playing is worse than stopping.
+  const activeSlide = slides[activeIndex];
+  const reduceMotion = useReduceMotion();
+  const isFocused = useIsFocused();
+  const { pause, resume } = useAutoAdvance({
+    count: slides.length,
+    index: activeIndex,
+    enabled: isFocused && !reduceMotion && activeSlide?.type !== 'video',
+    onAdvance: (next) => {
+      flatListRef.current?.scrollToOffset({ offset: next * mediaWidth, animated: true });
+    },
+  });
+
   const renderItem = ({
     item,
     index,
@@ -269,6 +287,8 @@ function ActivityMediaSlider({
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
+        onScrollBeginDrag={pause}
+        onScrollEndDrag={resume}
         decelerationRate="fast"
         snapToInterval={mediaWidth}
         snapToAlignment="center"

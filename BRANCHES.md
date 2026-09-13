@@ -88,6 +88,20 @@ wtedy wszystkie poza jednym.
 - [ ] Przeniesienie treningu na inny dzień nadal działa po zmianie klucza
 - [ ] Sesja: przycisk stopki mówi „Pomiń · X", gdy w bieżącym ćwiczeniu nic nie zapisano, i „Następne · X", gdy coś jest
 
+### Auto-rotacja mediów na karcie feedu (branch `rywalizacja-i-silownia`)
+
+Karta z kilkoma zdjęciami przewija się sama co 4,5 s, ręczne przesuwanie działa
+jak dotąd. Zatrzymuje się na slajdzie z wideo, poza aktywnym ekranem i przy
+włączonym ograniczeniu ruchu w systemie.
+
+- [ ] Karta z 2+ mediami przewija się sama i zawija z ostatniego na pierwszy
+- [ ] Karta z jednym medium nie rusza się wcale
+- [ ] Przesunięcie palcem zatrzymuje rotację na czas gestu i daje wybranemu slajdowi pełne 4,5 s
+- [ ] Slajd z wideo nie jest automatycznie zmieniany
+- [ ] Wejście na inny ekran zatrzymuje rotację kart w feedzie
+- [ ] Włączone „ogranicz ruch" w systemie wyłącza rotację całkowicie
+- [ ] Kropki paginacji śledzą automatyczną zmianę, nie tylko ręczną
+
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 
 Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;
