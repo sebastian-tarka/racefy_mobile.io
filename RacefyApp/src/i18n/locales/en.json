@@ -640,7 +640,8 @@
       "title": "What's on the line",
       "finisher": "Finisher",
       "pointsOnly": "Points only"
-    }
+    },
+    "create": "Create"
   },
   "eventDetail": {
     "title": "Event Details",

@@ -640,7 +640,8 @@
       "title": "Qué está en juego",
       "finisher": "Por terminar",
       "pointsOnly": "Solo puntos"
-    }
+    },
+    "create": "Crear"
   },
   "eventDetail": {
     "title": "Detalles del evento",

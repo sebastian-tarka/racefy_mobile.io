@@ -662,7 +662,8 @@
       "title": "O co gramy",
       "finisher": "Za ukończenie",
       "pointsOnly": "Tylko punkty"
-    }
+    },
+    "create": "Utwórz"
   },
   "eventDetail": {
     "title": "Szczegóły wydarzenia",

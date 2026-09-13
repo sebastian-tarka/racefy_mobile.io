@@ -62,6 +62,24 @@ nie przypominało o otwartej sesji — inaczej niż przy aktywności biegowej.
 - [ ] Po zakończeniu lub pominięciu sesji przycisk wraca do emeraldu z play bez restartu aplikacji
 - [ ] Etykieta „Dodaj serię" bez podwójnego plusa (ikona + tekst, nie „+ + seria")
 
+### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+
+Design: `racefy-events.jsx`, `racefy-event-detail.jsx`. Większość sekcji już była;
+domknięte różnice układu i jedna rzecz, która była zbudowana, ale niepodłączona:
+`StageCtaCard` miał propsy na liczbę ścigających się i procent ukończonych, a ekran
+nigdy ich nie przekazywał — podtytuł karty „Na żywo" był pusty.
+
+- [ ] Trwający event: ciemna karta „Na żywo" ma podtytuł z liczbą ścigających się i procentem ukończonych
+- [ ] Zakończony event: karta „Wyniki końcowe" bez zmian
+- [ ] Nadchodzący event: żadne standings nie są pobierane (sprawdź w logach sieci)
+- [ ] Uczestnicy są nad trasą i opisem, nie pod galerią
+- [ ] Lista: aktywny filtr to jeden ciemny chip, reszta obrysy; emerald został akcjom
+- [ ] Lista: pigułka „Utwórz" w nagłówku, tylko na zakładce wydarzeń i po zalogowaniu
+- [ ] Karty wydarzeń i karta wyróżniona: pasek stawek nie rozjedzie układu, gdy event nie ma żadnych nagród
+
+Braki po stronie API spisane w `.notes/prompt-backend-eventy-brakujace-dane.md`
+(liczba znajomych zapisanych, agregaty live na zasobie eventu, etykieta dyscypliny).
+
 ### Hiszpański uzupełniony (branch `rywalizacja-i-silownia`)
 
 `es.json` nie miał 537 kluczy z 2816 — w tym **całego** treningu siłowego (272)

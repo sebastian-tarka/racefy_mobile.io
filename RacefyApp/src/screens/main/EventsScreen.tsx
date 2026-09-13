@@ -883,12 +883,16 @@ export function EventsScreen({ navigation, route }: Props) {
               color={isSearchVisible ? colors.error : colors.textPrimary}
             />
           </TouchableOpacity>
-          {isAuthenticated && (
+          {isAuthenticated && activeTab === 'events' && (
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.createButton, { backgroundColor: colors.textPrimary }]}
               onPress={() => navigation.navigate('EventForm', {})}
+              activeOpacity={0.85}
             >
-              <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+              <Ionicons name="add" size={16} color={colors.white} />
+              <Text style={[styles.createButtonText, { color: colors.white }]}>
+                {t('events.create')}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -914,16 +918,22 @@ export function EventsScreen({ navigation, route }: Props) {
                 key={filter.value}
                 style={[
                   styles.filterButton,
-                  { backgroundColor: colors.borderLight },
-                  activeFilter === filter.value && { backgroundColor: colors.primary },
+                  {
+                    backgroundColor:
+                      activeFilter === filter.value ? colors.textPrimary : 'transparent',
+                    borderColor: activeFilter === filter.value ? colors.textPrimary : colors.border,
+                  },
                 ]}
                 onPress={() => setActiveFilter(filter.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: activeFilter === filter.value }}
               >
                 <Text
                   style={[
                     styles.filterText,
-                    { color: colors.textSecondary },
-                    activeFilter === filter.value && { color: colors.white },
+                    {
+                      color: activeFilter === filter.value ? colors.white : colors.textSecondary,
+                    },
                   ]}
                 >
                   {filter.label}
@@ -1120,6 +1130,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   // Filter and list styles
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 34,
+    paddingHorizontal: 13,
+    borderRadius: borderRadius.full,
+  },
+  createButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+  },
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
@@ -1128,13 +1150,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    // Design "Racefy v2" (EventsScreen): the selected filter is the one solid
+    // dark chip; the rest are outlines. Emerald is the brand accent and reads
+    // as "go" — spending it on a list filter left nothing for the actions.
+    paddingHorizontal: 13,
+    paddingVertical: 7,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
   },
   filterText: {
     fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   resultsCount: {
     paddingHorizontal: spacing.md,
