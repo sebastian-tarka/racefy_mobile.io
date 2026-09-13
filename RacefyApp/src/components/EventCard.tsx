@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { Card } from './Card';
+import { EventStakes } from './event/EventStakes';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
@@ -84,6 +85,11 @@ function EventCardBase({ event, onPress }: EventCardProps) {
                 {meta}
               </Text>
             </View>
+            {/* What it is worth and how it is scored — on the card, so the
+                decision to register does not need the detail page. */}
+            <View style={styles.stakes}>
+              <EventStakes event={event} />
+            </View>
           </View>
           {event.is_registered && (
             <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
@@ -101,8 +107,11 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
+  },
+  stakes: {
+    marginTop: spacing.sm,
   },
   badge: {
     width: 52,

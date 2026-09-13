@@ -9,6 +9,7 @@ import { Badge } from './Badge';
 import { useTheme } from '../hooks/useTheme';
 import { getSportIcon } from '../utils/sportIcon';
 import { pickEventCoverUrl } from './event/eventFormat';
+import { EventStakes } from './event/EventStakes';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Event } from '../types/api';
 
@@ -76,6 +77,12 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
           </View>
         </View>
       </TouchableOpacity>
+
+      {/* Stakes above the register button — what there is to win reaches the
+          athlete before the button that asks them to commit. */}
+      <View style={styles.stakes}>
+        <EventStakes event={event} />
+      </View>
 
       <View style={styles.footer}>
         <Text style={[styles.going, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -159,6 +166,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '500',
     marginTop: 2,
+  },
+  stakes: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   footer: {
     flexDirection: 'row',

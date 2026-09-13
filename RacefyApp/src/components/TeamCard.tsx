@@ -10,10 +10,16 @@ import type { Team } from '../types/api';
 
 interface TeamCardProps {
   team: Team;
+  /**
+   * This team's place in the monthly volume board. The number is what gives
+   * anyone a reason to open the row — without it a team card says only that a
+   * team exists.
+   */
+  standing?: { rank: number; activeMembers: number } | null;
   onPress: () => void;
 }
 
-function TeamCardBase({ team, onPress }: TeamCardProps) {
+function TeamCardBase({ team, standing, onPress }: TeamCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
@@ -31,6 +37,17 @@ function TeamCardBase({ team, onPress }: TeamCardProps) {
               {team.captain.name}
             </Text>
           </View>
+          {standing && (
+            <View style={styles.metaRow}>
+              <Ionicons name="trophy-outline" size={14} color={colors.warning} />
+              <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
+                {t('teams.standingMeta', {
+                  rank: standing.rank,
+                  active: standing.activeMembers,
+                })}
+              </Text>
+            </View>
+          )}
           <View style={styles.metaRow}>
             <Ionicons name="people-outline" size={14} color={colors.textMuted} />
             <Text style={[styles.metaText, { color: colors.textMuted }]}>

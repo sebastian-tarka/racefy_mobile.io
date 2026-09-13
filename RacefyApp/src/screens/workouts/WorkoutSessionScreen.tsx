@@ -196,16 +196,23 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
       },
     ]);
 
-  const leave = () => {
-    if (inProgress) {
-      Alert.alert('', t('strengthPlans.session.leaveHint'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.ok'), onPress: () => navigation.goBack() },
-      ]);
-    } else {
-      navigation.goBack();
-    }
-  };
+  /**
+   * Leaving does not end the session — the server keeps it open and the
+   * "Resume" banner brings the athlete back from anywhere in the app, the same
+   * way a running activity works. A confirmation dialog in front of a harmless
+   * action only made the session feel like a place you were locked into.
+   */
+  const leave = () => navigation.goBack();
+
+  const confirmRemoveSet = (setId: number) =>
+    Alert.alert('', t('strengthPlans.session.deleteSetConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('strengthPlans.session.removeSet'),
+        style: 'destructive',
+        onPress: () => void s.removeSet(setId),
+      },
+    ]);
 
   // ── render helpers ────────────────────────────────────────────────────────
 
@@ -281,17 +288,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
           <TouchableOpacity
             style={[styles.stateButton, { backgroundColor: colors.primary }]}
             onPress={() => inProgress && s.reopenSet(set.id)}
-            onLongPress={() =>
-              inProgress &&
-              Alert.alert('', t('strengthPlans.session.deleteSetConfirm'), [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                  text: t('strengthPlans.session.removeSet'),
-                  style: 'destructive',
-                  onPress: () => void s.removeSet(set.id),
-                },
-              ])
-            }
+            onLongPress={() => inProgress && confirmRemoveSet(set.id)}
             accessibilityLabel={t('strengthPlans.session.undo')}
           >
             <Ionicons name="checkmark" size={18} color="#ffffff" />
@@ -328,6 +325,22 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             >
               {t('strengthPlans.session.start')}
             </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* A set you add mid-session has to be removable the same way. This
+            used to be a long press on the tick of an already-completed set —
+            undiscoverable, and no help at all for the extra set you just
+            added and have not done yet. */}
+        {inProgress && (
+          <TouchableOpacity
+            style={styles.removeSet}
+            onPress={() => confirmRemoveSet(set.id)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('strengthPlans.session.removeSet')}
+          >
+            <Ionicons name="close" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -1022,6 +1035,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '700',
+  },
+  removeSet: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addSet: {
     flexDirection: 'row',

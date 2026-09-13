@@ -9,13 +9,67 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-08**
+Stan na: **2026-09-13**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### Warstwa rywalizacji wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
+
+Design: `racefy-compete.jsx`, `racefy-rewards.jsx`, `racefy-teams.jsx` oraz zmiany
+w `racefy-profile.jsx`, `racefy-events.jsx`, `racefy-screens.jsx`. Ranking, punkty,
+odznaki i drużyny leżały 3–4 poziomy głęboko albo nie miały widoku wcale; to jest
+wyciągnięcie ich na wierzch. Nowe ekrany: `Rewards`. Przebudowane: `Leaderboard`,
+`PointHistory`. Nowe komponenty: `StandingBlock`, `RankDelta`, `BadgeCabinet`,
+`BadgeTile`, `BadgeSheet`, `LeaderboardRow`, `EventStakes`, `EventRewardsCard`,
+`CompetitionStandingSection`. Poświata `ScreenContainer` ma teraz prop `glow`.
+
+- [ ] Profil: blok pozycji w karcie tożsamości pokazuje rangę tygodniową i punkty; strzałka zmiany pojawia się dopiero przy drugim wejściu (delta liczy się lokalnie z `@racefy_seen_ranks`)
+- [ ] Profil: konto bez punktów pokazuje wariant „jeszcze bez pozycji", nie zero
+- [ ] Profil: gablota odznak renderuje się nad zakładkami i znika, gdy nie ma żadnej odznaki
+- [ ] Profil: odznaka legendarna odróżnia się od epickiej z odległości (gradient + grubszy pierścień)
+- [ ] Profil: grupa „Rywalizacja" — wszystkie trzy wiersze mają liczby, także Drużyny
+- [ ] Ranking: domyślnie Obserwowani + Tydzień; przełączniki zakresu i okresu działają
+- [ ] Ranking: własny wiersz przyklejony na dole i znikający, gdy prawdziwy wiersz wjedzie na ekran (nie może być widoczny dwa razy)
+- [ ] Ranking: sekcja „W twojej okolicy" pojawia się na globalnym, gdy pozycja jest poza czołówką
+- [ ] Ranking: pusty stan Obserwowanych, gdy nikogo nie obserwujesz
+- [ ] Punkty: karta sumy z podziałem na aktywności i wydarzenia; filtry działają (uwaga: filtrują to, co wczytane, nie zapytanie)
+- [ ] Nagrody: ekran otwiera się z profilu i z gabloty; sumy u góry zgadzają się z listą
+- [ ] Nagrody: kupon pokazuje kod i datę ważności
+- [ ] Drużyny: karta pozycji nad listą i `#pozycja · aktywni` na kartach drużyn
+- [ ] Wydarzenia: pasek stawek na karcie listy i na karcie wyróżnionej — punkty, nagroda, kupon, tryb rankingu
+- [ ] Wydarzenia: blok „O co gramy" nad przyciskiem zapisu w detalu (wcześniej nagrody nie renderowały się nigdzie)
+- [ ] Home: sekcja rywalizacji pojawia się po zdobyciu odznaki albo zmianie pozycji i milczy, gdy nic się nie zmieniło
+- [ ] Profil bez poświaty: sticky pasek zakładek nie odcina się jaśniejszym prostokątem
+- [ ] Tryb ciemny: blok pozycji i przyklejony wiersz rankingu (ciemne tło „hero") czytelne na ciemnym motywie
+
+### Trening siłowy: usuwanie serii i wychodzenie z sesji (branch `rywalizacja-i-silownia`)
+
+Zgłoszone z urządzenia. Serię dało się dodać, ale nie usunąć — kasowanie wisiało
+na przytrzymaniu „ptaszka" **już ukończonej** serii, więc świeżo dodanej nie dało
+się cofnąć wcale. Wyjście z sesji pytało dialogiem, a poza ekranami siłowni nic
+nie przypominało o otwartej sesji — inaczej niż przy aktywności biegowej.
+
+- [ ] Każdy wiersz serii ma widoczny × podczas trwania sesji; potwierdzenie usuwa serię (także nieukończoną)
+- [ ] Usunięcie serii aktualizuje licznik serii w podsumowaniu sesji
+- [ ] Przytrzymanie ptaszka na ukończonej serii nadal usuwa (stara ścieżka)
+- [ ] Cofnięcie z sesji wychodzi od razu, bez dialogu, i nie kończy sesji
+- [ ] Na Home pojawia się pasek „Sesja w toku — Wznów" i wraca do właściwej sesji
+- [ ] Wznowienie z Home odtwarza stan serii (nic nie ginie)
+- [ ] Przycisk Record na dolnym pasku w czasie sesji siłowej: bursztyn + sztanga, tknięcie wraca do sesji (z każdej zakładki)
+- [ ] Aktywność biegowa ma pierwszeństwo: gdy biegną obie, przycisk pokazuje kwadrat/play i prowadzi na ekran nagrywania
+- [ ] Po zakończeniu lub pominięciu sesji przycisk wraca do emeraldu z play bez restartu aplikacji
+- [ ] Etykieta „Dodaj serię" bez podwójnego plusa (ikona + tekst, nie „+ + seria")
+
+### Hiszpański uzupełniony (branch `rywalizacja-i-silownia`)
+
+`es.json` nie miał 537 kluczy z 2816 — w tym **całego** treningu siłowego (272)
+i prawie całego nagrywania (132) — więc spadały na angielski. Uzupełnione;
+parzystość kluczów i placeholderów z `en.json` sprawdzona maszynowo.
+
+- [ ] Przełączenie języka na hiszpański: ekran nagrywania i sesja siłowa bez wtrętów angielskich
+- [ ] Liczba mnoga po hiszpańsku (`_one`/`_other`) działa tam, gdzie polski ma `_few`/`_many`
 
 ---
 

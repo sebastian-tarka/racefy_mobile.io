@@ -58,6 +58,7 @@ export type RootStackParamList = {
   Paywall: { feature?: string } | undefined;
   Leaderboard: undefined;
   PointHistory: undefined;
+  Rewards: undefined;
   Insights: undefined;
   // Live broadcasting
   LiveBroadcasts: undefined;

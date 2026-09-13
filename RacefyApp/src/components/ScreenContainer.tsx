@@ -8,39 +8,51 @@ interface ScreenContainerProps {
   children: React.ReactNode;
   edges?: Edge[];
   style?: ViewStyle;
+  /**
+   * Off for screens that pin an opaque element over the page — a sticky tab bar
+   * painted in `colors.background` cannot reproduce the gradient underneath it,
+   * so it reads as a flat lighter patch. The "Racefy v2" design has no glow on
+   * those screens either.
+   */
+  glow?: boolean;
 }
 
 export function ScreenContainer({
   children,
   edges = ['top', 'bottom'],
   style,
+  glow = true,
 }: ScreenContainerProps) {
   const { colors, isDark } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top-left emerald glow */}
-      <LinearGradient
-        colors={
-          isDark
-            ? ['rgba(16, 185, 129, 0.12)', 'transparent']
-            : ['rgba(16, 185, 129, 0.08)', 'transparent']
-        }
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.7, y: 0.5 }}
-        style={styles.glowTopLeft}
-      />
-      {/* Bottom-right blue glow */}
-      <LinearGradient
-        colors={
-          isDark
-            ? ['transparent', 'rgba(59, 130, 246, 0.08)']
-            : ['transparent', 'rgba(59, 130, 246, 0.06)']
-        }
-        start={{ x: 0.3, y: 0.5 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.glowBottomRight}
-      />
+      {glow && (
+        <>
+          {/* Top-left emerald glow */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ['rgba(16, 185, 129, 0.12)', 'transparent']
+                : ['rgba(16, 185, 129, 0.08)', 'transparent']
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.7, y: 0.5 }}
+            style={styles.glowTopLeft}
+          />
+          {/* Bottom-right blue glow */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ['transparent', 'rgba(59, 130, 246, 0.08)']
+                : ['transparent', 'rgba(59, 130, 246, 0.06)']
+            }
+            start={{ x: 0.3, y: 0.5 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.glowBottomRight}
+          />
+        </>
+      )}
       <SafeAreaView style={[styles.container, style]} edges={edges}>
         {children}
       </SafeAreaView>

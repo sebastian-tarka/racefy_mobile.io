@@ -17,6 +17,7 @@ import { RoutePreview } from '../../components/LeafletMap';
 import {
   CommentaryPreviewCard,
   EventActionSection,
+  EventRewardsCard,
   EventCourseIntel,
   EventGallery,
   EventHero,
@@ -245,6 +246,12 @@ export function EventDetailScreen({ route, navigation }: Props) {
             />
 
             <View style={styles.sections}>
+              {/* What the event is worth, above the button that asks for a
+                  commitment — not below the description, after it. */}
+              <View style={styles.padded}>
+                <EventRewardsCard event={event} />
+              </View>
+
               <EventActionSection
                 event={event}
                 isAuthenticated={isAuthenticated}

@@ -19,6 +19,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityCard,
   Avatar,
+  BadgeCabinet,
+  BadgeSheet,
   CompareUserSelector,
   DraftPostCard,
   EmptyState,
@@ -35,6 +37,7 @@ import {
   PersonalBestsCard,
   SegmentedControl,
   SportTypeFilter,
+  StandingBlock,
   type TimeRange,
   UserListModal,
 } from '../../components';
@@ -46,6 +49,8 @@ import { useUnits } from '../../hooks/useUnits';
 import { useActivityStats } from '../../hooks/useActivityStats';
 import { useActivityTrends } from '../../hooks/useActivityTrends';
 import { usePointStats } from '../../hooks/usePointStats';
+import { useRankDelta } from '../../hooks/useRankDelta';
+import { useRewards } from '../../hooks/useRewards';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
@@ -63,6 +68,7 @@ import type { MainTabParamList, RootStackParamList } from '../../navigation/type
 import type {
   Activity,
   ActivityStats,
+  BadgeReward,
   DraftPost,
   Event,
   Post,
@@ -175,6 +181,11 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     isLoading: isLoadingPointStats,
     refetch: refetchPointStats,
   } = usePointStats();
+  // The direction of travel next to the rank. Derived on the device — the API
+  // has no "previous rank" — so it is absent on the first visit of a period.
+  const rankDeltas = useRankDelta(pointStats);
+  const { badges } = useRewards();
+  const [openBadge, setOpenBadge] = useState<BadgeReward | null>(null);
   const { sportTypes } = useSportTypes();
   const {
     trends,
@@ -584,7 +595,10 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // Wrapped in a measured View: knowing where the header ends is what lets a
   // tab switch land on the content instead of somewhere in the middle of it.
   const renderProfileHeader = () => (
-    <View onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+    <View
+      style={styles.profileHeader}
+      onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+    >
       <View
         style={[
           styles.profileCard,
@@ -637,6 +651,15 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
               {user.bio}
             </Text>
           )}
+
+          {/* Where you stand — current state, one tap from the full board.
+              The lifetime row below is history; this is not (design
+              "Racefy v2" → StandingBlock). */}
+          <StandingBlock
+            stats={pointStats}
+            weeklyDelta={rankDeltas.weekly ?? null}
+            onPress={() => navigation.navigate('Leaderboard')}
+          />
 
           {/* Training and social used to share one row of four columns, with
               the distance labelled "Total" — total of what was anyone's guess.
@@ -703,6 +726,14 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
           </View>
         </View>
       </View>
+
+      {/* What you have won, above the tabs — see BadgeCabinet for why this is
+          a section and not a sixth tab. */}
+      <BadgeCabinet
+        badges={badges}
+        onOpenAll={() => navigation.navigate('Rewards')}
+        onOpenBadge={setOpenBadge}
+      />
 
       {/* Navigation Sections */}
       <ProfileNavigationSections navigation={navigation} tier={tier} />
@@ -781,7 +812,7 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
       )}
 
       {activeTab === 'activities' && (
-        <View style={styles.activitiesFilterContent}>
+        <View style={[styles.activitiesFilterContent, styles.filterBleed]}>
           <SportTypeFilter
             sportTypes={sportTypes}
             selectedSportTypeId={selectedSportTypeId}
@@ -804,12 +835,14 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
             value={selectedTimeRange}
             onChange={setSelectedTimeRange}
           />
-          <SportTypeFilter
-            sportTypes={sportTypes}
-            selectedSportTypeId={selectedSportTypeId}
-            onSelectSportType={setSelectedSportTypeId}
-            isLoading={isLoadingActivityStats}
-          />
+          <View style={styles.filterBleed}>
+            <SportTypeFilter
+              sportTypes={sportTypes}
+              selectedSportTypeId={selectedSportTypeId}
+              onSelectSportType={setSelectedSportTypeId}
+              isLoading={isLoadingActivityStats}
+            />
+          </View>
 
           <StatsHeadlineCard
             stats={activityStats}
@@ -894,7 +927,7 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // so the Rules of Hooks hold.
   if (!isAuthenticated) {
     return (
-      <ScreenContainer>
+      <ScreenContainer glow={false}>
         <View
           style={[
             styles.header,
@@ -1077,7 +1110,10 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   };
 
   return (
-    <ScreenContainer>
+    // Bez poświaty: sticky pasek tabów musi być nieprzezroczysty, a płaskie
+    // `colors.background` nie odtworzy gradientu pod sobą — zostawał jaśniejszy
+    // prostokąt. Design "Racefy v2" ma tu płaskie tło.
+    <ScreenContainer glow={false}>
       {/* One list for every tab, drafts included. Two lists meant the profile
           header — cover, avatar and the whole navigation block — was mounted
           twice, so its data hooks fired twice on every visit. */}
@@ -1122,6 +1158,8 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
           pendingRequestsCount={pendingFollowCount}
         />
       )}
+
+      <BadgeSheet reward={openBadge} onClose={() => setOpenBadge(null)} />
     </ScreenContainer>
   );
 }
@@ -1143,9 +1181,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
+  profileHeader: {
+    // Design "Racefy v2" (ProfileScreen): 18 px między ostatnią kartą narzędzi
+    // a paskiem tabów. Na headerze, nie na pasku — pasek jest sticky, więc
+    // margines nad nim przepuszczałby wiersze listy po przypięciu.
+    paddingBottom: 18,
+  },
   listContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   coverImage: {
@@ -1278,8 +1322,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   tabContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    marginHorizontal: -spacing.md,
+    borderBottomWidth: 1,
+    // Kreska idzie przez całą szerokość — znosi wcięcie listy.
+    marginHorizontal: -spacing.lg,
   },
   draftsNote: {
     flexDirection: 'row',
@@ -1371,8 +1416,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   activitiesFilterContent: {
-    marginTop: spacing.sm,
+    // Bez marginTop: odstęp 12 pod kreską daje już `stickyTabs.paddingBottom`.
     marginBottom: spacing.md,
-    gap: spacing.xs,
+  },
+  // Filtr sportów scrolluje od krawędzi ekranu — własny padding listy chipów
+  // ustawia je w jednej linii z kartami, zamiast dokładać drugie wcięcie.
+  filterBleed: {
+    marginHorizontal: -spacing.lg,
   },
 });

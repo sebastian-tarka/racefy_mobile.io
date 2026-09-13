@@ -38,7 +38,17 @@
     "sun": "Dom",
     "notNow": "Ahora no",
     "options": "Opciones",
-    "view": "Ver"
+    "view": "Ver",
+    "clear": "Borrar",
+    "accept": "Aceptar",
+    "copied": "Copiado",
+    "decline": "Rechazar",
+    "fieldRequired": "Este campo es obligatorio",
+    "genericError": "Algo ha salido mal",
+    "noResults": "Sin resultados",
+    "permissionDenied": "No tienes permiso para hacer eso",
+    "retry": "Reintentar",
+    "selectLanguage": "Elegir idioma"
   },
   "sports": {
     "running": "Correr",
@@ -260,6 +270,15 @@
         "behind": "Por detrás",
         "completed": "Completado"
       }
+    },
+    "competition": {
+      "badgeTitle": "Nueva insignia: {{name}}",
+      "badgeBody": "Toca para verla en tu vitrina",
+      "movedUp_one": "Subes {{count}} puesto esta semana",
+      "movedUp_other": "Subes {{count}} puestos esta semana",
+      "movedDown_one": "Bajas {{count}} puesto esta semana",
+      "movedDown_other": "Bajas {{count}} puestos esta semana",
+      "rankNow": "#{{rank}} con {{points}} pts — mira quién está cerca"
     }
   },
   "network": {
@@ -382,7 +401,9 @@
     "reminderTitle": "Tienes borradores sin publicar",
     "reminderSubtitle": "Revisa y publica tus borradores",
     "viewAll": "Ver todos los borradores",
-    "dismissReminder": "Más tarde"
+    "dismissReminder": "Más tarde",
+    "unpublishedNote_one": "{{count}} actividad grabada sin publicar. Al publicarla conservas tus estadísticas y puntos.",
+    "unpublishedNote_other": "{{count}} actividades grabadas sin publicar. Al publicarlas conservas tus estadísticas y puntos."
   },
   "profile": {
     "title": "Perfil",
@@ -436,6 +457,34 @@
         "month": "Mes",
         "year": "Año",
         "allTime": "Todo el tiempo"
+      },
+      "metric": {
+        "distance": "Distancia",
+        "count": "Actividades",
+        "time": "Tiempo"
+      },
+      "bySport": "Por deporte",
+      "shareOf": "del total de {{metric}}",
+      "otherSport": "Otros",
+      "activitiesCount_one": "{{count}} actividad",
+      "activitiesCount_other": "{{count}} actividades",
+      "bests": {
+        "title": "Récords personales",
+        "inPeriod": "en este periodo",
+        "longestDistance": "Más larga",
+        "longestDuration": "Más tiempo",
+        "fastestSpeed": "Más rápida"
+      },
+      "advanced": {
+        "title": "Estadísticas avanzadas",
+        "body": "Zonas, carga de entrenamiento y comparación con otros atletas",
+        "cta": "Mejorar plan"
+      },
+      "comparedWith": "vs {{name}}",
+      "vsPrevious": "vs periodo anterior",
+      "trend": {
+        "title": "Tendencia",
+        "best": "mejor {{value}} · {{period}}"
       }
     },
     "empty": {
@@ -486,7 +535,27 @@
       "restrictedStats": "Las estadísticas están ocultas",
       "restrictedActivities": "Las actividades están ocultas",
       "restrictedPosts": "Las publicaciones están ocultas"
-    }
+    },
+    "tools": {
+      "competition": "Competición",
+      "rankStatus": "#{{weekly}} esta semana · {{points}} pts · #{{global}} histórico",
+      "rankStatusEmpty": "Aún sin puesto · una actividad te mete en la tabla",
+      "rewardsStatus": "{{badges}} insignias · {{coupons}} cupones · {{points}} pts",
+      "teamsStatusMember": "{{name}} · {{members}} miembros",
+      "teamsStatusNone_one": "{{count}} equipo abierto a nuevos miembros",
+      "teamsStatusNone_other": "{{count}} equipos abiertos a nuevos miembros",
+      "training": "Entrenamiento",
+      "community": "Comunidad y lugares",
+      "goalsStatus_one": "{{count}} activo · {{percent}}% completado",
+      "goalsStatus_other": "{{count}} activos · {{percent}}% completado",
+      "routesStatus_one": "{{count}} ruta guardada",
+      "routesStatus_other": "{{count}} rutas guardadas"
+    },
+    "streak": "Racha",
+    "streakDays": "días de racha",
+    "totalKm": "KM TOTALES",
+    "totalActivities": "ACTIVIDADES",
+    "totalTime": "TIEMPO"
   },
   "editProfile": {
     "title": "Editar perfil",
@@ -561,7 +630,17 @@
     "happeningNow": "En curso ahora",
     "upcomingEvents": "Próximos eventos",
     "completedEvents": "Completados recientemente",
-    "featured": "Destacado"
+    "featured": "Destacado",
+    "stakes": {
+      "points_one": "{{count}} pt",
+      "points_other": "{{count}} pts",
+      "coupon": "Cupón"
+    },
+    "rewards": {
+      "title": "Qué está en juego",
+      "finisher": "Por terminar",
+      "pointsOnly": "Solo puntos"
+    }
   },
   "eventDetail": {
     "title": "Detalles del evento",
@@ -957,6 +1036,150 @@
       "message": "Para grabar toda tu ruta con la pantalla apagada, permite que Racefy ignore la optimización de batería. Sin esto, el sistema puede detener el GPS durante la actividad.",
       "allow": "Permitir",
       "later": "Ahora no"
+    },
+    "audioCoachEnabled": "Entrenador de voz ACTIVADO",
+    "audioCoachDisabled": "Entrenador de voz DESACTIVADO",
+    "screenLocked": "Pantalla bloqueada",
+    "screenUnlocked": "Pantalla desbloqueada",
+    "holdToUnlock": "MANTÉN PARA DESBLOQUEAR",
+    "lock": "Bloquear pantalla",
+    "workout": {
+      "title": "Objetivo de entrenamiento",
+      "subtitle": "Recibirás un aviso al alcanzarlo. La grabación continúa.",
+      "openConfig": "Objetivo de entrenamiento",
+      "distance": "Distancia",
+      "time": "Tiempo",
+      "minutesShort": "min",
+      "setGoal": "Fijar objetivo",
+      "changeGoal": "Cambiar objetivo",
+      "clearGoal": "Quitar objetivo",
+      "goalLabel": "Objetivo · {{goal}}",
+      "remaining": "faltan {{value}}",
+      "reached": "Objetivo alcanzado",
+      "reachedDetail": "+{{extra}} · objetivo en {{at}}",
+      "pausedProgress": "Objetivo {{goal}} · {{percent}}%",
+      "cues": "Avisos",
+      "cueHalfway": "Aviso a mitad",
+      "cueVoice": "Voz",
+      "cueTone": "Sonido",
+      "cueHaptics": "Vibración",
+      "cueHint": "Los avisos usan la voz del entrenador y bajan tu música mientras suenan. Funcionan con la pantalla apagada.",
+      "toastSet": "Objetivo fijado: {{goal}}",
+      "toastCleared": "Objetivo quitado",
+      "notification": {
+        "title": "Objetivo alcanzado",
+        "body": "{{goal}} completado — buen trabajo. La grabación continúa.",
+        "goal": "Tu objetivo",
+        "segmentTitle": "Siguiente segmento",
+        "segmentBody": "{{segment}}",
+        "completeBody": "Entrenamiento completado — buen trabajo. La grabación continúa."
+      },
+      "headline": "¿Qué persigues hoy?",
+      "headlineHint": "Puedes cambiarlo cuando quieras, incluso a mitad de la actividad.",
+      "adjustTitle": "Ajustar objetivo",
+      "adjustSubtitle": "La actividad sigue en marcha",
+      "goalType": "Tipo de objetivo",
+      "typeOpen": "Libre",
+      "typeOpenHint": "Solo grabar, sin meta",
+      "typeDistanceHint": "Terminar a una distancia fija",
+      "typeTimeHint": "Moverte durante un tiempo fijo",
+      "typeIntervals": "Series",
+      "typeIntervalsHint": "Repeticiones de esfuerzo y recuperación",
+      "comingSoon": "Pronto",
+      "targetDistance": "Distancia objetivo",
+      "targetDuration": "Duración objetivo",
+      "presetHalf": "Media maratón",
+      "presetMarathon": "Maratón",
+      "alerts": "Avisos",
+      "cueVoiceHint": "Se dice a mitad y al llegar al objetivo",
+      "cueToneHint": "Señal corta antes de la voz",
+      "cueHapticsHint": "Vibrar con cada aviso",
+      "cueHalfwayHint": "Un aviso extra al 50 %",
+      "saveGoal": "Guardar objetivo · {{goal}}",
+      "dropGoal": "Descartar objetivo",
+      "applyNow": "Aplicar ahora",
+      "liveNote": "Aplicarlo a mitad de la actividad conserva todo lo grabado hasta ahora. El progreso cuenta desde el principio.",
+      "sectionGoal": "Objetivo",
+      "rowHint": "Toca para cambiar la distancia o el tiempo",
+      "setMidRun": "Fijar un objetivo sobre la marcha",
+      "add": "Añadir",
+      "edit": "Editar",
+      "goalLeft": "objetivo {{goal}} · falta",
+      "clear": "Borrar",
+      "secondsShort": "s",
+      "stepOpen": "libre",
+      "presets": "Predefinidos",
+      "presetSub": {
+        "p400": "con 200 m de trote",
+        "p1min": "con 1 min suave",
+        "p5min": "umbral, 90 s de transición"
+      },
+      "buildYourOwn": "Créalo tú",
+      "estimated": "aprox. {{time}}",
+      "repeats": "Repeticiones",
+      "stepWork": "Esfuerzo",
+      "stepRecovery": "Recuperación",
+      "stepWarmup": "Calentamiento",
+      "stepCooldown": "Vuelta a la calma",
+      "stepRemove": "Quitar",
+      "modeTime": "Tiempo",
+      "modeDistance": "Distancia",
+      "plan": "Plan",
+      "legendWork": "Esfuerzo",
+      "legendRecovery": "Recuperación",
+      "legendWarmCool": "Calent./vuelta",
+      "liveNoteIntervals": "Aplicarlo a mitad de la actividad conserva todo lo grabado hasta ahora. El plan empieza desde este momento.",
+      "cueCountdown": "Cuenta atrás",
+      "cueCountdownHint": "Pitidos 3-2-1 antes de que acabe un segmento por tiempo",
+      "cueVoiceHintIntervals": "Se dice en cada cambio de segmento",
+      "segWarmup": "Calentamiento",
+      "segCooldown": "Vuelta a la calma",
+      "segWork": "Esfuerzo",
+      "segRecovery": "Recuperación",
+      "segRep": "Rep {{current}}/{{total}}",
+      "segmentLeft": "segmento de {{length}} · falta",
+      "next": "Siguiente · {{segment}}",
+      "lastSegment": "Último segmento",
+      "repsTotal": "{{count}} repeticiones en total",
+      "planComplete": "Plan completado",
+      "allSegmentsDone": "Todos los segmentos hechos",
+      "skip": "Saltar",
+      "skipSegment": "Saltar este segmento",
+      "stepAdd": "Añadir"
+    },
+    "heartRate": "Pulso",
+    "bpm": "ppm",
+    "elevation": "Desnivel",
+    "kcal": "kcal",
+    "holdToFinish": "Mantén stop para terminar",
+    "holdToLock": "Mantén para bloquear la pantalla",
+    "finish": {
+      "title": "Terminar",
+      "defaultTitle": "Actividad de {{sport}}",
+      "titlePlaceholder": "Ponle nombre a esta actividad",
+      "savePrivate": "Guardar en privado",
+      "saveAndShare": "Guardar y compartir",
+      "noTrack": "No se ha grabado ninguna traza GPS"
+    },
+    "allSports": "Todos los deportes",
+    "startSport": "Empezar {{sport}}",
+    "layerMap": "Mapa",
+    "layerRoute": "Ruta",
+    "shortcuts": {
+      "title": "Accesos directos de deportes",
+      "edit": "Editar accesos directos",
+      "counter": "{{count}} de {{max}} en la pantalla de inicio",
+      "onTheRail": "En la barra · en orden",
+      "defaultSport": "Deporte predeterminado",
+      "search": "Buscar deportes",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "remove": "Quitar de la barra",
+      "full": "La barra admite {{max}} deportes. Quita uno para añadir otro."
+    },
+    "pausedHint": "En pausa — reanuda o termina",
+    "permissions": {
+      "locationDenied": "Se necesita permiso de ubicación."
     }
   },
   "gpxImport": {
@@ -1135,7 +1358,8 @@
   },
   "permissions": {
     "gallery": "Se requiere permiso para acceder a las fotos y seleccionar una imagen.",
-    "camera": "Se requiere permiso para acceder a la cámara y tomar una foto."
+    "camera": "Se requiere permiso para acceder a la cámara y tomar una foto.",
+    "mediaLibrary": "Se necesita acceso a la galería para elegir una imagen."
   },
   "settings": {
     "title": "Configuración",
@@ -1787,7 +2011,23 @@
       "settingsUpdated": "Configuración actualizada exitosamente",
       "startsOn": "Empieza el {{date}}",
       "planRegeneratedTitle": "Plan reconstruido",
-      "planRegeneratedMessage": "Tu pausa fue lo bastante larga como para que el plan anterior terminara después de tu carrera, así que se reconstruyó con el tiempo que te queda. Tus semanas anteriores se conservan como historial."
+      "planRegeneratedMessage": "Tu pausa fue lo bastante larga como para que el plan anterior terminara después de tu carrera, así que se reconstruyó con el tiempo que te queda. Tus semanas anteriores se conservan como historial.",
+      "weekShort": "SEM",
+      "browseWeeks": "Ver semanas",
+      "weeksDone": "Semanas hechas",
+      "toGo": "Quedan",
+      "toGoUnit": "sem",
+      "adherence": "Cumplimiento",
+      "sessions": "Sesiones",
+      "planned": "{{value}} planificadas",
+      "viewWeekProgress": "Ver el progreso de la semana",
+      "switchPlan": "Cambiar de plan",
+      "switchPlanDesc": "Tienes otros planes activos",
+      "sessionStatus": {
+        "done": "Hecha",
+        "planned": "Planificada",
+        "skipped": "Saltada"
+      }
     },
     "weekDetail": {
       "title": "Semana {{number}}",
@@ -1950,7 +2190,14 @@
       "goal_demands_more_sessions": "Este objetivo suele entrenarse con al menos {{recommended_min_sessions}} sesiones por semana y elegiste {{sessions_per_week}}, así que la sesión larga dominará tu semana. Añadir otro deporte en ajustes es una forma más segura de sumar carga.",
       "plan_regenerated_on_resume": "El plan se reconstruyó tras una pausa de {{paused_weeks}} semanas para que siga llegando a tiempo.",
       "target_date_passed": "La fecha de tu carrera ya pasó, así que el plan ya no apunta a ella."
-    }
+    },
+    "activeBadge": "Activo",
+    "pausedBadge": "En pausa",
+    "weekOfTotal": "Semana {{current}} de {{total}}",
+    "holdToSwitch": "mantén pulsado para cambiar",
+    "yourPlans": "Tus planes de entrenamiento · {{count}}",
+    "createPlan": "Crear un plan nuevo",
+    "createPlanDesc": "La IA lo construye según tu objetivo y tu horario"
   },
   "rewards": {
     "title": "Recompensas",
@@ -1994,7 +2241,23 @@
     "noRewards": "Sin recompensas aún",
     "noRewardsMessage": "¡Completa eventos para ganar recompensas, puntos y premios exclusivos!",
     "loadingRewards": "Cargando recompensas...",
-    "failedToLoad": "Error al cargar recompensas"
+    "failedToLoad": "Error al cargar recompensas",
+    "cabinet": {
+      "label": "Insignias · {{count}}",
+      "labelWithNew": "Insignias · {{count}} · {{fresh}} nuevas",
+      "allRewards": "Todas las recompensas",
+      "seeAll": "Ver las {{count}} insignias"
+    },
+    "badgeSheet": {
+      "earned": "Conseguida",
+      "from": "De",
+      "fromEvent": "Un evento"
+    },
+    "sections": {
+      "couponsHint": "Los códigos caducan — úsalos",
+      "badgesHint": "Por fecha de obtención",
+      "pointsRow": "Historial completo de cada punto ganado"
+    }
   },
   "reshare": {
     "title": "Compartir publicación",
@@ -2084,7 +2347,13 @@
       "training_programs": "Programas de entrenamiento",
       "active_training_programs": "Programas de entrenamiento activos",
       "exclusive_badges": "Insignias exclusivas",
-      "points_multiplier": "Multiplicador de puntos"
+      "points_multiplier": "Multiplicador de puntos",
+      "teams_max": "Equipos",
+      "team_members_max": "Miembros por equipo",
+      "coaching_hints_bulk": "Consejos de entrenamiento en lote",
+      "audio_coach_ai": "Entrenador de voz con IA",
+      "insights_advanced": "Análisis avanzados",
+      "ad_free": "Sin anuncios"
     },
     "featureDescriptions": {
       "ai_posts_monthly": "Deja que la IA escriba publicaciones atractivas sobre tus actividades.",
@@ -2102,7 +2371,18 @@
       "exclusive_badges": "Desbloquea insignias de logros exclusivas para tu perfil.",
       "points_multiplier": "Gana puntos más rápido con un multiplicador de bonificación."
     },
-    "tapToUpgrade": "Toca para mejorar"
+    "tapToUpgrade": "Toca para mejorar",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "yearlyDiscount": "Anual -20%",
+    "perMonth": "/mes",
+    "perYear": "/año",
+    "mostPopular": "El más elegido",
+    "currentPlan": "Plan actual",
+    "selectPlan": "Elegir plan",
+    "contactSupport": "¿Dudas sobre los planes?",
+    "unlimited": "Ilimitado",
+    "free": "Gratis"
   },
   "goals": {
     "title": "Objetivos de entrenamiento",
@@ -2421,7 +2701,9 @@
     "periodThisMonth": "Este mes",
     "periodLastMonth": "Mes pasado",
     "periodThisYear": "Este año",
-    "periodLastYear": "Año pasado"
+    "periodLastYear": "Año pasado",
+    "standingMeta": "#{{rank}} este mes · {{active}} activos esta semana",
+    "standingSummary": "#{{rank}} de {{total}} equipos · {{active}} de {{members}} entrenaron esta semana"
   },
   "feedback": {
     "title": "Comentarios y reportes de errores",
@@ -2671,6 +2953,442 @@
       "commentsDescription": "Quienes te vean podrán enviarte un mensaje. Los privados solo llegan a ti; los públicos también los ven los demás espectadores.",
       "ttsLabel": "Leer los mensajes en voz alta mientras me muevo",
       "ttsDescription": "Los mensajes entrantes se leen por tus auriculares, bajando el volumen de la música en vez de detenerla. Requiere un plan de pago."
+    }
+  },
+  "tabs": {
+    "home": "Inicio",
+    "feed": "Novedades",
+    "record": "Grabar",
+    "events": "Eventos",
+    "profile": "Tú",
+    "a11y": {
+      "home": "Pantalla de inicio",
+      "feed": "Actividades de tus amistades",
+      "record": "Grabar una actividad",
+      "events": "Eventos",
+      "profile": "Tu perfil",
+      "resumeStrength": "Volver a la sesión de fuerza en curso"
+    }
+  },
+  "compete": {
+    "standing": {
+      "rankWeek": "Puesto · semana",
+      "points": "Puntos",
+      "thisWeek": "esta semana",
+      "notRanked": "Aún sin puesto",
+      "notRankedHint": "Cada actividad terminada da puntos — con una entras en la tabla",
+      "a11y": "Puesto {{rank}} esta semana, {{points}} puntos"
+    },
+    "periods": {
+      "weekly": "Semana",
+      "monthly": "Mes",
+      "allTime": "Histórico"
+    },
+    "aroundYou": "Cerca de ti",
+    "gapToNext": "{{points}} pts hasta #{{rank}}",
+    "pointsAction": "Puntos",
+    "emptyFollowing": "Todavía no hay con quién competir",
+    "emptyFollowingBody": "Sigue a algunos atletas y esta tabla se llenará de gente con la que compites de verdad.",
+    "findPeople": "Buscar a quién seguir",
+    "seeGlobal": "Ver la tabla global",
+    "footerWeekly": "Tabla global · se reinicia el lunes a las 00:00",
+    "footerMonthly": "Tabla global · se reinicia el día 1",
+    "footerAllTime": "Tabla global · todos los puntos ganados",
+    "footerFollowing_one": "{{count}} atleta que sigues tiene puntos",
+    "footerFollowing_other": "{{count}} atletas que sigues tienen puntos",
+    "you": "Tú",
+    "history": {
+      "total": "Total",
+      "entries_one": "pts · {{count}} entrada",
+      "entries_other": "pts · {{count}} entradas",
+      "fromActivities": "De actividades",
+      "fromEvents": "De eventos",
+      "filters": {
+        "all": "Todo",
+        "activity": "Actividades",
+        "event": "Eventos"
+      }
+    }
+  },
+  "routeDetail": {
+    "title": "Detalles de la ruta",
+    "loading": "Cargando ruta...",
+    "notFound": "Ruta no encontrada",
+    "failedToLoad": "No se han podido cargar los detalles de la ruta",
+    "distance": "Distancia",
+    "elevation": "Desnivel positivo",
+    "elevationLoss": "Desnivel negativo",
+    "estimatedTime": "Tiempo est.",
+    "profile": "Tipo",
+    "waypoints": "Puntos de paso",
+    "sport": "Deporte",
+    "createdBy": "Creada por",
+    "startNavigation": "Iniciar navegación",
+    "duplicate": "Guardar en mi biblioteca",
+    "delete": "Eliminar ruta",
+    "edit": "Editar ruta",
+    "elevationProfile": "Perfil de desnivel",
+    "turnInstructions": "Indicaciones",
+    "noElevationData": "No hay datos de desnivel"
+  },
+  "navigation": {
+    "in": "En",
+    "backOnRoute": "De vuelta en la ruta",
+    "spokenMeters_one": "{{value}} metro",
+    "spokenMeters_other": "{{value}} metros",
+    "spokenKilometers_one": "{{value}} kilómetro",
+    "spokenKilometers_other": "{{value}} kilómetros",
+    "sharpLeft": "Gira cerrado a la izquierda",
+    "sharpRight": "Gira cerrado a la derecha",
+    "offRoute": "Fuera de ruta",
+    "remaining": "Restante",
+    "eta": "Llegada",
+    "turnLeft": "Gira a la izquierda",
+    "turnRight": "Gira a la derecha",
+    "goStraight": "Sigue recto",
+    "uTurn": "Cambio de sentido",
+    "routeComplete": "Ruta completada",
+    "arrive": "Llegada",
+    "then": "Después",
+    "lastInstruction": "Última indicación",
+    "left": "quedan {{distance}}",
+    "voiceOn": "Indicaciones por voz activadas",
+    "voiceOff": "Indicaciones por voz desactivadas",
+    "allDirections": "Todas las indicaciones",
+    "upsell": "Navegación paso a paso — Pro",
+    "readyTitle": "Navegación lista",
+    "cueCount_one": "{{count}} indicación",
+    "cueCount_other": "{{count}} indicaciones",
+    "previewVoice": "indicaciones por voz",
+    "previewSilent": "indicaciones solo en pantalla",
+    "allCount": "Las {{count}}",
+    "next": "Siguiente",
+    "noCues": "Esta ruta no tiene indicaciones"
+  },
+  "strengthPlans": {
+    "title": "Planes de fuerza",
+    "subtitle": "Entrenamientos, ejercicios y calendario semanal",
+    "empty": "Todavía no hay planes de fuerza",
+    "emptyHint": "Crea un plan desde cero o importa una hoja de cálculo.",
+    "newPlan": "Plan nuevo",
+    "importXlsx": "Importar hoja de cálculo",
+    "library": "Biblioteca de ejercicios",
+    "status": {
+      "draft": "Borrador",
+      "active": "Activo",
+      "archived": "Archivado"
+    },
+    "workoutsCount": "{{count}} entrenamientos",
+    "exercisesCount": "{{count}} ejercicios",
+    "durationMinutes": "~{{minutes}} min",
+    "secondsShort": "s",
+    "target": {
+      "reps": "Repeticiones",
+      "seconds": "Segundos",
+      "amrap": "Máx. repeticiones",
+      "amrapShort": "máx"
+    },
+    "weekdays": {
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado",
+      "7": "Domingo"
+    },
+    "weekdaysShort": {
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mié",
+      "4": "Jue",
+      "5": "Vie",
+      "6": "Sáb",
+      "7": "Dom"
+    },
+    "noWeekday": "Sin día fijo",
+    "restDay": "Descanso",
+    "week": "Semana",
+    "workouts": "Entrenamientos",
+    "addWorkout": "Añadir entrenamiento",
+    "noWorkouts": "Este plan aún no tiene entrenamientos",
+    "actions": {
+      "activate": "Marcar como activo",
+      "duplicate": "Duplicar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "moveUp": "Subir",
+      "moveDown": "Bajar",
+      "editPlan": "Editar plan",
+      "deletePlan": "Eliminar plan",
+      "deleteWorkout": "Eliminar entrenamiento",
+      "removeExercise": "Quitar del entrenamiento",
+      "openVideo": "Abrir vídeo"
+    },
+    "confirm": {
+      "deletePlan": "¿Eliminar este plan con todos sus entrenamientos?",
+      "deleteWorkout": "¿Eliminar este entrenamiento y sus ejercicios?",
+      "removeExercise": "¿Quitar este ejercicio del entrenamiento?",
+      "deleteExercise": "¿Eliminar este ejercicio de tu biblioteca?",
+      "activate": "¿Activar este plan? El plan activo actual se archivará."
+    },
+    "toast": {
+      "activated": "El plan ya está activo",
+      "duplicated": "Copia creada como borrador",
+      "planDeleted": "Plan eliminado",
+      "workoutDeleted": "Entrenamiento eliminado",
+      "exerciseRemoved": "Ejercicio quitado",
+      "exerciseDeleted": "Ejercicio eliminado",
+      "saved": "Guardado"
+    },
+    "errors": {
+      "inUse": "Este ejercicio se usa en {{count}} entrenamientos. Quítalo de ellos primero.",
+      "nameRequired": "El nombre es obligatorio",
+      "setsRange": "Las series deben estar entre 1 y 20",
+      "repsOrder": "El máximo debe ser al menos el mínimo",
+      "restRange": "El descanso debe estar entre 0 y 3600 s",
+      "exerciseRequired": "Elige un ejercicio o escribe su nombre"
+    },
+    "planForm": {
+      "titleNew": "Plan nuevo",
+      "titleEdit": "Editar plan",
+      "name": "Nombre del plan",
+      "namePlaceholder": "p. ej. Empuje / Tirón / Pierna",
+      "description": "Descripción",
+      "goal": "Objetivo",
+      "goalPlaceholder": "p. ej. hipertrofia, pérdida de grasa",
+      "startsOn": "Empieza el",
+      "endsOn": "Termina el",
+      "noDate": "Sin definir",
+      "scheduleNotes": "Notas para los demás días",
+      "scheduleNotesHint": "Qué pasa los días sin entrenamiento de fuerza (p. ej. carrera suave, descanso).",
+      "save": "Guardar plan"
+    },
+    "workoutForm": {
+      "titleNew": "Entrenamiento nuevo",
+      "titleEdit": "Editar entrenamiento",
+      "name": "Nombre del entrenamiento",
+      "namePlaceholder": "p. ej. EMPUJE — pecho, hombros, tríceps",
+      "dayLabel": "Etiqueta del día",
+      "dayLabelPlaceholder": "p. ej. Día 1",
+      "weekday": "Día de la semana",
+      "focus": "Enfoque",
+      "focusPlaceholder": "p. ej. fuerza, volumen",
+      "notes": "Notas",
+      "save": "Guardar entrenamiento"
+    },
+    "workout": {
+      "exercises": "Ejercicios",
+      "addExercise": "Añadir ejercicio",
+      "noExercises": "Todavía no hay ejercicios",
+      "superset": "Superserie {{group}}",
+      "tempo": "Tempo {{tempo}}",
+      "weight": "{{kg}} kg",
+      "holdHint": "Mantén pulsado un ejercicio para reordenarlo o quitarlo",
+      "start": "Empezar entrenamiento",
+      "noExercisesHint": "Añade los levantamientos que quieras en esta sesión: las series, repeticiones y el peso se editan por ejercicio."
+    },
+    "exerciseForm": {
+      "titleNew": "Añadir ejercicio",
+      "titleEdit": "Editar ejercicio",
+      "exercise": "Ejercicio",
+      "pickExercise": "Elige un ejercicio",
+      "sets": "Series",
+      "targetType": "Objetivo",
+      "repsMin": "Mín",
+      "repsMax": "Máx",
+      "secondsMin": "Mín (s)",
+      "secondsMax": "Máx (s)",
+      "rest": "Descanso (s)",
+      "tempo": "Tempo",
+      "tempoPlaceholder": "p. ej. 3-1-1",
+      "superset": "Grupo de superserie",
+      "weight": "Peso objetivo (kg)",
+      "loadNote": "Nota de carga",
+      "loadNotePlaceholder": "p. ej. 25 kg y subir a partir de la repetición 8",
+      "videoOverride": "Enlace de vídeo para este entrenamiento",
+      "videoHint": "Déjalo vacío para usar el enlace propio del ejercicio.",
+      "notes": "Notas",
+      "save": "Guardar",
+      "swapExercise": "Cambiar de ejercicio"
+    },
+    "picker": {
+      "title": "Elegir ejercicio",
+      "search": "Buscar ejercicios…",
+      "createNew": "Añadir «{{name}}» como ejercicio nuevo",
+      "noResults": "No hay resultados: escribe un nombre para crearlo",
+      "global": "Global",
+      "mine": "Míos"
+    },
+    "libraryScreen": {
+      "title": "Biblioteca de ejercicios",
+      "search": "Buscar…",
+      "all": "Todos",
+      "mine": "Míos",
+      "global": "Globales",
+      "empty": "Ningún ejercicio coincide",
+      "add": "Ejercicio nuevo",
+      "usedIn": "Usado en {{count}} entrenamientos",
+      "globalBadge": "Global"
+    },
+    "exerciseLibForm": {
+      "titleNew": "Ejercicio nuevo",
+      "titleEdit": "Editar ejercicio",
+      "name": "Nombre",
+      "muscleGroup": "Grupo muscular",
+      "equipment": "Material",
+      "equipmentPlaceholder": "p. ej. barra, mancuernas",
+      "video": "Enlace de vídeo (YouTube)",
+      "description": "Descripción",
+      "save": "Guardar ejercicio",
+      "readOnly": "Los ejercicios globales los mantienen los administradores y no se pueden editar."
+    },
+    "muscleGroups": {
+      "chest": "Pecho",
+      "back": "Espalda",
+      "shoulders": "Hombros",
+      "arms": "Brazos",
+      "legs": "Piernas",
+      "glutes": "Glúteos",
+      "core": "Core",
+      "full_body": "Cuerpo completo",
+      "cardio": "Cardio",
+      "other": "Otros"
+    },
+    "import": {
+      "title": "Importar hoja de cálculo",
+      "intro": "Elige un .xlsx exportado de Google Sheets: un título en A1, secciones DÍA N con tablas de ejercicios y un bloque de calendario semanal.",
+      "pick": "Elegir archivo",
+      "parsing": "Leyendo la hoja de cálculo…",
+      "preview": "Vista previa",
+      "planName": "Nombre del plan",
+      "summary": "{{workouts}} entrenamientos · {{exercises}} ejercicios · {{newExercises}} nuevos · {{scheduled}} programados",
+      "warnings": "Avisos ({{count}})",
+      "warningRow": "{{sheet}}, fila {{row}}: {{message}}",
+      "matchNew": "nuevo",
+      "matchExisting": "en la biblioteca",
+      "save": "Guardar plan",
+      "saving": "Guardando…",
+      "saved": "Plan importado",
+      "pickAnother": "Elegir otro archivo",
+      "fileTooLarge": "El archivo supera los 5 MB",
+      "failed": "No se ha podido leer este archivo"
+    },
+    "resume": {
+      "title": "Sesión en curso",
+      "subtitle": "{{name}} · empezada a las {{time}}",
+      "cta": "Reanudar"
+    },
+    "schedule": {
+      "title": "Calendario",
+      "today": "Hoy",
+      "start": "Empezar",
+      "resume": "Reanudar",
+      "skip": "Saltar",
+      "skipped": "Saltado",
+      "completed": "Completado",
+      "inProgress": "En curso",
+      "noteOnly": "Nota",
+      "empty": "Nada planificado en las próximas dos semanas",
+      "statsLine": "{{sets}} series · {{volume}} kg · {{duration}}",
+      "confirmSkip": "¿Saltar este entrenamiento? Quedará registrado como saltado.",
+      "conflictInProgress": "Hay otra sesión en curso: {{name}}. ¿La reanudas?",
+      "conflictLogged": "Este entrenamiento ya está registrado ese día.",
+      "openActivity": "Abrir actividad",
+      "openSchedule": "Programar y empezar",
+      "range": "Próximos 14 días",
+      "undoSkip": "Deshacer",
+      "moveTo": "Mover a otro día",
+      "movedFrom": "movido del {{date}}",
+      "resumeSkipped": "Reanudar",
+      "alreadyOnDay": "Este entrenamiento ya está el {{date}}."
+    },
+    "session": {
+      "progress": "{{done}}/{{total}} series",
+      "volume": "{{kg}} kg",
+      "setNo": "Serie {{n}}",
+      "kg": "kg",
+      "reps": "reps",
+      "sec": "s",
+      "start": "Empezar",
+      "done": "Hecha",
+      "undo": "Deshacer",
+      "addSet": "Añadir serie",
+      "removeSet": "Quitar serie",
+      "rest": "Descanso",
+      "restLeft": "quedan {{time}}",
+      "skipRest": "Saltar descanso",
+      "plus30": "+30 s",
+      "finish": "Terminar entrenamiento",
+      "skipSession": "Saltar sesión",
+      "confirmSkip": "¿Saltar esta sesión? No se guardará como actividad.",
+      "history": "Historial",
+      "suggested": "última {{kg}} kg",
+      "target": "{{target}}",
+      "nextExercise": "Siguiente: {{name}}",
+      "collapsedDone": "{{done}}/{{total}} hechas",
+      "notification": {
+        "title": "Descanso terminado",
+        "body": "Siguiente serie: {{exercise}}"
+      },
+      "deleteSetConfirm": "¿Quitar esta serie?",
+      "exerciseOf": "Ejercicio {{index}} de {{total}}",
+      "next": "Siguiente · {{name}}",
+      "prevExercise": "Ejercicio anterior",
+      "setColumn": "Serie"
+    },
+    "complete": {
+      "title": "Terminar entrenamiento",
+      "rpe": "Esfuerzo (RPE)",
+      "rpeHint": "1 = muy fácil · 10 = al límite",
+      "notes": "Notas",
+      "visibility": "Visibilidad",
+      "visibilityOptions": {
+        "public": "Pública",
+        "followers": "Seguidores",
+        "private": "Privada"
+      },
+      "submit": "Guardar como actividad",
+      "summaryTitle": "Entrenamiento guardado",
+      "time": "Tiempo",
+      "sets": "Series",
+      "volume": "Volumen",
+      "openActivity": "Abrir actividad",
+      "backToPlan": "Volver al plan",
+      "skippedTitle": "Sesión saltada"
+    },
+    "history": {
+      "title": "Historial",
+      "empty": "Todavía no hay sesiones registradas",
+      "best": "mejor {{kg}} kg",
+      "volume": "{{kg}} kg",
+      "setLine": "{{reps}} × {{kg}} kg",
+      "setLineSeconds": "{{seconds}} s"
+    },
+    "plansCount_one": "{{count}} plan",
+    "plansCount_other": "{{count}} planes",
+    "activeCount_one": "{{count}} activo",
+    "activeCount_other": "{{count}} activos",
+    "sessionsCount_one": "{{count}} sesión",
+    "sessionsCount_other": "{{count}} sesiones",
+    "sessionsPerWeek_one": "{{count}} sesión por semana",
+    "sessionsPerWeek_other": "{{count}} sesiones por semana",
+    "dayNumber": "Día {{number}}",
+    "conflict": {
+      "inProgressTitle": "{{name}} sigue abierto",
+      "inProgressBody": "Termínalo o sáltalo antes de empezar otro.",
+      "loggedTitle": "Este entrenamiento ya está registrado el {{date}}",
+      "loggedBody": "Ábrelo para ver lo que se guardó, o elige otro día.",
+      "open": "Abrir",
+      "view": "Ver"
+    },
+    "resumeSheet": {
+      "title": "Reanudar {{name}}",
+      "hint": "¿Lo entrenaste otro día? Elige el día al que debe contar.",
+      "keep": "Dejar el {{date}}",
+      "today": "Mover a hoy",
+      "other": "Otro día",
+      "confirm": "Reanudar entrenamiento"
     }
   }
 }

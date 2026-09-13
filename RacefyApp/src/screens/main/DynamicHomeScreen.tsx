@@ -15,6 +15,11 @@ import { executeCtaActionFromTab } from '../../utils/homeNavigation';
 
 // Hooks
 import { useAuth } from '../../hooks/useAuth';
+import { usePointStats } from '../../hooks/usePointStats';
+import { useRankDelta } from '../../hooks/useRankDelta';
+import { useRewards } from '../../hooks/useRewards';
+import { CompetitionStandingSection } from './home/components/CompetitionStandingSection';
+import { ResumeSessionBanner } from '../workouts/components/ResumeSessionBanner';
 import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -75,6 +80,12 @@ type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
  */
 export function DynamicHomeScreen({ navigation }: Props) {
   const { user, isAuthenticated } = useAuth();
+  // Home had no competition line at all — seventeen section types and not one
+  // about where the athlete stands. This is the single one, and it stays quiet
+  // unless something actually changed.
+  const { stats: pointStats } = usePointStats();
+  const rankDeltas = useRankDelta(isAuthenticated ? pointStats : null);
+  const { badges } = useRewards();
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
@@ -502,6 +513,23 @@ export function DynamicHomeScreen({ navigation }: Props) {
         {isAuthenticated && (
           <FadeInView delay={480}>
             <QuickActionsBarV2 onCreatePost={handleCreatePost} onFindEvents={handleFindEvents} />
+          </FadeInView>
+        )}
+
+        {/* An open strength session follows the athlete around the app, the
+            same way a running activity does — otherwise leaving the session
+            screen to check a message means losing the way back to it. */}
+        {isAuthenticated && <ResumeSessionBanner />}
+
+        {isAuthenticated && (
+          <FadeInView delay={500}>
+            <CompetitionStandingSection
+              stats={pointStats}
+              weeklyDelta={rankDeltas.weekly ?? null}
+              newBadges={badges.filter((b) => b.is_new)}
+              onOpenLeaderboard={() => navigation.getParent()?.navigate('Leaderboard')}
+              onOpenRewards={() => navigation.getParent()?.navigate('Rewards')}
+            />
           </FadeInView>
         )}
 
