@@ -961,6 +961,7 @@ export interface Activity {
   sport_type?: SportType;
   gps_track?: GpsTrack;
   photos?: Photo[];
+  videos?: Video[];
   user?: User;
   is_owner?: boolean;
   /** True only while broadcasting; cleared the moment the broadcast ends. */
@@ -1410,6 +1411,8 @@ export interface CreateCommentRequest {
 export interface Photo {
   id: number;
   user_id: number;
+  /** Position within the owner's media set; continuous across post + activity. */
+  order?: number;
   path: string;
   filename: string;
   mime_type: string;

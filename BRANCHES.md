@@ -61,6 +61,22 @@ nie przypominało o otwartej sesji — inaczej niż przy aktywności biegowej.
 - [ ] Aktywność biegowa ma pierwszeństwo: gdy biegną obie, przycisk pokazuje kwadrat/play i prowadzi na ekran nagrywania
 - [ ] Po zakończeniu lub pominięciu sesji przycisk wraca do emeraldu z play bez restartu aplikacji
 - [ ] Etykieta „Dodaj serię" bez podwójnego plusa (ikona + tekst, nie „+ + seria")
+- [ ] Sesję można zakończyć z każdego ćwiczenia (przycisk z flagą w stopce), nie tylko z ostatniego
+- [ ] Zakończenie w połowie zapisuje aktywność z tym, co już zrobione — nie kasuje sesji jak „Saltar”/„Pomiń”
+- [ ] Na ostatnim ćwiczeniu stopka ma jeden przycisk „Zakończ”, bez zdublowanej flagi
+
+### Media aktywności po migracji backendu (branch `rywalizacja-i-silownia`)
+
+Backend przeniósł zdjęcia postu aktywnościowego na aktywność: `post.photos` jest
+puste, komplet siedzi w `activity.photos` z ciągłą kolejnością. Mobile czytał
+wyłącznie stronę postu, więc karta aktywności w feedzie **nie pokazałaby żadnego
+zdjęcia**. Scalanie obu stron zostaje na stałe — fallback `Post::mediaOwner()`
+nadal potrafi zapisać zdjęcie na poście.
+
+- [ ] Feed: post aktywnościowy z czterema zdjęciami pokazuje cztery, w kolejności 0–3
+- [ ] Strona aktywności pokazuje ten sam komplet co karta w feedzie
+- [ ] Post udostępniony (reshare) aktywności też pokazuje zdjęcia
+- [ ] Post ogólny ze zdjęciami na poście działa jak dotąd (ścieżka fallbacku)
 
 ### Eventy wg designu „Racefy v2" (branch `rywalizacja-i-silownia`)
 

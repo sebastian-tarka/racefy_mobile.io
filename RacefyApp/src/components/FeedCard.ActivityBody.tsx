@@ -16,6 +16,7 @@ import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { MediaGrid } from './MediaGrid';
 import { MentionText } from './MentionText';
+import { mergeActivityPhotos, mergeActivityVideos } from '../utils/activityMedia';
 import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { useTheme } from '../hooks/useTheme';
@@ -309,8 +310,10 @@ export function ActivityBody({
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   const { imageUrls, mediaItems } = useMemo(() => {
-    const postVideos = post.videos || [];
-    const postPhotos = post.photos || [];
+    // Both sides: the backend keeps activity media on the activity now, but a
+    // post can still own it — see mergeActivityPhotos.
+    const postVideos = mergeActivityVideos(post);
+    const postPhotos = mergeActivityPhotos(post);
     const urls = postPhotos.map((p) => fixStorageUrl(p.url) || '');
     const items: PostMediaItem[] = [];
     postVideos.forEach((v) =>
@@ -330,7 +333,7 @@ export function ActivityBody({
       }),
     );
     return { imageUrls: urls, mediaItems: items };
-  }, [post.videos, post.photos]);
+  }, [post]);
 
   // Hooks above must run unconditionally; guard the missing-activity case after them.
   if (!activity) return null;

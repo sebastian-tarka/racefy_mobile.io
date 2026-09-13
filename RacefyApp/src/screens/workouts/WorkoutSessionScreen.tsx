@@ -719,6 +719,20 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
               <Text style={styles.footerPrimaryText}>{t('strengthPlans.session.finish')}</Text>
             </TouchableOpacity>
           )}
+
+          {/* Finishing was only reachable from the last exercise: until then the
+              primary button said "Next", and the only way out was "Skip
+              session", which saves nothing. Half a workout is still a workout,
+              so ending it early has to keep it. */}
+          {next && (
+            <TouchableOpacity
+              style={[styles.footerFinish, { borderColor: colors.border }]}
+              onPress={() => setCompleteOpen(true)}
+              accessibilityLabel={t('strengthPlans.session.finish')}
+            >
+              <Ionicons name="flag" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -870,6 +884,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   footerBack: {
+    width: 56,
+    height: 52,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerFinish: {
     width: 56,
     height: 52,
     borderRadius: borderRadius.xl,
