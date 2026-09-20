@@ -1,6 +1,6 @@
 {
   "name": "racefyapp",
-  "version": "1.23.0",
+  "version": "1.23.1",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
