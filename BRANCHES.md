@@ -242,6 +242,7 @@ przytrzymanie wiersza). Szczegóły: `.notes/SILOWNIA_PRZEKLADANIE.md`.
 - [ ] 409 `already_logged` na sesji pominiętej daje w dialogu dodatkowo „Wznów"
 - [ ] 409 bez `reason` i 429 pokazują komunikat z serwera i nie wyrzucają z ekranu
 - [ ] Ekran pominiętej sesji ma przycisk „Wznów" (ta sama ścieżka co z kalendarza)
+- [ ] Ekran treningu: „Start" na dniu pominiętym (409 `already_logged` + sesja `skipped`) pyta „Wznowić?" i po potwierdzeniu otwiera wznowioną sesję — wcześniej był tylko komunikat bez wyjścia (poprawka 2026-09-20)
 - [ ] Przeniesiony dzień **nie** pojawia się w historii treningów
 - [ ] Baner „Sesja w toku" na liście planów i w planie ma znowu poprawny tekst i przycisk „Wznów" (był nadpisany kluczami arkusza)
 - [ ] Nagłówek kolumny w sesji to „Seria", a nie „SERIA {{n}}"

@@ -3333,6 +3333,7 @@
       "confirmSkip": "¿Saltar este entrenamiento? Quedará registrado como saltado.",
       "conflictInProgress": "Hay otra sesión en curso: {{name}}. ¿La reanudas?",
       "conflictLogged": "Este entrenamiento ya está registrado ese día.",
+      "conflictSkipped": "Este entrenamiento se omitió ese día. ¿Recuperarlo?",
       "openActivity": "Abrir actividad",
       "openSchedule": "Programar y empezar",
       "range": "Próximos 14 días",
