@@ -1185,7 +1185,8 @@
     "savedOnDeviceTitle": "Saved on your phone",
     "savedOnDeviceBody": "Your activity is safe. We will upload it automatically when the connection is back — points and the post appear once it is sent.",
     "savedNeedsAttention": "Your activity is saved on the phone, but the server did not accept it: {{reason}}\n\nOpen the unsent list to decide what to do.",
-    "openUnsynced": "Open list"
+    "openUnsynced": "Open list",
+    "offlineStartToast": "No connection — recording offline. The activity uploads when the network is back."
   },
   "gpxImport": {
     "title": "Import GPX",
@@ -2927,7 +2928,8 @@
     "deliveredBodyPoints": "{{title}} is now on your profile · +{{points}} pts",
     "startBlocked": "Your previous activity is still waiting to be uploaded. Open “Unsynced activities” and send or discard it before starting a new one.",
     "logoutWarning_one": "{{count}} activity is waiting to be uploaded. After signing out it stays on this phone and goes out only when you sign back in to this account.",
-    "logoutWarning_other": "{{count}} activities are waiting to be uploaded. After signing out they stay on this phone and go out only when you sign back in to this account."
+    "logoutWarning_other": "{{count}} activities are waiting to be uploaded. After signing out they stay on this phone and go out only when you sign back in to this account.",
+    "untitledOffline": "Activity recorded offline"
   },
   "eventStatus": {
     "upcoming": "Upcoming",

@@ -959,6 +959,8 @@ export interface Activity {
   total_paused_duration: number;
   /** ISO start of the pause in progress; null/absent while recording. */
   paused_at?: string | null;
+  /** Device-minted recording UUID (set at start since offline start exists). */
+  client_activity_id?: string | null;
   last_point_at: string | null;
   has_gps_track: boolean;
   route_svg?: string | null;

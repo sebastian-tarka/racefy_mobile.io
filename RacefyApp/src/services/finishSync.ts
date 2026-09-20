@@ -7,6 +7,10 @@
  * one comes back. It is the only thing that talks to `POST /activities/{id}/finish`
  * for recorded activities.
  *
+ * An activity started with no network has never been seen by the server. For
+ * those the entry carries the start request, and the first step is to create the
+ * activity (idempotent per `client_activity_id`, with the real `started_at`).
+ *
  * Per entry: upload the track first (idempotent batches of 200 through the points
  * uploader — this is also what lifts the server's 3000-points-per-request cap for
  * a long stretch without signal), then finish with the `ended_at` of the moment
@@ -56,10 +60,14 @@ export interface FinishSyncDeps {
     | 'listPendingFinishes'
     | 'updatePendingFinish'
     | 'completePendingFinish'
+    | 'bindPendingFinishServerActivity'
+    | 'getPendingFinishByServerActivityId'
     | 'getUnsyncedPoints'
     | 'countUnsynced'
   >;
   drain: typeof drainPoints;
+  /** `POST /activities/start`. Rejects with `.status`; on 422 "already active", `.data` is that activity. */
+  start: (payload: Record<string, unknown>) => Promise<Activity>;
   finish: (activityId: number, payload: FinishActivityRequest) => Promise<FinishActivityResponse>;
   getActivity: (activityId: number) => Promise<Activity>;
   currentUserId: () => number | null;
@@ -170,9 +178,63 @@ async function processEntry(
     return { status: 'retry_later', error };
   };
 
+  const needsAttention = (error: string): FinishOutcome => {
+    logger.warn('activity', 'Queued activity refused by server — needs attention', {
+      clientActivityId: id,
+      serverActivityId: entry.serverActivityId,
+      error,
+    });
+    d.db.updatePendingFinish(id, {
+      state: 'needs_attention',
+      attempts: entry.attempts + 1,
+      lastError: error,
+    });
+    return { status: 'needs_attention', error };
+  };
+
+  // 0. Started offline and never created: start it now, with the real start
+  //    time. Idempotent per client_activity_id, so a lost response just means the
+  //    retry gets the same activity back.
+  let serverActivityId = entry.serverActivityId;
+  if (serverActivityId == null) {
+    if (!entry.startPayload) return needsAttention('Missing start data for an offline activity');
+    try {
+      const created = await d.start({ ...entry.startPayload, client_activity_id: id });
+      serverActivityId = created.id;
+      d.db.bindPendingFinishServerActivity(id, serverActivityId);
+      // A replayed start can come back already finished: an earlier run created
+      // AND finished it, and died before clearing the entry.
+      if (created.status === 'completed') {
+        d.db.completePendingFinish(id);
+        d.emit(FINISH_DELIVERED_EVENT, {
+          clientActivityId: id,
+          activityId: serverActivityId,
+        } satisfies FinishDelivered);
+        return { status: 'delivered' };
+      }
+    } catch (error: any) {
+      const status: number | undefined = error?.status;
+      const message: string = error?.message || 'Failed to start activity';
+      if (status === 401) {
+        d.db.updatePendingFinish(id, { state: 'pending', lastError: message });
+        return { status: 'auth_required' };
+      }
+      if (isTransient(status)) return retryLater(message);
+      // "Another activity is already active." If that one is ours and waiting in
+      // this very outbox, it will be gone soon — wait for it. Anything else the
+      // athlete has to sort out (an activity left open on another device…).
+      const blockingId: number | undefined = error?.data?.id;
+      if (blockingId != null && d.db.getPendingFinishByServerActivityId(blockingId)) {
+        return retryLater('Waiting for an earlier activity to be delivered');
+      }
+      return needsAttention(message);
+    }
+  }
+  const activityId: number = serverActivityId;
+
   // 1. The track. Batches are idempotent (client_activity_id + seq), so a pass
   //    that dies halfway costs nothing but the retry.
-  const session = { clientActivityId: id, serverActivityId: entry.serverActivityId };
+  const session = { clientActivityId: id, serverActivityId: activityId };
   for (let pass = 0; pass < MAX_DRAIN_PASSES; pass++) {
     const result = await d.drain({
       session,
@@ -198,15 +260,15 @@ async function processEntry(
   };
 
   try {
-    const response = await d.finish(entry.serverActivityId, payload);
+    const response = await d.finish(activityId, payload);
     d.db.completePendingFinish(id);
     logger.activity('Queued finish delivered', {
-      activityId: entry.serverActivityId,
+      activityId: activityId,
       attempts: entry.attempts + 1,
     });
     d.emit(FINISH_DELIVERED_EVENT, {
       clientActivityId: id,
-      activityId: entry.serverActivityId,
+      activityId: activityId,
       response,
     } satisfies FinishDelivered);
     return { status: 'delivered', response };
@@ -224,31 +286,21 @@ async function processEntry(
     // A verdict. Most often a 422 "not active" for a finish that DID land and
     // whose response we never saw — ask the server before bothering the athlete.
     const landed = await d
-      .getActivity(entry.serverActivityId)
+      .getActivity(activityId)
       .then((a) => a.status === 'completed')
       .catch(() => false);
 
     if (landed) {
       d.db.completePendingFinish(id);
-      logger.activity('Queued finish had already landed', { activityId: entry.serverActivityId });
+      logger.activity('Queued finish had already landed', { activityId: activityId });
       d.emit(FINISH_DELIVERED_EVENT, {
         clientActivityId: id,
-        activityId: entry.serverActivityId,
+        activityId: activityId,
       } satisfies FinishDelivered);
       return { status: 'delivered' };
     }
 
-    d.db.updatePendingFinish(id, {
-      state: 'needs_attention',
-      attempts: entry.attempts + 1,
-      lastError: message,
-    });
-    logger.warn('activity', 'Queued finish refused by server — needs attention', {
-      activityId: entry.serverActivityId,
-      status,
-      message,
-    });
-    return { status: 'needs_attention', error: message };
+    return needsAttention(message);
   }
 }
 

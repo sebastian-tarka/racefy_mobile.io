@@ -31,7 +31,12 @@ export type RetryOutcome = { ok: true } | { ok: false; error: string };
  *    recording session is gone, so they could not be migrated; manual retry only.
  */
 export type UnsyncedItem = UnsyncedActivityMeta & {
+  /** Stable identity for lists and "which one is busy": the server id is not one —
+   *  an activity started offline has none until it is delivered. */
+  key: string;
   source: 'outbox' | 'legacy';
+  /** Outbox only: recorded entirely offline, the server has never seen it. */
+  neverOnServer?: boolean;
   /** Outbox only. `pending` = waits for a network, `needs_attention` = the server refused it. */
   state?: PendingFinishState;
   clientActivityId?: string;
@@ -42,11 +47,14 @@ export type UnsyncedItem = UnsyncedActivityMeta & {
 function outboxToItem(entry: PendingFinish): UnsyncedItem {
   const meta = entry.meta as Record<string, any>;
   return {
+    key: `outbox:${entry.clientActivityId}`,
     source: 'outbox',
+    neverOnServer: entry.serverActivityId == null,
     state: entry.state,
     clientActivityId: entry.clientActivityId,
     hasEvent: (entry.payload as Record<string, any>).event_id != null,
-    activityId: entry.serverActivityId,
+    // 0 = not on the server yet; never used as an identity (see `key`).
+    activityId: entry.serverActivityId ?? 0,
     sportTypeId: meta.sportTypeId ?? 0,
     sportTypeName: meta.sportTypeName,
     title: meta.title,
@@ -81,7 +89,7 @@ function outcomeToRetry(outcome: FinishOutcome | undefined): RetryOutcome {
 export function useUnsyncedActivities() {
   const [items, setItems] = useState<UnsyncedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [retryingId, setRetryingId] = useState<number | null>(null);
+  const [retryingKey, setRetryingKey] = useState<string | null>(null);
   const isMounted = useRef(true);
 
   const refresh = useCallback(async () => {
@@ -90,7 +98,7 @@ export function useUnsyncedActivities() {
       const outbox = trackingDb.listPendingFinishes().map(outboxToItem);
       const list: UnsyncedItem[] = [
         ...outbox,
-        ...legacy.map((e) => ({ ...e, source: 'legacy' as const })),
+        ...legacy.map((e) => ({ ...e, key: `legacy:${e.activityId}`, source: 'legacy' as const })),
       ].sort((a, b) => new Date(b.failedAt).getTime() - new Date(a.failedAt).getTime());
       if (isMounted.current) setItems(list);
     } catch (err) {
@@ -119,14 +127,14 @@ export function useUnsyncedActivities() {
 
   /** Send one outbox entry now, ignoring backoff and `needs_attention` parking. */
   const sendOutboxEntry = useCallback(
-    async (activityId: number, clientActivityId: string): Promise<RetryOutcome> => {
-      setRetryingId(activityId);
+    async (clientActivityId: string): Promise<RetryOutcome> => {
+      setRetryingKey(`outbox:${clientActivityId}`);
       try {
         const outcomes = await syncPendingFinishes({ force: true, only: clientActivityId });
         await refresh();
         return outcomeToRetry(outcomes[clientActivityId]);
       } finally {
-        if (isMounted.current) setRetryingId(null);
+        if (isMounted.current) setRetryingKey(null);
       }
     },
     [refresh],
@@ -142,18 +150,25 @@ export function useUnsyncedActivities() {
       if (!entry) return { ok: false, error: 'Entry not found' };
       trackingDb.updatePendingFinish(item.clientActivityId, {
         payload: { ...entry.payload, event_id: null },
+        // Started offline: the event is in the start request too, and start
+        // validates it just as strictly.
+        ...(entry.startPayload
+          ? { startPayload: { ...entry.startPayload, event_id: undefined } }
+          : {}),
       });
-      return sendOutboxEntry(item.activityId, item.clientActivityId);
+      return sendOutboxEntry(item.clientActivityId);
     },
     [sendOutboxEntry],
   );
 
   const retry = useCallback(
-    async (activityId: number): Promise<RetryOutcome> => {
-      const owed = trackingDb.getPendingFinishByServerActivityId(activityId);
-      if (owed) return sendOutboxEntry(activityId, owed.clientActivityId);
+    async (item: UnsyncedItem): Promise<RetryOutcome> => {
+      if (item.source === 'outbox' && item.clientActivityId) {
+        return sendOutboxEntry(item.clientActivityId);
+      }
 
-      setRetryingId(activityId);
+      const activityId = item.activityId;
+      setRetryingKey(item.key);
       try {
         const entry = await getUnsyncedActivity(activityId);
         if (!entry) {
@@ -232,21 +247,28 @@ export function useUnsyncedActivities() {
         logger.activity('Unsynced activity retried successfully', { activityId });
         return { ok: true };
       } finally {
-        if (isMounted.current) setRetryingId(null);
+        if (isMounted.current) setRetryingKey(null);
       }
     },
     [refresh],
   );
 
   const discard = useCallback(
-    async (activityId: number) => {
-      const owed = trackingDb.getPendingFinishByServerActivityId(activityId);
+    async (item: UnsyncedItem) => {
+      const activityId = item.activityId;
+      const owed =
+        item.source === 'outbox' && item.clientActivityId
+          ? trackingDb.getPendingFinish(item.clientActivityId)
+          : null;
       if (owed) {
         // The server still holds the activity open; without this it would block
         // the next start ("an activity is already in progress"). Best effort —
         // offline it stays open server-side and surfaces as a recoverable
         // activity on the next launch, where it can be discarded again.
-        await api.discardActivity(activityId).catch(() => {});
+        // (Recorded entirely offline: the server never had it — nothing to tell.)
+        if (owed.serverActivityId != null) {
+          await api.discardActivity(owed.serverActivityId).catch(() => {});
+        }
         trackingDb.discardPendingFinish(owed.clientActivityId);
         DeviceEventEmitter.emit(FINISH_QUEUE_CHANGED_EVENT);
       } else {
@@ -269,7 +291,7 @@ export function useUnsyncedActivities() {
     items,
     count: items.length,
     isLoading,
-    retryingId,
+    retryingKey,
     refresh,
     retry,
     retryWithoutEvent,

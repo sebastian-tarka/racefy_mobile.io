@@ -132,8 +132,10 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     /**
      * Get current active activity (if any)
      */
-    async getCurrentActivity(): Promise<Types.Activity | null> {
-      const response = await this.request<{ data: Types.Activity | null }>('/activities/current');
+    async getCurrentActivity(opts: { timeoutMs?: number } = {}): Promise<Types.Activity | null> {
+      const response = await this.request<{ data: Types.Activity | null }>('/activities/current', {
+        signal: timeoutSignal(opts.timeoutMs),
+      });
       return response.data;
     }
 
@@ -157,10 +159,20 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
        * broadcast's share token must be read from `toggleLiveBroadcast`.
        */
       live?: Types.LiveBroadcastSettings;
+      /**
+       * UUID minted on the device BEFORE this request. Makes start idempotent: a
+       * repeat returns the activity the first call created — which is what lets the
+       * app fall back to an offline start after a timeout without risking a twin.
+       */
+      client_activity_id?: string;
+      /** Bounds the wait; a timed-out start throws without `.status`, like any network failure. */
+      timeoutMs?: number;
     }): Promise<Types.Activity> {
+      const { timeoutMs, ...body } = data;
       const response = await this.request<Types.ApiResponse<Types.Activity>>('/activities/start', {
+        signal: timeoutSignal(timeoutMs),
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       });
       return response.data;
     }

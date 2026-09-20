@@ -201,7 +201,7 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
       let cumDist: number | null = null;
       try {
         const activityId = await getActiveActivityId();
-        const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+        const session = activityId ? trackingDb.resolveRecordingSession(activityId) : null;
         cumDist = session
           ? (trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? null)
           : null;
@@ -310,7 +310,7 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
 async function readCumulativeDistanceM(): Promise<number | null> {
   try {
     const activityId = await getActiveActivityId();
-    const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+    const session = activityId ? trackingDb.resolveRecordingSession(activityId) : null;
     return session ? (trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? null) : null;
   } catch {
     return null;
@@ -479,7 +479,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           // have the running total even for background-only stretches.
           try {
             const activityId = await getActiveActivityId();
-            const session = activityId ? trackingDb.getSessionByServerActivityId(activityId) : null;
+            const session = activityId ? trackingDb.resolveRecordingSession(activityId) : null;
             if (session) {
               let runningDist = trackingDb.getLastPoint(session.clientActivityId)?.cumDist ?? 0;
 

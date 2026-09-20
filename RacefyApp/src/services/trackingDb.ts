@@ -21,7 +21,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { logger } from './logger';
 
 const DB_NAME = 'racefy_tracking.db';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 export type PointSource = 'fg' | 'bg';
 
@@ -52,6 +52,13 @@ export interface ActivitySession {
   sportSlug: string | null;
   startedAt: string;
   /**
+   * The `POST /activities/start` body this recording was (or is still to be)
+   * created with. Present for sessions started since offline start exists: it is
+   * what lets the app rebuild the activity after a restart with no network, and
+   * create it on the server later when it was started offline.
+   */
+  startPayload: Record<string, unknown> | null;
+  /**
    * `pending_finish`: the athlete saved the activity, the server has not heard
    * yet (see pending_finishes). Not "active" any more — the recording screen is
    * free — but not purgeable either: its points are the only copy of the track.
@@ -64,7 +71,10 @@ export type PendingFinishState = 'pending' | 'syncing' | 'needs_attention';
 /** One saved-but-not-yet-delivered activity (the finish outbox). */
 export interface PendingFinish {
   clientActivityId: string;
-  serverActivityId: number;
+  /** null = started offline and never created on the server yet; finishSync starts it first. */
+  serverActivityId: number | null;
+  /** The start request for an activity the server has not seen (see serverActivityId). */
+  startPayload: Record<string, unknown> | null;
   userId: number | null;
   /** The finish request body, minus `final_points` (points stay in activity_points). */
   payload: Record<string, unknown>;
@@ -174,6 +184,37 @@ function migrate(database: SQLiteDatabase): void {
         );
       `);
     }
+    if (version < 4) {
+      // Offline start: a recording can exist before its server activity does.
+      // Sessions remember their start request; the outbox accepts an entry with no
+      // server id yet. SQLite cannot drop NOT NULL in place — rebuild the (tiny) table.
+      database.execSync('ALTER TABLE activity_sessions ADD COLUMN start_payload TEXT;');
+      database.execSync(`
+        CREATE TABLE pending_finishes_v4 (
+          client_activity_id TEXT PRIMARY KEY,
+          server_activity_id INTEGER,
+          start_payload TEXT,
+          user_id INTEGER,
+          payload TEXT NOT NULL,
+          meta TEXT NOT NULL,
+          state TEXT NOT NULL DEFAULT 'pending',
+          attempts INTEGER NOT NULL DEFAULT 0,
+          next_attempt_at INTEGER NOT NULL DEFAULT 0,
+          last_error TEXT,
+          created_at TEXT NOT NULL
+        );
+      `);
+      database.execSync(`
+        INSERT INTO pending_finishes_v4
+          (client_activity_id, server_activity_id, start_payload, user_id, payload, meta,
+           state, attempts, next_attempt_at, last_error, created_at)
+        SELECT client_activity_id, server_activity_id, NULL, user_id, payload, meta,
+               state, attempts, next_attempt_at, last_error, created_at
+        FROM pending_finishes;
+      `);
+      database.execSync('DROP TABLE pending_finishes;');
+      database.execSync('ALTER TABLE pending_finishes_v4 RENAME TO pending_finishes;');
+    }
     database.execSync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   });
 }
@@ -197,15 +238,69 @@ function rowToPoint(row: any): StoredTrackPoint {
 
 // ── Sessions ────────────────────────────────────────────────────────────────
 
-export function startSession(clientActivityId: string, sportSlug?: string): void {
+function parseJson(raw: unknown): Record<string, unknown> | null {
+  if (typeof raw !== 'string' || !raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function rowToSession(row: any): ActivitySession {
+  return {
+    clientActivityId: row.client_activity_id,
+    serverActivityId: row.server_activity_id ?? null,
+    sportSlug: row.sport_slug ?? null,
+    startedAt: row.started_at,
+    startPayload: parseJson(row.start_payload),
+    status: row.status,
+  };
+}
+
+export function startSession(
+  clientActivityId: string,
+  sportSlug?: string,
+  opts: { startedAt?: string; startPayload?: Record<string, unknown> } = {},
+): void {
   const database = getDb();
   if (!database) return;
 
   database.runSync(
-    `INSERT OR IGNORE INTO activity_sessions (client_activity_id, sport_slug, started_at, status, next_seq)
-     VALUES (?, ?, ?, 'recording', 0);`,
-    [clientActivityId, sportSlug ?? null, new Date().toISOString()],
+    `INSERT OR IGNORE INTO activity_sessions
+       (client_activity_id, sport_slug, started_at, status, next_seq, start_payload)
+     VALUES (?, ?, ?, 'recording', 0, ?);`,
+    [
+      clientActivityId,
+      sportSlug ?? null,
+      opts.startedAt ?? new Date().toISOString(),
+      opts.startPayload ? JSON.stringify(opts.startPayload) : null,
+    ],
   );
+}
+
+export function getSession(clientActivityId: string): ActivitySession | null {
+  const database = getDb();
+  if (!database) return null;
+  const row = database.getFirstSync<any>(
+    'SELECT * FROM activity_sessions WHERE client_activity_id = ?;',
+    [clientActivityId],
+  );
+  return row ? rowToSession(row) : null;
+}
+
+/**
+ * The session a background context should write to: the one bound to this server
+ * activity, else — for a recording started offline, which has no server id to be
+ * found by — the session that is actively recording.
+ */
+export function resolveRecordingSession(serverActivityId: number | null): ActivitySession | null {
+  if (serverActivityId != null && serverActivityId > 0) {
+    const bound = getSessionByServerActivityId(serverActivityId);
+    if (bound) return bound;
+  }
+  return getActiveSession();
 }
 
 export function bindServerActivity(clientActivityId: string, serverActivityId: number): void {
@@ -231,15 +326,7 @@ export function getActiveSession(): ActivitySession | null {
     `SELECT * FROM activity_sessions WHERE status IN ('recording', 'finishing')
      ORDER BY started_at DESC LIMIT 1;`,
   );
-  if (!row) return null;
-
-  return {
-    clientActivityId: row.client_activity_id,
-    serverActivityId: row.server_activity_id ?? null,
-    sportSlug: row.sport_slug ?? null,
-    startedAt: row.started_at,
-    status: row.status,
-  };
+  return row ? rowToSession(row) : null;
 }
 
 export function getSessionByServerActivityId(serverActivityId: number): ActivitySession | null {
@@ -250,15 +337,7 @@ export function getSessionByServerActivityId(serverActivityId: number): Activity
     'SELECT * FROM activity_sessions WHERE server_activity_id = ? ORDER BY started_at DESC LIMIT 1;',
     [serverActivityId],
   );
-  if (!row) return null;
-
-  return {
-    clientActivityId: row.client_activity_id,
-    serverActivityId: row.server_activity_id ?? null,
-    sportSlug: row.sport_slug ?? null,
-    startedAt: row.started_at,
-    status: row.status,
-  };
+  return row ? rowToSession(row) : null;
 }
 
 export function markSessionFinished(clientActivityId: string): void {
@@ -318,7 +397,8 @@ function rowToPendingFinish(row: any): PendingFinish {
   };
   return {
     clientActivityId: row.client_activity_id,
-    serverActivityId: row.server_activity_id,
+    serverActivityId: row.server_activity_id ?? null,
+    startPayload: parseJson(row.start_payload),
     userId: row.user_id ?? null,
     payload: parse(row.payload),
     meta: parse(row.meta),
@@ -339,7 +419,10 @@ function rowToPendingFinish(row: any): PendingFinish {
  */
 export function enqueuePendingFinish(entry: {
   clientActivityId: string;
-  serverActivityId: number;
+  /** null for an activity started offline that the server has never seen. */
+  serverActivityId: number | null;
+  /** Required when serverActivityId is null: how to create the activity first. */
+  startPayload?: Record<string, unknown> | null;
   userId: number | null;
   payload: Record<string, unknown>;
   meta: Record<string, unknown>;
@@ -351,19 +434,22 @@ export function enqueuePendingFinish(entry: {
     database.withTransactionSync(() => {
       database.runSync(
         `INSERT OR REPLACE INTO pending_finishes
-           (client_activity_id, server_activity_id, user_id, payload, meta, state, attempts, next_attempt_at, last_error, created_at)
-         VALUES (?, ?, ?, ?, ?, 'pending', 0, 0, NULL, ?);`,
+           (client_activity_id, server_activity_id, start_payload, user_id, payload, meta, state, attempts, next_attempt_at, last_error, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, 0, NULL, ?);`,
         [
           entry.clientActivityId,
           entry.serverActivityId,
+          entry.startPayload ? JSON.stringify(entry.startPayload) : null,
           entry.userId,
           JSON.stringify(entry.payload),
           JSON.stringify(entry.meta),
           new Date().toISOString(),
         ],
       );
+      // COALESCE: never wipe a server id the session already knows.
       database.runSync(
-        `UPDATE activity_sessions SET status = 'pending_finish', server_activity_id = ?
+        `UPDATE activity_sessions
+           SET status = 'pending_finish', server_activity_id = COALESCE(?, server_activity_id)
          WHERE client_activity_id = ?;`,
         [entry.serverActivityId, entry.clientActivityId],
       );
@@ -414,7 +500,10 @@ export function countPendingFinishes(): number {
 export function updatePendingFinish(
   clientActivityId: string,
   patch: Partial<
-    Pick<PendingFinish, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'payload'>
+    Pick<
+      PendingFinish,
+      'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'payload' | 'startPayload'
+    >
   >,
 ): void {
   const database = getDb();
@@ -429,12 +518,38 @@ export function updatePendingFinish(
   if (patch.lastError !== undefined) (sets.push('last_error = ?'), values.push(patch.lastError));
   if (patch.payload !== undefined)
     (sets.push('payload = ?'), values.push(JSON.stringify(patch.payload)));
+  if (patch.startPayload !== undefined)
+    (sets.push('start_payload = ?'),
+      values.push(patch.startPayload ? JSON.stringify(patch.startPayload) : null));
   if (sets.length === 0) return;
 
   database.runSync(`UPDATE pending_finishes SET ${sets.join(', ')} WHERE client_activity_id = ?;`, [
     ...values,
     clientActivityId,
   ]);
+}
+
+/**
+ * The server activity now exists (finishSync created it from `start_payload`).
+ * Recorded at once, in both tables: if the run dies right after, the next one
+ * must upload points to this activity, not start a second one.
+ */
+export function bindPendingFinishServerActivity(
+  clientActivityId: string,
+  serverActivityId: number,
+): void {
+  const database = getDb();
+  if (!database) return;
+  database.withTransactionSync(() => {
+    database.runSync(
+      'UPDATE pending_finishes SET server_activity_id = ? WHERE client_activity_id = ?;',
+      [serverActivityId, clientActivityId],
+    );
+    database.runSync(
+      'UPDATE activity_sessions SET server_activity_id = ? WHERE client_activity_id = ?;',
+      [serverActivityId, clientActivityId],
+    );
+  });
 }
 
 /** The server has the activity: drop the entry and let the session be purged in due course. */

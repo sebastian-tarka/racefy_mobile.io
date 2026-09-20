@@ -90,6 +90,7 @@ function makeDeps(over: Partial<FinishSyncDeps> = {}) {
       if (n > 0) trackingDb.markSynced(id, 0, 1_000_000);
       return { uploaded: n, remaining: 0 };
     }) as any,
+    start: jest.fn(async () => ({ id: 555, status: 'in_progress' }) as any),
     finish: jest.fn(async (activityId: number) => ({
       data: { id: activityId, status: 'completed' } as any,
       message: 'ok',
@@ -344,5 +345,155 @@ describe('guards', () => {
     expect(deps.finish).toHaveBeenCalledTimes(1);
     expect(trackingDb.getPendingFinish(A)).not.toBeNull();
     expect(trackingDb.getPendingFinish(B)).toBeNull();
+  });
+});
+
+describe('activities started offline (never seen by the server)', () => {
+  const START = { sport_type_id: 1, title: 'Evening run', started_at: '2026-09-20T09:00:00.000Z' };
+
+  function queueOffline(clientId: string) {
+    trackingDb.startSession(clientId, 'running', {
+      startedAt: START.started_at,
+      startPayload: START,
+    });
+    trackingDb.insertPoints(
+      clientId,
+      [0, 1].map((i) => ({
+        lat: 52 + i * 0.001,
+        lng: 21,
+        ts: new Date(1e12 + i * 1e4).toISOString(),
+      })),
+      'fg',
+    );
+    trackingDb.enqueuePendingFinish({
+      clientActivityId: clientId,
+      serverActivityId: null,
+      startPayload: START,
+      userId: 7,
+      payload: {
+        title: 'Evening run',
+        ended_at: '2026-09-20T10:00:00.000Z',
+        total_paused_duration: 60,
+      },
+      meta: { title: 'Evening run' },
+    });
+  }
+
+  it('creates the activity first — with the real start time and the UUID — then uploads and finishes', async () => {
+    queueOffline(A);
+    const order: string[] = [];
+    const { deps } = makeDeps({
+      start: jest.fn(async () => {
+        order.push('start');
+        return { id: 555, status: 'in_progress' } as any;
+      }),
+      drain: jest.fn(async (opts: any) => {
+        order.push(`drain:${opts.session.serverActivityId}`);
+        trackingDb.markSynced(A, 0, 1_000_000);
+        return { uploaded: 2, remaining: 0 };
+      }) as any,
+      finish: jest.fn(async (activityId: number) => {
+        order.push(`finish:${activityId}`);
+        return { data: { id: activityId, status: 'completed' } as any, message: 'ok' };
+      }),
+    });
+
+    const outcomes = await syncPendingFinishes();
+
+    expect(outcomes[A].status).toBe('delivered');
+    expect(order).toEqual(['start', 'drain:555', 'finish:555']);
+    expect(deps.start).toHaveBeenCalledWith({ ...START, client_activity_id: A });
+    expect(trackingDb.countPendingFinishes()).toBe(0);
+    expect(trackingDb.getSession(A)).toMatchObject({ serverActivityId: 555, status: 'finished' });
+  });
+
+  it('remembers the server id at once: a run that dies after start does not start twice', async () => {
+    queueOffline(A);
+    const finish = jest
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Network request failed'))
+      .mockResolvedValue({ data: { id: 555, status: 'completed' }, message: 'ok' });
+    const { deps } = makeDeps({ finish });
+
+    expect((await syncPendingFinishes())[A].status).toBe('retry_later');
+    expect(trackingDb.getPendingFinish(A)?.serverActivityId).toBe(555);
+
+    expect((await syncPendingFinishes({ force: true }))[A].status).toBe('delivered');
+    expect(deps.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('a replayed start that comes back completed closes the entry without finishing again', async () => {
+    queueOffline(A);
+    const { deps, emitted } = makeDeps({
+      start: jest.fn(async () => ({ id: 555, status: 'completed' }) as any),
+    });
+
+    expect((await syncPendingFinishes())[A]).toEqual({ status: 'delivered' });
+    expect(deps.finish).not.toHaveBeenCalled();
+    expect(trackingDb.countPendingFinishes()).toBe(0);
+    expect(emitted.some(([e]) => e === FINISH_DELIVERED_EVENT)).toBe(true);
+  });
+
+  it('no network at start: backs off and touches nothing else', async () => {
+    queueOffline(A);
+    const { deps } = makeDeps({
+      start: jest.fn().mockRejectedValue(new TypeError('Network request failed')),
+    });
+
+    expect((await syncPendingFinishes())[A].status).toBe('retry_later');
+    expect(deps.drain).not.toHaveBeenCalled();
+    expect(deps.finish).not.toHaveBeenCalled();
+    expect(trackingDb.getPendingFinish(A)).toMatchObject({ serverActivityId: null, attempts: 1 });
+  });
+
+  it('blocked by our own earlier activity still in the outbox: waits instead of bothering the athlete', async () => {
+    queue(B, 102); // an earlier activity the server still holds open…
+    trackingDb.updatePendingFinish(B, { state: 'needs_attention' }); // …and that is stuck
+    queueOffline(A);
+    makeDeps({
+      start: jest.fn().mockRejectedValue(
+        Object.assign(new Error('You already have an active activity'), {
+          status: 422,
+          data: { id: 102, status: 'paused' },
+        }),
+      ),
+    });
+
+    const outcomes = await syncPendingFinishes();
+
+    expect(outcomes[A].status).toBe('retry_later');
+    expect(trackingDb.getPendingFinish(A)?.state).toBe('pending');
+  });
+
+  it('blocked by an activity we know nothing about: the athlete has to sort it out', async () => {
+    queueOffline(A);
+    makeDeps({
+      start: jest.fn().mockRejectedValue(
+        Object.assign(new Error('You already have an active activity'), {
+          status: 422,
+          data: { id: 9001, status: 'in_progress' },
+        }),
+      ),
+    });
+
+    expect((await syncPendingFinishes())[A]).toEqual({
+      status: 'needs_attention',
+      error: 'You already have an active activity',
+    });
+  });
+
+  it('an entry with no server id and no start request cannot be sent and says so', async () => {
+    trackingDb.startSession(A, 'running');
+    trackingDb.enqueuePendingFinish({
+      clientActivityId: A,
+      serverActivityId: null,
+      userId: 7,
+      payload: {},
+      meta: {},
+    });
+    const { deps } = makeDeps();
+
+    expect((await syncPendingFinishes())[A].status).toBe('needs_attention');
+    expect(deps.start).not.toHaveBeenCalled();
   });
 });

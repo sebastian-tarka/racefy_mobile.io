@@ -21,7 +21,11 @@ import * as BackgroundTask from 'expo-background-task';
 import { logger } from './logger';
 import * as trackingDb from './trackingDb';
 import { drainPoints } from './pointsUploader';
-import { finishActivityHeadless, getActivityHeadless } from './backgroundApiClient';
+import {
+  finishActivityHeadless,
+  getActivityHeadless,
+  startActivityHeadless,
+} from './backgroundApiClient';
 import {
   configureFinishSync,
   emitFinishSyncEvent,
@@ -56,6 +60,7 @@ function configureHeadless(): void {
   configureFinishSync({
     db: trackingDb,
     drain: drainPoints,
+    start: startActivityHeadless,
     finish: finishActivityHeadless,
     getActivity: getActivityHeadless,
     currentUserId: headlessUserId,
