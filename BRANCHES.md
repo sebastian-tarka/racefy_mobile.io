@@ -15,7 +15,32 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `offline-finish-faza-0` — pauza/stop/zapis bez internetu, faza 0 (hotfix)
+
+Plan całości: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`. Bez sieci nie dało się
+nawet dojść do ekranu zakończenia: `pauseTracking` zatrzymywał GPS, potem padał na
+`api.pauseActivity`, a stan zostawał „nagrywanie" — stoper leciał bez GPS. Teraz pauza,
+wznowienie i Stop są operacjami lokalnymi; serwer dowiaduje się w tle, a gdy się nie
+da — później, z prawdziwym czasem (`at`). Nowy moduł `activityLifecycleLedger` (księga
+pauz w `trackingDb.kv`, przeżywa kill aplikacji). Wymaga backendu z brancha
+`offline-finish-api` (`at` w pause/resume, `total_paused_duration` i idempotentny
+finish) — ze starym backendem działa, ale pauzy zrobione offline wliczą się w czas.
+
+**Poza zakresem (faza 1):** zapis offline nadal kończy się alertem „Ponów" i wpisem
+w „Niezsynchronizowane" z ręcznym ponowieniem; limit 3000 punktów w jednym żądaniu.
+
+- [ ] Tryb samolotowy w trakcie nagrywania → Pauza: stoper staje natychmiast, bez alertu o błędzie
+- [ ] Tryb samolotowy → Stop: ekran zakończenia otwiera się od razu
+- [ ] Pauza i wznowienie offline, potem powrót sieci: w ciągu ~30 s (tick synchronizacji) serwer dostaje zaległe pause/resume; czas aktywności po zapisie **nie** zawiera postoju
+- [ ] Pauza online → wznowienie offline → zapis online: czas bez postoju (idzie `total_paused_duration`)
+- [ ] Wszystko online: zachowanie jak dotąd, czas zgodny z poprzednimi aktywnościami
+- [ ] Sieć „jest, ale nie działa" (np. słaby zasięg): Stop nie wisi — ekran zakończenia pojawia się natychmiast
+- [ ] Kill aplikacji w trakcie pauzy zrobionej offline → po powrocie aktywność jest w pauzie, nie „nagrywa"
+- [ ] Zapis offline → alert → „Ponów" po powrocie sieci: tytuł i wybór „prywatnie/udostępnij" zachowane
+- [ ] Zapis offline aktywności eventowej → ponowienie z „Niezsynchronizowane": aktywność ma tytuł, event i nie tworzy posta, jeśli wybrano „prywatnie"
+- [ ] Zapis nieudany, potem udany z tego samego ekranu: baner „Niezsynchronizowane" znika (wpis nie zostaje jako duch)
+- [ ] „Niezsynchronizowane" → ponów aktywność, która faktycznie już się zapisała (zgubiona odpowiedź): wpis znika bez błędu
+- [ ] Transmisja live: widz widzi pauzę/wznowienie jak dotąd (online)
 
 ---
 
