@@ -15,7 +15,16 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `offline-finish-faza-3` — wysyłka aktywności zapisanych offline przy zamkniętej aplikacji
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Offline, faza 3: wysyłka aktywności zapisanych offline przy zamkniętej aplikacji (zmergowane 2026-09-20, tag `pre-offline-finish-faza-3` = main sprzed merge)
 
 Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`, opis całości: `RacefyApp/docs/OFFLINE_ACTIVITY_SYNC.md`.
 `expo-background-task` (WorkManager / BGTaskScheduler) budzi `finishSync`, gdy aplikacja jest
@@ -37,13 +46,6 @@ wyrzuceniu aplikacji z listy ostatnich nie uruchomi zadania do ponownego otwarci
 - [ ] Po wylogowaniu zadanie niczego nie wysyła; po zalogowaniu na inne konto — też nie
 - [ ] Expo Go / symulator iOS: brak błędów, rejestracja po cichu pomijana
 - [ ] Nagrywanie GPS w tle (osobne zadanie `backgroundLocation`) działa jak dotąd — dwa zadania sobie nie przeszkadzają
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Offline, faza 0: pauza, wznowienie i Stop bez internetu (zmergowane 2026-09-20, tag `pre-offline-finish` = main sprzed merge)
 
@@ -886,6 +888,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-09-20 | `offline-finish-faza-3` | Wysyłka aktywności zapisanych offline przy zamkniętej aplikacji: `expo-background-task`, `finishSyncBackgroundTask` (rejestracja tylko przy niepustym outboxie), headless `backgroundApiClient`, przycisk w Dev Tools, `docs/OFFLINE_ACTIVITY_SYNC.md`. **Wymaga builda natywnego** |
 | 2026-09-20 | `offline-finish-faza-0` + `offline-finish-faza-1` | Pauza/wznowienie/Stop i zapis aktywności bez internetu: księga pauz (`activityLifecycleLedger`), outbox w SQLite (`pending_finishes`), `finishSync` z automatyczną wysyłką (powrót sieci, logowanie, foreground), UI kolejki; `ended_at` = moment Stop. Backend: `at` w pause/resume, `total_paused_duration`, idempotentny finish |
 | 2026-09-20 | `event-prestart` | Pasek eventu na pre-starcie (event narzuca dyscyplinę, blokada raila), znacznik eventu na ekranie live + dialog odmowy, wiersz eventu na zakończeniu, „Startuj aktywność" na ekranie eventu; `EventBar`, `EventPinDialog`, tokeny `colors.event*` |
 | 2026-08-27 | `feature/voice-turn-instructions` | Głosowe „za 200 metrów, skręć w lewo” dla trasy-cienia (skręty routera z plannera/eventu, heurystyka z geometrii dla śladów GPS), odmiana jednostek w mowie, `routeKey` zamiast gołego `id` |
