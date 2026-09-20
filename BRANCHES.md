@@ -42,6 +42,37 @@ w „Niezsynchronizowane" z ręcznym ponowieniem; limit 3000 punktów w jednym �
 - [ ] „Niezsynchronizowane" → ponów aktywność, która faktycznie już się zapisała (zgubiona odpowiedź): wpis znika bez błędu
 - [ ] Transmisja live: widz widzi pauzę/wznowienie jak dotąd (online)
 
+### `offline-finish-faza-1` — zapis aktywności bez internetu + automatyczna wysyłka (na bazie `offline-finish-faza-0`)
+
+Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`. Zapis jest operacją lokalną:
+żądanie finish trafia do outboxa w SQLite (`trackingDb.pending_finishes`, jedna transakcja
+ze zmianą statusu sesji na `pending_finish`), ekran nagrywania jest od razu wolny, a
+`services/finishSync` dowozi aktywność — teraz, jeśli jest sieć (czekamy do 5 s, żeby online
+wyglądało jak dotąd: punkty, post, alert), albo później. Wyzwalacze: powrót sieci, logowanie,
+start i powrót aplikacji na pierwszy plan, każdy zapis. Backoff z jitterem per wpis; 401
+zatrzymuje przebieg; 4xx = „wymaga uwagi" po sprawdzeniu, czy finish jednak nie dotarł.
+Ślad idzie paczkami po 200 przed finish — znika limit 3000 punktów. `ended_at` to teraz
+moment Stop (początek ostatniej pauzy), nie moment naciśnięcia „Zapisz".
+Wysyłka przy zamkniętej aplikacji (faza 3, `expo-background-task`) — **nie** w tym branchu.
+
+- [ ] Tryb samolotowy → Stop → Zapisz: po ~5 s alert „Zapisano na telefonie", ekran nagrywania wraca do startu, można zacząć… (start wymaga sieci — faza 4)
+- [ ] Wyłącz tryb samolotowy z aplikacją na wierzchu: aktywność wysyła się sama, przychodzi powiadomienie „Aktywność wysłana", feed/profil się odświeża
+- [ ] Aktywność wysłana później ma czas końca = moment Stop, a nie moment wysyłki; czas bez postojów
+- [ ] Online: zapis wygląda jak dotąd (alert z punktami / szkic posta), bez powiadomienia „wysłana"
+- [ ] Online, ale wolno (>5 s): alert „Zapisano na telefonie", po chwili powiadomienie o wysłaniu — aktywność **nie** dubluje się
+- [ ] Baner na Home liczy wpisy z outboxa; ekran „Niezsynchronizowane" pokazuje „Czeka na internet" (niebieski) vs „Nie wysłano" (pomarańczowy)
+- [ ] „Ponów wysłanie" na wpisie czekającym działa od ręki po powrocie sieci
+- [ ] Eksport GPX z wpisu outboxa zawiera cały ślad
+- [ ] Event zamknięty przed wysyłką → wpis „Nie wysłano" z powodem z serwera; „Wyślij bez eventu" zapisuje aktywność bez powiązania
+- [ ] „Odrzuć" wpis z outboxa: znika, a kolejny start nie jest blokowany przez „aktywność już trwa"
+- [ ] Kill aplikacji tuż po „Zapisz" offline → po ponownym uruchomieniu **nie** pojawia się dialog „Wznów/Zakończ/Odrzuć", a wpis jest w kolejce i wysyła się po powrocie sieci
+- [ ] Zapis offline, potem próba startu nowej aktywności online: poprzednia wysyła się najpierw, start przechodzi; gdy serwer ją odrzuca — czytelny komunikat zamiast „already in progress"
+- [ ] Długa aktywność offline (>3000 punktów, np. 3 h): wysyła się w całości, dystans zgodny z telefonem
+- [ ] Wylogowanie z oczekującą aktywnością: ostrzeżenie w dialogu; po zalogowaniu na **inne** konto nic się nie wysyła, po powrocie na właściwe — wysyła
+- [ ] Stara kolejka (AsyncStorage) sprzed aktualizacji: wpisy z zachowaną sesją przenoszą się do outboxa, reszta zostaje z ręcznym ponowieniem
+- [ ] Aktywność bez GPS (siłownia/czasówka) zapisana offline wysyła się poprawnie
+- [ ] Web / brak SQLite: zapis działa po staremu (online, z alertem „Ponów" przy błędzie)
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
