@@ -13,6 +13,11 @@ import {
   type FinishDelivered,
 } from '../services/finishSync';
 import { notifyActivityDelivered } from '../services/finishSyncNotification';
+import {
+  ensureFinishSyncTaskRegistered,
+  KV_AUTH_USER_ID,
+  unregisterFinishSyncTask,
+} from '../services/finishSyncBackgroundTask';
 import { migrateLegacyUnsyncedQueue } from '../services/unsyncedActivities';
 import { emitRefresh } from '../services/refreshEvents';
 
@@ -35,7 +40,8 @@ export function suppressDeliveredNotification(clientActivityId: string): () => v
  *  - sign-in → forced (a 401 is the only reason a run stops early);
  *  - app start and return to foreground → timed (respects per-entry backoff);
  *  - a fresh save triggers its own sync from the save flow.
- * Background delivery (app closed) is a separate, later step.
+ * With the app closed, services/finishSyncBackgroundTask takes over; this hook
+ * keeps that task registered exactly as long as there is something to deliver.
  */
 export function useFinishSyncRunner(userId: number | null, isAuthenticated: boolean) {
   const userIdRef = useRef<number | null>(userId);
@@ -55,13 +61,23 @@ export function useFinishSyncRunner(userId: number | null, isAuthenticated: bool
     });
     // Entries left `syncing` by a kill mid-request would otherwise never be picked up again.
     trackingDb.resetInterruptedFinishes();
+    // Something left over from a previous run: make sure the OS will wake us for it.
+    if (trackingDb.countPendingFinishes() > 0) void ensureFinishSyncTaskRegistered();
   }, []);
+
+  // The headless task has no auth context: leave it the id of whoever is signed
+  // in, so it can refuse to send one account's activity from another.
+  useEffect(() => {
+    if (userId != null) trackingDb.setKv(KV_AUTH_USER_ID, String(userId));
+    else if (!isAuthenticated) trackingDb.deleteKv(KV_AUTH_USER_ID);
+  }, [userId, isAuthenticated]);
 
   // Announce + refresh when something lands.
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(FINISH_DELIVERED_EVENT, (e: FinishDelivered) => {
       emitRefresh('activities');
       emitRefresh('feed');
+      if (trackingDb.countPendingFinishes() === 0) void unregisterFinishSyncTask();
       if (announcedElsewhere.has(e.clientActivityId)) return;
       void notifyActivityDelivered({
         title: e.response?.data?.title,

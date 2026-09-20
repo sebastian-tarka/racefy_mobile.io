@@ -6,7 +6,9 @@
  */
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import i18n from 'i18next';
+// Through our own module, not bare 'i18next': a headless launch must get an
+// initialised instance, not an empty one.
+import i18n from '../i18n';
 import { logger } from './logger';
 
 const CHANNEL_ID = 'activity-sync';

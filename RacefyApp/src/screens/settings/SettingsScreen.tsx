@@ -43,6 +43,8 @@ import { useHealthSync } from '../../hooks/useHealthSync';
 import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { countPendingFinishes } from '../../services/trackingDb';
+import * as BackgroundTask from 'expo-background-task';
+import { ensureFinishSyncTaskRegistered } from '../../services/finishSyncBackgroundTask';
 import { logger } from '../../services/logger';
 import { changeLanguage, supportedLanguages } from '../../i18n';
 import { fontSize, spacing } from '../../theme';
@@ -1374,6 +1376,27 @@ export function SettingsScreen({ navigation }: Props) {
             onToggle={() => toggleSection('devTools')}
           >
             <View style={{ padding: spacing.md }}>
+              {/* The OS decides when the offline-finish task really runs (≥15 min,
+                  network + battery). This fires it on demand — debug builds only. */}
+              <Button
+                title={`Run background finish sync (${countPendingFinishes()} queued)`}
+                variant="outline"
+                onPress={async () => {
+                  try {
+                    await ensureFinishSyncTaskRegistered();
+                    const ran = await BackgroundTask.triggerTaskWorkerForTestingAsync();
+                    Alert.alert(
+                      'Background finish sync',
+                      ran
+                        ? 'Worker triggered. Put the app in the background to let it run.'
+                        : 'Not triggered — nothing registered (empty queue?) or not a debug build.',
+                    );
+                  } catch (e: any) {
+                    Alert.alert('Error', e.message);
+                  }
+                }}
+              />
+              <View style={{ height: spacing.sm }} />
               <Button
                 title="Send test notification (5s delay)"
                 onPress={async () => {

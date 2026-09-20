@@ -96,6 +96,15 @@ export function configureFinishSync(next: FinishSyncDeps): void {
   deps = next;
 }
 
+/**
+ * Has anyone wired the engine in this JS runtime? The background task asks: if
+ * the app's UI is alive it has (and owns announcements); a cold headless launch
+ * has not, and the task wires its own, React-free dependencies.
+ */
+export function isFinishSyncConfigured(): boolean {
+  return deps !== null;
+}
+
 // One run at a time, in call order: a regained network, a foreground event and a
 // fresh save often fire within the same second.
 let chain: Promise<unknown> = Promise.resolve();
