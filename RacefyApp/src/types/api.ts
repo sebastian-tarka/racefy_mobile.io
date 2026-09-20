@@ -957,6 +957,8 @@ export interface Activity {
   status: 'in_progress' | 'paused' | 'completed';
   is_active: boolean;
   total_paused_duration: number;
+  /** ISO start of the pause in progress; null/absent while recording. */
+  paused_at?: string | null;
   last_point_at: string | null;
   has_gps_track: boolean;
   route_svg?: string | null;
@@ -1215,6 +1217,12 @@ export interface FinishActivityRequest {
   title?: string;
   description?: string;
   ended_at?: string;
+  /**
+   * Seconds spent paused, measured on the device. Sent only when a pause/resume
+   * of this activity could not be delivered on time (no network): the server
+   * clocks pauses by arrival, so without this the stops would count as active time.
+   */
+  total_paused_duration?: number;
   calories?: number;
   avg_heart_rate?: number;
   max_heart_rate?: number;

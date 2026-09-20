@@ -3,6 +3,19 @@ import type { ApiBase } from './base';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
+/**
+ * An AbortSignal that fires after `ms`. The API client has no timeout of its
+ * own, and `fetch` on a connected-but-dead network can hang for a minute —
+ * unacceptable behind a Stop button. An aborted request throws without a
+ * `.status`, i.e. it looks like any other network failure to the caller.
+ */
+function timeoutSignal(ms?: number): AbortSignal | undefined {
+  if (!ms) return undefined;
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
 export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
   return class ActivitiesMixin extends Base {
     // ============ ACTIVITIES ============
@@ -182,23 +195,41 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     }
 
     /**
-     * Pause an active activity
+     * Pause an active activity.
+     *
+     * `at` is when the athlete actually paused — sent whenever the request is
+     * delivered late (the app pauses locally and the network was down). `timeoutMs`
+     * bounds the wait: pause must never hang the Stop button on a dead connection.
      */
-    async pauseActivity(activityId: number): Promise<Types.Activity> {
+    async pauseActivity(
+      activityId: number,
+      opts: { at?: string; timeoutMs?: number } = {},
+    ): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${activityId}/pause`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          body: JSON.stringify(opts.at ? { at: opts.at } : {}),
+          signal: timeoutSignal(opts.timeoutMs),
+        },
       );
       return response.data;
     }
 
     /**
-     * Resume a paused activity
+     * Resume a paused activity. `at` / `timeoutMs`: see `pauseActivity`.
      */
-    async resumeActivity(activityId: number): Promise<Types.Activity> {
+    async resumeActivity(
+      activityId: number,
+      opts: { at?: string; timeoutMs?: number } = {},
+    ): Promise<Types.Activity> {
       const response = await this.request<Types.ApiResponse<Types.Activity>>(
         `/activities/${activityId}/resume`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          body: JSON.stringify(opts.at ? { at: opts.at } : {}),
+          signal: timeoutSignal(opts.timeoutMs),
+        },
       );
       return response.data;
     }

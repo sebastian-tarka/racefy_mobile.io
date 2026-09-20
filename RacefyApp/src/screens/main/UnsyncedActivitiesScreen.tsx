@@ -12,9 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../hooks/useTheme';
-import { useUnsyncedActivities } from '../../hooks/useUnsyncedActivities';
+import { useUnsyncedActivities, type UnsyncedItem } from '../../hooks/useUnsyncedActivities';
+import * as trackingDb from '../../services/trackingDb';
+import { toGpsPoints } from '../../services/pointsUploader';
 import { exportGpxAndShare } from '../../utils/gpxExport';
-import { getUnsyncedActivity, type UnsyncedActivityMeta } from '../../services/unsyncedActivities';
+import { getUnsyncedActivity } from '../../services/unsyncedActivities';
 import { Button, ScreenContainer, ScreenHeader } from '../../components';
 import { spacing, fontSize, msFont } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
@@ -44,10 +46,11 @@ function formatFailedAt(iso: string, locale: string): string {
 export function UnsyncedActivitiesScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { items, isLoading, retryingId, refresh, retry, discard } = useUnsyncedActivities();
+  const { items, isLoading, retryingId, refresh, retry, retryWithoutEvent, discard } =
+    useUnsyncedActivities();
 
   const onRetry = useCallback(
-    async (entry: UnsyncedActivityMeta) => {
+    async (entry: UnsyncedItem) => {
       const outcome = await retry(entry.activityId);
       if (outcome.ok) {
         Alert.alert(t('unsynced.retrySuccessTitle'), t('unsynced.retrySuccessBody'));
@@ -58,9 +61,36 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
     [retry, t],
   );
 
+  const onRetryWithoutEvent = useCallback(
+    (entry: UnsyncedItem) => {
+      Alert.alert(t('unsynced.withoutEventTitle'), t('unsynced.withoutEventBody'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('unsynced.withoutEvent'),
+          onPress: async () => {
+            const outcome = await retryWithoutEvent(entry);
+            if (outcome.ok) {
+              Alert.alert(t('unsynced.retrySuccessTitle'), t('unsynced.retrySuccessBody'));
+            } else {
+              Alert.alert(t('unsynced.retryFailedTitle'), outcome.error);
+            }
+          },
+        },
+      ]);
+    },
+    [retryWithoutEvent, t],
+  );
+
   const onExport = useCallback(
-    async (entry: UnsyncedActivityMeta) => {
-      const full = await getUnsyncedActivity(entry.activityId);
+    async (entry: UnsyncedItem) => {
+      // Outbox entries never copied their track anywhere: it is still in the tracking DB.
+      const full =
+        entry.source === 'outbox' && entry.clientActivityId
+          ? {
+              ...entry,
+              points: toGpsPoints(trackingDb.getAllPoints(entry.clientActivityId)),
+            }
+          : await getUnsyncedActivity(entry.activityId);
       if (!full) {
         Alert.alert(t('unsynced.exportFailedTitle'), t('unsynced.exportMissing'));
         return;
@@ -80,7 +110,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
   );
 
   const onDiscard = useCallback(
-    (entry: UnsyncedActivityMeta) => {
+    (entry: UnsyncedItem) => {
       Alert.alert(t('unsynced.discardConfirmTitle'), t('unsynced.discardConfirmBody'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -94,8 +124,13 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: UnsyncedActivityMeta }) => {
+    ({ item }: { item: UnsyncedItem }) => {
       const isRetrying = retryingId === item.activityId;
+      // Waiting for a network is the normal, healthy state of an outbox entry — it
+      // will go out by itself. Only a refusal (or a legacy entry) is a problem.
+      const waiting = item.source === 'outbox' && item.state !== 'needs_attention';
+      const badgeColor = waiting ? colors.info : colors.warning;
+      const badgeBg = waiting ? colors.infoLight : colors.warningLight;
 
       return (
         <View
@@ -114,15 +149,20 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
                 {formatFailedAt(item.failedAt, i18n.language)}
               </Text>
             </View>
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: colors.warningLight, borderColor: colors.warning },
-              ]}
-            >
-              <Ionicons name="cloud-offline" size={14} color={colors.warning} />
-              <Text style={[styles.badgeText, { color: colors.warning }]}>
-                {t('unsynced.statusFailed')}
+            <View style={[styles.badge, { backgroundColor: badgeBg, borderColor: badgeColor }]}>
+              <Ionicons
+                name={waiting ? 'cloud-upload-outline' : 'cloud-offline'}
+                size={14}
+                color={badgeColor}
+              />
+              <Text style={[styles.badgeText, { color: badgeColor }]}>
+                {t(
+                  waiting
+                    ? isRetrying || item.state === 'syncing'
+                      ? 'unsynced.statusSending'
+                      : 'unsynced.statusWaiting'
+                    : 'unsynced.statusFailed',
+                )}
               </Text>
             </View>
           </View>
@@ -145,8 +185,13 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
             />
           </View>
 
-          {item.lastError && (
-            <Text style={[styles.errorText, { color: colors.error }]} numberOfLines={2}>
+          {waiting && (
+            <Text style={[styles.retryText, { color: colors.textSecondary }]}>
+              {t('unsynced.waitingHint')}
+            </Text>
+          )}
+          {!waiting && item.lastError && (
+            <Text style={[styles.errorText, { color: colors.error }]} numberOfLines={3}>
               {item.lastError}
             </Text>
           )}
@@ -164,6 +209,15 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
               disabled={isRetrying}
               style={styles.actionPrimary}
             />
+            {!waiting && item.hasEvent && (
+              <Button
+                title={t('unsynced.withoutEvent')}
+                variant="outline"
+                onPress={() => onRetryWithoutEvent(item)}
+                disabled={isRetrying}
+                style={styles.actionSecondary}
+              />
+            )}
             <Button
               title={t('unsynced.exportGpx')}
               variant="outline"
@@ -182,7 +236,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
         </View>
       );
     },
-    [colors, i18n.language, onDiscard, onExport, onRetry, retryingId, t],
+    [colors, i18n.language, onDiscard, onExport, onRetry, onRetryWithoutEvent, retryingId, t],
   );
 
   return (
@@ -205,7 +259,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={(item) => String(item.activityId)}
+          keyExtractor={(item) => `${item.source}:${item.activityId}`}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

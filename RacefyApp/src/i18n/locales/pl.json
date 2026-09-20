@@ -1203,7 +1203,11 @@
     "pausedHint": "Wstrzymane — wznów albo zakończ",
     "permissions": {
       "locationDenied": "Wymagana jest zgoda na dostęp do lokalizacji."
-    }
+    },
+    "savedOnDeviceTitle": "Zapisano na telefonie",
+    "savedOnDeviceBody": "Aktywność jest bezpieczna. Wyślemy ją automatycznie, gdy wróci internet — punkty i wpis pojawią się po wysłaniu.",
+    "savedNeedsAttention": "Aktywność jest zapisana na telefonie, ale serwer jej nie przyjął: {{reason}}\n\nOtwórz listę niewysłanych, żeby zdecydować, co dalej.",
+    "openUnsynced": "Otwórz listę"
   },
   "gpxImport": {
     "title": "Importuj GPX",
@@ -2945,7 +2949,21 @@
     "retryCount": "{{count}} poprzednich prób",
     "discardConfirmTitle": "Odrzucić tę aktywność?",
     "discardConfirmBody": "Lokalny ślad GPS zostanie trwale usunięty. Wyeksportuj GPX wcześniej, jeśli chcesz go zachować.",
-    "untitled": "Aktywność #{{id}}"
+    "untitled": "Aktywność #{{id}}",
+    "statusWaiting": "Czeka na internet",
+    "statusSending": "Wysyłanie…",
+    "waitingHint": "Wyślemy ją automatycznie, gdy wróci internet. Możesz też spróbować teraz.",
+    "withoutEvent": "Wyślij bez eventu",
+    "withoutEventTitle": "Wysłać bez eventu?",
+    "withoutEventBody": "Aktywność zostanie zapisana jako zwykły trening, bez powiązania z eventem. Tego nie da się potem cofnąć z poziomu aplikacji.",
+    "deliveredTitle": "Aktywność wysłana",
+    "deliveredBody": "{{title}} jest już na Twoim profilu.",
+    "deliveredBodyPoints": "{{title}} jest już na Twoim profilu · +{{points}} pkt",
+    "startBlocked": "Poprzednia aktywność czeka jeszcze na wysłanie. Otwórz „Niezsynchronizowane aktywności” i wyślij ją lub odrzuć, zanim zaczniesz nową.",
+    "logoutWarning_one": "{{count}} aktywność czeka na wysłanie. Po wylogowaniu zostanie na telefonie i wyśle się dopiero, gdy zalogujesz się ponownie na to konto.",
+    "logoutWarning_few": "{{count}} aktywności czekają na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto.",
+    "logoutWarning_many": "{{count}} aktywności czeka na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto.",
+    "logoutWarning_other": "{{count}} aktywności czeka na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto."
   },
   "eventStatus": {
     "upcoming": "Nadchodzące",

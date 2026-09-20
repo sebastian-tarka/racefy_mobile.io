@@ -42,6 +42,7 @@ import { type SportTypeWithIcon, useSportTypes } from '../../hooks/useSportTypes
 import { useHealthSync } from '../../hooks/useHealthSync';
 import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
+import { countPendingFinishes } from '../../services/trackingDb';
 import { logger } from '../../services/logger';
 import { changeLanguage, supportedLanguages } from '../../i18n';
 import { fontSize, spacing } from '../../theme';
@@ -646,7 +647,14 @@ export function SettingsScreen({ navigation }: Props) {
 
   const handleLogout = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(t('common.logout'), t('profile.logoutConfirm'), [
+    // Activities saved on the phone go out only from the account that recorded
+    // them — after a sign-out they wait (nothing is lost), which is worth saying.
+    const owed = countPendingFinishes();
+    const message =
+      owed > 0
+        ? `${t('profile.logoutConfirm')}\n\n${t('unsynced.logoutWarning', { count: owed })}`
+        : t('profile.logoutConfirm');
+    Alert.alert(t('common.logout'), message, [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.logout'),
