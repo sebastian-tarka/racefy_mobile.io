@@ -34,6 +34,14 @@ export interface UnsyncedActivityMeta {
   sportTypeId: number;
   sportTypeName?: string;
   title?: string;
+  // The athlete's choices on the finish screen, replayed verbatim on retry.
+  description?: string;
+  skipAutoPost?: boolean;
+  eventId?: number | null;
+  /** Device-minted recording UUID — makes the retried finish idempotent server-side. */
+  clientActivityId?: string;
+  /** Device-measured pause total, present when a pause/resume never reached the server. */
+  totalPausedDuration?: number;
   startedAt: string;
   endedAt: string;
   distance: number; // meters, client-calculated
@@ -153,6 +161,8 @@ export async function updateUnsyncedActivityMeta(
 
 export async function removeUnsyncedActivity(activityId: number): Promise<void> {
   const index = await readIndex();
+  // Called after every successful finish; most of the time there is nothing queued.
+  if (!index.some((e) => e.activityId === activityId)) return;
   const next = index.filter((e) => e.activityId !== activityId);
   await writeIndex(next);
   await AsyncStorage.removeItem(pointsKey(activityId));

@@ -10,8 +10,23 @@ import {
   stopBackgroundLocationTracking,
 } from '../services/backgroundLocation';
 import { drainPoints, toGpsPoints } from '../services/pointsUploader';
-import { enqueueUnsyncedActivity } from '../services/unsyncedActivities';
+import { enqueueUnsyncedActivity, removeUnsyncedActivity } from '../services/unsyncedActivities';
 import * as trackingDb from '../services/trackingDb';
+import {
+  clearLedger,
+  createLedger,
+  enqueueOp,
+  flushPendingOps,
+  isTransientError,
+  LIFECYCLE_TIMEOUT_MS,
+  loadLedger,
+  recordPause,
+  recordResume,
+  saveLedger,
+  totalPausedAt,
+  type LedgerState,
+  type LedgerStorage,
+} from '../services/activityLifecycleLedger';
 import * as Crypto from 'expo-crypto';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import type * as Types from '../types/api';
@@ -39,6 +54,13 @@ import {
 } from '../constants/tracking';
 
 const isWeb = Platform.OS === 'web';
+
+/** The lifecycle ledger lives in the tracking DB's kv table — it survives an app kill. */
+const ledgerStorage: LedgerStorage = {
+  get: trackingDb.getKv,
+  set: trackingDb.setKv,
+  remove: trackingDb.deleteKv,
+};
 
 export interface LiveActivityStats {
   distance: number;
@@ -119,6 +141,26 @@ function useLiveActivityInternal() {
   const localStatsRef = useRef<LiveActivityStats>({ ...initialStats });
   const trackingStartTime = useRef<number | null>(null);
   const pausedDuration = useRef<number>(0);
+
+  // Pause/resume are local operations; the server is told afterwards. The ledger
+  // keeps the device's own pause total and any calls still waiting for a network
+  // (see services/activityLifecycleLedger).
+  const ledgerRef = useRef<LedgerState | null>(null);
+  // Deliveries run one after another, in the background: a resume must never
+  // overtake the pause it ends, and neither may hold up the UI.
+  const lifecycleChainRef = useRef<Promise<void>>(Promise.resolve());
+  // What the last finish attempt asked for — kept so a failed finish can be
+  // queued with the athlete's title, event and share choice intact.
+  const lastFinishAttemptRef = useRef<{
+    endedAt: string;
+    data?: {
+      title?: string;
+      description?: string;
+      calories?: number;
+      skip_auto_post?: boolean;
+      event_id?: number | null;
+    };
+  } | null>(null);
   const currentActivityId = useRef<number | null>(null);
 
   // Device-minted UUID of the SQLite tracking session (durable point log).
@@ -260,7 +302,9 @@ function useLiveActivityInternal() {
           ...prev,
           activity,
           isTracking: false, // Don't auto-resume, let user decide
-          isPaused: activity.status === 'paused',
+          // A pause made offline lives only in the ledger — the server still
+          // says in_progress.
+          isPaused: activity.status === 'paused' || !!ensureLedger(activity).pauseStartedAt,
           currentStats: stats,
           isLoading: false,
           hasExistingActivity: true,
@@ -285,6 +329,127 @@ function useLiveActivityInternal() {
       logger.error('activity', 'Failed to check existing activity', { error });
       setState((prev) => ({ ...prev, isLoading: false }));
     }
+  };
+
+  const commitLedger = (ledger: LedgerState) => {
+    ledgerRef.current = ledger;
+    saveLedger(ledgerStorage, ledger);
+  };
+
+  /** The ledger of this activity: in memory, else persisted, else seeded from the server. */
+  const ensureLedger = (activity: Activity): LedgerState => {
+    if (ledgerRef.current?.activityId === activity.id) return ledgerRef.current;
+    const ledger =
+      loadLedger(ledgerStorage, activity.id) ??
+      createLedger(activity.id, {
+        pausedTotalSec: activity.total_paused_duration || 0,
+        // Older API builds do not send paused_at; "now" is a harmless stand-in —
+        // a seeded ledger is clean, so its total is never sent to the server.
+        pauseStartedAt:
+          activity.status === 'paused' ? (activity.paused_at ?? new Date().toISOString()) : null,
+      });
+    ledgerRef.current = ledger;
+    return ledger;
+  };
+
+  const dropLedger = (activityId: number) => {
+    ledgerRef.current = null;
+    clearLedger(ledgerStorage, activityId);
+  };
+
+  /**
+   * Tell the server about a pause/resume that has ALREADY happened locally.
+   * Never throws: with no network the call is queued with its real timestamp and
+   * replayed later; a call the server refuses leaves the ledger dirty, so finish
+   * sends the device's pause total. Returns the freshest activity we know of.
+   */
+  const deliverLifecycle = async (
+    activity: Activity,
+    op: 'pause' | 'resume',
+    at: string,
+  ): Promise<Activity> => {
+    const ledger = ensureLedger(activity);
+
+    // Earlier calls are still waiting — this one must queue behind them.
+    if (ledger.pendingOps.length > 0) {
+      const queued = enqueueOp(ledger, { op, at });
+      commitLedger(queued);
+      const res = await flushPendingOps(queued, api);
+      // Pause accounting may have moved on meanwhile; only the queue is ours to write.
+      if (ledgerRef.current?.activityId === activity.id) {
+        commitLedger({
+          ...ledgerRef.current,
+          pendingOps: res.ledger.pendingOps,
+          dirty: true,
+        });
+      }
+      return res.activity ?? activity;
+    }
+
+    try {
+      const opts = { at, timeoutMs: LIFECYCLE_TIMEOUT_MS };
+      return op === 'pause'
+        ? await api.pauseActivity(activity.id, opts)
+        : await api.resumeActivity(activity.id, opts);
+    } catch (error: any) {
+      logger.warn('activity', `Could not deliver ${op}, continuing locally`, {
+        id: activity.id,
+        at,
+        status: error?.status,
+        error: error?.message,
+      });
+      // Finished or discarded while this call was in flight — nothing left to account for.
+      if (ledgerRef.current?.activityId !== activity.id) return activity;
+      const latest = ledgerRef.current;
+      commitLedger(
+        isTransientError(error) ? enqueueOp(latest, { op, at }) : { ...latest, dirty: true },
+      );
+      return activity;
+    }
+  };
+
+  /** Queue a delivery behind the previous one and return immediately. */
+  const scheduleLifecycle = (activity: Activity, op: 'pause' | 'resume', at: string) => {
+    lifecycleChainRef.current = lifecycleChainRef.current
+      .then(() => deliverLifecycle(activity, op, at))
+      .then((fresh) => {
+        if (fresh === activity) return;
+        if (op === 'resume') pausedDuration.current = fresh.total_paused_duration || 0;
+        setState((prev) => (prev.activity?.id === fresh.id ? { ...prev, activity: fresh } : prev));
+      })
+      .catch((error) => {
+        logger.warn('activity', 'Lifecycle delivery failed unexpectedly', { op, error });
+      });
+  };
+
+  /** Replay queued pause/resume calls; called from the sync tick once points go through. */
+  const flushLifecycleBacklog = async () => {
+    const ledger = ledgerRef.current;
+    if (!ledger || ledger.pendingOps.length === 0) return;
+    // Through the same chain as live pause/resume calls, so the two never interleave.
+    lifecycleChainRef.current = lifecycleChainRef.current
+      .then(async () => {
+        const current = ledgerRef.current;
+        if (!current || current.activityId !== ledger.activityId) return;
+        if (current.pendingOps.length === 0) return;
+        const res = await flushPendingOps(current, api);
+        if (ledgerRef.current?.activityId === current.activityId) {
+          commitLedger({ ...ledgerRef.current, pendingOps: res.ledger.pendingOps });
+        }
+        if (res.activity) {
+          const fresh = res.activity;
+          setState((prev) =>
+            prev.activity?.id === fresh.id ? { ...prev, activity: fresh } : prev,
+          );
+        }
+      })
+      .catch(() => {});
+  };
+
+  /** `total_paused_duration` for the finish request — only when the server's own sum can't be trusted. */
+  const pausedDurationField = (endedAt: string): { total_paused_duration?: number } => {
+    const ledger = ledgerRef.current;
+    return ledger?.dirty ? { total_paused_duration: totalPausedAt(ledger, endedAt) } : {};
   };
 
   // Start local duration timer for real-time UI updates
@@ -1077,6 +1242,12 @@ function useLiveActivityInternal() {
       },
     }));
 
+    // Points went through (or there were none to send and no error): the network
+    // is there, so replay any pause/resume that could not be delivered earlier.
+    if (!result.error && !result.backedOff) {
+      void flushLifecycleBacklog();
+    }
+
     if (result.uploaded > 0) {
       logger.gps('GPS points synced successfully', {
         uploaded: result.uploaded,
@@ -1210,46 +1381,39 @@ function useLiveActivityInternal() {
     [getGpsProfileForSport],
   );
 
+  /**
+   * Pause is a LOCAL operation. GPS stops and the recording is paused whether or
+   * not the server can be reached — it used to be the other way round: GPS was
+   * stopped first, then `api.pauseActivity` threw with no network, and the state
+   * stayed "recording": the clock kept running with no GPS behind it and the
+   * finish screen (which pauses first) never opened.
+   */
   const pauseTracking = useCallback(async () => {
     if (!state.activity) return;
+    const current = state.activity;
+
+    logger.activity('Pausing activity', { id: current.id });
+    setState((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      logger.activity('Pausing activity', { id: state.activity.id });
-      setState((prev) => ({ ...prev, isLoading: true }));
-
       // Stop GPS (no longer clears persisted data — we control that here)
       await stopGpsTracking();
-
-      // Sync remaining points (all accepted points are already durable in SQLite)
-      await syncPoints(state.activity.id);
-
-      // Pause on server
-      const activity = await api.pauseActivity(state.activity.id);
-
-      logger.activity('Activity paused', {
-        id: activity.id,
-        duration: activity.duration,
-      });
-
-      setState((prev) => ({
-        ...prev,
-        activity,
-        isTracking: false,
-        isPaused: true,
-        isLoading: false,
-      }));
     } catch (error: any) {
-      logger.error('activity', 'Failed to pause activity', {
-        id: state.activity.id,
-        error: error.message,
-      });
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: error.message || 'Failed to pause activity',
-      }));
-      throw error;
+      logger.error('activity', 'Failed to stop GPS on pause', { error: error?.message });
     }
+
+    const at = new Date().toISOString();
+    commitLedger(recordPause(ensureLedger(current), at));
+
+    // From here on the athlete IS paused. Telling the server happens in the
+    // background: on a connected-but-dead network the point upload alone can take
+    // 30 s, and Stop must open the finish screen now, not then.
+    setState((prev) => ({ ...prev, isTracking: false, isPaused: true, isLoading: false }));
+    logger.activity('Activity paused locally', { id: current.id, at });
+
+    // All accepted points are already durable in SQLite; this never throws.
+    void syncPoints(current.id);
+    scheduleLifecycle(current, 'pause', at);
   }, [state.activity]);
 
   const resumeTracking = useCallback(async () => {
@@ -1262,15 +1426,22 @@ function useLiveActivityInternal() {
       });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      let activity = state.activity;
+      const activity = state.activity;
 
-      // Only call API resume if activity is paused
+      // Resume is local too: the ledger closes the pause now, the server hears
+      // about it now or — with no network — later, with this timestamp.
+      const at = new Date().toISOString();
+      const before = ensureLedger(state.activity);
+      const hadLocalPause = !!before.pauseStartedAt;
+      commitLedger(recordResume(before, at));
+
+      // Tell the server only if there is a pause to end: one we made (delivered,
+      // queued or still in flight) or one it reports itself. In the background,
+      // behind that pause — recording restarts now either way.
       // If activity is already in_progress (e.g., app crashed), just restart GPS tracking
-      if (state.activity.status === 'paused') {
-        activity = await api.resumeActivity(state.activity.id);
-        // Update paused duration from server
-        pausedDuration.current = activity.total_paused_duration || 0;
-        logger.activity('Activity resumed via API', { id: activity.id });
+      if (hadLocalPause || state.activity.status === 'paused') {
+        scheduleLifecycle(state.activity, 'resume', at);
+        logger.activity('Activity resumed locally', { id: activity.id, at });
       } else if (state.activity.status === 'in_progress') {
         // Activity is already in progress, just need to restart local GPS tracking
         // No API call needed
@@ -1321,23 +1492,34 @@ function useLiveActivityInternal() {
         ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
         : [];
       const startedAt = state.activity.started_at;
+      const attempt = lastFinishAttemptRef.current;
       const lastTimestamp = gpsTracker.lastPosition?.timestamp;
-      const endedAt = lastTimestamp
-        ? new Date(lastTimestamp).toISOString()
-        : new Date().toISOString();
+      // The end the athlete actually asked for; the last GPS fix only as a fallback.
+      const endedAt =
+        attempt?.endedAt ??
+        (lastTimestamp ? new Date(lastTimestamp).toISOString() : new Date().toISOString());
+      const ledger = ledgerRef.current;
 
       await enqueueUnsyncedActivity(
         {
           activityId: state.activity.id,
           sportTypeId: state.activity.sport_type_id,
           sportTypeName: state.activity.sport_type?.name,
-          title: state.activity.title,
+          // What the athlete chose on the finish screen — without these a retried
+          // finish saved the activity untitled, unlinked from its event, and
+          // shared even when "save privately" was picked.
+          title: attempt?.data?.title ?? state.activity.title,
+          description: attempt?.data?.description,
+          skipAutoPost: attempt?.data?.skip_auto_post,
+          eventId: attempt?.data?.event_id,
+          clientActivityId: clientActivityIdRef.current ?? undefined,
+          totalPausedDuration: ledger?.dirty ? totalPausedAt(ledger, endedAt) : undefined,
           startedAt,
           endedAt,
           distance: Math.round(localStatsRef.current.distance),
           duration: localStatsRef.current.duration,
           elevationGain: Math.round(localStatsRef.current.elevation_gain || 0),
-          calories: localStatsRef.current.calories,
+          calories: attempt?.data?.calories ?? localStatsRef.current.calories,
           avgHeartRate: localStatsRef.current.avg_heart_rate,
           maxHeartRate: localStatsRef.current.max_heart_rate,
           pointsCount: points.length,
@@ -1398,9 +1580,14 @@ function useLiveActivityInternal() {
       });
 
       // Finish on server with GPS timestamp + remaining pending points
+      // Let a pause/resume still in flight settle first (bounded by its timeout):
+      // whether the ledger is dirty decides what this request carries.
+      await lifecycleChainRef.current;
+      lastFinishAttemptRef.current = { endedAt, data };
       const response = await api.finishActivity(state.activity.id, {
         ...data,
         ended_at: endedAt,
+        ...pausedDurationField(endedAt),
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
         client_distance: clientDistance,
@@ -1408,6 +1595,16 @@ function useLiveActivityInternal() {
       });
 
       const activity = response.data;
+
+      dropLedger(activity.id);
+
+      // A finish that failed once and then went through leaves a queue entry behind —
+
+      // the banner would keep offering to retry an activity that is already saved.
+
+      void removeUnsyncedActivity(activity.id).catch(() => {});
+
+      lastFinishAttemptRef.current = null;
 
       // Close the durable SQLite session (points purged after retention window)
       if (clientActivityIdRef.current) {
@@ -1511,9 +1708,15 @@ function useLiveActivityInternal() {
       });
 
       // Finish on server with current time + remaining pending points
+      const endedAt = new Date().toISOString();
+      // Let a pause/resume still in flight settle first (bounded by its timeout):
+      // whether the ledger is dirty decides what this request carries.
+      await lifecycleChainRef.current;
+      lastFinishAttemptRef.current = { endedAt, data };
       const response = await api.finishActivity(state.activity.id, {
         ...data,
-        ended_at: new Date().toISOString(),
+        ended_at: endedAt,
+        ...pausedDurationField(endedAt),
         location: activityLocationRef.current ?? undefined,
         final_points: finalPoints.length > 0 ? finalPoints : undefined,
         client_distance: clientDistance,
@@ -1521,6 +1724,16 @@ function useLiveActivityInternal() {
       });
 
       const activity = response.data;
+
+      dropLedger(activity.id);
+
+      // A finish that failed once and then went through leaves a queue entry behind —
+
+      // the banner would keep offering to retry an activity that is already saved.
+
+      void removeUnsyncedActivity(activity.id).catch(() => {});
+
+      lastFinishAttemptRef.current = null;
 
       // Close the durable SQLite session (points purged after retention window)
       if (clientActivityIdRef.current) {
@@ -1693,9 +1906,15 @@ function useLiveActivityInternal() {
         });
 
         // Finish on server - include location and remaining pending points
+        const endedAt = new Date().toISOString();
+        // Let a pause/resume still in flight settle first (bounded by its timeout):
+        // whether the ledger is dirty decides what this request carries.
+        await lifecycleChainRef.current;
+        lastFinishAttemptRef.current = { endedAt, data };
         const response = await api.finishActivity(state.activity.id, {
           ...data,
-          ended_at: new Date().toISOString(),
+          ended_at: endedAt,
+          ...pausedDurationField(endedAt),
           location: activityLocationRef.current ?? undefined,
           final_points: finalPoints.length > 0 ? finalPoints : undefined,
           client_distance: clientDistance,
@@ -1703,6 +1922,16 @@ function useLiveActivityInternal() {
         });
 
         const activity = response.data;
+
+        dropLedger(activity.id);
+
+        // A finish that failed once and then went through leaves a queue entry behind —
+
+        // the banner would keep offering to retry an activity that is already saved.
+
+        void removeUnsyncedActivity(activity.id).catch(() => {});
+
+        lastFinishAttemptRef.current = null;
 
         // Close the durable SQLite session (points purged after retention window)
         if (clientActivityIdRef.current) {
@@ -1800,6 +2029,8 @@ function useLiveActivityInternal() {
 
       // Discard on server
       await api.discardActivity(state.activity.id);
+      dropLedger(state.activity.id);
+      lastFinishAttemptRef.current = null;
 
       logger.activity('Activity discarded', { id: state.activity.id });
 

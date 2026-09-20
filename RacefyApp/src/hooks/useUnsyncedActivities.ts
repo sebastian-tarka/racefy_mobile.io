@@ -82,6 +82,12 @@ export function useUnsyncedActivities() {
         // 2. Finish the activity (no final_points: they were uploaded above).
         try {
           await api.finishActivity(activityId, {
+            title: entry.title,
+            description: entry.description,
+            skip_auto_post: entry.skipAutoPost,
+            event_id: entry.eventId,
+            client_activity_id: entry.clientActivityId,
+            total_paused_duration: entry.totalPausedDuration,
             ended_at: entry.endedAt,
             location: entry.location,
             client_distance: entry.distance,
@@ -90,6 +96,23 @@ export function useUnsyncedActivities() {
             calories: entry.calories,
           });
         } catch (finishErr: any) {
+          // A 422 here usually means the FIRST finish did land and only its
+          // response was lost. If the server says the activity is completed,
+          // that is success, not an error to show the athlete forever.
+          if (finishErr?.status === 422) {
+            const landed = await api
+              .getActivity(activityId)
+              .then((a) => a.status === 'completed')
+              .catch(() => false);
+            if (landed) {
+              await removeUnsyncedActivity(activityId);
+              await refresh();
+              logger.activity('Unsynced activity was already finished on the server', {
+                activityId,
+              });
+              return { ok: true };
+            }
+          }
           const msg = finishErr?.message || 'Failed to finish activity';
           await updateUnsyncedActivityMeta(activityId, {
             lastError: msg,

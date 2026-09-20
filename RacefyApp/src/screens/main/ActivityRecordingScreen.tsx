@@ -886,13 +886,17 @@ export function ActivityRecordingScreen() {
   const handleStop = async () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
     // Pause the timer, then let the athlete review before anything is written.
+    // Pausing is local and does not need the network; whatever happens, the
+    // athlete gets to the finish screen — a Stop button that does nothing with no
+    // signal is the one thing this must never be.
     try {
       if (isTracking) {
         await pauseTracking();
       }
-      setShowFinish(true);
     } catch (err) {
-      logger.error('activity', 'Failed to stop activity', { error: err });
+      logger.error('activity', 'Failed to pause on stop', { error: err });
+    } finally {
+      setShowFinish(true);
     }
   };
 
@@ -985,7 +989,8 @@ export function ActivityRecordingScreen() {
           text: t('recording.retry'),
           onPress: () => {
             isFinishingRef.current = false;
-            handleSave();
+            // Same title and share choice — a bare handleSave() used to drop both.
+            handleSave(options);
           },
         },
       ]);
