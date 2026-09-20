@@ -15,7 +15,16 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `offline-start-faza-4` — start aktywności bez internetu + odzyskiwanie nagrania po killu offline
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Offline, faza 4: start aktywności bez internetu + odzyskiwanie nagrania po killu offline (zmergowane 2026-09-20, tag `pre-offline-start-faza-4` = main sprzed merge)
 
 Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`, opis: `RacefyApp/docs/OFFLINE_ACTIVITY_SYNC.md`.
 UUID nagrania powstaje **przed** zapytaniem serwera; gdy serwer nie odpowie w 5 s (brak sieci,
@@ -24,7 +33,7 @@ aktywność powstaje później: w trakcie nagrywania, gdy wróci sieć (`createS
 jako pierwszy krok wysyłki po zapisie (`finishSync`, krok 0). Start jest idempotentny po
 `client_activity_id`, więc timeout po stronie klienta nie tworzy duplikatu. `trackingDb` v4
 (sesja pamięta żądanie startu; outbox dopuszcza brak id serwera — migracja przebudowuje tabelę).
-**Wymaga backendu z brancha `offline-start-api`** (`client_activity_id` w start, walidacja
+**Wymaga backendu z `offline-start-api`** (zmergowany do `main` API tego samego dnia; zawiera migrację) (`client_activity_id` w start, walidacja
 `started_at`, spóźniony start bez powiadomienia obserwujących). Ze starym backendem start offline
 działa, ale ponowiony start po zgubionej odpowiedzi może dać „already active".
 
@@ -45,13 +54,6 @@ działa, ale ponowiony start po zgubionej odpowiedzi może dać „already activ
 - [ ] Ekran kolejki: wpis nagrany offline ma tytuł (nie „Aktywność #0"), ponowienie/odrzucenie/eksport GPX działają
 - [ ] Aktualizacja aplikacji z oczekującą aktywnością w kolejce (migracja bazy v3→v4): wpis przetrwał z całym śladem
 - [ ] Web: start wymaga sieci jak dotąd (brak SQLite), błąd jest czytelny
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Offline, faza 3: wysyłka aktywności zapisanych offline przy zamkniętej aplikacji (zmergowane 2026-09-20, tag `pre-offline-finish-faza-3` = main sprzed merge)
 
@@ -917,6 +919,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-09-20 | `offline-start-faza-4` | Start aktywności bez internetu: UUID nagrania przed zapytaniem serwera, „tymczasowa" aktywność (ujemne id), tworzenie na serwerze w trakcie nagrywania albo jako krok 0 wysyłki, `trackingDb` v4, odzyskiwanie nagrania po killu bez sieci, „Odrzuć" i nagrywanie w tle bez id serwera. Backend: idempotentny start po `client_activity_id` |
 | 2026-09-20 | `offline-finish-faza-3` | Wysyłka aktywności zapisanych offline przy zamkniętej aplikacji: `expo-background-task`, `finishSyncBackgroundTask` (rejestracja tylko przy niepustym outboxie), headless `backgroundApiClient`, przycisk w Dev Tools, `docs/OFFLINE_ACTIVITY_SYNC.md`. **Wymaga builda natywnego** |
 | 2026-09-20 | `offline-finish-faza-0` + `offline-finish-faza-1` | Pauza/wznowienie/Stop i zapis aktywności bez internetu: księga pauz (`activityLifecycleLedger`), outbox w SQLite (`pending_finishes`), `finishSync` z automatyczną wysyłką (powrót sieci, logowanie, foreground), UI kolejki; `ended_at` = moment Stop. Backend: `at` w pause/resume, `total_paused_duration`, idempotentny finish |
 | 2026-09-20 | `event-prestart` | Pasek eventu na pre-starcie (event narzuca dyscyplinę, blokada raila), znacznik eventu na ekranie live + dialog odmowy, wiersz eventu na zakończeniu, „Startuj aktywność" na ekranie eventu; `EventBar`, `EventPinDialog`, tokeny `colors.event*` |
