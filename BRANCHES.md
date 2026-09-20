@@ -15,7 +15,16 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `event-prestart` — podpięcie eventu przed startem + „Startuj aktywność" z ekranu eventu
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Podpięcie eventu przed startem + „Startuj aktywność" z ekranu eventu (zmergowane 2026-09-20, tag `pre-event-prestart` = main sprzed merge)
 
 Design: `racefy-event-pin.jsx`, `Prestart Event - warianty.html` (wariant b), zmiany
 w `racefy-prestart.jsx`. Przywraca dwa wejścia wycofane w `2d697db` (wiersz eventu na
@@ -44,13 +53,6 @@ tokeny `colors.event*`.
 - [ ] Organizator, który jest też zapisany: osobna karta z CTA pod akcjami organizatora
 - [ ] Import GPX: arkusz eventu w nowym wyglądzie nadal podpina event
 - [ ] Tryb ciemny: pasek eventu, arkusz, dialogi, znacznik na ekranie live
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Warstwa rywalizacji wg designu „Racefy v2" (zmergowane 2026-09-13, tag `pre-rywalizacja-i-silownia` = main sprzed merge)
 
@@ -805,6 +807,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-09-20 | `event-prestart` | Pasek eventu na pre-starcie (event narzuca dyscyplinę, blokada raila), znacznik eventu na ekranie live + dialog odmowy, wiersz eventu na zakończeniu, „Startuj aktywność" na ekranie eventu; `EventBar`, `EventPinDialog`, tokeny `colors.event*` |
 | 2026-08-27 | `feature/voice-turn-instructions` | Głosowe „za 200 metrów, skręć w lewo” dla trasy-cienia (skręty routera z plannera/eventu, heurystyka z geometrii dla śladów GPS), odmiana jednostek w mowie, `routeKey` zamiast gołego `id` |
 | 2026-08-27 | `feature/live-athlete-avatar` | Avatar zawodnika (MarkerView) zamiast kropki na mapie widza |
 | 2026-08-27 | `feature/live-cheer-pins` | Pinezki dopingów na trasie zakończonej aktywności + „na X km · m:ss” w karcie; `docs/api` → `e57f4fd` |
