@@ -919,9 +919,17 @@ export function ActivityRecordingScreen() {
         event_id: selectedEvent?.id ?? null,
       });
 
+      // Cancelled (GPS-gap dialog) or a duplicate tap: nothing was saved, stay here.
+      if (!result) return;
+
+      // Either the server answered while we waited, or the activity is safe in
+      // the phone's outbox and goes out when the network allows.
+      const delivered = result.queued ? null : result;
+
       logger.activity('Activity saved from UI', {
-        activityId: result?.activity?.id,
-        hasPost: !!result?.post,
+        activityId: delivered?.activity.id ?? (result.queued ? result.activityId : undefined),
+        queued: !!result.queued,
+        hasPost: !!delivered?.post,
       });
 
       // Audio coach: announce end with summary
@@ -935,8 +943,8 @@ export function ActivityRecordingScreen() {
       }
 
       // Fire-and-forget: enrich activity with HR data from Health Connect / HealthKit
-      if (result?.activity) {
-        enrichActivityWithHeartRate(result.activity).catch(() => {
+      if (delivered) {
+        enrichActivityWithHeartRate(delivered.activity).catch(() => {
           // Silently ignore — enrichment is non-blocking
         });
       }
@@ -955,17 +963,39 @@ export function ActivityRecordingScreen() {
       void clearWorkoutSession();
       void cancelGoalNotification();
 
+      if (result.queued) {
+        // No points or post to report yet — those exist only once the server has
+        // the activity, and promising them here would be a lie half the time.
+        if (result.needsAttention) {
+          Alert.alert(
+            t('recording.savedOnDeviceTitle'),
+            t('recording.savedNeedsAttention', { reason: result.needsAttention }),
+            [
+              { text: t('recording.later'), style: 'cancel' },
+              {
+                text: t('recording.openUnsynced'),
+                onPress: () => navigation.navigate('UnsyncedActivities'),
+              },
+            ],
+          );
+        } else {
+          Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
+        }
+        return;
+      }
+
       // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
-      const pointsEarned = result?.points_earned;
+      const pointsEarned = delivered?.points_earned;
       const successMessage =
         pointsEarned == null || pointsEarned === 0
           ? t('recording.noPointsAwarded')
           : t('recording.pointsAwarded', { points: pointsEarned });
 
-      if (result?.post) {
-        if (result.post.status === 'published') {
+      const post = delivered?.post;
+      if (post) {
+        if (post.status === 'published') {
           Alert.alert(t('common.success'), `${t('recording.activityShared')}\n\n${successMessage}`);
-        } else if (result.post.status === 'draft') {
+        } else if (post.status === 'draft') {
           Alert.alert(
             t('recording.activitySaved'),
             `${t('recording.draftCreated')}\n\n${successMessage}`,
@@ -973,7 +1003,7 @@ export function ActivityRecordingScreen() {
               { text: t('recording.later'), style: 'cancel' },
               {
                 text: t('recording.viewDraft'),
-                onPress: () => navigation.navigate('PostDetail', { postId: result.post!.id }),
+                onPress: () => navigation.navigate('PostDetail', { postId: post.id }),
               },
             ],
           );

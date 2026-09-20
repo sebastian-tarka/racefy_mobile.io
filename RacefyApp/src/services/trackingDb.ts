@@ -21,7 +21,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { logger } from './logger';
 
 const DB_NAME = 'racefy_tracking.db';
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 export type PointSource = 'fg' | 'bg';
 
@@ -51,7 +51,31 @@ export interface ActivitySession {
   serverActivityId: number | null;
   sportSlug: string | null;
   startedAt: string;
-  status: 'recording' | 'finishing' | 'finished';
+  /**
+   * `pending_finish`: the athlete saved the activity, the server has not heard
+   * yet (see pending_finishes). Not "active" any more — the recording screen is
+   * free — but not purgeable either: its points are the only copy of the track.
+   */
+  status: 'recording' | 'finishing' | 'pending_finish' | 'finished';
+}
+
+export type PendingFinishState = 'pending' | 'syncing' | 'needs_attention';
+
+/** One saved-but-not-yet-delivered activity (the finish outbox). */
+export interface PendingFinish {
+  clientActivityId: string;
+  serverActivityId: number;
+  userId: number | null;
+  /** The finish request body, minus `final_points` (points stay in activity_points). */
+  payload: Record<string, unknown>;
+  /** What the queue UI shows: title, sport, distance, duration, timestamps. */
+  meta: Record<string, unknown>;
+  state: PendingFinishState;
+  attempts: number;
+  /** Epoch ms before which the automatic sync leaves this entry alone. */
+  nextAttemptAt: number;
+  lastError: string | null;
+  createdAt: string;
 }
 
 const isWeb = Platform.OS === 'web';
@@ -130,6 +154,26 @@ function migrate(database: SQLiteDatabase): void {
         );
       `);
     }
+    if (version < 3) {
+      // Finish outbox: activities the athlete saved while the server could not
+      // be told. In SQLite rather than AsyncStorage so the entry and the
+      // session's status change are one transaction, and so the (large) track
+      // is never copied — it stays where it already is, in activity_points.
+      database.execSync(`
+        CREATE TABLE IF NOT EXISTS pending_finishes (
+          client_activity_id TEXT PRIMARY KEY,
+          server_activity_id INTEGER NOT NULL,
+          user_id INTEGER,
+          payload TEXT NOT NULL,
+          meta TEXT NOT NULL,
+          state TEXT NOT NULL DEFAULT 'pending',
+          attempts INTEGER NOT NULL DEFAULT 0,
+          next_attempt_at INTEGER NOT NULL DEFAULT 0,
+          last_error TEXT,
+          created_at TEXT NOT NULL
+        );
+      `);
+    }
     database.execSync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   });
 }
@@ -174,13 +218,17 @@ export function bindServerActivity(clientActivityId: string, serverActivityId: n
   );
 }
 
-/** The single session still in `recording`/`finishing` state (newest wins). */
+/**
+ * The single session still in `recording`/`finishing` state (newest wins).
+ * A `pending_finish` session is deliberately not "active": the athlete is done
+ * with it and may already be recording the next one.
+ */
 export function getActiveSession(): ActivitySession | null {
   const database = getDb();
   if (!database) return null;
 
   const row = database.getFirstSync<any>(
-    `SELECT * FROM activity_sessions WHERE status != 'finished'
+    `SELECT * FROM activity_sessions WHERE status IN ('recording', 'finishing')
      ORDER BY started_at DESC LIMIT 1;`,
   );
   if (!row) return null;
@@ -256,6 +304,169 @@ export function purgeFinishedSessions(keepDays = 7): void {
       [cutoff],
     );
   });
+}
+
+// ── Finish outbox ───────────────────────────────────────────────────────────
+
+function rowToPendingFinish(row: any): PendingFinish {
+  const parse = (raw: string) => {
+    try {
+      return JSON.parse(raw) ?? {};
+    } catch {
+      return {};
+    }
+  };
+  return {
+    clientActivityId: row.client_activity_id,
+    serverActivityId: row.server_activity_id,
+    userId: row.user_id ?? null,
+    payload: parse(row.payload),
+    meta: parse(row.meta),
+    state: row.state,
+    attempts: row.attempts ?? 0,
+    nextAttemptAt: row.next_attempt_at ?? 0,
+    lastError: row.last_error ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Record that the athlete finished this session and park the session as
+ * `pending_finish` — one transaction, so there is never a saved activity
+ * without an outbox entry or the other way round. Returns false when the DB
+ * is unavailable (web, native module missing): the caller must then finish
+ * online the old way.
+ */
+export function enqueuePendingFinish(entry: {
+  clientActivityId: string;
+  serverActivityId: number;
+  userId: number | null;
+  payload: Record<string, unknown>;
+  meta: Record<string, unknown>;
+}): boolean {
+  const database = getDb();
+  if (!database) return false;
+
+  try {
+    database.withTransactionSync(() => {
+      database.runSync(
+        `INSERT OR REPLACE INTO pending_finishes
+           (client_activity_id, server_activity_id, user_id, payload, meta, state, attempts, next_attempt_at, last_error, created_at)
+         VALUES (?, ?, ?, ?, ?, 'pending', 0, 0, NULL, ?);`,
+        [
+          entry.clientActivityId,
+          entry.serverActivityId,
+          entry.userId,
+          JSON.stringify(entry.payload),
+          JSON.stringify(entry.meta),
+          new Date().toISOString(),
+        ],
+      );
+      database.runSync(
+        `UPDATE activity_sessions SET status = 'pending_finish', server_activity_id = ?
+         WHERE client_activity_id = ?;`,
+        [entry.serverActivityId, entry.clientActivityId],
+      );
+    });
+    return true;
+  } catch (error) {
+    logger.error('activity', 'Failed to enqueue pending finish', { error });
+    return false;
+  }
+}
+
+export function listPendingFinishes(): PendingFinish[] {
+  const database = getDb();
+  if (!database) return [];
+  return database
+    .getAllSync<any>('SELECT * FROM pending_finishes ORDER BY created_at ASC;')
+    .map(rowToPendingFinish);
+}
+
+export function getPendingFinish(clientActivityId: string): PendingFinish | null {
+  const database = getDb();
+  if (!database) return null;
+  const row = database.getFirstSync<any>(
+    'SELECT * FROM pending_finishes WHERE client_activity_id = ?;',
+    [clientActivityId],
+  );
+  return row ? rowToPendingFinish(row) : null;
+}
+
+/** Is this server activity one the athlete has already saved (and we still owe the server)? */
+export function getPendingFinishByServerActivityId(serverActivityId: number): PendingFinish | null {
+  const database = getDb();
+  if (!database) return null;
+  const row = database.getFirstSync<any>(
+    'SELECT * FROM pending_finishes WHERE server_activity_id = ? LIMIT 1;',
+    [serverActivityId],
+  );
+  return row ? rowToPendingFinish(row) : null;
+}
+
+export function countPendingFinishes(): number {
+  const database = getDb();
+  if (!database) return 0;
+  const row = database.getFirstSync<{ n: number }>('SELECT COUNT(*) AS n FROM pending_finishes;');
+  return row?.n ?? 0;
+}
+
+export function updatePendingFinish(
+  clientActivityId: string,
+  patch: Partial<
+    Pick<PendingFinish, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'payload'>
+  >,
+): void {
+  const database = getDb();
+  if (!database) return;
+
+  const sets: string[] = [];
+  const values: (string | number | null)[] = [];
+  if (patch.state !== undefined) (sets.push('state = ?'), values.push(patch.state));
+  if (patch.attempts !== undefined) (sets.push('attempts = ?'), values.push(patch.attempts));
+  if (patch.nextAttemptAt !== undefined)
+    (sets.push('next_attempt_at = ?'), values.push(patch.nextAttemptAt));
+  if (patch.lastError !== undefined) (sets.push('last_error = ?'), values.push(patch.lastError));
+  if (patch.payload !== undefined)
+    (sets.push('payload = ?'), values.push(JSON.stringify(patch.payload)));
+  if (sets.length === 0) return;
+
+  database.runSync(`UPDATE pending_finishes SET ${sets.join(', ')} WHERE client_activity_id = ?;`, [
+    ...values,
+    clientActivityId,
+  ]);
+}
+
+/** The server has the activity: drop the entry and let the session be purged in due course. */
+export function completePendingFinish(clientActivityId: string): void {
+  const database = getDb();
+  if (!database) return;
+  database.withTransactionSync(() => {
+    database.runSync('DELETE FROM pending_finishes WHERE client_activity_id = ?;', [
+      clientActivityId,
+    ]);
+    database.runSync(
+      `UPDATE activity_sessions SET status = 'finished' WHERE client_activity_id = ?;`,
+      [clientActivityId],
+    );
+  });
+}
+
+/** The athlete threw the queued activity away: entry, session and track all go. */
+export function discardPendingFinish(clientActivityId: string): void {
+  const database = getDb();
+  if (!database) return;
+  database.runSync('DELETE FROM pending_finishes WHERE client_activity_id = ?;', [
+    clientActivityId,
+  ]);
+  discardSession(clientActivityId);
+}
+
+/** A sync that was cut short (app killed mid-request) left entries `syncing` — make them eligible again. */
+export function resetInterruptedFinishes(): void {
+  const database = getDb();
+  if (!database) return;
+  database.runSync(`UPDATE pending_finishes SET state = 'pending' WHERE state = 'syncing';`);
 }
 
 // ── Points ──────────────────────────────────────────────────────────────────

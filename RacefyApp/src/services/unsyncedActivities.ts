@@ -181,3 +181,57 @@ export async function clearAllUnsyncedActivities(): Promise<void> {
   });
   emitQueueChanged();
 }
+
+/**
+ * One-off bridge from this (legacy, AsyncStorage) queue to the SQLite finish
+ * outbox, which retries by itself. An entry can move only while its recording
+ * session — and therefore its track — is still in the tracking DB; the rest stay
+ * here with the manual retry they always had.
+ */
+export async function migrateLegacyUnsyncedQueue(userId: number | null): Promise<number> {
+  // Lazy: keeps this module importable where the tracking DB is not (web).
+  const trackingDb = await import('./trackingDb');
+  const index = await readIndex();
+  let moved = 0;
+
+  for (const entry of index) {
+    const session = trackingDb.getSessionByServerActivityId(entry.activityId);
+    if (!session || session.status === 'finished') continue;
+
+    const queued = trackingDb.enqueuePendingFinish({
+      clientActivityId: session.clientActivityId,
+      serverActivityId: entry.activityId,
+      userId,
+      payload: {
+        title: entry.title,
+        description: entry.description,
+        skip_auto_post: entry.skipAutoPost,
+        event_id: entry.eventId,
+        total_paused_duration: entry.totalPausedDuration,
+        ended_at: entry.endedAt,
+        location: entry.location,
+        client_distance: entry.distance,
+        calories: entry.calories,
+        avg_heart_rate: entry.avgHeartRate,
+        max_heart_rate: entry.maxHeartRate,
+      },
+      meta: {
+        title: entry.title,
+        sportTypeName: entry.sportTypeName,
+        sportTypeId: entry.sportTypeId,
+        startedAt: entry.startedAt,
+        endedAt: entry.endedAt,
+        distance: entry.distance,
+        duration: entry.duration,
+      },
+    });
+    if (!queued) continue;
+
+    await removeUnsyncedActivity(entry.activityId);
+    moved += 1;
+  }
+
+  if (moved > 0)
+    logger.activity('Moved legacy unsynced activities to the finish outbox', { moved });
+  return moved;
+}

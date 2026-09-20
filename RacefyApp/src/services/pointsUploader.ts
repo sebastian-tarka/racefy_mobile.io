@@ -172,8 +172,16 @@ async function postBatch(
 export async function drainPoints(opts?: {
   maxBatches?: number;
   stats?: { calories?: number; clientDistance?: number };
+  /**
+   * Drain this session instead of the active one. The finish outbox uses it:
+   * a saved-but-undelivered activity is no longer "active", yet its points
+   * still have to reach the server before the finish call does.
+   */
+  session?: { clientActivityId: string; serverActivityId: number };
+  /** Skip the backoff window — for a sync the athlete (or a regained network) asked for. */
+  ignoreBackoff?: boolean;
 }): Promise<DrainResult> {
-  const session = trackingDb.getActiveSession();
+  const session = opts?.session ?? trackingDb.getActiveSession();
 
   if (!session || session.serverActivityId == null) {
     return { uploaded: 0, remaining: 0 };
@@ -185,7 +193,7 @@ export async function drainPoints(opts?: {
     return { uploaded: 0, remaining: trackingDb.countUnsynced(clientId), backedOff: true };
   }
 
-  if (isInBackoffWindow()) {
+  if (!opts?.ignoreBackoff && isInBackoffWindow()) {
     return { uploaded: 0, remaining: trackingDb.countUnsynced(clientId), backedOff: true };
   }
 

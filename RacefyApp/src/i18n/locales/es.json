@@ -1181,7 +1181,11 @@
     "pausedHint": "En pausa — reanuda o termina",
     "permissions": {
       "locationDenied": "Se necesita permiso de ubicación."
-    }
+    },
+    "savedOnDeviceTitle": "Guardado en el teléfono",
+    "savedOnDeviceBody": "Tu actividad está a salvo. La subiremos automáticamente cuando vuelva la conexión — los puntos y la publicación aparecerán al enviarla.",
+    "savedNeedsAttention": "Tu actividad está guardada en el teléfono, pero el servidor no la aceptó: {{reason}}\n\nAbre la lista de no enviadas para decidir qué hacer.",
+    "openUnsynced": "Abrir lista"
   },
   "gpxImport": {
     "title": "Importar GPX",
@@ -2856,7 +2860,19 @@
     "retryCount": "{{count}} intentos anteriores",
     "discardConfirmTitle": "¿Descartar esta actividad?",
     "discardConfirmBody": "El recorrido GPS local se eliminará y no podrá recuperarse. Exporta el GPX antes si quieres conservarlo.",
-    "untitled": "Actividad #{{id}}"
+    "untitled": "Actividad #{{id}}",
+    "statusWaiting": "Esperando conexión",
+    "statusSending": "Enviando…",
+    "waitingHint": "La enviaremos automáticamente cuando vuelva la conexión. También puedes intentarlo ahora.",
+    "withoutEvent": "Enviar sin evento",
+    "withoutEventTitle": "¿Enviar sin el evento?",
+    "withoutEventBody": "La actividad se guardará como un entrenamiento normal, sin vincular al evento. No se puede deshacer después desde la app.",
+    "deliveredTitle": "Actividad subida",
+    "deliveredBody": "{{title}} ya está en tu perfil.",
+    "deliveredBodyPoints": "{{title}} ya está en tu perfil · +{{points}} pts",
+    "startBlocked": "Tu actividad anterior aún espera ser subida. Abre «Actividades sin sincronizar» y envíala o descártala antes de empezar otra.",
+    "logoutWarning_one": "{{count}} actividad espera ser subida. Tras cerrar sesión se queda en este teléfono y se enviará solo cuando vuelvas a iniciar sesión en esta cuenta.",
+    "logoutWarning_other": "{{count}} actividades esperan ser subidas. Tras cerrar sesión se quedan en este teléfono y se enviarán solo cuando vuelvas a iniciar sesión en esta cuenta."
   },
   "eventStatus": {
     "upcoming": "Próximo",

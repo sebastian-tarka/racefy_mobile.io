@@ -9,8 +9,14 @@ import {
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
 } from '../services/backgroundLocation';
-import { drainPoints, toGpsPoints } from '../services/pointsUploader';
+import { drainPoints, resetUploaderBackoff, toGpsPoints } from '../services/pointsUploader';
 import { enqueueUnsyncedActivity, removeUnsyncedActivity } from '../services/unsyncedActivities';
+import {
+  emitFinishSyncEvent,
+  FINISH_QUEUE_CHANGED_EVENT,
+  syncPendingFinishes,
+} from '../services/finishSync';
+import { suppressDeliveredNotification, useFinishSyncRunner } from './useFinishSyncRunner';
 import * as trackingDb from '../services/trackingDb';
 import {
   clearLedger,
@@ -39,6 +45,7 @@ import {
 import { useSportTypes } from './useSportTypes';
 import { useAuth } from './useAuth';
 import { logger } from '../services/logger';
+import i18n from '../i18n';
 import { captureActivityLocation } from '../utils/locationCapture';
 import { PaceTracker } from '../utils/paceCalculator';
 import { accumulateRecoveredTrack, haversineDistance } from '../utils/gpsMath';
@@ -54,6 +61,30 @@ import {
 } from '../constants/tracking';
 
 const isWeb = Platform.OS === 'web';
+
+/** How long Save waits for the server before telling the athlete "it is safe on your phone". */
+const FINISH_WAIT_MS = 5000;
+
+export interface FinishData {
+  title?: string;
+  description?: string;
+  calories?: number;
+  skip_auto_post?: boolean;
+  event_id?: number | null;
+}
+
+/**
+ * Either the server answered while we waited (the classic result), or the
+ * activity is saved on the device and will be delivered later.
+ */
+export type FinishResult =
+  | { activity: Activity; post?: AutoCreatedPost; points_earned?: number; queued?: false }
+  | {
+      queued: true;
+      activityId: number;
+      /** The server refused it outright — the athlete has a decision to make in the queue. */
+      needsAttention?: string;
+    };
 
 /** The lifecycle ledger lives in the tracking DB's kv table — it survives an app kill. */
 const ledgerStorage: LedgerStorage = {
@@ -113,7 +144,8 @@ const initialStats: LiveActivityStats = {
 // Internal hook implementation (not exported directly)
 function useLiveActivityInternal() {
   const { getGpsProfileForSport } = useSportTypes();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  useFinishSyncRunner(user?.id ?? null, isAuthenticated);
 
   const [state, setState] = useState<LiveActivityState>({
     activity: null,
@@ -276,7 +308,17 @@ function useLiveActivityInternal() {
     try {
       logger.activity('Checking for existing activity');
       setState((prev) => ({ ...prev, isLoading: true }));
-      const activity = await api.getCurrentActivity();
+      let activity = await api.getCurrentActivity();
+      // The server still lists an activity the athlete has ALREADY saved — its
+      // finish is in the outbox. Offering "Resume / Finish / Discard" for it would
+      // be absurd; nudge the delivery instead and carry on as if nothing is open.
+      if (activity && trackingDb.getPendingFinishByServerActivityId(activity.id)) {
+        logger.activity('Current activity on server is already saved locally — delivering', {
+          id: activity.id,
+        });
+        void syncPendingFinishes({ force: true });
+        activity = null;
+      }
       if (activity) {
         logger.activity('Found existing activity', {
           id: activity.id,
@@ -1277,7 +1319,23 @@ function useLiveActivityInternal() {
 
         // IMPORTANT: Check for existing activity first!
         // Never call start blindly - the API will reject if one exists
-        const existingActivity = await api.getCurrentActivity();
+        let existingActivity = await api.getCurrentActivity();
+        const owed = existingActivity
+          ? trackingDb.getPendingFinishByServerActivityId(existingActivity.id)
+          : null;
+        if (existingActivity && owed) {
+          // The previous activity is saved on the phone but the server has not
+          // heard yet, and it allows only one active activity at a time — deliver
+          // it now, before starting the next.
+          const outcomes = await syncPendingFinishes({
+            force: true,
+            only: owed.clientActivityId,
+          });
+          if (outcomes[owed.clientActivityId]?.status !== 'delivered') {
+            throw new Error(i18n.t('unsynced.startBlocked'));
+          }
+          existingActivity = null;
+        }
         if (existingActivity) {
           const stats: LiveActivityStats = {
             distance: existingActivity.distance,
@@ -1536,276 +1594,220 @@ function useLiveActivityInternal() {
     }
   };
 
-  // Helper: Finish activity using GPS timestamp duration (when timer ran after GPS stopped)
-  const finishWithGpsDuration = async (data?: {
-    title?: string;
-    description?: string;
-    calories?: number;
-    skip_auto_post?: boolean;
-  }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
-    if (!state.activity) return null;
+  /** Back to a clean slate: the recording screen is free for the next activity. */
+  const resetRecordingState = () => {
+    localStatsRef.current = { ...initialStats };
+    gpsTracker.lastPosition = null;
+    allRoutePoints.current = [];
+    pointsVersionRef.current++;
+    pausedDuration.current = 0;
+    trackingStartTime.current = null;
+    activityLocationRef.current = null;
+    clientActivityIdRef.current = null;
+    lastFinishAttemptRef.current = null;
+    paceTracker.reset();
 
-    isFinishingOrDiscardingRef.current = true;
+    setState({
+      activity: null,
+      isTracking: false,
+      isPaused: false,
+      isLoading: false,
+      error: null,
+      currentStats: { ...initialStats },
+      hasExistingActivity: false,
+      trackingStatus: {
+        gpsSignal: 'good',
+        isOnline: true,
+        pendingPoints: 0,
+        lastSyncTime: null,
+        syncError: null,
+      },
+    });
+  };
 
+  /**
+   * Legacy path, used only where the tracking DB is unavailable (web, native
+   * module missing) and there is therefore no outbox to write to: finish online,
+   * and on failure snapshot to the old AsyncStorage queue and throw.
+   */
+  const finishDirect = async (
+    activityId: number,
+    payload: Types.FinishActivityRequest,
+  ): Promise<FinishResult> => {
     try {
-      logger.activity('Finishing with GPS duration', { id: state.activity.id });
-      setState((prev) => ({ ...prev, isLoading: true }));
-
-      // Capture client distance BEFORE sync (sync overwrites local distance with server value)
-      const clientDistance = Math.round(localStatsRef.current.distance);
-
-      // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
-      if (state.activity) {
-        await syncPoints(state.activity.id);
-      }
-
-      // Stop GPS — no new points arrive after this
-      await stopGpsTracking();
-
-      // Remaining unsynced points from the SQLite log go atomically with finish
-      const finalPoints = clientActivityIdRef.current
-        ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
-        : [];
-
-      // Use last GPS timestamp as ended_at (instead of current time)
-      const lastTimestamp = gpsTracker.lastPosition?.timestamp;
-      const endedAt = lastTimestamp
-        ? new Date(lastTimestamp).toISOString()
-        : new Date().toISOString();
-
-      logger.activity('Using GPS timestamp for ended_at', {
-        endedAt,
-        difference: Date.now() - (lastTimestamp || Date.now()),
-        finalPointsCount: finalPoints.length,
-      });
-
-      // Finish on server with GPS timestamp + remaining pending points
-      // Let a pause/resume still in flight settle first (bounded by its timeout):
-      // whether the ledger is dirty decides what this request carries.
-      await lifecycleChainRef.current;
-      lastFinishAttemptRef.current = { endedAt, data };
-      const response = await api.finishActivity(state.activity.id, {
-        ...data,
-        ended_at: endedAt,
-        ...pausedDurationField(endedAt),
-        location: activityLocationRef.current ?? undefined,
-        final_points: finalPoints.length > 0 ? finalPoints : undefined,
-        client_distance: clientDistance,
-        client_activity_id: clientActivityIdRef.current ?? undefined,
-      });
-
-      const activity = response.data;
-
-      dropLedger(activity.id);
-
-      // A finish that failed once and then went through leaves a queue entry behind —
-
-      // the banner would keep offering to retry an activity that is already saved.
-
-      void removeUnsyncedActivity(activity.id).catch(() => {});
-
-      lastFinishAttemptRef.current = null;
-
-      // Close the durable SQLite session (points purged after retention window)
-      if (clientActivityIdRef.current) {
-        trackingDb.markSessionFinished(clientActivityIdRef.current);
-        clientActivityIdRef.current = null;
-      }
-
-      logger.activity('Activity finished with GPS duration', {
-        id: activity.id,
-        distance: activity.distance,
-        client_distance: activity.client_distance,
-        duration: activity.duration,
-        hasGpsTrack: activity.has_gps_track,
-      });
-
-      // Reset state and pace tracking
-      localStatsRef.current = { ...initialStats };
-      gpsTracker.lastPosition = null;
-      allRoutePoints.current = [];
-      pointsVersionRef.current++;
-      pausedDuration.current = 0;
-      trackingStartTime.current = null;
-      activityLocationRef.current = null;
-      paceTracker.reset();
-
-      setState({
-        activity: null,
-        isTracking: false,
-        isPaused: false,
-        isLoading: false,
-        error: null,
-        currentStats: { ...initialStats },
-        hasExistingActivity: false,
-        trackingStatus: {
-          gpsSignal: 'good',
-          isOnline: true,
-          pendingPoints: 0,
-          lastSyncTime: null,
-          syncError: null,
-        },
-      });
-
-      return { activity, post: response.post, points_earned: response.points_earned };
+      const response = await api.finishActivity(activityId, payload);
+      dropLedger(activityId);
+      void removeUnsyncedActivity(activityId).catch(() => {});
+      resetRecordingState();
+      return {
+        activity: response.data,
+        post: response.post,
+        points_earned: response.points_earned,
+      };
     } catch (error: any) {
-      logger.error('activity', 'Failed to finish with GPS duration', {
-        id: state.activity.id,
+      logger.error('activity', 'Failed to finish activity', {
+        id: activityId,
         error: error.message,
       });
-
-      // Points remain durable in the SQLite log — recoverable on next start
-
       await enqueueFailedFinish(error?.message || 'Failed to finish activity');
-
       setState((prev) => ({
         ...prev,
         isLoading: false,
         error: error.message || 'Failed to finish activity',
       }));
       throw error;
-    } finally {
-      isFinishingOrDiscardingRef.current = false;
     }
   };
 
-  // Helper: Finish activity using full timer duration (normal finish)
-  const finishWithFullDuration = async (data?: {
-    title?: string;
-    description?: string;
-    calories?: number;
-    skip_auto_post?: boolean;
-  }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
+  /**
+   * Saving is a LOCAL operation. The finish request goes into the SQLite outbox
+   * in one transaction with the session's status change, the recording state is
+   * reset, and services/finishSync delivers it — right now when there is a
+   * network, otherwise whenever one comes back. We wait up to
+   * FINISH_WAIT_MS for that first attempt so the online experience is what it
+   * always was (points, auto-post, "saved" alert); past that the athlete is told
+   * the activity is safe on the phone and let go.
+   *
+   * It used to be the other way round: `api.finishActivity` was awaited, and with
+   * no network the athlete stayed on the save screen with a "Retry" alert, unable
+   * to do anything else with the app until a signal turned up.
+   */
+  const performFinish = async (
+    data: FinishData | undefined,
+    endedAtChoice: 'stop' | 'gps',
+  ): Promise<FinishResult | null> => {
     if (!state.activity) return null;
+    const current = state.activity;
 
     isFinishingOrDiscardingRef.current = true;
-
     try {
-      logger.activity('Finishing with full timer duration', {
-        id: state.activity.id,
-      });
+      logger.activity('Finishing activity', { id: current.id, endedAtChoice });
       setState((prev) => ({ ...prev, isLoading: true }));
 
-      // Capture client distance BEFORE sync (sync overwrites local distance with server value)
+      // Capture before anything resets it.
       const clientDistance = Math.round(localStatsRef.current.distance);
 
-      // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
-      if (state.activity) {
-        await syncPoints(state.activity.id);
-      }
-
-      // Stop GPS — no new points arrive after this
+      // Stop GPS — no new points arrive after this. No pre-flush: every accepted
+      // point is already durable in SQLite and finishSync uploads what is left.
       await stopGpsTracking();
 
-      // Remaining unsynced points from the SQLite log go atomically with finish
-      const finalPoints = clientActivityIdRef.current
-        ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
-        : [];
+      // A pause/resume still on its way decides whether the server's pause total
+      // can be trusted. Give it a moment; if it has not settled, assume it cannot.
+      const settled = await Promise.race([
+        lifecycleChainRef.current.then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1500)),
+      ]);
+      const ledger = ensureLedger(current);
 
-      logger.activity('Flushing GPS buffer for finish', {
-        id: state.activity.id,
-        finalPointsCount: finalPoints.length,
-      });
+      // When did the activity end? The moment the athlete stopped — i.e. the start
+      // of the pause we are finishing from — not the moment they got round to
+      // pressing Save, which can be minutes (offline: hours) later.
+      const lastGps = gpsTracker.lastPosition?.timestamp;
+      const endedAt =
+        endedAtChoice === 'gps' && lastGps
+          ? new Date(lastGps).toISOString()
+          : (ledger.pauseStartedAt ?? new Date().toISOString());
 
-      // Finish on server with current time + remaining pending points
-      const endedAt = new Date().toISOString();
-      // Let a pause/resume still in flight settle first (bounded by its timeout):
-      // whether the ledger is dirty decides what this request carries.
-      await lifecycleChainRef.current;
-      lastFinishAttemptRef.current = { endedAt, data };
-      const response = await api.finishActivity(state.activity.id, {
+      const trustServerPauses = settled && !ledger.dirty && ledger.pendingOps.length === 0;
+
+      const payload: Types.FinishActivityRequest = {
         ...data,
         ended_at: endedAt,
-        ...pausedDurationField(endedAt),
+        ...(trustServerPauses ? {} : { total_paused_duration: totalPausedAt(ledger, endedAt) }),
         location: activityLocationRef.current ?? undefined,
-        final_points: finalPoints.length > 0 ? finalPoints : undefined,
         client_distance: clientDistance,
-        client_activity_id: clientActivityIdRef.current ?? undefined,
-      });
+      };
+      lastFinishAttemptRef.current = { endedAt, data };
 
-      const activity = response.data;
-
-      dropLedger(activity.id);
-
-      // A finish that failed once and then went through leaves a queue entry behind —
-
-      // the banner would keep offering to retry an activity that is already saved.
-
-      void removeUnsyncedActivity(activity.id).catch(() => {});
-
-      lastFinishAttemptRef.current = null;
-
-      // Close the durable SQLite session (points purged after retention window)
-      if (clientActivityIdRef.current) {
-        trackingDb.markSessionFinished(clientActivityIdRef.current);
-        clientActivityIdRef.current = null;
+      // The outbox needs a session to hang on. A recovered activity that was never
+      // resumed has not re-bound its session yet; one started elsewhere has none.
+      let clientId =
+        clientActivityIdRef.current ??
+        trackingDb.getSessionByServerActivityId(current.id)?.clientActivityId ??
+        null;
+      if (!clientId && !isWeb) {
+        clientId = Crypto.randomUUID();
+        trackingDb.startSession(clientId, current.sport_type?.slug);
+        trackingDb.bindServerActivity(clientId, current.id);
       }
 
-      logger.activity('Activity finished with full duration', {
-        id: activity.id,
-        distance: activity.distance,
-        client_distance: activity.client_distance,
-        duration: activity.duration,
-        hasGpsTrack: activity.has_gps_track,
+      const queued =
+        !!clientId &&
+        trackingDb.enqueuePendingFinish({
+          clientActivityId: clientId,
+          serverActivityId: current.id,
+          userId: user?.id ?? null,
+          payload: payload as Record<string, unknown>,
+          meta: {
+            title: data?.title ?? current.title,
+            sportTypeId: current.sport_type_id,
+            sportTypeName: current.sport_type?.name,
+            startedAt: current.started_at,
+            endedAt,
+            distance: clientDistance,
+            duration: localStatsRef.current.duration,
+          },
+        });
+
+      if (!queued || !clientId) {
+        const finalPoints = clientId
+          ? toGpsPoints(trackingDb.getUnsyncedPoints(clientId, 3000))
+          : [];
+        return await finishDirect(current.id, {
+          ...payload,
+          final_points: finalPoints.length > 0 ? finalPoints : undefined,
+          client_activity_id: clientId ?? undefined,
+        });
+      }
+
+      // From here the activity is SAVED. Whatever the network does next, the
+      // athlete is done with it.
+      dropLedger(current.id);
+      resetRecordingState();
+      emitFinishSyncEvent(FINISH_QUEUE_CHANGED_EVENT);
+
+      const keepQuiet = suppressDeliveredNotification(clientId);
+      resetUploaderBackoff();
+      const delivery = syncPendingFinishes({ force: true, only: clientId }).then(
+        (outcomes) => outcomes[clientId as string] ?? null,
+      );
+      const outcome = await Promise.race([
+        delivery,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), FINISH_WAIT_MS)),
+      ]).catch(() => null);
+      keepQuiet();
+
+      if (outcome?.status === 'delivered' && outcome.response) {
+        const response = outcome.response;
+        logger.activity('Activity finished and delivered', {
+          id: response.data.id,
+          distance: response.data.distance,
+          duration: response.data.duration,
+          hasPost: !!response.post,
+        });
+        return {
+          activity: response.data,
+          post: response.post,
+          points_earned: response.points_earned,
+        };
+      }
+
+      logger.activity('Activity saved locally, delivery pending', {
+        id: current.id,
+        outcome: outcome?.status ?? 'timeout',
       });
-
-      // Reset state and pace tracking
-      localStatsRef.current = { ...initialStats };
-      gpsTracker.lastPosition = null;
-      allRoutePoints.current = [];
-      pointsVersionRef.current++;
-      pausedDuration.current = 0;
-      trackingStartTime.current = null;
-      activityLocationRef.current = null;
-      paceTracker.reset();
-
-      setState({
-        activity: null,
-        isTracking: false,
-        isPaused: false,
-        isLoading: false,
-        error: null,
-        currentStats: { ...initialStats },
-        hasExistingActivity: false,
-        trackingStatus: {
-          gpsSignal: 'good',
-          isOnline: true,
-          pendingPoints: 0,
-          lastSyncTime: null,
-          syncError: null,
-        },
-      });
-
-      return { activity, post: response.post, points_earned: response.points_earned };
-    } catch (error: any) {
-      logger.error('activity', 'Failed to finish with full duration', {
-        id: state.activity.id,
-        error: error.message,
-      });
-
-      // Points remain durable in the SQLite log — recoverable on next start
-
-      await enqueueFailedFinish(error?.message || 'Failed to finish activity');
-
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: error.message || 'Failed to finish activity',
-      }));
-      throw error;
+      return {
+        queued: true,
+        activityId: current.id,
+        needsAttention: outcome?.status === 'needs_attention' ? outcome.error : undefined,
+      };
     } finally {
       isFinishingOrDiscardingRef.current = false;
     }
   };
 
   const finishTracking = useCallback(
-    async (data?: {
-      title?: string;
-      description?: string;
-      calories?: number;
-      skip_auto_post?: boolean;
-      event_id?: number | null;
-    }): Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null> => {
+    async (data?: FinishData): Promise<FinishResult | null> => {
       if (!state.activity) return null;
 
       // Guard: prevent concurrent finish/discard calls
@@ -1816,189 +1818,44 @@ function useLiveActivityInternal() {
         return null;
       }
 
-      isFinishingOrDiscardingRef.current = true;
+      // GPS died long before the finish while the clock kept running — only
+      // meaningful when finishing straight out of a recording (a recovered
+      // activity). From a pause the gap is the pause itself, and the activity
+      // ends where the pause began.
+      const lastGpsTimestamp = gpsTracker.lastPosition?.timestamp;
+      const now = Date.now();
 
-      try {
-        logger.activity('Finishing activity', { id: state.activity.id });
+      if (!state.isPaused && lastGpsTimestamp && now - lastGpsTimestamp > 120000) {
+        const gapMinutes = Math.floor((now - lastGpsTimestamp) / 60000);
 
-        // Check if GPS stopped a long time ago (> 2 minutes)
-        const lastGpsTimestamp = gpsTracker.lastPosition?.timestamp;
-        const now = Date.now();
-
-        if (lastGpsTimestamp && now - lastGpsTimestamp > 120000) {
-          const gapMinutes = Math.floor((now - lastGpsTimestamp) / 60000);
-
-          logger.activity('GPS stopped significantly before finish', {
-            gapMinutes,
-            lastGpsTime: new Date(lastGpsTimestamp).toISOString(),
-            finishTime: new Date(now).toISOString(),
-          });
-
-          // Reset the guard flag before showing alert (user might cancel)
-          isFinishingOrDiscardingRef.current = false;
-
-          // Show warning dialog to user
-          return new Promise<{
-            activity: Activity;
-            post?: AutoCreatedPost;
-            points_earned?: number;
-          } | null>((resolve) => {
-            Alert.alert(
-              'GPS Tracking Stopped',
-              `GPS tracking stopped ${gapMinutes} minute${gapMinutes > 1 ? 's' : ''} ago. The timer kept running after GPS stopped.\n\nWhich duration should be used?`,
-              [
-                {
-                  text: 'Use GPS Time (Recommended)',
-                  onPress: async () => {
-                    try {
-                      const result = await finishWithGpsDuration(data);
-                      resolve(result);
-                    } catch (error) {
-                      resolve(null);
-                      throw error;
-                    }
-                  },
-                },
-                {
-                  text: 'Use Full Timer',
-                  onPress: async () => {
-                    try {
-                      const result = await finishWithFullDuration(data);
-                      resolve(result);
-                    } catch (error) {
-                      resolve(null);
-                      throw error;
-                    }
-                  },
-                },
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                  onPress: () => resolve(null),
-                },
-              ],
-            );
-          });
-        }
-
-        setState((prev) => ({ ...prev, isLoading: true }));
-
-        // Capture client distance BEFORE sync (sync overwrites local distance with server value)
-        const clientDistance = Math.round(localStatsRef.current.distance);
-
-        // Pre-flush: upload pending points before stopping GPS (reduces final_points payload)
-        if (state.activity) {
-          await syncPoints(state.activity.id);
-        }
-
-        // Stop GPS — no new points arrive after this
-        await stopGpsTracking();
-
-        // Remaining unsynced points from the SQLite log go atomically with finish
-        const finalPoints = clientActivityIdRef.current
-          ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
-          : [];
-
-        logger.activity('Flushing GPS buffer for finish', {
-          id: state.activity.id,
-          finalPointsCount: finalPoints.length,
-          clientDistance,
+        logger.activity('GPS stopped significantly before finish', {
+          gapMinutes,
+          lastGpsTime: new Date(lastGpsTimestamp).toISOString(),
+          finishTime: new Date(now).toISOString(),
         });
 
-        // Finish on server - include location and remaining pending points
-        const endedAt = new Date().toISOString();
-        // Let a pause/resume still in flight settle first (bounded by its timeout):
-        // whether the ledger is dirty decides what this request carries.
-        await lifecycleChainRef.current;
-        lastFinishAttemptRef.current = { endedAt, data };
-        const response = await api.finishActivity(state.activity.id, {
-          ...data,
-          ended_at: endedAt,
-          ...pausedDurationField(endedAt),
-          location: activityLocationRef.current ?? undefined,
-          final_points: finalPoints.length > 0 ? finalPoints : undefined,
-          client_distance: clientDistance,
-          client_activity_id: clientActivityIdRef.current ?? undefined,
+        return new Promise<FinishResult | null>((resolve, reject) => {
+          Alert.alert(
+            'GPS Tracking Stopped',
+            `GPS tracking stopped ${gapMinutes} minute${gapMinutes > 1 ? 's' : ''} ago. The timer kept running after GPS stopped.\n\nWhich duration should be used?`,
+            [
+              {
+                text: 'Use GPS Time (Recommended)',
+                onPress: () => performFinish(data, 'gps').then(resolve, reject),
+              },
+              {
+                text: 'Use Full Timer',
+                onPress: () => performFinish(data, 'stop').then(resolve, reject),
+              },
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(null) },
+            ],
+          );
         });
-
-        const activity = response.data;
-
-        dropLedger(activity.id);
-
-        // A finish that failed once and then went through leaves a queue entry behind —
-
-        // the banner would keep offering to retry an activity that is already saved.
-
-        void removeUnsyncedActivity(activity.id).catch(() => {});
-
-        lastFinishAttemptRef.current = null;
-
-        // Close the durable SQLite session (points purged after retention window)
-        if (clientActivityIdRef.current) {
-          trackingDb.markSessionFinished(clientActivityIdRef.current);
-          clientActivityIdRef.current = null;
-        }
-
-        logger.activity('Activity finished successfully', {
-          id: activity.id,
-          distance: activity.distance,
-          client_distance: activity.client_distance,
-          duration: activity.duration,
-          hasGpsTrack: activity.has_gps_track,
-          hasPost: !!response.post,
-          postStatus: response.post?.status,
-        });
-
-        // Reset state and pace tracking
-        localStatsRef.current = { ...initialStats };
-        gpsTracker.lastPosition = null;
-        allRoutePoints.current = [];
-        pointsVersionRef.current++;
-        pausedDuration.current = 0;
-        trackingStartTime.current = null;
-        activityLocationRef.current = null;
-        paceTracker.reset();
-
-        setState({
-          activity: null,
-          isTracking: false,
-          isPaused: false,
-          isLoading: false,
-          error: null,
-          currentStats: { ...initialStats },
-          hasExistingActivity: false,
-          trackingStatus: {
-            gpsSignal: 'good',
-            isOnline: true,
-            pendingPoints: 0,
-            lastSyncTime: null,
-            syncError: null,
-          },
-        });
-
-        return { activity, post: response.post, points_earned: response.points_earned };
-      } catch (error: any) {
-        logger.error('activity', 'Failed to finish activity', {
-          id: state.activity.id,
-          error: error.message,
-        });
-
-        // Points remain durable in the SQLite log — recoverable on next start
-
-        await enqueueFailedFinish(error?.message || 'Failed to finish activity');
-
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: error.message || 'Failed to finish activity',
-        }));
-        throw error;
-      } finally {
-        // Always reset the guard flag
-        isFinishingOrDiscardingRef.current = false;
       }
+
+      return performFinish(data, 'stop');
     },
-    [state.activity],
+    [state.activity, state.isPaused, user?.id],
   );
 
   const discardTracking = useCallback(async () => {
@@ -2121,13 +1978,7 @@ interface LiveActivityContextType {
   ) => Promise<Activity | undefined>;
   pauseTracking: () => Promise<void>;
   resumeTracking: () => Promise<void>;
-  finishTracking: (data?: {
-    title?: string;
-    description?: string;
-    calories?: number;
-    skip_auto_post?: boolean;
-    event_id?: number | null;
-  }) => Promise<{ activity: Activity; post?: AutoCreatedPost; points_earned?: number } | null>;
+  finishTracking: (data?: FinishData) => Promise<FinishResult | null>;
   discardTracking: () => Promise<void>;
   clearError: () => void;
   checkExistingActivity: () => Promise<void>;
