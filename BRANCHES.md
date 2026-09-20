@@ -15,19 +15,27 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `offline-finish-faza-0` — pauza/stop/zapis bez internetu, faza 0 (hotfix)
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Offline, faza 0: pauza, wznowienie i Stop bez internetu (zmergowane 2026-09-20, tag `pre-offline-finish` = main sprzed merge)
 
 Plan całości: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`. Bez sieci nie dało się
 nawet dojść do ekranu zakończenia: `pauseTracking` zatrzymywał GPS, potem padał na
 `api.pauseActivity`, a stan zostawał „nagrywanie" — stoper leciał bez GPS. Teraz pauza,
 wznowienie i Stop są operacjami lokalnymi; serwer dowiaduje się w tle, a gdy się nie
 da — później, z prawdziwym czasem (`at`). Nowy moduł `activityLifecycleLedger` (księga
-pauz w `trackingDb.kv`, przeżywa kill aplikacji). Wymaga backendu z brancha
-`offline-finish-api` (`at` w pause/resume, `total_paused_duration` i idempotentny
+pauz w `trackingDb.kv`, przeżywa kill aplikacji). Wymaga backendu z
+`offline-finish-api` (zmergowany do `main` API tego samego dnia) (`at` w pause/resume, `total_paused_duration` i idempotentny
 finish) — ze starym backendem działa, ale pauzy zrobione offline wliczą się w czas.
 
-**Poza zakresem (faza 1):** zapis offline nadal kończy się alertem „Ponów" i wpisem
-w „Niezsynchronizowane" z ręcznym ponowieniem; limit 3000 punktów w jednym żądaniu.
+Zapis offline i limit 3000 punktów załatwia faza 1 (wpis niżej).
 
 - [ ] Tryb samolotowy w trakcie nagrywania → Pauza: stoper staje natychmiast, bez alertu o błędzie
 - [ ] Tryb samolotowy → Stop: ekran zakończenia otwiera się od razu
@@ -42,7 +50,7 @@ w „Niezsynchronizowane" z ręcznym ponowieniem; limit 3000 punktów w jednym �
 - [ ] „Niezsynchronizowane" → ponów aktywność, która faktycznie już się zapisała (zgubiona odpowiedź): wpis znika bez błędu
 - [ ] Transmisja live: widz widzi pauzę/wznowienie jak dotąd (online)
 
-### `offline-finish-faza-1` — zapis aktywności bez internetu + automatyczna wysyłka (na bazie `offline-finish-faza-0`)
+### Offline, faza 1: zapis aktywności bez internetu + automatyczna wysyłka (zmergowane 2026-09-20, ten sam tag)
 
 Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`. Zapis jest operacją lokalną:
 żądanie finish trafia do outboxa w SQLite (`trackingDb.pending_finishes`, jedna transakcja
@@ -53,7 +61,7 @@ start i powrót aplikacji na pierwszy plan, każdy zapis. Backoff z jitterem per
 zatrzymuje przebieg; 4xx = „wymaga uwagi" po sprawdzeniu, czy finish jednak nie dotarł.
 Ślad idzie paczkami po 200 przed finish — znika limit 3000 punktów. `ended_at` to teraz
 moment Stop (początek ostatniej pauzy), nie moment naciśnięcia „Zapisz".
-Wysyłka przy zamkniętej aplikacji (faza 3, `expo-background-task`) — **nie** w tym branchu.
+Wysyłka przy zamkniętej aplikacji (faza 3, `expo-background-task`) i start bez sieci (faza 4) — jeszcze niezrobione.
 
 - [ ] Tryb samolotowy → Stop → Zapisz: po ~5 s alert „Zapisano na telefonie", ekran nagrywania wraca do startu, można zacząć… (start wymaga sieci — faza 4)
 - [ ] Wyłącz tryb samolotowy z aplikacją na wierzchu: aktywność wysyła się sama, przychodzi powiadomienie „Aktywność wysłana", feed/profil się odświeża
@@ -72,13 +80,6 @@ Wysyłka przy zamkniętej aplikacji (faza 3, `expo-background-task`) — **nie**
 - [ ] Stara kolejka (AsyncStorage) sprzed aktualizacji: wpisy z zachowaną sesją przenoszą się do outboxa, reszta zostaje z ręcznym ponowieniem
 - [ ] Aktywność bez GPS (siłownia/czasówka) zapisana offline wysyła się poprawnie
 - [ ] Web / brak SQLite: zapis działa po staremu (online, z alertem „Ponów" przy błędzie)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Podpięcie eventu przed startem + „Startuj aktywność" z ekranu eventu (zmergowane 2026-09-20, tag `pre-event-prestart` = main sprzed merge)
 
@@ -864,6 +865,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-09-20 | `offline-finish-faza-0` + `offline-finish-faza-1` | Pauza/wznowienie/Stop i zapis aktywności bez internetu: księga pauz (`activityLifecycleLedger`), outbox w SQLite (`pending_finishes`), `finishSync` z automatyczną wysyłką (powrót sieci, logowanie, foreground), UI kolejki; `ended_at` = moment Stop. Backend: `at` w pause/resume, `total_paused_duration`, idempotentny finish |
 | 2026-09-20 | `event-prestart` | Pasek eventu na pre-starcie (event narzuca dyscyplinę, blokada raila), znacznik eventu na ekranie live + dialog odmowy, wiersz eventu na zakończeniu, „Startuj aktywność" na ekranie eventu; `EventBar`, `EventPinDialog`, tokeny `colors.event*` |
 | 2026-08-27 | `feature/voice-turn-instructions` | Głosowe „za 200 metrów, skręć w lewo” dla trasy-cienia (skręty routera z plannera/eventu, heurystyka z geometrii dla śladów GPS), odmiana jednostek w mowie, `routeKey` zamiast gołego `id` |
 | 2026-08-27 | `feature/live-athlete-avatar` | Avatar zawodnika (MarkerView) zamiast kropki na mapie widza |
