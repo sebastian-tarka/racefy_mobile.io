@@ -24,9 +24,17 @@ type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 /** How long the stop button must be held before the finish screen opens. */
 const HOLD_TO_STOP_MS = 1200;
+/** Event marker ink on the hero ground — same in light and dark, like the panel itself. */
+const EVENT_PILL_INK = '#FBCFE8';
 
 interface RecordingViewProps {
   selectedSport: SportTypeWithIcon | null;
+  /** Title of the event this activity is recorded for; null when there is none. */
+  eventTitle?: string | null;
+  /** The event ended while recording — the activity still counts for it. */
+  eventEnded?: boolean;
+  /** Tapping the event marker: explains why it cannot be dropped mid-run. */
+  onEventPress?: () => void;
   status: RecordingStatus;
   trackingStatus: TrackingStatus | null;
   localDuration: number;
@@ -77,6 +85,9 @@ interface RecordingViewProps {
  */
 export function RecordingView({
   selectedSport,
+  eventTitle,
+  eventEnded,
+  onEventPress,
   status,
   trackingStatus,
   localDuration,
@@ -221,6 +232,23 @@ export function RecordingView({
                 {selectedSport.name}
               </Text>
             </View>
+            {/* The sport pill is a label; the event marker is the only tappable
+                thing here — and it explains the lock. */}
+            {!!eventTitle && (
+              <TouchableOpacity
+                style={styles.eventPill}
+                onPress={onEventPress}
+                disabled={isLocked}
+                activeOpacity={0.8}
+                accessibilityLabel={`${t('eventPin.recordingFor')}: ${eventTitle}`}
+              >
+                <Ionicons name="calendar" size={13} color={EVENT_PILL_INK} />
+                <Text style={styles.eventPillText} numberOfLines={1}>
+                  {eventTitle}
+                </Text>
+                {eventEnded && <View style={styles.eventPillDot} />}
+              </TouchableOpacity>
+            )}
             {trackingStatus?.gpsSignal === 'lost' && (
               <View style={[styles.sportPill, { backgroundColor: heroColors.red + '2E' }]}>
                 <Ionicons name="warning" size={13} color={heroColors.red} />
@@ -230,6 +258,10 @@ export function RecordingView({
               </View>
             )}
           </View>
+        )}
+
+        {!!eventTitle && eventEnded && (
+          <Text style={styles.eventEndedText}>{t('eventPin.eventEnded')}</Text>
         )}
 
         {/* ── Hero duration ── */}
@@ -513,6 +545,7 @@ const styles = StyleSheet.create({
   },
   sportPillRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
@@ -553,6 +586,38 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: '600',
     color: heroColors.ink,
+  },
+  eventPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    maxWidth: 210,
+    paddingVertical: 4,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.sm + 2,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(219,39,119,0.5)',
+    backgroundColor: 'rgba(219,39,119,0.22)',
+  },
+  eventPillText: {
+    flexShrink: 1,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: EVENT_PILL_INK,
+  },
+  eventPillDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: EVENT_PILL_INK,
+    opacity: 0.7,
+  },
+  eventEndedText: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    fontSize: msFont(11.5),
+    color: heroColors.inkSoft,
   },
   heroBlock: {
     paddingHorizontal: spacing.lg,

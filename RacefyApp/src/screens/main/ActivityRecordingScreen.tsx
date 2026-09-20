@@ -55,6 +55,7 @@ import {
   BottomSheet,
   type BottomSheetOption,
   EventSelectionSheet,
+  EventPinDialog,
   FeatureGate,
   GpsHealthCheckCard,
   LiveAthleteInbox,
@@ -155,6 +156,8 @@ export function ActivityRecordingScreen() {
   const [workoutModalType, setWorkoutModalType] = useState<QuickGoalType | undefined>(undefined);
   const { prefs: workoutCuePrefs, updatePrefs: updateWorkoutCuePrefs } = useWorkoutCuePrefs();
   const workoutToast = useFadeToast<string>();
+  /** Payload: true = pinned (event tone), false = unpinned. */
+  const eventToast = useFadeToast<boolean>();
 
   // Activity options
   const [selectedSport, setSelectedSport] = useDefaultSport(
@@ -172,7 +175,10 @@ export function ActivityRecordingScreen() {
    * loses nothing either: the activity stays paused.
    */
   const [showFinish, setShowFinish] = useState(false);
-  const preselectedEventHandled = useRef(false);
+  // Id of the last event handed over by "Start activity" on the event screen.
+  // An id rather than a flag, so a second event opened later is handled too.
+  const preselectedEventHandled = useRef<number | null>(null);
+  const [eventLockDialogVisible, setEventLockDialogVisible] = useState(false);
   const isFinishingRef = useRef(false);
 
   // View mode state (stats vs map)
@@ -199,7 +205,11 @@ export function ActivityRecordingScreen() {
   const audioCoachToast = useFadeToast<boolean>();
 
   // Data hooks
-  const { events: ongoingEvents, isLoading: eventsLoading } = useOngoingEvents();
+  const {
+    events: ongoingEvents,
+    isLoading: eventsLoading,
+    refresh: refreshOngoingEvents,
+  } = useOngoingEvents();
   const { milestones: milestonesData } = useMilestones(
     isAuthenticated && canUseAdvancedStats && selectedSport ? selectedSport.id : undefined,
   );
@@ -599,41 +609,64 @@ export function ActivityRecordingScreen() {
   }, [workoutPlan, workoutToast, t]);
   const { enrichActivityWithHeartRate } = useHealthEnrichment();
 
-  // Handle preselected event
+  // The event's own course, loaded as the shadow track.
+  const loadEventRoute = useCallback(
+    (event: Event) => {
+      const eventRoute = event.route;
+      if (!eventRoute?.geometry) return;
+      handleRouteSelect({
+        id: eventRoute.id,
+        title: eventRoute.title,
+        distance: eventRoute.distance,
+        elevation_gain: eventRoute.elevation_gain,
+        duration: eventRoute.estimated_duration,
+        sport_type_id: eventRoute.sport_type_id,
+        user: eventRoute.user || { id: 0, name: '', username: '', avatar: '' },
+        stats: { likes_count: 0, boosts_count: 0 },
+        track_data: eventRoute.geometry,
+        distance_from_user: 0,
+        created_at: eventRoute.created_at,
+        source: 'event',
+        turn_instructions: eventRoute.turn_instructions ?? [],
+      });
+      setShowNearbyRoutesToggle(true);
+    },
+    [handleRouteSelect],
+  );
+
+  // Pin an event BEFORE the start. Hard rule: a pinned event owns the
+  // discipline — the sport rail locks to it and the only way out is unpinning.
+  const pinEvent = useCallback(
+    (event: Event): boolean => {
+      const eventSportTypeId = event.sport_type_id ?? event.sport_type?.id;
+      const matchingSport = sportTypes.find((s) => s.id === eventSportTypeId);
+      if (!matchingSport) return false;
+      setSelectedEvent(event);
+      setSelectedSport(matchingSport);
+      loadEventRoute(event);
+      return true;
+    },
+    [sportTypes, setSelectedSport, loadEventRoute],
+  );
+
+  // Arriving from "Start activity" on the event screen: event, discipline and
+  // course are preset. Ignored while something is already recording — the
+  // event and discipline never change mid-activity.
   useEffect(() => {
     const preselectedEvent = route.params?.preselectedEvent;
-    if (preselectedEvent && !preselectedEventHandled.current) {
-      setSelectedEvent(preselectedEvent);
-      const eventSportTypeId = preselectedEvent.sport_type_id ?? preselectedEvent.sport_type?.id;
-      if (eventSportTypeId && sportTypes.length > 0 && !sportsLoading) {
-        const matchingSport = sportTypes.find((s) => s.id === eventSportTypeId);
-        if (matchingSport) {
-          setSelectedSport(matchingSport);
-          preselectedEventHandled.current = true;
-
-          // Auto-load event route as shadow track
-          if (preselectedEvent.route?.geometry) {
-            const eventRoute = preselectedEvent.route;
-            handleRouteSelect({
-              id: eventRoute.id,
-              title: eventRoute.title,
-              distance: eventRoute.distance,
-              elevation_gain: eventRoute.elevation_gain,
-              duration: eventRoute.estimated_duration,
-              sport_type_id: eventRoute.sport_type_id,
-              user: eventRoute.user || { id: 0, name: '', username: '', avatar: '' },
-              stats: { likes_count: 0, boosts_count: 0 },
-              track_data: eventRoute.geometry,
-              distance_from_user: 0,
-              created_at: eventRoute.created_at,
-              source: 'event',
-              turn_instructions: eventRoute.turn_instructions ?? [],
-            });
-          }
-        }
-      }
+    if (!preselectedEvent) {
+      preselectedEventHandled.current = null;
+      return;
     }
-  }, [route.params?.preselectedEvent, sportTypes, sportsLoading, handleRouteSelect]);
+    if (preselectedEventHandled.current === preselectedEvent.id) return;
+    if (!isIdle || sportsLoading || sportTypes.length === 0) return;
+    if (pinEvent(preselectedEvent)) {
+      preselectedEventHandled.current = preselectedEvent.id;
+      // Consume the param: otherwise tapping "Start activity" for the same
+      // event again, after saving, would be swallowed by the guard above.
+      navigation.setParams({ preselectedEvent: undefined });
+    }
+  }, [route.params?.preselectedEvent, sportTypes, sportsLoading, isIdle, pinEvent, navigation]);
 
   // Error handling
   useEffect(() => {
@@ -660,10 +693,12 @@ export function ActivityRecordingScreen() {
     }
   }, [viewMode, isTracking, isPaused]);
 
-  // Auto-pick a matching ongoing event when entering paused state
-  // (only if user hasn't selected one yet and an event with the same sport_type is ongoing)
+  // Auto-suggest a matching ongoing event on the finish screen (only if nothing
+  // is pinned and an event of the same discipline is ongoing). Deliberately not
+  // on a mere pause: a pinned event is locked while recording, so it must never
+  // appear mid-activity without the athlete choosing it.
   useEffect(() => {
-    if (status !== 'paused') return;
+    if (!showFinish) return;
     if (selectedEvent) return;
     if (!selectedSport) return;
     if (!ongoingEvents.length) return;
@@ -676,7 +711,7 @@ export function ActivityRecordingScreen() {
         sportId,
       });
     }
-  }, [status, selectedSport, ongoingEvents, selectedEvent]);
+  }, [showFinish, selectedSport, ongoingEvents, selectedEvent]);
 
   // The route layer is a pre-start decision: drop it once the activity starts.
   // It deliberately does NOT depend on viewMode — the pre-start screen is a map
@@ -905,6 +940,8 @@ export function ActivityRecordingScreen() {
       resetMilestones();
       setSkipAutoPost(false);
       setShowFinish(false);
+      // The pin belonged to this recording; the next activity starts unpinned.
+      setSelectedEvent(null);
 
       // Restore original audio coach settings in AsyncStorage (undo session toggle)
       restoreAudioCoachSettings();
@@ -969,6 +1006,7 @@ export function ActivityRecordingScreen() {
             await discardTracking();
             resetMilestones();
             setShowFinish(false);
+            setSelectedEvent(null);
             // Restore original audio coach settings in AsyncStorage
             restoreAudioCoachSettings();
             setWorkoutPlan(null);
@@ -985,17 +1023,33 @@ export function ActivityRecordingScreen() {
 
   // Bottom sheet options
   const handleEventSelect = (event: Event | null) => {
-    setSelectedEvent(event);
-    if (event) {
-      const eventSportTypeId = event.sport_type_id ?? event.sport_type?.id;
-      if (eventSportTypeId && sportTypes.length > 0) {
-        const matchingSport = sportTypes.find((s) => s.id === eventSportTypeId);
-        if (matchingSport) {
-          setSelectedSport(matchingSport);
-        }
-      }
+    // Finish screen: the sheet already disables other disciplines, so this only
+    // re-points the recorded activity — it never touches the sport.
+    if (!isIdle) {
+      setSelectedEvent(event);
+      return;
     }
+    if (!event) {
+      if (selectedEvent) eventToast.show(false);
+      setSelectedEvent(null);
+      return;
+    }
+    if (pinEvent(event)) eventToast.show(true);
   };
+
+  const handleOpenEventSheet = () => {
+    refreshOngoingEvents();
+    setEventSheetVisible(true);
+  };
+
+  const handleBrowseEvents = () => navigation.dispatch(TabActions.jumpTo('Events'));
+
+  const eventRoute = selectedEvent?.route?.geometry ? selectedEvent.route : null;
+  const isEventRoute =
+    !!eventRoute &&
+    selectedShadowTrack?.source === 'event' &&
+    selectedShadowTrack.id === eventRoute.id;
+  const eventEnded = !!selectedEvent && new Date(selectedEvent.ends_at).getTime() < Date.now();
 
   const addActivityOptions: BottomSheetOption[] = useMemo(
     () => [
@@ -1032,7 +1086,9 @@ export function ActivityRecordingScreen() {
       livePointsVersion={livePointsVersion}
       gpsEnabled={gpsProfile?.enabled ?? false}
       onStart={handleStart}
-      onSelectSport={(sport) => setSelectedSport(sport)}
+      onSelectSport={(sport) => {
+        if (!selectedEvent) setSelectedSport(sport);
+      }}
       onOpenAllSports={() => setSportModalVisible(true)}
       onManageShortcuts={() => setShortcutsModalVisible(true)}
       onClose={() => navigation.dispatch(TabActions.jumpTo('Home'))}
@@ -1061,6 +1117,15 @@ export function ActivityRecordingScreen() {
       navVoiceEnabled={navVoiceEnabled}
       onToggleNavVoice={toggleNavVoice}
       onOpenCueList={() => setCueListVisible(true)}
+      showEventBar={isAuthenticated}
+      pinnedEvent={selectedEvent}
+      ongoingEventsCount={ongoingEvents.length}
+      onOpenEventSheet={handleOpenEventSheet}
+      onClearEvent={() => handleEventSelect(null)}
+      onBrowseEvents={handleBrowseEvents}
+      isEventRoute={isEventRoute}
+      canRestoreEventRoute={!!eventRoute && !isEventRoute}
+      onRestoreEventRoute={() => selectedEvent && loadEventRoute(selectedEvent)}
       workoutLabel={workoutLabel}
       onOpenWorkout={openWorkoutModal}
       onClearWorkout={handleClearWorkout}
@@ -1078,6 +1143,9 @@ export function ActivityRecordingScreen() {
   const renderRecordingLayout = () => (
     <RecordingView
       selectedSport={selectedSport}
+      eventTitle={selectedEvent ? selectedEvent.post?.title || t('eventDetail.untitled') : null}
+      eventEnded={eventEnded}
+      onEventPress={() => setEventLockDialogVisible(true)}
       status={status}
       trackingStatus={trackingStatus}
       localDuration={localDuration}
@@ -1128,7 +1196,7 @@ export function ActivityRecordingScreen() {
       gpsProfile={gpsProfile}
       livePoints={livePoints}
       selectedEvent={selectedEvent}
-      onShowEventSheet={() => setEventSheetVisible(true)}
+      onShowEventSheet={handleOpenEventSheet}
       onClearEvent={() => setSelectedEvent(null)}
       onBack={() => setShowFinish(false)}
       onSave={handleSave}
@@ -1440,6 +1508,29 @@ export function ActivityRecordingScreen() {
       )}
 
       {/* Goal toast */}
+      {eventToast.visible && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: eventToast.payload ? colors.event : colors.primary,
+              opacity: eventToast.opacity,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons
+            name={eventToast.payload ? 'lock-closed' : 'lock-open'}
+            size={20}
+            color={eventToast.payload ? colors.event : colors.primary}
+          />
+          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
+            {t(eventToast.payload ? 'eventPin.pinnedToast' : 'eventPin.unpinned')}
+          </Text>
+        </Animated.View>
+      )}
+
       {workoutToast.visible && (
         <Animated.View
           style={[
@@ -1477,7 +1568,9 @@ export function ActivityRecordingScreen() {
         onClose={() => setSportModalVisible(false)}
         sportTypes={sportTypes}
         selectedSport={selectedSport}
-        onSelect={setSelectedSport}
+        onSelect={(sport) => {
+          if (!selectedEvent) setSelectedSport(sport);
+        }}
       />
 
       {/* While recording, navigation runs on the approach-merged route, so the
@@ -1516,6 +1609,24 @@ export function ActivityRecordingScreen() {
         events={ongoingEvents}
         selectedEvent={selectedEvent}
         isLoading={eventsLoading}
+        sportTypes={sportTypes}
+        lockedSportId={isIdle ? null : (selectedSport?.id ?? null)}
+        onBrowse={isIdle ? handleBrowseEvents : undefined}
+      />
+
+      {/* Tapping the event marker mid-run: no unpin path, only finish-and-save. */}
+      <EventPinDialog
+        visible={eventLockDialogVisible}
+        icon="lock-closed"
+        title={t('eventPin.cantUnpin')}
+        body={t('eventPin.cantUnpinBody')}
+        primaryLabel={t('eventPin.finishSave')}
+        secondaryLabel={t('eventPin.keepRecording')}
+        onPrimary={() => {
+          setEventLockDialogVisible(false);
+          void handleStop();
+        }}
+        onClose={() => setEventLockDialogVisible(false)}
       />
 
       <RouteSelectionModal

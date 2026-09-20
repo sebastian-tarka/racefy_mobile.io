@@ -36,6 +36,12 @@ export const lightColors = {
   draftLight: '#FEF3C7',
   draftBorder: '#FCD34D',
 
+  // Event pin accent — magenta, so a pinned event is never misread as a route
+  // (blue) or a goal/CTA (emerald). Design: racefy-event-pin.jsx.
+  event: '#DB2777',
+  eventSoft: '#FCE7F3',
+  eventDeep: '#9D174D',
+
   // Event status badges
   upcoming: {
     bg: '#ecfdf5',
@@ -99,6 +105,11 @@ export const darkColors = {
   draft: '#FCD34D',
   draftLight: '#422006',
   draftBorder: '#78350F',
+
+  // Event pin accent (see lightColors)
+  event: '#EC4899',
+  eventSoft: 'rgba(236, 72, 153, 0.16)',
+  eventDeep: '#F9A8D4',
 
   // Event status badges
   upcoming: {

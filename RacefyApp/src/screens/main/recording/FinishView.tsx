@@ -245,7 +245,9 @@ export function FinishView({
           </View>
         </View>
 
-        {/* Event link — carried over from the old paused screen. */}
+        {/* Event row — shows what was pinned before the start (design:
+            EventFinishRow). The sheet it opens disables events of another
+            discipline, so the recorded activity's type is never rewritten. */}
         <TouchableOpacity
           style={[
             styles.row,
@@ -253,28 +255,54 @@ export function FinishView({
           ]}
           onPress={onShowEventSheet}
           activeOpacity={0.8}
-          accessibilityLabel={t('recording.selectEvent')}
+          accessibilityLabel={t('eventPin.pinCta')}
         >
-          <View style={[styles.rowIcon, { backgroundColor: colors.primary + '20' }]}>
+          <View
+            style={[
+              styles.rowIcon,
+              { backgroundColor: selectedEvent ? colors.event : colors.background },
+            ]}
+          >
             <Ionicons
               name={selectedEvent ? 'calendar' : 'calendar-outline'}
               size={18}
-              color={selectedEvent ? colors.primary : colors.textMuted}
+              color={selectedEvent ? '#ffffff' : colors.textMuted}
             />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.rowLabel, { color: colors.textMuted }]}>
-              {t('recording.linkToEvent')}
+              {t('eventPin.eventLabel')}
             </Text>
-            <Text style={[styles.rowValue, { color: colors.textPrimary }]} numberOfLines={1}>
-              {selectedEvent?.post?.title || t('recording.selectEvent')}
+            <Text
+              style={[
+                styles.rowValue,
+                { color: selectedEvent ? colors.textPrimary : colors.textSecondary },
+              ]}
+              numberOfLines={1}
+            >
+              {selectedEvent
+                ? selectedEvent.post?.title || t('eventDetail.untitled')
+                : t('eventPin.none')}
             </Text>
+            {selectedEvent && (
+              <Text style={[styles.rowHint, { color: colors.textMuted }]} numberOfLines={1}>
+                {[
+                  selectedSport?.name,
+                  `${t('eventPin.startsAt')} ${new Date(selectedEvent.starts_at).toLocaleTimeString(
+                    undefined,
+                    { hour: '2-digit', minute: '2-digit' },
+                  )}`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            )}
           </View>
           {selectedEvent ? (
             <TouchableOpacity
               onPress={onClearEvent}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              accessibilityLabel={t('common.clear')}
+              accessibilityLabel={t('eventPin.unpin')}
             >
               <Ionicons name="close-circle" size={20} color={colors.textMuted} />
             </TouchableOpacity>
@@ -445,6 +473,10 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    marginTop: 1,
+  },
+  rowHint: {
+    fontSize: msFont(11),
     marginTop: 1,
   },
   actions: {

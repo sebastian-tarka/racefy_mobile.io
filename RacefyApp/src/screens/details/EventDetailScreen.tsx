@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   CommentSection,
+  EventPinDialog,
   KeyboardAwareScreenLayout,
   Loading,
   ParticipantAvatarsStack,
@@ -32,6 +33,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { useEventDetail } from '../../hooks/useEventDetail';
 import { useEventWatch } from '../../hooks/useEventWatch';
 import { useEventStandings } from '../../hooks/useEventStandings';
+import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { fontSize, spacing } from '../../theme';
@@ -52,12 +54,18 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [busyDialogVisible, setBusyDialogVisible] = useState(false);
+  const { isTracking, isPaused } = useLiveActivityContext();
 
   const navigateToAuth = useCallback(
     () => navigation.navigate('Auth', { screen: 'Login' }),
     [navigation],
   );
   const navigateBack = useCallback(() => navigation.goBack(), [navigation]);
+  const goToRecording = useCallback(
+    () => navigation.navigate('Main', { screen: 'Record' }),
+    [navigation],
+  );
 
   const {
     event,
@@ -278,6 +286,18 @@ export function EventDetailScreen({ route, navigation }: Props) {
                 onViewResults={goToResults}
                 standingsRacingCount={isOngoing ? standingsAggregates.racingCount : undefined}
                 standingsFinishedPct={isOngoing ? standingsAggregates.finishedPct : undefined}
+                startCta={{
+                  recording: isTracking || isPaused,
+                  // Lands on the pre-start with the event pinned, the discipline
+                  // forced and the event course loaded.
+                  onStart: () =>
+                    navigation.navigate('Main', {
+                      screen: 'Record',
+                      params: { preselectedEvent: event },
+                    }),
+                  onResume: goToRecording,
+                  onBusy: () => setBusyDialogVisible(true),
+                }}
               />
 
               {(isOngoing || isCompleted) && (
@@ -402,6 +422,20 @@ export function EventDetailScreen({ route, navigation }: Props) {
         id={eventId}
         title={event.post?.title}
         description={event.post?.content}
+      />
+      {/* An activity is already running: no switching mid-recording. */}
+      <EventPinDialog
+        visible={busyDialogVisible}
+        icon="calendar-outline"
+        title={t('eventPin.busyTitle')}
+        body={t('eventPin.busyBody')}
+        primaryLabel={t('eventPin.finishSave')}
+        secondaryLabel={t('eventPin.keepRecording')}
+        onPrimary={() => {
+          setBusyDialogVisible(false);
+          goToRecording();
+        }}
+        onClose={() => setBusyDialogVisible(false)}
       />
     </ScreenContainer>
   );
