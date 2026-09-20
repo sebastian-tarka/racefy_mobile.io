@@ -100,12 +100,21 @@ async function headlessRequest<T>(
     if (!response.ok) {
       throw Object.assign(new Error(data?.message || `HTTP ${response.status}`), {
         status: response.status,
+        // Same shape as the main client's errors: finishSync reads `.data` to see
+        // WHICH activity blocks a start.
+        data: data?.data,
       });
     }
     return data as T;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+/** `POST /activities/start` — for an activity recorded offline and never created. */
+export async function startActivityHeadless(payload: Record<string, unknown>): Promise<Activity> {
+  const response = await headlessRequest<{ data: Activity }>('POST', '/activities/start', payload);
+  return response.data;
 }
 
 export function finishActivityHeadless(

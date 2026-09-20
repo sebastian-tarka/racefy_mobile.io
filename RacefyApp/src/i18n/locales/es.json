@@ -1185,7 +1185,8 @@
     "savedOnDeviceTitle": "Guardado en el teléfono",
     "savedOnDeviceBody": "Tu actividad está a salvo. La subiremos automáticamente cuando vuelva la conexión — los puntos y la publicación aparecerán al enviarla.",
     "savedNeedsAttention": "Tu actividad está guardada en el teléfono, pero el servidor no la aceptó: {{reason}}\n\nAbre la lista de no enviadas para decidir qué hacer.",
-    "openUnsynced": "Abrir lista"
+    "openUnsynced": "Abrir lista",
+    "offlineStartToast": "Sin conexión — grabando sin red. La actividad se subirá cuando vuelva la conexión."
   },
   "gpxImport": {
     "title": "Importar GPX",
@@ -2872,7 +2873,8 @@
     "deliveredBodyPoints": "{{title}} ya está en tu perfil · +{{points}} pts",
     "startBlocked": "Tu actividad anterior aún espera ser subida. Abre «Actividades sin sincronizar» y envíala o descártala antes de empezar otra.",
     "logoutWarning_one": "{{count}} actividad espera ser subida. Tras cerrar sesión se queda en este teléfono y se enviará solo cuando vuelvas a iniciar sesión en esta cuenta.",
-    "logoutWarning_other": "{{count}} actividades esperan ser subidas. Tras cerrar sesión se quedan en este teléfono y se enviarán solo cuando vuelvas a iniciar sesión en esta cuenta."
+    "logoutWarning_other": "{{count}} actividades esperan ser subidas. Tras cerrar sesión se quedan en este teléfono y se enviarán solo cuando vuelvas a iniciar sesión en esta cuenta.",
+    "untitledOffline": "Actividad grabada sin conexión"
   },
   "eventStatus": {
     "upcoming": "Próximo",

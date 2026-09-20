@@ -63,6 +63,52 @@ import {
 
 const isWeb = Platform.OS === 'web';
 
+/**
+ * How long Start waits for the server before beginning the recording locally.
+ * Short on purpose: the athlete is standing there ready to go, and nothing is
+ * lost by starting offline — the activity is created later under the same UUID.
+ */
+const START_WAIT_MS = 5000;
+
+/**
+ * A recording the server has not seen yet lives under a negative id — real ids
+ * are positive, so every "talk to the server about this activity" path can tell
+ * at a glance that there is nobody to talk to yet.
+ */
+export const isProvisionalActivity = (activity: Pick<Activity, 'id'> | null | undefined) =>
+  !!activity && activity.id < 0;
+
+/** Stable across restarts: derived from the recording's UUID, never stored. */
+function provisionalIdFor(clientActivityId: string): number {
+  const n = parseInt(clientActivityId.replace(/-/g, '').slice(0, 8), 16);
+  return -((Number.isFinite(n) ? n : 0) % 2_000_000_000) - 1;
+}
+
+/**
+ * The activity as the app knows it before the server does. Only the fields the
+ * recording UI reads are real; the rest are the zero values a fresh server
+ * activity would have.
+ */
+function buildProvisionalActivity(
+  clientActivityId: string,
+  startPayload: { sport_type_id: number; title?: string; started_at: string; event_id?: number },
+): Activity {
+  return {
+    id: provisionalIdFor(clientActivityId),
+    sport_type_id: startPayload.sport_type_id,
+    title: startPayload.title ?? '',
+    started_at: startPayload.started_at,
+    event_id: startPayload.event_id ?? null,
+    status: 'in_progress',
+    distance: 0,
+    duration: 0,
+    elevation_gain: 0,
+    total_paused_duration: 0,
+    paused_at: null,
+    client_activity_id: clientActivityId,
+  } as unknown as Activity;
+}
+
 /** How long Save waits for the server before telling the athlete "it is safe on your phone". */
 const FINISH_WAIT_MS = 5000;
 
@@ -144,7 +190,7 @@ const initialStats: LiveActivityStats = {
 
 // Internal hook implementation (not exported directly)
 function useLiveActivityInternal() {
-  const { getGpsProfileForSport } = useSportTypes();
+  const { getGpsProfileForSport, sportTypes } = useSportTypes();
   const { isAuthenticated, user } = useAuth();
   useFinishSyncRunner(user?.id ?? null, isAuthenticated);
 
@@ -305,11 +351,57 @@ function useLiveActivityInternal() {
     };
   }, []);
 
+  /**
+   * Rebuild the activity from the tracking DB when the server cannot supply it.
+   * Only sessions that remember their start request can be rebuilt (those begun
+   * since offline start exists). When the server DID answer "nothing active", a
+   * session it knows by id is stale — finished or discarded elsewhere — and is
+   * left alone; one it has never seen is ours to recover.
+   */
+  const recoverFromLocalSession = (serverAnswered: boolean): Activity | null => {
+    if (isWeb) return null;
+    const session = trackingDb.getActiveSession();
+    if (!session?.startPayload) return null;
+    if (serverAnswered && session.serverActivityId != null) return null;
+
+    const payload = session.startPayload as {
+      sport_type_id: number;
+      title?: string;
+      started_at?: string;
+      event_id?: number;
+    };
+    const base = buildProvisionalActivity(session.clientActivityId, {
+      ...payload,
+      started_at: payload.started_at ?? session.startedAt,
+    });
+    clientActivityIdRef.current = session.clientActivityId;
+
+    const lastPoint = trackingDb.getLastPoint(session.clientActivityId);
+    return {
+      ...base,
+      // Known to the server, just unreachable right now: keep its real id so
+      // uploads and the finish go to the right place when the network returns.
+      id: session.serverActivityId ?? base.id,
+      distance: Math.round(lastPoint?.cumDist ?? 0),
+      sport_type: sportTypes.find((st) => st.id === payload.sport_type_id),
+    } as Activity;
+  };
+
   const checkExistingActivity = async () => {
     try {
       logger.activity('Checking for existing activity');
       setState((prev) => ({ ...prev, isLoading: true }));
-      let activity = await api.getCurrentActivity();
+      // Ask the server, but do not depend on it. A recording started offline is
+      // unknown to it; one started online is unreachable when the app is reopened
+      // with no signal. In both cases the local session can rebuild it.
+      let activity: Activity | null = null;
+      let serverAnswered = true;
+      try {
+        activity = await api.getCurrentActivity({ timeoutMs: START_WAIT_MS });
+      } catch (checkError: any) {
+        if (!isTransientError(checkError)) throw checkError;
+        serverAnswered = false;
+      }
       // The server still lists an activity the athlete has ALREADY saved — its
       // finish is in the outbox. Offering "Resume / Finish / Discard" for it would
       // be absurd; nudge the delivery instead and carry on as if nothing is open.
@@ -319,6 +411,17 @@ function useLiveActivityInternal() {
         });
         void syncPendingFinishes({ force: true });
         activity = null;
+      }
+      if (!activity) {
+        const local = recoverFromLocalSession(serverAnswered);
+        if (local) {
+          activity = local;
+          logger.activity('Recovered recording from the local session', {
+            id: local.id,
+            provisional: isProvisionalActivity(local),
+            serverAnswered,
+          });
+        }
       }
       if (activity) {
         logger.activity('Found existing activity', {
@@ -413,6 +516,14 @@ function useLiveActivityInternal() {
   ): Promise<Activity> => {
     const ledger = ensureLedger(activity);
 
+    // The server has never heard of this activity: keep the call for the day it
+    // has (createServerActivity replays the queue), and mark the ledger dirty —
+    // finish will carry the device's pause total.
+    if (isProvisionalActivity(activity)) {
+      commitLedger(enqueueOp(ledger, { op, at }));
+      return activity;
+    }
+
     // Earlier calls are still waiting — this one must queue behind them.
     if (ledger.pendingOps.length > 0) {
       const queued = enqueueOp(ledger, { op, at });
@@ -487,6 +598,59 @@ function useLiveActivityInternal() {
         }
       })
       .catch(() => {});
+  };
+
+  /**
+   * Turn a recording that started offline into a real server activity, as soon
+   * as there is a network — while it is still running. Idempotent per
+   * client_activity_id, so calling it again after a lost response is safe.
+   * Failing is fine too: the save flow creates the activity as its first step.
+   */
+  const creatingServerActivityRef = useRef(false);
+  const createServerActivity = async () => {
+    const clientId = clientActivityIdRef.current;
+    const session = clientId ? trackingDb.getSession(clientId) : null;
+    if (!clientId || !session?.startPayload || session.serverActivityId != null) return;
+    if (creatingServerActivityRef.current || isFinishingOrDiscardingRef.current) return;
+
+    creatingServerActivityRef.current = true;
+    const provisionalId = provisionalIdFor(clientId);
+    try {
+      const created = await api.startLiveActivity({
+        ...(session.startPayload as Parameters<typeof api.startLiveActivity>[0]),
+        client_activity_id: clientId,
+        timeoutMs: START_WAIT_MS,
+      });
+      // Finished or discarded while we were asking: leave the outbox to it.
+      if (clientActivityIdRef.current !== clientId || isFinishingOrDiscardingRef.current) return;
+
+      trackingDb.bindServerActivity(clientId, created.id);
+      currentActivityId.current = created.id;
+      await setActiveActivityId(created.id);
+
+      // The pause ledger was keyed by the provisional id.
+      const ledger = ledgerRef.current ?? loadLedger(ledgerStorage, provisionalId);
+      clearLedger(ledgerStorage, provisionalId);
+      if (ledger) commitLedger({ ...ledger, activityId: created.id });
+
+      setState((prev) =>
+        prev.activity?.id === provisionalId ? { ...prev, activity: created } : prev,
+      );
+      logger.activity('Offline recording now exists on the server', {
+        id: created.id,
+        clientActivityId: clientId,
+      });
+
+      // Pauses made while offline, in order, with their real timestamps.
+      void flushLifecycleBacklog();
+    } catch (error: any) {
+      logger.debug('activity', 'Could not create the server activity yet', {
+        status: error?.status,
+        error: error?.message,
+      });
+    } finally {
+      creatingServerActivityRef.current = false;
+    }
   };
 
   /** `total_paused_duration` for the finish request — only when the server's own sum can't be trusted. */
@@ -1016,7 +1180,10 @@ function useLiveActivityInternal() {
     lastRenderedSeqRef.current = -1;
     try {
       const existingSession = trackingDb.getSessionByServerActivityId(activityId);
-      if (existingSession) {
+      if (clientActivityIdRef.current && trackingDb.getSession(clientActivityIdRef.current)) {
+        // startTracking (or local recovery) already opened the session — for a
+        // recording started offline there is no server id to find it by.
+      } else if (existingSession) {
         clientActivityIdRef.current = existingSession.clientActivityId;
       } else {
         const uuid = Crypto.randomUUID();
@@ -1255,6 +1422,12 @@ function useLiveActivityInternal() {
   const syncPoints = async (_activityId: number) => {
     if (!clientActivityIdRef.current) return;
 
+    // Started offline: there is no activity to upload points to yet. Every sync
+    // tick (and every regained network) is a chance to create it.
+    if (trackingDb.getSession(clientActivityIdRef.current)?.serverActivityId == null) {
+      await createServerActivity();
+    }
+
     const result = await drainPoints({
       stats: {
         calories: localStatsRef.current.calories,
@@ -1320,7 +1493,17 @@ function useLiveActivityInternal() {
 
         // IMPORTANT: Check for existing activity first!
         // Never call start blindly - the API will reject if one exists
-        let existingActivity = await api.getCurrentActivity();
+        // …when we can ask. With no network there is nobody to ask, and that must
+        // not stop the athlete from starting: the recording begins locally and the
+        // server activity is created later (see startProvisional below).
+        let existingActivity: Activity | null = null;
+        let serverReachable = true;
+        try {
+          existingActivity = await api.getCurrentActivity({ timeoutMs: START_WAIT_MS });
+        } catch (checkError: any) {
+          if (!isTransientError(checkError)) throw checkError;
+          serverReachable = false;
+        }
         const owed = existingActivity
           ? trackingDb.getPendingFinishByServerActivityId(existingActivity.id)
           : null;
@@ -1383,17 +1566,56 @@ function useLiveActivityInternal() {
         const gpsProfile = getGpsProfileForSport(sportTypeId);
         const gpsProfileRequest = convertToApiGpsProfile(gpsProfile);
 
-        // Start activity on server with GPS profile
-        const activity = await api.startLiveActivity({
+        // The recording's identity is minted HERE, before the server is asked. It
+        // makes the start idempotent: if the request below times out after the
+        // server has in fact created the activity, the later retry under the same
+        // UUID gets that activity back instead of a twin.
+        const clientActivityId = isWeb ? null : Crypto.randomUUID();
+        const startedAt = new Date().toISOString();
+        const startPayload = {
           sport_type_id: sportTypeId,
           title,
-          started_at: new Date().toISOString(),
+          started_at: startedAt,
           event_id: eventId,
           gps_profile: gpsProfileRequest,
-          // Omitted entirely when not broadcasting — absence is the canonical
-          // "off", and this must never default to enabled.
-          ...(live?.enabled ? { live } : {}),
-        });
+        };
+
+        if (clientActivityId) {
+          const sportSlug = sportTypes.find((st) => st.id === sportTypeId)?.slug;
+          trackingDb.startSession(clientActivityId, sportSlug, { startedAt, startPayload });
+          clientActivityIdRef.current = clientActivityId;
+        }
+
+        // Start activity on server with GPS profile — or, when it cannot be
+        // reached, locally.
+        let activity: Activity;
+        try {
+          if (!serverReachable) throw new TypeError('Network unreachable');
+          activity = await api.startLiveActivity({
+            ...startPayload,
+            // Omitted entirely when not broadcasting — absence is the canonical
+            // "off", and this must never default to enabled.
+            ...(live?.enabled ? { live } : {}),
+            ...(clientActivityId ? { client_activity_id: clientActivityId } : {}),
+            timeoutMs: START_WAIT_MS,
+          });
+          if (clientActivityId) trackingDb.bindServerActivity(clientActivityId, activity.id);
+        } catch (startError: any) {
+          // A refusal (4xx) is the server's decision and stays an error. No answer
+          // at all is just a missing network — without SQLite (web) there is
+          // nowhere to keep a local recording, so that stays an error too.
+          if (!clientActivityId || !isTransientError(startError)) {
+            if (clientActivityId) trackingDb.discardSession(clientActivityId);
+            clientActivityIdRef.current = null;
+            throw startError;
+          }
+          activity = buildProvisionalActivity(clientActivityId, startPayload);
+          logger.activity('Server unreachable — recording starts locally', {
+            provisionalId: activity.id,
+            clientActivityId,
+            error: startError?.message,
+          });
+        }
 
         // Reset local stats and pace tracking
         localStatsRef.current = { ...initialStats };
@@ -1419,6 +1641,7 @@ function useLiveActivityInternal() {
 
         logger.activity('Activity started successfully', {
           id: activity.id,
+          provisional: isProvisionalActivity(activity),
           sportTypeId,
           eventId,
         });
@@ -1437,7 +1660,7 @@ function useLiveActivityInternal() {
         throw error;
       }
     },
-    [getGpsProfileForSport],
+    [getGpsProfileForSport, sportTypes],
   );
 
   /**
@@ -1709,7 +1932,11 @@ function useLiveActivityInternal() {
           ? new Date(lastGps).toISOString()
           : (ledger.pauseStartedAt ?? new Date().toISOString());
 
-      const trustServerPauses = settled && !ledger.dirty && ledger.pendingOps.length === 0;
+      const trustServerPauses =
+        settled &&
+        !ledger.dirty &&
+        ledger.pendingOps.length === 0 &&
+        !isProvisionalActivity(current);
 
       const payload: Types.FinishActivityRequest = {
         ...data,
@@ -1732,11 +1959,20 @@ function useLiveActivityInternal() {
         trackingDb.bindServerActivity(clientId, current.id);
       }
 
+      // Started offline and the network never came back: the server has no such
+      // activity. The outbox entry then carries the start request too, and
+      // finishSync creates the activity as its first step.
+      const session = clientId ? trackingDb.getSession(clientId) : null;
+      const serverActivityId = isProvisionalActivity(current)
+        ? (session?.serverActivityId ?? null)
+        : current.id;
+
       const queued =
         !!clientId &&
         trackingDb.enqueuePendingFinish({
           clientActivityId: clientId,
-          serverActivityId: current.id,
+          serverActivityId,
+          startPayload: serverActivityId == null ? (session?.startPayload ?? null) : null,
           userId: user?.id ?? null,
           payload: payload as Record<string, unknown>,
           meta: {
@@ -1889,8 +2125,20 @@ function useLiveActivityInternal() {
         clientActivityIdRef.current = null;
       }
 
-      // Discard on server
-      await api.discardActivity(state.activity.id);
+      // Discard on server — best effort. The recording is already gone locally
+      // (above), so a failure here must not leave the screen stuck on an activity
+      // that no longer exists. Started offline and never created: nothing to tell.
+      // If the server cannot be reached, its copy stays open and turns up as a
+      // recoverable activity on the next launch, where it can be discarded again.
+      if (!isProvisionalActivity(state.activity)) {
+        await api.discardActivity(state.activity.id).catch((error: any) => {
+          logger.warn('activity', 'Server discard failed, continuing locally', {
+            id: state.activity?.id,
+            status: error?.status,
+            error: error?.message,
+          });
+        });
+      }
       dropLedger(state.activity.id);
       lastFinishAttemptRef.current = null;
 

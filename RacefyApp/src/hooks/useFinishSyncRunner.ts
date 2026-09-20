@@ -52,6 +52,10 @@ export function useFinishSyncRunner(userId: number | null, isAuthenticated: bool
     configureFinishSync({
       db: trackingDb,
       drain: drainPoints,
+      // The start body is stored verbatim at record time; the API method's typed
+      // signature is for callers that build one by hand.
+      start: (payload) =>
+        api.startLiveActivity(payload as Parameters<typeof api.startLiveActivity>[0]),
       finish: (activityId, payload) => api.finishActivity(activityId, payload),
       getActivity: (activityId) => api.getActivity(activityId),
       currentUserId: () => userIdRef.current,

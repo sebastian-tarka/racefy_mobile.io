@@ -6,7 +6,7 @@ upload".
 
 ## The rule
 
-**Pause, resume, stop and save are local operations.** The UI never waits for the
+**Start, pause, resume, stop and save are local operations.** The UI never waits for the
 server to change state. The server is told afterwards: immediately when there is
 a network, otherwise later — with the timestamps of when things actually happened.
 
@@ -23,6 +23,34 @@ a network, otherwise later — with the timestamps of when things actually happe
 | Background task | `services/finishSyncBackgroundTask.ts` | Delivery while the app is closed |
 | Queue UI | `screens/main/UnsyncedActivitiesScreen.tsx` | "Waiting for connection" vs "Not sent", retry, send without event, GPX export, discard |
 
+## Starting (`useLiveActivity.startTracking`)
+
+1. Mint the recording's UUID (`client_activity_id`) and open the tracking session —
+   **before** asking the server. The session stores the start request (`start_payload`).
+2. Ask the server (`/activities/current`, then `/activities/start`), each bounded by 5 s.
+3. Answer in time → the usual server activity. No answer (offline, timeout, 5xx) → the
+   recording starts **locally** under a *provisional* activity: a negative id derived from
+   the UUID (`isProvisionalActivity`), so every "talk to the server about this activity"
+   path can tell there is nobody to talk to yet. A refusal (4xx) stays an error.
+
+While a provisional recording runs, every sync tick and every regained network tries
+`createServerActivity()`: `POST /activities/start` with the real `started_at` and the same
+UUID. The server treats that as idempotent, so a start that timed out *after* the server
+created the activity does not produce a twin. On success the session is bound, the pause
+ledger is re-keyed, and pauses made offline are replayed with their timestamps. If it never
+succeeds, nothing is lost — saving handles it (below).
+
+Live broadcasting and the spectator inbox are hidden for a provisional activity. A start
+delivered more than 5 minutes late is not announced to followers (server-side rule).
+
+### After an app kill with no network
+
+`checkExistingActivity` asks the server but does not depend on it. When it cannot answer —
+or answers "nothing active" for a session it has never seen — the activity is rebuilt from
+the local session (`recoverFromLocalSession`): start request, last cumulative distance,
+pause ledger. Only sessions that stored a start request can be rebuilt (those begun since
+offline start exists).
+
 ## Saving (`useLiveActivity.performFinish`)
 
 1. Stop GPS. Build the finish request: `ended_at` = **the moment the athlete stopped**
@@ -34,6 +62,12 @@ a network, otherwise later — with the timestamps of when things actually happe
    classic result (points, auto-post). Otherwise → "Saved on your phone".
 
 Without SQLite (web) the old online-only path is used.
+
+For a recording the server has never seen, the outbox row has `server_activity_id = NULL`
+and carries the start request. `finishSync` then creates the activity first (step 0), binds
+the id **at once** (so a run that dies right after does not start it twice), and carries on
+with the track and the finish. "Another activity is already active" (422) is *wait* when the
+blocking activity is one of our own outbox entries, *needs attention* otherwise.
 
 ## Failure classes (`finishSync`)
 
@@ -74,6 +108,8 @@ the "Activity uploaded" notification.
 
 ## Backend contract
 
-`POST /activities/{id}/pause|resume` accept `at`; `finish` accepts `total_paused_duration`
-and is idempotent per `client_activity_id` (`replayed: true`). See `docs/api/` →
+`POST /activities/start` accepts `client_activity_id` and a past `started_at`, and is
+idempotent per UUID (a repeat returns the same activity, `replayed: true`, whatever its
+status). `POST /activities/{id}/pause|resume` accept `at`; `finish` accepts
+`total_paused_duration` and is idempotent per `client_activity_id` (`replayed: true`). See `docs/api/` →
 API_ENDPOINTS, "Offline finish".

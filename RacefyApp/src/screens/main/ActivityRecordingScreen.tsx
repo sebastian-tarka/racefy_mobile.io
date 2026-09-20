@@ -35,6 +35,7 @@ import {
   useGpsHealthCheck,
   useHealthEnrichment,
   useLiveActivityContext,
+  isProvisionalActivity,
   useLivePreferences,
   useMapStyleCycler,
   useMilestones,
@@ -158,6 +159,7 @@ export function ActivityRecordingScreen() {
   const workoutToast = useFadeToast<string>();
   /** Payload: true = pinned (event tone), false = unpinned. */
   const eventToast = useFadeToast<boolean>();
+  const offlineToast = useFadeToast<void>({ holdDuration: 3500 });
 
   // Activity options
   const [selectedSport, setSelectedSport] = useDefaultSport(
@@ -558,6 +560,9 @@ export function ActivityRecordingScreen() {
 
   // Timer and milestone tracking
   const { localDuration } = useActivityTimer(activity, isTracking, isPaused);
+  // Broadcasting and the spectator inbox are conversations with the server about
+  // this activity. Started offline, it does not exist there yet.
+  const liveActivityId = activity && !isProvisionalActivity(activity) ? activity.id : null;
   const { resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
 
   const workout = useWorkoutEngine({
@@ -839,7 +844,14 @@ export function ActivityRecordingScreen() {
     await maybePromptBatteryExemption();
 
     try {
-      await startTracking(selectedSport.id, `${selectedSport.name} Activity`, selectedEvent?.id);
+      const started = await startTracking(
+        selectedSport.id,
+        `${selectedSport.name} Activity`,
+        selectedEvent?.id,
+      );
+      // No network: the recording runs locally and is created on the server later.
+      // Say so once — silence would leave the athlete wondering whether it counts.
+      if (isProvisionalActivity(started)) offlineToast.show();
       resetMilestones();
       // Keep selectedEvent in state — user may want to change it at save time in PausedView
       logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
@@ -1268,12 +1280,12 @@ export function ActivityRecordingScreen() {
           onLayout={(e) => setLiveRowHeight(e.nativeEvent.layout.height)}
         >
           <LiveBroadcastControl
-            activityId={activity?.id ?? null}
+            activityId={liveActivityId}
             onBroadcastingChange={setIsBroadcasting}
           />
           {/* Spectator messages reach the athlete only while broadcasting. */}
           <LiveAthleteInbox
-            activityId={activity?.id ?? null}
+            activityId={liveActivityId}
             isBroadcasting={isBroadcasting}
             ttsIncoming={livePreferences.tts_incoming}
           />
@@ -1543,6 +1555,25 @@ export function ActivityRecordingScreen() {
       )}
 
       {/* Goal toast */}
+      {offlineToast.visible && (
+        <Animated.View
+          style={[
+            styles.mapStyleToast,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.info,
+              opacity: offlineToast.opacity,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Ionicons name="cloud-offline-outline" size={20} color={colors.info} />
+          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
+            {t('recording.offlineStartToast')}
+          </Text>
+        </Animated.View>
+      )}
+
       {eventToast.visible && (
         <Animated.View
           style={[

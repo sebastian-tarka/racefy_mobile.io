@@ -58,6 +58,7 @@ jest.mock('../pointsUploader', () => ({
 }));
 
 jest.mock('../backgroundApiClient', () => ({
+  startActivityHeadless: jest.fn(),
   finishActivityHeadless: jest.fn(),
   getActivityHeadless: jest.fn(),
 }));
@@ -196,6 +197,7 @@ it('with the app alive: uses the already-wired engine and leaves announcing to i
   configureFinishSync({
     db: trackingDb,
     drain: jest.fn(async () => ({ uploaded: 0, remaining: 0 })) as any,
+    start: jest.fn(),
     finish,
     getActivity: jest.fn(),
     currentUserId: () => 7,

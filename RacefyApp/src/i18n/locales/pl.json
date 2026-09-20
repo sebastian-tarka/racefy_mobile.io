@@ -1207,7 +1207,8 @@
     "savedOnDeviceTitle": "Zapisano na telefonie",
     "savedOnDeviceBody": "Aktywność jest bezpieczna. Wyślemy ją automatycznie, gdy wróci internet — punkty i wpis pojawią się po wysłaniu.",
     "savedNeedsAttention": "Aktywność jest zapisana na telefonie, ale serwer jej nie przyjął: {{reason}}\n\nOtwórz listę niewysłanych, żeby zdecydować, co dalej.",
-    "openUnsynced": "Otwórz listę"
+    "openUnsynced": "Otwórz listę",
+    "offlineStartToast": "Brak internetu — nagrywasz offline. Aktywność wyśle się, gdy wróci sieć."
   },
   "gpxImport": {
     "title": "Importuj GPX",
@@ -2963,7 +2964,8 @@
     "logoutWarning_one": "{{count}} aktywność czeka na wysłanie. Po wylogowaniu zostanie na telefonie i wyśle się dopiero, gdy zalogujesz się ponownie na to konto.",
     "logoutWarning_few": "{{count}} aktywności czekają na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto.",
     "logoutWarning_many": "{{count}} aktywności czeka na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto.",
-    "logoutWarning_other": "{{count}} aktywności czeka na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto."
+    "logoutWarning_other": "{{count}} aktywności czeka na wysłanie. Po wylogowaniu zostaną na telefonie i wyślą się dopiero, gdy zalogujesz się ponownie na to konto.",
+    "untitledOffline": "Aktywność nagrana offline"
   },
   "eventStatus": {
     "upcoming": "Nadchodzące",

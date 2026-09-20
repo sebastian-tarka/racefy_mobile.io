@@ -130,4 +130,25 @@ describe('trackingDb', () => {
     expect(result).toBeNull();
     expect(trackingDb.getAllPoints('missing-session')).toHaveLength(0);
   });
+
+  it('remembers the start request and resolves the recording session without a server id', () => {
+    trackingDb.__resetForTests();
+    const payload = { sport_type_id: 1, started_at: '2026-09-20T09:00:00.000Z' };
+    trackingDb.startSession(UUID, 'running', {
+      startedAt: payload.started_at,
+      startPayload: payload,
+    });
+
+    expect(trackingDb.getSession(UUID)).toMatchObject({
+      serverActivityId: null,
+      startedAt: payload.started_at,
+      startPayload: payload,
+    });
+    // A background context only has the (provisional, negative) id the app stored.
+    expect(trackingDb.resolveRecordingSession(-42)?.clientActivityId).toBe(UUID);
+    expect(trackingDb.resolveRecordingSession(null)?.clientActivityId).toBe(UUID);
+
+    trackingDb.bindServerActivity(UUID, 321);
+    expect(trackingDb.resolveRecordingSession(321)?.clientActivityId).toBe(UUID);
+  });
 });

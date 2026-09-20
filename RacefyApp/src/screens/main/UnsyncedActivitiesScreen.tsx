@@ -46,12 +46,12 @@ function formatFailedAt(iso: string, locale: string): string {
 export function UnsyncedActivitiesScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { items, isLoading, retryingId, refresh, retry, retryWithoutEvent, discard } =
+  const { items, isLoading, retryingKey, refresh, retry, retryWithoutEvent, discard } =
     useUnsyncedActivities();
 
   const onRetry = useCallback(
     async (entry: UnsyncedItem) => {
-      const outcome = await retry(entry.activityId);
+      const outcome = await retry(entry);
       if (outcome.ok) {
         Alert.alert(t('unsynced.retrySuccessTitle'), t('unsynced.retrySuccessBody'));
       } else {
@@ -116,7 +116,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
         {
           text: t('unsynced.discard'),
           style: 'destructive',
-          onPress: () => discard(entry.activityId),
+          onPress: () => discard(entry),
         },
       ]);
     },
@@ -125,7 +125,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
 
   const renderItem = useCallback(
     ({ item }: { item: UnsyncedItem }) => {
-      const isRetrying = retryingId === item.activityId;
+      const isRetrying = retryingKey === item.key;
       // Waiting for a network is the normal, healthy state of an outbox entry — it
       // will go out by itself. Only a refusal (or a legacy entry) is a problem.
       const waiting = item.source === 'outbox' && item.state !== 'needs_attention';
@@ -142,7 +142,10 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
           <View style={styles.cardHeader}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-                {item.title || t('unsynced.untitled', { id: item.activityId })}
+                {item.title ||
+                  (item.neverOnServer
+                    ? t('unsynced.untitledOffline')
+                    : t('unsynced.untitled', { id: item.activityId }))}
               </Text>
               <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 {item.sportTypeName ? `${item.sportTypeName} • ` : ''}
@@ -236,7 +239,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
         </View>
       );
     },
-    [colors, i18n.language, onDiscard, onExport, onRetry, onRetryWithoutEvent, retryingId, t],
+    [colors, i18n.language, onDiscard, onExport, onRetry, onRetryWithoutEvent, retryingKey, t],
   );
 
   return (
@@ -259,7 +262,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
       ) : (
         <FlatList
           data={items}
-          keyExtractor={(item) => `${item.source}:${item.activityId}`}
+          keyExtractor={(item) => item.key}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
