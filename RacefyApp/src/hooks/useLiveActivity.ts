@@ -17,6 +17,7 @@ import {
   syncPendingFinishes,
 } from '../services/finishSync';
 import { suppressDeliveredNotification, useFinishSyncRunner } from './useFinishSyncRunner';
+import { ensureFinishSyncTaskRegistered } from '../services/finishSyncBackgroundTask';
 import * as trackingDb from '../services/trackingDb';
 import {
   clearLedger,
@@ -1791,6 +1792,10 @@ function useLiveActivityInternal() {
           points_earned: response.points_earned,
         };
       }
+
+      // Not delivered while we waited: from here on it may have to go out with the
+      // app closed, so ask the OS to wake us when there is a network.
+      void ensureFinishSyncTaskRegistered();
 
       logger.activity('Activity saved locally, delivery pending', {
         id: current.id,

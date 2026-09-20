@@ -151,6 +151,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     './plugins/withLargeHeap',
     'expo-sqlite',
+    // Delivers activities saved offline while the app is closed (services/finishSyncBackgroundTask).
+    // iOS: adds the `processing` background mode + BGTaskSchedulerPermittedIdentifiers.
+    'expo-background-task',
     [
       'expo-build-properties',
       {
