@@ -16,6 +16,7 @@ import { useTheme } from '../../../hooks/useTheme';
 import { getSportTile, hasSportTile } from '../../../config/sportTiles';
 import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
 import type {
+  Event,
   GeoJSONLineString,
   GpsPoint,
   NearbyRoute,
@@ -23,7 +24,7 @@ import type {
 } from '../../../types/api';
 import type { SportTypeWithIcon } from '../../../hooks/useSportTypes';
 import type { TrackingStatus } from '../../../hooks/useLiveActivity';
-import { LivePulse, MapboxLiveMap, NavPreview } from '../../../components';
+import { EventBar, LivePulse, MapboxLiveMap, NavPreview } from '../../../components';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 
 /** The route layer paints planned routes in blue — the design's own accent. */
@@ -74,6 +75,20 @@ interface IdleViewProps {
   navVoiceEnabled: boolean;
   onToggleNavVoice: () => void;
   onOpenCueList: () => void;
+  // Event pin — a pinned event owns the discipline: the sport rail locks to it
+  // and the only way out is unpinning.
+  /** Hidden entirely for signed-out users. */
+  showEventBar: boolean;
+  pinnedEvent: Event | null;
+  ongoingEventsCount: number;
+  onOpenEventSheet: () => void;
+  onClearEvent: () => void;
+  onBrowseEvents: () => void;
+  /** The chosen route is the pinned event's own course. */
+  isEventRoute: boolean;
+  /** The event has a course and the athlete swapped it for another route. */
+  canRestoreEventRoute: boolean;
+  onRestoreEventRoute: () => void;
   // Training goal
   workoutLabel?: string | null;
   onOpenWorkout?: (type?: 'distance' | 'time') => void;
@@ -130,6 +145,15 @@ export function IdleView({
   navVoiceEnabled,
   onToggleNavVoice,
   onOpenCueList,
+  showEventBar,
+  pinnedEvent,
+  ongoingEventsCount,
+  onOpenEventSheet,
+  onClearEvent,
+  onBrowseEvents,
+  isEventRoute,
+  canRestoreEventRoute,
+  onRestoreEventRoute,
   workoutLabel,
   onOpenWorkout,
   onClearWorkout,
@@ -158,6 +182,15 @@ export function IdleView({
         : 'trail-sign-outline';
 
   const canStart = !isLoading && !!selectedSport;
+
+  // A pinned event overrides the rail outright. Its discipline may not be among
+  // the shortcuts — show it anyway, first and active.
+  const sportLocked = !!pinnedEvent;
+  const railSports =
+    sportLocked && selectedSport && !shortcutSports.some((s) => s.id === selectedSport.id)
+      ? [selectedSport, ...shortcutSports]
+      : shortcutSports;
+  const pinnedTitle = pinnedEvent?.post?.title || t('eventDetail.untitled');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -310,18 +343,44 @@ export function IdleView({
           },
         ]}
       >
+        {showEventBar && (
+          <View style={styles.eventBarWrap}>
+            <EventBar
+              event={pinnedEvent}
+              count={ongoingEventsCount}
+              sportName={pinnedEvent ? selectedSport?.name : null}
+              sportIcon={pinnedEvent ? selectedSport?.icon : undefined}
+              disabled={isLoading}
+              onOpen={onOpenEventSheet}
+              onClear={onClearEvent}
+              onBrowse={onBrowseEvents}
+            />
+          </View>
+        )}
+
         <View style={styles.cardSectionHeader}>
           <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
             {t('recording.selectSport').toUpperCase()}
           </Text>
-          <TouchableOpacity
-            onPress={onManageShortcuts}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={[styles.linkText, { color: colors.primary }]}>
-              {t('recording.shortcuts.edit')}
-            </Text>
-          </TouchableOpacity>
+          {sportLocked ? (
+            // The reason sits where "Edit" was, so a locked rail reads as a
+            // rule, not as a broken screen.
+            <View style={styles.lockReason}>
+              <Ionicons name="lock-closed" size={13} color={colors.eventDeep} />
+              <Text style={[styles.lockReasonText, { color: colors.eventDeep }]} numberOfLines={1}>
+                {t('eventPin.sportLocked', { event: pinnedTitle })}
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={onManageShortcuts}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={[styles.linkText, { color: colors.primary }]}>
+                {t('recording.shortcuts.edit')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {sportsLoading ? (
@@ -332,8 +391,9 @@ export function IdleView({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.sportRail}
           >
-            {shortcutSports.map((sport) => {
+            {railSports.map((sport) => {
               const active = selectedSport?.id === sport.id;
+              const off = sportLocked && !active;
               return (
                 <TouchableOpacity
                   key={sport.id}
@@ -342,12 +402,14 @@ export function IdleView({
                     {
                       backgroundColor: active ? colors.textPrimary : colors.cardBackground,
                       borderColor: active ? colors.textPrimary : colors.border,
+                      opacity: off ? 0.32 : 1,
                     },
                   ]}
                   onPress={() => onSelectSport(sport)}
+                  disabled={sportLocked}
                   activeOpacity={0.85}
                   accessibilityRole="radio"
-                  accessibilityState={{ selected: active }}
+                  accessibilityState={{ selected: active, disabled: off }}
                 >
                   <View
                     style={[
@@ -384,8 +446,13 @@ export function IdleView({
             })}
 
             <TouchableOpacity
-              style={[styles.sportChip, styles.sportChipGhost, { borderColor: colors.border }]}
+              style={[
+                styles.sportChip,
+                styles.sportChipGhost,
+                { borderColor: colors.border, opacity: sportLocked ? 0.32 : 1 },
+              ]}
               onPress={onOpenAllSports}
+              disabled={sportLocked}
               activeOpacity={0.85}
             >
               <View style={[styles.sportChipIcon, { backgroundColor: colors.cardBackground }]}>
@@ -414,10 +481,10 @@ export function IdleView({
           />
           <SetupChip
             icon="git-branch-outline"
-            label={t('recording.shadowTrack')}
+            label={isEventRoute ? t('eventPin.eventRoute') : t('recording.shadowTrack')}
             value={selectedRouteTitle ?? t('recording.selectRoute')}
             active={!!selectedRouteTitle}
-            tone={ROUTE_BLUE}
+            tone={isEventRoute ? colors.event : ROUTE_BLUE}
             disabled={!gpsEnabled}
             onPress={() => {
               onRouteLayerChange(true);
@@ -426,6 +493,22 @@ export function IdleView({
             onClear={selectedRouteTitle ? onClearRoute : undefined}
           />
         </View>
+
+        {/* The route is NOT locked with the event: the course is guidance, not
+            scoring, so the athlete may lay their own shadow track over it — with
+            one tap back to the event's. */}
+        {canRestoreEventRoute && (
+          <TouchableOpacity
+            style={styles.restoreRoute}
+            onPress={onRestoreEventRoute}
+            hitSlop={{ top: 6, bottom: 6, left: 8, right: 8 }}
+          >
+            <Ionicons name="git-branch-outline" size={13} color={colors.eventDeep} />
+            <Text style={[styles.restoreRouteText, { color: colors.eventDeep }]}>
+              {t('eventPin.restoreRoute')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Turn-by-turn preview — only when the chosen route has directions */}
         {navTurns.length > 0 && (
@@ -468,6 +551,7 @@ export function IdleView({
 
         <Text style={[styles.startSummary, { color: colors.textSecondary }]} numberOfLines={1}>
           {[
+            pinnedEvent ? pinnedTitle : null,
             workoutLabel ?? t('recording.workout.typeOpen'),
             selectedRouteTitle,
             navTurns.length > 0
@@ -687,6 +771,36 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  eventBarWrap: {
+    paddingHorizontal: spacing.lg,
+  },
+  lockReason: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 5,
+    marginLeft: spacing.sm,
+  },
+  lockReasonText: {
+    flexShrink: 1,
+    fontSize: msFont(11.5),
+    fontWeight: '600',
+  },
+  restoreRoute: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
+    paddingHorizontal: spacing.lg,
+    marginTop: -spacing.xs,
+    paddingBottom: spacing.sm + 2,
+  },
+  restoreRouteText: {
+    fontSize: msFont(11.5),
     fontWeight: '600',
   },
   sportRail: {

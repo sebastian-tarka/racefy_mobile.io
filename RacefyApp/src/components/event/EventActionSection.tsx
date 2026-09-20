@@ -3,8 +3,9 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../Card';
+import { LivePulse } from '../recording/LivePulse';
 import { useTheme } from '../../hooks/useTheme';
-import { borderRadius, fontSize, spacing } from '../../theme';
+import { borderRadius, fontSize, msFont, spacing } from '../../theme';
 import type { Event } from '../../types/api';
 
 export interface OwnerAction {
@@ -38,6 +39,17 @@ export interface EventActionSectionProps {
   onViewResults?: () => void;
   standingsRacingCount?: number;
   standingsFinishedPct?: number;
+  /**
+   * "Start activity" — the way in to recording for this event. Rendered only
+   * for a registered athlete; what it shows follows from the stage.
+   */
+  startCta?: {
+    /** An activity is already being recorded. */
+    recording: boolean;
+    onStart: () => void;
+    onResume: () => void;
+    onBusy: () => void;
+  };
 }
 
 type Stage = 'before' | 'during' | 'after';
@@ -54,11 +66,21 @@ export function EventActionSection(props: EventActionSectionProps) {
   const stage = stageOf(event.status);
   const isOwner = event.is_owner ?? false;
   const isRegistered = event.is_registered ?? false;
+  // One dominant CTA, never two: while "Start activity" is showing, the live
+  // standings tile demotes to a quiet row.
+  const startShowing = !!props.startCta && isRegistered && stage === 'during';
 
   return (
     <View style={styles.wrap}>
       {isOwner ? (
-        <OwnerActionsCard actions={props.ownerActions} />
+        <>
+          <OwnerActionsCard actions={props.ownerActions} />
+          {isRegistered && props.startCta && stage !== 'after' && (
+            <Card noPadding style={styles.registeredCard}>
+              <EventStartCta event={event} stage={stage} cta={props.startCta} bare />
+            </Card>
+          )}
+        </>
       ) : isRegistered ? (
         <RegisteredCard {...props} stage={stage} />
       ) : stage === 'before' ? (
@@ -67,14 +89,20 @@ export function EventActionSection(props: EventActionSectionProps) {
         <RegistrationClosedBox message={props.registrationClosedMessage} />
       )}
 
-      {stage === 'during' && (
-        <StageCtaCard
-          variant="live"
-          onPress={props.onViewStandings}
-          racingCount={props.standingsRacingCount}
-          finishedPct={props.standingsFinishedPct}
-        />
-      )}
+      {stage === 'during' &&
+        (startShowing ? (
+          <LiveStandingsRow
+            onPress={props.onViewStandings}
+            racingCount={props.standingsRacingCount}
+          />
+        ) : (
+          <StageCtaCard
+            variant="live"
+            onPress={props.onViewStandings}
+            racingCount={props.standingsRacingCount}
+            finishedPct={props.standingsFinishedPct}
+          />
+        ))}
       {stage === 'after' && event.status === 'completed' && (
         <StageCtaCard variant="results" onPress={props.onViewResults} />
       )}
@@ -227,7 +255,146 @@ function RegisteredCard(props: EventActionSectionProps & { stage: Stage }) {
           )}
         </TouchableOpacity>
       )}
+      {props.startCta && stage !== 'after' && (
+        <EventStartCta event={event} stage={stage} cta={props.startCta} />
+      )}
     </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// "Start activity" — footer of the registration card (design: EventStartCTA).
+// The card states the situation, then offers the single action that follows.
+// ---------------------------------------------------------------------------
+function EventStartCta({
+  event,
+  stage,
+  cta,
+  bare,
+}: {
+  event: Event;
+  stage: Stage;
+  cta: NonNullable<EventActionSectionProps['startCta']>;
+  /** No top divider — the CTA is the whole card (organizer who also races). */
+  bare?: boolean;
+}) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  if (event.status === 'cancelled') return null;
+
+  const frame = [
+    styles.startWrap,
+    { backgroundColor: colors.cardBackground, borderTopColor: colors.border },
+    bare && { borderTopWidth: 0 },
+  ];
+
+  // Not started: a reason instead of a greyed-out dummy button.
+  if (stage === 'before') {
+    const startTime = new Date(event.starts_at).toLocaleString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return (
+      <View style={[frame, styles.startInfoRow]}>
+        <View style={[styles.startInfoIcon, { backgroundColor: colors.background }]}>
+          <Ionicons name="time-outline" size={17} color={colors.textMuted} />
+        </View>
+        <View style={styles.startInfoBody}>
+          <Text style={[styles.startInfoTitle, { color: colors.textSecondary }]}>
+            {t('eventPin.notStarted', { time: startTime })}
+          </Text>
+          <Text style={[styles.startInfoSub, { color: colors.textMuted }]}>
+            {t('eventPin.notStartedSub')}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Already recording something else → the CTA becomes a way back, and the
+  // only path to this event runs through saving what is running.
+  if (cta.recording) {
+    return (
+      <View style={frame}>
+        <TouchableOpacity
+          style={[styles.startButton, styles.resumeButton, { backgroundColor: colors.textPrimary }]}
+          onPress={cta.onResume}
+          activeOpacity={0.85}
+        >
+          <LivePulse color={colors.primary} size={7} />
+          <Text style={[styles.resumeText, { color: colors.background }]}>
+            {t('eventPin.backToActivity')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={cta.onBusy} style={styles.busyLink} hitSlop={HIT_SLOP}>
+          <Text style={[styles.busyLinkText, { color: colors.textSecondary }]}>
+            {t('eventPin.startActivity')} →
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={frame}>
+      <TouchableOpacity
+        style={[
+          styles.startButton,
+          { backgroundColor: colors.primary, shadowColor: colors.primary },
+        ]}
+        onPress={cta.onStart}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t('eventPin.startActivity')}
+      >
+        <Ionicons name="play" size={19} color="#ffffff" />
+        <Text style={styles.startText}>{t('eventPin.startActivity')}</Text>
+      </TouchableOpacity>
+      <Text style={[styles.startSub, { color: colors.textSecondary }]}>
+        {t('eventPin.startSub')}
+      </Text>
+    </View>
+  );
+}
+
+const HIT_SLOP = { top: 8, bottom: 8, left: 12, right: 12 };
+
+/** The live-standings tile, demoted to a quiet row while "Start activity" leads. */
+function LiveStandingsRow({
+  onPress,
+  racingCount,
+}: {
+  onPress?: () => void;
+  racingCount?: number;
+}) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
+      style={[
+        styles.liveRow,
+        { backgroundColor: colors.cardBackground, borderColor: colors.border },
+      ]}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={0.85}
+    >
+      <LivePulse color={colors.error} size={7} />
+      <Text style={[styles.liveRowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+        {t('eventDetail.viewLiveStandings', 'View live standings')}
+      </Text>
+      {racingCount != null && (
+        <Text style={[styles.liveRowMeta, { color: colors.textMuted }]}>
+          {t('eventDetail.racingNow', {
+            count: racingCount,
+            defaultValue: `${racingCount} racing`,
+          })}
+        </Text>
+      )}
+      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+    </TouchableOpacity>
   );
 }
 
@@ -464,6 +631,94 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  // Start activity
+  startWrap: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 12,
+  },
+  startButton: {
+    height: 54,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  startText: {
+    color: '#ffffff',
+    fontSize: msFont(16),
+    fontWeight: '700',
+  },
+  startSub: {
+    textAlign: 'center',
+    fontSize: msFont(11.5),
+    paddingTop: 7,
+    paddingHorizontal: 6,
+  },
+  resumeButton: {
+    height: 50,
+    gap: 9,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  resumeText: {
+    fontSize: msFont(14.5),
+    fontWeight: '700',
+  },
+  busyLink: {
+    alignSelf: 'center',
+    paddingTop: 10,
+  },
+  busyLinkText: {
+    fontSize: msFont(12),
+    fontWeight: '600',
+  },
+  startInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+  },
+  startInfoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startInfoBody: { flex: 1, minWidth: 0 },
+  startInfoTitle: {
+    fontSize: msFont(13),
+    fontWeight: '700',
+  },
+  startInfoSub: {
+    fontSize: msFont(11.5),
+    marginTop: 1,
+  },
+  liveRow: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+  },
+  liveRowTitle: {
+    flex: 1,
+    fontSize: msFont(13.5),
+    fontWeight: '600',
+  },
+  liveRowMeta: {
+    fontSize: msFont(11.5),
   },
   // Owner
   ownerCard: {

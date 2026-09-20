@@ -90,6 +90,26 @@ and an "Edit" affordance (or a dashed "Set a goal mid-run" row when there is non
 - Sport tile grids sit on a frosted panel (`cardBackground + 'B8'`, `borderRadius.xl`) so the
   tiles don't float loose over the map.
 
+### Event pin (`EventBar`, `EventSelectionSheet`, `EventPinDialog`)
+
+Pinning an activity to an event **before** the start (design: `racefy-event-pin.jsx`).
+Hard rule: a pinned event owns the discipline — the sport rail locks to it and the
+only way out is unpinning; while recording, unpinning is refused outright.
+
+- Accent: `colors.event` / `eventSoft` / `eventDeep` (magenta). Emerald stays goal/CTA,
+  `#2563EB` stays route — never paint an event in either.
+- `EventBar` — full-width bar above the sport rail on the pre-start card. Three states:
+  no ongoing events (muted, "Browse"), events available (dashed, count pill), pinned
+  (filled, "×"; `locked` turns the "×" into a lock).
+- `EventSelectionSheet` — "No event" always on top. Pass `lockedSportId` once an activity
+  is recorded: events of another discipline render disabled instead of silently
+  rewriting the activity type.
+- `EventPinDialog` — refusal dialog with no "unpin"/"switch" path, only finish-and-save.
+
+```tsx
+<EventBar event={pinned} count={ongoing.length} onOpen={openSheet} onClear={unpin} />
+```
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:
