@@ -15,7 +15,36 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `offline-start-faza-4` — start aktywności bez internetu + odzyskiwanie nagrania po killu offline
+
+Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`, opis: `RacefyApp/docs/OFFLINE_ACTIVITY_SYNC.md`.
+UUID nagrania powstaje **przed** zapytaniem serwera; gdy serwer nie odpowie w 5 s (brak sieci,
+timeout, 5xx), nagranie rusza lokalnie pod „tymczasową" aktywnością (ujemne id). Serwerowa
+aktywność powstaje później: w trakcie nagrywania, gdy wróci sieć (`createServerActivity`), albo
+jako pierwszy krok wysyłki po zapisie (`finishSync`, krok 0). Start jest idempotentny po
+`client_activity_id`, więc timeout po stronie klienta nie tworzy duplikatu. `trackingDb` v4
+(sesja pamięta żądanie startu; outbox dopuszcza brak id serwera — migracja przebudowuje tabelę).
+**Wymaga backendu z brancha `offline-start-api`** (`client_activity_id` w start, walidacja
+`started_at`, spóźniony start bez powiadomienia obserwujących). Ze starym backendem start offline
+działa, ale ponowiony start po zgubionej odpowiedzi może dać „already active".
+
+- [ ] Tryb samolotowy → START: po ≤5 s nagrywanie rusza, toast „nagrywasz offline", stoper i dystans działają
+- [ ] Online: start jak dotąd, bez toastu, bez odczuwalnego opóźnienia
+- [ ] Start offline → powrót sieci w trakcie: w ciągu ~30 s aktywność pojawia się na serwerze z **prawdziwym** czasem startu, punkty zaczynają się wysyłać, pojawia się kontrolka transmisji
+- [ ] Start offline → pauzy offline → powrót sieci: pauzy odtworzone na serwerze; po zapisie czas bez postojów
+- [ ] Start offline → cała aktywność offline → zapis offline → powrót sieci: aktywność powstaje i kończy się jednym ciągiem; czas startu, końca, dystans i ślad zgodne z telefonem
+- [ ] Obserwujący **nie** dostają powiadomienia „X zaczął aktywność" dla aktywności dowiezionej po fakcie
+- [ ] Start offline aktywności eventowej (z pre-startu): po dowiezieniu podpięta pod event; gdy event się skończył — wpis „Nie wysłano" i „Wyślij bez eventu" działa (czyści event także z żądania startu)
+- [ ] Start offline sportu bez GPS (siłownia/czasówka): zapis i wysyłka działają
+- [ ] Kill aplikacji w trakcie nagrania offline → po otwarciu (nadal bez sieci) dialog „Wznów/Zakończ/Odrzuć" z dobrym dystansem; „Wznów" kontynuuje ślad
+- [ ] Kill aplikacji w trakcie nagrania **online**, otwarcie bez sieci: aktywność też się odzyskuje (wcześniej znikała do powrotu sieci)
+- [ ] Nagrywanie GPS w tle przy aktywności tymczasowej: punkty z tła trafiają do śladu (ekran zgaszony, tryb samolotowy)
+- [ ] „Odrzuć" aktywność tymczasową: znika bez błędu i bez wołania serwera; „Odrzuć" zwykłą aktywność bez sieci: ekran się zwalnia (wcześniej zawisał z błędem)
+- [ ] Dwie aktywności offline z rzędu: obie wysyłają się po kolei; druga czeka na pierwszą zamiast lądować w „Nie wysłano"
+- [ ] Na serwerze wisi aktywna aktywność z innego urządzenia → wpis „Nie wysłano" z czytelnym powodem, a po jej zakończeniu/odrzuceniu „Ponów" działa
+- [ ] Ekran kolejki: wpis nagrany offline ma tytuł (nie „Aktywność #0"), ponowienie/odrzucenie/eksport GPX działają
+- [ ] Aktualizacja aplikacji z oczekującą aktywnością w kolejce (migracja bazy v3→v4): wpis przetrwał z całym śladem
+- [ ] Web: start wymaga sieci jak dotąd (brak SQLite), błąd jest czytelny
 
 ---
 
