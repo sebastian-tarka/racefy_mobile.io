@@ -15,7 +15,28 @@ Stan na: **2026-09-20**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `offline-finish-faza-3` — wysyłka aktywności zapisanych offline przy zamkniętej aplikacji
+
+Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`, opis całości: `RacefyApp/docs/OFFLINE_ACTIVITY_SYNC.md`.
+`expo-background-task` (WorkManager / BGTaskScheduler) budzi `finishSync`, gdy aplikacja jest
+zamknięta. Zadanie jest zarejestrowane **tylko, gdy outbox nie jest pusty**, i samo się
+wyrejestrowuje. W uruchomieniu bez UI używa `backgroundApiClient` (token z SecureStore, bez
+efektu „401 → wyloguj") i id użytkownika z `trackingDb.kv`. **Wymaga nowego builda natywnego**
+(nowy moduł natywny + `processing` w `UIBackgroundModes` i `BGTaskSchedulerPermittedIdentifiers`
+na iOS). Ograniczenia platform: nie częściej niż co 15 min, tylko z siecią i baterią; iOS po
+wyrzuceniu aplikacji z listy ostatnich nie uruchomi zadania do ponownego otwarcia.
+
+- [ ] Build natywny (Android + iOS) przechodzi z nową wtyczką `expo-background-task`
+- [ ] Debug: Ustawienia → Dev Tools → „Run background finish sync" z aktywnością w kolejce → po zminimalizowaniu aplikacji aktywność się wysyła i przychodzi powiadomienie „Aktywność wysłana"
+- [ ] Android, scenariusz prawdziwy: tryb samolotowy → nagraj → zapisz → zamknij aplikację → wyłącz tryb samolotowy → w ciągu ~15–30 min powiadomienie o wysłaniu, bez otwierania aplikacji
+- [ ] iOS, to samo z aplikacją w tle (nie wyrzuconą z listy ostatnich); po wyrzuceniu — wysyłka dopiero po otwarciu (oczekiwane)
+- [ ] Powiadomienie jest w języku aplikacji (nie po angielsku), także po zimnym starcie zadania
+- [ ] Aplikacja żywa w tle + zadanie: **jedno** powiadomienie, nie dwa
+- [ ] Pusta kolejka: zadanie się wyrejestrowuje (log „Background finish sync unregistered"), bateria nie jest ruszana co 15 min
+- [ ] Wpis „Nie wysłano" (odmowa serwera) **nie** jest ponawiany przez zadanie w tle co 15 min
+- [ ] Po wylogowaniu zadanie niczego nie wysyła; po zalogowaniu na inne konto — też nie
+- [ ] Expo Go / symulator iOS: brak błędów, rejestracja po cichu pomijana
+- [ ] Nagrywanie GPS w tle (osobne zadanie `backgroundLocation`) działa jak dotąd — dwa zadania sobie nie przeszkadzają
 
 ---
 
