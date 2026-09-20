@@ -9,13 +9,41 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-13**
+Stan na: **2026-09-20**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `event-prestart` — podpięcie eventu przed startem + „Startuj aktywność" z ekranu eventu
+
+Design: `racefy-event-pin.jsx`, `Prestart Event - warianty.html` (wariant b), zmiany
+w `racefy-prestart.jsx`. Przywraca dwa wejścia wycofane w `2d697db` (wiersz eventu na
+pre-starcie) i `d88fc39` (przycisk startu na ekranie eventu). Reguła twarda: podpięty
+event narzuca dyscyplinę; w trakcie nagrywania eventu ani sportu się nie zmienia.
+Nowe komponenty: `EventBar`, `EventPinDialog`; przebudowany `EventSelectionSheet`;
+tokeny `colors.event*`.
+
+- [ ] Pre-start: pasek eventu nad railem sportów — stan „brak eventów" (wyciszony + „Przeglądaj"), „dostępne" (przerywana ramka + licznik), „podpięty" (tytuł ucięty do 1 linii + „×")
+- [ ] Pre-start: pasek nie wypycha START poza ekran przy dużym foncie systemowym i z włączoną kartą wskazówek zakręt-po-zakręcie
+- [ ] Pre-start: niezalogowany nie widzi paska wcale
+- [ ] Podpięcie eventu przestawia sport, blokuje rail (kafle wyszarzone, „Wszystkie sporty" nieklikalne) i pokazuje „Dyscyplinę narzuca event …" w miejscu „Edytuj"
+- [ ] Dyscyplina eventu spoza skrótów pojawia się na railu jako pierwsza, aktywna
+- [ ] Event z trasą: ślad-cień wczytany, chip trasy z etykietą „Trasa eventu" w kolorze eventu; po podmianie trasy pojawia się „Przywróć trasę eventu"
+- [ ] „×" odpina event, odblokowuje rail i pokazuje toast; toast po podpięciu też się pojawia
+- [ ] Arkusz: „Bez eventu" na górze, szkielety przy ładowaniu, stan pusty z „Przeglądaj eventy" → zakładka Wydarzenia
+- [ ] Ekran live: znacznik eventu obok pigułki sportu; tknięcie otwiera dialog odmowy, „Zakończ i zapisz" prowadzi na ekran zakończenia
+- [ ] Ekran live: event kończący się w trakcie — kropka na znaczniku + linijka „Event zakończony — aktywność dokańcza się pod nim"
+- [ ] Ekran zakończenia: wiersz eventu wypełniony wyborem sprzed startu; w arkuszu eventy innej dyscypliny są nieaktywne z wyjaśnieniem
+- [ ] Ekran zakończenia: auto-podpowiedź trwającego eventu tej samej dyscypliny działa dopiero tu (nie przy samej pauzie)
+- [ ] Po zapisie/odrzuceniu kolejna aktywność startuje bez podpiętego eventu
+- [ ] Ekran eventu (trwa + zapisany): „Startuj aktywność" w stopce karty rejestracji, kafel wyników na żywo zdegradowany do cichego wiersza
+- [ ] Ekran eventu → pre-start: event podpięty, sport narzucony, trasa wczytana; ponowne wejście z tego samego eventu po zapisie też działa
+- [ ] Ekran eventu (zapisany, przed startem): wiersz „Start: …" zamiast przycisku; event zakończony / niezapisany: brak CTA
+- [ ] Ekran eventu w trakcie nagrywania: „Wróć do aktywności" + link otwierający dialog „Nagrywasz już coś innego"
+- [ ] Organizator, który jest też zapisany: osobna karta z CTA pod akcjami organizatora
+- [ ] Import GPX: arkusz eventu w nowym wyglądzie nadal podpina event
+- [ ] Tryb ciemny: pasek eventu, arkusz, dialogi, znacznik na ekranie live
 
 ---
 
