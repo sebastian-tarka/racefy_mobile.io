@@ -11,15 +11,18 @@ const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
 
+// Must match the file names app.config.ts expects for the variant.
+const suffix = process.env.APP_VARIANT === 'staging' ? '-staging' : '';
+
 const configs = [
   {
     envVar: 'GOOGLE_SERVICES_JSON',
-    outputFile: 'google-services.json',
+    outputFile: `google-services${suffix}.json`,
     description: 'Android Firebase config',
   },
   {
     envVar: 'GOOGLE_SERVICE_INFO_PLIST',
-    outputFile: 'GoogleService-Info.plist',
+    outputFile: `GoogleService-Info${suffix}.plist`,
     description: 'iOS Firebase config',
   },
 ];

@@ -15,6 +15,7 @@ import {
 import { BottomTabBarButtonProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -123,11 +124,15 @@ import {
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // Deep linking: /reset-password?token=XXX&email=YYY opens the reset flow
-// inside the Auth modal stack on racefy://, https://racefy.io and https://app.dev.racefy.io.
+// inside the Auth modal stack. Prefixes follow the app variant (app.config.ts):
+// production racefy:// + https://racefy.io, staging racefy-staging:// + https://app.dev.racefy.io.
 // /messages/{id} opens the Chat screen directly (works for direct & team chats —
 // ChatScreen fetches the conversation when it's not passed as a param).
+const rawScheme = Constants.expoConfig?.scheme;
+const linkScheme = (Array.isArray(rawScheme) ? rawScheme[0] : rawScheme) ?? 'racefy';
+const linkHost = (Constants.expoConfig?.extra?.linkHost as string | undefined) ?? 'racefy.io';
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['racefy://', 'https://racefy.io', 'https://app.dev.racefy.io'],
+  prefixes: [`${linkScheme}://`, `https://${linkHost}`],
   config: {
     screens: {
       Auth: {

@@ -27,6 +27,7 @@
       "distribution": "internal",
       "env": {
         "APP_ENV": "staging",
+        "APP_VARIANT": "staging",
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "error",
         "LOG_PERSIST": "true",

@@ -40,7 +40,7 @@ cd RacefyApp && npm run android         # Run on Android
 # Building
 cd RacefyApp && eas build --platform android --profile staging     # Build staging APK
 cd RacefyApp && eas build --platform android --profile production  # Build production AAB
-cd RacefyApp && eas build --platform ios --profile production      # Build iOS for TestFlight (staging API)
+cd RacefyApp && eas build --platform ios --profile production      # Build iOS for TestFlight (production API)
 cd RacefyApp && eas submit --platform ios --latest                 # Submit iOS build to TestFlight
 
 # Environment Variables Management
@@ -48,6 +48,30 @@ eas env:list production --include-sensitive                         # List produ
 eas env:list preview --include-sensitive                            # List staging env vars
 eas env:create --name NAME --value "VALUE" --scope project --type string --visibility secret --environment production --non-interactive  # Add secret
 ```
+
+### App Variants (production vs staging)
+
+`APP_VARIANT` (set per profile in `eas.json`) picks the app identity in `app.config.ts`,
+so the store app and a test build can be installed side by side:
+
+| | production (default) | staging (`APP_VARIANT=staging`) |
+|---|---|---|
+| Profiles | `production`, `production-apk`, `development` | `staging` |
+| Bundle ID / package | `com.racefy.app` | `com.racefy.app.staging` |
+| Name | Racefy | Racefy Beta (amber Android icon background) |
+| Scheme | `racefy://` | `racefy-staging://` |
+| Universal / App Links | `racefy.io` | `app.dev.racefy.io` |
+| API (`APP_ENV`) | `https://racefy.io/api` | `https://app.dev.racefy.io/api` |
+| Firebase files | `google-services.json`, `GoogleService-Info.plist` | `google-services-staging.json`, `GoogleService-Info-staging.plist` |
+
+The staging variant is a separate app everywhere it is registered: it needs its own
+Firebase apps (files go into the EAS `preview` environment as `GOOGLE_SERVICES_JSON` /
+`GOOGLE_SERVICE_INFO_PLIST`), Google OAuth clients (package + SHA-1, iOS client ID),
+an Apple App ID with the same capabilities, and — for purchases — its own RevenueCat app.
+`AppNavigator` linking prefixes are read from the resolved config (`scheme`, `extra.linkHost`).
+
+`API_PRODUCTION_URL` / `API_STAGING_URL` in `.env` or the EAS environment override the
+API URLs above — keep them pointing at `racefy.io` / `app.dev.racefy.io`.
 
 ### Important Paths
 - API Service: `RacefyApp/src/services/api.ts`

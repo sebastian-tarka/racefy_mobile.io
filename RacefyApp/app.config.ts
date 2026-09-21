@@ -3,7 +3,31 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { version as appVersion } from './package.json';
 
+// App variant: `production` is the store app (com.racefy.app, racefy.io);
+// `staging` is a separate app (com.racefy.app.staging, app.dev.racefy.io) so both
+// can be installed side by side. Set in eas.json per profile.
+const IS_STAGING = process.env.APP_VARIANT === 'staging';
+const VARIANT = IS_STAGING
+  ? {
+      name: 'Racefy Beta',
+      appId: 'com.racefy.app.staging',
+      scheme: 'racefy-staging',
+      linkHost: 'app.dev.racefy.io',
+      iconBackground: '#f59e0b',
+      firebaseSuffix: '-staging',
+    }
+  : {
+      name: 'Racefy',
+      appId: 'com.racefy.app',
+      scheme: 'racefy',
+      linkHost: 'racefy.io',
+      iconBackground: '#10b981',
+      firebaseSuffix: '',
+    };
+
 // Decode Firebase config files from base64 EAS env vars (or use existing local files).
+// Each variant has its own file (google-services-staging.json, ...), because the
+// Firebase app is registered per bundle ID / package.
 // Runs both locally (when files exist on disk) and on EAS servers (when env vars are set).
 const decodeFirebaseConfig = (envVar: string, outputFile: string): string | undefined => {
   const outputPath = path.resolve(__dirname, outputFile);
@@ -23,11 +47,11 @@ const decodeFirebaseConfig = (envVar: string, outputFile: string): string | unde
 
 const iosGoogleServicesFile = decodeFirebaseConfig(
   'GOOGLE_SERVICE_INFO_PLIST',
-  'GoogleService-Info.plist',
+  `GoogleService-Info${VARIANT.firebaseSuffix}.plist`,
 );
 const androidGoogleServicesFile = decodeFirebaseConfig(
   'GOOGLE_SERVICES_JSON',
-  'google-services.json',
+  `google-services${VARIANT.firebaseSuffix}.json`,
 );
 
 // Determine API URL based on APP_ENV
@@ -46,7 +70,7 @@ const getApiUrl = (): string => {
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Racefy',
+  name: VARIANT.name,
   slug: 'RacefyApp',
   // Single source of truth - bump it with `npm run release:{patch,minor,major}`,
   // which also commits and tags. iOS buildNumber / Android versionCode are NOT
@@ -57,7 +81,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon-ios.png',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
-  scheme: 'racefy',
+  scheme: VARIANT.scheme,
   splash: {
     image: './assets/splash-logo.png',
     resizeMode: 'contain',
@@ -65,9 +89,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.racefy.app',
+    bundleIdentifier: VARIANT.appId,
     ...(iosGoogleServicesFile ? { googleServicesFile: iosGoogleServicesFile } : {}),
-    associatedDomains: ['applinks:racefy.io', 'applinks:app.dev.racefy.io'],
+    associatedDomains: [`applinks:${VARIANT.linkHost}`],
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         'Racefy needs access to your location to track your activities and show your route on the map.',
@@ -107,10 +131,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/icon-foreground.png',
-      backgroundColor: '#10b981',
+      backgroundColor: VARIANT.iconBackground,
     },
     edgeToEdgeEnabled: true,
-    package: 'com.racefy.app',
+    package: VARIANT.appId,
     ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [
       'ACCESS_FINE_LOCATION',
@@ -134,11 +158,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         data: [
           {
             scheme: 'https',
-            host: 'racefy.io',
-          },
-          {
-            scheme: 'https',
-            host: 'app.dev.racefy.io',
+            host: VARIANT.linkHost,
           },
         ],
         category: ['BROWSABLE', 'DEFAULT'],
@@ -218,6 +238,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ],
   extra: {
     appEnv: process.env.APP_ENV || 'production',
+    appVariant: IS_STAGING ? 'staging' : 'production',
+    linkHost: VARIANT.linkHost,
     apiLocalIp: process.env.API_LOCAL_IP || '192.168.1.100',
     apiLocalPort: process.env.API_LOCAL_PORT || '8080',
     apiUrl: getApiUrl(),
