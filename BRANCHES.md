@@ -47,7 +47,7 @@ sekrety EAS, więc build prod **na pewno** strzela w `racefy.io/api`.
 - [ ] Google Sign-In w buildzie prod działa (backend prod ma `GOOGLE_CLIENT_ID_ANDROID` = web client ID z `eas.json`)
 - [ ] Push (FCM) w buildzie prod
 - [ ] `racefy://reset-password?...` i `https://racefy.io/reset-password?...` otwierają reset hasła
-- [ ] Po odblokowaniu Firebase staging: obie aplikacje zainstalowane obok siebie, staging ma bursztynową ikonę i pisze do `app.dev.racefy.io`
+- [ ] Po odblokowaniu Firebase staging: obie aplikacje zainstalowane obok siebie, staging ma bursztynową ikonę (Android i iOS) i pisze do `app.dev.racefy.io`
 
 ### Offline, faza 4: start aktywności bez internetu + odzyskiwanie nagrania po killu offline (zmergowane 2026-09-20, tag `pre-offline-start-faza-4` = main sprzed merge)
 

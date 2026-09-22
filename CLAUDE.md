@@ -58,7 +58,7 @@ so the store app and a test build can be installed side by side:
 |---|---|---|
 | Profiles | `production`, `production-apk`, `development` | `staging` |
 | Bundle ID / package | `com.racefy.app` | `com.racefy.app.staging` |
-| Name | Racefy | Racefy Beta (amber Android icon background) |
+| Name / icon | Racefy, emerald icon | Racefy Beta, amber icon (`icon-ios-staging.png`, Android adaptive background) |
 | Scheme | `racefy://` | `racefy-staging://` |
 | Universal / App Links | `racefy.io` | `app.dev.racefy.io` |
 | API (`APP_ENV`) | `https://racefy.io/api` | `https://app.dev.racefy.io/api` |

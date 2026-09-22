@@ -13,6 +13,7 @@ const VARIANT = IS_STAGING
       appId: 'com.racefy.app.staging',
       scheme: 'racefy-staging',
       linkHost: 'app.dev.racefy.io',
+      iosIcon: './assets/icon-ios-staging.png',
       iconBackground: '#f59e0b',
       firebaseSuffix: '-staging',
     }
@@ -21,6 +22,7 @@ const VARIANT = IS_STAGING
       appId: 'com.racefy.app',
       scheme: 'racefy',
       linkHost: 'racefy.io',
+      iosIcon: './assets/icon-ios.png',
       iconBackground: '#10b981',
       firebaseSuffix: '',
     };
@@ -78,7 +80,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // those counters and increments them itself (`eas build:version:get`).
   version: appVersion,
   orientation: 'portrait',
-  icon: './assets/icon-ios.png',
+  // Same glyph on both variants; staging swaps the emerald background for amber
+  // (Android does it via adaptiveIcon.backgroundColor, iOS needs a separate file).
+  icon: VARIANT.iosIcon,
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
   scheme: VARIANT.scheme,
