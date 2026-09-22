@@ -46,6 +46,8 @@ import { countPendingFinishes } from '../../services/trackingDb';
 import * as BackgroundTask from 'expo-background-task';
 import { ensureFinishSyncTaskRegistered } from '../../services/finishSyncBackgroundTask';
 import { logger } from '../../services/logger';
+import { pushNotificationService } from '../../services/pushNotifications';
+import { buildInfo } from '../../config/buildInfo';
 import { changeLanguage, supportedLanguages } from '../../i18n';
 import { fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -366,6 +368,18 @@ export function SettingsScreen({ navigation }: Props) {
   }, []);
 
   const appVersion = Application.nativeApplicationVersion || '1.0.0';
+  const backendTargetLabel = (target: typeof buildInfo.apiTarget): string => {
+    switch (target) {
+      case 'prod':
+        return t('settings.buildInfo.prod');
+      case 'stage':
+        return t('settings.buildInfo.stage');
+      case 'local':
+        return t('settings.buildInfo.local');
+      default:
+        return t('settings.buildInfo.none');
+    }
+  };
 
   // Training reminders summary for settings row
   const trainingRemindersSummary = (() => {
@@ -1302,6 +1316,28 @@ export function SettingsScreen({ navigation }: Props) {
               © {new Date().getFullYear()} Racefy. {t('settings.allRightsReserved')}
             </Text>
           </View>
+          {/* Which backend / projects this build is wired to — lets a tester tell
+              a prod build from a stage one without reading URLs. */}
+          <SettingsRow
+            icon="server-outline"
+            label={t('settings.buildInfo.api')}
+            value={backendTargetLabel(buildInfo.apiTarget)}
+          />
+          <SettingsRow
+            icon="flame-outline"
+            label={t('settings.buildInfo.firebase')}
+            value={backendTargetLabel(buildInfo.firebaseTarget)}
+          />
+          <SettingsRow
+            icon="logo-google"
+            label={t('settings.buildInfo.googleSignIn')}
+            value={buildInfo.googleProjectNumber ?? t('settings.buildInfo.none')}
+          />
+          <SettingsRow
+            icon="notifications-outline"
+            label={t('settings.buildInfo.push')}
+            value={pushNotificationService.getProvider().toUpperCase()}
+          />
           <SettingsRow icon="log-out-outline" label={t('common.logout')} onPress={handleLogout} />
         </SettingsSection>
 

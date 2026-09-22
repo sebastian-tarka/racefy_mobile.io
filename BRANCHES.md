@@ -49,6 +49,19 @@ sekrety EAS, więc build prod **na pewno** strzela w `racefy.io/api`.
 - [ ] `racefy://reset-password?...` i `https://racefy.io/reset-password?...` otwierają reset hasła
 - [ ] Po odblokowaniu Firebase staging: obie aplikacje zainstalowane obok siebie, staging ma bursztynową ikonę (Android i iOS) i pisze do `app.dev.racefy.io`
 
+### Ustawienia → Aplikacja pokazuje, w co strzela build (na `main` 2026-09-22)
+
+Cztery wiersze pod wersją: **Serwer API** (produkcja / stage / lokalny — po hoście `API_BASE_URL`),
+**Firebase** (produkcja / stage / nieskonfigurowane — po nazwie pliku `google-services*.json`
+z configu), **Logowanie Google** (numer projektu Google Cloud z `GOOGLE_WEB_CLIENT_ID`, np.
+`663721589252`, albo „nieskonfigurowane") i **Dostawca push** (FCM / EXPO). Źródło:
+`src/config/buildInfo.ts`; nic nie jest pobierane z sieci.
+
+- [ ] Build `production-apk`: API „produkcja", Firebase „produkcja", Google `663721589252`, push FCM
+- [ ] Build `staging` (po odblokowaniu Firebase): API „stage", Firebase „stage"
+- [ ] `npm start` na telefonie: API „lokalny"; z `USE_STAGING_IN_DEV=true` — „stage"
+- [ ] Build bez `GOOGLE_WEB_CLIENT_ID` pokazuje „nieskonfigurowane" zamiast pustego wiersza
+
 ### Offline, faza 4: start aktywności bez internetu + odzyskiwanie nagrania po killu offline (zmergowane 2026-09-20, tag `pre-offline-start-faza-4` = main sprzed merge)
 
 Plan: `.notes/OFFLINE_ZAKONCZENIE_AKTYWNOSCI_PLAN.md`, opis: `RacefyApp/docs/OFFLINE_ACTIVITY_SYNC.md`.

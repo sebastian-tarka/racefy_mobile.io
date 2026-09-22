@@ -1628,6 +1628,16 @@
     },
     "app": "Aplikacja",
     "version": "Wersja",
+    "buildInfo": {
+      "api": "Serwer API",
+      "firebase": "Firebase",
+      "googleSignIn": "Logowanie Google",
+      "push": "Dostawca push",
+      "prod": "produkcja",
+      "stage": "stage",
+      "local": "lokalny",
+      "none": "nieskonfigurowane"
+    },
     "allRightsReserved": "Wszelkie prawa zastrzeżone",
     "subscriptionSection": "Subskrypcja",
     "currentPlan": "Obecny plan",

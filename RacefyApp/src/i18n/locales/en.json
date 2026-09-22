@@ -1606,6 +1606,16 @@
     },
     "app": "App",
     "version": "Version",
+    "buildInfo": {
+      "api": "API server",
+      "firebase": "Firebase",
+      "googleSignIn": "Google Sign-In",
+      "push": "Push provider",
+      "prod": "production",
+      "stage": "stage",
+      "local": "local",
+      "none": "not configured"
+    },
     "allRightsReserved": "All rights reserved",
     "subscriptionSection": "Subscription",
     "currentPlan": "Current Plan",
