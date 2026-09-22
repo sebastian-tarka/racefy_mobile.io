@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-20**
+Stan na: **2026-09-22**
 
 ---
 
@@ -23,6 +23,31 @@ _Nic nie czeka._
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Wariant staging jako osobna aplikacja + URL-e API przypięte w `eas.json` (zmergowane 2026-09-22)
+
+`APP_VARIANT=staging` (tylko profil `staging`) daje osobną aplikację `com.racefy.app.staging`
+„Racefy Beta", scheme `racefy-staging://`, linki tylko `app.dev.racefy.io`, pliki Firebase
+`*-staging`. Produkcja bez zmian: `com.racefy.app`, `racefy://`, linki tylko `racefy.io`
+(wypadł prefiks `https://app.dev.racefy.io` z linkingu prod). URL-e API są jawne w `env`
+każdego profilu (`API_PRODUCTION_URL` / `API_STAGING_URL`) — `env` profilu nadpisuje
+sekrety EAS, więc build prod **na pewno** strzela w `racefy.io/api`.
+
+**Blokery poza kodem dla profilu `staging`** (build prod ich nie potrzebuje):
+- [ ] Firebase: nowa aplikacja Android `com.racefy.app.staging` (i iOS) w projekcie, plik
+      `google-services-staging.json` jako `GOOGLE_SERVICES_JSON` w środowisku EAS `preview`
+      (obecny sekret z 2026-04-07 to plik dla `com.racefy.app` → Gradle „No matching client
+      found for package name")
+- [ ] Google OAuth: klient Android dla `com.racefy.app.staging` + SHA-1 keystore'a EAS
+      (osobny keystore per package)
+- [ ] `eas build:version:set --platform android --profile staging` — licznik dla nowego
+      package'a startuje od zera (prod jest na 35)
+
+- [ ] Build `production-apk` loguje i zapisuje aktywność w `racefy.io` (sprawdzić w bazie prod)
+- [ ] Google Sign-In w buildzie prod działa (backend prod ma `GOOGLE_CLIENT_ID_ANDROID` = web client ID z `eas.json`)
+- [ ] Push (FCM) w buildzie prod
+- [ ] `racefy://reset-password?...` i `https://racefy.io/reset-password?...` otwierają reset hasła
+- [ ] Po odblokowaniu Firebase staging: obie aplikacje zainstalowane obok siebie, staging ma bursztynową ikonę i pisze do `app.dev.racefy.io`
 
 ### Offline, faza 4: start aktywności bez internetu + odzyskiwanie nagrania po killu offline (zmergowane 2026-09-20, tag `pre-offline-start-faza-4` = main sprzed merge)
 
@@ -919,6 +944,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-09-22 | `feat/staging-app-variant` | Osobna aplikacja stage `com.racefy.app.staging` („Racefy Beta", `racefy-staging://`, linki `app.dev.racefy.io`, pliki Firebase `*-staging`) obok produkcyjnej; prefiksy deep linków z configu wariantu; `API_PRODUCTION_URL` / `API_STAGING_URL` przypięte w profilach `eas.json` |
 | 2026-09-20 | `offline-start-faza-4` | Start aktywności bez internetu: UUID nagrania przed zapytaniem serwera, „tymczasowa" aktywność (ujemne id), tworzenie na serwerze w trakcie nagrywania albo jako krok 0 wysyłki, `trackingDb` v4, odzyskiwanie nagrania po killu bez sieci, „Odrzuć" i nagrywanie w tle bez id serwera. Backend: idempotentny start po `client_activity_id` |
 | 2026-09-20 | `offline-finish-faza-3` | Wysyłka aktywności zapisanych offline przy zamkniętej aplikacji: `expo-background-task`, `finishSyncBackgroundTask` (rejestracja tylko przy niepustym outboxie), headless `backgroundApiClient`, przycisk w Dev Tools, `docs/OFFLINE_ACTIVITY_SYNC.md`. **Wymaga builda natywnego** |
 | 2026-09-20 | `offline-finish-faza-0` + `offline-finish-faza-1` | Pauza/wznowienie/Stop i zapis aktywności bez internetu: księga pauz (`activityLifecycleLedger`), outbox w SQLite (`pending_finishes`), `finishSync` z automatyczną wysyłką (powrót sieci, logowanie, foreground), UI kolejki; `ended_at` = moment Stop. Backend: `at` w pause/resume, `total_paused_duration`, idempotentny finish |
