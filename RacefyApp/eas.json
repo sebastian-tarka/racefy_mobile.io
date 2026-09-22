@@ -28,6 +28,7 @@
       "env": {
         "APP_ENV": "staging",
         "APP_VARIANT": "staging",
+        "API_STAGING_URL": "https://app.dev.racefy.io/api",
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "error",
         "LOG_PERSIST": "true",
@@ -52,6 +53,7 @@
       "distribution": "store",
       "env": {
         "APP_ENV": "production",
+        "API_PRODUCTION_URL": "https://racefy.io/api",
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "warn",
         "LOG_PERSIST": "true",
@@ -76,6 +78,7 @@
       "distribution": "internal",
       "env": {
         "APP_ENV": "production",
+        "API_PRODUCTION_URL": "https://racefy.io/api",
         "LOG_ENABLED": "true",
         "LOG_LEVEL": "warn",
         "LOG_PERSIST": "true",
