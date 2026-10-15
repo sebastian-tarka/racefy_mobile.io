@@ -26,6 +26,8 @@ export const lightColors = {
   successLight: '#ecfdf5',
   warning: '#f59e0b',
   warningLight: '#fffbeb',
+  /** Amber text that stays readable on a light ground (records, "+5 kg"). */
+  warningStrong: '#b45309',
   info: '#3b82f6',
   infoLight: '#eff6ff',
 
@@ -41,6 +43,14 @@ export const lightColors = {
   event: '#DB2777',
   eventSoft: '#FCE7F3',
   eventDeep: '#9D174D',
+
+  /**
+   * Chart series, in a stable order (strength volume bars, set rhythm). Same
+   * values as the web SPA's --chart-1, -2, -3, -5, -4.
+   */
+  series: ['#10b981', '#2563eb', '#7c3aed', '#f59e0b', '#ef4444'],
+  /** Text on a primary / warning / series fill. */
+  onAccent: '#04352a',
 
   // Event status badges
   upcoming: {
@@ -96,6 +106,7 @@ export const darkColors = {
   successLight: '#0a2e1f',
   warning: '#fbbf24',
   warningLight: '#2e2008',
+  warningStrong: '#fbbf24',
   info: '#60a5fa',
   infoLight: '#0f2340',
 
@@ -110,6 +121,10 @@ export const darkColors = {
   event: '#EC4899',
   eventSoft: 'rgba(236, 72, 153, 0.16)',
   eventDeep: '#F9A8D4',
+
+  // Chart series (see lightColors)
+  series: ['#10d193', '#60a5fa', '#a78bfa', '#f0b429', '#f2564c'],
+  onAccent: '#04241c',
 
   // Event status badges
   upcoming: {

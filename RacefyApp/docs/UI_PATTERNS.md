@@ -110,6 +110,27 @@ only way out is unpinning; while recording, unpinning is refused outright.
 <EventBar event={pinned} count={ongoing.length} onOpen={openSheet} onClear={unpin} />
 ```
 
+### Strength activities (`components/strength/`)
+
+Activities logged from a strength session carry `activity.strength_session`
+(`StrengthSessionSummary` in `types/api.ts`; API docs → "Strength session"). Mirror of the
+web SPA's `components/workouts/strength/` — same rules, same `activities.strength.*` wording.
+Helpers (labels "55×8", volume shares, rhythm, deltas) live in `strengthSession.ts`.
+
+| Component | Where | What |
+|-----------|-------|------|
+| `StrengthFeedPanel` | `FeedCard.ActivityBody`, where a run shows its map | `StrengthSetMosaic` (row per exercise, tile per set: accent = done, amber = heavier than last time, dashed = skipped) over `StrengthVolumePanel` (total kg, one bar split by exercise, amber record chips). Tap opens the activity |
+| `StrengthMetricStrip` | feed stats bar, `PostCard`, activity screen | Feed: time · sets · exercises · RPE. Activity screen / `PostCard`: volume first |
+| `StrengthRhythm` | `ActivityDetailScreen`, where the map would be | Sets as blocks, rests as bars ∝ `rest_seconds` (rest *after* that set), scrolls sideways |
+| `StrengthSessionCards` | `ActivityDetailScreen`, under the metrics | Owner's note (quote), progress vs last time, volume breakdown, one tile per exercise (plan, "+5 kg vs plan", 4-column set grid, volume) |
+
+- The auto description is the sets as prose: hidden on the activity screen, and on the
+  feed / post cards whenever the post text is empty or equal to it.
+- A skipped exercise (`sets_completed: 0`) is dashed and muted — never red. A worse result
+  than last time is muted, a better one amber (`colors.warningStrong`).
+- Series colours: `colors.series` (stable order, light/dark). Mono figures: `fontFamily.mono`.
+- `muscle_group` is mostly `"other"` — nothing is built on it.
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:

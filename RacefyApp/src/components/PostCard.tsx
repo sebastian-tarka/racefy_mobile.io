@@ -17,6 +17,13 @@ import { formatDuration } from '../utils/formatDuration';
 import { getSportIcon } from '../utils/sportIcon';
 import { mergeActivityPhotos, mergeActivityVideos } from '../utils/activityMedia';
 import type { Post } from '../types/api';
+import {
+  hasStrengthSession,
+  isAutoStrengthText,
+  StrengthMetricStrip,
+  strengthMetrics,
+  StrengthSetMosaic,
+} from './strength';
 
 interface PostCardProps {
   post: Post;
@@ -47,9 +54,16 @@ function PostCardBase({
   onEventPress,
   isOwner = false,
 }: PostCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { formatDistance, formatPaceWithUnit } = useUnits();
+  const strength =
+    post.type === 'activity' && hasStrengthSession(post.activity?.strength_session)
+      ? post.activity!.strength_session!
+      : null;
+  // The strength session's auto text is its sets as prose; the mosaic shows them.
+  const showContent =
+    !!post.content && !(strength && isAutoStrengthText(post.content, post.activity?.description));
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: false,
   });
@@ -102,6 +116,13 @@ function PostCardBase({
         activeOpacity={0.7}
         disabled={!onActivityPress}
       >
+        {/* Strength session: the set mosaic where a run shows its map */}
+        {strength && !hasRouteMap && (
+          <View style={styles.strengthMosaic}>
+            <StrengthSetMosaic session={strength} />
+          </View>
+        )}
+
         {/* Route Map Preview */}
         {hasRouteMap && (
           <View style={styles.activityMapContainer}>
@@ -157,26 +178,39 @@ function PostCardBase({
           )}
         </View>
 
-        <View style={[styles.activityStats, { borderTopColor: colors.borderLight }]}>
-          <View style={styles.activityStatItem}>
-            <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-              {formatDistance(activity.distance)}
-            </Text>
+        {strength ? (
+          <View style={[styles.strengthStats, { borderTopColor: colors.borderLight }]}>
+            <StrengthMetricStrip
+              items={strengthMetrics(strength, activity.duration, {
+                withVolume: true,
+                formatDuration,
+                t,
+                locale: i18n.language,
+              })}
+            />
           </View>
-          <View style={styles.activityStatItem}>
-            <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-              {formatDuration(activity.duration)}
-            </Text>
+        ) : (
+          <View style={[styles.activityStats, { borderTopColor: colors.borderLight }]}>
+            <View style={styles.activityStatItem}>
+              <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
+                {formatDistance(activity.distance)}
+              </Text>
+            </View>
+            <View style={styles.activityStatItem}>
+              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
+                {formatDuration(activity.duration)}
+              </Text>
+            </View>
+            <View style={styles.activityStatItem}>
+              <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
+                {formatPaceWithUnit(activity.distance, activity.duration)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.activityStatItem}>
-            <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
-            <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-              {formatPaceWithUnit(activity.distance, activity.duration)}
-            </Text>
-          </View>
-        </View>
+        )}
 
         {/* Boost button for activity */}
         <View style={[styles.activityBoostContainer, { borderTopColor: colors.borderLight }]}>
@@ -304,7 +338,7 @@ function PostCardBase({
           )}
         </View>
 
-        {post.content && (
+        {showContent && (
           <Text style={[styles.content, { color: colors.textPrimary }]}>{post.content}</Text>
         )}
 
@@ -400,6 +434,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  strengthMosaic: {
+    padding: spacing.md,
+  },
+  strengthStats: {
+    borderTopWidth: 1,
+    paddingHorizontal: spacing.xs,
   },
   activityMapContainer: {
     borderTopLeftRadius: borderRadius.md,
