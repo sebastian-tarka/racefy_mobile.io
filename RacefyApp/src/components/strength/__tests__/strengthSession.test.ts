@@ -2,6 +2,8 @@ import type { TFunction } from 'i18next';
 import {
   comparedExercises,
   formatKg,
+  formatVolume,
+  groupSeparator,
   hasStrengthSession,
   highlightDelta,
   isAutoStrengthText,
@@ -14,6 +16,7 @@ import {
   skippedExercises,
   strengthMetrics,
   volumeShares,
+  weightUnit,
 } from '../strengthSession';
 import { curls, facePulls, makeSession, rowing } from './fixture';
 
@@ -111,10 +114,54 @@ describe('strengthSession helpers', () => {
     expect(detail[0]).toMatchObject({ value: '1,555', unit: 'kg' });
   });
 
-  it('treats an empty or mirrored text as the auto description', () => {
-    expect(isAutoStrengthText(null, 'x')).toBe(true);
-    expect(isAutoStrengthText('', 'x')).toBe(true);
-    expect(isAutoStrengthText('x', 'x')).toBe(true);
-    expect(isAutoStrengthText('Great day!', 'x')).toBe(false);
+  it('hides a text only while the description is the generated one', () => {
+    const auto = makeSession();
+    const edited = makeSession({ description_is_auto: false });
+    expect(isAutoStrengthText(auto, null, 'x')).toBe(true);
+    expect(isAutoStrengthText(auto, '', 'x')).toBe(true);
+    expect(isAutoStrengthText(auto, 'x', 'x')).toBe(true);
+    expect(isAutoStrengthText(auto, 'Great day!', 'x')).toBe(false);
+    expect(isAutoStrengthText(edited, 'x', 'x')).toBe(false);
+    expect(isAutoStrengthText(undefined, 'x', 'x')).toBe(false);
+  });
+
+  it('always groups the volume with the locale separator', () => {
+    // Intl in pl does not group 4 digits on its own; the volume still reads "5 912".
+    expect(formatVolume(5912, 'pl')).toMatch(/^5\s912$/);
+    expect(formatVolume(5912, 'en')).toBe('5,912');
+    expect(formatVolume(1234567, 'es')).toBe('1.234.567');
+    expect(formatVolume(912.6, 'en')).toBe('913');
+  });
+
+  it('falls back to a space when Intl cannot tell the separator', () => {
+    const spy = jest.spyOn(Intl, 'NumberFormat').mockImplementation(() => {
+      throw new Error('no Intl');
+    });
+    expect(groupSeparator('pl')).toBe(' ');
+    spy.mockRestore();
+  });
+
+  it('converts to lb for imperial users', () => {
+    expect(weightUnit('imperial')).toBe('lb');
+    expect(weightUnit('metric')).toBe('kg');
+    expect(formatKg(55, 'pl', 'imperial')).toBe('121,3');
+    expect(formatKg(17.25, 'en', 'metric')).toBe('17.25');
+    expect(setLabel({ weight_kg: 55, reps: 8, duration_seconds: null }, 'pl', 'imperial')).toBe(
+      '121,3×8',
+    );
+    expect(
+      setDetailLabel({ weight_kg: 50, reps: 8, duration_seconds: null }, 'en', 'imperial'),
+    ).toBe('110.2 lb × 8');
+    expect(formatVolume(5912, 'en', 'imperial')).toBe('13,034');
+    expect(highlightDelta(makeSession().highlights[0], t, 'en', 'imperial')).toBe('+11 lb');
+    expect(progressDelta(rowing.progress!, t, 'en', 'imperial').text).toBe('+11 lb');
+    const metrics = strengthMetrics(makeSession(), 0, {
+      withVolume: true,
+      formatDuration: String,
+      t,
+      locale: 'en',
+      units: 'imperial',
+    });
+    expect(metrics[0]).toMatchObject({ value: '3,428', unit: 'lb' });
   });
 });

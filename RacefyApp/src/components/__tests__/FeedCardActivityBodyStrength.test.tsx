@@ -23,6 +23,7 @@ jest.mock('../../hooks/useUnits', () => ({
   useUnits: () => ({
     formatDistance: (m: number) => `${m / 1000} km`,
     formatElevation: (m: number) => `${m} m`,
+    units: 'metric',
   }),
 }));
 jest.mock('react-i18next', () => ({
@@ -66,6 +67,16 @@ describe('ActivityBody — strength session', () => {
   it("keeps a post text of the athlete's own", () => {
     render(<ActivityBody post={makePost({ strength_session: makeSession() }, 'Nowy rekord!')} />);
     expect(screen.getByText('Nowy rekord!')).toBeTruthy();
+  });
+
+  it('shows a description the athlete has edited', () => {
+    render(
+      <ActivityBody
+        post={makePost({ strength_session: makeSession({ description_is_auto: false }) })}
+      />,
+    );
+    expect(screen.getByText(PROSE)).toBeTruthy();
+    expect(screen.getByText('activities.strength.liftedTotal')).toBeTruthy();
   });
 
   it('leaves other activities alone', () => {

@@ -5,7 +5,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontFamily, fontSize, fontWeight, ms, msFont, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
 import { StrengthSectionLabel } from './StrengthSectionLabel';
-import { hasStrengthSession, restFlex, rhythmItems, setLabel } from './strengthSession';
+import { hasStrengthSession, restFlex, rhythmItems } from './strengthSession';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /** Below this the blocks get unreadable, so the strip scrolls sideways instead. */
 const MIN_STRIP_WIDTH = ms(640);
@@ -19,7 +20,8 @@ export function StrengthRhythm({
 }: {
   session: StrengthSessionSummary | null | undefined;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
 
   if (!hasStrengthSession(session)) return null;
@@ -72,7 +74,7 @@ export function StrengthRhythm({
                     style={[styles.blockText, { color: colors.cardBackground }]}
                     numberOfLines={1}
                   >
-                    {setLabel(item.set, i18n.language)}
+                    {fmt.set(item.set)}
                   </Text>
                 </View>
               );

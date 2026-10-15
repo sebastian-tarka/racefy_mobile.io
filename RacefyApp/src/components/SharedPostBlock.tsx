@@ -9,7 +9,8 @@ import { spacing, fontSize, borderRadius } from '../theme';
 import { formatDuration, getSportIcon } from './FeedCard.utils';
 import { mergeActivityPhotos } from '../utils/activityMedia';
 import type { SharedPost } from '../types/api';
-import { formatVolume, hasStrengthSession, isAutoStrengthText } from './strength';
+import { formatVolume, hasStrengthSession, isAutoStrengthText, weightUnit } from './strength';
+import { useUnits } from '../hooks/useUnits';
 
 interface SharedPostBlockProps {
   sharedPost: SharedPost;
@@ -20,14 +21,14 @@ interface SharedPostBlockProps {
 export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPostBlockProps) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
+  const { units } = useUnits();
   const strength = hasStrengthSession(sharedPost.activity?.strength_session)
     ? sharedPost.activity!.strength_session!
     : null;
-  // A strength session's auto text is its sets as prose — the stats say it shorter.
-  const content =
-    strength && isAutoStrengthText(sharedPost.content, sharedPost.activity?.description)
-      ? null
-      : sharedPost.content;
+  // The generated sets list (description_is_auto) — the stats say it shorter.
+  const content = isAutoStrengthText(strength, sharedPost.content, sharedPost.activity?.description)
+    ? null
+    : sharedPost.content;
 
   // A reshared activity post carries its media on the activity, same as the
   // original does.
@@ -99,7 +100,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
           {strength && (
             <>
               <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
-                {formatVolume(strength.stats.volume_kg, i18n.language)} kg
+                {formatVolume(strength.stats.volume_kg, i18n.language, units)} {weightUnit(units)}
               </Text>
               <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
                 {t('activities.strength.setsCompact', {

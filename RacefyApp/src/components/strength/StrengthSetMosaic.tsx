@@ -5,7 +5,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontFamily, fontSize, fontWeight, ms, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
 import { StrengthSectionLabel } from './StrengthSectionLabel';
-import { isHeavierThanLastTime, isSkippedExercise, setLabel } from './strengthSession';
+import { isHeavierThanLastTime, isSkippedExercise } from './strengthSession';
+import { useStrengthFormat } from './useStrengthFormat';
 
 const TILE_HEIGHT = ms(26);
 const TILE_MIN_WIDTH = ms(52);
@@ -16,9 +17,9 @@ const TILE_MIN_WIDTH = ms(52);
  * Tiles are visual only: each row reads out as one accessibility label.
  */
 export function StrengthSetMosaic({ session }: { session: StrengthSessionSummary }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
-  const locale = i18n.language;
 
   return (
     <View style={styles.container}>
@@ -26,7 +27,7 @@ export function StrengthSetMosaic({ session }: { session: StrengthSessionSummary
       {session.exercises.map((exercise) => {
         const skipped = isSkippedExercise(exercise);
         const spoken = exercise.sets
-          .map((s) => (s.is_completed ? setLabel(s, locale) : t('activities.strength.skippedSet')))
+          .map((s) => (s.is_completed ? fmt.set(s) : t('activities.strength.skippedSet')))
           .join(', ');
         return (
           <View
@@ -56,7 +57,7 @@ export function StrengthSetMosaic({ session }: { session: StrengthSessionSummary
                     ]}
                   >
                     <Text style={[styles.tileText, { color: colors.onAccent }]} numberOfLines={1}>
-                      {setLabel(set, locale)}
+                      {fmt.set(set)}
                     </Text>
                   </View>
                 ) : (

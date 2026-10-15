@@ -890,7 +890,7 @@
       "exercisesTitle": "Ćwiczenia",
       "colPlan": "Plan",
       "colVolume": "Objętość",
-      "overPlan": "+{{kg}} kg vs plan",
+      "overPlan": "+{{kg}} {{unit}} vs plan",
       "skipped": "Pominięte",
       "setsLabel": "Serie",
       "exercisesLabel": "Ćwiczenia",
@@ -899,7 +899,7 @@
       "setNumber": "Seria {{number}}",
       "notesTitle": "Twoja notatka",
       "setsCompact": "serie {{done}}/{{total}}",
-      "a11ySummary": "Trening siłowy: podniesione {{volume}} kg, serie {{sets}} z {{setsTotal}}, ćwiczenia {{exercises}} z {{exercisesTotal}}",
+      "a11ySummary": "Trening siłowy: podniesione {{volume}} {{unit}}, serie {{sets}} z {{setsTotal}}, ćwiczenia {{exercises}} z {{exercisesTotal}}",
       "rhythmA11y": "Rytm treningu: serie {{sets}}, ćwiczenia {{exercises}}"
     }
   },

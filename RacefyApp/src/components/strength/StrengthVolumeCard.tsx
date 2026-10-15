@@ -5,8 +5,9 @@ import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';
 import { fontFamily, fontSize, fontWeight, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
-import { formatVolume, percent, skippedExercises, volumeShares } from './strengthSession';
+import { percent, skippedExercises, volumeShares } from './strengthSession';
 import { cardStyles } from './cardStyles';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /** One bar per exercise (scaled to the biggest), kg and share; skipped ones listed below. */
 export function StrengthVolumeCard({
@@ -16,9 +17,9 @@ export function StrengthVolumeCard({
   session: StrengthSessionSummary;
   style?: ViewStyle;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
-  const locale = i18n.language;
   const shares = volumeShares(session);
   const skipped = skippedExercises(session);
   const max = shares[0]?.exercise.volume_kg || 1;
@@ -32,7 +33,7 @@ export function StrengthVolumeCard({
       </Text>
       <View style={[cardStyles.body, styles.list]}>
         {shares.map((s) => {
-          const kg = `${formatVolume(s.exercise.volume_kg, locale)} kg`;
+          const kg = `${fmt.volume(s.exercise.volume_kg)} ${fmt.unit}`;
           return (
             <View
               key={s.exercise.exercise_order}

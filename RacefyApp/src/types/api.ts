@@ -1059,6 +1059,7 @@ export interface StrengthExercise {
     rest_seconds: number | null;
     suggested_weight_kg: number | null;
   };
+  /** `rest_seconds` on a set = the rest AFTER it (null = not timed). */
   sets: StrengthSet[];
   /** 0 = the exercise was skipped (show muted, never as a failure). */
   sets_completed: number;
@@ -1086,6 +1087,11 @@ export interface StrengthSessionSummary {
   rpe: number | null;
   /** The athlete's own note — owner only, null for everyone else. */
   notes: string | null;
+  /**
+   * True while `activity.description` is the generated sets list (hide it — the
+   * strength UI shows the same); false once the athlete has edited it.
+   */
+  description_is_auto: boolean;
   stats: {
     sets_total: number;
     sets_completed: number;

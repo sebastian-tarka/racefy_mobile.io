@@ -5,8 +5,9 @@ import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';
 import { fontFamily, fontSize, fontWeight, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
-import { comparedExercises, progressDelta, setLabel } from './strengthSession';
+import { comparedExercises } from './strengthSession';
 import { cardStyles } from './cardStyles';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /**
  * Best set now against the best set the last time the exercise was done.
@@ -19,9 +20,9 @@ export function StrengthProgressCard({
   session: StrengthSessionSummary;
   style?: ViewStyle;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
-  const locale = i18n.language;
   const compared = comparedExercises(session);
 
   return (
@@ -36,9 +37,9 @@ export function StrengthProgressCard({
       ) : (
         <View style={cardStyles.body}>
           {compared.map((e, i) => {
-            const delta = progressDelta(e.progress!, t, locale);
-            const from = setLabel(e.previous!.best_set, locale);
-            const to = setLabel(e.best_set, locale);
+            const delta = fmt.progress(e.progress!);
+            const from = fmt.set(e.previous!.best_set);
+            const to = fmt.set(e.best_set);
             const toneColor =
               delta.tone === 'up'
                 ? colors.warningStrong

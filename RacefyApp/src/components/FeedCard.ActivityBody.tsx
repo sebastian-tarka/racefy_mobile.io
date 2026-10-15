@@ -50,7 +50,7 @@ import {
 function ActivityStatsBar({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { formatDistance: fmtDistance, formatElevation } = useUnits();
+  const { formatDistance: fmtDistance, formatElevation, units } = useUnits();
 
   // Strength: volume and records sit in the panel above; here the rest of the
   // session at a glance (duration · sets · exercises · RPE).
@@ -62,6 +62,7 @@ function ActivityStatsBar({ activity }: { activity: Activity }) {
           formatDuration,
           t,
           locale: i18n.language,
+          units,
         })}
       />
     );
@@ -380,15 +381,18 @@ export function ActivityBody({
   // Hooks above must run unconditionally; guard the missing-activity case after them.
   if (!activity) return null;
 
-  // A strength workout's auto description is its sets as prose — the panel
-  // shows them. Only a post text of the athlete's own survives.
+  // While a strength workout's description is still the generated sets list
+  // (`description_is_auto`), the panel shows the same thing: the text goes,
+  // unless the post carries a text of the athlete's own. An edited description
+  // is theirs and shows as for any activity.
   const strength = hasStrengthSession(activity.strength_session) ? activity.strength_session : null;
-  const bodyText = strength
-    ? isAutoStrengthText(post.content, activity.description)
+  const autoDescription = !!strength?.description_is_auto;
+  const bodyText = autoDescription
+    ? isAutoStrengthText(strength, post.content, activity.description)
       ? null
       : post.content
     : activity.description;
-  const bodyMentions = strength ? post.mentions : activity.mentions;
+  const bodyMentions = autoDescription ? post.mentions : activity.mentions;
 
   const truncatedDesc = bodyText
     ? truncateDescription(bodyText, 120)

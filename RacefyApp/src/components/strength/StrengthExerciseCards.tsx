@@ -8,13 +8,8 @@ import { formatTarget } from '../../utils/workoutPlanFormat';
 import type { StrengthExercise, StrengthSessionSummary } from '../../types/api';
 import { StrengthChip } from './StrengthChip';
 import { cardStyles } from './cardStyles';
-import {
-  formatKg,
-  formatVolume,
-  isSkippedExercise,
-  overPlanKg,
-  setDetailLabel,
-} from './strengthSession';
+import { isSkippedExercise, overPlanKg } from './strengthSession';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /**
  * The exercises set by set. On a phone one tile per exercise instead of the
@@ -46,16 +41,16 @@ export function StrengthExerciseCards({
 }
 
 function ExerciseTile({ exercise }: { exercise: StrengthExercise }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
-  const locale = i18n.language;
+  const fmt = useStrengthFormat();
   const skipped = isSkippedExercise(exercise);
   const overPlan = overPlanKg(exercise);
   const { planned } = exercise;
   const plan = [
     `${planned.sets} × ${formatTarget(planned.target_type ?? undefined, planned.reps_min, planned.reps_max, t)}`,
     planned.suggested_weight_kg != null
-      ? `${formatKg(planned.suggested_weight_kg, locale)} kg`
+      ? `${fmt.kg(planned.suggested_weight_kg)} ${fmt.unit}`
       : null,
   ]
     .filter(Boolean)
@@ -90,17 +85,17 @@ function ExerciseTile({ exercise }: { exercise: StrengthExercise }) {
           <Text
             style={[styles.volume, { color: colors.textPrimary }]}
             accessibilityLabel={`${t('activities.strength.colVolume')}: ${
-              exercise.volume_kg > 0 ? `${formatVolume(exercise.volume_kg, locale)} kg` : '—'
+              exercise.volume_kg > 0 ? `${fmt.volume(exercise.volume_kg)} ${fmt.unit}` : '—'
             }`}
           >
-            {exercise.volume_kg > 0 ? `${formatVolume(exercise.volume_kg, locale)} kg` : '—'}
+            {exercise.volume_kg > 0 ? `${fmt.volume(exercise.volume_kg)} ${fmt.unit}` : '—'}
           </Text>
         )}
       </View>
 
       {overPlan != null && (
         <StrengthChip
-          value={t('activities.strength.overPlan', { kg: formatKg(overPlan, locale) })}
+          value={t('activities.strength.overPlan', { kg: fmt.kg(overPlan), unit: fmt.unit })}
           style={styles.chip}
         />
       )}
@@ -109,7 +104,7 @@ function ExerciseTile({ exercise }: { exercise: StrengthExercise }) {
         <View style={styles.grid}>
           {exercise.sets.map((set) => {
             const label = t('activities.strength.setNumber', { number: set.set_number });
-            const value = set.is_completed ? setDetailLabel(set, locale) : '—';
+            const value = set.is_completed ? fmt.setDetail(set) : '—';
             return (
               <View key={set.set_number} style={styles.cell}>
                 <View

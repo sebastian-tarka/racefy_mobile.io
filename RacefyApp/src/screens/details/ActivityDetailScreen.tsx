@@ -72,7 +72,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const { canUse, tier } = useSubscription();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isActionsSheetVisible, setIsActionsSheetVisible] = useState(false);
-  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
+  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation, units } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -357,8 +357,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 
   const isOwner = activity?.is_owner ?? false;
   // Strength activity logged from a session: its own metrics, the rhythm strip
-  // where the map would be, the set-by-set cards — and no text description,
-  // which is the same sets as prose.
+  // where the map would be, the set-by-set cards — and no text description
+  // while it is the generated sets list (`description_is_auto`).
   const strength = hasStrengthSession(activity.strength_session) ? activity.strength_session : null;
   const hasMap =
     activity.has_gps_track &&
@@ -689,6 +689,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                     formatDuration,
                     t,
                     locale: i18n.language,
+                    units,
                   })}
                 />
               </Card>
@@ -728,7 +729,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             {strength && <StrengthSessionCards session={strength} cardStyle={styles.section} />}
 
             {/* Description - Story comes before technical details */}
-            {activity.description && !strength && (
+            {activity.description && !strength?.description_is_auto && (
               <Card style={styles.section}>
                 <MentionText
                   text={activity.description}

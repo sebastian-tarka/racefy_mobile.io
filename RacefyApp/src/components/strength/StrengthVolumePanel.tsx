@@ -6,16 +6,17 @@ import { fontFamily, fontSize, fontWeight, msFont, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
 import { StrengthChip } from './StrengthChip';
 import { StrengthSectionLabel } from './StrengthSectionLabel';
-import { formatVolume, highlightDelta, percent, volumeShares } from './strengthSession';
+import { percent, volumeShares } from './strengthSession';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /**
  * Total volume, one bar split by exercise, and the records of the session.
  * Feed card (under the mosaic); the activity screen uses StrengthVolumeCard.
  */
 export function StrengthVolumePanel({ session }: { session: StrengthSessionSummary }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
-  const locale = i18n.language;
   const shares = volumeShares(session);
   const seriesColor = (i: number) => colors.series[i % colors.series.length];
 
@@ -24,9 +25,9 @@ export function StrengthVolumePanel({ session }: { session: StrengthSessionSumma
       <StrengthSectionLabel>{t('activities.strength.liftedTotal')}</StrengthSectionLabel>
       <View style={styles.totalRow}>
         <Text style={[styles.total, { color: colors.textPrimary }]}>
-          {formatVolume(session.stats.volume_kg, locale)}
+          {fmt.volume(session.stats.volume_kg)}
         </Text>
-        <Text style={[styles.unit, { color: colors.textSecondary }]}>kg</Text>
+        <Text style={[styles.unit, { color: colors.textSecondary }]}>{fmt.unit}</Text>
       </View>
 
       {shares.length > 0 && (
@@ -68,12 +69,7 @@ export function StrengthVolumePanel({ session }: { session: StrengthSessionSumma
       {session.highlights.length > 0 && (
         <View style={styles.highlights}>
           {session.highlights.map((h) => (
-            <StrengthChip
-              key={h.exercise_order}
-              arrow
-              label={h.name}
-              value={highlightDelta(h, t, locale)}
-            />
+            <StrengthChip key={h.exercise_order} arrow label={h.name} value={fmt.delta(h)} />
           ))}
         </View>
       )}

@@ -868,7 +868,7 @@
       "exercisesTitle": "Ejercicios",
       "colPlan": "Plan",
       "colVolume": "Volumen",
-      "overPlan": "+{{kg}} kg sobre el plan",
+      "overPlan": "+{{kg}} {{unit}} sobre el plan",
       "skipped": "Omitido",
       "setsLabel": "Series",
       "exercisesLabel": "Ejercicios",
@@ -877,7 +877,7 @@
       "setNumber": "Serie {{number}}",
       "notesTitle": "Tu nota",
       "setsCompact": "{{done}}/{{total}} series",
-      "a11ySummary": "Entrenamiento de fuerza: {{volume}} kg levantados, {{sets}} de {{setsTotal}} series, {{exercises}} de {{exercisesTotal}} ejercicios",
+      "a11ySummary": "Entrenamiento de fuerza: {{volume}} {{unit}} levantados, {{sets}} de {{setsTotal}} series, {{exercises}} de {{exercisesTotal}} ejercicios",
       "rhythmA11y": "Ritmo del entrenamiento: {{sets}} series en {{exercises}} ejercicios"
     }
   },

@@ -93,6 +93,7 @@ export function makeSession(over: Partial<StrengthSessionSummary> = {}): Strengt
     duration_seconds: 2621,
     rpe: 5,
     notes: null,
+    description_is_auto: true,
     stats: {
       sets_total: 8,
       sets_completed: 5,

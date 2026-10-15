@@ -868,7 +868,7 @@
       "exercisesTitle": "Exercises",
       "colPlan": "Plan",
       "colVolume": "Volume",
-      "overPlan": "+{{kg}} kg vs plan",
+      "overPlan": "+{{kg}} {{unit}} vs plan",
       "skipped": "Skipped",
       "setsLabel": "Sets",
       "exercisesLabel": "Exercises",
@@ -877,7 +877,7 @@
       "setNumber": "Set {{number}}",
       "notesTitle": "Your note",
       "setsCompact": "{{done}}/{{total}} sets",
-      "a11ySummary": "Strength workout: {{volume}} kg lifted, {{sets}} of {{setsTotal}} sets, {{exercises}} of {{exercisesTotal}} exercises",
+      "a11ySummary": "Strength workout: {{volume}} {{unit}} lifted, {{sets}} of {{setsTotal}} sets, {{exercises}} of {{exercisesTotal}} exercises",
       "rhythmA11y": "Workout rhythm: {{sets}} sets across {{exercises}} exercises"
     }
   },

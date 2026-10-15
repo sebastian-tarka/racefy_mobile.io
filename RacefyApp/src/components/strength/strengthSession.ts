@@ -7,6 +7,7 @@ import type {
   StrengthSet,
   StrengthSetValue,
 } from '../../types/api';
+import type { UnitSystem } from '../../utils/unitConversions';
 
 /**
  * Helpers for `activity.strength_session`, shared by the feed card, the post
@@ -24,34 +25,81 @@ export function hasStrengthSession(
   return !!session && Array.isArray(session.exercises) && session.exercises.length > 0;
 }
 
-/** 55 → "55", 17.5 → "17,5" in pl, "17.5" in en. */
-export function formatKg(value: number | null | undefined, locale?: string): string {
-  if (value == null) return '—';
-  return Number(value).toLocaleString(locale, { maximumFractionDigits: 2 });
+const LB_PER_KG = 2.20462;
+
+/** The weight unit for the athlete's units preference (the API always speaks kg). */
+export function weightUnit(units: UnitSystem = 'metric'): 'kg' | 'lb' {
+  return units === 'imperial' ? 'lb' : 'kg';
 }
 
-/** 5912 → "5 912" / "5,912" (whatever the locale groups). */
-export function formatVolume(value: number | null | undefined, locale?: string): string {
-  return Math.round(Number(value) || 0).toLocaleString(locale);
+function toUnit(kg: number, units: UnitSystem): number {
+  return units === 'imperial' ? kg * LB_PER_KG : kg;
+}
+
+/**
+ * The locale's thousands separator. Polish does not group four-digit numbers
+ * (5912), but a volume reads better as "5 912", so grouping is applied by hand.
+ * Hermes' Intl support varies — any failure falls back to a plain space.
+ */
+export function groupSeparator(locale?: string): string {
+  try {
+    return (
+      new Intl.NumberFormat(locale).formatToParts(1000000).find((p) => p.type === 'group')?.value ??
+      ' '
+    );
+  } catch {
+    return ' ';
+  }
+}
+
+/** 55 → "55", 17.5 → "17,5" (pl) / "17.5" (en); in lb (max 1 decimal) for imperial users. */
+export function formatKg(
+  value: number | null | undefined,
+  locale?: string,
+  units: UnitSystem = 'metric',
+): string {
+  if (value == null) return '—';
+  return toUnit(Number(value), units).toLocaleString(locale, {
+    maximumFractionDigits: units === 'imperial' ? 1 : 2,
+  });
+}
+
+/** 5912 → "5 912" (pl) / "5,912" (en) / "5.912" (es), always grouped; in lb for imperial users. */
+export function formatVolume(
+  value: number | null | undefined,
+  locale?: string,
+  units: UnitSystem = 'metric',
+): string {
+  const n = Math.round(toUnit(Number(value) || 0, units));
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, groupSeparator(locale));
 }
 
 /** "55×8", "45 s", "20" (bodyweight) — one set as it reads on a tile. */
-export function setLabel(set: StrengthSetValue | null | undefined, locale?: string): string {
+export function setLabel(
+  set: StrengthSetValue | null | undefined,
+  locale?: string,
+  units: UnitSystem = 'metric',
+): string {
   if (!set) return '—';
   if (set.weight_kg != null && set.reps != null)
-    return `${formatKg(set.weight_kg, locale)}×${set.reps}`;
+    return `${formatKg(set.weight_kg, locale, units)}×${set.reps}`;
   if (set.duration_seconds != null) return `${set.duration_seconds} s`;
   if (set.reps != null) return String(set.reps);
   return '—';
 }
 
 /** "55 kg × 8", "45 s", "× 20" — the longer form on the exercise cards. */
-export function setDetailLabel(set: StrengthSetValue, locale?: string): string {
+export function setDetailLabel(
+  set: StrengthSetValue,
+  locale?: string,
+  units: UnitSystem = 'metric',
+): string {
+  const unit = weightUnit(units);
   if (set.weight_kg != null && set.reps != null)
-    return `${formatKg(set.weight_kg, locale)} kg × ${set.reps}`;
+    return `${formatKg(set.weight_kg, locale, units)} ${unit} × ${set.reps}`;
   if (set.duration_seconds != null) {
     return set.weight_kg != null
-      ? `${formatKg(set.weight_kg, locale)} kg · ${set.duration_seconds} s`
+      ? `${formatKg(set.weight_kg, locale, units)} ${unit} · ${set.duration_seconds} s`
       : `${set.duration_seconds} s`;
   }
   if (set.reps != null) return `× ${set.reps}`;
@@ -125,6 +173,8 @@ export function rhythmItems(session: StrengthSessionSummary): {
         set,
         colorIndex: ei,
       });
+      // `rest_seconds` is the rest AFTER this set (null = not timed), so it
+      // fills the gap to the next set; the last set of an exercise has none drawn.
       if (si < sets.length - 1) {
         items.push({
           kind: 'rest',
@@ -147,8 +197,10 @@ export function highlightDelta(
   highlight: StrengthHighlight,
   t: TFunction,
   locale?: string,
+  units: UnitSystem = 'metric',
 ): string {
-  if (highlight.type === 'weight') return `+${formatKg(highlight.weight_delta_kg, locale)} kg`;
+  if (highlight.type === 'weight')
+    return `+${formatKg(highlight.weight_delta_kg, locale, units)} ${weightUnit(units)}`;
   if (highlight.type === 'reps') {
     return t('activities.strength.repsDelta', { count: highlight.reps_delta });
   }
@@ -162,12 +214,14 @@ export function progressDelta(
   progress: StrengthProgress,
   t: TFunction,
   locale?: string,
+  units: UnitSystem = 'metric',
 ): { text: string; tone: ProgressTone } {
   const { weight_delta_kg: w, reps_delta: r, duration_delta_seconds: d } = progress;
   const up = w > 0 || r > 0 || d > 0;
   const down = w < 0 || (w === 0 && (r < 0 || d < 0));
   let text = '=';
-  if (w !== 0) text = `${w > 0 ? '+' : '−'}${formatKg(Math.abs(w), locale)} kg`;
+  if (w !== 0)
+    text = `${w > 0 ? '+' : '−'}${formatKg(Math.abs(w), locale, units)} ${weightUnit(units)}`;
   else if (r !== 0) {
     text = t('activities.strength.repsDeltaSigned', {
       sign: r > 0 ? '+' : '−',
@@ -208,16 +262,17 @@ export function strengthMetrics(
     formatDuration: (s: number) => string;
     t: TFunction;
     locale?: string;
+    units?: UnitSystem;
   },
 ): StrengthMetric[] {
-  const { t, locale } = opts;
+  const { t, locale, units = 'metric' } = opts;
   const items: StrengthMetric[] = [];
   if (opts.withVolume) {
     items.push({
       key: 'volume',
       label: t('activities.strength.volume'),
-      value: formatVolume(session.stats.volume_kg, locale),
-      unit: 'kg',
+      value: formatVolume(session.stats.volume_kg, locale, units),
+      unit: weightUnit(units),
     });
   }
   if (durationSeconds && durationSeconds > 0) {
@@ -251,13 +306,16 @@ export function strengthMetrics(
 }
 
 /**
- * The activity's auto description is the session's sets as prose — the strength
- * panel shows the same thing, so the text is hidden when it is just that. The
- * feed post keeps a text of its own only when it differs from the description.
+ * Whether a text is just the session's generated sets list. Only when the API
+ * says the description is still generated (`description_is_auto`) — once the
+ * athlete edits it, it is theirs and stays. A post text counts only when it is
+ * that same description (or empty), as on the web.
  */
 export function isAutoStrengthText(
+  session: StrengthSessionSummary | null | undefined,
   text: string | null | undefined,
   description: string | null | undefined,
 ): boolean {
+  if (!session?.description_is_auto) return false;
   return text == null || text === '' || text === description;
 }

@@ -121,11 +121,16 @@ Helpers (labels "55×8", volume shares, rhythm, deltas) live in `strengthSession
 |-----------|-------|------|
 | `StrengthFeedPanel` | `FeedCard.ActivityBody`, where a run shows its map | `StrengthSetMosaic` (row per exercise, tile per set: accent = done, amber = heavier than last time, dashed = skipped) over `StrengthVolumePanel` (total kg, one bar split by exercise, amber record chips). Tap opens the activity |
 | `StrengthMetricStrip` | feed stats bar, `PostCard`, activity screen | Feed: time · sets · exercises · RPE. Activity screen / `PostCard`: volume first |
-| `StrengthRhythm` | `ActivityDetailScreen`, where the map would be | Sets as blocks, rests as bars ∝ `rest_seconds` (rest *after* that set), scrolls sideways |
+| `StrengthRhythm` | `ActivityDetailScreen`, where the map would be | Sets as blocks, rests as bars ∝ `rest_seconds` (rest *after* that set, null = not timed), scrolls sideways |
 | `StrengthSessionCards` | `ActivityDetailScreen`, under the metrics | Owner's note (quote), progress vs last time, volume breakdown, one tile per exercise (plan, "+5 kg vs plan", 4-column set grid, volume) |
 
-- The auto description is the sets as prose: hidden on the activity screen, and on the
-  feed / post cards whenever the post text is empty or equal to it.
+- The description is hidden only while `strength_session.description_is_auto` is true (it is
+  the generated sets list): on the activity screen always, on the feed / post cards when the
+  post text is empty or equal to it. Once the athlete edits it, it shows as usual.
+- Weights: the API speaks kg; `useStrengthFormat()` binds the formatters to the UI language and
+  `useUnits().units` — imperial users read lb (1 kg = 2.20462 lb, max 1 decimal; kg max 2),
+  volume rounded. Volume is always grouped by hand with the locale's separator ("5 912" pl,
+  "5,912" en, "1.234.567" es; plain space when Hermes' Intl cannot tell).
 - A skipped exercise (`sets_completed: 0`) is dashed and muted — never red. A worse result
   than last time is muted, a better one amber (`colors.warningStrong`).
 - Series colours: `colors.series` (stable order, light/dark). Mono figures: `fontFamily.mono`.

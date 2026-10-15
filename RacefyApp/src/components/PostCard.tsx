@@ -56,14 +56,15 @@ function PostCardBase({
 }: PostCardProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
-  const { formatDistance, formatPaceWithUnit } = useUnits();
+  const { formatDistance, formatPaceWithUnit, units } = useUnits();
   const strength =
     post.type === 'activity' && hasStrengthSession(post.activity?.strength_session)
       ? post.activity!.strength_session!
       : null;
-  // The strength session's auto text is its sets as prose; the mosaic shows them.
+  // The generated sets list (description_is_auto) is what the mosaic shows.
   const showContent =
-    !!post.content && !(strength && isAutoStrengthText(post.content, post.activity?.description));
+    !!post.content &&
+    !(strength && isAutoStrengthText(strength, post.content, post.activity?.description));
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: false,
   });
@@ -186,6 +187,7 @@ function PostCardBase({
                 formatDuration,
                 t,
                 locale: i18n.language,
+                units,
               })}
             />
           </View>

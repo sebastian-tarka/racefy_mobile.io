@@ -6,7 +6,8 @@ import { borderRadius, spacing } from '../../theme';
 import type { StrengthSessionSummary } from '../../types/api';
 import { StrengthSetMosaic } from './StrengthSetMosaic';
 import { StrengthVolumePanel } from './StrengthVolumePanel';
-import { formatVolume, hasStrengthSession } from './strengthSession';
+import { hasStrengthSession } from './strengthSession';
+import { useStrengthFormat } from './useStrengthFormat';
 
 /**
  * What a strength workout shows on a feed card where a run shows its map: the
@@ -20,13 +21,15 @@ export function StrengthFeedPanel({
   session: StrengthSessionSummary | null | undefined;
   onPress?: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const fmt = useStrengthFormat();
   const { colors } = useTheme();
 
   if (!hasStrengthSession(session)) return null;
 
   const summary = t('activities.strength.a11ySummary', {
-    volume: formatVolume(session.stats.volume_kg, i18n.language),
+    volume: fmt.volume(session.stats.volume_kg),
+    unit: fmt.unit,
     sets: session.stats.sets_completed,
     setsTotal: session.stats.sets_total,
     exercises: session.stats.exercises_completed,

@@ -14,6 +14,15 @@ jest.mock('../../../hooks/useTheme', () => ({
   }),
 }));
 
+let mockUnits: 'metric' | 'imperial' = 'metric';
+jest.mock('../../../hooks/useUnits', () => ({
+  useUnits: () => ({ units: mockUnits }),
+}));
+
+afterEach(() => {
+  mockUnits = 'metric';
+});
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: Record<string, unknown>) =>
@@ -89,7 +98,7 @@ describe('StrengthSessionCards', () => {
     ).toBeTruthy();
     expect(screen.getByText('activities.strength.skipped')).toBeTruthy();
     expect(
-      screen.getByText(`activities.strength.overPlan:${JSON.stringify({ kg: '5' })}`),
+      screen.getByText(`activities.strength.overPlan:${JSON.stringify({ kg: '5', unit: 'kg' })}`),
     ).toBeTruthy();
     expect(screen.getAllByText('55 kg × 8')).toHaveLength(2);
     expect(screen.getByText('1,280 kg')).toBeTruthy();
@@ -111,5 +120,26 @@ describe('StrengthSessionCards', () => {
     render(<StrengthSessionCards session={makeSession()} />);
     const names = [rowing.name, curls.name, facePulls.name];
     names.forEach((n) => expect(screen.getAllByText(n).length).toBeGreaterThan(0));
+  });
+});
+
+describe('imperial units', () => {
+  it('shows lb on tiles, volume, records and the over-plan chip', () => {
+    mockUnits = 'imperial';
+    render(<StrengthFeedPanel session={makeSession()} />);
+    expect(screen.getAllByText('121.3×8')).toHaveLength(2);
+    expect(screen.getByText('3,428')).toBeTruthy();
+    expect(screen.getByText('lb')).toBeTruthy();
+    expect(screen.getByText('+11 lb')).toBeTruthy();
+  });
+
+  it('converts the exercise cards too', () => {
+    mockUnits = 'imperial';
+    render(<StrengthSessionCards session={makeSession()} />);
+    expect(
+      screen.getByText(`activities.strength.overPlan:${JSON.stringify({ kg: '11', unit: 'lb' })}`),
+    ).toBeTruthy();
+    expect(screen.getAllByText('121.3 lb × 8')).toHaveLength(2);
+    expect(screen.getByText('2,822 lb')).toBeTruthy();
   });
 });
