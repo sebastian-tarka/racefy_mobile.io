@@ -27,7 +27,10 @@ zmienia, aktywność wygląda jak dotąd.
 - [ ] Feed: aktywność z sesji siłowej ma mozaikę (kafel na serię „55×8"), bursztynowe kafle przy cięższych seriach niż ostatnio, przerywane przy pominiętych; legenda się mieści
 - [ ] Feed: panel objętości — suma kg, pasek podzielony na ćwiczenia, legenda z %, chipy rekordów „↑ … +5 kg" (długie nazwy ucinane, kg widoczne)
 - [ ] Feed: pasek Czas · Serie X/Y · Ćwiczenia X/Y · RPE mieści się na wąskim telefonie (360 dp) i przy dużej czcionce systemowej
-- [ ] Feed: auto-opis (serie prozą) nie pojawia się; post z własnym tekstem go pokazuje; tap w panel otwiera aktywność
+- [ ] Feed: wygenerowany opis (serie prozą, `description_is_auto`) nie pojawia się; post z własnym tekstem go pokazuje; tap w panel otwiera aktywność
+- [ ] Po ręcznej edycji opisu aktywności siłowej (backend zwraca `description_is_auto: false`) opis wraca w feedzie i na ekranie aktywności
+- [ ] Jednostki imperialne (Ustawienia → jednostki): lb wszędzie — kafle „121,3×8", objętość, chipy „+11 lb", „+11 lb vs plan", plan „· 110,2 lb"; metryczne: kg jak dotąd
+- [ ] Objętość zgrupowana: „5 912" po polsku, „5,912" po angielsku, „1.234.567" po hiszpańsku (Hermes na Androidzie i iOS)
 - [ ] Feed: aktywność siłowa ze zdjęciami — panel nad zdjęciami, galeria działa
 - [ ] Ekran aktywności: metryki Objętość · Czas · Serie · Ćwiczenia · RPE zamiast dystansu/tempa; brak opisu-prozy
 - [ ] Ekran aktywności: rytm na górze (serie jako bloki, przerwy proporcjonalne), przewija się w bok bez blokowania przewijania w pionie
