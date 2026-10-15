@@ -15,13 +15,22 @@ Stan na: **2026-10-15**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feat/strength-activity-ui` — trening siłowy w feedzie i na ekranie aktywności
+_Nic nie czeka._
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Trening siłowy w feedzie i na ekranie aktywności (zmergowane 2026-10-15, `feat/strength-activity-ui`)
 
 Opis: `RacefyApp/docs/UI_PATTERNS.md` → „Strength activities". Aktywność zapisana z sesji
 siłowej niesie `activity.strength_session`; zamiast mapy i dystansu/tempa feed pokazuje mozaikę
 serii + panel objętości, a ekran aktywności metryki siłowe, rytm treningu i karty progresu,
 objętości i ćwiczeń. Lustro SPA (`components/workouts/strength/`). **Wymaga backendu ze
-`strength_session` w ActivityResource** (API `main`, stage wkrótce) — bez niego nic się nie
+`strength_session` w ActivityResource** (API v1.2.10+ na prod, `description_is_auto` od v1.2.12) — bez niego nic się nie
 zmienia, aktywność wygląda jak dotąd.
 
 - [ ] Feed: aktywność z sesji siłowej ma mozaikę (kafel na serię „55×8"), bursztynowe kafle przy cięższych seriach niż ostatnio, przerywane przy pominiętych; legenda się mieści
@@ -42,13 +51,6 @@ zmienia, aktywność wygląda jak dotąd.
 - [ ] Profil (PostCard): mozaika i metryki siłowe; repost aktywności siłowej pokazuje kg i serie zamiast „0.0 km"
 - [ ] TalkBack/VoiceOver: wiersz mozaiki czytany jako „ćwiczenie: 55×8, …, pominięta seria"; panel w feedzie ma podsumowanie
 - [ ] Bieg/rower z GPS wyglądają jak przed zmianą (feed i ekran aktywności)
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Wariant staging jako osobna aplikacja + URL-e API przypięte w `eas.json` (zmergowane 2026-09-22)
 
