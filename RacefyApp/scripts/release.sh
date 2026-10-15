@@ -66,7 +66,10 @@ fi
 
 git add package.json package-lock.json
 git commit -q -m "chore(release): ${TAG}"
-git tag "$TAG"
+# Tag z adnotacją, nie lekki: `git push --follow-tags` wypycha wyłącznie
+# tagi z adnotacją. Lekkie tagi zostawały lokalnie — na origin nie było
+# ani jednego taga releasu od v1.18.0 do v1.24.0.
+git tag -a "$TAG" -m "Release ${TAG}"
 
 echo -e "${GREEN}✔${NC} ${BOLD}${CURRENT} → ${NEW}${NC}"
 echo -e "  ${DIM}commit + tag ${TAG}${NC}"
