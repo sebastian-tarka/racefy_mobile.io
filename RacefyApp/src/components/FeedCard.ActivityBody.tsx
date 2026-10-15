@@ -36,14 +36,37 @@ import {
   useImageGallery,
 } from './FeedCard.utils';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
+import {
+  hasStrengthSession,
+  isAutoStrengthText,
+  StrengthFeedPanel,
+  StrengthMetricStrip,
+  strengthMetrics,
+} from './strength';
 
 /* ──────────────────────────────────────────────────────────
  * Activity Stats — Prominent horizontal bar under the map
  * ────────────────────────────────────────────────────────── */
 function ActivityStatsBar({ activity }: { activity: Activity }) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
-  const { formatDistance: fmtDistance, formatElevation } = useUnits();
+  const { t, i18n } = useTranslation();
+  const { formatDistance: fmtDistance, formatElevation, units } = useUnits();
+
+  // Strength: volume and records sit in the panel above; here the rest of the
+  // session at a glance (duration · sets · exercises · RPE).
+  if (hasStrengthSession(activity.strength_session)) {
+    return (
+      <StrengthMetricStrip
+        variant="bar"
+        items={strengthMetrics(activity.strength_session, activity.duration, {
+          formatDuration,
+          t,
+          locale: i18n.language,
+          units,
+        })}
+      />
+    );
+  }
 
   const stats = [
     {
@@ -358,8 +381,21 @@ export function ActivityBody({
   // Hooks above must run unconditionally; guard the missing-activity case after them.
   if (!activity) return null;
 
-  const truncatedDesc = activity.description
-    ? truncateDescription(activity.description, 120)
+  // While a strength workout's description is still the generated sets list
+  // (`description_is_auto`), the panel shows the same thing: the text goes,
+  // unless the post carries a text of the athlete's own. An edited description
+  // is theirs and shows as for any activity.
+  const strength = hasStrengthSession(activity.strength_session) ? activity.strength_session : null;
+  const autoDescription = !!strength?.description_is_auto;
+  const bodyText = autoDescription
+    ? isAutoStrengthText(strength, post.content, activity.description)
+      ? null
+      : post.content
+    : activity.description;
+  const bodyMentions = autoDescription ? post.mentions : activity.mentions;
+
+  const truncatedDesc = bodyText
+    ? truncateDescription(bodyText, 120)
     : { text: '', isTruncated: false };
 
   const hasRouteMap = activity.route_preview_url || activity.route_map_url || activity.route_svg;
@@ -394,17 +430,17 @@ export function ActivityBody({
         {post.title && (
           <Text style={[styles.bodyTitle, { color: colors.textPrimary }]}>{post.title}</Text>
         )}
-        {activity.description && (
+        {bodyText && (
           <View>
-            {activity.mentions ? (
+            {bodyMentions ? (
               <MentionText
-                text={showFullDescription ? activity.description : truncatedDesc.text}
-                mentions={activity.mentions}
+                text={showFullDescription ? bodyText : truncatedDesc.text}
+                mentions={bodyMentions}
                 style={[styles.expandableText, { color: colors.textPrimary }]}
               />
             ) : (
               <Text style={[styles.expandableText, { color: colors.textPrimary }]}>
-                {showFullDescription ? activity.description : truncatedDesc.text}
+                {showFullDescription ? bodyText : truncatedDesc.text}
               </Text>
             )}
             {truncatedDesc.isTruncated && !showFullDescription && (
@@ -440,6 +476,9 @@ export function ActivityBody({
           )}
         </View>
       </View>
+
+      {/* Strength session: where a run shows its map */}
+      {strength && <StrengthFeedPanel session={strength} onPress={onActivityPress} />}
 
       {/* Hero visual area — padded with rounded corners to match content */}
       {hasRouteMap && hasMedia ? (

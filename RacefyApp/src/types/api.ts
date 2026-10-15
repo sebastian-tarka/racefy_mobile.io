@@ -1004,6 +1004,103 @@ export interface Activity {
    * serve trimmed public resources.
    */
   analysis_summary?: ActivityAnalysisSummary | null;
+  /**
+   * The strength session this activity was logged from. Present on
+   * `GET /activities/{id}`, `GET /feed` (post `activity` and
+   * `shared_post.activity`), `GET /posts` and `GET /posts/{id}`; the key is
+   * missing everywhere else and on activities not logged from a session.
+   */
+  strength_session?: StrengthSessionSummary;
+}
+
+// ============ STRENGTH SESSION (activity.strength_session) ============
+
+export interface StrengthSetValue {
+  weight_kg: number | null;
+  reps: number | null;
+  duration_seconds: number | null;
+}
+
+export interface StrengthProgress {
+  /** Best weight now − last time. */
+  weight_delta_kg: number;
+  /** Only at the same weight, else 0. */
+  reps_delta: number;
+  /** Only at the same weight, else 0. */
+  duration_delta_seconds: number;
+}
+
+export type StrengthHighlight = {
+  exercise_order: number;
+  name: string;
+  type: 'weight' | 'reps' | 'duration';
+  from: StrengthSetValue;
+  to: StrengthSetValue;
+} & StrengthProgress;
+
+export type StrengthSet = StrengthSetValue & {
+  set_number: number;
+  /** Skipped sets are listed too, with reps / weight null. */
+  is_completed: boolean;
+  rest_seconds: number | null;
+};
+
+export interface StrengthExercise {
+  exercise_order: number;
+  exercise_id: number;
+  name: string;
+  /** Often 'other' — do not build UI around it. */
+  muscle_group: string | null;
+  planned: {
+    sets: number;
+    target_type: 'reps' | 'seconds' | 'amrap' | null;
+    reps_min: number | null;
+    reps_max: number | null;
+    rest_seconds: number | null;
+    suggested_weight_kg: number | null;
+  };
+  /** `rest_seconds` on a set = the rest AFTER it (null = not timed). */
+  sets: StrengthSet[];
+  /** 0 = the exercise was skipped (show muted, never as a failure). */
+  sets_completed: number;
+  volume_kg: number;
+  /** Heaviest completed set; null when nothing was completed. */
+  best_set: StrengthSetValue | null;
+  /** Last earlier session containing this exercise; null the first time. */
+  previous: {
+    session_id: number;
+    completed_at: string;
+    best_set: StrengthSetValue | null;
+    volume_kg: number;
+  } | null;
+  progress: StrengthProgress | null;
+}
+
+export interface StrengthSessionSummary {
+  id: number;
+  workout_id: number | null;
+  workout_plan_id: number | null;
+  workout_name: string;
+  day_label: string | null;
+  duration_seconds: number | null;
+  /** 1–10 */
+  rpe: number | null;
+  /** The athlete's own note — owner only, null for everyone else. */
+  notes: string | null;
+  /**
+   * True while `activity.description` is the generated sets list (hide it — the
+   * strength UI shows the same); false once the athlete has edited it.
+   */
+  description_is_auto: boolean;
+  stats: {
+    sets_total: number;
+    sets_completed: number;
+    volume_kg: number;
+    exercises: number;
+    exercises_completed: number;
+  };
+  highlights: StrengthHighlight[];
+  exercises: StrengthExercise[];
 }
 
 // ============ ACTIVITY EFFORT ANALYSIS ============

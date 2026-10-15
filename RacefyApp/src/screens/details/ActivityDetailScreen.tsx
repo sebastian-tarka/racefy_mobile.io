@@ -35,6 +35,13 @@ import {
   ScreenContainer,
   ScreenHeader,
 } from '../../components';
+import {
+  hasStrengthSession,
+  StrengthMetricStrip,
+  strengthMetrics,
+  StrengthRhythm,
+  StrengthSessionCards,
+} from '../../components/strength';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
@@ -60,12 +67,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   // Read live: a frozen module-level width would desync the pager's index from
   // its scroll offset if the window resizes (foldable, split-screen).
   const { width: windowWidth } = useWindowDimensions();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { canUse, tier } = useSubscription();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isActionsSheetVisible, setIsActionsSheetVisible] = useState(false);
-  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation } = useUnits();
+  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation, units } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -349,6 +356,18 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   }
 
   const isOwner = activity?.is_owner ?? false;
+  // Strength activity logged from a session: its own metrics, the rhythm strip
+  // where the map would be, the set-by-set cards — and no text description
+  // while it is the generated sets list (`description_is_auto`).
+  const strength = hasStrengthSession(activity.strength_session) ? activity.strength_session : null;
+  const hasMap =
+    activity.has_gps_track &&
+    !!(
+      gpsTrack?.route_preview_url ||
+      gpsTrack?.route_map_url ||
+      gpsTrack?.route_svg ||
+      gpsTrack?.track_data
+    );
 
   return (
     <ScreenContainer>
@@ -527,6 +546,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 </Animated.View>
               )}
 
+            {/* Strength: the workout's rhythm where a run shows its map */}
+            {strength && !hasMap && <StrengthRhythm session={strength} />}
+
             {/* Header Section: Title + User Info Combined */}
             <View style={[styles.headerSection, { backgroundColor: colors.cardBackground }]}>
               {/* User Info */}
@@ -659,39 +681,55 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </Card>
 
             {/* Main Stats - Key Metrics First */}
-            <Card style={styles.statsCard}>
-              <View style={styles.mainStats}>
-                <View style={styles.mainStatItem}>
-                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                    {formatDistance(activity.distance)}
-                  </Text>
-                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                    {t('activityDetail.distance')}
-                  </Text>
+            {strength ? (
+              <Card style={styles.statsCard}>
+                <StrengthMetricStrip
+                  items={strengthMetrics(strength, activity.duration, {
+                    withVolume: true,
+                    formatDuration,
+                    t,
+                    locale: i18n.language,
+                    units,
+                  })}
+                />
+              </Card>
+            ) : (
+              <Card style={styles.statsCard}>
+                <View style={styles.mainStats}>
+                  <View style={styles.mainStatItem}>
+                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                      {formatDistance(activity.distance)}
+                    </Text>
+                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                      {t('activityDetail.distance')}
+                    </Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.mainStatItem}>
+                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                      {formatDuration(activity.duration)}
+                    </Text>
+                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                      {t('activityDetail.duration')}
+                    </Text>
+                  </View>
+                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.mainStatItem}>
+                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
+                      {formatPace(activity.duration, activity.distance)}
+                    </Text>
+                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
+                      {t('activityDetail.pace')}
+                    </Text>
+                  </View>
                 </View>
-                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.mainStatItem}>
-                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                    {formatDuration(activity.duration)}
-                  </Text>
-                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                    {t('activityDetail.duration')}
-                  </Text>
-                </View>
-                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.mainStatItem}>
-                  <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                    {formatPace(activity.duration, activity.distance)}
-                  </Text>
-                  <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                    {t('activityDetail.pace')}
-                  </Text>
-                </View>
-              </View>
-            </Card>
+              </Card>
+            )}
+
+            {strength && <StrengthSessionCards session={strength} cardStyle={styles.section} />}
 
             {/* Description - Story comes before technical details */}
-            {activity.description && (
+            {activity.description && !strength?.description_is_auto && (
               <Card style={styles.section}>
                 <MentionText
                   text={activity.description}

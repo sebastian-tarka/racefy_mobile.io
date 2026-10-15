@@ -9,6 +9,8 @@ import { spacing, fontSize, borderRadius } from '../theme';
 import { formatDuration, getSportIcon } from './FeedCard.utils';
 import { mergeActivityPhotos } from '../utils/activityMedia';
 import type { SharedPost } from '../types/api';
+import { formatVolume, hasStrengthSession, isAutoStrengthText, weightUnit } from './strength';
+import { useUnits } from '../hooks/useUnits';
 
 interface SharedPostBlockProps {
   sharedPost: SharedPost;
@@ -18,7 +20,15 @@ interface SharedPostBlockProps {
 
 export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPostBlockProps) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { units } = useUnits();
+  const strength = hasStrengthSession(sharedPost.activity?.strength_session)
+    ? sharedPost.activity!.strength_session!
+    : null;
+  // The generated sets list (description_is_auto) — the stats say it shorter.
+  const content = isAutoStrengthText(strength, sharedPost.content, sharedPost.activity?.description)
+    ? null
+    : sharedPost.content;
 
   // A reshared activity post carries its media on the activity, same as the
   // original does.
@@ -68,9 +78,9 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
       )}
 
       {/* Content */}
-      {sharedPost.content ? (
+      {content ? (
         <Text style={[styles.content, { color: colors.textSecondary }]} numberOfLines={4}>
-          {sharedPost.content}
+          {content}
         </Text>
       ) : null}
 
@@ -86,6 +96,19 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
             <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
               {(sharedPost.activity.distance / 1000).toFixed(1)} km
             </Text>
+          )}
+          {strength && (
+            <>
+              <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
+                {formatVolume(strength.stats.volume_kg, i18n.language, units)} {weightUnit(units)}
+              </Text>
+              <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
+                {t('activities.strength.setsCompact', {
+                  done: strength.stats.sets_completed,
+                  total: strength.stats.sets_total,
+                })}
+              </Text>
+            </>
           )}
           {sharedPost.activity.duration > 0 && (
             <Text style={[styles.activityStat, { color: colors.textSecondary }]}>

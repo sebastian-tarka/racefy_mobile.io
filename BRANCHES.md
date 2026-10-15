@@ -9,13 +9,39 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-09-22**
+Stan na: **2026-10-15**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `feat/strength-activity-ui` — trening siłowy w feedzie i na ekranie aktywności
+
+Opis: `RacefyApp/docs/UI_PATTERNS.md` → „Strength activities". Aktywność zapisana z sesji
+siłowej niesie `activity.strength_session`; zamiast mapy i dystansu/tempa feed pokazuje mozaikę
+serii + panel objętości, a ekran aktywności metryki siłowe, rytm treningu i karty progresu,
+objętości i ćwiczeń. Lustro SPA (`components/workouts/strength/`). **Wymaga backendu ze
+`strength_session` w ActivityResource** (API `main`, stage wkrótce) — bez niego nic się nie
+zmienia, aktywność wygląda jak dotąd.
+
+- [ ] Feed: aktywność z sesji siłowej ma mozaikę (kafel na serię „55×8"), bursztynowe kafle przy cięższych seriach niż ostatnio, przerywane przy pominiętych; legenda się mieści
+- [ ] Feed: panel objętości — suma kg, pasek podzielony na ćwiczenia, legenda z %, chipy rekordów „↑ … +5 kg" (długie nazwy ucinane, kg widoczne)
+- [ ] Feed: pasek Czas · Serie X/Y · Ćwiczenia X/Y · RPE mieści się na wąskim telefonie (360 dp) i przy dużej czcionce systemowej
+- [ ] Feed: wygenerowany opis (serie prozą, `description_is_auto`) nie pojawia się; post z własnym tekstem go pokazuje; tap w panel otwiera aktywność
+- [ ] Po ręcznej edycji opisu aktywności siłowej (backend zwraca `description_is_auto: false`) opis wraca w feedzie i na ekranie aktywności
+- [ ] Jednostki imperialne (Ustawienia → jednostki): lb wszędzie — kafle „121,3×8", objętość, chipy „+11 lb", „+11 lb vs plan", plan „· 110,2 lb"; metryczne: kg jak dotąd
+- [ ] Objętość zgrupowana: „5 912" po polsku, „5,912" po angielsku, „1.234.567" po hiszpańsku (Hermes na Androidzie i iOS)
+- [ ] Feed: aktywność siłowa ze zdjęciami — panel nad zdjęciami, galeria działa
+- [ ] Ekran aktywności: metryki Objętość · Czas · Serie · Ćwiczenia · RPE zamiast dystansu/tempa; brak opisu-prozy
+- [ ] Ekran aktywności: rytm na górze (serie jako bloki, przerwy proporcjonalne), przewija się w bok bez blokowania przewijania w pionie
+- [ ] Ekran aktywności: karta progresu (pierwszy raz → komunikat „nie ma z czym porównać"), rozkład objętości z listą pominiętych, kafle ćwiczeń z siatką 4 kolumn i „+5 kg vs plan"
+- [ ] Pominięte ćwiczenie: przerywane i wyciszone, nigdzie czerwone
+- [ ] Notatka z sesji widoczna dla właściciela, niewidoczna dla innych
+- [ ] Tryb ciemny i jasny: kontrast kafli, chipów i bloków rytmu czytelny
+- [ ] iOS: czcionka mono (Menlo) i Android (monospace) — cyfry nie skaczą, nic się nie zawija
+- [ ] Profil (PostCard): mozaika i metryki siłowe; repost aktywności siłowej pokazuje kg i serie zamiast „0.0 km"
+- [ ] TalkBack/VoiceOver: wiersz mozaiki czytany jako „ćwiczenie: 55×8, …, pominięta seria"; panel w feedzie ma podsumowanie
+- [ ] Bieg/rower z GPS wyglądają jak przed zmianą (feed i ekran aktywności)
 
 ---
 
