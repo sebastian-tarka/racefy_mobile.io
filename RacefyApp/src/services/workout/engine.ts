@@ -77,7 +77,7 @@ export interface SegmentProgress {
 }
 
 /** Distance before a boundary at which the "approach" cue fires. */
-export const APPROACH_METERS = 100;
+const APPROACH_METERS = 100;
 
 export function createWorkoutEngine(plan: WorkoutPlan, start: EngineSnapshot): WorkoutEngineState {
   return {

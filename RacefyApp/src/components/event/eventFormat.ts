@@ -1,7 +1,6 @@
 import type { TFunction } from 'i18next';
 import { fixStorageUrl } from '../../config/api';
 import type { Event, EventRankingMode } from '../../types/api';
-import type { ThemeColors } from '../../theme/colors';
 
 /** Best cover image URL for mobile: prefer a variant, then the full cover, then first post photo. */
 export function pickEventCoverUrl(
@@ -35,19 +34,6 @@ export function rankingModeLabel(mode: EventRankingMode | undefined, t: TFunctio
     .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
     .join(' ');
   return t(key, { defaultValue: fallback });
-}
-
-export function difficultyColor(difficulty: Event['difficulty'], colors: ThemeColors): string {
-  switch (difficulty) {
-    case 'beginner':
-      return colors.success;
-    case 'intermediate':
-      return colors.warning;
-    case 'advanced':
-      return colors.error;
-    default:
-      return colors.primary;
-  }
 }
 
 /** Format a time-limit / cut-off given in seconds as `H:MM`. */

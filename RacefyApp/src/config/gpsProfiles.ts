@@ -10,7 +10,6 @@
  */
 
 import type { GpsProfileApiResponse, GpsProfileRequest } from '../types/api';
-import { logger } from '../services/logger';
 
 // ============ TYPE DEFINITIONS ============
 
@@ -243,7 +242,7 @@ export const DEFAULT_GPS_PROFILE: GpsProfile = {
  * These are used when API data is unavailable
  * Only includes sports with significantly different GPS requirements
  */
-export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
+const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
   // Outdoor GPS-enabled sports
   running: {
     enabled: true,
@@ -388,91 +387,4 @@ export const FALLBACK_GPS_PROFILES: Record<string, GpsProfile> = {
 export function getGpsProfileBySlug(slug: string): GpsProfile {
   const normalizedSlug = slug.toLowerCase();
   return FALLBACK_GPS_PROFILES[normalizedSlug] || DEFAULT_GPS_PROFILE;
-}
-
-/**
- * Check if GPS tracking should be enabled for a sport slug (using fallback profiles)
- */
-export function isGpsEnabledForSportSlug(slug: string): boolean {
-  return getGpsProfileBySlug(slug).enabled;
-}
-
-// ============ STATIC CACHE FOR BACKGROUND SERVICE ============
-
-/**
- * Static cache for GPS profiles from API
- * This allows the background location service to access profiles without hooks
- */
-let cachedApiProfiles: Map<string, GpsProfile> = new Map();
-let cachedSportIdToSlug: Map<number, string> = new Map();
-
-/**
- * Update the static GPS profile cache (called from useSportTypes hook)
- * This enables background location service to use API profiles
- */
-export function updateGpsProfileCache(
-  sports: {
-    id: number;
-    slug: string;
-    gps_profile?: GpsProfileApiResponse;
-  }[],
-): void {
-  cachedApiProfiles.clear();
-  cachedSportIdToSlug.clear();
-
-  let cachedCount = 0;
-  for (const sport of sports) {
-    cachedSportIdToSlug.set(sport.id, sport.slug);
-    if (sport.gps_profile) {
-      const convertedProfile = convertApiGpsProfile(sport.gps_profile);
-      cachedApiProfiles.set(sport.slug, convertedProfile);
-      cachedCount++;
-    }
-  }
-
-  logger.info('gps', 'GPS profile cache updated', {
-    totalSports: sports.length,
-    cachedProfiles: cachedCount,
-    cachedSlugs: Array.from(cachedApiProfiles.keys()),
-  });
-}
-
-/**
- * Get GPS profile from static cache (for background service)
- * Falls back to hardcoded profiles if not in cache
- *
- * @param slugOrId - Sport slug (string) or sport ID (number)
- */
-export function getGpsProfileFromCache(slugOrId: string | number): GpsProfile {
-  let slug: string;
-
-  if (typeof slugOrId === 'number') {
-    slug = cachedSportIdToSlug.get(slugOrId) || 'other';
-  } else {
-    slug = slugOrId;
-  }
-
-  // Try cached API profile first
-  const cachedProfile = cachedApiProfiles.get(slug);
-  if (cachedProfile) {
-    return cachedProfile;
-  }
-
-  // Fall back to hardcoded profiles
-  return getGpsProfileBySlug(slug);
-}
-
-/**
- * Check if GPS is enabled for a sport (using static cache)
- */
-export function isGpsEnabledFromCache(slugOrId: string | number): boolean {
-  return getGpsProfileFromCache(slugOrId).enabled;
-}
-
-/**
- * Clear the static cache (useful for testing or logout)
- */
-export function clearGpsProfileCache(): void {
-  cachedApiProfiles.clear();
-  cachedSportIdToSlug.clear();
 }

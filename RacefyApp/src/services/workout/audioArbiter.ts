@@ -12,7 +12,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const SPLIT_SUPPRESS_WINDOW_MS = 3000;
+const SPLIT_SUPPRESS_WINDOW_MS = 3000;
 
 const LAST_CUE_KEY = '@racefy:workout:lastCueMs';
 
@@ -39,9 +39,4 @@ export async function isSplitSuppressedAsync(nowMs: number = Date.now()): Promis
   } catch {
     return false;
   }
-}
-
-/** Test hook. */
-export function resetAudioArbiter(): void {
-  lastWorkoutCueMs = 0;
 }

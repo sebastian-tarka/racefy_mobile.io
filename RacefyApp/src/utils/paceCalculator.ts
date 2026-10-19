@@ -29,7 +29,7 @@ export interface PaceSegment {
  * @param minSegmentDistance - Minimum distance delta in meters required for valid pace
  * @returns Pace in seconds per kilometer, or null if insufficient data
  */
-export function calculateCurrentPace(
+function calculateCurrentPace(
   segments: PaceSegment[],
   windowSeconds: number,
   minSegmentDistance: number,
@@ -107,7 +107,7 @@ export function calculateCurrentPace(
  * @param smoothingFactor - Alpha factor (0.1-0.9). Lower = smoother, higher = more responsive
  * @returns Smoothed pace value in seconds/km
  */
-export function smoothPace(
+function smoothPace(
   currentPace: number,
   previousSmoothed: number | null,
   smoothingFactor: number,
@@ -193,7 +193,7 @@ export function calculateAveragePace(
  * @param maxSegments - Maximum number of segments to keep (default: 30)
  * @returns Updated segments array
  */
-export function addPaceSegment(
+function addPaceSegment(
   buffer: PaceSegment[],
   newSegment: PaceSegment,
   maxSegments: number = 30,
@@ -261,19 +261,4 @@ export class PaceTracker {
     this.segments = [];
     this.smoothedPace = null;
   }
-}
-
-/**
- * Trim segments to only include those within a time window.
- *
- * @param segments - Array of pace segments
- * @param windowSeconds - Time window in seconds
- * @returns Filtered segments array
- */
-export function trimSegmentsToWindow(
-  segments: PaceSegment[],
-  windowSeconds: number,
-): PaceSegment[] {
-  const cutoffTime = Date.now() - windowSeconds * 1000;
-  return segments.filter((s) => s.timestamp >= cutoffTime);
 }

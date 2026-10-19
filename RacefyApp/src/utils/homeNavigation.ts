@@ -22,7 +22,7 @@ interface NavigationTarget {
  * Map CTA action to navigation target.
  * Returns null for unknown actions (safe fallback).
  */
-export function mapCtaActionToNavigation(
+function mapCtaActionToNavigation(
   action: HomeCtaAction | string,
   payload?: HomeActionPayload,
 ): NavigationTarget | null {
@@ -76,48 +76,10 @@ export function mapCtaActionToNavigation(
 }
 
 /**
- * Execute navigation for a CTA action.
- *
- * @param navigation - React Navigation prop (any to avoid complex typing)
- * @param action - CTA action from backend
- * @param payload - Optional payload (training_week_id, goal_id, …)
- * @returns true if navigation was executed, false if action was unknown
- */
-export function navigateForCtaAction(
-  navigation: any,
-  action: HomeCtaAction | string,
-  payload?: HomeActionPayload,
-): boolean {
-  const target = mapCtaActionToNavigation(action, payload);
-
-  if (!target) {
-    // Unknown action - do nothing
-    return false;
-  }
-
-  if (target.root) {
-    // Navigate to root stack screen
-    navigation.navigate(target.root, target.params);
-    return true;
-  }
-
-  if (target.tab) {
-    // Navigate to main tab - need to go through Main
-    navigation.navigate('Main', {
-      screen: target.tab,
-      params: target.params,
-    });
-    return true;
-  }
-
-  return false;
-}
-
-/**
  * Execute navigation from within a tab navigator.
  * Use this when already inside the Main tabs.
  */
-export function navigateForCtaActionFromTab(
+function navigateForCtaActionFromTab(
   navigation: any,
   action: HomeCtaAction | string,
   payload?: HomeActionPayload,

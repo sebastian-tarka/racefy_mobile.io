@@ -32,7 +32,7 @@ export interface TrailPoint {
  * coordinate would reach the map, where `[undefined, undefined]` renders as a
  * line to null island rather than as an error.
  */
-export function trackToTrail(track: LiveTrack | null | undefined): TrailPoint[] {
+function trackToTrail(track: LiveTrack | null | undefined): TrailPoint[] {
   if (!track?.coordinates?.length) return [];
 
   const points: TrailPoint[] = [];

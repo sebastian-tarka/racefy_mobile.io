@@ -1,13 +1,6 @@
 import type { MentionEntity, MentionMap } from '../types/api';
 import { replaceTriggerValues } from 'react-native-controlled-mentions';
 
-// Trigger characters for each mention type
-export const MENTION_TRIGGERS = {
-  user: '@',
-  event: '#',
-  activity: '!',
-} as const;
-
 // API token patterns: <@ID>, <#ID>, <!ID>
 const MENTION_TOKEN_REGEX = /<([@#!])(\d+)>/g;
 

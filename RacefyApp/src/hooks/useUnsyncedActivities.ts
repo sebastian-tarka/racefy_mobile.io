@@ -5,7 +5,6 @@ import { logger } from '../services/logger';
 import {
   clearAllUnsyncedActivities,
   countUnsyncedActivities,
-  enqueueUnsyncedActivity,
   getUnsyncedActivity,
   listUnsyncedActivities,
   removeUnsyncedActivity,
@@ -325,5 +324,3 @@ export function useUnsyncedActivitiesCount(): { count: number; refresh: () => vo
 
   return { count, refresh };
 }
-
-export { enqueueUnsyncedActivity };

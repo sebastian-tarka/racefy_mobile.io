@@ -31,7 +31,7 @@ export function getImageMimeType(uri: string): string {
  * Returns the MIME type for a video file based on its URI/filename extension.
  * Defaults to 'video/mp4' for unknown extensions.
  */
-export function getVideoMimeType(uri: string): string {
+function getVideoMimeType(uri: string): string {
   const filename = uri.split('/').pop() ?? '';
   const match = /\.(\w+)$/.exec(filename);
   if (!match) return 'video/mp4';

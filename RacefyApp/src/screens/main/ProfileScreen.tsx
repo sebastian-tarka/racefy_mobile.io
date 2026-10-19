@@ -25,7 +25,6 @@ import {
   DraftPostCard,
   EmptyState,
   EventCard,
-  type PeriodOption,
   PointsCard,
   PostCard,
   ProfileNavigationSections,
@@ -38,9 +37,9 @@ import {
   SegmentedControl,
   SportTypeFilter,
   StandingBlock,
-  type TimeRange,
   UserListModal,
 } from '../../components';
+import type { PeriodOption, TimeRange } from '../../utils/dateRanges';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';

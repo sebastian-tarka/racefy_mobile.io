@@ -28,7 +28,7 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;');
 }
 
-export function buildGpxDocument(input: GpxExportInput): string {
+function buildGpxDocument(input: GpxExportInput): string {
   const { activityId, name, startedAt, sportType, points } = input;
 
   const metadataParts: string[] = [];
@@ -91,7 +91,7 @@ function gpxFileName(activityId: number | string): string {
  * Write the GPX to a temp file in the app cache directory and return its URI.
  * Callers usually want `exportGpxAndShare` instead.
  */
-export async function writeGpxToCache(input: GpxExportInput): Promise<string> {
+async function writeGpxToCache(input: GpxExportInput): Promise<string> {
   const xml = buildGpxDocument(input);
   const uri = `${FileSystem.cacheDirectory}${gpxFileName(input.activityId)}`;
   await FileSystem.writeAsStringAsync(uri, xml, {

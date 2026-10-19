@@ -19,7 +19,7 @@ import { loadGoalNotificationId, saveGoalNotificationId } from './storage';
 
 const CHANNEL_ID = 'workout';
 /** Grace period so the foreground wins the race. */
-export const GOAL_NOTIFICATION_GRACE_S = 2;
+const GOAL_NOTIFICATION_GRACE_S = 2;
 
 let channelReady = false;
 

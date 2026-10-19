@@ -9,7 +9,6 @@ const LOCAL_IP = extra.apiLocalIp || '192.168.1.100';
 const LOCAL_PORT = extra.apiLocalPort || '8080';
 const API_URL = extra.apiUrl || 'https://racefy.io/api';
 const API_STAGING_URL = extra.apiStagingUrl || 'https://app.dev.racefy.io/api';
-const APP_ENV = extra.appEnv || 'production';
 const USE_STAGING_IN_DEV = extra.useStagingInDev === true;
 
 // Xdebug debugging - only active in development mode
@@ -23,8 +22,6 @@ const MAPBOX_FEATURE_ENABLED = extra.mapboxEnabled !== false;
 export const MAPBOX_ACCESS_TOKEN = MAPBOX_FEATURE_ENABLED ? MAPBOX_TOKEN : null;
 
 // Export environment info for debugging
-export { APP_ENV };
-
 // API Base URL configuration
 const getBaseUrl = (): string => {
   if (__DEV__) {

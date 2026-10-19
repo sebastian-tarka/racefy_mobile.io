@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useAuth } from './useAuth';
 import { useFetch } from './useFetch';
 import type { ActivityTrendsResponse, TrendGranularity } from '../types/api';
-import type { TimeRange } from '../components/TimeRangeFilter';
+import type { TimeRange } from '../utils/dateRanges';
 
 /**
  * How many buckets, and how wide, for each period the stats tab offers.

@@ -533,6 +533,8 @@ export function updatePendingFinish(
  * The server activity now exists (finishSync created it from `start_payload`).
  * Recorded at once, in both tables: if the run dies right after, the next one
  * must upload points to this activity, not start a second one.
+ *
+ * @public used through `Pick<typeof trackingDb, …>` in finishSync, which knip cannot see.
  */
 export function bindPendingFinishServerActivity(
   clientActivityId: string,
@@ -552,7 +554,11 @@ export function bindPendingFinishServerActivity(
   });
 }
 
-/** The server has the activity: drop the entry and let the session be purged in due course. */
+/**
+ * The server has the activity: drop the entry and let the session be purged in due course.
+ *
+ * @public used through `Pick<typeof trackingDb, …>` in finishSync, which knip cannot see.
+ */
 export function completePendingFinish(clientActivityId: string): void {
   const database = getDb();
   if (!database) return;

@@ -121,7 +121,7 @@ import {
 } from '../screens/workouts';
 
 // Create navigation ref for use outside of React components (e.g., push notification handlers)
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 // Deep linking: /reset-password?token=XXX&email=YYY opens the reset flow
 // inside the Auth modal stack. Prefixes follow the app variant (app.config.ts):
@@ -173,9 +173,6 @@ function AuthNavigator() {
 }
 
 // Tab bar layout helpers (kept in separate modules to avoid circular deps)
-export { TAB_BAR_CONTENT_GAP } from './constants';
-export { useTabBarPadding } from './useTabBarPadding';
-
 /**
  * The raised centre button (design "Racefy v2" → TabBar). A circle lifted out of
  * the bar and ringed in the bar's own colour, so it reads as sitting on top of

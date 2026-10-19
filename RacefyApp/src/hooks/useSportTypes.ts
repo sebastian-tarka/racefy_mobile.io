@@ -5,12 +5,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { SportType } from '../types/api';
 import type { Ionicons } from '@expo/vector-icons';
-import {
-  convertApiGpsProfile,
-  getGpsProfileBySlug,
-  updateGpsProfileCache,
-  type GpsProfile,
-} from '../config/gpsProfiles';
+import { convertApiGpsProfile, getGpsProfileBySlug, type GpsProfile } from '../config/gpsProfiles';
 
 // Map sport slugs/names to Ionicon names (lowercase keys for case-insensitive matching)
 const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -122,7 +117,7 @@ let cachedLanguage: string | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Function to invalidate cache (called when language changes)
-export function invalidateSportTypesCache() {
+function invalidateSportTypesCache() {
   cachedSportTypes = null;
   cacheTimestamp = 0;
   cachedLanguage = null;
@@ -190,9 +185,6 @@ export function useSportTypes(): UseSportTypesResult {
         cachedSportTypes = sportsWithIcons;
         cacheTimestamp = Date.now();
         cachedLanguage = lang;
-
-        // Update GPS profile static cache for background service
-        updateGpsProfileCache(apiSports);
 
         // Log GPS profiles for each sport
         const sportsWithGps = apiSports.filter((s) => s.gps_profile);
@@ -394,8 +386,3 @@ function isValidIonicon(iconName: string): boolean {
   // Common Ionicon patterns
   return iconName.endsWith('-outline') || iconName.endsWith('-sharp') || !iconName.includes('-');
 }
-
-/**
- * Export fallback sports for use when API is not available
- */
-export { FALLBACK_SPORTS };

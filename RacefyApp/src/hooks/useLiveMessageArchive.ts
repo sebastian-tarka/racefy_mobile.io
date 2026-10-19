@@ -53,7 +53,7 @@ async function fetchAllMessages(activityId: number): Promise<LiveMessage[]> {
  * from before the API recorded it and null when there was no GPS fix yet, so
  * a card can list every message while the map only pins the ones it can place.
  */
-export function toPins(messages: LiveMessage[]): LiveMessagePin[] {
+function toPins(messages: LiveMessage[]): LiveMessagePin[] {
   return messages.flatMap((m) => {
     const position = m.live_position;
     if (!Array.isArray(position) || position.length < 2) return [];

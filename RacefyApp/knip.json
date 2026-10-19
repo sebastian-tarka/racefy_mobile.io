@@ -4,10 +4,12 @@
     "App.tsx",
     "plugins/*.js",
     "scripts/*.js",
-    "src/**/__tests__/**/*.{ts,tsx}"
+    "src/**/__tests__/**/*.{ts,tsx}",
+    "src/components/MapboxRouteMap.tsx"
   ],
   "project": ["*.{ts,tsx}", "src/**/*.{ts,tsx}", "plugins/**/*.js"],
-  "ignoreDependencies": [
-    "lint-staged"
-  ]
+  "ignoreDependencies": ["lint-staged", "expo-updates", "expo-asset"],
+  "rules": {
+    "types": "off"
+  }
 }
