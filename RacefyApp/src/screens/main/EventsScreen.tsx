@@ -29,6 +29,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/useEvents';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
@@ -60,6 +61,7 @@ type RewardFilterOption = 'all' | 'points' | 'coupon' | 'badge' | 'prize';
 export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort } = useUnits();
   const tabBarPaddingBottom = useTabBarPadding();
   const { isAuthenticated } = useAuth();
   const {
@@ -564,11 +566,6 @@ export function EventsScreen({ navigation, route }: Props) {
     }
   };
 
-  const formatDistance = (meters: number): string => {
-    if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
-    return `${meters} m`;
-  };
-
   type StatItem = {
     icon: keyof typeof Ionicons.glyphMap;
     color: string;
@@ -668,7 +665,7 @@ export function EventsScreen({ navigation, route }: Props) {
           {
             icon: 'navigate',
             color: colors.success,
-            value: s ? formatDistance(s.activity_totals.distance) : '0',
+            value: s ? formatDistanceShort(s.activity_totals.distance) : '0',
             label: t('events.stats.distance'),
           },
           {

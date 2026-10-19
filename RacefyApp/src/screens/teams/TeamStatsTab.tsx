@@ -35,7 +35,7 @@ const RANKING_SORT_OPTIONS: { value: RankingSortBy; labelKey: string }[] = [
 export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { formatDistance } = useUnits();
+  const { formatDistanceShort, getDistanceValue, getDistanceUnit } = useUnits();
   const { getSportById } = useSportTypes();
 
   const [period, setPeriod] = useState<StatsPeriod>('this_month');
@@ -56,11 +56,16 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
     [t],
   );
 
-  const formatDist = useCallback((meters: number) => {
-    if (meters >= 1000)
-      return `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} km`;
-    return `${meters} m`;
-  }, []);
+  const formatDist = useCallback(
+    (meters: number) => {
+      if (meters < 1000) return formatDistanceShort(meters);
+      const value = getDistanceValue(meters).toLocaleString(undefined, {
+        maximumFractionDigits: 0,
+      });
+      return `${value} ${getDistanceUnit()}`;
+    },
+    [formatDistanceShort, getDistanceValue, getDistanceUnit],
+  );
 
   const formatCalories = useCallback((cal: number) => {
     if (cal >= 1000) return `${(cal / 1000).toFixed(1)}k`;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../hooks/useTheme';
+import { useUnits } from '../hooks/useUnits';
 import { borderRadius, fontSize, spacing } from '../theme';
 import { Avatar } from './Avatar';
 import type { LiveBroadcast } from '../types/api';
@@ -12,8 +13,6 @@ interface Props {
   broadcast: LiveBroadcast;
   onPress: () => void;
 }
-
-const fmtKm = (meters: number) => `${(Math.round(meters / 100) / 10).toFixed(1)} km`;
 
 const fmtDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
@@ -25,6 +24,7 @@ const fmtDuration = (seconds: number) => {
 export function LiveBroadcastCard({ broadcast, onPress }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   const { user, stats, position } = broadcast;
   // `null` position means the athlete is inside a privacy zone right now.
@@ -52,7 +52,7 @@ export function LiveBroadcastCard({ broadcast, onPress }: Props) {
         <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
           {[
             broadcast.sport_type?.name,
-            stats ? fmtKm(stats.distance) : null,
+            stats ? formatDistanceFromKm(stats.distance / 1000) : null,
             stats ? fmtDuration(stats.duration) : null,
           ]
             .filter(Boolean)

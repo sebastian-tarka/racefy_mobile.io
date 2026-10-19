@@ -21,7 +21,7 @@ interface SharedPostBlockProps {
 export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPostBlockProps) {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
-  const { units } = useUnits();
+  const { units, formatDistanceShort } = useUnits();
   const strength = hasStrengthSession(sharedPost.activity?.strength_session)
     ? sharedPost.activity!.strength_session!
     : null;
@@ -94,7 +94,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
           />
           {sharedPost.activity.distance > 0 && (
             <Text style={[styles.activityStat, { color: colors.textSecondary }]}>
-              {(sharedPost.activity.distance / 1000).toFixed(1)} km
+              {formatDistanceShort(sharedPost.activity.distance)}
             </Text>
           )}
           {strength && (
