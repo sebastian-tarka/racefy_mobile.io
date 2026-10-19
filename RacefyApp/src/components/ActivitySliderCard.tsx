@@ -11,6 +11,7 @@ import { borderRadius, componentSize, fontSize, spacing } from '../theme';
 import { formatDurationCompact } from '../utils/formatDuration';
 import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
+import { useTranslation } from 'react-i18next';
 
 interface ActivitySliderCardProps {
   activity: Activity;
@@ -23,6 +24,7 @@ export function ActivitySliderCard({
   onPress,
   isAuthenticated = true,
 }: ActivitySliderCardProps) {
+  const { t } = useTranslation();
   const {
     getDistanceValue,
     getDistanceUnit,
@@ -109,7 +111,7 @@ export function ActivitySliderCard({
       <BlurView intensity={30} style={styles.lockedBadgeBlur}>
         <View style={styles.lockedBadgeContent}>
           <Ionicons name="lock-closed" size={14} color="#fff" />
-          <Text style={styles.lockedBadgeText}>Sign in</Text>
+          <Text style={styles.lockedBadgeText}>{t('common.signIn')}</Text>
         </View>
       </BlurView>
     </View>

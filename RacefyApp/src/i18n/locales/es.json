@@ -2012,7 +2012,19 @@
     "photoOverlayFailed": "Error al generar la superposición de foto",
     "savedToGallery": "¡Imagen guardada en la galería!",
     "saveFailed": "Error al guardar imagen",
-    "saveToGallery": "Guardar en galería"
+    "saveToGallery": "Guardar en galería",
+    "alerts": {
+      "downloadFailedTitle": "Error de descarga",
+      "downloadFailedBody": "No se pudo descargar la imagen. Se compartirá solo el texto.",
+      "fileNotFoundTitle": "Archivo no encontrado",
+      "fileNotFoundBody": "No se encontró el archivo de la imagen. Se compartirá solo el texto.",
+      "sharedTitle": "✅ Imagen compartida",
+      "sharedCopyLinkBody": "La imagen se ha compartido. Toca «Copiar enlace» abajo para copiar el texto y el enlace en tu mensaje.",
+      "sharedPasteBody": "¡Imagen compartida! Pega el texto manualmente si lo necesitas.",
+      "sharedCopySectionBody": "La imagen se ha compartido. Puedes copiar el texto y el enlace en la sección «Copiar enlace» de abajo.",
+      "failedTitle": "❌ Error al compartir",
+      "failedBody": "No se pudo compartir la imagen. Usa «Compartir solo texto» o guarda la imagen y compártela manualmente."
+    }
   },
   "training": {
     "title": "Planes de entrenamiento",
@@ -3497,5 +3509,27 @@
     "unmuteAction": "Reactivar notificaciones",
     "unmuteDescription": "Vuelve a recibir sus avisos de sesión, directo y publicación.",
     "failed": "No se ha podido cambiar el ajuste de notificaciones"
+  },
+  "activityCharts": {
+    "splitTimes": "Tiempos parciales:",
+    "fastest": "Más rápido",
+    "average": "Promedio",
+    "slowest": "Más lento",
+    "totalGain": "Desnivel positivo",
+    "totalLoss": "Desnivel negativo",
+    "net": "Neto",
+    "min": "Mín.",
+    "avg": "Prom.",
+    "max": "Máx."
+  },
+  "activityCard": {
+    "viewRoute": "Ver ruta"
+  },
+  "video": {
+    "loadFailed": "No se pudo cargar el video"
+  },
+  "errorBoundary": {
+    "title": "Algo salió mal",
+    "message": "Error inesperado de la aplicación"
   }
 }

@@ -2012,7 +2012,19 @@
     "photoOverlayFailed": "Failed to generate photo overlay",
     "savedToGallery": "Image saved to gallery!",
     "saveFailed": "Failed to save image",
-    "saveToGallery": "Save to Gallery"
+    "saveToGallery": "Save to Gallery",
+    "alerts": {
+      "downloadFailedTitle": "Download failed",
+      "downloadFailedBody": "Could not download the image. Sharing text only instead.",
+      "fileNotFoundTitle": "File not found",
+      "fileNotFoundBody": "The image file could not be found. Sharing text only instead.",
+      "sharedTitle": "✅ Image shared",
+      "sharedCopyLinkBody": "The image has been shared. Tap \"Copy Link\" below to copy the text and link to paste in your message.",
+      "sharedPasteBody": "Image shared! Paste the text manually if needed.",
+      "sharedCopySectionBody": "The image has been shared. You can copy the text and link from the \"Copy Link\" section below.",
+      "failedTitle": "❌ Share failed",
+      "failedBody": "Could not share the image. Use \"Share Text Only\" or save the image and share it manually."
+    }
   },
   "training": {
     "title": "Training Plans",
@@ -3497,5 +3509,27 @@
     "unmuteAction": "Unmute notifications",
     "unmuteDescription": "Start getting their session, live and post notifications again.",
     "failed": "Could not change the notification setting"
+  },
+  "activityCharts": {
+    "splitTimes": "Split times:",
+    "fastest": "Fastest",
+    "average": "Average",
+    "slowest": "Slowest",
+    "totalGain": "Total Gain",
+    "totalLoss": "Total Loss",
+    "net": "Net",
+    "min": "Min",
+    "avg": "Avg",
+    "max": "Max"
+  },
+  "activityCard": {
+    "viewRoute": "View Route"
+  },
+  "video": {
+    "loadFailed": "Failed to load video"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "Unexpected app error"
   }
 }

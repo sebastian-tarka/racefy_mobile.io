@@ -2036,7 +2036,19 @@
     "photoOverlayFailed": "Nie udało się wygenerować obrazu ze zdjęciem",
     "savedToGallery": "Obraz zapisany w galerii!",
     "saveFailed": "Nie udało się zapisać obrazu",
-    "saveToGallery": "Zapisz w galerii"
+    "saveToGallery": "Zapisz w galerii",
+    "alerts": {
+      "downloadFailedTitle": "Nie udało się pobrać",
+      "downloadFailedBody": "Nie udało się pobrać zdjęcia. Udostępniamy sam tekst.",
+      "fileNotFoundTitle": "Nie znaleziono pliku",
+      "fileNotFoundBody": "Nie znaleziono pliku zdjęcia. Udostępniamy sam tekst.",
+      "sharedTitle": "✅ Zdjęcie udostępnione",
+      "sharedCopyLinkBody": "Zdjęcie zostało udostępnione. Stuknij „Kopiuj link” poniżej, aby skopiować tekst i link do wiadomości.",
+      "sharedPasteBody": "Zdjęcie udostępnione! W razie potrzeby wklej tekst ręcznie.",
+      "sharedCopySectionBody": "Zdjęcie zostało udostępnione. Tekst i link skopiujesz w sekcji „Kopiuj link” poniżej.",
+      "failedTitle": "❌ Nie udało się udostępnić",
+      "failedBody": "Nie udało się udostępnić zdjęcia. Użyj „Udostępnij sam tekst” albo zapisz zdjęcie i udostępnij je ręcznie."
+    }
   },
   "training": {
     "title": "Plany Treningowe",
@@ -3548,5 +3560,27 @@
     "unmuteAction": "Włącz powiadomienia",
     "unmuteDescription": "Znów będziesz dostawać powiadomienia o treningach, transmisjach i wpisach.",
     "failed": "Nie udało się zmienić ustawienia powiadomień"
+  },
+  "activityCharts": {
+    "splitTimes": "Czasy odcinków:",
+    "fastest": "Najszybszy",
+    "average": "Średnio",
+    "slowest": "Najwolniejszy",
+    "totalGain": "Suma podejść",
+    "totalLoss": "Suma zejść",
+    "net": "Bilans",
+    "min": "Min.",
+    "avg": "Śr.",
+    "max": "Maks."
+  },
+  "activityCard": {
+    "viewRoute": "Zobacz trasę"
+  },
+  "video": {
+    "loadFailed": "Nie udało się wczytać wideo"
+  },
+  "errorBoundary": {
+    "title": "Coś poszło nie tak",
+    "message": "Nieoczekiwany błąd aplikacji"
   }
 }
