@@ -4,9 +4,8 @@ import type { ApiBase } from './base';
 type Constructable<T = object> = new (...args: any[]) => T;
 
 /**
- * An AbortSignal that fires after `ms`. The API client has no timeout of its
- * own, and `fetch` on a connected-but-dead network can hang for a minute —
- * unacceptable behind a Stop button. An aborted request throws without a
+ * An AbortSignal that fires after `ms`. The API client's default timeout is a
+ * minute — far too long behind a Stop button, so these calls pass a shorter one. An aborted request throws without a
  * `.status`, i.e. it looks like any other network failure to the caller.
  */
 function timeoutSignal(ms?: number): AbortSignal | undefined {
