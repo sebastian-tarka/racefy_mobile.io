@@ -30,7 +30,7 @@ export function ActivitySliderCard({
     formatPaceFromDistanceTime,
     getPaceUnit,
   } = useUnits();
-  const sportTheme = getSportTheme(activity.sport_type?.name);
+  const sportTheme = getSportTheme(activity.sport_type);
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
