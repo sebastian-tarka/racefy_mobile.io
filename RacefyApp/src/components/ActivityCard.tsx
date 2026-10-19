@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns/format';
 import { Card } from './Card';
@@ -189,11 +190,14 @@ function ActivityCardBase({
                   fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined,
               }}
               style={styles.mapImage}
-              resizeMode={activity.route_map_url ? 'cover' : 'contain'}
+              contentFit={activity.route_map_url ? 'cover' : 'contain'}
+              cachePolicy="memory-disk"
             />
             <View style={[styles.mapOverlay, { backgroundColor: colors.primary + '10' }]}>
               <Ionicons name="map-outline" size={16} color={colors.primary} />
-              <Text style={[styles.mapText, { color: colors.primary }]}>View Route</Text>
+              <Text style={[styles.mapText, { color: colors.primary }]}>
+                {t('activityCard.viewRoute')}
+              </Text>
             </View>
           </View>
         )}
@@ -205,7 +209,9 @@ function ActivityCardBase({
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatDistance(activity.distance)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Distance</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('activity.stats.distance')}
+            </Text>
           </View>
 
           <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
@@ -215,7 +221,9 @@ function ActivityCardBase({
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatDuration(activity.duration)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Duration</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('activity.stats.duration')}
+            </Text>
           </View>
 
           <View style={[styles.statDivider, { backgroundColor: colors.borderLight }]} />
@@ -225,7 +233,9 @@ function ActivityCardBase({
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatPaceWithUnit(activity.distance, activity.duration)}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pace</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {t('activityDetail.pace')}
+            </Text>
           </View>
         </View>
 
@@ -263,7 +273,9 @@ function ActivityCardBase({
                   <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                     {formatElevation(activity.elevation_gain!)}
                   </Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Elevation</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('recording.elevation')}
+                  </Text>
                 </View>
               )}
 
@@ -280,7 +292,9 @@ function ActivityCardBase({
                   <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                     {activity.calories}
                   </Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Calories</Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('activityDetail.calories')}
+                  </Text>
                 </View>
               )}
 

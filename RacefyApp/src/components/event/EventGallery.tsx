@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { ImageViewer } from '../ImageViewer';
 import { useTheme } from '../../hooks/useTheme';
@@ -36,7 +37,14 @@ export function EventGallery({ photos }: { photos: Photo[] | undefined }) {
               activeOpacity={0.85}
               onPress={() => uri && setViewerUri(uri)}
             >
-              {uri && <Image source={{ uri }} style={styles.image} resizeMode="cover" />}
+              {uri && (
+                <Image
+                  source={{ uri }}
+                  style={styles.image}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                />
+              )}
               {showOverlay && (
                 <View style={styles.overlay}>
                   <Text style={styles.overlayText}>+{remaining}</Text>

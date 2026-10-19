@@ -22,7 +22,7 @@ function ActivityCompactCardBase({
 }: ActivityCompactCardProps) {
   const { colors } = useTheme();
   const { formatDistanceShort } = useUnits();
-  const sportTheme = getSportTheme(activity.sport_type?.name);
+  const sportTheme = getSportTheme(activity.sport_type);
   const sportColor = sportTheme.color;
 
   return (

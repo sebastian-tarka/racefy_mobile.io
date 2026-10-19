@@ -105,4 +105,75 @@ describe('usePaginatedFetch', () => {
     expect(fetchPage).toHaveBeenCalledTimes(1);
     expect(result.current.data).toEqual(['a']);
   });
+
+  it('a dep change while a page is in flight loads the new deps and drops the old answer', async () => {
+    // Filter chips: switch "all" → "earned" before the "all" page has arrived.
+    const pending: Record<string, (v: ReturnType<typeof page<string>>) => void> = {};
+    const fetchPage = jest.fn(
+      (filter: string) =>
+        new Promise<ReturnType<typeof page<string>>>((resolve) => {
+          pending[filter] = resolve;
+        }),
+    );
+    const { result, rerender } = renderHook(
+      ({ filter }: { filter: string }) =>
+        usePaginatedFetch(() => fetchPage(filter), { deps: [filter] }),
+      { initialProps: { filter: 'all' } },
+    );
+    expect(fetchPage).toHaveBeenCalledWith('all');
+
+    rerender({ filter: 'earned' });
+    expect(fetchPage).toHaveBeenCalledWith('earned');
+    // A fresh load for the new filter, not a pull-to-refresh.
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isRefreshing).toBe(false);
+
+    await act(async () => pending.all(page(['all-1'], 1, 1)));
+    expect(result.current.data).toEqual([]);
+
+    await act(async () => pending.earned(page(['earned-1'], 1, 1)));
+    expect(result.current.data).toEqual(['earned-1']);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('a refresh supersedes a request still in flight (search as you type)', async () => {
+    const pending: Record<string, (v: ReturnType<typeof page<string>>) => void> = {};
+    let query = 'a';
+    const fetchPage = jest.fn(
+      () =>
+        new Promise<ReturnType<typeof page<string>>>((resolve) => {
+          pending[query] = resolve;
+        }),
+    );
+    const { result } = renderHook(() => usePaginatedFetch(() => fetchPage(), { autoLoad: false }));
+
+    act(() => {
+      result.current.refresh();
+    });
+    query = 'ab';
+    act(() => {
+      result.current.refresh();
+    });
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+
+    // The newer answer lands first, then the stale one — which must be dropped.
+    await act(async () => pending.ab(page(['ab-1'], 1, 1)));
+    await act(async () => pending.a(page(['a-1'], 1, 1)));
+    expect(result.current.data).toEqual(['ab-1']);
+  });
+
+  it('loadMore is still ignored while a page is loading', async () => {
+    let resolveFirst: (v: ReturnType<typeof page<string>>) => void = () => {};
+    const fetchPage = jest.fn(
+      (p: number) =>
+        new Promise<ReturnType<typeof page<string>>>((resolve) => {
+          if (p === 1) resolveFirst = resolve;
+          else resolve(page(['x'], p, 3));
+        }),
+    );
+    const { result } = renderHook(() => usePaginatedFetch(fetchPage));
+    act(() => result.current.loadMore());
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    await act(async () => resolveFirst(page(['a'], 1, 3)));
+  });
 });

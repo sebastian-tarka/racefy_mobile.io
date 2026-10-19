@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, fontSize } from '../theme';
 import { logger } from '../services/logger';
+import { useTranslation } from 'react-i18next';
 
 interface VideoPlayerProps {
   uri: string;
@@ -26,6 +27,7 @@ interface VideoPlayerProps {
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayerProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -169,7 +171,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
 
           {error && (
             <View style={styles.loadingContainer}>
-              <Text style={styles.errorText}>Failed to load video</Text>
+              <Text style={styles.errorText}>{t('video.loadFailed')}</Text>
               <Text style={styles.errorDetail}>{error}</Text>
               <Text style={styles.errorDetail} numberOfLines={2}>
                 {uri}

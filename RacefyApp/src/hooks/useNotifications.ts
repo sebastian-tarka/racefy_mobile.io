@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { Notification } from '../types/api';
+import { useForegroundInterval } from './useForegroundInterval';
 
 export function useNotifications(pollInterval = 30000) {
   const { isAuthenticated } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const appStateRef = useRef(AppState.currentState);
 
   const fetchUnreadCount = useCallback(async () => {
     if (!isAuthenticated) {
@@ -54,38 +52,12 @@ export function useNotifications(pollInterval = 30000) {
     }
   }, []);
 
-  // Handle app state changes
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      // App has come to the foreground
-      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        // App foregrounded, refreshing count
-        fetchUnreadCount();
-      }
-      appStateRef.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [fetchUnreadCount]);
-
-  // Setup polling
   useEffect(() => {
     fetchUnreadCount();
+  }, [fetchUnreadCount]);
 
-    if (isAuthenticated) {
-      intervalRef.current = setInterval(fetchUnreadCount, pollInterval);
-      // Started polling
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        // Stopped polling
-      }
-    };
-  }, [fetchUnreadCount, isAuthenticated, pollInterval]);
+  // Polls only in the foreground; refreshes at once when the app comes back.
+  useForegroundInterval(fetchUnreadCount, isAuthenticated ? pollInterval : null);
 
   return {
     unreadCount,

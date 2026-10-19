@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   Alert,
   DeviceEventEmitter,
@@ -49,26 +49,9 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
     { label: t('routes.filters.nearby'), value: 'nearby' },
   ];
 
-  const [activeFilter, setActiveFilter] = useState<FilterOption>('my');
-
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  useEffect(() => {
-    changeFilter(activeFilter);
-  }, [activeFilter]);
-
-  // Trigger fetch when filter changes
-  useEffect(() => {
-    if (filter === activeFilter) {
-      refresh();
-    }
-  }, [filter]);
-
-  const handleFilterChange = useCallback((value: FilterOption) => {
-    setActiveFilter(value);
-  }, []);
+  // The hook loads on mount and again (from page 1) whenever the filter changes.
+  const activeFilter: FilterOption = filter;
+  const handleFilterChange = changeFilter;
 
   const handleRoutePress = useCallback(
     (route: PlannedRoute) => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { fontSize } from '../theme';
@@ -21,7 +21,18 @@ const BRAND_GREEN = '#10b981';
 interface AnimatedSplashProps {
   /** Called once the exit animation has finished so the host can unmount this overlay. */
   onFinish: () => void;
+  /**
+   * The app underneath can be shown (auth restored). The splash leaves as soon as this
+   * is true and the logo + wordmark have fully appeared (MIN_SHOW_MS) — not after a fixed
+   * MAX_SHOW_MS every launch. Without it, it always waits MAX_SHOW_MS.
+   */
+  ready?: boolean;
 }
+
+/** Logo spring + wordmark fade-in (350 + 450 ms) have finished by then. */
+const MIN_SHOW_MS = 1100;
+/** The previous fixed duration — still the upper bound when the app is slow. */
+const MAX_SHOW_MS = 1700;
 
 /**
  * Animated splash overlay that takes over from the static native splash screen.
@@ -30,7 +41,7 @@ interface AnimatedSplashProps {
  * up beneath it, briefly holds, then the whole overlay fades out and zooms
  * slightly to reveal the app underneath.
  */
-export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
+export function AnimatedSplash({ onFinish, ready = false }: AnimatedSplashProps) {
   const containerOpacity = useSharedValue(1);
   const logoScale = useSharedValue(0.7);
   const logoOpacity = useSharedValue(0);
@@ -53,26 +64,39 @@ export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
       withTiming(0, { duration: 450, easing: Easing.out(Easing.cubic) }),
     );
 
-    const exitTimer = setTimeout(() => {
-      logoScale.value = withTiming(1.12, {
-        duration: 480,
-        easing: Easing.in(Easing.cubic),
-      });
-      containerOpacity.value = withTiming(
-        0,
-        { duration: 480, easing: Easing.in(Easing.quad) },
-        (finished) => {
-          if (finished) {
-            runOnJS(onFinish)();
-          }
-        },
-      );
-    }, 1700);
-
-    return () => clearTimeout(exitTimer);
+    const minTimer = setTimeout(() => setMinShown(true), MIN_SHOW_MS);
+    const maxTimer = setTimeout(() => setMaxShown(true), MAX_SHOW_MS);
+    return () => {
+      clearTimeout(minTimer);
+      clearTimeout(maxTimer);
+    };
     // Shared values are stable; run this setup exactly once on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const [minShown, setMinShown] = useState(false);
+  const [maxShown, setMaxShown] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const shouldExit = maxShown || (minShown && ready);
+
+  useEffect(() => {
+    if (!shouldExit || exiting) return;
+    setExiting(true);
+    logoScale.value = withTiming(1.12, {
+      duration: 480,
+      easing: Easing.in(Easing.cubic),
+    });
+    containerOpacity.value = withTiming(
+      0,
+      { duration: 480, easing: Easing.in(Easing.quad) },
+      (finished) => {
+        if (finished) {
+          runOnJS(onFinish)();
+        }
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldExit, exiting]);
 
   const containerStyle = useAnimatedStyle(() => ({
     opacity: containerOpacity.value,

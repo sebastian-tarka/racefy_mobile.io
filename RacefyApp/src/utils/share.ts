@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import type { ShareLinkResponse } from '../types/api';
 import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
+import i18n from '../i18n';
 
 export interface ShareActivityWithImageOptions {
   activityId: number;
@@ -55,9 +56,11 @@ export async function shareActivityWithImage({
     if (!localUri) {
       // Fallback to text-only if download fails
       logger.warn('general', 'Image download failed, sharing text only');
-      Alert.alert('Download Failed', 'Could not download the image. Sharing text only instead.', [
-        { text: 'OK' },
-      ]);
+      Alert.alert(
+        i18n.t('share.alerts.downloadFailedTitle'),
+        i18n.t('share.alerts.downloadFailedBody'),
+        [{ text: 'OK' }],
+      );
       await Share.share({
         message,
         title: shareData.title,
@@ -71,8 +74,8 @@ export async function shareActivityWithImage({
       if (!fileInfo.exists) {
         logger.error('general', 'Downloaded file does not exist at share time', { localUri });
         Alert.alert(
-          'File Not Found',
-          'The image file could not be found. Sharing text only instead.',
+          i18n.t('share.alerts.fileNotFoundTitle'),
+          i18n.t('share.alerts.fileNotFoundBody'),
           [{ text: 'OK' }],
         );
         await Share.share({
@@ -116,11 +119,9 @@ export async function shareActivityWithImage({
 
       logger.info('general', 'Image shared successfully via expo-sharing');
 
-      Alert.alert(
-        '✅ Image Shared',
-        'The image has been shared. Tap "Copy Link" below to copy the text and link to paste in your message.',
-        [{ text: 'OK' }],
-      );
+      Alert.alert(i18n.t('share.alerts.sharedTitle'), i18n.t('share.alerts.sharedCopyLinkBody'), [
+        { text: 'OK' },
+      ]);
     } catch (shareError: any) {
       logger.warn('general', 'expo-sharing failed, trying native Share as fallback', {
         error: shareError.message,
@@ -157,7 +158,7 @@ export async function shareActivityWithImage({
 
         logger.info('general', 'Image shared successfully via native Share');
 
-        Alert.alert('✅ Image Shared', 'Image shared! Paste the text manually if needed.', [
+        Alert.alert(i18n.t('share.alerts.sharedTitle'), i18n.t('share.alerts.sharedPasteBody'), [
           { text: 'OK' },
         ]);
       } catch (nativeShareError: any) {
@@ -166,11 +167,9 @@ export async function shareActivityWithImage({
           nativeShareError: nativeShareError.message,
         });
 
-        Alert.alert(
-          '❌ Share Failed',
-          'Could not share the image. Use "Share Text Only" button or save the image and share manually.',
-          [{ text: 'OK' }],
-        );
+        Alert.alert(i18n.t('share.alerts.failedTitle'), i18n.t('share.alerts.failedBody'), [
+          { text: 'OK' },
+        ]);
 
         throw nativeShareError;
       }
@@ -318,8 +317,8 @@ export async function shareToApp(
 
       // Show message about copying text
       Alert.alert(
-        '✅ Image Shared',
-        'The image has been shared. You can copy the text and link from the "Copy Link" section below.',
+        i18n.t('share.alerts.sharedTitle'),
+        i18n.t('share.alerts.sharedCopySectionBody'),
         [{ text: 'OK' }],
       );
     } else {

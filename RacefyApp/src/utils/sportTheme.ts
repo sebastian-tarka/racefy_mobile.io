@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { sportColor } from './sportColor';
 
 export interface SportTheme {
   color: string;
@@ -7,66 +8,50 @@ export interface SportTheme {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-const sportThemes: Record<string, SportTheme> = {
-  running: {
-    color: '#10b981',
-    gradient: ['#10b981', '#059669'],
-    accent: '#34d399',
-    icon: 'walk',
-  },
-  cycling: {
-    color: '#3b82f6',
-    gradient: ['#3b82f6', '#1d4ed8'],
-    accent: '#60a5fa',
-    icon: 'bicycle',
-  },
-  swimming: {
-    color: '#06b6d4',
-    gradient: ['#06b6d4', '#0891b2'],
-    accent: '#22d3ee',
-    icon: 'water',
-  },
-  gym: {
-    color: '#f97316',
-    gradient: ['#f97316', '#ea580c'],
-    accent: '#fb923c',
+/** Icon per sport family; the colour comes from the design palette (sportColor). */
+const ICONS: { match: (name: string) => boolean; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { match: (n) => n.includes('run') || n.includes('jog'), icon: 'walk' },
+  { match: (n) => n.includes('cycl') || n.includes('bike'), icon: 'bicycle' },
+  { match: (n) => n.includes('swim'), icon: 'water' },
+  {
+    match: (n) => n.includes('gym') || n.includes('weight') || n.includes('fitness'),
     icon: 'barbell',
   },
-  yoga: {
-    color: '#a855f7',
-    gradient: ['#a855f7', '#7c3aed'],
-    accent: '#c084fc',
-    icon: 'body',
-  },
-  hiking: {
-    color: '#84cc16',
-    gradient: ['#84cc16', '#65a30d'],
-    accent: '#a3e635',
+  { match: (n) => n.includes('yoga') || n.includes('pilates'), icon: 'body' },
+  {
+    match: (n) => n.includes('hik') || n.includes('walk') || n.includes('trek'),
     icon: 'trail-sign',
   },
-  default: {
-    color: '#6366f1',
-    gradient: ['#6366f1', '#4f46e5'],
-    accent: '#818cf8',
-    icon: 'fitness',
-  },
-};
+];
+
+/** Mix a #RRGGBB colour towards black (amount < 0) or white (amount > 0). */
+export function shade(hex: string, amount: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const target = amount < 0 ? 0 : 255;
+  const t = Math.abs(amount);
+  const mix = (c: number) => Math.round(c + (target - c) * t);
+  const r = mix((n >> 16) & 0xff);
+  const g = mix((n >> 8) & 0xff);
+  const b = mix(n & 0xff);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
 
 /**
- * Returns the full sport theme (color, gradient, accent, icon) for a given sport name.
+ * Colour, gradient, accent and icon for a sport. The colour is the design palette's
+ * (utils/sportColor — "Racefy v2"), so a sport looks the same on Home cards as in the
+ * profile charts and filters; gradient and accent are darker/lighter shades of it.
  */
-export function getSportTheme(sportName?: string): SportTheme {
-  if (!sportName) return sportThemes.default;
-  const name = sportName.toLowerCase();
-
-  if (name.includes('run') || name.includes('jog')) return sportThemes.running;
-  if (name.includes('cycl') || name.includes('bike')) return sportThemes.cycling;
-  if (name.includes('swim')) return sportThemes.swimming;
-  if (name.includes('gym') || name.includes('weight') || name.includes('fitness'))
-    return sportThemes.gym;
-  if (name.includes('yoga') || name.includes('pilates')) return sportThemes.yoga;
-  if (name.includes('hik') || name.includes('walk') || name.includes('trek'))
-    return sportThemes.hiking;
-
-  return sportThemes.default;
+export function getSportTheme(
+  sport?: { slug?: string | null; name?: string | null; id?: number } | null,
+): SportTheme {
+  const color = sportColor({ slug: sport?.slug ?? sport?.name, id: sport?.id });
+  // Icons were always matched on the display name ("Mountain bike" → bicycle); the slug
+  // alone ("mtb") would miss that, so both are searched.
+  const name = `${sport?.slug ?? ''} ${sport?.name ?? ''}`.toLowerCase();
+  return {
+    color,
+    gradient: [color, shade(color, -0.2)],
+    accent: shade(color, 0.25),
+    icon: ICONS.find((i) => i.match(name))?.icon ?? 'fitness',
+  };
 }

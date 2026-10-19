@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { api } from '../services/api';
 import { useFetch } from './useFetch';
 import type { EventStandingEntry, EventStandingsResponse } from '../types/api';
+import { useForegroundInterval } from './useForegroundInterval';
 
 /** Read a metric uniformly across single-activity and aggregated standings rows. */
 export function normalizeStanding(entry: EventStandingEntry): {
@@ -49,14 +50,8 @@ export function useEventStandings(eventId: number, options: UseEventStandingsOpt
     },
   );
 
-  // Polling — kept in a ref so the interval callback stays stable.
-  const refetchRef = useRef(refetch);
-  refetchRef.current = refetch;
-  useEffect(() => {
-    if (!enabled || pollMs <= 0) return;
-    const id = setInterval(() => refetchRef.current(), pollMs);
-    return () => clearInterval(id);
-  }, [enabled, pollMs, eventId]);
+  // Polling, foreground only; refreshes at once when the app comes back.
+  useForegroundInterval(refetch, enabled && pollMs > 0 ? pollMs : null);
 
   const individual = useMemo(() => data?.individual_standings ?? [], [data]);
 

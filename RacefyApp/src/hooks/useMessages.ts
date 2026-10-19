@@ -3,13 +3,13 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { emitRefresh } from '../services/refreshEvents';
 import type { Message } from '../types/api';
+import { useForegroundInterval } from './useForegroundInterval';
 
 export function useMessages(conversationId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastMessageIdRef = useRef<number | null>(null);
 
   // Fetch messages (API returns oldest first for chat display)
@@ -89,19 +89,13 @@ export function useMessages(conversationId: number) {
     }
   }, [conversationId]);
 
-  // Initial fetch and polling setup
   useEffect(() => {
     fetchMessages();
+  }, [conversationId, fetchMessages]);
 
-    // Poll for new messages every 5 seconds
-    pollIntervalRef.current = setInterval(pollForNewMessages, 5000);
-
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-    };
-  }, [conversationId, fetchMessages, pollForNewMessages]);
+  // Poll for new messages every 5 s — only while the app is in the foreground (a chat
+  // left open used to keep polling in the background); catches up at once on return.
+  useForegroundInterval(pollForNewMessages, 5000);
 
   return {
     messages,

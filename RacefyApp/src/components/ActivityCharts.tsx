@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -32,6 +33,7 @@ function useChartWidth(): number {
  * Line going down = getting faster (better performance)
  */
 export function PaceChart({ splits, title }: PaceChartProps) {
+  const { t } = useTranslation();
   const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel, getDistanceUnit } = useUnits();
@@ -119,7 +121,9 @@ export function PaceChart({ splits, title }: PaceChartProps) {
 
       {/* Show actual pace values below chart for clarity */}
       <View style={styles.paceValuesContainer}>
-        <Text style={[styles.paceValuesTitle, { color: colors.textSecondary }]}>Split times:</Text>
+        <Text style={[styles.paceValuesTitle, { color: colors.textSecondary }]}>
+          {t('activityCharts.splitTimes')}
+        </Text>
         <View style={styles.paceValuesGrid}>
           {splits.map((split) => (
             <View key={split.kilometer} style={styles.paceValueItem}>
@@ -136,19 +140,25 @@ export function PaceChart({ splits, title }: PaceChartProps) {
 
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Fastest</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.fastest')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.primary }]}>
             {formatTime(fastestDuration)}
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Average</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.average')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {formatTime(avgDuration)}
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Slowest</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.slowest')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {formatTime(slowestDuration)}
           </Text>
@@ -162,6 +172,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
  * Elevation Chart - Shows elevation gain/loss per kilometer
  */
 export function ElevationChart({ splits, title }: ElevationChartProps) {
+  const { t } = useTranslation();
   const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel, getElevationUnit, formatElevation } = useUnits();
@@ -230,19 +241,25 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
       <Text style={[styles.axisLabel, { color: colors.textMuted }]}>{getSplitLabel()}</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Gain</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.totalGain')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {formatElevation(totalElevationGain)}
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Loss</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.totalLoss')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {formatElevation(totalElevationLoss)}
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Net</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.net')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {formatElevation(totalElevationGain - totalElevationLoss)}
           </Text>
@@ -256,6 +273,7 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
  * Heart Rate Chart - Shows average heart rate per kilometer
  */
 export function HeartRateChart({ splits, title }: HeartRateChartProps) {
+  const { t } = useTranslation();
   const chartWidth = useChartWidth();
   const { colors } = useTheme();
   const { getSplitLabel } = useUnits();
@@ -325,19 +343,25 @@ export function HeartRateChart({ splits, title }: HeartRateChartProps) {
       <Text style={[styles.axisLabel, { color: colors.textMuted }]}>{getSplitLabel()}</Text>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.min')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {Math.round(minHR)} bpm
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Avg</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.avg')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {Math.round(avgHR)} bpm
           </Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Max</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+            {t('activityCharts.max')}
+          </Text>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {Math.round(maxHR)} bpm
           </Text>
