@@ -112,7 +112,7 @@ Lokalny build release: APK 227,9 → 108,6 MB; bundle Hermes 11,9 → 10,7 MB.
 
 Do sprawdzenia na telefonie (build z EAS — R8 działa tylko w release):
 - [x] Build `production-apk` przechodzi w EAS (heap Gradle, R8) — 1.25.1, versionCode 42, APK 108,6 MB (2026-10-19)
-- [ ] Build iOS przechodzi w EAS
+- [x] Build iOS przechodzi w EAS — 1.25.1, build 34, wysłany do TestFlight (2026-10-19)
 - [ ] Po zalogowaniu: mapy Mapbox, paywall i zakup (RevenueCat), logowanie Google, Health Connect
 - [ ] **Nagrywanie z zamkniętą aplikacją** (lokalizacja w tle + wysyłka offline przy zamkniętej
       aplikacji) — to ścieżka, którą psuł brakujący `RNHeadlessAppLoader`
