@@ -121,7 +121,10 @@ export function usePaginatedFetch<T>(
 
   const fetchAt = useCallback(
     async (targetPage: number, mode: 'replace' | 'append') => {
-      if (!enabled || isLoadingRef.current) return;
+      if (!enabled) return;
+      // Appending waits for the request in flight. Replacing (refresh, a new search)
+      // supersedes it instead: the old one gets a stale id and its answer is dropped.
+      if (isLoadingRef.current && mode === 'append') return;
 
       isLoadingRef.current = true;
       const requestId = ++requestIdRef.current;
@@ -154,8 +157,8 @@ export function usePaginatedFetch<T>(
           setIsLoading(false);
           setIsRefreshing(false);
           setIsLoadingMore(false);
+          isLoadingRef.current = false;
         }
-        isLoadingRef.current = false;
       }
     },
     [enabled, logCategory, errorMessage, mergeDeduped],
