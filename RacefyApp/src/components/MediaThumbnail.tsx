@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, spacing } from '../theme';
@@ -22,7 +23,12 @@ export function MediaThumbnail({ item, onRemove, onPress, size = 80 }: MediaThum
       activeOpacity={onPress ? 0.8 : 1}
       disabled={!onPress}
     >
-      <Image source={{ uri: item.uri }} style={styles.image} resizeMode="cover" />
+      <Image
+        source={{ uri: item.uri }}
+        style={styles.image}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
       {item.type === 'video' && (
         <View style={[styles.playIconContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <Ionicons name="play" size={24} color="#FFFFFF" />

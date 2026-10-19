@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns/format';
@@ -44,7 +45,12 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
       <TouchableOpacity activeOpacity={0.9} onPress={onPress} disabled={!onPress}>
         <View style={styles.cover}>
           {coverUrl ? (
-            <Image source={{ uri: coverUrl }} style={styles.image} resizeMode="cover" />
+            <Image
+              source={{ uri: coverUrl }}
+              style={styles.image}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View style={[styles.placeholder, { backgroundColor: colors.primaryLight + '20' }]}>
               <Ionicons

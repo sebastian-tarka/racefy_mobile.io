@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
@@ -126,6 +127,7 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
               key={photo.id}
               source={{ uri: fixStorageUrl(photo.url) || '' }}
               style={styles.photoThumb}
+              cachePolicy="memory-disk"
             />
           ))}
           {photos.length > 2 && (

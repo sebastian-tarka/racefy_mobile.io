@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
@@ -105,7 +106,12 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
         {coverImageUrl ? (
           <>
             {/* Cover image - positioned from top */}
-            <Image source={{ uri: coverImageUrl }} style={styles.coverImage} resizeMode="cover" />
+            <Image
+              source={{ uri: coverImageUrl }}
+              style={styles.coverImage}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
             {/* Dark gradient overlay for readability */}
             <LinearGradient
               colors={['rgba(0, 0, 0, 0.3)', 'rgba(0, 0, 0, 0.7)']}

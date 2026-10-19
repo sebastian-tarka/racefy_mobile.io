@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,12 @@ export function EventHero({ event, onBack, onShare, onEdit, height = 300 }: Even
   return (
     <View style={[styles.container, { height, backgroundColor: colors.border }]}>
       {coverUrl ? (
-        <Image source={{ uri: coverUrl }} style={styles.image} resizeMode="cover" />
+        <Image
+          source={{ uri: coverUrl }}
+          style={styles.image}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+        />
       ) : (
         <View style={[styles.placeholder, { backgroundColor: colors.primaryLight + '20' }]}>
           <Ionicons name={getSportIcon(sportName)} size={72} color={colors.primary} />

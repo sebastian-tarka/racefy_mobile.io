@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
@@ -45,7 +46,11 @@ export function BadgeTile({ reward, size = 'md', onPress }: Props) {
   const face = (
     <>
       {badge.icon_url ? (
-        <Image source={{ uri: badge.icon_url }} style={{ width: d * 0.5, height: d * 0.5 }} />
+        <Image
+          source={{ uri: badge.icon_url }}
+          style={{ width: d * 0.5, height: d * 0.5 }}
+          cachePolicy="memory-disk"
+        />
       ) : (
         <Text style={{ fontSize: d * 0.44, lineHeight: d * 0.56 }}>
           {badge.icon_emoji || badge.icon || '🏅'}

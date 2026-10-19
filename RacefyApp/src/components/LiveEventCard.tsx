@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
@@ -45,7 +46,12 @@ function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardPro
         {/* Image/Icon */}
         <View style={styles.imageContainer}>
           {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.image}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View style={[styles.iconPlaceholder, { backgroundColor: colors.primaryLight + '20' }]}>
               <Ionicons

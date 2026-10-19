@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius, msFont } from '../theme';
@@ -39,7 +40,12 @@ export function AchievementBody({ post }: AchievementBodyProps) {
         <View style={styles.row}>
           <View style={[styles.iconContainer, { borderColor: rarityConfig.border }]}>
             {iconUrl ? (
-              <Image source={{ uri: iconUrl }} style={styles.iconImage} resizeMode="contain" />
+              <Image
+                source={{ uri: iconUrl }}
+                style={styles.iconImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
             ) : (
               <Text style={styles.iconEmoji}>{badge.icon_emoji || '🏅'}</Text>
             )}

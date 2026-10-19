@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { useUnits } from '../../../../../hooks/useUnits';
@@ -84,7 +85,11 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
                 </Text>
               </View>
               {participant.user.avatar_url ? (
-                <Image source={{ uri: participant.user.avatar_url }} style={styles.avatar} />
+                <Image
+                  source={{ uri: participant.user.avatar_url }}
+                  style={styles.avatar}
+                  cachePolicy="memory-disk"
+                />
               ) : (
                 <View style={[styles.avatarPlaceholder, { backgroundColor: colors.border }]}>
                   <Ionicons name="person" size={14} color={colors.textSecondary} />

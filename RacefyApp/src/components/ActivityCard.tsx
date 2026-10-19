@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns/format';
 import { Card } from './Card';
@@ -189,7 +190,8 @@ function ActivityCardBase({
                   fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined,
               }}
               style={styles.mapImage}
-              resizeMode={activity.route_map_url ? 'cover' : 'contain'}
+              contentFit={activity.route_map_url ? 'cover' : 'contain'}
+              cachePolicy="memory-disk"
             />
             <View style={[styles.mapOverlay, { backgroundColor: colors.primary + '10' }]}>
               <Ionicons name="map-outline" size={16} color={colors.primary} />
