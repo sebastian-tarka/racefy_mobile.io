@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
 import type { HomeSection, HomeSectionEvent } from '../../../../../types/api';
+import { formatShortDate } from '../../../../../utils/formatters';
 
 interface NearbyEventsSectionProps {
   section: HomeSection;
@@ -21,12 +22,6 @@ interface NearbyEventsSectionProps {
 /**
  * Format date compactly
  */
-function formatDate(dateString?: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 /**
  * Single event card for horizontal scroll
  */
@@ -49,7 +44,7 @@ function EventCard({
         <View style={styles.eventOverlay}>
           {event.start_date && (
             <View style={styles.dateBadge}>
-              <Text style={styles.dateText}>{formatDate(event.start_date)}</Text>
+              <Text style={styles.dateText}>{formatShortDate(event.start_date)}</Text>
             </View>
           )}
         </View>

@@ -60,6 +60,7 @@ import { exportGpxAndShare } from '../../utils/gpxExport';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
+import { formatDuration } from '../../utils/formatDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -222,17 +223,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       },
     ]);
   }, [handleDelete, t]);
-
-  const formatDuration = (seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const formatPace = (seconds: number, meters: number): string => {
     return formatPaceWithUnit(meters, seconds);
