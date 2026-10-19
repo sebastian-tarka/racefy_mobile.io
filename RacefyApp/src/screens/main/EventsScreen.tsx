@@ -959,7 +959,7 @@ export function EventsScreen({ navigation, route }: Props) {
               data={events}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item, index }) => (
-                <AnimatedListItem index={index}>
+                <AnimatedListItem index={index} animateKey={`event:${item.id}`}>
                   {index === 0 && activeFilter === 'upcoming' ? (
                     <FeaturedEventCard event={item} onPress={() => handleEventPress(item.id)} />
                   ) : (

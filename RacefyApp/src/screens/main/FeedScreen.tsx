@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -212,68 +212,47 @@ export function FeedScreen({ navigation }: Props) {
     navigation.navigate('PostForm', { postId });
   };
 
+  // One stable object for every row: FeedListItem is memoized, so it must not get fresh
+  // callbacks on each render. The methods call through a ref to the current handlers.
+  const feedHandlers = {
+    applyLikeChange,
+    applyBoostChange,
+    resharePost,
+    unresharePost,
+    handleDeletePost,
+    handleReportPost,
+    handleEditPost,
+    navigation,
+  };
+  const feedHandlersRef = useRef(feedHandlers);
+  feedHandlersRef.current = feedHandlers;
+  const feedActions = useMemo<FeedItemActions>(() => {
+    const h = () => feedHandlersRef.current;
+    return {
+      likeChange: (postId, isLiked, count) => h().applyLikeChange(postId, isLiked, count),
+      boostChange: (postId, isBoosted, count) => h().applyBoostChange(postId, isBoosted, count),
+      navigate: (...args) => (h().navigation.navigate as (...a: unknown[]) => void)(...args),
+      reshare: (postId, content, visibility) =>
+        h().resharePost(postId, { content, visibility: visibility as any }),
+      unreshare: (postId) => h().unresharePost(postId),
+      menu: (postId, action) => {
+        if (action === 'delete') h().handleDeletePost(postId);
+        else if (action === 'report') h().handleReportPost(postId);
+        else if (action === 'edit') h().handleEditPost(postId);
+      },
+    };
+  }, []);
+
   const renderFeedItem = useCallback(
     ({ item, index }: { item: Post; index: number }) => (
-      <AnimatedListItem index={index}>
-        <FeedCard
-          post={item}
-          isOwner={item.is_owner ?? item.user_id === user?.id}
-          onLikeChange={(isLiked, count) => applyLikeChange(item.id, isLiked, count)}
-          onBoostChange={(isBoosted, count) => applyBoostChange(item.id, isBoosted, count)}
-          onComment={() =>
-            navigation.navigate('PostDetail', { postId: item.id, focusComments: true })
-          }
-          onShareActivity={
-            item.type === 'activity' && item.activity
-              ? () =>
-                  navigation.navigate('ActivityShare', {
-                    activityId: item.activity!.id,
-                    hasGpsTrack: item.activity!.has_gps_track,
-                    photos: item.activity!.photos,
-                  })
-              : undefined
-          }
-          onUserPress={() => {
-            if (item.user?.username) {
-              navigation.navigate('UserProfile', { username: item.user.username });
-            }
-          }}
-          onActivityPress={
-            item.type === 'activity' && item.activity
-              ? () => navigation.navigate('ActivityDetail', { activityId: item.activity!.id })
-              : undefined
-          }
-          onEventPress={
-            (item.type === 'event' || item.type === 'challenge') && item.event
-              ? () => navigation.navigate('EventDetail', { eventId: item.event!.id })
-              : (item as any).tagged_event
-                ? () =>
-                    navigation.navigate('EventDetail', { eventId: (item as any).tagged_event!.id })
-                : undefined
-          }
-          onReshare={(content, visibility) =>
-            resharePost(item.id, { content, visibility: visibility as any })
-          }
-          onUnreshare={() => unresharePost(item.id)}
-          onOriginalPostUserPress={(username) => navigation.navigate('UserProfile', { username })}
-          onMenu={(action) => {
-            if (action === 'delete') handleDeletePost(item.id);
-            else if (action === 'report') handleReportPost(item.id);
-            else if (action === 'edit') handleEditPost(item.id);
-          }}
-        />
-      </AnimatedListItem>
+      <FeedListItem
+        item={item}
+        index={index}
+        isOwner={item.is_owner ?? item.user_id === user?.id}
+        actions={feedActions}
+      />
     ),
-    [
-      user?.id,
-      applyLikeChange,
-      applyBoostChange,
-      navigation,
-      handleDeletePost,
-      handleReportPost,
-      resharePost,
-      unresharePost,
-    ],
+    [user?.id, feedActions],
   );
 
   const renderSearchResults = () => {
@@ -585,6 +564,76 @@ export function FeedScreen({ navigation }: Props) {
     </ScreenContainer>
   );
 }
+
+interface FeedItemActions {
+  likeChange: (postId: number, isLiked: boolean, count: number) => void;
+  boostChange: (postId: number, isBoosted: boolean, count: number) => void;
+  navigate: (screen: string, params?: object) => void;
+  // Return the request: FeedCard awaits them (spinner, error toast).
+  reshare: (postId: number, content?: string, visibility?: string) => Promise<unknown>;
+  unreshare: (postId: number) => Promise<unknown>;
+  menu: (postId: number, action: string) => void;
+}
+
+/**
+ * One feed row. Memoized on (post, owner, actions) — the per-row callbacks FeedCard needs
+ * are built here, so a feed re-render (new page, a like elsewhere) skips untouched rows.
+ */
+const FeedListItem = React.memo(function FeedListItem({
+  item,
+  index,
+  isOwner,
+  actions,
+}: {
+  item: Post;
+  index: number;
+  isOwner: boolean;
+  actions: FeedItemActions;
+}) {
+  const taggedEvent = (item as any).tagged_event as { id: number } | undefined;
+  return (
+    <AnimatedListItem index={index} animateKey={`feed:${item.id}`}>
+      <FeedCard
+        post={item}
+        isOwner={isOwner}
+        onLikeChange={(isLiked, count) => actions.likeChange(item.id, isLiked, count)}
+        onBoostChange={(isBoosted, count) => actions.boostChange(item.id, isBoosted, count)}
+        onComment={() => actions.navigate('PostDetail', { postId: item.id, focusComments: true })}
+        onShareActivity={
+          item.type === 'activity' && item.activity
+            ? () =>
+                actions.navigate('ActivityShare', {
+                  activityId: item.activity!.id,
+                  hasGpsTrack: item.activity!.has_gps_track,
+                  photos: item.activity!.photos,
+                })
+            : undefined
+        }
+        onUserPress={() => {
+          if (item.user?.username) {
+            actions.navigate('UserProfile', { username: item.user.username });
+          }
+        }}
+        onActivityPress={
+          item.type === 'activity' && item.activity
+            ? () => actions.navigate('ActivityDetail', { activityId: item.activity!.id })
+            : undefined
+        }
+        onEventPress={
+          (item.type === 'event' || item.type === 'challenge') && item.event
+            ? () => actions.navigate('EventDetail', { eventId: item.event!.id })
+            : taggedEvent
+              ? () => actions.navigate('EventDetail', { eventId: taggedEvent.id })
+              : undefined
+        }
+        onReshare={(content, visibility) => actions.reshare(item.id, content, visibility)}
+        onUnreshare={() => actions.unreshare(item.id)}
+        onOriginalPostUserPress={(username) => actions.navigate('UserProfile', { username })}
+        onMenu={(action) => actions.menu(item.id, action)}
+      />
+    </AnimatedListItem>
+  );
+});
 
 const styles = StyleSheet.create({
   container: {
