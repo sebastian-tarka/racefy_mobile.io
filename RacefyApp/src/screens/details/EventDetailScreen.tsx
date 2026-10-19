@@ -3,7 +3,6 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
-  Button,
   Card,
   CommentSection,
   EventPinDialog,
@@ -13,6 +12,7 @@ import {
   ScreenContainer,
   ScreenHeader,
   SocialShareModal,
+  ErrorState,
 } from '../../components';
 import { RoutePreview } from '../../components/LeafletMap';
 import {
@@ -220,13 +220,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
     return (
       <ScreenContainer>
         <ScreenHeader title={t('eventDetail.title')} showBack onBack={navigateBack} />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error || t('eventDetail.notFound')}
-          </Text>
-          <Button title={t('common.tryAgain')} onPress={fetchEvent} variant="primary" />
-        </View>
+        <ErrorState message={error || t('eventDetail.notFound')} onRetry={fetchEvent} />
       </ScreenContainer>
     );
   }
@@ -497,16 +491,5 @@ const styles = StyleSheet.create({
   about: {
     fontSize: fontSize.md,
     lineHeight: 22,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorText: {
-    fontSize: fontSize.lg,
-    marginVertical: spacing.lg,
-    textAlign: 'center',
   },
 });

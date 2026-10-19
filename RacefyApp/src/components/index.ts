@@ -34,6 +34,7 @@ export * from './PointsBudgetIndicator';
 export * from './DraftPostCard';
 export * from './DraftsReminderModal';
 export * from './EmptyState';
+export * from './ErrorState';
 export * from './EventCard';
 export * from './FeaturedEventCard';
 export * from './RouteCard';

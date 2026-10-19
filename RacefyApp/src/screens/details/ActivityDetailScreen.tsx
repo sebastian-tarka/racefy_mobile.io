@@ -19,7 +19,6 @@ import {
   Avatar,
   BottomSheet,
   type BottomSheetOption,
-  Button,
   Card,
   CommentSection,
   EffortBreakdownCard,
@@ -34,6 +33,7 @@ import {
   RoutePreview,
   ScreenContainer,
   ScreenHeader,
+  ErrorState,
 } from '../../components';
 import {
   hasStrengthSession,
@@ -344,13 +344,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           showBack
           onBack={() => navigation.goBack()}
         />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error || t('activityDetail.notFound')}
-          </Text>
-          <Button title={t('common.tryAgain')} onPress={fetchActivity} variant="primary" />
-        </View>
+        <ErrorState message={error || t('activityDetail.notFound')} onRetry={fetchActivity} />
       </ScreenContainer>
     );
   }
@@ -1240,17 +1234,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorText: {
-    fontSize: fontSize.lg,
-    marginVertical: spacing.lg,
-    textAlign: 'center',
   },
   engagementCard: {
     marginHorizontal: spacing.md,

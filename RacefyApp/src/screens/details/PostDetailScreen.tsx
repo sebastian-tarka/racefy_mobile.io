@@ -14,7 +14,6 @@ import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import {
   Avatar,
-  Button,
   Card,
   CommentSection,
   InteractionButton,
@@ -29,6 +28,7 @@ import {
   SharedPostBlock,
   SharedPostDeletedBlock,
   SocialShareModal,
+  ErrorState,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -322,13 +322,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
     return (
       <ScreenContainer>
         <ScreenHeader title={t('feed.title')} showBack onBack={() => navigation.goBack()} />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error || t('feed.failedToLoad')}
-          </Text>
-          <Button title={t('common.tryAgain')} onPress={fetchPost} variant="primary" />
-        </View>
+        <ErrorState message={error || t('feed.failedToLoad')} onRetry={fetchPost} />
       </ScreenContainer>
     );
   }
@@ -676,17 +670,6 @@ const styles = StyleSheet.create({
   commentsContainer: {
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorText: {
-    fontSize: fontSize.lg,
-    marginVertical: spacing.lg,
-    textAlign: 'center',
   },
   headerActions: {
     flexDirection: 'row',
