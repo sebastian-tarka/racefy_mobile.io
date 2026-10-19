@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: tsc · lint · knip · jest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: RacefyApp
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same Node as EAS builds; the SQLite test suites need better-sqlite3 built for it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: RacefyApp/.nvmrc
+          cache: npm
+          cache-dependency-path: RacefyApp/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unused files, exports and dependencies
+        run: npx knip --no-progress
+
+      - name: Tests
+        run: npm test -- --ci
