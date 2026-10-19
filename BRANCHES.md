@@ -31,7 +31,7 @@ i nigdy nie zostały obejrzane na urządzeniu.
 lokalnie trzeba raz zrobić `npm rebuild better-sqlite3` (moduł natywny testów), inaczej testy
 SQLite padają z `NODE_MODULE_VERSION`. Natywny build w EAS na Node 24 nie był wcześniej sprawdzany.
 
-- [ ] Build `production` (Android) na Node 24 przechodzi w EAS
+- [x] Build `production` (Android) na Node 24 przechodzi w EAS (1.25.1, versionCode 40)
 - [ ] Build `staging` i iOS na Node 24 przechodzą w EAS
 - [ ] Aplikacja z tego builda startuje na telefonie: logowanie, feed, nagranie aktywności z GPS
 
