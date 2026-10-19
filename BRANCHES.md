@@ -15,6 +15,31 @@ Stan na: **2026-10-19**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### `audyt-etap1` — sprzątanie: martwy kod, zależności, lint, CI (2026-10-19)
+
+Etap 1 z `.notes/AUDYT_REFACTOR_2026-10.md`. Odgałęziony od `main`, niezależny od `audyt-etap0`
+(pliki zmieniane tam zostały tu pominięte przy sprzątaniu lintu, żeby merge był bez konfliktów).
+tsc 0, jest 416/416, knip 0, ESLint 263 → 104 (`lint` z zapadką `--max-warnings=104`),
+`expo export` android+ios przechodzi (Hermes 11,9 MB).
+
+- Usunięte paczki: `react-native-maps` (natywna), `react-native-gifted-charts`, `@react-navigation/stack`,
+  `react-hook-form`, `expo-localization`, `@expo/cli`, `sharp`. `expo` 54.0.37 + 8 patchy z
+  `expo install`. `expo-asset` dodany jawnie (bez tego `expo-font` go nie widział — ikony).
+- Ok. 4,5 tys. linii martwego kodu: 22 komponenty, 5 hooków, martwe eksporty, cache profili GPS
+  zapisywany i nigdy nieczytany.
+- CI: `.github/workflows/ci.yml` (tsc, lint, knip, jest na Node z `.nvmrc`); testy SQLite przerywają
+  się czytelnym błędem pod złą wersją Node.
+
+Do sprawdzenia:
+- [ ] Pierwszy przebieg CI na GitHubie jest zielony (po pushu brancha / PR)
+- [ ] **Nowy build natywny** (dev client albo staging) — zmienił się zestaw modułów natywnych,
+      stary dev client nie pasuje do JS z tego brancha
+- [ ] Start aplikacji, ikony (Ionicons) i fonty się renderują — `expo-asset`
+- [ ] Mapy Mapbox: podgląd aktywności, nagrywanie, planer trasy, strefy prywatności
+- [ ] Ekrany z ruszonym kodem: edycja profilu (zmiana avatara i tła), Insights, Home, wideo w feedzie,
+      udostępnianie, wykresy aktywności, lajki (post/aktywność/komentarz), zakończenie aktywności
+      offline (`updatePendingFinish`)
+
 ### `audyt-etap0` — poprawki błędów z audytu (2026-10-19)
 
 Etap 0 z audytu `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, jest 424/424 (nowy `apiBase.test`),
