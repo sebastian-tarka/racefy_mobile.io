@@ -110,6 +110,8 @@ export type RootStackParamList = {
 
 declare global {
   namespace ReactNavigation {
+    // Must stay an interface: React Navigation merges into it.
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

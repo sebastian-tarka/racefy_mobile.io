@@ -77,7 +77,7 @@ so the old `API_PRODUCTION_URL` secret on EAS no longer influences builds. Local
 matters only for `expo start` / local builds.
 
 ### Important Paths
-- API Service: `RacefyApp/src/services/api.ts`
+- API Service: `RacefyApp/src/services/api/` (`base.ts` = `request()`, one mixin per domain; `services/api.ts` only re-exports)
 - API Types: `RacefyApp/src/types/api.ts`
 - Navigation: `RacefyApp/src/navigation/AppNavigator.tsx`
 - Theme: `RacefyApp/src/theme/`
@@ -110,8 +110,11 @@ cd RacefyApp && npm run android         # Run on Android emulator
 cd RacefyApp && npm run ios             # Run on iOS simulator
 cd RacefyApp && npm run web             # Run in browser
 
-# Type checking
-cd RacefyApp && npx tsc --noEmit
+# Checks (the same four run in CI: .github/workflows/ci.yml)
+cd RacefyApp && npm run typecheck       # tsc --noEmit
+cd RacefyApp && npm run lint            # eslint with a --max-warnings ratchet
+cd RacefyApp && npx knip                # unused files, exports, dependencies — must exit 0
+cd RacefyApp && npm test                # jest; needs the Node from .nvmrc (better-sqlite3 is native)
 
 # Install Expo-compatible packages (preferred over npm install)
 cd RacefyApp && npx expo install <package>
@@ -127,7 +130,7 @@ cd RacefyApp && npx expo install <package>
 
 ### Source Structure (RacefyApp/src/)
 - `config/api.ts` - API URL configuration with platform-aware base URLs
-- `services/api.ts` - API client class with token management via AsyncStorage
+- `services/api/` - API client: `base.ts` (request, token, dedupe, timeout) + one mixin per domain
 - `hooks/` - React hooks for auth, feed, events, permissions, live activity tracking
 - `navigation/` - AppNavigator with MainTabs and Auth modal stack
 - `screens/auth/` - Login/Register screens
@@ -152,11 +155,12 @@ cd RacefyApp && npx expo install <package>
 - Physical device with adb reverse: `http://localhost:8080/api` (when `API_LOCAL_IP=localhost`)
 - Physical device via WiFi: Uses `API_LOCAL_IP` from `.env` (e.g., `http://192.168.1.100:8080/api`)
 
-**API Service** (`services/api.ts`): Single `request<T>(endpoint, options)` method for all API calls:
+**API Service** (`services/api/base.ts`, domain methods in `services/api/<domain>.ts`): Single `request<T>(endpoint, options)` method for all API calls:
 - Auto-detects FormData and skips Content-Type header (browser sets it with boundary)
 - Adds Authorization, Accept, Accept-Language headers automatically
 - Appends Xdebug trigger when enabled (for PHP debugging)
 - Parses JSON response and throws on error
+- Deduplicates concurrent identical GETs (same endpoint → one shared Promise)
 
 ```typescript
 // JSON request
@@ -559,7 +563,7 @@ When implementing new features:
 1. **New Screens**: Use `ScreenHeader` component, `SafeAreaView` with `edges={['top']}`, and theme colors
 2. **New Components**: Export from `components/index.ts`, use theme tokens for spacing/colors
 3. **New Translations**: Add keys to both `en.json` and `pl.json`
-4. **API Integration**: Add methods to `services/api.ts`, types to `types/api.ts`. Always use `this.request()` - it handles both JSON and FormData automatically. Never use `fetch()` directly.
+4. **API Integration**: Add methods to the matching mixin in `services/api/`, types to `types/api.ts`. Always use `this.request()` - it handles both JSON and FormData automatically. Never use `fetch()` directly.
 5. **Forms**: Use existing `Input`, `Button` components with validation patterns from existing screens
 6. **Lists**: Use `FlatList` with card components, ensure consistent spacing with `listContent` style
 7. **UI Patterns**: When adding new reusable UI patterns or components, update `RacefyApp/docs/UI_PATTERNS.md` with usage examples

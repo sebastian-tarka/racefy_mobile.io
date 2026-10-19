@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { VideoPlayerManager } from '../services/VideoPlayerManager';
 import { logger } from '../services/logger';

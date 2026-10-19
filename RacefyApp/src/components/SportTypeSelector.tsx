@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../theme';
-import { FALLBACK_SPORTS, type SportTypeWithIcon, useSportTypes } from '../hooks/useSportTypes';
+import { type SportTypeWithIcon, useSportTypes } from '../hooks/useSportTypes';
 
 export interface SportTypeOption {
   id: number;
@@ -21,9 +21,6 @@ export interface SportTypeOption {
   slug: string;
   icon: keyof typeof Ionicons.glyphMap;
 }
-
-// Export for backward compatibility - prefer using useSportTypes hook
-export const SPORT_TYPES: SportTypeOption[] = FALLBACK_SPORTS;
 
 interface SportTypeSelectorProps {
   value: number | null;

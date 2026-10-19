@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { spacing, fontSize, fontWeight } from '../../theme';
+import { fontSize, fontWeight } from '../../theme';
 import type { TrainingDay } from '../../hooks/useTrainingReminders';
 
 interface DayPickerProps {

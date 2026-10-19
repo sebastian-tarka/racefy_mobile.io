@@ -10,7 +10,7 @@ import {
   type TextStyle,
   type StyleProp,
 } from 'react-native';
-import { useMentions, type Suggestion } from 'react-native-controlled-mentions';
+import { useMentions } from 'react-native-controlled-mentions';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { api } from '../services/api';

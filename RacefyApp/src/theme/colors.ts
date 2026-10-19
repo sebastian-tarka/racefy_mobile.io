@@ -152,9 +152,6 @@ export const darkColors = {
   orange: '#f59e0b',
 };
 
-// Default export for backward compatibility
-export const colors = lightColors;
-
 export type ThemeColors = typeof lightColors;
 export type ColorName = keyof typeof lightColors;
 

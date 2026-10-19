@@ -69,7 +69,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     setIsLoading(true);
     try {
       await fetchBlockedUsers(1, false);
-    } catch (err) {
+    } catch {
       // Error already handled in fetchBlockedUsers
     } finally {
       setIsLoading(false);
@@ -80,7 +80,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     setIsRefreshing(true);
     try {
       await fetchBlockedUsers(1, false);
-    } catch (err) {
+    } catch {
       // Error already handled in fetchBlockedUsers
     } finally {
       setIsRefreshing(false);
@@ -93,7 +93,7 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     setIsLoadingMore(true);
     try {
       await fetchBlockedUsers(currentPage + 1, true);
-    } catch (err) {
+    } catch {
       // Error already handled in fetchBlockedUsers
     } finally {
       setIsLoadingMore(false);

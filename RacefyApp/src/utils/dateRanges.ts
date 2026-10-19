@@ -1,5 +1,11 @@
-import type { TimeRange } from '../components/TimeRangeFilter';
 import { logger } from '../services/logger';
+
+export type TimeRange = 'week' | 'month' | 'year' | 'all_time';
+
+export interface PeriodOption<T = string> {
+  value: T;
+  labelKey: string;
+}
 
 export interface DateRange {
   from: string;

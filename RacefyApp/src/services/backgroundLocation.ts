@@ -12,7 +12,7 @@ import type { GpsProfile } from '../config/gpsProfiles';
 import { haversineDistance } from '../utils/gpsMath';
 import * as trackingDb from './trackingDb';
 
-export const BACKGROUND_LOCATION_TASK = 'background-location-task';
+const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
 // Module-level timer for background sync
 let backgroundSyncTimer: NodeJS.Timeout | null = null;
@@ -318,7 +318,7 @@ async function readCumulativeDistanceM(): Promise<number | null> {
 }
 
 /** Clear background audio coach state (called on tracking start/stop) */
-export async function clearAudioCoachBackgroundState(): Promise<void> {
+async function clearAudioCoachBackgroundState(): Promise<void> {
   await Promise.all([
     AsyncStorage.removeItem(BG_AUDIO_DISTANCE_KEY),
     AsyncStorage.removeItem(BG_AUDIO_THRESHOLD_KEY),
@@ -338,7 +338,7 @@ export async function setAudioCoachMilestones(thresholdsKm: number[]): Promise<v
 }
 
 /** Initialize background audio coach state (called on tracking start) */
-export async function initAudioCoachBackgroundState(): Promise<void> {
+async function initAudioCoachBackgroundState(): Promise<void> {
   await AsyncStorage.setItem(BG_AUDIO_START_TIME_KEY, Date.now().toString());
   await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, '0');
   await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
@@ -627,7 +627,7 @@ export async function setActiveActivityId(id: number | null): Promise<void> {
   }
 }
 
-export async function getActiveActivityId(): Promise<number | null> {
+async function getActiveActivityId(): Promise<number | null> {
   try {
     const id = await AsyncStorage.getItem(ACTIVE_ACTIVITY_KEY);
     return id ? parseInt(id, 10) : null;
@@ -753,15 +753,6 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
     await clearAudioCoachBackgroundState();
   } catch (error) {
     logger.error('gps', 'Failed to stop background location tracking', { error });
-  }
-}
-
-// Check if background location tracking is running
-export async function isBackgroundLocationTrackingRunning(): Promise<boolean> {
-  try {
-    return await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-  } catch {
-    return false;
   }
 }
 

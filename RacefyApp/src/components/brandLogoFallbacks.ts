@@ -82,8 +82,6 @@ const LOGO_TEXT_DARK = `<svg xmlns="http://www.w3.org/2000/svg" width="288pt" he
 </g>
 </svg>`;
 
-type FallbackKey = `${BrandAssetCategory}:${BrandAssetVariant}`;
-
 const FALLBACK_SVGS: Record<string, string> = {
   'logo-full:light': LOGO_FULL_LIGHT,
   'logo-full:dark': LOGO_FULL_DARK,

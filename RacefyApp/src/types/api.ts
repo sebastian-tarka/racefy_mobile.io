@@ -3221,7 +3221,7 @@ export interface WeekFeedback {
   overall_rating: OverallRating;
 }
 
-export interface WeekFeedbackResponse extends ApiResponse<WeekFeedback> {}
+export type WeekFeedbackResponse = ApiResponse<WeekFeedback>;
 
 // ============ TRAINING TIPS ============
 

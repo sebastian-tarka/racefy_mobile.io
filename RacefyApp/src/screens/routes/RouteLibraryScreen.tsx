@@ -35,7 +35,6 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
     routes,
     isLoading,
     isRefreshing,
-    hasMore,
     error,
     filter,
     refresh,

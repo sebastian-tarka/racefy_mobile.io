@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { nearestPointOnRoute, routeTotalDistance } from '../utils/routeNavigation';

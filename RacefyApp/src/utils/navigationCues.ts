@@ -7,7 +7,7 @@ import type { RouteTurnInstruction } from '../types/api';
  * instruction — the banner switches to its "act now" look here (design
  * "Racefy v2" → NavBanner, `imminent`).
  */
-export const IMMINENT_METERS = 120;
+const IMMINENT_METERS = 120;
 
 /** Ionicons stand-in for a router maneuver string ("turn-left", "u-turn", …). */
 export function turnIcon(maneuver: string): keyof typeof Ionicons.glyphMap {

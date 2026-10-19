@@ -172,7 +172,7 @@ function stepEqual(a: IntervalStepDraft | null, b: IntervalStepDraft | null): bo
   return a.mode === b.mode && a.value === b.value;
 }
 
-export function draftsEqual(a: IntervalDraft, b: IntervalDraft): boolean {
+function draftsEqual(a: IntervalDraft, b: IntervalDraft): boolean {
   return (
     a.reps === b.reps &&
     stepEqual(a.work, b.work) &&

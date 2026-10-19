@@ -13,7 +13,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import * as Application from 'expo-application';
 import * as Device from 'expo-device';
-import Constants from 'expo-constants';
 import {
   loggerConfig,
   shouldLog,
@@ -281,9 +280,12 @@ class Logger {
     if (this.config.consoleOutput) {
       const prefix = `[${level.toUpperCase()}][${category}]`;
       const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
+      // The logger is the one place allowed to write to the console.
       if (context) {
+        // eslint-disable-next-line no-console
         console[consoleMethod](prefix, message, context);
       } else {
+        // eslint-disable-next-line no-console
         console[consoleMethod](prefix, message);
       }
     }

@@ -45,7 +45,7 @@ export function useRoutes() {
         });
         setHasMore(response.meta.current_page < response.meta.last_page);
         setPage(currentPage + 1);
-      } catch (err) {
+      } catch {
         setError('Failed to load routes');
       } finally {
         setIsLoading(false);

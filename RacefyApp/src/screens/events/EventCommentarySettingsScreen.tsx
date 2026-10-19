@@ -105,7 +105,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const handleToggleEnabled = async (value: boolean) => {
     try {
       await updateSettings({ enabled: value });
-    } catch (err) {
+    } catch {
       Alert.alert(
         t('commentary.error', 'Error'),
         t('commentary.updateFailed', 'Failed to update commentary settings'),
@@ -116,7 +116,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const handleStyleChange = async (style: CommentaryStyle) => {
     try {
       await updateSettings({ style });
-    } catch (err) {
+    } catch {
       Alert.alert(
         t('commentary.error', 'Error'),
         t('commentary.updateFailed', 'Failed to update commentary settings'),
@@ -127,7 +127,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const handleIntervalChange = async (interval: number) => {
     try {
       await updateSettings({ interval_minutes: interval });
-    } catch (err) {
+    } catch {
       Alert.alert(
         t('commentary.error', 'Error'),
         t('commentary.updateFailed', 'Failed to update commentary settings'),
@@ -138,7 +138,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const handleToggleAutoPublish = async (value: boolean) => {
     try {
       await updateSettings({ auto_publish: value });
-    } catch (err) {
+    } catch {
       Alert.alert(
         t('commentary.error', 'Error'),
         t('commentary.updateFailed', 'Failed to update commentary settings'),
@@ -165,7 +165,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
 
     try {
       await updateSettings({ languages: newLanguages });
-    } catch (err) {
+    } catch {
       Alert.alert(
         t('commentary.error', 'Error'),
         t('commentary.updateFailed', 'Failed to update commentary settings'),
@@ -199,7 +199,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
                   'Commentary generation has been started. It will appear in the feed shortly.',
                 ),
               );
-            } catch (err) {
+            } catch {
               Alert.alert(
                 t('commentary.error', 'Error'),
                 generateError || t('commentary.generateFailed', 'Failed to generate commentary'),

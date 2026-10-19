@@ -38,7 +38,7 @@ class VideoPlayerManagerClass {
     if (player) {
       try {
         player.pause();
-      } catch (error) {
+      } catch {
         logger.debug(
           'activity',
           `[VideoPlayerManager] Player ${id} already released during unregister`,
@@ -153,7 +153,7 @@ class VideoPlayerManagerClass {
       try {
         player.pause();
         logger.activity(`[VideoPlayerManager] Paused player: ${id}`);
-      } catch (error) {
+      } catch {
         logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`);
         this.players.delete(id);
       }
@@ -170,7 +170,7 @@ class VideoPlayerManagerClass {
       try {
         player.play();
         logger.activity(`[VideoPlayerManager] Resumed player: ${id}`);
-      } catch (error) {
+      } catch {
         logger.debug('activity', `[VideoPlayerManager] Player ${id} no longer valid, removing`);
         this.players.delete(id);
       }

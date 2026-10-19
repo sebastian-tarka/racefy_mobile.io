@@ -29,11 +29,14 @@ module.exports = defineConfig([
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'react-hooks/exhaustive-deps': 'warn',
       'import/no-unresolved': 'off',
+      // i18next's default export is the i18n instance, so `i18n.t()` / `i18n.changeLanguage()`
+      // are exactly how it is meant to be used — the rule only produces noise here.
+      'import/no-named-as-default-member': 'off',
     },
   },
   {
-    // Theme-system rules — scoped to app source. Design mockups under refactor/
-    // don't consume the theme, so the rule would only produce noise there.
+    // Theme-system rules — scoped to app source; scripts and config files don't
+    // consume the theme.
     files: ['src/**/*.{ts,tsx}'],
     rules: {
       // A literal font size bypasses the system-font-scale cap baked into the
@@ -75,6 +78,10 @@ module.exports = defineConfig([
         beforeAll: 'readonly',
         afterAll: 'readonly',
       },
+    },
+    rules: {
+      // jest.isolateModules / per-test module state needs require() inside the test body.
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ]);

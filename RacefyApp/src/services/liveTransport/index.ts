@@ -5,9 +5,6 @@ import type { LiveTransport, LiveTransportOptions } from './types';
 import type { RealtimeConfig } from '../../types/api';
 
 export * from './types';
-export { createPollingTransport } from './pollingTransport';
-export { createEchoTransport } from './echoTransport';
-
 /** Fallback cadence when the server sends no realtime block at all. */
 const DEFAULT_POLL_INTERVAL_MS = 5000;
 

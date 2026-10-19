@@ -1,4 +1,3 @@
-export { InsightCard } from './InsightCard';
 export { LockedInsightCard } from './LockedInsightCard';
 export { SummaryCard } from './SummaryCard';
 export { ComparisonCard } from './ComparisonCard';

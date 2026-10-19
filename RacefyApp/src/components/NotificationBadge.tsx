@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { fontSize } from '../theme';
 
 interface NotificationBadgeProps {
   count: number;

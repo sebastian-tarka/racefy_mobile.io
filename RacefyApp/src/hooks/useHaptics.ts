@@ -97,11 +97,6 @@ export function useHaptics(): UseHapticsResult {
   };
 }
 
-// Update global variable directly (used by hook)
-export const updateGlobalHapticsEnabled = (enabled: boolean): void => {
-  globalHapticsEnabled = enabled;
-};
-
 export const loadGlobalHapticsPreference = async (): Promise<void> => {
   try {
     const saved = await AsyncStorage.getItem(HAPTICS_ENABLED_KEY);
@@ -118,15 +113,6 @@ export const triggerHaptic = (
 ): void => {
   if (globalHapticsEnabled && checkHapticsSupport()) {
     Haptics.impactAsync(style);
-  }
-};
-
-export const setGlobalHapticsEnabled = async (enabled: boolean): Promise<void> => {
-  globalHapticsEnabled = enabled;
-  try {
-    await AsyncStorage.setItem(HAPTICS_ENABLED_KEY, String(enabled));
-  } catch (error) {
-    logger.error('general', 'Failed to save haptics preference', { error });
   }
 };
 

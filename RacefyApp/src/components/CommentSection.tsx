@@ -68,7 +68,7 @@ export function CommentSection({
       }
       setComments(fetchedComments);
       setLocalCommentsCount(fetchedComments.length);
-    } catch (err) {
+    } catch {
       setError(t('comments.failedToLoad'));
     } finally {
       setIsLoading(false);

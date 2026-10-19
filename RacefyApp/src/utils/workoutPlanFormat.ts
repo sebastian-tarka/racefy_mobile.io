@@ -39,7 +39,7 @@ export function formatPrescription(row: PrescriptionLike, t: TFunction): string 
 }
 
 /** "120 s", "1:30" for odd values above a minute stays in seconds — coaches read "90 s". */
-export function formatRest(seconds: number, t: TFunction): string {
+function formatRest(seconds: number, t: TFunction): string {
   return `${seconds} ${t('strengthPlans.secondsShort')}`;
 }
 

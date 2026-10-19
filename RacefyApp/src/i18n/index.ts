@@ -9,7 +9,7 @@ import es from './locales/es.json';
 
 const LANGUAGE_KEY = '@racefy_language';
 
-export const resources = {
+const resources = {
   en: { translation: en },
   pl: { translation: pl },
   es: { translation: es },

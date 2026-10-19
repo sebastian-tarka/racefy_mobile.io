@@ -144,7 +144,7 @@ export function spokenDuration(seconds: number, lang: AudioCoachLanguage): strin
   return parts.join(' ');
 }
 
-export function spokenRemaining(
+function spokenRemaining(
   remaining: SegmentRemaining,
   lang: AudioCoachLanguage,
   units: SpokenUnits,
@@ -154,11 +154,7 @@ export function spokenRemaining(
     : spokenDistance(remaining.meters, lang, units);
 }
 
-export function spokenGoal(
-  goal: WorkoutGoal,
-  lang: AudioCoachLanguage,
-  units: SpokenUnits,
-): string {
+function spokenGoal(goal: WorkoutGoal, lang: AudioCoachLanguage, units: SpokenUnits): string {
   return goal.type === 'time'
     ? spokenDuration(goal.seconds, lang)
     : spokenDistance(goal.meters, lang, units);

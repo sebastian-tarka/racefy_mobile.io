@@ -11,10 +11,9 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize } from '../theme';
+import { spacing } from '../theme';
 import { logger } from '../services/logger';
 import type { GeoJSONLineString, RouteWaypoint } from '../types/api';
 
@@ -29,7 +28,7 @@ try {
   if (MAPBOX_ACCESS_TOKEN && MapboxGL) {
     MapboxGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
   }
-} catch (e) {
+} catch {
   logger.debug('gps', 'Mapbox SDK not available for route planner');
 }
 
@@ -61,7 +60,6 @@ export const MapboxRoutePlanner = forwardRef<MapboxRoutePlannerHandle, MapboxRou
       routeGeometry,
       isLoadingPreview,
       onMapTap,
-      onWaypointDrag,
       height,
       initialCenter,
       mapStyleType = 'outdoors',

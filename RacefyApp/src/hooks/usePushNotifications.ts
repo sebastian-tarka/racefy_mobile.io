@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
-import { type EventSubscription } from 'expo-modules-core';
 import { NavigationContainerRefWithCurrent, ParamListBase } from '@react-navigation/native';
 import { pushNotificationService } from '../services/pushNotifications';
 import { logger } from '../services/logger';
 import type { PushNotificationData } from '../types/api';
 import { resolveNotificationTarget } from '../utils/notificationRouting';
+
+// expo-modules-core is only a transitive dependency, so take the type from the API we call.
+type EventSubscription = ReturnType<typeof Notifications.addNotificationReceivedListener>;
 
 export interface UsePushNotificationsOptions {
   /**

@@ -3,28 +3,10 @@ import { api } from '../services/api';
 import type {
   RouteWaypoint,
   PlannedRoute,
-  RoutePreviewResponse,
   GeoJSONLineString,
   RouteTurnInstruction,
   RouteElevationPoint,
 } from '../types/api';
-
-interface RoutePlannerState {
-  waypoints: RouteWaypoint[];
-  profile: 'walking' | 'cycling';
-  preview: {
-    geometry: GeoJSONLineString | null;
-    distance: number;
-    estimatedDuration: number;
-    elevationGain: number;
-    elevationLoss: number;
-    elevationProfile: RouteElevationPoint[];
-    turnInstructions: RouteTurnInstruction[];
-  };
-  isLoadingPreview: boolean;
-  isSaving: boolean;
-  error: string | null;
-}
 
 interface PreviewState {
   geometry: GeoJSONLineString | null;
@@ -84,7 +66,7 @@ export function useRoutePlanner() {
         elevationProfile: response.elevation_profile,
         turnInstructions: response.turn_instructions,
       });
-    } catch (err) {
+    } catch {
       setError('Failed to calculate route');
     } finally {
       setIsLoadingPreview(false);
@@ -205,7 +187,7 @@ export function useRoutePlanner() {
           is_public: isPublic,
         });
         return route;
-      } catch (err) {
+      } catch {
         setError('Failed to save route');
         return null;
       } finally {

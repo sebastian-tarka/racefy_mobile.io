@@ -57,37 +57,3 @@ export function useLeaderboard({
 }
 
 // Hook for event-specific leaderboard
-interface UseEventLeaderboardOptions {
-  eventId: number;
-  limit?: number;
-  autoLoad?: boolean;
-}
-
-interface UseEventLeaderboardResult {
-  entries: LeaderboardEntry[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-export function useEventLeaderboard({
-  eventId,
-  limit = 50,
-  autoLoad = true,
-}: UseEventLeaderboardOptions): UseEventLeaderboardResult {
-  const { data, isLoading, error, refetch } = useFetch<LeaderboardEntry[]>(
-    () => api.getEventLeaderboard(eventId, limit).then((res) => res.leaderboard),
-    {
-      enabled: autoLoad && !!eventId,
-      deps: [eventId, limit],
-      errorMessage: 'Failed to load leaderboard',
-    },
-  );
-
-  return {
-    entries: data ?? [],
-    isLoading,
-    error,
-    refetch,
-  };
-}

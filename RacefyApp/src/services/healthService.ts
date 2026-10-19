@@ -41,7 +41,7 @@ export async function setHealthSyncEnabled(enabled: boolean): Promise<void> {
  * Downsample HR data using LTTB-like approach to reduce payload size.
  * Keeps first and last samples, selects evenly-spaced representative samples.
  */
-export function downsampleIfNeeded(
+function downsampleIfNeeded(
   samples: HeartRateSample[],
   maxSamples: number = 5000,
 ): HeartRateSample[] {

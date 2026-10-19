@@ -82,7 +82,7 @@ function parseLogLevel(value: string | undefined): LogLevel {
 /**
  * Get logger configuration from environment
  */
-export function getLoggerConfig(): LoggerConfig {
+function getLoggerConfig(): LoggerConfig {
   // Default: enabled in dev mode, disabled in production
   const enabled = extra.logEnabled !== undefined ? extra.logEnabled === true : __DEV__;
 

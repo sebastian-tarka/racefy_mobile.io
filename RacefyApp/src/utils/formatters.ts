@@ -1,9 +1,4 @@
-import {
-  UnitSystem,
-  formatDistance as ucFormatDistance,
-  formatTotalDistance as ucFormatTotalDistance,
-  formatPaceFromSpeed as ucFormatPaceFromSpeed,
-} from './unitConversions';
+import { UnitSystem, formatDistance as ucFormatDistance } from './unitConversions';
 
 /**
  * Format time in seconds to HH:MM:SS or MM:SS format
@@ -27,13 +22,6 @@ export const formatDistance = (meters: number, units: UnitSystem = 'metric'): st
 };
 
 /**
- * Format total distance (without decimals for km, with optional unit system)
- */
-export const formatTotalDistance = (meters: number, units: UnitSystem = 'metric'): string => {
-  return ucFormatTotalDistance(meters, units);
-};
-
-/**
  * Format total time with hours or minutes only
  */
 export const formatTotalTime = (seconds: number): string => {
@@ -43,13 +31,6 @@ export const formatTotalTime = (seconds: number): string => {
     return `${hrs}:${mins.toString().padStart(2, '0')}h`;
   }
   return `${mins}m`;
-};
-
-/**
- * Format average pace from average speed (m/s) to min/km or min/mi
- */
-export const formatAvgPace = (avgSpeed: number, units: UnitSystem = 'metric'): string => {
-  return ucFormatPaceFromSpeed(avgSpeed, units);
 };
 
 /**

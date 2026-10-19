@@ -18,7 +18,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import { useTeamDetail, useAuth, useTheme, useSubscription } from '../../hooks';
 import { ScreenContainer, ScreenHeader, Card, Avatar, Button } from '../../components';
 import { TeamStatsTab } from './TeamStatsTab';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TeamDetail'>;

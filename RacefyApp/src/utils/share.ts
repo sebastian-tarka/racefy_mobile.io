@@ -348,26 +348,3 @@ export async function shareToApp(
     }
   }
 }
-
-/**
- * Safe share wrapper with error handling
- * Falls back to text-only share if image fails
- */
-export async function shareActivitySafe(
-  activityId: number,
-  shareData: ShareLinkResponse,
-  imageUrl?: string | null,
-): Promise<void> {
-  try {
-    await shareActivityWithImage({
-      activityId,
-      imageUrl,
-      shareData,
-    });
-  } catch (error: any) {
-    // If error is not "User did not share", show alert
-    if (error?.message !== 'User did not share') {
-      Alert.alert('Share Failed', 'Failed to share activity. Please try again.', [{ text: 'OK' }]);
-    }
-  }
-}

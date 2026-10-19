@@ -8,12 +8,6 @@
 /** How often (ms) GPS points are synced to the server */
 export const SYNC_INTERVAL_MS = 30_000;
 
-/** How often (ms) the in-memory buffer is persisted to AsyncStorage (crash protection) */
-export const PERSIST_INTERVAL_MS = 10_000;
-
-/** Maximum backoff delay (ms) when sync fails repeatedly */
-export const MAX_BACKOFF_MS = 300_000; // 5 minutes
-
 // ── GPS signal thresholds ───────────────────────────────────────────────────
 
 /** Time without GPS update (ms) below which signal is considered "good" */

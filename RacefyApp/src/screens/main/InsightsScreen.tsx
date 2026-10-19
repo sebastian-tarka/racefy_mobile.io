@@ -19,24 +19,11 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { spacing, fontSize, fontWeight } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { InsightsResponse, LockedSection } from '../../types/insights';
-import type { SubscriptionTier } from '../../types/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Insights'>;
-
-const SECTION_CONFIG: {
-  key: string;
-  icon: string;
-  titleKey: string;
-}[] = [
-  { key: 'trends', icon: 'trending-up', titleKey: 'insights.trends.title' },
-  { key: 'time_patterns', icon: 'time', titleKey: 'insights.timePatterns.title' },
-  { key: 'milestone_progress', icon: 'trophy', titleKey: 'insights.milestones.title' },
-  { key: 'weather_profile', icon: 'partly-sunny', titleKey: 'insights.weather.title' },
-  { key: 'favorite_routes', icon: 'map', titleKey: 'insights.routes.title' },
-];
 
 export function InsightsScreen({ navigation }: Props) {
   const { t } = useTranslation();

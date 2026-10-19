@@ -70,10 +70,3 @@ export function getSportTheme(sportName?: string): SportTheme {
 
   return sportThemes.default;
 }
-
-/**
- * Returns just the primary color for a sport.
- */
-export function getSportColor(sportName?: string): string {
-  return getSportTheme(sportName).color;
-}

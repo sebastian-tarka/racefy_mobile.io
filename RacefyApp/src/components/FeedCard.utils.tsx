@@ -3,16 +3,10 @@ import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { fixStorageUrl } from '../config/api';
-import type { UnitSystem } from '../utils/unitConversions';
-import {
-  formatDistance as ucFormatDistance,
-  formatPaceWithUnit as ucFormatPaceWithUnit,
-} from '../utils/unitConversions';
-import type { Activity, Post } from '../types/api';
+import type { Post } from '../types/api';
 
 // Re-export from canonical locations for backwards compatibility
 export { formatDuration } from '../utils/formatDuration';
-export { formatDurationCompact } from '../utils/formatDuration';
 export { getSportIcon } from '../utils/sportIcon';
 
 // ============ TYPES & INTERFACES ============
@@ -162,15 +156,6 @@ export function buildMediaItems(post: Post): PostMediaItem[] {
   return [...videos, ...photos, ...media];
 }
 
-export function formatDistance(meters: number, units: UnitSystem = 'metric'): string {
-  return ucFormatDistance(meters, units);
-}
-
-export function formatPace(meters: number, seconds: number, units: UnitSystem = 'metric'): string {
-  if (meters === 0) return '-';
-  return ucFormatPaceWithUnit(meters, seconds, units);
-}
-
 export function getEffortLevel(
   sportName: string | undefined,
   meters: number,
@@ -193,22 +178,6 @@ export function getEffortLevel(
   if (paceSecondsPerKm > easy) return { label: 'Easy', emoji: '😊' };
   if (paceSecondsPerKm > moderate) return { label: 'Moderate', emoji: '😐' };
   return { label: 'Hard', emoji: '😤' };
-}
-
-export function getHeroStat(activity: Activity): 'distance' | 'duration' | 'elevation' {
-  const name = (activity.sport_type?.name || '').toLowerCase();
-  if (activity.elevation_gain && activity.elevation_gain > 200) return 'elevation';
-  if (name.includes('cycl') || name.includes('bike')) return 'duration';
-  return 'distance';
-}
-
-export function getTimeOfDay(timestamp: string): 'morning' | 'afternoon' | 'evening' {
-  const date = new Date(timestamp);
-  const hour = date.getHours();
-
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 18) return 'afternoon';
-  return 'evening';
 }
 
 export function truncateDescription(

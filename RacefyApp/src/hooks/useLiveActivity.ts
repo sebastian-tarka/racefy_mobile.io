@@ -653,12 +653,6 @@ function useLiveActivityInternal() {
     }
   };
 
-  /** `total_paused_duration` for the finish request — only when the server's own sum can't be trusted. */
-  const pausedDurationField = (endedAt: string): { total_paused_duration?: number } => {
-    const ledger = ledgerRef.current;
-    return ledger?.dirty ? { total_paused_duration: totalPausedAt(ledger, endedAt) } : {};
-  };
-
   // Start local duration timer for real-time UI updates
   const startDurationTimer = (initialDuration: number = 0, initialCalories: number = 0) => {
     trackingStartTime.current = Date.now() - initialDuration * 1000;

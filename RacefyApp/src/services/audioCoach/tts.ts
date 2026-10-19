@@ -43,11 +43,6 @@ export function enqueueAudioTask(task: () => Promise<void>): void {
   enqueue(task);
 }
 
-/** Whether an announcement is playing or waiting. */
-export function isSpeechQueueBusy(): boolean {
-  return isSpeaking || queue.length > 0;
-}
-
 /**
  * Language code mapping for expo-speech
  */

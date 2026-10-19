@@ -40,12 +40,6 @@ const REVENUECAT_TEST_KEY = 'test_imuKPattskGISWCnJMolGWUNmzI';
 
 const REVENUECAT_API_KEY = REVENUECAT_PROD_KEY || REVENUECAT_TEST_KEY;
 
-// Entitlement identifiers (must match RevenueCat dashboard)
-export const ENTITLEMENTS = {
-  PLUS: 'Racefy Plus',
-  PRO: 'Racefy Pro',
-} as const;
-
 let isConfigured = false;
 
 /**
@@ -107,19 +101,6 @@ export async function revenueCatLogOut(): Promise<void> {
 }
 
 /**
- * Get current customer info (entitlements, subscriptions).
- */
-export async function getCustomerInfo(): Promise<any | null> {
-  if (!Purchases) return null;
-  try {
-    return await Purchases.getCustomerInfo();
-  } catch (error) {
-    logger.error('general', 'Failed to get RevenueCat customer info', { error });
-    return null;
-  }
-}
-
-/**
  * Get available offerings (products/packages).
  */
 export async function getOfferings(): Promise<any | null> {
@@ -170,21 +151,4 @@ export async function restorePurchases(): Promise<any | null> {
     logger.error('general', 'Failed to restore purchases', { error });
     return null;
   }
-}
-
-/**
- * Check if user has a specific entitlement active.
- */
-export function hasEntitlement(customerInfo: any, entitlement: string): boolean {
-  return entitlement in (customerInfo?.entitlements?.active ?? {});
-}
-
-/**
- * Check if user has Plus or Pro entitlement.
- */
-export function isPremiumFromCustomerInfo(customerInfo: any): boolean {
-  return (
-    hasEntitlement(customerInfo, ENTITLEMENTS.PLUS) ||
-    hasEntitlement(customerInfo, ENTITLEMENTS.PRO)
-  );
 }

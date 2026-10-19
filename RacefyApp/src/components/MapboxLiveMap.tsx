@@ -28,7 +28,7 @@ try {
   if (MAPBOX_ACCESS_TOKEN && MapboxGL) {
     MapboxGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
   }
-} catch (e) {
+} catch {
   // @rnmapbox/maps not installed - fallback
   logger.debug('gps', 'Mapbox SDK not available for live map');
 }

@@ -35,7 +35,7 @@ try {
   if (MAPBOX_ACCESS_TOKEN && MapboxGL) {
     MapboxGL.setAccessToken(MAPBOX_ACCESS_TOKEN);
   }
-} catch (e) {
+} catch {
   // @rnmapbox/maps not installed - fallback to static images
   logger.debug('gps', 'Mapbox SDK not available - using static map images');
 }
@@ -93,7 +93,6 @@ function getKmMarkerPoints(coordinates: number[][]): GeoJSON.Feature[] {
 
   for (let i = 1; i < coordinates.length; i++) {
     const segmentDistance = haversineDistance(coordinates[i - 1], coordinates[i]);
-    const prevAccumulated = accumulatedDistance;
     accumulatedDistance += segmentDistance;
 
     while (accumulatedDistance >= nextKm) {

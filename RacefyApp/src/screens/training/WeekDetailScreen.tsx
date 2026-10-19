@@ -22,7 +22,7 @@ import {
 } from '../../components';
 import { CoachingHintPanel } from '../../components/Training/CoachingHintPanel';
 import type { RootStackParamList } from '../../navigation/types';
-import type { TrainingWeek, TrainingActivity, SuggestedActivity, Activity } from '../../types/api';
+import type { TrainingWeek, Activity } from '../../types/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeekDetail'>;

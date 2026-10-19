@@ -13,7 +13,6 @@ import {
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize } from '../theme';
 import { logger } from '../services/logger';
 
@@ -27,7 +26,6 @@ interface VideoPlayerProps {
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayerProps) {
-  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,7 +119,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
       } else {
         player.play();
       }
-    } catch (error) {
+    } catch {
       // Player already released, ignore
       logger.debug('general', 'VideoPlayer: player already released in togglePlayPause');
     }
@@ -143,7 +141,7 @@ export function VideoPlayer({ uri, visible, onClose, thumbnailUrl }: VideoPlayer
     if (player) {
       try {
         player.pause();
-      } catch (error) {
+      } catch {
         // Player already released, ignore
         logger.debug('general', 'VideoPlayer: player already released in handleClose');
       }

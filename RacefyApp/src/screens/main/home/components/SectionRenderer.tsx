@@ -275,37 +275,3 @@ export function SectionRenderer({
 
   return <View>{sections.map(renderSection)}</View>;
 }
-
-/**
- * Get the component name for a section type.
- * Useful for debugging and analytics.
- */
-export function getSectionComponentName(type: HomeSectionType): string {
-  const mapping: Record<HomeSectionType, string> = {
-    // Original section types
-    weather_insight: 'WeatherInsightSection',
-    friend_activity: 'FriendActivitySection',
-    live_activity: 'LiveActivitySection',
-    upcoming_event: 'UpcomingEventSection',
-    last_activity_summary: 'LastActivitySummarySection',
-    weekly_insight: 'WeeklyInsightSection',
-    motivation_banner: 'MotivationBannerSection',
-    // New event-related section types
-    live_event: 'LiveEventSection',
-    event_results: 'EventResultsSection',
-    nearby_events: 'NearbyEventsSection',
-    friend_events: 'FriendEventsSection',
-    // Training-related section types
-    // (todays_training_session is handled outside SectionRenderer)
-    todays_training_session: 'PrimaryCTAHero',
-    weekly_training_progress: 'WeeklyTrainingProgressSection',
-    training_goal_progress: 'TrainingGoalProgressSection',
-    program_phase_intro: 'ProgramPhaseIntroSection',
-    // UI-only sections
-    upcoming_events: 'UpcomingEventsSection',
-    auth_prompt: 'AuthPromptSection',
-    quick_actions: 'QuickActionsSection',
-  };
-
-  return mapping[type] || 'UnknownSection';
-}

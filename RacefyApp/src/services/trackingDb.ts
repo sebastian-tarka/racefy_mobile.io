@@ -511,16 +511,17 @@ export function updatePendingFinish(
 
   const sets: string[] = [];
   const values: (string | number | null)[] = [];
-  if (patch.state !== undefined) (sets.push('state = ?'), values.push(patch.state));
-  if (patch.attempts !== undefined) (sets.push('attempts = ?'), values.push(patch.attempts));
-  if (patch.nextAttemptAt !== undefined)
-    (sets.push('next_attempt_at = ?'), values.push(patch.nextAttemptAt));
-  if (patch.lastError !== undefined) (sets.push('last_error = ?'), values.push(patch.lastError));
-  if (patch.payload !== undefined)
-    (sets.push('payload = ?'), values.push(JSON.stringify(patch.payload)));
+  const set = (column: string, value: string | number | null) => {
+    sets.push(`${column} = ?`);
+    values.push(value);
+  };
+  if (patch.state !== undefined) set('state', patch.state);
+  if (patch.attempts !== undefined) set('attempts', patch.attempts);
+  if (patch.nextAttemptAt !== undefined) set('next_attempt_at', patch.nextAttemptAt);
+  if (patch.lastError !== undefined) set('last_error', patch.lastError);
+  if (patch.payload !== undefined) set('payload', JSON.stringify(patch.payload));
   if (patch.startPayload !== undefined)
-    (sets.push('start_payload = ?'),
-      values.push(patch.startPayload ? JSON.stringify(patch.startPayload) : null));
+    set('start_payload', patch.startPayload ? JSON.stringify(patch.startPayload) : null);
   if (sets.length === 0) return;
 
   database.runSync(`UPDATE pending_finishes SET ${sets.join(', ')} WHERE client_activity_id = ?;`, [
@@ -533,6 +534,8 @@ export function updatePendingFinish(
  * The server activity now exists (finishSync created it from `start_payload`).
  * Recorded at once, in both tables: if the run dies right after, the next one
  * must upload points to this activity, not start a second one.
+ *
+ * @public used through `Pick<typeof trackingDb, …>` in finishSync, which knip cannot see.
  */
 export function bindPendingFinishServerActivity(
   clientActivityId: string,
@@ -552,7 +555,11 @@ export function bindPendingFinishServerActivity(
   });
 }
 
-/** The server has the activity: drop the entry and let the session be purged in due course. */
+/**
+ * The server has the activity: drop the entry and let the session be purged in due course.
+ *
+ * @public used through `Pick<typeof trackingDb, …>` in finishSync, which knip cannot see.
+ */
 export function completePendingFinish(clientActivityId: string): void {
   const database = getDb();
   if (!database) return;

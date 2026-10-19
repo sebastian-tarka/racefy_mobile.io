@@ -52,8 +52,7 @@ const STATUS_FILTERS: (FeedbackStatus | 'all')[] = [
 export function FeedbackListScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { feedbacks, isLoading, isRefreshing, hasMore, error, refresh, loadMore, setFilters } =
-    useFeedback();
+  const { feedbacks, isLoading, isRefreshing, refresh, loadMore, setFilters } = useFeedback();
   const [activeFilter, setActiveFilter] = useState<FeedbackStatus | 'all'>('all');
 
   useEffect(() => {
