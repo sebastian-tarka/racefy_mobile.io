@@ -18,6 +18,7 @@ import {
   RewardCard,
   ScreenContainer,
   ScreenHeader,
+  FilterChip,
 } from '../../components';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useRewards } from '../../hooks/useRewards';
@@ -126,33 +127,14 @@ export function RewardsScreen({ navigation }: Props) {
               contentContainerStyle={styles.filters}
               style={styles.filtersScroll}
             >
-              {FILTERS.map((id) => {
-                const active = filter === id;
-                return (
-                  <TouchableOpacity
-                    key={id}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor: active ? colors.textPrimary : 'transparent',
-                        borderColor: active ? colors.textPrimary : colors.border,
-                      },
-                    ]}
-                    onPress={() => setFilter(id)}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: active }}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        { color: active ? colors.white : colors.textSecondary },
-                      ]}
-                    >
-                      {t(`rewards.filters.${id}`)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+              {FILTERS.map((id) => (
+                <FilterChip
+                  key={id}
+                  label={t(`rewards.filters.${id}`)}
+                  active={filter === id}
+                  onPress={() => setFilter(id)}
+                />
+              ))}
             </ScrollView>
           )}
 
@@ -303,16 +285,6 @@ const styles = StyleSheet.create({
   filters: {
     paddingHorizontal: spacing.lg,
     gap: 7,
-  },
-  chip: {
-    paddingVertical: 7,
-    paddingHorizontal: 13,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: msFont(12),
-    fontWeight: '600',
   },
   section: {
     marginTop: spacing.lg,

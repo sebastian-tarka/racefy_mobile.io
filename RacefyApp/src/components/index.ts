@@ -35,6 +35,7 @@ export * from './DraftPostCard';
 export * from './DraftsReminderModal';
 export * from './EmptyState';
 export * from './ErrorState';
+export * from './FilterChip';
 export * from './EventCard';
 export * from './FeaturedEventCard';
 export * from './RouteCard';
