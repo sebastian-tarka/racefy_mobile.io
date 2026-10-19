@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, Avatar, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
@@ -23,6 +22,7 @@ import { fixStorageUrl } from '../../config/api';
 import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import { pickImages } from '../../utils/pickImages';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
@@ -108,41 +108,22 @@ export function EditProfileScreen({ navigation }: Props) {
     const setImage = type === 'avatar' ? setAvatarUri : setBackgroundUri;
 
     const launchGalleryForType = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(t('common.error'), t('editProfile.permissionDenied'));
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
+      const [asset] = await pickImages({
         allowsEditing: true,
         aspect,
-        quality: 0.8,
+        deniedMessage: t('editProfile.permissionDenied'),
       });
-
-      if (!result.canceled && result.assets[0]) {
-        setImage(result.assets[0].uri);
-      }
+      if (asset) setImage(asset.uri);
     };
 
     const launchCameraForType = async () => {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(t('common.error'), t('editProfile.cameraPermissionDenied'));
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: 'images',
+      const [asset] = await pickImages({
+        source: 'camera',
         allowsEditing: true,
         aspect,
-        quality: 0.8,
+        deniedMessage: t('editProfile.cameraPermissionDenied'),
       });
-
-      if (!result.canceled && result.assets[0]) {
-        setImage(result.assets[0].uri);
-      }
+      if (asset) setImage(asset.uri);
     };
 
     const title =

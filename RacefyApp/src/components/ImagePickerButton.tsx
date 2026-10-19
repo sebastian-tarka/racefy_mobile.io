@@ -10,10 +10,10 @@ import {
   ActionSheetIOS,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { pickImages } from '../utils/pickImages';
 
 interface ImagePickerButtonProps {
   value: string | null;
@@ -32,45 +32,22 @@ export function ImagePickerButton({
   const { colors } = useTheme();
 
   const launchGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'Permission to access photos is required to select an image.');
-      return;
-    }
-
     // On Android, disable editing to avoid crop screen issues
     // On iOS, editing works fine
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+    const [asset] = await pickImages({
       allowsEditing: Platform.OS === 'ios',
       aspect: aspectRatio,
-      quality: 0.8,
     });
-
-    if (!result.canceled && result.assets[0]) {
-      onChange(result.assets[0].uri);
-    }
+    if (asset) onChange(asset.uri);
   };
 
   const launchCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), 'Permission to access camera is required to take a photo.');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images',
+    const [asset] = await pickImages({
+      source: 'camera',
       allowsEditing: Platform.OS === 'ios',
       aspect: aspectRatio,
-      quality: 0.8,
     });
-
-    if (!result.canceled && result.assets[0]) {
-      onChange(result.assets[0].uri);
-    }
+    if (asset) onChange(asset.uri);
   };
 
   const pickImage = () => {

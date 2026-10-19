@@ -13,7 +13,6 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { Input, Button, ScreenHeader, MentionInput, ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -25,6 +24,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, Photo, Video, MediaItem } from '../../types/api';
+import { pickImages } from '../../utils/pickImages';
 
 type ActivityVisibility = 'public' | 'followers' | 'private';
 
@@ -125,21 +125,13 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       return;
     }
 
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('permissions.gallery'));
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsMultipleSelection: true,
-      quality: 0.8,
+    const assets = await pickImages({
+      multiple: true,
       selectionLimit: MAX_PHOTOS - totalPhotos,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
-      const newMedia: MediaItem[] = result.assets.map((asset) => ({
+    if (assets.length > 0) {
+      const newMedia: MediaItem[] = assets.map((asset) => ({
         uri: asset.uri,
         type: 'image' as const,
         width: asset.width,
@@ -155,19 +147,8 @@ export function ActivityFormScreen({ navigation, route }: Props) {
       return;
     }
 
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('permissions.camera'));
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images',
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const asset = result.assets[0];
+    const [asset] = await pickImages({ source: 'camera' });
+    if (asset) {
       setNewPhotos((prev) => [
         ...prev,
         {
