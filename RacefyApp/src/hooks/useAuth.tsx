@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import { secureStorage } from '../services/secureStorage';
 import { pushNotificationService } from '../services/pushNotifications';
@@ -331,30 +331,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        requiresConsent,
-        isImpersonating,
-        impersonatedUser,
-        impersonationSession,
-        login,
-        register,
-        googleSignIn,
-        logout,
-        refreshUser,
-        checkConsentStatus,
-        setConsentComplete,
-        startImpersonation,
-        stopImpersonation,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // Memoized so the many consumers re-render only when auth state actually changes.
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      requiresConsent,
+      isImpersonating,
+      impersonatedUser,
+      impersonationSession,
+      login,
+      register,
+      googleSignIn,
+      logout,
+      refreshUser,
+      checkConsentStatus,
+      setConsentComplete,
+      startImpersonation,
+      stopImpersonation,
+    }),
+    [
+      user,
+      isLoading,
+      requiresConsent,
+      isImpersonating,
+      impersonatedUser,
+      impersonationSession,
+      login,
+      register,
+      googleSignIn,
+      logout,
+      refreshUser,
+      checkConsentStatus,
+      setConsentComplete,
+      startImpersonation,
+      stopImpersonation,
+    ],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {

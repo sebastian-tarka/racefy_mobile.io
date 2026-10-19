@@ -18,7 +18,7 @@ export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 let backgroundSyncTimer: NodeJS.Timeout | null = null;
 
 // Log task registration at module load time for debugging
-console.log('[BackgroundLocation] Module loaded, will define task:', BACKGROUND_LOCATION_TASK);
+logger.debug('gps', 'Background location module loaded', { task: BACKGROUND_LOCATION_TASK });
 const LOCATION_BUFFER_KEY = '@racefy_location_buffer';
 const FOREGROUND_BUFFER_KEY = '@racefy_foreground_buffer'; // Persisted foreground points
 const ACTIVE_ACTIVITY_KEY = '@racefy_active_activity_id';
@@ -554,7 +554,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
 });
 
 // Verify task registration
-console.log('[BackgroundLocation] Task defined successfully:', BACKGROUND_LOCATION_TASK);
+logger.debug('gps', 'Background location task defined', { task: BACKGROUND_LOCATION_TASK });
 
 // ============================================
 // LEGACY BUFFER MIGRATION (one-time)

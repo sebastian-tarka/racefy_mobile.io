@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { InsightCard } from './InsightCard';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
 import type { ActivitySummary } from '../../types/insights';
 
@@ -41,9 +42,12 @@ function StatBox({
 export function SummaryCard({ data }: SummaryCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const { getDistanceValueFromKm, getDistanceUnit, formatDistanceFromKm } = useUnits();
 
-  const formatDistance = (km: number) =>
-    km >= 1000 ? `${(km / 1000).toFixed(1)}k` : km.toFixed(1);
+  const formatDistance = (km: number) => {
+    const value = getDistanceValueFromKm(km);
+    return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toFixed(1);
+  };
   const formatDuration = (hours: number) => hours.toFixed(1);
   const formatElevation = (m: number) =>
     m >= 1000 ? `${(m / 1000).toFixed(1)}k` : Math.round(m).toString();
@@ -62,7 +66,7 @@ export function SummaryCard({ data }: SummaryCardProps) {
         />
         <StatBox
           label={t('insights.summary.distance')}
-          value={`${formatDistance(data.total_distance_km)} km`}
+          value={`${formatDistance(data.total_distance_km)} ${getDistanceUnit()}`}
           icon="navigate-outline"
           colors={colors}
           isDark={isDark}
@@ -105,7 +109,7 @@ export function SummaryCard({ data }: SummaryCardProps) {
                   {stats.count}x
                 </Text>
                 <Text style={[styles.sportStat, { color: colors.textSecondary }]}>
-                  {stats.total_distance_km.toFixed(1)} km
+                  {formatDistanceFromKm(stats.total_distance_km)}
                 </Text>
                 <Text style={[styles.sportStat, { color: colors.textSecondary }]}>
                   {stats.total_duration_hours.toFixed(1)} h

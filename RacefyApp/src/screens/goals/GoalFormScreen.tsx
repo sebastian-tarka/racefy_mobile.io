@@ -11,9 +11,15 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, OptionSelector, ScreenContainer, ScreenHeader } from '../../components';
+import {
+  Button,
+  DatePickerSheet,
+  Input,
+  OptionSelector,
+  ScreenContainer,
+  ScreenHeader,
+} from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useUnits } from '../../hooks/useUnits';
@@ -130,11 +136,10 @@ export function GoalFormScreen({ navigation, route }: Props) {
     setSportTypeId(id);
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') setDatePickerField(null);
-    if (!selectedDate) return;
+  const handleDateConfirm = (selectedDate: Date) => {
     if (datePickerField === 'start') setStartDate(selectedDate);
     else if (datePickerField === 'end') setEndDate(selectedDate);
+    setDatePickerField(null);
   };
 
   const handleSubmit = async () => {
@@ -401,15 +406,13 @@ export function GoalFormScreen({ navigation, route }: Props) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {datePickerField && (
-        <DateTimePicker
-          value={(datePickerField === 'start' ? startDate : endDate) || new Date()}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-          minimumDate={datePickerField === 'end' ? startDate : undefined}
-        />
-      )}
+      <DatePickerSheet
+        visible={datePickerField != null}
+        value={(datePickerField === 'start' ? startDate : endDate) || new Date()}
+        minimumDate={datePickerField === 'end' ? startDate : undefined}
+        onConfirm={handleDateConfirm}
+        onCancel={() => setDatePickerField(null)}
+      />
     </ScreenContainer>
   );
 }

@@ -3,19 +3,17 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Platform,
   RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BottomSheet, ScreenContainer, ScreenHeader } from '../../components';
+import { BottomSheet, DatePickerSheet, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
 import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
 import { useTheme } from '../../hooks/useTheme';
@@ -284,10 +282,10 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
     return options;
   };
 
-  const handleMoveDate = (event: DateTimePickerEvent, selected?: Date) => {
+  const handleMoveDate = (selected: Date) => {
     const day = movingDay;
     setMovingDay(null);
-    if (!selected || !day?.workout) return;
+    if (!day?.workout) return;
 
     const to = isoDate(selected);
     if (to === day.date) return;
@@ -529,14 +527,12 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
         options={actionsFor ? dayActions(actionsFor) : []}
       />
 
-      {movingDay && (
-        <DateTimePicker
-          value={new Date(movingDay.date)}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleMoveDate}
-        />
-      )}
+      <DatePickerSheet
+        visible={movingDay != null}
+        value={movingDay ? new Date(movingDay.date) : new Date()}
+        onConfirm={handleMoveDate}
+        onCancel={() => setMovingDay(null)}
+      />
 
       <ResumeSessionSheet
         visible={resumeFor != null}

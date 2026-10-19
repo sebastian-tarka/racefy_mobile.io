@@ -14,6 +14,15 @@ export const appendXdebugTrigger = (url: string): string => {
   return `${url}${separator}XDEBUG_TRIGGER=PHPSTORM`;
 };
 
+/**
+ * Default timeout for JSON requests. `fetch` has none of its own, and on a
+ * connected-but-dead network it can hang for minutes; with GET deduplication a
+ * single hung request would also block every later call to that endpoint.
+ * Uploads (FormData) get no default - a video on a slow uplink legitimately
+ * takes longer. Callers that pass their own `signal` own the timeout.
+ */
+const DEFAULT_TIMEOUT_MS = 60_000;
+
 export class ApiBase {
   private token: string | null = null;
   private onUnauthorizedCallback: (() => void) | null = null;
@@ -101,7 +110,9 @@ export class ApiBase {
       }
       const promise = this.doRequest<T>(endpoint, options);
       this.inflightRequests.set(endpoint, promise);
-      promise.finally(() => this.inflightRequests.delete(endpoint));
+      // `.finally()` returns a new promise that rejects along with `promise`;
+      // swallow it here - the caller handles the rejection of `promise` itself.
+      promise.finally(() => this.inflightRequests.delete(endpoint)).catch(() => {});
       return promise;
     }
 
@@ -157,10 +168,19 @@ export class ApiBase {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let signal = options.signal;
+    if (!signal && !isFormData) {
+      const controller = new AbortController();
+      timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+      signal = controller.signal;
+    }
+
     try {
       const response = await fetch(this.buildUrl(endpoint), {
         ...options,
         headers,
+        signal,
       });
 
       const duration = Date.now() - startTime;
@@ -186,7 +206,7 @@ export class ApiBase {
         }
 
         // Handle 503 Maintenance Mode
-        if (response.status === 503 && (data as any).maintenance) {
+        if (response.status === 503 && data?.maintenance) {
           logger.warn('api', 'Server in maintenance mode', { endpoint });
           if (this.onMaintenanceModeCallback) {
             this.onMaintenanceModeCallback(data as any);
@@ -213,7 +233,7 @@ export class ApiBase {
         }
 
         // Handle 403 with upgrade_required - premium feature access denied
-        if (response.status === 403 && (data as any).upgrade_required === true) {
+        if (response.status === 403 && data?.upgrade_required === true) {
           const premiumData = data as Types.PremiumErrorResponse;
           logger.warn('api', 'Premium feature access denied', {
             endpoint,
@@ -254,6 +274,8 @@ export class ApiBase {
         });
       }
       throw error;
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

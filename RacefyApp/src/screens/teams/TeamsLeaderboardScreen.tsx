@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { useTheme, useAuth } from '../../hooks';
+import { useTheme, useAuth, useUnits } from '../../hooks';
 import { useTeamsLeaderboard } from '../../hooks/useTeamsLeaderboard';
 import {
   ScreenContainer,
@@ -43,6 +43,7 @@ const SORT_OPTIONS: { value: LeaderboardSortBy; labelKey: string }[] = [
 export function TeamsLeaderboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceShort, getDistanceValue, getDistanceUnit } = useUnits();
   const { user } = useAuth();
 
   const [period, setPeriod] = useState<StatsPeriod>('this_month');
@@ -77,11 +78,16 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
     [navigation],
   );
 
-  const formatDist = useCallback((meters: number) => {
-    if (meters >= 1000)
-      return `${(meters / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} km`;
-    return `${meters} m`;
-  }, []);
+  const formatDist = useCallback(
+    (meters: number) => {
+      if (meters < 1000) return formatDistanceShort(meters);
+      const value = getDistanceValue(meters).toLocaleString(undefined, {
+        maximumFractionDigits: 0,
+      });
+      return `${value} ${getDistanceUnit()}`;
+    },
+    [formatDistanceShort, getDistanceValue, getDistanceUnit],
+  );
 
   const getSortValue = useCallback(
     (entry: TeamLeaderboardEntry) => {

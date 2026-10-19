@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useUnsyncedActivities, type UnsyncedItem } from '../../hooks/useUnsyncedActivities';
 import * as trackingDb from '../../services/trackingDb';
 import { toGpsPoints } from '../../services/pointsUploader';
@@ -22,10 +23,6 @@ import { spacing, fontSize, msFont } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UnsyncedActivities'>;
-
-function formatDistanceKm(meters: number): string {
-  return `${(meters / 1000).toFixed(2)} km`;
-}
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -45,6 +42,7 @@ function formatFailedAt(iso: string, locale: string): string {
 
 export function UnsyncedActivitiesScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { formatDistance } = useUnits();
   const { t, i18n } = useTranslation();
   const { items, isLoading, retryingKey, refresh, retry, retryWithoutEvent, discard } =
     useUnsyncedActivities();
@@ -173,7 +171,7 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
           <View style={styles.stats}>
             <Stat
               label={t('unsynced.statDistance')}
-              value={formatDistanceKm(item.distance)}
+              value={formatDistance(item.distance)}
               colors={colors}
             />
             <Stat
@@ -239,7 +237,17 @@ export function UnsyncedActivitiesScreen({ navigation }: Props) {
         </View>
       );
     },
-    [colors, i18n.language, onDiscard, onExport, onRetry, onRetryWithoutEvent, retryingKey, t],
+    [
+      colors,
+      formatDistance,
+      i18n.language,
+      onDiscard,
+      onExport,
+      onRetry,
+      onRetryWithoutEvent,
+      retryingKey,
+      t,
+    ],
   );
 
   return (

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useLiveBroadcastFeed } from '../../hooks/useLiveBroadcastFeed';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import {
@@ -29,8 +30,6 @@ interface Props {
   navigation: NavigationProp;
   route: RoutePropType;
 }
-
-const fmtKm = (meters: number) => `${(Math.round(meters / 100) / 10).toFixed(1)} km`;
 
 const fmtDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
@@ -53,6 +52,7 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
   const { activityId } = route.params;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   const { broadcast, position, stats, trail, messages, status, isPositionHidden, error } =
     useLiveBroadcastFeed(activityId);
@@ -189,7 +189,10 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
         </View>
 
         <View style={[styles.statsBar, { backgroundColor: colors.cardBackground }]}>
-          <Stat label={t('live.spectator.distance')} value={stats ? fmtKm(stats.distance) : '—'} />
+          <Stat
+            label={t('live.spectator.distance')}
+            value={stats ? formatDistanceFromKm(stats.distance / 1000) : '—'}
+          />
           <Stat
             label={t('live.spectator.duration')}
             value={stats ? fmtDuration(stats.duration) : '—'}

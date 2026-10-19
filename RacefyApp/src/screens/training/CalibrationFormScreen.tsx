@@ -16,7 +16,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useSportTypes } from '../../hooks/useSportTypes';
@@ -31,6 +30,7 @@ import {
   ScreenContainer,
   ScreenHeader,
   SportTypeSelector,
+  DatePickerSheet,
 } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type {
@@ -690,20 +690,16 @@ export function CalibrationFormScreen({ navigation }: Props) {
       </KeyboardAvoidingView>
 
       {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={targetDate || new Date()}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          minimumDate={new Date()}
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(Platform.OS === 'ios');
-            if (selectedDate) {
-              setTargetDate(selectedDate);
-            }
-          }}
-        />
-      )}
+      <DatePickerSheet
+        visible={showDatePicker}
+        value={targetDate || new Date()}
+        minimumDate={new Date()}
+        onConfirm={(selectedDate) => {
+          setTargetDate(selectedDate);
+          setShowDatePicker(false);
+        }}
+        onCancel={() => setShowDatePicker(false)}
+      />
 
       {/* Cross-Training Sport Picker Modal */}
       <Modal

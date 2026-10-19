@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { triggerHaptic } from '../../hooks/useHaptics';
@@ -57,7 +58,6 @@ const fmtDay = (d: string) =>
   new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 const fmtFull = (d: string) =>
   new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-const fmtKm = (meters: number) => `${Math.round(meters / 100) / 10} km`;
 
 interface UISession {
   id: string;
@@ -75,13 +75,15 @@ interface UISession {
  * completion status → DONE/PLANNED); falls back to the prescribed `suggested_activities`
  * (always shown as planned) when no concrete activities exist yet.
  */
-function getSessions(week: TrainingWeek): UISession[] {
+type DistanceFormatter = (meters: number) => string;
+
+function getSessions(week: TrainingWeek, fmtDist: DistanceFormatter): UISession[] {
   const acts = week.activities || [];
   if (acts.length > 0) {
     return acts.map((a) => ({
       id: `a-${a.id}`,
       title: humanize(a.description || a.activity_type),
-      detail: [a.distance_meters ? fmtKm(a.distance_meters) : null, a.intensity]
+      detail: [a.distance_meters ? fmtDist(a.distance_meters) : null, a.intensity]
         .filter(Boolean)
         .join(' · '),
       durationMinutes: a.duration_minutes || 0,
@@ -94,7 +96,7 @@ function getSessions(week: TrainingWeek): UISession[] {
     id: `s-${s.id}`,
     title: humanize(s.activity_type),
     detail: [
-      s.target_distance_meters ? fmtKm(s.target_distance_meters) : null,
+      s.target_distance_meters ? fmtDist(s.target_distance_meters) : null,
       s.intensity_description,
     ]
       .filter(Boolean)
@@ -107,8 +109,8 @@ function getSessions(week: TrainingWeek): UISession[] {
 }
 
 /** Completed / total sessions, planned minutes and percent for a week. */
-function weekStats(week: TrainingWeek) {
-  const sessions = getSessions(week);
+function weekStats(week: TrainingWeek, fmtDist: DistanceFormatter) {
+  const sessions = getSessions(week, fmtDist);
   const statusCompleted = sessions.filter((s) => s.status === 'completed').length;
   // The backend exposes completed/planned counts in `progress` (derived from
   // activity matching). Prefer them so the card matches the week-progress
@@ -152,6 +154,11 @@ function humanize(text: string): string {
 export function WeeksListScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { getDistanceValue, getDistanceUnit } = useUnits();
+  const fmtDist = useCallback(
+    (meters: number) => `${Math.round(getDistanceValue(meters) * 10) / 10} ${getDistanceUnit()}`,
+    [getDistanceValue, getDistanceUnit],
+  );
   const { sportTypes } = useSportTypes();
   const { features, tier, canUse } = useSubscription();
   const [loading, setLoading] = useState(true);
@@ -577,7 +584,7 @@ export function WeeksListScreen({ navigation, route }: Props) {
     let planned = 0;
     weeks.forEach((w) => {
       if (w.status === 'upcoming') return;
-      const s = weekStats(w);
+      const s = weekStats(w, fmtDist);
       done += s.completed;
       planned += s.total;
     });
@@ -705,7 +712,7 @@ export function WeeksListScreen({ navigation, route }: Props) {
     );
   };
 
-  const selectedStats = selectedWeek ? weekStats(selectedWeek) : null;
+  const selectedStats = selectedWeek ? weekStats(selectedWeek, fmtDist) : null;
   const selectedIsCurrent = selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
 
   // ---- Grouped options below the week card ----

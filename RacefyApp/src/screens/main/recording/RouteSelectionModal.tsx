@@ -4,7 +4,7 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../../hooks';
+import { useTheme, useUnits } from '../../../hooks';
 import { NearbyRoutesList, ScreenContainer } from '../../../components';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 import type { NearbyRoute } from '../../../types/api';
@@ -34,6 +34,7 @@ export function RouteSelectionModal({
 }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { formatDistanceFromKm, formatElevation } = useUnits();
 
   const dragGesture = Gesture.Pan().onEnd((event) => {
     if (event.translationY > 100 || event.velocityY > 500) {
@@ -148,8 +149,8 @@ export function RouteSelectionModal({
                             {r.title}
                           </Text>
                           <Text style={[styles.myRouteMeta, { color: colors.textMuted }]}>
-                            {(r.distance / 1000).toFixed(1)} km
-                            {r.elevation_gain > 0 ? ` · ↑${Math.round(r.elevation_gain)} m` : ''}
+                            {formatDistanceFromKm(r.distance / 1000)}
+                            {r.elevation_gain > 0 ? ` · ↑${formatElevation(r.elevation_gain)}` : ''}
                           </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

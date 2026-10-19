@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { InsightCard } from './InsightCard';
 import { useTheme } from '../../hooks/useTheme';
+import { useUnits } from '../../hooks/useUnits';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
 import type { FavoriteRoutes, RouteFingerprint } from '../../types/insights';
 
@@ -15,6 +16,7 @@ interface RoutesCardProps {
 export function RoutesCard({ routes, fingerprints }: RoutesCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
+  const { formatDistanceFromKm } = useUnits();
 
   return (
     <InsightCard title={t('insights.routes.title')} icon="map">
@@ -83,7 +85,7 @@ export function RoutesCard({ routes, fingerprints }: RoutesCardProps) {
                   </View>
                 </View>
                 <Text style={[styles.fingerprintMeta, { color: colors.textMuted }]}>
-                  {fp.activity_count}x · {fp.distance_km.toFixed(1)} km
+                  {fp.activity_count}x · {formatDistanceFromKm(fp.distance_km)}
                 </Text>
               </View>
             </View>
