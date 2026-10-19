@@ -128,7 +128,9 @@ export function RecordingView({
 
   const paused = status === 'paused';
 
-  // Hold-to-stop fill — the button fills bottom-up while held.
+  // Hold-to-stop fill — the button fills bottom-up while held. Driven natively
+  // (translateY of a full-size fill, clipped by the round button) so it stays smooth
+  // while JS is busy re-rendering this screen every second.
   const fillAnim = useRef(new Animated.Value(0)).current;
   const fillAnimRef = useRef<Animated.CompositeAnimation | null>(null);
 
@@ -137,14 +139,14 @@ export function RecordingView({
     fillAnimRef.current = Animated.timing(fillAnim, {
       toValue: 1,
       duration: HOLD_TO_STOP_MS,
-      useNativeDriver: false,
+      useNativeDriver: true,
     });
     fillAnimRef.current.start();
   };
 
   const handleHoldEnd = () => {
     fillAnimRef.current?.stop();
-    Animated.timing(fillAnim, { toValue: 0, duration: 150, useNativeDriver: false }).start();
+    Animated.timing(fillAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start();
   };
 
   const minDistance = gpsProfile?.minDistanceForPace ?? 50;
@@ -418,10 +420,14 @@ export function RecordingView({
                 style={[
                   styles.stopFill,
                   {
-                    height: fillAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, CONTROL_SECONDARY],
-                    }),
+                    transform: [
+                      {
+                        translateY: fillAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [CONTROL_SECONDARY, 0],
+                        }),
+                      },
+                    ],
                   },
                 ]}
               />
@@ -711,6 +717,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    height: CONTROL_SECONDARY,
     backgroundColor: '#ffffff',
     opacity: 0.35,
   },
