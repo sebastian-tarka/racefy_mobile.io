@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import * as Application from 'expo-application';
 import { api } from '../services/api';
@@ -144,21 +152,28 @@ export function AppConfigProvider({ children }: { children: React.ReactNode }) {
     return () => api.setOnMaintenanceMode(null);
   }, [handleMaintenanceResponse]);
 
-  return (
-    <AppConfigContext.Provider
-      value={{
-        config,
-        isLoading,
-        error,
-        refresh,
-        isMaintenanceMode,
-        maintenanceMessage,
-        maintenanceEstimatedEnd,
-      }}
-    >
-      {children}
-    </AppConfigContext.Provider>
+  const value = useMemo(
+    () => ({
+      config,
+      isLoading,
+      error,
+      refresh,
+      isMaintenanceMode,
+      maintenanceMessage,
+      maintenanceEstimatedEnd,
+    }),
+    [
+      config,
+      isLoading,
+      error,
+      refresh,
+      isMaintenanceMode,
+      maintenanceMessage,
+      maintenanceEstimatedEnd,
+    ],
   );
+
+  return <AppConfigContext.Provider value={value}>{children}</AppConfigContext.Provider>;
 }
 
 export function useAppConfig() {
