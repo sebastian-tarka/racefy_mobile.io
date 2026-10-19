@@ -8,6 +8,7 @@
 
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { routeKey, type RouteSource } from '../utils/routeKey';
+import { routeFeature, settledBoundary } from '../utils/routeChunks';
 import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-native';
 import * as Location from 'expo-location';
 import { logger } from '../services/logger';
@@ -98,7 +99,7 @@ export interface MapboxLiveMapProps {
  * MapboxLiveMap - Real-time GPS tracking map
  * Shows live route, user location, GPS signal indicator, and optional shadow track
  */
-export function MapboxLiveMap({
+function MapboxLiveMapBase({
   livePoints,
   livePointsVersion,
   currentPosition,
@@ -178,38 +179,21 @@ export function MapboxLiveMap({
   // Use preview location if tracking hasn't started, otherwise use live position
   const displayPosition = currentPosition || previewLocation;
 
-  // Build GeoJSON from livePoints as a MultiLineString split at segment_break
-  // points (bridged GPS gaps) — the distance across a gap is counted in stats,
-  // but the map must not draw a straight line through it.
-  // Depends on livePointsVersion (cheap number comparison) instead of array reference
-  // to avoid O(n) copy on every render from duration timer
-  const routeGeoJSON = useMemo(() => {
-    if (livePoints.length < 2) return null;
-
-    const segments: [number, number][][] = [];
-    let current: [number, number][] = [];
-
-    for (const p of livePoints) {
-      if (p.segment_break && current.length > 0) {
-        if (current.length >= 2) segments.push(current);
-        current = [];
-      }
-      current.push([p.lng, p.lat]);
-    }
-    if (current.length >= 2) segments.push(current);
-
-    if (segments.length === 0) return null;
-
-    return {
-      type: 'Feature' as const,
-      properties: {},
-      geometry: {
-        type: 'MultiLineString' as const,
-        coordinates: segments,
-      },
-    };
+  // Route geometry in two sources (see utils/routeChunks): the settled part changes
+  // every ROUTE_SETTLE_EVERY points, the tail on every point — so a new point crosses
+  // the bridge with at most a few hundred coordinates, not the whole session.
+  // livePoints is the same (append-only) array between points; livePointsVersion is
+  // what changes, so it is the dependency instead of an O(n) array copy.
+  const settledEnd = settledBoundary(livePoints.length);
+  const settledRouteGeoJSON = useMemo(
+    () => (settledEnd > 0 ? routeFeature(livePoints, 0, settledEnd) : null),
+    [livePoints, settledEnd],
+  );
+  const tailRouteGeoJSON = useMemo(
+    () => routeFeature(livePoints, settledEnd, livePoints.length - 1),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [livePointsVersion]);
+    [livePoints, settledEnd, livePointsVersion],
+  );
 
   // Note: Map load analytics tracked by parent when activityId is available
   // No trackMapLoad(0) call here - activityId 0 is invalid and API rejects it
@@ -294,6 +278,14 @@ export function MapboxLiveMap({
 
   // Theme-aware colors
   const routeColor = isDark ? '#34d399' : colors.primary;
+  // Settled part and live tail are drawn identically, so they read as one line.
+  const routeLineStyle = {
+    lineColor: routeColor || '#10b981',
+    lineWidth: 4,
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const,
+    lineOpacity: 1,
+  };
   const shadowTrackBorderColor = isDark ? '#1E3A8A' : '#1E40AF';
   const shadowTrackMainColor = isDark ? '#60A5FA' : '#3B82F6';
 
@@ -496,18 +488,14 @@ export function MapboxLiveMap({
         )}
 
         {/* Live route polyline (only show when we have 2+ points) */}
-        {routeGeoJSON && (
-          <MapboxGL.ShapeSource id="liveRoute" shape={routeGeoJSON}>
-            <MapboxGL.LineLayer
-              id="liveRouteLine"
-              style={{
-                lineColor: routeColor || '#10b981',
-                lineWidth: 4,
-                lineCap: 'round',
-                lineJoin: 'round',
-                lineOpacity: 1,
-              }}
-            />
+        {settledRouteGeoJSON && (
+          <MapboxGL.ShapeSource id="liveRoute" shape={settledRouteGeoJSON}>
+            <MapboxGL.LineLayer id="liveRouteLine" style={routeLineStyle} />
+          </MapboxGL.ShapeSource>
+        )}
+        {tailRouteGeoJSON && (
+          <MapboxGL.ShapeSource id="liveRouteTail" shape={tailRouteGeoJSON}>
+            <MapboxGL.LineLayer id="liveRouteTailLine" style={routeLineStyle} />
           </MapboxGL.ShapeSource>
         )}
 
@@ -594,6 +582,10 @@ export function MapboxLiveMap({
     </View>
   );
 }
+
+// Memoized: the recording screen re-renders every second (duration), but the map only
+// needs to when a point arrives (livePointsVersion) or the position/style/route changes.
+export const MapboxLiveMap = React.memo(MapboxLiveMapBase);
 
 const styles = StyleSheet.create({
   athleteAvatar: {
