@@ -33,7 +33,7 @@ SQLite padają z `NODE_MODULE_VERSION`. Natywny build w EAS na Node 24 nie był 
 
 - [x] Build `production` (Android) na Node 24 przechodzi w EAS (1.25.1, versionCode 40)
 - [ ] Build `staging` i iOS na Node 24 przechodzą w EAS
-- [ ] Aplikacja z tego builda startuje na telefonie: logowanie, feed, nagranie aktywności z GPS
+- [x] Aplikacja z tego builda startuje na telefonie: logowanie, feed, nagranie aktywności z GPS (APK 1.25.1, versionCode 41, 2026-10-19)
 
 ### Trening siłowy w feedzie i na ekranie aktywności (zmergowane 2026-10-15, `feat/strength-activity-ui`)
 
