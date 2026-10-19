@@ -15,11 +15,19 @@ Stan na: **2026-10-19**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `audyt-etap1` — sprzątanie: martwy kod, zależności, lint, CI (2026-10-19)
+_Nic nie czeka._
 
-Etap 1 z `.notes/AUDYT_REFACTOR_2026-10.md`. Odgałęziony od `main`, niezależny od `audyt-etap0`
-(pliki zmieniane tam zostały tu pominięte przy sprzątaniu lintu, żeby merge był bez konfliktów).
-tsc 0, jest 416/416, knip 0, ESLint 263 → 104 (`lint` z zapadką `--max-warnings=104`),
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt, etap 1: sprzątanie — martwy kod, zależności, lint, CI (zmergowane 2026-10-19, `audyt-etap1`, tag `pre-audyt` = main sprzed merge)
+
+Etap 1 z `.notes/AUDYT_REFACTOR_2026-10.md`. Zmergowany razem z etapem 0 bez konfliktów; po połączeniu ESLint 101.
+tsc 0, jest 416/416, knip 0, ESLint 263 → 104 (`lint` z zapadką `--max-warnings=101` po mergu z etapem 0),
 `expo export` android+ios przechodzi (Hermes 11,9 MB).
 
 - Usunięte paczki: `react-native-maps` (natywna), `react-native-gifted-charts`, `@react-navigation/stack`,
@@ -40,7 +48,7 @@ Do sprawdzenia:
       udostępnianie, wykresy aktywności, lajki (post/aktywność/komentarz), zakończenie aktywności
       offline (`updatePendingFinish`)
 
-### `audyt-etap0` — poprawki błędów z audytu (2026-10-19)
+### Audyt, etap 0: poprawki błędów (zmergowane 2026-10-19, `audyt-etap0`, ten sam tag)
 
 Etap 0 z audytu `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, jest 424/424 (nowy `apiBase.test`),
 ESLint 267 → 264 warningów.
@@ -64,13 +72,6 @@ Do sprawdzenia na urządzeniu:
       wybór trasy, Insights — wszędzie mi/ft; w metrycznych wygląd bez zmian
 - [ ] Regresja: logowanie/wylogowanie, upload zdjęcia/wideo do posta (bez timeoutu),
       zapis aktywności
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Node 24 dla buildów EAS i lokalnie (na `main` 2026-10-19, release v1.25.1)
 
@@ -1044,6 +1045,8 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-10-19 | `audyt-etap1` | Sprzątanie: -7 paczek (m.in. `react-native-maps`, `@expo/cli`), expo 54.0.37, `expo-asset` jawnie, ~4,5 tys. linii martwego kodu, ESLint 263 → 104 z zapadką, CI w GitHub Actions, fail-fast testów SQLite |
+| 2026-10-19 | `audyt-etap0` | Klient API (nie-JSON, unhandled rejection, timeout 60 s), mile w 11 miejscach, `DatePickerSheet` (iOS), `useMemo` w Auth/AppConfig, `console` → logger |
 | 2026-09-22 | `feat/staging-app-variant` | Osobna aplikacja stage `com.racefy.app.staging` („Racefy Beta", `racefy-staging://`, linki `app.dev.racefy.io`, pliki Firebase `*-staging`) obok produkcyjnej; prefiksy deep linków z configu wariantu; `API_PRODUCTION_URL` / `API_STAGING_URL` przypięte w profilach `eas.json` |
 | 2026-09-20 | `offline-start-faza-4` | Start aktywności bez internetu: UUID nagrania przed zapytaniem serwera, „tymczasowa" aktywność (ujemne id), tworzenie na serwerze w trakcie nagrywania albo jako krok 0 wysyłki, `trackingDb` v4, odzyskiwanie nagrania po killu bez sieci, „Odrzuć" i nagrywanie w tle bez id serwera. Backend: idempotentny start po `client_activity_id` |
 | 2026-09-20 | `offline-finish-faza-3` | Wysyłka aktywności zapisanych offline przy zamkniętej aplikacji: `expo-background-task`, `finishSyncBackgroundTask` (rejestracja tylko przy niepustym outboxie), headless `backgroundApiClient`, przycisk w Dev Tools, `docs/OFFLINE_ACTIVITY_SYNC.md`. **Wymaga builda natywnego** |
