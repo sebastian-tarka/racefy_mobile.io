@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { LiveBroadcast, LiveBroadcastListParams } from '../types/api';
+import { useForegroundInterval } from './useForegroundInterval';
 
 interface Options extends LiveBroadcastListParams {
   /** Set false to skip fetching entirely (e.g. logged out). */
@@ -70,11 +71,8 @@ export function useLiveBroadcasts({
     load();
   }, [load]);
 
-  useEffect(() => {
-    if (!enabled || !refreshIntervalMs) return;
-    const timer = setInterval(() => load(), refreshIntervalMs);
-    return () => clearInterval(timer);
-  }, [enabled, refreshIntervalMs, load]);
+  // Foreground only — this runs on the always-mounted Profile tab.
+  useForegroundInterval(() => load(), enabled && refreshIntervalMs ? refreshIntervalMs : null);
 
   const refresh = useCallback(() => load(true), [load]);
 

@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
 import type {
@@ -10,6 +9,7 @@ import type {
   HomeVersion,
 } from '../types/api';
 import { logger } from '../services/logger';
+import { useForegroundInterval } from './useForegroundInterval';
 
 const HOME_CONFIG_CACHE_KEY = '@racefy_home_config';
 const REFRESH_INTERVAL = 60000; // 60 seconds
@@ -130,31 +130,8 @@ export function useHomeConfig(): UseHomeConfigResult {
     fetchConfig();
   }, [fetchConfig]);
 
-  // Periodic refresh
-  useEffect(() => {
-    const interval = setInterval(() => {
-      logger.debug('general', 'Auto-refreshing home config');
-      fetchConfig();
-    }, REFRESH_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [fetchConfig]);
-
-  // Refresh when app returns to foreground
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active') {
-        logger.debug('general', 'App became active, refreshing home config');
-        fetchConfig();
-      }
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-    return () => {
-      subscription.remove();
-    };
-  }, [fetchConfig]);
+  // Periodic refresh, foreground only; refreshes at once when the app comes back.
+  useForegroundInterval(fetchConfig, REFRESH_INTERVAL);
 
   // Sort sections by priority (ascending)
   const sortedSections = (config?.sections || []).slice().sort((a, b) => a.priority - b.priority);
