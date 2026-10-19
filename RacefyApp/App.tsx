@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AnimatedSplash } from './src/components/AnimatedSplash';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/hooks/useAuth';
+import { AuthProvider, useAuth } from './src/hooks/useAuth';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 import { LiveActivityProvider } from './src/hooks/useLiveActivity';
 import { UnitsProvider } from './src/hooks/useUnits';
@@ -20,6 +20,7 @@ import { loadSavedLanguage } from './src/i18n';
 
 function AppContent() {
   const { colors, isDark } = useTheme();
+  const { isLoading: isAuthLoading } = useAuth();
   const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
@@ -34,7 +35,9 @@ function AppContent() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <AppNavigator />
-      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
+      {!splashDone && (
+        <AnimatedSplash ready={!isAuthLoading} onFinish={() => setSplashDone(true)} />
+      )}
     </GestureHandlerRootView>
   );
 }
