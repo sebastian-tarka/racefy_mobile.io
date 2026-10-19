@@ -24,6 +24,31 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Audyt, etap 4: wspólne komponenty (zmergowane 2026-10-19, `audyt-etap4`, tag `pre-audyt-etap4` = main sprzed merge)
+
+- `DatePickerSheet` z trybem `datetime` (iOS: spinner w arkuszu z Anuluj/Gotowe; Android: dialog
+  daty, potem godziny). Przeniesione: formularz eventu (na iOS spinner nie miał jak się zamknąć),
+  okna czasowe komentarza AI (na iOS „Anuluj” nic nie cofało), przypomnienia treningowe.
+- `SheetModal` — wspólna obudowa 7 dolnych arkuszy (BottomSheet, wybór aktywności, plany, uczestnicy,
+  listy polubień/obserwujących, udostępnianie).
+- `ErrorState` (3 ekrany szczegółów), `FilterChip` (Nagrody, historia punktów), wspólne mapy kolorów
+  (feedback, raporty AI, kategorie wskazówek), `formatShortDate`, lokalne `formatDuration` → utils.
+- `pickImages()` — uprawnienia i wybór zdjęć w jednym miejscu (komentarze, formularz aktywności,
+  edycja profilu, ImagePickerButton).
+- Tempo u widza transmisji live w jednostkach użytkownika (było zawsze /km, plus „5:60”).
+
+Do sprawdzenia na telefonie:
+- [ ] Formularz eventu: data startu/końca/rejestracji — iOS: spinner data+godzina, Gotowe zapisuje,
+      Anuluj nie zmienia; Android: dialog daty, potem godziny
+- [ ] Ustawienia komentarza AI w formularzu eventu: okno czasowe — Anuluj nie zmienia godziny (iOS)
+- [ ] Przypomnienia treningowe: zmiana godziny
+- [ ] Arkusze: wybór aktywności (tydzień planu), lista planów, uczestnicy eventu, lista polubień,
+      obserwujący, udostępnianie, menu „…” posta — wyglądają jak wcześniej, tap w tło zamyka,
+      tap w treść nie
+- [ ] Zdjęcia: komentarz (dodanie i edycja), formularz aktywności (galeria wiele + aparat), avatar i tło
+      profilu, okładka eventu; odmowa uprawnień pokazuje komunikat
+- [ ] Widz live z jednostkami imperialnymi: tempo w /mi
+
 ### Audyt, etap 3: wydajność nagrywania (zmergowane 2026-10-19, `audyt-etap3`, tag `pre-audyt-etap2-3` = main sprzed merge)
 
 - `LiveActivityStatusContext` / `useLiveActivityStatus()`: tab bar, Home i EventDetail czytają tylko
@@ -1090,6 +1115,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-10-19 | `audyt-etap4` | Wspólne komponenty: `DatePickerSheet` datetime (+3 migracje, 2 błędy iOS), `SheetModal` (7 arkuszy), `ErrorState`, `FilterChip`, `pickImages()`, mapy kolorów, formatery; tempo widza live w jednostkach |
 | 2026-10-19 | `audyt-etap3` | Wydajność nagrywania: status context (koniec re-renderu tab bara/Home co sekundę), timery, stabilna pozycja GPS + memo mapy, trasa w dwóch źródłach, wyścigi watchera GPS i syncu w tle, `RecordingToast`, `describeSaveOutcome` |
 | 2026-10-19 | `audyt-etap2` | Rozmiar: filmy 25 → 4,5 MB, `date-fns` −1 MB JS, R8 + shrinkResources + ABI (APK 228 → 109 MB), heap Gradle 4 GB, keep `RNHeadlessAppLoader` |
 | 2026-10-19 | `audyt-etap1` | Sprzątanie: -7 paczek (m.in. `react-native-maps`, `@expo/cli`), expo 54.0.37, `expo-asset` jawnie, ~4,5 tys. linii martwego kodu, ESLint 263 → 104 z zapadką, CI w GitHub Actions, fail-fast testów SQLite |
