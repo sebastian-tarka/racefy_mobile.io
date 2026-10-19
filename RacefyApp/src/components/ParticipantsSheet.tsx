@@ -3,14 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  Pressable,
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
@@ -18,6 +15,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { ConversationParticipant } from '../types/api';
+import { SheetModal } from './SheetModal';
 
 interface ParticipantsSheetProps {
   visible: boolean;
@@ -34,7 +32,6 @@ export function ParticipantsSheet({
 }: ParticipantsSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [participants, setParticipants] = useState<ConversationParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -92,74 +89,39 @@ export function ParticipantsSheet({
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.cardBackground,
-              paddingBottom: Math.max(insets.bottom, spacing.lg),
-            },
-          ]}
-          onPress={(e) => e.stopPropagation()}
-        >
-          <View style={styles.handleContainer}>
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-          </View>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              {t('messaging.viewMembers')}
-            </Text>
-            <TouchableOpacity
-              onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
+    <SheetModal visible={visible} onClose={onClose} style={styles.sheet}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {t('messaging.viewMembers')}
+        </Text>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <FlatList
-              data={participants}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={renderRow}
-              contentContainerStyle={styles.listContent}
-              ItemSeparatorComponent={() => (
-                <View style={[styles.separator, { backgroundColor: colors.border }]} />
-              )}
-            />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={participants}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderRow}
+          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => (
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
           )}
-        </Pressable>
-      </Pressable>
-    </Modal>
+        />
+      )}
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   sheet: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
     maxHeight: '70%',
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',

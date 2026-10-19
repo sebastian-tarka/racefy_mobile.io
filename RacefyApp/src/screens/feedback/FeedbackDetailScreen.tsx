@@ -24,23 +24,13 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Feedback, FeedbackReply, FeedbackAttachment } from '../../types/api';
+import {
+  FEEDBACK_PRIORITY_COLORS,
+  FEEDBACK_STATUS_COLORS,
+  FEEDBACK_UNKNOWN_COLOR,
+} from './feedbackColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackDetail'>;
-
-const STATUS_COLORS: Record<string, string> = {
-  open: '#3B82F6',
-  in_progress: '#EAB308',
-  waiting_for_user: '#F97316',
-  resolved: '#22C55E',
-  closed: '#6B7280',
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  critical: '#EF4444',
-  high: '#F97316',
-  medium: '#EAB308',
-  low: '#6B7280',
-};
 
 export function FeedbackDetailScreen({ navigation, route }: Props) {
   const { feedbackId } = route.params;
@@ -187,8 +177,8 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
   }
 
   const isClosed = feedback.status === 'closed';
-  const statusColor = STATUS_COLORS[feedback.status] || '#6B7280';
-  const priorityColor = PRIORITY_COLORS[feedback.priority] || '#6B7280';
+  const statusColor = FEEDBACK_STATUS_COLORS[feedback.status] || FEEDBACK_UNKNOWN_COLOR;
+  const priorityColor = FEEDBACK_PRIORITY_COLORS[feedback.priority] || FEEDBACK_UNKNOWN_COLOR;
 
   return (
     <ScreenContainer>

@@ -23,6 +23,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { FeedbackType, FeedbackPriority } from '../../types/api';
+import { FEEDBACK_PRIORITY_COLORS } from './feedbackColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackForm'>;
 
@@ -33,13 +34,6 @@ const FEEDBACK_TYPES: { type: FeedbackType; icon: string; color: string }[] = [
 ];
 
 const PRIORITIES: FeedbackPriority[] = ['low', 'medium', 'high', 'critical'];
-
-const PRIORITY_COLORS: Record<FeedbackPriority, string> = {
-  low: '#6B7280',
-  medium: '#EAB308',
-  high: '#F97316',
-  critical: '#EF4444',
-};
 
 interface Attachment {
   uri: string;
@@ -221,7 +215,7 @@ export function FeedbackFormScreen({ navigation }: Props) {
           <View style={styles.priorityRow}>
             {PRIORITIES.map((p) => {
               const isActive = priority === p;
-              const pColor = PRIORITY_COLORS[p];
+              const pColor = FEEDBACK_PRIORITY_COLORS[p];
               return (
                 <TouchableOpacity
                   key={p}

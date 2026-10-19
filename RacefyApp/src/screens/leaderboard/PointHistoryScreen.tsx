@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { PointHistoryList, ScreenContainer, ScreenHeader } from '../../components';
+import { FilterChip, PointHistoryList, ScreenContainer, ScreenHeader } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { usePointHistory } from '../../hooks/usePointHistory';
 import { usePointStats } from '../../hooks/usePointStats';
@@ -96,30 +96,14 @@ export function PointHistoryScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.filters}>
-        {FILTERS.map((id) => {
-          const active = filter === id;
-          return (
-            <TouchableOpacity
-              key={id}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: active ? colors.textPrimary : 'transparent',
-                  borderColor: active ? colors.textPrimary : colors.border,
-                },
-              ]}
-              onPress={() => setFilter(id)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: active }}
-            >
-              <Text
-                style={[styles.chipText, { color: active ? colors.white : colors.textSecondary }]}
-              >
-                {t(`compete.history.filters.${id}`)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {FILTERS.map((id) => (
+          <FilterChip
+            key={id}
+            label={t(`compete.history.filters.${id}`)}
+            active={filter === id}
+            onPress={() => setFilter(id)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -207,15 +191,5 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm + 2,
-  },
-  chip: {
-    paddingVertical: 7,
-    paddingHorizontal: 13,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontSize: msFont(12),
-    fontWeight: '600',
   },
 });

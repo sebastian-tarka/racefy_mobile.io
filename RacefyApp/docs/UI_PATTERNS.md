@@ -50,20 +50,67 @@ All card components include consistent bottom margin for list spacing:
 | `EventCard` | `marginBottom: spacing.md` | Event listings |
 | `ActivityCard` | `marginBottom: spacing.md` | Activity listings |
 
-### Sport tiles (`SportTile`)
+### Sport illustrations (`config/sportTiles.ts`)
 
-Illustrated sport picker used on the recording screen (idle overlay, map overlay) and as
-thumbnails in `SportSelectionModal`. Illustrations live in `assets/sports/{dark,light}/`
-(256 px squares, no caption) and are resolved by slug in `config/sportTiles.ts` — unknown
-sports fall back to the "R" tile, so a new backend sport never renders broken.
+Sport pictures (`SportSelectionModal`, `SportShortcutsModal`, `RouteCard`) live in
+`assets/sports/{dark,light}/` (256 px squares, no caption) and are resolved by slug in
+`config/sportTiles.ts` — an unknown sport falls back to the "R" tile, so a new backend sport
+never renders broken. New sport: add `dark/<slug>.jpg` + `light/<slug>.jpg` and register both.
+
+### Bottom sheets (`SheetModal`)
+
+The shell every bottom sheet shares: dimmed backdrop that closes on tap, sheet sliding up
+with rounded top corners and a drag handle. The content is yours.
 
 ```tsx
-<SportTile sport={sport} selected={isSelected} onPress={() => select(sport)} size={tileSize} />
+<SheetModal visible={visible} onClose={onClose} style={styles.sheet}>
+  <Text style={styles.title}>{t('…')}</Text>
+  <ScrollView>{/* … */}</ScrollView>
+</SheetModal>
 ```
 
-- Three tiles per row: `size = floor((width − 2·spacing.lg − 2·spacing.sm) / 3)`.
-- The translated name sits on a bottom gradient; selection = primary ring + check badge.
-- Add a new sport: drop `dark/<slug>.jpg` + `light/<slug>.jpg`, register both in `sportTiles.ts`.
+- `style` is merged over the defaults (`cardBackground`, `borderRadius.xl` top) — put
+  `maxHeight`, `paddingHorizontal` or a different background there.
+- `safeAreaBottom` (default `true`) pads for the home indicator; `handleSpacing="sm"` for the
+  tighter list sheets.
+- A list of actions (icon + title + chevron) is `BottomSheet` — built on `SheetModal`.
+- Sheets with a text input keep their own `KeyboardAvoidingView` shell for now (`ReportModal`).
+
+### Date and time pickers (`DatePickerSheet`)
+
+Never render `@react-native-community/datetimepicker` directly. The iOS spinner fires
+`onChange` on every wheel tick and has no close button of its own; Android shows a dialog
+that fires once. `DatePickerSheet` gives both the same "pick, then confirm" behaviour.
+
+```tsx
+<DatePickerSheet
+  visible={field != null}
+  mode="datetime"               // 'date' | 'time' | 'datetime'
+  value={formData[field] ?? new Date()}
+  minimumDate={new Date()}
+  title={t('…')}               // iOS only, between Cancel and Done
+  onConfirm={(date) => { save(date); close(); }}
+  onCancel={close}
+/>
+```
+
+- iOS: spinner in a sheet with Cancel / Done; nothing is reported before Done.
+- Android: native dialog; `datetime` runs a date dialog, then a time dialog.
+
+### Error state (`ErrorState`)
+
+Full-screen "could not load" for a detail screen; for empty lists use `EmptyState`.
+
+```tsx
+if (error || !post) {
+  return (
+    <ScreenContainer>
+      <ScreenHeader title={t('feed.title')} showBack onBack={navigation.goBack} />
+      <ErrorState message={error || t('feed.failedToLoad')} onRetry={fetchPost} />
+    </ScreenContainer>
+  );
+}
+```
 
 ### Training goal (`WorkoutGoalRow`, `WorkoutConfigModal`, `WorkoutProgressCard`)
 

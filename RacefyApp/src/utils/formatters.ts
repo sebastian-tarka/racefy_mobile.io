@@ -48,3 +48,9 @@ export const formatPrice = (amount: number, currency: string = 'PLN'): string =>
     return `${amount.toFixed(2)} ${currency.toUpperCase()}`;
   }
 };
+
+/** Short day and month in the device locale: "Oct 19" / "19 paź". Empty for no date. */
+export const formatShortDate = (dateString?: string): string => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};

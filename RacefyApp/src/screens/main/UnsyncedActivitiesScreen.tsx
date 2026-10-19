@@ -21,16 +21,9 @@ import { getUnsyncedActivity } from '../../services/unsyncedActivities';
 import { Button, ScreenContainer, ScreenHeader } from '../../components';
 import { spacing, fontSize, msFont } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
+import { formatDuration } from '../../utils/formatDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UnsyncedActivities'>;
-
-function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
 
 function formatFailedAt(iso: string, locale: string): string {
   try {

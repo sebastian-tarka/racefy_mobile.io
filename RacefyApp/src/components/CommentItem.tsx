@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
-import * as ImagePicker from 'expo-image-picker';
 import { Avatar } from './Avatar';
 import { MediaGallery } from './MediaGallery';
 import { MentionText } from './MentionText';
@@ -22,6 +21,7 @@ import { useAuth } from '../hooks/useAuth';
 import { apiTokensToLibraryFormat, stripMentionsForApi } from '../utils/mentions';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Comment, MediaItem, Photo, User } from '../types/api';
+import { pickImages } from '../utils/pickImages';
 
 interface MediaEditState {
   existingMedia: Photo | null; // Current media from comment
@@ -120,20 +120,8 @@ export function CommentItem({
   };
 
   const handlePickMedia = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('common.permissionDenied'));
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: false,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
+    const [asset] = await pickImages();
+    if (asset) {
       setMediaEdit((prev) => ({
         ...prev,
         newMedia: {

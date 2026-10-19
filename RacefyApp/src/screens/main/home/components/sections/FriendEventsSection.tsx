@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
 import type { HomeSection, HomeSectionEvent } from '../../../../../types/api';
+import { formatShortDate } from '../../../../../utils/formatters';
 
 interface FriendEventsSectionProps {
   section: HomeSection;
@@ -21,12 +22,6 @@ interface FriendEventsSectionProps {
 /**
  * Format date compactly
  */
-function formatDate(dateString?: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 /**
  * Single event card
  */
@@ -67,7 +62,7 @@ function EventCard({
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
               <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                {formatDate(event.start_date)}
+                {formatShortDate(event.start_date)}
               </Text>
             </View>
           )}

@@ -2,11 +2,9 @@ import React from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +18,7 @@ import { useInteractors } from '../hooks/useInteractors';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { InteractionTargetType } from './InteractionButton';
 import type { UserInteractor } from '../types/api';
+import { SheetModal } from './SheetModal';
 
 interface InteractorsListModalProps {
   visible: boolean;
@@ -150,57 +149,32 @@ export function InteractorsListModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <View style={styles.handleContainer}>
-                <View style={[styles.handle, { backgroundColor: colors.border }]} />
-              </View>
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      style={[styles.modalContent, { backgroundColor: colors.background }]}
+      safeAreaBottom={false}
+      handleSpacing="sm"
+    >
+      <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+          {title}
+          {totalCount > 0 ? ` (${totalCount})` : ''}
+        </Text>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {title}
-                  {totalCount > 0 ? ` (${totalCount})` : ''}
-                </Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close" size={24} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
-              {renderContent()}
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      {renderContent()}
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   modalContent: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
     minHeight: '40%',
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
   },
   modalHeader: {
     flexDirection: 'row',

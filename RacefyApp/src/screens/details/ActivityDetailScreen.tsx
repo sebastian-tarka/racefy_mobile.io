@@ -19,7 +19,6 @@ import {
   Avatar,
   BottomSheet,
   type BottomSheetOption,
-  Button,
   Card,
   CommentSection,
   EffortBreakdownCard,
@@ -34,6 +33,7 @@ import {
   RoutePreview,
   ScreenContainer,
   ScreenHeader,
+  ErrorState,
 } from '../../components';
 import {
   hasStrengthSession,
@@ -60,6 +60,7 @@ import { exportGpxAndShare } from '../../utils/gpxExport';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
+import { formatDuration } from '../../utils/formatDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -223,17 +224,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     ]);
   }, [handleDelete, t]);
 
-  const formatDuration = (seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hrs > 0) {
-      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const formatPace = (seconds: number, meters: number): string => {
     return formatPaceWithUnit(meters, seconds);
   };
@@ -344,13 +334,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           showBack
           onBack={() => navigation.goBack()}
         />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.textMuted} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-            {error || t('activityDetail.notFound')}
-          </Text>
-          <Button title={t('common.tryAgain')} onPress={fetchActivity} variant="primary" />
-        </View>
+        <ErrorState message={error || t('activityDetail.notFound')} onRetry={fetchActivity} />
       </ScreenContainer>
     );
   }
@@ -1240,17 +1224,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: fontSize.sm,
     fontWeight: '500',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorText: {
-    fontSize: fontSize.lg,
-    marginVertical: spacing.lg,
-    textAlign: 'center',
   },
   engagementCard: {
     marginHorizontal: spacing.md,

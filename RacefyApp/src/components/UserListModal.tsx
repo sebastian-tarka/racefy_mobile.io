@@ -3,8 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Modal,
   FlatList,
   StyleSheet,
   ActivityIndicator,
@@ -19,6 +17,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { User, FollowRequest } from '../types/api';
+import { SheetModal } from './SheetModal';
 
 type TabType = 'followers' | 'following' | 'requests';
 
@@ -307,93 +306,65 @@ function UserListModalComponent({
   ];
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <View style={styles.handleContainer}>
-                <View style={[styles.handle, { backgroundColor: colors.border }]} />
-              </View>
+    <SheetModal
+      visible={visible}
+      onClose={onClose}
+      style={[styles.modalContent, { backgroundColor: colors.background }]}
+      safeAreaBottom={false}
+      handleSpacing="sm"
+    >
+      <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{getTitle()}</Text>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{getTitle()}</Text>
-                <TouchableOpacity
-                  onPress={onClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="close" size={24} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Tabs */}
-              <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
-                {tabs.map((tab) => (
-                  <TouchableOpacity
-                    key={tab.value}
-                    style={[
-                      styles.tab,
-                      activeTab === tab.value && [
-                        styles.activeTab,
-                        { borderBottomColor: colors.primary },
-                      ],
-                    ]}
-                    onPress={() => setActiveTab(tab.value)}
-                  >
-                    <View style={styles.tabLabelRow}>
-                      <Text
-                        style={[
-                          styles.tabText,
-                          {
-                            color: activeTab === tab.value ? colors.primary : colors.textSecondary,
-                          },
-                        ]}
-                      >
-                        {tab.label}
-                      </Text>
-                      {tab.value === 'requests' &&
-                        pendingRequestsCount != null &&
-                        pendingRequestsCount > 0 && (
-                          <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.tabBadgeText}>
-                              {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
-                            </Text>
-                          </View>
-                        )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {renderContent()}
+      {/* Tabs */}
+      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.value}
+            style={[
+              styles.tab,
+              activeTab === tab.value && [styles.activeTab, { borderBottomColor: colors.primary }],
+            ]}
+            onPress={() => setActiveTab(tab.value)}
+          >
+            <View style={styles.tabLabelRow}>
+              <Text
+                style={[
+                  styles.tabText,
+                  {
+                    color: activeTab === tab.value ? colors.primary : colors.textSecondary,
+                  },
+                ]}
+              >
+                {tab.label}
+              </Text>
+              {tab.value === 'requests' &&
+                pendingRequestsCount != null &&
+                pendingRequestsCount > 0 && (
+                  <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.tabBadgeText}>
+                      {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
+                    </Text>
+                  </View>
+                )}
             </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {renderContent()}
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   modalContent: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
     minHeight: '40%',
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
   },
   modalHeader: {
     flexDirection: 'row',

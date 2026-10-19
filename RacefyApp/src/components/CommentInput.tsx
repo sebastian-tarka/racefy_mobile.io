@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import * as ImagePicker from 'expo-image-picker';
 import { useMentions } from 'react-native-controlled-mentions';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
@@ -26,6 +25,7 @@ import type {
   MentionSearchEvent,
   MentionSearchActivity,
 } from '../types/api';
+import { pickImages } from '../utils/pickImages';
 
 const DEBOUNCE_MS = 300;
 
@@ -143,19 +143,8 @@ export function CommentInput({
   const canSubmit = (content.trim().length > 0 || photo !== null) && !isSubmitting && !disabled;
 
   const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: false,
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets.length > 0) {
-      const asset = result.assets[0];
+    const [asset] = await pickImages();
+    if (asset) {
       setPhoto({
         uri: asset.uri,
         type: 'image',

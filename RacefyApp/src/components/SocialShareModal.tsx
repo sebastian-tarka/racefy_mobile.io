@@ -3,8 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Modal,
   StyleSheet,
   TextInput,
   ScrollView,
@@ -23,6 +21,7 @@ import { logger } from '../services/logger';
 import { ShareFormatSelector } from './ShareFormatSelector';
 import { shareActivityWithImage } from '../utils/share';
 import type { ShareLinkResponse } from '../types/api';
+import { SheetModal } from './SheetModal';
 
 type ShareableType = 'activity' | 'post' | 'event' | 'comment';
 
@@ -228,189 +227,162 @@ function SocialShareModalComponent({ visible, onClose, type, id }: SocialShareMo
   const shareUrl = shareData?.url || '';
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <View style={styles.handleContainer}>
-                <View style={[styles.handle, { backgroundColor: colors.border }]} />
-              </View>
+    <SheetModal
+      visible={visible}
+      onClose={handleClose}
+      style={[styles.modalContent, { backgroundColor: colors.background }]}
+      safeAreaBottom={false}
+      handleSpacing="sm"
+    >
+      <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+        {showFormatSelector && (
+          <TouchableOpacity
+            onPress={() => setShowFormatSelector(false)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
+        <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+          {showFormatSelector ? t('share.selectFormat') : t('share.title')}
+        </Text>
+        <TouchableOpacity
+          onPress={handleClose}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          disabled={isLoading}
+        >
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                {showFormatSelector && (
-                  <TouchableOpacity
-                    onPress={() => setShowFormatSelector(false)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={styles.backButton}
-                  >
-                    <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-                  </TouchableOpacity>
-                )}
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {showFormatSelector ? t('share.selectFormat') : t('share.title')}
-                </Text>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  disabled={isLoading}
-                >
-                  <Ionicons name="close" size={24} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                    {t('share.loading')}
-                  </Text>
-                </View>
-              ) : showFormatSelector && type === 'activity' ? (
-                <ScrollView
-                  style={styles.scrollView}
-                  contentContainerStyle={styles.scrollContent}
-                  showsVerticalScrollIndicator={false}
-                >
-                  <ShareFormatSelector
-                    activityId={id}
-                    onShare={handleShareWithImage}
-                    onClose={() => setShowFormatSelector(false)}
-                  />
-                </ScrollView>
-              ) : (
-                <ScrollView
-                  style={styles.scrollView}
-                  contentContainerStyle={styles.scrollContent}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {/* Native share button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.nativeShareButton,
-                      {
-                        backgroundColor: colors.primary,
-                        borderColor: colors.primary,
-                      },
-                    ]}
-                    onPress={handleNativeShare}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="share-outline" size={iconSize.md} color={colors.white} />
-                    <Text style={[styles.nativeShareText, { color: colors.white }]}>
-                      {t('share.shareVia')}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Platform buttons */}
-                  <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                    {t('share.shareOn')}
-                  </Text>
-
-                  <View style={styles.platformsGrid}>
-                    {SHARE_PLATFORMS.map((platform) => (
-                      <TouchableOpacity
-                        key={platform.id}
-                        style={[
-                          styles.platformButton,
-                          {
-                            backgroundColor: colors.cardBackground,
-                            borderColor: colors.border,
-                          },
-                        ]}
-                        onPress={() => handlePlatformShare(platform.id)}
-                        activeOpacity={0.7}
-                      >
-                        <View
-                          style={[
-                            styles.platformIconContainer,
-                            { backgroundColor: platform.color },
-                          ]}
-                        >
-                          <Ionicons name={platform.icon} size={iconSize.lg} color="#FFFFFF" />
-                        </View>
-                        <Text
-                          style={[styles.platformName, { color: colors.textPrimary }]}
-                          numberOfLines={1}
-                        >
-                          {platform.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
-                  {/* Copy link section */}
-                  <View style={[styles.copyLinkSection, { borderTopColor: colors.border }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-                      {t('share.copyLink')}
-                    </Text>
-
-                    <View
-                      style={[
-                        styles.linkContainer,
-                        {
-                          backgroundColor: colors.cardBackground,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                    >
-                      <TextInput
-                        style={[styles.linkInput, { color: colors.textSecondary }]}
-                        value={shareUrl}
-                        editable={false}
-                        numberOfLines={1}
-                      />
-                      <TouchableOpacity
-                        style={[
-                          styles.copyButton,
-                          {
-                            backgroundColor: copied ? colors.success : colors.primary,
-                          },
-                        ]}
-                        onPress={handleCopyLink}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons
-                          name={copied ? 'checkmark' : 'copy-outline'}
-                          size={18}
-                          color={colors.white}
-                        />
-                        <Text style={[styles.copyButtonText, { color: colors.white }]}>
-                          {copied ? t('share.copied') : t('share.copy')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </ScrollView>
-              )}
-            </View>
-          </TouchableWithoutFeedback>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+            {t('share.loading')}
+          </Text>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+      ) : showFormatSelector && type === 'activity' ? (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <ShareFormatSelector
+            activityId={id}
+            onShare={handleShareWithImage}
+            onClose={() => setShowFormatSelector(false)}
+          />
+        </ScrollView>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Native share button */}
+          <TouchableOpacity
+            style={[
+              styles.nativeShareButton,
+              {
+                backgroundColor: colors.primary,
+                borderColor: colors.primary,
+              },
+            ]}
+            onPress={handleNativeShare}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="share-outline" size={iconSize.md} color={colors.white} />
+            <Text style={[styles.nativeShareText, { color: colors.white }]}>
+              {t('share.shareVia')}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Platform buttons */}
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            {t('share.shareOn')}
+          </Text>
+
+          <View style={styles.platformsGrid}>
+            {SHARE_PLATFORMS.map((platform) => (
+              <TouchableOpacity
+                key={platform.id}
+                style={[
+                  styles.platformButton,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => handlePlatformShare(platform.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.platformIconContainer, { backgroundColor: platform.color }]}>
+                  <Ionicons name={platform.icon} size={iconSize.lg} color="#FFFFFF" />
+                </View>
+                <Text
+                  style={[styles.platformName, { color: colors.textPrimary }]}
+                  numberOfLines={1}
+                >
+                  {platform.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Copy link section */}
+          <View style={[styles.copyLinkSection, { borderTopColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              {t('share.copyLink')}
+            </Text>
+
+            <View
+              style={[
+                styles.linkContainer,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <TextInput
+                style={[styles.linkInput, { color: colors.textSecondary }]}
+                value={shareUrl}
+                editable={false}
+                numberOfLines={1}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.copyButton,
+                  {
+                    backgroundColor: copied ? colors.success : colors.primary,
+                  },
+                ]}
+                onPress={handleCopyLink}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={copied ? 'checkmark' : 'copy-outline'}
+                  size={18}
+                  color={colors.white}
+                />
+                <Text style={[styles.copyButtonText, { color: colors.white }]}>
+                  {copied ? t('share.copied') : t('share.copy')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      )}
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   modalContent: {
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
     maxHeight: '85%',
     minHeight: '40%',
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
   },
   modalHeader: {
     flexDirection: 'row',
