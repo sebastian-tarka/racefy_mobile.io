@@ -24,6 +24,51 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Audyt, etap 3: wydajność nagrywania (zmergowane 2026-10-19, `audyt-etap3`, tag `pre-audyt-etap2-3` = main sprzed merge)
+
+- `LiveActivityStatusContext` / `useLiveActivityStatus()`: tab bar, Home i EventDetail czytają tylko
+  status — wcześniej re-renderowały się co sekundę przez cały trening. Baner na Home sam czyta czas.
+- Timer w `useLiveActivity` nie robi `setState` w tle; `useActivityTimer` 1 wybudzenie/s zamiast 10
+  (dalej działa w tle — silnik treningu liczy z niego odcinki czasowe).
+- `GpsTracker.currentPosition` zwraca ten sam obiekt do zmiany pozycji (wcześniej nowy co render →
+  co sekundę odpalały się efekty kamery mapy i `useNearbyRoutes`); `MapboxLiveMap` w `memo`.
+- Trasa na mapie w dwóch źródłach (część utrwalona co 300 pkt + ogon) zamiast całej trasy przez most
+  przy każdym punkcie.
+- Wyścigi: podwójny watcher GPS przy dwóch startach / watcher po stopie; podwójny timer syncu w tle.
+- Toasty → `RecordingToast`; wspólne sprzątanie po Save/Discard; komunikat po zapisie jako czysta
+  funkcja z testami; wypełnianie przycisku Stop na natywnym sterowniku.
+
+Do sprawdzenia na telefonie:
+- [ ] Nagrywanie 20+ min: czas na ekranie nagrywania i na banerze Home idzie równo, mapa rysuje trasę
+      bez przerwy na granicy co 300 punktów (ok. 5 min przy 1 Hz), kamera podąża
+- [ ] Ekran wyłączony 10 min, powrót: czas i dystans od razu aktualne (najpóźniej po 1 s), trasa
+      uzupełniona o punkty z tła
+- [ ] Trening interwałowy z odcinkiem czasowym przy wyłączonym ekranie — granica odcinka słyszalna
+      jak wcześniej
+- [ ] Pauza / wznowienie / szybkie wyjście i powrót do aplikacji kilka razy — dystans nie rośnie
+      podwójnie (dwa watchery)
+- [ ] Przytrzymanie Stop: wypełnienie rośnie od dołu płynnie; puszczenie wcześniej cofa
+- [ ] Toasty (audio coach, blokada, styl mapy, pin eventu) wyglądają jak wcześniej
+- [ ] Zapis: komunikaty — opublikowany / szkic („Zobacz szkic”) / offline w kolejce
+
+### Audyt, etap 2: rozmiar aplikacji (zmergowane 2026-10-19, `audyt-etap2`, ten sam tag)
+
+Lokalny build release: APK 227,9 → 108,6 MB; bundle Hermes 11,9 → 10,7 MB.
+
+- Filmy na ekranie powitalnym 25 → 4,5 MB (środkowy wycinek 720×1080; oryginały w `.notes/brand-video-masters/`).
+- `date-fns` z podścieżek: 1080 → 52 KB JS; reguła ESLint blokuje import z barrela.
+- R8 + shrinkResources; w buildach EAS (poza `development`) tylko arm64-v8a i armeabi-v7a.
+- `plugins/withGradleHeap` (4 GB) — bez tego R8 pada z OutOfMemoryError, także w EAS.
+- Reguła keep dla `RNHeadlessAppLoader` (R8 go wycinał — zadania w tle przy zamkniętej aplikacji).
+  Smoke test na emulatorze: start + 1500 losowych zdarzeń bez crasha, ale **bez logowania**.
+
+Do sprawdzenia na telefonie (build z EAS — R8 działa tylko w release):
+- [ ] Build `production-apk` i iOS przechodzą w EAS (heap Gradle, R8)
+- [ ] Po zalogowaniu: mapy Mapbox, paywall i zakup (RevenueCat), logowanie Google, Health Connect
+- [ ] **Nagrywanie z zamkniętą aplikacją** (lokalizacja w tle + wysyłka offline przy zamkniętej
+      aplikacji) — to ścieżka, którą psuł brakujący `RNHeadlessAppLoader`
+- [ ] Ekran powitalny: filmy wyglądają dobrze na telefonie (wylogowany)
+
 ### Audyt, etap 1: sprzątanie — martwy kod, zależności, lint, CI (zmergowane 2026-10-19, `audyt-etap1`, tag `pre-audyt` = main sprzed merge)
 
 Etap 1 z `.notes/AUDYT_REFACTOR_2026-10.md`. Zmergowany razem z etapem 0 bez konfliktów; po połączeniu ESLint 101.
@@ -1045,6 +1090,8 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-10-19 | `audyt-etap3` | Wydajność nagrywania: status context (koniec re-renderu tab bara/Home co sekundę), timery, stabilna pozycja GPS + memo mapy, trasa w dwóch źródłach, wyścigi watchera GPS i syncu w tle, `RecordingToast`, `describeSaveOutcome` |
+| 2026-10-19 | `audyt-etap2` | Rozmiar: filmy 25 → 4,5 MB, `date-fns` −1 MB JS, R8 + shrinkResources + ABI (APK 228 → 109 MB), heap Gradle 4 GB, keep `RNHeadlessAppLoader` |
 | 2026-10-19 | `audyt-etap1` | Sprzątanie: -7 paczek (m.in. `react-native-maps`, `@expo/cli`), expo 54.0.37, `expo-asset` jawnie, ~4,5 tys. linii martwego kodu, ESLint 263 → 104 z zapadką, CI w GitHub Actions, fail-fast testów SQLite |
 | 2026-10-19 | `audyt-etap0` | Klient API (nie-JSON, unhandled rejection, timeout 60 s), mile w 11 miejscach, `DatePickerSheet` (iOS), `useMemo` w Auth/AppConfig, `console` → logger |
 | 2026-09-22 | `feat/staging-app-variant` | Osobna aplikacja stage `com.racefy.app.staging` („Racefy Beta", `racefy-staging://`, linki `app.dev.racefy.io`, pliki Firebase `*-staging`) obok produkcyjnej; prefiksy deep linków z configu wariantu; `API_PRODUCTION_URL` / `API_STAGING_URL` przypięte w profilach `eas.json` |
