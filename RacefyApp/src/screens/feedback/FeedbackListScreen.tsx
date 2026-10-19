@@ -17,6 +17,11 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Feedback, FeedbackStatus, FeedbackType } from '../../types/api';
+import {
+  FEEDBACK_PRIORITY_COLORS,
+  FEEDBACK_STATUS_COLORS,
+  FEEDBACK_UNKNOWN_COLOR,
+} from './feedbackColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackList'>;
 
@@ -24,21 +29,6 @@ const TYPE_ICONS: Record<FeedbackType, string> = {
   bug: 'bug-outline',
   feature_request: 'bulb-outline',
   feedback: 'chatbubble-outline',
-};
-
-const STATUS_COLORS: Record<FeedbackStatus, string> = {
-  open: '#3B82F6',
-  in_progress: '#EAB308',
-  waiting_for_user: '#F97316',
-  resolved: '#22C55E',
-  closed: '#6B7280',
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  critical: '#EF4444',
-  high: '#F97316',
-  medium: '#EAB308',
-  low: '#6B7280',
 };
 
 const STATUS_FILTERS: (FeedbackStatus | 'all')[] = [
@@ -94,8 +84,8 @@ export function FeedbackListScreen({ navigation }: Props) {
 
   const renderFeedbackCard = ({ item }: { item: Feedback }) => {
     const typeIcon = TYPE_ICONS[item.type] || 'chatbubble-outline';
-    const statusColor = STATUS_COLORS[item.status] || '#6B7280';
-    const priorityColor = PRIORITY_COLORS[item.priority] || '#6B7280';
+    const statusColor = FEEDBACK_STATUS_COLORS[item.status] || FEEDBACK_UNKNOWN_COLOR;
+    const priorityColor = FEEDBACK_PRIORITY_COLORS[item.priority] || FEEDBACK_UNKNOWN_COLOR;
     const repliesText =
       item.replies_count === 0
         ? t('feedback.noRepliesShort')

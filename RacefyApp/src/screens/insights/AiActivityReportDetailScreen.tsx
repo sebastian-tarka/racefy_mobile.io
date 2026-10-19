@@ -21,6 +21,7 @@ import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { AiActivityReport, AiActivityReportStatus } from '../../types/reports';
+import { REPORT_STATUS_COLORS } from './reportStatusColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AiActivityReportDetail'>;
 
@@ -28,13 +29,6 @@ const POLL_INTERVAL = 3000;
 const POLL_GIVE_UP_AFTER = 3 * 60 * 1000; // 3 minutes
 
 const TERMINAL_STATUSES: AiActivityReportStatus[] = ['completed', 'failed'];
-
-const STATUS_COLORS: Record<AiActivityReportStatus, string> = {
-  pending: '#6B7280',
-  processing: '#F59E0B',
-  completed: '#10B981',
-  failed: '#EF4444',
-};
 
 export function AiActivityReportDetailScreen({ navigation, route }: Props) {
   const { reportId } = route.params;
@@ -217,7 +211,7 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
     );
   }
 
-  const statusColor = STATUS_COLORS[report.status];
+  const statusColor = REPORT_STATUS_COLORS[report.status];
   const count = report.activity_ids.length;
   const countLabel =
     count === 1
@@ -304,7 +298,7 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
               { backgroundColor: colors.cardBackground, borderColor: colors.border },
             ]}
           >
-            <Ionicons name="alert-circle-outline" size={32} color={STATUS_COLORS.failed} />
+            <Ionicons name="alert-circle-outline" size={32} color={REPORT_STATUS_COLORS.failed} />
             <Text style={[styles.errorMessage, { color: colors.textPrimary }]}>
               {report.error_message || t('insights.aiReports.errorWaiting')}
             </Text>

@@ -10,7 +10,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, fontWeight } from '../../../../theme';
-import type { TrainingTip, TipCategory } from '../../../../types/api';
+import type { TrainingTip } from '../../../../types/api';
+import { TIP_CATEGORY_CONFIG } from '../../../../utils/tipCategory';
 
 interface CollapsibleTipCardProps {
   tip: TrainingTip;
@@ -18,16 +19,6 @@ interface CollapsibleTipCardProps {
   onPress?: () => void;
   onMarkHelpful?: (helpful: boolean) => void;
 }
-
-// Category colors and emojis
-const CATEGORY_CONFIG: Record<TipCategory, { color: string; emoji: string }> = {
-  mindset: { color: '#3B82F6', emoji: '🧠' },
-  recovery: { color: '#10B981', emoji: '💪' },
-  technique: { color: '#8B5CF6', emoji: '🎯' },
-  nutrition: { color: '#F59E0B', emoji: '🍎' },
-  sleep: { color: '#6366F1', emoji: '😴' },
-  pacing: { color: '#EF4444', emoji: '🏃' },
-};
 
 export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
   tip,
@@ -43,7 +34,7 @@ export const CollapsibleTipCard: React.FC<CollapsibleTipCardProps> = ({
   const height = useSharedValue(defaultExpanded ? 1 : 0);
   const rotation = useSharedValue(defaultExpanded ? 90 : 0);
 
-  const categoryConfig = CATEGORY_CONFIG[tip.category] || {
+  const categoryConfig = TIP_CATEGORY_CONFIG[tip.category] || {
     color: colors.primary,
     emoji: '💡',
   };

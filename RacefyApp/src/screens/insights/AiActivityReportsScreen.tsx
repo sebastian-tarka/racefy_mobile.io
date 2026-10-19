@@ -18,16 +18,10 @@ import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius, msFont } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { AiActivityReport, AiActivityReportStatus } from '../../types/reports';
+import type { AiActivityReport } from '../../types/reports';
+import { REPORT_STATUS_COLORS } from './reportStatusColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AiActivityReports'>;
-
-const STATUS_COLORS: Record<AiActivityReportStatus, string> = {
-  pending: '#6B7280',
-  processing: '#F59E0B',
-  completed: '#10B981',
-  failed: '#EF4444',
-};
 
 export function AiActivityReportsScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
@@ -88,7 +82,7 @@ export function AiActivityReportsScreen({ navigation }: Props) {
   };
 
   const renderCard = ({ item }: { item: AiActivityReport }) => {
-    const statusColor = STATUS_COLORS[item.status];
+    const statusColor = REPORT_STATUS_COLORS[item.status];
     const count = item.activity_ids.length;
     const countLabel =
       count === 1

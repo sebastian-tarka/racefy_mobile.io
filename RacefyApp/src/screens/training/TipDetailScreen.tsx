@@ -11,7 +11,8 @@ import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import { Loading, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
-import type { TrainingTip, TipCategory } from '../../types/api';
+import type { TrainingTip } from '../../types/api';
+import { TIP_CATEGORY_CONFIG } from '../../utils/tipCategory';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TipDetail'>;
@@ -20,16 +21,6 @@ interface Props {
   navigation: NavigationProp;
   route: RoutePropType;
 }
-
-// Category colors and emojis
-const CATEGORY_CONFIG: Record<TipCategory, { color: string; emoji: string }> = {
-  mindset: { color: '#3B82F6', emoji: '🧠' },
-  recovery: { color: '#10B981', emoji: '💪' },
-  technique: { color: '#8B5CF6', emoji: '🎯' },
-  nutrition: { color: '#F59E0B', emoji: '🍎' },
-  sleep: { color: '#6366F1', emoji: '😴' },
-  pacing: { color: '#EF4444', emoji: '🏃' },
-};
 
 export function TipDetailScreen({ navigation, route }: Props) {
   const { tipId } = route.params;
@@ -88,7 +79,7 @@ export function TipDetailScreen({ navigation, route }: Props) {
   }
 
   // Fallback for unknown categories
-  const categoryConfig = CATEGORY_CONFIG[tip.category] || {
+  const categoryConfig = TIP_CATEGORY_CONFIG[tip.category] || {
     color: colors.primary,
     emoji: '💡',
   };
