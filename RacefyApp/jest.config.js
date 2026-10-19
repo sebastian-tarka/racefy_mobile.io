@@ -3,6 +3,8 @@ module.exports = {
   preset: 'jest-expo',
   // RNTL v12.4+ registers its jest matchers automatically — no extend-expect setup needed.
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
+  // Fails fast with a clear message when better-sqlite3 was built for another Node.
+  globalSetup: '<rootDir>/jest.globalSetup.js',
   // Allow Jest to transform the RN/Expo ESM packages our code touches.
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@rnmapbox/.*|@react-native-community/.*|react-native-reanimated))',
