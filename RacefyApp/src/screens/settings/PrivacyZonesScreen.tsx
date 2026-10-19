@@ -31,7 +31,7 @@ export function PrivacyZonesScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const { features, canUse } = useSubscription();
+  const { features } = useSubscription();
 
   const [zones, setZones] = useState<PrivacyZone[]>([]);
   const [suggestions, setSuggestions] = useState<PrivacyZoneSuggestion[]>([]);

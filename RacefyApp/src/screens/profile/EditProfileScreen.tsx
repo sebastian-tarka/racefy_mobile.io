@@ -20,7 +20,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { fixStorageUrl } from '../../config/api';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -101,46 +101,6 @@ export function EditProfileScreen({ navigation }: Props) {
   const isLocalImage = (uri: string | null): boolean => {
     if (!uri) return false;
     return uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('/');
-  };
-
-  const launchGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('editProfile.permissionDenied'));
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatarUri(result.assets[0].uri);
-    }
-  };
-
-  const launchCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (status !== 'granted') {
-      Alert.alert(t('common.error'), t('editProfile.cameraPermissionDenied'));
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setAvatarUri(result.assets[0].uri);
-    }
   };
 
   const pickImage = (type: 'avatar' | 'background') => {

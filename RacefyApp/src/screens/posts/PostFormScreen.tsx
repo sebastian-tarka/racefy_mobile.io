@@ -17,7 +17,6 @@ import {
   Button,
   ScreenHeader,
   MediaPicker,
-  MediaThumbnail,
   MentionInput,
   ScreenContainer,
 } from '../../components';

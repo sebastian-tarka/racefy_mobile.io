@@ -53,7 +53,6 @@ export function ActivityFormScreen({ navigation, route }: Props) {
   const [newPhotos, setNewPhotos] = useState<MediaItem[]>([]);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const MAX_PHOTOS = 10;
-  const MAX_VIDEOS = 5;
 
   useEffect(() => {
     if (isEditMode && activityId) {

@@ -15,8 +15,7 @@ import { purgeFinishedSessions } from './src/services/trackingDb';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AppNavigator } from './src/navigation';
 
-// Initialize i18n
-import './src/i18n';
+// Importing i18n also initializes it
 import { loadSavedLanguage } from './src/i18n';
 
 function AppContent() {

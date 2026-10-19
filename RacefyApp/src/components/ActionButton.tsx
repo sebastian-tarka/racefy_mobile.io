@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
-import { spacing, borderRadius, fontSize, fontWeight } from '../theme';
+import { spacing, fontSize } from '../theme';
 import { useTheme } from '../hooks/useTheme';
 
 interface ActionButtonProps {

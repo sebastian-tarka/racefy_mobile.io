@@ -29,7 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for system theme changes
   useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+    const subscription = Appearance.addChangeListener(() => {
       // This will trigger re-render when system theme changes
     });
 

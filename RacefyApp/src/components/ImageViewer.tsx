@@ -1,13 +1,5 @@
-import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  Image,
-  StatusBar,
-  Dimensions,
-} from 'react-native';
+import React from 'react';
+import { StyleSheet, TouchableOpacity, Modal, Image, StatusBar, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme';

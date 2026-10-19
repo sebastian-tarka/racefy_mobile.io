@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { stripMentionsForApi } from '../utils/mentions';
 import { api } from '../services/api';
-import { logger } from '../services/logger';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type {
   Comment,

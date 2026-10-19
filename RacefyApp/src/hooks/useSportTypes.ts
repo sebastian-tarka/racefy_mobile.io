@@ -89,13 +89,6 @@ function getFallbackSports(t: (key: string) => string): SportTypeWithIcon[] {
   }));
 }
 
-// Legacy export for backwards compatibility (English names)
-const FALLBACK_SPORTS: SportTypeWithIcon[] = FALLBACK_SPORT_DEFINITIONS.map((sport) => ({
-  ...sport,
-  name: sport.slug.charAt(0).toUpperCase() + sport.slug.slice(1), // Capitalize slug as fallback
-  is_active: true,
-}));
-
 export interface SportTypeWithIcon extends SportType {
   icon: keyof typeof Ionicons.glyphMap;
 }

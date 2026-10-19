@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useBlockedUsers } from '../../hooks/useBlockedUsers';
 import { useBlockUser } from '../../hooks/useBlockUser';

@@ -22,7 +22,6 @@ function TrendRow({
   direction: string | null;
 }) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
 
   if (changePct == null || direction == null) return null;
 

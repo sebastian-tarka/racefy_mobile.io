@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
@@ -16,8 +15,6 @@ interface LiveEventSectionProps {
  * Shows a single live event that is currently happening.
  */
 export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSectionProps) {
-  const { colors } = useTheme();
-
   const event = section.event;
 
   if (!event) {

@@ -55,9 +55,9 @@ interface SearchResults {
   posts: Post[];
 }
 
-export function FeedScreen({ navigation, route }: Props) {
+export function FeedScreen({ navigation }: Props) {
   const { t } = useTranslation();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const tabBarPaddingBottom = useTabBarPadding();
   const { user, isAuthenticated } = useAuth();
   const { count: unreadCount, refresh: refreshUnreadCount } = useUnreadCount();
@@ -65,7 +65,6 @@ export function FeedScreen({ navigation, route }: Props) {
     posts,
     isLoading,
     isRefreshing,
-    hasMore,
     error,
     refresh,
     loadMore,
@@ -183,7 +182,7 @@ export function FeedScreen({ navigation, route }: Props) {
         onPress: async () => {
           try {
             await deletePost(postId);
-          } catch (error) {
+          } catch {
             Alert.alert(t('common.error'), t('feed.failedToDelete'));
           }
         },
@@ -201,7 +200,7 @@ export function FeedScreen({ navigation, route }: Props) {
           try {
             await api.reportPost(postId, 'Inappropriate content');
             Alert.alert(t('common.success'), t('feed.reportSuccess'));
-          } catch (error) {
+          } catch {
             Alert.alert(t('common.error'), t('feed.reportFailed'));
           }
         },

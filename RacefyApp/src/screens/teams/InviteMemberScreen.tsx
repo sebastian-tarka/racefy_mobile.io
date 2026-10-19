@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useTheme } from '../../hooks';
-import { ScreenContainer, ScreenHeader, Avatar, Button } from '../../components';
+import { ScreenContainer, ScreenHeader, Avatar } from '../../components';
 import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
 import type { User } from '../../types/api';

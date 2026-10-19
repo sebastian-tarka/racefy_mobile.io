@@ -20,7 +20,6 @@ import { useRankDelta } from '../../hooks/useRankDelta';
 import { useRewards } from '../../hooks/useRewards';
 import { CompetitionStandingSection } from './home/components/CompetitionStandingSection';
 import { ResumeSessionBanner } from '../workouts/components/ResumeSessionBanner';
-import { useTheme } from '../../hooks/useTheme';
 import { useLiveActivityContext } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
@@ -86,7 +85,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const { stats: pointStats } = usePointStats();
   const rankDeltas = useRankDelta(isAuthenticated ? pointStats : null);
   const { badges } = useRewards();
-  const { colors } = useTheme();
   const { t, i18n } = useTranslation();
   const { isTracking, isPaused, currentStats } = useLiveActivityContext();
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
@@ -137,7 +135,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const {
     refetch: refetchData,
     upcomingEvents,
-    recentActivities,
     liveEvents,
   } = useHomeData({
     language: (i18n.language || 'en') as 'en' | 'pl',
@@ -188,7 +185,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
       setLoadingTips(true);
       const tips = await api.getAvailableTips();
       setAvailableTips(tips);
-    } catch (error) {
+    } catch {
       // Silently fail - tips are optional feature
       setAvailableTips([]);
     } finally {

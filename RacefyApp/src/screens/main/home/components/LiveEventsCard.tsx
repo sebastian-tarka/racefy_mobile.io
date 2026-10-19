@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
-import { spacing, borderRadius, fontSize, fontWeight, msFont } from '../../../../theme';
+import { spacing, fontSize, msFont } from '../../../../theme';
 import { fixStorageUrl } from '../../../../config/api';
 import type { EventWithLatestCommentary } from '../../../../types/api';
 

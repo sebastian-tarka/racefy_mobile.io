@@ -12,12 +12,7 @@ interface UseTeamDetailParams {
   navigateBack: () => void;
 }
 
-export function useTeamDetail({
-  slug,
-  isAuthenticated,
-  userId,
-  navigateBack,
-}: UseTeamDetailParams) {
+export function useTeamDetail({ slug, userId, navigateBack }: UseTeamDetailParams) {
   const { t } = useTranslation();
 
   const [team, setTeam] = useState<Team | null>(null);

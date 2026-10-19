@@ -43,7 +43,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
     try {
       const users = await api.searchUsersForImpersonation(text);
       setResults(users);
-    } catch (error) {
+    } catch {
       Alert.alert(t('common.error'), t('admin.impersonate.searchError'));
     } finally {
       setLoading(false);
@@ -78,7 +78,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
                   ],
                 }),
               );
-            } catch (error) {
+            } catch {
               Alert.alert(t('common.error'), t('admin.impersonate.startError'));
             } finally {
               setImpersonating(false);

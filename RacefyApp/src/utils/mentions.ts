@@ -11,13 +11,6 @@ const TRIGGER_TO_TYPE: Record<string, MentionEntity['type']> = {
   '!': 'activity',
 };
 
-// Map trigger char to API prefix
-const TYPE_TO_TRIGGER: Record<MentionEntity['type'], string> = {
-  user: '@',
-  event: '#',
-  activity: '!',
-};
-
 /**
  * Strip display names from library format before sending to API.
  * Converts: `@[John](5)` → `<@5>`, `#[Event Name](12)` → `<#12>`, `![Activity](3)` → `<!3>`

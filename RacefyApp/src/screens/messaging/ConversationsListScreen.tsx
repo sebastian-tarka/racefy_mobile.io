@@ -42,7 +42,6 @@ export function ConversationsListScreen({ navigation }: Props) {
     conversations,
     isLoading,
     isRefreshing,
-    hasMore,
     error,
     refresh,
     loadMore,
@@ -142,7 +141,7 @@ export function ConversationsListScreen({ navigation }: Props) {
         onPress: async () => {
           try {
             await deleteConversation(conversation.id);
-          } catch (err) {
+          } catch {
             Alert.alert(t('common.error'), t('messaging.failedToLoad'));
           }
         },

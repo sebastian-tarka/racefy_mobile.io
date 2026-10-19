@@ -11,9 +11,9 @@ interface BaseChartProps {
   title: string;
 }
 
-interface PaceChartProps extends BaseChartProps {}
-interface ElevationChartProps extends BaseChartProps {}
-interface HeartRateChartProps extends BaseChartProps {}
+type PaceChartProps = BaseChartProps;
+type ElevationChartProps = BaseChartProps;
+type HeartRateChartProps = BaseChartProps;
 
 const CHART_HEIGHT = 220;
 
@@ -59,7 +59,7 @@ export function PaceChart({ splits, title }: PaceChartProps) {
     backgroundGradientTo: colors.cardBackground,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
-    labelColor: (opacity = 1) => colors.textMuted,
+    labelColor: () => colors.textMuted,
     style: {
       borderRadius: 8,
     },
@@ -185,7 +185,7 @@ export function ElevationChart({ splits, title }: ElevationChartProps) {
     backgroundGradientTo: colors.cardBackground,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
-    labelColor: (opacity = 1) => colors.textMuted,
+    labelColor: () => colors.textMuted,
     style: {
       borderRadius: 8,
     },
@@ -280,7 +280,7 @@ export function HeartRateChart({ splits, title }: HeartRateChartProps) {
     backgroundGradientTo: colors.cardBackground,
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
-    labelColor: (opacity = 1) => colors.textMuted,
+    labelColor: () => colors.textMuted,
     style: {
       borderRadius: 8,
     },

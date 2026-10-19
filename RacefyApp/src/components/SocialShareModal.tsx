@@ -49,14 +49,7 @@ const SHARE_PLATFORMS: SharePlatform[] = [
   { id: 'whatsapp', name: 'WhatsApp', icon: 'logo-whatsapp', color: '#25D366' },
 ];
 
-function SocialShareModalComponent({
-  visible,
-  onClose,
-  type,
-  id,
-  title,
-  description,
-}: SocialShareModalProps) {
+function SocialShareModalComponent({ visible, onClose, type, id }: SocialShareModalProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
@@ -233,7 +226,6 @@ function SocialShareModalComponent({
   };
 
   const shareUrl = shareData?.url || '';
-  const shareTitle = shareData?.title || title || t('share.defaultTitle');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>

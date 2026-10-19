@@ -1,10 +1,11 @@
+import { logger } from '../services/logger';
+
 export type TimeRange = 'week' | 'month' | 'year' | 'all_time';
 
 export interface PeriodOption<T = string> {
   value: T;
   labelKey: string;
 }
-import { logger } from '../services/logger';
 
 export interface DateRange {
   from: string;

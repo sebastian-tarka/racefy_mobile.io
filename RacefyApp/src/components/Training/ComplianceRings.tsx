@@ -5,7 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize } from '../../theme';
 import { Card } from '../../components';
 import type { ComplianceData } from '../../types/api';
 

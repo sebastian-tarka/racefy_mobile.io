@@ -21,7 +21,7 @@ import type { GeoJSONLineString, LiveMessagePin } from '../types/api';
 let MapboxRouteMap: any = null;
 try {
   MapboxRouteMap = require('./MapboxRouteMap').MapboxRouteMap;
-} catch (e) {
+} catch {
   // @rnmapbox/maps not installed, will use fallback static images
 }
 

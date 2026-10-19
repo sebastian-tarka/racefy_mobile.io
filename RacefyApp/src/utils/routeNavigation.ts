@@ -4,7 +4,7 @@
  * Coordinates follow GeoJSON convention: [lng, lat].
  */
 
-import type { GeoJSONLineString, RouteTurnInstruction } from '../types/api';
+import type { RouteTurnInstruction } from '../types/api';
 import {
   OFF_ROUTE_WARNING_M,
   OFF_ROUTE_ALERT_M,

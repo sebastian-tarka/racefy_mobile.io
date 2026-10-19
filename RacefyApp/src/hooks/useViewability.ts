@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 
 interface ViewabilityOptions {
   threshold?: number; // Percentage of view that should be visible (0-100)
@@ -26,8 +26,7 @@ export function useViewability(options: ViewabilityOptions = {}) {
 
     viewRef.current.measureInWindow((x, y, width, height) => {
       // Get screen dimensions
-      const screenHeight = require('react-native').Dimensions.get('window').height;
-      const screenWidth = require('react-native').Dimensions.get('window').width;
+      const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
       // Calculate visible area
       const visibleTop = Math.max(0, y);

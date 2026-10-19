@@ -50,7 +50,7 @@ export function BrandLogo({
   showLoading = true,
 }: BrandLogoProps) {
   const { colors, isDark } = useTheme();
-  const { getAsset, isLoading, error } = useBrandAssets();
+  const { getAsset, isLoading } = useBrandAssets();
 
   const asset = getAsset(category, variant);
   const defaultSize = DEFAULT_SIZES[category];

@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Avatar } from './Avatar';
-import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { borderRadius, componentSize, fontSize, spacing } from '../theme';
@@ -24,7 +23,6 @@ export function ActivitySliderCard({
   onPress,
   isAuthenticated = true,
 }: ActivitySliderCardProps) {
-  const { colors, isDark } = useTheme();
   const {
     getDistanceValue,
     getDistanceUnit,

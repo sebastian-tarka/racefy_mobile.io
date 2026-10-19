@@ -162,7 +162,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       } else {
         logger.debug('gps', 'Activity has no GPS track');
       }
-    } catch (err) {
+    } catch {
       setError(t('activityDetail.failedToLoad'));
     } finally {
       setIsLoading(false);

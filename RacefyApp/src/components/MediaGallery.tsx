@@ -15,7 +15,7 @@ import { useTheme } from '../hooks/useTheme';
 import { VideoPlayer } from './VideoPlayer';
 import { fixStorageUrl } from '../config/api';
 import { logger } from '../services/logger';
-import { spacing, borderRadius } from '../theme';
+import { spacing } from '../theme';
 import type { Media, Photo, Video } from '../types/api';
 
 interface MediaGalleryProps {

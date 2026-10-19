@@ -56,7 +56,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   },
 ];
 
-export function ShareFormatSelector({ activityId, onShare, onClose }: ShareFormatSelectorProps) {
+export function ShareFormatSelector({ activityId, onShare }: ShareFormatSelectorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [selectedFormat, setSelectedFormat] = useState<ShareFormat>('social');

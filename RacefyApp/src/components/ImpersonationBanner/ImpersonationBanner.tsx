@@ -43,7 +43,7 @@ export function ImpersonationBanner() {
                   ],
                 }),
               );
-            } catch (error) {
+            } catch {
               Alert.alert(t('common.error'), t('admin.impersonate.exitError'));
             }
           },

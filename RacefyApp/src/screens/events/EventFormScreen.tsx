@@ -83,7 +83,6 @@ export function EventFormScreen({ navigation, route }: Props) {
     field: DatePickerField;
     mode: 'date' | 'time';
   } | null>(null);
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [eventStatus, setEventStatus] = useState<string | null>(null);
   const [hasAiFeatures, setHasAiFeatures] = useState(false);
 
@@ -328,7 +327,6 @@ export function EventFormScreen({ navigation, route }: Props) {
       event.point_rewards?.third_place ||
       event.point_rewards?.finisher
     ) {
-      setShowOptionalFields(true);
     }
   };
 

@@ -52,7 +52,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistance, formatPaceWithUnit } = useUnits();
-  const { user: currentUser, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { postId, focusComments } = route.params;
 
   // Pause all videos when navigating away from this screen
@@ -97,7 +97,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
           logger.debug('gps', 'Failed to load GPS track for activity post', { error: trackError });
         }
       }
-    } catch (err) {
+    } catch {
       setError(t('feed.failedToLoad'));
     } finally {
       setIsLoading(false);

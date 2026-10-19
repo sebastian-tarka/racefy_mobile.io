@@ -36,7 +36,7 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
     try {
       const data = await api.getRoute(routeId);
       setRoute(data);
-    } catch (err) {
+    } catch {
       setError(t('routeDetail.failedToLoad'));
     } finally {
       setIsLoading(false);

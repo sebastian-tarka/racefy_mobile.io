@@ -101,7 +101,7 @@ function UserListModalComponent({
       } else if (activeTab === 'requests') {
         await fetchRequests();
       }
-    } catch (err) {
+    } catch {
       setError(t('common.error'));
     } finally {
       setIsLoading(false);

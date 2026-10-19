@@ -104,15 +104,18 @@ async function performInteraction(
 ): Promise<{ count?: number }> {
   if (variant === 'like') {
     if (targetType === 'post') {
-      add ? await api.likePost(targetId) : await api.unlikePost(targetId);
+      if (add) await api.likePost(targetId);
+      else await api.unlikePost(targetId);
       return {};
     }
     if (targetType === 'activity') {
-      add ? await api.likeActivity(targetId) : await api.unlikeActivity(targetId);
+      if (add) await api.likeActivity(targetId);
+      else await api.unlikeActivity(targetId);
       return {};
     }
     if (targetType === 'comment') {
-      add ? await api.likeComment(targetId) : await api.unlikeComment(targetId);
+      if (add) await api.likeComment(targetId);
+      else await api.unlikeComment(targetId);
       return {};
     }
     throw new Error(`like is not supported for targetType=${targetType}`);
