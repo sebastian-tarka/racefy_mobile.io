@@ -111,7 +111,8 @@ Lokalny build release: APK 227,9 → 108,6 MB; bundle Hermes 11,9 → 10,7 MB.
   Smoke test na emulatorze: start + 1500 losowych zdarzeń bez crasha, ale **bez logowania**.
 
 Do sprawdzenia na telefonie (build z EAS — R8 działa tylko w release):
-- [ ] Build `production-apk` i iOS przechodzą w EAS (heap Gradle, R8)
+- [x] Build `production-apk` przechodzi w EAS (heap Gradle, R8) — 1.25.1, versionCode 42, APK 108,6 MB (2026-10-19)
+- [ ] Build iOS przechodzi w EAS
 - [ ] Po zalogowaniu: mapy Mapbox, paywall i zakup (RevenueCat), logowanie Google, Health Connect
 - [ ] **Nagrywanie z zamkniętą aplikacją** (lokalizacja w tle + wysyłka offline przy zamkniętej
       aplikacji) — to ścieżka, którą psuł brakujący `RNHeadlessAppLoader`
