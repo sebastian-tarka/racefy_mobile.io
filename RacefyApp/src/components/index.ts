@@ -85,6 +85,7 @@ export * from './AutoDisplayImage';
 export * from './ImageViewer';
 export * from './ImageGallery';
 export * from './BottomSheet';
+export * from './DatePickerSheet';
 export * from './ParticipantsSheet';
 export * from './EventSelectionSheet';
 export * from './ActivitySelectionSheet';
