@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "environment": "development",
-      "node": "22.22.0",
+      "node": "24.19.0",
       "env": {
         "APP_ENV": "development"
       }
@@ -16,7 +16,7 @@
     "staging": {
       "environment": "preview",
       "autoIncrement": true,
-      "node": "22.22.0",
+      "node": "24.19.0",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
@@ -42,7 +42,7 @@
     "production": {
       "environment": "production",
       "autoIncrement": true,
-      "node": "22.22.0",
+      "node": "24.19.0",
       "android": {
         "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease"
@@ -67,7 +67,7 @@
     "production-apk": {
       "environment": "production",
       "autoIncrement": true,
-      "node": "22.22.0",
+      "node": "24.19.0",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"

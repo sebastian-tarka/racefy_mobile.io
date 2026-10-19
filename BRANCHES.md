@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-15**
+Stan na: **2026-10-19**
 
 ---
 
@@ -23,6 +23,17 @@ _Nic nie czeka._
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Node 24 dla buildów EAS i lokalnie (na `main` 2026-10-19, release v1.25.1)
+
+`eas.json` (wszystkie profile) i `RacefyApp/.nvmrc` przestawione z Node 22.22.0 / 20.19.5 na
+**24.19.0**. Lokalnie na 24 przechodzą tsc, jest 416/416 i `expo export`. Po zmianie wersji Node
+lokalnie trzeba raz zrobić `npm rebuild better-sqlite3` (moduł natywny testów), inaczej testy
+SQLite padają z `NODE_MODULE_VERSION`. Natywny build w EAS na Node 24 nie był wcześniej sprawdzany.
+
+- [ ] Build `production` (Android) na Node 24 przechodzi w EAS
+- [ ] Build `staging` i iOS na Node 24 przechodzą w EAS
+- [ ] Aplikacja z tego builda startuje na telefonie: logowanie, feed, nagranie aktywności z GPS
 
 ### Trening siłowy w feedzie i na ekranie aktywności (zmergowane 2026-10-15, `feat/strength-activity-ui`)
 
