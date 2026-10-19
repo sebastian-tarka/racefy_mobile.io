@@ -105,10 +105,10 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
     clearTimeout(timeout);
 
     const status = error?.status;
-    console.warn('🔊 AI TTS FAILED', { status, message: error?.message, error: String(error) });
     if (status === 403 || status === 402 || status === 429 || status === 502) {
       logger.warn('audioCoach', `AI TTS returned ${status}, falling back to offline`, {
         status,
+        error: error?.message || String(error),
       });
     } else {
       logger.warn('audioCoach', 'AI TTS failed, falling back to offline', {

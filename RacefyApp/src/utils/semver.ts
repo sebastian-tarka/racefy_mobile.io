@@ -1,3 +1,5 @@
+import { logger } from '../services/logger';
+
 /**
  * Minimal semantic version comparator — no external dependencies.
  *
@@ -10,7 +12,7 @@
  *    0 if `a === b`
  *    1 if `a > b`
  *
- * Invalid input (non-numeric segments) yields 0 with a console.warn — we
+ * Invalid input (non-numeric segments) yields 0 with a logged warning — we
  * fail open so a malformed version from the server can never lock the
  * user out of the app.
  */
@@ -19,7 +21,7 @@ export function compareVersions(a: string, b: string): -1 | 0 | 1 {
     const stripped = v.split(/[-+]/)[0]; // drop prerelease/build metadata
     const parts = stripped.split('.').map((p) => parseInt(p, 10));
     if (parts.some((n) => Number.isNaN(n))) {
-      console.warn(`[semver] Invalid version: "${v}"`);
+      logger.warn('general', 'Invalid version string', { version: v });
       return [0, 0, 0];
     }
     while (parts.length < 3) parts.push(0);
