@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { api } from '../services/api';
 import { emitRefresh, useRefreshOn } from '../services/refreshEvents';
 import type { Event, EventRegistration, Activity, LeaderboardEntry } from '../types/api';

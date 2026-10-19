@@ -11,8 +11,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format, isToday, isYesterday, isThisWeek, isThisYear } from 'date-fns';
-import { pl, enUS } from 'date-fns/locale';
+import { format } from 'date-fns/format';
+import { isToday } from 'date-fns/isToday';
+import { isYesterday } from 'date-fns/isYesterday';
+import { isThisWeek } from 'date-fns/isThisWeek';
+import { isThisYear } from 'date-fns/isThisYear';
+import { pl } from 'date-fns/locale/pl';
+import { enUS } from 'date-fns/locale/en-US';
 import {
   Avatar,
   EmptyState,

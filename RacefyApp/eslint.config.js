@@ -50,6 +50,17 @@ module.exports = defineConfig([
             'Use a fontSize token from the theme (fontSize.md, …) or msFont(n) — a raw number skips the fontScale cap.',
         },
       ],
+      // Metro does not tree-shake: the 'date-fns' barrel pulls in every function and
+      // 'date-fns/locale' every one of ~95 locales (~1 MB of JS). Import the subpath.
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'date-fns', message: "Import the function's subpath: 'date-fns/format'." },
+            { name: 'date-fns/locale', message: "Import one locale: 'date-fns/locale/pl'." },
+          ],
+        },
+      ],
     },
   },
   {
