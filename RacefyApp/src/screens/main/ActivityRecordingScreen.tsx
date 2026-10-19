@@ -79,6 +79,7 @@ import { navBannerState } from '../../utils/navigationCues';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { RecordingToast } from './recording/RecordingToast';
+import { describeSaveOutcome, type SaveOutcome } from './recording/saveOutcome';
 import { FinishView } from './recording/FinishView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
 import { SportShortcutsModal } from './recording/SportShortcutsModal';
@@ -912,6 +913,72 @@ export function ActivityRecordingScreen() {
     }
   };
 
+  /** Everything that belonged to the recording that just ended — saved or discarded. */
+  const resetAfterRecording = () => {
+    resetMilestones();
+    setShowFinish(false);
+    // The pin belonged to this recording; the next activity starts unpinned.
+    setSelectedEvent(null);
+    // Restore original audio coach settings in AsyncStorage (undo session toggle)
+    restoreAudioCoachSettings();
+    // The goal belonged to this recording; forget it (and its background state).
+    setWorkoutPlan(null);
+    void clearWorkoutSession();
+    void cancelGoalNotification();
+  };
+
+  const showSaveOutcome = (outcome: SaveOutcome) => {
+    // Points (or the lack of them — the activity didn't meet the thresholds).
+    const pointsMessage = (points: number | null) =>
+      !points ? t('recording.noPointsAwarded') : t('recording.pointsAwarded', { points });
+
+    switch (outcome.kind) {
+      case 'queued-needs-attention':
+        Alert.alert(
+          t('recording.savedOnDeviceTitle'),
+          t('recording.savedNeedsAttention', { reason: outcome.reason }),
+          [
+            { text: t('recording.later'), style: 'cancel' },
+            {
+              text: t('recording.openUnsynced'),
+              onPress: () => navigation.navigate('UnsyncedActivities'),
+            },
+          ],
+        );
+        return;
+      case 'queued':
+        Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
+        return;
+      case 'published':
+        Alert.alert(
+          t('common.success'),
+          `${t('recording.activityShared')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+        );
+        return;
+      case 'draft':
+        Alert.alert(
+          t('recording.activitySaved'),
+          `${t('recording.draftCreated')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+          [
+            { text: t('recording.later'), style: 'cancel' },
+            {
+              text: t('recording.viewDraft'),
+              onPress: () => navigation.navigate('PostDetail', { postId: outcome.postId }),
+            },
+          ],
+        );
+        return;
+      case 'saved':
+        Alert.alert(
+          t('common.success'),
+          `${t('recording.activitySaved')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+        );
+        return;
+      case 'silent':
+        return;
+    }
+  };
+
   const handleSave = async (options?: { title?: string; share?: boolean }) => {
     if (!activity || !selectedSport) return;
     if (isFinishingRef.current) return;
@@ -961,68 +1028,9 @@ export function ActivityRecordingScreen() {
         });
       }
 
-      resetMilestones();
       setSkipAutoPost(false);
-      setShowFinish(false);
-      // The pin belonged to this recording; the next activity starts unpinned.
-      setSelectedEvent(null);
-
-      // Restore original audio coach settings in AsyncStorage (undo session toggle)
-      restoreAudioCoachSettings();
-
-      // The goal belonged to this recording; forget it (and its background state).
-      setWorkoutPlan(null);
-      void clearWorkoutSession();
-      void cancelGoalNotification();
-
-      if (result.queued) {
-        // No points or post to report yet — those exist only once the server has
-        // the activity, and promising them here would be a lie half the time.
-        if (result.needsAttention) {
-          Alert.alert(
-            t('recording.savedOnDeviceTitle'),
-            t('recording.savedNeedsAttention', { reason: result.needsAttention }),
-            [
-              { text: t('recording.later'), style: 'cancel' },
-              {
-                text: t('recording.openUnsynced'),
-                onPress: () => navigation.navigate('UnsyncedActivities'),
-              },
-            ],
-          );
-        } else {
-          Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
-        }
-        return;
-      }
-
-      // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
-      const pointsEarned = delivered?.points_earned;
-      const successMessage =
-        pointsEarned == null || pointsEarned === 0
-          ? t('recording.noPointsAwarded')
-          : t('recording.pointsAwarded', { points: pointsEarned });
-
-      const post = delivered?.post;
-      if (post) {
-        if (post.status === 'published') {
-          Alert.alert(t('common.success'), `${t('recording.activityShared')}\n\n${successMessage}`);
-        } else if (post.status === 'draft') {
-          Alert.alert(
-            t('recording.activitySaved'),
-            `${t('recording.draftCreated')}\n\n${successMessage}`,
-            [
-              { text: t('recording.later'), style: 'cancel' },
-              {
-                text: t('recording.viewDraft'),
-                onPress: () => navigation.navigate('PostDetail', { postId: post.id }),
-              },
-            ],
-          );
-        }
-      } else {
-        Alert.alert(t('common.success'), `${t('recording.activitySaved')}\n\n${successMessage}`);
-      }
+      resetAfterRecording();
+      showSaveOutcome(describeSaveOutcome(result));
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
       Alert.alert(t('recording.saveFailedTitle'), t('recording.saveFailed'), [
@@ -1051,14 +1059,7 @@ export function ActivityRecordingScreen() {
         onPress: async () => {
           try {
             await discardTracking();
-            resetMilestones();
-            setShowFinish(false);
-            setSelectedEvent(null);
-            // Restore original audio coach settings in AsyncStorage
-            restoreAudioCoachSettings();
-            setWorkoutPlan(null);
-            void clearWorkoutSession();
-            void cancelGoalNotification();
+            resetAfterRecording();
             logger.activity('Activity discarded from UI');
           } catch (err) {
             logger.error('activity', 'Failed to discard activity from UI', { error: err });
