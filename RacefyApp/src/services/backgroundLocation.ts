@@ -16,6 +16,12 @@ const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
 // Module-level timer for background sync
 let backgroundSyncTimer: NodeJS.Timeout | null = null;
+// The timer is created after an `await`, so two location batches arriving close together
+// could both pass the `!backgroundSyncTimer` check and start two intervals (one orphaned
+// for good — double syncing). `syncStarting` closes that window; `syncGeneration` makes a
+// start that was still awaiting when tracking stopped give up instead of outliving it.
+let syncStarting = false;
+let syncGeneration = 0;
 
 // Log task registration at module load time for debugging
 logger.debug('gps', 'Background location module loaded', { task: BACKGROUND_LOCATION_TASK });
@@ -513,19 +519,29 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
           });
 
           // Initialize background sync timer on first GPS update if not already running
-          if (!backgroundSyncTimer) {
-            const profile = await getStoredGpsProfile();
-            // Check if background sync is enabled for this profile
-            const syncEnabled = (profile as any).backgroundSyncEnabled ?? true;
-            const syncInterval = (profile as any).backgroundSyncInterval ?? 240000; // Default: 4 minutes
+          if (!backgroundSyncTimer && !syncStarting) {
+            syncStarting = true;
+            const generation = syncGeneration;
+            try {
+              const profile = await getStoredGpsProfile();
+              // Check if background sync is enabled for this profile
+              const syncEnabled = (profile as any).backgroundSyncEnabled ?? true;
+              const syncInterval = (profile as any).backgroundSyncInterval ?? 240000; // Default: 4 minutes
 
-            if (syncEnabled) {
-              logger.gps(`Background sync: Initializing timer (interval: ${syncInterval / 1000}s)`);
-              backgroundSyncTimer = setInterval(async () => {
-                await performBackgroundSync();
-              }, syncInterval);
-            } else {
-              logger.gps('Background sync: Disabled by GPS profile');
+              if (generation !== syncGeneration) {
+                // Tracking stopped while we were reading the profile.
+              } else if (syncEnabled) {
+                logger.gps(
+                  `Background sync: Initializing timer (interval: ${syncInterval / 1000}s)`,
+                );
+                backgroundSyncTimer = setInterval(async () => {
+                  await performBackgroundSync();
+                }, syncInterval);
+              } else {
+                logger.gps('Background sync: Disabled by GPS profile');
+              }
+            } finally {
+              syncStarting = false;
             }
           }
         } else if (filteredByAccuracy + filteredByDistance + filteredBySpeed > 0) {
@@ -741,7 +757,8 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
       await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       logger.gps('Background location tracking stopped');
     }
-    // Clear background sync timer
+    // Clear background sync timer (and cancel a start still awaiting the profile)
+    syncGeneration++;
     if (backgroundSyncTimer) {
       clearInterval(backgroundSyncTimer);
       backgroundSyncTimer = null;

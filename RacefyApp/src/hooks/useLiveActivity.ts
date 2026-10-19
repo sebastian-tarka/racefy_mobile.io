@@ -220,6 +220,12 @@ function useLiveActivityInternal() {
   });
 
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  // watchPositionAsync is awaited, so two starts close together could both see no
+  // subscription and open two watchers (one orphaned — every point handled twice), and a
+  // stop during the await would leave a watcher running after the session. Starts are
+  // serialized, and every stop bumps the generation so an in-flight start gives up.
+  const foregroundStartingRef = useRef(false);
+  const foregroundGenerationRef = useRef(0);
   // Accumulates ALL route points for map visualization (never cleared on sync)
   const allRoutePoints = useRef<GpsPoint[]>([]);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
@@ -338,6 +344,7 @@ function useLiveActivityInternal() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      foregroundGenerationRef.current++;
       if (locationSubscription.current) {
         locationSubscription.current.remove();
       }
@@ -818,193 +825,208 @@ function useLiveActivityInternal() {
   const startForegroundTracking = async () => {
     const profile = currentGpsProfile.current;
 
-    if (locationSubscription.current) {
+    if (locationSubscription.current || foregroundStartingRef.current) {
       logger.gps('Foreground tracking already running');
       return;
     }
 
     logger.gps('Starting foreground GPS tracking');
 
-    locationSubscription.current = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.BestForNavigation,
-        distanceInterval: profile.distanceInterval,
-        timeInterval: profile.timeInterval,
-      },
-      (location) => {
-        const gpsProfile = currentGpsProfile.current;
+    foregroundStartingRef.current = true;
+    const generation = foregroundGenerationRef.current;
+    let subscription: Location.LocationSubscription;
+    try {
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          distanceInterval: profile.distanceInterval,
+          timeInterval: profile.timeInterval,
+        },
+        (location) => {
+          const gpsProfile = currentGpsProfile.current;
 
-        // Filter out inaccurate GPS readings first
-        const accuracy = location.coords.accuracy;
-        if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
-          logger.gps('GPS point filtered: poor accuracy', {
-            accuracy: accuracy.toFixed(1),
-            threshold: gpsProfile.accuracyThreshold,
-          });
-          return;
-        }
+          // Filter out inaccurate GPS readings first
+          const accuracy = location.coords.accuracy;
+          if (accuracy && accuracy > gpsProfile.accuracyThreshold) {
+            logger.gps('GPS point filtered: poor accuracy', {
+              accuracy: accuracy.toFixed(1),
+              threshold: gpsProfile.accuracyThreshold,
+            });
+            return;
+          }
 
-        // Skip first GPS point after returning from background to avoid drift
-        // BUT update lastPosition so the next point has a valid baseline
-        if (skipNextGpsPoint.current) {
-          logger.gps(
-            'Skipping first GPS point after returning from background (using as new baseline)',
-            {
-              accuracy: location.coords.accuracy,
-              speed: location.coords.speed,
+          // Skip first GPS point after returning from background to avoid drift
+          // BUT update lastPosition so the next point has a valid baseline
+          if (skipNextGpsPoint.current) {
+            logger.gps(
+              'Skipping first GPS point after returning from background (using as new baseline)',
+              {
+                accuracy: location.coords.accuracy,
+                speed: location.coords.speed,
+                lat: location.coords.latitude,
+                lng: location.coords.longitude,
+              },
+            );
+            skipNextGpsPoint.current = false;
+
+            // Use smoothed position for baseline consistency
+            // (next point calculation also uses smoothed position)
+            const smoothedBaseline = getSmoothedPosition({
               lat: location.coords.latitude,
               lng: location.coords.longitude,
-            },
-          );
-          skipNextGpsPoint.current = false;
+              ele: location.coords.altitude ?? undefined,
+              timestamp: location.timestamp,
+            });
 
-          // Use smoothed position for baseline consistency
-          // (next point calculation also uses smoothed position)
-          const smoothedBaseline = getSmoothedPosition({
+            // Update lastPosition with smoothed values for consistent distance calculation
+            gpsTracker.lastPosition = {
+              lat: smoothedBaseline.lat,
+              lng: smoothedBaseline.lng,
+              ele: smoothedBaseline.ele,
+              timestamp: location.timestamp,
+            };
+
+            // Don't add to buffer or calculate distance, just set baseline
+            return;
+          }
+
+          const point: GpsPoint = {
             lat: location.coords.latitude,
             lng: location.coords.longitude,
             ele: location.coords.altitude ?? undefined,
-            timestamp: location.timestamp,
-          });
-
-          // Update lastPosition with smoothed values for consistent distance calculation
-          gpsTracker.lastPosition = {
-            lat: smoothedBaseline.lat,
-            lng: smoothedBaseline.lng,
-            ele: smoothedBaseline.ele,
-            timestamp: location.timestamp,
+            time: new Date(location.timestamp).toISOString(),
+            speed:
+              location.coords.speed != null && location.coords.speed >= 0
+                ? location.coords.speed
+                : undefined,
+            accuracy: location.coords.accuracy ?? undefined,
           };
 
-          // Don't add to buffer or calculate distance, just set baseline
-          return;
-        }
-
-        const point: GpsPoint = {
-          lat: location.coords.latitude,
-          lng: location.coords.longitude,
-          ele: location.coords.altitude ?? undefined,
-          time: new Date(location.timestamp).toISOString(),
-          speed:
-            location.coords.speed != null && location.coords.speed >= 0
-              ? location.coords.speed
-              : undefined,
-          accuracy: location.coords.accuracy ?? undefined,
-        };
-
-        // Feed the raw reading through the positioning tracker: it smooths, classifies
-        // it against the baseline (filter/gap/accept), and advances the baseline + gap
-        // clock. We just apply the returned stats deltas + side effects. `decision` is
-        // null on the very first point (no baseline to measure against yet).
-        const { decision } = gpsTracker.addPoint({
-          raw: {
-            lat: point.lat,
-            lng: point.lng,
-            ele: point.ele,
-            timestamp: location.timestamp,
-          },
-          profile: gpsProfile,
-          gapThresholdMs: GPS_GAP_THRESHOLD_MS,
-          rawSpeed: location.coords.speed,
-        });
-
-        if (decision) {
-          if (decision.outcome === 'accepted' || decision.outcome === 'gap-bridged') {
-            // Validated points count; a bridged gap counts its straight-line
-            // distance (like a GPS watch through a tunnel) with a segment break.
-            localStatsRef.current.distance += decision.distanceAdded;
-            localStatsRef.current.elevation_gain += decision.elevationAdded;
-
-            if (decision.segmentBreak) {
-              point.segment_break = true;
-              // A minutes-long hop would poison the smoothed current pace —
-              // restart pace tracking from this point.
-              paceTracker.reset();
-              logger.gps('GPS gap bridged: distance counted, segment break marked', {
-                gapSeconds: (decision.gapMs / 1000).toFixed(0),
-                bridgedMeters: decision.distanceAdded.toFixed(1),
-                impliedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
-              });
-            } else {
-              // Track pace segment and refresh the smoothed current pace.
-              localStatsRef.current.currentPace = paceTracker.record(
-                {
-                  timestamp: location.timestamp,
-                  distance: localStatsRef.current.distance,
-                },
-                gpsProfile,
-                MAX_PACE_SEGMENTS,
-              );
-            }
-
-            // Map trail keeps the original (non-smoothed) validated point
-            allRoutePoints.current.push(point);
-            pointsVersionRef.current++;
-
-            // Durable log: the accepted point goes to SQLite with the cumulative
-            // distance — this is the upload queue AND the crash-recovery source.
-            // IMPORTANT: Only validated points are stored/synced to prevent
-            // GPS jumps/glitches from reaching the server.
-            if (clientActivityIdRef.current && point.time) {
-              const range = trackingDb.insertPoints(
-                clientActivityIdRef.current,
-                [
-                  {
-                    lat: point.lat,
-                    lng: point.lng,
-                    ele: point.ele,
-                    ts: point.time,
-                    speed: point.speed,
-                    accuracy: point.accuracy,
-                    cumDist: localStatsRef.current.distance,
-                    segmentBreak: point.segment_break === true,
-                  },
-                ],
-                'fg',
-              );
-              if (range) {
-                lastRenderedSeqRef.current = range.lastSeq;
-              }
-            }
-
-            setState((prev) => ({
-              ...prev,
-              currentStats: { ...localStatsRef.current },
-            }));
-          } else if (decision.outcome === 'gap') {
-            // Route discontinuity (app was backgrounded, GPS signal lost). The first
-            // "jump" point is discarded and the gap clock advanced inside addPoint.
-            logger.gps('GPS point discarded: route segment break (large time gap)', {
-              gapSeconds: (decision.gapMs / 1000).toFixed(0),
-              thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+          // Feed the raw reading through the positioning tracker: it smooths, classifies
+          // it against the baseline (filter/gap/accept), and advances the baseline + gap
+          // clock. We just apply the returned stats deltas + side effects. `decision` is
+          // null on the very first point (no baseline to measure against yet).
+          const { decision } = gpsTracker.addPoint({
+            raw: {
               lat: point.lat,
               lng: point.lng,
-            });
-          } else if (decision.outcome === 'filtered-speed') {
-            logger.gps('GPS point filtered: unrealistic speed - NOT synced to server', {
-              distance: decision.distance.toFixed(1),
-              timeDelta: decision.timeSinceLastPoint.toFixed(1),
-              speedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
-              maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
-            });
-          } else {
-            logger.debug('gps', 'GPS point filtered: small movement - NOT synced to server', {
-              distance: decision.distance.toFixed(1),
-              threshold: decision.effectiveMinDistance,
-              isStationary: decision.isStationary,
-            });
-          }
-        }
+              ele: point.ele,
+              timestamp: location.timestamp,
+            },
+            profile: gpsProfile,
+            gapThresholdMs: GPS_GAP_THRESHOLD_MS,
+            rawSpeed: location.coords.speed,
+          });
 
-        // Update GPS signal time (we got a GPS reading, even if filtered)
-        lastGpsTime.current = Date.now();
-      },
-    );
+          if (decision) {
+            if (decision.outcome === 'accepted' || decision.outcome === 'gap-bridged') {
+              // Validated points count; a bridged gap counts its straight-line
+              // distance (like a GPS watch through a tunnel) with a segment break.
+              localStatsRef.current.distance += decision.distanceAdded;
+              localStatsRef.current.elevation_gain += decision.elevationAdded;
+
+              if (decision.segmentBreak) {
+                point.segment_break = true;
+                // A minutes-long hop would poison the smoothed current pace —
+                // restart pace tracking from this point.
+                paceTracker.reset();
+                logger.gps('GPS gap bridged: distance counted, segment break marked', {
+                  gapSeconds: (decision.gapMs / 1000).toFixed(0),
+                  bridgedMeters: decision.distanceAdded.toFixed(1),
+                  impliedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
+                });
+              } else {
+                // Track pace segment and refresh the smoothed current pace.
+                localStatsRef.current.currentPace = paceTracker.record(
+                  {
+                    timestamp: location.timestamp,
+                    distance: localStatsRef.current.distance,
+                  },
+                  gpsProfile,
+                  MAX_PACE_SEGMENTS,
+                );
+              }
+
+              // Map trail keeps the original (non-smoothed) validated point
+              allRoutePoints.current.push(point);
+              pointsVersionRef.current++;
+
+              // Durable log: the accepted point goes to SQLite with the cumulative
+              // distance — this is the upload queue AND the crash-recovery source.
+              // IMPORTANT: Only validated points are stored/synced to prevent
+              // GPS jumps/glitches from reaching the server.
+              if (clientActivityIdRef.current && point.time) {
+                const range = trackingDb.insertPoints(
+                  clientActivityIdRef.current,
+                  [
+                    {
+                      lat: point.lat,
+                      lng: point.lng,
+                      ele: point.ele,
+                      ts: point.time,
+                      speed: point.speed,
+                      accuracy: point.accuracy,
+                      cumDist: localStatsRef.current.distance,
+                      segmentBreak: point.segment_break === true,
+                    },
+                  ],
+                  'fg',
+                );
+                if (range) {
+                  lastRenderedSeqRef.current = range.lastSeq;
+                }
+              }
+
+              setState((prev) => ({
+                ...prev,
+                currentStats: { ...localStatsRef.current },
+              }));
+            } else if (decision.outcome === 'gap') {
+              // Route discontinuity (app was backgrounded, GPS signal lost). The first
+              // "jump" point is discarded and the gap clock advanced inside addPoint.
+              logger.gps('GPS point discarded: route segment break (large time gap)', {
+                gapSeconds: (decision.gapMs / 1000).toFixed(0),
+                thresholdSeconds: GPS_GAP_THRESHOLD_MS / 1000,
+                lat: point.lat,
+                lng: point.lng,
+              });
+            } else if (decision.outcome === 'filtered-speed') {
+              logger.gps('GPS point filtered: unrealistic speed - NOT synced to server', {
+                distance: decision.distance.toFixed(1),
+                timeDelta: decision.timeSinceLastPoint.toFixed(1),
+                speedKmh: (decision.impliedSpeed * 3.6).toFixed(1),
+                maxSpeedKmh: (gpsProfile.maxRealisticSpeed * 3.6).toFixed(1),
+              });
+            } else {
+              logger.debug('gps', 'GPS point filtered: small movement - NOT synced to server', {
+                distance: decision.distance.toFixed(1),
+                threshold: decision.effectiveMinDistance,
+                isStationary: decision.isStationary,
+              });
+            }
+          }
+
+          // Update GPS signal time (we got a GPS reading, even if filtered)
+          lastGpsTime.current = Date.now();
+        },
+      );
+    } finally {
+      foregroundStartingRef.current = false;
+    }
+
+    if (generation !== foregroundGenerationRef.current) {
+      subscription.remove();
+      logger.gps('Foreground GPS tracking stopped while starting — watcher released');
+      return;
+    }
+    locationSubscription.current = subscription;
 
     logger.gps('Foreground GPS tracking started');
   };
 
   // Stop foreground GPS tracking
   const stopForegroundTracking = () => {
+    foregroundGenerationRef.current++;
     if (locationSubscription.current) {
       locationSubscription.current.remove();
       locationSubscription.current = null;
@@ -1364,6 +1386,7 @@ function useLiveActivityInternal() {
         clearInterval(gpsSignalCheckInterval.current);
         gpsSignalCheckInterval.current = null;
       }
+      foregroundGenerationRef.current++;
       if (locationSubscription.current) {
         locationSubscription.current.remove();
         locationSubscription.current = null;
@@ -1379,6 +1402,7 @@ function useLiveActivityInternal() {
 
   const stopGpsTracking = async () => {
     // Stop foreground tracking
+    foregroundGenerationRef.current++;
     if (locationSubscription.current) {
       locationSubscription.current.remove();
       locationSubscription.current = null;
