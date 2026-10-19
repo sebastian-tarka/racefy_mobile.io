@@ -6,22 +6,21 @@ import { useTheme } from '../../../../hooks/useTheme';
 import { useUnits } from '../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../theme';
 import { formatDuration } from '../../../../utils/formatDuration';
+import { useLiveActivityContext } from '../../../../hooks/useLiveActivity';
 
 interface LiveActivityBannerProps {
-  isActive: boolean;
-  isPaused: boolean;
-  duration: number;
-  distance: number;
   onPress: () => void;
 }
 
-export function LiveActivityBanner({
-  isActive,
-  isPaused,
-  duration,
-  distance,
+/**
+ * Reads the live stats itself: it is the only part of Home that has to re-render every
+ * second while recording, so the rest of the screen reads just the status context.
+ */
+export const LiveActivityBanner = React.memo(function LiveActivityBanner({
   onPress,
 }: LiveActivityBannerProps) {
+  const { isTracking: isActive, isPaused, currentStats } = useLiveActivityContext();
+  const { duration, distance } = currentStats;
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistance } = useUnits();
@@ -83,7 +82,7 @@ export function LiveActivityBanner({
       </View>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

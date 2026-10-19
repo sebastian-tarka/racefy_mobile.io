@@ -3,7 +3,6 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Alert,
-  Animated,
   Platform,
   StyleSheet,
   Text,
@@ -79,6 +78,8 @@ import { routeKey } from '../../utils/routeKey';
 import { navBannerState } from '../../utils/navigationCues';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
+import { RecordingToast } from './recording/RecordingToast';
+import { describeSaveOutcome, type SaveOutcome } from './recording/saveOutcome';
 import { FinishView } from './recording/FinishView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
 import { SportShortcutsModal } from './recording/SportShortcutsModal';
@@ -912,6 +913,72 @@ export function ActivityRecordingScreen() {
     }
   };
 
+  /** Everything that belonged to the recording that just ended — saved or discarded. */
+  const resetAfterRecording = () => {
+    resetMilestones();
+    setShowFinish(false);
+    // The pin belonged to this recording; the next activity starts unpinned.
+    setSelectedEvent(null);
+    // Restore original audio coach settings in AsyncStorage (undo session toggle)
+    restoreAudioCoachSettings();
+    // The goal belonged to this recording; forget it (and its background state).
+    setWorkoutPlan(null);
+    void clearWorkoutSession();
+    void cancelGoalNotification();
+  };
+
+  const showSaveOutcome = (outcome: SaveOutcome) => {
+    // Points (or the lack of them — the activity didn't meet the thresholds).
+    const pointsMessage = (points: number | null) =>
+      !points ? t('recording.noPointsAwarded') : t('recording.pointsAwarded', { points });
+
+    switch (outcome.kind) {
+      case 'queued-needs-attention':
+        Alert.alert(
+          t('recording.savedOnDeviceTitle'),
+          t('recording.savedNeedsAttention', { reason: outcome.reason }),
+          [
+            { text: t('recording.later'), style: 'cancel' },
+            {
+              text: t('recording.openUnsynced'),
+              onPress: () => navigation.navigate('UnsyncedActivities'),
+            },
+          ],
+        );
+        return;
+      case 'queued':
+        Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
+        return;
+      case 'published':
+        Alert.alert(
+          t('common.success'),
+          `${t('recording.activityShared')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+        );
+        return;
+      case 'draft':
+        Alert.alert(
+          t('recording.activitySaved'),
+          `${t('recording.draftCreated')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+          [
+            { text: t('recording.later'), style: 'cancel' },
+            {
+              text: t('recording.viewDraft'),
+              onPress: () => navigation.navigate('PostDetail', { postId: outcome.postId }),
+            },
+          ],
+        );
+        return;
+      case 'saved':
+        Alert.alert(
+          t('common.success'),
+          `${t('recording.activitySaved')}\n\n${pointsMessage(outcome.pointsEarned)}`,
+        );
+        return;
+      case 'silent':
+        return;
+    }
+  };
+
   const handleSave = async (options?: { title?: string; share?: boolean }) => {
     if (!activity || !selectedSport) return;
     if (isFinishingRef.current) return;
@@ -961,68 +1028,9 @@ export function ActivityRecordingScreen() {
         });
       }
 
-      resetMilestones();
       setSkipAutoPost(false);
-      setShowFinish(false);
-      // The pin belonged to this recording; the next activity starts unpinned.
-      setSelectedEvent(null);
-
-      // Restore original audio coach settings in AsyncStorage (undo session toggle)
-      restoreAudioCoachSettings();
-
-      // The goal belonged to this recording; forget it (and its background state).
-      setWorkoutPlan(null);
-      void clearWorkoutSession();
-      void cancelGoalNotification();
-
-      if (result.queued) {
-        // No points or post to report yet — those exist only once the server has
-        // the activity, and promising them here would be a lie half the time.
-        if (result.needsAttention) {
-          Alert.alert(
-            t('recording.savedOnDeviceTitle'),
-            t('recording.savedNeedsAttention', { reason: result.needsAttention }),
-            [
-              { text: t('recording.later'), style: 'cancel' },
-              {
-                text: t('recording.openUnsynced'),
-                onPress: () => navigation.navigate('UnsyncedActivities'),
-              },
-            ],
-          );
-        } else {
-          Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
-        }
-        return;
-      }
-
-      // Inform user about earned points (or lack thereof — activity didn't meet thresholds)
-      const pointsEarned = delivered?.points_earned;
-      const successMessage =
-        pointsEarned == null || pointsEarned === 0
-          ? t('recording.noPointsAwarded')
-          : t('recording.pointsAwarded', { points: pointsEarned });
-
-      const post = delivered?.post;
-      if (post) {
-        if (post.status === 'published') {
-          Alert.alert(t('common.success'), `${t('recording.activityShared')}\n\n${successMessage}`);
-        } else if (post.status === 'draft') {
-          Alert.alert(
-            t('recording.activitySaved'),
-            `${t('recording.draftCreated')}\n\n${successMessage}`,
-            [
-              { text: t('recording.later'), style: 'cancel' },
-              {
-                text: t('recording.viewDraft'),
-                onPress: () => navigation.navigate('PostDetail', { postId: post.id }),
-              },
-            ],
-          );
-        }
-      } else {
-        Alert.alert(t('common.success'), `${t('recording.activitySaved')}\n\n${successMessage}`);
-      }
+      resetAfterRecording();
+      showSaveOutcome(describeSaveOutcome(result));
     } catch (err) {
       logger.error('activity', 'Failed to save activity from UI', { error: err });
       Alert.alert(t('recording.saveFailedTitle'), t('recording.saveFailed'), [
@@ -1051,14 +1059,7 @@ export function ActivityRecordingScreen() {
         onPress: async () => {
           try {
             await discardTracking();
-            resetMilestones();
-            setShowFinish(false);
-            setSelectedEvent(null);
-            // Restore original audio coach settings in AsyncStorage
-            restoreAudioCoachSettings();
-            setWorkoutPlan(null);
-            void clearWorkoutSession();
-            void cancelGoalNotification();
+            resetAfterRecording();
             logger.activity('Activity discarded from UI');
           } catch (err) {
             logger.error('activity', 'Failed to discard activity from UI', { error: err });
@@ -1463,157 +1464,82 @@ export function ActivityRecordingScreen() {
         </View>
       )}
 
-      {/* Audio coach toast */}
+      {/* Toasts */}
       {audioCoachToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: audioCoachToast.payload ? colors.primary : colors.cardBackground,
-              borderColor: audioCoachToast.payload ? colors.primary : colors.border,
-              opacity: audioCoachToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={audioCoachToast.payload ? 'musical-notes' : 'musical-notes-outline'}
-            size={20}
-            color={audioCoachToast.payload ? '#ffffff' : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.mapStyleToastText,
-              { color: audioCoachToast.payload ? '#ffffff' : colors.textPrimary },
-            ]}
-          >
-            {t(
-              audioCoachToast.payload
-                ? 'recording.audioCoachEnabled'
-                : 'recording.audioCoachDisabled',
-            )}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={audioCoachToast.opacity}
+          icon={audioCoachToast.payload ? 'musical-notes' : 'musical-notes-outline'}
+          text={t(
+            audioCoachToast.payload
+              ? 'recording.audioCoachEnabled'
+              : 'recording.audioCoachDisabled',
+          )}
+          iconColor={audioCoachToast.payload ? '#ffffff' : colors.textSecondary}
+          textColor={audioCoachToast.payload ? '#ffffff' : colors.textPrimary}
+          backgroundColor={audioCoachToast.payload ? colors.primary : colors.cardBackground}
+          borderColor={audioCoachToast.payload ? colors.primary : colors.border}
+        />
       )}
-
-      {/* Lock toast */}
       {lockToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: lockToast.payload ? '#1f2937' : colors.cardBackground,
-              borderColor: lockToast.payload ? '#374151' : colors.border,
-              opacity: lockToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={lockToast.payload ? 'lock-closed' : 'lock-open-outline'}
-            size={20}
-            color={lockToast.payload ? '#f9fafb' : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.mapStyleToastText,
-              { color: lockToast.payload ? '#f9fafb' : colors.textPrimary },
-            ]}
-          >
-            {t(lockToast.payload ? 'recording.screenLocked' : 'recording.screenUnlocked')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={lockToast.opacity}
+          icon={lockToast.payload ? 'lock-closed' : 'lock-open-outline'}
+          text={t(lockToast.payload ? 'recording.screenLocked' : 'recording.screenUnlocked')}
+          iconColor={lockToast.payload ? '#f9fafb' : colors.textSecondary}
+          textColor={lockToast.payload ? '#f9fafb' : colors.textPrimary}
+          backgroundColor={lockToast.payload ? '#1f2937' : colors.cardBackground}
+          borderColor={lockToast.payload ? '#374151' : colors.border}
+        />
       )}
-
-      {/* Map style toast notification */}
       {showStyleToast && viewMode === 'map' && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-              opacity: styleToastOpacity,
-            },
-          ]}
-        >
-          <Ionicons
-            name={
-              mapStyle === 'satellite' ? 'globe' : mapStyle === 'streets' ? 'car' : 'trail-sign'
-            }
-            size={20}
-            color={colors.primary}
-          />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {mapStyle === 'satellite'
+        <RecordingToast
+          opacity={styleToastOpacity}
+          icon={mapStyle === 'satellite' ? 'globe' : mapStyle === 'streets' ? 'car' : 'trail-sign'}
+          text={
+            mapStyle === 'satellite'
               ? t('recording.mapStyleSatellite')
               : mapStyle === 'streets'
                 ? t('recording.mapStyleStreets')
-                : t('recording.mapStyleOutdoors')}
-          </Text>
-        </Animated.View>
+                : t('recording.mapStyleOutdoors')
+          }
+          iconColor={colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.border}
+        />
       )}
-
-      {/* Goal toast */}
       {offlineToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.info,
-              opacity: offlineToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons name="cloud-offline-outline" size={20} color={colors.info} />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {t('recording.offlineStartToast')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={offlineToast.opacity}
+          icon="cloud-offline-outline"
+          text={t('recording.offlineStartToast')}
+          iconColor={colors.info}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.info}
+        />
       )}
-
       {eventToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: eventToast.payload ? colors.event : colors.primary,
-              opacity: eventToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={eventToast.payload ? 'lock-closed' : 'lock-open'}
-            size={20}
-            color={eventToast.payload ? colors.event : colors.primary}
-          />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {t(eventToast.payload ? 'eventPin.pinnedToast' : 'eventPin.unpinned')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={eventToast.opacity}
+          icon={eventToast.payload ? 'lock-closed' : 'lock-open'}
+          text={t(eventToast.payload ? 'eventPin.pinnedToast' : 'eventPin.unpinned')}
+          iconColor={eventToast.payload ? colors.event : colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={eventToast.payload ? colors.event : colors.primary}
+        />
       )}
-
       {workoutToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.primary,
-              opacity: workoutToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons name="flag" size={20} color={colors.primary} />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {workoutToast.payload}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={workoutToast.opacity}
+          icon="flag"
+          text={workoutToast.payload ?? ''}
+          iconColor={colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.primary}
+        />
       )}
 
       <WorkoutConfigModal
@@ -1862,28 +1788,6 @@ const styles = StyleSheet.create({
   },
 
   // Map style toast notification
-  mapStyleToast: {
-    position: 'absolute',
-    top: 100,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 2000,
-  },
-  mapStyleToastText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
 
   // ─────────────────────────────────────────────────────────────────────────
   // Map Top Overlay (idle + map mode)

@@ -282,6 +282,16 @@ describe('GpsTracker', () => {
     expect(t.lastBufferedTime).toBe(20_000); // advanced on gap
   });
 
+  it('returns the same currentPosition object until the baseline moves', () => {
+    const t = new GpsTracker();
+    t.lastPosition = { lat: 10, lng: 20, timestamp: 1000 };
+    const first = t.currentPosition;
+    expect(t.currentPosition).toBe(first);
+    t.lastPosition = { lat: 11, lng: 21, timestamp: 2000 };
+    expect(t.currentPosition).not.toBe(first);
+    expect(t.currentPosition).toEqual({ lat: 11, lng: 21 });
+  });
+
   it('exposes currentPosition and supports manual baseline/gap-clock seeding', () => {
     const t = new GpsTracker();
     expect(t.currentPosition).toBeNull();

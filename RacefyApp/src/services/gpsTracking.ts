@@ -268,6 +268,8 @@ export interface LivePointResult {
 export class GpsTracker {
   private buffer = new GpsSmoothingBuffer();
   private baseline: GpsBaseline | null = null;
+  private positionFor: GpsBaseline | null = null;
+  private position: { lat: number; lng: number } | null = null;
   private gapClock: number | null = null;
 
   /**
@@ -341,8 +343,17 @@ export class GpsTracker {
   }
 
   /** {lat,lng} of the current baseline, for the hook's currentPosition return value. */
+  /**
+   * Same object until the baseline moves. The hook returns this on every render (the
+   * duration timer re-renders once a second); a fresh object each time re-fired every
+   * effect keyed on the position and defeated memo on the map.
+   */
   get currentPosition(): { lat: number; lng: number } | null {
-    return this.baseline ? { lat: this.baseline.lat, lng: this.baseline.lng } : null;
+    if (this.positionFor !== this.baseline) {
+      this.positionFor = this.baseline;
+      this.position = this.baseline ? { lat: this.baseline.lat, lng: this.baseline.lng } : null;
+    }
+    return this.position;
   }
 
   /** Clear only the smoothing buffer (e.g. on start/resume to drop pre-pause positions). */

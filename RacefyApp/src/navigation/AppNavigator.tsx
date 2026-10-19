@@ -19,7 +19,7 @@ import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
-import { useLiveActivityContext } from '../hooks/useLiveActivity';
+import { useLiveActivityStatus } from '../hooks/useLiveActivity';
 import { useCurrentWorkoutSession } from '../hooks/useCurrentWorkoutSession';
 import { useMaintenance } from '../hooks/useMaintenance';
 import { useAppVersion } from '../hooks/useAppVersion';
@@ -308,7 +308,7 @@ function MainTabNavigator() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { isTracking, activity } = useLiveActivityContext();
+  const { isTracking, activity } = useLiveActivityStatus();
   // An open strength session has to be reachable from every tab, not just from
   // the strength screens — the same promise the Record button already makes
   // for an outdoor activity.
