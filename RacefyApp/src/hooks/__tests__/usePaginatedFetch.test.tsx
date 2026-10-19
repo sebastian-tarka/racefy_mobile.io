@@ -105,4 +105,34 @@ describe('usePaginatedFetch', () => {
     expect(fetchPage).toHaveBeenCalledTimes(1);
     expect(result.current.data).toEqual(['a']);
   });
+
+  it('a dep change while a page is in flight loads the new deps and drops the old answer', async () => {
+    // Filter chips: switch "all" → "earned" before the "all" page has arrived.
+    const pending: Record<string, (v: ReturnType<typeof page<string>>) => void> = {};
+    const fetchPage = jest.fn(
+      (filter: string) =>
+        new Promise<ReturnType<typeof page<string>>>((resolve) => {
+          pending[filter] = resolve;
+        }),
+    );
+    const { result, rerender } = renderHook(
+      ({ filter }: { filter: string }) =>
+        usePaginatedFetch(() => fetchPage(filter), { deps: [filter] }),
+      { initialProps: { filter: 'all' } },
+    );
+    expect(fetchPage).toHaveBeenCalledWith('all');
+
+    rerender({ filter: 'earned' });
+    expect(fetchPage).toHaveBeenCalledWith('earned');
+    // A fresh load for the new filter, not a pull-to-refresh.
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isRefreshing).toBe(false);
+
+    await act(async () => pending.all(page(['all-1'], 1, 1)));
+    expect(result.current.data).toEqual([]);
+
+    await act(async () => pending.earned(page(['earned-1'], 1, 1)));
+    expect(result.current.data).toEqual(['earned-1']);
+    expect(result.current.isLoading).toBe(false);
+  });
 });

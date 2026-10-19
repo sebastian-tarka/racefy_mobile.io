@@ -99,6 +99,11 @@ export function usePaginatedFetch<T>(
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
   const requestIdRef = useRef(0);
+  const hasRunRef = useRef(false);
+  // Read at fetch time, not from a closure: right after reset() the closure still
+  // sees the old list and would show a pull-to-refresh spinner for a fresh load.
+  const hasDataRef = useRef(false);
+  hasDataRef.current = data.length > 0;
   const isMountedRef = useRef(true);
   useEffect(() => {
     isMountedRef.current = true;
@@ -121,7 +126,7 @@ export function usePaginatedFetch<T>(
       isLoadingRef.current = true;
       const requestId = ++requestIdRef.current;
       if (mode === 'append') setIsLoadingMore(true);
-      else if (targetPage === 1 && data.length > 0) setIsRefreshing(true);
+      else if (targetPage === 1 && hasDataRef.current) setIsRefreshing(true);
       else setIsLoading(true);
       setError(null);
 
@@ -153,7 +158,7 @@ export function usePaginatedFetch<T>(
         isLoadingRef.current = false;
       }
     },
-    [enabled, logCategory, errorMessage, mergeDeduped, data.length],
+    [enabled, logCategory, errorMessage, mergeDeduped],
   );
 
   const refresh = useCallback(async () => {
@@ -190,6 +195,14 @@ export function usePaginatedFetch<T>(
     }
     // Manual mode: the consumer triggers loading via refresh()/loadMore().
     if (!autoLoad) return;
+    if (hasRunRef.current) {
+      // A dep changed (a filter, an id): what is on screen or in flight belongs to the
+      // previous deps. Without this, a page still loading for the old deps blocked the
+      // new fetch (isLoadingRef) and then landed in the list as if it were the answer.
+      reset();
+      hasDataRef.current = false;
+    }
+    hasRunRef.current = true;
     pageRef.current = 1;
     hasMoreRef.current = true;
     fetchAt(1, 'replace');
