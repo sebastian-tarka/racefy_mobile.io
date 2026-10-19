@@ -15,7 +15,30 @@ Stan na: **2026-10-19**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### `audyt-etap0` — poprawki błędów z audytu (2026-10-19)
+
+Etap 0 z audytu `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, jest 424/424 (nowy `apiBase.test`),
+ESLint 267 → 264 warningów.
+
+- Klient API (`services/api/base.ts`): odpowiedź nie-JSON (HTML 503/403) nie wywala już
+  `TypeError`, nieudany GET nie zostawia nieobsłużonego odrzucenia, domyślny timeout 60 s
+  dla JSON (uploady FormData i wywołania z własnym `signal` bez zmian).
+- Dystans w milach w 11 miejscach, gdzie był wpisany na sztywno w km.
+- Nowy `DatePickerSheet`: na iOS spinner w arkuszu z Anuluj/Gotowe. Dotyczy
+  WorkoutSchedule („Przenieś”), GoalForm, CalibrationForm.
+- `useMemo` na wartościach `AuthProvider` i `AppConfigProvider`, `console.*` → logger.
+
+Do sprawdzenia na urządzeniu:
+- [ ] iOS: „Przenieś” w harmonogramie treningów — kręcenie kółkiem niczego nie przenosi,
+      dopiero „Gotowe”; „Anuluj” i tap w tło zamykają bez zmian
+- [ ] iOS: data w formularzu celu (start/koniec, min. data końca) i w kalibracji — da się zamknąć,
+      spinner czytelny w trybie ciemnym
+- [ ] Android: te same trzy pickery — natywny dialog, OK zapisuje, Anuluj nic nie zmienia
+- [ ] Jednostki imperialne: feed (udostępniona aktywność), Events → statystyki, drużyny
+      (statystyki + ranking), live (lista + widz), plan treningowy, niezsynchronizowane,
+      wybór trasy, Insights — wszędzie mi/ft; w metrycznych wygląd bez zmian
+- [ ] Regresja: logowanie/wylogowanie, upload zdjęcia/wideo do posta (bez timeoutu),
+      zapis aktywności
 
 ---
 
