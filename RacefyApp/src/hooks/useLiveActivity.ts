@@ -343,8 +343,9 @@ function useLiveActivityInternal() {
 
   // Cleanup on unmount
   useEffect(() => {
+    const foregroundGeneration = foregroundGenerationRef;
     return () => {
-      foregroundGenerationRef.current++;
+      foregroundGeneration.current++;
       if (locationSubscription.current) {
         locationSubscription.current.remove();
       }
