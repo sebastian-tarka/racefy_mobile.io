@@ -20,7 +20,7 @@ import { useRankDelta } from '../../hooks/useRankDelta';
 import { useRewards } from '../../hooks/useRewards';
 import { CompetitionStandingSection } from './home/components/CompetitionStandingSection';
 import { ResumeSessionBanner } from '../workouts/components/ResumeSessionBanner';
-import { useLiveActivityContext } from '../../hooks/useLiveActivity';
+import { useLiveActivityStatus } from '../../hooks/useLiveActivity';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
@@ -86,7 +86,8 @@ export function DynamicHomeScreen({ navigation }: Props) {
   const rankDeltas = useRankDelta(isAuthenticated ? pointStats : null);
   const { badges } = useRewards();
   const { t, i18n } = useTranslation();
-  const { isTracking, isPaused, currentStats } = useLiveActivityContext();
+  const { isTracking } = useLiveActivityStatus();
+  const openRecording = useCallback(() => navigation.navigate('Record'), [navigation]);
   const { unreadCount, refresh: refreshNotifications } = useNotifications();
   const weeklyStreakData = useWeeklyStreak();
   const trainingReminders = useTrainingReminders();
@@ -421,15 +422,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
         />
 
         {/* Live Activity Banner - no animation, shows when recording */}
-        <LiveActivityBanner
-          isActive={isTracking}
-          isPaused={isPaused}
-          duration={currentStats.duration}
-          distance={currentStats.distance}
-          onPress={() => {
-            navigation.navigate('Record');
-          }}
-        />
+        <LiveActivityBanner onPress={openRecording} />
 
         {/* Header - with staggered fade-in */}
         <FadeInView delay={50}>

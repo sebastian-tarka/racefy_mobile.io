@@ -11,6 +11,12 @@ import { logger } from '../services/logger';
  * - Uses pauseStartTime to track pause duration locally
  * - Falls back to local calculation if server values seem incorrect
  */
+/** Delay until elapsed time crosses the next whole second (+ a few ms of margin). */
+export function msUntilNextSecond(elapsedMs: number): number {
+  const intoSecond = ((elapsedMs % 1000) + 1000) % 1000;
+  return 1000 - intoSecond + 5;
+}
+
 export function useActivityTimer(
   activity: Activity | null,
   isTracking: boolean,
@@ -73,22 +79,27 @@ export function useActivityTimer(
 
       // Clear any existing interval
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
       }
 
-      intervalRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        const safeDuration = Math.max(0, elapsed);
+      // One wake-up per second, scheduled just after the displayed second flips — the
+      // same moment a 100 ms poll would catch it, at a tenth of the JS wake-ups. It keeps
+      // running in the background: the workout engine reads this duration for time cues.
+      const tick = () => {
+        const elapsedMs = Date.now() - startTimeRef.current;
+        const safeDuration = Math.max(0, Math.floor(elapsedMs / 1000));
         setLocalDuration(safeDuration);
         // Always track the last known duration while running
         lastKnownDurationRef.current = safeDuration;
-      }, 100);
+        intervalRef.current = setTimeout(tick, msUntilNextSecond(elapsedMs));
+      };
+      tick();
     } else if (isPaused && activity) {
       // PAUSED state
 
       // Clear the running interval
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
         intervalRef.current = null;
       }
 
@@ -123,7 +134,7 @@ export function useActivityTimer(
       // IDLE state - reset everything
 
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
         intervalRef.current = null;
       }
 
@@ -135,7 +146,7 @@ export function useActivityTimer(
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
       }
     };
   }, [activity, isTracking, isPaused]);

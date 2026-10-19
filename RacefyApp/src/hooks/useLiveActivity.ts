@@ -1,4 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Alert, AppState, AppStateStatus, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { api } from '../services/api';
@@ -671,6 +679,11 @@ function useLiveActivityInternal() {
 
         localStatsRef.current.duration = duration;
         localStatsRef.current.calories = calories;
+
+        // In the background nobody sees the stats, and a setState here re-renders the
+        // recording screen once a second for the whole session. The refs above stay
+        // current for background code; the first tick after returning repaints.
+        if (AppState.currentState !== 'active') return;
 
         setState((prev) => ({
           ...prev,
@@ -2235,14 +2248,43 @@ interface LiveActivityContextType {
   currentPosition: { lat: number; lng: number } | null;
 }
 
+/** The slow-changing part: flips on start/pause/resume/finish, never on a timer tick. */
+export interface LiveActivityStatus {
+  activity: Activity | null;
+  isTracking: boolean;
+  isPaused: boolean;
+}
+
 // Create Context
 const LiveActivityContext = createContext<LiveActivityContextType | null>(null);
+const LiveActivityStatusContext = createContext<LiveActivityStatus | null>(null);
 
 // Provider Component
 export function LiveActivityProvider({ children }: { children: React.ReactNode }) {
   const liveActivityState = useLiveActivityInternal();
+  const { activity, isTracking, isPaused } = liveActivityState;
+  // The full value changes every second while recording (duration tick) and on every
+  // GPS point. Screens that only need to know *whether* something is recording read
+  // this instead, so the tab bar and Home don't re-render once a second for hours.
+  const status = useMemo(
+    () => ({ activity, isTracking, isPaused }),
+    [activity, isTracking, isPaused],
+  );
 
-  return React.createElement(LiveActivityContext.Provider, { value: liveActivityState }, children);
+  return React.createElement(
+    LiveActivityContext.Provider,
+    { value: liveActivityState },
+    React.createElement(LiveActivityStatusContext.Provider, { value: status }, children),
+  );
+}
+
+/** Recording status only — prefer this over useLiveActivityContext() outside the recording screen. */
+export function useLiveActivityStatus(): LiveActivityStatus {
+  const context = useContext(LiveActivityStatusContext);
+  if (!context) {
+    throw new Error('useLiveActivityStatus must be used within LiveActivityProvider');
+  }
+  return context;
 }
 
 // Hook to use the context (replaces the direct hook usage)

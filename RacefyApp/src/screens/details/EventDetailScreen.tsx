@@ -33,7 +33,7 @@ import { useUnits } from '../../hooks/useUnits';
 import { useEventDetail } from '../../hooks/useEventDetail';
 import { useEventWatch } from '../../hooks/useEventWatch';
 import { useEventStandings } from '../../hooks/useEventStandings';
-import { useLiveActivityContext } from '../../hooks/useLiveActivity';
+import { useLiveActivityStatus } from '../../hooks/useLiveActivity';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { fontSize, spacing } from '../../theme';
@@ -55,7 +55,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [busyDialogVisible, setBusyDialogVisible] = useState(false);
-  const { isTracking, isPaused } = useLiveActivityContext();
+  const { isTracking, isPaused } = useLiveActivityStatus();
 
   const navigateToAuth = useCallback(
     () => navigation.navigate('Auth', { screen: 'Login' }),
