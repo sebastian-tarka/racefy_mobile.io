@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from 'react-i18next';

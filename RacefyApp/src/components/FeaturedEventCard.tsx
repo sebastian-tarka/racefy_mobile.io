@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Badge } from './Badge';

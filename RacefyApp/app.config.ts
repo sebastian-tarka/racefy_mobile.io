@@ -7,6 +7,11 @@ import { version as appVersion } from './package.json';
 // `staging` is a separate app (com.racefy.app.staging, app.dev.racefy.io) so both
 // can be installed side by side. Set in eas.json per profile.
 const IS_STAGING = process.env.APP_VARIANT === 'staging';
+
+// EAS sets EAS_BUILD_PROFILE. Release builds ship only real-device ABIs; local builds and the
+// dev client keep x86/x86_64 so they still run on emulators.
+const IS_EAS_RELEASE_BUILD =
+  !!process.env.EAS_BUILD_PROFILE && process.env.EAS_BUILD_PROFILE !== 'development';
 const VARIANT = IS_STAGING
   ? {
       name: 'Racefy Beta',
@@ -174,6 +179,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     './plugins/withLargeHeap',
+    './plugins/withGradleHeap',
     'expo-sqlite',
     // Delivers activities saved offline while the app is closed (services/finishSyncBackgroundTask).
     // iOS: adds the `processing` background mode + BGTaskSchedulerPermittedIdentifiers.
@@ -183,6 +189,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         android: {
           minSdkVersion: 26,
+          // R8: strips unused Java/Kotlin code and obfuscates; library consumer rules
+          // (Mapbox, RevenueCat, Reanimated, Expo modules…) keep what they reflect on.
+          enableMinifyInReleaseBuilds: true,
+          // Drops resources nothing references (only possible together with R8).
+          enableShrinkResourcesInReleaseBuilds: true,
+          // Classes found only by name at runtime, which R8 cannot see being used:
+          // - RNHeadlessAppLoader: expo-modules-core picks it by Class.forName() from a
+          //   manifest meta-data value; without it background tasks (location, background
+          //   sync) cannot start JS while the app is closed. Its consumer rules keep only
+          //   the @DoNotStrip constructor, not the class — found by a smoke test on an
+          //   emulator (ClassNotFoundException in logcat).
+          extraProguardRules: [
+            '-keep class expo.modules.adapters.react.apploader.RNHeadlessAppLoader { *; }',
+          ].join('\n'),
+          // x86/x86_64 exist only for emulators; in an APK they almost double the native libs.
+          ...(IS_EAS_RELEASE_BUILD && { buildArchs: ['armeabi-v7a', 'arm64-v8a'] }),
         },
         ios: {
           // GoogleSignIn 9.2+ -> AppCheckCore 11.3 pulls in Swift deps that don't define

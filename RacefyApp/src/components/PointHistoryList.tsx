@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { PointTransaction, PointTransactionType } from '../types/api';

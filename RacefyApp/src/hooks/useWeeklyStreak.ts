@@ -1,4 +1,7 @@
-import { startOfWeek, addDays, isSameDay, parseISO } from 'date-fns';
+import { startOfWeek } from 'date-fns/startOfWeek';
+import { addDays } from 'date-fns/addDays';
+import { isSameDay } from 'date-fns/isSameDay';
+import { parseISO } from 'date-fns/parseISO';
 import { api } from '../services/api';
 import { useFetch } from './useFetch';
 import type { Activity } from '../types/api';

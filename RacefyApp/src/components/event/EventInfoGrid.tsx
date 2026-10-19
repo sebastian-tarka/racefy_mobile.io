@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { InteractionButton } from './InteractionButton';
