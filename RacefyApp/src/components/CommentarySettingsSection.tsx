@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
-import { Modal, Platform, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTheme } from '../hooks';
 import { Card } from './Card';
+import { DatePickerSheet } from './DatePickerSheet';
 import { Input } from './Input';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { CommentaryLanguage, CommentaryStyle } from '../types/api';
@@ -197,23 +197,15 @@ export function CommentarySettingsSection({
     return `${hours}:${minutes}`;
   };
 
-  // Handle time picker change
-  const handleTimePickerChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    // On Android, close picker after selection
-    if (Platform.OS === 'android') {
-      setActiveTimePicker(null);
-      if (event.type === 'set' && selectedDate && activeTimePicker) {
-        const timeString = formatTimeToString(selectedDate);
-        updateTimeWindow(activeTimePicker.windowIndex, activeTimePicker.field, timeString);
-      }
-      return;
+  const confirmTime = (date: Date) => {
+    if (activeTimePicker) {
+      updateTimeWindow(
+        activeTimePicker.windowIndex,
+        activeTimePicker.field,
+        formatTimeToString(date),
+      );
     }
-
-    // On iOS, update value continuously as user scrolls (modal has Done button to close)
-    if (selectedDate && activeTimePicker) {
-      const timeString = formatTimeToString(selectedDate);
-      updateTimeWindow(activeTimePicker.windowIndex, activeTimePicker.field, timeString);
-    }
+    setActiveTimePicker(null);
   };
 
   // Open time picker for a specific window and field
@@ -608,73 +600,19 @@ export function CommentarySettingsSection({
                       </Text>
                     </TouchableOpacity>
 
-                    {/* Time Picker Modal */}
-                    {activeTimePicker && Platform.OS === 'android' && (
-                      <DateTimePicker
-                        value={getTimePickerValue()}
-                        mode="time"
-                        is24Hour={true}
-                        display="default"
-                        onChange={handleTimePickerChange}
-                      />
-                    )}
-                    {activeTimePicker && Platform.OS === 'ios' && (
-                      <Modal
-                        transparent
-                        animationType="slide"
-                        visible={true}
-                        onRequestClose={() => setActiveTimePicker(null)}
-                      >
-                        <View style={styles.timePickerModalOverlay}>
-                          <View
-                            style={[
-                              styles.timePickerModalContent,
-                              { backgroundColor: colors.cardBackground },
-                            ]}
-                          >
-                            <View
-                              style={[
-                                styles.timePickerModalHeader,
-                                { borderBottomColor: colors.border },
-                              ]}
-                            >
-                              <TouchableOpacity onPress={() => setActiveTimePicker(null)}>
-                                <Text
-                                  style={[
-                                    styles.timePickerModalCancel,
-                                    { color: colors.textSecondary },
-                                  ]}
-                                >
-                                  {t('common.cancel', 'Cancel')}
-                                </Text>
-                              </TouchableOpacity>
-                              <Text
-                                style={[styles.timePickerModalTitle, { color: colors.textPrimary }]}
-                              >
-                                {activeTimePicker.field === 'start'
-                                  ? t('commentary.timeWindowStart', 'Start')
-                                  : t('commentary.timeWindowEnd', 'End')}
-                              </Text>
-                              <TouchableOpacity onPress={() => setActiveTimePicker(null)}>
-                                <Text
-                                  style={[styles.timePickerModalDone, { color: colors.primary }]}
-                                >
-                                  {t('common.done', 'Done')}
-                                </Text>
-                              </TouchableOpacity>
-                            </View>
-                            <DateTimePicker
-                              value={getTimePickerValue()}
-                              mode="time"
-                              is24Hour={true}
-                              display="spinner"
-                              onChange={handleTimePickerChange}
-                              style={styles.iosTimePicker}
-                            />
-                          </View>
-                        </View>
-                      </Modal>
-                    )}
+                    {/* Time picker: confirmed with Done on iOS, the dialog's OK on Android. */}
+                    <DatePickerSheet
+                      visible={activeTimePicker != null}
+                      mode="time"
+                      value={getTimePickerValue()}
+                      title={
+                        activeTimePicker?.field === 'end'
+                          ? t('commentary.timeWindowEnd', 'End')
+                          : t('commentary.timeWindowStart', 'Start')
+                      }
+                      onConfirm={confirmTime}
+                      onCancel={() => setActiveTimePicker(null)}
+                    />
                   </View>
 
                   {/* Divider */}
@@ -958,38 +896,5 @@ const styles = StyleSheet.create({
   dayChipText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
-  },
-  // iOS Time Picker Modal styles
-  timePickerModalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  timePickerModalContent: {
-    borderTopLeftRadius: borderRadius.lg,
-    borderTopRightRadius: borderRadius.lg,
-    paddingBottom: spacing.xl,
-  },
-  timePickerModalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  timePickerModalTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  timePickerModalCancel: {
-    fontSize: fontSize.md,
-  },
-  timePickerModalDone: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  iosTimePicker: {
-    height: 200,
   },
 });

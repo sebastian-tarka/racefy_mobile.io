@@ -17,9 +17,12 @@ import { spacing, fontSize, borderRadius } from '../theme';
 interface DatePickerSheetProps {
   visible: boolean;
   value: Date;
-  mode?: 'date' | 'time';
+  /** 'datetime' is one spinner on iOS and a date dialog followed by a time dialog on Android. */
+  mode?: 'date' | 'time' | 'datetime';
   minimumDate?: Date;
   maximumDate?: Date;
+  /** Shown between Cancel and Done on iOS (Android dialogs have no title). */
+  title?: string;
   /** Called once with the final choice — on Android when the dialog is set, on iOS on "Done". */
   onConfirm: (date: Date) => void;
   onCancel: () => void;
@@ -39,6 +42,7 @@ export function DatePickerSheet({
   mode = 'date',
   minimumDate,
   maximumDate,
+  title,
   onConfirm,
   onCancel,
 }: DatePickerSheetProps) {
@@ -46,26 +50,54 @@ export function DatePickerSheet({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState(value);
+  // Android 'datetime': which of the two dialogs is showing.
+  const [androidStep, setAndroidStep] = useState<'date' | 'time'>('date');
+  // The Android dialog reads its value once, on mount — so it mounts only after the
+  // draft has been re-seeded for this opening, never with the previous one.
+  const [seeded, setSeeded] = useState(false);
 
   // Re-seed the draft every time the sheet opens.
   useEffect(() => {
-    if (visible) setDraft(value);
+    if (visible) {
+      setDraft(value);
+      setAndroidStep('date');
+    }
+    setSeeded(visible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   if (Platform.OS !== 'ios') {
-    if (!visible) return null;
+    if (!visible || !seeded) return null;
+    const step = mode === 'datetime' ? androidStep : mode;
     return (
       <DateTimePicker
-        value={value}
-        mode={mode}
+        key={step}
+        value={draft}
+        mode={step}
         display="default"
         is24Hour
-        minimumDate={minimumDate}
-        maximumDate={maximumDate}
+        minimumDate={step === 'date' ? minimumDate : undefined}
+        maximumDate={step === 'date' ? maximumDate : undefined}
         onChange={(event: DateTimePickerEvent, selected?: Date) => {
-          if (event.type === 'set' && selected) onConfirm(selected);
-          else onCancel();
+          if (event.type !== 'set' || !selected) {
+            onCancel();
+            return;
+          }
+          if (mode === 'datetime' && step === 'date') {
+            // Keep the time of day, take the picked day; then ask for the time.
+            const next = new Date(draft);
+            next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+            setDraft(next);
+            setAndroidStep('time');
+            return;
+          }
+          if (mode === 'datetime') {
+            const next = new Date(draft);
+            next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
+            onConfirm(next);
+            return;
+          }
+          onConfirm(selected);
         }}
       />
     );
@@ -91,6 +123,11 @@ export function DatePickerSheet({
                     {t('common.cancel')}
                   </Text>
                 </TouchableOpacity>
+                {title ? (
+                  <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {title}
+                  </Text>
+                ) : null}
                 <TouchableOpacity onPress={() => onConfirm(draft)} hitSlop={8}>
                   <Text style={[styles.action, styles.done, { color: colors.primary }]}>
                     {t('common.done')}
@@ -139,5 +176,12 @@ const styles = StyleSheet.create({
   },
   done: {
     fontWeight: '600',
+  },
+  title: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    marginHorizontal: spacing.md,
   },
 });

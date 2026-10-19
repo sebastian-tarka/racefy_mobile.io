@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   DeviceEventEmitter,
-  Platform,
   ScrollView,
   Switch,
   Text,
@@ -12,13 +11,13 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns/format';
 import {
   Button,
   Card,
   CommentarySettingsSection,
+  DatePickerSheet,
   DifficultySelector,
   ImagePickerButton,
   Input,
@@ -79,10 +78,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   const [errors, setErrors] = useState<Record<string, string | string[]>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
-  const [showDatePicker, setShowDatePicker] = useState<{
-    field: DatePickerField;
-    mode: 'date' | 'time';
-  } | null>(null);
+  const [datePickerField, setDatePickerField] = useState<DatePickerField | null>(null);
   const [eventStatus, setEventStatus] = useState<string | null>(null);
   const [hasAiFeatures, setHasAiFeatures] = useState(false);
 
@@ -636,51 +632,7 @@ export function EventFormScreen({ navigation, route }: Props) {
     }
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(null);
-    }
-
-    if (event.type === 'set' && selectedDate && showDatePicker) {
-      const { field, mode } = showDatePicker;
-
-      if (mode === 'date') {
-        // For date mode, preserve time and update date
-        const currentDate = formData[field] || new Date();
-        const newDate = new Date(currentDate);
-        newDate.setFullYear(selectedDate.getFullYear());
-        newDate.setMonth(selectedDate.getMonth());
-        newDate.setDate(selectedDate.getDate());
-        updateField(field, newDate);
-
-        // On Android, show time picker after date is selected
-        if (Platform.OS === 'android') {
-          setTimeout(() => {
-            setShowDatePicker({ field, mode: 'time' });
-          }, 100);
-        }
-      } else {
-        // For time mode, preserve date and update time
-        const currentDate = formData[field] || new Date();
-        const newDate = new Date(currentDate);
-        newDate.setHours(selectedDate.getHours());
-        newDate.setMinutes(selectedDate.getMinutes());
-        updateField(field, newDate);
-      }
-    }
-
-    if (Platform.OS === 'ios' && event.type === 'dismissed') {
-      setShowDatePicker(null);
-    }
-  };
-
-  const openDatePicker = (field: DatePickerField) => {
-    // Initialize the field with current date if null
-    if (formData[field] === null) {
-      updateField(field, new Date());
-    }
-    setShowDatePicker({ field, mode: 'date' });
-  };
+  const openDatePicker = (field: DatePickerField) => setDatePickerField(field);
 
   const formatDateTime = (date: Date | null): string => {
     if (!date) return t('eventForm.selectDate');
@@ -1481,16 +1433,18 @@ export function EventFormScreen({ navigation, route }: Props) {
           />
         </View>
 
-        {/* Date Picker Modal */}
-        {showDatePicker && (
-          <DateTimePicker
-            value={formData[showDatePicker.field] || new Date()}
-            mode={Platform.OS === 'ios' ? 'datetime' : showDatePicker.mode}
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            minimumDate={new Date()}
-          />
-        )}
+        {/* Date + time: one spinner on iOS, date then time dialogs on Android. */}
+        <DatePickerSheet
+          visible={datePickerField != null}
+          mode="datetime"
+          value={(datePickerField && formData[datePickerField]) || new Date()}
+          minimumDate={new Date()}
+          onConfirm={(date) => {
+            if (datePickerField) updateField(datePickerField, date);
+            setDatePickerField(null);
+          }}
+          onCancel={() => setDatePickerField(null)}
+        />
       </KeyboardAvoidingView>
     </ScreenContainer>
   );

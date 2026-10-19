@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
 import { useTrainingReminders } from '../../hooks/useTrainingReminders';
 import { triggerHaptic } from '../../hooks/useHaptics';
 import { emitRefresh } from '../../services/refreshEvents';
-import { ScreenHeader, ScreenContainer, Loading } from '../../components';
+import { DatePickerSheet, ScreenHeader, ScreenContainer, Loading } from '../../components';
 import { DayPicker } from '../../components/settings/DayPicker';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -61,15 +52,11 @@ export function TrainingRemindersScreen({ navigation }: Props) {
   const timeDate = new Date();
   timeDate.setHours(hours, minutes, 0, 0);
 
-  const handleTimeChange = (_event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowTimePicker(false);
-    }
-    if (selectedDate) {
-      const h = selectedDate.getHours().toString().padStart(2, '0');
-      const m = selectedDate.getMinutes().toString().padStart(2, '0');
-      setTime(`${h}:${m}`);
-    }
+  const handleTimeConfirm = (selectedDate: Date) => {
+    const h = selectedDate.getHours().toString().padStart(2, '0');
+    const m = selectedDate.getMinutes().toString().padStart(2, '0');
+    setTime(`${h}:${m}`);
+    setShowTimePicker(false);
   };
 
   return (
@@ -141,23 +128,13 @@ export function TrainingRemindersScreen({ navigation }: Props) {
             <Ionicons name="time-outline" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
 
-          {showTimePicker && (
-            <DateTimePicker
-              value={timeDate}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleTimeChange}
-            />
-          )}
-          {Platform.OS === 'ios' && showTimePicker && (
-            <TouchableOpacity
-              style={[styles.doneButton, { backgroundColor: colors.primary }]}
-              onPress={() => setShowTimePicker(false)}
-            >
-              <Text style={styles.doneButtonText}>{t('common.done')}</Text>
-            </TouchableOpacity>
-          )}
+          <DatePickerSheet
+            visible={showTimePicker}
+            mode="time"
+            value={timeDate}
+            onConfirm={handleTimeConfirm}
+            onCancel={() => setShowTimePicker(false)}
+          />
         </View>
 
         {/* Push Notifications Toggle */}
@@ -250,17 +227,6 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: fontSize.xl,
-    fontWeight: fontWeight.semibold,
-  },
-  doneButton: {
-    marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  doneButtonText: {
-    color: '#ffffff',
-    fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
   },
   infoText: {
