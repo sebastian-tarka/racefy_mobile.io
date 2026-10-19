@@ -24,6 +24,29 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### Audyt, etap 5: listy, sieć, dane, start, i18n (zmergowane 2026-10-19, `audyt-etap5`, tag `pre-audyt-etap5` = main sprzed merge)
+
+- Jedna paleta sportów (design v2): karty aktywności na Home w tych samych kolorach co profil i filtry.
+- Feed: `FeedCard` faktycznie memoizowany (stabilne akcje); wiersze wracające w widok nie znikają na 0,6 s.
+- Polling tylko na pierwszym planie (`useForegroundInterval`): liczniki nieprzeczytanych, konfiguracja Home,
+  transmisje live, czat, tabela wyników eventu. Skrzynka kibiców w trakcie nagrywania bez zmian.
+- `usePaginatedFetch`: zmiana filtra / odświeżenie w trakcie ładowania nie gubi się i nie miesza wyników
+  (historia punktów, biblioteka tras, wyszukiwanie drużyn).
+- Logger zapisuje logi także przy ciągłym logowaniu (wcześniej debounce nigdy nie dochodził do zapisu).
+- 12 kart list na `expo-image` (cache na dysku). Splash znika, gdy auth gotowy (min 1,1 s, max 1,7 s).
+- ~25 tekstów wpisanych na sztywno przetłumaczonych (wykresy, karta aktywności, udostępnianie, ekran błędu).
+Smoke test na emulatorze: start, landing, logowanie — bez crasha i błędów JS (bez logowania).
+
+Do sprawdzenia na telefonie:
+- [ ] Home: kolory kart aktywności (rower bursztynowy, siłownia czerwona…) zgodne z profilem
+- [ ] Feed: przewijanie w dół i z powrotem — karty nie migają, lajk/komentarz/udostępnij/menu działają
+- [ ] Historia punktów: szybkie przełączanie chipów — lista zgodna z wybranym filtrem
+- [ ] Biblioteka tras: przełączanie Moje/Popularne/W pobliżu; drużyny: wyszukiwanie przy pisaniu
+- [ ] Po powrocie z tła (np. po treningu): licznik powiadomień i wiadomości od razu aktualny
+- [ ] Zdjęcia w kartach (okładki eventów, mapy tras, odznaki, avatary w sekcjach Home) ładują się
+- [ ] Język polski / hiszpański: wykresy na ekranie aktywności, karta aktywności, alerty udostępniania
+- [ ] Zimny start: splash krótszy przy zalogowanym użytkowniku, bez mignięcia ekranu logowania
+
 ### Audyt, etap 4: wspólne komponenty (zmergowane 2026-10-19, `audyt-etap4`, tag `pre-audyt-etap4` = main sprzed merge)
 
 - `DatePickerSheet` z trybem `datetime` (iOS: spinner w arkuszu z Anuluj/Gotowe; Android: dialog
@@ -1115,6 +1138,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-10-19 | `audyt-etap5` | Paleta sportów v2, memo feedu, polling tylko na pierwszym planie, 2 wyścigi w `usePaginatedFetch` (+trasy, drużyny), logger, `expo-image` w kartach, splash wg gotowości, i18n ~25 tekstów |
 | 2026-10-19 | `audyt-etap4` | Wspólne komponenty: `DatePickerSheet` datetime (+3 migracje, 2 błędy iOS), `SheetModal` (7 arkuszy), `ErrorState`, `FilterChip`, `pickImages()`, mapy kolorów, formatery; tempo widza live w jednostkach |
 | 2026-10-19 | `audyt-etap3` | Wydajność nagrywania: status context (koniec re-renderu tab bara/Home co sekundę), timery, stabilna pozycja GPS + memo mapy, trasa w dwóch źródłach, wyścigi watchera GPS i syncu w tle, `RecordingToast`, `describeSaveOutcome` |
 | 2026-10-19 | `audyt-etap2` | Rozmiar: filmy 25 → 4,5 MB, `date-fns` −1 MB JS, R8 + shrinkResources + ABI (APK 228 → 109 MB), heap Gradle 4 GB, keep `RNHeadlessAppLoader` |
