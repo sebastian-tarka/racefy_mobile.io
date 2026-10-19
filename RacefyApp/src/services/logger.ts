@@ -22,6 +22,7 @@ import {
 } from '../config/logger.config';
 
 // Storage key for logs
+const SAVE_INTERVAL_MS = 2000;
 const LOGS_STORAGE_KEY = '@racefy_debug_logs';
 const SESSION_ID_KEY = '@racefy_session_id';
 
@@ -295,22 +296,23 @@ class Logger {
       this.logs = this.logs.slice(-this.config.maxEntries);
     }
 
-    // Debounced save to storage
+    // Throttled save to storage
     if (this.config.persist) {
-      this.debouncedSave();
+      this.scheduleSave();
     }
   }
 
   /**
-   * Debounced save to prevent too many writes
+   * Save at most once per SAVE_INTERVAL_MS, and always within it. A debounce (reset on
+   * every log) never fired while something logged more often than its delay — e.g. GPS
+   * points during a recording — so the logs were never persisted and a crash lost them.
    */
-  private debouncedSave(): void {
-    if (this.saveTimeout) {
-      clearTimeout(this.saveTimeout);
-    }
+  private scheduleSave(): void {
+    if (this.saveTimeout) return;
     this.saveTimeout = setTimeout(() => {
+      this.saveTimeout = null;
       this.saveToStorage();
-    }, 1000);
+    }, SAVE_INTERVAL_MS);
   }
 
   /**
