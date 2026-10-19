@@ -3,7 +3,6 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Alert,
-  Animated,
   Platform,
   StyleSheet,
   Text,
@@ -79,6 +78,7 @@ import { routeKey } from '../../utils/routeKey';
 import { navBannerState } from '../../utils/navigationCues';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
+import { RecordingToast } from './recording/RecordingToast';
 import { FinishView } from './recording/FinishView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
 import { SportShortcutsModal } from './recording/SportShortcutsModal';
@@ -1463,157 +1463,82 @@ export function ActivityRecordingScreen() {
         </View>
       )}
 
-      {/* Audio coach toast */}
+      {/* Toasts */}
       {audioCoachToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: audioCoachToast.payload ? colors.primary : colors.cardBackground,
-              borderColor: audioCoachToast.payload ? colors.primary : colors.border,
-              opacity: audioCoachToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={audioCoachToast.payload ? 'musical-notes' : 'musical-notes-outline'}
-            size={20}
-            color={audioCoachToast.payload ? '#ffffff' : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.mapStyleToastText,
-              { color: audioCoachToast.payload ? '#ffffff' : colors.textPrimary },
-            ]}
-          >
-            {t(
-              audioCoachToast.payload
-                ? 'recording.audioCoachEnabled'
-                : 'recording.audioCoachDisabled',
-            )}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={audioCoachToast.opacity}
+          icon={audioCoachToast.payload ? 'musical-notes' : 'musical-notes-outline'}
+          text={t(
+            audioCoachToast.payload
+              ? 'recording.audioCoachEnabled'
+              : 'recording.audioCoachDisabled',
+          )}
+          iconColor={audioCoachToast.payload ? '#ffffff' : colors.textSecondary}
+          textColor={audioCoachToast.payload ? '#ffffff' : colors.textPrimary}
+          backgroundColor={audioCoachToast.payload ? colors.primary : colors.cardBackground}
+          borderColor={audioCoachToast.payload ? colors.primary : colors.border}
+        />
       )}
-
-      {/* Lock toast */}
       {lockToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: lockToast.payload ? '#1f2937' : colors.cardBackground,
-              borderColor: lockToast.payload ? '#374151' : colors.border,
-              opacity: lockToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={lockToast.payload ? 'lock-closed' : 'lock-open-outline'}
-            size={20}
-            color={lockToast.payload ? '#f9fafb' : colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.mapStyleToastText,
-              { color: lockToast.payload ? '#f9fafb' : colors.textPrimary },
-            ]}
-          >
-            {t(lockToast.payload ? 'recording.screenLocked' : 'recording.screenUnlocked')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={lockToast.opacity}
+          icon={lockToast.payload ? 'lock-closed' : 'lock-open-outline'}
+          text={t(lockToast.payload ? 'recording.screenLocked' : 'recording.screenUnlocked')}
+          iconColor={lockToast.payload ? '#f9fafb' : colors.textSecondary}
+          textColor={lockToast.payload ? '#f9fafb' : colors.textPrimary}
+          backgroundColor={lockToast.payload ? '#1f2937' : colors.cardBackground}
+          borderColor={lockToast.payload ? '#374151' : colors.border}
+        />
       )}
-
-      {/* Map style toast notification */}
       {showStyleToast && viewMode === 'map' && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.border,
-              opacity: styleToastOpacity,
-            },
-          ]}
-        >
-          <Ionicons
-            name={
-              mapStyle === 'satellite' ? 'globe' : mapStyle === 'streets' ? 'car' : 'trail-sign'
-            }
-            size={20}
-            color={colors.primary}
-          />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {mapStyle === 'satellite'
+        <RecordingToast
+          opacity={styleToastOpacity}
+          icon={mapStyle === 'satellite' ? 'globe' : mapStyle === 'streets' ? 'car' : 'trail-sign'}
+          text={
+            mapStyle === 'satellite'
               ? t('recording.mapStyleSatellite')
               : mapStyle === 'streets'
                 ? t('recording.mapStyleStreets')
-                : t('recording.mapStyleOutdoors')}
-          </Text>
-        </Animated.View>
+                : t('recording.mapStyleOutdoors')
+          }
+          iconColor={colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.border}
+        />
       )}
-
-      {/* Goal toast */}
       {offlineToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.info,
-              opacity: offlineToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons name="cloud-offline-outline" size={20} color={colors.info} />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {t('recording.offlineStartToast')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={offlineToast.opacity}
+          icon="cloud-offline-outline"
+          text={t('recording.offlineStartToast')}
+          iconColor={colors.info}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.info}
+        />
       )}
-
       {eventToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: eventToast.payload ? colors.event : colors.primary,
-              opacity: eventToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={eventToast.payload ? 'lock-closed' : 'lock-open'}
-            size={20}
-            color={eventToast.payload ? colors.event : colors.primary}
-          />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {t(eventToast.payload ? 'eventPin.pinnedToast' : 'eventPin.unpinned')}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={eventToast.opacity}
+          icon={eventToast.payload ? 'lock-closed' : 'lock-open'}
+          text={t(eventToast.payload ? 'eventPin.pinnedToast' : 'eventPin.unpinned')}
+          iconColor={eventToast.payload ? colors.event : colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={eventToast.payload ? colors.event : colors.primary}
+        />
       )}
-
       {workoutToast.visible && (
-        <Animated.View
-          style={[
-            styles.mapStyleToast,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.primary,
-              opacity: workoutToast.opacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons name="flag" size={20} color={colors.primary} />
-          <Text style={[styles.mapStyleToastText, { color: colors.textPrimary }]}>
-            {workoutToast.payload}
-          </Text>
-        </Animated.View>
+        <RecordingToast
+          opacity={workoutToast.opacity}
+          icon="flag"
+          text={workoutToast.payload ?? ''}
+          iconColor={colors.primary}
+          textColor={colors.textPrimary}
+          backgroundColor={colors.cardBackground}
+          borderColor={colors.primary}
+        />
       )}
 
       <WorkoutConfigModal
@@ -1862,28 +1787,6 @@ const styles = StyleSheet.create({
   },
 
   // Map style toast notification
-  mapStyleToast: {
-    position: 'absolute',
-    top: 100,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.full,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 2000,
-  },
-  mapStyleToastText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
 
   // ─────────────────────────────────────────────────────────────────────────
   // Map Top Overlay (idle + map mode)
