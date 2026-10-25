@@ -29,6 +29,7 @@ import {
   weekdayLong,
 } from '../../utils/workoutPlanFormat';
 import { GhostButton } from './components/GhostButton';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutDetail'>;
 
@@ -57,8 +58,8 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
       await action();
       emitRefresh('workouts');
       if (toast) Alert.alert('', toast);
-    } catch (error: any) {
-      Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
   };
 

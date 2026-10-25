@@ -9,6 +9,7 @@ import type {
   BrandAssetVariant,
   BrandAssetsResponse,
 } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 // Cache for brand assets to avoid refetching
 let cachedAssets: BrandAssetsResponse | null = null;
@@ -46,9 +47,9 @@ export function useBrandAssets(): UseBrandAssetsResult {
       cachedAssets = response;
       cacheTimestamp = Date.now();
       setAssets(response);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('api', 'Failed to fetch brand assets', { error: err });
-      setError(err.message || 'Failed to load brand assets');
+      setError(getErrorMessage(err) || 'Failed to load brand assets');
     } finally {
       setIsLoading(false);
     }

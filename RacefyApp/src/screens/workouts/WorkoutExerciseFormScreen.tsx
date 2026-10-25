@@ -27,6 +27,7 @@ import type {
   WorkoutTargetType,
 } from '../../types/workouts';
 import { ExercisePickerModal } from './components/ExercisePickerModal';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutExerciseForm'>;
 
@@ -167,9 +168,9 @@ export function WorkoutExerciseFormScreen({ navigation, route }: Props) {
       }
       emitRefresh('workouts');
       navigation.goBack();
-    } catch (error: any) {
-      if (error.status === 422) setErrors(error.errors || {});
-      else Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      if (isApiError(error) && error.status === 422) setErrors(error.errors || {});
+      else Alert.alert('', getErrorMessage(error) || t('common.error'));
     } finally {
       setSubmitting(false);
     }

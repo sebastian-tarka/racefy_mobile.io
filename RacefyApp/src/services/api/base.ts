@@ -3,6 +3,7 @@ import { getCurrentLanguage } from '../../i18n';
 import { logger } from '../logger';
 import { secureStorage } from '../secureStorage';
 import type * as Types from '../../types/api';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 /**
  * Append Xdebug trigger to URL when debugging is enabled
@@ -263,13 +264,13 @@ export class ApiBase {
       }
 
       return { status: response.status, data: data as T | null };
-    } catch (error: any) {
+    } catch (error) {
       const duration = Date.now() - startTime;
-      if (shouldLog && !error.status) {
+      if (shouldLog && !getErrorStatus(error)) {
         // Network error (not API error which has .status)
         logger.error('api', `${method} ${endpoint} network error`, {
           duration,
-          error: error.message || error.toString(),
+          error: getErrorMessage(error) || String(error),
           url: this.buildUrl(endpoint),
         });
       }

@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { LiveBroadcast, LiveBroadcastListParams } from '../types/api';
 import { useForegroundInterval } from './useForegroundInterval';
+import { getErrorMessage } from '../utils/errors';
 
 interface Options extends LiveBroadcastListParams {
   /** Set false to skip fetching entirely (e.g. logged out). */
@@ -56,8 +57,8 @@ export function useLiveBroadcasts({
         setBroadcasts(response.data ?? []);
         setTotal(response.meta?.total ?? response.data?.length ?? 0);
         setError(null);
-      } catch (err: any) {
-        logger.warn('live', 'Failed to load live broadcasts', { error: err?.message });
+      } catch (err) {
+        logger.warn('live', 'Failed to load live broadcasts', { error: getErrorMessage(err) });
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
         setIsLoading(false);

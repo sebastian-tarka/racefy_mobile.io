@@ -25,6 +25,7 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Exercise, MuscleGroup } from '../../types/workouts';
 import { MUSCLE_GROUPS } from '../../types/workouts';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ExerciseLibrary'>;
 type Scope = 'all' | 'mine' | 'global';
@@ -58,8 +59,8 @@ export function ExerciseLibraryScreen({ navigation }: Props) {
         setItems((prev) => (append ? [...prev, ...res.data] : res.data));
         setPage(nextPage);
         setLastPage(res.meta?.last_page ?? 1);
-      } catch (error: any) {
-        logger.error('api', 'Failed to load exercises', { error: error.message });
+      } catch (error) {
+        logger.error('api', 'Failed to load exercises', { error: getErrorMessage(error) });
       } finally {
         setLoading(false);
       }
@@ -90,13 +91,16 @@ export function ExerciseLibraryScreen({ navigation }: Props) {
             await api.deleteExercise(exercise.id);
             emitRefresh('workouts');
             Alert.alert('', t('strengthPlans.toast.exerciseDeleted'));
-          } catch (error: any) {
-            if (error.status === 409) {
+          } catch (error) {
+            if (isApiError(error) && error.status === 409) {
               const count =
-                error.usage_count ?? error.data?.usage_count ?? exercise.usage_count ?? 0;
+                (error.usage_count as number | undefined) ??
+                (error.data as { usage_count?: number } | undefined)?.usage_count ??
+                exercise.usage_count ??
+                0;
               Alert.alert('', t('strengthPlans.errors.inUse', { count }));
             } else {
-              Alert.alert('', error.message || t('common.error'));
+              Alert.alert('', getErrorMessage(error) || t('common.error'));
             }
           }
         },

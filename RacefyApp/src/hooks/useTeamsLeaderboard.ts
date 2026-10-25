@@ -7,6 +7,7 @@ import type {
   LeaderboardSortBy,
   StatsPeriod,
 } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseTeamsLeaderboardResult {
   entries: TeamLeaderboardEntry[];
@@ -50,9 +51,9 @@ export function useTeamsLeaderboard(
         }
         setTotal(data.total);
         setOffset(currentOffset + data.data.length);
-      } catch (err: any) {
+      } catch (err) {
         logger.error('general', 'Failed to fetch teams leaderboard', { error: err });
-        setError(err.message || 'Failed to load leaderboard');
+        setError(getErrorMessage(err) || 'Failed to load leaderboard');
       } finally {
         setIsLoading(false);
       }

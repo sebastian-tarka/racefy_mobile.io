@@ -29,6 +29,7 @@ import {
   FEEDBACK_STATUS_COLORS,
   FEEDBACK_UNKNOWN_COLOR,
 } from './feedbackColors';
+import { getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackDetail'>;
 
@@ -82,9 +83,9 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
       });
       setReplyText('');
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 200);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('api', 'Failed to send reply', { feedbackId, error: err });
-      if (err?.status === 403) {
+      if (getErrorStatus(err) === 403) {
         Alert.alert(t('feedback.detail.closedNotice'));
       } else {
         Alert.alert(t('feedback.messages.replyFailed'));

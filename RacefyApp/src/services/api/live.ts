@@ -62,7 +62,7 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         return await this.request<Types.LiveBroadcastDetailResponse>(
           `/live/${activityId}${suffix}`,
         );
-      } catch (error: any) {
+      } catch (error) {
         if (isNotFound(error)) return null;
         throw error;
       }

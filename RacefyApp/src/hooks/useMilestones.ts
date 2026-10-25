@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { MilestonesData } from '../types/api';
+import { getErrorMessage, getErrorStatus, isApiError } from '../utils/errors';
 
 interface UseMilestonesResult {
   milestones: MilestonesData | null;
@@ -30,14 +31,14 @@ export function useMilestones(sportTypeId?: number): UseMilestonesResult {
     try {
       const data = await api.getMilestones(sportTypeId);
       setMilestones(data);
-    } catch (err: any) {
+    } catch (err) {
       // 403 = premium feature not available for current plan — silently return empty
-      if (err?.upgrade_required || err?.status === 403) {
+      if ((isApiError(err) && err.upgrade_required) || getErrorStatus(err) === 403) {
         logger.debug('activity', 'Milestones not available for current plan');
         setMilestones(null);
       } else {
         logger.error('activity', 'Failed to fetch milestones', { error: err });
-        setError(err.message || 'Failed to load milestones');
+        setError(getErrorMessage(err) || 'Failed to load milestones');
         setMilestones(null);
       }
     } finally {

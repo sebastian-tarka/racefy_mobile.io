@@ -13,6 +13,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { pushNotificationService } from '../services/pushNotifications';
 import type { AppConfigQuery, AppConfigResponse } from '../types/api';
+import { getErrorMessage, isApiError } from '../utils/errors';
 
 /**
  * Native binary version (NOT the JS bundle / OTA version).
@@ -87,13 +88,13 @@ export function AppConfigProvider({ children }: { children: React.ReactNode }) {
       // Inject push config into the push service so it doesn't need to
       // fetch /config/app on its own.
       pushNotificationService.setPushConfig(fresh.push);
-    } catch (err: any) {
+    } catch (err) {
       // 503 with maintenance flag — flip into maintenance mode without
       // treating it as a hard error.
-      if (err?.status === 503 && err?.maintenance) {
+      if (isApiError(err) && err.status === 503 && err.maintenance) {
         setIsMaintenanceMode(true);
-        setMaintenanceMessage(err.message ?? null);
-        setMaintenanceEstimatedEnd(err.estimated_end ?? null);
+        setMaintenanceMessage(getErrorMessage(err) || null);
+        setMaintenanceEstimatedEnd((err.estimated_end as string | null | undefined) ?? null);
         setError(null);
       } else {
         logger.error('api', 'Failed to fetch app config', { error: err });

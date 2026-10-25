@@ -33,6 +33,7 @@ import { emitRefresh } from '../../services/refreshEvents';
 import { CompleteSessionSheet } from './components/CompleteSessionSheet';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
 
@@ -93,8 +94,8 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
       setResumeOpen(false);
       setResult(null);
       await s.reload();
-    } catch (error: any) {
-      Alert.alert('', error?.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     } finally {
       setIsResuming(false);
     }
@@ -174,8 +175,8 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
       const res = await s.complete({ ...input, duration_seconds: s.elapsedSeconds });
       setCompleteOpen(false);
       setResult({ activityId: res.activity_id ?? res.data.activity_id ?? null });
-    } catch (error: any) {
-      Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
   };
 
@@ -189,8 +190,8 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
           try {
             await s.skip();
             setResult({ activityId: null });
-          } catch (error: any) {
-            Alert.alert('', error.message || t('common.error'));
+          } catch (error) {
+            Alert.alert('', getErrorMessage(error) || t('common.error'));
           }
         },
       },

@@ -19,6 +19,7 @@ import {
   syncPendingFinishes,
   type FinishOutcome,
 } from '../services/finishSync';
+import { getErrorMessage, getErrorStatus } from '../utils/errors';
 
 export type RetryOutcome = { ok: true } | { ok: false; error: string };
 
@@ -184,8 +185,8 @@ export function useUnsyncedActivities() {
               max_heart_rate: entry.maxHeartRate,
               client_distance: entry.distance,
             });
-          } catch (pointsErr: any) {
-            const msg = pointsErr?.message || 'Failed to upload points';
+          } catch (pointsErr) {
+            const msg = getErrorMessage(pointsErr) || 'Failed to upload points';
             await updateUnsyncedActivityMeta(activityId, {
               lastError: msg,
               lastRetryAt: new Date().toISOString(),
@@ -212,11 +213,11 @@ export function useUnsyncedActivities() {
             max_heart_rate: entry.maxHeartRate,
             calories: entry.calories,
           });
-        } catch (finishErr: any) {
+        } catch (finishErr) {
           // A 422 here usually means the FIRST finish did land and only its
           // response was lost. If the server says the activity is completed,
           // that is success, not an error to show the athlete forever.
-          if (finishErr?.status === 422) {
+          if (getErrorStatus(finishErr) === 422) {
             const landed = await api
               .getActivity(activityId)
               .then((a) => a.status === 'completed')
@@ -230,7 +231,7 @@ export function useUnsyncedActivities() {
               return { ok: true };
             }
           }
-          const msg = finishErr?.message || 'Failed to finish activity';
+          const msg = getErrorMessage(finishErr) || 'Failed to finish activity';
           await updateUnsyncedActivityMeta(activityId, {
             lastError: msg,
             lastRetryAt: new Date().toISOString(),

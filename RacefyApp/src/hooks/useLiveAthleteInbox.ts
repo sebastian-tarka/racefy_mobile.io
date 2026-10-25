@@ -5,6 +5,7 @@ import { logger } from '../services/logger';
 import { type LiveTtsFailure, playLiveMessageTts } from '../services/liveTts';
 import { useAppConfig } from '../contexts/AppConfigContext';
 import type { LiveMessage } from '../types/api';
+import { getErrorStatus } from '../utils/errors';
 
 interface Options {
   /** Only poll while actually broadcasting. */
@@ -96,10 +97,10 @@ export function useLiveAthleteInbox(
           if (cancelled) break;
           await speak(message);
         }
-      } catch (error: any) {
+      } catch (error) {
         logger.warn('live', 'Athlete inbox poll failed', {
           activityId,
-          status: error?.status,
+          status: getErrorStatus(error),
         });
       }
     };

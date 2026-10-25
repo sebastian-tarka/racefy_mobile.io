@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { LivePreferences } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 /**
  * Server defaults, used until the real preferences load and if the request
@@ -38,8 +39,8 @@ export function useLivePreferences(enabled = true): Result {
       const all = await api.getPreferences();
       setPreferences({ ...DEFAULTS, ...(all.live ?? {}) });
       setError(null);
-    } catch (err: any) {
-      logger.warn('live', 'Failed to load live preferences', { error: err?.message });
+    } catch (err) {
+      logger.warn('live', 'Failed to load live preferences', { error: getErrorMessage(err) });
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setIsLoading(false);
@@ -62,9 +63,9 @@ export function useLivePreferences(enabled = true): Result {
         const all = await api.updatePreferences({ live: { ...preferences, ...patch } });
         setPreferences({ ...DEFAULTS, ...(all.live ?? {}) });
         return true;
-      } catch (err: any) {
+      } catch (err) {
         setPreferences(previous); // roll back so the UI never lies
-        logger.warn('live', 'Failed to save live preferences', { error: err?.message });
+        logger.warn('live', 'Failed to save live preferences', { error: getErrorMessage(err) });
         setError(err instanceof Error ? err : new Error(String(err)));
         return false;
       } finally {

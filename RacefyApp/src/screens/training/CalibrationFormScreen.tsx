@@ -39,6 +39,7 @@ import type {
   RecoveryProfile,
   TrainingGoal,
 } from '../../types/api';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -110,9 +111,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
         const goals = await api.getTrainingGoals(sportTypeId);
         setTrainingGoals(goals);
         logger.info('training', 'Loaded training goals', { sportTypeId, count: goals.length });
-      } catch (error: any) {
+      } catch (error) {
         logger.error('training', 'Failed to load training goals', { error });
-        setErrors({ submit: error.message || t('training.errors.loadGoalsFailed') });
+        setErrors({ submit: getErrorMessage(error) || t('training.errors.loadGoalsFailed') });
       } finally {
         setLoadingGoals(false);
       }
@@ -214,7 +215,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
       logger.info('training', 'No existing program found, proceeding with creation');
       // No active program, proceed normally
       await createNewProgram();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('training', 'Failed to check existing program', { error });
       setErrors({ submit: t('training.errors.checkProgramFailed') });
       setLoading(false);
@@ -274,20 +275,20 @@ export function CalibrationFormScreen({ navigation }: Props) {
       // The plan is ready — go straight to it. A `scheduled` status is expected
       // for a deferred plan and is rendered by the weeks list, not an error.
       navigation.replace('TrainingWeeksList', warnings.length > 0 ? { warnings } : undefined);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('training', 'Failed to create calibration', { error });
       // Handle 403 feature-gating for active_training_programs limit
-      const msg = error.message?.toLowerCase() || '';
+      const msg = getErrorMessage(error).toLowerCase();
       if (
         msg.includes('active_training_programs') ||
         msg.includes('limit') ||
-        error.status === 403
+        getErrorStatus(error) === 403
       ) {
         upgradePromptEmitter.emit('show', {
           feature: 'active_training_programs',
         });
       } else {
-        setErrors({ submit: error.message || t('training.errors.creationFailed') });
+        setErrors({ submit: getErrorMessage(error) || t('training.errors.creationFailed') });
       }
     } finally {
       setLoading(false);

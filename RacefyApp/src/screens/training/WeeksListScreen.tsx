@@ -45,6 +45,7 @@ import type {
   TrainingProgram,
   TrainingWeek,
 } from '../../types/api';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeeksList'>;
@@ -227,9 +228,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
           selectedId: activeProgram?.id,
           totalWeeks: weeksData.length,
         });
-      } catch (err: any) {
+      } catch (err) {
         logger.error('training', 'Failed to load training weeks', { error: err });
-        setError(err.message || t('training.errors.loadingFailed'));
+        setError(getErrorMessage(err) || t('training.errors.loadingFailed'));
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -313,9 +314,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
               } else {
                 navigation.goBack();
               }
-            } catch (err: any) {
+            } catch (err) {
               logger.error('training', 'Failed to abandon program', { error: err });
-              Alert.alert(t('training.errors.title'), err.message);
+              Alert.alert(t('training.errors.title'), getErrorMessage(err));
             } finally {
               setActionLoading(false);
             }
@@ -340,9 +341,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
               await api.pauseProgram(program.id, reason);
               logger.info('training', 'Program paused', { programId: program.id, reason });
               loadData(true);
-            } catch (err: any) {
+            } catch (err) {
               logger.error('training', 'Failed to pause program', { error: err });
-              Alert.alert(t('training.errors.title'), err.message);
+              Alert.alert(t('training.errors.title'), getErrorMessage(err));
             } finally {
               setActionLoading(false);
             }
@@ -361,7 +362,7 @@ export function WeeksListScreen({ navigation, route }: Props) {
       setMentalBudget(budget);
       setAiMode(budget.ai_mode);
       logger.info('training', 'Mental budget loaded', { budget });
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to load mental budget', { error: err });
     } finally {
       setLoadingMentalBudget(false);
@@ -402,9 +403,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
       await loadData(true);
       setShowSettingsModal(false);
       Alert.alert(t('common.success'), t('training.weeksList.settingsUpdated'));
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to update settings', { error: err });
-      Alert.alert(t('common.error'), err.message);
+      Alert.alert(t('common.error'), getErrorMessage(err));
     } finally {
       setSavingSettings(false);
     }
@@ -436,9 +437,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
       }
 
       loadData(true);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to resume program', { error: err });
-      Alert.alert(t('training.errors.title'), err.message);
+      Alert.alert(t('training.errors.title'), getErrorMessage(err));
     } finally {
       setActionLoading(false);
     }
@@ -508,10 +509,14 @@ export function WeeksListScreen({ navigation, route }: Props) {
           logger.error('training', 'Polling hints progress failed', { error: pollErr });
         }
       }, 5000);
-    } catch (err: any) {
+    } catch (err) {
       setGeneratingHints(false);
       logger.error('training', 'Failed to generate coaching hints', { error: err });
-      if (err?.status === 403 && err?.data?.required_tier) {
+      if (
+        isApiError(err) &&
+        err.status === 403 &&
+        (err.data as { required_tier?: string } | undefined)?.required_tier
+      ) {
         upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier });
         return;
       }

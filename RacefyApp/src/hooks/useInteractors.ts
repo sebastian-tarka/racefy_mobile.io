@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { InteractionTargetType, InteractionVariant } from '../components/InteractionButton';
 import type { PaginatedResponse, UserInteractor } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseInteractorsParams {
   /** When false, the hook won't fetch (used to gate on modal visibility) */
@@ -76,15 +77,15 @@ export function useInteractors({
         setUsers((prev) => (pageToFetch === 1 ? res.data : [...prev, ...res.data]));
         setPage(res.meta.current_page);
         setHasMore(res.meta.current_page < res.meta.last_page);
-      } catch (err: any) {
+      } catch (err) {
         if (reqId !== requestIdRef.current) return;
         logger.error('api', 'Failed to fetch interactors', {
-          error: err?.message || err,
+          error: getErrorMessage(err) || err,
           variant,
           targetType,
           targetId,
         });
-        setError(err?.message || 'Failed to load');
+        setError(getErrorMessage(err) || 'Failed to load');
       } finally {
         if (reqId === requestIdRef.current) {
           setIsLoading(false);

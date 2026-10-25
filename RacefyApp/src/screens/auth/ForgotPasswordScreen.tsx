@@ -10,6 +10,7 @@ import { spacing, fontSize } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -41,9 +42,9 @@ export function ForgotPasswordScreen({ navigation }: Props) {
     try {
       await api.forgotPassword(email);
       setIsSent(true);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('auth', 'Forgot password error', { error: err });
-      const message = err?.message || t('auth.forgotPasswordFailed');
+      const message = getErrorMessage(err) || t('auth.forgotPasswordFailed');
       Alert.alert(t('common.error'), message);
     } finally {
       setIsLoading(false);

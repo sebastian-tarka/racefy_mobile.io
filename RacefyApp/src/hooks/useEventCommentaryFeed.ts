@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { getCurrentLanguage } from '../i18n';
 import type { EventCommentary, CommentaryListResponse, CommentaryLanguage } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseEventCommentaryFeedOptions {
   eventId: number;
@@ -122,9 +123,9 @@ export function useEventCommentaryFeed({
         } else {
           setPage(currentPage + 1);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (isMountedRef.current) {
-          setError(err?.message || 'Failed to load commentary');
+          setError(getErrorMessage(err) || 'Failed to load commentary');
         }
       } finally {
         if (isMountedRef.current && !silent) {

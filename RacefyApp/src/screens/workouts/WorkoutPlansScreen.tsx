@@ -27,6 +27,7 @@ import { STRENGTH_ACCENT, weekdayShort } from '../../utils/workoutPlanFormat';
 import { GhostButton } from './components/GhostButton';
 import { PlanStatusPill } from './components/PlanStatusPill';
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutPlans'>;
 
@@ -44,8 +45,8 @@ export function WorkoutPlansScreen({ navigation }: Props) {
     else setIsLoading(true);
     try {
       setPlans(await api.listWorkoutPlans());
-    } catch (error: any) {
-      logger.error('api', 'Failed to load workout plans', { error: error.message });
+    } catch (error) {
+      logger.error('api', 'Failed to load workout plans', { error: getErrorMessage(error) });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -64,8 +65,8 @@ export function WorkoutPlansScreen({ navigation }: Props) {
       await action();
       emitRefresh('workouts');
       Alert.alert('', toast);
-    } catch (error: any) {
-      Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
   };
 

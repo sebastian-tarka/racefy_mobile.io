@@ -23,6 +23,7 @@ import {
 import { CoachingHintPanel } from '../../components/Training/CoachingHintPanel';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, Activity } from '../../types/api';
+import { getErrorMessage } from '../../utils/errors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeekDetail'>;
@@ -52,9 +53,9 @@ export function WeekDetailScreen({ navigation, route }: Props) {
       setLoading(true);
       const weekData = await api.getWeek(weekId);
       setWeek(weekData);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to load week detail', { error: err });
-      Alert.alert(t('common.error'), err.message || t('training.errors.loadingFailed'));
+      Alert.alert(t('common.error'), getErrorMessage(err) || t('training.errors.loadingFailed'));
     } finally {
       setLoading(false);
     }
@@ -89,9 +90,12 @@ export function WeekDetailScreen({ navigation, route }: Props) {
                   },
                 ],
               );
-            } catch (err: any) {
+            } catch (err) {
               logger.error('training', 'Failed to complete week', { error: err });
-              Alert.alert(t('common.error'), err.message || t('training.errors.completeFailed'));
+              Alert.alert(
+                t('common.error'),
+                getErrorMessage(err) || t('training.errors.completeFailed'),
+              );
             } finally {
               setProcessingAction(false);
             }
@@ -113,9 +117,9 @@ export function WeekDetailScreen({ navigation, route }: Props) {
             await api.skipWeek(weekId);
             logger.info('training', 'Week skipped', { weekId });
             navigation.goBack();
-          } catch (err: any) {
+          } catch (err) {
             logger.error('training', 'Failed to skip week', { error: err });
-            Alert.alert(t('common.error'), err.message || t('training.errors.skipFailed'));
+            Alert.alert(t('common.error'), getErrorMessage(err) || t('training.errors.skipFailed'));
           } finally {
             setProcessingAction(false);
           }
@@ -140,9 +144,12 @@ export function WeekDetailScreen({ navigation, route }: Props) {
               setWeek(updatedWeek);
               logger.info('training', 'Activity unlinked', { weekId, trainingActivityId });
               Alert.alert(t('common.success'), t('training.weekDetail.activityUnlinked'));
-            } catch (err: any) {
+            } catch (err) {
               logger.error('training', 'Failed to unlink activity', { error: err });
-              Alert.alert(t('common.error'), err.message || t('training.errors.unlinkFailed'));
+              Alert.alert(
+                t('common.error'),
+                getErrorMessage(err) || t('training.errors.unlinkFailed'),
+              );
             } finally {
               setProcessingAction(false);
             }
@@ -175,9 +182,9 @@ export function WeekDetailScreen({ navigation, route }: Props) {
       });
 
       setUserActivities(filtered);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to load activities for linking', { error: err });
-      Alert.alert(t('common.error'), err.message || t('training.errors.loadingFailed'));
+      Alert.alert(t('common.error'), getErrorMessage(err) || t('training.errors.loadingFailed'));
       setActivitySheetVisible(false);
     } finally {
       setActivitiesLoading(false);
@@ -192,9 +199,9 @@ export function WeekDetailScreen({ navigation, route }: Props) {
         setWeek(updatedWeek);
         logger.info('training', 'Activity linked to week', { weekId, activityId: activity.id });
         Alert.alert(t('common.success'), t('training.weekDetail.activityLinked'));
-      } catch (err: any) {
+      } catch (err) {
         logger.error('training', 'Failed to link activity', { error: err });
-        Alert.alert(t('common.error'), err.message || t('training.errors.linkFailed'));
+        Alert.alert(t('common.error'), getErrorMessage(err) || t('training.errors.linkFailed'));
       } finally {
         setProcessingAction(false);
       }

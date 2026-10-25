@@ -5,6 +5,7 @@ import type { ShareLinkResponse } from '../types/api';
 import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import i18n from '../i18n';
+import { getErrorCode, getErrorMessage } from './errors';
 
 export interface ShareActivityWithImageOptions {
   activityId: number;
@@ -122,10 +123,10 @@ export async function shareActivityWithImage({
       Alert.alert(i18n.t('share.alerts.sharedTitle'), i18n.t('share.alerts.sharedCopyLinkBody'), [
         { text: 'OK' },
       ]);
-    } catch (shareError: any) {
+    } catch (shareError) {
       logger.warn('general', 'expo-sharing failed, trying native Share as fallback', {
-        error: shareError.message,
-        code: shareError.code,
+        error: getErrorMessage(shareError),
+        code: getErrorCode(shareError),
       });
 
       // Method 2: Try native Share API with Android content URI
@@ -161,10 +162,10 @@ export async function shareActivityWithImage({
         Alert.alert(i18n.t('share.alerts.sharedTitle'), i18n.t('share.alerts.sharedPasteBody'), [
           { text: 'OK' },
         ]);
-      } catch (nativeShareError: any) {
+      } catch (nativeShareError) {
         logger.error('general', 'Both sharing methods failed', {
-          expoSharingError: shareError.message,
-          nativeShareError: nativeShareError.message,
+          expoSharingError: getErrorMessage(shareError),
+          nativeShareError: getErrorMessage(nativeShareError),
         });
 
         Alert.alert(i18n.t('share.alerts.failedTitle'), i18n.t('share.alerts.failedBody'), [
@@ -181,15 +182,15 @@ export async function shareActivityWithImage({
         logger.warn('general', 'Failed to clean up downloaded share image', { error: err }),
       );
     }, 10000);
-  } catch (error: any) {
+  } catch (error) {
     // expo-sharing throws different error messages
     const isCancelled =
-      error?.message === 'User did not share' ||
-      error?.code === 'ERR_SHARING_CANCELLED' ||
-      error?.message?.includes('cancel');
+      getErrorMessage(error) === 'User did not share' ||
+      getErrorCode(error) === 'ERR_SHARING_CANCELLED' ||
+      getErrorMessage(error).includes('cancel');
 
     if (!isCancelled) {
-      logger.error('general', 'Share failed', { error, errorCode: error?.code });
+      logger.error('general', 'Share failed', { error, errorCode: getErrorCode(error) });
       throw error;
     }
   }
@@ -256,10 +257,10 @@ async function downloadImageForSharing(imageUrl: string): Promise<string | null>
       imageUrl,
     });
     return null;
-  } catch (error: any) {
+  } catch (error) {
     logger.error('general', 'Failed to download image for sharing', {
-      error: error.message,
-      stack: error.stack,
+      error: getErrorMessage(error),
+      stack: error instanceof Error ? error.stack : undefined,
       imageUrl,
     });
     return null;
@@ -335,11 +336,11 @@ export async function shareToApp(
         logger.warn('general', 'Failed to clean up app share image', { error: err }),
       );
     }, 10000);
-  } catch (error: any) {
+  } catch (error) {
     const isCancelled =
-      error?.message === 'User did not share' ||
-      error?.code === 'ERR_SHARING_CANCELLED' ||
-      error?.message?.includes('cancel');
+      getErrorMessage(error) === 'User did not share' ||
+      getErrorCode(error) === 'ERR_SHARING_CANCELLED' ||
+      getErrorMessage(error).includes('cancel');
 
     if (!isCancelled) {
       logger.error('general', `Failed to share to ${appId}`, { error });

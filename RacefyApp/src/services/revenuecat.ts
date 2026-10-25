@@ -126,8 +126,8 @@ export async function purchasePackage(pkg: any): Promise<{ customerInfo: any; su
       activeEntitlements: Object.keys(customerInfo.entitlements.active),
     });
     return { customerInfo, success: true };
-  } catch (error: any) {
-    if (error.userCancelled) {
+  } catch (error) {
+    if ((error as { userCancelled?: boolean } | null)?.userCancelled) {
       logger.info('general', 'Purchase cancelled by user');
     } else {
       logger.error('general', 'Purchase failed', { error });

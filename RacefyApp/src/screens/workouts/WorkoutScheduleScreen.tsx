@@ -28,6 +28,7 @@ import { formatDurationMinutes, weekdayShort } from '../../utils/workoutPlanForm
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { SessionConflictDialog, type SessionConflict } from './components/SessionConflictDialog';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSchedule'>;
 
@@ -98,8 +99,11 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
             to: shiftDays(isoDate(new Date()), RANGE_AHEAD_DAYS),
           }),
         );
-      } catch (error: any) {
-        logger.error('api', 'Failed to load workout schedule', { planId, error: error.message });
+      } catch (error) {
+        logger.error('api', 'Failed to load workout schedule', {
+          planId,
+          error: getErrorMessage(error),
+        });
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -179,7 +183,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
       await api.moveWorkoutSession({ workout_id: day.workout.id, from: day.date, to });
       emitRefresh('workouts');
       await load('refresh');
-    } catch (error: any) {
+    } catch (error) {
       handleError(error);
     } finally {
       setIsBusy(false);
@@ -193,7 +197,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
       emitRefresh('workouts');
       setResumeFor(null);
       openSession(session.id);
-    } catch (error: any) {
+    } catch (error) {
       // `already_logged` only means "pick another day" — leave the sheet open.
       const known = readConflict(error);
       if (known?.reason === 'in_progress_exists') setResumeFor(null);
@@ -220,8 +224,8 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
           try {
             await api.skipPlannedWorkout(workoutId, day.date);
             emitRefresh('workouts');
-          } catch (error: any) {
-            Alert.alert('', error.message || t('common.error'));
+          } catch (error) {
+            Alert.alert('', getErrorMessage(error) || t('common.error'));
           }
         },
       },
@@ -233,8 +237,8 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
     try {
       await api.deleteWorkoutSession(sessionId);
       emitRefresh('workouts');
-    } catch (error: any) {
-      Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
   };
 

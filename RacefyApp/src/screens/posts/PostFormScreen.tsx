@@ -242,13 +242,15 @@ export function PostFormScreen({ navigation, route }: Props) {
       emitRefresh('feed');
       emitRefresh('posts');
       navigation.goBack();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('api', 'Failed to save post', { error });
 
       // Check if it's a 422 error about activity post content
+      const response = (
+        error as { response?: { status?: number; data?: { message?: string } } } | null
+      )?.response;
       const isActivityContentError =
-        error?.response?.status === 422 &&
-        error?.response?.data?.message?.toLowerCase().includes('activity');
+        response?.status === 422 && response?.data?.message?.toLowerCase().includes('activity');
 
       const errorMessage = isActivityContentError
         ? t('postForm.activityContentError')

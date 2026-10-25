@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api } from '../services/api';
 import type { CommentarySettings, UpdateCommentarySettingsRequest } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 export function useCommentarySettings(eventId: number) {
   const [settings, setSettings] = useState<CommentarySettings | null>(null);
@@ -15,8 +16,8 @@ export function useCommentarySettings(eventId: number) {
     try {
       const data = await api.getCommentarySettings(eventId);
       setSettings(data);
-    } catch (err: any) {
-      const errorMessage = err?.message || 'Failed to load commentary settings';
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || 'Failed to load commentary settings';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -32,8 +33,8 @@ export function useCommentarySettings(eventId: number) {
         const data = await api.updateCommentarySettings(eventId, updates);
         setSettings(data);
         return data;
-      } catch (err: any) {
-        const errorMessage = err?.message || 'Failed to update commentary settings';
+      } catch (err) {
+        const errorMessage = getErrorMessage(err) || 'Failed to update commentary settings';
         setError(errorMessage);
         throw err;
       } finally {

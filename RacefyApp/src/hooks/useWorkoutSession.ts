@@ -11,6 +11,7 @@ import type {
   WorkoutSessionSetUpdate,
   WorkoutSessionStats,
 } from '../types/workouts';
+import { getErrorMessage } from '../utils/errors';
 
 export interface SetValues {
   weightKg?: number | null;
@@ -56,9 +57,12 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
       const fresh = await api.getWorkoutSession(sessionId);
       commit(fresh);
       restoreRest(fresh, setRest);
-    } catch (error: any) {
-      logger.error('api', 'Failed to load workout session', { sessionId, error: error.message });
-      onErrorRef.current(error.message);
+    } catch (error) {
+      logger.error('api', 'Failed to load workout session', {
+        sessionId,
+        error: getErrorMessage(error),
+      });
+      onErrorRef.current(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -223,8 +227,8 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
           // Ad-hoc exercise: the server built a new group — reload to get its header.
           await reload();
         }
-      } catch (error: any) {
-        onErrorRef.current(error.message);
+      } catch (error) {
+        onErrorRef.current(getErrorMessage(error));
       }
     },
     [sessionId, commit, reload],
@@ -247,9 +251,9 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
       });
       try {
         await api.deleteWorkoutSessionSet(setId);
-      } catch (error: any) {
+      } catch (error) {
         commit(before);
-        onErrorRef.current(error.message);
+        onErrorRef.current(getErrorMessage(error));
       }
     },
     [commit],

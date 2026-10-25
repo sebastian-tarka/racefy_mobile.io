@@ -34,6 +34,7 @@ import * as trackingDb from './trackingDb';
 import type { PendingFinish } from './trackingDb';
 import { drainPoints, toGpsPoints } from './pointsUploader';
 import type { Activity, FinishActivityRequest, FinishActivityResponse } from '../types/api';
+import { getErrorMessage, getErrorStatus, isApiError } from '../utils/errors';
 
 /** Queue contents or an entry's state changed — list/count hooks refresh on it. */
 export const FINISH_QUEUE_CHANGED_EVENT = 'finishSync:changed';
@@ -212,9 +213,9 @@ async function processEntry(
         } satisfies FinishDelivered);
         return { status: 'delivered' };
       }
-    } catch (error: any) {
-      const status: number | undefined = error?.status;
-      const message: string = error?.message || 'Failed to start activity';
+    } catch (error) {
+      const status: number | undefined = getErrorStatus(error);
+      const message: string = getErrorMessage(error) || 'Failed to start activity';
       if (status === 401) {
         d.db.updatePendingFinish(id, { state: 'pending', lastError: message });
         return { status: 'auth_required' };
@@ -223,7 +224,9 @@ async function processEntry(
       // "Another activity is already active." If that one is ours and waiting in
       // this very outbox, it will be gone soon — wait for it. Anything else the
       // athlete has to sort out (an activity left open on another device…).
-      const blockingId: number | undefined = error?.data?.id;
+      const blockingId = isApiError(error)
+        ? (error.data as { id?: number } | undefined)?.id
+        : undefined;
       if (blockingId != null && d.db.getPendingFinishByServerActivityId(blockingId)) {
         return retryLater('Waiting for an earlier activity to be delivered');
       }
@@ -272,9 +275,9 @@ async function processEntry(
       response,
     } satisfies FinishDelivered);
     return { status: 'delivered', response };
-  } catch (error: any) {
-    const status: number | undefined = error?.status;
-    const message: string = error?.message || 'Failed to finish activity';
+  } catch (error) {
+    const status: number | undefined = getErrorStatus(error);
+    const message: string = getErrorMessage(error) || 'Failed to finish activity';
 
     if (status === 401) {
       d.db.updatePendingFinish(id, { state: 'pending', lastError: message });

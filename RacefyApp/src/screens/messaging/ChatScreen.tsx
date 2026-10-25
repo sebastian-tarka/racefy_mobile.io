@@ -31,6 +31,7 @@ import type { ThemeColors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation, ConversationParticipant, Message } from '../../types/api';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -68,14 +69,14 @@ export function ChatScreen({ navigation, route }: Props) {
     try {
       const data = await api.getConversation(conversationId);
       setConversation(data);
-    } catch (error: any) {
-      if (error.status === 403) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403) {
         logger.warn('api', 'No longer a participant of conversation', { conversationId });
         navigation.goBack();
       } else {
         logger.error('api', 'Failed to load conversation', {
           conversationId,
-          error: error.message,
+          error: getErrorMessage(error),
         });
       }
     } finally {
@@ -149,13 +150,13 @@ export function ChatScreen({ navigation, route }: Props) {
       const updated = await api.updateConversation(conversationId, { name: trimmed });
       setConversation(updated);
       setIsRenaming(false);
-    } catch (error: any) {
-      if (error.status === 403) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403) {
         // Captain demoted mid-session — refetch + hide pencil
         await fetchConversation();
         setIsRenaming(false);
       } else {
-        Alert.alert('', error.message || t('messaging.renameFailed'));
+        Alert.alert('', getErrorMessage(error) || t('messaging.renameFailed'));
       }
     } finally {
       setIsSavingRename(false);

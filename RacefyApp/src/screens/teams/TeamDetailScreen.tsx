@@ -20,6 +20,7 @@ import { ScreenContainer, ScreenHeader, Card, Avatar, Button } from '../../compo
 import { TeamStatsTab } from './TeamStatsTab';
 import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TeamDetail'>;
 type TabType = 'members' | 'stats' | 'events';
@@ -128,13 +129,13 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         conversationId: conversation.id,
         conversation,
       });
-    } catch (error: any) {
-      if (error.status === 403) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403) {
         setTeamChatUnavailable(true);
-      } else if (error.status === 404) {
+      } else if (getErrorStatus(error) === 404) {
         Alert.alert('', t('messaging.failedToLoad'));
       } else {
-        Alert.alert('', error.message || t('messaging.failedToLoad'));
+        Alert.alert('', getErrorMessage(error) || t('messaging.failedToLoad'));
       }
     } finally {
       setIsOpeningChat(false);

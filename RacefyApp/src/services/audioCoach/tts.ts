@@ -4,6 +4,7 @@ import { synthesize } from './api';
 import { ensureAudioMode, speakDucked, withAudioFocus } from './audioSession';
 import { playBase64Mp3 } from '../audio/playBase64Mp3';
 import type { AudioCoachSettings } from '../../types/audioCoach';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 const SYNTH_TIMEOUT_MS = 8000;
 
@@ -96,18 +97,18 @@ async function speakAi(text: string, settings: AudioCoachSettings): Promise<bool
     await withAudioFocus(() => playBase64Mp3(result.audio_base64, `audiocoach_${Date.now()}`));
 
     return true;
-  } catch (error: any) {
+  } catch (error) {
     clearTimeout(timeout);
 
-    const status = error?.status;
+    const status = getErrorStatus(error);
     if (status === 403 || status === 402 || status === 429 || status === 502) {
       logger.warn('audioCoach', `AI TTS returned ${status}, falling back to offline`, {
         status,
-        error: error?.message || String(error),
+        error: getErrorMessage(error) || String(error),
       });
     } else {
       logger.warn('audioCoach', 'AI TTS failed, falling back to offline', {
-        error: error?.message || String(error),
+        error: getErrorMessage(error) || String(error),
       });
     }
     return false;

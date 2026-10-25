@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { useTranslation } from 'react-i18next';
 import type { ReportableType, ReportReason } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseReportContentReturn {
   isLoading: boolean;
@@ -65,8 +66,8 @@ export function useReportContent(): UseReportContentReturn {
       ]);
 
       onReportSuccess?.();
-    } catch (err: any) {
-      const errorMessage = err?.message || t('reporting.reportError');
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || t('reporting.reportError');
       setError(errorMessage);
       logger.error('general', 'Failed to report content', {
         reportableType,

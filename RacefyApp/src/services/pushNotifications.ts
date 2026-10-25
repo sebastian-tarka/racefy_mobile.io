@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { api } from './api';
 import { logger } from './logger';
 import type { AppConfigPush, DeviceType, PushProvider } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 // Configure how notifications are displayed when app is in foreground
 Notifications.setNotificationHandler({
@@ -133,7 +134,7 @@ class PushNotificationService {
         tokenPrefix: tokenData.data.substring(0, 20),
       });
       return tokenData.data;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('general', 'Failed to get FCM token', { error });
       return null;
     }
@@ -236,9 +237,9 @@ class PushNotificationService {
       });
 
       return token.data;
-    } catch (error: any) {
+    } catch (error) {
       // Check if it's a Firebase not initialized error
-      if (error?.message?.includes('FirebaseApp')) {
+      if (getErrorMessage(error).includes('FirebaseApp')) {
         logger.warn('general', 'Firebase not configured - push notifications disabled', {
           hint: 'Add google-services.json to enable push notifications',
         });

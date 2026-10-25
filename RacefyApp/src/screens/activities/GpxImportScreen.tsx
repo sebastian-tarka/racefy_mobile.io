@@ -22,6 +22,7 @@ import type { Event } from '../../types/api';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GpxImport'>;
 
@@ -114,19 +115,19 @@ export function GpxImportScreen({ navigation }: Props) {
           onPress: () => navigation.goBack(),
         },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('activity', 'GPX import failed', { error });
       // 409: duplicate import (deduped by SHA256 hash + started_at)
-      if (error?.status === 409) {
+      if (getErrorStatus(error) === 409) {
         Alert.alert(
           t('gpxImport.duplicateTitle'),
-          error.message || t('gpxImport.duplicateMessage'),
+          getErrorMessage(error) || t('gpxImport.duplicateMessage'),
         );
         return;
       }
       // 429 is handled globally via api.setOnRateLimit
-      if (error?.status === 429) return;
-      Alert.alert(t('common.error'), error?.message || t('gpxImport.importFailed'));
+      if (getErrorStatus(error) === 429) return;
+      Alert.alert(t('common.error'), getErrorMessage(error) || t('gpxImport.importFailed'));
     } finally {
       setIsImporting(false);
     }

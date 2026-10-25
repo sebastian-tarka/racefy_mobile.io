@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { BlockedUser } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseBlockedUsersReturn {
   blockedUsers: BlockedUser[];
@@ -57,8 +58,8 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
         page: response.meta.current_page,
         total: response.meta.total,
       });
-    } catch (err: any) {
-      const errorMessage = err?.message || 'Failed to load blocked users';
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || 'Failed to load blocked users';
       setError(errorMessage);
       logger.error('auth', 'Failed to fetch blocked users', { page, error: err });
       throw err;
