@@ -290,3 +290,23 @@ export interface HomeConfigResponse {
   data: HomeConfigData;
   meta: HomeConfigMeta;
 }
+
+/** GET /home/friends-today — one followed athlete's latest activity today. */
+export interface FriendTodayActivity {
+  activity_id: number;
+  title: string;
+  user: { id: number; name: string; username: string; avatar_url: string | null };
+  sport_type: { id: number; slug: string; name: string; icon: string | null };
+  started_at: string;
+  /** Seconds. */
+  duration: number;
+  /** Meters; 0 for a strength session. */
+  distance: number;
+  strength: { sets: number; volume_kg: number } | null;
+}
+
+export interface FriendsTodayResponse {
+  data: FriendTodayActivity[];
+  /** Every friend active today, not only the rows returned. */
+  meta: { friends_count: number };
+}

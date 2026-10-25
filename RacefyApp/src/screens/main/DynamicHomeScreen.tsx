@@ -26,6 +26,9 @@ import { useHomeData } from '../../hooks/useHomeData';
 import { useHomeConfig } from '../../hooks/useHomeConfig';
 import { useWeeklyStreak } from '../../hooks/useWeeklyStreak';
 import { useTrainingReminders } from '../../hooks/useTrainingReminders';
+import { useNextWorkoutSession } from '../../hooks/useNextWorkoutSession';
+import { useFriendsToday } from '../../hooks/useFriendsToday';
+import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
 
 // Services
 import { api } from '../../services/api';
@@ -40,12 +43,14 @@ import { spacing } from '../../theme';
 import { getSectionWeather } from './home/components/sections';
 import {
   CollapsibleTipCard,
+  FriendsTodayCard,
   HomeHeader,
   LiveActivityBanner,
   LiveEventsCard,
   PrimaryCTA,
   QuickActionsBarV2,
   SectionRenderer,
+  StrengthNextCard,
   WeeklyStatsCardV2,
   WeeklyStreakCard,
 } from './home/components';
@@ -145,6 +150,15 @@ export function DynamicHomeScreen({ navigation }: Props) {
     enableAutoRefresh: true,
   });
 
+  // Strength card and "Friends today" (design "Racefy v2" → Home).
+  const { next: nextStrength, refetch: refetchNextStrength } =
+    useNextWorkoutSession(isAuthenticated);
+  const friendsToday = useFriendsToday(isAuthenticated);
+  const refetchFriendsToday = friendsToday.refetch;
+  const { start: startStrength, busyWorkoutId: startingStrengthId } = useStartWorkoutSession(
+    (sessionId) => navigation.getParent()?.navigate('WorkoutSession', { sessionId }),
+  );
+
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
   const [loadingTips, setLoadingTips] = useState(false);
@@ -243,9 +257,15 @@ export function DynamicHomeScreen({ navigation }: Props) {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetchConfig(), refetchData(), loadAvailableTips()]);
+    await Promise.all([
+      refetchConfig(),
+      refetchData(),
+      loadAvailableTips(),
+      refetchNextStrength(),
+      refetchFriendsToday(),
+    ]);
     setRefreshing(false);
-  }, [refetchConfig, refetchData, loadAvailableTips]);
+  }, [refetchConfig, refetchData, loadAvailableTips, refetchNextStrength, refetchFriendsToday]);
 
   // Navigation helpers
   const navigateToAuth = useCallback(
@@ -460,6 +480,26 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
 
+        {/* An open strength session follows the athlete around the app, the
+            same way a running activity does — otherwise leaving the session
+            screen to check a message means losing the way back to it. */}
+        {isAuthenticated && <ResumeSessionBanner />}
+
+        {/* Strength — the gym counterpart to the hero above */}
+        {isAuthenticated && nextStrength && (
+          <FadeInView delay={160}>
+            <StrengthNextCard
+              next={nextStrength}
+              busyWorkoutId={startingStrengthId}
+              onStart={(workoutId, date) => void startStrength(workoutId, date)}
+              onOpenPlan={(planId) =>
+                navigation.getParent()?.navigate('WorkoutPlanDetail', { planId })
+              }
+              onOpenPlans={() => navigation.getParent()?.navigate('WorkoutPlans')}
+            />
+          </FadeInView>
+        )}
+
         {/* Weekly Streak - authenticated users only */}
         {isAuthenticated && !weeklyStreakData.isLoading && (
           <FadeInView delay={200}>
@@ -506,11 +546,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
           </FadeInView>
         )}
 
-        {/* An open strength session follows the athlete around the app, the
-            same way a running activity does — otherwise leaving the session
-            screen to check a message means losing the way back to it. */}
-        {isAuthenticated && <ResumeSessionBanner />}
-
         {isAuthenticated && (
           <FadeInView delay={500}>
             <CompetitionStandingSection
@@ -544,6 +579,19 @@ export function DynamicHomeScreen({ navigation }: Props) {
               data={sectionData}
               callbacks={sectionCallbacks}
               isAuthenticated={isAuthenticated}
+            />
+          </FadeInView>
+        )}
+
+        {isAuthenticated && (
+          <FadeInView delay={600}>
+            <FriendsTodayCard
+              rows={friendsToday.rows}
+              friendsCount={friendsToday.friendsCount}
+              onOpenActivity={(activityId) =>
+                navigation.getParent()?.navigate('ActivityDetail', { activityId })
+              }
+              onOpenFeed={() => navigation.navigate('Feed')}
             />
           </FadeInView>
         )}
