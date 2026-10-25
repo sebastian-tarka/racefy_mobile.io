@@ -6,6 +6,19 @@ type Constructable<T = object> = new (...args: any[]) => T;
 
 export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
   return class UsersMixin extends Base {
+    /** Navigation badges: unread counts and "new since last visit" per section. */
+    async getBadges(): Promise<Types.BadgesResponse> {
+      return this.request<Types.BadgesResponse>('/me/badges');
+    }
+
+    /** The user opened a section: its "new" count drops to 0 on every device. */
+    async markBadgeSectionSeen(section: Types.BadgeSection): Promise<Types.BadgesResponse> {
+      return this.request<Types.BadgesResponse>('/me/badges/seen', {
+        method: 'POST',
+        body: JSON.stringify({ section }),
+      });
+    }
+
     // ============ FOLLOWS ============
 
     async followUser(userId: number): Promise<void> {

@@ -3670,5 +3670,10 @@
   "errorBoundary": {
     "title": "Algo salió mal",
     "message": "Error inesperado de la aplicación"
+  },
+  "navBadges": {
+    "newCount_one": "{{count}} nueva",
+    "newCount_many": "{{count}} nuevas",
+    "newCount_other": "{{count}} nuevas"
   }
 }

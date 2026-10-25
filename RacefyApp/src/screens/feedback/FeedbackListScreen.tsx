@@ -23,6 +23,7 @@ import {
   FEEDBACK_UNKNOWN_COLOR,
 } from './feedbackColors';
 import { formatIntlDate } from '../../utils/dateFormat';
+import { useMarkSectionSeen } from '../../hooks/useNavBadges';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackList'>;
 
@@ -42,6 +43,7 @@ const STATUS_FILTERS: (FeedbackStatus | 'all')[] = [
 
 export function FeedbackListScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  useMarkSectionSeen('feedback');
   const { colors } = useTheme();
   const { feedbacks, isLoading, isRefreshing, refresh, loadMore, setFilters } = useFeedback();
   const [activeFilter, setActiveFilter] = useState<FeedbackStatus | 'all'>('all');

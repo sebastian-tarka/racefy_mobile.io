@@ -45,6 +45,7 @@ import type {
   EventWithLatestCommentary,
   Reward,
 } from '../../types/api';
+import { useMarkSectionSeen } from '../../hooks/useNavBadges';
 
 const LIVE_VIEW_MODE_KEY = '@racefy_events_live_view_mode';
 type LiveViewMode = 'compact' | 'detailed';
@@ -60,6 +61,7 @@ type RewardFilterOption = 'all' | 'points' | 'coupon' | 'badge' | 'prize';
 
 export function EventsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  useMarkSectionSeen('events');
   const { colors } = useTheme();
   const { formatDistanceShort } = useUnits();
   const tabBarPaddingBottom = useTabBarPadding();

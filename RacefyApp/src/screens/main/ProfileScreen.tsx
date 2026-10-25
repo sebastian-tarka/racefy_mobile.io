@@ -42,6 +42,7 @@ import {
 import type { PeriodOption, TimeRange } from '../../utils/dateRanges';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useAuth } from '../../hooks/useAuth';
+import { useMarkSectionSeen, useNavBadges } from '../../hooks/useNavBadges';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
@@ -119,6 +120,12 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   const { canUse, tier } = useSubscription();
   const tabBarPaddingBottom = useTabBarPadding();
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'stats');
+  // "New since last visit": own activities on their tab, admin replies to
+  // feedback on the settings button (feedback lives under Settings).
+  const navBadges = useNavBadges();
+  const newActivities = navBadges?.sections.activities ?? 0;
+  const newFeedback = navBadges?.sections.feedback ?? 0;
+  useMarkSectionSeen('activities', activeTab === 'activities');
   const [stats, setStats] = useState<UserStats | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [draftsCount, setDraftsCount] = useState(0);
@@ -556,6 +563,14 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
       hitSlop={SETTINGS_HIT_SLOP}
     >
       <Ionicons name="settings-outline" size={24} color={colors.white} />
+      {newFeedback > 0 && (
+        <View
+          style={[
+            styles.settingsDot,
+            { backgroundColor: colors.primary, borderColor: colors.white },
+          ]}
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -779,6 +794,13 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
                 >
                   {tab.label}
                 </Text>
+                {tab.value === 'activities' && newActivities > 0 && (
+                  <View style={[styles.draftsBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
+                      {newActivities > 99 ? '99+' : newActivities}
+                    </Text>
+                  </View>
+                )}
                 {tab.value === 'drafts' && draftsCount > 0 && (
                   <View style={[styles.draftsBadge, { backgroundColor: colors.error }]}>
                     <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
@@ -1351,6 +1373,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+  },
+  settingsDot: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
   },
   draftsBadge: {
     position: 'absolute',

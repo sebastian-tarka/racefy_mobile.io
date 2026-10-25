@@ -19,6 +19,7 @@ import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import type { SubscriptionTier, Team, TrainingProgram, UserPointStats } from '../types/api';
 import type { UserGoal } from '../types/goals';
 import type { WorkoutPlan } from '../types/workouts';
+import { useNavBadges } from '../hooks/useNavBadges';
 
 type ProfileNavigation = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -56,6 +57,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
   const [openTeamCount, setOpenTeamCount] = useState<number | null>(null);
   // `total` (server-side), not the page length — the list is paginated at 20.
   const { total: liveCount } = useLiveBroadcasts();
+  const navBadges = useNavBadges();
 
   const isFree = tier === 'free';
 
@@ -244,6 +246,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
             tone={colors.warning}
             title={t('goals.title')}
             status={goalsStatus}
+            newCount={navBadges?.sections.goals}
             onPress={() => navigation.navigate('Goals')}
           />
           <ProfileToolRow
@@ -253,6 +256,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
             status={aiReportsStatus}
             locked={isFree}
             badge={isFree ? 'PLUS' : undefined}
+            newCount={isFree ? undefined : navBadges?.sections.ai_reports}
             onPress={() =>
               isFree
                 ? navigation.navigate('Paywall', { feature: 'activity_analysis_reports_monthly' })
@@ -264,6 +268,8 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
             tone="#EF4444"
             title={t('strengthPlans.title')}
             status={strengthStatus}
+            badge={navBadges?.workout_session_active ? 'LIVE' : undefined}
+            badgeColor={colors.error}
             onPress={() => navigation.navigate('WorkoutPlans')}
           />
         </>,

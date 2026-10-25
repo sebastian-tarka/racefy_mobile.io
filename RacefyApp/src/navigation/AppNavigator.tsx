@@ -18,6 +18,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
+import { useNavBadges, useNavBadgesRunner } from '../hooks/useNavBadges';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveActivityStatus } from '../hooks/useLiveActivity';
 import { useCurrentWorkoutSession } from '../hooks/useCurrentWorkoutSession';
@@ -306,6 +307,18 @@ const styles = StyleSheet.create({
 function MainTabNavigator() {
   const { isAuthenticated } = useAuth();
   const { colors } = useTheme();
+  // "New since last visit" counts (GET /me/badges): Events on its own tab,
+  // everything reached from the profile summed on the Profile tab.
+  useNavBadgesRunner(isAuthenticated);
+  const navBadges = useNavBadges();
+  const eventsBadge = navBadges?.sections.events ?? 0;
+  const profileBadge = navBadges
+    ? navBadges.sections.activities +
+      navBadges.sections.goals +
+      navBadges.sections.ai_reports +
+      navBadges.sections.feedback
+    : 0;
+  const badgeOf = (count: number) => (count > 0 ? (count > 99 ? '99+' : count) : undefined);
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isTracking, activity } = useLiveActivityStatus();
@@ -368,6 +381,12 @@ function MainTabNavigator() {
           tabBarActiveTintColor: colors.textPrimary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: styles.tabLabel,
+          tabBarBadgeStyle: {
+            backgroundColor: colors.primary,
+            color: '#ffffff',
+            fontSize: msFont(10),
+            fontWeight: '700',
+          },
           tabBarStyle: {
             backgroundColor: colors.cardBackground,
             borderTopColor: colors.border,
@@ -416,6 +435,7 @@ function MainTabNavigator() {
           options={{
             tabBarLabel: t('tabs.events'),
             tabBarAccessibilityLabel: t('tabs.a11y.events'),
+            tabBarBadge: badgeOf(eventsBadge),
           }}
           listeners={authGuardListener}
         />
@@ -425,6 +445,7 @@ function MainTabNavigator() {
           options={{
             tabBarLabel: t('tabs.profile'),
             tabBarAccessibilityLabel: t('tabs.a11y.profile'),
+            tabBarBadge: badgeOf(profileBadge),
           }}
           listeners={authGuardListener}
         />

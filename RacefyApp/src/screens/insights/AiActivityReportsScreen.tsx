@@ -21,11 +21,13 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { AiActivityReport } from '../../types/reports';
 import { REPORT_STATUS_COLORS } from './reportStatusColors';
 import { getErrorMessage } from '../../utils/errors';
+import { useMarkSectionSeen } from '../../hooks/useNavBadges';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AiActivityReports'>;
 
 export function AiActivityReportsScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
+  useMarkSectionSeen('ai_reports');
   const { colors } = useTheme();
   const { tier } = useSubscription();
 

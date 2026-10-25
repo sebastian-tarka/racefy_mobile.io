@@ -3664,5 +3664,9 @@
   "errorBoundary": {
     "title": "Something went wrong",
     "message": "Unexpected app error"
+  },
+  "navBadges": {
+    "newCount_one": "{{count}} new",
+    "newCount_other": "{{count}} new"
   }
 }
