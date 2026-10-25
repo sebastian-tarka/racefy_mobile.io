@@ -207,6 +207,9 @@ export function mapEventApiErrors(
                 ? 'point_rewards_finisher'
                 : `point_rewards_${sub}`;
       mapped[flatKey] = value as string[];
+    } else if (key.startsWith('recurrence.')) {
+      // The Repeat section shows one message for the whole rule
+      mapped.recurrence ??= value as string[];
     } else {
       mapped[key] = value as string[];
     }

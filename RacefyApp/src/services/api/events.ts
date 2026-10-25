@@ -69,6 +69,33 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/events/${id}`, { method: 'DELETE' });
     }
 
+    // ============ EVENT SERIES ============
+    // Owner-only. The rule and template can't be edited yet — PUT /events/{id}
+    // changes a single edition.
+
+    /** The waiting edition still runs; no further ones are generated until resumed. */
+    async pauseEventSeries(seriesId: number): Promise<Types.EventSeriesSummary> {
+      const response = await this.request<Types.ApiResponse<Types.EventSeriesSummary>>(
+        `/event-series/${seriesId}/pause`,
+        { method: 'POST' },
+      );
+      return response.data;
+    }
+
+    /** Generates the next edition right away if none is waiting. */
+    async resumeEventSeries(seriesId: number): Promise<Types.EventSeriesSummary> {
+      const response = await this.request<Types.ApiResponse<Types.EventSeriesSummary>>(
+        `/event-series/${seriesId}/resume`,
+        { method: 'POST' },
+      );
+      return response.data;
+    }
+
+    /** Ends the series and cancels the waiting upcoming edition; past ones stay. */
+    async endEventSeries(seriesId: number): Promise<void> {
+      await this.request(`/event-series/${seriesId}`, { method: 'DELETE' });
+    }
+
     // ============ EVENT POINTS BUDGET ============
 
     /**

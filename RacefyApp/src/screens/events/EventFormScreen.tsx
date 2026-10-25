@@ -42,6 +42,7 @@ import { fontSize, spacing, msFont } from '../../theme';
 import {
   ApiError,
   Event,
+  EventSeriesSummary,
   EventTeamScoring,
   EventVisibility,
   GeoJSONLineString,
@@ -67,6 +68,13 @@ import {
   eventToFormData,
   mapEventApiErrors,
 } from './eventFormPayload';
+import { EventSeriesCard, RecurrenceSection } from '../../components/event';
+import {
+  buildRecurrenceInput,
+  initialRecurrenceForm,
+  RecurrenceForm,
+  validateRecurrence,
+} from '../../utils/recurrence';
 import { EventRankingModeSelector } from '../../components/EventRankingModeSelector';
 import { formatDate } from '../../utils/dateFormat';
 
@@ -95,6 +103,20 @@ export function EventFormScreen({ navigation, route }: Props) {
   // Points budget state
   const [pointsBudgetValid, setPointsBudgetValid] = useState(true);
   const [pointsBudgetPrereqReady, setPointsBudgetPrereqReady] = useState(false);
+
+  // Recurrence (create only) and the series this edition belongs to (edit only)
+  const [recurrence, setRecurrence] = useState<RecurrenceForm>(initialRecurrenceForm);
+  const [series, setSeries] = useState<EventSeriesSummary | null>(null);
+  const [occurrenceNumber, setOccurrenceNumber] = useState<number | null>(null);
+
+  const updateRecurrence = useCallback((patch: Partial<RecurrenceForm>) => {
+    setRecurrence((prev) => ({ ...prev, ...patch }));
+    setErrors((prev) => {
+      if (!prev.recurrence) return prev;
+      const { recurrence: _cleared, ...rest } = prev;
+      return rest;
+    });
+  }, []);
 
   // Geometry of the attached route — the location picker draws it and takes the start from it
   const [routeGeometry, setRouteGeometry] = useState<GeoJSONLineString | null>(null);
@@ -166,6 +188,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       'cover_image',
       'slug',
       'slug_expires_at',
+      'recurrence',
     ],
     scoring: [
       'ranking_mode',
@@ -302,6 +325,8 @@ export function EventFormScreen({ navigation, route }: Props) {
   const populateForm = (event: Event) => {
     setEventStatus(event.status);
     setFormData(eventToFormData(event));
+    setSeries(event.series ?? null);
+    setOccurrenceNumber(event.occurrence_number ?? null);
     setRouteGeometry(event.route_id ? (event.route?.geometry ?? null) : null);
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
   };
@@ -352,6 +377,11 @@ export function EventFormScreen({ navigation, route }: Props) {
         newErrors.team_size_max = t('eventForm.validation.teamSizeMaxLessThanMin');
     }
 
+    if (!isEditMode) {
+      const recurrenceError = validateRecurrence(recurrence, formData.starts_at);
+      if (recurrenceError) newErrors.recurrence = recurrenceError;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0 ? null : newErrors;
   };
@@ -384,9 +414,15 @@ export function EventFormScreen({ navigation, route }: Props) {
         await api.updateEvent(eventId, buildUpdateEventPayload(formData, { entryFeeEnabled }));
         savedEventId = eventId;
       } else {
-        const createdEvent = await api.createEvent(
-          buildCreateEventPayload(formData, { entryFeeEnabled }),
-        );
+        const createdEvent = await api.createEvent({
+          ...buildCreateEventPayload(formData, { entryFeeEnabled }),
+          // The organizer's zone keeps every edition at the same local time across DST
+          recurrence: buildRecurrenceInput(
+            recurrence,
+            formData.starts_at,
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ),
+        });
         savedEventId = createdEvent.id;
       }
 
@@ -881,6 +917,16 @@ export function EventFormScreen({ navigation, route }: Props) {
 
           {activeTab === 'basic' && (
             <>
+              {isEditMode && series && (
+                <EventSeriesCard
+                  series={series}
+                  occurrenceNumber={occurrenceNumber}
+                  onStatusChange={(status) =>
+                    setSeries((prev) => (prev ? { ...prev, status } : prev))
+                  }
+                />
+              )}
+
               {/* Location — search, map pin, or the start of the attached route */}
               <EventLocationPicker
                 value={{
@@ -945,6 +991,20 @@ export function EventFormScreen({ navigation, route }: Props) {
                   </Text>
                 )}
               </View>
+
+              {/* Repeat — a series can only be started when creating (Plus/Pro) */}
+              {!isEditMode && (
+                <Card style={styles.optionalCard}>
+                  <PremiumTeaser feature="recurring_events">
+                    <RecurrenceSection
+                      value={recurrence}
+                      onChange={updateRecurrence}
+                      startsAt={formData.starts_at}
+                      error={errors.recurrence}
+                    />
+                  </PremiumTeaser>
+                </Card>
+              )}
             </>
           )}
 

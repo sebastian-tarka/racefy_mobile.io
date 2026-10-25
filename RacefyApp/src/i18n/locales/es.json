@@ -1434,6 +1434,58 @@
       "teamSizeMinRequired": "El tamaño mínimo del equipo debe ser al menos 2",
       "teamSizeMaxRequired": "El tamaño máximo del equipo debe ser al menos 2",
       "teamSizeMaxLessThanMin": "El máximo debe ser mayor o igual al mínimo"
+    },
+    "recurrence": {
+      "title": "Repetir",
+      "description": "Cada edición se crea sola cuando termina la anterior.",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "every": "Cada",
+      "intervalWeeks_one": "semana",
+      "intervalWeeks_other": "semanas",
+      "intervalMonths_one": "mes",
+      "intervalMonths_other": "meses",
+      "monthlyDay": "El día {{day}}",
+      "monthlyWeekday": "{{nth}} {{weekday}}",
+      "nth": {
+        "1": "1.er",
+        "2": "2.º",
+        "3": "3.er",
+        "4": "4.º",
+        "last": "Último"
+      },
+      "ends": "Termina",
+      "endNever": "Nunca",
+      "endCount": "Tras",
+      "endUntil": "En fecha",
+      "countLabel": "Número de ediciones (incluida esta)",
+      "registrationOpens": "Inscripción abre (días antes de cada edición)",
+      "registrationOpensPlaceholder": "Vacío = en cuanto exista la edición",
+      "copiedHint": "Cada edición copia este evento: ruta, premios, límites, equipos y comentarios. Los premios patrocinados no se copian.",
+      "errors": {
+        "noWeekday": "Elige al menos un día de la semana.",
+        "startNotOnRule": "La fecha de inicio debe caer en uno de los días elegidos.",
+        "count": "El número de ediciones debe estar entre 2 y 520.",
+        "until": "La fecha final debe ser posterior a la primera edición.",
+        "registration": "La inscripción puede abrir de 1 a 365 días antes."
+      }
+    },
+    "series": {
+      "title": "Evento recurrente",
+      "edition": "Edición n.º {{number}} de una serie",
+      "status": {
+        "active": "Activa",
+        "paused": "En pausa",
+        "ended": "Terminada"
+      },
+      "next": "Próxima edición: {{date}}",
+      "thisEditionOnly": "Los cambios de este formulario afectan solo a esta edición.",
+      "pause": "Pausar serie",
+      "resume": "Reanudar serie",
+      "end": "Terminar serie",
+      "endTitle": "¿Terminar la serie?",
+      "endBody": "No se crearán más ediciones y la próxima se cancelará. Las ediciones pasadas y sus resultados se conservan.",
+      "actionFailed": "No se pudo actualizar la serie."
     }
   },
   "permissions": {

@@ -1434,6 +1434,58 @@
       "teamSizeMinRequired": "Min team size must be at least 2",
       "teamSizeMaxRequired": "Max team size must be at least 2",
       "teamSizeMaxLessThanMin": "Max must be ≥ min team size"
+    },
+    "recurrence": {
+      "title": "Repeat",
+      "description": "Every edition is created automatically when the previous one ends.",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "every": "Every",
+      "intervalWeeks_one": "week",
+      "intervalWeeks_other": "weeks",
+      "intervalMonths_one": "month",
+      "intervalMonths_other": "months",
+      "monthlyDay": "On day {{day}}",
+      "monthlyWeekday": "{{nth}} {{weekday}}",
+      "nth": {
+        "1": "1st",
+        "2": "2nd",
+        "3": "3rd",
+        "4": "4th",
+        "last": "Last"
+      },
+      "ends": "Ends",
+      "endNever": "Never",
+      "endCount": "After",
+      "endUntil": "On date",
+      "countLabel": "Number of editions (incl. this one)",
+      "registrationOpens": "Registration opens (days before each edition)",
+      "registrationOpensPlaceholder": "Empty = as soon as the edition exists",
+      "copiedHint": "Each edition copies this event: route, rewards, limits, team and commentary settings. Sponsored prizes are not copied.",
+      "errors": {
+        "noWeekday": "Pick at least one day of the week.",
+        "startNotOnRule": "The start date must fall on one of the selected days.",
+        "count": "Number of editions must be between 2 and 520.",
+        "until": "The end date must be after the first edition.",
+        "registration": "Registration can open 1–365 days before."
+      }
+    },
+    "series": {
+      "title": "Recurring event",
+      "edition": "Edition #{{number}} of a series",
+      "status": {
+        "active": "Active",
+        "paused": "Paused",
+        "ended": "Ended"
+      },
+      "next": "Next edition: {{date}}",
+      "thisEditionOnly": "Changes in this form apply to this edition only.",
+      "pause": "Pause series",
+      "resume": "Resume series",
+      "end": "End series",
+      "endTitle": "End the series?",
+      "endBody": "No more editions will be created and the upcoming one will be cancelled. Past editions and their results stay.",
+      "actionFailed": "Could not update the series."
     }
   },
   "permissions": {

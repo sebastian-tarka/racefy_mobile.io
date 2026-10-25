@@ -105,6 +105,12 @@ export interface Event {
   // Route planning
   route_id?: number | null;
   route?: PlannedRoute | null;
+  // Recurring series — absent / null for one-off events
+  series_id?: number | null;
+  /** 1-based edition number within the series. */
+  occurrence_number?: number | null;
+  /** Present when the API loaded the relation (index, show — not the PUT response). */
+  series?: EventSeriesSummary | null;
   // Registration status
   is_registration_open?: boolean; // DEPRECATED: Use registration_eligibility instead
   is_full?: boolean;
@@ -227,6 +233,8 @@ export interface CreateEventRequest {
   point_rewards?: EventPointRewards;
   // Route planning
   route_id?: number | null;
+  /** Makes this event edition #1 of a series (Plus/Pro). `starts_at` must be a rule date. */
+  recurrence?: RecurrenceInput;
 }
 
 export interface UpdateEventRequest {
@@ -468,4 +476,42 @@ export interface EventPointsBudget {
   is_sponsored: boolean;
   effective_distance: number;
   effective_elevation: number;
+}
+
+// ============ EVENT SERIES (recurring events) ============
+
+/** `recurrence` of POST /events. Not an RRULE — the API's own small rule object. */
+export interface RecurrenceInput {
+  frequency: 'weekly' | 'monthly';
+  /** Every N weeks / months, 1-12. */
+  interval?: number;
+  /** 0 = Sunday … 6 = Saturday. */
+  by_weekday?: number[];
+  /** Monthly by weekday: 1-4, -1 = last. Needs exactly one `by_weekday`. */
+  week_of_month?: 1 | 2 | 3 | 4 | -1;
+  /** Monthly by date, 1-31 (clamped to short months). */
+  day_of_month?: number;
+  /** Y-m-d, inclusive. */
+  until?: string;
+  /** Total editions including the first, 2-520. */
+  count?: number;
+  skip_dates?: string[];
+  /** IANA zone the rule is evaluated in — keeps the start time across DST. */
+  timezone?: string;
+  /** Omit to open registration as soon as an edition exists. */
+  registration_opens_days_before?: number;
+}
+
+export type EventSeriesStatus = 'active' | 'paused' | 'ended';
+
+/** Short form embedded in Event.series. */
+export interface EventSeriesSummary {
+  id: number;
+  slug: string;
+  title_pattern: string;
+  status: EventSeriesStatus;
+  frequency: 'weekly' | 'monthly';
+  /** Localized, e.g. "Every Saturday at 10:00". */
+  summary: string;
+  next_occurrence_at: string | null;
 }

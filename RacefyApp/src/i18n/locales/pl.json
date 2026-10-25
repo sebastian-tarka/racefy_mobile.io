@@ -1456,6 +1456,62 @@
       "teamSizeMinRequired": "Min. liczba w drużynie musi wynosić co najmniej 2",
       "teamSizeMaxRequired": "Maks. liczba w drużynie musi wynosić co najmniej 2",
       "teamSizeMaxLessThanMin": "Maks. musi być ≥ min. liczba w drużynie"
+    },
+    "recurrence": {
+      "title": "Powtarzanie",
+      "description": "Każda kolejna edycja tworzy się sama, gdy poprzednia się skończy.",
+      "weekly": "Co tydzień",
+      "monthly": "Co miesiąc",
+      "every": "Co",
+      "intervalWeeks_one": "tydzień",
+      "intervalWeeks_few": "tygodnie",
+      "intervalWeeks_many": "tygodni",
+      "intervalWeeks_other": "tygodnia",
+      "intervalMonths_one": "miesiąc",
+      "intervalMonths_few": "miesiące",
+      "intervalMonths_many": "miesięcy",
+      "intervalMonths_other": "miesiąca",
+      "monthlyDay": "{{day}}. dnia miesiąca",
+      "monthlyWeekday": "{{weekday}} w {{nth}} tygodniu",
+      "nth": {
+        "1": "1.",
+        "2": "2.",
+        "3": "3.",
+        "4": "4.",
+        "last": "ostatnim"
+      },
+      "ends": "Koniec",
+      "endNever": "Nigdy",
+      "endCount": "Po liczbie",
+      "endUntil": "W dniu",
+      "countLabel": "Liczba edycji (z tą włącznie)",
+      "registrationOpens": "Zapisy otwierają się (dni przed każdą edycją)",
+      "registrationOpensPlaceholder": "Puste = od razu po utworzeniu edycji",
+      "copiedHint": "Każda edycja kopiuje ten event: trasę, nagrody, limity, ustawienia drużyn i komentarza. Nagrody sponsorowane nie są kopiowane.",
+      "errors": {
+        "noWeekday": "Wybierz co najmniej jeden dzień tygodnia.",
+        "startNotOnRule": "Data startu musi wypadać w jeden z wybranych dni.",
+        "count": "Liczba edycji musi być od 2 do 520.",
+        "until": "Data końca musi być po pierwszej edycji.",
+        "registration": "Zapisy mogą otwierać się od 1 do 365 dni wcześniej."
+      }
+    },
+    "series": {
+      "title": "Wydarzenie cykliczne",
+      "edition": "Edycja #{{number}} serii",
+      "status": {
+        "active": "Aktywna",
+        "paused": "Wstrzymana",
+        "ended": "Zakończona"
+      },
+      "next": "Następna edycja: {{date}}",
+      "thisEditionOnly": "Zmiany w tym formularzu dotyczą tylko tej edycji.",
+      "pause": "Wstrzymaj serię",
+      "resume": "Wznów serię",
+      "end": "Zakończ serię",
+      "endTitle": "Zakończyć serię?",
+      "endBody": "Kolejne edycje nie będą tworzone, a nadchodząca zostanie odwołana. Poprzednie edycje i ich wyniki zostają.",
+      "actionFailed": "Nie udało się zmienić serii."
     }
   },
   "permissions": {

@@ -11,3 +11,5 @@ export * from './EventScoreboard';
 export * from './CommentaryPreviewCard';
 export * from './EventStakes';
 export * from './EventRewardsCard';
+export * from './RecurrenceSection';
+export * from './EventSeriesCard';

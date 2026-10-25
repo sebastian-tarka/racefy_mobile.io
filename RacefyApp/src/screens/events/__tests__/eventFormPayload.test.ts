@@ -310,12 +310,15 @@ describe('mapEventApiErrors', () => {
         'point_rewards.first_place': ['Too many'],
         'point_rewards.finisher': ['Too many'],
         'point_rewards.total': ['Budget'],
+        'recurrence.by_weekday': ['Pick a day'],
+        'recurrence.count': ['Too many'],
       }),
     ).toStrictEqual({
       title: ['Required'],
       point_rewards_first: ['Too many'],
       point_rewards_finisher: ['Too many'],
       point_rewards_total: ['Budget'],
+      recurrence: ['Pick a day'],
     });
   });
 });
