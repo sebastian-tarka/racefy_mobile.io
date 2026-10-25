@@ -194,8 +194,7 @@ describe('eventToFormData', () => {
     sport_type: { id: 4 },
     location_name: 'Park',
     ranking_mode: 'fastest_time',
-    latitude: 52.1,
-    longitude: 21.0,
+    coordinates: [21.0, 52.1],
     starts_at: STARTS,
     ends_at: ENDS,
     registration_opens_at: null,
@@ -263,6 +262,29 @@ describe('eventToFormData', () => {
       max_participants: 100,
       auto_finalize_results: false,
       point_rewards: { first_place: 500 },
+    });
+  });
+});
+
+describe('coordinates', () => {
+  const noPin = { ...minimalForm, latitude: null, longitude: null };
+
+  it('create leaves out a location that was never picked', () => {
+    const payload = wire(buildCreateEventPayload(noPin, { entryFeeEnabled: true }));
+    expect(payload).not.toHaveProperty('latitude');
+    expect(payload).not.toHaveProperty('longitude');
+  });
+
+  it('update clears it with null', () => {
+    const payload = buildUpdateEventPayload(noPin, { entryFeeEnabled: true });
+    expect(payload.latitude).toBeNull();
+    expect(payload.longitude).toBeNull();
+  });
+
+  it('reads [lng, lat] from the API and treats a missing pair as no location', () => {
+    expect(eventToFormData({ coordinates: null } as unknown as Event)).toMatchObject({
+      latitude: null,
+      longitude: null,
     });
   });
 });

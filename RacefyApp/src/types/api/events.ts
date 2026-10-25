@@ -51,9 +51,8 @@ export interface Event {
   slug_expires_at?: string;
   friendly_url?: string;
   location_name: string;
-  latitude: number;
-  longitude: number;
-  coordinates?: [number, number];
+  /** [lng, lat]; null when the event has no location (the API maps 0/0 to null). */
+  coordinates?: [number, number] | null;
   starts_at: string;
   ends_at: string;
   registration_opens_at: string | null;
@@ -238,8 +237,8 @@ export interface UpdateEventRequest {
   // Event fields (restricted for ongoing/completed)
   sport_type_id?: number;
   location_name?: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null;
+  longitude?: number | null;
   starts_at?: string;
   ends_at?: string;
   registration_opens_at?: string | null;

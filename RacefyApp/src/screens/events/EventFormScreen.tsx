@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import {
   CommentarySettingsSection,
   DatePickerSheet,
   DifficultySelector,
+  EventLocationPicker,
   ImagePickerButton,
   Input,
   MediaPicker,
@@ -31,13 +32,22 @@ import {
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
+import { reverseGeocode } from '../../services/geocoding';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { fontSize, spacing, msFont } from '../../theme';
-import { ApiError, Event, EventTeamScoring, EventVisibility, MediaItem } from '../../types/api';
+import {
+  ApiError,
+  Event,
+  EventTeamScoring,
+  EventVisibility,
+  GeoJSONLineString,
+  MediaItem,
+} from '../../types/api';
+import type { EventLocation } from '../../components';
 import { getFieldError } from '../../utils/getFieldError';
 import {
   buildDefaultCommentarySettings,
@@ -86,13 +96,48 @@ export function EventFormScreen({ navigation, route }: Props) {
   const [pointsBudgetValid, setPointsBudgetValid] = useState(true);
   const [pointsBudgetPrereqReady, setPointsBudgetPrereqReady] = useState(false);
 
-  // Listen for route selection from RouteLibrary
+  // Geometry of the attached route — the location picker draws it and takes the start from it
+  const [routeGeometry, setRouteGeometry] = useState<GeoJSONLineString | null>(null);
+
+  const updateLocation = useCallback((patch: Partial<EventLocation>) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...(patch.name !== undefined ? { location_name: patch.name } : {}),
+      ...(patch.latitude !== undefined ? { latitude: patch.latitude } : {}),
+      ...(patch.longitude !== undefined ? { longitude: patch.longitude } : {}),
+    }));
+    if (patch.name) {
+      setErrors((prev) => {
+        if (!prev.location_name) return prev;
+        const { location_name: _cleared, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, []);
+
+  // Listen for route selection from RouteLibrary: the event starts where the route starts
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('route:selected', (routeId: number) => {
+    const sub = DeviceEventEmitter.addListener('route:selected', async (routeId: number) => {
       setFormData((prev) => ({ ...prev, route_id: routeId }));
+      try {
+        const route = await api.getRoute(routeId);
+        const start = route.geometry?.coordinates[0];
+        setRouteGeometry(route.geometry ?? null);
+        if (!start) return;
+        updateLocation({ latitude: start[1], longitude: start[0] });
+        const name = await reverseGeocode(start[1], start[0]);
+        updateLocation({ name: name || route.title });
+      } catch (error) {
+        logger.warn('api', 'Could not load the selected route', { error, routeId });
+      }
     });
     return () => sub.remove();
-  }, []);
+  }, [updateLocation]);
+
+  const detachRoute = () => {
+    updateField('route_id', null);
+    setRouteGeometry(null);
+  };
 
   // Tab state
   type EventFormTab = 'basic' | 'scoring' | 'rewards' | 'team' | 'ai';
@@ -247,6 +292,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   const populateForm = (event: Event) => {
     setEventStatus(event.status);
     setFormData(eventToFormData(event));
+    setRouteGeometry(event.route_id ? (event.route?.geometry ?? null) : null);
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
   };
 
@@ -719,7 +765,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                           {t('eventForm.routeAttached', 'Route attached')}
                         </Text>
                       </View>
-                      <TouchableOpacity onPress={() => updateField('route_id', null)}>
+                      <TouchableOpacity onPress={detachRoute}>
                         <Ionicons name="close-circle" size={22} color={colors.textSecondary} />
                       </TouchableOpacity>
                     </View>
@@ -825,16 +871,17 @@ export function EventFormScreen({ navigation, route }: Props) {
 
           {activeTab === 'basic' && (
             <>
-              {/* Location */}
-              <Input
-                label={t('eventForm.location')}
-                placeholder={t('eventForm.locationPlaceholder')}
-                value={formData.location_name}
-                onChangeText={(text) => updateField('location_name', text)}
+              {/* Location — search, map pin, or the start of the attached route */}
+              <EventLocationPicker
+                value={{
+                  name: formData.location_name,
+                  latitude: formData.latitude,
+                  longitude: formData.longitude,
+                }}
+                onChange={updateLocation}
+                routeGeometry={formData.route_id ? routeGeometry : null}
                 error={errors.location_name}
-                leftIcon="location-outline"
-                editable={!isLimitedEdit}
-                style={isLimitedEdit ? { opacity: 0.6 } : undefined}
+                disabled={isLimitedEdit}
               />
 
               {/* Start Date */}

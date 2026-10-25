@@ -56,8 +56,9 @@ export interface FormData {
   sport_type_id: number | null;
   ranking_mode?: EventRankingMode;
   location_name: string;
-  latitude: number;
-  longitude: number;
+  /** null until picked on the map, from a suggestion or from the route start. */
+  latitude: number | null;
+  longitude: number | null;
   starts_at: Date;
   ends_at: Date;
   registration_opens_at: Date | null;
@@ -99,8 +100,8 @@ export const initialFormData: FormData = {
   sport_type_id: null,
   ranking_mode: 'fastest_time',
   location_name: '',
-  latitude: 0,
-  longitude: 0,
+  latitude: null,
+  longitude: null,
   starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
   ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
   registration_opens_at: null,
