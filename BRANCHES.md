@@ -15,6 +15,13 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### Wydarzenia cykliczne w formularzu eventu (`event-series`, od 2026-10-25, odgałęziony od `event-location`)
+
+Tworzenie: sekcja „Powtarzanie” (co tydzień / co miesiąc, koniec po N edycjach lub w dniu, Plus/Pro),
+walidacja daty startu względem reguły. Edycja edycji serii: karta serii z pauzą / wznowieniem /
+zakończeniem; zmiany w formularzu dotyczą tylko tej edycji (API nie edytuje reguły). Mergować **po**
+`event-location`. Lista weryfikacji — przy mergu.
+
 ### Lokalizacja eventu z mapy i z trasy (`event-location`, od 2026-10-25, odgałęziony od `audyt-etap6`)
 
 Formularz eventu: wyszukiwanie miejsca (podpowiedzi Mapbox jak w SPA), mapa z pinezką (stuknięcie →
