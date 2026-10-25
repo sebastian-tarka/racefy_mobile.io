@@ -15,7 +15,16 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Insights: zakres, tygodnie per sport, heatmapa (`insights-redesign`, od 2026-10-25)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Insights: zakres, tygodnie per sport, heatmapa (zmergowane 2026-10-25, `insights-redesign`, tag `pre-insights-redesign` = main sprzed merge)
 
 API (`GET /insights?range=`, `GET /insights/weekly`, `streak_data.active_days`) jest na prod od v1.3.8.
 
@@ -27,14 +36,6 @@ Do sprawdzenia na telefonie:
 - [ ] Heatmapa w karcie serii: ikony sportów, „+N”, dzisiejszy dzień obrysowany, tapnięcie dnia →
       lista aktywności → ekran aktywności
 - [ ] Mały ekran (szerokość 320) i duża czcionka systemowa — heatmapa i słupki się mieszczą; ciemny motyw
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Plakietki „nowe od ostatniej wizyty” (zmergowane 2026-10-25, `nav-badges`, tag `pre-nav-badges-period` = main sprzed merge)
 
