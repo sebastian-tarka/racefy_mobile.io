@@ -15,11 +15,25 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt, etap 6: typy + `EventFormScreen` (`audyt-etap6`, od 2026-10-25)
+### Audyt, etap 6: typy, błędy, query, formularz eventu (`audyt-etap6`, od 2026-10-25)
 
-Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`: podział `types/api.ts` na moduły, zmiana nazwy
-kolidującego `WorkoutPlan` (konfigurator), `catch (e: unknown)`, `withQuery()`, payload formularza
-eventu w czystych funkcjach z testami. Lista weryfikacji — przy mergu.
+Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, ESLint 97 (zapadka bez zmian), knip 0, jest 497/497.
+
+- `types/api.ts` (3961 linii) → `types/api/` (24 pliki wg domen + `index.ts`); importy bez zmian,
+  usunięte 11 nieużywanych typów. Typ konfiguratora treningu `WorkoutPlan` → `GuidedWorkout`.
+- 153× `catch (e: any)` → `unknown` + `utils/errors.ts` (`isApiError`, `getErrorMessage`, `getErrorStatus`,
+  `getErrorCode`). Warunki na polach błędu API wymagają teraz liczbowego `status`.
+- `withQuery()` w 29 miejscach mixinów; bez parametrów URL nie kończy się już pustym `?`.
+- Formularz eventu: payload create/update w `eventFormPayload.ts` z testami (zachowany 1:1).
+
+Do sprawdzenia na telefonie:
+- [ ] Event: utworzenie (z i bez opłaty, nagród, drużyn), edycja z wyczyszczeniem pól (limit, dystans,
+      rejestracja) — po zapisie pola puste; błąd walidacji z API przełącza na właściwą zakładkę
+- [ ] Komunikaty błędów API nadal czytelne: logowanie złym hasłem, rejestracja zajętym e-mailem,
+      limit celów (Free), błąd 422 w formularzach siłowni
+- [ ] Listy z filtrami: aktywności, eventy, trasy (w tym wyszukiwanie), drużyny, feedback, statystyki
+- [ ] Usunięcie aktywności podpiętej do planu treningowego — alert z planem jak wcześniej
+- [ ] Przerwa techniczna (503) i wymagana aktualizacja nadal pokazują swoje ekrany
 
 ---
 
