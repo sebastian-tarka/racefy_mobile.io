@@ -25,6 +25,7 @@ Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, ESLint 97 (zapadka bez zmian
   `getErrorCode`). Warunki na polach błędu API wymagają teraz liczbowego `status`.
 - `withQuery()` w 29 miejscach mixinów; bez parametrów URL nie kończy się już pustym `?`.
 - Formularz eventu: payload create/update w `eventFormPayload.ts` z testami (zachowany 1:1).
+- Daty w języku aplikacji (`utils/dateFormat.ts`), nie telefonu — ~45 miejsc; formularz eventu bez „Anuluj”.
 
 Do sprawdzenia na telefonie:
 - [ ] Event: utworzenie (z i bez opłaty, nagród, drużyn), edycja z wyczyszczeniem pól (limit, dystans,
@@ -34,6 +35,10 @@ Do sprawdzenia na telefonie:
 - [ ] Listy z filtrami: aktywności, eventy, trasy (w tym wyszukiwanie), drużyny, feedback, statystyki
 - [ ] Usunięcie aktywności podpiętej do planu treningowego — alert z planem jak wcześniej
 - [ ] Przerwa techniczna (503) i wymagana aktualizacja nadal pokazują swoje ekrany
+- [ ] Język aplikacji ≠ język telefonu (np. PL w aplikacji, EN w telefonie): daty po polsku i w 24 h
+      w formularzu eventu, karcie eventu, feedzie („5 minut temu”), czacie, powiadomieniach, aktywności
+- [ ] Angielski w aplikacji: daty po angielsku z AM/PM; hiszpański — po hiszpańsku
+- [ ] Formularz eventu: na dole tylko „Utwórz”/„Zapisz”, wyjście strzałką w nagłówku
 
 ---
 
