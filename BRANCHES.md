@@ -15,7 +15,30 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Plakietki „nowe od ostatniej wizyty” (`nav-badges`, od 2026-10-25; zawiera `event-period-challenges`)
+
+`GET /me/badges` + `POST /me/badges/seen` (API v1.3.8, już na prod). Branch jest odgałęziony od
+`event-period-challenges` — merge `nav-badges` wnosi oba.
+
+Do sprawdzenia na telefonie:
+- [ ] Nowe publiczne wydarzenie innej osoby → licznik na zakładce Wydarzenia; wejście w nią go czyści
+      (także na webie po odświeżeniu)
+- [ ] Nowa aktywność (nagrana/zsynchronizowana) → licznik na zakładce Profil i przy zakładce Aktywności;
+      otwarcie zakładki Aktywności czyści
+- [ ] Gotowy raport AI / zakończony okres celu → liczniki przy Raportach AI / Celach, wejście czyści
+- [ ] Odpowiedź admina na feedback → kropka na przycisku ustawień, „N nowe” przy „Feedback i błędy”
+- [ ] Trwająca sesja siłowa → „LIVE” przy Planach siłowych
+- [ ] Wylogowanie chowa wszystkie liczniki; ciemny motyw
+
+### Wyzwania okresowe w formularzu i na ekranie wydarzenia (`event-period-challenges`, od 2026-10-25)
+
+Do sprawdzenia na telefonie:
+- [ ] Formularz: ranking „najwięcej km/przewyższenia” + wiele aktywności, bez dystansu → pula punktów
+      liczona („Pula z długości wyzwania: N dni”), nagrody da się ustawić i zapisać
+- [ ] Zwykły bieg z dystansem — pula jak dotąd
+- [ ] Szczegóły takiego wydarzenia: notka „liczy się automatycznie” (zapisany / niezapisany), znika
+      po finalizacji wyników
+
 
 ---
 
