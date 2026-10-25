@@ -3490,7 +3490,14 @@
       "next": "Next · {{name}}",
       "prevExercise": "Previous exercise",
       "setColumn": "Set",
-      "skipExercise": "Skip · {{name}}"
+      "skipExercise": "Skip · {{name}}",
+      "offline": {
+        "pending_one": "Offline · {{count}} change waiting",
+        "pending_other": "Offline · {{count}} changes waiting",
+        "completeQueued": "Workout saved on your phone. We'll send it and add the activity once you're back online.",
+        "addSet": "Adding a set needs an internet connection. You can keep logging the other sets offline.",
+        "skip": "You can't skip a workout offline — some sets are still waiting to be sent."
+      }
     },
     "complete": {
       "title": "Finish workout",

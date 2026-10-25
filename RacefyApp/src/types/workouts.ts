@@ -367,6 +367,11 @@ export interface WorkoutSessionCompleteInput {
   rpe?: number;
   notes?: string | null;
   visibility?: ActivityVisibility;
+  /**
+   * ISO time "Finish" was tapped — set when the call was queued offline and
+   * goes out later. Without it the server stamps its own now().
+   */
+  completed_at?: string;
 }
 
 export interface WorkoutSessionCompleteResponse {

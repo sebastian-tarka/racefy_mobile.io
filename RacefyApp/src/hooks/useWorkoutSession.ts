@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
+import i18n from '../i18n';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { emitRefresh } from '../services/refreshEvents';
+import type { OutboxEvent, StrengthOp } from '../services/strength/sessionOutbox';
+import { STRENGTH_OUTBOX_EVENT, strengthOutbox } from '../services/strength/strengthOutbox';
 import type {
   WorkoutSession,
   WorkoutSessionAddSetInput,
   WorkoutSessionCompleteInput,
-  WorkoutSessionCompleteResponse,
   WorkoutSessionSet,
   WorkoutSessionSetUpdate,
   WorkoutSessionStats,
 } from '../types/workouts';
-import { getErrorMessage } from '../utils/errors';
+import { getErrorMessage, getErrorStatus } from '../utils/errors';
 
 export interface SetValues {
   weightKg?: number | null;
@@ -28,36 +31,100 @@ export interface RestState {
   seconds: number;
 }
 
+export type CompleteOutcome =
+  | { queued: false; activityId: number | null }
+  /** No network: the session is closed on the phone and goes out with the queue. */
+  | { queued: true };
+
+/** What the server would count — the phone counts it itself so it stays right offline. */
+function computeStats(exercises: WorkoutSession['exercises']): WorkoutSessionStats | undefined {
+  if (!exercises) return undefined;
+  const sets = exercises.flatMap((ex) => ex.sets);
+  const done = sets.filter((x) => x.is_completed);
+  const volume = done.reduce((sum, x) => sum + (x.weight_kg ?? 0) * (x.reps ?? 0), 0);
+  return {
+    sets_total: sets.length,
+    sets_completed: done.length,
+    volume_kg: Math.round(volume * 10) / 10,
+    exercises: new Set(sets.map((x) => x.exercise_order)).size,
+  };
+}
+
+function isNetworkFailure(error: unknown): boolean {
+  const status = getErrorStatus(error);
+  return status == null || status >= 500 || status === 429;
+}
+
 /**
- * State for one in-progress session: the checklist, the serial request queue
- * for set updates (the athlete taps faster than the network answers), the
- * rest timer, and completion / skip.
+ * State for one in-progress session: the checklist, the rest timer, and
+ * completion / skip.
  *
- * Every set mutation is optimistic — the row changes at once, the PUT goes
- * out in order, and a failure rolls the row back and surfaces the message.
+ * Every set change is optimistic and goes through the strength outbox
+ * (services/strength/sessionOutbox): the row changes at once, the request is
+ * queued on disk and sent in order. Without a network the queue simply waits —
+ * the athlete keeps going, and "Finish" closes the session on the phone and
+ * sends it when the connection is back. A change the server refuses (4xx) is
+ * reported and the session is reloaded from the server.
  */
 export function useWorkoutSession(sessionId: number, onError: (message: string) => void) {
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [rest, setRest] = useState<RestState | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [pendingCount, setPendingCount] = useState(
+    () => strengthOutbox.pendingOps(sessionId).length,
+  );
   const sessionRef = useRef<WorkoutSession | null>(null);
-  const queueRef = useRef<Promise<unknown>>(Promise.resolve());
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  /** The complete op's fate, read by complete() once the flush returns. */
+  const completionRef = useRef<{ activityId: number | null } | { rejected: string } | null>(null);
+  /** Bumped on every local change, so a server answer older than it is ignored. */
+  const localEditsRef = useRef(0);
 
-  const commit = useCallback((next: WorkoutSession | null) => {
-    sessionRef.current = next;
-    setSession(next);
-  }, []);
+  const commit = useCallback(
+    (next: WorkoutSession | null) => {
+      const withStats = next?.exercises ? { ...next, stats: computeStats(next.exercises) } : next;
+      sessionRef.current = withStats;
+      setSession(withStats);
+      if (!withStats) return;
+      // Keep the phone's copy of the open session (and of one closed offline) —
+      // it is what the screen shows when the server cannot be reached.
+      if (withStats.status === 'in_progress' || strengthOutbox.hasPendingComplete(sessionId)) {
+        strengthOutbox.saveSnapshot(withStats);
+      } else {
+        strengthOutbox.clearSnapshot(sessionId);
+      }
+    },
+    [sessionId],
+  );
 
-  /** Reload from the server (also restores the rest timer from rest_started_at). */
+  /**
+   * Load the session. The phone's copy (if this is the session it holds) shows
+   * at once — reopening offline, or on a network that hangs, must not wait for
+   * a request. Queued changes go out next; while any are still waiting the
+   * phone's copy stays the truth, otherwise the server's answer replaces it —
+   * unless the athlete changed something while that answer was on its way.
+   * Also restores the rest timer from rest_started_at.
+   */
   const reload = useCallback(async () => {
+    const stored = strengthOutbox.readSnapshot();
+    const snapshot = stored?.id === sessionId ? stored : null;
+    if (snapshot) {
+      commit(snapshot);
+      restoreRest(snapshot, setRest);
+      setIsLoading(false);
+    }
     try {
+      if (strengthOutbox.hasPending(sessionId)) await strengthOutbox.flush();
+      if (snapshot && strengthOutbox.hasPending(sessionId)) return;
+      const editsBefore = localEditsRef.current;
       const fresh = await api.getWorkoutSession(sessionId);
+      if (localEditsRef.current !== editsBefore || strengthOutbox.hasPending(sessionId)) return;
       commit(fresh);
       restoreRest(fresh, setRest);
     } catch (error) {
+      if (snapshot && isNetworkFailure(error)) return;
       logger.error('api', 'Failed to load workout session', {
         sessionId,
         error: getErrorMessage(error),
@@ -72,6 +139,30 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     void reload();
   }, [reload]);
 
+  // What the outbox reports back: queue size, refusals, a completion sent later.
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(STRENGTH_OUTBOX_EVENT, (e: OutboxEvent) => {
+      if (e.type === 'changed') {
+        setPendingCount(strengthOutbox.pendingOps(sessionId).length);
+        return;
+      }
+      if (e.sessionId !== sessionId) return;
+      if (e.type === 'completed') {
+        completionRef.current = { activityId: e.activityId };
+        commit(e.session);
+        return;
+      }
+      // Refused: the phone's version is wrong somewhere — take the server's.
+      if (e.op.kind === 'complete') {
+        completionRef.current = { rejected: e.message };
+      } else {
+        onErrorRef.current(e.message);
+      }
+      void reload();
+    });
+    return () => sub.remove();
+  }, [sessionId, commit, reload]);
+
   // 1 s clock for the stopwatch and the rest countdown.
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -80,12 +171,11 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
 
   /** Apply a change to one set locally. */
   const patchSet = useCallback(
-    (setId: number, patch: Partial<WorkoutSessionSet>, stats?: WorkoutSessionStats) => {
+    (setId: number, patch: Partial<WorkoutSessionSet>) => {
       const current = sessionRef.current;
       if (!current?.exercises) return;
       commit({
         ...current,
-        stats: stats ?? current.stats,
         exercises: current.exercises.map((ex) => ({
           ...ex,
           sets: ex.sets.map((s) => (s.id === setId ? { ...s, ...patch } : s)),
@@ -103,24 +193,24 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     return null;
   }, []);
 
-  /** Serialise a set update: optimistic patch, queued PUT, rollback on failure. */
+  /** Queue an op and try to send it; without a network it waits in the outbox. */
+  const send = useCallback(
+    (op: StrengthOp) => {
+      localEditsRef.current += 1;
+      strengthOutbox.enqueue(sessionId, op);
+      void strengthOutbox.flush();
+    },
+    [sessionId],
+  );
+
+  /** A set update: optimistic patch, then the PUT through the outbox. */
   const enqueueSetUpdate = useCallback(
     (setId: number, optimistic: Partial<WorkoutSessionSet>, body: WorkoutSessionSetUpdate) => {
-      const before = findSet(setId);
-      if (!before) return;
+      if (!findSet(setId)) return;
       patchSet(setId, optimistic);
-      queueRef.current = queueRef.current
-        .then(async () => {
-          const res = await api.updateWorkoutSessionSet(setId, body);
-          patchSet(setId, res.data, res.stats);
-        })
-        .catch((error: any) => {
-          patchSet(setId, before);
-          logger.warn('api', 'Set update failed, rolled back', { setId, error: error.message });
-          onErrorRef.current(error.message);
-        });
+      send({ kind: 'set', setId, body });
     },
-    [findSet, patchSet],
+    [findSet, patchSet, send],
   );
 
   const startSet = useCallback(
@@ -182,16 +272,11 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
       const r = rest;
       setRest(null);
       if (!r) return;
-      queueRef.current = queueRef.current
-        .then(() =>
-          api.updateWorkoutSessionSet(r.setId, {
-            rest_seconds: Math.max(0, Math.round(actualSeconds)),
-          }),
-        )
-        .then((res) => patchSet(r.setId, res.data, res.stats))
-        .catch(() => {});
+      const restSeconds = Math.max(0, Math.round(actualSeconds));
+      patchSet(r.setId, { rest_seconds: restSeconds });
+      send({ kind: 'set', setId: r.setId, body: { rest_seconds: restSeconds } });
     },
-    [rest, patchSet],
+    [rest, patchSet, send],
   );
 
   const extendRest = useCallback((seconds: number) => {
@@ -200,9 +285,15 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     );
   }, []);
 
+  /**
+   * Adding a set needs the server — it hands out the set's id, which every later
+   * change refers to — so this one stays online-only.
+   */
   const addSet = useCallback(
     async (input: WorkoutSessionAddSetInput) => {
       try {
+        // Earlier changes first, so the new set lands after them.
+        await strengthOutbox.flush();
         const created = await api.addWorkoutSessionSet(sessionId, input);
         const current = sessionRef.current;
         if (!current?.exercises) return;
@@ -210,9 +301,6 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
         if (exists) {
           commit({
             ...current,
-            stats: current.stats
-              ? { ...current.stats, sets_total: current.stats.sets_total + 1 }
-              : current.stats,
             exercises: current.exercises.map((ex) =>
               ex.exercise_order === created.exercise_order
                 ? {
@@ -228,7 +316,11 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
           await reload();
         }
       } catch (error) {
-        onErrorRef.current(getErrorMessage(error));
+        onErrorRef.current(
+          isNetworkFailure(error)
+            ? i18n.t('strengthPlans.session.offline.addSet')
+            : getErrorMessage(error),
+        );
       }
     },
     [sessionId, commit, reload],
@@ -238,44 +330,63 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     async (setId: number) => {
       const current = sessionRef.current;
       if (!current?.exercises) return;
-      const before = current;
       commit({
         ...current,
-        stats: current.stats
-          ? { ...current.stats, sets_total: Math.max(0, current.stats.sets_total - 1) }
-          : current.stats,
         exercises: current.exercises.map((ex) => ({
           ...ex,
           sets: ex.sets.filter((s) => s.id !== setId),
         })),
       });
-      try {
-        await api.deleteWorkoutSessionSet(setId);
-      } catch (error) {
-        commit(before);
-        onErrorRef.current(getErrorMessage(error));
-      }
+      send({ kind: 'delete', setId });
     },
-    [commit],
+    [commit, send],
   );
 
+  /**
+   * Close the session. The complete call goes out behind every queued set
+   * change, so the activity is built from the full log. Without a network it
+   * stays queued — the session is closed on the phone, stamped with this
+   * moment, and the outbox runner delivers it later.
+   */
   const complete = useCallback(
-    async (input: WorkoutSessionCompleteInput): Promise<WorkoutSessionCompleteResponse> => {
-      // Let queued set updates land first so the activity description is complete.
-      await queueRef.current.catch(() => {});
-      const res = await api.completeWorkoutSession(sessionId, input);
-      commit(res.data);
+    async (input: WorkoutSessionCompleteInput): Promise<CompleteOutcome> => {
+      const completedAt = new Date().toISOString();
+      completionRef.current = null;
+      strengthOutbox.enqueue(sessionId, {
+        kind: 'complete',
+        input: { ...input, completed_at: completedAt },
+      });
+      await strengthOutbox.flush();
       setRest(null);
-      emitRefresh('workouts');
-      emitRefresh('activities');
-      return res;
+      const fate = completionRef.current as
+        | { activityId: number | null }
+        | { rejected: string }
+        | null;
+      if (fate && 'rejected' in fate) throw new Error(fate.rejected);
+      if (fate) return { queued: false, activityId: fate.activityId };
+      const current = sessionRef.current;
+      if (current) {
+        commit({
+          ...current,
+          status: 'completed',
+          completed_at: completedAt,
+          duration_seconds: input.duration_seconds ?? current.duration_seconds,
+          rpe: input.rpe ?? current.rpe,
+          notes: input.notes !== undefined ? input.notes : current.notes,
+        });
+      }
+      return { queued: true };
     },
     [sessionId, commit],
   );
 
+  /** Skipping is online-only: it would otherwise race the queued sets it discards. */
   const skip = useCallback(
     async (notes?: string) => {
-      await queueRef.current.catch(() => {});
+      await strengthOutbox.flush();
+      if (strengthOutbox.hasPending(sessionId)) {
+        throw new Error(i18n.t('strengthPlans.session.offline.skip'));
+      }
       const res = await api.skipWorkoutSession(sessionId, notes);
       commit(res);
       setRest(null);
@@ -311,6 +422,8 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     activeSetId,
     rest,
     restRemaining,
+    /** Changes still waiting for the network. */
+    pendingCount,
     startSet,
     completeSet,
     reopenSet,
