@@ -279,6 +279,27 @@
       "movedDown_one": "Down {{count}} place this week",
       "movedDown_other": "Down {{count}} places this week",
       "rankNow": "#{{rank}} with {{points}} pts — see who is close"
+    },
+    "strength": {
+      "eyebrow": "Strength",
+      "eyebrowToday": "Strength · today",
+      "eyebrowNext": "Strength · next, {{when}} · start early",
+      "tomorrow": "tomorrow",
+      "noneTitle": "No session scheduled today",
+      "noneBody": "Start a session anyway or open your plan",
+      "another": "Another session or plan",
+      "exercises_one": "{{count}} exercise",
+      "exercises_other": "{{count}} exercises",
+      "sets_one": "{{count}} set",
+      "sets_other": "{{count}} sets",
+      "minutes_one": "~{{count}} min",
+      "minutes_other": "~{{count}} min"
+    },
+    "friendsToday": {
+      "title": "Friends today",
+      "seeFeed": "See feed",
+      "seeFeedMore_one": "+{{count}} in feed",
+      "seeFeedMore_other": "+{{count}} in feed"
     }
   },
   "network": {

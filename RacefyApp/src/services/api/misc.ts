@@ -147,6 +147,11 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return this.request<Types.HomeConfigResponse>('/home/config');
     }
 
+    /** Latest activity of each followed athlete today (Home "Friends today"). */
+    async getFriendsToday(limit = 3): Promise<Types.FriendsTodayResponse> {
+      return this.request<Types.FriendsTodayResponse>(withQuery('/home/friends-today', { limit }));
+    }
+
     // ============ APP CONFIG (Public) ============
 
     /**

@@ -6,6 +6,8 @@ export { LiveActivityBanner } from './LiveActivityBanner';
 export { WeeklyStreakCard } from './WeeklyStreakCard';
 export { CollapsibleTipCard } from './CollapsibleTipCard';
 export { LiveEventsCard } from './LiveEventsCard';
+export { StrengthNextCard } from './StrengthNextCard';
+export { FriendsTodayCard } from './FriendsTodayCard';
 
 // Dynamic Home Config components
 export { PrimaryCTA } from './PrimaryCTA';

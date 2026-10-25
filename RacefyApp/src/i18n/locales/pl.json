@@ -287,6 +287,35 @@
       "movedDown_many": "Spadek o {{count}} miejsc w tym tygodniu",
       "movedDown_other": "Spadek o {{count}} miejsc w tym tygodniu",
       "rankNow": "#{{rank}} z {{points}} pkt — zobacz, kto jest blisko"
+    },
+    "strength": {
+      "eyebrow": "Siłownia",
+      "eyebrowToday": "Siłownia · dziś",
+      "eyebrowNext": "Siłownia · następny: {{when}} · zacznij wcześniej",
+      "tomorrow": "jutro",
+      "noneTitle": "Dziś brak treningu w planie",
+      "noneBody": "Zacznij sesję mimo to albo otwórz plan",
+      "another": "Inna sesja lub plan",
+      "exercises_one": "{{count}} ćwiczenie",
+      "exercises_few": "{{count}} ćwiczenia",
+      "exercises_many": "{{count}} ćwiczeń",
+      "exercises_other": "{{count}} ćwiczenia",
+      "sets_one": "{{count}} seria",
+      "sets_few": "{{count}} serie",
+      "sets_many": "{{count}} serii",
+      "sets_other": "{{count}} serii",
+      "minutes_one": "~{{count}} min",
+      "minutes_few": "~{{count}} min",
+      "minutes_many": "~{{count}} min",
+      "minutes_other": "~{{count}} min"
+    },
+    "friendsToday": {
+      "title": "Znajomi dziś",
+      "seeFeed": "Zobacz feed",
+      "seeFeedMore_one": "+{{count}} w feedzie",
+      "seeFeedMore_few": "+{{count}} w feedzie",
+      "seeFeedMore_many": "+{{count}} w feedzie",
+      "seeFeedMore_other": "+{{count}} w feedzie"
     }
   },
   "network": {

@@ -405,6 +405,32 @@ export interface PlannedSession {
     | null;
 }
 
+/** GET /workout-sessions/next — the Home strength card. */
+export interface NextWorkoutSession {
+  state: 'in_progress' | 'today' | 'upcoming' | 'none_scheduled' | 'no_active_plan';
+  /** YYYY-MM-DD in the athlete's timezone. */
+  date: string | null;
+  /** 0 today, 1 tomorrow; negative for an open session started on an earlier day. */
+  days_ahead: number | null;
+  plan: { id: number; name: string } | null;
+  workout: {
+    id: number;
+    name: string;
+    day_label: string | null;
+    exercises_count: number;
+    sets_count: number;
+    estimated_duration_minutes: number | null;
+  } | null;
+  session: {
+    id: number;
+    status: WorkoutSessionStatus;
+    workout_name: string;
+    moved_from: string | null;
+    started_at: string | null;
+    stats: WorkoutSessionStats | null;
+  } | null;
+}
+
 /** POST /workout-sessions/move — one occurrence of a day, not the plan. */
 export interface WorkoutSessionMoveInput {
   workout_id: number;

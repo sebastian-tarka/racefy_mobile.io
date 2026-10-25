@@ -19,6 +19,7 @@ import type {
   WorkoutSessionAddSetInput,
   WorkoutSessionCompleteInput,
   WorkoutSessionMoveInput,
+  NextWorkoutSession,
   WorkoutSessionCompleteResponse,
   WorkoutSessionListParams,
   WorkoutSessionListResponse,
@@ -234,6 +235,16 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       const response = await this.request<{ data: WorkoutSession | null }>(
         '/workout-sessions/current',
       );
+      return response.data;
+    }
+
+    /**
+     * Home card: the open session, else today's or the nearest planned workout
+     * of the active plan(s). Always answers — `state` says which case it is.
+     */
+    async getNextWorkoutSession(): Promise<NextWorkoutSession> {
+      const response =
+        await this.request<Types.ApiResponse<NextWorkoutSession>>('/workout-sessions/next');
       return response.data;
     }
 
