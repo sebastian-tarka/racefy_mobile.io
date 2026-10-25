@@ -15,10 +15,18 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Plakietki „nowe od ostatniej wizyty” (`nav-badges`, od 2026-10-25; zawiera `event-period-challenges`)
+_(nic)_
 
-`GET /me/badges` + `POST /me/badges/seen` (API v1.3.8, już na prod). Branch jest odgałęziony od
-`event-period-challenges` — merge `nav-badges` wnosi oba.
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Plakietki „nowe od ostatniej wizyty” (zmergowane 2026-10-25, `nav-badges`, tag `pre-nav-badges-period` = main sprzed merge)
+
+`GET /me/badges` + `POST /me/badges/seen` (API v1.3.8, na prod).
 
 Do sprawdzenia na telefonie:
 - [ ] Nowe publiczne wydarzenie innej osoby → licznik na zakładce Wydarzenia; wejście w nią go czyści
@@ -30,7 +38,7 @@ Do sprawdzenia na telefonie:
 - [ ] Trwająca sesja siłowa → „LIVE” przy Planach siłowych
 - [ ] Wylogowanie chowa wszystkie liczniki; ciemny motyw
 
-### Wyzwania okresowe w formularzu i na ekranie wydarzenia (`event-period-challenges`, od 2026-10-25)
+### Wyzwania okresowe w formularzu i na ekranie wydarzenia (zmergowane 2026-10-25, `event-period-challenges` przez `nav-badges`, ten sam tag)
 
 Do sprawdzenia na telefonie:
 - [ ] Formularz: ranking „najwięcej km/przewyższenia” + wiele aktywności, bez dystansu → pula punktów
@@ -38,14 +46,6 @@ Do sprawdzenia na telefonie:
 - [ ] Zwykły bieg z dystansem — pula jak dotąd
 - [ ] Szczegóły takiego wydarzenia: notka „liczy się automatycznie” (zapisany / niezapisany), znika
       po finalizacji wyników
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Home: karta siłowa + „Znajomi dziś” (zmergowane 2026-10-25, `home-strength-friends`, ten sam tag)
 
