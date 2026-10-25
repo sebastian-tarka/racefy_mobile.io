@@ -25,6 +25,7 @@ import {
   syncPendingFinishes,
 } from '../services/finishSync';
 import { suppressDeliveredNotification, useFinishSyncRunner } from './useFinishSyncRunner';
+import { useStrengthOutboxRunner } from './useStrengthOutboxRunner';
 import { ensureFinishSyncTaskRegistered } from '../services/finishSyncBackgroundTask';
 import * as trackingDb from '../services/trackingDb';
 import {
@@ -202,6 +203,7 @@ function useLiveActivityInternal() {
   const { getGpsProfileForSport, sportTypes } = useSportTypes();
   const { isAuthenticated, user } = useAuth();
   useFinishSyncRunner(user?.id ?? null, isAuthenticated);
+  useStrengthOutboxRunner(isAuthenticated);
 
   const [state, setState] = useState<LiveActivityState>({
     activity: null,

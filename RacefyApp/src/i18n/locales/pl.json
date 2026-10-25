@@ -3533,7 +3533,16 @@
       "next": "Dalej · {{name}}",
       "prevExercise": "Poprzednie ćwiczenie",
       "setColumn": "Seria",
-      "skipExercise": "Pomiń · {{name}}"
+      "skipExercise": "Pomiń · {{name}}",
+      "offline": {
+        "pending_one": "Bez sieci · {{count}} zmiana czeka",
+        "pending_few": "Bez sieci · {{count}} zmiany czekają",
+        "pending_many": "Bez sieci · {{count}} zmian czeka",
+        "pending_other": "Bez sieci · {{count}} zmian czeka",
+        "completeQueued": "Trening zapisany na telefonie. Wyślemy go i dodamy aktywność, gdy wróci internet.",
+        "addSet": "Dodanie serii wymaga internetu. Pozostałe serie możesz zapisywać bez sieci.",
+        "skip": "Nie da się pominąć treningu bez internetu — część serii czeka jeszcze na wysłanie."
+      }
     },
     "complete": {
       "title": "Zakończ trening",

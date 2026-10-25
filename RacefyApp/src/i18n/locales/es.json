@@ -3545,7 +3545,15 @@
       "next": "Siguiente · {{name}}",
       "prevExercise": "Ejercicio anterior",
       "setColumn": "Serie",
-      "skipExercise": "Saltar · {{name}}"
+      "skipExercise": "Saltar · {{name}}",
+      "offline": {
+        "pending_one": "Sin conexión · {{count}} cambio pendiente",
+        "pending_many": "Sin conexión · {{count}} cambios pendientes",
+        "pending_other": "Sin conexión · {{count}} cambios pendientes",
+        "completeQueued": "Entrenamiento guardado en el teléfono. Lo enviaremos y añadiremos la actividad cuando vuelva la conexión.",
+        "addSet": "Para añadir una serie necesitas conexión. Puedes seguir registrando las demás series sin conexión.",
+        "skip": "No puedes omitir el entrenamiento sin conexión: algunas series aún esperan a enviarse."
+      }
     },
     "complete": {
       "title": "Terminar entrenamiento",

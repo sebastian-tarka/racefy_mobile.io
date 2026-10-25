@@ -172,9 +172,9 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
   const finish = async (input: Parameters<typeof s.complete>[0]) => {
     try {
-      const res = await s.complete({ ...input, duration_seconds: s.elapsedSeconds });
+      const outcome = await s.complete({ ...input, duration_seconds: s.elapsedSeconds });
       setCompleteOpen(false);
-      setResult({ activityId: res.activity_id ?? res.data.activity_id ?? null });
+      setResult({ activityId: outcome.queued ? null : outcome.activityId });
     } catch (error) {
       Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
@@ -468,6 +468,20 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             </View>
           )}
 
+          {!skipped && s.pendingCount > 0 && (
+            <View
+              style={[
+                styles.offlineNotice,
+                { backgroundColor: colors.cardBackground, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="cloud-offline-outline" size={18} color={colors.textSecondary} />
+              <Text style={[styles.offlineNoticeText, { color: colors.textSecondary }]}>
+                {t('strengthPlans.session.offline.completeQueued')}
+              </Text>
+            </View>
+          )}
+
           <View style={{ flex: 1 }} />
 
           {skipped && (
@@ -548,6 +562,14 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
                 total: stats?.sets_total ?? 0,
               })}
             </Text>
+            {s.pendingCount > 0 && (
+              <View style={styles.offlineChip}>
+                <Ionicons name="cloud-offline-outline" size={12} color={heroColors.inkSoft} />
+                <Text style={styles.offlineChipText} numberOfLines={1}>
+                  {t('strengthPlans.session.offline.pending', { count: s.pendingCount })}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.sessionClockBlock}>
@@ -794,6 +816,16 @@ const styles = StyleSheet.create({
     color: heroColors.inkSoft,
     fontSize: fontSize.xs,
     marginTop: 1,
+  },
+  offlineChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  offlineChipText: {
+    color: heroColors.inkSoft,
+    fontSize: fontSize.xs,
   },
   sessionClockBlock: {
     alignItems: 'flex-end',
@@ -1096,6 +1128,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.6,
     marginTop: spacing.md,
+  },
+  offlineNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+  },
+  offlineNoticeText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    lineHeight: 19,
   },
   summaryStats: {
     flexDirection: 'row',
