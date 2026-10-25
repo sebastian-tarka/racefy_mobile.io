@@ -15,26 +15,34 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Okładki AI eventu (`event-ai-cover`, od 2026-10-25, odgałęziony od `event-series`)
+_(nic)_
 
-Edycja eventu: „Wygeneruj okładkę AI” — wskazówka, 2 podglądy (asynchronicznie, polling), wybór
-z wcześniej wygenerowanych podglądów tego eventu, limit miesięczny wg planu (Free 0 / Plus 3 / Pro 15).
-Mergować **po** `event-series`. Lista weryfikacji — przy mergu.
+---
 
-### Wydarzenia cykliczne w formularzu eventu (`event-series`, od 2026-10-25, odgałęziony od `event-location`)
+## Na `main`, ale niezweryfikowane runtime
 
-Tworzenie: sekcja „Powtarzanie” (co tydzień / co miesiąc, koniec po N edycjach lub w dniu, Plus/Pro),
-walidacja daty startu względem reguły. Edycja edycji serii: karta serii z pauzą / wznowieniem /
-zakończeniem; zmiany w formularzu dotyczą tylko tej edycji (API nie edytuje reguły). Mergować **po**
-`event-location`. Lista weryfikacji — przy mergu.
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
 
-### Lokalizacja eventu z mapy i z trasy (`event-location`, od 2026-10-25, odgałęziony od `audyt-etap6`)
+### Formularz eventu: lokalizacja, serie, okładki AI (zmergowane 2026-10-25, `event-location` → `event-series` → `event-ai-cover`, tag `pre-event-form-features` = main sprzed merge, release v1.26.0)
 
-Formularz eventu: wyszukiwanie miejsca (podpowiedzi Mapbox jak w SPA), mapa z pinezką (stuknięcie →
-współrzędne + nazwa z odwrotnego geokodowania), po podpięciu trasy lokalizacja = start trasy, tylko do
-odczytu. Naprawia też wysyłanie `0,0` jako współrzędnych. Mergować **po** `audyt-etap6`. Lista weryfikacji — przy mergu.
+Okładki AI i ich biblioteka wymagają API z `feat/event-ai-cover-library` (racefy_api.io) —
+bez wdrożenia sekcja „Twoje wcześniejsze okładki” się nie pokazuje.
 
-### Audyt, etap 6: typy, błędy, query, formularz eventu (`audyt-etap6`, od 2026-10-25)
+Do sprawdzenia na telefonie:
+- [ ] Lokalizacja: wyszukiwanie miejsca z podpowiedziami; podgląd mapy → pełny ekran, przesuwanie
+      i zoom, „Użyj tej lokalizacji” ustawia nazwę i pinezkę; edycja pokazuje zapisaną pinezkę
+- [ ] Podpięcie trasy: lokalizacja = start trasy (tylko do odczytu), dystans i przewyższenie z trasy;
+      odpięcie przywraca ręczny wybór
+- [ ] Serie (Plus/Pro): co tydzień z dniami, co miesiąc (dzień / n-ty dzień tygodnia), koniec po N /
+      w dniu; błąd, gdy start nie pasuje do reguły; Free widzi zachętę do planu
+- [ ] Edycja edycji serii: karta serii, pauza / wznowienie / zakończenie z potwierdzeniem
+- [ ] Okładka AI (edycja i ekran wydarzenia ✨, tylko twórca): generowanie 2 podglądów z licznikiem
+      czasu, „Użyj jako okładki”, znaczek AI; Free → zachęta do planu; limit miesięczny
+- [ ] „Twoje wcześniejsze okładki” z innych wydarzeń: użycie nie zmienia licznika limitu
+- [ ] Formularz: okładka i „Zdjęcia i wideo” w osobnych kartach
+
+### Audyt, etap 6: typy, błędy, query, formularz eventu (zmergowane 2026-10-25, `audyt-etap6`, ten sam tag)
 
 Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, ESLint 97 (zapadka bez zmian), knip 0, jest 497/497.
 
@@ -58,13 +66,6 @@ Do sprawdzenia na telefonie:
       w formularzu eventu, karcie eventu, feedzie („5 minut temu”), czacie, powiadomieniach, aktywności
 - [ ] Angielski w aplikacji: daty po angielsku z AM/PM; hiszpański — po hiszpańsku
 - [ ] Formularz eventu: na dole tylko „Utwórz”/„Zapisz”, wyjście strzałką w nagłówku
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt, etap 5: listy, sieć, dane, start, i18n (zmergowane 2026-10-19, `audyt-etap5`, tag `pre-audyt-etap5` = main sprzed merge; zweryfikowane na telefonie 2026-10-25)
 
@@ -1181,6 +1182,10 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-10-25 | `event-ai-cover` | Okładki AI eventu (formularz + ekran wydarzenia), biblioteka własnych okładek z innych eventów, okładka i galeria jako osobne karty |
+| 2026-10-25 | `event-series` | Wydarzenia cykliczne: sekcja „Powtarzanie” przy tworzeniu, karta serii z pauzą / wznowieniem / zakończeniem w edycji |
+| 2026-10-25 | `event-location` | Lokalizacja eventu: wyszukiwarka Mapbox, mapa pełnoekranowa, start trasy; dystans i przewyższenie z trasy |
+| 2026-10-25 | `audyt-etap6` | `types/api/` wg domen, `GuidedWorkout`, `catch (e: unknown)` + `utils/errors.ts`, `withQuery()`, payload formularza eventu z testami, daty w języku aplikacji, formularz bez „Anuluj” |
 | 2026-10-19 | `audyt-etap5` | Paleta sportów v2, memo feedu, polling tylko na pierwszym planie, 2 wyścigi w `usePaginatedFetch` (+trasy, drużyny), logger, `expo-image` w kartach, splash wg gotowości, i18n ~25 tekstów |
 | 2026-10-19 | `audyt-etap4` | Wspólne komponenty: `DatePickerSheet` datetime (+3 migracje, 2 błędy iOS), `SheetModal` (7 arkuszy), `ErrorState`, `FilterChip`, `pickImages()`, mapy kolorów, formatery; tempo widza live w jednostkach |
 | 2026-10-19 | `audyt-etap3` | Wydajność nagrywania: status context (koniec re-renderu tab bara/Home co sekundę), timery, stabilna pozycja GPS + memo mapy, trasa w dwóch źródłach, wyścigi watchera GPS i syncu w tle, `RecordingToast`, `describeSaveOutcome` |
