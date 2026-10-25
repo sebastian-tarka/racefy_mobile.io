@@ -8,6 +8,8 @@ import type { TrendsData } from '../../types/insights';
 
 interface TrendsCardProps {
   data: TrendsData;
+  /** The 4-week bars; off when the 8-week weekly card is on screen. */
+  showBreakdown?: boolean;
 }
 
 function ChangeIndicator({
@@ -64,7 +66,7 @@ function TrendComparison({
   );
 }
 
-export function TrendsCard({ data }: TrendsCardProps) {
+export function TrendsCard({ data, showBreakdown = true }: TrendsCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
 
@@ -96,7 +98,7 @@ export function TrendsCard({ data }: TrendsCardProps) {
         />
       )}
 
-      {breakdown.length > 0 && (
+      {showBreakdown && breakdown.length > 0 && (
         <View style={styles.chartSection}>
           <Text style={[styles.chartLabel, { color: colors.textSecondary }]}>
             {t('insights.trends.weeklyBreakdown')}

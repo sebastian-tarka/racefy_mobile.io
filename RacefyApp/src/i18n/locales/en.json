@@ -2729,7 +2729,10 @@
       "days": "d",
       "consistency": "Weekly consistency",
       "weeks": "weeks",
-      "totalActiveDays": "{{count}} total active days"
+      "totalActiveDays": "{{count}} total active days",
+      "activeDays": "Active days (12 weeks)",
+      "activeDaysA11y_one": "{{count}} active day in the last 12 weeks",
+      "activeDaysA11y_other": "{{count}} active days in the last 12 weeks"
     },
     "trends": {
       "title": "Trends",
@@ -2822,6 +2825,25 @@
       "regenerate": "Regenerate",
       "stillProcessing": "Still processing — we'll notify you when it's ready.",
       "openActivity": "Open activity"
+    },
+    "range": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "season": "Season",
+      "all": "All time",
+      "note": "Summary, time patterns, weather and places follow the chosen range. Streaks, trends and milestones keep their own periods.",
+      "empty": "No activities in this range. Pick a longer one."
+    },
+    "weekly": {
+      "title": "Recent weeks",
+      "allSports": "All",
+      "lastWeeks_one": "in total over the last {{count}} week",
+      "lastWeeks_other": "in total over the last {{count}} weeks",
+      "tempo": {
+        "pace_km": "Pace",
+        "pace_100m": "Pace per 100 m",
+        "speed": "Average speed"
+      }
     }
   },
   "teams": {

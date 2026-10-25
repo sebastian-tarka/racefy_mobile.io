@@ -2767,7 +2767,12 @@
       "days": "d",
       "consistency": "Regularność tygodniowa",
       "weeks": "tygodnie",
-      "totalActiveDays": "{{count}} aktywnych dni łącznie"
+      "totalActiveDays": "{{count}} aktywnych dni łącznie",
+      "activeDays": "Aktywne dni (12 tygodni)",
+      "activeDaysA11y_one": "{{count}} aktywny dzień w ostatnich 12 tygodniach",
+      "activeDaysA11y_few": "{{count}} aktywne dni w ostatnich 12 tygodniach",
+      "activeDaysA11y_many": "{{count}} aktywnych dni w ostatnich 12 tygodniach",
+      "activeDaysA11y_other": "{{count}} aktywnych dni w ostatnich 12 tygodniach"
     },
     "trends": {
       "title": "Trendy",
@@ -2860,6 +2865,27 @@
       "regenerate": "Wygeneruj ponownie",
       "stillProcessing": "Wciąż przetwarzane — powiadomimy Cię, gdy będzie gotowe.",
       "openActivity": "Otwórz aktywność"
+    },
+    "range": {
+      "7d": "7 dni",
+      "30d": "30 dni",
+      "season": "Sezon",
+      "all": "Wszystko",
+      "note": "Podsumowanie, pory treningów, pogoda i miejsca dotyczą wybranego okresu. Serie, trendy i kamienie milowe mają własne okresy.",
+      "empty": "W tym okresie nie ma aktywności. Wybierz dłuższy zakres."
+    },
+    "weekly": {
+      "title": "Ostatnie tygodnie",
+      "allSports": "Wszystkie",
+      "lastWeeks_one": "łącznie w ostatnim {{count}} tygodniu",
+      "lastWeeks_few": "łącznie w ostatnich {{count}} tygodniach",
+      "lastWeeks_many": "łącznie w ostatnich {{count}} tygodniach",
+      "lastWeeks_other": "łącznie w ostatnich {{count}} tygodniach",
+      "tempo": {
+        "pace_km": "Tempo",
+        "pace_100m": "Tempo na 100 m",
+        "speed": "Średnia prędkość"
+      }
     }
   },
   "teams": {
