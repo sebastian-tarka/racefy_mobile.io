@@ -7,3 +7,4 @@ export { TimePatternsCard } from './TimePatternsCard';
 export { MilestonesCard } from './MilestonesCard';
 export { WeatherCard } from './WeatherCard';
 export { RoutesCard } from './RoutesCard';
+export { WeeklyVolumeCard } from './WeeklyVolumeCard';

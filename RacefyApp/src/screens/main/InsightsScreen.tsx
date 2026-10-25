@@ -4,7 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ScreenContainer, ScreenHeader, Loading, EmptyState } from '../../components';
+import {
+  ScreenContainer,
+  ScreenHeader,
+  Loading,
+  EmptyState,
+  SegmentedControl,
+} from '../../components';
 import {
   SummaryCard,
   ComparisonCard,
@@ -15,21 +21,27 @@ import {
   WeatherCard,
   RoutesCard,
   LockedInsightCard,
+  WeeklyVolumeCard,
 } from '../../components/insights';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { spacing, fontSize } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import type { InsightsResponse, LockedSection } from '../../types/insights';
+import type { InsightsRangeKey, InsightsResponse, LockedSection } from '../../types/insights';
 import { formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Insights'>;
+
+const RANGES: InsightsRangeKey[] = ['7d', '30d', 'season', 'all'];
 
 export function InsightsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
 
+  // Same default as the web page: a month answers "how am I doing" better
+  // than a lifetime total.
+  const [range, setRange] = useState<InsightsRangeKey>('30d');
   const [data, setData] = useState<InsightsResponse['data'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -39,11 +51,13 @@ export function InsightsScreen({ navigation }: Props) {
     async (isRefresh = false) => {
       if (isRefresh) {
         setIsRefreshing(true);
-      } else {
+      } else if (!data) {
+        // Switching the range keeps the old figures on screen until the new
+        // ones arrive; only the very first load shows the full-screen spinner.
         setIsLoading(true);
       }
       try {
-        const response = await api.getInsights();
+        const response = await api.getInsights(range);
         setData(response.data);
         setError(null);
       } catch (err: unknown) {
@@ -55,7 +69,8 @@ export function InsightsScreen({ navigation }: Props) {
         setIsRefreshing(false);
       }
     },
-    [t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `data` only decides the spinner
+    [t, range],
   );
 
   useFocusEffect(
@@ -171,10 +186,28 @@ export function InsightsScreen({ navigation }: Props) {
   }
 
   const { sections, comparisons } = data;
+  const summary = sections.activity_summary;
+  const emptyRange = range !== 'all' && summary?.total_count === 0;
+  const canSeeWeekly = data.tier !== 'free';
+  const openActivity = (activityId: number) =>
+    navigation.navigate('ActivityDetail', { activityId });
 
   return (
     <ScreenContainer edges={['top']}>
-      <ScreenHeader title={t('insights.title')} showBack onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('insights.title')}
+        showBack
+        onBack={() => navigation.goBack()}
+        rightAction={
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AiActivityReports')}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={t('insights.aiReports.viewAll')}
+          >
+            <Ionicons name="sparkles-outline" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        }
+      />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -197,8 +230,29 @@ export function InsightsScreen({ navigation }: Props) {
           </Text>
         )}
 
-        {/* 1. Activity Summary */}
-        {sections.activity_summary && <SummaryCard data={sections.activity_summary} />}
+        <SegmentedControl
+          options={RANGES.map((value) => ({ value, label: t(`insights.range.${value}`) }))}
+          value={range}
+          onChange={setRange}
+          style={styles.range}
+        />
+        {data.range && range !== 'all' && (
+          <Text style={[styles.rangeNote, { color: colors.textMuted }]}>
+            {t('insights.range.note')}
+          </Text>
+        )}
+
+        {/* 1. Activity Summary — for the chosen range */}
+        {emptyRange ? (
+          <View style={[styles.emptyRange, { borderColor: colors.border }]}>
+            <Ionicons name="calendar-clear-outline" size={20} color={colors.textMuted} />
+            <Text style={[styles.emptyRangeText, { color: colors.textSecondary }]}>
+              {t('insights.range.empty')}
+            </Text>
+          </View>
+        ) : (
+          summary && <SummaryCard data={summary} />
+        )}
 
         {/* 2. Comparisons */}
         {comparisons && Object.keys(comparisons).length > 0 && (
@@ -206,11 +260,26 @@ export function InsightsScreen({ navigation }: Props) {
         )}
 
         {/* 3. Streak */}
-        {sections.streak_data && <StreakCard data={sections.streak_data} />}
+        {sections.streak_data && (
+          <StreakCard data={sections.streak_data} onOpenActivity={openActivity} />
+        )}
 
         {/* 4. Trends */}
         {renderLockedOrSection('trends', 'trending-up', 'insights.trends.title', () =>
-          sections.trends ? <TrendsCard key="trends" data={sections.trends} /> : null,
+          sections.trends ? (
+            <TrendsCard key="trends" data={sections.trends} showBreakdown={!canSeeWeekly} />
+          ) : null,
+        )}
+
+        {/* 4b. Eight weeks per sport, with tempo (Plus+) */}
+        {canSeeWeekly ? (
+          <WeeklyVolumeCard />
+        ) : (
+          <LockedInsightCard
+            title={t('insights.weekly.title')}
+            icon="bar-chart"
+            requiredTier="plus"
+          />
         )}
 
         {/* 5. Time Patterns */}
@@ -274,7 +343,28 @@ const styles = StyleSheet.create({
   },
   updatedAt: {
     fontSize: fontSize.xs,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  range: {
+    marginBottom: spacing.xs,
+  },
+  rangeNote: {
+    fontSize: fontSize.xs,
+    marginBottom: spacing.md,
+  },
+  emptyRange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+  },
+  emptyRangeText: {
+    flex: 1,
+    fontSize: fontSize.sm,
   },
   bottomSpacer: {
     height: 80,

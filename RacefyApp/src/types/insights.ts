@@ -9,7 +9,53 @@ export interface InsightsResponse {
     comparisons: Partial<InsightsComparisons>;
     aggregated_at: string | null;
     last_activity_at: string | null;
+    /** Present when the API knows ranges (2026-10). */
+    range?: InsightsRange;
   };
+}
+
+/** `GET /insights?range=` — `season` is the calendar year so far. */
+export type InsightsRangeKey = '7d' | '30d' | 'season' | 'all';
+
+export interface InsightsRange {
+  key: InsightsRangeKey;
+  /** ISO 8601; null for 'all'. */
+  from: string | null;
+  /** Sections that follow the range; every other section keeps its own period. */
+  sections: string[];
+}
+
+/** One day of the 12-week heatmap (`streak_data.active_days`), athlete's timezone. */
+export interface ActiveDay {
+  date: string;
+  activities: {
+    id: number;
+    title: string;
+    distance_km: number;
+    sport: { id: number; name: string; icon: string };
+  }[];
+}
+
+/** `tempo`: s/km, s/100 m or km/h; null for sports without a distance-based tempo. */
+export type TempoMetric = 'pace_km' | 'pace_100m' | 'speed' | null;
+
+export interface WeeklyVolumeWeek {
+  /** Monday, YYYY-MM-DD. */
+  week_start: string;
+  count: number;
+  distance_km: number;
+  duration_min: number;
+  /** Only with a sport selected. */
+  tempo?: number | null;
+}
+
+/** `GET /insights/weekly?sport_type_id=` (Plus+): 8 weeks, oldest first. */
+export interface WeeklyVolume {
+  sport_type_id: number | null;
+  tempo_metric: TempoMetric;
+  weeks: WeeklyVolumeWeek[];
+  /** Sports with distance in those 8 weeks, longest first — the chart's choices. */
+  sports: { sport_type_id: number; name: string; distance_km: number }[];
 }
 
 export interface InsightsSections {
@@ -59,6 +105,7 @@ export interface ActivitySummary {
 }
 
 export interface SportStats {
+  sport_type_id?: number;
   count: number;
   total_distance_km: number;
   total_duration_hours: number;
@@ -76,6 +123,8 @@ export interface StreakData {
   activities_this_month: number;
   weekly_consistency?: number;
   total_active_days?: number;
+  /** Last 12 Monday-aligned weeks, oldest first, only days with activities. */
+  active_days?: ActiveDay[];
 }
 
 export interface TrendsData {

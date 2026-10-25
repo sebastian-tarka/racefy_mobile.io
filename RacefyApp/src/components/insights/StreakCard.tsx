@@ -5,9 +5,12 @@ import { InsightCard } from './InsightCard';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
 import type { StreakData } from '../../types/insights';
+import { ActiveDaysGrid } from './ActiveDaysGrid';
 
 interface StreakCardProps {
   data: StreakData;
+  /** Opens an activity listed under a tapped heatmap day. */
+  onOpenActivity?: (activityId: number) => void;
 }
 
 function MiniStatBox({
@@ -34,7 +37,7 @@ function MiniStatBox({
   );
 }
 
-export function StreakCard({ data }: StreakCardProps) {
+export function StreakCard({ data, onOpenActivity }: StreakCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
 
@@ -68,6 +71,15 @@ export function StreakCard({ data }: StreakCardProps) {
           isDark={isDark}
         />
       </View>
+
+      {data.active_days && onOpenActivity && (
+        <View style={styles.heatmap}>
+          <Text style={[styles.consistencyLabel, { color: colors.textSecondary }]}>
+            {t('insights.streak.activeDays')}
+          </Text>
+          <ActiveDaysGrid days={data.active_days} onOpenActivity={onOpenActivity} />
+        </View>
+      )}
 
       <View style={styles.consistencySection}>
         <Text style={[styles.consistencyLabel, { color: colors.textSecondary }]}>
@@ -127,6 +139,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: 2,
     textAlign: 'center',
+  },
+  heatmap: {
+    marginBottom: spacing.md,
   },
   consistencySection: {
     marginBottom: spacing.sm,
