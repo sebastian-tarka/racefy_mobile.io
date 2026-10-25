@@ -15,7 +15,19 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Insights: zakres, tygodnie per sport, heatmapa (`insights-redesign`, od 2026-10-25)
+
+API (`GET /insights?range=`, `GET /insights/weekly`, `streak_data.active_days`) jest na prod od v1.3.8.
+
+Do sprawdzenia na telefonie:
+- [ ] Przełącznik 7 dni / 30 dni / Sezon / Wszystko zmienia podsumowanie; stare liczby zostają do
+      czasu nowych (bez pełnoekranowego spinnera); pusty okres → informacja zamiast zer
+- [ ] „Ostatnie tygodnie” (Plus/Pro): 8 słupków, chipy sportów, linia tempa dla biegu/roweru/pływania,
+      jednostki imperialne; Free widzi zablokowaną kartę z wejściem w paywall
+- [ ] Heatmapa w karcie serii: ikony sportów, „+N”, dzisiejszy dzień obrysowany, tapnięcie dnia →
+      lista aktywności → ekran aktywności
+- [ ] Mały ekran (szerokość 320) i duża czcionka systemowa — heatmapa i słupki się mieszczą; ciemny motyw
+
 
 ---
 
