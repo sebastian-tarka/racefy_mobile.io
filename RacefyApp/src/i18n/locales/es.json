@@ -1339,8 +1339,10 @@
     "createTitle": "Crear evento",
     "editTitle": "Editar evento",
     "coverImage": "Imagen de portada",
+    "coverDescription": "Tu propia foto o una portada generada con IA, independiente de la galería de abajo.",
     "tapToSelectImage": "Toca para seleccionar imagen de portada",
     "additionalMedia": "Fotos y videos",
+    "additionalMediaDescription": "Galería en la página del evento. No es necesaria para la portada.",
     "selectImage": "Seleccionar imagen",
     "takePhoto": "Tomar foto",
     "chooseFromGallery": "Elegir de la galería",
@@ -1517,7 +1519,10 @@
       "generatingTile": "Creando vista previa…",
       "elapsed": "{{seconds}} s · suele tardar 20–60 s",
       "upgradeCta": "Ver planes",
-      "afterCreate": "Podrás generar una portada con IA después de crear el evento."
+      "afterCreate": "Podrás generar una portada con IA después de crear el evento.",
+      "library": "Tus portadas anteriores",
+      "libraryHint": "Generadas para tus otros eventos. Usarlas es gratis y no consume tu límite.",
+      "libraryFrom": "De: {{title}}"
     }
   },
   "permissions": {

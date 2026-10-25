@@ -19,7 +19,12 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { borderRadius, fontSize, spacing } from '../../theme';
-import type { EventAiCovers, EventCoverGeneration, EventCoverPreview } from '../../types/api';
+import type {
+  EventAiCovers,
+  EventCoverGeneration,
+  EventCoverLibraryPreview,
+  EventCoverPreview,
+} from '../../types/api';
 import { getErrorMessage, getErrorStatus, isApiError } from '../../utils/errors';
 import { Button } from '../Button';
 import { Input } from '../Input';
@@ -40,8 +45,9 @@ const isRunning = (g: EventCoverGeneration) => g.status === 'pending' || g.statu
 /**
  * AI cover ideas for an existing event (Plus 3 / Pro 15 a month): an optional
  * hint, two previews per generation made in the background and polled, and every
- * earlier preview of this event to pick from — applying one is free. Mirrors
- * EventAiCoverModal.jsx in the web app.
+ * earlier preview of this event to pick from — applying one is free. Below them,
+ * the user's previews from their other events ("library"), reusable here on any
+ * plan. Mirrors EventAiCoverModal.jsx in the web app.
  */
 export function EventAiCoverModal({
   visible,
@@ -53,6 +59,7 @@ export function EventAiCoverModal({
   const { t } = useTranslation();
   const { tier } = useSubscription();
   const [data, setData] = useState<EventAiCovers | null>(null);
+  const [library, setLibrary] = useState<EventCoverLibraryPreview[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [hint, setHint] = useState('');
   const [hintError, setHintError] = useState<string | null>(null);
@@ -70,9 +77,20 @@ export function EventAiCoverModal({
     }
   }, [eventId]);
 
+  // Optional extra — a failure just leaves the section out
+  const loadLibrary = useCallback(async () => {
+    try {
+      setLibrary(await api.getEventAiCoverLibrary(eventId));
+    } catch (error) {
+      logger.debug('api', 'Could not load AI cover library', { error, eventId });
+    }
+  }, [eventId]);
+
   useEffect(() => {
-    if (visible) load();
-  }, [visible, load]);
+    if (!visible) return;
+    load();
+    loadLibrary();
+  }, [visible, load, loadLibrary]);
 
   const running = data?.generations.filter(isRunning) ?? [];
   const hasRunning = running.length > 0;
@@ -132,7 +150,7 @@ export function EventAiCoverModal({
     }
   };
 
-  const apply = async (preview: EventCoverPreview) => {
+  const apply = async (preview: EventCoverPreview | EventCoverLibraryPreview) => {
     setApplyingId(preview.id);
     try {
       const result = await api.applyEventAiCover(eventId, preview.id);
@@ -335,6 +353,47 @@ export function EventAiCoverModal({
                 ))}
               </View>
 
+              {library.length > 0 && (
+                <View style={styles.form}>
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                    {t('eventForm.aiCover.library')}
+                  </Text>
+                  <Text style={[styles.meta, { color: colors.textSecondary }]}>
+                    {t('eventForm.aiCover.libraryHint')}
+                  </Text>
+                  <View style={styles.grid}>
+                    {library.map((preview) => (
+                      <View key={preview.id} style={styles.tileWrapper}>
+                        <Image
+                          source={{ uri: preview.url }}
+                          style={styles.tile}
+                          contentFit="cover"
+                          cachePolicy="disk"
+                          transition={150}
+                        />
+                        {!!preview.source_event?.title && (
+                          <Text
+                            style={[styles.meta, { color: colors.textMuted }]}
+                            numberOfLines={1}
+                          >
+                            {t('eventForm.aiCover.libraryFrom', {
+                              title: preview.source_event.title,
+                            })}
+                          </Text>
+                        )}
+                        <Button
+                          title={t('eventForm.aiCover.apply')}
+                          variant="outline"
+                          onPress={() => apply(preview)}
+                          loading={applyingId === preview.id}
+                          disabled={applyingId != null}
+                        />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               <Text style={[styles.disclosure, { color: colors.textMuted }]}>
                 {t('eventForm.aiCover.disclosure')}
               </Text>
@@ -360,6 +419,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.md, gap: spacing.md },
   loading: { marginTop: spacing.xl },
   intro: { fontSize: fontSize.sm },
+  sectionTitle: { fontSize: fontSize.md, fontWeight: '600', marginTop: spacing.sm },
   form: { gap: spacing.sm },
   meta: { fontSize: fontSize.xs },
   notice: { fontSize: fontSize.sm },

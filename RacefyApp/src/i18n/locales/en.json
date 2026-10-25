@@ -1339,8 +1339,10 @@
     "createTitle": "Create Event",
     "editTitle": "Edit Event",
     "coverImage": "Cover Image",
+    "coverDescription": "Your own photo or an AI-generated cover — independent of the gallery below.",
     "tapToSelectImage": "Tap to select cover image",
     "additionalMedia": "Photos & Videos",
+    "additionalMediaDescription": "Gallery on the event page. Not needed for the cover.",
     "selectImage": "Select Image",
     "takePhoto": "Take Photo",
     "chooseFromGallery": "Choose from Gallery",
@@ -1517,7 +1519,10 @@
       "generatingTile": "Creating preview…",
       "elapsed": "{{seconds}} s · usually 20–60 s",
       "upgradeCta": "See plans",
-      "afterCreate": "You can generate an AI cover after the event is created."
+      "afterCreate": "You can generate an AI cover after the event is created.",
+      "library": "Your earlier covers",
+      "libraryHint": "Generated for your other events. Using one is free and does not count against your limit.",
+      "libraryFrom": "From: {{title}}"
     }
   },
   "permissions": {

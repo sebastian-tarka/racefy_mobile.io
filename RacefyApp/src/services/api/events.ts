@@ -103,6 +103,14 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return response.data;
     }
 
+    /** Previews the user generated for their other events; `apply` takes them too. */
+    async getEventAiCoverLibrary(eventId: number): Promise<Types.EventCoverLibraryPreview[]> {
+      const response = await this.request<Types.ApiResponse<Types.EventCoverLibraryPreview[]>>(
+        `/events/${eventId}/cover/ai/library`,
+      );
+      return response.data;
+    }
+
     /** Makes the preview the event cover right away — not on form save. */
     async applyEventAiCover(
       eventId: number,

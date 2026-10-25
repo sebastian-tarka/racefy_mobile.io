@@ -165,7 +165,6 @@ export const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderWidth: 1,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
   },
   aiCoverButtonText: {
     fontSize: fontSize.sm,
@@ -248,6 +247,9 @@ export const styles = StyleSheet.create({
   sectionDescription: {
     fontSize: fontSize.sm,
     lineHeight: 20,
+  },
+  coverDescription: {
+    marginBottom: spacing.md,
   },
   checkboxRow: {
     flexDirection: 'row',

@@ -1361,6 +1361,7 @@
     "createTitle": "Utwórz wydarzenie",
     "editTitle": "Edytuj wydarzenie",
     "coverImage": "Zdjęcie okładki",
+    "coverDescription": "Własne zdjęcie albo okładka wygenerowana przez AI — niezależnie od galerii poniżej.",
     "tapToSelectImage": "Dotknij, aby wybrać zdjęcie",
     "selectImage": "Wybierz zdjęcie",
     "takePhoto": "Zrób zdjęcie",
@@ -1407,6 +1408,7 @@
     "updateFailed": "Nie udało się zaktualizować wydarzenia",
     "coverImageUploadFailed": "Wydarzenie zapisane, ale nie udało się przesłać zdjęcia okładki.",
     "additionalMedia": "Zdjęcia i wideo",
+    "additionalMediaDescription": "Galeria na stronie wydarzenia. Nie jest potrzebna do okładki.",
     "gpsPrivacy": "Prywatność GPS",
     "gpsPrivacyDescription": "Kontroluj widoczność punktów start/meta dla uczestników wydarzenia",
     "showStartFinishMarkers": "Pokaż punkty start/meta wszystkim uczestnikom",
@@ -1543,7 +1545,10 @@
       "generatingTile": "Tworzę podgląd…",
       "elapsed": "{{seconds}} s · zwykle 20–60 s",
       "upgradeCta": "Zobacz plany",
-      "afterCreate": "Okładkę AI wygenerujesz po utworzeniu wydarzenia."
+      "afterCreate": "Okładkę AI wygenerujesz po utworzeniu wydarzenia.",
+      "library": "Twoje wcześniejsze okładki",
+      "libraryHint": "Wygenerowane dla Twoich innych wydarzeń. Użycie jest bezpłatne i nie zużywa limitu.",
+      "libraryFrom": "Z: {{title}}"
     }
   },
   "permissions": {

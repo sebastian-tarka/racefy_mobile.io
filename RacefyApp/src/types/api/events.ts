@@ -553,6 +553,21 @@ export interface EventCoverGeneration {
   previews: EventCoverPreview[];
 }
 
+/** A preview the user generated for one of their other events — reusable for free. */
+export interface EventCoverLibraryPreview {
+  id: number;
+  url: string;
+  width: number;
+  height: number;
+  created_at: string;
+  /** Null once that event is gone. */
+  source_event: {
+    id: number;
+    title: string | null;
+    sport_type: { id: number; name: string } | null;
+  } | null;
+}
+
 export interface EventCoverQuota {
   used: number;
   /** -1 = unlimited, 0 = not on this plan. */

@@ -606,47 +606,71 @@ export function EventFormScreen({ navigation, route }: Props) {
         >
           {activeTab === 'basic' && (
             <>
-              {/* Cover Image — own photo, or AI ideas once the event exists */}
-              <View>
-                <ImagePickerButton
-                  value={coverImage}
-                  onChange={(uri) => {
-                    setCoverImage(uri);
-                    setCoverAiGenerated(false);
-                  }}
-                />
-                {coverAiGenerated && !!coverImage && (
-                  <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
-                    <Ionicons name="sparkles" size={12} color={colors.white} />
-                    <Text style={[styles.aiBadgeText, { color: colors.white }]}>
-                      {t('eventForm.aiCover.badge')}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              {isEditMode && eventId ? (
-                <TouchableOpacity
-                  onPress={() => setIsAiCoverOpen(true)}
-                  style={[styles.aiCoverButton, { borderColor: colors.primary }]}
-                >
-                  <Ionicons name="sparkles-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.aiCoverButtonText, { color: colors.primary }]}>
-                    {t('eventForm.aiCover.open')}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                  {t('eventForm.aiCover.afterCreate')}
+              {/* Cover — own photo or AI, on its own: the gallery below never feeds it */}
+              <Card style={styles.optionalCard}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('eventForm.coverImage')}
                 </Text>
-              )}
+                <Text
+                  style={[
+                    styles.sectionDescription,
+                    styles.coverDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t('eventForm.coverDescription')}
+                </Text>
+                <View>
+                  <ImagePickerButton
+                    showLabel={false}
+                    value={coverImage}
+                    onChange={(uri) => {
+                      setCoverImage(uri);
+                      setCoverAiGenerated(false);
+                    }}
+                  />
+                  {coverAiGenerated && !!coverImage && (
+                    <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
+                      <Ionicons name="sparkles" size={12} color={colors.white} />
+                      <Text style={[styles.aiBadgeText, { color: colors.white }]}>
+                        {t('eventForm.aiCover.badge')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {isEditMode && eventId ? (
+                  <TouchableOpacity
+                    onPress={() => setIsAiCoverOpen(true)}
+                    style={[styles.aiCoverButton, { borderColor: colors.primary }]}
+                  >
+                    <Ionicons name="sparkles-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.aiCoverButtonText, { color: colors.primary }]}>
+                      {t('eventForm.aiCover.open')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                    {t('eventForm.aiCover.afterCreate')}
+                  </Text>
+                )}
+              </Card>
 
-              {/* Additional Media */}
-              <View style={styles.inputContainer}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {/* Gallery — photos and videos shown on the event page */}
+              <Card style={styles.optionalCard}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                   {t('eventForm.additionalMedia')}
                 </Text>
+                <Text
+                  style={[
+                    styles.sectionDescription,
+                    styles.coverDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t('eventForm.additionalMediaDescription')}
+                </Text>
                 <MediaPicker media={eventMedia} onChange={setEventMedia} maxItems={10} allowVideo />
-              </View>
+              </Card>
 
               {/* Title */}
               <Input

@@ -20,6 +20,8 @@ interface ImagePickerButtonProps {
   onChange: (uri: string | null) => void;
   aspectRatio?: [number, number];
   placeholder?: string;
+  /** Off when the surrounding section already names the image. */
+  showLabel?: boolean;
 }
 
 export function ImagePickerButton({
@@ -27,6 +29,7 @@ export function ImagePickerButton({
   onChange,
   aspectRatio = [16, 9],
   placeholder,
+  showLabel = true,
 }: ImagePickerButtonProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -80,7 +83,11 @@ export function ImagePickerButton({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('eventForm.coverImage')}</Text>
+      {showLabel && (
+        <Text style={[styles.label, { color: colors.textPrimary }]}>
+          {t('eventForm.coverImage')}
+        </Text>
+      )}
       <TouchableOpacity
         style={[
           styles.imageContainer,
