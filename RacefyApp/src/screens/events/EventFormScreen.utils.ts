@@ -142,6 +142,35 @@ export type DatePickerField =
   | 'registration_opens_at'
   | 'registration_closes_at';
 export const styles = StyleSheet.create({
+  aiBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+  },
+  aiBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  aiCoverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.md,
+  },
+  aiCoverButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
   },

@@ -69,6 +69,51 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       await this.request(`/events/${id}`, { method: 'DELETE' });
     }
 
+    // ============ AI EVENT COVERS ============
+
+    async getEventAiCovers(eventId: number): Promise<Types.EventAiCovers> {
+      const response = await this.request<Types.ApiResponse<Types.EventAiCovers>>(
+        `/events/${eventId}/cover/ai`,
+      );
+      return response.data;
+    }
+
+    /** 202 with a pending generation; 409 while another one runs; 403 when out of quota. */
+    async generateEventAiCover(
+      eventId: number,
+      hint?: string,
+    ): Promise<{ generation: Types.EventCoverGeneration; quota: Types.EventCoverQuota }> {
+      const response = await this.request<{
+        data: Types.EventCoverGeneration;
+        quota: Types.EventCoverQuota;
+      }>(`/events/${eventId}/cover/ai`, {
+        method: 'POST',
+        body: JSON.stringify(hint ? { hint } : {}),
+      });
+      return { generation: response.data, quota: response.quota };
+    }
+
+    async getEventAiCoverGeneration(
+      eventId: number,
+      generationId: number,
+    ): Promise<Types.EventCoverGeneration> {
+      const response = await this.request<Types.ApiResponse<Types.EventCoverGeneration>>(
+        `/events/${eventId}/cover/ai/${generationId}`,
+      );
+      return response.data;
+    }
+
+    /** Makes the preview the event cover right away — not on form save. */
+    async applyEventAiCover(
+      eventId: number,
+      previewId: number,
+    ): Promise<Types.ApplyEventCoverResponse> {
+      return this.request<Types.ApplyEventCoverResponse>(
+        `/events/${eventId}/cover/ai/previews/${previewId}/apply`,
+        { method: 'POST' },
+      );
+    }
+
     // ============ EVENT SERIES ============
     // Owner-only. The rule and template can't be edited yet — PUT /events/{id}
     // changes a single edition.

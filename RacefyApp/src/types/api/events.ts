@@ -121,6 +121,8 @@ export interface Event {
   sponsor?: EventSponsor | null;
   // Visual / content
   cover_variants?: EventCoverVariants | null;
+  /** Cover came from AI generation — show an "AI" badge. */
+  cover_ai_generated?: boolean;
   has_custom_page?: boolean;
   custom_page_url?: string | null;
   videos?: Video[];
@@ -514,4 +516,62 @@ export interface EventSeriesSummary {
   /** Localized, e.g. "Every Saturday at 10:00". */
   summary: string;
   next_occurrence_at: string | null;
+}
+
+// ============ AI EVENT COVERS ============
+// /events/{id}/cover/ai — the event must exist. Each generation makes `variants`
+// (2) previews asynchronously; poll it until completed / failed. Applying any
+// preview is free and repeatable.
+
+export type CoverGenerationStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type CoverGenerationError =
+  | 'provider_error'
+  | 'budget_exceeded'
+  | 'ai_limit_reached'
+  | 'disabled'
+  | 'timeout'
+  | 'storage_error';
+
+export interface EventCoverPreview {
+  id: number;
+  url: string;
+  width: number;
+  height: number;
+  /** Used as the cover at least once. */
+  applied_at: string | null;
+}
+
+export interface EventCoverGeneration {
+  id: number;
+  status: CoverGenerationStatus;
+  hint: string | null;
+  /** Failed generations don't count towards the monthly quota. */
+  error: CoverGenerationError | null;
+  variants: number;
+  created_at: string;
+  completed_at: string | null;
+  previews: EventCoverPreview[];
+}
+
+export interface EventCoverQuota {
+  used: number;
+  /** -1 = unlimited, 0 = not on this plan. */
+  limit: number;
+  remaining: number | null;
+}
+
+export interface EventAiCovers {
+  /** False when switched off by admin or no image provider is configured. */
+  enabled: boolean;
+  quota: EventCoverQuota;
+  variants: number;
+  /** Newest first, max 20. */
+  generations: EventCoverGeneration[];
+}
+
+export interface ApplyEventCoverResponse {
+  message: string;
+  cover_image: string;
+  cover_ai_generated: boolean;
+  accent_color: string | null;
 }

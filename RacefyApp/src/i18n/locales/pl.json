@@ -1512,6 +1512,38 @@
       "endTitle": "Zakończyć serię?",
       "endBody": "Kolejne edycje nie będą tworzone, a nadchodząca zostanie odwołana. Poprzednie edycje i ich wyniki zostają.",
       "actionFailed": "Nie udało się zmienić serii."
+    },
+    "aiCover": {
+      "open": "Wygeneruj okładkę AI",
+      "title": "Okładka AI",
+      "intro": "Wygeneruj propozycje okładki na podstawie sportu, miejsca i pory roku wydarzenia. Każda generacja daje {{count}} podglądy; użycie dowolnego podglądu — tu albo w aplikacji mobilnej — jest bezpłatne.",
+      "hintLabel": "Co ma przedstawiać? (opcjonalnie)",
+      "hintHelp": "Do 200 znaków. Bez imion i nazwisk.",
+      "hintPlaceholder": "np. wschód słońca nad jeziorem, jesienne kolory",
+      "generate": "Wygeneruj {{count}} podglądy",
+      "generating": "Generuję…",
+      "quota": "{{used}} z {{limit}} w tym miesiącu",
+      "quotaUnlimited": "Bez limitu w Twoim planie",
+      "outOfQuota": "Wykorzystałeś generacje na ten miesiąc. Nadal możesz użyć dowolnego podglądu poniżej.",
+      "upgrade": "Okładki AI są dostępne w planach Plus i Pro.",
+      "disabled": "Okładki AI są chwilowo niedostępne.",
+      "apply": "Użyj jako okładki",
+      "used": "W użyciu",
+      "badge": "AI",
+      "disclosure": "Obrazy generuje OpenAI na podstawie sportu, miejsca, pory roku i Twojego opisu. Tytuł wydarzenia nie jest wysyłany.",
+      "loadError": "Nie udało się wczytać okładek AI",
+      "errors": {
+        "provider_error": "Usługa obrazów zawiodła. Ta generacja nie została policzona — spróbuj ponownie.",
+        "budget_exceeded": "Okładki AI są wstrzymane do końca miesiąca. Ta generacja nie została policzona.",
+        "ai_limit_reached": "AI jest chwilowo niedostępne. Ta generacja nie została policzona.",
+        "disabled": "Okładki AI są chwilowo niedostępne.",
+        "timeout": "Generowanie trwało zbyt długo. Ta generacja nie została policzona — spróbuj ponownie.",
+        "storage_error": "Nie udało się zapisać obrazu. Ta generacja nie została policzona — spróbuj ponownie."
+      },
+      "generatingTile": "Tworzę podgląd…",
+      "elapsed": "{{seconds}} s · zwykle 20–60 s",
+      "upgradeCta": "Zobacz plany",
+      "afterCreate": "Okładkę AI wygenerujesz po utworzeniu wydarzenia."
     }
   },
   "permissions": {

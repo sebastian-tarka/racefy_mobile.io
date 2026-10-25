@@ -12,6 +12,7 @@ export interface SubscriptionFeatures {
   event_ai_commentary: boolean;
   recurring_events: boolean; // free: false, plus/pro: true
   event_series_active: number; // active + paused series — free: 0, plus: 3, pro: -1
+  event_ai_covers_monthly: number; // AI cover generations — free: 0, plus: 3, pro: 15
   privacy_zones: number;
   training_programs: number;
   active_training_programs: number; // concurrent active/paused limit (-1 = unlimited)
@@ -42,6 +43,7 @@ export interface SubscriptionUsage {
   ai_posts_monthly: number;
   events_monthly: number;
   event_series_active?: number;
+  event_ai_covers_monthly?: number;
   privacy_zones: number;
   training_programs: number;
   teams_max: number;

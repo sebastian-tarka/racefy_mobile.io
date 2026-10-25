@@ -68,7 +68,7 @@ import {
   eventToFormData,
   mapEventApiErrors,
 } from './eventFormPayload';
-import { EventSeriesCard, RecurrenceSection } from '../../components/event';
+import { EventAiCoverModal, EventSeriesCard, RecurrenceSection } from '../../components/event';
 import {
   buildRecurrenceInput,
   initialRecurrenceForm,
@@ -89,6 +89,8 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverAiGenerated, setCoverAiGenerated] = useState(false);
+  const [isAiCoverOpen, setIsAiCoverOpen] = useState(false);
   const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
   const [commentarySettings, setCommentarySettings] = useState<CommentarySettingsData>(() =>
     buildDefaultCommentarySettings(i18n.language),
@@ -329,6 +331,7 @@ export function EventFormScreen({ navigation, route }: Props) {
     setOccurrenceNumber(event.occurrence_number ?? null);
     setRouteGeometry(event.route_id ? (event.route?.geometry ?? null) : null);
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
+    setCoverAiGenerated(!!event.cover_ai_generated);
   };
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -603,8 +606,39 @@ export function EventFormScreen({ navigation, route }: Props) {
         >
           {activeTab === 'basic' && (
             <>
-              {/* Cover Image */}
-              <ImagePickerButton value={coverImage} onChange={setCoverImage} />
+              {/* Cover Image — own photo, or AI ideas once the event exists */}
+              <View>
+                <ImagePickerButton
+                  value={coverImage}
+                  onChange={(uri) => {
+                    setCoverImage(uri);
+                    setCoverAiGenerated(false);
+                  }}
+                />
+                {coverAiGenerated && !!coverImage && (
+                  <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
+                    <Ionicons name="sparkles" size={12} color={colors.white} />
+                    <Text style={[styles.aiBadgeText, { color: colors.white }]}>
+                      {t('eventForm.aiCover.badge')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {isEditMode && eventId ? (
+                <TouchableOpacity
+                  onPress={() => setIsAiCoverOpen(true)}
+                  style={[styles.aiCoverButton, { borderColor: colors.primary }]}
+                >
+                  <Ionicons name="sparkles-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.aiCoverButtonText, { color: colors.primary }]}>
+                    {t('eventForm.aiCover.open')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                  {t('eventForm.aiCover.afterCreate')}
+                </Text>
+              )}
 
               {/* Additional Media */}
               <View style={styles.inputContainer}>
@@ -1315,6 +1349,21 @@ export function EventFormScreen({ navigation, route }: Props) {
             disabled={!pointsBudgetValid}
           />
         </View>
+
+        {isEditMode && eventId ? (
+          <EventAiCoverModal
+            visible={isAiCoverOpen}
+            eventId={eventId}
+            onClose={() => setIsAiCoverOpen(false)}
+            onApplied={(url) => {
+              // Already the cover on the server — the save button won't upload it again
+              setCoverImage(fixStorageUrl(url) || url);
+              setCoverAiGenerated(true);
+              setIsAiCoverOpen(false);
+              emitRefresh('events');
+            }}
+          />
+        ) : null}
 
         {/* Date + time: one spinner on iOS, date then time dialogs on Android. */}
         <DatePickerSheet

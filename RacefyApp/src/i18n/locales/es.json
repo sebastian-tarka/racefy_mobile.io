@@ -1486,6 +1486,38 @@
       "endTitle": "¿Terminar la serie?",
       "endBody": "No se crearán más ediciones y la próxima se cancelará. Las ediciones pasadas y sus resultados se conservan.",
       "actionFailed": "No se pudo actualizar la serie."
+    },
+    "aiCover": {
+      "open": "Generar portada con IA",
+      "title": "Portada con IA",
+      "intro": "Genera propuestas de portada a partir del deporte, el lugar y la temporada del evento. Cada generación da {{count}} vistas previas; usar cualquiera de ellas — aquí o en la app móvil — es gratis.",
+      "hintLabel": "¿Qué debería mostrar? (opcional)",
+      "hintHelp": "Hasta 200 caracteres. Sin nombres de personas.",
+      "hintPlaceholder": "p. ej. amanecer sobre el lago, colores de otoño",
+      "generate": "Generar {{count}} vistas previas",
+      "generating": "Generando…",
+      "quota": "{{used}} de {{limit}} este mes",
+      "quotaUnlimited": "Ilimitado en tu plan",
+      "outOfQuota": "Has usado las generaciones de este mes. Aún puedes usar cualquier vista previa de abajo.",
+      "upgrade": "Las portadas con IA están disponibles en Plus y Pro.",
+      "disabled": "Las portadas con IA no están disponibles en este momento.",
+      "apply": "Usar como portada",
+      "used": "En uso",
+      "badge": "IA",
+      "disclosure": "Las imágenes las genera OpenAI a partir del deporte, el lugar, la temporada y tu descripción. El título del evento no se envía.",
+      "loadError": "No se pudieron cargar las portadas con IA",
+      "errors": {
+        "provider_error": "El servicio de imágenes falló. Esta generación no se ha contado — inténtalo de nuevo.",
+        "budget_exceeded": "Las portadas con IA están en pausa este mes. Esta generación no se ha contado.",
+        "ai_limit_reached": "La IA no está disponible temporalmente. Esta generación no se ha contado.",
+        "disabled": "Las portadas con IA no están disponibles en este momento.",
+        "timeout": "La generación tardó demasiado. Esta generación no se ha contado — inténtalo de nuevo.",
+        "storage_error": "No se pudo guardar la imagen. Esta generación no se ha contado — inténtalo de nuevo."
+      },
+      "generatingTile": "Creando vista previa…",
+      "elapsed": "{{seconds}} s · suele tardar 20–60 s",
+      "upgradeCta": "Ver planes",
+      "afterCreate": "Podrás generar una portada con IA después de crear el evento."
     }
   },
   "permissions": {

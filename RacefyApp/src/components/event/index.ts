@@ -13,3 +13,4 @@ export * from './EventStakes';
 export * from './EventRewardsCard';
 export * from './RecurrenceSection';
 export * from './EventSeriesCard';
+export * from './EventAiCoverModal';
