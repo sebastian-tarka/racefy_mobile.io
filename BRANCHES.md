@@ -15,7 +15,11 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Nic nie czeka._
+### Audyt, etap 6: typy + `EventFormScreen` (`audyt-etap6`, od 2026-10-25)
+
+Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`: podział `types/api.ts` na moduły, zmiana nazwy
+kolidującego `WorkoutPlan` (konfigurator), `catch (e: unknown)`, `withQuery()`, payload formularza
+eventu w czystych funkcjach z testami. Lista weryfikacji — przy mergu.
 
 ---
 
