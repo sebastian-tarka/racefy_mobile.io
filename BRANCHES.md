@@ -26,8 +26,8 @@ i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Home: karta siłowa + „Znajomi dziś” (zmergowane 2026-10-25, `home-strength-friends`, ten sam tag)
 
-Wymaga API z brancha `home-strength-friends` w racefy_api.io (`GET /workout-sessions/next`,
-`GET /home/friends-today`, `completed_at` w complete). Bez niego obie karty po prostu się nie pokazują.
+API (`GET /workout-sessions/next`, `GET /home/friends-today`, `completed_at` w complete) wdrożone
+na stage i prod 2026-10-25 jako v1.3.9 (racefy_api.io, merge `24960206`).
 
 Do sprawdzenia na telefonie:
 - [ ] Karta siłowa pod głównym CTA: dziś („Siłownia · dziś”), dzień wolny → najbliższy trening
@@ -43,8 +43,8 @@ Do sprawdzenia na telefonie:
 ### Sesja siłowa bez internetu (zmergowane 2026-10-25, `strength-offline-sets`, tag `pre-home-strength-offline` = main sprzed merge)
 
 Serie i „Zakończ” idą przez trwałą kolejkę na telefonie (`services/strength/sessionOutbox.ts`)
-i są wysyłane po powrocie sieci. Godzina zakończenia z telefonu (`completed_at`) działa dopiero
-z backendem, który ją przyjmuje — bez tego aktywność dostaje godzinę synchronizacji.
+i są wysyłane po powrocie sieci. Godzinę zakończenia z telefonu (`completed_at`) API przyjmuje
+od v1.3.9 (stage i prod 2026-10-25).
 
 Do sprawdzenia na telefonie (tryb samolotowy w trakcie sesji):
 - [ ] Zaliczanie kolejnych serii bez sieci: wiersz zostaje odhaczony, przechodzi do następnej serii,
