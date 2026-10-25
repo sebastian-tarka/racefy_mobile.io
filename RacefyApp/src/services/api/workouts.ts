@@ -28,6 +28,7 @@ import type {
   WorkoutUpdate,
 } from '../../types/workouts';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -167,14 +168,15 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
 
     /** Own + global library. Paginated. */
     async listExercises(params: ExerciseListParams = {}): Promise<ExerciseListResponse> {
-      const query = new URLSearchParams();
-      if (params.q) query.set('q', params.q);
-      if (params.muscle_group) query.set('muscle_group', params.muscle_group);
-      if (params.scope) query.set('scope', params.scope);
-      if (params.page) query.set('page', String(params.page));
-      if (params.per_page) query.set('per_page', String(params.per_page));
-      const qs = query.toString();
-      return this.request<ExerciseListResponse>(`/exercises${qs ? `?${qs}` : ''}`);
+      return this.request<ExerciseListResponse>(
+        withQuery('/exercises', {
+          q: params.q,
+          muscle_group: params.muscle_group,
+          scope: params.scope,
+          page: params.page,
+          per_page: params.per_page,
+        }),
+      );
     }
 
     async getExercise(id: number): Promise<Exercise> {
@@ -221,12 +223,8 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       planId: number,
       range: { from?: string; to?: string } = {},
     ): Promise<PlannedSession[]> {
-      const query = new URLSearchParams();
-      if (range.from) query.set('from', range.from);
-      if (range.to) query.set('to', range.to);
-      const qs = query.toString();
       const response = await this.request<Types.ApiResponse<PlannedSession[]>>(
-        `/workout-plans/${planId}/sessions${qs ? `?${qs}` : ''}`,
+        withQuery(`/workout-plans/${planId}/sessions`, { from: range.from, to: range.to }),
       );
       return response.data;
     }
@@ -249,13 +247,14 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     async listWorkoutSessions(
       params: WorkoutSessionListParams = {},
     ): Promise<WorkoutSessionListResponse> {
-      const query = new URLSearchParams();
-      if (params.status) query.set('status', params.status);
-      if (params.plan_id) query.set('plan_id', String(params.plan_id));
-      if (params.per_page) query.set('per_page', String(params.per_page));
-      if (params.page) query.set('page', String(params.page));
-      const qs = query.toString();
-      return this.request<WorkoutSessionListResponse>(`/workout-sessions${qs ? `?${qs}` : ''}`);
+      return this.request<WorkoutSessionListResponse>(
+        withQuery('/workout-sessions', {
+          status: params.status,
+          plan_id: params.plan_id,
+          per_page: params.per_page,
+          page: params.page,
+        }),
+      );
     }
 
     /**

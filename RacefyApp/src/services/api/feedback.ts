@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -46,12 +47,14 @@ export function FeedbackMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
       status?: Types.FeedbackStatus;
       type?: Types.FeedbackType;
     }): Promise<Types.PaginatedResponse<Types.Feedback>> {
-      const query = new URLSearchParams();
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      if (params?.status) query.append('status', params.status);
-      if (params?.type) query.append('type', params.type);
-      return this.request(`/feedback?${query}`);
+      return this.request(
+        withQuery('/feedback', {
+          page: params?.page,
+          per_page: params?.per_page,
+          status: params?.status,
+          type: params?.type,
+        }),
+      );
     }
 
     async getFeedback(id: number): Promise<Types.Feedback> {

@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -12,11 +13,13 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.Team>> {
-      const query = new URLSearchParams();
-      if (params?.search) query.append('search', params.search);
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      return this.request(`/teams?${query}`);
+      return this.request(
+        withQuery('/teams', {
+          search: params?.search,
+          page: params?.page,
+          per_page: params?.per_page,
+        }),
+      );
     }
 
     async getTeam(slug: string): Promise<Types.Team> {
@@ -131,10 +134,7 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       slug: string,
       period?: Types.StatsPeriod,
     ): Promise<Types.TeamSummaryResponse> {
-      const query = new URLSearchParams();
-      if (period) query.append('period', period);
-      const qs = query.toString();
-      return this.request(`/teams/${slug}/stats${qs ? `?${qs}` : ''}`);
+      return this.request(withQuery(`/teams/${slug}/stats`, { period }));
     }
 
     async getTeamRanking(
@@ -145,12 +145,13 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         sport_type_id?: number;
       },
     ): Promise<Types.TeamRankingResponse> {
-      const query = new URLSearchParams();
-      if (params?.sort_by) query.append('sort_by', params.sort_by);
-      if (params?.period) query.append('period', params.period);
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      const qs = query.toString();
-      return this.request(`/teams/${slug}/stats/ranking${qs ? `?${qs}` : ''}`);
+      return this.request(
+        withQuery(`/teams/${slug}/stats/ranking`, {
+          sort_by: params?.sort_by,
+          period: params?.period,
+          sport_type_id: params?.sport_type_id,
+        }),
+      );
     }
 
     async getTeamTrends(
@@ -161,12 +162,13 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         sport_type_id?: number;
       },
     ): Promise<Types.TeamTrendsResponse> {
-      const query = new URLSearchParams();
-      if (params?.granularity) query.append('granularity', params.granularity);
-      if (params?.periods) query.append('periods', String(params.periods));
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      const qs = query.toString();
-      return this.request(`/teams/${slug}/stats/trends${qs ? `?${qs}` : ''}`);
+      return this.request(
+        withQuery(`/teams/${slug}/stats/trends`, {
+          granularity: params?.granularity,
+          periods: params?.periods,
+          sport_type_id: params?.sport_type_id,
+        }),
+      );
     }
 
     async getTeamsLeaderboard(params?: {
@@ -175,13 +177,14 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit?: number;
       offset?: number;
     }): Promise<Types.TeamLeaderboardResponse> {
-      const query = new URLSearchParams();
-      if (params?.sort_by) query.append('sort_by', params.sort_by);
-      if (params?.period) query.append('period', params.period);
-      if (params?.limit) query.append('limit', String(params.limit));
-      if (params?.offset) query.append('offset', String(params.offset));
-      const qs = query.toString();
-      return this.request(`/teams/leaderboard${qs ? `?${qs}` : ''}`);
+      return this.request(
+        withQuery('/teams/leaderboard', {
+          sort_by: params?.sort_by,
+          period: params?.period,
+          limit: params?.limit,
+          offset: params?.offset,
+        }),
+      );
     }
 
     // ============ REGISTER TEAM FOR EVENT ============

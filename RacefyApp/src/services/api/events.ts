@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -25,13 +26,15 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.Event>> {
-      const query = new URLSearchParams();
-      if (params?.user_id) query.append('user_id', String(params.user_id));
-      if (params?.status) query.append('status', params.status);
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      return this.request(`/events?${query}`);
+      return this.request(
+        withQuery('/events', {
+          user_id: params?.user_id,
+          status: params?.status,
+          sport_type_id: params?.sport_type_id,
+          page: params?.page,
+          per_page: params?.per_page,
+        }),
+      );
     }
 
     async getEvent(id: number): Promise<Types.Event> {
@@ -281,9 +284,9 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       eventId: number,
       limit = 50,
     ): Promise<Types.EventLeaderboardResponse> {
-      const query = new URLSearchParams();
-      query.append('limit', String(limit));
-      return this.request<Types.EventLeaderboardResponse>(`/leaderboard/event/${eventId}?${query}`);
+      return this.request<Types.EventLeaderboardResponse>(
+        withQuery(`/leaderboard/event/${eventId}`, { limit: String(limit) }),
+      );
     }
 
     /**
@@ -312,13 +315,12 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         language?: Types.CommentaryLanguage;
       },
     ): Promise<Types.CommentaryListResponse> {
-      const query = new URLSearchParams();
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.language) query.append('language', params.language);
-      const queryString = query.toString();
       return this.request<Types.CommentaryListResponse>(
-        `/events/${eventId}/commentary${queryString ? `?${queryString}` : ''}`,
+        withQuery(`/events/${eventId}/commentary`, {
+          per_page: params?.per_page,
+          page: params?.page,
+          language: params?.language,
+        }),
       );
     }
 

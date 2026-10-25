@@ -1,6 +1,7 @@
 import { getFilename, getImageMimeType, getMediaMimeType } from '../../utils/mime';
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -16,10 +17,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       user_id?: number;
       page?: number;
     }): Promise<Types.PaginatedResponse<Types.Post>> {
-      const query = new URLSearchParams();
-      if (params?.user_id) query.append('user_id', String(params.user_id));
-      if (params?.page) query.append('page', String(params.page));
-      return this.request(`/posts?${query}`);
+      return this.request(withQuery('/posts', { user_id: params?.user_id, page: params?.page }));
     }
 
     async getPost(id: number): Promise<Types.Post> {
@@ -87,11 +85,9 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ DRAFTS ============
 
     async getDrafts(params?: { page?: number; per_page?: number }): Promise<Types.DraftsResponse> {
-      const query = new URLSearchParams();
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      const queryString = query.toString();
-      return this.request(`/posts/drafts${queryString ? `?${queryString}` : ''}`);
+      return this.request(
+        withQuery('/posts/drafts', { page: params?.page, per_page: params?.per_page }),
+      );
     }
 
     async publishDraft(postId: number): Promise<Types.Post> {

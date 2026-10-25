@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -78,12 +79,8 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page?: number;
       per_page?: number;
     }): Promise<Types.BlockedUsersResponse> {
-      const query = new URLSearchParams();
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      const queryString = query.toString();
       return this.request<Types.BlockedUsersResponse>(
-        `/blocks${queryString ? `?${queryString}` : ''}`,
+        withQuery('/blocks', { page: params?.page, per_page: params?.per_page }),
       );
     }
 
@@ -159,16 +156,14 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       to?: string;
       sport_type_id?: number;
     }): Promise<Types.ActivityStats> {
-      const query = new URLSearchParams();
-      if (params?.period) {
-        query.append('period', params.period);
-      } else {
-        if (params?.from) query.append('from', params.from);
-        if (params?.to) query.append('to', params.to);
-      }
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
+      // A period wins over an explicit from/to range.
+      const range = params?.period ? {} : { from: params?.from, to: params?.to };
       const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
-        `/stats/activities?${query}`,
+        withQuery('/stats/activities', {
+          period: params?.period,
+          ...range,
+          sport_type_id: params?.sport_type_id,
+        }),
       );
       return response.data;
     }
@@ -182,12 +177,13 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       periods?: number;
       sport_type_id?: number;
     }): Promise<Types.ActivityTrendsResponse> {
-      const query = new URLSearchParams();
-      if (params?.granularity) query.append('granularity', params.granularity);
-      if (params?.periods) query.append('periods', String(params.periods));
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      const qs = query.toString();
-      return this.request<Types.ActivityTrendsResponse>(`/stats/trends${qs ? `?${qs}` : ''}`);
+      return this.request<Types.ActivityTrendsResponse>(
+        withQuery('/stats/trends', {
+          granularity: params?.granularity,
+          periods: params?.periods,
+          sport_type_id: params?.sport_type_id,
+        }),
+      );
     }
 
     async getWeeklyStats(sportTypeId?: number): Promise<Types.WeeklyStats> {
@@ -229,17 +225,13 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         sport_type_id?: number;
       },
     ): Promise<Types.ActivityStats> {
-      const query = new URLSearchParams();
-      if (params?.from) query.append('from', params.from);
-      if (params?.to) query.append('to', params.to);
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-
-      const queryString = query.toString();
-      const endpoint = queryString
-        ? `/users/${userId}/stats/activities/active?${queryString}`
-        : `/users/${userId}/stats/activities/active`;
-
-      const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(endpoint);
+      const response = await this.request<Types.ApiResponse<Types.ActivityStats>>(
+        withQuery(`/users/${userId}/stats/activities/active`, {
+          from: params?.from,
+          to: params?.to,
+          sport_type_id: params?.sport_type_id,
+        }),
+      );
       return response.data;
     }
 
@@ -257,11 +249,13 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit = 50,
       offset = 0,
     ): Promise<Types.LeaderboardResponse> {
-      const query = new URLSearchParams();
-      query.append('period', period);
-      query.append('limit', String(limit));
-      query.append('offset', String(offset));
-      return this.request<Types.LeaderboardResponse>(`/leaderboard/global?${query}`);
+      return this.request<Types.LeaderboardResponse>(
+        withQuery('/leaderboard/global', {
+          period,
+          limit: String(limit),
+          offset: String(offset),
+        }),
+      );
     }
 
     /**
@@ -271,10 +265,9 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       period: Types.LeaderboardPeriod = 'all_time',
       limit = 50,
     ): Promise<Types.LeaderboardResponse> {
-      const query = new URLSearchParams();
-      query.append('period', period);
-      query.append('limit', String(limit));
-      return this.request<Types.LeaderboardResponse>(`/leaderboard/following?${query}`);
+      return this.request<Types.LeaderboardResponse>(
+        withQuery('/leaderboard/following', { period, limit: String(limit) }),
+      );
     }
 
     /**
@@ -292,13 +285,9 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit = 20,
       type?: Types.PointTransactionType,
     ): Promise<Types.PointHistoryResponse> {
-      const query = new URLSearchParams();
-      query.append('page', String(page));
-      query.append('limit', String(limit));
-      if (type) {
-        query.append('type', type);
-      }
-      return this.request<Types.PointHistoryResponse>(`/leaderboard/history?${query}`);
+      return this.request<Types.PointHistoryResponse>(
+        withQuery('/leaderboard/history', { page: String(page), limit: String(limit), type }),
+      );
     }
 
     // ============ PROFILE ============
