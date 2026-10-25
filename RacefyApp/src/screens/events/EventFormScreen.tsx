@@ -12,7 +12,6 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import {
   Button,
   Card,
@@ -59,6 +58,7 @@ import {
   mapEventApiErrors,
 } from './eventFormPayload';
 import { EventRankingModeSelector } from '../../components/EventRankingModeSelector';
+import { formatDate } from '../../utils/dateFormat';
 
 export function EventFormScreen({ navigation, route }: Props) {
   const { eventId } = route.params || {};
@@ -399,7 +399,7 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const formatDateTime = (date: Date | null): string => {
     if (!date) return t('eventForm.selectDate');
-    return format(date, 'MMM d, yyyy h:mm a');
+    return formatDate(date, 'PPp');
   };
 
   // Check if the selected sport type exists in the loaded sport types
@@ -1170,11 +1170,9 @@ export function EventFormScreen({ navigation, route }: Props) {
           )}
         </ScrollView>
 
-        {/* Sticky footer with Cancel/Save */}
+        {/* Sticky footer with Save — leaving goes through the header's back button */}
         <View
           style={{
-            flexDirection: 'row',
-            gap: spacing.md,
             padding: spacing.md,
             borderTopWidth: 1,
             borderTopColor: colors.border,
@@ -1182,17 +1180,10 @@ export function EventFormScreen({ navigation, route }: Props) {
           }}
         >
           <Button
-            title={t('common.cancel')}
-            variant="secondary"
-            onPress={() => navigation.goBack()}
-            style={{ flex: 1 }}
-          />
-          <Button
             title={isEditMode ? t('eventForm.updateButton') : t('eventForm.createButton')}
             onPress={handleSubmit}
             loading={isLoading}
             disabled={!pointsBudgetValid}
-            style={{ flex: 2 }}
           />
         </View>
 
