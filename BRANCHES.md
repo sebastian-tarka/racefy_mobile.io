@@ -15,6 +15,12 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### Okładki AI eventu (`event-ai-cover`, od 2026-10-25, odgałęziony od `event-series`)
+
+Edycja eventu: „Wygeneruj okładkę AI” — wskazówka, 2 podglądy (asynchronicznie, polling), wybór
+z wcześniej wygenerowanych podglądów tego eventu, limit miesięczny wg planu (Free 0 / Plus 3 / Pro 15).
+Mergować **po** `event-series`. Lista weryfikacji — przy mergu.
+
 ### Wydarzenia cykliczne w formularzu eventu (`event-series`, od 2026-10-25, odgałęziony od `event-location`)
 
 Tworzenie: sekcja „Powtarzanie” (co tydzień / co miesiąc, koniec po N edycjach lub w dniu, Plus/Pro),
