@@ -123,6 +123,14 @@ export function EventFormScreen({ navigation, route }: Props) {
         const route = await api.getRoute(routeId);
         const start = route.geometry?.coordinates[0];
         setRouteGeometry(route.geometry ?? null);
+        // The course defines the distance and the climb, as in the web form
+        setFormData((prev) => ({
+          ...prev,
+          distance: route.distance ? String(Math.round(route.distance) / 1000) : prev.distance,
+          target_elevation: route.elevation_gain
+            ? String(Math.round(route.elevation_gain))
+            : prev.target_elevation,
+        }));
         if (!start) return;
         updateLocation({ latitude: start[1], longitude: start[0] });
         const name = await reverseGeocode(start[1], start[0]);
@@ -219,7 +227,9 @@ export function EventFormScreen({ navigation, route }: Props) {
   const parsedMaxParticipants = formData.max_participants
     ? parseInt(formData.max_participants, 10)
     : null;
-  const parsedDistanceMeters = formData.distance ? parseFloat(formData.distance) * 1000 : null;
+  const parsedDistanceMeters = formData.distance
+    ? Math.round(parseFloat(formData.distance) * 1000)
+    : null;
   // Allocated = 1st + 2nd + 3rd + finisher × estimated_finishers
   // We approximate estimated_finishers = max_participants until backend returns it; the
   // indicator will refine it after the preview response.
@@ -1013,6 +1023,18 @@ export function EventFormScreen({ navigation, route }: Props) {
                       error={errors.distance ?? errors.target_distance}
                     />
                   )}
+
+                {/* Target elevation — total ascent of the course */}
+                <Input
+                  label={t('eventForm.targetElevation')}
+                  placeholder={t('eventForm.targetElevationPlaceholder')}
+                  value={formData.target_elevation}
+                  onChangeText={(text) => updateField('target_elevation', text)}
+                  keyboardType="number-pad"
+                  leftIcon="trending-up-outline"
+                  editable={!isLimitedEdit}
+                  error={errors.target_elevation}
+                />
 
                 {/* Entry Fee - only when feature flag enabled */}
                 {entryFeeEnabled && (

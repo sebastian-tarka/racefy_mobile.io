@@ -37,7 +37,8 @@ function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: Payload
     max_participants: toInt(formData.max_participants),
     difficulty: formData.difficulty,
     // Convert from km (form) to meters (API) — backend auto-mirrors distance → target_distance
-    distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
+    // Rounded: '1.005' * 1000 is 1004.999…, and the API wants an integer
+    distance: formData.distance ? Math.round(parseFloat(formData.distance) * 1000) : undefined,
     entry_fee: entryFeeEnabled && formData.entry_fee ? parseFloat(formData.entry_fee) : undefined,
     show_start_finish_points: formData.show_start_finish_points,
     start_finish_note: formData.start_finish_note || undefined,
@@ -45,6 +46,7 @@ function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: Payload
     visibility: formData.visibility,
     // Minutes in the form, seconds in the API
     time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
+    target_elevation: toInt(formData.target_elevation),
     is_team_event: isTeam,
     team_size_min: isTeam ? toInt(formData.team_size_min) : undefined,
     team_size_max: isTeam ? toInt(formData.team_size_max) : undefined,
@@ -89,6 +91,7 @@ export function buildUpdateEventPayload(
     latitude: fields.latitude ?? null,
     longitude: fields.longitude ?? null,
     distance: fields.distance ?? null,
+    target_elevation: fields.target_elevation ?? null,
     entry_fee: fields.entry_fee ?? null,
     auto_finalize_results: formData.auto_finalize_results,
   };
@@ -135,6 +138,7 @@ export function eventToFormData(event: Event): EventFormData {
     visibility: event.visibility || 'public',
     // Ranking mode config (target_distance is mirrored from `distance` by backend)
     time_limit: event.time_limit ? (event.time_limit / 60).toString() : '',
+    target_elevation: event.target_elevation?.toString() || '',
     // Team event
     is_team_event: event.is_team_event ?? false,
     team_size_min: event.team_size_min?.toString() || '',

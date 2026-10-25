@@ -253,7 +253,7 @@ export interface UpdateEventRequest {
   // Ranking mode
   ranking_mode?: EventRankingMode;
   target_distance?: number;
-  target_elevation?: number;
+  target_elevation?: number | null;
   time_limit?: number;
   // Team event
   is_team_event?: boolean;

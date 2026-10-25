@@ -1372,6 +1372,8 @@
     "maxParticipantsPlaceholder": "Leave empty for unlimited",
     "distance": "Distance (km)",
     "distancePlaceholder": "Optional",
+    "targetElevation": "Target elevation (m)",
+    "targetElevationPlaceholder": "e.g. 1000",
     "entryFee": "Entry Fee",
     "entryFeePlaceholder": "0 for free event",
     "createButton": "Create Event",

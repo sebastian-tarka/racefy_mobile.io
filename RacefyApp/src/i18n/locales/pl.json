@@ -1393,6 +1393,8 @@
     "maxParticipantsPlaceholder": "Pozostaw puste dla nieograniczonej",
     "distance": "Dystans (km)",
     "distancePlaceholder": "Opcjonalne",
+    "targetElevation": "Docelowe przewyższenie (m)",
+    "targetElevationPlaceholder": "np. 1000",
     "entryFee": "Opłata wstępu",
     "entryFeePlaceholder": "0 dla darmowego wydarzenia",
     "createButton": "Utwórz wydarzenie",

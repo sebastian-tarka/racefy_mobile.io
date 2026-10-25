@@ -36,6 +36,7 @@ const minimalForm: FormData = {
   auto_finalize_results: true,
   visibility: 'public',
   time_limit: '',
+  target_elevation: '',
   is_team_event: false,
   team_size_min: '',
   team_size_max: '',
@@ -62,6 +63,7 @@ const fullForm: FormData = {
   auto_finalize_results: false,
   visibility: 'followers',
   time_limit: '90',
+  target_elevation: '850',
   is_team_event: true,
   team_size_min: '2',
   team_size_max: '4',
@@ -104,6 +106,7 @@ const fullCommon = {
   auto_finalize_results: false,
   visibility: 'followers',
   time_limit: 5400,
+  target_elevation: 850,
   is_team_event: true,
   team_size_min: 2,
   team_size_max: 4,
@@ -120,6 +123,7 @@ describe('buildUpdateEventPayload', () => {
       registration_closes_at: null,
       max_participants: null,
       distance: null,
+      target_elevation: null,
       entry_fee: null,
       auto_finalize_results: true,
     });
@@ -233,6 +237,7 @@ describe('eventToFormData', () => {
       auto_finalize_results: true,
       visibility: 'public',
       time_limit: '90',
+      target_elevation: '',
       is_team_event: false,
       team_size_min: '2',
       team_size_max: '',
@@ -264,6 +269,14 @@ describe('eventToFormData', () => {
       point_rewards: { first_place: 500 },
     });
   });
+});
+
+it('rounds the distance to whole metres', () => {
+  const payload = buildCreateEventPayload(
+    { ...minimalForm, distance: '1.005' },
+    { entryFeeEnabled: true },
+  );
+  expect(payload.distance).toBe(1005);
 });
 
 describe('coordinates', () => {

@@ -80,6 +80,7 @@ export interface FormData {
   // NOTE: target_distance is no longer a separate form field. Backend mirrors
   // `distance` into `target_distance` automatically. We send only `distance`.
   time_limit: string; // minutes in UI → seconds to API
+  target_elevation: string; // metres of total ascent
   // Team event
   is_team_event: boolean;
   team_size_min: string;
@@ -121,6 +122,7 @@ export const initialFormData: FormData = {
   visibility: 'public',
   // Ranking mode config
   time_limit: '',
+  target_elevation: '',
   // Team event
   is_team_event: false,
   team_size_min: '',
