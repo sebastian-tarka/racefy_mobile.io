@@ -12,79 +12,16 @@ interface PayloadOptions {
   entryFeeEnabled: boolean;
 }
 
-export function buildUpdateEventPayload(
-  formData: EventFormData,
-  { entryFeeEnabled }: PayloadOptions,
-): UpdateEventRequest {
-  return {
-    title: formData.title,
-    content: formData.content,
-    sport_type_id: formData.sport_type_id!,
-    ranking_mode: formData.ranking_mode,
-    location_name: formData.location_name,
-    latitude: formData.latitude,
-    longitude: formData.longitude,
-    starts_at: formData.starts_at.toISOString(),
-    ends_at: formData.ends_at.toISOString(),
-    registration_opens_at: formData.registration_opens_at?.toISOString() || null,
-    registration_closes_at: formData.registration_closes_at?.toISOString() || null,
-    max_participants: formData.max_participants ? parseInt(formData.max_participants, 10) : null,
-    difficulty: formData.difficulty,
-    // Convert from km (form) to meters (API)
-    distance: formData.distance ? parseFloat(formData.distance) * 1000 : null,
-    entry_fee: entryFeeEnabled && formData.entry_fee ? parseFloat(formData.entry_fee) : null,
-    // GPS Privacy (new in 2026-01)
-    show_start_finish_points: formData.show_start_finish_points,
-    start_finish_note: formData.start_finish_note || undefined,
-    // Activity aggregation
-    allow_multiple_activities: formData.allow_multiple_activities,
-    // Auto-finalize results
-    auto_finalize_results: formData.auto_finalize_results,
-    // Visibility
-    visibility: formData.visibility,
-    // Ranking mode config — backend auto-mirrors distance → target_distance
-    time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
-    // Team event
-    is_team_event: formData.is_team_event,
-    team_size_min:
-      formData.is_team_event && formData.team_size_min
-        ? parseInt(formData.team_size_min, 10)
-        : undefined,
-    team_size_max:
-      formData.is_team_event && formData.team_size_max
-        ? parseInt(formData.team_size_max, 10)
-        : undefined,
-    team_scoring: formData.is_team_event ? formData.team_scoring : undefined,
-    // Point rewards
-    point_rewards:
-      formData.point_rewards_first ||
-      formData.point_rewards_second ||
-      formData.point_rewards_third ||
-      formData.point_rewards_finisher
-        ? {
-            first_place: formData.point_rewards_first
-              ? parseInt(formData.point_rewards_first, 10)
-              : undefined,
-            second_place: formData.point_rewards_second
-              ? parseInt(formData.point_rewards_second, 10)
-              : undefined,
-            third_place: formData.point_rewards_third
-              ? parseInt(formData.point_rewards_third, 10)
-              : undefined,
-            finisher: formData.point_rewards_finisher
-              ? parseInt(formData.point_rewards_finisher, 10)
-              : undefined,
-          }
-        : undefined,
-    // Route planning
-    route_id: formData.route_id,
-  };
-}
+const toInt = (value: string): number | undefined => (value ? parseInt(value, 10) : undefined);
 
-export function buildCreateEventPayload(
-  formData: EventFormData,
-  { entryFeeEnabled }: PayloadOptions,
-): CreateEventRequest {
+/** Fields sent the same way on create and update; optional ones are `undefined` when empty. */
+function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: PayloadOptions) {
+  const isTeam = formData.is_team_event;
+  const hasRewards =
+    formData.point_rewards_first ||
+    formData.point_rewards_second ||
+    formData.point_rewards_third ||
+    formData.point_rewards_finisher;
   return {
     title: formData.title,
     content: formData.content,
@@ -97,58 +34,61 @@ export function buildCreateEventPayload(
     ends_at: formData.ends_at.toISOString(),
     registration_opens_at: formData.registration_opens_at?.toISOString(),
     registration_closes_at: formData.registration_closes_at?.toISOString(),
-    max_participants: formData.max_participants
-      ? parseInt(formData.max_participants, 10)
-      : undefined,
+    max_participants: toInt(formData.max_participants),
     difficulty: formData.difficulty,
-    // Convert from km (form) to meters (API)
+    // Convert from km (form) to meters (API) — backend auto-mirrors distance → target_distance
     distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
-    ...(entryFeeEnabled && formData.entry_fee ? { entry_fee: parseFloat(formData.entry_fee) } : {}),
-    // GPS Privacy (new in 2026-01)
+    entry_fee: entryFeeEnabled && formData.entry_fee ? parseFloat(formData.entry_fee) : undefined,
     show_start_finish_points: formData.show_start_finish_points,
     start_finish_note: formData.start_finish_note || undefined,
-    // Activity aggregation
     allow_multiple_activities: formData.allow_multiple_activities,
-    // Auto-finalize results (only send when disabled, API defaults to true)
-    ...(!formData.auto_finalize_results ? { auto_finalize_results: false } : {}),
-    // Visibility
     visibility: formData.visibility,
-    // Ranking mode config — backend auto-mirrors distance → target_distance
+    // Minutes in the form, seconds in the API
     time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
-    // Team event
-    is_team_event: formData.is_team_event,
-    team_size_min:
-      formData.is_team_event && formData.team_size_min
-        ? parseInt(formData.team_size_min, 10)
-        : undefined,
-    team_size_max:
-      formData.is_team_event && formData.team_size_max
-        ? parseInt(formData.team_size_max, 10)
-        : undefined,
-    team_scoring: formData.is_team_event ? formData.team_scoring : undefined,
-    // Point rewards
-    point_rewards:
-      formData.point_rewards_first ||
-      formData.point_rewards_second ||
-      formData.point_rewards_third ||
-      formData.point_rewards_finisher
-        ? {
-            first_place: formData.point_rewards_first
-              ? parseInt(formData.point_rewards_first, 10)
-              : undefined,
-            second_place: formData.point_rewards_second
-              ? parseInt(formData.point_rewards_second, 10)
-              : undefined,
-            third_place: formData.point_rewards_third
-              ? parseInt(formData.point_rewards_third, 10)
-              : undefined,
-            finisher: formData.point_rewards_finisher
-              ? parseInt(formData.point_rewards_finisher, 10)
-              : undefined,
-          }
-        : undefined,
-    // Route planning
+    is_team_event: isTeam,
+    team_size_min: isTeam ? toInt(formData.team_size_min) : undefined,
+    team_size_max: isTeam ? toInt(formData.team_size_max) : undefined,
+    team_scoring: isTeam ? formData.team_scoring : undefined,
+    point_rewards: hasRewards
+      ? {
+          first_place: toInt(formData.point_rewards_first),
+          second_place: toInt(formData.point_rewards_second),
+          third_place: toInt(formData.point_rewards_third),
+          finisher: toInt(formData.point_rewards_finisher),
+        }
+      : undefined,
     route_id: formData.route_id,
+  };
+}
+
+/** Create leaves empty optional fields out; the API applies its defaults. */
+export function buildCreateEventPayload(
+  formData: EventFormData,
+  options: PayloadOptions,
+): CreateEventRequest {
+  const { entry_fee, ...fields } = buildSharedFields(formData, options);
+  return {
+    ...fields,
+    ...(entry_fee !== undefined ? { entry_fee } : {}),
+    // API defaults to true, so it is only sent when switched off
+    ...(!formData.auto_finalize_results ? { auto_finalize_results: false } : {}),
+  };
+}
+
+/** Update sends cleared fields as `null` — leaving them out would keep the old value. */
+export function buildUpdateEventPayload(
+  formData: EventFormData,
+  options: PayloadOptions,
+): UpdateEventRequest {
+  const fields = buildSharedFields(formData, options);
+  return {
+    ...fields,
+    registration_opens_at: fields.registration_opens_at ?? null,
+    registration_closes_at: fields.registration_closes_at ?? null,
+    max_participants: fields.max_participants ?? null,
+    distance: fields.distance ?? null,
+    entry_fee: fields.entry_fee ?? null,
+    auto_finalize_results: formData.auto_finalize_results,
   };
 }
 
