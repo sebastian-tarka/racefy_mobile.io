@@ -15,6 +15,7 @@ import { useTheme } from '../hooks/useTheme';
 import { msFont, spacing } from '../theme';
 import type { SportTypeWithIcon } from '../hooks/useSportTypes';
 import type { Event } from '../types/api';
+import { formatIntlTime } from '../utils/dateFormat';
 
 const ROUTE_BLUE = '#2563EB';
 
@@ -60,7 +61,7 @@ export function EventSelectionSheet({
   const insets = useSafeAreaInsets();
 
   const formatTime = (dateString: string) =>
-    new Date(dateString).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    formatIntlTime(dateString, { hour: '2-digit', minute: '2-digit' });
 
   const pick = (event: Event | null) => {
     onSelect(event);

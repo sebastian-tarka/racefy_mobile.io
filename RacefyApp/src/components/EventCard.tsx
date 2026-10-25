@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { Card } from './Card';
 import { EventStakes } from './event/EventStakes';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +9,7 @@ import { useUnits } from '../hooks/useUnits';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { getSportIcon } from '../utils/sportIcon';
 import type { Event } from '../types/api';
+import { formatDate } from '../utils/dateFormat';
 
 interface EventCardProps {
   event: Event;
@@ -42,9 +42,9 @@ function DateBadge({ event }: { event: Event }) {
   return (
     <View style={[styles.badge, { backgroundColor: colors.primaryLight + '22' }]}>
       <Text style={[styles.badgeMonth, { color: colors.primary }]}>
-        {format(start, 'MMM').toUpperCase()}
+        {formatDate(start, 'MMM').toUpperCase()}
       </Text>
-      <Text style={[styles.badgeDay, { color: colors.primary }]}>{format(start, 'd')}</Text>
+      <Text style={[styles.badgeDay, { color: colors.primary }]}>{formatDate(start, 'd')}</Text>
     </View>
   );
 }

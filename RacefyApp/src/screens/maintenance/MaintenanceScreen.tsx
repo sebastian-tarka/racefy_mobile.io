@@ -7,6 +7,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useMaintenance } from '../../hooks/useMaintenance';
 import { Button, BrandLogo } from '../../components';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import { getAppLocale } from '../../utils/dateFormat';
 
 export function MaintenanceScreen() {
   const { t } = useTranslation();
@@ -78,13 +79,13 @@ function formatEstimatedEnd(isoDate: string, t: (key: string) => string): string
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
 
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = date.toLocaleTimeString(getAppLocale(), { hour: '2-digit', minute: '2-digit' });
 
     if (isToday) {
       return `${t('maintenance.today')} ${time}`;
     }
 
-    const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    const dateStr = date.toLocaleDateString(getAppLocale(), { day: 'numeric', month: 'short' });
     return `${dateStr} ${time}`;
   } catch {
     return isoDate;

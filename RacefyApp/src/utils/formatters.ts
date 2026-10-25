@@ -1,4 +1,5 @@
 import { UnitSystem, formatDistance as ucFormatDistance } from './unitConversions';
+import { formatIntlDate } from './dateFormat';
 
 /**
  * Format time in seconds to HH:MM:SS or MM:SS format
@@ -52,5 +53,5 @@ export const formatPrice = (amount: number, currency: string = 'PLN'): string =>
 /** Short day and month in the device locale: "Oct 19" / "19 paź". Empty for no date. */
 export const formatShortDate = (dateString?: string): string => {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatIntlDate(dateString, { month: 'short', day: 'numeric' });
 };

@@ -3,7 +3,6 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Badge } from './Badge';
@@ -13,6 +12,7 @@ import { pickEventCoverUrl } from './event/eventFormat';
 import { EventStakes } from './event/EventStakes';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Event } from '../types/api';
+import { formatDate } from '../utils/dateFormat';
 
 interface FeaturedEventCardProps {
   event: Event;
@@ -78,7 +78,7 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
               {event.post?.title || t('eventDetail.untitled')}
             </Text>
             <Text style={styles.subtitle} numberOfLines={1}>
-              {[format(start, 'EEE · d MMM yyyy'), event.location_name].filter(Boolean).join(' · ')}
+              {[formatDate(start, 'EEE · PP'), event.location_name].filter(Boolean).join(' · ')}
             </Text>
           </View>
         </View>

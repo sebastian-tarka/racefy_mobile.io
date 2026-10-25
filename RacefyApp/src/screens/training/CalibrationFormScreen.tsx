@@ -40,6 +40,7 @@ import type {
   TrainingGoal,
 } from '../../types/api';
 import { getErrorMessage, getErrorStatus } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -651,9 +652,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
                     { color: targetDate ? colors.textPrimary : colors.textMuted },
                   ]}
                 >
-                  {targetDate
-                    ? targetDate.toLocaleDateString()
-                    : t('training.calibration.selectDate')}
+                  {targetDate ? formatIntlDate(targetDate) : t('training.calibration.selectDate')}
                 </Text>
               </TouchableOpacity>
               {selectedGoal.default_duration_weeks && !errors.targetDate && (

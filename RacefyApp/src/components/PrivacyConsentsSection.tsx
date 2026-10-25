@@ -11,6 +11,7 @@ import { logger } from '../services/logger';
 import { spacing, fontSize } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import type { UserConsent, LegalDocumentType } from '../types/legal';
+import { formatIntlDate } from '../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,7 +27,7 @@ const getDocumentTitle = (type: LegalDocumentType, t: (key: string) => string): 
 };
 
 const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString();
+  return formatIntlDate(dateString);
 };
 
 interface PrivacyConsentsSectionProps {

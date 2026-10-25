@@ -46,6 +46,7 @@ import type {
   TrainingWeek,
 } from '../../types/api';
 import { getErrorMessage, isApiError } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeeksList'>;
@@ -55,10 +56,9 @@ interface Props {
   route: RoutePropType;
 }
 
-const fmtDay = (d: string) =>
-  new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+const fmtDay = (d: string) => formatIntlDate(d, { day: 'numeric', month: 'short' });
 const fmtFull = (d: string) =>
-  new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  formatIntlDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 
 interface UISession {
   id: string;

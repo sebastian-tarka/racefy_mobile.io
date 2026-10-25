@@ -1,12 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { Card } from './Card';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from 'react-i18next';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Reward, RewardType } from '../types/api';
+import { formatDate } from '../utils/dateFormat';
 
 interface RewardCardProps {
   reward: Reward;
@@ -61,7 +61,7 @@ const getBadgeRarityColor = (rarity: string, colors: any): string => {
 function RewardCardBase({ reward, onPress }: RewardCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const formattedDate = format(new Date(reward.earned_at), 'MMM d, yyyy');
+  const formattedDate = formatDate(reward.earned_at, 'PP');
 
   const rewardColor = getRewardColor(reward.reward_type, colors);
   const icon = getRewardIcon(reward.reward_type);
@@ -142,8 +142,7 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
               <Text
                 style={[styles.expiryText, { color: isExpired ? colors.error : colors.textMuted }]}
               >
-                {t('rewards.expiresAt')}:{' '}
-                {format(new Date(reward.coupon.expires_at), 'MMM d, yyyy')}
+                {t('rewards.expiresAt')}: {formatDate(reward.coupon.expires_at, 'PP')}
               </Text>
               {isCancelled && (
                 <Text style={[styles.statusBadge, { color: colors.error }]}>

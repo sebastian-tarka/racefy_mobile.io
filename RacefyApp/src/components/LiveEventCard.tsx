@@ -2,7 +2,6 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { InteractionButton } from './InteractionButton';
@@ -11,6 +10,7 @@ import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import { getSportIcon } from '../utils/sportIcon';
 import type { EventWithLatestCommentary } from '../types/api';
+import { SHORT_DATE_TIME, formatDate, formatIntlDateTime } from '../utils/dateFormat';
 
 interface LiveEventCardProps {
   event: EventWithLatestCommentary;
@@ -21,7 +21,7 @@ interface LiveEventCardProps {
 function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const formattedDate = format(new Date(event.starts_at), 'MMM d, h:mm a');
+  const formattedDate = formatIntlDateTime(event.starts_at, SHORT_DATE_TIME);
 
   const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
 
@@ -118,7 +118,7 @@ function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardPro
               <View style={styles.commentaryFooter}>
                 <Text style={[styles.commentaryTime, { color: colors.textSecondary }]}>
                   {event.latest_commentary.published_at &&
-                    format(new Date(event.latest_commentary.published_at), 'h:mm a')}
+                    formatDate(event.latest_commentary.published_at, 'p')}
                 </Text>
                 <InteractionButton
                   variant="boost"

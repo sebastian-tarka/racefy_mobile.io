@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
 import { MediaGallery } from './MediaGallery';
@@ -22,6 +21,7 @@ import { apiTokensToLibraryFormat, stripMentionsForApi } from '../utils/mentions
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Comment, MediaItem, Photo, User } from '../types/api';
 import { pickImages } from '../utils/pickImages';
+import { formatTimeAgo } from '../utils/dateFormat';
 
 interface MediaEditState {
   existingMedia: Photo | null; // Current media from comment
@@ -190,9 +190,7 @@ export function CommentItem({
     }
   };
 
-  const timeAgo = formatDistanceToNow(new Date(comment.created_at), {
-    addSuffix: true,
-  });
+  const timeAgo = formatTimeAgo(comment.created_at);
 
   return (
     <View style={[styles.container, isReply && styles.replyContainer]}>

@@ -11,6 +11,7 @@ import { YouTubeEmbed } from './YouTubeEmbed';
 import { buildMediaItems, styles } from './FeedCard.utils';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post, TaggedEvent } from '../types/api';
+import { getAppLocale } from '../utils/dateFormat';
 
 const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
   challenge: { accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
@@ -33,7 +34,11 @@ function TaggedEventBlock({
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(getAppLocale(), {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
   };
 
   return (

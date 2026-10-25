@@ -9,8 +9,6 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import {
   Avatar,
@@ -44,6 +42,7 @@ import { getSportIcon } from '../../utils/sportIcon';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { GpsTrack, Post, User } from '../../types/api';
+import { formatDate, formatTimeAgo } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PostDetail'>;
 
@@ -173,7 +172,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
     navigation.navigate('UserProfile', { username: user.username });
   };
 
-  const timeAgo = post ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true }) : '';
+  const timeAgo = post ? formatTimeAgo(post.created_at) : '';
 
   const isOwner = post?.is_owner ?? false;
 
@@ -288,10 +287,10 @@ export function PostDetailScreen({ route, navigation }: Props) {
         <View style={styles.eventHeader}>
           <View style={[styles.eventDateBadge, { backgroundColor: colors.warning }]}>
             <Text style={[styles.eventDateDay, { color: colors.white }]}>
-              {format(new Date(event.starts_at), 'd')}
+              {formatDate(event.starts_at, 'd')}
             </Text>
             <Text style={[styles.eventDateMonth, { color: colors.white }]}>
-              {format(new Date(event.starts_at), 'MMM')}
+              {formatDate(event.starts_at, 'MMM')}
             </Text>
           </View>
           <View style={styles.eventInfo}>

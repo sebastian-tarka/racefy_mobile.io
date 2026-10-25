@@ -54,6 +54,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { NotificationChannelSettings, UserPreferences } from '../../types/api';
 import { getErrorMessage, isApiError } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
 
@@ -839,7 +840,7 @@ export function SettingsScreen({ navigation }: Props) {
             )}
             {!isTrial && isPremium && expiresAt && (
               <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
-                {t('settings.expiresOn', { date: new Date(expiresAt).toLocaleDateString() })}
+                {t('settings.expiresOn', { date: formatIntlDate(expiresAt) })}
               </Text>
             )}
           </View>

@@ -2,10 +2,10 @@ import React, { memo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { PointTransaction, PointTransactionType } from '../types/api';
+import { formatDate } from '../utils/dateFormat';
 
 interface PointHistoryListProps {
   transactions: PointTransaction[];
@@ -61,7 +61,7 @@ const PointHistoryItem = memo(function PointHistoryItem({ transaction }: PointHi
           {transaction.description}
         </Text>
         <Text style={[styles.date, { color: colors.textMuted }]}>
-          {format(new Date(transaction.created_at), 'MMM d, yyyy h:mm a')}
+          {formatDate(transaction.created_at, 'PPp')}
         </Text>
       </View>
 

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
+import { getAppLocale } from '../../../../../utils/dateFormat';
 
 interface UpcomingEventSectionProps {
   section: HomeSection;
@@ -17,7 +18,7 @@ interface UpcomingEventSectionProps {
 function formatEventDate(dateString?: string): string {
   if (!dateString) return '';
   const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(getAppLocale(), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',

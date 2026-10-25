@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import { api } from '../services/api';
 import { emitRefresh, useRefreshOn } from '../services/refreshEvents';
 import type { Event, EventRegistration, Activity, LeaderboardEntry } from '../types/api';
+import { SHORT_DATE_TIME, formatIntlDateTime } from '../utils/dateFormat';
 
 interface UseEventDetailParams {
   eventId: number;
@@ -233,13 +233,13 @@ export function useEventDetail({
       case 'registration_not_opened':
         return eligibility.opens_at
           ? t('eventDetail.registrationOpensOn', {
-              date: format(new Date(eligibility.opens_at), 'MMM d, h:mm a'),
+              date: formatIntlDateTime(eligibility.opens_at, SHORT_DATE_TIME),
             })
           : t('eventDetail.registrationNotOpened');
       case 'registration_closed':
         return eligibility.closes_at
           ? t('eventDetail.registrationClosedOn', {
-              date: format(new Date(eligibility.closes_at), 'MMM d, h:mm a'),
+              date: formatIntlDateTime(eligibility.closes_at, SHORT_DATE_TIME),
             })
           : t('eventDetail.registrationClosed');
       default:

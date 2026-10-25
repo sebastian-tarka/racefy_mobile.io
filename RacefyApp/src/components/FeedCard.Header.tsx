@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post } from '../types/api';
 import { type FeedPostType, getTypeColors, getTypeIcon, styles } from './FeedCard.utils';
+import { formatTimeAgo } from '../utils/dateFormat';
 
 interface MenuBottomSheetProps {
   isOwner: boolean;
@@ -169,7 +169,7 @@ export function FeedCardHeader({
   const { colors } = useTheme();
   const typeColors = getTypeColors(type, colors);
   const isSponsored = type === 'sponsored';
-  const timeAgo = formatDistanceToNow(new Date(post.created_at), { addSuffix: false });
+  const timeAgo = formatTimeAgo(post.created_at, { addSuffix: false });
 
   const visibilityConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> =
     {

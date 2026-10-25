@@ -2,10 +2,6 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { format } from 'date-fns/format';
-import { enUS } from 'date-fns/locale/en-US';
-import { es } from 'date-fns/locale/es';
-import { pl } from 'date-fns/locale/pl';
 import { useTranslation } from 'react-i18next';
 import { AutoDisplayImage } from './AutoDisplayImage';
 import { ExpandableContent, PostMedia } from './FeedCard.Media';
@@ -16,6 +12,7 @@ import { fixStorageUrl } from '../config/api';
 import { styles, useImageGallery } from './FeedCard.utils';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post } from '../types/api';
+import { formatDate, formatIntlDate } from '../utils/dateFormat';
 
 function GalleryModals({
   galleryVisible,
@@ -44,7 +41,7 @@ function GalleryModals({
 
 export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: () => void }) {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const {
     expandedImage,
     setExpandedImage,
@@ -54,8 +51,6 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
     openGallery,
   } = useImageGallery();
   const event = post.event;
-
-  const dateFnsLocale = i18n.language === 'pl' ? pl : i18n.language === 'es' ? es : enUS;
 
   const { coverUrl, imageUrls } = useMemo(() => {
     const cover = event?.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
@@ -72,7 +67,7 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
   if (!event) return null;
 
   const isNew = event.status === 'upcoming';
-  const formattedDate = format(new Date(event.starts_at), 'MMM d', { locale: dateFnsLocale });
+  const formattedDate = formatIntlDate(event.starts_at, { day: 'numeric', month: 'short' });
 
   return (
     <>
@@ -147,7 +142,7 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
           <View style={evStyles.infoItem}>
             <Ionicons name="calendar-outline" size={15} color={colors.info} />
             <Text style={[evStyles.infoText, { color: colors.textPrimary }]}>
-              {format(new Date(event.starts_at), 'EEE, MMM d, yyyy', { locale: dateFnsLocale })}
+              {formatDate(event.starts_at, 'EEE, PP')}
             </Text>
           </View>
           {event.location_name && (

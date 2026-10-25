@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
 import { InteractionButton } from './InteractionButton';
@@ -15,6 +14,7 @@ import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDuration } from '../utils/formatDuration';
 import { getActivityVerdict, VERDICT_COLORS } from '../utils/activityVerdict';
 import type { Activity } from '../types/api';
+import { formatDate } from '../utils/dateFormat';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -34,7 +34,7 @@ function ActivityCardBase({
   const { t } = useTranslation();
   const { formatDistance, formatPaceWithUnit, formatElevation } = useUnits();
   const { getSportById } = useSportTypes();
-  const formattedDate = format(new Date(activity.started_at), 'MMM d, yyyy');
+  const formattedDate = formatDate(activity.started_at, 'PP');
   const verdict = getActivityVerdict(activity);
 
   // Engagement state — local copies so the buttons can update independently

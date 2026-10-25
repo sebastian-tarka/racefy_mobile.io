@@ -15,6 +15,7 @@ import { rarityColor } from './BadgeTile';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, msFont, spacing } from '../../theme';
 import type { BadgeReward } from '../../types/api';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 interface Props {
   reward: BadgeReward | null;
@@ -83,7 +84,7 @@ export function BadgeSheet({ reward, onClose }: Props) {
                   <View style={styles.metaRow}>
                     <Meta
                       label={t('rewards.badgeSheet.earned')}
-                      value={new Date(reward.earned_at).toLocaleDateString()}
+                      value={formatIntlDate(reward.earned_at)}
                     />
                     {!!reward.metadata?.event_id && (
                       <Meta

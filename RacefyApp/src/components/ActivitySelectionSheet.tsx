@@ -14,6 +14,7 @@ import { useUnits } from '../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Activity } from '../types/api';
 import { SheetModal } from './SheetModal';
+import { getAppLocale } from '../utils/dateFormat';
 
 interface ActivitySelectionSheetProps {
   visible: boolean;
@@ -38,7 +39,7 @@ export function ActivitySelectionSheet({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(getAppLocale(), {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',

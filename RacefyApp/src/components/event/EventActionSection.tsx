@@ -7,6 +7,7 @@ import { LivePulse } from '../recording/LivePulse';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontSize, msFont, spacing } from '../../theme';
 import type { Event } from '../../types/api';
+import { formatIntlDateTime } from '../../utils/dateFormat';
 
 export interface OwnerAction {
   key: string;
@@ -290,7 +291,7 @@ function EventStartCta({
 
   // Not started: a reason instead of a greyed-out dummy button.
   if (stage === 'before') {
-    const startTime = new Date(event.starts_at).toLocaleString(undefined, {
+    const startTime = formatIntlDateTime(event.starts_at, {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',

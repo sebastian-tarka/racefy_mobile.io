@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityLiveMessages,
@@ -62,6 +61,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
 import { formatDuration } from '../../utils/formatDuration';
 import { getErrorMessage, isApiError } from '../../utils/errors';
+import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -553,7 +553,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                       {activity.user.name}
                     </Text>
                     <Text style={[styles.activityDate, { color: colors.textMuted }]}>
-                      {format(new Date(activity.started_at), 'EEEE, MMMM d · h:mm a')}
+                      {`${formatIntlDate(activity.started_at, { weekday: 'long', day: 'numeric', month: 'long' })} · ${formatDate(activity.started_at, 'p')}`}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -952,7 +952,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                   {t('activityDetail.date')}
                 </Text>
                 <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                  {format(new Date(activity.started_at), 'PPpp')}
+                  {formatDate(activity.started_at, 'PPpp')}
                 </Text>
               </View>
               <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>

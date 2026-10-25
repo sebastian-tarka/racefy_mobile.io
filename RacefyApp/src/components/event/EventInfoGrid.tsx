@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';
@@ -9,6 +8,7 @@ import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { fontSize, spacing } from '../../theme';
 import { formatCutoff, rankingModeLabel } from './eventFormat';
 import type { Event } from '../../types/api';
+import { formatDate } from '../../utils/dateFormat';
 
 interface InfoCell {
   label: string;
@@ -26,8 +26,8 @@ export function EventInfoGrid({ event }: { event: Event }) {
   const cells = useMemo<InfoCell[]>(() => {
     const start = new Date(event.starts_at);
     const list: InfoCell[] = [
-      { label: t('eventInfo.date', 'Date'), value: format(start, 'd MMM yyyy') },
-      { label: t('eventInfo.start', 'Start'), value: format(start, 'HH:mm') },
+      { label: t('eventInfo.date', 'Date'), value: formatDate(start, 'PP') },
+      { label: t('eventInfo.start', 'Start'), value: formatDate(start, 'p') },
     ];
 
     const distanceMeters = event.distance ?? event.route?.distance ?? null;

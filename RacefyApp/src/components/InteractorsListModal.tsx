@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { Avatar } from './Avatar';
@@ -19,6 +18,7 @@ import { borderRadius, fontSize, spacing } from '../theme';
 import type { InteractionTargetType } from './InteractionButton';
 import type { UserInteractor } from '../types/api';
 import { SheetModal } from './SheetModal';
+import { formatTimeAgo } from '../utils/dateFormat';
 
 interface InteractorsListModalProps {
   visible: boolean;
@@ -86,9 +86,7 @@ export function InteractorsListModal({
       </View>
       {item.interacted_at && (
         <Text style={[styles.timeAgo, { color: colors.textMuted }]}>
-          {formatDistanceToNow(new Date(item.interacted_at), {
-            addSuffix: false,
-          })}
+          {formatTimeAgo(item.interacted_at, { addSuffix: false })}
         </Text>
       )}
     </TouchableOpacity>

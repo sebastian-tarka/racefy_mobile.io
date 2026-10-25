@@ -2,13 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';
 import { useFetch } from '../../hooks/useFetch';
 import { api } from '../../services/api';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { CommentaryListResponse } from '../../types/api';
+import { formatDate } from '../../utils/dateFormat';
 
 const ACCENT = '#8b5cf6'; // commentary purple accent (matches mockup)
 
@@ -58,7 +58,7 @@ export function CommentaryPreviewCard({
             {isLive
               ? t('eventDetail.commentaryUpdating', 'Updating live · tap for full timeline')
               : latest.published_at
-                ? format(new Date(latest.published_at), 'HH:mm')
+                ? formatDate(latest.published_at, 'p')
                 : t('eventDetail.commentaryTapTimeline', 'Tap for full timeline')}
           </Text>
         </View>

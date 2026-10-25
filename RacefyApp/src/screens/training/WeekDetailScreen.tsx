@@ -24,6 +24,7 @@ import { CoachingHintPanel } from '../../components/Training/CoachingHintPanel';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, Activity } from '../../types/api';
 import { getErrorMessage } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeekDetail'>;
@@ -286,8 +287,7 @@ export function WeekDetailScreen({ navigation, route }: Props) {
         <Card style={styles.weekInfoCard}>
           <Text style={[styles.weekInfoPhase, { color: colors.primary }]}>{week.phase_name}</Text>
           <Text style={[styles.weekInfoDate, { color: colors.textSecondary }]}>
-            {new Date(week.start_date).toLocaleDateString()} -{' '}
-            {new Date(week.end_date).toLocaleDateString()}
+            {formatIntlDate(week.start_date)} - {formatIntlDate(week.end_date)}
           </Text>
 
           {week.focus_description && (
