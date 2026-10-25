@@ -15,6 +15,12 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### Lokalizacja eventu z mapy i z trasy (`event-location`, od 2026-10-25, odgałęziony od `audyt-etap6`)
+
+Formularz eventu: wyszukiwanie miejsca (podpowiedzi Mapbox jak w SPA), mapa z pinezką (stuknięcie →
+współrzędne + nazwa z odwrotnego geokodowania), po podpięciu trasy lokalizacja = start trasy, tylko do
+odczytu. Naprawia też wysyłanie `0,0` jako współrzędnych. Mergować **po** `audyt-etap6`. Lista weryfikacji — przy mergu.
+
 ### Audyt, etap 6: typy, błędy, query, formularz eventu (`audyt-etap6`, od 2026-10-25)
 
 Etap 6 z `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, ESLint 97 (zapadka bez zmian), knip 0, jest 497/497.
