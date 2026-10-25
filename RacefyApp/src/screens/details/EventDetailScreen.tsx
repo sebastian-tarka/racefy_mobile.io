@@ -24,6 +24,7 @@ import {
   EventGallery,
   EventHero,
   EventInfoGrid,
+  EventPeriodChallengeNote,
   EventRegistrationProgress,
   type OwnerAction,
   SponsorRow,
@@ -312,6 +313,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
 
               <View style={styles.padded}>
                 <EventInfoGrid event={event} />
+                <EventPeriodChallengeNote event={event} />
               </View>
 
               {showRegistrationProgress && (

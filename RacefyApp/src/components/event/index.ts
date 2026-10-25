@@ -1,6 +1,7 @@
 export * from './eventFormat';
 export * from './EventHero';
 export * from './EventInfoGrid';
+export * from './EventPeriodChallengeNote';
 export * from './EventRegistrationProgress';
 export * from './SponsorRow';
 export * from './EventCourseIntel';

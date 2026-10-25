@@ -34,6 +34,7 @@ import {
   ScreenHeader,
   SettingsSection,
 } from '../../components';
+import { useNavSectionCount } from '../../hooks/useNavBadges';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
@@ -290,6 +291,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
 
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const newFeedback = useNavSectionCount('feedback');
   const { user, logout } = useAuth();
   const { tier, isPremium, isTrial, remainingDays, expiresAt, canUse } = useSubscription();
   const { colors, isDark, themePreference, setThemePreference } = useTheme();
@@ -1292,6 +1294,7 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="chatbubbles-outline"
             label={t('settings.privacySafety.feedbackAndBugs')}
+            value={newFeedback > 0 ? t('navBadges.newCount', { count: newFeedback }) : undefined}
             onPress={() => navigation.navigate('FeedbackList')}
           />
         </SettingsSection>

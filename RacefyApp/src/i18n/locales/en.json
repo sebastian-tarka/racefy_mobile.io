@@ -616,10 +616,12 @@
       "disabledHint": "Fill distance/sport/participants to unlock",
       "prereqTitle": "To compute the points pool, provide:",
       "prereqSportType": "Sport type",
-      "prereqEffort": "Distance or elevation",
+      "prereqEffort": "Distance, elevation, or a period challenge (multiple activities + distance/elevation ranking)",
       "prereqMaxParticipants": "Max participants",
       "poolReady": "Pool ready",
-      "rewardsLockedHint": "🔒 Fill the fields above to award points"
+      "rewardsLockedHint": "🔒 Fill the fields above to award points",
+      "periodBasis_one": "Pool based on the challenge length: {{count}} day",
+      "periodBasis_other": "Pool based on the challenge length: {{count}} days"
     },
     "title": "Events",
     "subtitle": "Local sports events",
@@ -781,7 +783,12 @@
     "finalStandings": "Final standings",
     "noResultsTitle": "Results not final yet",
     "noResultsMessage": "Final placements will appear once the organizer finalizes them.",
-    "trigger": "Trigger"
+    "trigger": "Trigger",
+    "periodChallenge": {
+      "title": "Period challenge",
+      "registered": "Every {{sport}} activity you start between {{from}} and {{to}} counts automatically — no need to pick the event when you start.",
+      "notRegistered": "Once you register, every {{sport}} activity you start between {{from}} and {{to}} will count automatically."
+    }
   },
   "activityDetail": {
     "title": "Activity Details",
@@ -3657,5 +3664,9 @@
   "errorBoundary": {
     "title": "Something went wrong",
     "message": "Unexpected app error"
+  },
+  "navBadges": {
+    "newCount_one": "{{count}} new",
+    "newCount_other": "{{count}} new"
   }
 }

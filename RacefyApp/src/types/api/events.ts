@@ -463,6 +463,14 @@ export interface EventPointsBudgetPreviewRequest {
   target_elevation?: number | null;
   max_participants?: number | null;
   is_sponsored?: boolean;
+  /**
+   * Period challenge ("most km in November"): with all three the pool comes from
+   * the event's length when there is no distance. Without them such an event
+   * gets pool 0.
+   */
+  starts_at?: string;
+  ends_at?: string;
+  allow_multiple_activities?: boolean;
 }
 
 /**
@@ -476,8 +484,13 @@ export interface EventPointsBudget {
   remaining: number;
   estimated_finishers: number;
   is_sponsored: boolean;
+  /** Meters; for basis 'period' the reference distance. */
   effective_distance: number;
   effective_elevation: number;
+  /** 'period' = pool from the event's length (period challenge). Older API: absent. */
+  basis?: 'effort' | 'period';
+  /** Days counted (max 31) when basis is 'period'. */
+  period_days?: number | null;
 }
 
 // ============ EVENT SERIES (recurring events) ============

@@ -25,3 +25,4 @@ export * from './subscriptions';
 export * from './teams';
 export * from './training';
 export * from './user';
+export * from './badges';

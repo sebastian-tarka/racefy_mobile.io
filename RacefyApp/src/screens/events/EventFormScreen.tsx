@@ -1246,6 +1246,16 @@ export function EventFormScreen({ navigation, route }: Props) {
                       <PointsBudgetIndicator
                         sportTypeId={formData.sport_type_id}
                         distance={parsedDistanceMeters}
+                        targetElevation={
+                          formData.target_elevation ? parseFloat(formData.target_elevation) : null
+                        }
+                        startsAt={formData.starts_at}
+                        endsAt={formData.ends_at}
+                        allowMultipleActivities={
+                          formData.allow_multiple_activities &&
+                          (formData.ranking_mode === 'most_distance' ||
+                            formData.ranking_mode === 'most_elevation')
+                        }
                         maxParticipants={parsedMaxParticipants}
                         allocated={allocatedPoints}
                         eventId={isEditMode ? eventId : undefined}

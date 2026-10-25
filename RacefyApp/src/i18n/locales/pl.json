@@ -644,10 +644,14 @@
       "disabledHint": "Uzupełnij dystans/sport/uczestników by odblokować",
       "prereqTitle": "Aby obliczyć pulę punktów, podaj:",
       "prereqSportType": "Dyscyplina sportowa",
-      "prereqEffort": "Dystans lub przewyższenie",
+      "prereqEffort": "Dystans, przewyższenie albo wyzwanie okresowe (wiele aktywności + ranking na dystans/przewyższenie)",
       "prereqMaxParticipants": "Maks. liczba uczestników",
       "poolReady": "Pula gotowa",
-      "rewardsLockedHint": "🔒 Uzupełnij dane powyżej, aby przyznać punkty"
+      "rewardsLockedHint": "🔒 Uzupełnij dane powyżej, aby przyznać punkty",
+      "periodBasis_one": "Pula liczona z długości wyzwania: {{count}} dzień",
+      "periodBasis_few": "Pula liczona z długości wyzwania: {{count}} dni",
+      "periodBasis_many": "Pula liczona z długości wyzwania: {{count}} dni",
+      "periodBasis_other": "Pula liczona z długości wyzwania: {{count}} dni"
     },
     "title": "Wydarzenia",
     "subtitle": "Lokalne wydarzenia sportowe",
@@ -811,7 +815,12 @@
     "finalStandings": "Wyniki końcowe",
     "noResultsTitle": "Wyniki jeszcze nie ostateczne",
     "noResultsMessage": "Końcowe miejsca pojawią się, gdy organizator zatwierdzi wyniki.",
-    "trigger": "Powód"
+    "trigger": "Powód",
+    "periodChallenge": {
+      "title": "Wyzwanie okresowe",
+      "registered": "Każda Twoja aktywność ({{sport}}) rozpoczęta od {{from}} do {{to}} liczy się automatycznie — nie musisz wybierać wydarzenia przy starcie.",
+      "notRegistered": "Po zapisaniu się każda Twoja aktywność ({{sport}}) rozpoczęta od {{from}} do {{to}} będzie liczyć się automatycznie."
+    }
   },
   "activityDetail": {
     "title": "Szczegóły aktywności",
@@ -3722,5 +3731,11 @@
   "errorBoundary": {
     "title": "Coś poszło nie tak",
     "message": "Nieoczekiwany błąd aplikacji"
+  },
+  "navBadges": {
+    "newCount_one": "{{count}} nowa",
+    "newCount_few": "{{count}} nowe",
+    "newCount_many": "{{count}} nowych",
+    "newCount_other": "{{count}} nowych"
   }
 }

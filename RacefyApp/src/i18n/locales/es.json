@@ -620,10 +620,13 @@
       "disabledHint": "Completa distancia/deporte/participantes para desbloquear",
       "prereqTitle": "Para calcular la bolsa de puntos, indica:",
       "prereqSportType": "Tipo de deporte",
-      "prereqEffort": "Distancia o desnivel",
+      "prereqEffort": "Distancia, desnivel o un reto por periodo (varias actividades + ranking por distancia/desnivel)",
       "prereqMaxParticipants": "Máx. participantes",
       "poolReady": "Bolsa lista",
-      "rewardsLockedHint": "🔒 Completa los campos arriba para asignar puntos"
+      "rewardsLockedHint": "🔒 Completa los campos arriba para asignar puntos",
+      "periodBasis_one": "Bolsa calculada según la duración del reto: {{count}} día",
+      "periodBasis_many": "Bolsa calculada según la duración del reto: {{count}} días",
+      "periodBasis_other": "Bolsa calculada según la duración del reto: {{count}} días"
     },
     "title": "Eventos",
     "subtitle": "Eventos deportivos locales",
@@ -785,7 +788,12 @@
     "finalStandings": "Clasificación final",
     "noResultsTitle": "Resultados aún no definitivos",
     "noResultsMessage": "Las posiciones finales aparecerán cuando el organizador las finalice.",
-    "trigger": "Motivo"
+    "trigger": "Motivo",
+    "periodChallenge": {
+      "title": "Reto por periodo",
+      "registered": "Cada actividad de {{sport}} que empieces entre el {{from}} y el {{to}} cuenta automáticamente; no hace falta elegir el evento al empezar.",
+      "notRegistered": "Cuando te inscribas, cada actividad de {{sport}} que empieces entre el {{from}} y el {{to}} contará automáticamente."
+    }
   },
   "activityDetail": {
     "title": "Detalles de la actividad",
@@ -3662,5 +3670,10 @@
   "errorBoundary": {
     "title": "Algo salió mal",
     "message": "Error inesperado de la aplicación"
+  },
+  "navBadges": {
+    "newCount_one": "{{count}} nueva",
+    "newCount_many": "{{count}} nuevas",
+    "newCount_other": "{{count}} nuevas"
   }
 }

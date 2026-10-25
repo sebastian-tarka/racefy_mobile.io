@@ -24,11 +24,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { UserGoal } from '../../types/goals';
 import { getErrorMessage } from '../../utils/errors';
+import { useMarkSectionSeen } from '../../hooks/useNavBadges';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Goals'>;
 
 export function GoalsScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  useMarkSectionSeen('goals');
   const { colors } = useTheme();
   const { features } = useSubscription();
   const { units } = useUnits();
