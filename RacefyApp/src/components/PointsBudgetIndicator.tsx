@@ -22,6 +22,14 @@ export interface PointsBudgetIndicatorProps {
   maxParticipants: number | null;
   /** Allocated points from current reward inputs (1st + 2nd + 3rd + finisher × est) */
   allocated: number;
+  /**
+   * Period challenge: an aggregated event (several activities summed) with a
+   * start–end window. The server sizes its pool from the window's length, so
+   * no distance is needed.
+   */
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+  allowMultipleActivities?: boolean;
   /** Whether the event is sponsored (skips premium gating server-side) */
   isSponsored?: boolean;
   /** For existing event: fetch persisted budget instead of preview */
@@ -49,6 +57,9 @@ export function PointsBudgetIndicator({
   targetElevation,
   maxParticipants,
   allocated,
+  startsAt,
+  endsAt,
+  allowMultipleActivities,
   isSponsored,
   eventId,
   onValidityChange,
@@ -64,9 +75,17 @@ export function PointsBudgetIndicator({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastReqIdRef = useRef(0);
 
-  // Prerequisites check: need sport_type, max_participants, and either distance or elevation
+  // Prerequisites check: need sport_type, max_participants, and either distance,
+  // elevation, or a period challenge window (the pool then comes from its length).
+  const isPeriod =
+    !!allowMultipleActivities && !!startsAt && !!endsAt && endsAt.getTime() > startsAt.getTime();
   const hasEffort =
-    (distance != null && distance > 0) || (elevationGain != null && elevationGain > 0);
+    (distance != null && distance > 0) ||
+    (elevationGain != null && elevationGain > 0) ||
+    (targetElevation != null && targetElevation > 0) ||
+    isPeriod;
+  const startsIso = isPeriod ? startsAt!.toISOString() : undefined;
+  const endsIso = isPeriod ? endsAt!.toISOString() : undefined;
   const prerequisitesReady = !!sportTypeId && hasEffort && !!maxParticipants && maxParticipants > 0;
 
   // Notify parent about prerequisite changes
@@ -83,10 +102,22 @@ export function PointsBudgetIndicator({
         elevationGain,
         targetElevation,
         maxParticipants,
+        startsIso,
+        endsIso,
         isSponsored: !!isSponsored,
         eventId,
       }),
-    [sportTypeId, distance, elevationGain, targetElevation, maxParticipants, isSponsored, eventId],
+    [
+      sportTypeId,
+      distance,
+      elevationGain,
+      targetElevation,
+      maxParticipants,
+      startsIso,
+      endsIso,
+      isSponsored,
+      eventId,
+    ],
   );
 
   // Fetch preview (debounced) or persisted budget when inputs change
@@ -115,6 +146,9 @@ export function PointsBudgetIndicator({
             target_elevation: targetElevation ?? undefined,
             max_participants: maxParticipants ?? undefined,
             is_sponsored: isSponsored,
+            ...(isPeriod
+              ? { starts_at: startsIso, ends_at: endsIso, allow_multiple_activities: true }
+              : {}),
           };
           result = await api.previewPointsBudget(payload);
         }
@@ -277,6 +311,12 @@ export function PointsBudgetIndicator({
       <Text style={[styles.estimated, { color: colors.textSecondary }]}>
         {t('events.pointsBudget.estimatedFinishers')}: {budget.estimated_finishers}
       </Text>
+
+      {budget.basis === 'period' && budget.period_days != null && (
+        <Text style={[styles.estimated, { color: colors.textSecondary }]}>
+          {t('events.pointsBudget.periodBasis', { count: budget.period_days })}
+        </Text>
+      )}
 
       {exceeded && (
         <Text style={[styles.exceededText, { color: colors.error }]}>
