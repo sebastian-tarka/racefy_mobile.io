@@ -160,7 +160,7 @@ only way out is unpinning; while recording, unpinning is refused outright.
 ### Strength activities (`components/strength/`)
 
 Activities logged from a strength session carry `activity.strength_session`
-(`StrengthSessionSummary` in `types/api.ts`; API docs → "Strength session"). Mirror of the
+(`StrengthSessionSummary` in `types/api/activities.ts`; API docs → "Strength session"). Mirror of the
 web SPA's `components/workouts/strength/` — same rules, same `activities.strength.*` wording.
 Helpers (labels "55×8", volume shares, rhythm, deltas) live in `strengthSession.ts`.
 
