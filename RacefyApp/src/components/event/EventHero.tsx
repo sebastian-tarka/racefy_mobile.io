@@ -17,6 +17,8 @@ interface EventHeroProps {
   onBack: () => void;
   onShare: () => void;
   onEdit?: () => void;
+  /** Owner only — opens AI cover generation. */
+  onAiCover?: () => void;
   /** Height of the cover area. */
   height?: number;
 }
@@ -26,7 +28,14 @@ interface EventHeroProps {
  * floating back / share / edit controls, status badge, sport·difficulty pill,
  * title and location — matching the mobile event mockups.
  */
-export function EventHero({ event, onBack, onShare, onEdit, height = 300 }: EventHeroProps) {
+export function EventHero({
+  event,
+  onBack,
+  onShare,
+  onEdit,
+  onAiCover,
+  height = 300,
+}: EventHeroProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -63,6 +72,16 @@ export function EventHero({ event, onBack, onShare, onEdit, height = 300 }: Even
           <Ionicons name="chevron-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={styles.controlsRight}>
+          {onAiCover && (
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={onAiCover}
+              hitSlop={HIT_SLOP}
+              accessibilityLabel={t('eventForm.aiCover.open')}
+            >
+              <Ionicons name="sparkles-outline" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
           {onEdit && (
             <TouchableOpacity style={styles.controlButton} onPress={onEdit} hitSlop={HIT_SLOP}>
               <Ionicons name="create-outline" size={20} color="#fff" />
@@ -86,6 +105,12 @@ export function EventHero({ event, onBack, onShare, onEdit, height = 300 }: Even
               </Text>
             </View>
           )}
+          {event.cover_ai_generated && coverUrl ? (
+            <View style={styles.sportPill} accessibilityLabel={t('eventForm.aiCover.badge')}>
+              <Ionicons name="sparkles" size={12} color="#fff" />
+              <Text style={styles.sportPillText}>{t('eventForm.aiCover.badge')}</Text>
+            </View>
+          ) : null}
         </View>
         <Text style={styles.title} numberOfLines={2}>
           {title}
