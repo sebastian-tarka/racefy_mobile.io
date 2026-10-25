@@ -6,6 +6,7 @@ import { logger } from '../logger';
 import { API_BASE_URL } from '../../config/api';
 import type { LiveTransport, LiveTransportOptions } from './types';
 import type { LiveBroadcastStats, LiveMessage, RealtimeConfig } from '../../types/api';
+import { getErrorMessage } from '../../utils/errors';
 
 // Echo looks for Pusher on the global object. React Native has no `window`,
 // so this is attached to globalThis, which exists in both environments.
@@ -75,7 +76,7 @@ export function createEchoTransport(
         const history = await api.getLiveMessages(activityId);
         if (!stopped && history.length > 0) handlers.onMessages(history);
       }
-    } catch (error: any) {
+    } catch (error) {
       if (!stopped) {
         handlers.onError(error instanceof Error ? error : new Error(String(error)));
       }
@@ -147,8 +148,11 @@ export function createEchoTransport(
       });
 
       logger.info('live', 'Echo transport subscribed', { activityId });
-    } catch (error: any) {
-      logger.error('live', 'Failed to start Echo transport', { activityId, error: error?.message });
+    } catch (error) {
+      logger.error('live', 'Failed to start Echo transport', {
+        activityId,
+        error: getErrorMessage(error),
+      });
       handlers.onError(error instanceof Error ? error : new Error(String(error)));
     }
   };
@@ -158,8 +162,8 @@ export function createEchoTransport(
     try {
       echo?.leave(`activity.${activityId}`);
       echo?.disconnect();
-    } catch (error: any) {
-      logger.warn('live', 'Error tearing down Echo transport', { error: error?.message });
+    } catch (error) {
+      logger.warn('live', 'Error tearing down Echo transport', { error: getErrorMessage(error) });
     }
     echo = null;
   };

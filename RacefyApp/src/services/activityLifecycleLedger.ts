@@ -21,6 +21,7 @@
  */
 
 import { logger } from './logger';
+import { getErrorMessage, getErrorStatus } from '../utils/errors';
 
 export type LifecycleOp = { op: 'pause' | 'resume'; at: string };
 
@@ -167,7 +168,7 @@ export async function flushPendingOps<TActivity>(
           ? await api.pauseActivity(current.activityId, { at: next.at, timeoutMs })
           : await api.resumeActivity(current.activityId, { at: next.at, timeoutMs });
       current = { ...current, pendingOps: rest };
-    } catch (error: any) {
+    } catch (error) {
       if (isTransientError(error)) {
         return { ledger: current, activity, drained: false };
       }
@@ -175,8 +176,8 @@ export async function flushPendingOps<TActivity>(
         activityId: current.activityId,
         op: next.op,
         at: next.at,
-        status: error?.status,
-        error: error?.message,
+        status: getErrorStatus(error),
+        error: getErrorMessage(error),
       });
       current = { ...current, pendingOps: rest };
     }

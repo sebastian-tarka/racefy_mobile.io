@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -24,33 +25,31 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       sport_type_id?: number;
       page?: number;
     }): Promise<Types.PaginatedResponse<Types.Activity>> {
-      const query = new URLSearchParams();
-      if (params?.user_id) query.append('user_id', String(params.user_id));
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      if (params?.page) query.append('page', String(params.page));
-      return this.request(`/activities?${query}`);
+      return this.request(
+        withQuery('/activities', {
+          user_id: params?.user_id,
+          sport_type_id: params?.sport_type_id,
+          page: params?.page,
+        }),
+      );
     }
 
     async getActivitiesFeed(params?: {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.Activity>> {
-      const query = new URLSearchParams();
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      const queryString = query.toString();
-      return this.request(`/activities/feed${queryString ? `?${queryString}` : ''}`);
+      return this.request(
+        withQuery('/activities/feed', { page: params?.page, per_page: params?.per_page }),
+      );
     }
 
     async getActivitiesDiscover(params?: {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.Activity>> {
-      const query = new URLSearchParams();
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      const queryString = query.toString();
-      return this.request(`/activities/discover${queryString ? `?${queryString}` : ''}`);
+      return this.request(
+        withQuery('/activities/discover', { page: params?.page, per_page: params?.per_page }),
+      );
     }
 
     async getActivity(id: number): Promise<Types.Activity> {
@@ -285,19 +284,14 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       sportTypeId?: number,
       limit: number = 10,
     ): Promise<Types.NearbyRoute[]> {
-      const params = new URLSearchParams({
-        lat: lat.toString(),
-        lng: lng.toString(),
-        radius: radius.toString(),
-        limit: limit.toString(),
-      });
-
-      if (sportTypeId) {
-        params.append('sport_type_id', sportTypeId.toString());
-      }
-
       const response = await this.request<Types.ApiResponse<Types.NearbyRoute[]>>(
-        `/activities/nearby?${params.toString()}`,
+        withQuery('/activities/nearby', {
+          lat: lat.toString(),
+          lng: lng.toString(),
+          radius: radius.toString(),
+          limit: limit.toString(),
+          sport_type_id: sportTypeId,
+        }),
       );
 
       return response.data;

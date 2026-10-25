@@ -6,6 +6,7 @@ import { logger } from '../services/logger';
 import type { SportType } from '../types/api';
 import type { Ionicons } from '@expo/vector-icons';
 import { convertApiGpsProfile, getGpsProfileBySlug, type GpsProfile } from '../config/gpsProfiles';
+import { getErrorMessage } from '../utils/errors';
 
 // Map sport slugs/names to Ionicon names (lowercase keys for case-insensitive matching)
 const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -216,9 +217,9 @@ export function useSportTypes(): UseSportTypesResult {
         });
 
         setSportTypes(sportsWithIcons);
-      } catch (err: any) {
-        logger.error('general', 'Failed to fetch sport types', { error: err.message });
-        setError(err.message || 'Failed to load sports');
+      } catch (err) {
+        logger.error('general', 'Failed to fetch sport types', { error: getErrorMessage(err) });
+        setError(getErrorMessage(err) || 'Failed to load sports');
         // Use translated fallback sports on error (get fresh copy each time)
         setSportTypes(getFallbackSports(t));
       } finally {

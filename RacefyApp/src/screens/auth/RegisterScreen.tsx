@@ -11,6 +11,7 @@ import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
 import type { CompositeScreenProps } from '@react-navigation/native';
+import { getErrorCode, getErrorMessage } from '../../utils/errors';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<AuthStackParamList, 'Register'>,
@@ -71,8 +72,8 @@ export function RegisterScreen({ navigation }: Props) {
         password,
         password_confirmation: passwordConfirmation,
       });
-    } catch (error: any) {
-      const message = error?.message || t('auth.registerFailedMessage');
+    } catch (error) {
+      const message = getErrorMessage(error) || t('auth.registerFailedMessage');
       Alert.alert(t('auth.registerFailed'), message);
     } finally {
       setIsLoading(false);
@@ -83,12 +84,12 @@ export function RegisterScreen({ navigation }: Props) {
     setIsGoogleLoading(true);
     try {
       await googleSignIn();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('auth', 'Google Sign-In error', { error });
-      if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
+      if (getErrorCode(error) === statusCodes.SIGN_IN_CANCELLED) {
         return;
       }
-      const message = error?.message || t('auth.googleSignInFailedMessage');
+      const message = getErrorMessage(error) || t('auth.googleSignInFailedMessage');
       Alert.alert(t('auth.googleSignInFailed'), message);
     } finally {
       setIsGoogleLoading(false);

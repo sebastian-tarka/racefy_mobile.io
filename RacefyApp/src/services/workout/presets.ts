@@ -2,10 +2,10 @@
  * Interval sessions: the three presets from the mockup and the "build your
  * own" form (repeats, work, recovery, optional warm-up / cool-down). The form
  * is a flat draft — easier to edit with steppers than a nested block tree —
- * and compiles to a `WorkoutPlan` on save.
+ * and compiles to a `GuidedWorkout` on save.
  */
 
-import type { WorkoutBlock, WorkoutPlan, WorkoutStep, WorkoutStepEnd } from '../../types/workout';
+import type { WorkoutBlock, GuidedWorkout, WorkoutStep, WorkoutStepEnd } from '../../types/workout';
 import { isWorkoutRepeat } from '../../types/workout';
 import { newWorkoutId } from './compile';
 
@@ -102,7 +102,7 @@ export function buildIntervalPlan(
   draft: IntervalDraft,
   name: string,
   sportTypeId?: number,
-): WorkoutPlan {
+): GuidedWorkout {
   const blocks: WorkoutBlock[] = [];
   if (draft.warm && draft.warm.value > 0) {
     blocks.push({ id: 'warm', kind: 'warmup', end: toEnd(draft.warm) });
@@ -128,7 +128,7 @@ export function buildIntervalPlan(
  * cool shape (hand-built later, or from a training plan) return null and the
  * form starts from the default preset.
  */
-export function draftFromPlan(plan: WorkoutPlan): IntervalDraft | null {
+export function draftFromPlan(plan: GuidedWorkout): IntervalDraft | null {
   if (plan.mode !== 'intervals' || !plan.blocks) return null;
   let warm: IntervalStepDraft | null = null;
   let cool: IntervalStepDraft | null = null;

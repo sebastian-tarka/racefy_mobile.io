@@ -78,7 +78,7 @@ matters only for `expo start` / local builds.
 
 ### Important Paths
 - API Service: `RacefyApp/src/services/api/` (`base.ts` = `request()`, one mixin per domain; `services/api.ts` only re-exports)
-- API Types: `RacefyApp/src/types/api.ts`
+- API Types: `RacefyApp/src/types/api/` (one file per domain, `index.ts` re-exports all — import from `types/api`)
 - Navigation: `RacefyApp/src/navigation/AppNavigator.tsx`
 - Theme: `RacefyApp/src/theme/`
 - Translations: `RacefyApp/src/i18n/locales/`
@@ -139,7 +139,7 @@ cd RacefyApp && npx expo install <package>
 - `screens/settings/` - Settings screen
 - `components/` - Reusable UI components (Button, Input, Card, Avatar, ScreenHeader, etc.)
 - `theme/` - Colors (emerald primary #10b981), spacing, typography tokens
-- `types/api.ts` - TypeScript interfaces matching Laravel API
+- `types/api/` - TypeScript interfaces matching Laravel API, one file per domain
 - `i18n/` - Translation setup and locale files
 - `docs/` - Internal documentation (UI_PATTERNS.md, LOCAL_BUILD_SETUP.md)
 
@@ -563,7 +563,7 @@ When implementing new features:
 1. **New Screens**: Use `ScreenHeader` component, `SafeAreaView` with `edges={['top']}`, and theme colors
 2. **New Components**: Export from `components/index.ts`, use theme tokens for spacing/colors
 3. **New Translations**: Add keys to both `en.json` and `pl.json`
-4. **API Integration**: Add methods to the matching mixin in `services/api/`, types to `types/api.ts`. Always use `this.request()` - it handles both JSON and FormData automatically. Never use `fetch()` directly.
+4. **API Integration**: Add methods to the matching mixin in `services/api/`, types to the matching file in `types/api/`. Always use `this.request()` - it handles both JSON and FormData automatically. Never use `fetch()` directly.
 5. **Forms**: Use existing `Input`, `Button` components with validation patterns from existing screens
 6. **Lists**: Use `FlatList` with card components, ensure consistent spacing with `listContent` style
 7. **UI Patterns**: When adding new reusable UI patterns or components, update `RacefyApp/docs/UI_PATTERNS.md` with usage examples

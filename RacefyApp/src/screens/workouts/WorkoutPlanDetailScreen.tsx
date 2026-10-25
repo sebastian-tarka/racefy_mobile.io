@@ -29,6 +29,7 @@ import {
 import { GhostButton } from './components/GhostButton';
 import { PlanStatusPill } from './components/PlanStatusPill';
 import { ResumeSessionBanner } from './components/ResumeSessionBanner';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutPlanDetail'>;
 
@@ -47,8 +48,8 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
       await action();
       emitRefresh('workouts');
       if (toast) Alert.alert('', toast);
-    } catch (error: any) {
-      Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      Alert.alert('', getErrorMessage(error) || t('common.error'));
     }
   };
 

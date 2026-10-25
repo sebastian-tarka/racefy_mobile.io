@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,13 +12,13 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import {
   Button,
   Card,
   CommentarySettingsSection,
   DatePickerSheet,
   DifficultySelector,
+  EventLocationPicker,
   ImagePickerButton,
   Input,
   MediaPicker,
@@ -32,6 +32,7 @@ import {
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh } from '../../services/refreshEvents';
+import { reverseGeocode } from '../../services/geocoding';
 import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
@@ -40,13 +41,14 @@ import { useSportTypes } from '../../hooks/useSportTypes';
 import { fontSize, spacing, msFont } from '../../theme';
 import {
   ApiError,
-  CreateEventRequest,
   Event,
+  EventSeriesSummary,
   EventTeamScoring,
   EventVisibility,
+  GeoJSONLineString,
   MediaItem,
-  UpdateEventRequest,
 } from '../../types/api';
+import type { EventLocation } from '../../components';
 import { getFieldError } from '../../utils/getFieldError';
 import {
   buildDefaultCommentarySettings,
@@ -58,7 +60,23 @@ import {
   Props,
   styles,
 } from './EventFormScreen.utils';
+import {
+  buildCreateEventPayload,
+  buildUpdateEventPayload,
+  commentarySettingsFromApi,
+  commentarySettingsPayload,
+  eventToFormData,
+  mapEventApiErrors,
+} from './eventFormPayload';
+import { EventAiCoverModal, EventSeriesCard, RecurrenceSection } from '../../components/event';
+import {
+  buildRecurrenceInput,
+  initialRecurrenceForm,
+  RecurrenceForm,
+  validateRecurrence,
+} from '../../utils/recurrence';
 import { EventRankingModeSelector } from '../../components/EventRankingModeSelector';
+import { formatDate } from '../../utils/dateFormat';
 
 export function EventFormScreen({ navigation, route }: Props) {
   const { eventId } = route.params || {};
@@ -71,6 +89,8 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [coverAiGenerated, setCoverAiGenerated] = useState(false);
+  const [isAiCoverOpen, setIsAiCoverOpen] = useState(false);
   const [eventMedia, setEventMedia] = useState<MediaItem[]>([]);
   const [commentarySettings, setCommentarySettings] = useState<CommentarySettingsData>(() =>
     buildDefaultCommentarySettings(i18n.language),
@@ -86,13 +106,70 @@ export function EventFormScreen({ navigation, route }: Props) {
   const [pointsBudgetValid, setPointsBudgetValid] = useState(true);
   const [pointsBudgetPrereqReady, setPointsBudgetPrereqReady] = useState(false);
 
-  // Listen for route selection from RouteLibrary
+  // Recurrence (create only) and the series this edition belongs to (edit only)
+  const [recurrence, setRecurrence] = useState<RecurrenceForm>(initialRecurrenceForm);
+  const [series, setSeries] = useState<EventSeriesSummary | null>(null);
+  const [occurrenceNumber, setOccurrenceNumber] = useState<number | null>(null);
+
+  const updateRecurrence = useCallback((patch: Partial<RecurrenceForm>) => {
+    setRecurrence((prev) => ({ ...prev, ...patch }));
+    setErrors((prev) => {
+      if (!prev.recurrence) return prev;
+      const { recurrence: _cleared, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  // Geometry of the attached route — the location picker draws it and takes the start from it
+  const [routeGeometry, setRouteGeometry] = useState<GeoJSONLineString | null>(null);
+
+  const updateLocation = useCallback((patch: Partial<EventLocation>) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...(patch.name !== undefined ? { location_name: patch.name } : {}),
+      ...(patch.latitude !== undefined ? { latitude: patch.latitude } : {}),
+      ...(patch.longitude !== undefined ? { longitude: patch.longitude } : {}),
+    }));
+    if (patch.name) {
+      setErrors((prev) => {
+        if (!prev.location_name) return prev;
+        const { location_name: _cleared, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, []);
+
+  // Listen for route selection from RouteLibrary: the event starts where the route starts
   useEffect(() => {
-    const sub = DeviceEventEmitter.addListener('route:selected', (routeId: number) => {
+    const sub = DeviceEventEmitter.addListener('route:selected', async (routeId: number) => {
       setFormData((prev) => ({ ...prev, route_id: routeId }));
+      try {
+        const route = await api.getRoute(routeId);
+        const start = route.geometry?.coordinates[0];
+        setRouteGeometry(route.geometry ?? null);
+        // The course defines the distance and the climb, as in the web form
+        setFormData((prev) => ({
+          ...prev,
+          distance: route.distance ? String(Math.round(route.distance) / 1000) : prev.distance,
+          target_elevation: route.elevation_gain
+            ? String(Math.round(route.elevation_gain))
+            : prev.target_elevation,
+        }));
+        if (!start) return;
+        updateLocation({ latitude: start[1], longitude: start[0] });
+        const name = await reverseGeocode(start[1], start[0]);
+        updateLocation({ name: name || route.title });
+      } catch (error) {
+        logger.warn('api', 'Could not load the selected route', { error, routeId });
+      }
     });
     return () => sub.remove();
-  }, []);
+  }, [updateLocation]);
+
+  const detachRoute = () => {
+    updateField('route_id', null);
+    setRouteGeometry(null);
+  };
 
   // Tab state
   type EventFormTab = 'basic' | 'scoring' | 'rewards' | 'team' | 'ai';
@@ -113,6 +190,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       'cover_image',
       'slug',
       'slug_expires_at',
+      'recurrence',
     ],
     scoring: [
       'ranking_mode',
@@ -174,7 +252,9 @@ export function EventFormScreen({ navigation, route }: Props) {
   const parsedMaxParticipants = formData.max_participants
     ? parseInt(formData.max_participants, 10)
     : null;
-  const parsedDistanceMeters = formData.distance ? parseFloat(formData.distance) * 1000 : null;
+  const parsedDistanceMeters = formData.distance
+    ? Math.round(parseFloat(formData.distance) * 1000)
+    : null;
   // Allocated = 1st + 2nd + 3rd + finisher × estimated_finishers
   // We approximate estimated_finishers = max_participants until backend returns it; the
   // indicator will refine it after the preview response.
@@ -233,18 +313,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       });
       populateForm(event);
       if (settings) {
-        setCommentarySettings({
-          enabled: settings.enabled,
-          style: settings.style,
-          token_limit: settings.token_limit,
-          interval_minutes: settings.interval_minutes,
-          auto_publish: settings.auto_publish,
-          languages: settings.languages,
-          force_participants: settings.force_participants || false,
-          time_windows: settings.time_windows || [],
-          days_of_week: settings.days_of_week || [],
-          pause_summary_enabled: settings.pause_summary_enabled !== false,
-        });
+        setCommentarySettings(commentarySettingsFromApi(settings));
       }
     } catch (error) {
       logger.error('api', 'Failed to fetch event', { error });
@@ -257,73 +326,12 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const populateForm = (event: Event) => {
     setEventStatus(event.status);
-    // Use sport_type_id if available, otherwise fallback to sport_type.id
-    const sportTypeId = event.sport_type_id ?? event.sport_type?.id ?? null;
-    setFormData({
-      title: event.post?.title || '',
-      content: event.post?.content || '',
-      sport_type_id: sportTypeId,
-      location_name: event.location_name,
-      ranking_mode: event.ranking_mode,
-      latitude: event.latitude,
-      longitude: event.longitude,
-      starts_at: new Date(event.starts_at),
-      ends_at: new Date(event.ends_at),
-      registration_opens_at: event.registration_opens_at
-        ? new Date(event.registration_opens_at)
-        : null,
-      registration_closes_at: event.registration_closes_at
-        ? new Date(event.registration_closes_at)
-        : null,
-      max_participants: event.max_participants?.toString() || '',
-      difficulty: event.difficulty,
-      // Convert from meters (API) to km (form display).
-      // Backend auto-mirrors `distance` ↔ `target_distance`, so prefer
-      // whichever is set when loading an existing event.
-      distance: event.distance
-        ? (event.distance / 1000).toString()
-        : event.target_distance
-          ? (event.target_distance / 1000).toString()
-          : '',
-      entry_fee: event.entry_fee?.toString() || '',
-      // GPS Privacy (new in 2026-01)
-      show_start_finish_points: event.show_start_finish_points ?? false,
-      start_finish_note: event.start_finish_note || '',
-      // Activity aggregation
-      allow_multiple_activities: event.allow_multiple_activities ?? false,
-      auto_finalize_results: event.auto_finalize_results !== false,
-      // Visibility
-      visibility: event.visibility || 'public',
-      // Ranking mode config (target_distance is mirrored from `distance` by backend)
-      time_limit: event.time_limit ? (event.time_limit / 60).toString() : '',
-      // Team event
-      is_team_event: event.is_team_event ?? false,
-      team_size_min: event.team_size_min?.toString() || '',
-      team_size_max: event.team_size_max?.toString() || '',
-      team_scoring: event.team_scoring || 'sum',
-      // Point rewards
-      point_rewards_first: event.point_rewards?.first_place?.toString() || '',
-      point_rewards_second: event.point_rewards?.second_place?.toString() || '',
-      point_rewards_third: event.point_rewards?.third_place?.toString() || '',
-      point_rewards_finisher: event.point_rewards?.finisher?.toString() || '',
-      // Route planning
-      route_id: event.route_id || null,
-    });
+    setFormData(eventToFormData(event));
+    setSeries(event.series ?? null);
+    setOccurrenceNumber(event.occurrence_number ?? null);
+    setRouteGeometry(event.route_id ? (event.route?.geometry ?? null) : null);
     setCoverImage(fixStorageUrl(event.cover_image_url) || null);
-
-    // Show optional fields if any have values
-    if (
-      event.registration_opens_at ||
-      event.registration_closes_at ||
-      event.max_participants ||
-      event.distance ||
-      event.entry_fee ||
-      event.point_rewards?.first_place ||
-      event.point_rewards?.second_place ||
-      event.point_rewards?.third_place ||
-      event.point_rewards?.finisher
-    ) {
-    }
+    setCoverAiGenerated(!!event.cover_ai_generated);
   };
 
   const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
@@ -372,6 +380,11 @@ export function EventFormScreen({ navigation, route }: Props) {
         newErrors.team_size_max = t('eventForm.validation.teamSizeMaxLessThanMin');
     }
 
+    if (!isEditMode) {
+      const recurrenceError = validateRecurrence(recurrence, formData.starts_at);
+      if (recurrenceError) newErrors.recurrence = recurrenceError;
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0 ? null : newErrors;
   };
@@ -401,144 +414,18 @@ export function EventFormScreen({ navigation, route }: Props) {
       let savedEventId: number;
 
       if (isEditMode && eventId) {
-        const updateData: UpdateEventRequest = {
-          title: formData.title,
-          content: formData.content,
-          sport_type_id: formData.sport_type_id!,
-          ranking_mode: formData.ranking_mode,
-          location_name: formData.location_name,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          starts_at: formData.starts_at.toISOString(),
-          ends_at: formData.ends_at.toISOString(),
-          registration_opens_at: formData.registration_opens_at?.toISOString() || null,
-          registration_closes_at: formData.registration_closes_at?.toISOString() || null,
-          max_participants: formData.max_participants
-            ? parseInt(formData.max_participants, 10)
-            : null,
-          difficulty: formData.difficulty,
-          // Convert from km (form) to meters (API)
-          distance: formData.distance ? parseFloat(formData.distance) * 1000 : null,
-          entry_fee: entryFeeEnabled && formData.entry_fee ? parseFloat(formData.entry_fee) : null,
-          // GPS Privacy (new in 2026-01)
-          show_start_finish_points: formData.show_start_finish_points,
-          start_finish_note: formData.start_finish_note || undefined,
-          // Activity aggregation
-          allow_multiple_activities: formData.allow_multiple_activities,
-          // Auto-finalize results
-          auto_finalize_results: formData.auto_finalize_results,
-          // Visibility
-          visibility: formData.visibility,
-          // Ranking mode config — backend auto-mirrors distance → target_distance
-          time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
-          // Team event
-          is_team_event: formData.is_team_event,
-          team_size_min:
-            formData.is_team_event && formData.team_size_min
-              ? parseInt(formData.team_size_min, 10)
-              : undefined,
-          team_size_max:
-            formData.is_team_event && formData.team_size_max
-              ? parseInt(formData.team_size_max, 10)
-              : undefined,
-          team_scoring: formData.is_team_event ? formData.team_scoring : undefined,
-          // Point rewards
-          point_rewards:
-            formData.point_rewards_first ||
-            formData.point_rewards_second ||
-            formData.point_rewards_third ||
-            formData.point_rewards_finisher
-              ? {
-                  first_place: formData.point_rewards_first
-                    ? parseInt(formData.point_rewards_first, 10)
-                    : undefined,
-                  second_place: formData.point_rewards_second
-                    ? parseInt(formData.point_rewards_second, 10)
-                    : undefined,
-                  third_place: formData.point_rewards_third
-                    ? parseInt(formData.point_rewards_third, 10)
-                    : undefined,
-                  finisher: formData.point_rewards_finisher
-                    ? parseInt(formData.point_rewards_finisher, 10)
-                    : undefined,
-                }
-              : undefined,
-          // Route planning
-          route_id: formData.route_id,
-        };
-
-        await api.updateEvent(eventId, updateData);
+        await api.updateEvent(eventId, buildUpdateEventPayload(formData, { entryFeeEnabled }));
         savedEventId = eventId;
       } else {
-        const createData: CreateEventRequest = {
-          title: formData.title,
-          content: formData.content,
-          sport_type_id: formData.sport_type_id!,
-          ranking_mode: formData.ranking_mode,
-          location_name: formData.location_name,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          starts_at: formData.starts_at.toISOString(),
-          ends_at: formData.ends_at.toISOString(),
-          registration_opens_at: formData.registration_opens_at?.toISOString(),
-          registration_closes_at: formData.registration_closes_at?.toISOString(),
-          max_participants: formData.max_participants
-            ? parseInt(formData.max_participants, 10)
-            : undefined,
-          difficulty: formData.difficulty,
-          // Convert from km (form) to meters (API)
-          distance: formData.distance ? parseFloat(formData.distance) * 1000 : undefined,
-          ...(entryFeeEnabled && formData.entry_fee
-            ? { entry_fee: parseFloat(formData.entry_fee) }
-            : {}),
-          // GPS Privacy (new in 2026-01)
-          show_start_finish_points: formData.show_start_finish_points,
-          start_finish_note: formData.start_finish_note || undefined,
-          // Activity aggregation
-          allow_multiple_activities: formData.allow_multiple_activities,
-          // Auto-finalize results (only send when disabled, API defaults to true)
-          ...(!formData.auto_finalize_results ? { auto_finalize_results: false } : {}),
-          // Visibility
-          visibility: formData.visibility,
-          // Ranking mode config — backend auto-mirrors distance → target_distance
-          time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
-          // Team event
-          is_team_event: formData.is_team_event,
-          team_size_min:
-            formData.is_team_event && formData.team_size_min
-              ? parseInt(formData.team_size_min, 10)
-              : undefined,
-          team_size_max:
-            formData.is_team_event && formData.team_size_max
-              ? parseInt(formData.team_size_max, 10)
-              : undefined,
-          team_scoring: formData.is_team_event ? formData.team_scoring : undefined,
-          // Point rewards
-          point_rewards:
-            formData.point_rewards_first ||
-            formData.point_rewards_second ||
-            formData.point_rewards_third ||
-            formData.point_rewards_finisher
-              ? {
-                  first_place: formData.point_rewards_first
-                    ? parseInt(formData.point_rewards_first, 10)
-                    : undefined,
-                  second_place: formData.point_rewards_second
-                    ? parseInt(formData.point_rewards_second, 10)
-                    : undefined,
-                  third_place: formData.point_rewards_third
-                    ? parseInt(formData.point_rewards_third, 10)
-                    : undefined,
-                  finisher: formData.point_rewards_finisher
-                    ? parseInt(formData.point_rewards_finisher, 10)
-                    : undefined,
-                }
-              : undefined,
-          // Route planning
-          route_id: formData.route_id,
-        };
-
-        const createdEvent = await api.createEvent(createData);
+        const createdEvent = await api.createEvent({
+          ...buildCreateEventPayload(formData, { entryFeeEnabled }),
+          // The organizer's zone keeps every edition at the same local time across DST
+          recurrence: buildRecurrenceInput(
+            recurrence,
+            formData.starts_at,
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ),
+        });
         savedEventId = createdEvent.id;
       }
 
@@ -564,20 +451,10 @@ export function EventFormScreen({ navigation, route }: Props) {
       // Save AI commentary settings (via separate API endpoint) - only if user has AI features
       if (hasAiFeatures) {
         try {
-          await api.updateCommentarySettings(savedEventId, {
-            enabled: commentarySettings.enabled,
-            style: commentarySettings.style,
-            token_limit: commentarySettings.token_limit,
-            interval_minutes: commentarySettings.interval_minutes,
-            auto_publish: commentarySettings.auto_publish,
-            languages: commentarySettings.languages,
-            force_participants: commentarySettings.force_participants,
-            time_windows:
-              commentarySettings.time_windows.length > 0 ? commentarySettings.time_windows : null,
-            days_of_week:
-              commentarySettings.days_of_week.length > 0 ? commentarySettings.days_of_week : null,
-            pause_summary_enabled: commentarySettings.pause_summary_enabled,
-          });
+          await api.updateCommentarySettings(
+            savedEventId,
+            commentarySettingsPayload(commentarySettings),
+          );
           logger.debug('api', 'Commentary settings saved', { eventId: savedEventId });
         } catch (commentaryError) {
           logger.error('api', 'Failed to save commentary settings', { error: commentaryError });
@@ -597,26 +474,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       const apiError = error as ApiError | undefined;
       const apiErrors = apiError?.errors;
       if (apiErrors && typeof apiErrors === 'object') {
-        const mapped: Record<string, string | string[]> = {};
-        for (const [key, value] of Object.entries(apiErrors)) {
-          // Flatten nested point_rewards.* → point_rewards_*
-          if (key.startsWith('point_rewards.')) {
-            const sub = key.slice('point_rewards.'.length);
-            const flatKey =
-              sub === 'first_place'
-                ? 'point_rewards_first'
-                : sub === 'second_place'
-                  ? 'point_rewards_second'
-                  : sub === 'third_place'
-                    ? 'point_rewards_third'
-                    : sub === 'finisher'
-                      ? 'point_rewards_finisher'
-                      : `point_rewards_${sub}`;
-            mapped[flatKey] = value as string[];
-          } else {
-            mapped[key] = value as string[];
-          }
-        }
+        const mapped = mapEventApiErrors(apiErrors);
         setErrors(mapped);
         // Auto-switch to first tab with backend errors
         const tab = findFirstErrorTab(Object.keys(mapped));
@@ -636,7 +494,7 @@ export function EventFormScreen({ navigation, route }: Props) {
 
   const formatDateTime = (date: Date | null): string => {
     if (!date) return t('eventForm.selectDate');
-    return format(date, 'MMM d, yyyy h:mm a');
+    return formatDate(date, 'PPp');
   };
 
   // Check if the selected sport type exists in the loaded sport types
@@ -748,16 +606,71 @@ export function EventFormScreen({ navigation, route }: Props) {
         >
           {activeTab === 'basic' && (
             <>
-              {/* Cover Image */}
-              <ImagePickerButton value={coverImage} onChange={setCoverImage} />
+              {/* Cover — own photo or AI, on its own: the gallery below never feeds it */}
+              <Card style={styles.optionalCard}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  {t('eventForm.coverImage')}
+                </Text>
+                <Text
+                  style={[
+                    styles.sectionDescription,
+                    styles.coverDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t('eventForm.coverDescription')}
+                </Text>
+                <View>
+                  <ImagePickerButton
+                    showLabel={false}
+                    value={coverImage}
+                    onChange={(uri) => {
+                      setCoverImage(uri);
+                      setCoverAiGenerated(false);
+                    }}
+                  />
+                  {coverAiGenerated && !!coverImage && (
+                    <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
+                      <Ionicons name="sparkles" size={12} color={colors.white} />
+                      <Text style={[styles.aiBadgeText, { color: colors.white }]}>
+                        {t('eventForm.aiCover.badge')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                {isEditMode && eventId ? (
+                  <TouchableOpacity
+                    onPress={() => setIsAiCoverOpen(true)}
+                    style={[styles.aiCoverButton, { borderColor: colors.primary }]}
+                  >
+                    <Ionicons name="sparkles-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.aiCoverButtonText, { color: colors.primary }]}>
+                      {t('eventForm.aiCover.open')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                    {t('eventForm.aiCover.afterCreate')}
+                  </Text>
+                )}
+              </Card>
 
-              {/* Additional Media */}
-              <View style={styles.inputContainer}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>
+              {/* Gallery — photos and videos shown on the event page */}
+              <Card style={styles.optionalCard}>
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                   {t('eventForm.additionalMedia')}
                 </Text>
+                <Text
+                  style={[
+                    styles.sectionDescription,
+                    styles.coverDescription,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  {t('eventForm.additionalMediaDescription')}
+                </Text>
                 <MediaPicker media={eventMedia} onChange={setEventMedia} maxItems={10} allowVideo />
-              </View>
+              </Card>
 
               {/* Title */}
               <Input
@@ -956,7 +869,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                           {t('eventForm.routeAttached', 'Route attached')}
                         </Text>
                       </View>
-                      <TouchableOpacity onPress={() => updateField('route_id', null)}>
+                      <TouchableOpacity onPress={detachRoute}>
                         <Ionicons name="close-circle" size={22} color={colors.textSecondary} />
                       </TouchableOpacity>
                     </View>
@@ -1062,16 +975,27 @@ export function EventFormScreen({ navigation, route }: Props) {
 
           {activeTab === 'basic' && (
             <>
-              {/* Location */}
-              <Input
-                label={t('eventForm.location')}
-                placeholder={t('eventForm.locationPlaceholder')}
-                value={formData.location_name}
-                onChangeText={(text) => updateField('location_name', text)}
+              {isEditMode && series && (
+                <EventSeriesCard
+                  series={series}
+                  occurrenceNumber={occurrenceNumber}
+                  onStatusChange={(status) =>
+                    setSeries((prev) => (prev ? { ...prev, status } : prev))
+                  }
+                />
+              )}
+
+              {/* Location — search, map pin, or the start of the attached route */}
+              <EventLocationPicker
+                value={{
+                  name: formData.location_name,
+                  latitude: formData.latitude,
+                  longitude: formData.longitude,
+                }}
+                onChange={updateLocation}
+                routeGeometry={formData.route_id ? routeGeometry : null}
                 error={errors.location_name}
-                leftIcon="location-outline"
-                editable={!isLimitedEdit}
-                style={isLimitedEdit ? { opacity: 0.6 } : undefined}
+                disabled={isLimitedEdit}
               />
 
               {/* Start Date */}
@@ -1125,6 +1049,20 @@ export function EventFormScreen({ navigation, route }: Props) {
                   </Text>
                 )}
               </View>
+
+              {/* Repeat — a series can only be started when creating (Plus/Pro) */}
+              {!isEditMode && (
+                <Card style={styles.optionalCard}>
+                  <PremiumTeaser feature="recurring_events">
+                    <RecurrenceSection
+                      value={recurrence}
+                      onChange={updateRecurrence}
+                      startsAt={formData.starts_at}
+                      error={errors.recurrence}
+                    />
+                  </PremiumTeaser>
+                </Card>
+              )}
             </>
           )}
 
@@ -1203,6 +1141,18 @@ export function EventFormScreen({ navigation, route }: Props) {
                       error={errors.distance ?? errors.target_distance}
                     />
                   )}
+
+                {/* Target elevation — total ascent of the course */}
+                <Input
+                  label={t('eventForm.targetElevation')}
+                  placeholder={t('eventForm.targetElevationPlaceholder')}
+                  value={formData.target_elevation}
+                  onChangeText={(text) => updateField('target_elevation', text)}
+                  keyboardType="number-pad"
+                  leftIcon="trending-up-outline"
+                  editable={!isLimitedEdit}
+                  error={errors.target_elevation}
+                />
 
                 {/* Entry Fee - only when feature flag enabled */}
                 {entryFeeEnabled && (
@@ -1407,11 +1357,9 @@ export function EventFormScreen({ navigation, route }: Props) {
           )}
         </ScrollView>
 
-        {/* Sticky footer with Cancel/Save */}
+        {/* Sticky footer with Save — leaving goes through the header's back button */}
         <View
           style={{
-            flexDirection: 'row',
-            gap: spacing.md,
             padding: spacing.md,
             borderTopWidth: 1,
             borderTopColor: colors.border,
@@ -1419,19 +1367,27 @@ export function EventFormScreen({ navigation, route }: Props) {
           }}
         >
           <Button
-            title={t('common.cancel')}
-            variant="secondary"
-            onPress={() => navigation.goBack()}
-            style={{ flex: 1 }}
-          />
-          <Button
             title={isEditMode ? t('eventForm.updateButton') : t('eventForm.createButton')}
             onPress={handleSubmit}
             loading={isLoading}
             disabled={!pointsBudgetValid}
-            style={{ flex: 2 }}
           />
         </View>
+
+        {isEditMode && eventId ? (
+          <EventAiCoverModal
+            visible={isAiCoverOpen}
+            eventId={eventId}
+            onClose={() => setIsAiCoverOpen(false)}
+            onApplied={(url) => {
+              // Already the cover on the server — the save button won't upload it again
+              setCoverImage(fixStorageUrl(url) || url);
+              setCoverAiGenerated(true);
+              setIsAiCoverOpen(false);
+              emitRefresh('events');
+            }}
+          />
+        ) : null}
 
         {/* Date + time: one spinner on iOS, date then time dialogs on Android. */}
         <DatePickerSheet

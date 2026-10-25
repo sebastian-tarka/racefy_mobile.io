@@ -1,8 +1,6 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
 import { Avatar } from './Avatar';
@@ -25,6 +23,7 @@ import {
   strengthMetrics,
   StrengthSetMosaic,
 } from './strength';
+import { formatDate, formatTimeAgo } from '../utils/dateFormat';
 
 interface PostCardProps {
   post: Post;
@@ -66,9 +65,7 @@ function PostCardBase({
   const showContent =
     !!post.content &&
     !(strength && isAutoStrengthText(strength, post.content, post.activity?.description));
-  const timeAgo = formatDistanceToNow(new Date(post.created_at), {
-    addSuffix: false,
-  });
+  const timeAgo = formatTimeAgo(post.created_at, { addSuffix: false });
 
   const getTypeConfig = () => {
     switch (post.type) {
@@ -249,10 +246,10 @@ function PostCardBase({
         <View style={styles.eventHeader}>
           <View style={[styles.eventDateBadge, { backgroundColor: colors.warning }]}>
             <Text style={[styles.eventDateDay, { color: colors.white }]}>
-              {format(new Date(event.starts_at), 'd')}
+              {formatDate(event.starts_at, 'd')}
             </Text>
             <Text style={[styles.eventDateMonth, { color: colors.white }]}>
-              {format(new Date(event.starts_at), 'MMM')}
+              {formatDate(event.starts_at, 'MMM')}
             </Text>
           </View>
           <View style={styles.eventInfo}>

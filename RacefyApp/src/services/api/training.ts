@@ -1,6 +1,7 @@
 import { logger } from '../logger';
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -86,23 +87,25 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
           programStatus: program?.status,
         });
         return program ?? null;
-      } catch (error: any) {
+      } catch (error) {
         logger.debug('training', 'getCurrentProgram error caught', {
-          message: error.message,
-          status: error.status,
+          message: getErrorMessage(error),
+          status: getErrorStatus(error),
           errorKeys: error ? Object.keys(error) : 'null',
         });
         // 404 is expected when user has no active program
         // Note: ApiError from request() has message but no status field,
         // so we check the message text for common "not found" patterns
-        const msg = error.message?.toLowerCase() || '';
+        const msg = getErrorMessage(error).toLowerCase();
         if (
           msg.includes('no active training program') ||
           msg.includes('not found') ||
           msg.includes('404') ||
-          error.status === 404
+          getErrorStatus(error) === 404
         ) {
-          logger.debug('training', 'No active program (expected)', { message: error.message });
+          logger.debug('training', 'No active program (expected)', {
+            message: getErrorMessage(error),
+          });
           return null;
         }
         // Re-throw unexpected errors
@@ -126,13 +129,13 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
         // Fallback for old API: wrap single program in array
         const program = response?.program ?? response?.data;
         return program ? [program] : [];
-      } catch (error: any) {
-        const msg = error.message?.toLowerCase() || '';
+      } catch (error) {
+        const msg = getErrorMessage(error).toLowerCase();
         if (
           msg.includes('no active training program') ||
           msg.includes('not found') ||
           msg.includes('404') ||
-          error.status === 404
+          getErrorStatus(error) === 404
         ) {
           return [];
         }

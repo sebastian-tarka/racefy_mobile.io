@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '../services/api';
 import type { HomeData, CommentaryLanguage, HomeVersion } from '../types/api';
 import { logger } from '../services/logger';
+import { getErrorMessage } from '../utils/errors';
 
 const HOME_DATA_CACHE_KEY = '@racefy_home_data';
 const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
@@ -79,8 +80,8 @@ export function useHomeData(options: UseHomeDataOptions = {}) {
       } catch (cacheError) {
         logger.warn('home', 'Failed to cache home data', { error: cacheError });
       }
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to load feed';
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || 'Failed to load feed';
       setError(errorMessage);
       logger.error('home', 'Failed to fetch home data', { error: err });
     } finally {

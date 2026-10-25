@@ -3,13 +3,11 @@ import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { enUS } from 'date-fns/locale/en-US';
-import { pl } from 'date-fns/locale/pl';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../services/logger';
 import { InteractionButton } from './InteractionButton';
 import type { CommentaryType, EventCommentary } from '../types/api';
+import { formatTimeAgo } from '../utils/dateFormat';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
@@ -25,7 +23,7 @@ export function CommentaryItem({
   onBoostChange,
 }: CommentaryItemProps) {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const handleShare = useCallback(async () => {
     try {
@@ -82,9 +80,7 @@ export function CommentaryItem({
   };
 
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const locale = i18n.language === 'pl' ? pl : enUS;
-    return formatDistanceToNow(date, { addSuffix: true, locale });
+    return formatTimeAgo(dateString);
   };
 
   const typeColor = getTypeColor(commentary.type);

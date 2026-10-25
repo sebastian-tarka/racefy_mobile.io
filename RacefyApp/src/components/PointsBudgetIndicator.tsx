@@ -7,6 +7,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { EventPointsBudget, EventPointsBudgetPreviewRequest } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 export interface PointsBudgetIndicatorProps {
   /** Sport type id (required for preview) */
@@ -121,11 +122,11 @@ export function PointsBudgetIndicator({
         if (reqId !== lastReqIdRef.current) return;
         setBudget(result);
         onBudgetChange?.(result);
-      } catch (err: any) {
+      } catch (err) {
         if (reqId !== lastReqIdRef.current) return;
         logger.debug('api', 'Points budget preview failed', { error: err });
         setBudget(null);
-        setError(err?.message || 'Failed to load points budget');
+        setError(getErrorMessage(err) || 'Failed to load points budget');
         onBudgetChange?.(null);
       } finally {
         if (reqId === lastReqIdRef.current) setLoading(false);

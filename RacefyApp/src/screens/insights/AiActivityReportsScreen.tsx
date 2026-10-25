@@ -20,6 +20,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { AiActivityReport } from '../../types/reports';
 import { REPORT_STATUS_COLORS } from './reportStatusColors';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AiActivityReports'>;
 
@@ -41,8 +42,8 @@ export function AiActivityReportsScreen({ navigation }: Props) {
       setReports((prev) => (mode === 'refresh' ? response.data : [...prev, ...response.data]));
       setPage(response.meta.current_page);
       setLastPage(response.meta.last_page);
-    } catch (error: any) {
-      logger.error('api', 'Failed to load activity reports', { error: error.message });
+    } catch (error) {
+      logger.error('api', 'Failed to load activity reports', { error: getErrorMessage(error) });
     }
   }, []);
 

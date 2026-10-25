@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
 import {
@@ -12,6 +11,7 @@ import {
 import { spacing, fontSize } from '../theme';
 import type { Notification } from '../types/api';
 import { API_BASE_URL } from '../config/api';
+import { formatTimeAgo } from '../utils/dateFormat';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -53,7 +53,7 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
           <Text style={{ color: colors.textSecondary }}> {notification.data.body}</Text>
         </Text>
         <Text style={[styles.time, { color: colors.textMuted }]}>
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          {formatTimeAgo(notification.created_at)}
         </Text>
       </View>
 

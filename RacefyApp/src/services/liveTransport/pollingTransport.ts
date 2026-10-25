@@ -1,6 +1,7 @@
 import { api } from '../api';
 import { logger } from '../logger';
 import type { LiveTransport, LiveTransportOptions } from './types';
+import { getErrorMessage } from '../../utils/errors';
 
 /**
  * Polling transport — the default, and the only one that works on shared
@@ -64,9 +65,9 @@ export function createPollingTransport({
           handlers.onMessages(messages);
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       if (!stopped) {
-        logger.warn('live', 'Polling tick failed', { activityId, error: error?.message });
+        logger.warn('live', 'Polling tick failed', { activityId, error: getErrorMessage(error) });
         handlers.onError(error instanceof Error ? error : new Error(String(error)));
       }
     } finally {

@@ -36,6 +36,7 @@ import {
 } from './finishSync';
 import { notifyActivityDelivered } from './finishSyncNotification';
 import { loadSavedLanguage } from '../i18n';
+import { getErrorMessage } from '../utils/errors';
 
 export const FINISH_SYNC_TASK = 'racefy-finish-sync';
 
@@ -104,8 +105,8 @@ export async function runBackgroundFinishSync(): Promise<BackgroundTask.Backgrou
 
     if (trackingDb.countPendingFinishes() === 0) await unregisterFinishSyncTask();
     return BackgroundTask.BackgroundTaskResult.Success;
-  } catch (error: any) {
-    logger.warn('activity', 'Background finish sync failed', { error: error?.message });
+  } catch (error) {
+    logger.warn('activity', 'Background finish sync failed', { error: getErrorMessage(error) });
     return BackgroundTask.BackgroundTaskResult.Failed;
   }
 }
@@ -129,10 +130,10 @@ export async function ensureFinishSyncTaskRegistered(): Promise<void> {
       minimumInterval: MINIMUM_INTERVAL_MIN,
     });
     logger.activity('Background finish sync registered');
-  } catch (error: any) {
+  } catch (error) {
     // Expo Go, simulator, restricted background refresh: foreground sync still covers it.
     logger.debug('activity', 'Could not register background finish sync', {
-      error: error?.message,
+      error: getErrorMessage(error),
     });
   }
 }
@@ -144,9 +145,9 @@ export async function unregisterFinishSyncTask(): Promise<void> {
       await BackgroundTask.unregisterTaskAsync(FINISH_SYNC_TASK);
       logger.activity('Background finish sync unregistered (outbox empty)');
     }
-  } catch (error: any) {
+  } catch (error) {
     logger.debug('activity', 'Could not unregister background finish sync', {
-      error: error?.message,
+      error: getErrorMessage(error),
     });
   }
 }

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import type { SegmentProgress, WorkoutEngineState } from '../../../services/workout/engine';
-import type { CompiledSegment, WorkoutPlan } from '../../../types/workout';
+import type { CompiledSegment, GuidedWorkout } from '../../../types/workout';
 import { fontSize, heroColors, msFont, spacing } from '../../../theme';
 import {
   formatGoalTime,
@@ -24,7 +24,7 @@ type Variant =
   | 'paused';
 
 interface Props {
-  plan: WorkoutPlan | null;
+  plan: GuidedWorkout | null;
   progress: SegmentProgress | null;
   /** Needed for interval sessions (next segment, plan strip). */
   state?: WorkoutEngineState | null;
@@ -350,7 +350,7 @@ export function WorkoutProgressCard({
   );
 }
 
-function repeatCount(plan: WorkoutPlan): number {
+function repeatCount(plan: GuidedWorkout): number {
   const repeat = plan.blocks?.find((b) => 'times' in b);
   return repeat && 'times' in repeat ? repeat.times : 0;
 }

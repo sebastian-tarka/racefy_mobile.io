@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { NearbyRoute } from '../types/api';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseNearbyRoutesResult {
   nearbyRoutes: NearbyRoute[];
@@ -72,8 +73,8 @@ export function useNearbyRoutes(
           );
           setNearbyRoutes(routes);
           logger.info('activity', 'Nearby routes fetched successfully', { count: routes.length });
-        } catch (error: any) {
-          setRoutesError(error.message || t('recording.routesError'));
+        } catch (error) {
+          setRoutesError(getErrorMessage(error) || t('recording.routesError'));
           logger.error('activity', 'Failed to fetch nearby routes', { error });
         } finally {
           setLoadingRoutes(false);

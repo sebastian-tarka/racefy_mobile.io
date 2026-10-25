@@ -32,6 +32,7 @@ import { HighlightsGrid } from '../../components/Training/HighlightsGrid';
 import { TrendIndicator } from '../../components/Training/TrendIndicator';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WeekFeedback } from '../../types/api';
+import { getErrorMessage } from '../../utils/errors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'WeekFeedback'>;
@@ -72,9 +73,9 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
           weekNumber: data.week_number,
           overallRating: data.overall_rating,
         });
-      } catch (err: any) {
+      } catch (err) {
         logger.error('training', 'Failed to load week feedback', { error: err, weekId });
-        setError(err.message || t('training.feedback.loadError'));
+        setError(getErrorMessage(err) || t('training.feedback.loadError'));
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -113,7 +114,7 @@ export function WeekFeedbackScreen({ navigation, route }: Props) {
       setWeekNotes(editingNote.trim());
       setNoteModalVisible(false);
       logger.info('training', 'Week note saved', { weekId });
-    } catch (err: any) {
+    } catch (err) {
       logger.error('training', 'Failed to save week note', { error: err, weekId });
       Alert.alert(t('common.error'), t('training.feedback.noteSaveFailed'));
     } finally {

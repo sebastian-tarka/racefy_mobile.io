@@ -26,6 +26,7 @@ import { logger } from '../../services/logger';
 import { upgradePromptEmitter } from '../../services/upgradePromptEmitter';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { PrivacyZone, PrivacyZoneSuggestion } from '../../types/api';
+import { getErrorStatus } from '../../utils/errors';
 
 export function PrivacyZonesScreen() {
   const { t } = useTranslation();
@@ -186,8 +187,8 @@ export function PrivacyZonesScreen() {
       }
       setShowAddModal(false);
       Alert.alert(t('common.success'), t('settings.privacyZones.saved'));
-    } catch (err: any) {
-      if (err?.status === 403) {
+    } catch (err) {
+      if (getErrorStatus(err) === 403) {
         upgradePromptEmitter.emit('show', { feature: 'privacy_zones' });
         setShowAddModal(false);
       } else {
@@ -217,8 +218,8 @@ export function PrivacyZonesScreen() {
         ),
       );
       Alert.alert(t('common.success'), t('settings.privacyZones.saved'));
-    } catch (err: any) {
-      if (err?.status === 403) {
+    } catch (err) {
+      if (getErrorStatus(err) === 403) {
         upgradePromptEmitter.emit('show', { feature: 'privacy_zones' });
       } else {
         logger.error('general', 'Failed to add suggested zone', { error: err });

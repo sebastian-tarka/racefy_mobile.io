@@ -13,6 +13,7 @@ import { Loading, ScreenContainer } from '../../components';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingTip } from '../../types/api';
 import { TIP_CATEGORY_CONFIG } from '../../utils/tipCategory';
+import { getErrorMessage } from '../../utils/errors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TipDetail'>;
@@ -41,9 +42,9 @@ export function TipDetailScreen({ navigation, route }: Props) {
       const tipData = await api.getTip(tipId);
       setTip(tipData);
       logger.info('training', 'Tip loaded and delivery recorded', { tipId });
-    } catch (error: any) {
+    } catch (error) {
       logger.error('training', 'Failed to load tip', { error, tipId });
-      Alert.alert(t('common.error'), error.message || t('training.errors.loadingFailed'));
+      Alert.alert(t('common.error'), getErrorMessage(error) || t('training.errors.loadingFailed'));
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -62,9 +63,9 @@ export function TipDetailScreen({ navigation, route }: Props) {
       Alert.alert('', t('training.tips.thanksFeedback'), [
         { text: t('common.ok'), onPress: () => navigation.goBack() },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('training', 'Failed to submit tip feedback', { error, tipId: tip.id });
-      Alert.alert(t('common.error'), error.message);
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmittingFeedback(false);
     }

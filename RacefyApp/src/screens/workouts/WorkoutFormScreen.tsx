@@ -22,6 +22,7 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { Weekday } from '../../types/workouts';
 import { WEEKDAYS } from '../../types/workouts';
 import { weekdayShort } from '../../utils/workoutPlanFormat';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutForm'>;
 
@@ -92,9 +93,9 @@ export function WorkoutFormScreen({ navigation, route }: Props) {
         emitRefresh('workouts');
         navigation.replace('WorkoutDetail', { planId, workoutId: w.id });
       }
-    } catch (error: any) {
-      if (error.status === 422) setErrors(error.errors || {});
-      else Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      if (isApiError(error) && error.status === 422) setErrors(error.errors || {});
+      else Alert.alert('', getErrorMessage(error) || t('common.error'));
     } finally {
       setSubmitting(false);
     }

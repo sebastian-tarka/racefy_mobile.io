@@ -25,6 +25,7 @@ import * as trackingDb from './trackingDb';
 import { logger } from './logger';
 import { getCurrentLanguage } from '../i18n';
 import type { GpsPoint } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 const BATCH_SIZE = 200;
 const DEFAULT_MAX_BATCHES = 5;
@@ -153,11 +154,14 @@ async function postBatch(
         max_speed: data.stats?.max_speed,
       },
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
       status: 0,
-      message: error?.name === 'AbortError' ? 'Request timeout' : error?.message || 'Network error',
+      message:
+        (error as { name?: unknown } | null)?.name === 'AbortError'
+          ? 'Request timeout'
+          : getErrorMessage(error) || 'Network error',
     };
   } finally {
     clearTimeout(timeoutId);

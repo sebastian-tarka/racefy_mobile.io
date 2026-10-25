@@ -89,7 +89,7 @@ import { useWorkoutEngine } from '../../hooks/useWorkoutEngine';
 import { useWorkoutCuePrefs } from '../../hooks/useWorkoutCuePrefs';
 import { clearWorkoutSession } from '../../services/workout/storage';
 import { cancelGoalNotification } from '../../services/workout/goalNotification';
-import type { WorkoutPlan } from '../../types/workout';
+import type { GuidedWorkout } from '../../types/workout';
 import { formatPlanLabel, workoutStatusLine } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
@@ -153,7 +153,7 @@ export function ActivityRecordingScreen() {
 
   // Training goal (distance / time). The plan lives here; the engine hook
   // below turns it into cues and progress once recording starts.
-  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
+  const [workoutPlan, setWorkoutPlan] = useState<GuidedWorkout | null>(null);
   const [workoutModalVisible, setWorkoutModalVisible] = useState(false);
   const [workoutModalType, setWorkoutModalType] = useState<QuickGoalType | undefined>(undefined);
   const { prefs: workoutCuePrefs, updatePrefs: updateWorkoutCuePrefs } = useWorkoutCuePrefs();
@@ -591,7 +591,7 @@ export function ActivityRecordingScreen() {
   }, []);
 
   const handleApplyWorkout = useCallback(
-    (plan: WorkoutPlan) => {
+    (plan: GuidedWorkout) => {
       setWorkoutPlan(plan);
       setWorkoutModalVisible(false);
       triggerHaptic();

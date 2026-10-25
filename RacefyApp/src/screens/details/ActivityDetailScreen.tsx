@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityLiveMessages,
@@ -61,6 +60,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
 import { formatDuration } from '../../utils/formatDuration';
+import { getErrorMessage, isApiError } from '../../utils/errors';
+import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
@@ -190,9 +191,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
         navigation.goBack();
         // Then emit refresh to update other screens (feed, profile, etc.)
         emitRefresh('activities');
-      } catch (error: any) {
+      } catch (error) {
         // Check if activity is linked to training plan (422 error)
-        if (error.training_week_id) {
+        if (isApiError(error) && error.training_week_id) {
           Alert.alert(
             t('activityDetail.linkedToTrainingPlan'),
             t('activityDetail.linkedToTrainingPlanMessage'),
@@ -206,7 +207,10 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             ],
           );
         } else {
-          Alert.alert(t('common.error'), error.message || t('activityDetail.deleteFailed'));
+          Alert.alert(
+            t('common.error'),
+            getErrorMessage(error) || t('activityDetail.deleteFailed'),
+          );
         }
       }
     },
@@ -248,8 +252,8 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
     try {
       const response = await api.generateActivityReport({ activity_ids: [activityId] });
       navigation.navigate('AiActivityReportDetail', { reportId: response.data.id });
-    } catch (error: any) {
-      if (error.status === 403 && error.upgrade_required) {
+    } catch (error) {
+      if (isApiError(error) && error.status === 403 && error.upgrade_required) {
         Alert.alert(
           t('insights.aiReports.monthlyLimitReached'),
           t('insights.aiReports.monthlyLimitReachedHint'),
@@ -263,7 +267,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           ],
         );
       } else {
-        Alert.alert('', error.message || t('insights.aiReports.errorWaiting'));
+        Alert.alert('', getErrorMessage(error) || t('insights.aiReports.errorWaiting'));
       }
     } finally {
       setIsGeneratingReport(false);
@@ -297,9 +301,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       if (!ok) {
         Alert.alert('', t('unsynced.exportFailedBody'));
       }
-    } catch (err: any) {
+    } catch (err) {
       logger.error('activity', 'GPX export from detail failed', { activityId, error: err });
-      Alert.alert('', err?.message || t('unsynced.exportFailedBody'));
+      Alert.alert('', getErrorMessage(err) || t('unsynced.exportFailedBody'));
     } finally {
       setIsExportingGpx(false);
     }
@@ -549,7 +553,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                       {activity.user.name}
                     </Text>
                     <Text style={[styles.activityDate, { color: colors.textMuted }]}>
-                      {format(new Date(activity.started_at), 'EEEE, MMMM d · h:mm a')}
+                      {`${formatIntlDate(activity.started_at, { weekday: 'long', day: 'numeric', month: 'long' })} · ${formatDate(activity.started_at, 'p')}`}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -948,7 +952,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                   {t('activityDetail.date')}
                 </Text>
                 <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                  {format(new Date(activity.started_at), 'PPpp')}
+                  {formatDate(activity.started_at, 'PPpp')}
                 </Text>
               </View>
               <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>

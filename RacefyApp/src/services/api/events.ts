@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -25,13 +26,15 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.Event>> {
-      const query = new URLSearchParams();
-      if (params?.user_id) query.append('user_id', String(params.user_id));
-      if (params?.status) query.append('status', params.status);
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      return this.request(`/events?${query}`);
+      return this.request(
+        withQuery('/events', {
+          user_id: params?.user_id,
+          status: params?.status,
+          sport_type_id: params?.sport_type_id,
+          page: params?.page,
+          per_page: params?.per_page,
+        }),
+      );
     }
 
     async getEvent(id: number): Promise<Types.Event> {
@@ -64,6 +67,86 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async deleteEvent(id: number): Promise<void> {
       await this.request(`/events/${id}`, { method: 'DELETE' });
+    }
+
+    // ============ AI EVENT COVERS ============
+
+    async getEventAiCovers(eventId: number): Promise<Types.EventAiCovers> {
+      const response = await this.request<Types.ApiResponse<Types.EventAiCovers>>(
+        `/events/${eventId}/cover/ai`,
+      );
+      return response.data;
+    }
+
+    /** 202 with a pending generation; 409 while another one runs; 403 when out of quota. */
+    async generateEventAiCover(
+      eventId: number,
+      hint?: string,
+    ): Promise<{ generation: Types.EventCoverGeneration; quota: Types.EventCoverQuota }> {
+      const response = await this.request<{
+        data: Types.EventCoverGeneration;
+        quota: Types.EventCoverQuota;
+      }>(`/events/${eventId}/cover/ai`, {
+        method: 'POST',
+        body: JSON.stringify(hint ? { hint } : {}),
+      });
+      return { generation: response.data, quota: response.quota };
+    }
+
+    async getEventAiCoverGeneration(
+      eventId: number,
+      generationId: number,
+    ): Promise<Types.EventCoverGeneration> {
+      const response = await this.request<Types.ApiResponse<Types.EventCoverGeneration>>(
+        `/events/${eventId}/cover/ai/${generationId}`,
+      );
+      return response.data;
+    }
+
+    /** Previews the user generated for their other events; `apply` takes them too. */
+    async getEventAiCoverLibrary(eventId: number): Promise<Types.EventCoverLibraryPreview[]> {
+      const response = await this.request<Types.ApiResponse<Types.EventCoverLibraryPreview[]>>(
+        `/events/${eventId}/cover/ai/library`,
+      );
+      return response.data;
+    }
+
+    /** Makes the preview the event cover right away — not on form save. */
+    async applyEventAiCover(
+      eventId: number,
+      previewId: number,
+    ): Promise<Types.ApplyEventCoverResponse> {
+      return this.request<Types.ApplyEventCoverResponse>(
+        `/events/${eventId}/cover/ai/previews/${previewId}/apply`,
+        { method: 'POST' },
+      );
+    }
+
+    // ============ EVENT SERIES ============
+    // Owner-only. The rule and template can't be edited yet — PUT /events/{id}
+    // changes a single edition.
+
+    /** The waiting edition still runs; no further ones are generated until resumed. */
+    async pauseEventSeries(seriesId: number): Promise<Types.EventSeriesSummary> {
+      const response = await this.request<Types.ApiResponse<Types.EventSeriesSummary>>(
+        `/event-series/${seriesId}/pause`,
+        { method: 'POST' },
+      );
+      return response.data;
+    }
+
+    /** Generates the next edition right away if none is waiting. */
+    async resumeEventSeries(seriesId: number): Promise<Types.EventSeriesSummary> {
+      const response = await this.request<Types.ApiResponse<Types.EventSeriesSummary>>(
+        `/event-series/${seriesId}/resume`,
+        { method: 'POST' },
+      );
+      return response.data;
+    }
+
+    /** Ends the series and cancels the waiting upcoming edition; past ones stay. */
+    async endEventSeries(seriesId: number): Promise<void> {
+      await this.request(`/event-series/${seriesId}`, { method: 'DELETE' });
     }
 
     // ============ EVENT POINTS BUDGET ============
@@ -281,9 +364,9 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       eventId: number,
       limit = 50,
     ): Promise<Types.EventLeaderboardResponse> {
-      const query = new URLSearchParams();
-      query.append('limit', String(limit));
-      return this.request<Types.EventLeaderboardResponse>(`/leaderboard/event/${eventId}?${query}`);
+      return this.request<Types.EventLeaderboardResponse>(
+        withQuery(`/leaderboard/event/${eventId}`, { limit: String(limit) }),
+      );
     }
 
     /**
@@ -312,13 +395,12 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         language?: Types.CommentaryLanguage;
       },
     ): Promise<Types.CommentaryListResponse> {
-      const query = new URLSearchParams();
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.language) query.append('language', params.language);
-      const queryString = query.toString();
       return this.request<Types.CommentaryListResponse>(
-        `/events/${eventId}/commentary${queryString ? `?${queryString}` : ''}`,
+        withQuery(`/events/${eventId}/commentary`, {
+          per_page: params?.per_page,
+          page: params?.page,
+          language: params?.language,
+        }),
       );
     }
 

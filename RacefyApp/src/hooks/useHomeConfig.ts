@@ -10,6 +10,7 @@ import type {
 } from '../types/api';
 import { logger } from '../services/logger';
 import { useForegroundInterval } from './useForegroundInterval';
+import { getErrorMessage } from '../utils/errors';
 
 const HOME_CONFIG_CACHE_KEY = '@racefy_home_config';
 const REFRESH_INTERVAL = 60000; // 60 seconds
@@ -107,8 +108,8 @@ export function useHomeConfig(): UseHomeConfigResult {
       } catch (cacheError) {
         logger.warn('general', 'Failed to cache home config', { error: cacheError });
       }
-    } catch (err: any) {
-      const errorMessage = err.message || 'Failed to load home config';
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || 'Failed to load home config';
       setError(errorMessage);
       logger.error('general', 'Failed to fetch home config', { error: err });
 

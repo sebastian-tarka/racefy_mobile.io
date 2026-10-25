@@ -13,6 +13,7 @@ import { logger } from '../../services/logger';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { ShareLinkResponse } from '../../types/api';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityShare'>;
 
@@ -62,8 +63,8 @@ export function ActivityShareScreen({ route, navigation }: Props) {
         activityId,
         hasImage: !!imageUrl,
       });
-    } catch (err: any) {
-      if (err?.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Share with image failed', { error: err });
         Alert.alert(t('common.error'), t('share.fetchError'));
       }
@@ -112,8 +113,8 @@ export function ActivityShareScreen({ route, navigation }: Props) {
       }
 
       logger.info('general', 'Shared to platform', { platform: platformId });
-    } catch (err: any) {
-      if (err?.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Platform share failed', { platform: platformId, error: err });
       }
     }

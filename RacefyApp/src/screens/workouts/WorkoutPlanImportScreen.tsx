@@ -21,6 +21,7 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { WorkoutPlanImportPreview } from '../../types/workouts';
 import { formatPrescription, weekdayShort } from '../../utils/workoutPlanFormat';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutPlanImport'>;
 
@@ -67,9 +68,10 @@ export function WorkoutPlanImportScreen({ navigation }: Props) {
       setPreview(parsed);
       setName(parsed.data.name);
       setWarningsOpen(parsed.warnings.length > 0 && parsed.warnings.length <= 5);
-    } catch (error: any) {
-      logger.error('api', 'Workout plan import preview failed', { error: error.message });
-      const detail = error.errors?.file?.[0] ?? error.message;
+    } catch (error) {
+      logger.error('api', 'Workout plan import preview failed', { error: getErrorMessage(error) });
+      const detail =
+        (isApiError(error) ? error.errors?.file?.[0] : undefined) ?? getErrorMessage(error);
       Alert.alert(t('strengthPlans.import.failed'), detail || '');
     } finally {
       setParsing(false);
@@ -86,9 +88,10 @@ export function WorkoutPlanImportScreen({ navigation }: Props) {
       });
       emitRefresh('workouts');
       navigation.replace('WorkoutPlanDetail', { planId: plan.id });
-    } catch (error: any) {
-      const first = error.errors ? Object.values<string[]>(error.errors)[0]?.[0] : undefined;
-      Alert.alert('', first || error.message || t('common.error'));
+    } catch (error) {
+      const first =
+        isApiError(error) && error.errors ? Object.values(error.errors)[0]?.[0] : undefined;
+      Alert.alert('', first || getErrorMessage(error) || t('common.error'));
     } finally {
       setSaving(false);
     }

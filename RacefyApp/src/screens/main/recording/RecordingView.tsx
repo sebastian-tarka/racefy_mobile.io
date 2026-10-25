@@ -15,7 +15,7 @@ import { LivePulse, MapboxLiveMap, NavBanner, StatBlock } from '../../../compone
 import type { NavBannerState } from '../../../utils/navigationCues';
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 import { WorkoutProgressCard } from './WorkoutProgressCard';
-import type { WorkoutPlan } from '../../../types/workout';
+import type { GuidedWorkout } from '../../../types/workout';
 import type { SegmentProgress, WorkoutEngineState } from '../../../services/workout/engine';
 import { workoutStatusLine } from '../../../utils/workoutFormat';
 import { spacing, fontSize, borderRadius, componentSize, heroColors, msFont } from '../../../theme';
@@ -67,7 +67,7 @@ interface RecordingViewProps {
   navLocked?: boolean;
   onUnlockNav?: () => void;
   // Training goal
-  workoutPlan?: WorkoutPlan | null;
+  workoutPlan?: GuidedWorkout | null;
   workoutProgress?: SegmentProgress | null;
   workoutState?: WorkoutEngineState | null;
   onOpenWorkout?: () => void;

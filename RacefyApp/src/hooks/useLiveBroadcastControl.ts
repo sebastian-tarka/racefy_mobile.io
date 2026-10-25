@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { useAuth } from './useAuth';
 import type { LiveVisibility } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface Result {
   isBroadcasting: boolean;
@@ -53,8 +54,11 @@ export function useLiveBroadcastControl(activityId: number | null): Result {
           visibility: response.data?.live_visibility,
         });
         return true;
-      } catch (err: any) {
-        logger.error('live', 'Failed to enable broadcast', { activityId, error: err?.message });
+      } catch (err) {
+        logger.error('live', 'Failed to enable broadcast', {
+          activityId,
+          error: getErrorMessage(err),
+        });
         setError(err instanceof Error ? err : new Error(String(err)));
         return false;
       } finally {
@@ -75,8 +79,11 @@ export function useLiveBroadcastControl(activityId: number | null): Result {
       setShareToken(null);
       logger.info('live', 'Broadcast disabled', { activityId });
       return true;
-    } catch (err: any) {
-      logger.error('live', 'Failed to disable broadcast', { activityId, error: err?.message });
+    } catch (err) {
+      logger.error('live', 'Failed to disable broadcast', {
+        activityId,
+        error: getErrorMessage(err),
+      });
       setError(err instanceof Error ? err : new Error(String(err)));
       return false;
     } finally {
@@ -118,9 +125,9 @@ export function useLiveBroadcastControl(activityId: number | null): Result {
           syncFromServer(mine.live_visibility);
           if (mine.live_share_token) setShareToken(mine.live_share_token);
         }
-      } catch (err: any) {
+      } catch (err) {
         // Non-fatal: the control simply stays in its default off state.
-        logger.warn('live', 'Could not recover broadcast state', { error: err?.message });
+        logger.warn('live', 'Could not recover broadcast state', { error: getErrorMessage(err) });
       }
     })();
 

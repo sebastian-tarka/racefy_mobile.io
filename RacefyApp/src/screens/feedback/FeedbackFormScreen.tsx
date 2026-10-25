@@ -24,6 +24,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { FeedbackType, FeedbackPriority } from '../../types/api';
 import { FEEDBACK_PRIORITY_COLORS } from './feedbackColors';
+import { getErrorMessage, getErrorStatus, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackForm'>;
 
@@ -116,18 +117,18 @@ export function FeedbackFormScreen({ navigation }: Props) {
 
       Alert.alert(t('feedback.messages.submitted'));
       navigation.goBack();
-    } catch (err: any) {
+    } catch (err) {
       logger.error('api', 'Failed to submit feedback', { error: err });
-      if (err?.status === 429) {
+      if (getErrorStatus(err) === 429) {
         Alert.alert(t('feedback.messages.rateLimited'));
-      } else if (err?.errors) {
+      } else if (isApiError(err) && err.errors) {
         const fieldErrors: Record<string, string> = {};
         for (const [key, messages] of Object.entries(err.errors)) {
           fieldErrors[key] = Array.isArray(messages) ? messages[0] : String(messages);
         }
         setErrors(fieldErrors);
       } else {
-        Alert.alert(t('feedback.messages.submitFailed'), err?.message);
+        Alert.alert(t('feedback.messages.submitFailed'), getErrorMessage(err));
       }
     } finally {
       setIsSubmitting(false);

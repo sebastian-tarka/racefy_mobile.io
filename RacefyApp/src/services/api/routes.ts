@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -12,11 +13,13 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page?: number;
       per_page?: number;
     }): Promise<Types.PaginatedResponse<Types.PlannedRoute>> {
-      const query = new URLSearchParams();
-      if (params?.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      if (params?.page) query.append('page', String(params.page));
-      if (params?.per_page) query.append('per_page', String(params.per_page));
-      return this.request(`/routes?${query}`);
+      return this.request(
+        withQuery('/routes', {
+          sport_type_id: params?.sport_type_id,
+          page: params?.page,
+          per_page: params?.per_page,
+        }),
+      );
     }
 
     async getRoute(id: number): Promise<Types.PlannedRoute> {
@@ -47,15 +50,17 @@ export function RoutesMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async searchRoutes(
       params: Types.RouteSearchParams,
     ): Promise<Types.PaginatedResponse<Types.PlannedRoute>> {
-      const query = new URLSearchParams();
-      if (params.lat != null) query.append('lat', String(params.lat));
-      if (params.lng != null) query.append('lng', String(params.lng));
-      if (params.radius) query.append('radius', String(params.radius));
-      if (params.sport_type_id) query.append('sport_type_id', String(params.sport_type_id));
-      if (params.query) query.append('query', params.query);
-      if (params.page) query.append('page', String(params.page));
-      if (params.per_page) query.append('per_page', String(params.per_page));
-      return this.request(`/routes/search?${query}`);
+      return this.request(
+        withQuery('/routes/search', {
+          lat: params.lat?.toString(),
+          lng: params.lng?.toString(),
+          radius: params.radius,
+          sport_type_id: params.sport_type_id,
+          query: params.query,
+          page: params.page,
+          per_page: params.per_page,
+        }),
+      );
     }
 
     async duplicateRoute(id: number): Promise<Types.PlannedRoute> {

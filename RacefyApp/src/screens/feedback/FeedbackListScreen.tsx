@@ -22,6 +22,7 @@ import {
   FEEDBACK_STATUS_COLORS,
   FEEDBACK_UNKNOWN_COLOR,
 } from './feedbackColors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackList'>;
 
@@ -133,7 +134,7 @@ export function FeedbackListScreen({ navigation }: Props) {
         )}
 
         <Text style={[styles.cardDate, { color: colors.textMuted }]}>
-          {new Date(item.created_at).toLocaleDateString()}
+          {formatIntlDate(item.created_at)}
         </Text>
       </TouchableOpacity>
     );

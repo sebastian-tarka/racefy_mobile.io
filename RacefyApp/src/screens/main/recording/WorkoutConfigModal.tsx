@@ -30,7 +30,7 @@ import {
   type IntervalStepDraft,
 } from '../../../services/workout/presets';
 import { loadLastQuickGoal, saveLastQuickGoal } from '../../../services/workout/storage';
-import type { WorkoutCuePrefs, WorkoutGoal, WorkoutPlan } from '../../../types/workout';
+import type { WorkoutCuePrefs, WorkoutGoal, GuidedWorkout } from '../../../types/workout';
 import { borderRadius, fontSize, msFont, spacing } from '../../../theme';
 import {
   describeIntervals,
@@ -91,8 +91,8 @@ type TypeChoice = 'open' | QuickGoalType | 'intervals';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  plan: WorkoutPlan | null;
-  onApply: (plan: WorkoutPlan) => void;
+  plan: GuidedWorkout | null;
+  onApply: (plan: GuidedWorkout) => void;
   onClear: () => void;
   cuePrefs: WorkoutCuePrefs;
   onCuePrefsChange: (partial: Partial<WorkoutCuePrefs>) => void;
@@ -173,7 +173,7 @@ export function WorkoutConfigModal({
   }, [type, distanceValue, timeMinutes, unitFactor]);
 
   // The interval plan as it stands; its label doubles as the footer text.
-  const intervalPlan: WorkoutPlan | null = useMemo(() => {
+  const intervalPlan: GuidedWorkout | null = useMemo(() => {
     if (type !== 'intervals') return null;
     const p = buildIntervalPlan(intervals, '', sportTypeId);
     p.name = describeIntervals(p, formatDistance, t);

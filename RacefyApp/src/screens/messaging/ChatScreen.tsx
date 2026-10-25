@@ -14,13 +14,10 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isToday } from 'date-fns/isToday';
 import { isYesterday } from 'date-fns/isYesterday';
 import { isThisYear } from 'date-fns/isThisYear';
-import { pl } from 'date-fns/locale/pl';
-import { enUS } from 'date-fns/locale/en-US';
 import { Avatar, Loading, ParticipantsSheet, ScreenContainer } from '../../components';
 import { useMessages } from '../../hooks/useMessages';
 import { useTheme } from '../../hooks/useTheme';
@@ -31,6 +28,8 @@ import type { ThemeColors } from '../../theme/colors';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation, ConversationParticipant, Message } from '../../types/api';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
+import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -40,7 +39,7 @@ export function ChatScreen({ navigation, route }: Props) {
     participant: routeParticipant,
     conversation: routeConversation,
   } = route.params;
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const {
@@ -60,22 +59,20 @@ export function ChatScreen({ navigation, route }: Props) {
   const [renameValue, setRenameValue] = useState('');
   const [isSavingRename, setIsSavingRename] = useState(false);
 
-  const dateLocale = i18n.language.startsWith('pl') ? pl : enUS;
-
   const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
 
   const fetchConversation = useCallback(async () => {
     try {
       const data = await api.getConversation(conversationId);
       setConversation(data);
-    } catch (error: any) {
-      if (error.status === 403) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403) {
         logger.warn('api', 'No longer a participant of conversation', { conversationId });
         navigation.goBack();
       } else {
         logger.error('api', 'Failed to load conversation', {
           conversationId,
-          error: error.message,
+          error: getErrorMessage(error),
         });
       }
     } finally {
@@ -109,8 +106,8 @@ export function ChatScreen({ navigation, route }: Props) {
   const formatDateSeparator = (date: Date): string => {
     if (isToday(date)) return t('messaging.today');
     if (isYesterday(date)) return t('messaging.yesterday');
-    if (isThisYear(date)) return format(date, 'd MMMM', { locale: dateLocale });
-    return format(date, 'd MMMM yyyy', { locale: dateLocale });
+    if (isThisYear(date)) return formatIntlDate(date, { day: 'numeric', month: 'long' });
+    return formatDate(date, 'PPP');
   };
 
   const handleSend = async () => {
@@ -149,13 +146,13 @@ export function ChatScreen({ navigation, route }: Props) {
       const updated = await api.updateConversation(conversationId, { name: trimmed });
       setConversation(updated);
       setIsRenaming(false);
-    } catch (error: any) {
-      if (error.status === 403) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403) {
         // Captain demoted mid-session — refetch + hide pencil
         await fetchConversation();
         setIsRenaming(false);
       } else {
-        Alert.alert('', error.message || t('messaging.renameFailed'));
+        Alert.alert('', getErrorMessage(error) || t('messaging.renameFailed'));
       }
     } finally {
       setIsSavingRename(false);
@@ -165,7 +162,7 @@ export function ChatScreen({ navigation, route }: Props) {
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const isOwn = item.is_own;
     const prevMessage = index > 0 ? messages[index - 1] : null;
-    const time = format(new Date(item.created_at), 'HH:mm');
+    const time = formatDate(item.created_at, 'p');
     const showDateSeparator =
       !prevMessage || !isSameDay(new Date(item.created_at), new Date(prevMessage.created_at));
 

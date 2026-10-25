@@ -29,6 +29,8 @@ import {
   FEEDBACK_STATUS_COLORS,
   FEEDBACK_UNKNOWN_COLOR,
 } from './feedbackColors';
+import { getErrorStatus } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackDetail'>;
 
@@ -82,9 +84,9 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
       });
       setReplyText('');
       setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 200);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('api', 'Failed to send reply', { feedbackId, error: err });
-      if (err?.status === 403) {
+      if (getErrorStatus(err) === 403) {
         Alert.alert(t('feedback.detail.closedNotice'));
       } else {
         Alert.alert(t('feedback.messages.replyFailed'));
@@ -142,7 +144,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
           )}
           <Text style={[styles.replyAuthor, { color: colors.textPrimary }]}>{label}</Text>
           <Text style={[styles.replyDate, { color: colors.textMuted }]}>
-            {new Date(reply.created_at).toLocaleDateString(undefined, {
+            {formatIntlDate(reply.created_at, {
               month: 'short',
               day: 'numeric',
               hour: '2-digit',
@@ -280,7 +282,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
             </Text>
           )}
           <Text style={[styles.metaInfo, { color: colors.textMuted }]}>
-            {new Date(feedback.created_at).toLocaleDateString(undefined, {
+            {formatIntlDate(feedback.created_at, {
               year: 'numeric',
               month: 'long',
               day: 'numeric',

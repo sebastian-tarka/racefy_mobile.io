@@ -17,6 +17,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { fontSize, spacing } from '../theme';
 import { InteractorsListModal } from './InteractorsListModal';
+import { getErrorMessage } from '../utils/errors';
 
 export type InteractionVariant = 'like' | 'boost' | 'comment';
 export type InteractionTargetType = 'post' | 'activity' | 'comment' | 'commentary';
@@ -251,12 +252,12 @@ export function InteractionButton({
       const finalCount = res.count ?? nextCount;
       if (res.count != null) setCount(res.count);
       onChange?.(nextActive, finalCount);
-    } catch (err: any) {
+    } catch (err) {
       // Rollback
       setIsActive(prevActive);
       setCount(prevCount);
       logger.error('api', `${variant} ${targetType} failed`, {
-        error: err?.message || err,
+        error: getErrorMessage(err) || err,
         targetId,
       });
     } finally {

@@ -53,6 +53,8 @@ import { fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { NotificationChannelSettings, UserPreferences } from '../../types/api';
+import { getErrorMessage, isApiError } from '../../utils/errors';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
 
@@ -615,9 +617,9 @@ export function SettingsScreen({ navigation }: Props) {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
+    } catch (error) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      if (error?.errors?.current_password) {
+      if (isApiError(error) && error.errors?.current_password) {
         setPasswordErrors({ currentPassword: t('settings.incorrectPassword') });
       } else {
         Alert.alert(t('common.error'), t('settings.passwordChangeFailed'));
@@ -646,9 +648,9 @@ export function SettingsScreen({ navigation }: Props) {
             await api.deleteAccount(deletePassword);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             await logout();
-          } catch (error: any) {
+          } catch (error) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            if (error?.message?.includes('password')) {
+            if (getErrorMessage(error).includes('password')) {
               Alert.alert(t('common.error'), t('settings.incorrectPassword'));
             } else {
               Alert.alert(t('common.error'), t('settings.deleteAccountFailed'));
@@ -838,7 +840,7 @@ export function SettingsScreen({ navigation }: Props) {
             )}
             {!isTrial && isPremium && expiresAt && (
               <Text style={[styles.subscriptionExpiry, { color: colors.textMuted }]}>
-                {t('settings.expiresOn', { date: new Date(expiresAt).toLocaleDateString() })}
+                {t('settings.expiresOn', { date: formatIntlDate(expiresAt) })}
               </Text>
             )}
           </View>
@@ -1427,8 +1429,8 @@ export function SettingsScreen({ navigation }: Props) {
                         ? 'Worker triggered. Put the app in the background to let it run.'
                         : 'Not triggered — nothing registered (empty queue?) or not a debug build.',
                     );
-                  } catch (e: any) {
-                    Alert.alert('Error', e.message);
+                  } catch (e) {
+                    Alert.alert('Error', getErrorMessage(e));
                   }
                 }}
               />
@@ -1455,8 +1457,8 @@ export function SettingsScreen({ navigation }: Props) {
                       'Scheduled',
                       'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.',
                     );
-                  } catch (e: any) {
-                    Alert.alert('Error', e.message);
+                  } catch (e) {
+                    Alert.alert('Error', getErrorMessage(e));
                   }
                 }}
               />
@@ -1474,8 +1476,8 @@ export function SettingsScreen({ navigation }: Props) {
                       },
                       trigger: null,
                     });
-                  } catch (e: any) {
-                    Alert.alert('Error', e.message);
+                  } catch (e) {
+                    Alert.alert('Error', getErrorMessage(e));
                   }
                 }}
               />
@@ -1496,8 +1498,8 @@ export function SettingsScreen({ navigation }: Props) {
                       },
                       { text: 'OK' },
                     ]);
-                  } catch (e: any) {
-                    Alert.alert('Error getting token', e.message);
+                  } catch (e) {
+                    Alert.alert('Error getting token', getErrorMessage(e));
                   }
                 }}
               />

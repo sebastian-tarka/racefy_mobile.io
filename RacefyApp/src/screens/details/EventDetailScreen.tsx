@@ -18,6 +18,7 @@ import { RoutePreview } from '../../components/LeafletMap';
 import {
   CommentaryPreviewCard,
   EventActionSection,
+  EventAiCoverModal,
   EventRewardsCard,
   EventCourseIntel,
   EventGallery,
@@ -36,6 +37,7 @@ import { useEventStandings } from '../../hooks/useEventStandings';
 import { useLiveActivityStatus } from '../../hooks/useLiveActivity';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { emitRefresh } from '../../services/refreshEvents';
 import { fontSize, spacing } from '../../theme';
 import { formatTotalTime } from '../../utils/formatters';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -53,6 +55,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [isAiCoverOpen, setIsAiCoverOpen] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [busyDialogVisible, setBusyDialogVisible] = useState(false);
   const { isTracking, isPaused } = useLiveActivityStatus();
@@ -253,6 +256,7 @@ export function EventDetailScreen({ route, navigation }: Props) {
               onBack={navigateBack}
               onShare={() => setShareModalVisible(true)}
               onEdit={canEdit ? goToForm : undefined}
+              onAiCover={canEdit ? () => setIsAiCoverOpen(true) : undefined}
             />
 
             <View style={styles.sections}>
@@ -409,6 +413,19 @@ export function EventDetailScreen({ route, navigation }: Props) {
         )}
       />
 
+      {canEdit && (
+        <EventAiCoverModal
+          visible={isAiCoverOpen}
+          eventId={eventId}
+          onClose={() => setIsAiCoverOpen(false)}
+          onApplied={() => {
+            // The new cover (and its variants) come with the event
+            setIsAiCoverOpen(false);
+            fetchEvent();
+            emitRefresh('events');
+          }}
+        />
+      )}
       <SocialShareModal
         visible={shareModalVisible}
         onClose={() => setShareModalVisible(false)}

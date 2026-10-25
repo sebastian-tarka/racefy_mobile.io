@@ -23,6 +23,7 @@ import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { pickImages } from '../../utils/pickImages';
+import { isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
@@ -201,14 +202,15 @@ export function EditProfileScreen({ navigation }: Props) {
 
       Alert.alert(t('common.success'), t('editProfile.updateSuccess'));
       navigation.goBack();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('api', 'Failed to update profile', { error });
 
       // Handle validation errors from API
-      if (error?.errors) {
+      if (isApiError(error) && error.errors) {
+        const fieldErrors = error.errors;
         const apiErrors: Record<string, string> = {};
-        Object.keys(error.errors).forEach((key) => {
-          apiErrors[key] = error.errors[key][0];
+        Object.keys(fieldErrors).forEach((key) => {
+          apiErrors[key] = fieldErrors[key][0];
         });
         setErrors(apiErrors);
       } else {

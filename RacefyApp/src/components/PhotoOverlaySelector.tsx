@@ -20,6 +20,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import type { Photo, PhotoOverlayFormat } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 2;
@@ -173,8 +174,8 @@ export function PhotoOverlaySelector({
         }
         logger.info('general', 'Photo overlay save triggered');
       }
-    } catch (err: any) {
-      if (err?.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Save to gallery failed', { error: err });
         Alert.alert(t('common.error'), t('share.saveFailed'));
       }
@@ -202,8 +203,8 @@ export function PhotoOverlaySelector({
           FileSystem.deleteAsync(download.uri, { idempotent: true }).catch(() => {});
         }, 10000);
       }
-    } catch (err: any) {
-      if (err?.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Photo overlay share failed', { error: err });
       }
     }

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type { LiveMessage } from '../types/api';
+import { getErrorStatus, isApiError } from '../utils/errors';
 
 export const LIVE_MESSAGE_MAX_LENGTH = 280;
 
@@ -41,25 +42,28 @@ export function useLiveMessaging(activityId: number | null): Result {
       setErrorKey(null);
       try {
         return await api.sendLiveMessage(activityId, { content: trimmed, public: isPublic });
-      } catch (err: any) {
+      } catch (err) {
         // Prefer the machine-readable `error` code where the API sends one;
         // fall back to the HTTP status, which is all older responses carried.
         // Never branch on `message` — it is prose and it is translated.
-        if (err?.error === 'live_comments_disabled' || err?.status === 403) {
+        if (
+          (isApiError(err) && err.error === 'live_comments_disabled') ||
+          getErrorStatus(err) === 403
+        ) {
           setCommentsDisabled(true);
           setErrorKey('live.messages.disabled');
-        } else if (err?.status === 404) {
+        } else if (getErrorStatus(err) === 404) {
           setErrorKey('live.messages.unavailable');
-        } else if (err?.status === 422) {
+        } else if (getErrorStatus(err) === 422) {
           setErrorKey('live.messages.tooLong');
-        } else if (err?.status === 429) {
+        } else if (getErrorStatus(err) === 429) {
           setErrorKey('live.messages.throttled');
         } else {
           setErrorKey('live.messages.sendFailed');
         }
         logger.warn('live', 'Failed to send live message', {
           activityId,
-          status: err?.status,
+          status: getErrorStatus(err),
         });
         return null;
       } finally {

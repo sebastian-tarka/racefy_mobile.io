@@ -17,6 +17,7 @@ import { SharedPostBlock } from './SharedPostBlock';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post } from '../types/api';
+import { getErrorStatus } from '../utils/errors';
 
 interface ReshareModalProps {
   visible: boolean;
@@ -43,8 +44,10 @@ export function ReshareModal({ visible, onClose, post, onSubmit }: ReshareModalP
       setContent('');
       setVisibility('public');
       onClose();
-    } catch (error: any) {
-      const status = error?.status || error?.response?.status;
+    } catch (error) {
+      const status =
+        getErrorStatus(error) ||
+        (error as { response?: { status?: number } } | null)?.response?.status;
       if (status === 409) {
         Alert.alert(t('common.error'), t('reshare.alreadyReshared'));
       } else if (status === 403) {

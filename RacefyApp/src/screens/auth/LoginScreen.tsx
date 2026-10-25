@@ -11,6 +11,7 @@ import { fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList, RootStackParamList } from '../../navigation/types';
 import type { CompositeScreenProps } from '@react-navigation/native';
+import { getErrorCode, getErrorMessage } from '../../utils/errors';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<AuthStackParamList, 'Login'>,
@@ -56,9 +57,9 @@ export function LoginScreen({ navigation }: Props) {
       await login({ email, password });
       logger.info('auth', 'Login successful');
       // Navigation handled automatically by AppNavigator's conditional rendering
-    } catch (error: any) {
+    } catch (error) {
       logger.error('auth', 'Login error', { error });
-      const message = error?.message || t('auth.loginFailedMessage');
+      const message = getErrorMessage(error) || t('auth.loginFailedMessage');
       Alert.alert(t('auth.loginFailed'), message);
     } finally {
       setIsLoading(false);
@@ -69,13 +70,13 @@ export function LoginScreen({ navigation }: Props) {
     setIsGoogleLoading(true);
     try {
       await googleSignIn();
-    } catch (error: any) {
+    } catch (error) {
       logger.error('auth', 'Google Sign-In error', { error });
-      if (error?.code === statusCodes.SIGN_IN_CANCELLED) {
+      if (getErrorCode(error) === statusCodes.SIGN_IN_CANCELLED) {
         // User cancelled - no alert needed
         return;
       }
-      const message = error?.message || t('auth.googleSignInFailedMessage');
+      const message = getErrorMessage(error) || t('auth.googleSignInFailedMessage');
       Alert.alert(t('auth.googleSignInFailed'), message);
     } finally {
       setIsGoogleLoading(false);

@@ -16,6 +16,7 @@ import { logger } from '../services/logger';
 import { api } from '../services/api';
 import { spacing, fontSize } from '../theme';
 import { Button } from './Button';
+import { getErrorMessage } from '../utils/errors';
 
 export function DebugLogsSection() {
   const { t } = useTranslation();
@@ -99,9 +100,9 @@ export function DebugLogsSection() {
         totalLogs,
         chunks,
       });
-    } catch (error: any) {
+    } catch (error) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      logger.error('api', 'Failed to send debug logs', { error: error.message });
+      logger.error('api', 'Failed to send debug logs', { error: getErrorMessage(error) });
 
       Alert.alert(
         t('common.error', 'Error'),

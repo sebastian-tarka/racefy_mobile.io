@@ -10,6 +10,7 @@ import { fontSize, spacing } from '../../theme';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/types';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -47,9 +48,9 @@ export function ResetPasswordScreen({ route, navigation }: Props) {
         password_confirmation: passwordConfirmation,
       });
       setIsDone(true);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('auth', 'Reset password error', { error: err });
-      const message = err?.message || t('auth.resetPasswordFailed');
+      const message = getErrorMessage(err) || t('auth.resetPasswordFailed');
       Alert.alert(t('common.error'), message);
     } finally {
       setIsLoading(false);

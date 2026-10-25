@@ -11,13 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns/format';
 import { isToday } from 'date-fns/isToday';
 import { isYesterday } from 'date-fns/isYesterday';
 import { isThisWeek } from 'date-fns/isThisWeek';
 import { isThisYear } from 'date-fns/isThisYear';
-import { pl } from 'date-fns/locale/pl';
-import { enUS } from 'date-fns/locale/en-US';
 import {
   Avatar,
   EmptyState,
@@ -36,11 +33,12 @@ import { spacing, fontSize } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation, MentionSearchUser } from '../../types/api';
+import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConversationsList'>;
 
 export function ConversationsListScreen({ navigation }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { isAuthenticated } = useAuth();
   const {
@@ -156,12 +154,11 @@ export function ConversationsListScreen({ navigation }: Props) {
 
   const formatConversationTime = (dateStr: string): string => {
     const date = new Date(dateStr);
-    const dateLocale = i18n.language.startsWith('pl') ? pl : enUS;
-    if (isToday(date)) return format(date, 'HH:mm');
+    if (isToday(date)) return formatDate(date, 'p');
     if (isYesterday(date)) return t('messaging.yesterday');
-    if (isThisWeek(date, { weekStartsOn: 1 })) return format(date, 'EEE', { locale: dateLocale });
-    if (isThisYear(date)) return format(date, 'd MMM', { locale: dateLocale });
-    return format(date, 'd MMM yyyy', { locale: dateLocale });
+    if (isThisWeek(date, { weekStartsOn: 1 })) return formatDate(date, 'EEE');
+    if (isThisYear(date)) return formatIntlDate(date, { day: 'numeric', month: 'short' });
+    return formatDate(date, 'PP');
   };
 
   const renderConversation = ({ item }: { item: Conversation }) => {

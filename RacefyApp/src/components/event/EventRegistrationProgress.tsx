@@ -1,12 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { format } from 'date-fns/format';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../Card';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { Event } from '../../types/api';
+import { formatDate } from '../../utils/dateFormat';
 
 /**
  * "Registration open · Closes …" box with a fill bar and spots counter.
@@ -36,14 +36,14 @@ export function EventRegistrationProgress({ event }: { event: Event }) {
   const subline = isOpen
     ? closesAt
       ? t('eventDetail.closesOn', {
-          date: format(new Date(closesAt), 'EEE d MMM · HH:mm'),
-          defaultValue: `Closes ${format(new Date(closesAt), 'EEE d MMM · HH:mm')}`,
+          date: formatDate(closesAt, 'EEE d MMM · p'),
+          defaultValue: `Closes ${formatDate(closesAt, 'EEE d MMM · p')}`,
         })
       : null
     : opensAt && new Date(opensAt) > new Date()
       ? t('eventDetail.opensOn', {
-          date: format(new Date(opensAt), 'EEE d MMM · HH:mm'),
-          defaultValue: `Opens ${format(new Date(opensAt), 'EEE d MMM · HH:mm')}`,
+          date: formatDate(opensAt, 'EEE d MMM · p'),
+          defaultValue: `Opens ${formatDate(opensAt, 'EEE d MMM · p')}`,
         })
       : null;
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
 import { usePermissions } from './usePermissions';
 import { logger } from '../services/logger';
+import { getErrorMessage } from '../utils/errors';
 
 interface PreviewLocationResult {
   previewLocation: { lat: number; lng: number } | null;
@@ -61,8 +62,10 @@ export function usePreviewLocation(
             lat: location.coords.latitude,
             lng: location.coords.longitude,
           });
-        } catch (error: any) {
-          logger.error('activity', 'Failed to fetch preview location', { error: error.message });
+        } catch (error) {
+          logger.error('activity', 'Failed to fetch preview location', {
+            error: getErrorMessage(error),
+          });
         } finally {
           setFetchingPreviewLocation(false);
         }

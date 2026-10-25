@@ -2,6 +2,7 @@ import { api } from './api';
 import { logger } from './logger';
 import { withAudioFocus } from './audioCoach/audioSession';
 import { playBase64Mp3 } from './audio/playBase64Mp3';
+import { getErrorStatus } from '../utils/errors';
 
 /**
  * Why a live message failed to be read aloud. These are NOT interchangeable:
@@ -34,8 +35,8 @@ export async function playLiveMessageTts(commentId: number): Promise<LiveTtsResu
     // the user's preference and comes back when the message ends.
     await withAudioFocus(() => playBase64Mp3(result.audio_base64, `live_msg_${commentId}`));
     return { ok: true };
-  } catch (error: any) {
-    const status = error?.status;
+  } catch (error) {
+    const status = getErrorStatus(error);
     // 403 = free tier, 402 = over the monthly TTS cost cap, 404 = not the
     // athlete on this broadcast. Each needs its own message.
     const reason: LiveTtsFailure =

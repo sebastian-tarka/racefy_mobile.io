@@ -23,6 +23,7 @@ import { formatMetricValue, paceStatusColor } from '../../utils/goalHelpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { UserGoal } from '../../types/goals';
+import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Goals'>;
 
@@ -42,8 +43,8 @@ export function GoalsScreen({ navigation }: Props) {
     try {
       const data = await api.listGoals();
       setGoals(data);
-    } catch (error: any) {
-      logger.error('api', 'Failed to load goals', { error: error.message });
+    } catch (error) {
+      logger.error('api', 'Failed to load goals', { error: getErrorMessage(error) });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

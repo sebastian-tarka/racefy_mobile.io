@@ -22,6 +22,7 @@ import { ShareFormatSelector } from './ShareFormatSelector';
 import { shareActivityWithImage } from '../utils/share';
 import type { ShareLinkResponse } from '../types/api';
 import { SheetModal } from './SheetModal';
+import { getErrorMessage } from '../utils/errors';
 
 type ShareableType = 'activity' | 'post' | 'event' | 'comment';
 
@@ -100,16 +101,16 @@ function SocialShareModalComponent({ visible, onClose, type, id }: SocialShareMo
 
       logger.info('general', 'Share link fetched', { type, id, url: response.url });
       setShareData(response);
-    } catch (err: any) {
+    } catch (err) {
       logger.error('general', 'Failed to fetch share link', {
         type,
         id,
         error: err,
-        errorMessage: err?.message,
-        errorStack: err?.stack,
+        errorMessage: getErrorMessage(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
       });
 
-      const errorMessage = err?.message || t('share.fetchError');
+      const errorMessage = getErrorMessage(err) || t('share.fetchError');
       Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok'), onPress: onClose }]);
     } finally {
       setIsLoading(false);
@@ -164,8 +165,8 @@ function SocialShareModalComponent({ visible, onClose, type, id }: SocialShareMo
           sharedWith: result.activityType,
         });
       }
-    } catch (err: any) {
-      if (err.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Native share failed', { error: err });
       }
     }
@@ -192,8 +193,8 @@ function SocialShareModalComponent({ visible, onClose, type, id }: SocialShareMo
       // Close both modals after successful share
       setShowFormatSelector(false);
       onClose();
-    } catch (err: any) {
-      if (err.message !== 'User did not share') {
+    } catch (err) {
+      if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Share with image failed', { error: err });
         Alert.alert(t('common.error'), t('share.fetchError'));
       }

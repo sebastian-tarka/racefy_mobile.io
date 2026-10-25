@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { nearestPointOnRoute, routeTotalDistance } from '../utils/routeNavigation';
 import type { GeoJSONLineString, RouteTurnInstruction, RoutePreviewResponse } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 interface Params {
   /** Original shadow track / route geometry */
@@ -143,10 +144,10 @@ export function useRouteApproachPath({
           totalDistance: routeTotalDistance(merged),
           turns: (preview.turn_instructions?.length ?? 0) + baseTurnsShifted.length,
         });
-      } catch (err: any) {
+      } catch (err) {
         if (cancelled) return;
         logger.warn('activity', 'Route approach fetch failed, falling back to raw route', {
-          error: err?.message,
+          error: getErrorMessage(err),
         });
         // Fallback: use raw base geometry from nearest point
         const trimmed = trimRouteFrom(baseCoords, nearest.index, nearest.point);
@@ -156,7 +157,7 @@ export function useRouteApproachPath({
           turnInstructions: shiftTurnsAfter(baseTurnInstructions, nearest.distanceAlong),
           totalDistance: routeTotalDistance(trimmed),
           approachDistance: 0,
-          error: err?.message ?? 'approach_failed',
+          error: getErrorMessage(err, 'approach_failed'),
         });
       }
     })();

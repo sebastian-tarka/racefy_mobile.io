@@ -13,7 +13,7 @@
  * recorded distance in metres.
  */
 
-import type { CompiledSegment, WorkoutPlan, WorkoutStepEnd } from '../../types/workout';
+import type { CompiledSegment, GuidedWorkout, WorkoutStepEnd } from '../../types/workout';
 import { compileWorkout } from './compile';
 
 export interface EngineSnapshot {
@@ -23,7 +23,7 @@ export interface EngineSnapshot {
 
 export interface WorkoutEngineState {
   planId: string;
-  mode: WorkoutPlan['mode'];
+  mode: GuidedWorkout['mode'];
   segments: CompiledSegment[];
   currentIndex: number;
   /** Snapshot taken when the current segment began. */
@@ -79,7 +79,10 @@ export interface SegmentProgress {
 /** Distance before a boundary at which the "approach" cue fires. */
 const APPROACH_METERS = 100;
 
-export function createWorkoutEngine(plan: WorkoutPlan, start: EngineSnapshot): WorkoutEngineState {
+export function createWorkoutEngine(
+  plan: GuidedWorkout,
+  start: EngineSnapshot,
+): WorkoutEngineState {
   return {
     planId: plan.id,
     mode: plan.mode,

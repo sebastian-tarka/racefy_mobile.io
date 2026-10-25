@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -32,14 +33,14 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     async getLiveBroadcasts(
       params?: Types.LiveBroadcastListParams,
     ): Promise<Types.LiveBroadcastListResponse> {
-      const qs = new URLSearchParams();
-      if (params?.user_id != null) qs.append('user_id', String(params.user_id));
-      if (params?.event_id != null) qs.append('event_id', String(params.event_id));
-      if (params?.page != null) qs.append('page', String(params.page));
-      if (params?.per_page != null) qs.append('per_page', String(params.per_page));
-      const suffix = qs.toString() ? `?${qs.toString()}` : '';
-
-      return this.request<Types.LiveBroadcastListResponse>(`/live${suffix}`);
+      return this.request<Types.LiveBroadcastListResponse>(
+        withQuery('/live', {
+          user_id: params?.user_id?.toString(),
+          event_id: params?.event_id?.toString(),
+          page: params?.page?.toString(),
+          per_page: params?.per_page?.toString(),
+        }),
+      );
     }
 
     /**
@@ -62,7 +63,7 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         return await this.request<Types.LiveBroadcastDetailResponse>(
           `/live/${activityId}${suffix}`,
         );
-      } catch (error: any) {
+      } catch (error) {
         if (isNotFound(error)) return null;
         throw error;
       }

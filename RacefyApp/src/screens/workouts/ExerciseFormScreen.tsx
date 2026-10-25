@@ -21,6 +21,7 @@ import { borderRadius, fontSize, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { MuscleGroup } from '../../types/workouts';
 import { MUSCLE_GROUPS } from '../../types/workouts';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ExerciseForm'>;
 
@@ -84,9 +85,9 @@ export function ExerciseFormScreen({ navigation, route }: Props) {
       else await api.createExercise(payload);
       emitRefresh('workouts');
       navigation.goBack();
-    } catch (error: any) {
-      if (error.status === 422) setErrors(error.errors || {});
-      else Alert.alert('', error.message || t('common.error'));
+    } catch (error) {
+      if (isApiError(error) && error.status === 422) setErrors(error.errors || {});
+      else Alert.alert('', getErrorMessage(error) || t('common.error'));
     } finally {
       setSubmitting(false);
     }

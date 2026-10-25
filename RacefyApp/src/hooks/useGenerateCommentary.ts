@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { api } from '../services/api';
 import type { CommentaryType } from '../types/api';
+import { getErrorMessage } from '../utils/errors';
 
 export function useGenerateCommentary(eventId: number) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -16,8 +17,8 @@ export function useGenerateCommentary(eventId: number) {
       try {
         const response = await api.generateCommentary(eventId, type);
         return response;
-      } catch (err: any) {
-        const errorMessage = err?.message || 'Failed to generate commentary';
+      } catch (err) {
+        const errorMessage = getErrorMessage(err) || 'Failed to generate commentary';
         setError(errorMessage);
         throw err;
       } finally {

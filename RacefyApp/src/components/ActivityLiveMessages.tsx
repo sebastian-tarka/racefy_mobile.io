@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { format } from 'date-fns/format';
 import { useTranslation } from 'react-i18next';
 
 import { Avatar } from './Avatar';
@@ -12,6 +11,7 @@ import { useUnits } from '../hooks/useUnits';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Activity, LiveMessage, User } from '../types/api';
 import { formatDuration } from '../utils/formatDuration';
+import { formatDate } from '../utils/dateFormat';
 
 const hairline = StyleSheet.hairlineWidth;
 
@@ -134,7 +134,7 @@ export function ActivityLiveMessages({
                   {author?.name ?? author?.username ?? ''}
                 </Text>
                 <Text style={[styles.time, { color: colors.textMuted }]}>
-                  {format(new Date(message.created_at), 'p')}
+                  {formatDate(message.created_at, 'p')}
                 </Text>
               </View>
 

@@ -68,6 +68,7 @@ import {
   MAX_PACE_SEGMENTS,
   SYNC_INTERVAL_MS,
 } from '../constants/tracking';
+import { getErrorMessage, getErrorStatus } from '../utils/errors';
 
 const isWeb = Platform.OS === 'web';
 
@@ -414,7 +415,7 @@ function useLiveActivityInternal() {
       let serverAnswered = true;
       try {
         activity = await api.getCurrentActivity({ timeoutMs: START_WAIT_MS });
-      } catch (checkError: any) {
+      } catch (checkError) {
         if (!isTransientError(checkError)) throw checkError;
         serverAnswered = false;
       }
@@ -561,12 +562,12 @@ function useLiveActivityInternal() {
       return op === 'pause'
         ? await api.pauseActivity(activity.id, opts)
         : await api.resumeActivity(activity.id, opts);
-    } catch (error: any) {
+    } catch (error) {
       logger.warn('activity', `Could not deliver ${op}, continuing locally`, {
         id: activity.id,
         at,
-        status: error?.status,
-        error: error?.message,
+        status: getErrorStatus(error),
+        error: getErrorMessage(error),
       });
       // Finished or discarded while this call was in flight — nothing left to account for.
       if (ledgerRef.current?.activityId !== activity.id) return activity;
@@ -659,10 +660,10 @@ function useLiveActivityInternal() {
 
       // Pauses made while offline, in order, with their real timestamps.
       void flushLifecycleBacklog();
-    } catch (error: any) {
+    } catch (error) {
       logger.debug('activity', 'Could not create the server activity yet', {
-        status: error?.status,
-        error: error?.message,
+        status: getErrorStatus(error),
+        error: getErrorMessage(error),
       });
     } finally {
       creatingServerActivityRef.current = false;
@@ -1532,7 +1533,7 @@ function useLiveActivityInternal() {
         let serverReachable = true;
         try {
           existingActivity = await api.getCurrentActivity({ timeoutMs: START_WAIT_MS });
-        } catch (checkError: any) {
+        } catch (checkError) {
           if (!isTransientError(checkError)) throw checkError;
           serverReachable = false;
         }
@@ -1632,7 +1633,7 @@ function useLiveActivityInternal() {
             timeoutMs: START_WAIT_MS,
           });
           if (clientActivityId) trackingDb.bindServerActivity(clientActivityId, activity.id);
-        } catch (startError: any) {
+        } catch (startError) {
           // A refusal (4xx) is the server's decision and stays an error. No answer
           // at all is just a missing network — without SQLite (web) there is
           // nowhere to keep a local recording, so that stays an error too.
@@ -1645,7 +1646,7 @@ function useLiveActivityInternal() {
           logger.activity('Server unreachable — recording starts locally', {
             provisionalId: activity.id,
             clientActivityId,
-            error: startError?.message,
+            error: getErrorMessage(startError),
           });
         }
 
@@ -1679,15 +1680,15 @@ function useLiveActivityInternal() {
         });
 
         return activity;
-      } catch (error: any) {
+      } catch (error) {
         logger.error('activity', 'Failed to start activity', {
           sportTypeId,
-          error: error.message,
+          error: getErrorMessage(error),
         });
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error.message || 'Failed to start activity',
+          error: getErrorMessage(error) || 'Failed to start activity',
         }));
         throw error;
       }
@@ -1712,8 +1713,8 @@ function useLiveActivityInternal() {
     try {
       // Stop GPS (no longer clears persisted data — we control that here)
       await stopGpsTracking();
-    } catch (error: any) {
-      logger.error('activity', 'Failed to stop GPS on pause', { error: error?.message });
+    } catch (error) {
+      logger.error('activity', 'Failed to stop GPS on pause', { error: getErrorMessage(error) });
     }
 
     const at = new Date().toISOString();
@@ -1782,15 +1783,15 @@ function useLiveActivityInternal() {
       // Fallback to pre-resume state in case API response omits sport_type_id
       const resumeSportTypeId = activity.sport_type_id ?? state.activity.sport_type_id;
       await startGpsTracking(activity.id, resumeSportTypeId);
-    } catch (error: any) {
+    } catch (error) {
       logger.error('activity', 'Failed to resume activity', {
         id: state.activity.id,
-        error: error.message,
+        error: getErrorMessage(error),
       });
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to resume activity',
+        error: getErrorMessage(error) || 'Failed to resume activity',
       }));
       throw error;
     }
@@ -1900,16 +1901,16 @@ function useLiveActivityInternal() {
         post: response.post,
         points_earned: response.points_earned,
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('activity', 'Failed to finish activity', {
         id: activityId,
-        error: error.message,
+        error: getErrorMessage(error),
       });
-      await enqueueFailedFinish(error?.message || 'Failed to finish activity');
+      await enqueueFailedFinish(getErrorMessage(error) || 'Failed to finish activity');
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to finish activity',
+        error: getErrorMessage(error) || 'Failed to finish activity',
       }));
       throw error;
     }
@@ -2202,15 +2203,15 @@ function useLiveActivityInternal() {
           syncError: null,
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       logger.error('activity', 'Failed to discard activity', {
         id: state.activity.id,
-        error: error.message,
+        error: getErrorMessage(error),
       });
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: error.message || 'Failed to discard activity',
+        error: getErrorMessage(error) || 'Failed to discard activity',
       }));
       throw error;
     } finally {

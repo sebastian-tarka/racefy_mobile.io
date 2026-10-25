@@ -56,8 +56,9 @@ export interface FormData {
   sport_type_id: number | null;
   ranking_mode?: EventRankingMode;
   location_name: string;
-  latitude: number;
-  longitude: number;
+  /** null until picked on the map, from a suggestion or from the route start. */
+  latitude: number | null;
+  longitude: number | null;
   starts_at: Date;
   ends_at: Date;
   registration_opens_at: Date | null;
@@ -79,6 +80,7 @@ export interface FormData {
   // NOTE: target_distance is no longer a separate form field. Backend mirrors
   // `distance` into `target_distance` automatically. We send only `distance`.
   time_limit: string; // minutes in UI → seconds to API
+  target_elevation: string; // metres of total ascent
   // Team event
   is_team_event: boolean;
   team_size_min: string;
@@ -99,8 +101,8 @@ export const initialFormData: FormData = {
   sport_type_id: null,
   ranking_mode: 'fastest_time',
   location_name: '',
-  latitude: 0,
-  longitude: 0,
+  latitude: null,
+  longitude: null,
   starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
   ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
   registration_opens_at: null,
@@ -120,6 +122,7 @@ export const initialFormData: FormData = {
   visibility: 'public',
   // Ranking mode config
   time_limit: '',
+  target_elevation: '',
   // Team event
   is_team_event: false,
   team_size_min: '',
@@ -139,6 +142,34 @@ export type DatePickerField =
   | 'registration_opens_at'
   | 'registration_closes_at';
 export const styles = StyleSheet.create({
+  aiBadge: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+  },
+  aiBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  aiCoverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+  },
+  aiCoverButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
   },
@@ -216,6 +247,9 @@ export const styles = StyleSheet.create({
   sectionDescription: {
     fontSize: fontSize.sm,
     lineHeight: 20,
+  },
+  coverDescription: {
+    marginBottom: spacing.md,
   },
   checkboxRow: {
     flexDirection: 'row',

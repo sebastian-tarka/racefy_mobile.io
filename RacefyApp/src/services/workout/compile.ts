@@ -1,4 +1,4 @@
-import type { CompiledSegment, WorkoutGoal, WorkoutPlan, WorkoutStep } from '../../types/workout';
+import type { CompiledSegment, WorkoutGoal, GuidedWorkout, WorkoutStep } from '../../types/workout';
 import { isWorkoutRepeat } from '../../types/workout';
 
 /** Fallback pace used to estimate a time for distance-based steps (6:00 min/km). */
@@ -8,7 +8,7 @@ const DEFAULT_PACE_SEC_PER_KM = 360;
  * Flatten a plan into the segment list the engine runs through. A simple goal
  * becomes a single `work` segment; repeats are expanded and numbered.
  */
-export function compileWorkout(plan: WorkoutPlan): CompiledSegment[] {
+export function compileWorkout(plan: GuidedWorkout): CompiledSegment[] {
   if (plan.mode === 'goal') {
     if (!plan.goal) return [];
     return [{ index: 0, kind: 'work', end: goalToEnd(plan.goal) }];
@@ -52,7 +52,7 @@ export interface WorkoutTotals {
  * athlete's typical pace when known so a 10 × 1 km session doesn't read as 20 min.
  */
 export function estimateWorkoutTotals(
-  plan: WorkoutPlan,
+  plan: GuidedWorkout,
   paceSecPerKm: number = DEFAULT_PACE_SEC_PER_KM,
 ): WorkoutTotals {
   const pace = paceSecPerKm > 0 ? paceSecPerKm : DEFAULT_PACE_SEC_PER_KM;
@@ -80,7 +80,7 @@ export function newWorkoutId(prefix = 'w'): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function makeQuickGoalPlan(goal: WorkoutGoal, sportTypeId?: number): WorkoutPlan {
+export function makeQuickGoalPlan(goal: WorkoutGoal, sportTypeId?: number): GuidedWorkout {
   return {
     id: newWorkoutId('goal'),
     name: '',

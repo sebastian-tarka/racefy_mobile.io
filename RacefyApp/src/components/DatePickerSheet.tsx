@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
+import { getAppLocale } from '../utils/dateFormat';
 
 interface DatePickerSheetProps {
   visible: boolean;
@@ -139,6 +140,8 @@ export function DatePickerSheet({
                 mode={mode}
                 display="spinner"
                 is24Hour
+                // iOS only — the Android dialog always follows the phone language
+                locale={getAppLocale()}
                 themeVariant={isDark ? 'dark' : 'light'}
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}

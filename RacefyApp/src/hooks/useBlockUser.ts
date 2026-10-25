@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { emitRefresh } from '../services/refreshEvents';
 import { useTranslation } from 'react-i18next';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseBlockUserReturn {
   isLoading: boolean;
@@ -61,8 +62,8 @@ export function useBlockUser(): UseBlockUserReturn {
 
               onBlockSuccess?.();
               resolve();
-            } catch (err: any) {
-              const errorMessage = err?.message || t('blocking.blockError');
+            } catch (err) {
+              const errorMessage = getErrorMessage(err) || t('blocking.blockError');
               setError(errorMessage);
               logger.error('auth', 'Failed to block user', { userId, error: err });
 
@@ -88,8 +89,8 @@ export function useBlockUser(): UseBlockUserReturn {
       logger.auth('User unblocked', { userId });
 
       onUnblockSuccess?.();
-    } catch (err: any) {
-      const errorMessage = err?.message || t('blocking.unblockError');
+    } catch (err) {
+      const errorMessage = getErrorMessage(err) || t('blocking.unblockError');
       setError(errorMessage);
       logger.error('auth', 'Failed to unblock user', { userId, error: err });
 

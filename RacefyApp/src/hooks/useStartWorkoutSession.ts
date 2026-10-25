@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { emitRefresh } from '../services/refreshEvents';
 import type { WorkoutSessionConflict } from '../types/workouts';
+import { getErrorMessage } from '../utils/errors';
 
 interface UseStartWorkoutSession {
   /** Starts (or resumes) a session and hands the id back through `onOpen`. */
@@ -77,11 +78,11 @@ export function useStartWorkoutSession(
           const session = await api.resumeWorkoutSession(sessionId, scheduledFor);
           emitRefresh('workouts');
           onOpen(session.id);
-        } catch (error: any) {
+        } catch (error) {
           // Resuming can itself hit an open session; a second skipped one cannot
           // be in the way, so this never loops.
           if (!handleConflict(error, () => {})) {
-            Alert.alert('', error?.message || t('common.error'));
+            Alert.alert('', getErrorMessage(error) || t('common.error'));
           }
         } finally {
           setBusyWorkoutId(null);
@@ -93,9 +94,9 @@ export function useStartWorkoutSession(
         const session = await api.startWorkoutSession(workoutId, scheduledFor);
         emitRefresh('workouts');
         onOpen(session.id);
-      } catch (error: any) {
+      } catch (error) {
         if (!handleConflict(error, (id) => void resumeSkipped(id))) {
-          Alert.alert('', error?.message || t('common.error'));
+          Alert.alert('', getErrorMessage(error) || t('common.error'));
         }
       } finally {
         setBusyWorkoutId(null);

@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -122,19 +123,15 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       include_activities?: boolean;
       include_upcoming?: boolean;
     }): Promise<Types.HomeData> {
-      const query = new URLSearchParams();
-      if (params?.language) query.append('language', params.language);
-      if (params?.per_page) query.append('per_page', String(params.per_page));
       // Laravel expects "1" or "0" for boolean values in query params
-      if (params?.include_activities !== undefined) {
-        query.append('include_activities', params.include_activities ? '1' : '0');
-      }
-      if (params?.include_upcoming !== undefined) {
-        query.append('include_upcoming', params.include_upcoming ? '1' : '0');
-      }
-      const queryString = query.toString();
+      const flag = (value?: boolean) => (value === undefined ? undefined : value ? '1' : '0');
       const response = await this.request<{ data: Types.HomeData }>(
-        `/home${queryString ? `?${queryString}` : ''}`,
+        withQuery('/home', {
+          language: params?.language,
+          per_page: params?.per_page,
+          include_activities: flag(params?.include_activities),
+          include_upcoming: flag(params?.include_upcoming),
+        }),
       );
       return response.data;
     }
@@ -222,13 +219,9 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param filters - Optional filters (type, event_id)
      */
     async getUserRewards(filters?: Types.RewardsQueryParams): Promise<Types.RewardsResponse> {
-      const params = new URLSearchParams();
-      if (filters?.type) params.append('type', filters.type);
-      if (filters?.event_id) params.append('event_id', filters.event_id.toString());
-
-      const endpoint = `/user/rewards${params.toString() ? `?${params.toString()}` : ''}`;
-
-      return await this.request<Types.RewardsResponse>(endpoint);
+      return await this.request<Types.RewardsResponse>(
+        withQuery('/user/rewards', { type: filters?.type, event_id: filters?.event_id }),
+      );
     }
   };
 }

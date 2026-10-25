@@ -32,6 +32,7 @@ import type {
   UserGoal,
   UserGoalPeriodResult,
 } from '../../types/goals';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GoalDetail'>;
 
@@ -54,11 +55,14 @@ export function GoalDetailScreen({ navigation, route }: Props) {
       ]);
       setGoal(g);
       if (h) setHistory(h);
-    } catch (error: any) {
-      if (error.status === 403 || error.status === 404) {
+    } catch (error) {
+      if (getErrorStatus(error) === 403 || getErrorStatus(error) === 404) {
         navigation.goBack();
       } else {
-        logger.error('api', 'Failed to load goal detail', { goalId, error: error.message });
+        logger.error('api', 'Failed to load goal detail', {
+          goalId,
+          error: getErrorMessage(error),
+        });
       }
     } finally {
       setIsLoading(false);
@@ -85,8 +89,8 @@ export function GoalDetailScreen({ navigation, route }: Props) {
             await api.deleteGoal(goalId);
             emitRefresh('goals');
             navigation.goBack();
-          } catch (error: any) {
-            Alert.alert('', error.message || t('common.error'));
+          } catch (error) {
+            Alert.alert('', getErrorMessage(error) || t('common.error'));
           }
         },
       },

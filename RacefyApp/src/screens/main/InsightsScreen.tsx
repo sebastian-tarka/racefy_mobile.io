@@ -22,6 +22,7 @@ import { logger } from '../../services/logger';
 import { spacing, fontSize } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 import type { InsightsResponse, LockedSection } from '../../types/insights';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Insights'>;
 
@@ -192,7 +193,7 @@ export function InsightsScreen({ navigation }: Props) {
         </Text>
         {data.aggregated_at && (
           <Text style={[styles.updatedAt, { color: colors.textMuted }]}>
-            {t('insights.updatedAt', { date: new Date(data.aggregated_at).toLocaleDateString() })}
+            {t('insights.updatedAt', { date: formatIntlDate(data.aggregated_at) })}
           </Text>
         )}
 

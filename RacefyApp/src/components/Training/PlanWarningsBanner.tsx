@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import type { PlanWarning } from '../../types/api';
+import { formatIntlDate } from '../../utils/dateFormat';
 
 interface Props {
   warnings: PlanWarning[];
@@ -14,7 +15,7 @@ interface Props {
 
 const fmtDate = (value: unknown) =>
   typeof value === 'string'
-    ? new Date(value).toLocaleDateString(undefined, {
+    ? formatIntlDate(value, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',

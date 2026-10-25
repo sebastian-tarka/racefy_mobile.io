@@ -22,6 +22,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { AiActivityReport, AiActivityReportStatus } from '../../types/reports';
 import { REPORT_STATUS_COLORS } from './reportStatusColors';
+import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AiActivityReportDetail'>;
 
@@ -61,14 +62,14 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
       const data = await api.getActivityReport(reportId);
       setReport(data);
       return data;
-    } catch (error: any) {
-      if (error.status === 404) {
+    } catch (error) {
+      if (getErrorStatus(error) === 404) {
         logger.info('api', 'Report not found (likely deleted), popping back', { reportId });
         clearPolling();
         navigation.goBack();
         return null;
       }
-      logger.error('api', 'Failed to load report', { reportId, error: error.message });
+      logger.error('api', 'Failed to load report', { reportId, error: getErrorMessage(error) });
       return null;
     }
   }, [reportId, navigation, clearPolling]);
@@ -153,9 +154,9 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
         await fetchReport();
         startPolling();
       }
-    } catch (error: any) {
-      logger.error('api', 'Failed to regenerate report', { error: error.message });
-      Alert.alert('', error.message || t('insights.aiReports.errorWaiting'));
+    } catch (error) {
+      logger.error('api', 'Failed to regenerate report', { error: getErrorMessage(error) });
+      Alert.alert('', getErrorMessage(error) || t('insights.aiReports.errorWaiting'));
     } finally {
       setIsRegenerating(false);
     }
@@ -173,9 +174,9 @@ export function AiActivityReportDetailScreen({ navigation, route }: Props) {
             await api.deleteActivityReport(reportId);
             clearPolling();
             navigation.goBack();
-          } catch (error: any) {
-            logger.error('api', 'Failed to delete report', { error: error.message });
-            Alert.alert('', error.message);
+          } catch (error) {
+            logger.error('api', 'Failed to delete report', { error: getErrorMessage(error) });
+            Alert.alert('', getErrorMessage(error));
           } finally {
             setIsDeleting(false);
           }

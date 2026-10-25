@@ -32,6 +32,7 @@ import { inputToSi, inputUnitLabel, siToInput } from '../../utils/goalHelpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { GoalMetric, GoalPeriod, UserGoal } from '../../types/goals';
+import { getErrorMessage, isApiError } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GoalForm'>;
 
@@ -171,13 +172,16 @@ export function GoalFormScreen({ navigation, route }: Props) {
       }
       emitRefresh('goals');
       navigation.goBack();
-    } catch (error: any) {
-      if (error.status === 403) {
-        const feature: string | undefined = error.feature;
+    } catch (error) {
+      if (isApiError(error) && error.status === 403) {
+        const feature = error.feature as string | undefined;
         if (feature === 'goals_max_active') {
           Alert.alert(
             t('goals.limitReached.title'),
-            t('goals.limitReached.body', { max: error.limit?.limit ?? features.goals_max_active }),
+            t('goals.limitReached.body', {
+              max:
+                (error.limit as { limit?: number } | undefined)?.limit ?? features.goals_max_active,
+            }),
             [
               { text: t('common.cancel'), style: 'cancel' },
               {
@@ -187,7 +191,7 @@ export function GoalFormScreen({ navigation, route }: Props) {
             ],
           );
         } else {
-          Alert.alert(t('goals.errors.upgradeRequired', { tier }), error.message || '', [
+          Alert.alert(t('goals.errors.upgradeRequired', { tier }), getErrorMessage(error) || '', [
             { text: t('common.cancel'), style: 'cancel' },
             {
               text: t('insights.locked.upgrade'),
@@ -195,10 +199,10 @@ export function GoalFormScreen({ navigation, route }: Props) {
             },
           ]);
         }
-      } else if (error.status === 422) {
+      } else if (isApiError(error) && error.status === 422) {
         setFieldErrors(error.errors || {});
       } else {
-        Alert.alert('', error.message || t('common.error'));
+        Alert.alert('', getErrorMessage(error) || t('common.error'));
       }
     } finally {
       setSubmitting(false);

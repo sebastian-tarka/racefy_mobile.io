@@ -37,6 +37,7 @@ export * from './EmptyState';
 export * from './ErrorState';
 export * from './FilterChip';
 export * from './EventCard';
+export * from './EventLocationPicker';
 export * from './FeaturedEventCard';
 export * from './RouteCard';
 export * from './ParticipantAvatarsStack';
