@@ -15,7 +15,24 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Sesja siłowa bez internetu (`strength-offline-sets`, od 2026-10-25)
+
+Serie i „Zakończ” idą przez trwałą kolejkę na telefonie (`services/strength/sessionOutbox.ts`)
+i są wysyłane po powrocie sieci. Godzina zakończenia z telefonu (`completed_at`) działa dopiero
+z backendem, który ją przyjmuje — bez tego aktywność dostaje godzinę synchronizacji.
+
+Do sprawdzenia na telefonie (tryb samolotowy w trakcie sesji):
+- [ ] Zaliczanie kolejnych serii bez sieci: wiersz zostaje odhaczony, przechodzi do następnej serii,
+      przerwa i jej powiadomienie działają, w nagłówku „Bez sieci · N zmian czeka”
+- [ ] Cofnięcie serii i usunięcie serii offline; „+ seria” offline pokazuje komunikat o internecie
+- [ ] Powrót sieci: licznik znika, po odświeżeniu na serwerze są wszystkie serie z właściwymi godzinami
+- [ ] Wyjście z ekranu offline i powrót przez baner „Wznów”; kill aplikacji offline → po starcie
+      sesja z telefonu (serie, przerwa) nadal jest
+- [ ] „Zakończ” offline: podsumowanie z informacją o zapisie na telefonie, baner „Wznów” nie wraca;
+      po powrocie sieci powstaje aktywność (feed / lista aktywności się odświeża)
+- [ ] „Zakończ” online działa jak wcześniej (przycisk „Otwórz aktywność”)
+- [ ] Pominięcie treningu z niewysłanymi seriami → komunikat, nic się nie gubi
+- [ ] Odrzucenie przez serwer (np. seria usunięta na innym urządzeniu) → komunikat i przeładowanie
 
 ---
 
