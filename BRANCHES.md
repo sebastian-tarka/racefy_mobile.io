@@ -15,7 +15,16 @@ Stan na: **2026-10-25**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Home: karta siłowa + „Znajomi dziś” (`home-strength-friends`, od 2026-10-25)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Home: karta siłowa + „Znajomi dziś” (zmergowane 2026-10-25, `home-strength-friends`, ten sam tag)
 
 Wymaga API z brancha `home-strength-friends` w racefy_api.io (`GET /workout-sessions/next`,
 `GET /home/friends-today`, `completed_at` w complete). Bez niego obie karty po prostu się nie pokazują.
@@ -31,7 +40,7 @@ Do sprawdzenia na telefonie:
       „Zobacz feed” / „+N w feedzie” → zakładka Feed; nikt nie trenował → brak karty
 - [ ] Ciemny motyw i duża czcionka systemowa (obie karty)
 
-### Sesja siłowa bez internetu (`strength-offline-sets`, od 2026-10-25)
+### Sesja siłowa bez internetu (zmergowane 2026-10-25, `strength-offline-sets`, tag `pre-home-strength-offline` = main sprzed merge)
 
 Serie i „Zakończ” idą przez trwałą kolejkę na telefonie (`services/strength/sessionOutbox.ts`)
 i są wysyłane po powrocie sieci. Godzina zakończenia z telefonu (`completed_at`) działa dopiero
@@ -49,13 +58,6 @@ Do sprawdzenia na telefonie (tryb samolotowy w trakcie sesji):
 - [ ] „Zakończ” online działa jak wcześniej (przycisk „Otwórz aktywność”)
 - [ ] Pominięcie treningu z niewysłanymi seriami → komunikat, nic się nie gubi
 - [ ] Odrzucenie przez serwer (np. seria usunięta na innym urządzeniu) → komunikat i przeładowanie
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Formularz eventu: lokalizacja, serie, okładki AI (zmergowane 2026-10-25, `event-location` → `event-series` → `event-ai-cover`, tag `pre-event-form-features` = main sprzed merge, release v1.26.0)
 
