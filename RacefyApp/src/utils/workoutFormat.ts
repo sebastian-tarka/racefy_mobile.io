@@ -4,7 +4,7 @@ import type {
   SegmentRemaining,
   WorkoutEngineState,
 } from '../services/workout/engine';
-import type { CompiledSegment, WorkoutGoal, WorkoutPlan, WorkoutStepEnd } from '../types/workout';
+import type { CompiledSegment, WorkoutGoal, GuidedWorkout, WorkoutStepEnd } from '../types/workout';
 import { formatTime } from './formatters';
 
 type FormatDistance = (meters: number) => string;
@@ -50,7 +50,7 @@ export function formatStepEnd(
 
 /** "8 × 400 m / 200 m" — the interval session in one breath. */
 export function describeIntervals(
-  plan: WorkoutPlan,
+  plan: GuidedWorkout,
   formatDistance: FormatDistance,
   t: TFunction,
 ): string {
@@ -65,7 +65,7 @@ export function describeIntervals(
 
 /** Label for a plan as a whole — the goal for quick goals, the session for intervals. */
 export function formatPlanLabel(
-  plan: WorkoutPlan,
+  plan: GuidedWorkout,
   formatDistance: FormatDistance,
   t?: TFunction,
 ): string {
@@ -105,7 +105,7 @@ export function segmentWeight(segment: CompiledSegment): number {
  * "GOAL · 5 KM · 1.8 km to go" / "REP 3/8 · 0:47 → 200 m recovery" / "PLAN COMPLETE".
  */
 export function workoutStatusLine(
-  plan: WorkoutPlan,
+  plan: GuidedWorkout,
   progress: SegmentProgress | null,
   state: WorkoutEngineState | null,
   formatDistance: FormatDistance,

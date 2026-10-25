@@ -24,12 +24,12 @@ import {
 } from '../services/workout/storage';
 import { buildSegmentStartText, type SpokenUnits } from '../services/workout/templates';
 import type { AudioCoachSettings } from '../types/audioCoach';
-import type { WorkoutCuePrefs, WorkoutPlan } from '../types/workout';
+import type { WorkoutCuePrefs, GuidedWorkout } from '../types/workout';
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'finished';
 
 interface Params {
-  plan: WorkoutPlan | null;
+  plan: GuidedWorkout | null;
   status: RecordingStatus;
   activityId: number | null;
   /** Recording timer, pauses excluded (`useActivityTimer().localDuration`). */
@@ -46,7 +46,7 @@ interface Params {
    * recovered (app restarted mid-run) — the screen adopts the plan so its
    * chip and card come back.
    */
-  onRestorePlan: (plan: WorkoutPlan) => void;
+  onRestorePlan: (plan: GuidedWorkout) => void;
 }
 
 export interface WorkoutEngineHandle {
@@ -79,7 +79,7 @@ export function useWorkoutEngine({
 }: Params): WorkoutEngineHandle {
   const [state, setState] = useState<WorkoutEngineState | null>(null);
   const stateRef = useRef<WorkoutEngineState | null>(null);
-  const planRef = useRef<WorkoutPlan | null>(plan);
+  const planRef = useRef<GuidedWorkout | null>(plan);
   planRef.current = plan;
   const prevStatusRef = useRef<RecordingStatus>(status);
   const restoreAttemptedForRef = useRef<number | null>(null);

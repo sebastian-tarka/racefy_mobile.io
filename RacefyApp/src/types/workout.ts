@@ -37,9 +37,9 @@ export function isWorkoutRepeat(block: WorkoutBlock): block is WorkoutRepeat {
 
 export type WorkoutGoal = { type: 'time'; seconds: number } | { type: 'distance'; meters: number };
 
-export type WorkoutPlanSource = 'quick' | 'preset' | 'custom' | 'training_plan';
+export type GuidedWorkoutSource = 'quick' | 'preset' | 'custom' | 'training_plan';
 
-export interface WorkoutPlan {
+export interface GuidedWorkout {
   id: string;
   name: string;
   mode: 'goal' | 'intervals';
@@ -47,7 +47,7 @@ export interface WorkoutPlan {
   goal?: WorkoutGoal;
   /** Set when `mode === 'intervals'`. */
   blocks?: WorkoutBlock[];
-  source: WorkoutPlanSource;
+  source: GuidedWorkoutSource;
   sportTypeId?: number;
 }
 

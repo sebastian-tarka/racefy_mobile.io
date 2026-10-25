@@ -16,7 +16,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AudioCoachLanguage } from '../../types/audioCoach';
-import type { WorkoutCuePrefs, WorkoutGoal, WorkoutPlan } from '../../types/workout';
+import type { WorkoutCuePrefs, WorkoutGoal, GuidedWorkout } from '../../types/workout';
 import { DEFAULT_WORKOUT_CUE_PREFS } from '../../types/workout';
 import type { WorkoutEngineState } from './engine';
 import type { SpokenUnits } from './templates';
@@ -31,7 +31,7 @@ const KEYS = {
 } as const;
 
 export interface WorkoutSession {
-  plan: WorkoutPlan;
+  plan: GuidedWorkout;
   /** Server activity id, once known. Used to match a restored session to the recovered activity. */
   activityId: number | null;
   language: AudioCoachLanguage;

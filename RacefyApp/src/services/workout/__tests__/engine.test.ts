@@ -1,4 +1,4 @@
-import type { WorkoutPlan } from '../../../types/workout';
+import type { GuidedWorkout } from '../../../types/workout';
 import { compileWorkout, estimateWorkoutTotals } from '../compile';
 import {
   advanceWorkout,
@@ -16,7 +16,7 @@ const snap = (activeSeconds: number, distanceM: number): EngineSnapshot => ({
   distanceM,
 });
 
-const distanceGoal = (meters: number): WorkoutPlan => ({
+const distanceGoal = (meters: number): GuidedWorkout => ({
   id: 'g1',
   name: '',
   mode: 'goal',
@@ -24,7 +24,7 @@ const distanceGoal = (meters: number): WorkoutPlan => ({
   source: 'quick',
 });
 
-const timeGoal = (seconds: number): WorkoutPlan => ({
+const timeGoal = (seconds: number): GuidedWorkout => ({
   id: 'g2',
   name: '',
   mode: 'goal',
@@ -32,7 +32,7 @@ const timeGoal = (seconds: number): WorkoutPlan => ({
   source: 'quick',
 });
 
-const intervals: WorkoutPlan = {
+const intervals: GuidedWorkout = {
   id: 'i1',
   name: '2 × 400/200',
   mode: 'intervals',
