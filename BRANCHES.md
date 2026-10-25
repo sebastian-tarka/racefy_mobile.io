@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-19**
+Stan na: **2026-10-25**
 
 ---
 
@@ -24,7 +24,7 @@ _Nic nie czeka._
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
-### Audyt, etap 5: listy, sieć, dane, start, i18n (zmergowane 2026-10-19, `audyt-etap5`, tag `pre-audyt-etap5` = main sprzed merge)
+### Audyt, etap 5: listy, sieć, dane, start, i18n (zmergowane 2026-10-19, `audyt-etap5`, tag `pre-audyt-etap5` = main sprzed merge; zweryfikowane na telefonie 2026-10-25)
 
 - Jedna paleta sportów (design v2): karty aktywności na Home w tych samych kolorach co profil i filtry.
 - Feed: `FeedCard` faktycznie memoizowany (stabilne akcje); wiersze wracające w widok nie znikają na 0,6 s.
@@ -38,16 +38,16 @@ i nigdy nie zostały obejrzane na urządzeniu.
 Smoke test na emulatorze: start, landing, logowanie — bez crasha i błędów JS (bez logowania).
 
 Do sprawdzenia na telefonie:
-- [ ] Home: kolory kart aktywności (rower bursztynowy, siłownia czerwona…) zgodne z profilem
-- [ ] Feed: przewijanie w dół i z powrotem — karty nie migają, lajk/komentarz/udostępnij/menu działają
-- [ ] Historia punktów: szybkie przełączanie chipów — lista zgodna z wybranym filtrem
-- [ ] Biblioteka tras: przełączanie Moje/Popularne/W pobliżu; drużyny: wyszukiwanie przy pisaniu
-- [ ] Po powrocie z tła (np. po treningu): licznik powiadomień i wiadomości od razu aktualny
-- [ ] Zdjęcia w kartach (okładki eventów, mapy tras, odznaki, avatary w sekcjach Home) ładują się
-- [ ] Język polski / hiszpański: wykresy na ekranie aktywności, karta aktywności, alerty udostępniania
-- [ ] Zimny start: splash krótszy przy zalogowanym użytkowniku, bez mignięcia ekranu logowania
+- [x] Home: kolory kart aktywności (rower bursztynowy, siłownia czerwona…) zgodne z profilem
+- [x] Feed: przewijanie w dół i z powrotem — karty nie migają, lajk/komentarz/udostępnij/menu działają
+- [x] Historia punktów: szybkie przełączanie chipów — lista zgodna z wybranym filtrem
+- [x] Biblioteka tras: przełączanie Moje/Popularne/W pobliżu; drużyny: wyszukiwanie przy pisaniu
+- [x] Po powrocie z tła (np. po treningu): licznik powiadomień i wiadomości od razu aktualny
+- [x] Zdjęcia w kartach (okładki eventów, mapy tras, odznaki, avatary w sekcjach Home) ładują się
+- [x] Język polski / hiszpański: wykresy na ekranie aktywności, karta aktywności, alerty udostępniania
+- [x] Zimny start: splash krótszy przy zalogowanym użytkowniku, bez mignięcia ekranu logowania
 
-### Audyt, etap 4: wspólne komponenty (zmergowane 2026-10-19, `audyt-etap4`, tag `pre-audyt-etap4` = main sprzed merge)
+### Audyt, etap 4: wspólne komponenty (zmergowane 2026-10-19, `audyt-etap4`, tag `pre-audyt-etap4` = main sprzed merge; zweryfikowane na telefonie 2026-10-25)
 
 - `DatePickerSheet` z trybem `datetime` (iOS: spinner w arkuszu z Anuluj/Gotowe; Android: dialog
   daty, potem godziny). Przeniesione: formularz eventu (na iOS spinner nie miał jak się zamknąć),
@@ -61,18 +61,18 @@ Do sprawdzenia na telefonie:
 - Tempo u widza transmisji live w jednostkach użytkownika (było zawsze /km, plus „5:60”).
 
 Do sprawdzenia na telefonie:
-- [ ] Formularz eventu: data startu/końca/rejestracji — iOS: spinner data+godzina, Gotowe zapisuje,
+- [x] Formularz eventu: data startu/końca/rejestracji — iOS: spinner data+godzina, Gotowe zapisuje,
       Anuluj nie zmienia; Android: dialog daty, potem godziny
-- [ ] Ustawienia komentarza AI w formularzu eventu: okno czasowe — Anuluj nie zmienia godziny (iOS)
-- [ ] Przypomnienia treningowe: zmiana godziny
-- [ ] Arkusze: wybór aktywności (tydzień planu), lista planów, uczestnicy eventu, lista polubień,
+- [x] Ustawienia komentarza AI w formularzu eventu: okno czasowe — Anuluj nie zmienia godziny (iOS)
+- [x] Przypomnienia treningowe: zmiana godziny
+- [x] Arkusze: wybór aktywności (tydzień planu), lista planów, uczestnicy eventu, lista polubień,
       obserwujący, udostępnianie, menu „…” posta — wyglądają jak wcześniej, tap w tło zamyka,
       tap w treść nie
-- [ ] Zdjęcia: komentarz (dodanie i edycja), formularz aktywności (galeria wiele + aparat), avatar i tło
+- [x] Zdjęcia: komentarz (dodanie i edycja), formularz aktywności (galeria wiele + aparat), avatar i tło
       profilu, okładka eventu; odmowa uprawnień pokazuje komunikat
-- [ ] Widz live z jednostkami imperialnymi: tempo w /mi
+- [x] Widz live z jednostkami imperialnymi: tempo w /mi
 
-### Audyt, etap 3: wydajność nagrywania (zmergowane 2026-10-19, `audyt-etap3`, tag `pre-audyt-etap2-3` = main sprzed merge)
+### Audyt, etap 3: wydajność nagrywania (zmergowane 2026-10-19, `audyt-etap3`, tag `pre-audyt-etap2-3` = main sprzed merge; zweryfikowane na telefonie 2026-10-25)
 
 - `LiveActivityStatusContext` / `useLiveActivityStatus()`: tab bar, Home i EventDetail czytają tylko
   status — wcześniej re-renderowały się co sekundę przez cały trening. Baner na Home sam czyta czas.
@@ -87,19 +87,19 @@ Do sprawdzenia na telefonie:
   funkcja z testami; wypełnianie przycisku Stop na natywnym sterowniku.
 
 Do sprawdzenia na telefonie:
-- [ ] Nagrywanie 20+ min: czas na ekranie nagrywania i na banerze Home idzie równo, mapa rysuje trasę
+- [x] Nagrywanie 20+ min: czas na ekranie nagrywania i na banerze Home idzie równo, mapa rysuje trasę
       bez przerwy na granicy co 300 punktów (ok. 5 min przy 1 Hz), kamera podąża
-- [ ] Ekran wyłączony 10 min, powrót: czas i dystans od razu aktualne (najpóźniej po 1 s), trasa
+- [x] Ekran wyłączony 10 min, powrót: czas i dystans od razu aktualne (najpóźniej po 1 s), trasa
       uzupełniona o punkty z tła
-- [ ] Trening interwałowy z odcinkiem czasowym przy wyłączonym ekranie — granica odcinka słyszalna
+- [x] Trening interwałowy z odcinkiem czasowym przy wyłączonym ekranie — granica odcinka słyszalna
       jak wcześniej
-- [ ] Pauza / wznowienie / szybkie wyjście i powrót do aplikacji kilka razy — dystans nie rośnie
+- [x] Pauza / wznowienie / szybkie wyjście i powrót do aplikacji kilka razy — dystans nie rośnie
       podwójnie (dwa watchery)
-- [ ] Przytrzymanie Stop: wypełnienie rośnie od dołu płynnie; puszczenie wcześniej cofa
-- [ ] Toasty (audio coach, blokada, styl mapy, pin eventu) wyglądają jak wcześniej
-- [ ] Zapis: komunikaty — opublikowany / szkic („Zobacz szkic”) / offline w kolejce
+- [x] Przytrzymanie Stop: wypełnienie rośnie od dołu płynnie; puszczenie wcześniej cofa
+- [x] Toasty (audio coach, blokada, styl mapy, pin eventu) wyglądają jak wcześniej
+- [x] Zapis: komunikaty — opublikowany / szkic („Zobacz szkic”) / offline w kolejce
 
-### Audyt, etap 2: rozmiar aplikacji (zmergowane 2026-10-19, `audyt-etap2`, ten sam tag)
+### Audyt, etap 2: rozmiar aplikacji (zmergowane 2026-10-19, `audyt-etap2`, ten sam tag; zweryfikowane na telefonie 2026-10-25)
 
 Lokalny build release: APK 227,9 → 108,6 MB; bundle Hermes 11,9 → 10,7 MB.
 
@@ -113,12 +113,12 @@ Lokalny build release: APK 227,9 → 108,6 MB; bundle Hermes 11,9 → 10,7 MB.
 Do sprawdzenia na telefonie (build z EAS — R8 działa tylko w release):
 - [x] Build `production-apk` przechodzi w EAS (heap Gradle, R8) — 1.25.1, versionCode 42, APK 108,6 MB (2026-10-19)
 - [x] Build iOS przechodzi w EAS — 1.25.1, build 34, wysłany do TestFlight (2026-10-19)
-- [ ] Po zalogowaniu: mapy Mapbox, paywall i zakup (RevenueCat), logowanie Google, Health Connect
-- [ ] **Nagrywanie z zamkniętą aplikacją** (lokalizacja w tle + wysyłka offline przy zamkniętej
+- [x] Po zalogowaniu: mapy Mapbox, paywall i zakup (RevenueCat), logowanie Google, Health Connect
+- [x] **Nagrywanie z zamkniętą aplikacją** (lokalizacja w tle + wysyłka offline przy zamkniętej
       aplikacji) — to ścieżka, którą psuł brakujący `RNHeadlessAppLoader`
-- [ ] Ekran powitalny: filmy wyglądają dobrze na telefonie (wylogowany)
+- [x] Ekran powitalny: filmy wyglądają dobrze na telefonie (wylogowany)
 
-### Audyt, etap 1: sprzątanie — martwy kod, zależności, lint, CI (zmergowane 2026-10-19, `audyt-etap1`, tag `pre-audyt` = main sprzed merge)
+### Audyt, etap 1: sprzątanie — martwy kod, zależności, lint, CI (zmergowane 2026-10-19, `audyt-etap1`, tag `pre-audyt` = main sprzed merge; zweryfikowane na telefonie 2026-10-25)
 
 Etap 1 z `.notes/AUDYT_REFACTOR_2026-10.md`. Zmergowany razem z etapem 0 bez konfliktów; po połączeniu ESLint 101.
 tsc 0, jest 416/416, knip 0, ESLint 263 → 104 (`lint` z zapadką `--max-warnings=101` po mergu z etapem 0),
@@ -133,16 +133,16 @@ tsc 0, jest 416/416, knip 0, ESLint 263 → 104 (`lint` z zapadką `--max-warnin
   się czytelnym błędem pod złą wersją Node.
 
 Do sprawdzenia:
-- [ ] Pierwszy przebieg CI na GitHubie jest zielony (po pushu brancha / PR)
-- [ ] **Nowy build natywny** (dev client albo staging) — zmienił się zestaw modułów natywnych,
+- [x] Pierwszy przebieg CI na GitHubie jest zielony (po pushu brancha / PR)
+- [x] **Nowy build natywny** (dev client albo staging) — zmienił się zestaw modułów natywnych,
       stary dev client nie pasuje do JS z tego brancha
-- [ ] Start aplikacji, ikony (Ionicons) i fonty się renderują — `expo-asset`
-- [ ] Mapy Mapbox: podgląd aktywności, nagrywanie, planer trasy, strefy prywatności
-- [ ] Ekrany z ruszonym kodem: edycja profilu (zmiana avatara i tła), Insights, Home, wideo w feedzie,
+- [x] Start aplikacji, ikony (Ionicons) i fonty się renderują — `expo-asset`
+- [x] Mapy Mapbox: podgląd aktywności, nagrywanie, planer trasy, strefy prywatności
+- [x] Ekrany z ruszonym kodem: edycja profilu (zmiana avatara i tła), Insights, Home, wideo w feedzie,
       udostępnianie, wykresy aktywności, lajki (post/aktywność/komentarz), zakończenie aktywności
       offline (`updatePendingFinish`)
 
-### Audyt, etap 0: poprawki błędów (zmergowane 2026-10-19, `audyt-etap0`, ten sam tag)
+### Audyt, etap 0: poprawki błędów (zmergowane 2026-10-19, `audyt-etap0`, ten sam tag; zweryfikowane na telefonie 2026-10-25)
 
 Etap 0 z audytu `.notes/AUDYT_REFACTOR_2026-10.md`. tsc 0, jest 424/424 (nowy `apiBase.test`),
 ESLint 267 → 264 warningów.
@@ -156,15 +156,15 @@ ESLint 267 → 264 warningów.
 - `useMemo` na wartościach `AuthProvider` i `AppConfigProvider`, `console.*` → logger.
 
 Do sprawdzenia na urządzeniu:
-- [ ] iOS: „Przenieś” w harmonogramie treningów — kręcenie kółkiem niczego nie przenosi,
+- [x] iOS: „Przenieś” w harmonogramie treningów — kręcenie kółkiem niczego nie przenosi,
       dopiero „Gotowe”; „Anuluj” i tap w tło zamykają bez zmian
-- [ ] iOS: data w formularzu celu (start/koniec, min. data końca) i w kalibracji — da się zamknąć,
+- [x] iOS: data w formularzu celu (start/koniec, min. data końca) i w kalibracji — da się zamknąć,
       spinner czytelny w trybie ciemnym
-- [ ] Android: te same trzy pickery — natywny dialog, OK zapisuje, Anuluj nic nie zmienia
-- [ ] Jednostki imperialne: feed (udostępniona aktywność), Events → statystyki, drużyny
+- [x] Android: te same trzy pickery — natywny dialog, OK zapisuje, Anuluj nic nie zmienia
+- [x] Jednostki imperialne: feed (udostępniona aktywność), Events → statystyki, drużyny
       (statystyki + ranking), live (lista + widz), plan treningowy, niezsynchronizowane,
       wybór trasy, Insights — wszędzie mi/ft; w metrycznych wygląd bez zmian
-- [ ] Regresja: logowanie/wylogowanie, upload zdjęcia/wideo do posta (bez timeoutu),
+- [x] Regresja: logowanie/wylogowanie, upload zdjęcia/wideo do posta (bez timeoutu),
       zapis aktywności
 
 ### Node 24 dla buildów EAS i lokalnie (na `main` 2026-10-19, release v1.25.1)
