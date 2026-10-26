@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: `useRecordingActions` + `MapControlsOverlay` (`audyt-recording-actions`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: `useRecordingActions` + `MapControlsOverlay` (zmergowane 2026-10-26, `audyt-recording-actions`, tag `pre-audyt-recording-actions` = main sprzed merge)
 
 Refaktor ekranu nagrywania bez zmiany zachowania — trzeba przeklikać cały cykl.
 
@@ -28,14 +37,6 @@ Do sprawdzenia na telefonie:
 - [ ] Odrzuć → potwierdzenie → stan bezczynny, wydarzenie i cel odpięte
 - [ ] Mapa w trakcie: wycentruj, powrót do statystyk, zmiana stylu mapy; przyciski nie wchodzą na
       pasek transmisji; zablokowany ekran chowa przyciski
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Insights: zakres, tygodnie per sport, heatmapa (zmergowane 2026-10-25, `insights-redesign`, tag `pre-insights-redesign` = main sprzed merge)
 
