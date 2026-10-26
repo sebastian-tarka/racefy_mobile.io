@@ -2982,6 +2982,7 @@
     "bySportType": "Wg dyscypliny",
     "teamLeaderboard": "Ranking zespołów",
     "noLeaderboardEntries": "Brak zespołów w rankingu",
+    "leaderboardFailed": "Nie udało się załadować rankingu",
     "sortMembers": "Członkowie",
     "periodThisWeek": "Ten tydzień",
     "periodLastWeek": "Ostatni tydzień",
