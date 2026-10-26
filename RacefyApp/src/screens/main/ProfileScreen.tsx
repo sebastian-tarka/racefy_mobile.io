@@ -1,52 +1,32 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  ImageBackground,
   RefreshControl,
-  ScrollView,
   SectionList,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityCard,
-  Avatar,
-  BadgeCabinet,
   BadgeSheet,
-  CompareUserSelector,
   DraftPostCard,
   EmptyState,
   EventCard,
-  PointsCard,
   PostCard,
-  ProfileNavigationSections,
   ScreenContainer,
-  SportSplitCard,
-  StatsHeadlineCard,
-  StatsTrendCard,
-  type StatsMetric,
-  PersonalBestsCard,
-  SegmentedControl,
   SportTypeFilter,
-  StandingBlock,
   UserListModal,
 } from '../../components';
-import type { PeriodOption, TimeRange } from '../../utils/dateRanges';
 import { useTabBarPadding } from '../../navigation/useTabBarPadding';
 import { useAuth } from '../../hooks/useAuth';
 import { useMarkSectionSeen, useNavBadges } from '../../hooks/useNavBadges';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
-import { useUnits } from '../../hooks/useUnits';
-import { useActivityStats } from '../../hooks/useActivityStats';
 import { useActivityTrends } from '../../hooks/useActivityTrends';
 import { usePointStats } from '../../hooks/usePointStats';
 import { useRankDelta } from '../../hooks/useRankDelta';
@@ -55,19 +35,18 @@ import { useSportTypes } from '../../hooks/useSportTypes';
 import { useFollowing } from '../../hooks/useFollowing';
 import { usePaginatedTabData } from '../../hooks/usePaginatedTabData';
 import { useDrafts } from '../../hooks/useDrafts';
+import { ProfileHeader, type ProfileScreenNavigationProp } from './profile/ProfileHeader';
+import { ProfileTabBar, type ProfileTabType } from './profile/ProfileTabBar';
+import { ProfileStatsTab } from './profile/ProfileStatsTab';
+import { useProfileStatsFilters } from './profile/useProfileStatsFilters';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
-import { borderRadius, fontSize, spacing, msFont } from '../../theme';
-import { getDateRangeForTimeRange, getPreviousDateRange } from '../../utils/dateRanges';
-import { formatDurationCompact } from '../../utils/formatDuration';
-import type { BottomTabNavigationProp, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { MainTabParamList, RootStackParamList } from '../../navigation/types';
+import { borderRadius, fontSize, spacing } from '../../theme';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import type { MainTabParamList } from '../../navigation/types';
 import type {
   Activity,
-  ActivityStats,
   BadgeReward,
   DraftPost,
   Event,
@@ -76,14 +55,9 @@ import type {
   UserStats,
 } from '../../types/api';
 
-type ProfileScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<MainTabParamList, 'Profile'>,
-  NativeStackNavigationProp<RootStackParamList>
->;
-
 type Props = BottomTabScreenProps<MainTabParamList, 'Profile'>;
 
-type TabType = 'posts' | 'drafts' | 'stats' | 'activities' | 'events';
+type TabType = ProfileTabType;
 
 /**
  * Sentinel row carrying whatever the active tab needs above its content
@@ -99,15 +73,6 @@ const isExtrasRow = (row: ListRow): row is ExtrasRow => 'extras' in row;
 /** How long a loaded tab is reused before a switch back refetches it. */
 const TAB_STALE_MS = 2 * 60 * 1000;
 
-const SETTINGS_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
-
-const TIME_RANGE_OPTIONS: PeriodOption<TimeRange>[] = [
-  { value: 'all_time', labelKey: 'profile.stats.timeRange.allTime' },
-  { value: 'year', labelKey: 'profile.stats.timeRange.year' },
-  { value: 'month', labelKey: 'profile.stats.timeRange.month' },
-  { value: 'week', labelKey: 'profile.stats.timeRange.week' },
-];
-
 export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   // The screen reaches both the tab navigator and the root stack; the tab
   // navigator's own prop type only knows about the former.
@@ -115,9 +80,8 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
 
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
-  const { colors, isDark } = useTheme();
-  const { formatTotalDistance } = useUnits();
-  const { canUse, tier } = useSubscription();
+  const { colors } = useTheme();
+  const { tier } = useSubscription();
   const tabBarPaddingBottom = useTabBarPadding();
   const [activeTab, setActiveTab] = useState<TabType>(route.params?.initialTab || 'stats');
   // "New since last visit": own activities on their tab, admin replies to
@@ -137,15 +101,16 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   );
   const [pendingFollowCount, setPendingFollowCount] = useState(0);
 
-  // Filter state - MUST be declared before dateRange and hooks that use them
-  const [selectedSportTypeId, setSelectedSportTypeId] = useState<number | null>(null);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('all_time');
-  const [statsMetric, setStatsMetric] = useState<StatsMetric>('distance');
-
-  // Comparison state
-  const [compareUser, setCompareUser] = useState<User | null>(null);
-  const [compareStats, setCompareStats] = useState<ActivityStats | null>(null);
-  const [isLoadingCompareStats, setIsLoadingCompareStats] = useState(false);
+  // Period / sport / metric filters and the stats computed from them; the sport
+  // also filters the Activities tab.
+  const filters = useProfileStatsFilters();
+  const {
+    selectedSportTypeId,
+    setSelectedSportTypeId,
+    activityStats,
+    isLoadingActivityStats,
+    refetchActivityStats,
+  } = filters;
 
   // Update active tab when navigating with initialTab param
   useEffect(() => {
@@ -154,34 +119,6 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     }
   }, [route.params?.initialTab]);
 
-  // Calculate date range based on selected time range (memoized to prevent unnecessary re-renders)
-  const dateRange = useMemo(() => {
-    const result = getDateRangeForTimeRange(selectedTimeRange);
-    logger.debug('profile', 'Date range calculated', {
-      selectedTimeRange,
-      result,
-    });
-    return result;
-  }, [selectedTimeRange]);
-
-  // Activity stats and points hooks
-  const {
-    stats: activityStats,
-    isLoading: isLoadingActivityStats,
-    refetch: refetchActivityStats,
-  } = useActivityStats({
-    sportTypeId: selectedSportTypeId,
-    from: dateRange?.from ?? undefined,
-    to: dateRange?.to ?? undefined,
-  });
-  // The same window one period back, so the headline can say whether this
-  // period is up or down. All-time has nothing before it — the hook is idle.
-  const previousRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
-  const { stats: previousStats } = useActivityStats({
-    sportTypeId: selectedSportTypeId,
-    from: previousRange?.from ?? undefined,
-    to: previousRange?.to ?? undefined,
-  });
   const {
     stats: pointStats,
     isLoading: isLoadingPointStats,
@@ -197,48 +134,8 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     trends,
     granularity: trendGranularity,
     isLoading: isLoadingTrends,
-  } = useActivityTrends(selectedTimeRange, selectedSportTypeId);
+  } = useActivityTrends(filters.selectedTimeRange, selectedSportTypeId);
   const { following, isLoading: isLoadingFollowing } = useFollowing();
-
-  // Debug: Log filter changes
-  useEffect(() => {
-    logger.info('profile', 'Filters changed', {
-      selectedSportTypeId,
-      selectedTimeRange,
-      dateRangeFrom: dateRange?.from,
-      dateRangeTo: dateRange?.to,
-    });
-  }, [selectedSportTypeId, selectedTimeRange, dateRange]);
-
-  // Fetch comparison user stats when selected or filters change
-  useEffect(() => {
-    const fetchCompareStats = async () => {
-      if (!compareUser) {
-        setCompareStats(null);
-        return;
-      }
-
-      setIsLoadingCompareStats(true);
-      try {
-        const stats = await api.getUserActiveActivityStats(compareUser.id, {
-          from: dateRange?.from ?? undefined,
-          to: dateRange?.to ?? undefined,
-          sport_type_id: selectedSportTypeId || undefined,
-        });
-        setCompareStats(stats);
-      } catch (error) {
-        logger.error('api', 'Failed to fetch compare user stats', {
-          error,
-          userId: compareUser.id,
-        });
-        setCompareStats(null);
-      } finally {
-        setIsLoadingCompareStats(false);
-      }
-    };
-
-    fetchCompareStats();
-  }, [compareUser, selectedSportTypeId, dateRange]);
 
   // Wrapper functions for usePaginatedTabData
   const fetchPostsWrapper = useCallback((userId: number, page: number) => {
@@ -485,30 +382,26 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
   useRefreshOn('events', eventsData.refresh);
   useRefreshOn('profile', handleRefresh);
 
-  const openEditProfile = () => navigation.navigate('EditProfile');
+  // Stable, so the memoized header is not re-rendered by a tab switch.
+  const openEditProfile = useCallback(() => navigation.navigate('EditProfile'), [navigation]);
+  const openSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
+  const openLeaderboard = useCallback(() => navigation.navigate('Leaderboard'), [navigation]);
+  const openRewards = useCallback(() => navigation.navigate('Rewards'), [navigation]);
 
-  const handleFollowersPress = () => {
+  const handleFollowersPress = useCallback(() => {
     setFollowModalTab('followers');
     setShowFollowModal(true);
-  };
+  }, []);
 
-  const handleFollowingPress = () => {
+  const handleFollowingPress = useCallback(() => {
     setFollowModalTab('following');
     setShowFollowModal(true);
-  };
+  }, []);
 
   const handleUserNavigation = (selectedUser: User) => {
     setShowFollowModal(false);
     navigation.navigate('UserProfile', { username: selectedUser.username });
   };
-
-  const tabs: { label: string; value: TabType; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { label: t('profile.tabs.stats'), value: 'stats', icon: 'stats-chart-outline' },
-    { label: t('profile.tabs.activities'), value: 'activities', icon: 'heart-outline' },
-    { label: t('profile.tabs.posts'), value: 'posts', icon: 'reorder-three-outline' },
-    { label: t('profile.tabs.drafts'), value: 'drafts', icon: 'create-outline' },
-    { label: t('profile.tabs.events'), value: 'events', icon: 'calendar-outline' },
-  ];
 
   const handlePublishDraft = (draft: DraftPost) => {
     Alert.alert(t('drafts.confirmPublishTitle'), t('drafts.confirmPublish'), [
@@ -554,268 +447,6 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
     ]);
   };
 
-  // Extract settings button to avoid duplication
-  const renderSettingsButton = () => (
-    <TouchableOpacity
-      style={styles.settingsButton}
-      onPress={() => navigation.navigate('Settings')}
-      activeOpacity={0.7}
-      hitSlop={SETTINGS_HIT_SLOP}
-    >
-      <Ionicons name="settings-outline" size={24} color={colors.white} />
-      {newFeedback > 0 && (
-        <View
-          style={[
-            styles.settingsDot,
-            { backgroundColor: colors.primary, borderColor: colors.white },
-          ]}
-        />
-      )}
-    </TouchableOpacity>
-  );
-
-  const renderCoverImage = () => {
-    const coverStyle = [styles.coverImage, { backgroundColor: colors.primary }];
-    const gradientOverlay = (
-      <LinearGradient
-        colors={['transparent', isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)']}
-        style={StyleSheet.absoluteFillObject}
-      />
-    );
-
-    if (user?.background_image_url) {
-      return (
-        <ImageBackground
-          source={{ uri: fixStorageUrl(user.background_image_url) || undefined }}
-          style={coverStyle}
-          resizeMode="cover"
-        >
-          {gradientOverlay}
-          {renderSettingsButton()}
-        </ImageBackground>
-      );
-    }
-
-    return (
-      <LinearGradient
-        colors={isDark ? [colors.primary, '#0f1520'] : [colors.primary, colors.background]}
-        style={coverStyle}
-      >
-        {renderSettingsButton()}
-      </LinearGradient>
-    );
-  };
-
-  // Wrapped in a measured View: knowing where the header ends is what lets a
-  // tab switch land on the content instead of somewhere in the middle of it.
-  const renderProfileHeader = () => (
-    <View
-      style={styles.profileHeader}
-      onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-    >
-      <View
-        style={[
-          styles.profileCard,
-          { backgroundColor: colors.cardBackground, borderColor: colors.borderLight },
-        ]}
-      >
-        {renderCoverImage()}
-
-        <View style={styles.profileBody}>
-          {/* The avatar is the thing people reach for when they want to change
-              it, so it goes where the edit screen is — three taps through
-              Settings was the old route. */}
-          <View style={styles.identityRow}>
-            <TouchableOpacity
-              style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}
-              onPress={openEditProfile}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={t('editProfile.title')}
-            >
-              <Avatar
-                uri={user?.avatar}
-                name={user?.name}
-                size="xxl"
-                showTierBadge={tier !== 'free'}
-                tier={tier}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.editButton, { borderColor: colors.border }]}
-              onPress={openEditProfile}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="create-outline" size={16} color={colors.textPrimary} />
-              <Text style={[styles.editButtonText, { color: colors.textPrimary }]}>
-                {t('editProfile.title')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-            {user?.name}
-          </Text>
-          <Text style={[styles.username, { color: colors.textSecondary }]} numberOfLines={1}>
-            @{user?.username}
-          </Text>
-          {user?.bio && (
-            <Text style={[styles.bio, { color: colors.textPrimary }]} numberOfLines={2}>
-              {user.bio}
-            </Text>
-          )}
-
-          {/* Where you stand — current state, one tap from the full board.
-              The lifetime row below is history; this is not (design
-              "Racefy v2" → StandingBlock). */}
-          <StandingBlock
-            stats={pointStats}
-            weeklyDelta={rankDeltas.weekly ?? null}
-            onPress={() => navigation.navigate('Leaderboard')}
-          />
-
-          {/* Training and social used to share one row of four columns, with
-              the distance labelled "Total" — total of what was anyone's guess.
-              Three named training metrics, then the social pair on its own. */}
-          <View style={[styles.statsRow, { borderTopColor: colors.borderLight }]}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.activities')}
-              </Text>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats?.activities?.total ?? 0}
-              </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.distance')}
-              </Text>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatTotalDistance(stats?.activities?.total_distance ?? 0)}
-              </Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.time')}
-              </Text>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {formatDurationCompact(stats?.activities?.total_duration ?? 0)}
-              </Text>
-            </View>
-          </View>
-
-          {/* All-time numbers say nothing about how it is going right now. */}
-          {(stats?.activities?.this_month ?? 0) > 0 && (
-            <Text style={[styles.thisMonth, { color: colors.textSecondary }]}>
-              {t('profile.stats.thisMonth', { count: stats?.activities?.this_month ?? 0 })}
-            </Text>
-          )}
-
-          <View style={[styles.socialRow, { borderTopColor: colors.borderLight }]}>
-            <TouchableOpacity style={styles.socialItem} onPress={handleFollowersPress}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats?.social.followers ?? 0}
-              </Text>
-              <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.followers')}
-              </Text>
-              {pendingFollowCount > 0 && (
-                <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.statBadgeText}>
-                    {pendingFollowCount > 99 ? '99+' : pendingFollowCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <View style={[styles.socialDivider, { backgroundColor: colors.borderLight }]} />
-            <TouchableOpacity style={styles.socialItem} onPress={handleFollowingPress}>
-              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                {stats?.social.following ?? 0}
-              </Text>
-              <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>
-                {t('profile.stats.following')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-
-      {/* What you have won, above the tabs — see BadgeCabinet for why this is
-          a section and not a sixth tab. */}
-      <BadgeCabinet
-        badges={badges}
-        onOpenAll={() => navigation.navigate('Rewards')}
-        onOpenBadge={setOpenBadge}
-      />
-
-      {/* Navigation Sections */}
-      <ProfileNavigationSections navigation={navigation} tier={tier} />
-    </View>
-  );
-
-  // Sticky section header: once you have scrolled past the profile, the tabs
-  // stay within reach instead of forcing a trip back to the top.
-  const renderTabBar = () => (
-    <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
-      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
-        {/* Packed to the left and scrollable rather than five equal columns:
-            the labels are different lengths, and stretching them apart makes
-            the marker under the active one harder to attach to a word. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabScroll}
-        >
-          {tabs.map((tab) => {
-            const active = activeTab === tab.value;
-            return (
-              <TouchableOpacity
-                key={tab.value}
-                style={[styles.tab, active && { borderBottomColor: colors.primary }]}
-                onPress={() => setActiveTab(tab.value)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-              >
-                <Ionicons
-                  name={tab.icon}
-                  size={18}
-                  color={active ? colors.primaryDark : colors.textSecondary}
-                />
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: active ? colors.primaryDark : colors.textSecondary,
-                      fontWeight: active ? '700' : '600',
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {tab.label}
-                </Text>
-                {tab.value === 'activities' && newActivities > 0 && (
-                  <View style={[styles.draftsBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
-                      {newActivities > 99 ? '99+' : newActivities}
-                    </Text>
-                  </View>
-                )}
-                {tab.value === 'drafts' && draftsCount > 0 && (
-                  <View style={[styles.draftsBadge, { backgroundColor: colors.error }]}>
-                    <Text style={[styles.draftsBadgeText, { color: colors.white }]}>
-                      {draftsCount > 99 ? '99+' : draftsCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-    </View>
-  );
-
   // Whatever the active tab needs above its rows. Rendered as the first row so
   // it scrolls away under the sticky tab bar instead of being pinned with it.
   const renderTabExtras = () => (
@@ -843,103 +474,19 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
         </View>
       )}
 
-      {/* Stats Tab Content */}
       {activeTab === 'stats' && (
-        <View style={styles.statsTabContent}>
-          {/* Period and sport apply to everything below; the metric switch
-              lives on the card it changes. */}
-          <SegmentedControl
-            options={TIME_RANGE_OPTIONS.map((option) => ({
-              value: option.value,
-              label: t(option.labelKey),
-            }))}
-            value={selectedTimeRange}
-            onChange={setSelectedTimeRange}
-          />
-          <View style={styles.filterBleed}>
-            <SportTypeFilter
-              sportTypes={sportTypes}
-              selectedSportTypeId={selectedSportTypeId}
-              onSelectSportType={setSelectedSportTypeId}
-              isLoading={isLoadingActivityStats}
-            />
-          </View>
-
-          <StatsHeadlineCard
-            stats={activityStats}
-            previous={previousStats}
-            metric={statsMetric}
-            onMetricChange={setStatsMetric}
-            periodLabel={t(
-              TIME_RANGE_OPTIONS.find((o) => o.value === selectedTimeRange)?.labelKey ?? '',
-            )}
-            comparesToPrevious={previousRange != null}
-          />
-
-          <StatsTrendCard
-            trends={trends}
-            granularity={trendGranularity}
-            metric={statsMetric}
-            isLoading={isLoadingTrends}
-          />
-
-          <SportSplitCard
-            stats={activityStats}
-            sportTypes={sportTypes}
-            metric={statsMetric}
-            selectedSportTypeId={selectedSportTypeId}
-            compareStats={compareStats}
-            compareUserName={compareUser?.name}
-          />
-
-          <PersonalBestsCard
-            stats={activityStats}
-            onOpenActivity={(activityId) => navigation.navigate('ActivityDetail', { activityId })}
-          />
-
-          <PointsCard
-            stats={pointStats}
-            isLoading={isLoadingPointStats}
-            onViewHistory={() => navigation.navigate('PointHistory')}
-            onViewLeaderboard={() => navigation.navigate('Leaderboard')}
-          />
-
-          {/* Comparing against another athlete is the paid part. It used to be a
-              full locked card at the top of the tab, before anyone had seen a
-              single number of their own; now it closes the tab as one row. */}
-          {canUse('advanced_stats') ? (
-            <CompareUserSelector
-              following={following}
-              selectedUser={compareUser}
-              onSelectUser={setCompareUser}
-              isLoading={isLoadingFollowing || isLoadingCompareStats}
-            />
-          ) : (
-            <TouchableOpacity
-              style={[
-                styles.advancedRow,
-                { backgroundColor: colors.aiLight, borderColor: colors.ai + '33' },
-              ]}
-              onPress={() => navigation.navigate('Paywall', { feature: 'advanced_stats' })}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.advancedIcon, { backgroundColor: colors.ai }]}>
-                <Ionicons name="lock-closed" size={15} color="#ffffff" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.advancedTitle, { color: colors.textPrimary }]}>
-                  {t('profile.stats.advanced.title')}
-                </Text>
-                <Text style={[styles.advancedBody, { color: colors.ai }]} numberOfLines={2}>
-                  {t('profile.stats.advanced.body')}
-                </Text>
-              </View>
-              <View style={[styles.advancedBadge, { backgroundColor: colors.ai }]}>
-                <Text style={styles.advancedBadgeText}>{t('profile.stats.advanced.cta')}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+        <ProfileStatsTab
+          filters={filters}
+          sportTypes={sportTypes}
+          trends={trends}
+          trendGranularity={trendGranularity}
+          isLoadingTrends={isLoadingTrends}
+          following={following}
+          isLoadingFollowing={isLoadingFollowing}
+          pointStats={pointStats}
+          isLoadingPointStats={isLoadingPointStats}
+          navigation={navigation}
+        />
       )}
     </>
   );
@@ -1143,9 +690,36 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
         sections={[{ data: getData() }]}
         keyExtractor={getKeyExtractor}
         renderItem={renderItem}
-        renderSectionHeader={renderTabBar}
+        renderSectionHeader={() => (
+          <ProfileTabBar
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            newActivities={newActivities}
+            draftsCount={draftsCount}
+          />
+        )}
         stickySectionHeadersEnabled
-        ListHeaderComponent={renderProfileHeader()}
+        ListHeaderComponent={
+          <ProfileHeader
+            user={user}
+            stats={stats}
+            pointStats={pointStats}
+            weeklyDelta={rankDeltas.weekly ?? null}
+            badges={badges}
+            tier={tier}
+            pendingFollowCount={pendingFollowCount}
+            newFeedback={newFeedback}
+            navigation={navigation}
+            onLayoutHeight={setHeaderHeight}
+            onEditProfile={openEditProfile}
+            onOpenSettings={openSettings}
+            onOpenFollowers={handleFollowersPress}
+            onOpenFollowing={handleFollowingPress}
+            onOpenLeaderboard={openLeaderboard}
+            onOpenRewards={openRewards}
+            onOpenBadge={setOpenBadge}
+          />
+        }
         ListFooterComponent={renderFooter}
         contentContainerStyle={[styles.listContent, { paddingBottom: tabBarPaddingBottom }]}
         refreshControl={
@@ -1202,150 +776,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
-  profileHeader: {
-    // Design "Racefy v2" (ProfileScreen): 18 px między ostatnią kartą narzędzi
-    // a paskiem tabów. Na headerze, nie na pasku — pasek jest sticky, więc
-    // margines nad nim przepuszczałby wiersze listy po przypięciu.
-    paddingBottom: 18,
-  },
   listContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
-  },
-  coverImage: {
-    height: 160,
-    position: 'relative',
-  },
-  settingsButton: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  profileCard: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  profileBody: {
-    alignItems: 'stretch',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  identityRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  avatarContainer: {
-    marginTop: -44,
-    borderWidth: 4,
-    borderRadius: 44,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-  },
-  editButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  thisMonth: {
-    fontSize: fontSize.xs,
-    marginTop: spacing.sm,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  socialItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingRight: spacing.md,
-  },
-  socialLabel: {
-    fontSize: fontSize.sm,
-  },
-  socialDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 16,
-    marginRight: spacing.md,
-  },
-  name: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    marginTop: spacing.sm,
-  },
-  username: {
-    fontSize: fontSize.md,
-    marginTop: 2,
-  },
-  bio: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  statBadge: {
-    minWidth: 18,
-    minHeight: 18,
-    borderRadius: 9,
-    paddingHorizontal: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statBadgeText: {
-    color: '#fff',
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  statValue: {
-    fontSize: fontSize.xxxl,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: msFont(11),
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-  },
-  stickyTabs: {
-    // The bar is pinned by SectionList, so the gap below it has to be opaque
-    // padding on the pinned element — with a margin the rows show through it.
-    paddingBottom: spacing.md,
-  },
-  tabContainer: {
-    borderBottomWidth: 1,
-    // Kreska idzie przez całą szerokość — znosi wcięcie listy.
-    marginHorizontal: -spacing.lg,
   },
   draftsNote: {
     flexDirection: 'row',
@@ -1360,90 +794,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     lineHeight: 18,
   },
-  tabScroll: {
-    paddingHorizontal: spacing.md,
-    gap: 2,
-  },
-  tab: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingTop: spacing.sm + 2,
-    paddingBottom: spacing.sm + 1,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  settingsDot: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
-  },
-  draftsBadge: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    minWidth: 17,
-    minHeight: 17,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  draftsBadgeText: {
-    fontSize: msFont(9),
-    fontWeight: '700',
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-  tabText: {
-    fontSize: msFont(11),
-    textAlign: 'center',
-  },
   footer: {
     paddingVertical: spacing.lg,
     alignItems: 'center',
-  },
-  advancedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-    padding: spacing.md,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-  },
-  advancedIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  advancedTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  advancedBody: {
-    fontSize: fontSize.xs,
-    marginTop: 1,
-  },
-  advancedBadge: {
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 5,
-    borderRadius: borderRadius.full,
-  },
-  advancedBadgeText: {
-    color: '#ffffff',
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  statsTabContent: {
-    marginTop: spacing.sm,
-    gap: spacing.md,
   },
   activitiesFilterContent: {
     // Bez marginTop: odstęp 12 pod kreską daje już `stickyTabs.paddingBottom`.
