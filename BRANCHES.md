@@ -15,7 +15,20 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: podział `ActivityDetailScreen` (`audyt-activity-detail`, od 2026-10-26)
+
+Refaktor bez zmiany zachowania — trzeba przeklikać ekran aktywności.
+
+Do sprawdzenia na telefonie:
+- [ ] Mapa: rozwijanie/zwijanie (animacja, przewinięcie do góry, przewijanie ekranu zablokowane przy
+      rozwiniętej), znaczniki km, notka prywatności GPS (właściciel / obcy)
+- [ ] Pinezki dopingu po transmisji: przełącznik, wybór pinezki, tapnięcie wiadomości w karcie
+      „z transmisji” zaznacza pinezkę i przewija do mapy
+- [ ] Statystyki: dystans · czas · tempo; aktywność siłowa → pasek siłowni, karty serii, bez opisu
+      generowanego; szczegóły (Plus/Pro) i teaser (Free)
+- [ ] Zdjęcia: miniatury, pełny ekran, przesuwanie, licznik „X / Y”, zamykanie
+- [ ] Informacje techniczne: data, źródło, punkty GPS
+
 
 ---
 
