@@ -15,13 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Usuwanie trasy z biblioteki (`route-delete`, od 2026-10-26)
-
-Kod usuwania z listy był, ale nic go nie wywoływało; usunięcie ze szczegółów zostawiało trasę na liście.
-- [ ] Biblioteka tras → przytrzymanie własnej trasy → „Usuń trasę” → potwierdzenie → trasa znika z listy
-- [ ] przytrzymanie cudzej trasy (Popularne/W pobliżu) i w trybie wyboru trasy: nic się nie otwiera
-- [ ] usunięcie ze szczegółów trasy → po powrocie lista już jej nie ma
-- [ ] usunięcie bez internetu: komunikat o błędzie, trasa zostaje
+_(nic)_
 
 ---
 
@@ -29,6 +23,14 @@ Kod usuwania z listy był, ale nic go nie wywoływało; usunięcie ze szczegół
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Usuwanie trasy z biblioteki (zmergowane 2026-10-26, `route-delete`, tag `pre-route-delete` = main sprzed merge)
+
+Kod usuwania z listy był, ale nic go nie wywoływało; usunięcie ze szczegółów zostawiało trasę na liście.
+- [ ] Biblioteka tras → przytrzymanie własnej trasy → „Usuń trasę” → potwierdzenie → trasa znika z listy
+- [ ] przytrzymanie cudzej trasy (Popularne/W pobliżu) i w trybie wyboru trasy: nic się nie otwiera
+- [ ] usunięcie ze szczegółów trasy → po powrocie lista już jej nie ma
+- [ ] usunięcie bez internetu: komunikat o błędzie, trasa zostaje
 
 ### Edycja drużyny wczytuje dane (zmergowane 2026-10-26, `team-edit`, tag `pre-team-edit` = main sprzed merge)
 
