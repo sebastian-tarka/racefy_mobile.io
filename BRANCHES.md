@@ -15,10 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt: porządki (`audyt-porzadki`, od 2026-10-26)
-
-Martwe zmienne i importy, query przez `withQuery()`, bez zmian produktowych.
-- [ ] po mergu: lista rozmów, powiadomienia i wyszukiwanie zwracają to samo co przed zmianą (query budowane inaczej)
+_(nic)_
 
 ---
 
@@ -26,6 +23,12 @@ Martwe zmienne i importy, query przez `withQuery()`, bez zmian produktowych.
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt: porządki (zmergowane 2026-10-26, `audyt-porzadki`, tag `pre-audyt-porzadki` = main sprzed merge)
+
+Martwe zmienne i importy, query w `services/api` przez `withQuery()`, bez zmian produktowych.
+- [ ] lista rozmów, wiadomości, powiadomienia, wyszukiwanie i @wzmianki działają jak wcześniej (query budowane inaczej)
+- [ ] czat na żywo do aktywności dociąga nowe wiadomości (`after`)
 
 ### Audyt E: podział `EventsScreen` (zmergowane 2026-10-26, `audyt-events`, tag `pre-audyt-events` = main sprzed merge)
 
