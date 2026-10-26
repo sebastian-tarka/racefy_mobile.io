@@ -15,12 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Ranking drużyn: komunikat błędu (`teams-leaderboard-error`, od 2026-10-26)
-
-Błąd ładowania wyglądał jak „Brak zespołów w rankingu”, a po zmianie filtra zostawał ranking poprzedniego filtra.
-- [ ] Ranking drużyn bez internetu: komunikat o błędzie z „Spróbuj ponownie”, nie „Brak zespołów”; po włączeniu sieci przycisk wczytuje ranking
-- [ ] z rankingiem na ekranie: wyłączenie sieci → zmiana okresu/sortowania → błąd, nie stary ranking pod nowym filtrem
-- [ ] szybkie przełączanie okresu/sortowania: lista odpowiada ostatnio wybranemu filtrowi
+_(nic)_
 
 ---
 
@@ -28,6 +23,13 @@ Błąd ładowania wyglądał jak „Brak zespołów w rankingu”, a po zmianie 
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Ranking drużyn: komunikat błędu (zmergowane 2026-10-26, `teams-leaderboard-error`, tag `pre-teams-leaderboard-error` = main sprzed merge)
+
+Błąd ładowania wyglądał jak „Brak zespołów w rankingu”, a po zmianie filtra zostawał ranking poprzedniego filtra.
+- [ ] Ranking drużyn bez internetu: komunikat o błędzie z „Spróbuj ponownie”, nie „Brak zespołów”; po włączeniu sieci przycisk wczytuje ranking
+- [ ] z rankingiem na ekranie: wyłączenie sieci → zmiana okresu/sortowania → błąd, nie stary ranking pod nowym filtrem
+- [ ] szybkie przełączanie okresu/sortowania: lista odpowiada ostatnio wybranemu filtrowi
 
 ### Ustawienia komentarza AI eventu: ładowanie i zwijane sekcje (zmergowane 2026-10-26, `commentary-settings`, tag `pre-commentary-settings` = main sprzed merge)
 
