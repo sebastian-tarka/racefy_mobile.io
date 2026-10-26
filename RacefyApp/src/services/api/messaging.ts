@@ -1,5 +1,6 @@
 import type * as Types from '../../types/api';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -8,7 +9,7 @@ export function MessagingMixin<TBase extends Constructable<ApiBase>>(Base: TBase
     // ============ MESSAGING ============
 
     async getConversations(page = 1): Promise<Types.PaginatedResponse<Types.Conversation>> {
-      return this.request(`/conversations?page=${page}`);
+      return this.request(withQuery('/conversations', { page }));
     }
 
     async startConversation(userId: number): Promise<Types.ApiResponse<Types.Conversation>> {
@@ -33,7 +34,7 @@ export function MessagingMixin<TBase extends Constructable<ApiBase>>(Base: TBase
       conversationId: number,
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.Message>> {
-      return this.request(`/conversations/${conversationId}/messages?page=${page}`);
+      return this.request(withQuery(`/conversations/${conversationId}/messages`, { page }));
     }
 
     async sendMessage(
@@ -106,7 +107,7 @@ export function MessagingMixin<TBase extends Constructable<ApiBase>>(Base: TBase
       perPage: number = 20,
     ): Promise<Types.NotificationListResponse> {
       return await this.request<Types.NotificationListResponse>(
-        `/notifications?per_page=${perPage}&page=${page}`,
+        withQuery('/notifications', { per_page: perPage, page }),
       );
     }
 

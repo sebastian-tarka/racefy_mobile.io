@@ -6,6 +6,7 @@ import type {
   GenerateActivityReportResponse,
 } from '../../types/reports';
 import type { ApiBase } from './base';
+import { withQuery } from './query';
 
 type Constructable<T = object> = new (...args: any[]) => T;
 
@@ -31,7 +32,7 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
      */
     async listActivityReports(page = 1): Promise<Types.PaginatedResponse<AiActivityReport>> {
       return this.request<Types.PaginatedResponse<AiActivityReport>>(
-        `/ai/activity-reports?page=${page}`,
+        withQuery('/ai/activity-reports', { page }),
       );
     }
 

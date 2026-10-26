@@ -525,7 +525,7 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/events/${eventId}/commentary/${commentaryId}/boosts?page=${page}`,
+        withQuery(`/events/${eventId}/commentary/${commentaryId}/boosts`, { page }),
       );
     }
   };

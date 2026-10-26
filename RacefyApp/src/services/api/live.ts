@@ -58,10 +58,11 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       activityId: number,
       options?: { includeTrack?: boolean },
     ): Promise<Types.LiveBroadcastDetailResponse | null> {
-      const suffix = options?.includeTrack ? '?include=track' : '';
       try {
         return await this.request<Types.LiveBroadcastDetailResponse>(
-          `/live/${activityId}${suffix}`,
+          withQuery(`/live/${activityId}`, {
+            include: options?.includeTrack ? 'track' : undefined,
+          }),
         );
       } catch (error) {
         if (isNotFound(error)) return null;
@@ -75,7 +76,7 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       token: string,
     ): Promise<Types.LiveBroadcastDetailResponse> {
       return this.request<Types.LiveBroadcastDetailResponse>(
-        `/live/${activityId}/join?token=${encodeURIComponent(token)}`,
+        withQuery(`/live/${activityId}/join`, { token }),
       );
     }
 
@@ -107,9 +108,11 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param after - Last seen message id, for incremental polling.
      */
     async getLiveMessages(activityId: number, after?: number): Promise<Types.LiveMessage[]> {
-      const suffix = after != null ? `?after=${after}` : '';
+      // As a string: withQuery drops 0, and after=0 is a real cursor.
       const response = await this.request<Types.ApiResponse<Types.LiveMessage[]>>(
-        `/live/${activityId}/messages${suffix}`,
+        withQuery(`/live/${activityId}/messages`, {
+          after: after != null ? String(after) : undefined,
+        }),
       );
       return response.data ?? [];
     }

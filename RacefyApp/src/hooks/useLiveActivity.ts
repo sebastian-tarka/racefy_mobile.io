@@ -42,9 +42,14 @@ import {
 import * as Crypto from 'expo-crypto';
 
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
-import type * as Types from '../types/api';
-
-import type { Activity, ActivityLocation, AutoCreatedPost, GpsPoint } from '../types/api';
+import type {
+  Activity,
+  ActivityLocation,
+  AutoCreatedPost,
+  FinishActivityRequest,
+  GpsPoint,
+  LiveBroadcastSettings,
+} from '../types/api';
 import {
   convertToApiGpsProfile,
   DEFAULT_GPS_PROFILE,
@@ -1380,12 +1385,7 @@ function useLiveActivityInternal() {
   };
 
   const startTracking = useCallback(
-    async (
-      sportTypeId: number,
-      title?: string,
-      eventId?: number,
-      live?: Types.LiveBroadcastSettings,
-    ) => {
+    async (sportTypeId: number, title?: string, eventId?: number, live?: LiveBroadcastSettings) => {
       try {
         logger.activity('Starting activity tracking', {
           sportTypeId,
@@ -1737,7 +1737,7 @@ function useLiveActivityInternal() {
    */
   const finishDirect = async (
     activityId: number,
-    payload: Types.FinishActivityRequest,
+    payload: FinishActivityRequest,
   ): Promise<FinishResult> => {
     try {
       const response = await api.finishActivity(activityId, payload);
@@ -1819,7 +1819,7 @@ function useLiveActivityInternal() {
         ledger.pendingOps.length === 0 &&
         !isProvisionalActivity(current);
 
-      const payload: Types.FinishActivityRequest = {
+      const payload: FinishActivityRequest = {
         ...data,
         ended_at: endedAt,
         ...(trustServerPauses ? {} : { total_paused_duration: totalPausedAt(ledger, endedAt) }),
@@ -2108,7 +2108,7 @@ interface LiveActivityContextType {
     title?: string,
     eventId?: number,
     /** Opt-in live broadcasting. Omit to start without broadcasting. */
-    live?: Types.LiveBroadcastSettings,
+    live?: LiveBroadcastSettings,
   ) => Promise<Activity | undefined>;
   pauseTracking: () => Promise<void>;
   resumeTracking: () => Promise<void>;

@@ -77,7 +77,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
     }
 
     async deleteActivity(id: number, force: boolean = false): Promise<void> {
-      const endpoint = force ? `/activities/${id}?force=true` : `/activities/${id}`;
+      const endpoint = withQuery(`/activities/${id}`, { force: force ? 'true' : undefined });
       await this.request(endpoint, { method: 'DELETE' });
     }
 
@@ -398,7 +398,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/activities/${activityId}/boosts?page=${page}`,
+        withQuery(`/activities/${activityId}/boosts`, { page }),
       );
     }
 
@@ -417,7 +417,7 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/activities/${id}/likes?page=${page}`,
+        withQuery(`/activities/${id}/likes`, { page }),
       );
     }
 
@@ -434,9 +434,8 @@ export function ActivitiesMixin<TBase extends Constructable<ApiBase>>(Base: TBas
       id: number,
       options?: { format?: 'social' | 'story' | 'square' },
     ): Promise<Types.ShareLinkResponse> {
-      const queryParams = options?.format ? `?format=${options.format}` : '';
       const response = await this.request<Types.ApiResponse<Types.ShareLinkResponse>>(
-        `/activities/${id}/share-link${queryParams}`,
+        withQuery(`/activities/${id}/share-link`, { format: options?.format }),
       );
       return response.data;
     }

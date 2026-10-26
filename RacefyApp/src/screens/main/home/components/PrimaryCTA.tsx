@@ -172,8 +172,8 @@ function getIconForAction(action: HomeCtaAction | string): keyof typeof Ionicons
  * Renders a prominent call-to-action button based on backend configuration.
  *
  * When `hero` props are provided (from `todays_training_session` section),
- * an enriched layout shows an overline, large title, subtitle and tag pills
- * above the action row.
+ * an enriched layout shows an overline, large title and subtitle above the
+ * action row (`meta.tags` are not shown).
  */
 export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: PrimaryCtaProps) {
   const { colors } = useTheme();
@@ -207,8 +207,6 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
   const icon = getIconForAction(resolvedAction);
   const isHero = Boolean(hero && (hero.label || hero.title || hero.meta));
   const isStartAction = START_ACTIONS.has(resolvedAction);
-
-  const tags = useMemo(() => hero?.meta?.tags?.filter(Boolean) ?? [], [hero?.meta?.tags]);
 
   // --- Animations ---------------------------------------------------------
   // Tactile spring scale on press.
@@ -298,15 +296,6 @@ export function PrimaryCTA({ cta, hero, weather, onPress, onLongPress }: Primary
                 {subtitle}
               </Text>
             )}
-            {/*{tags.length > 0 && (*/}
-            {/*  <View style={styles.tagsRow}>*/}
-            {/*    {tags.slice(0, 4).map((tag) => (*/}
-            {/*      <View key={tag} style={styles.tagChip}>*/}
-            {/*        <Text style={styles.tagText}>{tag}</Text>*/}
-            {/*      </View>*/}
-            {/*    ))}*/}
-            {/*  </View>*/}
-            {/*)}*/}
             <View style={styles.heroActionRow}>
               <View style={[styles.heroIconWrap, { width: iconBox, height: iconBox }]}>
                 {isStartAction && (
@@ -431,24 +420,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: 'rgba(255, 255, 255, 0.85)',
     marginTop: spacing.xs,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  tagChip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  tagText: {
-    fontSize: fontSize.xs,
-    fontWeight: fontWeight.semibold,
-    color: '#ffffff',
-    textTransform: 'lowercase',
   },
   heroActionRow: {
     flexDirection: 'row',

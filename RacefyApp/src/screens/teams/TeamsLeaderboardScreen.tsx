@@ -8,11 +8,10 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { useTheme, useAuth, useUnits } from '../../hooks';
+import { useTheme, useUnits } from '../../hooks';
 import { useTeamsLeaderboard } from '../../hooks/useTeamsLeaderboard';
 import {
   ScreenContainer,
@@ -21,7 +20,7 @@ import {
   OptionSelector,
   EmptyState,
 } from '../../components';
-import { spacing, fontSize, borderRadius, msFont } from '../../theme';
+import { spacing, fontSize, msFont } from '../../theme';
 import { formatTotalTime } from '../../utils/formatters';
 import type { StatsPeriod, LeaderboardSortBy, TeamLeaderboardEntry } from '../../types/api';
 
@@ -44,7 +43,6 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { formatDistanceShort, getDistanceValue, getDistanceUnit } = useUnits();
-  const { user } = useAuth();
 
   const [period, setPeriod] = useState<StatsPeriod>('this_month');
   const [sortBy, setSortBy] = useState<LeaderboardSortBy>('distance');

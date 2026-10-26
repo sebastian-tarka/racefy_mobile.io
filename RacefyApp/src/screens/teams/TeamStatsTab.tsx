@@ -8,7 +8,7 @@ import { useTeamRanking } from '../../hooks/useTeamRanking';
 import { useTeamTrends } from '../../hooks/useTeamTrends';
 import { Card, Avatar, OptionSelector, EmptyState } from '../../components';
 import { spacing, fontSize, borderRadius, msFont } from '../../theme';
-import { formatTime, formatTotalTime } from '../../utils/formatters';
+import { formatTotalTime } from '../../utils/formatters';
 import type { StatsPeriod, RankingSortBy, TrendGranularity } from '../../types/api';
 
 interface TeamStatsTabProps {

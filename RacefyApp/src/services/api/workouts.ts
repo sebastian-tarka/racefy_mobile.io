@@ -209,7 +209,7 @@ export function WorkoutsMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     /** Last sessions in which the exercise was logged — "last time: 40 kg × 8". */
     async getExerciseHistory(exerciseId: number, sessions = 10): Promise<ExerciseHistoryEntry[]> {
       const response = await this.request<Types.ApiResponse<ExerciseHistoryEntry[]>>(
-        `/exercises/${exerciseId}/history?sessions=${sessions}`,
+        withQuery(`/exercises/${exerciseId}/history`, { sessions }),
       );
       return response.data;
     }
