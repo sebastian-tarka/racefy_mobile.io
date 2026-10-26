@@ -15,7 +15,20 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: podział `EventsScreen` (`audyt-events`, od 2026-10-26)
+
+Refaktor bez zmian produktowych. Jedna różnica w zachowaniu: zakładka Nagrody jest montowana dopiero
+po wejściu, więc przy każdym powrocie na nią lista ładuje się od zera (wcześniej przez chwilę była
+widoczna poprzednia).
+
+Do sprawdzenia na telefonie:
+- [ ] „Wszystkie”: pasek statystyk, sekcje na żywo / nadchodzące / zakończone, „Zobacz wszystkie”
+      przełącza filtr, tryb kompaktowy ↔ szczegółowy na żywo zapamiętany po restarcie
+- [ ] Filtry Nadchodzące / Na żywo / Zakończone: statystyki filtra, wyróżniona karta na nadchodzących,
+      doładowywanie, pull-to-refresh, pusty stan z „Utwórz wydarzenie”
+- [ ] Wyszukiwarka: wysuwanie, podpowiedź < 2 znaki, wyniki, wejście w wynik zamyka wyszukiwanie
+- [ ] Nagrody: sumy, filtry typu, lista, wejście w wydarzenie z nagrody, pull-to-refresh, błąd + ponów
+
 
 ---
 
