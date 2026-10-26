@@ -1,16 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import {
   RouteProp,
@@ -21,8 +11,6 @@ import {
 } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  announceEnd,
-  announceStart,
   triggerHaptic,
   useActivityTimer,
   useAudioCoach,
@@ -65,10 +53,6 @@ import {
   RecordingMapControls,
   ScreenContainer,
 } from '../../components';
-import {
-  isBatteryOptimized,
-  requestIgnoreBatteryOptimizations,
-} from '../../services/batteryOptimization';
 import { NavigationOverlay } from '../../components/NavigationOverlay';
 import { useLiveNavigation } from '../../hooks/useLiveNavigation';
 import { useRouteApproachPath } from '../../hooks/useRouteApproachPath';
@@ -79,7 +63,8 @@ import { navBannerState } from '../../utils/navigationCues';
 import { IdleView } from './recording/IdleView';
 import { RecordingView } from './recording/RecordingView';
 import { RecordingToast } from './recording/RecordingToast';
-import { describeSaveOutcome, type SaveOutcome } from './recording/saveOutcome';
+import { MapControlsOverlay } from './recording/MapControlsOverlay';
+import { useRecordingActions } from './recording/useRecordingActions';
 import { FinishView } from './recording/FinishView';
 import { SportSelectionModal } from './recording/SportSelectionModal';
 import { SportShortcutsModal } from './recording/SportShortcutsModal';
@@ -94,7 +79,7 @@ import { formatPlanLabel, workoutStatusLine } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import { borderRadius, fontSize, heroColors, spacing, msFont } from '../../theme';
+import { borderRadius, fontSize, heroColors, spacing } from '../../theme';
 import type { MainTabParamList, RootStackParamList } from '../../navigation';
 import { logger } from '../../services/logger';
 import { formatTime } from '../../utils/formatters';
@@ -796,278 +781,60 @@ export function ActivityRecordingScreen() {
     }
   }, [hasExistingActivity, activity]);
 
-  // One-time (per install) battery-optimization prompt before the first
-  // recording on Android — an optimized app risks the OS killing GPS mid-run.
-  // Never blocks the start: declining just skips the exemption.
-  const maybePromptBatteryExemption = async (): Promise<void> => {
-    if (Platform.OS !== 'android') return;
-    try {
-      const alreadyShown = await AsyncStorage.getItem('@racefy_battery_prompt_shown');
-      if (alreadyShown) return;
-      if (!(await isBatteryOptimized())) return;
-
-      await AsyncStorage.setItem('@racefy_battery_prompt_shown', '1');
-
-      await new Promise<void>((resolve) => {
-        Alert.alert(t('recording.batteryPrompt.title'), t('recording.batteryPrompt.message'), [
-          { text: t('recording.batteryPrompt.later'), style: 'cancel', onPress: () => resolve() },
-          {
-            text: t('recording.batteryPrompt.allow'),
-            onPress: async () => {
-              await requestIgnoreBatteryOptimizations();
-              refreshGpsHealth();
-              resolve();
-            },
-          },
-        ]);
-      });
-    } catch (err) {
-      logger.warn('activity', 'Battery exemption prompt failed', { error: err });
-    }
-  };
-
-  // Action handlers
-  const handleStart = async () => {
-    logger.debug('activity', 'Start button pressed');
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-
-    if (!selectedSport) {
-      Alert.alert(t('recording.error'), t('recording.selectSportFirst'));
-      return;
-    }
-
-    try {
-      await requestActivityTrackingPermissions();
-    } catch (err) {
-      logger.error('activity', 'Permission error', { error: err });
-    }
-
-    await maybePromptBatteryExemption();
-
-    try {
-      const started = await startTracking(
-        selectedSport.id,
-        `${selectedSport.name} Activity`,
-        selectedEvent?.id,
-      );
-      // No network: the recording runs locally and is created on the server later.
-      // Say so once — silence would leave the athlete wondering whether it counts.
-      if (isProvisionalActivity(started)) offlineToast.show();
-      resetMilestones();
-      // Keep selectedEvent in state — user may want to change it at save time in PausedView
-      logger.activity('Activity started successfully from UI', { sportId: selectedSport.id });
-
-      // Audio coach: announce start + sync the effective session state to
-      // AsyncStorage for the background task
-      persistEffectiveAudioCoachEnabled();
-      announceStart(audioCoachSettings, tier as any);
-
-      // Store milestone thresholds for background audio coach
-      if (distanceMilestones.length > 0) {
-        const thresholds = distanceMilestones.filter((m) => !m.achieved).map((m) => m.threshold);
-        if (thresholds.length > 0) {
-          import('../../services/backgroundLocation')
-            .then((m) => m.setAudioCoachMilestones(thresholds))
-            .catch(() => {});
-        }
-      }
-    } catch (err) {
-      logger.error('activity', 'Failed to start activity from UI', { error: err });
-    }
-  };
-
-  const handlePause = async () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    try {
-      await pauseTracking();
-      logger.activity('Activity paused from UI');
-    } catch (err) {
-      logger.error('activity', 'Failed to pause activity from UI', { error: err });
-    }
-  };
-
-  const handleResume = async () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    try {
-      await resumeTracking();
-      logger.activity('Activity resumed from UI');
-    } catch (err) {
-      logger.error('activity', 'Failed to resume activity from UI', { error: err });
-    }
-  };
-
-  const handleStop = async () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
-    // Pause the timer, then let the athlete review before anything is written.
-    // Pausing is local and does not need the network; whatever happens, the
-    // athlete gets to the finish screen — a Stop button that does nothing with no
-    // signal is the one thing this must never be.
-    try {
-      if (isTracking) {
-        await pauseTracking();
-      }
-    } catch (err) {
-      logger.error('activity', 'Failed to pause on stop', { error: err });
-    } finally {
-      setShowFinish(true);
-    }
-  };
-
-  /** Everything that belonged to the recording that just ended — saved or discarded. */
-  const resetAfterRecording = () => {
-    resetMilestones();
-    setShowFinish(false);
-    // The pin belonged to this recording; the next activity starts unpinned.
-    setSelectedEvent(null);
-    // Restore original audio coach settings in AsyncStorage (undo session toggle)
-    restoreAudioCoachSettings();
-    // The goal belonged to this recording; forget it (and its background state).
-    setWorkoutPlan(null);
-    void clearWorkoutSession();
-    void cancelGoalNotification();
-  };
-
-  const showSaveOutcome = (outcome: SaveOutcome) => {
-    // Points (or the lack of them — the activity didn't meet the thresholds).
-    const pointsMessage = (points: number | null) =>
-      !points ? t('recording.noPointsAwarded') : t('recording.pointsAwarded', { points });
-
-    switch (outcome.kind) {
-      case 'queued-needs-attention':
-        Alert.alert(
-          t('recording.savedOnDeviceTitle'),
-          t('recording.savedNeedsAttention', { reason: outcome.reason }),
-          [
-            { text: t('recording.later'), style: 'cancel' },
-            {
-              text: t('recording.openUnsynced'),
-              onPress: () => navigation.navigate('UnsyncedActivities'),
-            },
-          ],
-        );
-        return;
-      case 'queued':
-        Alert.alert(t('recording.savedOnDeviceTitle'), t('recording.savedOnDeviceBody'));
-        return;
-      case 'published':
-        Alert.alert(
-          t('common.success'),
-          `${t('recording.activityShared')}\n\n${pointsMessage(outcome.pointsEarned)}`,
-        );
-        return;
-      case 'draft':
-        Alert.alert(
-          t('recording.activitySaved'),
-          `${t('recording.draftCreated')}\n\n${pointsMessage(outcome.pointsEarned)}`,
-          [
-            { text: t('recording.later'), style: 'cancel' },
-            {
-              text: t('recording.viewDraft'),
-              onPress: () => navigation.navigate('PostDetail', { postId: outcome.postId }),
-            },
-          ],
-        );
-        return;
-      case 'saved':
-        Alert.alert(
-          t('common.success'),
-          `${t('recording.activitySaved')}\n\n${pointsMessage(outcome.pointsEarned)}`,
-        );
-        return;
-      case 'silent':
-        return;
-    }
-  };
-
-  const handleSave = async (options?: { title?: string; share?: boolean }) => {
-    if (!activity || !selectedSport) return;
-    if (isFinishingRef.current) return;
-
-    isFinishingRef.current = true;
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-
-    // "Save private" on the finish screen is the same thing the old paused
-    // screen called "Don't share to feed".
-    const skip = options?.share === undefined ? skipAutoPost : !options.share;
-
-    try {
-      const result = await finishTracking({
-        title: options?.title?.trim() || `${selectedSport.name} Activity`,
-        calories: Math.floor(localDuration * 0.15),
-        skip_auto_post: skip,
-        event_id: selectedEvent?.id ?? null,
-      });
-
-      // Cancelled (GPS-gap dialog) or a duplicate tap: nothing was saved, stay here.
-      if (!result) return;
-
-      // Either the server answered while we waited, or the activity is safe in
-      // the phone's outbox and goes out when the network allows.
-      const delivered = result.queued ? null : result;
-
-      logger.activity('Activity saved from UI', {
-        activityId: delivered?.activity.id ?? (result.queued ? result.activityId : undefined),
-        queued: !!result.queued,
-        hasPost: !!delivered?.post,
-      });
-
-      // Audio coach: announce end with summary
-      const totalKm = currentStats.distance / 1000;
-      const avgPace =
-        localDuration > 0 && totalKm > 0
-          ? localDuration / 60 / totalKm // min/km
-          : 0;
-      if (avgPace > 0) {
-        announceEnd(audioCoachSettings, totalKm, avgPace, tier as any);
-      }
-
-      // Fire-and-forget: enrich activity with HR data from Health Connect / HealthKit
-      if (delivered) {
-        enrichActivityWithHeartRate(delivered.activity).catch(() => {
-          // Silently ignore — enrichment is non-blocking
-        });
-      }
-
-      setSkipAutoPost(false);
-      resetAfterRecording();
-      showSaveOutcome(describeSaveOutcome(result));
-    } catch (err) {
-      logger.error('activity', 'Failed to save activity from UI', { error: err });
-      Alert.alert(t('recording.saveFailedTitle'), t('recording.saveFailed'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('recording.retry'),
-          onPress: () => {
-            isFinishingRef.current = false;
-            // Same title and share choice — a bare handleSave() used to drop both.
-            handleSave(options);
-          },
-        },
-      ]);
-    } finally {
-      isFinishingRef.current = false;
-    }
-  };
-
-  const handleDiscard = async () => {
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-    Alert.alert(t('recording.discardActivity'), t('recording.discardConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('recording.discard'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await discardTracking();
-            resetAfterRecording();
-            logger.activity('Activity discarded from UI');
-          } catch (err) {
-            logger.error('activity', 'Failed to discard activity from UI', { error: err });
-          }
-        },
+  const { handleStart, handlePause, handleResume, handleStop, handleSave, handleDiscard } =
+    useRecordingActions({
+      t,
+      navigation,
+      live: {
+        activity,
+        isTracking,
+        currentStats,
+        startTracking,
+        pauseTracking,
+        resumeTracking,
+        finishTracking,
+        discardTracking,
       },
-    ]);
-  };
+      localDuration,
+      selectedSport,
+      selectedEvent,
+      setSelectedEvent,
+      skipAutoPost,
+      setSkipAutoPost,
+      setShowFinish,
+      setWorkoutPlan,
+      isFinishingRef,
+      requestActivityTrackingPermissions,
+      refreshGpsHealth,
+      showOfflineToast: offlineToast.show,
+      distanceMilestones,
+      resetMilestones,
+      audioCoachSettings,
+      persistEffectiveAudioCoachEnabled,
+      restoreAudioCoachSettings,
+      tier,
+      enrichActivityWithHeartRate,
+    });
+
+  const handleRecenter = useCallback(() => {
+    setFollowUser(true);
+    triggerHaptic();
+  }, []);
+  const handleShowStats = useCallback(() => {
+    logger.info('activity', 'Toggling view mode', { from: 'map', to: 'stats' });
+    setViewMode('stats');
+    triggerHaptic();
+  }, []);
+  const { toggle: toggleDevSim } = devSim;
+  const handleToggleDevSim = useCallback(() => {
+    toggleDevSim();
+    triggerHaptic();
+  }, [toggleDevSim]);
+  const devSimInfoRef = useRef('');
+  devSimInfoRef.current = `Distance: ${devSim.distanceKm.toFixed(2)} km\nPace: ${devSim.pace} min/km\nInterval: ${audioCoachSettings.intervalKm} km\nEnabled: ${isAudioCoachActive || devSim.running}\nLanguage: ${audioCoachSettings.language}\nStyle: ${audioCoachSettings.style}\n\n+350m every 10s → 1km every ~29s`;
+  const handleDevSimInfo = useCallback(() => {
+    Alert.alert('Audio Coach Sim', devSimInfoRef.current);
+  }, []);
 
   // Bottom sheet options
   const handleEventSelect = (event: Event | null) => {
@@ -1352,116 +1119,25 @@ export function ActivityRecordingScreen() {
 
       {renderLoadingOverlay()}
 
-      {/* View toggle buttons - visible for GPS-enabled activities only */}
+      {/* Floating map buttons — GPS-enabled activities only */}
       {gpsProfile?.enabled && (
-        <View
-          pointerEvents="box-none"
-          style={{ ...StyleSheet.absoluteFillObject, zIndex: 50, elevation: 50 }}
-        >
-          {/* Top-right controls row — re-center + view toggle + map style.
-              Hidden during paused stats view (no map → buttons would overlap the timer). */}
-          {!isIdle && !isScreenLocked && viewMode === 'map' && (
-            <View
-              style={[
-                styles.topRightControls,
-                // Clear the broadcast row, which sits between the header and the map.
-                { top: insets.top + 68 + spacing.sm + liveRowHeight },
-              ]}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.mapStyleToggleButton,
-                  { backgroundColor: followUser ? colors.cardBackground : colors.primary },
-                ]}
-                onPress={() => {
-                  setFollowUser(true);
-                  triggerHaptic();
-                }}
-                activeOpacity={0.7}
-                accessibilityLabel={t('recording.recenter')}
-              >
-                <Ionicons
-                  name="navigate"
-                  size={26}
-                  color={followUser ? colors.textSecondary : '#ffffff'}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.mapStyleToggleButton, { backgroundColor: colors.primary }]}
-                onPress={() => {
-                  logger.info('activity', 'Toggling view mode', { from: viewMode, to: 'stats' });
-                  setViewMode('stats');
-                  triggerHaptic();
-                }}
-                activeOpacity={0.7}
-                accessibilityLabel={t('recording.viewStats')}
-              >
-                <Ionicons name="list-outline" size={26} color="#ffffff" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.mapStyleToggleButton, { backgroundColor: colors.cardBackground }]}
-                onPress={handleMapStyleToggle}
-                activeOpacity={0.7}
-                accessibilityLabel={t('recording.mapStyle')}
-              >
-                <Ionicons
-                  name={
-                    mapStyle === 'satellite'
-                      ? 'globe-outline'
-                      : mapStyle === 'streets'
-                        ? 'car-outline'
-                        : 'trail-sign-outline'
-                  }
-                  size={26}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* DEV ONLY: Simulated run — only during recording/paused (idle handled by toolbars) */}
-          {__DEV__ && !isIdle && (
-            <View style={[styles.devMapToggleContainer, { bottom: fabBottom + 340 }]}>
-              <TouchableOpacity
-                style={[
-                  styles.mapStyleToggleButton,
-                  {
-                    backgroundColor: devSim.running ? '#ef4444' : colors.cardBackground,
-                  },
-                ]}
-                onPress={() => {
-                  devSim.toggle();
-                  triggerHaptic();
-                }}
-                onLongPress={() => {
-                  Alert.alert(
-                    'Audio Coach Sim',
-                    `Distance: ${devSim.distanceKm.toFixed(2)} km\nPace: ${devSim.pace} min/km\nInterval: ${audioCoachSettings.intervalKm} km\nEnabled: ${isAudioCoachActive || devSim.running}\nLanguage: ${audioCoachSettings.language}\nStyle: ${audioCoachSettings.style}\n\n+350m every 10s → 1km every ~29s`,
-                  );
-                }}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={devSim.running ? 'stop' : 'walk'}
-                  size={28}
-                  color={devSim.running ? '#fff' : colors.textSecondary}
-                />
-              </TouchableOpacity>
-              <Text
-                style={{
-                  color: devSim.running ? '#ef4444' : colors.textMuted,
-                  fontSize: msFont(9),
-                  textAlign: 'center',
-                  marginTop: 2,
-                }}
-              >
-                {devSim.running ? `${devSim.distanceKm.toFixed(1)}km` : 'SimRun'}
-              </Text>
-            </View>
-          )}
-        </View>
+        <MapControlsOverlay
+          // Hidden during the paused stats view (no map → buttons would overlap the timer).
+          showMapButtons={!isIdle && !isScreenLocked && viewMode === 'map'}
+          // Clear the broadcast row, which sits between the header and the map.
+          top={insets.top + 68 + spacing.sm + liveRowHeight}
+          followUser={followUser}
+          mapStyle={mapStyle}
+          onRecenter={handleRecenter}
+          onShowStats={handleShowStats}
+          onCycleMapStyle={handleMapStyleToggle}
+          showDevSim={__DEV__ && !isIdle}
+          devSimBottom={fabBottom + 340}
+          devSimRunning={devSim.running}
+          devSimDistanceKm={devSim.distanceKm}
+          onToggleDevSim={handleToggleDevSim}
+          onDevSimInfo={handleDevSimInfo}
+        />
       )}
 
       {/* Toasts */}
@@ -1769,23 +1445,6 @@ const styles = StyleSheet.create({
     right: spacing.lg,
   },
   // DEV: Map component toggle (above re-center button)
-  devMapToggleContainer: {
-    position: 'absolute',
-    right: spacing.lg,
-  },
-  mapStyleToggleButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1000,
-  },
 
   // Map style toast notification
 
@@ -1837,14 +1496,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-  },
-  topRightControls: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
