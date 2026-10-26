@@ -13,7 +13,7 @@
     "release:minor": "./scripts/release.sh minor",
     "release:major": "./scripts/release.sh major",
     "eas-build-pre-install": "node scripts/decode-firebase-config.js",
-    "lint": "eslint . --max-warnings=83",
+    "lint": "eslint . --max-warnings=82",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json}\"",

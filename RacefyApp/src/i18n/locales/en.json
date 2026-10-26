@@ -3033,6 +3033,7 @@
     },
     "deleteConfirm": "Are you sure you want to delete this route?",
     "deleted": "Route deleted",
+    "deleteFailed": "Failed to delete route",
     "duplicated": "Route copied to your library"
   },
   "routeDetail": {
