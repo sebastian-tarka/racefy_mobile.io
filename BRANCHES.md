@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: podział `ProfileScreen` (`audyt-profile`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: podział `ProfileScreen` (zmergowane 2026-10-26, `audyt-profile`, tag `pre-audyt-profile` = main sprzed merge)
 
 Refaktor bez zmiany zachowania — największe ryzyko: pomiar nagłówka i sticky pasek zakładek.
 
@@ -27,14 +36,6 @@ Do sprawdzenia na telefonie:
 - [ ] Statystyki: okres, sport, metryka, karty, porównanie z obserwowanym (Plus/Pro) i wiersz paywalla
       (Free); filtr sportu działa też w zakładce Aktywności
 - [ ] Pull-to-refresh na każdej zakładce, doładowywanie list, szkice (publikuj / usuń)
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E: podział `WeeksListScreen` (zmergowane 2026-10-26, `audyt-weeks-list`, tag `pre-audyt-weeks-list` = main sprzed merge)
 
