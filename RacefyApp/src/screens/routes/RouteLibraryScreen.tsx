@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   DeviceEventEmitter,
@@ -11,7 +11,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, Loading, RouteCard, ScreenContainer, ScreenHeader } from '../../components';
+import {
+  BottomSheet,
+  EmptyState,
+  Loading,
+  RouteCard,
+  ScreenContainer,
+  ScreenHeader,
+} from '../../components';
+import type { BottomSheetOption } from '../../components';
+import { useAuth } from '../../hooks/useAuth';
 import { useRoutes } from '../../hooks/useRoutes';
 import { useSportTypes } from '../../hooks/useSportTypes';
 import { useTheme } from '../../hooks/useTheme';
@@ -28,6 +37,9 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
   const selectMode = navRoute.params?.selectMode ?? false;
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { user } = useAuth();
+  /** Route whose long-press actions are open. */
+  const [routeSheet, setRouteSheet] = useState<PlannedRoute | null>(null);
   // `/routes` may omit `sport_type`; the cached catalogue fills the gap so every
   // card shows its sport rather than the generic fallback icon.
   const { getSportById } = useSportTypes();
@@ -66,7 +78,7 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
   );
 
   const handleDelete = useCallback(
-    async (routeId: number) => {
+    (routeId: number) => {
       Alert.alert(t('routeDetail.delete'), t('routes.deleteConfirm'), [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -75,7 +87,9 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
           onPress: async () => {
             try {
               await deleteRoute(routeId);
-            } catch {}
+            } catch {
+              Alert.alert(t('common.error'), t('routes.deleteFailed'));
+            }
           },
         },
       ]);
@@ -83,15 +97,29 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
     [deleteRoute, t],
   );
 
+  const routeOptions = (route: PlannedRoute): BottomSheetOption[] => [
+    {
+      id: 'delete',
+      icon: 'trash-outline',
+      title: t('routeDetail.delete'),
+      color: colors.error,
+      onPress: () => handleDelete(route.id),
+    },
+  ];
+
   const renderItem = useCallback(
     ({ item }: { item: PlannedRoute }) => (
       <RouteCard
         route={item}
         sport={item.sport_type ?? getSportById(item.sport_type_id) ?? null}
         onPress={() => handleRoutePress(item)}
+        // Only the owner can delete; picking a route for an event is not the place.
+        onLongPress={
+          !selectMode && user && item.user_id === user.id ? () => setRouteSheet(item) : undefined
+        }
       />
     ),
-    [handleRoutePress, getSportById],
+    [handleRoutePress, getSportById, selectMode, user],
   );
 
   const renderEmpty = () => {
@@ -168,6 +196,12 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
         ListFooterComponent={isLoading && routes.length > 0 ? <Loading /> : null}
+      />
+      <BottomSheet
+        visible={routeSheet != null}
+        onClose={() => setRouteSheet(null)}
+        title={routeSheet?.title}
+        options={routeSheet ? routeOptions(routeSheet) : []}
       />
     </ScreenContainer>
   );

@@ -21,9 +21,10 @@ interface RouteCardProps {
    */
   sport?: Pick<SportType, 'slug' | 'name'> | null;
   onPress?: () => void;
+  onLongPress?: () => void;
 }
 
-function RouteCardBase({ route, sport, onPress }: RouteCardProps) {
+function RouteCardBase({ route, sport, onPress, onLongPress }: RouteCardProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
 
@@ -32,7 +33,12 @@ function RouteCardBase({ route, sport, onPress }: RouteCardProps) {
   const tile = routeSport && hasSportTile(routeSport) ? getSportTile(routeSport, isDark) : null;
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
+    <TouchableOpacity
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.8}
+      disabled={!onPress && !onLongPress}
+    >
       <Card style={styles.card} noPadding>
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight + '20' }]}>

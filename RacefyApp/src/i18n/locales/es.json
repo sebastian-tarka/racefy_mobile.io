@@ -3040,6 +3040,7 @@
     },
     "deleteConfirm": "¿Seguro que quieres eliminar esta ruta?",
     "deleted": "Ruta eliminada",
+    "deleteFailed": "No se ha podido eliminar la ruta",
     "duplicated": "Ruta copiada a la biblioteca"
   },
   "unsynced": {

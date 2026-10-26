@@ -3075,6 +3075,7 @@
     },
     "deleteConfirm": "Czy na pewno chcesz usunąć tę trasę?",
     "deleted": "Trasa usunięta",
+    "deleteFailed": "Nie udało się usunąć trasy",
     "duplicated": "Trasa skopiowana do biblioteki"
   },
   "routeDetail": {

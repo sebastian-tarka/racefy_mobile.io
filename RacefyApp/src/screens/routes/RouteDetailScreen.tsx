@@ -6,6 +6,7 @@ import { Button, Loading, ScreenHeader, ScreenContainer, Card, LeafletMap } from
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { emitRefresh } from '../../services/refreshEvents';
 import { formatDistance, formatTotalTime } from '../../utils/formatters';
 import { spacing, fontSize, borderRadius } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -52,8 +53,11 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
         onPress: async () => {
           try {
             await api.deleteRoute(routeId);
+            emitRefresh('routes');
             navigation.goBack();
-          } catch {}
+          } catch {
+            Alert.alert(t('common.error'), t('routes.deleteFailed'));
+          }
         },
       },
     ]);
@@ -62,6 +66,7 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
   const handleDuplicate = useCallback(async () => {
     try {
       await api.duplicateRoute(routeId);
+      emitRefresh('routes');
       Alert.alert(t('routes.duplicated'));
     } catch {}
   }, [routeId, t]);

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { usePaginatedFetch } from './usePaginatedFetch';
 import { api } from '../services/api';
+import { useRefreshOn } from '../services/refreshEvents';
 import type { PlannedRoute } from '../types/api';
 
 type RouteFilter = 'my' | 'popular' | 'nearby';
@@ -25,6 +26,9 @@ export function useRoutes() {
       filter === 'my' ? api.getRoutes({ page }) : api.searchRoutes({ page, per_page: 15 }),
     { deps: [filter], dedupeBy: (r) => r.id, errorMessage: 'Failed to load routes' },
   );
+
+  // Route detail deletes/duplicates outside this list.
+  useRefreshOn('routes', refresh);
 
   const changeFilter = useCallback((newFilter: RouteFilter) => setFilter(newFilter), []);
 
