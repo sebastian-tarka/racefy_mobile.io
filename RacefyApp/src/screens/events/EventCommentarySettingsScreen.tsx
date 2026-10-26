@@ -19,7 +19,7 @@ import { spacing, borderRadius, fontSize, msFont } from '../../theme';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
-import { ScreenContainer } from '../../components';
+import { ErrorState, ScreenContainer } from '../../components';
 import { api } from '../../services/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CommentaryStyle, CommentaryLanguage, CommentaryType, Event } from '../../types/api';
@@ -29,6 +29,8 @@ type RootStackParamList = {
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EventCommentarySettings'>;
+
+type CollapsibleSection = 'languages' | 'advanced';
 
 export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   const { eventId } = route.params;
@@ -43,6 +45,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     isLoading,
     isSaving,
     error,
+    refresh,
     updateSettings,
     tokensUsed,
     tokenLimit,
@@ -57,12 +60,10 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     clearError,
   } = useGenerateCommentary(eventId);
 
-  const [expandedSections, setExpandedSections] = useState<{
-    [key: string]: boolean;
-  }>({
-    general: true,
-    advanced: false,
+  // The rarely touched sections start collapsed, with a one-line summary in the header.
+  const [expandedSections, setExpandedSections] = useState<Record<CollapsibleSection, boolean>>({
     languages: false,
+    advanced: false,
   });
 
   // Fetch event to check status
@@ -95,7 +96,7 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
   // Check if event is read-only (completed or cancelled)
   const isReadOnly = event?.status === 'completed' || event?.status === 'cancelled';
 
-  const toggleSection = (section: string) => {
+  const toggleSection = (section: CollapsibleSection) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -211,7 +212,41 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
     );
   };
 
-  if (isLoading) {
+  const sectionHeader = (section: CollapsibleSection, title: string, summary: string) => {
+    const expanded = expandedSections[section];
+    return (
+      <TouchableOpacity
+        style={styles.collapsibleHeader}
+        onPress={() => toggleSection(section)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+      >
+        <View style={styles.settingInfo}>
+          <Text
+            style={[styles.sectionTitle, styles.collapsibleTitle, { color: colors.textPrimary }]}
+          >
+            {title}
+          </Text>
+          {!expanded && !!summary && (
+            <Text
+              style={[styles.settingDescription, { color: colors.textSecondary }]}
+              numberOfLines={1}
+            >
+              {summary}
+            </Text>
+          )}
+        </View>
+        <Ionicons
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={20}
+          color={colors.textMuted}
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  // Wait for the event too: until its status is known, a completed event looked editable.
+  if (isLoading || isLoadingEvent) {
     return (
       <ScreenContainer>
         <ScreenHeader
@@ -234,11 +269,10 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
           showBack
           onBack={() => navigation.goBack()}
         />
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: colors.error }]}>
-            {error || t('commentary.loadFailed', 'Failed to load settings')}
-          </Text>
-        </View>
+        <ErrorState
+          message={error || t('commentary.loadFailed', 'Failed to load settings')}
+          onRetry={refresh}
+        />
       </ScreenContainer>
     );
   }
@@ -382,99 +416,122 @@ export function EventCommentarySettingsScreen({ route, navigation }: Props) {
 
             {/* Languages */}
             <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('commentary.languages', 'Languages')}
-              </Text>
-              <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-                {t(
-                  'commentary.languagesDescription',
-                  'Select which languages to generate commentary in',
-                )}
-              </Text>
-              {Object.entries(settings.available_languages).map(([code, name]) => (
-                <View key={code} style={styles.settingRow}>
-                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{name}</Text>
-                  <Switch
-                    value={settings.languages.includes(code as CommentaryLanguage)}
-                    onValueChange={() => handleToggleLanguage(code as CommentaryLanguage)}
-                    disabled={isSaving || isReadOnly}
-                    trackColor={{ true: colors.primary, false: colors.border }}
-                    thumbColor={colors.white}
-                  />
-                </View>
-              ))}
+              {sectionHeader(
+                'languages',
+                t('commentary.languages', 'Languages'),
+                settings.languages
+                  .map((code) => settings.available_languages[code] ?? code)
+                  .join(', '),
+              )}
+              {expandedSections.languages && (
+                <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                  {t(
+                    'commentary.languagesDescription',
+                    'Select which languages to generate commentary in',
+                  )}
+                </Text>
+              )}
+              {expandedSections.languages &&
+                Object.entries(settings.available_languages).map(([code, name]) => (
+                  <View key={code} style={styles.settingRow}>
+                    <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{name}</Text>
+                    <Switch
+                      value={settings.languages.includes(code as CommentaryLanguage)}
+                      onValueChange={() => handleToggleLanguage(code as CommentaryLanguage)}
+                      disabled={isSaving || isReadOnly}
+                      trackColor={{ true: colors.primary, false: colors.border }}
+                      thumbColor={colors.white}
+                    />
+                  </View>
+                ))}
             </Card>
 
             {/* Advanced Settings */}
             <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('commentary.advanced', 'Advanced')}
-              </Text>
+              {sectionHeader(
+                'advanced',
+                t('commentary.advanced', 'Advanced'),
+                [
+                  settings.auto_publish ? t('commentary.autoPublish', 'Auto-publish') : null,
+                  `${settings.interval_minutes} min`,
+                ]
+                  .filter(Boolean)
+                  .join(' · '),
+              )}
 
-              <View style={styles.settingRow}>
-                <View style={styles.settingInfo}>
+              {expandedSections.advanced && (
+                <>
+                  <View style={styles.settingRow}>
+                    <View style={styles.settingInfo}>
+                      <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
+                        {t('commentary.autoPublish', 'Auto-publish')}
+                      </Text>
+                      <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                        {t(
+                          'commentary.autoPublishDescription',
+                          'Automatically publish generated commentary',
+                        )}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={settings.auto_publish}
+                      onValueChange={handleToggleAutoPublish}
+                      disabled={isSaving || isReadOnly}
+                      trackColor={{ true: colors.primary, false: colors.border }}
+                      thumbColor={colors.white}
+                    />
+                  </View>
+
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
                   <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                    {t('commentary.autoPublish', 'Auto-publish')}
+                    {t('commentary.updateInterval', 'Update Interval')}
                   </Text>
                   <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
                     {t(
-                      'commentary.autoPublishDescription',
-                      'Automatically publish generated commentary',
+                      'commentary.updateIntervalDescription',
+                      'How often to generate live updates',
                     )}
                   </Text>
-                </View>
-                <Switch
-                  value={settings.auto_publish}
-                  onValueChange={handleToggleAutoPublish}
-                  disabled={isSaving || isReadOnly}
-                  trackColor={{ true: colors.primary, false: colors.border }}
-                  thumbColor={colors.white}
-                />
-              </View>
-
-              <View style={styles.divider} />
-
-              <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                {t('commentary.updateInterval', 'Update Interval')}
-              </Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
-                {t('commentary.updateIntervalDescription', 'How often to generate live updates')}
-              </Text>
-              <View style={styles.intervalOptions}>
-                {[5, 10, 15, 30, 60].map((interval) => (
-                  <TouchableOpacity
-                    key={interval}
-                    style={[
-                      styles.intervalButton,
-                      {
-                        backgroundColor:
-                          settings.interval_minutes === interval
-                            ? colors.primary
-                            : colors.transparent,
-                        borderColor:
-                          settings.interval_minutes === interval ? colors.primary : colors.border,
-                        opacity: isReadOnly ? 0.5 : 1,
-                      },
-                    ]}
-                    onPress={() => handleIntervalChange(interval)}
-                    disabled={isSaving || isReadOnly}
-                  >
-                    <Text
-                      style={[
-                        styles.intervalText,
-                        {
-                          color:
-                            settings.interval_minutes === interval
-                              ? colors.white
-                              : colors.textPrimary,
-                        },
-                      ]}
-                    >
-                      {interval} min
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  <View style={styles.intervalOptions}>
+                    {[5, 10, 15, 30, 60].map((interval) => (
+                      <TouchableOpacity
+                        key={interval}
+                        style={[
+                          styles.intervalButton,
+                          {
+                            backgroundColor:
+                              settings.interval_minutes === interval
+                                ? colors.primary
+                                : colors.transparent,
+                            borderColor:
+                              settings.interval_minutes === interval
+                                ? colors.primary
+                                : colors.border,
+                            opacity: isReadOnly ? 0.5 : 1,
+                          },
+                        ]}
+                        onPress={() => handleIntervalChange(interval)}
+                        disabled={isSaving || isReadOnly}
+                      >
+                        <Text
+                          style={[
+                            styles.intervalText,
+                            {
+                              color:
+                                settings.interval_minutes === interval
+                                  ? colors.white
+                                  : colors.textPrimary,
+                            },
+                          ]}
+                        >
+                          {interval} min
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
             </Card>
 
             {/* Manual Generation */}
@@ -524,16 +581,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorText: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
-  },
   readOnlyNotice: {
     flexDirection: 'row',
     padding: spacing.md,
@@ -561,6 +608,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
     marginBottom: spacing.sm,
+  },
+  collapsibleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  collapsibleTitle: {
+    marginBottom: 0,
   },
   sectionDescription: {
     fontSize: msFont(13),
@@ -635,7 +690,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
     marginVertical: spacing.md,
   },
   intervalOptions: {
