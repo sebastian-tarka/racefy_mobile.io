@@ -15,7 +15,23 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E — reszta: sesja siłowa, arkusz celu, księga pauz (`audyt-e-reszta`, od 2026-10-26)
+
+Trzy refaktory bez zmiany zachowania. `EventsScreen` świadomie pominięty (czeka na decyzję
+o restrukturyzacji ekranu wydarzeń).
+
+Do sprawdzenia na telefonie:
+- [ ] Sesja siłowa: wpisywanie powtórzeń / kg, Start → Gotowe → ✓, cofnięcie, usuwanie serii (krzyżyk
+      i długie przytrzymanie), przerwa; stoper tyka, a pola nie gubią wpisanych wartości
+- [ ] Podsumowanie sesji: ukończona (serie, objętość, czas, „Otwórz aktywność”), pominięta (wznów),
+      zakończona offline (notka)
+- [ ] Arkusz celu: dystans / czas (stepper, wpisanie wartości, presety), ostatni szybki cel wraca
+      przy kolejnym otwarciu; interwały: gotowe zestawy, budowanie (powtórzenia, czas ↔ dystans,
+      rozgrzewka / schłodzenie dodaj / usuń), pasek podglądu i legenda; tryb „Zmień cel” w trakcie
+- [ ] Pauza / wznowienie w trakcie nagrywania, także bez sieci i po powrocie sieci (pauzy dochodzą
+      na serwer z właściwym czasem); start offline → po powrocie sieci aktywność powstaje i pauzy idą za nią
+- [ ] Zapis, który serwer odrzuca → wpis w „Niewysłane” z tytułem, wydarzeniem i wyborem udostępnienia
+
 
 ---
 
