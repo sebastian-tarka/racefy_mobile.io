@@ -1,8 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
-  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -36,16 +34,18 @@ import {
 } from '../../components';
 import { TrainingPlansSheet } from '../../components/Training/TrainingPlansSheet';
 import { PlanWarningsBanner } from '../../components/Training/PlanWarningsBanner';
+import { ProgramSettingsModal } from './components/ProgramSettingsModal';
+import { SessionRow, WeekTile } from './components/WeekListItems';
+import { useCoachingHints } from '../../hooks/useCoachingHints';
+import {
+  defaultWeek,
+  programAdherence,
+  programProgress,
+  weekStats,
+} from '../../utils/trainingWeek';
 import type { RootStackParamList } from '../../navigation/types';
-import type {
-  AiMode,
-  MentalBudget,
-  PausedReason,
-  PlanWarning,
-  TrainingProgram,
-  TrainingWeek,
-} from '../../types/api';
-import { getErrorMessage, isApiError } from '../../utils/errors';
+import type { PausedReason, PlanWarning, TrainingProgram, TrainingWeek } from '../../types/api';
+import { getErrorMessage } from '../../utils/errors';
 import { formatIntlDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -59,98 +59,6 @@ interface Props {
 const fmtDay = (d: string) => formatIntlDate(d, { day: 'numeric', month: 'short' });
 const fmtFull = (d: string) =>
   formatIntlDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
-
-interface UISession {
-  id: string;
-  title: string;
-  detail: string;
-  durationMinutes: number;
-  status: 'completed' | 'skipped' | 'pending';
-  iconType: string;
-  /** Per-session discipline; only set on multi-sport (triathlon) plans. */
-  sportSlug?: string | null;
-}
-
-/**
- * Normalize a week's sessions into a single list. Prefers `activities` (they carry a
- * completion status → DONE/PLANNED); falls back to the prescribed `suggested_activities`
- * (always shown as planned) when no concrete activities exist yet.
- */
-type DistanceFormatter = (meters: number) => string;
-
-function getSessions(week: TrainingWeek, fmtDist: DistanceFormatter): UISession[] {
-  const acts = week.activities || [];
-  if (acts.length > 0) {
-    return acts.map((a) => ({
-      id: `a-${a.id}`,
-      title: humanize(a.description || a.activity_type),
-      detail: [a.distance_meters ? fmtDist(a.distance_meters) : null, a.intensity]
-        .filter(Boolean)
-        .join(' · '),
-      durationMinutes: a.duration_minutes || 0,
-      status: a.status,
-      iconType: a.activity_type,
-    }));
-  }
-  const suggested = week.suggested_activities || [];
-  return suggested.map((s) => ({
-    id: `s-${s.id}`,
-    title: humanize(s.activity_type),
-    detail: [
-      s.target_distance_meters ? fmtDist(s.target_distance_meters) : null,
-      s.intensity_description,
-    ]
-      .filter(Boolean)
-      .join(' · '),
-    durationMinutes: s.target_duration_minutes || 0,
-    status: 'pending' as const,
-    iconType: s.activity_type,
-    sportSlug: s.sport_slug,
-  }));
-}
-
-/** Completed / total sessions, planned minutes and percent for a week. */
-function weekStats(week: TrainingWeek, fmtDist: DistanceFormatter) {
-  const sessions = getSessions(week, fmtDist);
-  const statusCompleted = sessions.filter((s) => s.status === 'completed').length;
-  // The backend exposes completed/planned counts in `progress` (derived from
-  // activity matching). Prefer them so the card matches the week-progress
-  // (compliance) screen even when per-session status isn't set on auto-linked runs.
-  const completed = Math.max(statusCompleted, week.progress?.activities_count ?? 0);
-  const total =
-    week.progress?.suggested_activities_count ||
-    week.progress?.sessions_per_week ||
-    sessions.length;
-  const plannedMinutes = sessions.reduce((sum, s) => sum + s.durationMinutes, 0);
-  const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
-  return { sessions, completed, total, plannedMinutes, percent };
-}
-
-/**
- * `sportSlug` is the session's own discipline and is authoritative when present
- * — in a triathlon plan one week mixes swims, rides and runs, which the
- * name-sniffing fallback below cannot reliably tell apart.
- */
-function activityIcon(type: string, sportSlug?: string | null): keyof typeof Ionicons.glyphMap {
-  const slug = (sportSlug || '').toLowerCase();
-  if (slug.includes('swim')) return 'water';
-  if (slug.includes('cycl') || slug.includes('bike')) return 'bicycle';
-  if (slug.includes('run') || slug.includes('walk')) return 'walk';
-
-  const t = (type || '').toLowerCase();
-  if (t.includes('rest')) return 'bed-outline';
-  if (t.includes('hill') || t.includes('interval') || t.includes('tempo') || t.includes('speed'))
-    return 'flame';
-  if (t.includes('bike') || t.includes('cycl') || t.includes('cross')) return 'bicycle';
-  if (t.includes('swim')) return 'water';
-  return 'walk';
-}
-
-function humanize(text: string): string {
-  if (!text) return '';
-  const s = text.replace(/[_-]+/g, ' ').trim();
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
 
 export function WeeksListScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
@@ -184,21 +92,7 @@ export function WeeksListScreen({ navigation, route }: Props) {
     return limit === -1 || programs.length < limit;
   })();
 
-  // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [autoLinkActivities, setAutoLinkActivities] = useState(false);
-  const [allowedSportTypes, setAllowedSportTypes] = useState<number[]>([]);
-  const [savingSettings, setSavingSettings] = useState(false);
-
-  // Mental budget state
-  const [mentalBudget, setMentalBudget] = useState<MentalBudget | null>(null);
-  const [aiMode, setAiMode] = useState<AiMode>('reactive');
-  const [loadingMentalBudget, setLoadingMentalBudget] = useState(false);
-
-  // Coaching hints state
-  const [generatingHints, setGeneratingHints] = useState(false);
-  const [hintsProgress, setHintsProgress] = useState({ done: 0, total: 0 });
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = useCallback(
     async (isRefresh = false) => {
@@ -243,14 +137,6 @@ export function WeeksListScreen({ navigation, route }: Props) {
     loadData();
   }, [loadData]);
 
-  // Initialize settings when program loads
-  useEffect(() => {
-    if (program) {
-      setAutoLinkActivities(program.auto_link_activities);
-      setAllowedSportTypes(program.allowed_sport_types || []);
-    }
-  }, [program]);
-
   // Keep the selected week valid; default to the current week.
   useEffect(() => {
     if (weeks.length === 0) {
@@ -258,8 +144,7 @@ export function WeeksListScreen({ navigation, route }: Props) {
       return;
     }
     if (!weeks.some((w) => w.id === selectedWeekId)) {
-      const current = weeks.find((w) => w.status === 'current' || w.status === 'active');
-      setSelectedWeekId((current ?? weeks[0]).id);
+      setSelectedWeekId(defaultWeek(weeks)?.id ?? null);
     }
   }, [weeks, selectedWeekId]);
 
@@ -354,61 +239,8 @@ export function WeeksListScreen({ navigation, route }: Props) {
     );
   };
 
-  const loadMentalBudget = async () => {
-    if (!program) return;
-    setLoadingMentalBudget(true);
-    try {
-      const budget = await api.getMentalBudget();
-      setMentalBudget(budget);
-      setAiMode(budget.ai_mode);
-      logger.info('training', 'Mental budget loaded', { budget });
-    } catch (err) {
-      logger.error('training', 'Failed to load mental budget', { error: err });
-    } finally {
-      setLoadingMentalBudget(false);
-    }
-  };
-
-  const handleOpenSettings = async () => {
-    if (!program) return;
-    setAutoLinkActivities(program.auto_link_activities);
-    setAllowedSportTypes(program.allowed_sport_types || []);
-    setShowSettingsModal(true);
-    await loadMentalBudget();
-  };
-
-  const handleSaveSettings = async () => {
-    if (!program) return;
-    setSavingSettings(true);
-    try {
-      await api.updateProgramSettings(program.id, {
-        auto_link_activities: autoLinkActivities,
-        // null (not undefined, not []) is how "every sport counts" is expressed.
-        // Sending undefined omits the field, which left the user unable to clear
-        // a restriction once set; [] persists something that reads as a
-        // restriction but enforces nothing.
-        allowed_sport_types: allowedSportTypes.length > 0 ? allowedSportTypes : null,
-      });
-      logger.info('training', 'Program settings updated', {
-        programId: program.id,
-        autoLinkActivities,
-        allowedSportTypes: allowedSportTypes.length,
-      });
-
-      if (mentalBudget && aiMode !== mentalBudget.ai_mode) {
-        await api.updateMentalBudget({ ai_mode: aiMode });
-        logger.info('training', 'Mental budget updated', { aiMode });
-      }
-
-      await loadData(true);
-      setShowSettingsModal(false);
-      Alert.alert(t('common.success'), t('training.weeksList.settingsUpdated'));
-    } catch (err) {
-      logger.error('training', 'Failed to update settings', { error: err });
-      Alert.alert(t('common.error'), getErrorMessage(err));
-    } finally {
-      setSavingSettings(false);
-    }
+  const handleOpenSettings = () => {
+    if (program) setShowSettingsModal(true);
   };
 
   const handleResumeProgram = async () => {
@@ -445,84 +277,12 @@ export function WeeksListScreen({ navigation, route }: Props) {
     }
   };
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleGenerateHints = async () => {
-    if (!program) return;
-
-    if (weeks.every((w) => w.coaching_hint)) {
-      Alert.alert(
-        t('training.coachingHints.sectionTitle'),
-        t('training.coachingHints.allGenerated'),
-      );
-      return;
-    }
-
-    setGeneratingHints(true);
-    try {
-      const response = await api.generateAllHints(program.id);
-
-      if (response.status === 'completed') {
-        await loadData(true);
-        setGeneratingHints(false);
-        triggerHaptic();
-        Alert.alert(
-          t('training.coachingHints.sectionTitle'),
-          t('training.coachingHints.generationComplete'),
-        );
-        return;
-      }
-
-      const totalWeeks = response.total_weeks || program.total_weeks;
-      const weeksPending = response.weeks_pending || 0;
-      setHintsProgress({ done: totalWeeks - weeksPending, total: totalWeeks });
-
-      pollRef.current = setInterval(async () => {
-        try {
-          const updatedWeeks = await api.getWeeks();
-          setWeeks(updatedWeeks);
-
-          const remaining = updatedWeeks.filter((w) => !w.coaching_hint).length;
-          setHintsProgress({ done: totalWeeks - remaining, total: totalWeeks });
-
-          if (remaining === 0) {
-            if (pollRef.current) {
-              clearInterval(pollRef.current);
-              pollRef.current = null;
-            }
-            setGeneratingHints(false);
-            triggerHaptic();
-            Alert.alert(
-              t('training.coachingHints.sectionTitle'),
-              t('training.coachingHints.generationComplete'),
-            );
-          }
-        } catch (pollErr) {
-          logger.error('training', 'Polling hints progress failed', { error: pollErr });
-        }
-      }, 5000);
-    } catch (err) {
-      setGeneratingHints(false);
-      logger.error('training', 'Failed to generate coaching hints', { error: err });
-      if (
-        isApiError(err) &&
-        err.status === 403 &&
-        (err.data as { required_tier?: string } | undefined)?.required_tier
-      ) {
-        upgradePromptEmitter.emit('show', { feature: 'coaching_hints_bulk', currentTier: tier });
-        return;
-      }
-      Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
-    }
-  };
+  const reload = useCallback(() => loadData(true), [loadData]);
+  const {
+    generating: generatingHints,
+    progress: hintsProgress,
+    generate: handleGenerateHints,
+  } = useCoachingHints({ program, weeks, setWeeks, reload, tier });
 
   if (loading) {
     return <Loading fullScreen message={t('common.loading')} />;
@@ -576,25 +336,9 @@ export function WeeksListScreen({ navigation, route }: Props) {
   }
 
   // ---- Derived program-level values ----
-  const totalWeeks = program.total_weeks || 0;
-  const currentWeekNumber = program.current_week_number ?? 0;
-  const weeksDone = Math.max(0, currentWeekNumber - 1);
-  const toGo = Math.max(0, totalWeeks - weeksDone);
-  const overallPercent =
-    totalWeeks > 0 ? Math.min(100, Math.round((weeksDone / totalWeeks) * 100)) : 0;
-
-  // Adherence: completed vs planned sessions across all non-upcoming weeks (computed client-side).
-  const adherence = (() => {
-    let done = 0;
-    let planned = 0;
-    weeks.forEach((w) => {
-      if (w.status === 'upcoming') return;
-      const s = weekStats(w, fmtDist);
-      done += s.completed;
-      planned += s.total;
-    });
-    return planned > 0 ? Math.round((done / planned) * 100) : null;
-  })();
+  const { totalWeeks, currentWeekNumber, weeksDone, toGo, overallPercent } =
+    programProgress(program);
+  const adherence = programAdherence(weeks, fmtDist);
 
   const isPaused = program.status === 'paused';
   // Deferred plan: dated but not started yet, so the taper lands in race week.
@@ -608,114 +352,6 @@ export function WeeksListScreen({ navigation, route }: Props) {
       : t('training.activeBadge');
   const selectedWeek = weeks.find((w) => w.id === selectedWeekId) ?? null;
   const hasOtherPrograms = programs.length > 1;
-
-  const renderWeekTile = (week: TrainingWeek) => {
-    const isCurrent = week.status === 'current' || week.status === 'active';
-    const isSelected = week.id === selectedWeekId;
-    const dotColor =
-      week.status === 'completed'
-        ? colors.success
-        : week.status === 'skipped'
-          ? colors.textMuted
-          : isCurrent
-            ? colors.white
-            : 'transparent';
-
-    return (
-      <TouchableOpacity
-        key={week.id}
-        style={[
-          styles.weekTile,
-          {
-            backgroundColor: isCurrent ? colors.textPrimary : colors.cardBackground,
-            borderColor: isSelected ? colors.primary : colors.borderLight,
-          },
-        ]}
-        onPress={() => setSelectedWeekId(week.id)}
-        activeOpacity={0.8}
-      >
-        <Text
-          style={[
-            styles.weekTileLabel,
-            { color: isCurrent ? colors.background : colors.textMuted },
-          ]}
-        >
-          {t('training.weeksList.weekShort')}
-        </Text>
-        <Text
-          style={[
-            styles.weekTileNumber,
-            { color: isCurrent ? colors.background : colors.textPrimary },
-          ]}
-        >
-          {week.week_number}
-        </Text>
-        <View
-          style={[
-            styles.weekTileDot,
-            dotColor === 'transparent'
-              ? { borderWidth: 1.5, borderColor: colors.border }
-              : { backgroundColor: dotColor },
-          ]}
-        />
-      </TouchableOpacity>
-    );
-  };
-
-  const renderSession = (session: UISession) => {
-    const done = session.status === 'completed';
-    const skipped = session.status === 'skipped';
-    const duration = session.durationMinutes
-      ? formatDurationCompact(session.durationMinutes * 60)
-      : null;
-    const statusColor = done ? colors.success : skipped ? colors.textMuted : colors.textSecondary;
-    const statusLabel = done
-      ? t('training.weeksList.sessionStatus.done')
-      : skipped
-        ? t('training.weeksList.sessionStatus.skipped')
-        : t('training.weeksList.sessionStatus.planned');
-
-    return (
-      <View key={session.id} style={styles.session}>
-        <View
-          style={[
-            styles.sessionIcon,
-            { backgroundColor: done ? colors.success : colors.primary + '18' },
-          ]}
-        >
-          <Ionicons
-            name={done ? 'checkmark' : activityIcon(session.iconType, session.sportSlug)}
-            size={18}
-            color={done ? colors.white : colors.primary}
-          />
-        </View>
-        <View style={styles.sessionText}>
-          <Text style={[styles.sessionTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {session.title}
-          </Text>
-          {!!session.detail && (
-            <Text style={[styles.sessionDetail, { color: colors.textSecondary }]} numberOfLines={1}>
-              {session.detail}
-            </Text>
-          )}
-        </View>
-        <View style={styles.sessionMeta}>
-          {duration && (
-            <Text
-              style={[
-                styles.sessionDuration,
-                { color: done ? colors.textMuted : colors.textPrimary },
-                done && styles.strikethrough,
-              ]}
-            >
-              {duration}
-            </Text>
-          )}
-          <Text style={[styles.sessionStatus, { color: statusColor }]}>{statusLabel}</Text>
-        </View>
-      </View>
-    );
-  };
 
   const selectedStats = selectedWeek ? weekStats(selectedWeek, fmtDist) : null;
   const selectedIsCurrent = selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
@@ -940,7 +576,14 @@ export function WeeksListScreen({ navigation, route }: Props) {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.weekStrip}
             >
-              {weeks.map(renderWeekTile)}
+              {weeks.map((week) => (
+                <WeekTile
+                  key={week.id}
+                  week={week}
+                  isSelected={week.id === selectedWeekId}
+                  onSelect={setSelectedWeekId}
+                />
+              ))}
             </ScrollView>
           </View>
         )}
@@ -1034,7 +677,11 @@ export function WeeksListScreen({ navigation, route }: Props) {
             </View>
 
             {selectedStats.sessions.length > 0 && (
-              <View style={styles.sessionsList}>{selectedStats.sessions.map(renderSession)}</View>
+              <View style={styles.sessionsList}>
+                {selectedStats.sessions.map((session) => (
+                  <SessionRow key={session.id} session={session} />
+                ))}
+              </View>
             )}
 
             <TouchableOpacity
@@ -1067,187 +714,13 @@ export function WeeksListScreen({ navigation, route }: Props) {
         onCreateNew={handleCreateNewProgram}
       />
 
-      {/* Settings Modal */}
-      <Modal
+      <ProgramSettingsModal
         visible={showSettingsModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <ScreenContainer style={styles.modalContainer}>
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
-              <Ionicons name="close" size={24} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {t('training.weeksList.settings')}
-            </Text>
-            <TouchableOpacity onPress={handleSaveSettings} disabled={savingSettings}>
-              {savingSettings ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={[styles.modalDoneText, { color: colors.primary }]}>
-                  {t('common.save')}
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            {/* Auto-Link Toggle */}
-            <View style={styles.modalSection}>
-              <Text style={[styles.modalSectionTitle, { color: colors.textPrimary }]}>
-                {t('training.weeksList.autoLinkTitle')}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.modalToggleRow,
-                  { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  autoLinkActivities && {
-                    borderColor: colors.primary,
-                    backgroundColor: colors.primary + '15',
-                  },
-                ]}
-                onPress={() => setAutoLinkActivities(!autoLinkActivities)}
-              >
-                <View style={styles.modalToggleLabel}>
-                  <Ionicons
-                    name={autoLinkActivities ? 'checkbox' : 'square-outline'}
-                    size={24}
-                    color={autoLinkActivities ? colors.primary : colors.textSecondary}
-                  />
-                  <View style={styles.modalToggleContent}>
-                    <Text style={[styles.modalToggleText, { color: colors.textPrimary }]}>
-                      {t('training.calibration.autoLinkActivities')}
-                    </Text>
-                    <Text style={[styles.modalToggleDescription, { color: colors.textSecondary }]}>
-                      {t('training.calibration.autoLinkActivitiesDescription')}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Cross-Training Sports */}
-            {autoLinkActivities && (
-              <View style={styles.modalSection}>
-                <Text style={[styles.modalSectionTitle, { color: colors.textPrimary }]}>
-                  {t('training.calibration.crossTrainingSports')}
-                </Text>
-                <Text style={[styles.modalSectionDescription, { color: colors.textSecondary }]}>
-                  {t('training.calibration.crossTrainingSportsDescription')}
-                </Text>
-                {sportTypes
-                  .filter((s) => s.id !== program.sport_type_id)
-                  .map((sport) => {
-                    const isSelected = allowedSportTypes.includes(sport.id);
-                    return (
-                      <TouchableOpacity
-                        key={sport.id}
-                        style={[
-                          styles.modalSportRow,
-                          { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && {
-                            borderColor: colors.primary,
-                            backgroundColor: colors.primary + '15',
-                          },
-                        ]}
-                        onPress={() => {
-                          setAllowedSportTypes((prev) =>
-                            isSelected ? prev.filter((id) => id !== sport.id) : [...prev, sport.id],
-                          );
-                        }}
-                      >
-                        <Ionicons
-                          name={sport.icon || 'fitness-outline'}
-                          size={24}
-                          color={isSelected ? colors.primary : colors.textSecondary}
-                        />
-                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
-                          {sport.name}
-                        </Text>
-                        {isSelected && (
-                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-              </View>
-            )}
-
-            {/* Mental Budget / Training Tips Settings */}
-            <View style={styles.modalSection}>
-              <Text style={[styles.modalSectionTitle, { color: colors.textPrimary }]}>
-                {t('training.tips.settings.title')}
-              </Text>
-              <Text style={[styles.modalSectionDescription, { color: colors.textSecondary }]}>
-                {t('training.tips.settings.frequency')}
-              </Text>
-
-              {loadingMentalBudget ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                </View>
-              ) : (
-                <>
-                  {(['silent', 'reactive', 'proactive'] as AiMode[]).map((mode) => {
-                    const isSelected = aiMode === mode;
-                    const modeIcons: Record<AiMode, string> = {
-                      silent: 'volume-mute',
-                      reactive: 'volume-medium',
-                      proactive: 'volume-high',
-                    };
-                    return (
-                      <TouchableOpacity
-                        key={mode}
-                        style={[
-                          styles.modalSportRow,
-                          { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                          isSelected && {
-                            borderColor: colors.primary,
-                            backgroundColor: colors.primary + '15',
-                          },
-                        ]}
-                        onPress={() => setAiMode(mode)}
-                      >
-                        <Ionicons
-                          name={modeIcons[mode] as any}
-                          size={24}
-                          color={isSelected ? colors.primary : colors.textSecondary}
-                        />
-                        <Text style={[styles.modalSportText, { color: colors.textPrimary }]}>
-                          {t(`training.tips.settings.${mode}`)}
-                        </Text>
-                        {isSelected && (
-                          <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-
-                  {mentalBudget && (
-                    <View
-                      style={[styles.usageContainer, { backgroundColor: colors.cardBackground }]}
-                    >
-                      <Ionicons
-                        name="information-circle-outline"
-                        size={20}
-                        color={colors.textSecondary}
-                      />
-                      <Text style={[styles.usageText, { color: colors.textSecondary }]}>
-                        {t('training.tips.settings.usage', {
-                          delivered: mentalBudget.tips_delivered_this_week,
-                          max: mentalBudget.max_tips_per_week,
-                        })}
-                      </Text>
-                    </View>
-                  )}
-                </>
-              )}
-            </View>
-          </ScrollView>
-        </ScreenContainer>
-      </Modal>
+        program={program}
+        sportTypes={sportTypes}
+        onClose={() => setShowSettingsModal(false)}
+        onSaved={reload}
+      />
     </ScreenContainer>
   );
 }
@@ -1361,29 +834,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  weekTile: {
-    width: 60,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    gap: 2,
-  },
-  weekTileLabel: {
-    fontSize: msFont(9),
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  weekTileNumber: {
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-  },
-  weekTileDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 2,
-  },
   // Selected week card
   weekCard: {
     padding: spacing.lg,
@@ -1471,47 +921,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     gap: spacing.sm,
   },
-  session: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sessionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
-  },
-  sessionText: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  sessionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  sessionDetail: {
-    fontSize: fontSize.xs,
-    marginTop: 1,
-  },
-  sessionMeta: {
-    alignItems: 'flex-end',
-  },
-  sessionDuration: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  strikethrough: {
-    textDecorationLine: 'line-through',
-  },
-  sessionStatus: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 1,
-  },
   viewProgressBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1535,93 +944,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   // Settings modal
-  modalContainer: {
-    flex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-  },
-  modalDoneText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  modalContent: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  modalSection: {
-    marginBottom: spacing.xxl,
-  },
-  modalSectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.sm,
-  },
-  modalSectionDescription: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.md,
-  },
-  modalToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-  },
-  modalToggleLabel: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    flex: 1,
-  },
-  modalToggleContent: {
-    flex: 1,
-  },
-  modalToggleText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  modalToggleDescription: {
-    fontSize: fontSize.sm,
-  },
-  modalSportRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  modalSportText: {
-    flex: 1,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  usageContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.md,
-  },
-  usageText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-  },
 });
