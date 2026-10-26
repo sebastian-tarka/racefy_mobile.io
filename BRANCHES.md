@@ -15,14 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Ustawienia komentarza AI eventu: ładowanie i zwijane sekcje (`commentary-settings`, od 2026-10-26)
-
-Do czasu wczytania eventu ustawienia zakończonego/anulowanego eventu dało się zmieniać; zwijane sekcje były zaczęte i porzucone.
-- [ ] zakończony event → Ustawienia komentarza: od pierwszej klatki baner „tylko do odczytu”, przełączniki nieaktywne
-- [ ] „Języki” i „Zaawansowane” zwinięte, w nagłówku podsumowanie (języki / auto-publikacja · interwał); tap rozwija i zwija
-- [ ] zmiana języka/interwału przy zwiniętej sekcji → podsumowanie się zgadza po rozwinięciu i zwinięciu
-- [ ] bez internetu: błąd z „Spróbuj ponownie”, po włączeniu sieci ustawienia się wczytują
-- [ ] ciemny motyw: kreska w „Zaawansowane” nie świeci na jasno
+_(nic)_
 
 ---
 
@@ -30,6 +23,15 @@ Do czasu wczytania eventu ustawienia zakończonego/anulowanego eventu dało się
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Ustawienia komentarza AI eventu: ładowanie i zwijane sekcje (zmergowane 2026-10-26, `commentary-settings`, tag `pre-commentary-settings` = main sprzed merge)
+
+Do czasu wczytania eventu ustawienia zakończonego/anulowanego eventu dało się zmieniać; zwijane sekcje były zaczęte i porzucone.
+- [ ] zakończony event → Ustawienia komentarza: od pierwszej klatki baner „tylko do odczytu”, przełączniki nieaktywne
+- [ ] „Języki” i „Zaawansowane” zwinięte, w nagłówku podsumowanie (języki / auto-publikacja · interwał); tap rozwija i zwija
+- [ ] zmiana języka/interwału przy zwiniętej sekcji → podsumowanie się zgadza po rozwinięciu i zwinięciu
+- [ ] bez internetu: błąd z „Spróbuj ponownie”, po włączeniu sieci ustawienia się wczytują
+- [ ] ciemny motyw: kreska w „Zaawansowane” nie świeci na jasno
 
 ### Pull-to-refresh odświeża komentarze (zmergowane 2026-10-26, `comments-refresh`, tag `pre-comments-refresh` = main sprzed merge)
 
