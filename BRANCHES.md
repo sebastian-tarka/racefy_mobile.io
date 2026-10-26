@@ -15,7 +15,12 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Edycja drużyny wczytuje dane (`team-edit`, od 2026-10-26)
+
+Formularz edycji otwierał się pusty — zapis nadpisywał nazwę/opis/widoczność tym, co wpisano od zera.
+- [ ] kapitan → ołówek na drużynie: formularz ma aktualną nazwę, opis i widoczność
+- [ ] zapis zmiany → szczegóły drużyny po powrocie pokazują nową nazwę/opis
+- [ ] bez internetu przy otwieraniu edycji: komunikat błędu z „Spróbuj ponownie”, nie pusty formularz
 
 ---
 
