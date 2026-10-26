@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E — reszta: sesja siłowa, arkusz celu, księga pauz (`audyt-e-reszta`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E — reszta: sesja siłowa, arkusz celu, księga pauz (zmergowane 2026-10-26, `audyt-e-reszta`, tag `pre-audyt-e-reszta` = main sprzed merge)
 
 Trzy refaktory bez zmiany zachowania. `EventsScreen` świadomie pominięty (czeka na decyzję
 o restrukturyzacji ekranu wydarzeń).
@@ -31,14 +40,6 @@ Do sprawdzenia na telefonie:
 - [ ] Pauza / wznowienie w trakcie nagrywania, także bez sieci i po powrocie sieci (pauzy dochodzą
       na serwer z właściwym czasem); start offline → po powrocie sieci aktywność powstaje i pauzy idą za nią
 - [ ] Zapis, który serwer odrzuca → wpis w „Niewysłane” z tytułem, wydarzeniem i wyborem udostępnienia
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E: podział `ActivityDetailScreen` (zmergowane 2026-10-26, `audyt-activity-detail`, tag `pre-audyt-activity-detail` = main sprzed merge)
 
