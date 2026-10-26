@@ -371,12 +371,15 @@ export function PostDetailScreen({ route, navigation }: Props) {
         initialExpanded={true}
         onUserPress={handleUserPress}
         onInputFocus={scrollToComments}
-        renderLayout={({ header, commentList, commentInput }) => (
+        renderLayout={({ header, commentList, commentInput, refreshComments }) => (
           <KeyboardAwareScreenLayout
             scrollViewRef={scrollViewRef}
             bottomContent={commentInput}
             refreshing={isRefreshing}
-            onRefresh={onRefresh}
+            onRefresh={() => {
+              onRefresh();
+              refreshComments();
+            }}
           >
             {/* Post content */}
             <Card style={styles.postCard}>

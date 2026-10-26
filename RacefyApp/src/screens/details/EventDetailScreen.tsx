@@ -245,11 +245,14 @@ export function EventDetailScreen({ route, navigation }: Props) {
         commentableType="event"
         commentableId={eventId}
         onUserPress={isAuthenticated ? (u: User) => handleUserPress(u.username) : undefined}
-        renderLayout={({ header, commentList, commentInput }) => (
+        renderLayout={({ header, commentList, commentInput, refreshComments }) => (
           <KeyboardAwareScreenLayout
             scrollViewRef={scrollViewRef}
             refreshing={isRefreshing}
-            onRefresh={onRefresh}
+            onRefresh={() => {
+              onRefresh();
+              refreshComments();
+            }}
             keyboardVerticalOffset={{ ios: 120, android: 0 }}
           >
             <EventHero

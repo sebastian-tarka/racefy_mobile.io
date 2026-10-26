@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,8 @@ interface CommentSectionParts {
   header: React.ReactNode;
   commentList: React.ReactNode;
   commentInput: React.ReactNode;
+  /** Re-fetches the comments when they are shown — call it from the screen's pull-to-refresh. */
+  refreshComments: () => void;
 }
 
 interface CommentSectionProps {
@@ -44,13 +46,16 @@ export function CommentSection({
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [localCommentsCount, setLocalCommentsCount] = useState(commentsCount);
 
+  /** Only the latest fetch may write — a slow first load must not overwrite a refresh. */
+  const fetchSeq = useRef(0);
+
   const fetchComments = useCallback(async () => {
+    const seq = ++fetchSeq.current;
     setIsLoading(true);
     setError(null);
 
@@ -66,13 +71,13 @@ export function CommentSection({
         default:
           fetchedComments = [];
       }
+      if (seq !== fetchSeq.current) return;
       setComments(fetchedComments);
       setLocalCommentsCount(fetchedComments.length);
     } catch {
-      setError(t('comments.failedToLoad'));
+      if (seq === fetchSeq.current) setError(t('comments.failedToLoad'));
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      if (seq === fetchSeq.current) setIsLoading(false);
     }
   }, [commentableType, commentableId, t]);
 
@@ -82,10 +87,11 @@ export function CommentSection({
     }
   }, [isExpanded, fetchComments, comments.length, isAuthenticated]);
 
-  const handleRefresh = useCallback(() => {
-    setIsRefreshing(true);
-    fetchComments();
-  }, [fetchComments]);
+  // Collapsed or signed out there is nothing on screen to refresh; expanding fetches anyway.
+  // The list stays visible meanwhile — the spinner shows only while it is empty.
+  const refreshComments = useCallback(() => {
+    if (isExpanded && isAuthenticated) fetchComments();
+  }, [isExpanded, isAuthenticated, fetchComments]);
 
   const handleCreateComment = async (content: string, photo?: MediaItem) => {
     const data = {
@@ -316,6 +322,7 @@ export function CommentSection({
       header: headerNode,
       commentList: commentListNode,
       commentInput: commentInputNode,
+      refreshComments,
     });
   }
 

@@ -364,12 +364,15 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
           navigation.navigate('UserProfile', { username: user.username })
         }
         onInputFocus={scrollToComments}
-        renderLayout={({ header, commentList, commentInput }) => (
+        renderLayout={({ header, commentList, commentInput, refreshComments }) => (
           <KeyboardAwareScreenLayout
             scrollViewRef={scrollViewRef}
             bottomContent={commentInput}
             refreshing={isRefreshing}
-            onRefresh={onRefresh}
+            onRefresh={() => {
+              onRefresh();
+              refreshComments();
+            }}
             scrollViewProps={{ scrollEnabled: !isMapExpanded }}
           >
             {/* Map Section */}
