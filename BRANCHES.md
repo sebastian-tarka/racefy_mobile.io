@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: podział `WeeksListScreen` (`audyt-weeks-list`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: podział `WeeksListScreen` (zmergowane 2026-10-26, `audyt-weeks-list`, tag `pre-audyt-weeks-list` = main sprzed merge)
 
 Refaktor bez zmiany zachowania — trzeba przeklikać ekran planu treningowego.
 
@@ -29,14 +38,6 @@ Do sprawdzenia na telefonie:
 - [ ] „Generuj wskazówki”: postęp „X z Y”, komunikat po zakończeniu; wyjście z ekranu w trakcie nie
       zostawia odpytywania (logi)
 - [ ] Pauza / wznowienie / porzucenie programu, przełączanie planów
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E: `useRecordingActions` + `MapControlsOverlay` (zmergowane 2026-10-26, `audyt-recording-actions`, tag `pre-audyt-recording-actions` = main sprzed merge)
 
