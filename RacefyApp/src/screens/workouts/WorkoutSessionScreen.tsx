@@ -6,16 +6,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+
 import { useKeepAwake } from 'expo-keep-awake';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button, ScreenContainer, ScreenHeader } from '../../components';
+import { ScreenContainer, ScreenHeader } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useWorkoutSession } from '../../hooks/useWorkoutSession';
 import { playCue } from '../../services/workout/cues';
@@ -25,24 +25,19 @@ import {
 } from '../../services/strength/restTimerNotification';
 import { borderRadius, fontSize, heroColors, msFont, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
-import type { WorkoutSessionExercise, WorkoutSessionSet } from '../../types/workouts';
+import type { WorkoutSessionExercise } from '../../types/workouts';
 import { formatTime } from '../../utils/formatters';
 import { formatTarget } from '../../utils/workoutPlanFormat';
 import { api } from '../../services/api';
 import { emitRefresh } from '../../services/refreshEvents';
 import { CompleteSessionSheet } from './components/CompleteSessionSheet';
+import { SessionSetRow, type Draft } from './components/SessionSetRow';
+import { WorkoutSessionSummary } from './components/WorkoutSessionSummary';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
 import { getErrorMessage } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
-
-type Draft = { weight: string; reps: string };
-
-function num(text: string): number | null {
-  const n = parseFloat(text.replace(',', '.'));
-  return Number.isFinite(n) ? n : null;
-}
 
 /**
  * Screen B — the live checklist. Stopwatch from `started_at`, one expanded
@@ -147,26 +142,11 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
   useEffect(() => () => void cancelRestEndNotification(), []);
 
-  const draftFor = (set: WorkoutSessionSet): Draft =>
-    drafts[set.id] ?? {
-      weight:
-        set.weight_kg != null
-          ? String(set.weight_kg)
-          : set.planned.suggested_weight_kg != null
-            ? String(set.planned.suggested_weight_kg)
-            : '',
-      reps:
-        set.planned.target_type === 'seconds'
-          ? set.duration_seconds != null
-            ? String(set.duration_seconds)
-            : (set.planned.reps_max ?? set.planned.reps_min ?? '').toString()
-          : set.reps != null
-            ? String(set.reps)
-            : (set.planned.reps_max ?? set.planned.reps_min ?? '').toString(),
-    };
-
-  const setDraft = (setId: number, patch: Partial<Draft>, base: Draft) =>
-    setDrafts((prev) => ({ ...prev, [setId]: { ...base, ...prev[setId], ...patch } }));
+  const setDraft = useCallback(
+    (setId: number, patch: Partial<Draft>, base: Draft) =>
+      setDrafts((prev) => ({ ...prev, [setId]: { ...base, ...prev[setId], ...patch } })),
+    [],
+  );
 
   const openVideo = (url: string) => Linking.openURL(url).catch(() => {});
 
@@ -205,148 +185,21 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
    */
   const leave = () => navigation.goBack();
 
-  const confirmRemoveSet = (setId: number) =>
-    Alert.alert('', t('strengthPlans.session.deleteSetConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('strengthPlans.session.removeSet'),
-        style: 'destructive',
-        onPress: () => void s.removeSet(setId),
-      },
-    ]);
+  const { removeSet } = s;
+  const confirmRemoveSet = useCallback(
+    (setId: number) =>
+      Alert.alert('', t('strengthPlans.session.deleteSetConfirm'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('strengthPlans.session.removeSet'),
+          style: 'destructive',
+          onPress: () => void removeSet(setId),
+        },
+      ]),
+    [t, removeSet],
+  );
 
   // ── render helpers ────────────────────────────────────────────────────────
-
-  const renderSet = (ex: WorkoutSessionExercise, set: WorkoutSessionSet) => {
-    const timed = set.planned.target_type === 'seconds';
-    const draft = draftFor(set);
-    const isActive = set.id === activeSetId;
-    const started = !!set.started_at && !set.is_completed;
-    const target = formatTarget(
-      set.planned.target_type,
-      set.planned.reps_min,
-      set.planned.reps_max,
-      t,
-    );
-
-    return (
-      <View
-        key={set.id}
-        style={[
-          styles.setRow,
-          {
-            backgroundColor: set.is_completed
-              ? colors.primary + '14'
-              : isActive
-                ? colors.cardBackground
-                : 'transparent',
-            borderColor: isActive && !set.is_completed ? colors.primary : colors.border,
-          },
-        ]}
-      >
-        <View style={styles.setNo}>
-          <Text
-            style={[
-              styles.setNoText,
-              { color: set.is_completed ? colors.primary : colors.textMuted },
-            ]}
-          >
-            {set.set_number}
-          </Text>
-          <Text style={[styles.setTarget, { color: colors.textMuted }]}>{target}</Text>
-        </View>
-
-        <View style={styles.inputBox}>
-          <TextInput
-            value={draft.reps}
-            onChangeText={(v) => setDraft(set.id, { reps: v }, draft)}
-            keyboardType="number-pad"
-            editable={inProgress && !set.is_completed}
-            style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
-            placeholder="—"
-            placeholderTextColor={colors.textMuted}
-          />
-          <Text style={[styles.unit, { color: colors.textMuted }]}>
-            {t(timed ? 'strengthPlans.session.sec' : 'strengthPlans.session.reps')}
-          </Text>
-        </View>
-        <View style={styles.inputBox}>
-          <TextInput
-            value={draft.weight}
-            onChangeText={(v) => setDraft(set.id, { weight: v }, draft)}
-            keyboardType="decimal-pad"
-            editable={inProgress && !set.is_completed}
-            style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
-            placeholder="—"
-            placeholderTextColor={colors.textMuted}
-          />
-          <Text style={[styles.unit, { color: colors.textMuted }]}>
-            {t('strengthPlans.session.kg')}
-          </Text>
-        </View>
-
-        {set.is_completed ? (
-          <TouchableOpacity
-            style={[styles.stateButton, { backgroundColor: colors.primary }]}
-            onPress={() => inProgress && s.reopenSet(set.id)}
-            onLongPress={() => inProgress && confirmRemoveSet(set.id)}
-            accessibilityLabel={t('strengthPlans.session.undo')}
-          >
-            <Ionicons name="checkmark" size={18} color="#ffffff" />
-          </TouchableOpacity>
-        ) : started ? (
-          <TouchableOpacity
-            style={[styles.stateButton, styles.doneButton, { backgroundColor: colors.primary }]}
-            onPress={() =>
-              s.completeSet(set.id, {
-                weightKg: num(draft.weight),
-                reps: timed ? undefined : Math.round(num(draft.reps) ?? 0) || null,
-                durationSeconds: timed ? Math.round(num(draft.reps) ?? 0) || null : undefined,
-              })
-            }
-            disabled={!inProgress}
-          >
-            <Text style={styles.stateText}>{t('strengthPlans.session.done')}</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.stateButton,
-              styles.doneButton,
-              { backgroundColor: isActive ? colors.textPrimary : colors.border },
-            ]}
-            onPress={() => s.startSet(set.id)}
-            disabled={!inProgress}
-          >
-            <Text
-              style={[
-                styles.stateText,
-                { color: isActive ? colors.background : colors.textSecondary },
-              ]}
-            >
-              {t('strengthPlans.session.start')}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* A set you add mid-session has to be removable the same way. This
-            used to be a long press on the tick of an already-completed set —
-            undiscoverable, and no help at all for the extra set you just
-            added and have not done yet. */}
-        {inProgress && (
-          <TouchableOpacity
-            style={styles.removeSet}
-            onPress={() => confirmRemoveSet(set.id)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('strengthPlans.session.removeSet')}
-          >
-            <Ionicons name="close" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
 
   /** Heading for the exercise currently on screen — no accordion, no chevron. */
   const renderExerciseHead = (ex: WorkoutSessionExercise) => {
@@ -412,99 +265,17 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
   }
 
   if (result || session.status !== 'in_progress') {
-    const skipped = session.status === 'skipped';
-    const activityId = result?.activityId ?? session.activity_id;
-    const summary: [string, string][] = [
-      [
-        t('strengthPlans.complete.sets'),
-        `${session.stats?.sets_completed ?? 0}/${session.stats?.sets_total ?? 0}`,
-      ],
-      [t('strengthPlans.complete.volume'), `${Math.round(session.stats?.volume_kg ?? 0)} kg`],
-      [t('strengthPlans.complete.time'), formatTime(session.duration_seconds ?? s.elapsedSeconds)],
-    ];
-
     return (
       <ScreenContainer edges={['top']} style={{ backgroundColor: heroColors.bg }}>
-        <View style={styles.summaryHero}>
-          <View
-            style={[
-              styles.summaryIcon,
-              { backgroundColor: skipped ? heroColors.surfaceStrong : heroColors.primary },
-            ]}
-          >
-            <Ionicons
-              name={skipped ? 'remove-circle-outline' : 'checkmark'}
-              size={24}
-              color="#ffffff"
-            />
-          </View>
-          <Text style={styles.summaryTitle}>
-            {t(
-              skipped
-                ? 'strengthPlans.complete.skippedTitle'
-                : 'strengthPlans.complete.summaryTitle',
-            )}
-          </Text>
-          <Text style={styles.summarySubtitle} numberOfLines={2}>
-            {session.workout_name}
-          </Text>
-        </View>
-
-        <View style={[styles.summaryBody, { backgroundColor: colors.background }]}>
-          {!skipped && (
-            <View style={styles.summaryStats}>
-              {summary.map(([label, value]) => (
-                <View
-                  key={label}
-                  style={[
-                    styles.summaryCard,
-                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
-                  ]}
-                >
-                  <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {!skipped && s.pendingCount > 0 && (
-            <View
-              style={[
-                styles.offlineNotice,
-                { backgroundColor: colors.cardBackground, borderColor: colors.border },
-              ]}
-            >
-              <Ionicons name="cloud-offline-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.offlineNoticeText, { color: colors.textSecondary }]}>
-                {t('strengthPlans.session.offline.completeQueued')}
-              </Text>
-            </View>
-          )}
-
-          <View style={{ flex: 1 }} />
-
-          {skipped && (
-            <Button
-              title={t('strengthPlans.schedule.resumeSkipped')}
-              onPress={() => setResumeOpen(true)}
-              fullWidth
-            />
-          )}
-          {activityId != null && (
-            <Button
-              title={t('strengthPlans.complete.openActivity')}
-              onPress={() => navigation.replace('ActivityDetail', { activityId })}
-              fullWidth
-            />
-          )}
-          <Button
-            title={t('strengthPlans.complete.backToPlan')}
-            variant="outline"
-            onPress={() => navigation.goBack()}
-            fullWidth
-          />
-        </View>
+        <WorkoutSessionSummary
+          session={session}
+          activityId={result?.activityId ?? session.activity_id}
+          elapsedSeconds={s.elapsedSeconds}
+          pendingCount={s.pendingCount}
+          onResumeSkipped={() => setResumeOpen(true)}
+          onOpenActivity={(activityId) => navigation.replace('ActivityDetail', { activityId })}
+          onBack={() => navigation.goBack()}
+        />
 
         <ResumeSessionSheet
           visible={resumeOpen}
@@ -681,7 +452,20 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          {current?.sets.map((set) => renderSet(current, set))}
+          {current?.sets.map((set) => (
+            <SessionSetRow
+              key={set.id}
+              set={set}
+              override={drafts[set.id]}
+              isActive={set.id === activeSetId}
+              inProgress={inProgress}
+              onDraftChange={setDraft}
+              onStart={s.startSet}
+              onComplete={s.completeSet}
+              onReopen={s.reopenSet}
+              onRemove={confirmRemoveSet}
+            />
+          ))}
 
           {inProgress && current?.workout_exercise_id != null && (
             <TouchableOpacity
@@ -963,37 +747,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   // ── summary ──
-  summaryHero: {
-    backgroundColor: heroColors.bg,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  summaryIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summarySubtitle: {
-    color: heroColors.inkSoft,
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  summaryBody: {
-    flex: 1,
-    padding: spacing.md,
-    gap: spacing.sm,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-  },
-  summaryCard: {
-    flex: 1,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
   fill: {
     height: '100%',
     borderRadius: 3,
@@ -1048,65 +801,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     lineHeight: 16,
   },
-  setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.xs + 2,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-  },
-  setNo: {
-    width: 44,
-  },
-  setNoText: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  setTarget: {
-    fontSize: msFont(9),
-  },
-  inputBox: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: borderRadius.md,
-    textAlign: 'center',
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    paddingVertical: 0,
-  },
-  unit: {
-    fontSize: fontSize.xs,
-    width: 30,
-  },
-  stateButton: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneButton: {
-    width: 72,
-  },
-  stateText: {
-    color: '#ffffff',
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  removeSet: {
-    width: 26,
-    height: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   addSet: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1121,38 +815,5 @@ const styles = StyleSheet.create({
   addSetText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
-  },
-  summaryTitle: {
-    color: heroColors.ink,
-    fontSize: msFont(24),
-    fontWeight: '700',
-    letterSpacing: -0.6,
-    marginTop: spacing.md,
-  },
-  offlineNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  offlineNoticeText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    lineHeight: 19,
-  },
-  summaryStats: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  statValue: {
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
   },
 });
