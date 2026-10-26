@@ -2947,6 +2947,7 @@
     "bySportType": "Por tipo de deporte",
     "teamLeaderboard": "Clasificación de equipos",
     "noLeaderboardEntries": "Aún no hay equipos en la clasificación",
+    "leaderboardFailed": "No se ha podido cargar la clasificación",
     "sortMembers": "Miembros",
     "periodThisWeek": "Esta semana",
     "periodLastWeek": "Semana pasada",

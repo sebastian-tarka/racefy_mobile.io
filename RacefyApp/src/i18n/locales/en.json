@@ -2940,6 +2940,7 @@
     "bySportType": "By Sport Type",
     "teamLeaderboard": "Teams Leaderboard",
     "noLeaderboardEntries": "No teams in leaderboard yet",
+    "leaderboardFailed": "Failed to load the leaderboard",
     "sortMembers": "Members",
     "periodThisWeek": "This week",
     "periodLastWeek": "Last week",

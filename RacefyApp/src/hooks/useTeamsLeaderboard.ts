@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import type {
@@ -30,9 +30,12 @@ export function useTeamsLeaderboard(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
+  /** Only the latest request may write — quick filter switches used to mix rankings. */
+  const fetchSeq = useRef(0);
 
   const fetchLeaderboard = useCallback(
     async (reset = true) => {
+      const seq = ++fetchSeq.current;
       const currentOffset = reset ? 0 : offset;
       setIsLoading(true);
       setError(null);
@@ -44,6 +47,7 @@ export function useTeamsLeaderboard(
           limit: PAGE_SIZE,
           offset: currentOffset,
         });
+        if (seq !== fetchSeq.current) return;
         if (reset) {
           setEntries(data.data);
         } else {
@@ -52,10 +56,16 @@ export function useTeamsLeaderboard(
         setTotal(data.total);
         setOffset(currentOffset + data.data.length);
       } catch (err) {
+        if (seq !== fetchSeq.current) return;
         logger.error('general', 'Failed to fetch teams leaderboard', { error: err });
         setError(getErrorMessage(err) || 'Failed to load leaderboard');
+        // A failed first page must not leave the previous filter's ranking on screen.
+        if (reset) {
+          setEntries([]);
+          setTotal(0);
+        }
       } finally {
-        setIsLoading(false);
+        if (seq === fetchSeq.current) setIsLoading(false);
       }
     },
     [sortBy, period, offset],

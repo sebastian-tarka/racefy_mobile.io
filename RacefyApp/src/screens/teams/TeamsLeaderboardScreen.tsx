@@ -19,6 +19,7 @@ import {
   Avatar,
   OptionSelector,
   EmptyState,
+  ErrorState,
 } from '../../components';
 import { spacing, fontSize, msFont } from '../../theme';
 import { formatTotalTime } from '../../utils/formatters';
@@ -48,7 +49,7 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
   const [sortBy, setSortBy] = useState<LeaderboardSortBy>('distance');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { entries, isLoading, error, hasMore, loadMore, refetch } = useTeamsLeaderboard(
+  const { entries, total, isLoading, error, hasMore, loadMore, refetch } = useTeamsLeaderboard(
     sortBy,
     period,
   );
@@ -189,13 +190,25 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
         onEndReachedThreshold={0.5}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? null : error ? (
+            <ErrorState message={t('teams.leaderboardFailed')} onRetry={refetch} />
+          ) : (
             <EmptyState icon="trophy-outline" title={t('teams.noLeaderboardEntries')} />
-          ) : null
+          )
         }
         ListFooterComponent={
           isLoading ? (
             <ActivityIndicator style={{ padding: spacing.lg }} color={colors.primary} />
+          ) : error && entries.length > 0 && entries.length < total ? (
+            // The next page failed: the list so far stays, with a way to try again.
+            <TouchableOpacity style={styles.loadMoreError} onPress={loadMore}>
+              <Text style={[styles.loadMoreErrorText, { color: colors.textMuted }]}>
+                {t('teams.leaderboardFailed')}
+              </Text>
+              <Text style={[styles.loadMoreRetry, { color: colors.primary }]}>
+                {t('common.tryAgain')}
+              </Text>
+            </TouchableOpacity>
           ) : null
         }
       />
@@ -204,6 +217,18 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  loadMoreError: {
+    alignItems: 'center',
+    padding: spacing.lg,
+    gap: spacing.xs,
+  },
+  loadMoreErrorText: {
+    fontSize: fontSize.sm,
+  },
+  loadMoreRetry: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
   headerContent: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
