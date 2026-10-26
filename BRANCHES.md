@@ -9,13 +9,26 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-25**
+Stan na: **2026-10-26**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: `useRecordingActions` + `MapControlsOverlay` (`audyt-recording-actions`, od 2026-10-26)
+
+Refaktor ekranu nagrywania bez zmiany zachowania — trzeba przeklikać cały cykl.
+
+Do sprawdzenia na telefonie:
+- [ ] Start (z wybranym sportem, bez sportu → komunikat), pierwsze uruchomienie na Androidzie →
+      prompt o optymalizacji baterii, start bez sieci → toast „offline”
+- [ ] Pauza / wznowienie z widoku statystyk i z mapy; Stop → ekran zakończenia (także bez sieci)
+- [ ] Zapis: własny tytuł, „zapisz prywatnie”, przypięte wydarzenie; komunikat po zapisie (punkty,
+      szkic, kolejka offline); błąd zapisu → „Ponów” zachowuje tytuł
+- [ ] Odrzuć → potwierdzenie → stan bezczynny, wydarzenie i cel odpięte
+- [ ] Mapa w trakcie: wycentruj, powrót do statystyk, zmiana stylu mapy; przyciski nie wchodzą na
+      pasek transmisji; zablokowany ekran chowa przyciski
+
 
 ---
 
