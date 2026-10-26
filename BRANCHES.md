@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: podział `ActivityDetailScreen` (`audyt-activity-detail`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: podział `ActivityDetailScreen` (zmergowane 2026-10-26, `audyt-activity-detail`, tag `pre-audyt-activity-detail` = main sprzed merge)
 
 Refaktor bez zmiany zachowania — trzeba przeklikać ekran aktywności.
 
@@ -28,14 +37,6 @@ Do sprawdzenia na telefonie:
       generowanego; szczegóły (Plus/Pro) i teaser (Free)
 - [ ] Zdjęcia: miniatury, pełny ekran, przesuwanie, licznik „X / Y”, zamykanie
 - [ ] Informacje techniczne: data, źródło, punkty GPS
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E: podział `SettingsScreen` (zmergowane 2026-10-26, `audyt-settings`, tag `pre-audyt-settings` = main sprzed merge)
 
