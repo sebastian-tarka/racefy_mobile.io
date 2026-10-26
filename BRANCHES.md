@@ -15,7 +15,20 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: podział `SettingsScreen` (`audyt-settings`, od 2026-10-26)
+
+Refaktor bez zmiany zachowania — trzeba przeklikać ustawienia.
+
+Do sprawdzenia na telefonie:
+- [ ] Preferencje: jednostki, język, motyw, haptyka, styl mapy — zmiana od razu, po powrocie na ekran
+      zostaje; w trybie samolotowym przełącznik wraca i pokazuje się błąd
+- [ ] Powiadomienia: 2 przełączniki „na żywo” i 9 wierszy e-mail/push w tej samej kolejności i z tymi
+      samymi opisami
+- [ ] Zmiana hasła: walidacja (puste, za krótkie, niezgodne, złe obecne hasło), sukces chowa formularz
+- [ ] Ulubiony sport: modal, wybór, „brak”; prywatność i domyślne ustawienia aktywności
+- [ ] Usuwanie konta (na koncie testowym): hasło, potwierdzenie, wylogowanie
+- [ ] Dev Tools (build deweloperski): przyciski testowych powiadomień i synchronizacji w tle
+
 
 ---
 
