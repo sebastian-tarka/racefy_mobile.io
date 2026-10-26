@@ -46,11 +46,9 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       type?: 'all' | 'users' | 'events' | 'posts';
       per_type?: number;
     }): Promise<Types.SearchResponse> {
-      const searchParams = new URLSearchParams();
-      searchParams.append('q', params.query);
-      if (params.type) searchParams.append('type', params.type);
-      if (params.per_type) searchParams.append('per_type', String(params.per_type));
-      return this.request<Types.SearchResponse>(`/search?${searchParams}`);
+      return this.request<Types.SearchResponse>(
+        withQuery('/search', { q: params.query, type: params.type, per_type: params.per_type }),
+      );
     }
 
     /**
@@ -58,9 +56,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * @param query - Search query (min 2 characters)
      */
     async searchUsers(query: string): Promise<Types.SearchUsersResponse> {
-      return this.request<Types.SearchUsersResponse>(
-        `/search/users?q=${encodeURIComponent(query)}`,
-      );
+      return this.request<Types.SearchUsersResponse>(withQuery('/search/users', { q: query }));
     }
 
     // ============ MENTIONS ============
@@ -70,7 +66,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit = 10,
     ): Promise<Types.ApiResponse<Types.MentionSearchUser[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchUser[]>>(
-        `/mentions/search/users?q=${encodeURIComponent(query)}&limit=${limit}`,
+        withQuery('/mentions/search/users', { q: query, limit }),
       );
     }
 
@@ -79,7 +75,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit = 10,
     ): Promise<Types.ApiResponse<Types.MentionSearchEvent[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchEvent[]>>(
-        `/mentions/search/events?q=${encodeURIComponent(query)}&limit=${limit}`,
+        withQuery('/mentions/search/events', { q: query, limit }),
       );
     }
 
@@ -88,7 +84,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       limit = 10,
     ): Promise<Types.ApiResponse<Types.MentionSearchActivity[]>> {
       return this.request<Types.ApiResponse<Types.MentionSearchActivity[]>>(
-        `/mentions/search/activities?q=${encodeURIComponent(query)}&limit=${limit}`,
+        withQuery('/mentions/search/activities', { q: query, limit }),
       );
     }
 
@@ -164,10 +160,9 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      * No authentication required.
      */
     async getAppConfig(query?: Types.AppConfigQuery): Promise<Types.AppConfigResponse> {
-      const qs = query
-        ? `?platform=${encodeURIComponent(query.platform)}&app_version=${encodeURIComponent(query.app_version)}`
-        : '';
-      return this.request<Types.AppConfigResponse>(`/config/app${qs}`);
+      return this.request<Types.AppConfigResponse>(
+        withQuery('/config/app', { platform: query?.platform, app_version: query?.app_version }),
+      );
     }
 
     /**
@@ -187,7 +182,7 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
      */
     async searchUsersForImpersonation(query: string): Promise<Types.User[]> {
       const response = await this.request<Types.ApiResponse<Types.User[]>>(
-        `/admin/users/search?q=${encodeURIComponent(query)}`,
+        withQuery('/admin/users/search', { q: query }),
       );
       return response.data;
     }

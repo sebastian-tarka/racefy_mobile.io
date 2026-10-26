@@ -161,7 +161,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
 
   const [refreshing, setRefreshing] = useState(false);
   const [availableTips, setAvailableTips] = useState<TrainingTip[]>([]);
-  const [loadingTips, setLoadingTips] = useState(false);
 
   // Drafts reminder modal — once per app session
   const [showDraftsModal, setShowDraftsModal] = useState(false);
@@ -197,14 +196,11 @@ export function DynamicHomeScreen({ navigation }: Props) {
     }
 
     try {
-      setLoadingTips(true);
       const tips = await api.getAvailableTips();
       setAvailableTips(tips);
     } catch {
       // Silently fail - tips are optional feature
       setAvailableTips([]);
-    } finally {
-      setLoadingTips(false);
     }
   }, [isAuthenticated]);
 

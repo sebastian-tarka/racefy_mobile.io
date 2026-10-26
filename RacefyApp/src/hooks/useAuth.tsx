@@ -326,7 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         features: userData.subscription?.features,
       });
       setUser(userData);
-    } catch (error) {
+    } catch {
       // Ignore errors
     }
   }, []);

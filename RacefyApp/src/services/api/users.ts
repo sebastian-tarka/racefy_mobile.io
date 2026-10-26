@@ -52,7 +52,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
 
     async getFollowRequests(page: number = 1): Promise<Types.ApiListResponse<Types.FollowRequest>> {
       const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
-        `/follow-requests?page=${page}`,
+        withQuery('/follow-requests', { page }),
       );
       return response;
     }
@@ -61,7 +61,7 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page: number = 1,
     ): Promise<Types.ApiListResponse<Types.FollowRequest>> {
       const response = await this.request<Types.ApiListResponse<Types.FollowRequest>>(
-        `/follow-requests/sent?page=${page}`,
+        withQuery('/follow-requests/sent', { page }),
       );
       return response;
     }
@@ -149,11 +149,11 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       userId: number,
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.Activity>> {
-      return this.request(`/users/${userId}/activities?page=${page}`);
+      return this.request(withQuery(`/users/${userId}/activities`, { page }));
     }
 
     async getUserPosts(userId: number, page = 1): Promise<Types.PaginatedResponse<Types.Post>> {
-      return this.request(`/users/${userId}/posts?page=${page}`);
+      return this.request(withQuery(`/users/${userId}/posts`, { page }));
     }
 
     // ============ STATISTICS ============
@@ -200,25 +200,22 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     async getWeeklyStats(sportTypeId?: number): Promise<Types.WeeklyStats> {
-      const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.WeeklyStats>>(
-        `/stats/weekly${query}`,
+        withQuery('/stats/weekly', { sport_type_id: sportTypeId }),
       );
       return response.data;
     }
 
     async getMilestones(sportTypeId?: number): Promise<Types.MilestonesData> {
-      const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
-        `/stats/milestones${query}`,
+        withQuery('/stats/milestones', { sport_type_id: sportTypeId }),
       );
       return response.data;
     }
 
     async getUserMilestones(userId: number, sportTypeId?: number): Promise<Types.MilestonesData> {
-      const query = sportTypeId ? `?sport_type_id=${sportTypeId}` : '';
       const response = await this.request<Types.ApiResponse<Types.MilestonesData>>(
-        `/users/${userId}/stats/milestones${query}`,
+        withQuery(`/users/${userId}/stats/milestones`, { sport_type_id: sportTypeId }),
       );
       return response.data;
     }

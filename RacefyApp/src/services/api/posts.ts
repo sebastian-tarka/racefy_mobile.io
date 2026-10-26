@@ -10,7 +10,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     // ============ FEED & POSTS ============
 
     async getFeed(page = 1): Promise<Types.PaginatedResponse<Types.Post>> {
-      return this.request(`/feed?page=${page}`);
+      return this.request(withQuery('/feed', { page }));
     }
 
     async getPosts(params?: {
@@ -66,7 +66,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/posts/${id}/likes?page=${page}`,
+        withQuery(`/posts/${id}/likes`, { page }),
       );
     }
 
@@ -157,7 +157,7 @@ export function PostsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       page = 1,
     ): Promise<Types.PaginatedResponse<Types.UserInteractor>> {
       return this.request<Types.PaginatedResponse<Types.UserInteractor>>(
-        `/comments/${id}/likes?page=${page}`,
+        withQuery(`/comments/${id}/likes`, { page }),
       );
     }
 
