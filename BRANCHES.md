@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: podział `EventsScreen` (`audyt-events`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: podział `EventsScreen` (zmergowane 2026-10-26, `audyt-events`, tag `pre-audyt-events` = main sprzed merge)
 
 Refaktor bez zmian produktowych. Jedna różnica w zachowaniu: zakładka Nagrody jest montowana dopiero
 po wejściu, więc przy każdym powrocie na nią lista ładuje się od zera (wcześniej przez chwilę była
@@ -28,14 +37,6 @@ Do sprawdzenia na telefonie:
       doładowywanie, pull-to-refresh, pusty stan z „Utwórz wydarzenie”
 - [ ] Wyszukiwarka: wysuwanie, podpowiedź < 2 znaki, wyniki, wejście w wynik zamyka wyszukiwanie
 - [ ] Nagrody: sumy, filtry typu, lista, wejście w wydarzenie z nagrody, pull-to-refresh, błąd + ponów
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E — reszta: sesja siłowa, arkusz celu, księga pauz (zmergowane 2026-10-26, `audyt-e-reszta`, tag `pre-audyt-e-reszta` = main sprzed merge)
 
