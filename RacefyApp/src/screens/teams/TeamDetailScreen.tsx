@@ -179,7 +179,7 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         rightAction={
           isCaptain ? (
             <TouchableOpacity
-              onPress={() => navigation.navigate('TeamForm', { teamId: team.id })}
+              onPress={() => navigation.navigate('TeamForm', { slug: team.slug })}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="create-outline" size={24} color={colors.primary} />

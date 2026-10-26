@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
-import { emitRefresh } from '../services/refreshEvents';
+import { emitRefresh, useRefreshOn } from '../services/refreshEvents';
 import type { Team } from '../types/api';
 
 interface UseTeamDetailParams {
@@ -62,6 +62,8 @@ export function useTeamDetail({ slug, userId, navigateBack }: UseTeamDetailParam
   useEffect(() => {
     fetchTeam();
   }, [fetchTeam]);
+  // The edit form saves elsewhere — come back to the new name/description.
+  useRefreshOn('teams', fetchTeam);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);

@@ -88,7 +88,8 @@ export type RootStackParamList = {
   // Teams
   TeamsList: undefined;
   TeamDetail: { slug: string; initialTab?: 'members' | 'stats' | 'events' };
-  TeamForm: { teamId?: number };
+  /** `slug` = edit that team; none = create. */
+  TeamForm: { slug?: string };
   InviteMember: { teamId: number };
   TeamsLeaderboard: undefined;
   // Feedback
