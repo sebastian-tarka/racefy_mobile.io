@@ -2,13 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,59 +26,51 @@ import {
   MentionText,
   PaceChart,
   PremiumTeaser,
-  RoutePreview,
   ScreenContainer,
   ScreenHeader,
   ErrorState,
 } from '../../components';
 import {
   hasStrengthSession,
-  StrengthMetricStrip,
-  strengthMetrics,
   StrengthRhythm,
   StrengthSessionCards,
 } from '../../components/strength';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
-import { fixStorageUrl } from '../../config/api';
 import { useTheme } from '../../hooks/useTheme';
 import { useSubscription } from '../../hooks/useSubscription';
 import {
   qualifiesForEffortAnalysis,
   useActivityEffortAnalysis,
 } from '../../hooks/useActivityEffortAnalysis';
-import { useUnits } from '../../hooks/useUnits';
 import { useLiveMessageArchive } from '../../hooks/useLiveMessageArchive';
+import { ActivityDetailMap } from './activity/ActivityDetailMap';
+import { ActivityDetailedStats, ActivityMainStats } from './activity/ActivityStats';
+import { ActivityPhotoGallery } from './activity/ActivityPhotoGallery';
+import { ActivityTechnicalInfo } from './activity/ActivityTechnicalInfo';
 import { borderRadius, fontSize, spacing } from '../../theme';
 import { getSportIcon } from '../../utils/sportIcon';
 import { exportGpxAndShare } from '../../utils/gpxExport';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Activity, GpsTrack, SingleActivityStats, User } from '../../types/api';
-import { formatDuration } from '../../utils/formatDuration';
 import { getErrorMessage, isApiError } from '../../utils/errors';
 import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityDetail'>;
 
 export function ActivityDetailScreen({ route, navigation }: Props) {
-  // Read live: a frozen module-level width would desync the pager's index from
-  // its scroll offset if the window resizes (foldable, split-screen).
-  const { width: windowWidth } = useWindowDimensions();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { canUse, tier } = useSubscription();
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isActionsSheetVisible, setIsActionsSheetVisible] = useState(false);
-  const { formatDistance, formatPaceWithUnit, formatSpeed, formatElevation, units } = useUnits();
   const { activityId } = route.params;
   const scrollViewRef = useRef<ScrollView>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [gpsTrack, setGpsTrack] = useState<GpsTrack | null>(null);
   const [activityStats, setActivityStats] = useState<SingleActivityStats | null>(null);
-  /** Height of the map's bottom overlay row, so the cheer callout clears it. */
-  const [mapOverlayHeight, setMapOverlayHeight] = useState(0);
 
   // Effort breakdown. Not gated by tier and identical for the owner and for
   // anyone else who can see the activity - visibility follows the activity
@@ -94,11 +83,9 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const [showKmMarkers, setShowKmMarkers] = useState(false);
   // Cheers pinned on the route (owner's finished broadcast). On by default —
   // seeing where they landed is the point; the toggle declutters a busy map.
   const [showCheerPins, setShowCheerPins] = useState(true);
@@ -227,15 +214,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
       },
     ]);
   }, [handleDelete, t]);
-
-  const formatPace = (seconds: number, meters: number): string => {
-    return formatPaceWithUnit(meters, seconds);
-  };
-
-  const fmtSpeed = (metersPerSecond: number | null): string => {
-    if (!metersPerSecond) return '--';
-    return formatSpeed(metersPerSecond);
-  };
 
   const handleLikeChange = useCallback((active: boolean, count: number) => {
     setIsLiked(active);
@@ -400,138 +378,23 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                 gpsTrack?.route_map_url ||
                 gpsTrack?.route_svg ||
                 gpsTrack?.track_data) && (
-                <Animated.View style={{ height: mapHeightAnim }}>
-                  <RoutePreview
-                    routePreviewUrl={fixStorageUrl(gpsTrack.route_preview_url)}
-                    routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
-                    routeSvg={gpsTrack.route_svg}
-                    trackData={gpsTrack?.simplified_track}
-                    activityId={activity.id}
-                    height={isMapExpanded ? 500 : 250}
-                    enableZoom={isMapExpanded}
-                    showKmMarkers={showKmMarkers}
-                    showStartMarker={gpsTrack?.show_start_marker ?? true}
-                    showFinishMarker={gpsTrack?.show_finish_marker ?? true}
-                    startPoint={gpsTrack?.start_point ?? null}
-                    finishPoint={gpsTrack?.finish_point ?? null}
-                    cheerPins={cheerPins}
-                    selectedCheerId={selectedCheerId}
-                    onSelectCheer={setSelectedCheerId}
-                    calloutBottomInset={mapOverlayHeight + spacing.md}
-                  />
-                  {/* Everything that lives at the bottom of the map shares one
-                      row, so a long privacy label cannot collide with the
-                      controls and the cheer callout has a height to clear. */}
-                  <View
-                    style={styles.mapBottomOverlay}
-                    onLayout={(e) => setMapOverlayHeight(e.nativeEvent.layout.height)}
-                    pointerEvents="box-none"
-                  >
-                    {/* GPS privacy — a pill with nothing to say used to render
-                        anyway, an icon taking room from the controls. */}
-                    {gpsPrivacyLabel ? (
-                      <View
-                        style={[
-                          styles.privacyIndicator,
-                          {
-                            backgroundColor: colors.cardBackground + '80',
-                            borderColor: colors.borderLight,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name={activity.can_view_start_finish ? 'eye-outline' : 'shield-outline'}
-                          size={16}
-                          color={activity.is_owner ? colors.primary : colors.textSecondary}
-                        />
-                        <Text
-                          style={[styles.privacyText, { color: colors.textSecondary }]}
-                          numberOfLines={1}
-                        >
-                          {gpsPrivacyLabel}
-                        </Text>
-                      </View>
-                    ) : (
-                      <View />
-                    )}
-
-                    <View style={styles.mapControlsRow}>
-                      <TouchableOpacity
-                        style={[styles.mapToggleButton, { backgroundColor: colors.cardBackground }]}
-                        onPress={toggleMapExpand}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons
-                          name={isMapExpanded ? 'contract-outline' : 'expand-outline'}
-                          size={20}
-                          color={colors.textPrimary}
-                        />
-                        <Text style={[styles.mapToggleText, { color: colors.textPrimary }]}>
-                          {isMapExpanded
-                            ? t('activityDetail.collapseMap')
-                            : t('activityDetail.expandMap')}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.mapKmButton,
-                          {
-                            backgroundColor: showKmMarkers ? colors.primary : colors.cardBackground,
-                          },
-                        ]}
-                        onPress={() => setShowKmMarkers(!showKmMarkers)}
-                        activeOpacity={0.8}
-                      >
-                        <Ionicons
-                          name="flag-outline"
-                          size={16}
-                          color={showKmMarkers ? '#ffffff' : colors.textSecondary}
-                        />
-                        <Text
-                          style={[
-                            styles.mapKmButtonText,
-                            { color: showKmMarkers ? '#ffffff' : colors.textSecondary },
-                          ]}
-                        >
-                          km
-                        </Text>
-                      </TouchableOpacity>
-                      {liveArchive.pins.length > 0 && (
-                        <TouchableOpacity
-                          style={[
-                            styles.mapKmButton,
-                            {
-                              backgroundColor: showCheerPins
-                                ? colors.primary
-                                : colors.cardBackground,
-                            },
-                          ]}
-                          onPress={() => {
-                            setShowCheerPins(!showCheerPins);
-                            setSelectedCheerId(null);
-                          }}
-                          activeOpacity={0.8}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: showCheerPins }}
-                        >
-                          <Ionicons
-                            name="chatbubble-ellipses-outline"
-                            size={16}
-                            color={showCheerPins ? '#ffffff' : colors.textSecondary}
-                          />
-                          <Text
-                            style={[
-                              styles.mapKmButtonText,
-                              { color: showCheerPins ? '#ffffff' : colors.textSecondary },
-                            ]}
-                          >
-                            {t('live.archive.pins')}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-                </Animated.View>
+                <ActivityDetailMap
+                  activity={activity}
+                  gpsTrack={gpsTrack!}
+                  mapHeightAnim={mapHeightAnim}
+                  isMapExpanded={isMapExpanded}
+                  onToggleExpand={toggleMapExpand}
+                  gpsPrivacyLabel={gpsPrivacyLabel}
+                  cheerPins={cheerPins}
+                  hasCheers={liveArchive.pins.length > 0}
+                  showCheerPins={showCheerPins}
+                  onToggleCheerPins={() => {
+                    setShowCheerPins(!showCheerPins);
+                    setSelectedCheerId(null);
+                  }}
+                  selectedCheerId={selectedCheerId}
+                  onSelectCheer={setSelectedCheerId}
+                />
               )}
 
             {/* Strength: the workout's rhythm where a run shows its map */}
@@ -669,50 +532,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             </Card>
 
             {/* Main Stats - Key Metrics First */}
-            {strength ? (
-              <Card style={styles.statsCard}>
-                <StrengthMetricStrip
-                  items={strengthMetrics(strength, activity.duration, {
-                    withVolume: true,
-                    formatDuration,
-                    t,
-                    locale: i18n.language,
-                    units,
-                  })}
-                />
-              </Card>
-            ) : (
-              <Card style={styles.statsCard}>
-                <View style={styles.mainStats}>
-                  <View style={styles.mainStatItem}>
-                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                      {formatDistance(activity.distance)}
-                    </Text>
-                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                      {t('activityDetail.distance')}
-                    </Text>
-                  </View>
-                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                  <View style={styles.mainStatItem}>
-                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                      {formatDuration(activity.duration)}
-                    </Text>
-                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                      {t('activityDetail.duration')}
-                    </Text>
-                  </View>
-                  <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                  <View style={styles.mainStatItem}>
-                    <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                      {formatPace(activity.duration, activity.distance)}
-                    </Text>
-                    <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
-                      {t('activityDetail.pace')}
-                    </Text>
-                  </View>
-                </View>
-              </Card>
-            )}
+            <ActivityMainStats activity={activity} strength={strength} />
 
             {strength && <StrengthSessionCards session={strength} cardStyle={styles.section} />}
 
@@ -728,100 +548,7 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
             )}
 
             {/* Secondary Stats - Detailed Metrics */}
-            {canUse('advanced_stats') ? (
-              (activity.calories ||
-                activity.elevation_gain ||
-                activity.avg_speed ||
-                activity.max_speed ||
-                activity.avg_heart_rate ||
-                activity.max_heart_rate) && (
-                <Card style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                    {t('activityDetail.detailedStats')}
-                  </Text>
-                  <View style={styles.statsGrid}>
-                    {activity.calories !== null && activity.calories > 0 && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="flame-outline" size={22} color={colors.primary} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {activity.calories}
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.calories')}
-                        </Text>
-                      </View>
-                    )}
-                    {activity.elevation_gain !== null && activity.elevation_gain > 0 && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="trending-up-outline" size={22} color={colors.primary} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {formatElevation(activity.elevation_gain)}
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.elevationGain')}
-                        </Text>
-                      </View>
-                    )}
-                    {activity.avg_speed !== null && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="speedometer-outline" size={22} color={colors.primary} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {fmtSpeed(activity.avg_speed)}
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.avgSpeed')}
-                        </Text>
-                      </View>
-                    )}
-                    {activity.max_speed !== null && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="flash-outline" size={22} color={colors.primary} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {fmtSpeed(activity.max_speed)}
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.maxSpeed')}
-                        </Text>
-                      </View>
-                    )}
-                    {activity.avg_heart_rate !== null && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="heart-outline" size={22} color={colors.error} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {activity.avg_heart_rate} bpm
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.avgHeartRate')}
-                        </Text>
-                      </View>
-                    )}
-                    {activity.max_heart_rate !== null && (
-                      <View style={styles.statGridItem}>
-                        <Ionicons name="heart" size={22} color={colors.error} />
-                        <Text style={[styles.statGridValue, { color: colors.textPrimary }]}>
-                          {activity.max_heart_rate} bpm
-                        </Text>
-                        <Text style={[styles.statGridLabel, { color: colors.textMuted }]}>
-                          {t('activityDetail.maxHeartRate')}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  {activity.hr_data_source && (
-                    <View style={styles.hrSourceBadge}>
-                      <Ionicons name="watch-outline" size={14} color={colors.primary} />
-                      <Text style={[styles.hrSourceText, { color: colors.primary }]}>
-                        {activity.hr_data_source === 'health_connect'
-                          ? t('settings.healthSync.hrFromHealthConnect')
-                          : t('settings.healthSync.hrFromAppleHealth')}
-                      </Text>
-                    </View>
-                  )}
-                </Card>
-              )
-            ) : (
-              <PremiumTeaser feature="advanced_stats" style={styles.section} />
-            )}
+            <ActivityDetailedStats activity={activity} />
 
             {/* Effort breakdown - phases of the recorded effort. Sits above the
                 performance charts because it reads the whole session, while
@@ -862,126 +589,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
               <PremiumTeaser feature="advanced_stats" style={styles.section} />
             ) : null}
 
-            {/* Photo Gallery */}
             {activity.photos && activity.photos.length > 0 && (
-              <Card style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  {t('activityDetail.photos')} ({activity.photos.length})
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.photoGallery}
-                >
-                  {activity.photos.map((photo, index) => (
-                    <TouchableOpacity
-                      key={photo.id}
-                      onPress={() => setSelectedPhotoIndex(index)}
-                      activeOpacity={0.8}
-                    >
-                      <Image
-                        source={{ uri: fixStorageUrl(photo.url) || '' }}
-                        style={styles.photoThumbnail}
-                      />
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </Card>
+              <ActivityPhotoGallery photos={activity.photos} />
             )}
 
-            {/* Fullscreen Photo Modal */}
-            <Modal
-              visible={selectedPhotoIndex !== null}
-              transparent
-              animationType="fade"
-              onRequestClose={() => setSelectedPhotoIndex(null)}
-            >
-              <View style={styles.modalContainer}>
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => setSelectedPhotoIndex(null)}
-                >
-                  <Ionicons name="close" size={28} color="#fff" />
-                </TouchableOpacity>
-
-                {selectedPhotoIndex !== null && activity.photos && (
-                  <>
-                    <ScrollView
-                      horizontal
-                      pagingEnabled
-                      showsHorizontalScrollIndicator={false}
-                      contentOffset={{ x: selectedPhotoIndex * windowWidth, y: 0 }}
-                      onMomentumScrollEnd={(e) => {
-                        const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
-                        setSelectedPhotoIndex(newIndex);
-                      }}
-                    >
-                      {activity.photos.map((photo) => (
-                        <View
-                          key={photo.id}
-                          style={[styles.modalImageContainer, { width: windowWidth }]}
-                        >
-                          <Image
-                            source={{ uri: fixStorageUrl(photo.url) || '' }}
-                            style={{ width: windowWidth, height: windowWidth }}
-                            resizeMode="contain"
-                          />
-                        </View>
-                      ))}
-                    </ScrollView>
-
-                    {/* Photo counter */}
-                    <View style={styles.photoCounter}>
-                      <Text style={styles.photoCounterText}>
-                        {selectedPhotoIndex + 1} / {activity.photos.length}
-                      </Text>
-                    </View>
-                  </>
-                )}
-              </View>
-            </Modal>
-
             {/* Activity Info - Technical Details */}
-            <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                {t('activityDetail.technicalInfo')}
-              </Text>
-              <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
-                <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                  {t('activityDetail.date')}
-                </Text>
-                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                  {formatDate(activity.started_at, 'PPpp')}
-                </Text>
-              </View>
-              <View style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
-                <Ionicons name="phone-portrait-outline" size={20} color={colors.textSecondary} />
-                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                  {t('activityDetail.source')}
-                </Text>
-                <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                  {activity.source === 'app'
-                    ? t('activityDetail.sources.app')
-                    : activity.source === 'manual'
-                      ? t('activityDetail.sources.manual')
-                      : activity.source === 'gpx_import'
-                        ? t('activityDetail.sources.gpxImport')
-                        : activity.source}
-                </Text>
-              </View>
-              {gpsTrack && (
-                <View style={[styles.infoRow, { borderBottomColor: 'transparent' }]}>
-                  <Ionicons name="location-outline" size={20} color={colors.textSecondary} />
-                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>
-                    {t('activityDetail.gpsPoints')}
-                  </Text>
-                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>
-                    {gpsTrack.points_count.toLocaleString()} {t('activityDetail.points')}
-                  </Text>
-                </View>
-              )}
-            </Card>
+            <ActivityTechnicalInfo activity={activity} gpsTrack={gpsTrack} />
 
             {/* Messages the athlete received while broadcasting. Renders
                 nothing unless this is their own, once-live activity that
@@ -1065,17 +678,6 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  deleteButton: {
-    marginLeft: spacing.xs,
-  },
   headerSection: {
     padding: spacing.lg,
     paddingBottom: spacing.md,
@@ -1145,32 +747,6 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: fontSize.sm,
   },
-  statsCard: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
-  },
-  mainStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: spacing.sm,
-  },
-  mainStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  mainStatValue: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
-  mainStatLabel: {
-    fontSize: fontSize.xs,
-    marginTop: spacing.xs,
-    textTransform: 'uppercase',
-  },
-  statDivider: {
-    width: 1,
-    marginVertical: spacing.xs,
-  },
   section: {
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
@@ -1180,54 +756,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: spacing.md,
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  statGridItem: {
-    width: '50%',
-    paddingVertical: spacing.sm,
-    alignItems: 'flex-start',
-  },
-  statGridValue: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    marginTop: spacing.xs,
-  },
-  statGridLabel: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  hrSourceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.sm,
-    paddingVertical: spacing.xs,
-    gap: 4,
-  },
-  hrSourceText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
   description: {
     fontSize: fontSize.md,
     lineHeight: 22,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  infoLabel: {
-    fontSize: fontSize.sm,
-    marginLeft: spacing.sm,
-    flex: 1,
-  },
-  infoValue: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
   },
   engagementCard: {
     marginHorizontal: spacing.md,
@@ -1253,121 +784,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   // Photo gallery styles
-  photoGallery: {
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  photoThumbnail: {
-    width: 120,
-    height: 120,
-    borderRadius: borderRadius.md,
-  },
   // Fullscreen modal styles
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCloseButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
-    padding: spacing.sm,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: borderRadius.full,
-  },
-  modalImageContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoCounter: {
-    position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.lg,
-  },
-  photoCounterText: {
-    color: '#fff',
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
   commentsSection: {
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
   },
   // Map toggle button styles
-  mapBottomOverlay: {
-    position: 'absolute',
-    left: spacing.md,
-    right: spacing.md,
-    bottom: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  mapControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  mapToggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    gap: spacing.xs,
-  },
-  mapToggleText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  mapKmButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    gap: 2,
-  },
-  mapKmButtonText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  privacyIndicator: {
-    // Shrinks first: the controls next to it are actions, this is a label.
-    flexShrink: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  privacyText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
 });
