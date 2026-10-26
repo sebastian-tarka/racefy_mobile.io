@@ -1,31 +1,18 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
+
 import * as Application from 'expo-application';
-import * as Notifications from 'expo-notifications';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import {
   AiPostsSettings,
   AudioCoachSettings,
   BrandLogo,
-  Button,
   DebugLogsSection,
-  Input,
   LiveBroadcastSettings,
   MapStylePicker,
   PremiumTeaser,
@@ -35,6 +22,13 @@ import {
   SettingsSection,
 } from '../../components';
 import { useNavSectionCount } from '../../hooks/useNavBadges';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { ChangePasswordForm } from './components/ChangePasswordForm';
+import { DeleteAccountForm } from './components/DeleteAccountForm';
+import { DevToolsSection } from './components/DevToolsSection';
+import { FavoriteSportModal } from './components/FavoriteSportModal';
+import { NotificationSettings } from './components/NotificationSettings';
+import { SettingsRow } from './components/SettingsRows';
 import { useAuth } from '../../hooks/useAuth';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useTheme } from '../../hooks/useTheme';
@@ -42,10 +36,8 @@ import { triggerHaptic, useHaptics } from '../../hooks/useHaptics';
 import { type SportTypeWithIcon, useSportTypes } from '../../hooks/useSportTypes';
 import { useHealthSync } from '../../hooks/useHealthSync';
 import { useUnits } from '../../hooks/useUnits';
-import { api } from '../../services/api';
 import { countPendingFinishes } from '../../services/trackingDb';
-import * as BackgroundTask from 'expo-background-task';
-import { ensureFinishSyncTaskRegistered } from '../../services/finishSyncBackgroundTask';
+
 import { logger } from '../../services/logger';
 import { pushNotificationService } from '../../services/pushNotifications';
 import { buildInfo } from '../../config/buildInfo';
@@ -53,241 +45,12 @@ import { changeLanguage, supportedLanguages } from '../../i18n';
 import { fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import type { NotificationChannelSettings, UserPreferences } from '../../types/api';
-import { getErrorMessage, isApiError } from '../../utils/errors';
+import type { UserPreferences } from '../../types/api';
 import { formatIntlDate } from '../../utils/dateFormat';
 
 const SETTINGS_SECTIONS_KEY = '@racefy_settings_sections';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
-
-interface SettingsRowProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  rightElement?: React.ReactNode;
-  danger?: boolean;
-}
-
-function SettingsRow({ icon, label, value, onPress, rightElement, danger }: SettingsRowProps) {
-  const { colors } = useTheme();
-
-  const handlePress = () => {
-    triggerHaptic();
-    onPress?.();
-  };
-
-  return (
-    <TouchableOpacity
-      style={[styles.row, { borderBottomColor: colors.border }]}
-      onPress={handlePress}
-      disabled={!onPress && !rightElement}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
-      <View style={styles.rowLeft}>
-        <Ionicons
-          name={icon}
-          size={22}
-          color={danger ? colors.error : colors.textSecondary}
-          style={styles.rowIcon}
-        />
-        <Text
-          style={[
-            styles.rowLabel,
-            { color: colors.textPrimary },
-            danger && { color: colors.error },
-          ]}
-        >
-          {label}
-        </Text>
-      </View>
-      <View style={styles.rowRight}>
-        {value && <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>}
-        {rightElement}
-        {onPress && !rightElement && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-}
-
-// Notification row with email and push toggles
-interface LiveNotificationRowProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  description?: string;
-  settings: NotificationChannelSettings;
-  onChange: (value: boolean) => void;
-}
-
-/**
- * A category with one switch instead of two (design + mobile spec).
- *
- * To someone silencing a category, "stop telling me" does not mean "stop
- * telling me through one of two channels I have never heard of" — so push and
- * websocket move together and neither is named. There is no email row because
- * the backend never sends these by mail.
- */
-function LiveNotificationRow({
-  icon,
-  label,
-  description,
-  settings,
-  onChange,
-}: LiveNotificationRowProps) {
-  const { colors } = useTheme();
-
-  return (
-    <View style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
-      <View style={styles.notificationHeader}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={colors.textSecondary}
-          style={styles.notificationIcon}
-        />
-        <View style={styles.notificationLabelContainer}>
-          <Text style={[styles.notificationLabel, { color: colors.textPrimary }]}>{label}</Text>
-          {description && (
-            <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>
-              {description}
-            </Text>
-          )}
-        </View>
-        <Switch
-          value={settings.push}
-          onValueChange={(value) => {
-            triggerHaptic();
-            onChange(value);
-          }}
-          trackColor={{ false: colors.border, true: colors.primaryLight }}
-          thumbColor={settings.push ? colors.primary : colors.white}
-        />
-      </View>
-    </View>
-  );
-}
-
-interface NotificationRowProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  description?: string;
-  settings: NotificationChannelSettings;
-  onEmailChange: (value: boolean) => void;
-  onPushChange: (value: boolean) => void;
-}
-
-function NotificationRow({
-  icon,
-  label,
-  description,
-  settings,
-  onEmailChange,
-  onPushChange,
-}: NotificationRowProps) {
-  const { colors } = useTheme();
-
-  return (
-    <View style={[styles.notificationRow, { borderBottomColor: colors.border }]}>
-      <View style={styles.notificationHeader}>
-        <Ionicons
-          name={icon}
-          size={20}
-          color={colors.textSecondary}
-          style={styles.notificationIcon}
-        />
-        <View style={styles.notificationLabelContainer}>
-          <Text style={[styles.notificationLabel, { color: colors.textPrimary }]}>{label}</Text>
-          {description && (
-            <Text style={[styles.notificationDescription, { color: colors.textSecondary }]}>
-              {description}
-            </Text>
-          )}
-        </View>
-      </View>
-      <View style={styles.notificationToggles}>
-        <View style={styles.toggleItem}>
-          <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>Email</Text>
-          <Switch
-            value={settings.email}
-            onValueChange={(value) => {
-              triggerHaptic();
-              onEmailChange(value);
-            }}
-            trackColor={{ false: colors.border, true: colors.primaryLight }}
-            thumbColor={settings.email ? colors.primary : colors.white}
-          />
-        </View>
-        <View style={styles.toggleItem}>
-          <Text style={[styles.toggleLabel, { color: colors.textSecondary }]}>Push</Text>
-          <Switch
-            value={settings.push}
-            onValueChange={(value) => {
-              triggerHaptic();
-              onPushChange(value);
-            }}
-            trackColor={{ false: colors.border, true: colors.primaryLight }}
-            thumbColor={settings.push ? colors.primary : colors.white}
-          />
-        </View>
-      </View>
-    </View>
-  );
-}
-
-const DEFAULT_CHANNEL_SETTINGS: NotificationChannelSettings = {
-  email: true,
-  push: true,
-  websocket: true,
-};
-
-const DEFAULT_PREFERENCES: UserPreferences = {
-  units: 'metric',
-  language: 'en',
-  theme: 'system',
-  map_style: null,
-  notifications: {
-    likes: { ...DEFAULT_CHANNEL_SETTINGS },
-    comments: { ...DEFAULT_CHANNEL_SETTINGS },
-    follows: { ...DEFAULT_CHANNEL_SETTINGS },
-    messages: { ...DEFAULT_CHANNEL_SETTINGS },
-    event_reminders: { ...DEFAULT_CHANNEL_SETTINGS },
-    weekly_summary: { ...DEFAULT_CHANNEL_SETTINGS },
-    activity_reactions: { ...DEFAULT_CHANNEL_SETTINGS },
-    mentions: { ...DEFAULT_CHANNEL_SETTINGS },
-    training_week_feedback: { ...DEFAULT_CHANNEL_SETTINGS },
-    // Neither sends email — both are about something happening now, and mail
-    // arrives once it is over.
-    activity_started: { email: false, push: true, websocket: true },
-    activity_live_started: { email: false, push: true, websocket: true },
-  },
-  privacy: {
-    profile_visibility: 'public',
-    show_activities: true,
-    show_stats: true,
-    allow_messages: 'everyone',
-    share_achievements: true,
-    show_start_finish_points: true,
-  },
-  activity_defaults: {
-    visibility: 'public',
-    auto_share: true,
-    favorite_sport_id: null,
-  },
-  ai_posts: {
-    enabled: false,
-    default_style: 'achievement',
-    default_perspective: 'descriptive',
-    triggers: {
-      activity_completion: true,
-      activity_share: false,
-      event_results: true,
-    },
-    auto_publish: false,
-  },
-};
 
 export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -298,22 +61,19 @@ export function SettingsScreen({ navigation }: Props) {
   const { isEnabled: hapticsEnabled, setEnabled: setHapticsEnabled } = useHaptics();
   const { setUnits } = useUnits();
 
-  const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isUpdatingAiPosts, setIsUpdatingAiPosts] = useState(false);
+  const {
+    preferences,
+    isLoading,
+    isUpdatingAiPosts,
+    updatePreference,
+    updateNestedPreference,
+    updateNotificationChannel,
+    updateLiveNotification,
+    updateAiPostsPreference,
+  } = useUserPreferences();
 
-  // Password change state
   const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
-
-  // Delete account state
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Health sync
   const {
@@ -402,268 +162,6 @@ export function SettingsScreen({ navigation }: Props) {
       ? `${selectedDays} ${t('settings.trainingReminders.at')} ${time}`
       : t('settings.trainingReminders.on', 'On');
   })();
-
-  useEffect(() => {
-    loadPreferences();
-  }, []);
-
-  const loadPreferences = async () => {
-    try {
-      const prefs = await api.getPreferences();
-      setPreferences(prefs);
-      // Sync local theme with server preferences
-      if (prefs.theme && prefs.theme !== themePreference) {
-        setThemePreference(prefs.theme);
-      }
-      // Sync local language with server preferences
-      if (prefs.language) {
-        await changeLanguage(prefs.language);
-      }
-    } catch (error) {
-      logger.error('api', 'Failed to load preferences', { error });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updatePreference = async <K extends keyof UserPreferences>(
-    key: K,
-    value: UserPreferences[K],
-  ) => {
-    triggerHaptic();
-    const oldPreferences = { ...preferences };
-    setPreferences((prev) => ({ ...prev, [key]: value }));
-
-    try {
-      const updatedPrefs = await api.updatePreferences({ [key]: value });
-      // Sync with server response
-      setPreferences(updatedPrefs);
-    } catch (error) {
-      logger.error('api', 'Failed to update preferences', { error });
-      setPreferences(oldPreferences);
-      Alert.alert(t('common.error'), t('settings.updateFailed'));
-    }
-  };
-
-  const updateNestedPreference = async <
-    K extends 'notifications' | 'privacy' | 'activity_defaults',
-    NK extends keyof UserPreferences[K],
-  >(
-    category: K,
-    key: NK,
-    value: UserPreferences[K][NK],
-  ) => {
-    triggerHaptic();
-    const oldPreferences = { ...preferences };
-    const updatedCategory = { ...preferences[category], [key]: value };
-    setPreferences((prev) => ({ ...prev, [category]: updatedCategory }));
-
-    try {
-      // Use dot notation for partial update
-      const updatedPrefs = await api.updatePreferences({
-        [`${category}.${String(key)}`]: value,
-      });
-      // Sync with server response
-      setPreferences(updatedPrefs);
-    } catch (error) {
-      logger.error('api', 'Failed to update nested preferences', { error });
-      setPreferences(oldPreferences);
-      Alert.alert(t('common.error'), t('settings.updateFailed'));
-    }
-  };
-
-  // Update a specific notification channel (email/push) for a notification type
-  const updateNotificationChannel = async (
-    notificationType: keyof UserPreferences['notifications'],
-    channel: 'email' | 'push',
-    value: boolean,
-  ) => {
-    const oldPreferences = { ...preferences };
-    const updatedNotificationType = {
-      ...preferences.notifications[notificationType],
-      [channel]: value,
-    };
-    const updatedNotifications = {
-      ...preferences.notifications,
-      [notificationType]: updatedNotificationType,
-    };
-    setPreferences((prev) => ({ ...prev, notifications: updatedNotifications }));
-
-    try {
-      // Use dot notation for partial update as supported by API
-      const updatedPrefs = await api.updatePreferences({
-        [`notifications.${notificationType}.${channel}`]: value,
-      });
-      // Sync with server response
-      setPreferences(updatedPrefs);
-    } catch (error) {
-      logger.error('api', 'Failed to update notification preference', { error });
-      setPreferences(oldPreferences);
-      Alert.alert(t('common.error'), t('settings.updateFailed'));
-    }
-  };
-
-  /**
-   * Silence or unsilence a whole "happening now" category.
-   *
-   * Push and websocket are written in the same request so the two can never
-   * drift apart — a category that is off for push but still arriving over the
-   * socket is the bug this prevents.
-   */
-  const updateLiveNotification = async (
-    notificationType: 'activity_started' | 'activity_live_started',
-    value: boolean,
-  ) => {
-    const oldPreferences = preferences;
-    setPreferences((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [notificationType]: {
-          ...prev.notifications[notificationType],
-          push: value,
-          websocket: value,
-        },
-      },
-    }));
-
-    try {
-      const updatedPrefs = await api.updatePreferences({
-        [`notifications.${notificationType}.push`]: value,
-        [`notifications.${notificationType}.websocket`]: value,
-      });
-      setPreferences(updatedPrefs);
-    } catch (error) {
-      logger.error('api', 'Failed to update live notification preference', { error });
-      setPreferences(oldPreferences);
-      Alert.alert(t('common.error'), t('settings.updateFailed'));
-    }
-  };
-
-  // Update AI posts preference using dot notation (e.g., 'ai_posts.enabled')
-  const updateAiPostsPreference = async (key: string, value: any) => {
-    setIsUpdatingAiPosts(true);
-    const oldPreferences = { ...preferences };
-
-    // Optimistically update local state
-    const keys = key.split('.');
-    if (keys.length === 2) {
-      // Simple key like 'ai_posts.enabled'
-      setPreferences((prev) => ({
-        ...prev,
-        ai_posts: {
-          ...prev.ai_posts,
-          [keys[1]]: value,
-        },
-      }));
-    } else if (keys.length === 3) {
-      // Nested key like 'ai_posts.triggers.activity_completion'
-      setPreferences((prev) => ({
-        ...prev,
-        ai_posts: {
-          ...prev.ai_posts,
-          [keys[1]]: {
-            ...(prev.ai_posts[keys[1] as keyof typeof prev.ai_posts] as any),
-            [keys[2]]: value,
-          },
-        },
-      }));
-    }
-
-    try {
-      const updatedPrefs = await api.updatePreferences({
-        [key]: value,
-      });
-      // Sync with server response
-      setPreferences(updatedPrefs);
-    } catch (error) {
-      logger.error('api', 'Failed to update AI posts preference', { error });
-      setPreferences(oldPreferences);
-      Alert.alert(t('common.error'), t('settings.aiPostsFailed'));
-    } finally {
-      setIsUpdatingAiPosts(false);
-    }
-  };
-
-  const handlePasswordChange = async () => {
-    const errors: Record<string, string> = {};
-
-    if (!currentPassword) {
-      errors.currentPassword = t('settings.currentPasswordRequired');
-    }
-    if (!newPassword) {
-      errors.newPassword = t('settings.newPasswordRequired');
-    } else if (newPassword.length < 8) {
-      errors.newPassword = t('auth.validation.passwordMinLength');
-    }
-    if (newPassword !== confirmPassword) {
-      errors.confirmPassword = t('auth.validation.passwordsNotMatch');
-    }
-
-    setPasswordErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-
-    setIsChangingPassword(true);
-    triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
-
-    try {
-      await api.updatePassword({
-        current_password: currentPassword,
-        password: newPassword,
-        password_confirmation: confirmPassword,
-      });
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(t('common.success'), t('settings.passwordChanged'));
-      setShowPasswordChange(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (error) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      if (isApiError(error) && error.errors?.current_password) {
-        setPasswordErrors({ currentPassword: t('settings.incorrectPassword') });
-      } else {
-        Alert.alert(t('common.error'), t('settings.passwordChangeFailed'));
-      }
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      Alert.alert(t('common.error'), t('settings.passwordRequiredForDelete'));
-      return;
-    }
-
-    Alert.alert(t('settings.deleteAccount'), t('settings.deleteAccountConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          setIsDeleting(true);
-          triggerHaptic(Haptics.ImpactFeedbackStyle.Heavy);
-
-          try {
-            await api.deleteAccount(deletePassword);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            await logout();
-          } catch (error) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            if (getErrorMessage(error).includes('password')) {
-              Alert.alert(t('common.error'), t('settings.incorrectPassword'));
-            } else {
-              Alert.alert(t('common.error'), t('settings.deleteAccountFailed'));
-            }
-          } finally {
-            setIsDeleting(false);
-          }
-        },
-      },
-    ]);
-  };
 
   const handleLogout = () => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
@@ -757,50 +255,9 @@ export function SettingsScreen({ navigation }: Props) {
           <SettingsRow
             icon="lock-closed-outline"
             label={t('settings.changePassword')}
-            onPress={() => {
-              setShowPasswordChange(!showPasswordChange);
-              setPasswordErrors({});
-            }}
+            onPress={() => setShowPasswordChange(!showPasswordChange)}
           />
-          {showPasswordChange && (
-            <View
-              style={[
-                styles.formSection,
-                { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-              ]}
-            >
-              <Input
-                label={t('settings.currentPassword')}
-                placeholder={t('settings.currentPasswordPlaceholder')}
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                secureTextEntry
-                error={passwordErrors.currentPassword}
-              />
-              <Input
-                label={t('settings.newPassword')}
-                placeholder={t('settings.newPasswordPlaceholder')}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-                error={passwordErrors.newPassword}
-              />
-              <Input
-                label={t('auth.confirmPassword')}
-                placeholder={t('auth.confirmPasswordPlaceholder')}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                error={passwordErrors.confirmPassword}
-              />
-              <Button
-                title={t('settings.updatePassword')}
-                onPress={handlePasswordChange}
-                loading={isChangingPassword}
-                style={styles.formButton}
-              />
-            </View>
-          )}
+          {showPasswordChange && <ChangePasswordForm onDone={() => setShowPasswordChange(false)} />}
           {/* Subscription info */}
           <View
             style={[
@@ -1070,97 +527,10 @@ export function SettingsScreen({ navigation }: Props) {
           isExpanded={expandedSections.notifications}
           onToggle={() => toggleSection('notifications')}
         >
-          <LiveNotificationRow
-            icon="radio-outline"
-            label={t('settings.notif_activity_live_started')}
-            description={t('settings.notif_activity_live_started_desc')}
-            settings={preferences.notifications.activity_live_started}
-            onChange={(value) => updateLiveNotification('activity_live_started', value)}
-          />
-          <LiveNotificationRow
-            icon="play-circle-outline"
-            label={t('settings.notif_activity_started')}
-            description={t('settings.notif_activity_started_desc')}
-            settings={preferences.notifications.activity_started}
-            onChange={(value) => updateLiveNotification('activity_started', value)}
-          />
-          <NotificationRow
-            icon="heart-outline"
-            label={t('settings.notif_likes')}
-            description={t('settings.notif_likes_desc')}
-            settings={preferences.notifications.likes}
-            onEmailChange={(value) => updateNotificationChannel('likes', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('likes', 'push', value)}
-          />
-          <NotificationRow
-            icon="chatbubble-outline"
-            label={t('settings.notif_comments')}
-            description={t('settings.notif_comments_desc')}
-            settings={preferences.notifications.comments}
-            onEmailChange={(value) => updateNotificationChannel('comments', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('comments', 'push', value)}
-          />
-          <NotificationRow
-            icon="person-add-outline"
-            label={t('settings.notif_follows')}
-            description={t('settings.notif_follows_desc')}
-            settings={preferences.notifications.follows}
-            onEmailChange={(value) => updateNotificationChannel('follows', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('follows', 'push', value)}
-          />
-          <NotificationRow
-            icon="chatbubbles-outline"
-            label={t('settings.notif_messages')}
-            description={t('settings.notif_messages_desc')}
-            settings={preferences.notifications.messages}
-            onEmailChange={(value) => updateNotificationChannel('messages', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('messages', 'push', value)}
-          />
-          <NotificationRow
-            icon="calendar-outline"
-            label={t('settings.notif_event_reminders')}
-            description={t('settings.notif_event_reminders_desc')}
-            settings={preferences.notifications.event_reminders}
-            onEmailChange={(value) => updateNotificationChannel('event_reminders', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('event_reminders', 'push', value)}
-          />
-          <NotificationRow
-            icon="stats-chart-outline"
-            label={t('settings.notif_weekly_summary')}
-            description={t('settings.notif_weekly_summary_desc')}
-            settings={preferences.notifications.weekly_summary}
-            onEmailChange={(value) => updateNotificationChannel('weekly_summary', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('weekly_summary', 'push', value)}
-          />
-          <NotificationRow
-            icon="thumbs-up-outline"
-            label={t('settings.notif_activity_reactions')}
-            description={t('settings.notif_activity_reactions_desc')}
-            settings={preferences.notifications.activity_reactions}
-            onEmailChange={(value) =>
-              updateNotificationChannel('activity_reactions', 'email', value)
-            }
-            onPushChange={(value) => updateNotificationChannel('activity_reactions', 'push', value)}
-          />
-          <NotificationRow
-            icon="at-outline"
-            label={t('settings.notif_mentions')}
-            description={t('settings.notif_mentions_desc')}
-            settings={preferences.notifications.mentions}
-            onEmailChange={(value) => updateNotificationChannel('mentions', 'email', value)}
-            onPushChange={(value) => updateNotificationChannel('mentions', 'push', value)}
-          />
-          <NotificationRow
-            icon="bar-chart-outline"
-            label={t('settings.notif_training_week_feedback')}
-            description={t('settings.notif_training_week_feedback_desc')}
-            settings={preferences.notifications.training_week_feedback}
-            onEmailChange={(value) =>
-              updateNotificationChannel('training_week_feedback', 'email', value)
-            }
-            onPushChange={(value) =>
-              updateNotificationChannel('training_week_feedback', 'push', value)
-            }
+          <NotificationSettings
+            notifications={preferences.notifications}
+            onLiveChange={updateLiveNotification}
+            onChannelChange={updateNotificationChannel}
           />
         </SettingsSection>
 
@@ -1361,32 +731,7 @@ export function SettingsScreen({ navigation }: Props) {
             onPress={() => setShowDeleteAccount(!showDeleteAccount)}
             danger
           />
-          {showDeleteAccount && (
-            <View
-              style={[
-                styles.formSection,
-                { backgroundColor: colors.cardBackground, borderBottomColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.dangerText, { color: colors.error }]}>
-                {t('settings.deleteAccountWarning')}
-              </Text>
-              <Input
-                label={t('settings.confirmPassword')}
-                placeholder={t('settings.enterPasswordToDelete')}
-                value={deletePassword}
-                onChangeText={setDeletePassword}
-                secureTextEntry
-              />
-              <Button
-                title={t('settings.deleteAccountButton')}
-                onPress={handleDeleteAccount}
-                loading={isDeleting}
-                variant="danger"
-                style={styles.formButton}
-              />
-            </View>
-          )}
+          {showDeleteAccount && <DeleteAccountForm />}
         </SettingsSection>
 
         {/* ══════════════════════════════════════════════════════════
@@ -1416,309 +761,35 @@ export function SettingsScreen({ navigation }: Props) {
             isExpanded={expandedSections.devTools}
             onToggle={() => toggleSection('devTools')}
           >
-            <View style={{ padding: spacing.md }}>
-              {/* The OS decides when the offline-finish task really runs (≥15 min,
-                  network + battery). This fires it on demand — debug builds only. */}
-              <Button
-                title={`Run background finish sync (${countPendingFinishes()} queued)`}
-                variant="outline"
-                onPress={async () => {
-                  try {
-                    await ensureFinishSyncTaskRegistered();
-                    const ran = await BackgroundTask.triggerTaskWorkerForTestingAsync();
-                    Alert.alert(
-                      'Background finish sync',
-                      ran
-                        ? 'Worker triggered. Put the app in the background to let it run.'
-                        : 'Not triggered — nothing registered (empty queue?) or not a debug build.',
-                    );
-                  } catch (e) {
-                    Alert.alert('Error', getErrorMessage(e));
-                  }
-                }}
-              />
-              <View style={{ height: spacing.sm }} />
-              <Button
-                title="Send test notification (5s delay)"
-                onPress={async () => {
-                  try {
-                    await Notifications.scheduleNotificationAsync({
-                      content: {
-                        title: 'Test Notification',
-                        body:
-                          'Tap this to test if the app opens! Sent at ' +
-                          new Date().toLocaleTimeString(),
-                        data: { type: 'test', post_id: 1 },
-                        sound: 'default',
-                      },
-                      trigger: {
-                        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-                        seconds: 5,
-                      },
-                    });
-                    Alert.alert(
-                      'Scheduled',
-                      'Notification will appear in 5 seconds. Close the app and wait for it, then tap it.',
-                    );
-                  } catch (e) {
-                    Alert.alert('Error', getErrorMessage(e));
-                  }
-                }}
-              />
-              <View style={{ height: spacing.sm }} />
-              <Button
-                title="Send immediate notification"
-                onPress={async () => {
-                  try {
-                    await Notifications.scheduleNotificationAsync({
-                      content: {
-                        title: 'Immediate Test',
-                        body: 'Tap to test app opening. ' + new Date().toLocaleTimeString(),
-                        data: { type: 'test' },
-                        sound: 'default',
-                      },
-                      trigger: null,
-                    });
-                  } catch (e) {
-                    Alert.alert('Error', getErrorMessage(e));
-                  }
-                }}
-              />
-              <View style={{ height: spacing.sm }} />
-              <Button
-                title="Show Push Token"
-                onPress={async () => {
-                  try {
-                    const token = await Notifications.getExpoPushTokenAsync({
-                      projectId: '6eab0c85-bf5b-4308-96e2-15fcd9c780fe',
-                    });
-                    Alert.alert('Expo Push Token', token.data, [
-                      {
-                        text: 'Copy',
-                        onPress: () => {
-                          Clipboard.setStringAsync(token.data);
-                        },
-                      },
-                      { text: 'OK' },
-                    ]);
-                  } catch (e) {
-                    Alert.alert('Error getting token', getErrorMessage(e));
-                  }
-                }}
-              />
-              <View style={{ height: spacing.md }} />
-              <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
-                Test 1 - Lokalna notyfikacja:{'\n'}
-                1. {'"Send test notification (5s delay)"'}
-                {'\n'}
-                2. Zminimalizuj appkę{'\n'}
-                3. Tapnij powiadomienie{'\n'}
-                {'\n'}
-                Test 2 - Push via Expo Tool:{'\n'}
-                1. {'"Show Push Token"'} → skopiuj token{'\n'}
-                2. Wejdź na expo.dev/notifications{'\n'}
-                3. Wklej token i wyślij{'\n'}
-                4. Tapnij powiadomienie
-              </Text>
-            </View>
+            <DevToolsSection />
           </SettingsSection>
         )}
       </ScrollView>
 
-      {/* Sport Selection Modal */}
-      <Modal
+      <FavoriteSportModal
         visible={showSportModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowSportModal(false)}
-      >
-        <ScreenContainer style={styles.modalContainer}>
-          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity
-              onPress={() => setShowSportModal(false)}
-              style={styles.modalCloseButton}
-            >
-              <Ionicons name="close" size={28} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {t('settings.selectFavoriteSport')}
-            </Text>
-            <View style={styles.modalHeaderSpacer} />
-          </View>
-          {sportsLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                {t('common.loading')}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={[
-                {
-                  id: null,
-                  name: t('settings.noSportSelected'),
-                  slug: 'none',
-                  icon: 'close-circle-outline' as keyof typeof Ionicons.glyphMap,
-                  is_active: true,
-                },
-                ...sportTypes,
-              ]}
-              keyExtractor={(item) => item.id?.toString() || 'none'}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.sportItem,
-                    { borderBottomColor: colors.border },
-                    preferences.activity_defaults.favorite_sport_id === item.id && {
-                      backgroundColor: colors.successLight,
-                    },
-                  ]}
-                  onPress={() =>
-                    handleSelectFavoriteSport(item.id ? (item as SportTypeWithIcon) : null)
-                  }
-                >
-                  <Ionicons
-                    name={item.icon}
-                    size={24}
-                    color={
-                      preferences.activity_defaults.favorite_sport_id === item.id
-                        ? colors.primary
-                        : colors.textSecondary
-                    }
-                    style={styles.sportIcon}
-                  />
-                  <Text
-                    style={[
-                      styles.sportName,
-                      {
-                        color:
-                          preferences.activity_defaults.favorite_sport_id === item.id
-                            ? colors.primary
-                            : colors.textPrimary,
-                      },
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                  {preferences.activity_defaults.favorite_sport_id === item.id && (
-                    <Ionicons name="checkmark" size={24} color={colors.primary} />
-                  )}
-                </TouchableOpacity>
-              )}
-              contentContainerStyle={styles.sportList}
-            />
-          )}
-        </ScreenContainer>
-      </Modal>
+        sportTypes={sportTypes}
+        isLoading={sportsLoading}
+        selectedId={preferences.activity_defaults.favorite_sport_id}
+        onSelect={handleSelectFavoriteSport}
+        onClose={() => setShowSportModal(false)}
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: spacing.xxxl,
   },
-  sectionTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginTop: spacing.xl,
-    marginBottom: spacing.sm,
-    marginHorizontal: spacing.lg,
-  },
-  section: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-  },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  rowIcon: {
-    marginRight: spacing.md,
-  },
-  rowLabel: {
-    fontSize: fontSize.md,
-  },
-  rowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  rowValue: {
-    fontSize: fontSize.md,
-  },
   formSection: {
     padding: spacing.lg,
     borderBottomWidth: 1,
   },
-  formButton: {
-    marginTop: spacing.sm,
-  },
-  logoutSection: {
-    marginTop: spacing.xl,
-  },
-  dangerText: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.md,
-    lineHeight: 20,
-  },
   // Notification row styles
-  notificationRow: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  notificationIcon: {
-    marginRight: spacing.sm,
-    marginTop: 2,
-  },
-  notificationLabelContainer: {
-    flex: 1,
-  },
-  notificationLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
-  notificationDescription: {
-    fontSize: fontSize.sm,
-    marginTop: 2,
-  },
-  notificationToggles: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.xl,
-    marginTop: spacing.xs,
-  },
-  toggleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  toggleLabel: {
-    fontSize: fontSize.sm,
-  },
   // About section styles
   aboutSection: {
     alignItems: 'center',
@@ -1734,58 +805,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   // Sport selection modal styles
-  modalContainer: {
-    flex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  modalCloseButton: {
-    padding: spacing.xs,
-    width: 44,
-  },
-  modalTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-  },
-  modalHeaderSpacer: {
-    width: 44,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: spacing.xxxl,
-  },
-  loadingText: {
-    fontSize: fontSize.md,
-    marginTop: spacing.md,
-  },
-  sportList: {
-    paddingBottom: spacing.xl,
-  },
-  sportItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-  },
-  sportIcon: {
-    marginRight: spacing.md,
-  },
-  sportName: {
-    flex: 1,
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
   healthSyncDescription: {
     fontSize: fontSize.sm,
     lineHeight: 20,
