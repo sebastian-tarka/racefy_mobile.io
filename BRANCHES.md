@@ -15,7 +15,16 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Audyt E: podział `SettingsScreen` (`audyt-settings`, od 2026-10-26)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Audyt E: podział `SettingsScreen` (zmergowane 2026-10-26, `audyt-settings`, tag `pre-audyt-settings` = main sprzed merge)
 
 Refaktor bez zmiany zachowania — trzeba przeklikać ustawienia.
 
@@ -28,14 +37,6 @@ Do sprawdzenia na telefonie:
 - [ ] Ulubiony sport: modal, wybór, „brak”; prywatność i domyślne ustawienia aktywności
 - [ ] Usuwanie konta (na koncie testowym): hasło, potwierdzenie, wylogowanie
 - [ ] Dev Tools (build deweloperski): przyciski testowych powiadomień i synchronizacji w tle
-
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Audyt E: podział `ProfileScreen` (zmergowane 2026-10-26, `audyt-profile`, tag `pre-audyt-profile` = main sprzed merge)
 
