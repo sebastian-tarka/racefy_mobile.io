@@ -15,7 +15,21 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: podział `WeeksListScreen` (`audyt-weeks-list`, od 2026-10-26)
+
+Refaktor bez zmiany zachowania — trzeba przeklikać ekran planu treningowego.
+
+Do sprawdzenia na telefonie:
+- [ ] Karta programu: tydzień X z Y, procent, ukończone / zostało, adherence; plan zaplanowany na
+      później pokazuje datę startu
+- [ ] Pasek tygodni: domyślnie bieżący, wybór innego, kropki stanu; lista sesji (ikony, czasy,
+      „zrobione” przekreślone), „Postęp tygodnia”
+- [ ] Ustawienia (zębatka i wiersz w opcjach): auto-łączenie, sporty uzupełniające, częstotliwość
+      wskazówek z licznikiem; Zapisz → odświeżenie i komunikat; ponowne otwarcie startuje od zapisanych
+- [ ] „Generuj wskazówki”: postęp „X z Y”, komunikat po zakończeniu; wyjście z ekranu w trakcie nie
+      zostawia odpytywania (logi)
+- [ ] Pauza / wznowienie / porzucenie programu, przełączanie planów
+
 
 ---
 
