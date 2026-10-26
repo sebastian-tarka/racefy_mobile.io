@@ -15,12 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Pull-to-refresh odświeża komentarze (`comments-refresh`, od 2026-10-26)
-
-Pociągnięcie w dół na poście, aktywności i evencie odświeżało tylko treść — komentarze pobierały się raz, przy pierwszym rozwinięciu.
-- [ ] komentarz dodany z innego konta/urządzenia → pull-to-refresh na poście pokazuje go (to samo na aktywności i evencie z rozwiniętymi komentarzami)
-- [ ] przy odświeżaniu lista komentarzy nie mruga/nie znika
-- [ ] event ze zwiniętymi komentarzami: pull-to-refresh nie pobiera komentarzy
+_(nic)_
 
 ---
 
@@ -28,6 +23,13 @@ Pociągnięcie w dół na poście, aktywności i evencie odświeżało tylko tre
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Pull-to-refresh odświeża komentarze (zmergowane 2026-10-26, `comments-refresh`, tag `pre-comments-refresh` = main sprzed merge)
+
+Pociągnięcie w dół na poście, aktywności i evencie odświeżało tylko treść — komentarze pobierały się raz, przy pierwszym rozwinięciu.
+- [ ] komentarz dodany z innego konta/urządzenia → pull-to-refresh na poście pokazuje go (to samo na aktywności i evencie z rozwiniętymi komentarzami)
+- [ ] przy odświeżaniu lista komentarzy nie mruga/nie znika
+- [ ] event ze zwiniętymi komentarzami: pull-to-refresh nie pobiera komentarzy
 
 ### Usuwanie trasy z biblioteki (zmergowane 2026-10-26, `route-delete`, tag `pre-route-delete` = main sprzed merge)
 
