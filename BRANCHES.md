@@ -15,12 +15,7 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Edycja drużyny wczytuje dane (`team-edit`, od 2026-10-26)
-
-Formularz edycji otwierał się pusty — zapis nadpisywał nazwę/opis/widoczność tym, co wpisano od zera.
-- [ ] kapitan → ołówek na drużynie: formularz ma aktualną nazwę, opis i widoczność
-- [ ] zapis zmiany → szczegóły drużyny po powrocie pokazują nową nazwę/opis
-- [ ] bez internetu przy otwieraniu edycji: komunikat błędu z „Spróbuj ponownie”, nie pusty formularz
+_(nic)_
 
 ---
 
@@ -28,6 +23,13 @@ Formularz edycji otwierał się pusty — zapis nadpisywał nazwę/opis/widoczno
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Edycja drużyny wczytuje dane (zmergowane 2026-10-26, `team-edit`, tag `pre-team-edit` = main sprzed merge)
+
+Formularz edycji otwierał się pusty — zapis nadpisywał nazwę/opis/widoczność tym, co wpisano od zera.
+- [ ] kapitan → ołówek na drużynie: formularz ma aktualną nazwę, opis i widoczność
+- [ ] zapis zmiany → szczegóły drużyny po powrocie pokazują nową nazwę/opis
+- [ ] bez internetu przy otwieraniu edycji: komunikat błędu z „Spróbuj ponownie”, nie pusty formularz
 
 ### Audyt: porządki (zmergowane 2026-10-26, `audyt-porzadki`, tag `pre-audyt-porzadki` = main sprzed merge)
 
