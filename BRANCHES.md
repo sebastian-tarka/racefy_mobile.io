@@ -15,7 +15,12 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Pull-to-refresh odświeża komentarze (`comments-refresh`, od 2026-10-26)
+
+Pociągnięcie w dół na poście, aktywności i evencie odświeżało tylko treść — komentarze pobierały się raz, przy pierwszym rozwinięciu.
+- [ ] komentarz dodany z innego konta/urządzenia → pull-to-refresh na poście pokazuje go (to samo na aktywności i evencie z rozwiniętymi komentarzami)
+- [ ] przy odświeżaniu lista komentarzy nie mruga/nie znika
+- [ ] event ze zwiniętymi komentarzami: pull-to-refresh nie pobiera komentarzy
 
 ---
 
