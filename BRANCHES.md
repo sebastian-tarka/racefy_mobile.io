@@ -15,7 +15,10 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt: porządki (`audyt-porzadki`, od 2026-10-26)
+
+Martwe zmienne i importy, query przez `withQuery()`, bez zmian produktowych.
+- [ ] po mergu: lista rozmów, powiadomienia i wyszukiwanie zwracają to samo co przed zmianą (query budowane inaczej)
 
 ---
 
