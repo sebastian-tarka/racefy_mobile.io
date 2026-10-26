@@ -15,7 +15,19 @@ Stan na: **2026-10-26**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Audyt E: podział `ProfileScreen` (`audyt-profile`, od 2026-10-26)
+
+Refaktor bez zmiany zachowania — największe ryzyko: pomiar nagłówka i sticky pasek zakładek.
+
+Do sprawdzenia na telefonie:
+- [ ] Nagłówek: okładka (zdjęcie / gradient), przycisk ustawień z kropką feedbacku, avatar → edycja,
+      ranking → tablica, liczby, obserwujący (z licznikiem próśb) / obserwowani, odznaki, narzędzia
+- [ ] Pasek zakładek przykleja się po przewinięciu; przełączenie zakładki przy głębokim przewinięciu
+      ląduje na początku treści; liczniki „nowe aktywności” i szkiców
+- [ ] Statystyki: okres, sport, metryka, karty, porównanie z obserwowanym (Plus/Pro) i wiersz paywalla
+      (Free); filtr sportu działa też w zakładce Aktywności
+- [ ] Pull-to-refresh na każdej zakładce, doładowywanie list, szkice (publikuj / usuń)
+
 
 ---
 
