@@ -5,7 +5,15 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import { useTheme } from '../../hooks';
-import { ScreenContainer, ScreenHeader, Input, Button, Card } from '../../components';
+import {
+  ScreenContainer,
+  ScreenHeader,
+  Input,
+  Button,
+  Card,
+  Loading,
+  ErrorState,
+} from '../../components';
 import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
 import { emitRefresh } from '../../services/refreshEvents';
@@ -13,8 +21,8 @@ import { emitRefresh } from '../../services/refreshEvents';
 type Props = NativeStackScreenProps<RootStackParamList, 'TeamForm'>;
 
 export function TeamFormScreen({ route, navigation }: Props) {
-  const teamId = route.params?.teamId;
-  const isEdit = !!teamId;
+  const slug = route.params?.slug;
+  const isEdit = !!slug;
   const { t } = useTranslation();
   const { colors } = useTheme();
 
@@ -22,16 +30,32 @@ export function TeamFormScreen({ route, navigation }: Props) {
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  /** Id of the team being edited — known once it is loaded. */
+  const [teamId, setTeamId] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(isEdit);
+  const [fetchError, setFetchError] = useState(false);
 
-  useEffect(() => {
-    if (isEdit && teamId) {
-      setIsFetching(true);
-      // Fetch by ID — we need the team data. Use slug from a cached team or fetch by ID endpoint.
-      // For simplicity, we'll use the teams list to find it or just use the form with provided data.
+  // Edit starts from the saved values: an empty form would overwrite them on save.
+  const fetchTeam = useCallback(async () => {
+    if (!slug) return;
+    setIsFetching(true);
+    setFetchError(false);
+    try {
+      const team = await api.getTeam(slug);
+      setTeamId(team.id);
+      setName(team.name);
+      setDescription(team.description ?? '');
+      setIsPublic(team.visibility === 'public');
+    } catch {
+      setFetchError(true);
+    } finally {
       setIsFetching(false);
     }
-  }, [isEdit, teamId]);
+  }, [slug]);
+
+  useEffect(() => {
+    fetchTeam();
+  }, [fetchTeam]);
 
   const handleSubmit = useCallback(async () => {
     if (!name.trim()) {
@@ -46,7 +70,7 @@ export function TeamFormScreen({ route, navigation }: Props) {
         visibility: (isPublic ? 'public' : 'private') as 'public' | 'private',
       };
 
-      if (isEdit && teamId) {
+      if (teamId) {
         await api.updateTeam(teamId, data);
         Alert.alert(t('common.success'), t('teams.teamUpdated'));
       } else {
@@ -60,15 +84,32 @@ export function TeamFormScreen({ route, navigation }: Props) {
     } finally {
       setIsLoading(false);
     }
-  }, [name, description, isPublic, isEdit, teamId, navigation, t]);
+  }, [name, description, isPublic, teamId, navigation, t]);
+
+  const header = (
+    <ScreenHeader
+      title={isEdit ? t('teams.editTeam') : t('teams.createNewTeam')}
+      showBack
+      onBack={() => navigation.goBack()}
+    />
+  );
+
+  if (isEdit && (isFetching || fetchError)) {
+    return (
+      <ScreenContainer>
+        {header}
+        {isFetching ? (
+          <Loading fullScreen message={t('common.loading')} />
+        ) : (
+          <ErrorState message={t('teams.failedToLoad')} onRetry={fetchTeam} />
+        )}
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>
-      <ScreenHeader
-        title={isEdit ? t('teams.editTeam') : t('teams.createNewTeam')}
-        showBack
-        onBack={() => navigation.goBack()}
-      />
+      {header}
 
       <KeyboardAvoidingView
         style={styles.flex}
