@@ -18,8 +18,8 @@ Stan na: **2026-10-29**
 ### Sesja siłowa zostawiona na noc: 422 przy zapisie (`fix/overnight-session-duration`, branch o tej samej nazwie w API)
 
 Zakończenie wysyłało czas z licznika (ponad 12 h) → „The duration seconds field must not be greater than 43200.”
-API (osobny deploy) zamiast 422 bierze rozpiętość serii; mobile pyta o czas, gdy licznik > 4 h.
-- [ ] po wdrożeniu API: zawieszona sesja z 2026-10-28 zapisuje się z **obecnej** wersji aplikacji, czas ≈ od pierwszej do ostatniej serii
+API (v1.3.11, na prod od 2026-10-29) zamiast 422 bierze rozpiętość serii; mobile pyta o czas, gdy licznik > 4 h.
+- [ ] zawieszona sesja z 2026-10-28 zapisuje się z **obecnej** wersji aplikacji, czas ≈ od pierwszej do ostatniej serii
 - [ ] nowa wersja: sesja > 4 h → w „Zakończ trening” pole Godziny/Minuty z komunikatem, wypełnione czasem serii
 - [ ] wpisanie > 12 h → błąd pod polem, przycisk nieaktywny; 0 h 0 min → przycisk nieaktywny
 - [ ] zwykła sesja (< 4 h): arkusz bez pola czasu, zapis jak dotąd
