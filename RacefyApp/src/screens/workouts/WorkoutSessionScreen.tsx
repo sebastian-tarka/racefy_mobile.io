@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -36,6 +36,11 @@ import { WorkoutSessionSummary } from './components/WorkoutSessionSummary';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
 import { getErrorMessage } from '../../utils/errors';
+import {
+  LONG_SESSION_SECONDS,
+  MAX_SESSION_DURATION_SECONDS,
+  overrunDurationSuggestion,
+} from '../../utils/sessionDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
 
@@ -150,9 +155,23 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
   const openVideo = (url: string) => Linking.openURL(url).catch(() => {});
 
+  // The clock counts from started_at, so a session left running overnight
+  // shows a day of "work". Then the sheet asks for the real duration.
+  const overran = s.elapsedSeconds > LONG_SESSION_SECONDS;
+  const durationPrompt = useMemo(
+    () => (overran ? { suggested: overrunDurationSuggestion(s.session) } : null),
+    [overran, s.session],
+  );
+
   const finish = async (input: Parameters<typeof s.complete>[0]) => {
     try {
-      const outcome = await s.complete({ ...input, duration_seconds: s.elapsedSeconds });
+      const outcome = await s.complete({
+        ...input,
+        duration_seconds: Math.min(
+          input.duration_seconds ?? s.elapsedSeconds,
+          MAX_SESSION_DURATION_SECONDS,
+        ),
+      });
       setCompleteOpen(false);
       setResult({ activityId: outcome.queued ? null : outcome.activityId });
     } catch (error) {
@@ -557,6 +576,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         visible={completeOpen}
         onClose={() => setCompleteOpen(false)}
         onSubmit={finish}
+        durationPrompt={durationPrompt}
       />
       <ExerciseHistoryModal
         exerciseId={history?.id ?? null}

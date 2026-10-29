@@ -3618,6 +3618,11 @@
       "title": "Terminar entrenamiento",
       "rpe": "Esfuerzo (RPE)",
       "rpeHint": "1 = muy fácil · 10 = al límite",
+      "duration": "Duración del entrenamiento",
+      "durationOverrun": "El cronómetro siguió corriendo porque la sesión no se terminó. Comprueba cuánto duró realmente el entrenamiento.",
+      "hours": "Horas",
+      "minutes": "Minutos",
+      "durationMax": "Un entrenamiento no puede durar más de 12 horas.",
       "notes": "Notas",
       "visibility": "Visibilidad",
       "visibilityOptions": {

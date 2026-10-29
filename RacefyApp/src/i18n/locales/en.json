@@ -3555,6 +3555,11 @@
       "title": "Finish workout",
       "rpe": "Effort (RPE)",
       "rpeHint": "1 = very easy · 10 = all out",
+      "duration": "Workout duration",
+      "durationOverrun": "The timer kept running because the session wasn't finished. Check how long the workout really took.",
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "durationMax": "A workout can't be longer than 12 hours.",
       "notes": "Notes",
       "visibility": "Visibility",
       "visibilityOptions": {
