@@ -3614,6 +3614,11 @@
       "title": "Zakończ trening",
       "rpe": "Wysiłek (RPE)",
       "rpeHint": "1 = bardzo lekko · 10 = maksymalnie",
+      "duration": "Czas treningu",
+      "durationOverrun": "Licznik chodził dalej, bo sesja nie została zakończona. Sprawdź, ile trening trwał naprawdę.",
+      "hours": "Godziny",
+      "minutes": "Minuty",
+      "durationMax": "Trening nie może trwać dłużej niż 12 godzin.",
       "notes": "Notatka",
       "visibility": "Widoczność",
       "visibilityOptions": {
