@@ -15,16 +15,7 @@ Stan na: **2026-10-30**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Czas w ruchu: tempo bez stania w miejscu (`feature/moving-time`, branch o tej samej nazwie w API)
-
-API liczy `moving_time` z GPS (postoje ≥ 20 s, start w domu, światła); tempo w mobile i na webie czytane z niego, `duration` bez zmian.
-API na prod od 2026-10-30 (v1.3.13, backfill zrobiony) — web już liczy tempo z `moving_time`, mobile dopiero po merge tego brancha.
-- [ ] bieg z ~2 min stania przed startem: tempo na ekranie aktywności bez tych minut, pod czasem „w ruchu …”
-- [ ] bieg bez postojów: brak „w ruchu”, tempo jak dotąd
-- [ ] karta w feedzie, post, slider na profilu: to samo tempo co na ekranie aktywności
-- [ ] aktywność bez GPS (bieżnia/ręczna): bez zmian
-- [ ] web: ekran aktywności, karta, tabela — to samo tempo co w aplikacji
-- [x] prod: backfill 2026-10-30 (API v1.3.13): 348/352 aktywności, rozkład sprawdzony na próbce przed zapisem
+_(nic)_
 
 ---
 
@@ -32,6 +23,17 @@ API na prod od 2026-10-30 (v1.3.13, backfill zrobiony) — web już liczy tempo 
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Czas w ruchu: tempo bez stania w miejscu (zmergowane 2026-10-30, `feature/moving-time`, tag `pre-moving-time` = main sprzed merge)
+
+API liczy `moving_time` z GPS (postoje ≥ 20 s, start w domu, światła); tempo w mobile i na webie czytane z niego, `duration` bez zmian.
+API na prod od 2026-10-30 (v1.3.13, backfill zrobiony) — web już liczy tempo z `moving_time`, mobile od v1.28.0.
+- [ ] bieg z ~2 min stania przed startem: tempo na ekranie aktywności bez tych minut, pod czasem „w ruchu …”
+- [ ] bieg bez postojów: brak „w ruchu”, tempo jak dotąd
+- [ ] karta w feedzie, post, slider na profilu: to samo tempo co na ekranie aktywności
+- [ ] aktywność bez GPS (bieżnia/ręczna): bez zmian
+- [ ] web: ekran aktywności, karta, tabela — to samo tempo co w aplikacji
+- [x] prod: backfill 2026-10-30 (API v1.3.13): 348/352 aktywności, rozkład sprawdzony na próbce przed zapisem
 
 ### Licznik sesji siłowej = czas treningu (zmergowane 2026-10-30, `fix/session-active-time`, tag `pre-session-active-time` = main sprzed merge)
 
