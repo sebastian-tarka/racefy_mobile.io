@@ -15,6 +15,7 @@ import { formatDuration } from '../utils/formatDuration';
 import { getActivityVerdict, VERDICT_COLORS } from '../utils/activityVerdict';
 import type { Activity } from '../types/api';
 import { formatDate } from '../utils/dateFormat';
+import { paceSeconds } from '../utils/movingTime';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -231,7 +232,7 @@ function ActivityCardBase({
           <View style={styles.statItem}>
             <Ionicons name="speedometer-outline" size={18} color={colors.textSecondary} />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {formatPaceWithUnit(activity.distance, activity.duration)}
+              {formatPaceWithUnit(activity.distance, paceSeconds(activity))}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
               {t('activityDetail.pace')}

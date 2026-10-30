@@ -12,6 +12,7 @@ import { formatDurationCompact } from '../utils/formatDuration';
 import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
 import { useTranslation } from 'react-i18next';
+import { paceSeconds } from '../utils/movingTime';
 
 interface ActivitySliderCardProps {
   activity: Activity;
@@ -85,7 +86,7 @@ export function ActivitySliderCard({
         <View style={styles.statItem}>
           <Ionicons name="speedometer-outline" size={14} color="rgba(255,255,255,0.8)" />
           <Text style={styles.statText}>
-            {formatPaceFromDistanceTime(activity.distance, activity.duration)} {getPaceUnit()}
+            {formatPaceFromDistanceTime(activity.distance, paceSeconds(activity))} {getPaceUnit()}
           </Text>
         </View>
       </View>

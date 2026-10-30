@@ -42,6 +42,11 @@ export interface Activity {
   started_at: string;
   ended_at: string | null;
   duration: number;
+  /**
+   * Duration without standing still (seconds); null without a GPS track or from
+   * an API older than the field. Pace is read from it — see `paceSeconds()`.
+   */
+  moving_time?: number | null;
   distance: number;
   client_distance: number | null;
   elevation_gain: number | null;

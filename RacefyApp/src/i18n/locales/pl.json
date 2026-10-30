@@ -830,6 +830,7 @@
     "notFound": "Nie znaleziono aktywności",
     "failedToLoad": "Nie udało się załadować szczegółów aktywności",
     "duration": "Czas",
+    "movingTime": "w ruchu {{time}}",
     "distance": "Dystans",
     "pace": "Tempo",
     "stats": "Statystyki",

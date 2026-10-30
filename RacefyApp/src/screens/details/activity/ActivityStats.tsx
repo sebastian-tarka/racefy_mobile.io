@@ -10,6 +10,7 @@ import { useUnits } from '../../../hooks/useUnits';
 import { fontSize, spacing } from '../../../theme';
 import type { Activity } from '../../../types/api';
 import { formatDuration } from '../../../utils/formatDuration';
+import { paceSeconds, visibleMovingTime } from '../../../utils/movingTime';
 
 type StrengthSession = NonNullable<Activity['strength_session']>;
 
@@ -27,6 +28,7 @@ export function ActivityMainStats({
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { formatDistance, formatPaceWithUnit, units } = useUnits();
+  const movingTime = visibleMovingTime(activity);
 
   return (
     <>
@@ -61,11 +63,16 @@ export function ActivityMainStats({
               <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
                 {t('activityDetail.duration')}
               </Text>
+              {movingTime != null && (
+                <Text style={[styles.movingTime, { color: colors.textMuted }]}>
+                  {t('activityDetail.movingTime', { time: formatDuration(movingTime) })}
+                </Text>
+              )}
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.mainStatItem}>
               <Text style={[styles.mainStatValue, { color: colors.textPrimary }]}>
-                {formatPaceWithUnit(activity.distance, activity.duration)}
+                {formatPaceWithUnit(activity.distance, paceSeconds(activity))}
               </Text>
               <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>
                 {t('activityDetail.pace')}
@@ -212,6 +219,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginTop: spacing.xs,
     textTransform: 'uppercase',
+  },
+  movingTime: {
+    fontSize: fontSize.xs,
+    marginTop: 2,
   },
   mainStatValue: {
     fontSize: fontSize.xl,
