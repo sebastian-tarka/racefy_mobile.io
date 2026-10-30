@@ -9,13 +9,19 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-29**
+Stan na: **2026-10-30**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Licznik sesji siłowej = czas treningu (`fix/session-active-time`)
+
+Zamiast pauzy: przerwy > 30 min między akcjami (start/koniec serii, odpoczynek) nie liczą się do licznika ani do zapisu.
+- [ ] zwykła sesja: licznik tyka jak dotąd, zapisany czas = licznik
+- [ ] sesja zostawiona na noc i dokończona rano: licznik po otwarciu nie zawiera nocy, zapis bez pola czasu
+- [ ] ponad 30 min bez akcji → licznik cofa się do ostatniej akcji; następna seria liczy dalej
+- [ ] długa seria na czas (> 30 min, rozpoczęta przyciskiem) liczy się w całości
 
 ---
 
