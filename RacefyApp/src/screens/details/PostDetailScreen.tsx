@@ -43,6 +43,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { GpsTrack, Post, User } from '../../types/api';
 import { formatDate, formatTimeAgo } from '../../utils/dateFormat';
+import { paceSeconds } from '../../utils/movingTime';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PostDetail'>;
 
@@ -264,7 +265,7 @@ export function PostDetailScreen({ route, navigation }: Props) {
           <View style={styles.activityStatItem}>
             <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
             <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-              {formatPaceWithUnit(activity.distance, activity.duration)}
+              {formatPaceWithUnit(activity.distance, paceSeconds(activity))}
             </Text>
           </View>
         </View>

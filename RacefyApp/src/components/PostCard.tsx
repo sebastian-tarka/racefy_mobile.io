@@ -24,6 +24,7 @@ import {
   StrengthSetMosaic,
 } from './strength';
 import { formatDate, formatTimeAgo } from '../utils/dateFormat';
+import { paceSeconds } from '../utils/movingTime';
 
 interface PostCardProps {
   post: Post;
@@ -206,7 +207,7 @@ function PostCardBase({
             <View style={styles.activityStatItem}>
               <Ionicons name="speedometer-outline" size={14} color={colors.textSecondary} />
               <Text style={[styles.activityStatValue, { color: colors.textPrimary }]}>
-                {formatPaceWithUnit(activity.distance, activity.duration)}
+                {formatPaceWithUnit(activity.distance, paceSeconds(activity))}
               </Text>
             </View>
           </View>

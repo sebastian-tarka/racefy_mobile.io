@@ -803,6 +803,7 @@
     "notFound": "Actividad no encontrada",
     "failedToLoad": "Error al cargar los detalles de la actividad",
     "duration": "Duración",
+    "movingTime": "en movimiento {{time}}",
     "distance": "Distancia",
     "pace": "Ritmo",
     "stats": "Estadísticas",

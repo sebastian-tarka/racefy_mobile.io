@@ -798,6 +798,7 @@
     "notFound": "Activity not found",
     "failedToLoad": "Failed to load activity details",
     "duration": "Duration",
+    "movingTime": "moving {{time}}",
     "distance": "Distance",
     "pace": "Pace",
     "stats": "Statistics",
