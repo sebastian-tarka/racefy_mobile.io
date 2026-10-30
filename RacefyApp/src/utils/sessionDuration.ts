@@ -8,39 +8,57 @@ import type { WorkoutSession } from '../types/workouts';
 export const MAX_SESSION_DURATION_SECONDS = 43200;
 
 /**
- * Past this the session clock most likely kept running after the workout
- * (left open overnight), so the finish sheet asks for the real duration.
+ * Past this even the active time looks wrong (a set left started overnight),
+ * so the finish sheet asks for the real duration.
  */
 export const LONG_SESSION_SECONDS = 4 * 3600;
 
 /**
- * Seconds from the first set touched to the last set completed — the time
- * actually spent working. Null when no set carries a timestamp.
+ * A break between two actions longer than this is not training — the session
+ * was left open (overnight, until the next day) — and does not count.
  */
-export function setsSpanSeconds(session: Pick<WorkoutSession, 'exercises'> | null): number | null {
-  let first = Infinity;
-  let last = -Infinity;
-  for (const ex of session?.exercises ?? []) {
-    for (const set of ex.sets) {
-      for (const stamp of [set.started_at, set.completed_at]) {
-        const ms = stamp ? new Date(stamp).getTime() : NaN;
-        if (Number.isFinite(ms)) first = Math.min(first, ms);
-      }
-      const done = set.completed_at ? new Date(set.completed_at).getTime() : NaN;
-      if (Number.isFinite(done)) last = Math.max(last, done);
-    }
-  }
-  if (!Number.isFinite(first) || !Number.isFinite(last) || last <= first) return null;
-  return Math.round((last - first) / 1000);
-}
+const IDLE_GAP_SECONDS = 30 * 60;
+
+const ms = (stamp: string | null | undefined) => {
+  const t = stamp ? new Date(stamp).getTime() : NaN;
+  return Number.isFinite(t) ? t : null;
+};
 
 /**
- * What to prefill the duration with when the clock overran: the sets' span
- * when it fits under the cap, else nothing — the athlete types it in.
+ * Seconds actually spent training: the time from the session start through
+ * every set action (start, finish, rest) up to `now`, without the breaks
+ * longer than {@link IDLE_GAP_SECONDS}. Time inside a set that was started and
+ * not yet finished always counts — a long timed set is work, not a break.
+ * Stands in for a pause button: leave the session open, come back tomorrow,
+ * and the night is not on the clock.
  */
-export function overrunDurationSuggestion(
-  session: Pick<WorkoutSession, 'exercises'> | null,
-): number | null {
-  const span = setsSpanSeconds(session);
-  return span != null && span <= MAX_SESSION_DURATION_SECONDS ? span : null;
+export function activeSeconds(
+  session: Pick<WorkoutSession, 'started_at' | 'exercises'> | null,
+  now: number,
+): number {
+  const start = ms(session?.started_at);
+  if (start == null) return 0;
+
+  const sets = (session?.exercises ?? []).flatMap((ex) => ex.sets);
+  const events = [start];
+  const inSet: [number, number][] = [];
+  for (const set of sets) {
+    const began = ms(set.started_at);
+    const done = ms(set.completed_at);
+    for (const t of [began, done, ms(set.rest_started_at)]) if (t != null) events.push(t);
+    if (began != null) inSet.push([began, done ?? Infinity]);
+  }
+  events.push(now);
+  const points = events.filter((t) => t >= start && t <= now).sort((a, b) => a - b);
+
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const from = points[i - 1];
+    const to = points[i];
+    const gap = to - from;
+    if (gap <= IDLE_GAP_SECONDS * 1000 || inSet.some(([b, d]) => b <= from && d >= to)) {
+      total += gap;
+    }
+  }
+  return Math.floor(total / 1000);
 }

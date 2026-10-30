@@ -1,53 +1,55 @@
-import {
-  MAX_SESSION_DURATION_SECONDS,
-  overrunDurationSuggestion,
-  setsSpanSeconds,
-} from '../sessionDuration';
+import { activeSeconds } from '../sessionDuration';
 import type { WorkoutSession, WorkoutSessionSet } from '../../types/workouts';
 
-const set = (started_at: string | null, completed_at: string | null) =>
-  ({ started_at, completed_at }) as WorkoutSessionSet;
+const at = (hhmm: string, day = 29) => `2026-10-${day}T${hhmm}:00Z`;
+const now = (hhmm: string, day = 29) => new Date(at(hhmm, day)).getTime();
 
-const session = (...sets: WorkoutSessionSet[]) =>
-  ({ exercises: [{ sets }] }) as unknown as Pick<WorkoutSession, 'exercises'>;
+const set = (started: string | null, completed: string | null, rest: string | null = completed) =>
+  ({ started_at: started, completed_at: completed, rest_started_at: rest }) as WorkoutSessionSet;
 
-describe('setsSpanSeconds', () => {
-  it('runs from the first set touched to the last one completed', () => {
+const session = (started_at: string | null, ...sets: WorkoutSessionSet[]) =>
+  ({ started_at, exercises: [{ sets }] }) as unknown as Pick<
+    WorkoutSession,
+    'started_at' | 'exercises'
+  >;
+
+describe('activeSeconds', () => {
+  it('runs like a stopwatch through a normal session', () => {
+    const s = session(at('10:00'), set(at('10:05'), at('10:07')), set(null, at('10:20')));
+    expect(activeSeconds(s, now('10:30'))).toBe(30 * 60);
+  });
+
+  it('leaves out the night when the session was left open until the next day', () => {
     const s = session(
-      set('2026-10-29T10:00:00Z', '2026-10-29T10:02:00Z'),
-      set(null, '2026-10-29T10:45:00Z'),
-      set(null, null),
+      at('19:00', 28),
+      set(at('19:05', 28), at('19:10', 28)),
+      set(null, at('19:40', 28)),
+      set(null, at('12:10', 29)),
+      set(null, at('12:40', 29)),
     );
-    expect(setsSpanSeconds(s)).toBe(2700);
+    // 40 min yesterday + 30 min today (12:10 → 12:40); 12:40 → 12:45 is the tail.
+    expect(activeSeconds(s, now('12:45', 29))).toBe((40 + 30 + 5) * 60);
   });
 
-  it('starts at a completed_at when the set was ticked without being started', () => {
-    expect(
-      setsSpanSeconds(
-        session(set(null, '2026-10-29T10:00:00Z'), set(null, '2026-10-29T10:30:00Z')),
-      ),
-    ).toBe(1800);
+  it('stops counting while nothing happens and starts again with the next action', () => {
+    const s = session(at('10:00'), set(null, at('10:20')));
+    expect(activeSeconds(s, now('10:50'))).toBe(50 * 60);
+    expect(activeSeconds(s, now('18:00'))).toBe(20 * 60);
   });
 
-  it('is null without timestamps or with a single instant', () => {
-    expect(setsSpanSeconds(session(set(null, null)))).toBeNull();
-    expect(setsSpanSeconds(session(set(null, '2026-10-29T10:00:00Z')))).toBeNull();
-    expect(setsSpanSeconds(null)).toBeNull();
-  });
-});
-
-describe('overrunDurationSuggestion', () => {
-  it('offers the span for a session left running overnight', () => {
-    const s = session(set('2026-10-29T12:00:00Z', null), set(null, '2026-10-29T12:50:00Z'));
-    expect(overrunDurationSuggestion(s)).toBe(3000);
+  it('keeps a long set that is in progress', () => {
+    const s = session(at('10:00'), set(at('10:05'), null, null));
+    expect(activeSeconds(s, now('10:50'))).toBe(50 * 60);
   });
 
-  it('offers nothing when even the sets span more than the cap', () => {
-    const s = session(
-      set('2026-10-28T08:00:00Z', '2026-10-28T08:05:00Z'),
-      set(null, '2026-10-29T12:00:00Z'),
-    );
-    expect(setsSpanSeconds(s)! > MAX_SESSION_DURATION_SECONDS).toBe(true);
-    expect(overrunDurationSuggestion(s)).toBeNull();
+  it('keeps a long set that was finished', () => {
+    const s = session(at('10:00'), set(at('10:05'), at('10:50')));
+    expect(activeSeconds(s, now('10:55'))).toBe(55 * 60);
+  });
+
+  it('ignores stamps from before the start and is 0 without a start', () => {
+    const s = session(at('10:00'), set(null, at('09:00')));
+    expect(activeSeconds(s, now('10:10'))).toBe(10 * 60);
+    expect(activeSeconds(session(null), now('10:10'))).toBe(0);
   });
 });
