@@ -15,7 +15,16 @@ Stan na: **2026-10-30**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Czas w ruchu: tempo bez stania w miejscu (`feature/moving-time`, branch o tej samej nazwie w API)
+
+API liczy `moving_time` z GPS (postoje ≥ 20 s, start w domu, światła); tempo w mobile i na webie czytane z niego, `duration` bez zmian.
+Wymaga API z branchu (migracja + `activities:backfill-moving-time`); bez niego mobile pokazuje tempo jak dotąd.
+- [ ] bieg z ~2 min stania przed startem: tempo na ekranie aktywności bez tych minut, pod czasem „w ruchu …”
+- [ ] bieg bez postojów: brak „w ruchu”, tempo jak dotąd
+- [ ] karta w feedzie, post, slider na profilu: to samo tempo co na ekranie aktywności
+- [ ] aktywność bez GPS (bieżnia/ręczna): bez zmian
+- [ ] web: ekran aktywności, karta, tabela — to samo tempo co w aplikacji
+- [ ] prod: `activities:backfill-moving-time --dry-run` przed zapisem, rozkład zmian wygląda sensownie
 
 ---
 
