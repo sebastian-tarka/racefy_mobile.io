@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -13,8 +13,8 @@ interface Props {
   onClose: () => void;
   onSubmit: (input: WorkoutSessionCompleteInput) => Promise<void>;
   /**
-   * Set when the session clock overran (left running overnight): the sheet
-   * then asks for the real duration, prefilled with `suggested` when known.
+   * Set when the session clock overran: the sheet then asks for the real
+   * duration, prefilled with `suggested` (read once, when the sheet opens).
    */
   durationPrompt?: { suggested: number | null } | null;
 }
@@ -39,12 +39,16 @@ export function CompleteSessionSheet({ visible, onClose, onSubmit, durationPromp
   const [minutes, setMinutes] = useState('');
 
   const asksDuration = !!durationPrompt;
-  const suggested = durationPrompt?.suggested ?? null;
+  // The suggestion ticks with the session clock; reading it through a ref
+  // keeps it from overwriting what the athlete is typing.
+  const suggestedRef = useRef<number | null>(null);
+  suggestedRef.current = durationPrompt?.suggested ?? null;
   useEffect(() => {
     if (!visible || !asksDuration) return;
+    const suggested = suggestedRef.current;
     setHours(suggested != null ? String(Math.floor(suggested / 3600)) : '');
-    setMinutes(suggested != null ? String(Math.round((suggested % 3600) / 60)) : '');
-  }, [visible, asksDuration, suggested]);
+    setMinutes(suggested != null ? String(Math.floor((suggested % 3600) / 60)) : '');
+  }, [visible, asksDuration]);
 
   const durationSeconds = toInt(hours) * 3600 + toInt(minutes) * 60;
   const tooLong = durationSeconds > MAX_SESSION_DURATION_SECONDS;

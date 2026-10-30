@@ -15,6 +15,7 @@ import type {
   WorkoutSessionStats,
 } from '../types/workouts';
 import { getErrorMessage, getErrorStatus } from '../utils/errors';
+import { activeSeconds } from '../utils/sessionDuration';
 
 export interface SetValues {
   weightKg?: number | null;
@@ -395,13 +396,14 @@ export function useWorkoutSession(sessionId: number, onError: (message: string) 
     [sessionId, commit],
   );
 
+  /** Training time, not wall-clock: long idle breaks (a night) are left out. */
   const elapsedSeconds = useMemo(() => {
     if (!session?.started_at) return 0;
     if (session.duration_seconds != null && session.status !== 'in_progress') {
       return session.duration_seconds;
     }
-    return Math.max(0, Math.floor((now - new Date(session.started_at).getTime()) / 1000));
-  }, [session?.started_at, session?.duration_seconds, session?.status, now]);
+    return activeSeconds(session, now);
+  }, [session, now]);
 
   const restRemaining = rest ? Math.max(0, Math.ceil((rest.endsAt - now) / 1000)) : null;
 

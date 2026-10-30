@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -36,16 +36,12 @@ import { WorkoutSessionSummary } from './components/WorkoutSessionSummary';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { ExerciseHistoryModal } from './components/ExerciseHistoryModal';
 import { getErrorMessage } from '../../utils/errors';
-import {
-  LONG_SESSION_SECONDS,
-  MAX_SESSION_DURATION_SECONDS,
-  overrunDurationSuggestion,
-} from '../../utils/sessionDuration';
+import { LONG_SESSION_SECONDS, MAX_SESSION_DURATION_SECONDS } from '../../utils/sessionDuration';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSession'>;
 
 /**
- * Screen B — the live checklist. Stopwatch from `started_at`, one expanded
+ * Screen B — the live checklist. Stopwatch of active time (idle breaks left out), one expanded
  * exercise (the one holding the next open set), set rows with weight and
  * reps / seconds, Start → Done, a rest countdown with cue + vibration +
  * notification, "+ set", history per exercise, finish or skip.
@@ -155,13 +151,12 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
 
   const openVideo = (url: string) => Linking.openURL(url).catch(() => {});
 
-  // The clock counts from started_at, so a session left running overnight
-  // shows a day of "work". Then the sheet asks for the real duration.
-  const overran = s.elapsedSeconds > LONG_SESSION_SECONDS;
-  const durationPrompt = useMemo(
-    () => (overran ? { suggested: overrunDurationSuggestion(s.session) } : null),
-    [overran, s.session],
-  );
+  // The clock already leaves idle breaks out; still over 4h means something
+  // odd (a set left started overnight), so the sheet asks for the real duration.
+  const durationPrompt =
+    s.elapsedSeconds > LONG_SESSION_SECONDS
+      ? { suggested: s.elapsedSeconds <= MAX_SESSION_DURATION_SECONDS ? s.elapsedSeconds : null }
+      : null;
 
   const finish = async (input: Parameters<typeof s.complete>[0]) => {
     try {
