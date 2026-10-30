@@ -15,13 +15,7 @@ Stan na: **2026-10-30**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Licznik sesji siłowej = czas treningu (`fix/session-active-time`)
-
-Zamiast pauzy: przerwy > 30 min między akcjami (start/koniec serii, odpoczynek) nie liczą się do licznika ani do zapisu.
-- [ ] zwykła sesja: licznik tyka jak dotąd, zapisany czas = licznik
-- [ ] sesja zostawiona na noc i dokończona rano: licznik po otwarciu nie zawiera nocy, zapis bez pola czasu
-- [ ] ponad 30 min bez akcji → licznik cofa się do ostatniej akcji; następna seria liczy dalej
-- [ ] długa seria na czas (> 30 min, rozpoczęta przyciskiem) liczy się w całości
+_(nic)_
 
 ---
 
@@ -29,6 +23,14 @@ Zamiast pauzy: przerwy > 30 min między akcjami (start/koniec serii, odpoczynek)
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Licznik sesji siłowej = czas treningu (zmergowane 2026-10-30, `fix/session-active-time`, tag `pre-session-active-time` = main sprzed merge)
+
+Zamiast pauzy: przerwy > 30 min między akcjami (start/koniec serii, odpoczynek) nie liczą się do licznika ani do zapisu.
+- [ ] zwykła sesja: licznik tyka jak dotąd, zapisany czas = licznik
+- [ ] sesja zostawiona na noc i dokończona rano: licznik po otwarciu nie zawiera nocy, zapis bez pola czasu
+- [ ] ponad 30 min bez akcji → licznik cofa się do ostatniej akcji; następna seria liczy dalej
+- [ ] długa seria na czas (> 30 min, rozpoczęta przyciskiem) liczy się w całości
 
 ### Sesja siłowa zostawiona na noc: 422 przy zapisie (zmergowane 2026-10-29, `fix/overnight-session-duration`, tag `pre-overnight-session-duration` = main sprzed merge)
 
