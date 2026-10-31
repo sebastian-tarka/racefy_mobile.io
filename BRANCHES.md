@@ -9,13 +9,21 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-30**
+Stan na: **2026-10-31**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Odznaka przestaje być „nowa” po otwarciu (`feature/badge-seen`)
+
+Otwarcie odznaki (BadgeSheet: profil, Nagrody) woła `POST /user/badges/{id}/viewed` i od razu
+gasi „nowa” na wszystkich ekranach. **Endpointu w API jeszcze nie ma** — merge dopiero po
+wdrożeniu go na prod.
+- [ ] API: endpoint + testy, wdrożony na prod
+- [ ] profil: odznaka z „nowa” → otwarcie → znaczek znika w gablocie i licznik „X nowych” spada
+- [ ] Nagrody i Home (karta „nowa odznaka”): po otwarciu na profilu też już nie „nowa”
+- [ ] restart aplikacji / inne urządzenie: dalej nie „nowa” (stan z serwera)
 
 ---
 
