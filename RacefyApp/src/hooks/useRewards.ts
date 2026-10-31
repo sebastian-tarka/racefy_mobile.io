@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { api } from '../services/api';
+import { getSeenBadges, subscribeSeenBadges } from '../services/seenBadges';
 import { useFetch } from './useFetch';
 import type {
   BadgeReward,
@@ -33,15 +34,20 @@ export function useRewards(): UseRewardsResult {
     { errorMessage: 'Failed to load rewards' },
   );
 
+  const seen = useSyncExternalStore(subscribeSeenBadges, getSeenBadges);
+
   const split = useMemo(() => {
     const rewards = data?.data ?? [];
     return {
-      badges: rewards.filter((r): r is BadgeReward => r.reward_type === 'badge'),
+      badges: rewards
+        .filter((r): r is BadgeReward => r.reward_type === 'badge')
+        // Opened in this session: no longer new, whatever this copy was loaded with.
+        .map((b) => (b.is_new && seen.has(b.id) ? { ...b, is_new: false } : b)),
       coupons: rewards.filter((r): r is CouponReward => r.reward_type === 'coupon'),
       prizes: rewards.filter((r): r is PrizeReward => r.reward_type === 'prize'),
       points: rewards.filter((r): r is PointReward => r.reward_type === 'points'),
     };
-  }, [data]);
+  }, [data, seen]);
 
   return {
     ...split,

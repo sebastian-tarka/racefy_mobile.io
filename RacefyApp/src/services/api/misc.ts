@@ -223,5 +223,15 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
         withQuery('/user/rewards', { type: filters?.type, event_id: filters?.event_id }),
       );
     }
+
+    /**
+     * The athlete opened a badge — it stops being "new" on every device.
+     * Takes the reward id from /user/rewards (`badge_123`); the endpoint wants
+     * the bare UserBadge id.
+     */
+    async markBadgeViewed(rewardId: string): Promise<void> {
+      const userBadgeId = rewardId.replace(/^badge_/, '');
+      await this.request<void>(`/user/badges/${userBadgeId}/viewed`, { method: 'POST' });
+    }
   };
 }

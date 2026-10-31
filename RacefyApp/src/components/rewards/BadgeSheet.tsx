@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Image,
   Modal,
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { rarityColor } from './BadgeTile';
 import { useTheme } from '../../hooks/useTheme';
+import { markBadgeSeen } from '../../services/seenBadges';
 import { borderRadius, msFont, spacing } from '../../theme';
 import type { BadgeReward } from '../../types/api';
 import { formatIntlDate } from '../../utils/dateFormat';
@@ -34,6 +35,11 @@ export function BadgeSheet({ reward, onClose }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+
+  // Opening the sheet is what "seen" means — Profile and Rewards both come here.
+  useEffect(() => {
+    if (reward) markBadgeSeen(reward);
+  }, [reward]);
 
   const badge = reward?.badge;
   const tint = badge ? rarityColor(badge) : colors.primary;

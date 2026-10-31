@@ -132,7 +132,8 @@ export interface PrizeReward {
 
 // Badge Reward
 export interface BadgeReward {
-  id: number;
+  /** `badge_<UserBadge id>` — prefixed, so it never collides with other reward kinds. */
+  id: string;
   reward_type: 'badge';
   earned_at: string;
   is_new: boolean;
