@@ -15,7 +15,20 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Trener audio: tempo w komunikatach km i pauzy (`fix/audio-coach-split-pace`)
+
+Diagnoza w `.notes/ANALIZA_TEMPO_AUDIO_PAUZY.md`. Komunikat kilometrowy mówi teraz split ostatniego
+odcinka w czasie ruchu (z logu punktów SQLite) — w obu torach (foreground i task w tle) to samo.
+Stan trenera (ostatni ogłoszony km, kamienie milowe) nie jest już kasowany przy pauzie ani przy
+zejściu apki do tła na iOS, więc po wznowieniu nic się nie powtarza.
+- [ ] bieg z trenerem audio, Android: komunikaty na 1, 2, 3 km; tempo = tempo tego kilometra (porównać ze splitami po zapisie)
+- [ ] pauza 2–3 min w środku 2. km, wznowienie: brak powtórki „Kilometr 1”, komunikat na 2 km z sensownym tempem (bez czasu pauzy)
+- [ ] ekran zablokowany / apka w tle przez cały kilometr: komunikat przychodzi raz, tempo jak wyżej
+- [ ] iOS: zablokować telefon i odblokować kilka razy w trakcie kilometra — komunikat raz, bez powtórek
+- [ ] Pro: „szybciej/wolniej o X s” porównuje z poprzednim kilometrem
+- [ ] kamień milowy (np. 5 km) ogłaszany także gdy po drodze była pauza
+- [ ] tempo bieżące na ekranie po wznowieniu nie pokazuje przez chwilę absurdalnie wolnej wartości
+- [ ] DEV symulator biegu dalej działa (tempo 5:30 stałe)
 
 ---
 
