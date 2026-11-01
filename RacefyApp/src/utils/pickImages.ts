@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import i18n from '../i18n';
 
-export interface PickedImage {
+interface PickedImage {
   uri: string;
   width: number;
   height: number;

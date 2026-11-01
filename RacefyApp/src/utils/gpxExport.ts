@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { logger } from '../services/logger';
 import type { GpsPoint } from '../types/api';
 
-export interface GpxExportInput {
+interface GpxExportInput {
   /** Activity id used in filename and `<trk><name>`. */
   activityId: number | string;
   /** Human-readable name written into `<metadata><name>`. */

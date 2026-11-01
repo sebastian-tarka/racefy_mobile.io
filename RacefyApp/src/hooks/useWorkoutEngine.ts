@@ -49,7 +49,7 @@ interface Params {
   onRestorePlan: (plan: GuidedWorkout) => void;
 }
 
-export interface WorkoutEngineHandle {
+interface WorkoutEngineHandle {
   state: WorkoutEngineState | null;
   progress: SegmentProgress | null;
   /** End the current segment now ("Lap"). No-op without an active session. */

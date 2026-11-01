@@ -495,17 +495,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
   },
-  engagementItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  engagementText: {
-    fontSize: fontSize.sm,
-    marginLeft: spacing.xs,
-    fontWeight: '600',
-  },
 });
 
 // Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.

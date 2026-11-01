@@ -8,7 +8,7 @@ export interface OptionItem<T = string> {
   label: string;
 }
 
-export interface OptionSelectorProps<T = string> {
+interface OptionSelectorProps<T = string> {
   value: T;
   onChange: (value: T) => void;
   options: OptionItem<T>[];

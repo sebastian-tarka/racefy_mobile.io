@@ -8,12 +8,7 @@ import type { Activity, ActivityAnalysisSummary } from '../types/api';
  * this one comes from the measured track while that one comes from average
  * pace alone.
  */
-export type ActivityVerdict =
-  | 'strongFinish'
-  | 'intervals'
-  | 'hardEffort'
-  | 'evenPacing'
-  | 'fadedFinish';
+type ActivityVerdict = 'strongFinish' | 'intervals' | 'hardEffort' | 'evenPacing' | 'fadedFinish';
 
 /**
  * Exactly one verdict, in this priority order — a badge has no room for a

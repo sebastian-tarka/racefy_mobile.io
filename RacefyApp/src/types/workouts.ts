@@ -211,12 +211,12 @@ export interface ExerciseListResponse {
 
 // ── XLSX import preview ─────────────────────────────────────────────────────
 
-export interface ImportExerciseReference extends ExerciseReference {
+interface ImportExerciseReference extends ExerciseReference {
   match: 'new' | 'existing';
   is_global: boolean;
 }
 
-export interface ImportWorkoutExercise extends WorkoutExerciseInput {
+interface ImportWorkoutExercise extends WorkoutExerciseInput {
   exercise: ImportExerciseReference;
 }
 

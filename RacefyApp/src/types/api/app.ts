@@ -2,7 +2,7 @@ import type { RealtimeConfig } from './live';
 
 // ============ DEBUG LOGS ============
 
-export type DebugLogLevel = 'debug' | 'info' | 'warn' | 'error';
+type DebugLogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface DebugLogEntry {
   timestamp: string;

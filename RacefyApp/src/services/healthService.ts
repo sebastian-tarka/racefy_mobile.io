@@ -9,7 +9,7 @@ const HEALTH_SYNC_KEY = '@racefy_health_sync_enabled';
 
 export type HealthServiceStatus = 'available' | 'not_available' | 'not_installed';
 
-export interface HealthService {
+interface HealthService {
   isAvailable(): Promise<boolean>;
   requestHeartRatePermission(): Promise<boolean>;
   hasHeartRatePermission(): Promise<boolean>;

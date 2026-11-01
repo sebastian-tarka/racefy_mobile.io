@@ -11,7 +11,7 @@
  * Represents a GPS segment with timestamp and cumulative distance.
  * Used to track distance progress over time for pace calculations.
  */
-export interface PaceSegment {
+interface PaceSegment {
   /** Unix timestamp in milliseconds */
   timestamp: number;
   /** Cumulative distance in meters at this point */
@@ -209,7 +209,7 @@ function addPaceSegment(
 }
 
 /** Profile knobs that drive smoothed current-pace calculation. */
-export interface PaceTrackerProfile {
+interface PaceTrackerProfile {
   paceWindowSeconds: number;
   minSegmentDistance: number;
   paceSmoothingFactor: number;

@@ -1,4 +1,4 @@
-export type QueryValue = string | number | null | undefined;
+type QueryValue = string | number | null | undefined;
 
 /**
  * `path` with `params` as a query string, in key order. Falsy values (undefined,

@@ -201,13 +201,13 @@ export interface RouteFingerprint {
   distance_km: number;
 }
 
-export interface SocialProfile {
+interface SocialProfile {
   followers: number;
   following: number;
   active_friends_this_week: number;
 }
 
-export interface PointsSummary {
+interface PointsSummary {
   total_points: number;
   weekly_points: number;
   monthly_points: number;
@@ -215,7 +215,7 @@ export interface PointsSummary {
   weekly_rank: number;
 }
 
-export interface EventHistory {
+interface EventHistory {
   total_registered: number;
   total_attended: number;
   upcoming: number;

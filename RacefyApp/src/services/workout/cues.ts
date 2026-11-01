@@ -32,7 +32,7 @@ import {
   type SpokenUnits,
 } from './templates';
 
-export type CueSound = 'beep' | 'go' | 'work' | 'recovery' | 'goal';
+type CueSound = 'beep' | 'go' | 'work' | 'recovery' | 'goal';
 
 // Short synthetic tones (see assets/audio): mid-high, no bass, 0.1–0.4 s —
 // audible on a phone speaker, short enough not to wear out their welcome.

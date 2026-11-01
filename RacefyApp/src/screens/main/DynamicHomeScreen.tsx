@@ -650,9 +650,6 @@ export function DynamicHomeScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   scrollContent: {
     padding: spacing.lg,
     // paddingBottom calculated dynamically in component to account for tab bar + safe area

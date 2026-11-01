@@ -120,7 +120,7 @@ function buildProvisionalActivity(
 /** How long Save waits for the server before telling the athlete "it is safe on your phone". */
 const FINISH_WAIT_MS = 5000;
 
-export interface FinishData {
+interface FinishData {
   title?: string;
   description?: string;
   calories?: number;
@@ -2123,7 +2123,7 @@ interface LiveActivityContextType {
 }
 
 /** The slow-changing part: flips on start/pause/resume/finish, never on a timer tick. */
-export interface LiveActivityStatus {
+interface LiveActivityStatus {
   activity: Activity | null;
   isTracking: boolean;
   isPaused: boolean;

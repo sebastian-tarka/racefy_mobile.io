@@ -37,5 +37,3 @@ export function useStrengthFormat() {
     [t, locale, units],
   );
 }
-
-export type StrengthFormat = ReturnType<typeof useStrengthFormat>;

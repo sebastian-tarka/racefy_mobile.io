@@ -6,7 +6,7 @@ import { EventRankingMode, RankingModeOption } from '../types/api';
 import { logger } from '../services/logger';
 import { api } from '../services/api';
 
-export interface EventRankingModeSelectorProps {
+interface EventRankingModeSelectorProps {
   value: EventRankingMode;
   onChange: (difficulty: EventRankingMode) => void;
   disabled?: boolean;

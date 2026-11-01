@@ -63,11 +63,6 @@
     "basketball": "Básquetbol",
     "other": "Otro"
   },
-  "timeOfDay": {
-    "morning": "Mañana",
-    "afternoon": "Tarde",
-    "evening": "Noche"
-  },
   "activity": {
     "stats": {
       "distance": "Distancia",
@@ -1273,14 +1268,6 @@
     "selectFileFailed": "Error al seleccionar el archivo",
     "viewActivity": "Ver actividad"
   },
-  "eventSelection": {
-    "title": "Vincular a evento",
-    "subtitle": "Selecciona un evento en curso en el que estés inscrito",
-    "noEvent": "Sin evento",
-    "noEventDescription": "Grabar actividad sin vincular a un evento",
-    "noOngoingEvents": "No hay eventos en curso",
-    "noOngoingEventsHint": "No tienes eventos registrados que estén en curso actualmente"
-  },
   "eventPin": {
     "pinTitle": "Vincular a un evento",
     "pinSub": "Elige un evento en curso en el que estés inscrito",
@@ -1320,12 +1307,6 @@
     "intermediate": "Intermedio",
     "advanced": "Avanzado",
     "all_levels": "Todos los niveles"
-  },
-  "rankingModes": {
-    "fastest_time": "Tiempo más rápido",
-    "most_distance": "Mayor distancia",
-    "most_elevation": "Mayor desnivel acumulado",
-    "first_finish": "Primero en terminar"
   },
   "status": {
     "upcoming": "Próximo",

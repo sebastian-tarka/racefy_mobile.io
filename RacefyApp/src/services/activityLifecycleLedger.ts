@@ -43,7 +43,7 @@ export interface LedgerStorage {
   remove(key: string): void;
 }
 
-export interface LifecycleApi<TActivity> {
+interface LifecycleApi<TActivity> {
   pauseActivity(id: number, opts: { at?: string; timeoutMs?: number }): Promise<TActivity>;
   resumeActivity(id: number, opts: { at?: string; timeoutMs?: number }): Promise<TActivity>;
 }
@@ -137,7 +137,7 @@ export function totalPausedAt(ledger: LedgerState, endedAt: string): number {
   return ledger.pausedTotalSec + running;
 }
 
-export interface FlushResult<TActivity> {
+interface FlushResult<TActivity> {
   ledger: LedgerState;
   /** Server activity after the last acknowledged call, if any was acknowledged. */
   activity: TActivity | null;

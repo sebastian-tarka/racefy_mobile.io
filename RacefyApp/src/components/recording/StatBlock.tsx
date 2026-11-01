@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-na
 import { useTheme } from '../../hooks/useTheme';
 import { FONT_CAP, fontSize, heroColors, msFont, spacing } from '../../theme';
 
-export type StatBlockSize = 'sm' | 'md' | 'lg';
+type StatBlockSize = 'sm' | 'md' | 'lg';
 
 interface Props {
   label: string;

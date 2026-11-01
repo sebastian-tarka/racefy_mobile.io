@@ -35,7 +35,7 @@ export interface UnsyncedSnapshotInput {
   now?: () => Date;
 }
 
-export type UnsyncedSnapshot = Omit<UnsyncedActivityMeta, 'failedAt' | 'retryCount'>;
+type UnsyncedSnapshot = Omit<UnsyncedActivityMeta, 'failedAt' | 'retryCount'>;
 
 /**
  * The unsynced-queue entry for a recording whose finish the server keeps

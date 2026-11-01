@@ -523,17 +523,6 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: fontSize.sm,
   },
-  waypointsList: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  waypointRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: spacing.sm,
-  },
   waypointDot: {
     width: 12,
     height: 12,

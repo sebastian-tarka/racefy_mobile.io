@@ -15,13 +15,6 @@ import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../theme';
 import { type SportTypeWithIcon, useSportTypes } from '../hooks/useSportTypes';
 
-export interface SportTypeOption {
-  id: number;
-  name: string;
-  slug: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
 interface SportTypeSelectorProps {
   value: number | null;
   onChange: (sportTypeId: number) => void;
@@ -186,9 +179,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     minHeight: 48,
   },
-  selectorError: {
-    // borderColor applied inline
-  },
   placeholder: {
     fontSize: fontSize.md,
   },
@@ -237,9 +227,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
   },
-  sportItemSelected: {
-    // styles applied inline
-  },
   sportIcon: {
     width: 44,
     height: 44,
@@ -248,14 +235,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: spacing.md,
   },
-  sportIconSelected: {
-    // styles applied inline
-  },
   sportName: {
     flex: 1,
     fontSize: fontSize.md,
-  },
-  sportNameSelected: {
-    // styles applied inline
   },
 });

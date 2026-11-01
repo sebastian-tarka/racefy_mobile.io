@@ -28,7 +28,7 @@ export function invalidateEffortAnalysis(activityId: number): void {
   cache.delete(activityId);
 }
 
-export interface UseActivityEffortAnalysisResult {
+interface UseActivityEffortAnalysisResult {
   analysis: ActivityEffortAnalysis | null;
   /** True while the backend is still computing (HTTP 202). */
   isPending: boolean;

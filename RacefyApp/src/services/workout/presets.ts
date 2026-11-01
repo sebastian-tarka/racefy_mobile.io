@@ -26,7 +26,7 @@ export interface IntervalDraft {
   presetId: string | null;
 }
 
-export interface IntervalPreset {
+interface IntervalPreset {
   id: string;
   draft: Omit<IntervalDraft, 'presetId'>;
 }

@@ -40,7 +40,7 @@ export function apiTokensToLibraryFormat(text: string, mentions?: MentionMap): s
 /**
  * Segment type for parsed mention text
  */
-export interface MentionSegment {
+interface MentionSegment {
   type: 'text' | 'mention';
   text: string;
   entity?: MentionEntity;

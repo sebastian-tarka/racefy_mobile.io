@@ -3,9 +3,9 @@ import { ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { OptionSelector, OptionItem } from './OptionSelector';
 
-export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
+type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
 
-export interface DifficultySelectorProps {
+interface DifficultySelectorProps {
   value: DifficultyLevel;
   onChange: (difficulty: DifficultyLevel) => void;
   disabled?: boolean;

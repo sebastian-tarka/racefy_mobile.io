@@ -9,7 +9,7 @@ import { resolveNotificationTarget } from '../utils/notificationRouting';
 // expo-modules-core is only a transitive dependency, so take the type from the API we call.
 type EventSubscription = ReturnType<typeof Notifications.addNotificationReceivedListener>;
 
-export interface UsePushNotificationsOptions {
+interface UsePushNotificationsOptions {
   /**
    * Navigation ref for handling deep links from cold start
    * Pass this from the root component that has access to NavigationContainer ref
@@ -17,7 +17,7 @@ export interface UsePushNotificationsOptions {
   navigationRef?: NavigationContainerRefWithCurrent<ParamListBase>;
 }
 
-export interface UsePushNotificationsResult {
+interface UsePushNotificationsResult {
   /**
    * Whether notification permission is granted
    */

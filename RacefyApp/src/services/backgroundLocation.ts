@@ -39,7 +39,7 @@ const DEFAULT_MIN_DISTANCE_THRESHOLD = 3;
 const DEFAULT_MAX_REALISTIC_SPEED = 15;
 const DEFAULT_STATIONARY_SPEED_THRESHOLD = 0.5; // 0.5 m/s = 1.8 km/h
 
-export interface BufferedLocation {
+interface BufferedLocation {
   lat: number;
   lng: number;
   ele?: number;
@@ -87,7 +87,7 @@ async function getStoredGpsProfile(): Promise<{
 const calculateDistanceBetweenCoords = haversineDistance;
 
 // Get and set last background position for distance filtering
-export interface LastPosition {
+interface LastPosition {
   lat: number;
   lng: number;
   timestamp: number;

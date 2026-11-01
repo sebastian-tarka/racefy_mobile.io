@@ -1,6 +1,6 @@
 import type { ActivityStats, SportTypeStat } from '../types/api';
 
-export interface NormalizedSportStat extends SportTypeStat {
+interface NormalizedSportStat extends SportTypeStat {
   /** Null when neither the entry nor its key identifies a sport type. */
   sportTypeId: number | null;
 }

@@ -19,7 +19,7 @@ try {
   logger.debug('gps', 'Mapbox SDK not available for zone picker');
 }
 
-export interface LatLng {
+interface LatLng {
   lat: number;
   lng: number;
 }

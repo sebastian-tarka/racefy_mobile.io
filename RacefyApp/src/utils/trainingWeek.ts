@@ -13,7 +13,7 @@ export interface UISession {
   sportSlug?: string | null;
 }
 
-export type DistanceFormatter = (meters: number) => string;
+type DistanceFormatter = (meters: number) => string;
 
 export function humanize(text: string): string {
   if (!text) return '';

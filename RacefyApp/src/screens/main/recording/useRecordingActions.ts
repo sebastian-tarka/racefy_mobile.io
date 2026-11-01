@@ -70,7 +70,7 @@ export interface RecordingActionsInput {
   enrichActivityWithHeartRate: (activity: Activity) => Promise<unknown>;
 }
 
-export interface RecordingActions {
+interface RecordingActions {
   handleStart: () => Promise<void>;
   handlePause: () => Promise<void>;
   handleResume: () => Promise<void>;

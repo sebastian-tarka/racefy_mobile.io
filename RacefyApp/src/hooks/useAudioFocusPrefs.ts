@@ -7,7 +7,7 @@ import {
   setAudioFocusPrefs,
 } from '../services/audioCoach/audioSession';
 
-export interface UseAudioFocusPrefsResult {
+interface UseAudioFocusPrefsResult {
   prefs: AudioFocusPrefs;
   updatePrefs: (partial: Partial<AudioFocusPrefs>) => void;
 }

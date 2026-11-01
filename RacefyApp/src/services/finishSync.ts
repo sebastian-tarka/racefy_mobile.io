@@ -118,7 +118,7 @@ export function isFinishSyncConfigured(): boolean {
 // fresh save often fire within the same second.
 let chain: Promise<unknown> = Promise.resolve();
 
-export interface SyncOptions {
+interface SyncOptions {
   /** Ignore backoff and `needs_attention` parking — the athlete (or a regained network) asked. */
   force?: boolean;
   /** Only this entry. */

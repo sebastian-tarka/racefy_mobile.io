@@ -21,7 +21,7 @@ import {
 } from '../services/finishSync';
 import { getErrorMessage, getErrorStatus } from '../utils/errors';
 
-export type RetryOutcome = { ok: true } | { ok: false; error: string };
+type RetryOutcome = { ok: true } | { ok: false; error: string };
 
 /**
  * One row of the "not sent yet" screen. Two sources feed it:

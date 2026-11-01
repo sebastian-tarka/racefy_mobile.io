@@ -24,7 +24,7 @@ export type InteractionTargetType = 'post' | 'activity' | 'comment' | 'commentar
 
 const BOOST_COLOR = '#FF6B35';
 
-export interface InteractionButtonProps {
+interface InteractionButtonProps {
   variant: InteractionVariant;
   targetType: InteractionTargetType;
   targetId: number;

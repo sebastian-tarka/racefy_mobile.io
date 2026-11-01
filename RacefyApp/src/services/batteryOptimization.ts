@@ -68,7 +68,7 @@ export async function requestIgnoreBatteryOptimizations(): Promise<void> {
   }
 }
 
-export type OemKey = 'samsung' | 'xiaomi' | 'huawei' | 'oneplus' | 'oppo' | 'vivo';
+type OemKey = 'samsung' | 'xiaomi' | 'huawei' | 'oneplus' | 'oppo' | 'vivo';
 
 /** Vendor whose battery manager is known to kill foreground services, or null. */
 export function getOemKey(): OemKey | null {

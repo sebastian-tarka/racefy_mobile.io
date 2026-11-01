@@ -760,9 +760,6 @@ export function ProfileScreen({ navigation: tabNavigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

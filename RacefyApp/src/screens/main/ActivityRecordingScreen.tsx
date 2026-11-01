@@ -79,7 +79,7 @@ import { formatPlanLabel, workoutStatusLine } from '../../utils/workoutFormat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
-import { borderRadius, fontSize, heroColors, spacing } from '../../theme';
+import { fontSize, heroColors, spacing } from '../../theme';
 import type { MainTabParamList, RootStackParamList } from '../../navigation';
 import { logger } from '../../services/logger';
 import { formatTime } from '../../utils/formatters';
@@ -1319,41 +1319,9 @@ const styles = StyleSheet.create({
   // ─────────────────────────────────────────────────────────────────────────
   // Idle Header
   // ─────────────────────────────────────────────────────────────────────────
-  idleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  },
-  idleTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
   liveBroadcastRow: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gpsHeaderBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: borderRadius.full,
-  },
-  gpsHeaderText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1378,72 +1346,12 @@ const styles = StyleSheet.create({
   },
 
   // Start FAB on map view (idle state)
-  mapStartButtonContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  mapStartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: 999,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  mapStartButtonText: {
-    color: '#fff',
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    marginLeft: spacing.sm,
-  },
 
   // Nearby routes toggle container and button
-  routesToggleContainer: {
-    position: 'absolute',
-    right: spacing.lg,
-  },
-  routesToggleButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 1000,
-  },
 
   // Re-center button container and button
-  recenterContainer: {
-    position: 'absolute',
-    right: spacing.lg,
-  },
-  recenterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
 
   // Map style toggle container and button
-  mapStyleToggleContainer: {
-    position: 'absolute',
-    right: spacing.lg,
-  },
   // DEV: Map component toggle (above re-center button)
 
   // Map style toast notification
@@ -1451,50 +1359,4 @@ const styles = StyleSheet.create({
   // ─────────────────────────────────────────────────────────────────────────
   // Map Top Overlay (idle + map mode)
   // ─────────────────────────────────────────────────────────────────────────
-  mapTopGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 220,
-    zIndex: 1,
-  },
-  mapTopOverlay: {
-    position: 'absolute',
-    top: spacing.md,
-    left: 0,
-    right: 0,
-    zIndex: 20,
-    maxHeight: '55%',
-  },
-  mapTopOverlayContent: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-    gap: spacing.sm,
-  },
-  mapSportGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: borderRadius.xl,
-  },
-  mapIconToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  mapToolbarIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
 });

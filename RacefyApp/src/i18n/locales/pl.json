@@ -63,11 +63,6 @@
     "basketball": "Koszykówka",
     "other": "Inne"
   },
-  "timeOfDay": {
-    "morning": "Rano",
-    "afternoon": "Popołudnie",
-    "evening": "Wieczór"
-  },
   "activity": {
     "stats": {
       "distance": "Dystans",
@@ -1300,14 +1295,6 @@
     "selectFileFailed": "Nie udało się wybrać pliku",
     "viewActivity": "Zobacz aktywność"
   },
-  "eventSelection": {
-    "title": "Powiąż z wydarzeniem",
-    "subtitle": "Wybierz trwające wydarzenie, na które jesteś zarejestrowany",
-    "noEvent": "Bez wydarzenia",
-    "noEventDescription": "Nagraj aktywność bez powiązania z wydarzeniem",
-    "noOngoingEvents": "Brak trwających wydarzeń",
-    "noOngoingEventsHint": "Nie masz żadnych zarejestrowanych wydarzeń, które aktualnie trwają"
-  },
   "eventPin": {
     "pinTitle": "Podepnij pod event",
     "pinSub": "Wybierz trwający event, na który jesteś zapisany",
@@ -1347,12 +1334,6 @@
     "intermediate": "Średniozaawansowany",
     "advanced": "Zaawansowany",
     "all_levels": "Wszystkie poziomy"
-  },
-  "rankingModes": {
-    "fastest_time": "Najszybszy czas",
-    "most_distance": "Największy dystans",
-    "most_elevation": "Największa suma wzniesień",
-    "first_finish": "Pierwszy na mecie"
   },
   "status": {
     "upcoming": "Nadchodzące",

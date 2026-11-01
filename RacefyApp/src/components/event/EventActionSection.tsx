@@ -18,7 +18,7 @@ export interface OwnerAction {
   loading?: boolean;
 }
 
-export interface EventActionSectionProps {
+interface EventActionSectionProps {
   event: Event;
   isAuthenticated: boolean;
   // registration

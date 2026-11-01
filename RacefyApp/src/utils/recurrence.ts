@@ -13,7 +13,7 @@ export type RecurrenceFrequency = 'weekly' | 'monthly';
 /** Monthly "on the 15th" vs "on the last Saturday" — both taken from the start date. */
 export type MonthlyMode = 'day_of_month' | 'weekday';
 export type RecurrenceEnd = 'never' | 'count' | 'until';
-export type WeekOfMonth = 1 | 2 | 3 | 4 | -1;
+type WeekOfMonth = 1 | 2 | 3 | 4 | -1;
 
 export interface RecurrenceForm {
   enabled: boolean;

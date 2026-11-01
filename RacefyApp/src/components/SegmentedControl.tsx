@@ -10,7 +10,7 @@ import {
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../theme';
 
-export interface SegmentOption<T extends string> {
+interface SegmentOption<T extends string> {
   value: T;
   label: string;
 }

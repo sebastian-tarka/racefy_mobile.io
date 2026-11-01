@@ -7,7 +7,7 @@ import { fixStorageUrl } from '../config/api';
 import i18n from '../i18n';
 import { getErrorCode, getErrorMessage } from './errors';
 
-export interface ShareActivityWithImageOptions {
+interface ShareActivityWithImageOptions {
   activityId: number;
   imageUrl?: string | null;
   shareData: ShareLinkResponse;

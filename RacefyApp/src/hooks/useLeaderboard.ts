@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useFetch } from './useFetch';
 import type { LeaderboardEntry, LeaderboardPeriod } from '../types/api';
 
-export type LeaderboardType = 'global' | 'following';
+type LeaderboardType = 'global' | 'following';
 
 interface UseLeaderboardOptions {
   type: LeaderboardType;

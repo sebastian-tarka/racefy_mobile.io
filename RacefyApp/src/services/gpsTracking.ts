@@ -100,15 +100,10 @@ export class GpsSmoothingBuffer {
 }
 
 /** The classification verdict for a single live GPS point relative to the last baseline. */
-export type GpsPointOutcome =
-  | 'accepted'
-  | 'gap-bridged'
-  | 'gap'
-  | 'filtered-speed'
-  | 'filtered-distance';
+type GpsPointOutcome = 'accepted' | 'gap-bridged' | 'gap' | 'filtered-speed' | 'filtered-distance';
 
 /** Position baseline the new point is measured against (smoothed lat/lng/ele + capture time). */
-export interface GpsBaseline {
+interface GpsBaseline {
   lat: number;
   lng: number;
   ele?: number;
@@ -117,7 +112,7 @@ export interface GpsBaseline {
 }
 
 /** The profile knobs that drive the per-point filter (structural subset of GpsProfile). */
-export interface GpsClassifyProfile {
+interface GpsClassifyProfile {
   minDistanceThreshold: number;
   maxRealisticSpeed: number;
   minElevationChange: number;
@@ -125,7 +120,7 @@ export interface GpsClassifyProfile {
 }
 
 /** Full decision for one point: the verdict, the deltas to apply, and diagnostics for logging. */
-export interface GpsPointDecision {
+interface GpsPointDecision {
   outcome: GpsPointOutcome;
   /** Metres between the baseline and the smoothed point (always computed). */
   distance: number;
@@ -243,12 +238,12 @@ export function classifyGpsPoint(params: {
 }
 
 /** Profile knobs the per-point flow needs: smoothing window size + the classify fields. */
-export interface GpsTrackerProfile extends GpsClassifyProfile {
+interface GpsTrackerProfile extends GpsClassifyProfile {
   smoothingBufferSize: number;
 }
 
 /** Result of feeding one raw point through the tracker. */
-export interface LivePointResult {
+interface LivePointResult {
   /** The smoothed position over the current window (buffer always advances). */
   smoothedPoint: SmoothedPosition;
   /** The filter/gap/accept verdict, or null when there was no baseline yet (first point). */

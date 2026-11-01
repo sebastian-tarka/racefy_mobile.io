@@ -18,7 +18,7 @@ export function simulatedDistanceM(elapsedMs: number): number {
   return Math.floor(elapsedMs / STEP_INTERVAL_MS) * STEP_DISTANCE_M;
 }
 
-export interface DevRunSimulator {
+interface DevRunSimulator {
   /** Whether the simulated run is active. */
   running: boolean;
   /** Toggle the simulated run on/off. */

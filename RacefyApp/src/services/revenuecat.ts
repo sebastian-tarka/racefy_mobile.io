@@ -23,8 +23,6 @@ try {
 }
 
 // Re-export types for consumers (types are always safe to import)
-export type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
-
 // Environment detection
 const APP_ENV = Constants.expoConfig?.extra?.appEnv || 'production';
 

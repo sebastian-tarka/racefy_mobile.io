@@ -6,7 +6,7 @@ import { logger } from '../services/logger';
 
 const isWeb = Platform.OS === 'web';
 
-export type PermissionStatus = 'undetermined' | 'granted' | 'denied';
+type PermissionStatus = 'undetermined' | 'granted' | 'denied';
 
 interface PermissionsState {
   location: PermissionStatus;

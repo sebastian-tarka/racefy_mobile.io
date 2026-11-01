@@ -150,7 +150,7 @@ function sanitizeContext(
   return sanitizeValue('root', context, 0) as Record<string, any>;
 }
 
-export interface LogEntry {
+interface LogEntry {
   timestamp: string;
   level: LogLevel;
   category: LogCategory;
@@ -159,7 +159,7 @@ export interface LogEntry {
   stack_trace?: string;
 }
 
-export interface DeviceInfo {
+interface DeviceInfo {
   platform: 'android' | 'ios' | 'web';
   osVersion: string;
   appVersion: string;
@@ -167,7 +167,7 @@ export interface DeviceInfo {
   deviceId: string;
 }
 
-export interface LogsPayload {
+interface LogsPayload {
   device_info: {
     platform: string;
     os_version: string;
@@ -515,4 +515,4 @@ class Logger {
 export const logger = new Logger();
 
 // Export types
-export type { LogLevel, LogCategory, LoggerConfig };
+export type { LogCategory };

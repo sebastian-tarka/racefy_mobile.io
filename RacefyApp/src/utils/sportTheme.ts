@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { sportColor } from './sportColor';
 
-export interface SportTheme {
+interface SportTheme {
   color: string;
   gradient: [string, string];
   accent: string;

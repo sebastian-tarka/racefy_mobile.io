@@ -766,9 +766,6 @@ export function CalibrationFormScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   flex: {
     flex: 1,
   },
@@ -785,29 +782,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     marginBottom: spacing.md,
-  },
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  optionCard: {
-    flex: 1,
-    minWidth: '45%',
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  optionLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    marginTop: spacing.sm,
-  },
-  optionDescription: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    marginTop: spacing.xs,
   },
   optionsList: {
     gap: spacing.sm,

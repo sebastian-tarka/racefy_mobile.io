@@ -8,7 +8,7 @@ import { DEFAULT_AUDIO_COACH_SETTINGS } from '../types/audioCoach';
 const STORAGE_KEY = '@racefy:audioCoach:settings';
 const DEBOUNCE_MS = 500;
 
-export interface UseAudioCoachSettingsResult {
+interface UseAudioCoachSettingsResult {
   settings: AudioCoachSettings;
   planInfo: AudioCoachPlanInfo | null;
   isLoading: boolean;

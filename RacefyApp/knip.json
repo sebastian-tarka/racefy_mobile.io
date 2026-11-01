@@ -8,8 +8,5 @@
     "src/components/MapboxRouteMap.tsx"
   ],
   "project": ["*.{ts,tsx}", "src/**/*.{ts,tsx}", "plugins/**/*.js"],
-  "ignoreDependencies": ["lint-staged", "expo-updates", "expo-asset"],
-  "rules": {
-    "types": "off"
-  }
+  "ignoreDependencies": ["lint-staged", "expo-updates", "expo-asset"]
 }

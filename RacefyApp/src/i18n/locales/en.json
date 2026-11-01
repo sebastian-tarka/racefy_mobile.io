@@ -63,11 +63,6 @@
     "basketball": "Basketball",
     "other": "Other"
   },
-  "timeOfDay": {
-    "morning": "Morning",
-    "afternoon": "Afternoon",
-    "evening": "Evening"
-  },
   "activity": {
     "stats": {
       "distance": "Distance",
@@ -1268,14 +1263,6 @@
     "selectFileFailed": "Failed to select file",
     "viewActivity": "View Activity"
   },
-  "eventSelection": {
-    "title": "Link to Event",
-    "subtitle": "Select an ongoing event you're registered for",
-    "noEvent": "No Event",
-    "noEventDescription": "Record activity without linking to an event",
-    "noOngoingEvents": "No ongoing events",
-    "noOngoingEventsHint": "You don't have any registered events that are currently ongoing"
-  },
   "eventPin": {
     "pinTitle": "Pin to an event",
     "pinSub": "Pick an ongoing event you are signed up for",
@@ -1315,12 +1302,6 @@
     "intermediate": "Intermediate",
     "advanced": "Advanced",
     "all_levels": "All Levels"
-  },
-  "rankingModes": {
-    "fastest_time": "Fastest Time",
-    "most_distance": "Most Distance",
-    "most_elevation": "Most Elevation Gain",
-    "first_finish": "First to Finish"
   },
   "status": {
     "upcoming": "Upcoming",

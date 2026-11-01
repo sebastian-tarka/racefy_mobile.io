@@ -565,15 +565,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     marginTop: spacing.md,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: spacing.xl,
-  },
-  actionText: {
-    marginLeft: spacing.xs,
-    fontSize: fontSize.sm,
-  },
 });
 
 // Memoized: these cards render inside FlatLists; React.memo skips re-renders when props are unchanged.
