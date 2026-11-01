@@ -188,6 +188,17 @@ export function MiscMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     /**
+     * Unlock the current token for the admin API with an authenticator or recovery
+     * code. Needed when an admin endpoint answers 403 `code: "admin_2fa_required"`.
+     */
+    async verifyAdminTwoFactor(code: string): Promise<Types.AdminTwoFactorVerifyResponse> {
+      return await this.request<Types.AdminTwoFactorVerifyResponse>('/admin/2fa/verify', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      });
+    }
+
+    /**
      * Start impersonating a user (admin only)
      * @param userId - ID of user to impersonate
      */

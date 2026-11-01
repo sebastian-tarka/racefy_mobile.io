@@ -1908,6 +1908,14 @@
     "consentFailed": "Error al actualizar consentimiento"
   },
   "admin": {
+    "twoFactor": {
+      "title": "Verificación en dos pasos",
+      "message": "Las funciones de administrador necesitan el código de tu aplicación de autenticación (o un código de recuperación). Un código las desbloquea en este dispositivo durante 12 horas.",
+      "placeholder": "123456",
+      "verify": "Verificar",
+      "invalid": "Código de verificación no válido.",
+      "setupRequired": "Configura la autenticación en dos pasos en el panel de administración web (Seguridad) antes de usar las funciones de administrador."
+    },
     "impersonate": {
       "title": "Suplantar usuario",
       "warning": "⚠️ Estás a punto de suplantar a otro usuario. Todas las acciones se realizarán como ese usuario. Usa esta función de manera responsable y solo para fines de soporte.",

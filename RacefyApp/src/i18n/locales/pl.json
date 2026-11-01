@@ -1939,6 +1939,14 @@
     "consentFailed": "Nie udało się zaktualizować zgody"
   },
   "admin": {
+    "twoFactor": {
+      "title": "Weryfikacja dwuetapowa",
+      "message": "Funkcje admina wymagają kodu z aplikacji uwierzytelniającej (albo kodu odzyskiwania). Jeden kod odblokowuje je na tym urządzeniu na 12 godzin.",
+      "placeholder": "123456",
+      "verify": "Zweryfikuj",
+      "invalid": "Nieprawidłowy kod weryfikacyjny.",
+      "setupRequired": "Przed użyciem funkcji admina skonfiguruj weryfikację dwuetapową w panelu admina w przeglądarce (Bezpieczeństwo)."
+    },
     "impersonate": {
       "title": "Podszywanie się pod użytkownika",
       "warning": "⚠️ Zamierzasz podszyć się pod innego użytkownika. Wszystkie działania będą wykonywane jako ten użytkownik. Używaj tej funkcji odpowiedzialnie i tylko w celach wsparcia.",
