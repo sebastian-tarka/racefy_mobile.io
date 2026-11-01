@@ -1,0 +1,14 @@
+{
+  "name": "racefy-repo-scripts",
+  "private": true,
+  "description": "Dependencies of the App Store Connect scripts in scripts/ (subscriptions, regional prices, localizations). The app itself lives in RacefyApp/.",
+  "scripts": {
+    "appstore:setup-subscriptions": "node scripts/setup-appstore-subscriptions.mjs",
+    "appstore:regional-prices": "node scripts/set-regional-prices-v2.mjs",
+    "appstore:localizations": "node scripts/set-subscription-localizations.mjs"
+  },
+  "devDependencies": {
+    "jose": "4.15.9",
+    "node-app-store-connect-api": "5.0.6"
+  }
+}
