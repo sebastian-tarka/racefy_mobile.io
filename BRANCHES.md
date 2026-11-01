@@ -15,6 +15,31 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### Chip filtra w ciemnym motywie (`fix/training-profile-chips`)
+
+Aktywny `FilterChip` („Wszystkie” w profilu treningowym, filtry nagród i historii punktów) miał
+białą etykietę na jasnym wypełnieniu — w ciemnym motywie znikał. Etykieta bierze teraz kolor tła.
+- [ ] Profil treningowy → „Ostatnie tygodnie”: aktywny chip czytelny w ciemnym i jasnym motywie
+- [ ] Nagrody i historia punktów: to samo
+
+### Start aktywności z trasy + cofanie statusu sesji siłowej (`feature/route-start-session-undo`)
+
+Biblioteka tras: przytrzymanie karty → arkusz „Rozpocznij aktywność” (+ „Usuń” dla własnych);
+ten sam przycisk na szczegółach trasy. Ekran nagrywania dostaje trasę jako shadow track, dobiera
+jej sport (nie, gdy przypięty event) i przełącza na mapę. Kalendarz siłowy: dzień wykonany →
+„Oznacz jako niewykonany” (usuwa sesję + aktywność, dzień wraca do zaplanowanych); dzień pominięty
+→ w arkuszu „Przywróć do zaplanowanych”. API bez zmian wymaganych (osobno: branch
+`fix/activity-delete-session` w API, żeby usunięcie aktywności siłowej cofało sesję).
+- [ ] Moje trasy: przytrzymanie własnej trasy → „Rozpocznij aktywność” i „Usuń”; cudzej (publicznej) → tylko start
+- [ ] start z trasy: ekran nagrywania na mapie, trasa jako shadow track, sport zmieniony na sport trasy
+- [ ] start z trasy przy przypiętym evencie: sport eventu zostaje, trasa się ładuje
+- [ ] start tej samej trasy drugi raz (po zapisaniu aktywności) działa
+- [ ] w trakcie nagrywania „Rozpocznij aktywność” z trasy nic nie zmienia
+- [ ] szczegóły trasy: przycisk „Rozpocznij aktywność” nad „Duplikuj/Usuń”
+- [ ] kalendarz siłowy: dzień wykonany → „Oznacz jako niewykonany” (link i przytrzymanie) → ostrzeżenie → dzień
+      z przyciskami Start/Pomiń, aktywność zniknęła z listy aktywności
+- [ ] dzień pominięty → przytrzymanie → „Przywróć do zaplanowanych” → Start/Pomiń wracają
+
 ### Wszystkie nagrody wydarzenia (`feature/event-rewards-all`)
 
 Karta „O co gramy” pokazywała jedną nagrodę na miejsce (kolejne kupony się nadpisywały, `place: 0`
