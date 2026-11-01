@@ -25,6 +25,33 @@ jako „0.”). Teraz wiersz: pierwsza nagroda + „+N więcej”, dotknięcie �
 - [ ] po zdobyciu kuponu: kod widoczny, kopiowanie działa, „Przejdź do sklepu” otwiera link
 - [ ] wydarzenie z jedną nagrodą na miejsce: bez „+N” i bez przycisku „Zobacz wszystkie”
 
+### Głosowy doping w transmisji (`feature/voice-cheers`) — **wymaga builda natywnego**
+
+Kibic na ekranie transmisji nagrywa krótką wiadomość głosową (m4a/AAC, limit z `live.voice.max_seconds`),
+trenujący słyszy ją w kolejce trenera audio: jingiel + klip w jednym przyciszeniu muzyki. Tekst też dostał
+jingiel przed TTS. Przy okazji skrzynka trenującego przeżywa blokadę ekranu i pauzę (hook w ekranie
+nagrywania, nie w linii UI), a odtwarzacz ma limit czasu (brak `didJustFinish` nie wiesza kolejki).
+Nowe uprawnienia (`RECORD_AUDIO`, opis mikrofonu iOS) → `expo prebuild` / EAS build, nie wystarczy JS.
+API: branch głosowego dopingu w `racefy_api.io` musi być na stage (endpointy `/messages/voice`, `/played`,
+`live.voice` w `/config/app`, `allow_voice_messages` w `/live/{id}`).
+- [ ] Android, dwa telefony: kibic nagrywa (pierwsze użycie: wyjaśnienie → systemowe pytanie o mikrofon),
+      odsłuch przed wysyłką, odrzucenie, wysyłka; licznik zatrzymuje się sam na limicie
+- [ ] trenujący z zablokowanym ekranem i muzyką w słuchawkach: słyszy jingiel + klip, muzyka przycisza się
+      raz i wraca; linia u trenującego po odblokowaniu pokazuje mikrofon, nadawcę, „12 s” i transkrypcję
+- [ ] doping tekstowy: jingiel (krótszy) + TTS; na planie free zamiast TTS prompt o ulepszeniu, głos nadal gra
+- [ ] komunikat trenera (kilometr) nadchodzący w trakcie dopingu czeka, nie nakłada się
+- [ ] długie przytrzymanie linii u trenującego odtwarza ostatnią wiadomość ponownie (tekst i głos)
+- [ ] Ustawienia → Transmisje na żywo: „Odtwarzaj doping głosowy” wyłączony → mikrofon znika u kibica
+      (`allow_voice_messages: false`), tekst dalej działa
+- [ ] odmowa mikrofonu: mikrofon znika, komunikat „Brak dostępu…”, tekst działa
+- [ ] 422 `voice_rejected` (nagraj coś, co moderacja odrzuci) → „nie przeszło moderacji”, nic w liście
+- [ ] archiwum na szczegółach aktywności i pin na mapie: odtwarzacz z czasem + transkrypcją;
+      po wyczyszczeniu pliku (ustawić `voice_retention_days` nisko lub podmienić `audio_path` na null)
+      „Nagranie wygasło” + transkrypcja
+- [ ] iOS: to samo co Android + nagrywanie nie zostawia trasy audio „na słuchawkę” (muzyka po nagraniu
+      brzmi normalnie), odtwarzanie przy wyciszonym przełączniku
+- [ ] tryb `mix` w ustawieniach trenera audio: doping gra bez przyciszania, bez błędów
+
 ---
 
 ## Na `main`, ale niezweryfikowane runtime
