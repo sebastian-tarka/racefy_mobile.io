@@ -1637,6 +1637,8 @@
     "notif_mentions_desc": "Gdy ktoś Cię wspomni",
     "notif_training_week_feedback": "Podsumowanie tygodnia",
     "notif_training_week_feedback_desc": "Gdy podsumowanie tygodnia treningowego jest gotowe",
+    "notif_public_event": "Nowe publiczne wydarzenia",
+    "notif_public_event_desc": "Gdy ktoś tworzy publiczne wydarzenie w Racefy (e-mail najwyżej raz dziennie)",
     "privacy": "Prywatność",
     "profileVisibility": "Widoczność profilu",
     "profileVisibilityDesc": "Kto może widzieć Twój profil",

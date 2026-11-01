@@ -1601,6 +1601,8 @@
     "notif_mentions_desc": "When someone mentions you",
     "notif_training_week_feedback": "Week Feedback",
     "notif_training_week_feedback_desc": "When your training week feedback is ready",
+    "notif_public_event": "New public events",
+    "notif_public_event_desc": "When someone creates a public event on Racefy (e-mail at most once a day)",
     "privacy": "Privacy",
     "profileVisibility": "Profile Visibility",
     "profileVisibilityDesc": "Who can see your profile",
