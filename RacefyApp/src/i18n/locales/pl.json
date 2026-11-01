@@ -689,7 +689,15 @@
     "rewards": {
       "title": "O co gramy",
       "finisher": "Za ukończenie",
-      "pointsOnly": "Tylko punkty"
+      "pointsOnly": "Tylko punkty",
+      "sheetTitle": "Wszystkie nagrody",
+      "moreCount": "+{{count}} więcej",
+      "showAll": "Zobacz wszystkie nagrody ({{count}})",
+      "codeLocked": "Kod odblokujesz po zdobyciu tej nagrody",
+      "yourCode": "Twój kod",
+      "openShop": "Przejdź do sklepu",
+      "seePrize": "Zobacz nagrodę",
+      "validUntil": "Ważny do {{date}}"
     },
     "create": "Utwórz"
   },

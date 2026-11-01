@@ -657,7 +657,15 @@
     "rewards": {
       "title": "What's on the line",
       "finisher": "Finisher",
-      "pointsOnly": "Points only"
+      "pointsOnly": "Points only",
+      "sheetTitle": "All rewards",
+      "moreCount": "+{{count}} more",
+      "showAll": "See all rewards ({{count}})",
+      "codeLocked": "You unlock the code by winning this reward",
+      "yourCode": "Your code",
+      "openShop": "Go to the shop",
+      "seePrize": "View prize",
+      "validUntil": "Valid until {{date}}"
     },
     "create": "Create"
   },

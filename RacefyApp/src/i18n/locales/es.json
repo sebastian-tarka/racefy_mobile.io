@@ -662,7 +662,15 @@
     "rewards": {
       "title": "Qué está en juego",
       "finisher": "Por terminar",
-      "pointsOnly": "Solo puntos"
+      "pointsOnly": "Solo puntos",
+      "sheetTitle": "Todas las recompensas",
+      "moreCount": "+{{count}} más",
+      "showAll": "Ver todas las recompensas ({{count}})",
+      "codeLocked": "Desbloqueas el código al ganar esta recompensa",
+      "yourCode": "Tu código",
+      "openShop": "Ir a la tienda",
+      "seePrize": "Ver premio",
+      "validUntil": "Válido hasta {{date}}"
     },
     "create": "Crear"
   },

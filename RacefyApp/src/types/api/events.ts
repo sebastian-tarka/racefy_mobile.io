@@ -165,6 +165,10 @@ export interface EventCoupon {
   place: number;
   promoted_link: string | null;
   expires_at: string | null;
+  /** True until the signed-in athlete is awarded this coupon (always true for guests). */
+  code_locked?: boolean;
+  /** The code — only for an athlete who was awarded the coupon; null otherwise. */
+  code?: string | null;
 }
 
 export interface EventSponsor {
