@@ -15,15 +15,7 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Przełącznik „Nowe publiczne wydarzenia” (`feature/public-event-notifications`)
-
-Ustawienia → Powiadomienia: nowy wiersz `public_event` (e-mail + push). API rozsyła powiadomienie
-o każdym nowym publicznym wydarzeniu (poza obserwującymi twórcę — oni dostają `new_event`), e-mail
-najwyżej raz dziennie. Wiersz pokazuje się tylko, gdy serwer zwraca `notifications.public_event`
-(starsze API: brak wiersza zamiast awarii).
-- [ ] API z `public_event` na stage/prod
-- [ ] wiersz widoczny, oba przełączniki zapisują się (odświeżenie ekranu pokazuje ten sam stan)
-- [ ] wyłączony push → brak powiadomienia o nowym publicznym wydarzeniu; włączony → jest i otwiera wydarzenie
+_(nic)_
 
 ---
 
@@ -31,6 +23,16 @@ najwyżej raz dziennie. Wiersz pokazuje się tylko, gdy serwer zwraca `notificat
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Przełącznik „Nowe publiczne wydarzenia” (zmergowane 2026-11-01, `feature/public-event-notifications`, tag `pre-public-event-notifications` = main sprzed merge)
+
+Ustawienia → Powiadomienia: nowy wiersz `public_event` (e-mail + push). API rozsyła powiadomienie
+o każdym nowym publicznym wydarzeniu (poza obserwującymi twórcę — oni dostają `new_event`), e-mail
+najwyżej raz dziennie. Wiersz pokazuje się tylko, gdy serwer zwraca `notifications.public_event`
+(starsze API: brak wiersza zamiast awarii). Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01).
+- [ ] API z `public_event` na stage/prod
+- [ ] wiersz widoczny, oba przełączniki zapisują się (odświeżenie ekranu pokazuje ten sam stan)
+- [ ] wyłączony push → brak powiadomienia o nowym publicznym wydarzeniu; włączony → jest i otwiera wydarzenie
 
 ### Odznaka przestaje być „nowa” po otwarciu (zmergowane 2026-11-01, `feature/badge-seen`, tag `pre-badge-seen` = main sprzed merge)
 
@@ -1457,6 +1459,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-11-01 | `feature/public-event-notifications` | Ustawienia → Powiadomienia: przełącznik „Nowe publiczne wydarzenia” (`public_event`, e-mail + push), widoczny tylko gdy API go zwraca |
 | 2026-11-01 | `chore/appstore-scripts-deps` | `package.json` + lockfile w katalogu głównym dla `scripts/*.mjs` (node-app-store-connect-api 5.0.6, jose 4.15.9), skróty `npm run appstore:*` |
 | 2026-11-01 | `chore/remove-stale-files` | Usunięte nieaktualne pliki: `REACT_NATIVE_API_SPEC.md`, `MOBILE_APP_DEVELOPMENT.md`, `RacefyApp/maps/img.png`, `debug-push-notifications.sh`, pusty `package-lock.json` w katalogu głównym |
 | 2026-11-01 | `chore/unused-cleanup` | Porządki (tag `pre-unused-cleanup`): 64 nieużywane style, 13 kluczy i18n, 3 ikony, `getBaseUrl()`; knip sprawdza typy (118 typów bez `export`, 7 usuniętych) |
