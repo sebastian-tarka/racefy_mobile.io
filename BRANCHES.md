@@ -15,18 +15,7 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Odznaka przestaje być „nowa” po otwarciu (`feature/badge-seen`)
-
-Otwarcie odznaki (BadgeSheet: profil, Nagrody) woła `POST /user/badges/{id}/viewed` i od razu
-gasi „nowa” na wszystkich ekranach. Endpoint w API na prod od v1.3.18 — zostaje weryfikacja
-na urządzeniu, potem merge. API dokłada też
-`viewed_at` i `metadata` w `/user/rewards` (szczegóły odznaki pokażą „z wydarzenia”).
-- [x] API: `feature/badge-viewed` zmergowany do `main` 2026-11-01 (29de88d8, pełne testy zielone, wypchnięty)
-- [x] API: wdrożony na prod 2026-11-01 (v1.3.18), stage też; trasa odpowiada 401 bez tokenu
-- [ ] profil: odznaka z „nowa” → otwarcie → znaczek znika w gablocie i licznik „X nowych” spada
-- [ ] Nagrody i Home (karta „nowa odznaka”): po otwarciu na profilu też już nie „nowa”
-- [ ] restart aplikacji / inne urządzenie: dalej nie „nowa” (stan z serwera)
-- [ ] odznaka zdobyta na wydarzeniu: w szczegółach wiersz „Z wydarzenia”
+_(nic)_
 
 ---
 
@@ -34,6 +23,19 @@ na urządzeniu, potem merge. API dokłada też
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Odznaka przestaje być „nowa” po otwarciu (zmergowane 2026-11-01, `feature/badge-seen`, tag `pre-badge-seen` = main sprzed merge)
+
+Otwarcie odznaki (BadgeSheet: profil, Nagrody) woła `POST /user/badges/{id}/viewed` i od razu
+gasi „nowa” na wszystkich ekranach. Endpoint w API na prod od v1.3.18. Zmergowane bez weryfikacji
+na urządzeniu (decyzja z 2026-11-01). API dokłada też
+`viewed_at` i `metadata` w `/user/rewards` (szczegóły odznaki pokażą „z wydarzenia”).
+- [x] API: `feature/badge-viewed` zmergowany do `main` 2026-11-01 (29de88d8, pełne testy zielone, wypchnięty)
+- [x] API: wdrożony na prod 2026-11-01 (v1.3.18), stage też; trasa odpowiada 401 bez tokenu
+- [ ] profil: odznaka z „nowa” → otwarcie → znaczek znika w gablocie i licznik „X nowych” spada
+- [ ] Nagrody i Home (karta „nowa odznaka”): po otwarciu na profilu też już nie „nowa”
+- [ ] restart aplikacji / inne urządzenie: dalej nie „nowa” (stan z serwera)
+- [ ] odznaka zdobyta na wydarzeniu: w szczegółach wiersz „Z wydarzenia”
 
 ### Kod 2FA przy podszywaniu się (zmergowane 2026-11-01, `fix/admin-api-2fa`)
 
@@ -1447,6 +1449,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-11-01 | `feature/badge-seen` | Odznaka przestaje być „nowa” po otwarciu (BadgeSheet → `POST /user/badges/{id}/viewed`, API v1.3.18), flaga gaśnie od razu na wszystkich ekranach |
 | 2026-10-25 | `event-ai-cover` | Okładki AI eventu (formularz + ekran wydarzenia), biblioteka własnych okładek z innych eventów, okładka i galeria jako osobne karty |
 | 2026-10-25 | `event-series` | Wydarzenia cykliczne: sekcja „Powtarzanie” przy tworzeniu, karta serii z pauzą / wznowieniem / zakończeniem w edycji |
 | 2026-10-25 | `event-location` | Lokalizacja eventu: wyszukiwarka Mapbox, mapa pełnoekranowa, start trasy; dystans i przewyższenie z trasy |
