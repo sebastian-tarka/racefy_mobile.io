@@ -1449,6 +1449,7 @@ Zmergowane i bezpieczne do skasowania lokalnie: `feature/voice-turn-instructions
 
 | Data | Branch | Co weszło |
 |---|---|---|
+| 2026-11-01 | `chore/appstore-scripts-deps` | `package.json` + lockfile w katalogu głównym dla `scripts/*.mjs` (node-app-store-connect-api 5.0.6, jose 4.15.9), skróty `npm run appstore:*` |
 | 2026-11-01 | `chore/remove-stale-files` | Usunięte nieaktualne pliki: `REACT_NATIVE_API_SPEC.md`, `MOBILE_APP_DEVELOPMENT.md`, `RacefyApp/maps/img.png`, `debug-push-notifications.sh`, pusty `package-lock.json` w katalogu głównym |
 | 2026-11-01 | `chore/unused-cleanup` | Porządki (tag `pre-unused-cleanup`): 64 nieużywane style, 13 kluczy i18n, 3 ikony, `getBaseUrl()`; knip sprawdza typy (118 typów bez `export`, 7 usuniętych) |
 | 2026-11-01 | `feature/badge-seen` | Odznaka przestaje być „nowa” po otwarciu (BadgeSheet → `POST /user/badges/{id}/viewed`, API v1.3.18), flaga gaśnie od razu na wszystkich ekranach |
