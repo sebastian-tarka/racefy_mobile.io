@@ -15,14 +15,35 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Chip filtra w ciemnym motywie (`fix/training-profile-chips`)
+_(nic)_
+
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Wszystkie nagrody wydarzenia (zmergowane 2026-11-01, `feature/event-rewards-all`, tag `pre-event-rewards-all` = main sprzed merge)
+
+Karta „O co gramy” pokazywała jedną nagrodę na miejsce (kolejne kupony się nadpisywały, `place: 0`
+jako „0.”). Teraz wiersz: pierwsza nagroda + „+N więcej”, dotknięcie → arkusz z pełną listą
+(opis, ważność, kod po zdobyciu, link do sklepu); `place: 0` w wierszu „Za ukończenie”. API bez zmian.
+- [ ] wydarzenie 41 (Armodo): „Za ukończenie” z pierwszym kuponem, „+2 więcej” i „Zobacz wszystkie nagrody (3)”
+- [ ] arkusz: trzy kupony z opisem i kłódką „Kod odblokujesz…”, przewijanie przy długiej liście
+- [ ] po zdobyciu kuponu: kod widoczny, kopiowanie działa, „Przejdź do sklepu” otwiera link
+- [ ] wydarzenie z jedną nagrodą na miejsce: bez „+N” i bez przycisku „Zobacz wszystkie”
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01).
+
+### Chip filtra w ciemnym motywie (zmergowane 2026-11-01, `fix/training-profile-chips`, tag `pre-training-profile-chips` = main sprzed merge)
 
 Aktywny `FilterChip` („Wszystkie” w profilu treningowym, filtry nagród i historii punktów) miał
 białą etykietę na jasnym wypełnieniu — w ciemnym motywie znikał. Etykieta bierze teraz kolor tła.
 - [ ] Profil treningowy → „Ostatnie tygodnie”: aktywny chip czytelny w ciemnym i jasnym motywie
 - [ ] Nagrody i historia punktów: to samo
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01).
 
-### Start aktywności z trasy + cofanie statusu sesji siłowej (`feature/route-start-session-undo`)
+### Start aktywności z trasy + cofanie statusu sesji siłowej (zmergowane 2026-11-01, `feature/route-start-session-undo`, tag `pre-route-start-session-undo` = main sprzed merge)
 
 Biblioteka tras: przytrzymanie karty → arkusz „Rozpocznij aktywność” (+ „Usuń” dla własnych);
 ten sam przycisk na szczegółach trasy. Ekran nagrywania dostaje trasę jako shadow track, dobiera
@@ -39,23 +60,7 @@ jej sport (nie, gdy przypięty event) i przełącza na mapę. Kalendarz siłowy:
 - [ ] kalendarz siłowy: dzień wykonany → „Oznacz jako niewykonany” (link i przytrzymanie) → ostrzeżenie → dzień
       z przyciskami Start/Pomiń, aktywność zniknęła z listy aktywności
 - [ ] dzień pominięty → przytrzymanie → „Przywróć do zaplanowanych” → Start/Pomiń wracają
-
-### Wszystkie nagrody wydarzenia (`feature/event-rewards-all`)
-
-Karta „O co gramy” pokazywała jedną nagrodę na miejsce (kolejne kupony się nadpisywały, `place: 0`
-jako „0.”). Teraz wiersz: pierwsza nagroda + „+N więcej”, dotknięcie → arkusz z pełną listą
-(opis, ważność, kod po zdobyciu, link do sklepu); `place: 0` w wierszu „Za ukończenie”. API bez zmian.
-- [ ] wydarzenie 41 (Armodo): „Za ukończenie” z pierwszym kuponem, „+2 więcej” i „Zobacz wszystkie nagrody (3)”
-- [ ] arkusz: trzy kupony z opisem i kłódką „Kod odblokujesz…”, przewijanie przy długiej liście
-- [ ] po zdobyciu kuponu: kod widoczny, kopiowanie działa, „Przejdź do sklepu” otwiera link
-- [ ] wydarzenie z jedną nagrodą na miejsce: bez „+N” i bez przycisku „Zobacz wszystkie”
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01).
 
 ### Głosowy doping w transmisji (zmergowane 2026-11-01, `feature/voice-cheers`, tag `pre-voice-cheers` = main sprzed merge) — **wymaga builda natywnego**
 
