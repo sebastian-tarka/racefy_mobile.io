@@ -4,16 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../hooks/useTheme';
-import { useLiveAthleteInbox } from '../hooks/useLiveAthleteInbox';
+import type { LiveAthleteInboxState } from '../hooks/useLiveAthleteInbox';
+import { formatClipSeconds, isVoiceMessage } from '../services/liveCheer/message';
 import { upgradePromptEmitter } from '../services/upgradePromptEmitter';
 import { borderRadius, fontSize, spacing } from '../theme';
 
 interface Props {
-  activityId: number | null;
+  /**
+   * Owned by the recording screen, not by this line: the screen keeps polling
+   * and playing while this line is hidden behind the screen lock.
+   */
+  inbox: LiveAthleteInboxState;
   /** Only true while actually broadcasting. */
   isBroadcasting: boolean;
-  /** The athlete's `live.tts_incoming` preference. */
-  ttsIncoming: boolean;
 }
 
 /**
@@ -22,11 +25,10 @@ interface Props {
  * Kept to a single line: the athlete is moving and cannot read a feed. Anything
  * longer belongs in the post-activity view, where the messages persist anyway.
  */
-export function LiveAthleteInbox({ activityId, isBroadcasting, ttsIncoming }: Props) {
+export function LiveAthleteInbox({ inbox, isBroadcasting }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { latest, unreadCount, markAllSeen, ttsFailure, clearTtsFailure, speak } =
-    useLiveAthleteInbox(activityId, { enabled: isBroadcasting, autoPlayTts: ttsIncoming });
+  const { latest, unreadCount, markAllSeen, playbackFailure, clearPlaybackFailure, replay } = inbox;
 
   // A free-tier rejection is a sales moment, not an error: route it to the
   // existing upgrade prompt instead of showing a dead-end message.
@@ -35,18 +37,18 @@ export function LiveAthleteInbox({ activityId, isBroadcasting, ttsIncoming }: Pr
   // capability. It has to be one the paywall actually knows — an invented key
   // renders an empty offer.
   useEffect(() => {
-    if (ttsFailure === 'upgrade_required') {
+    if (playbackFailure === 'upgrade_required') {
       upgradePromptEmitter.emit('show', { feature: 'audio_coach_ai' });
-      clearTtsFailure();
+      clearPlaybackFailure();
     }
-  }, [ttsFailure, clearTtsFailure]);
+  }, [playbackFailure, clearPlaybackFailure]);
 
-  if (!isBroadcasting || !activityId) return null;
+  if (!isBroadcasting) return null;
 
-  if (ttsFailure === 'limit_reached') {
+  if (playbackFailure === 'limit_reached') {
     return (
       <TouchableOpacity
-        onPress={clearTtsFailure}
+        onPress={clearPlaybackFailure}
         style={[styles.notice, { backgroundColor: colors.warning + '14' }]}
       >
         <Ionicons name="volume-mute-outline" size={16} color={colors.warning} />
@@ -60,16 +62,27 @@ export function LiveAthleteInbox({ activityId, isBroadcasting, ttsIncoming }: Pr
 
   if (!latest) return null;
 
+  const isVoice = isVoiceMessage(latest);
+  const author = latest.user?.name ?? latest.user?.username;
+
   return (
     <TouchableOpacity
       onPress={markAllSeen}
-      onLongPress={() => speak(latest)}
+      onLongPress={() => replay(latest)}
       style={[styles.container, { backgroundColor: colors.cardBackgroundHighlight }]}
     >
-      <Ionicons name="chatbubble-ellipses" size={16} color={colors.primary} />
+      <Ionicons name={isVoice ? 'mic' : 'chatbubble-ellipses'} size={16} color={colors.primary} />
       <Text style={[styles.message, { color: colors.textPrimary }]} numberOfLines={1}>
-        <Text style={styles.author}>{latest.user?.name ?? latest.user?.username}: </Text>
-        {latest.content}
+        <Text style={styles.author}>{author}: </Text>
+        {isVoice ? (
+          <>
+            {formatClipSeconds(latest.audio_duration_ms)}
+            {/* Transcript is '' when moderation is off or STT failed — then the length is all there is. */}
+            {latest.content ? ` · ${latest.content}` : ''}
+          </>
+        ) : (
+          latest.content
+        )}
       </Text>
       {unreadCount > 1 && (
         <View style={[styles.badge, { backgroundColor: colors.primary }]}>

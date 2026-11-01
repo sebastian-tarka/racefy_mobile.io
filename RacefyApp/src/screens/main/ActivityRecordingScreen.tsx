@@ -23,6 +23,7 @@ import {
   useHealthEnrichment,
   useLiveActivityContext,
   isProvisionalActivity,
+  useLiveAthleteInbox,
   useLivePreferences,
   useMapStyleCycler,
   useMilestones,
@@ -549,6 +550,14 @@ export function ActivityRecordingScreen() {
   // Broadcasting and the spectator inbox are conversations with the server about
   // this activity. Started offline, it does not exist there yet.
   const liveActivityId = activity && !isProvisionalActivity(activity) ? activity.id : null;
+  // Owned by the screen, not by the inbox line it feeds: the line is hidden
+  // behind the screen lock and during pauses, and a cheer that arrives then
+  // still has to be heard — polling and playback must not stop with the UI.
+  const liveInbox = useLiveAthleteInbox(liveActivityId, {
+    enabled: isBroadcasting,
+    autoPlayTts: livePreferences.tts_incoming,
+    autoPlayVoice: livePreferences.voice_incoming,
+  });
   const { resetMilestones } = useMilestoneTracking(distance, distanceMilestones);
 
   const workout = useWorkoutEngine({
@@ -1052,11 +1061,7 @@ export function ActivityRecordingScreen() {
             onBroadcastingChange={setIsBroadcasting}
           />
           {/* Spectator messages reach the athlete only while broadcasting. */}
-          <LiveAthleteInbox
-            activityId={liveActivityId}
-            isBroadcasting={isBroadcasting}
-            ttsIncoming={livePreferences.tts_incoming}
-          />
+          <LiveAthleteInbox inbox={liveInbox} isBroadcasting={isBroadcasting} />
         </View>
       )}
 

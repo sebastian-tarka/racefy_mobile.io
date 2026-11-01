@@ -3291,6 +3291,26 @@
       "unavailable": "Ta transmisja nie jest już dostępna.",
       "sendFailed": "Nie udało się wysłać wiadomości. Spróbuj ponownie."
     },
+    "voice": {
+      "label": "Wiadomość głosowa",
+      "expired": "Nagranie wygasło",
+      "play": "Odtwórz wiadomość głosową",
+      "stop": "Zatrzymaj",
+      "record": "Nagraj doping głosowy",
+      "recording": "Nagrywanie…",
+      "stopRecording": "Zakończ nagrywanie",
+      "discard": "Odrzuć nagranie",
+      "send": "Wyślij nagranie",
+      "disabled": "Ta osoba nie przyjmuje wiadomości głosowych.",
+      "tooLong": "Nagranie jest za długie.",
+      "rejected": "Nagranie nie przeszło moderacji i nie zostało wysłane.",
+      "unreadable": "Nie udało się odczytać nagrania. Nagraj je jeszcze raz.",
+      "sendFailed": "Nie udało się wysłać nagrania. Spróbuj ponownie.",
+      "permissionTitle": "Dostęp do mikrofonu",
+      "permissionMessage": "Racefy potrzebuje mikrofonu, żeby nagrać doping głosowy dla tej osoby. Nagranie trafi tylko do niej (i do widzów, jeśli oznaczysz je jako publiczne).",
+      "permissionContinue": "Dalej",
+      "permissionDenied": "Brak dostępu do mikrofonu — możesz wysłać wiadomość tekstową."
+    },
     "archive": {
       "title": "Doping z transmisji",
       "count": "{{count}} wiadomość w trakcie transmisji",
@@ -3316,7 +3336,9 @@
       "commentsLabel": "Pozwól widzom pisać do Ciebie",
       "commentsDescription": "Osoby oglądające mogą wysłać Ci wiadomość. Prywatne trafiają tylko do Ciebie, publiczne widzą też pozostali widzowie.",
       "ttsLabel": "Czytaj wiadomości na głos w trakcie ruchu",
-      "ttsDescription": "Przychodzące wiadomości są czytane w słuchawkach, przyciszając muzykę zamiast ją zatrzymywać. Wymaga płatnego planu."
+      "ttsDescription": "Przychodzące wiadomości są czytane w słuchawkach, przyciszając muzykę zamiast ją zatrzymywać. Wymaga płatnego planu.",
+      "voiceLabel": "Odtwarzaj doping głosowy w trakcie ruchu",
+      "voiceDescription": "Widzowie mogą nagrać Ci krótką wiadomość głosową. Usłyszysz ją w słuchawkach po krótkim dźwięku, muzyka na chwilę przyciszy się."
     }
   },
   "strengthPlans": {

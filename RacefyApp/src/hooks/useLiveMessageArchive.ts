@@ -66,6 +66,7 @@ function toPins(messages: LiveMessage[]): LiveMessagePin[] {
         coordinate: [lng, lat] as [number, number],
         content: m.content,
         authorName: m.user?.name ?? m.user?.username ?? '',
+        kind: m.message_type === 'voice' ? 'voice' : 'text',
       },
     ];
   });

@@ -18,6 +18,7 @@ import {
 import { mapboxAnalytics } from '../services/mapboxAnalytics';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
+import { useTranslation } from 'react-i18next';
 import { useMapStyle } from '../hooks/useMapStyle';
 import { fontSize } from '../theme';
 import { haversineDistance as geoDistance } from '../utils/gpsMath';
@@ -136,6 +137,7 @@ export function MapboxRouteMap({
   onSelectCheer,
 }: MapboxRouteMapProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const { resolveStyleUrl } = useMapStyle();
   const cameraRef = useRef<any>(null);
   const mapReadyRef = useRef(false);
@@ -415,7 +417,10 @@ export function MapboxRouteMap({
           <View style={[styles.cheerCalloutDot, { backgroundColor: cheerColor }]} />
           <Text style={[styles.cheerCalloutText, { color: colors.textPrimary }]} numberOfLines={3}>
             <Text style={styles.cheerCalloutAuthor}>{selectedCheer.authorName} </Text>
-            {selectedCheer.content}
+            {/* A voice cheer shows its transcript; with none (moderation off, STT
+                failed) the pin still has to say what it is. */}
+            {selectedCheer.kind === 'voice' ? '🎙 ' : ''}
+            {selectedCheer.content || (selectedCheer.kind === 'voice' ? t('live.voice.label') : '')}
           </Text>
           <TouchableOpacity
             onPress={() => onSelectCheer?.(null)}

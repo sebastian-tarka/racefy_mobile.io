@@ -69,6 +69,12 @@ export interface LiveBroadcast {
    * Optional so an older backend degrades to the attempt-then-hide path.
    */
   allow_live_comments?: boolean;
+  /**
+   * Whether a spectator may record a voice cheer: the athlete's
+   * `voice_incoming` consent AND the server-wide switch. Absent on an older
+   * backend, which has no voice endpoint either — hide the mic then.
+   */
+  allow_voice_messages?: boolean;
   stats: LiveBroadcastStats;
   /** Owner-only; present on the athlete's own broadcast in `selected` mode. */
   live_share_token?: string | null;
@@ -148,20 +154,50 @@ export interface LiveMessage extends Comment {
   live_duration?: number | null; // seconds into the activity
   /** [lng, lat]. Null for non-owners while inside a privacy zone — never filtered for the owner. */
   live_position?: [number, number] | null;
+  /** Absent on an older backend — read as `text`. */
+  message_type?: LiveMessageType;
+  /** Voice only. Survives the audio file's purge, so the archive can still say "12 s". */
+  audio_duration_ms?: number | null;
+  /**
+   * Voice only. A temporary SIGNED url (2 h): no Bearer needed, so it can go
+   * straight into a player. Null once the file was purged (retention) — the
+   * transcript in `content` is what is left.
+   */
+  audio_url?: string | null;
 }
+
+export type LiveMessageType = 'text' | 'voice';
 
 /** A live message pinned on the finished route — only messages that carry a position. */
 export interface LiveMessagePin {
   id: number;
   coordinate: [number, number]; // [lng, lat]
+  /** For a voice message: the transcript, possibly empty. */
   content: string;
   authorName: string;
+  kind: LiveMessageType;
 }
 
 export interface SendLiveMessageRequest {
   content: string; // max 280 chars (422 above that)
   /** Defaults to false = private 1:1 to the athlete. */
   public?: boolean;
+}
+
+/** `POST /live/{activity}/messages/voice` — multipart, built by the API client. */
+export interface SendLiveVoiceMessageRequest {
+  /** Local file uri of an m4a/AAC recording. */
+  uri: string;
+  /** Client-measured length; the server re-measures and uses this as the fallback. */
+  durationMs: number;
+  public?: boolean;
+}
+
+/** `live.voice` block of `GET /config/app` — absent on a backend without voice cheers. */
+export interface LiveVoiceConfig {
+  enabled: boolean;
+  max_seconds: number;
+  max_bytes: number;
 }
 
 /** Body for `POST /recording/start`'s optional `live` object and the toggle endpoint. */
@@ -191,4 +227,6 @@ export interface LivePreferences {
   allow_live_comments: boolean;
   transmission_visibility: LiveVisibility;
   tts_incoming: boolean;
+  /** Play spectators' recorded voice cheers (not tier-gated, unlike TTS). */
+  voice_incoming: boolean;
 }

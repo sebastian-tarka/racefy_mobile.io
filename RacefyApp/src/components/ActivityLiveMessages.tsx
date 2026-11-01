@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Avatar } from './Avatar';
 import { Card } from './Card';
+import { LiveVoiceClip } from './LiveVoiceClip';
 import { useTheme } from '../hooks/useTheme';
 import { useLiveMessageArchive } from '../hooks/useLiveMessageArchive';
 import { useUnits } from '../hooks/useUnits';
+import { isVoiceMessage } from '../services/liveCheer/message';
 import { borderRadius, fontSize, spacing } from '../theme';
 import type { Activity, LiveMessage, User } from '../types/api';
 import { formatDuration } from '../utils/formatDuration';
@@ -138,7 +140,17 @@ export function ActivityLiveMessages({
                 </Text>
               </View>
 
-              <Text style={[styles.content, { color: colors.textPrimary }]}>{message.content}</Text>
+              {isVoiceMessage(message) ? (
+                <LiveVoiceClip
+                  uri={message.audio_url}
+                  durationMs={message.audio_duration_ms}
+                  transcript={message.content}
+                />
+              ) : (
+                <Text style={[styles.content, { color: colors.textPrimary }]}>
+                  {message.content}
+                </Text>
+              )}
 
               {hasDistance && (
                 <View style={styles.whereRow}>

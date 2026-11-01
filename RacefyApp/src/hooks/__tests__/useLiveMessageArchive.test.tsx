@@ -94,7 +94,7 @@ describe('useLiveMessageArchive', () => {
 
     await waitFor(() => expect(result.current.messages).toHaveLength(3));
     expect(result.current.pins).toEqual([
-      { id: 1, coordinate: [19.9424, 50.0662], content: 'msg 1', authorName: 'Ania' },
+      { id: 1, coordinate: [19.9424, 50.0662], content: 'msg 1', authorName: 'Ania', kind: 'text' },
     ]);
   });
 

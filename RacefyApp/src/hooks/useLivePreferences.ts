@@ -15,6 +15,7 @@ const DEFAULTS: LivePreferences = {
   allow_live_comments: true,
   transmission_visibility: 'followers',
   tts_incoming: true,
+  voice_incoming: true,
 };
 
 interface Result {

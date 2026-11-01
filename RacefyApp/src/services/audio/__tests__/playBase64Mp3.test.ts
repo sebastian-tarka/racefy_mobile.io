@@ -29,8 +29,9 @@ jest.mock('expo-av', () => ({
             setOnPlaybackStatusUpdate: (cb: (status: any) => void) => {
               statusCallback = cb;
               // Resolve on the next tick, as real playback would.
-              setTimeout(() => cb({ didJustFinish: true }), 0);
+              setTimeout(() => cb({ isLoaded: true, didJustFinish: true }), 0);
             },
+            playAsync: jest.fn().mockResolvedValue(undefined),
             unloadAsync: mockUnload,
           },
         }),

@@ -191,6 +191,7 @@ export function LiveSpectatorScreen({ navigation, route }: Props) {
           activityId={activityId}
           messages={allMessages}
           allowComments={broadcast?.allow_live_comments}
+          allowVoice={broadcast?.allow_voice_messages}
           onSent={(message) => setLocalMessages((prev) => [...prev, message])}
         />
       </KeyboardAvoidingView>

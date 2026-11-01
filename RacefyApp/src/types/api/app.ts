@@ -1,4 +1,4 @@
-import type { RealtimeConfig } from './live';
+import type { LiveVoiceConfig, RealtimeConfig } from './live';
 
 // ============ DEBUG LOGS ============
 
@@ -106,6 +106,10 @@ export interface AppConfigResponse {
    * simply reads as "no realtime"; callers should default to polling.
    */
   realtime?: RealtimeConfig;
+  /** Live-broadcast features that need a server switch; absent = no voice cheers. */
+  live?: {
+    voice: LiveVoiceConfig;
+  };
 }
 
 export interface AppConfigQuery {

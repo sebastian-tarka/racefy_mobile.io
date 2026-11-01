@@ -135,6 +135,39 @@ export function LiveMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       return response.data;
     }
 
+    /**
+     * Send a recorded voice cheer. Throttled to 6/min, max `live.voice.max_seconds`
+     * (from the app config) and 1 MB.
+     *
+     * Besides the text endpoint's 403 `live_comments_disabled`, a 403
+     * `live_voice_disabled` means the athlete takes text but not voice; 422
+     * carries `voice_too_long`, `voice_unreadable` or `voice_rejected`
+     * (moderation) in `error`.
+     */
+    async sendLiveVoiceMessage(
+      activityId: number,
+      data: Types.SendLiveVoiceMessageRequest,
+    ): Promise<Types.LiveMessage> {
+      const formData = new FormData();
+      formData.append('audio', { uri: data.uri, name: 'cheer.m4a', type: 'audio/mp4' } as any);
+      formData.append('duration_ms', String(Math.round(data.durationMs)));
+      formData.append('public', data.public ? '1' : '0');
+      const response = await this.request<Types.ApiResponse<Types.LiveMessage>>(
+        `/live/${activityId}/messages/voice`,
+        { method: 'POST', body: formData },
+      );
+      return response.data;
+    }
+
+    /**
+     * The athlete heard this message. Stamps `audio_played_at` once, so no
+     * device reads it again. Text messages are stamped by `/tts` already; this
+     * is how a voice clip, which never goes through TTS, gets its stamp.
+     */
+    async markLiveMessagePlayed(commentId: number): Promise<void> {
+      await this.request<void>(`/live/messages/${commentId}/played`, { method: 'POST' });
+    }
+
     /** Promote your own private message to public. */
     async promoteLiveMessage(commentId: number): Promise<Types.LiveMessage> {
       const response = await this.request<Types.ApiResponse<Types.LiveMessage>>(

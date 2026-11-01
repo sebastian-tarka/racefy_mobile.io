@@ -1,6 +1,11 @@
-import { Audio } from 'expo-av';
 import { File, Paths } from 'expo-file-system';
-import { getAudioFocusPrefs } from '../audioCoach/audioSession';
+import { playAudioSource } from './playAudioSource';
+
+/**
+ * Longest TTS clip the backend produces is well under a minute (280 chars of
+ * live message, or one coach sentence). Past this, assume playback is stuck.
+ */
+const MP3_SAFETY_TIMEOUT_MS = 60_000;
 
 /**
  * Decode a base64 MP3 to a temp file, play it to completion, then clean up.
@@ -31,20 +36,10 @@ export async function playBase64Mp3(
   }
   tempFile.write(bytes);
 
-  const { sound } = await Audio.Sound.createAsync(
-    { uri: tempFile.uri },
-    { shouldPlay: true, volume: volume ?? getAudioFocusPrefs().volume },
-  );
   try {
-    await new Promise<void>((resolve) => {
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if ('didJustFinish' in status && status.didJustFinish) resolve();
-      });
-    });
+    await playAudioSource({ uri: tempFile.uri }, { volume, timeoutMs: MP3_SAFETY_TIMEOUT_MS });
   } finally {
-    // Runs even if playback rejects, so a failure cannot leak the sound handle
-    // or leave the file behind in the cache.
-    await sound.unloadAsync().catch(() => {});
+    // Runs even if playback rejects, so a failure cannot leave the file behind.
     try {
       tempFile.delete();
     } catch {
