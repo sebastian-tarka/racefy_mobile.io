@@ -25,14 +25,21 @@ jako „0.”). Teraz wiersz: pierwsza nagroda + „+N więcej”, dotknięcie �
 - [ ] po zdobyciu kuponu: kod widoczny, kopiowanie działa, „Przejdź do sklepu” otwiera link
 - [ ] wydarzenie z jedną nagrodą na miejsce: bez „+N” i bez przycisku „Zobacz wszystkie”
 
-### Głosowy doping w transmisji (`feature/voice-cheers`) — **wymaga builda natywnego**
+---
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Głosowy doping w transmisji (zmergowane 2026-11-01, `feature/voice-cheers`, tag `pre-voice-cheers` = main sprzed merge) — **wymaga builda natywnego**
 
 Kibic na ekranie transmisji nagrywa krótką wiadomość głosową (m4a/AAC, limit z `live.voice.max_seconds`),
 trenujący słyszy ją w kolejce trenera audio: jingiel + klip w jednym przyciszeniu muzyki. Tekst też dostał
 jingiel przed TTS. Przy okazji skrzynka trenującego przeżywa blokadę ekranu i pauzę (hook w ekranie
 nagrywania, nie w linii UI), a odtwarzacz ma limit czasu (brak `didJustFinish` nie wiesza kolejki).
 Nowe uprawnienia (`RECORD_AUDIO`, opis mikrofonu iOS) → `expo prebuild` / EAS build, nie wystarczy JS.
-API: branch głosowego dopingu w `racefy_api.io` musi być na stage (endpointy `/messages/voice`, `/played`,
+API: głosowy doping zmergowany do main `racefy_api.io` 2026-11-01 i wdrażany na prod (wymaga migracji); na stage musi być (endpointy `/messages/voice`, `/played`,
 `live.voice` w `/config/app`, `allow_voice_messages` w `/live/{id}`).
 - [ ] Android, dwa telefony: kibic nagrywa (pierwsze użycie: wyjaśnienie → systemowe pytanie o mikrofon),
       odsłuch przed wysyłką, odrzucenie, wysyłka; licznik zatrzymuje się sam na limicie
@@ -51,13 +58,7 @@ API: branch głosowego dopingu w `racefy_api.io` musi być na stage (endpointy `
 - [ ] iOS: to samo co Android + nagrywanie nie zostawia trasy audio „na słuchawkę” (muzyka po nagraniu
       brzmi normalnie), odtwarzanie przy wyciszonym przełączniku
 - [ ] tryb `mix` w ustawieniach trenera audio: doping gra bez przyciszania, bez błędów
-
----
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01).
 
 ### Przełącznik „Nowe publiczne wydarzenia” (zmergowane 2026-11-01, `feature/public-event-notifications`, tag `pre-public-event-notifications` = main sprzed merge)
 
@@ -877,7 +878,6 @@ parzystość kluczów i placeholderów z `en.json` sprawdzona maszynowo.
 
 - [ ] Przełączenie języka na hiszpański: ekran nagrywania i sesja siłowa bez wtrętów angielskich
 - [ ] Liczba mnoga po hiszpańsku (`_one`/`_other`) działa tam, gdzie polski ma `_few`/`_many`
-
 
 ### Paski zakładek i zakładka Statystyki wg designu „Racefy v2" (zmergowane 2026-09-08, tag `pre-strength-move-resume` = main sprzed merge)
 
