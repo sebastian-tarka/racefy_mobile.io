@@ -29,7 +29,10 @@ export const FilterChip = React.memo(function FilterChip({
       accessibilityRole="radio"
       accessibilityState={{ selected: active }}
     >
-      <Text style={[styles.text, { color: active ? colors.white : colors.textSecondary }]}>
+      {/* The active pill is "ink on paper" inverted: text-coloured fill, so the
+          label must take the page colour — hard-coded white vanished on the
+          light fill of the dark theme. */}
+      <Text style={[styles.text, { color: active ? colors.background : colors.textSecondary }]}>
         {label}
       </Text>
     </TouchableOpacity>
