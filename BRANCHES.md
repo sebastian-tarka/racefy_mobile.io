@@ -15,7 +15,15 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Wszystkie nagrody wydarzenia (`feature/event-rewards-all`)
+
+Karta „O co gramy” pokazywała jedną nagrodę na miejsce (kolejne kupony się nadpisywały, `place: 0`
+jako „0.”). Teraz wiersz: pierwsza nagroda + „+N więcej”, dotknięcie → arkusz z pełną listą
+(opis, ważność, kod po zdobyciu, link do sklepu); `place: 0` w wierszu „Za ukończenie”. API bez zmian.
+- [ ] wydarzenie 41 (Armodo): „Za ukończenie” z pierwszym kuponem, „+2 więcej” i „Zobacz wszystkie nagrody (3)”
+- [ ] arkusz: trzy kupony z opisem i kłódką „Kod odblokujesz…”, przewijanie przy długiej liście
+- [ ] po zdobyciu kuponu: kod widoczny, kopiowanie działa, „Przejdź do sklepu” otwiera link
+- [ ] wydarzenie z jedną nagrodą na miejsce: bez „+N” i bez przycisku „Zobacz wszystkie”
 
 ---
 
