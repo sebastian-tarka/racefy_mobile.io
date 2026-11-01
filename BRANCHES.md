@@ -15,7 +15,15 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Przełącznik „Nowe publiczne wydarzenia” (`feature/public-event-notifications`)
+
+Ustawienia → Powiadomienia: nowy wiersz `public_event` (e-mail + push). API rozsyła powiadomienie
+o każdym nowym publicznym wydarzeniu (poza obserwującymi twórcę — oni dostają `new_event`), e-mail
+najwyżej raz dziennie. Wiersz pokazuje się tylko, gdy serwer zwraca `notifications.public_event`
+(starsze API: brak wiersza zamiast awarii).
+- [ ] API z `public_event` na stage/prod
+- [ ] wiersz widoczny, oba przełączniki zapisują się (odświeżenie ekranu pokazuje ten sam stan)
+- [ ] wyłączony push → brak powiadomienia o nowym publicznym wydarzeniu; włączony → jest i otwiera wydarzenie
 
 ---
 
