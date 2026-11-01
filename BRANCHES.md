@@ -15,7 +15,14 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Trener audio: tempo w komunikatach km i pauzy (`fix/audio-coach-split-pace`)
+_(nic)_
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Trener audio: tempo w komunikatach km i pauzy (zmergowane 2026-11-01, `fix/audio-coach-split-pace`, tag `pre-audio-coach-split-pace` = main sprzed merge)
 
 Diagnoza w `.notes/ANALIZA_TEMPO_AUDIO_PAUZY.md`. Komunikat kilometrowy mówi teraz split ostatniego
 odcinka w czasie ruchu (z logu punktów SQLite) — w obu torach (foreground i task w tle) to samo.
@@ -31,11 +38,7 @@ zejściu apki do tła na iOS, więc po wznowieniu nic się nie powtarza.
 - [ ] DEV symulator biegu dalej działa (tempo 5:30 stałe)
 
 ---
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-01). Czysty JS — wystarczy dev server, bez builda natywnego.
 
 ### Wszystkie nagrody wydarzenia (zmergowane 2026-11-01, `feature/event-rewards-all`, tag `pre-event-rewards-all` = main sprzed merge)
 
