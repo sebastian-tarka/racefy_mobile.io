@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-10-31**
+Stan na: **2026-11-01**
 
 ---
 
@@ -31,6 +31,16 @@ wdrożeniu go na prod.
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### Kod 2FA przy podszywaniu się (zmergowane 2026-11-01, `fix/admin-api-2fa`)
+
+API (gałąź `fix/security-critical-2026-11`, na stage od 2026-11-01) przy włączonym 2FA admina odpowiada na
+`/admin/*` 403 `code: admin_2fa_required`, dopóki token nie przejdzie `POST /admin/2fa/verify`. Ekran
+„Podszyj się” pokazuje okno na kod i powtarza wyszukiwanie/start. Bez włączonego 2FA nic się nie zmienia.
+- [ ] stage, 2FA admina włączone: wyszukanie użytkownika → okno kodu → poprawny kod → wyniki
+- [ ] zły kod: komunikat pod polem, okno zostaje
+- [ ] admin bez skonfigurowanego 2FA: alert „skonfiguruj w panelu”
+- [ ] po kodzie start podszywania się i powrót do konta admina działają jak dotąd
 
 ### Czas w ruchu: tempo bez stania w miejscu (zmergowane 2026-10-30, `feature/moving-time`, tag `pre-moving-time` = main sprzed merge)
 
