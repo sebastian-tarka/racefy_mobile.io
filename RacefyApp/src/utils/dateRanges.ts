@@ -7,7 +7,7 @@ export interface PeriodOption<T = string> {
   labelKey: string;
 }
 
-export interface DateRange {
+interface DateRange {
   from: string;
   to: string;
 }

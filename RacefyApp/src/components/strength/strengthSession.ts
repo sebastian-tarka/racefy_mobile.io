@@ -116,7 +116,7 @@ export function isSkippedExercise(exercise: StrengthExercise): boolean {
   return exercise.sets_completed === 0;
 }
 
-export interface VolumeShare {
+interface VolumeShare {
   exercise: StrengthExercise;
   share: number;
   colorIndex: number;
@@ -148,7 +148,7 @@ export function skippedExercises(session: StrengthSessionSummary): StrengthExerc
   return session.exercises.filter(isSkippedExercise);
 }
 
-export type RhythmItem =
+type RhythmItem =
   | { kind: 'separator'; key: string }
   | { kind: 'set'; key: string; set: StrengthSet; colorIndex: number }
   | { kind: 'rest'; key: string; seconds: number | null };
@@ -207,7 +207,7 @@ export function highlightDelta(
   return `+${highlight.duration_delta_seconds} s`;
 }
 
-export type ProgressTone = 'up' | 'down' | 'same';
+type ProgressTone = 'up' | 'down' | 'same';
 
 /** "+5 kg" / "−2 powt." / "=" and whether it went up, down or nowhere. */
 export function progressDelta(

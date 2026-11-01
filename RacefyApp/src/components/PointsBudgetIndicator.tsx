@@ -9,7 +9,7 @@ import { borderRadius, fontSize, spacing } from '../theme';
 import type { EventPointsBudget, EventPointsBudgetPreviewRequest } from '../types/api';
 import { getErrorMessage } from '../utils/errors';
 
-export interface PointsBudgetIndicatorProps {
+interface PointsBudgetIndicatorProps {
   /** Sport type id (required for preview) */
   sportTypeId: number | null;
   /** Distance in meters (required) */

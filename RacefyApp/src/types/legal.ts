@@ -54,8 +54,3 @@ export interface UserConsent {
 export interface UserConsentsResponse {
   consents: UserConsent[];
 }
-
-// Request body for PATCH /user/consents/{versionId}
-export interface UpdateConsentRequest {
-  accepted: boolean;
-}

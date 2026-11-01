@@ -44,7 +44,7 @@ interface SessionQueue {
 
 type OutboxState = Record<string, SessionQueue>;
 
-export interface KvStore {
+interface KvStore {
   get: (key: string) => string | null;
   set: (key: string, value: string) => void;
   delete: (key: string) => void;
@@ -65,9 +65,9 @@ export type OutboxEvent =
   | { type: 'rejected'; sessionId: number; op: StrengthOp; message: string }
   | { type: 'changed' };
 
-export type FlushResult = 'idle' | 'delivered' | 'offline' | 'auth_required';
+type FlushResult = 'idle' | 'delivered' | 'offline' | 'auth_required';
 
-export interface StrengthOutboxDeps {
+interface StrengthOutboxDeps {
   store: KvStore;
   transport: StrengthTransport;
   currentUserId: () => number | null;
@@ -268,5 +268,3 @@ export function createStrengthOutbox(deps: StrengthOutboxDeps) {
     clearSnapshot,
   };
 }
-
-export type StrengthOutbox = ReturnType<typeof createStrengthOutbox>;

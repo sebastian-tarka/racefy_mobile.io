@@ -4,7 +4,7 @@
  * testable without a real interval. The hook owns the setInterval + setState.
  */
 
-export interface DurationTick {
+interface DurationTick {
   /** Elapsed whole seconds since tracking started. */
   duration: number;
   /** Calories — never decreases (clamped to at least the previous value). */

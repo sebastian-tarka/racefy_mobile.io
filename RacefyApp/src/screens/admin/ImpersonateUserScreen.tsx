@@ -203,7 +203,6 @@ export function ImpersonateUserScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   content: { flex: 1, padding: spacing.md },
   warning: {
     padding: spacing.md,

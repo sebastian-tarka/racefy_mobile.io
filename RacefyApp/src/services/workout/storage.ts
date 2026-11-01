@@ -30,7 +30,7 @@ const KEYS = {
   notification: '@racefy:workout:goalNotificationId',
 } as const;
 
-export interface WorkoutSession {
+interface WorkoutSession {
   plan: GuidedWorkout;
   /** Server activity id, once known. Used to match a restored session to the recovered activity. */
   activityId: number | null;
@@ -39,7 +39,7 @@ export interface WorkoutSession {
   startedAtMs: number;
 }
 
-export interface TimeAnchor {
+interface TimeAnchor {
   /** Active seconds at the moment the anchor was written. */
   activeSeconds: number;
   /** Wall-clock time when it was written. */

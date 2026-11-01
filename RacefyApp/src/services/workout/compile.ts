@@ -38,7 +38,7 @@ function goalToEnd(goal: WorkoutGoal): CompiledSegment['end'] {
     : { type: 'distance', meters: goal.meters };
 }
 
-export interface WorkoutTotals {
+interface WorkoutTotals {
   /** Estimated active time, seconds. Open segments count as 0. */
   seconds: number;
   /** Estimated distance, metres. Time segments are converted with `paceSecPerKm`. */

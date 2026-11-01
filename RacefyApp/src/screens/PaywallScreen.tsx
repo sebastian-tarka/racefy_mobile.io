@@ -732,10 +732,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     marginBottom: spacing.xs,
   },
-  tableHeaderLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
   tableHeaderPlan: {
     fontSize: fontSize.sm,
     fontWeight: '700',

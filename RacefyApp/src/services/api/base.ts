@@ -297,8 +297,4 @@ export class ApiBase {
   getToken(): string | null {
     return this.token;
   }
-
-  getBaseUrl(): string {
-    return API_BASE_URL;
-  }
 }

@@ -54,7 +54,7 @@ export type WorkoutEngineEvent =
   /** The last segment of an interval session ended. */
   | { type: 'workout_complete'; at: EngineSnapshot };
 
-export interface AdvanceResult {
+interface AdvanceResult {
   state: WorkoutEngineState;
   events: WorkoutEngineEvent[];
 }

@@ -19,7 +19,7 @@ export function normalizeStanding(entry: EventStandingEntry): {
   };
 }
 
-export interface EventStandingsAggregates {
+interface EventStandingsAggregates {
   racingCount: number;
   finishedCount: number;
   finishedPct: number;

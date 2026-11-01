@@ -17,26 +17,26 @@ export interface SmoothedPosition {
   timestamp: number;
 }
 
-export interface TrackPoint {
+interface TrackPoint {
   lat: number;
   lng: number;
   ele?: number;
 }
 
-export interface TrackDelta {
+interface TrackDelta {
   distance: number;
   elevationGain: number;
 }
 
 /** A persisted/recovered point that still carries its capture time (ISO string). */
-export interface RecoveredPoint {
+interface RecoveredPoint {
   lat: number;
   lng: number;
   ele?: number;
   time?: string;
 }
 
-export interface RecoveredTrack {
+interface RecoveredTrack {
   distance: number;
   elevationGain: number;
   /** Trailing (most recent) point, to re-seed lastPosition; null when there are no points. */

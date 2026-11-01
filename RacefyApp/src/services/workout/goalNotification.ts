@@ -41,7 +41,7 @@ async function ensureChannel(): Promise<void> {
   }
 }
 
-export interface GoalNotificationContent {
+interface GoalNotificationContent {
   title: string;
   body: string;
 }

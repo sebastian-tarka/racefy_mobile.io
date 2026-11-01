@@ -7,7 +7,7 @@ import type {
 } from '../../types/api';
 
 /** One tick of broadcast state, whichever transport produced it. */
-export interface LiveFeedUpdate {
+interface LiveFeedUpdate {
   position: LivePosition;
   stats: LiveBroadcastStats;
   status: string;

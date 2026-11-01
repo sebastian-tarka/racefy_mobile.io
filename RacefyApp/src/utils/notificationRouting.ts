@@ -1,7 +1,7 @@
 import { pushId } from './pushPayload';
 
 /** Ids and hints a notification can carry, from push (`data`) or from the list. */
-export interface NotificationRouteData {
+interface NotificationRouteData {
   post_id?: number | string;
   activity_id?: number | string;
   event_id?: number | string;
@@ -17,7 +17,7 @@ export interface NotificationRouteData {
 }
 
 /** Where a notification leads. Screen names match `RootStackParamList`. */
-export type NotificationTarget =
+type NotificationTarget =
   | { screen: 'UserProfile'; params: { username: string } }
   | { screen: 'PostDetail'; params: { postId: number; focusComments?: boolean } }
   | { screen: 'ActivityDetail'; params: { activityId: number } }

@@ -38,9 +38,6 @@ export interface AdminTwoFactorVerifyResponse {
   };
 }
 
-/** Error codes of the admin API 2FA gate (403 body `code`). */
-export type AdminTwoFactorErrorCode = 'admin_2fa_required' | 'admin_2fa_setup_required';
-
 export interface StartImpersonationResponse {
   impersonation_token: string;
   impersonated_user: User;

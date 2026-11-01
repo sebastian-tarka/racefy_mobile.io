@@ -124,7 +124,7 @@ function getWeatherGradient(condition: string | undefined, hour: number): Gradie
  * + subtitle + tags). Missing fields gracefully fall back to the simple
  * label/subtitle from `cta`.
  */
-export interface PrimaryCtaHero {
+interface PrimaryCtaHero {
   label?: string;
   title?: string;
   message?: string;

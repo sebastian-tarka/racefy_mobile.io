@@ -36,14 +36,14 @@ const BACKOFF_MAX_MS = 300_000;
 const KV_FAILURES = 'uploader:consecutiveFailures';
 const KV_LAST_ATTEMPT = 'uploader:lastAttemptAt';
 
-export interface UploaderServerStats {
+interface UploaderServerStats {
   total_points: number;
   distance?: number;
   avg_speed?: number | null;
   max_speed?: number | null;
 }
 
-export interface DrainResult {
+interface DrainResult {
   uploaded: number;
   remaining: number;
   error?: string;

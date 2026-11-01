@@ -22,8 +22,6 @@ import {
 } from './FeedCard.utils';
 
 // Re-export types for backward compatibility
-export type { FeedCardProps } from './FeedCard.utils';
-
 const BODY_COMPONENTS: Record<FeedPostType, React.ComponentType<any>> = {
   general: GeneralBody,
   activity: ActivityBody,

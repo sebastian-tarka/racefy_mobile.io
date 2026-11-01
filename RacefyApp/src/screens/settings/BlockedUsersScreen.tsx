@@ -154,9 +154,6 @@ export function BlockedUsersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   countContainer: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../theme';
 
-export interface LanguageOption {
+interface LanguageOption {
   code: string;
   label: string;
 }

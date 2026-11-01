@@ -4,7 +4,7 @@ import { useAppConfig } from '../contexts/AppConfigContext';
 import { compareVersions } from '../utils/semver';
 import type { AppUpdateConfig } from '../types/api';
 
-export interface AppVersionState {
+interface AppVersionState {
   /** Native binary version of the running app. */
   currentAppVersion: string;
   /** Server-provided update config (or null when backend omits it). */

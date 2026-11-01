@@ -14,7 +14,7 @@ export function nextMapStyle(current: MapStyleType): MapStyleType {
   return MAP_STYLES[(index + 1) % MAP_STYLES.length];
 }
 
-export interface MapStyleCycler {
+interface MapStyleCycler {
   /** The current map style. */
   mapStyle: MapStyleType;
   /** Advance to the next style (with haptic + log), e.g. on the toggle button. */

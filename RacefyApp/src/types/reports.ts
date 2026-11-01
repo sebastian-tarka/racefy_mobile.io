@@ -2,7 +2,7 @@ export type AiActivityReportStatus = 'pending' | 'processing' | 'completed' | 'f
 
 export type AiActivityReportLocale = 'en' | 'pl' | 'es';
 
-export interface AiReportNextStep {
+interface AiReportNextStep {
   action: string;
   rationale: string;
 }

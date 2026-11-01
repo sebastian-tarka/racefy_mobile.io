@@ -31,7 +31,7 @@ const CARD_WIDTH = SCREEN_WIDTH * 0.85;
 const CARD_TOTAL_WIDTH = CARD_WIDTH + spacing.md; // card + marginRight
 const AUTO_SCROLL_INTERVAL = 6000; // ms between slides
 
-export type ActivitiesDisplayMode = 'slider' | 'compact';
+type ActivitiesDisplayMode = 'slider' | 'compact';
 
 interface ActivitiesFeedPreviewProps {
   onActivityPress: (activityId: number) => void;

@@ -16,7 +16,7 @@ export const ROUTE_SETTLE_EVERY = 300;
 
 type RoutePoint = Pick<GpsPoint, 'lat' | 'lng' | 'segment_break'>;
 
-export interface RouteFeature {
+interface RouteFeature {
   type: 'Feature';
   properties: Record<string, never>;
   geometry: { type: 'MultiLineString'; coordinates: [number, number][][] };

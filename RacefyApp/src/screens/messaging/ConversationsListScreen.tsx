@@ -368,9 +368,6 @@ export function ConversationsListScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   listContent: {
     flexGrow: 1,
   },

@@ -5,7 +5,7 @@ import type { ApiError } from '../types/api';
  * `status` attached. Endpoints add their own fields (`feature`, `limit`,
  * `usage_count`, `upgrade_required`, `training_week_id`…), hence the index signature.
  */
-export type ApiErrorBody = ApiError & Record<string, unknown>;
+type ApiErrorBody = ApiError & Record<string, unknown>;
 
 /** True for an error thrown by `api.request()` — a network failure has no `status`. */
 export function isApiError(error: unknown): error is ApiErrorBody {

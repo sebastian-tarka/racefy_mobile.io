@@ -12,7 +12,7 @@ import { getErrorStatus } from '../utils/errors';
  */
 export type LiveTtsFailure = 'upgrade_required' | 'limit_reached' | 'not_athlete' | 'failed';
 
-export type LiveTtsResult = { ok: true } | { ok: false; reason: LiveTtsFailure };
+type LiveTtsResult = { ok: true } | { ok: false; reason: LiveTtsFailure };
 
 /**
  * Fetch and play a live message as speech, for the broadcasting athlete.

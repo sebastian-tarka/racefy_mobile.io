@@ -8,7 +8,7 @@
  */
 export type RouteSource = 'activity' | 'planned_route' | 'event';
 
-export interface RouteIdentity {
+interface RouteIdentity {
   id: number;
   source?: RouteSource;
 }

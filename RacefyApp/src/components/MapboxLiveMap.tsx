@@ -61,7 +61,7 @@ export interface NearbyRoute {
 /** Map style options for Mapbox */
 export type MapStyleType = 'outdoors' | 'streets' | 'satellite';
 
-export interface MapboxLiveMapProps {
+interface MapboxLiveMapProps {
   livePoints: GpsPoint[];
   /** Version counter for livePoints — triggers useMemo recompute without array reference change */
   livePointsVersion?: number;

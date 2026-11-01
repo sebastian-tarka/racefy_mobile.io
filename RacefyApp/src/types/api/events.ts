@@ -19,7 +19,7 @@ export interface AiFeaturesResponse {
 }
 
 // Registration eligibility reason codes
-export type RegistrationEligibilityReason =
+type RegistrationEligibilityReason =
   | 'event_completed'
   | 'event_cancelled'
   | 'event_not_upcoming'

@@ -13,7 +13,7 @@ import type {
 } from '../types/api';
 
 /** A point on the trail, in the [lng, lat] order the API uses. */
-export interface TrailPoint {
+interface TrailPoint {
   lng: number;
   lat: number;
   /**
@@ -59,7 +59,7 @@ function trackToTrail(track: LiveTrack | null | undefined): TrailPoint[] {
   return points;
 }
 
-export type LiveFeedStatus = 'connecting' | 'live' | 'ended' | 'error';
+type LiveFeedStatus = 'connecting' | 'live' | 'ended' | 'error';
 
 interface Options {
   /** Set false to keep the feed torn down (e.g. screen not focused). */

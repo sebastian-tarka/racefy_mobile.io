@@ -20,7 +20,7 @@ import type { ShareLinkResponse } from '../types/api';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_PREVIEW_WIDTH = SCREEN_WIDTH - spacing.md * 4;
 
-export type ShareFormat = 'social' | 'story' | 'square';
+type ShareFormat = 'social' | 'story' | 'square';
 
 interface ShareFormatSelectorProps {
   activityId: number;

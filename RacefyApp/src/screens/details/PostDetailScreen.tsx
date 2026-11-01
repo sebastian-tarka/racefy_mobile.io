@@ -525,9 +525,6 @@ export function PostDetailScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   postCard: {
     marginHorizontal: spacing.md,
     marginTop: spacing.md,

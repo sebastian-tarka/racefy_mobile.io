@@ -8,7 +8,7 @@ import { API_BASE_URL } from './api';
  * without reading URLs. Everything is derived from the config baked in at
  * build time (app.config.ts → extra), never fetched.
  */
-export type BackendTarget = 'prod' | 'stage' | 'local' | 'none';
+type BackendTarget = 'prod' | 'stage' | 'local' | 'none';
 
 const extra = Constants.expoConfig?.extra ?? {};
 

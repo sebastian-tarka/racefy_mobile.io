@@ -23,7 +23,7 @@ export interface SetValues {
   durationSeconds?: number | null;
 }
 
-export interface RestState {
+interface RestState {
   /** Set whose rest this is. */
   setId: number;
   /** Wall-clock end of the rest (ms). */
@@ -32,7 +32,7 @@ export interface RestState {
   seconds: number;
 }
 
-export type CompleteOutcome =
+type CompleteOutcome =
   | { queued: false; activityId: number | null }
   /** No network: the session is closed on the phone and goes out with the queue. */
   | { queued: true };

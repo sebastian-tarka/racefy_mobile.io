@@ -46,7 +46,7 @@ export interface StoredTrackPoint extends NewTrackPoint {
   synced: boolean;
 }
 
-export interface ActivitySession {
+interface ActivitySession {
   clientActivityId: string;
   serverActivityId: number | null;
   sportSlug: string | null;

@@ -231,20 +231,6 @@ const styles = StyleSheet.create({
   emoji: {
     fontSize: msFont(32),
   },
-  emojiCorner: {
-    position: 'absolute',
-    top: 12,
-    left: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emojiSmall: {
-    fontSize: fontSize.xxxl,
-  },
   content: {
     padding: 14,
     paddingHorizontal: 18,

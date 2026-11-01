@@ -840,9 +840,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     gap: spacing.sm,
   },
-  timeInput: {
-    flex: 1,
-  },
   timeButton: {
     flex: 1,
     flexDirection: 'row',

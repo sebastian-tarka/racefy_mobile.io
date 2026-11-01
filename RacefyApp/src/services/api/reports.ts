@@ -1,7 +1,6 @@
 import type * as Types from '../../types/api';
 import type {
   AiActivityReport,
-  AiActivityReportLocale,
   GenerateActivityReportRequest,
   GenerateActivityReportResponse,
 } from '../../types/reports';
@@ -58,5 +57,3 @@ export function ReportsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) 
     }
   };
 }
-
-export type { AiActivityReport, AiActivityReportLocale };

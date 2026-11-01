@@ -10,7 +10,7 @@ import type {
 } from '../../../types/api';
 
 const LIVE_VIEW_MODE_KEY = '@racefy_events_live_view_mode';
-export type LiveViewMode = 'compact' | 'detailed';
+type LiveViewMode = 'compact' | 'detailed';
 
 /**
  * The "All" view of the Events screen: three events per status, the overview

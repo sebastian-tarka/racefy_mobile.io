@@ -9,5 +9,4 @@ export {
   isAutoStrengthText,
   strengthMetrics,
   weightUnit,
-  type StrengthMetric,
 } from './strengthSession';

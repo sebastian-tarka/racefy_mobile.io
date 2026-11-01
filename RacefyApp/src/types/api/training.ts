@@ -18,7 +18,7 @@ export type WeekStatus = 'upcoming' | 'current' | 'active' | 'completed' | 'skip
 
 /** Derived from ascent per km. Read-only; null when elevation or distance is missing. */
 export type TerrainProfile = 'flat' | 'rolling' | 'hilly' | 'mountainous';
-export type ActivityStatus = 'pending' | 'completed' | 'skipped';
+type ActivityStatus = 'pending' | 'completed' | 'skipped';
 
 export interface TrainingGoal {
   id: number;

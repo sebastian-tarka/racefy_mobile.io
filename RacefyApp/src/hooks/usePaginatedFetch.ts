@@ -8,7 +8,7 @@ import type { LogCategory } from '../services/logger';
  * this structurally (extra meta fields are ignored), and non-standard envelopes
  * can adapt to it in their `fetchPage` without inventing dummy meta fields.
  */
-export interface PaginatedFetchPage<T> {
+interface PaginatedFetchPage<T> {
   data: T[];
   meta: { current_page: number; last_page: number };
 }

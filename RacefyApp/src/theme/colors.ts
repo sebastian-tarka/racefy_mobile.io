@@ -153,7 +153,6 @@ export const darkColors = {
 };
 
 export type ThemeColors = typeof lightColors;
-export type ColorName = keyof typeof lightColors;
 
 /**
  * Live-recording surface ("hero") — from the Racefy v2 design, LiveScreen.

@@ -58,7 +58,7 @@ export interface UnsyncedActivityMeta {
   lastRetryAt?: string; // ISO timestamp of the last manual retry
 }
 
-export interface UnsyncedActivity extends UnsyncedActivityMeta {
+interface UnsyncedActivity extends UnsyncedActivityMeta {
   points: GpsPoint[];
 }
 

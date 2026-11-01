@@ -2,14 +2,14 @@ import { useCallback, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 
 /** Tunables for the fade-in / hold / fade-out cycle (milliseconds). */
-export interface FadeToastOptions {
+interface FadeToastOptions {
   /** Fade-in and fade-out duration. Default 200. */
   fadeDuration?: number;
   /** How long the toast stays fully visible between fades. Default 1800. */
   holdDuration?: number;
 }
 
-export interface FadeToast<T> {
+interface FadeToast<T> {
   /** Whether the toast is currently mounted/visible. */
   visible: boolean;
   /** Driving opacity value to bind to the toast's style. */

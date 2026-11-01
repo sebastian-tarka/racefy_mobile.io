@@ -79,7 +79,7 @@ export interface TeamActivityTotals {
   by_sport_type: TeamSportTypeStat[];
 }
 
-export interface TeamSportTypeStat {
+interface TeamSportTypeStat {
   sport_type_id: number;
   activities_count: number;
   total_distance: number;

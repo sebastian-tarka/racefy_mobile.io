@@ -27,8 +27,6 @@ import {
   getDistanceValueFromKm as _getDistanceValueFromKm,
 } from '../utils/unitConversions';
 
-export type { UnitSystem } from '../utils/unitConversions';
-
 const UNITS_STORAGE_KEY = '@racefy_units';
 
 // Module-level state for imperative updates (from useAuth)

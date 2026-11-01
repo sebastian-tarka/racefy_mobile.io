@@ -14,9 +14,9 @@
 import type { RouteTurnInstruction } from '../types/api';
 import { bearing, haversine } from './routeNavigation';
 
-export type DerivedManeuver = 'turn-left' | 'turn-right' | 'sharp-left' | 'sharp-right' | 'u-turn';
+type DerivedManeuver = 'turn-left' | 'turn-right' | 'sharp-left' | 'sharp-right' | 'u-turn';
 
-export interface TurnLabels {
+interface TurnLabels {
   left: string;
   right: string;
   sharpLeft?: string;
@@ -24,7 +24,7 @@ export interface TurnLabels {
   uTurn: string;
 }
 
-export interface DeriveTurnOptions {
+interface DeriveTurnOptions {
   /** Douglas–Peucker tolerance in meters (GPS noise below this is ignored) */
   simplifyToleranceM?: number;
   /** Both legs around a vertex must be at least this long to count (meters) */
