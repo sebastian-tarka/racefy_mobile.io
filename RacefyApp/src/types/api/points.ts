@@ -154,7 +154,7 @@ export interface BadgeReward {
     distance?: number;
     elevation_gain?: number;
     [key: string]: any;
-  };
+  } | null;
 }
 
 // Union type for all rewards
