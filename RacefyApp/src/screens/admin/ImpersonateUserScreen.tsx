@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { Input, Avatar, ScreenHeader, ScreenContainer } from '../../components';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
+import { getErrorCode, getErrorMessage } from '../../utils/errors';
+import { AdminTwoFactorDialog } from '../../components/admin/AdminTwoFactorDialog';
 import { spacing, fontSize } from '../../theme';
 import type { User } from '../../types/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,6 +32,27 @@ export function ImpersonateUserScreen({ navigation }: Props) {
   const [results, setResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [twoFactorVisible, setTwoFactorVisible] = useState(false);
+  // The admin request to repeat once the token passed 2FA.
+  const retryAfterTwoFactor = useRef<(() => void) | null>(null);
+
+  /**
+   * The admin API refuses a token that has not passed 2FA (`admin_2fa_required`):
+   * ask for the code, then repeat the request. Returns true when the error was handled.
+   */
+  const handleAdminTwoFactor = (error: unknown, retry: () => void): boolean => {
+    const code = getErrorCode(error);
+    if (code === 'admin_2fa_required') {
+      retryAfterTwoFactor.current = retry;
+      setTwoFactorVisible(true);
+      return true;
+    }
+    if (code === 'admin_2fa_setup_required') {
+      Alert.alert(t('common.error'), getErrorMessage(error, t('admin.twoFactor.setupRequired')));
+      return true;
+    }
+    return false;
+  };
 
   const handleSearch = async (text: string) => {
     setQuery(text);
@@ -43,10 +66,41 @@ export function ImpersonateUserScreen({ navigation }: Props) {
     try {
       const users = await api.searchUsersForImpersonation(text);
       setResults(users);
-    } catch {
-      Alert.alert(t('common.error'), t('admin.impersonate.searchError'));
+    } catch (error) {
+      if (!handleAdminTwoFactor(error, () => handleSearch(text))) {
+        Alert.alert(t('common.error'), t('admin.impersonate.searchError'));
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const doImpersonate = async (user: User) => {
+    setImpersonating(true);
+    try {
+      await startImpersonation(user.id);
+
+      // Reset navigation to Home screen to refresh all data with impersonated user
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Main',
+              state: {
+                routes: [{ name: 'Home' }],
+                index: 0,
+              },
+            },
+          ],
+        }),
+      );
+    } catch (error) {
+      if (!handleAdminTwoFactor(error, () => doImpersonate(user))) {
+        Alert.alert(t('common.error'), t('admin.impersonate.startError'));
+      }
+    } finally {
+      setImpersonating(false);
     }
   };
 
@@ -58,32 +112,7 @@ export function ImpersonateUserScreen({ navigation }: Props) {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('admin.impersonate.confirm.confirm'),
-          onPress: async () => {
-            setImpersonating(true);
-            try {
-              await startImpersonation(user.id);
-
-              // Reset navigation to Home screen to refresh all data with impersonated user
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [
-                    {
-                      name: 'Main',
-                      state: {
-                        routes: [{ name: 'Home' }],
-                        index: 0,
-                      },
-                    },
-                  ],
-                }),
-              );
-            } catch {
-              Alert.alert(t('common.error'), t('admin.impersonate.startError'));
-            } finally {
-              setImpersonating(false);
-            }
-          },
+          onPress: () => doImpersonate(user),
         },
       ],
     );
@@ -156,6 +185,19 @@ export function ImpersonateUserScreen({ navigation }: Props) {
           </Text>
         </View>
       )}
+      <AdminTwoFactorDialog
+        visible={twoFactorVisible}
+        onClose={() => {
+          setTwoFactorVisible(false);
+          retryAfterTwoFactor.current = null;
+        }}
+        onVerified={() => {
+          setTwoFactorVisible(false);
+          const retry = retryAfterTwoFactor.current;
+          retryAfterTwoFactor.current = null;
+          retry?.();
+        }}
+      />
     </ScreenContainer>
   );
 }
