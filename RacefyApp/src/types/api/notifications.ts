@@ -21,7 +21,9 @@ export type NotificationType =
   /** Someone you follow started recording, without broadcasting. */
   | 'activity_started'
   /** Someone you follow opened their session for spectating. */
-  | 'activity_live_started';
+  | 'activity_live_started'
+  /** Someone created a new public event in the community. */
+  | 'public_event';
 
 export interface NotificationData {
   type: NotificationType;

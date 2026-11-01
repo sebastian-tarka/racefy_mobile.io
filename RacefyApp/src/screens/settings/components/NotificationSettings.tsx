@@ -26,6 +26,7 @@ const CHANNEL_ROWS: [ChannelType, Icon][] = [
   ['activity_reactions', 'thumbs-up-outline'],
   ['mentions', 'at-outline'],
   ['training_week_feedback', 'bar-chart-outline'],
+  ['public_event', 'megaphone-outline'],
 ];
 
 interface Props {
@@ -51,14 +52,15 @@ export function NotificationSettings({ notifications, onLiveChange, onChannelCha
           onChange={onLiveChange}
         />
       ))}
-      {CHANNEL_ROWS.map(([type, icon]) => (
+      {/* A type the server does not send yet (older API) has no row instead of crashing. */}
+      {CHANNEL_ROWS.filter(([type]) => notifications[type]).map(([type, icon]) => (
         <NotificationRow
           key={type}
           type={type}
           icon={icon}
           label={t(`settings.notif_${type}`)}
           description={t(`settings.notif_${type}_desc`)}
-          settings={notifications[type]}
+          settings={notifications[type]!}
           onChange={onChannelChange}
         />
       ))}

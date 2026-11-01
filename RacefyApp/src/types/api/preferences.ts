@@ -54,6 +54,11 @@ export interface UserPreferences {
     activity_started: NotificationChannelSettings;
     /** Someone you follow is broadcasting and you can join. Push + websocket only. */
     activity_live_started: NotificationChannelSettings;
+    /**
+     * Any new public event in the community (not only from people you follow).
+     * E-mail at most once a day. Optional: servers before API 1.3.22 do not send it.
+     */
+    public_event?: NotificationChannelSettings;
   };
   privacy: {
     profile_visibility: 'public' | 'followers' | 'private';
