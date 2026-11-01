@@ -1,28 +1,29 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { rankingModeLabel } from './eventFormat';
+import { EventRewardsSheet, type RewardGroup, type RewardItem } from './EventRewardsSheet';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, msFont, spacing } from '../../theme';
-import type { Event, EventCoupon, EventPrize } from '../../types/api';
+import type { Event } from '../../types/api';
 
 interface Props {
   event: Event;
 }
 
-interface Line {
-  key: string;
-  place: string;
-  detail: string;
-  points: number | null;
-}
+/** `place` on a prize or coupon: 0 means every finisher gets it (API PrizeService). */
+const EVERY_FINISHER = 0;
 
 /** Ordinal label for a finishing place, falling back to "4th" style. */
 function placeLabel(place: number, t: ReturnType<typeof useTranslation>['t']): string {
   const key = `rewards.position.${place}`;
   const translated = t(key, { defaultValue: '' });
   return translated || `${place}.`;
+}
+
+function itemTitle(item: RewardItem): string {
+  return item.kind === 'prize' ? item.prize.name : item.coupon.title;
 }
 
 /**
@@ -33,56 +34,62 @@ function placeLabel(place: number, t: ReturnType<typeof useTranslation>['t']): s
  * way to learn what an event was worth was to finish it. Points, prizes and
  * coupons are grouped by finishing place because that is how the organiser
  * assigns them, and how anyone reads them.
+ *
+ * A place can hold several rewards (a sponsor's three coupons for every
+ * finisher), so a line shows the first and counts the rest; tapping it opens
+ * the full list. `place: 0` is "every finisher", so it joins the finisher line.
  */
 export function EventRewardsCard({ event }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const rewards = event.point_rewards;
-  const prizes: EventPrize[] = event.prizes ?? [];
-  const coupons: EventCoupon[] = event.coupons ?? [];
   const ranking = rankingModeLabel(event.ranking_mode, t);
 
-  const byPlace = new Map<number, { prize?: EventPrize; coupon?: EventCoupon }>();
-  for (const prize of prizes) {
-    byPlace.set(prize.place, { ...byPlace.get(prize.place), prize });
-  }
-  for (const coupon of coupons) {
-    byPlace.set(coupon.place, { ...byPlace.get(coupon.place), coupon });
-  }
+  const groups = useMemo<RewardGroup[]>(() => {
+    const byPlace = new Map<number, RewardItem[]>();
+    const add = (place: number, item: RewardItem) =>
+      byPlace.set(place, [...(byPlace.get(place) ?? []), item]);
+    for (const prize of event.prizes ?? []) add(prize.place, { kind: 'prize', prize });
+    for (const coupon of event.coupons ?? []) add(coupon.place, { kind: 'coupon', coupon });
 
-  const pointsFor = (place: number): number | null => {
-    if (place === 1) return rewards?.first_place ?? null;
-    if (place === 2) return rewards?.second_place ?? null;
-    if (place === 3) return rewards?.third_place ?? null;
-    return null;
-  };
-
-  const places = [...new Set([...byPlace.keys(), 1, 2, 3])]
-    .filter((place) => byPlace.has(place) || pointsFor(place) != null)
-    .sort((a, b) => a - b);
-
-  const lines: Line[] = places.map((place) => {
-    const slot = byPlace.get(place);
-    const detail = [slot?.prize?.name, slot?.coupon?.title].filter(Boolean).join(' · ');
-    return {
-      key: `place-${place}`,
-      place: placeLabel(place, t),
-      detail,
-      points: pointsFor(place),
+    const pointsFor = (place: number): number | null => {
+      if (place === 1) return rewards?.first_place ?? null;
+      if (place === 2) return rewards?.second_place ?? null;
+      if (place === 3) return rewards?.third_place ?? null;
+      return null;
     };
-  });
 
-  if (rewards?.finisher) {
-    lines.push({
-      key: 'finisher',
-      place: t('events.rewards.finisher'),
-      detail: '',
-      points: rewards.finisher,
-    });
-  }
+    const places = [...new Set([...byPlace.keys(), 1, 2, 3])]
+      .filter((place) => place !== EVERY_FINISHER)
+      .filter((place) => byPlace.has(place) || pointsFor(place) != null)
+      .sort((a, b) => a - b);
 
-  if (lines.length === 0) return null;
+    const result: RewardGroup[] = places.map((place) => ({
+      key: `place-${place}`,
+      label: placeLabel(place, t),
+      points: pointsFor(place),
+      items: byPlace.get(place) ?? [],
+    }));
+
+    const forEveryone = byPlace.get(EVERY_FINISHER) ?? [];
+    if (rewards?.finisher || forEveryone.length > 0) {
+      result.push({
+        key: 'finisher',
+        label: t('events.rewards.finisher'),
+        points: rewards?.finisher || null,
+        items: forEveryone,
+      });
+    }
+    return result;
+  }, [event.prizes, event.coupons, rewards, t]);
+
+  if (groups.length === 0) return null;
+
+  const totalItems = groups.reduce((sum, group) => sum + group.items.length, 0);
+  const hasHidden = groups.some((group) => group.items.length > 1);
+  const openSheet = () => setSheetOpen(true);
 
   return (
     <View
@@ -100,22 +107,50 @@ export function EventRewardsCard({ event }: Props) {
         )}
       </View>
 
-      {lines.map((line, i) => (
-        <View
-          key={line.key}
-          style={[i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, styles.line]}
+      {groups.map((group, i) => {
+        const [first, ...rest] = group.items;
+        return (
+          <TouchableOpacity
+            key={group.key}
+            style={[i > 0 && { borderTopWidth: 1, borderTopColor: colors.border }, styles.line]}
+            onPress={openSheet}
+            disabled={!first}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.place, { color: colors.textSecondary }]}>{group.label}</Text>
+            <View style={styles.detailWrap}>
+              <Text style={[styles.detail, { color: colors.textPrimary }]} numberOfLines={2}>
+                {first ? itemTitle(first) : t('events.rewards.pointsOnly')}
+              </Text>
+              {rest.length > 0 && (
+                <Text style={[styles.more, { color: colors.primaryDark }]}>
+                  {t('events.rewards.moreCount', { count: rest.length })}
+                </Text>
+              )}
+            </View>
+            {group.points != null && (
+              <Text style={[styles.points, { color: colors.primaryDark }]}>
+                {t('events.stakes.points', { count: group.points })}
+              </Text>
+            )}
+            {!!first && <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />}
+          </TouchableOpacity>
+        );
+      })}
+
+      {hasHidden && (
+        <TouchableOpacity
+          style={[styles.showAll, { borderTopColor: colors.border }]}
+          onPress={openSheet}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.place, { color: colors.textSecondary }]}>{line.place}</Text>
-          <Text style={[styles.detail, { color: colors.textPrimary }]} numberOfLines={2}>
-            {line.detail || t('events.rewards.pointsOnly')}
+          <Text style={[styles.showAllText, { color: colors.primaryDark }]}>
+            {t('events.rewards.showAll', { count: totalItems })}
           </Text>
-          {line.points != null && (
-            <Text style={[styles.points, { color: colors.primaryDark }]}>
-              {t('events.stakes.points', { count: line.points })}
-            </Text>
-          )}
-        </View>
-      ))}
+        </TouchableOpacity>
+      )}
+
+      <EventRewardsSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} groups={groups} />
     </View>
   );
 }
@@ -156,10 +191,26 @@ const styles = StyleSheet.create({
     fontSize: msFont(11.5),
     fontWeight: '700',
   },
-  detail: {
+  detailWrap: {
     flex: 1,
+    gap: 2,
+  },
+  detail: {
     fontSize: msFont(13),
     fontWeight: '600',
+  },
+  more: {
+    fontSize: msFont(11.5),
+    fontWeight: '700',
+  },
+  showAll: {
+    borderTopWidth: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.sm + 4,
+  },
+  showAllText: {
+    fontSize: msFont(13),
+    fontWeight: '700',
   },
   points: {
     fontSize: msFont(13),
