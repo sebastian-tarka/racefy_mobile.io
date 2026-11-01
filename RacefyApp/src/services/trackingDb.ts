@@ -718,6 +718,31 @@ export function getLastPoint(clientActivityId: string): StoredTrackPoint | null 
   return row ? rowToPoint(row) : null;
 }
 
+/**
+ * Points whose cumulative distance falls in [fromM, toM], plus the last point
+ * before `fromM` so the first interval of the range has a start — what a
+ * km-split needs. Ordered by seq.
+ */
+export function getPointsInDistanceRange(
+  clientActivityId: string,
+  fromM: number,
+  toM: number,
+): StoredTrackPoint[] {
+  const database = getDb();
+  if (!database) return [];
+
+  const anchor = database.getFirstSync<any>(
+    'SELECT * FROM activity_points WHERE client_activity_id = ? AND cum_dist < ? ORDER BY seq DESC LIMIT 1;',
+    [clientActivityId, fromM],
+  );
+  const rows = database.getAllSync<any>(
+    'SELECT * FROM activity_points WHERE client_activity_id = ? AND cum_dist >= ? AND cum_dist <= ? ORDER BY seq ASC;',
+    [clientActivityId, fromM, toM],
+  );
+
+  return (anchor ? [anchor, ...rows] : rows).map(rowToPoint);
+}
+
 export function getPointsAfterSeq(clientActivityId: string, seq: number): StoredTrackPoint[] {
   const database = getDb();
   if (!database) return [];

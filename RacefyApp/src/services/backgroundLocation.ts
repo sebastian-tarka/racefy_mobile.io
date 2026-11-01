@@ -6,6 +6,7 @@ import { buildAnnouncementText, buildMilestoneAnnouncement } from './audioCoach/
 import { speakText } from './audioCoach/tts';
 import { evaluateWorkoutInBackground } from './workout/background';
 import { isSplitSuppressedAsync } from './workout/audioArbiter';
+import { getSplitPaceMinPerKm } from './audioCoach/splitPace';
 import type { AudioCoachSettings } from '../types/audioCoach';
 import { DEFAULT_AUDIO_COACH_SETTINGS } from '../types/audioCoach';
 import type { GpsProfile } from '../config/gpsProfiles';
@@ -226,10 +227,18 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
 
     // Check threshold
     const lastThresholdStr = await AsyncStorage.getItem(BG_AUDIO_THRESHOLD_KEY);
-    const lastThreshold = lastThresholdStr ? parseFloat(lastThresholdStr) : 0;
 
     const totalDistKm = totalDistM / 1000;
     const currentThreshold = Math.floor(totalDistKm / intervalKm) * intervalKm;
+
+    // No threshold on record means the state was lost (reinstall, cleared
+    // storage), not that nothing was announced: adopt where the run is rather
+    // than re-announcing every kilometre behind us.
+    if (lastThresholdStr == null) {
+      await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, currentThreshold.toString());
+      return;
+    }
+    const lastThreshold = parseFloat(lastThresholdStr) || 0;
 
     if (currentThreshold <= 0 || currentThreshold <= lastThreshold) return;
 
@@ -244,17 +253,28 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
       return;
     }
 
-    // Calculate average pace (min/km) from elapsed time
-    const startTimeStr = await AsyncStorage.getItem(BG_AUDIO_START_TIME_KEY);
-    const startTime = startTimeStr ? parseInt(startTimeStr, 10) : Date.now();
-    const elapsedMin = (Date.now() - startTime) / 60000;
-    const paceMinPerKm = totalDistKm > 0 ? elapsedMin / totalDistKm : 0;
+    // The split just finished, in moving time, from the point log — the same
+    // number the foreground hook announces. Fallback: average since start
+    // (only when there is no point log at all).
+    let paceMinPerKm = isSimMode
+      ? 5.5
+      : (getSplitPaceMinPerKm(
+          await getActiveActivityId(),
+          currentThreshold - intervalKm,
+          currentThreshold,
+        ) ?? 0);
+    if (paceMinPerKm <= 0) {
+      const startTimeStr = await AsyncStorage.getItem(BG_AUDIO_START_TIME_KEY);
+      const startTime = startTimeStr ? parseInt(startTimeStr, 10) : Date.now();
+      const elapsedMin = (Date.now() - startTime) / 60000;
+      paceMinPerKm = totalDistKm > 0 ? elapsedMin / totalDistKm : 0;
+    }
 
     const text = buildAnnouncementText({
       language,
       style,
       km: currentThreshold,
-      pace: isSimMode ? 5.5 : paceMinPerKm, // Sim uses fixed pace
+      pace: paceMinPerKm,
       heartRate: undefined,
       splitDelta: undefined,
     });
@@ -262,7 +282,7 @@ async function handleAudioCoachBackground(distanceAddedM: number): Promise<void>
     logger.info('audioCoach', 'BG threshold crossed, speaking', {
       km: currentThreshold,
       totalDistM: Math.round(totalDistM),
-      pace: isSimMode ? '5.50 (sim)' : paceMinPerKm.toFixed(2),
+      pace: paceMinPerKm.toFixed(2),
       sim: isSimMode,
     });
 
@@ -323,8 +343,15 @@ async function readCumulativeDistanceM(): Promise<number | null> {
   }
 }
 
-/** Clear background audio coach state (called on tracking start/stop) */
-async function clearAudioCoachBackgroundState(): Promise<void> {
+/**
+ * Audio coach state (last announced km, milestones, fallback start time) lives
+ * exactly as long as the ACTIVITY — useLiveActivity initialises it at start
+ * and clears it at finish/discard. It must NOT follow the location task: that
+ * task stops on every pause and, on iOS, on every return to the foreground,
+ * and re-initialising it there zeroed the threshold so the next batch
+ * re-announced the last kilometre with a pace measured since the resume.
+ */
+export async function clearAudioCoachState(): Promise<void> {
   await Promise.all([
     AsyncStorage.removeItem(BG_AUDIO_DISTANCE_KEY),
     AsyncStorage.removeItem(BG_AUDIO_THRESHOLD_KEY),
@@ -343,8 +370,8 @@ export async function setAudioCoachMilestones(thresholdsKm: number[]): Promise<v
   await AsyncStorage.setItem(BG_AUDIO_PASSED_MILESTONES_KEY, JSON.stringify([]));
 }
 
-/** Initialize background audio coach state (called on tracking start) */
-async function initAudioCoachBackgroundState(): Promise<void> {
+/** Fresh coach state for a new activity (see clearAudioCoachState). */
+export async function initAudioCoachState(): Promise<void> {
   await AsyncStorage.setItem(BG_AUDIO_START_TIME_KEY, Date.now().toString());
   await AsyncStorage.setItem(BG_AUDIO_DISTANCE_KEY, '0');
   await AsyncStorage.setItem(BG_AUDIO_THRESHOLD_KEY, '0');
@@ -675,9 +702,6 @@ export async function startBackgroundLocationTracking(profile: GpsProfile): Prom
     // Store the profile for the background task to access
     await storeGpsProfile(profile);
 
-    // Initialize audio coach background state for this session
-    await initAudioCoachBackgroundState();
-
     // Start background location updates with profile-specific settings.
     // NOTE: no deferredUpdates* — batching held points in native memory where
     // they died with the process; points now land in SQLite per update instead.
@@ -726,7 +750,7 @@ export async function startSimBackgroundTracking(): Promise<boolean> {
       return false;
     }
 
-    await initAudioCoachBackgroundState();
+    await initAudioCoachState();
 
     await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
       accuracy: Location.Accuracy.Lowest,
@@ -764,10 +788,10 @@ export async function stopBackgroundLocationTracking(): Promise<void> {
       backgroundSyncTimer = null;
       logger.gps('Background sync timer cleared');
     }
-    // Clear stored profile, last position, and audio coach state
+    // Clear stored profile and last position. Audio coach state stays: it
+    // belongs to the activity, which may merely be paused.
     await clearGpsProfile();
     await clearLastBackgroundPosition();
-    await clearAudioCoachBackgroundState();
   } catch (error) {
     logger.error('gps', 'Failed to stop background location tracking', { error });
   }
