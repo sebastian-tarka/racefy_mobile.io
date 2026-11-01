@@ -164,6 +164,15 @@ export function RouteDetailScreen({ route: navRoute, navigation }: Props) {
 
         {/* Actions */}
         <View style={styles.actions}>
+          <Button
+            title={t('routes.startActivity')}
+            onPress={() =>
+              navigation.navigate('Main', {
+                screen: 'Record',
+                params: { preselectedRouteId: route.id },
+              })
+            }
+          />
           {!isOwner && (
             <Button
               title={t('routeDetail.duplicate')}

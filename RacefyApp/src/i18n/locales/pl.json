@@ -3069,7 +3069,9 @@
     "deleteConfirm": "Czy na pewno chcesz usunąć tę trasę?",
     "deleted": "Trasa usunięta",
     "deleteFailed": "Nie udało się usunąć trasy",
-    "duplicated": "Trasa skopiowana do biblioteki"
+    "duplicated": "Trasa skopiowana do biblioteki",
+    "startActivity": "Rozpocznij aktywność",
+    "startFailed": "Nie udało się wczytać tej trasy. Spróbuj ponownie."
   },
   "routeDetail": {
     "title": "Szczegóły trasy",
@@ -3578,7 +3580,11 @@
       "moveTo": "Przenieś na inny dzień",
       "movedFrom": "przeniesiony z {{date}}",
       "resumeSkipped": "Wznów",
-      "alreadyOnDay": "Ten trening jest już w dniu {{date}}."
+      "alreadyOnDay": "Ten trening jest już w dniu {{date}}.",
+      "markUndone": "Oznacz jako niewykonany",
+      "confirmMarkUndone": "Usunie to zapisaną sesję i jej aktywność siłową (serie, objętość, punkty). Dzień wraca do zaplanowanych.",
+      "confirmMarkUndoneNoActivity": "Usunie to zapisaną sesję. Dzień wraca do zaplanowanych.",
+      "backToPlanned": "Przywróć do zaplanowanych"
     },
     "session": {
       "progress": "{{done}}/{{total}} serii",

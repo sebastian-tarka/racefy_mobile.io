@@ -13,7 +13,9 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Feed: undefined;
-  Record: { preselectedEvent?: Event } | undefined;
+  // `preselectedRouteId`: arriving from the route library / route detail with
+  // "Start activity" — the route becomes the shadow track and picks the sport.
+  Record: { preselectedEvent?: Event; preselectedRouteId?: number } | undefined;
   Events: { initialFilter?: 'all' | 'upcoming' | 'ongoing' | 'completed' } | undefined;
   Profile: { initialTab?: 'posts' | 'drafts' | 'stats' | 'activities' | 'events' } | undefined;
 };

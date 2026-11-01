@@ -97,15 +97,40 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
     [deleteRoute, t],
   );
 
-  const routeOptions = (route: PlannedRoute): BottomSheetOption[] => [
-    {
-      id: 'delete',
-      icon: 'trash-outline',
-      title: t('routeDetail.delete'),
-      color: colors.error,
-      onPress: () => handleDelete(route.id),
+  // Hand the route to the recording screen as its shadow track. The tab is
+  // reused, not pushed, so an activity already running there is untouched —
+  // the screen ignores the param mid-recording.
+  const handleStartActivity = useCallback(
+    (route: PlannedRoute) => {
+      navigation.navigate('Main', {
+        screen: 'Record',
+        params: { preselectedRouteId: route.id },
+      });
     },
-  ];
+    [navigation],
+  );
+
+  const routeOptions = (route: PlannedRoute): BottomSheetOption[] => {
+    const options: BottomSheetOption[] = [
+      {
+        id: 'start',
+        icon: 'play-outline',
+        title: t('routes.startActivity'),
+        onPress: () => handleStartActivity(route),
+      },
+    ];
+    // Only the owner can delete.
+    if (user && route.user_id === user.id) {
+      options.push({
+        id: 'delete',
+        icon: 'trash-outline',
+        title: t('routeDetail.delete'),
+        color: colors.error,
+        onPress: () => handleDelete(route.id),
+      });
+    }
+    return options;
+  };
 
   const renderItem = useCallback(
     ({ item }: { item: PlannedRoute }) => (
@@ -113,13 +138,11 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
         route={item}
         sport={item.sport_type ?? getSportById(item.sport_type_id) ?? null}
         onPress={() => handleRoutePress(item)}
-        // Only the owner can delete; picking a route for an event is not the place.
-        onLongPress={
-          !selectMode && user && item.user_id === user.id ? () => setRouteSheet(item) : undefined
-        }
+        // Picking a route for an event is not the place for a context menu.
+        onLongPress={!selectMode ? () => setRouteSheet(item) : undefined}
       />
     ),
-    [handleRoutePress, getSportById, selectMode, user],
+    [handleRoutePress, getSportById, selectMode],
   );
 
   const renderEmpty = () => {
