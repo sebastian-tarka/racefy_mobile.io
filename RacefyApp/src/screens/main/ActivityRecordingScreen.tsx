@@ -29,6 +29,7 @@ import {
   useMilestones,
   useMilestoneTracking,
   useMyPlannedRoutes,
+  plannedRouteToNearby,
   useNavVoicePref,
   useNearbyRoutes,
   useOngoingEvents,
@@ -82,7 +83,9 @@ import type { Event } from '../../types/api';
 import * as Haptics from 'expo-haptics';
 import { fontSize, heroColors, spacing } from '../../theme';
 import type { MainTabParamList, RootStackParamList } from '../../navigation';
+import { api } from '../../services/api';
 import { logger } from '../../services/logger';
+import { getErrorMessage } from '../../utils/errors';
 import { formatTime } from '../../utils/formatters';
 
 const MILESTONE_ORDER = [
@@ -167,6 +170,7 @@ export function ActivityRecordingScreen() {
   // Id of the last event handed over by "Start activity" on the event screen.
   // An id rather than a flag, so a second event opened later is handled too.
   const preselectedEventHandled = useRef<number | null>(null);
+  const preselectedRouteHandled = useRef<number | null>(null);
   const [eventLockDialogVisible, setEventLockDialogVisible] = useState(false);
   const isFinishingRef = useRef(false);
 
@@ -667,6 +671,68 @@ export function ActivityRecordingScreen() {
       navigation.setParams({ preselectedEvent: undefined });
     }
   }, [route.params?.preselectedEvent, sportTypes, sportsLoading, isIdle, pinEvent, navigation]);
+
+  // Arriving from "Start activity" on a route (library long-press / route
+  // detail): the route becomes the shadow track and, unless an event already
+  // owns the discipline, picks the sport it was drawn for. The route is taken
+  // from the athlete's own list when it is theirs, fetched otherwise (a public
+  // route from someone else's library). Ignored mid-recording, like events.
+  useEffect(() => {
+    const routeId = route.params?.preselectedRouteId;
+    if (!routeId) {
+      preselectedRouteHandled.current = null;
+      return;
+    }
+    if (preselectedRouteHandled.current === routeId) return;
+    if (!isIdle || sportsLoading || sportTypes.length === 0) return;
+    preselectedRouteHandled.current = routeId;
+
+    let cancelled = false;
+    const own = myPlannedRoutes.find((r) => r.id === routeId && r.source === 'planned_route');
+    const load = own
+      ? Promise.resolve(own)
+      : api.getRoute(routeId).then((r) => plannedRouteToNearby(r, user));
+
+    load
+      .then((shadow) => {
+        if (cancelled) return;
+        handleRouteSelect(shadow);
+        if (!selectedEvent) {
+          const sport = sportTypes.find((s) => s.id === shadow.sport_type_id);
+          if (sport) setSelectedSport(sport);
+        }
+        setViewMode('map');
+        logger.activity('Route preselected for recording', { routeId });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        logger.warn('activity', 'Preselected route could not be loaded', {
+          routeId,
+          error: getErrorMessage(error),
+        });
+        Alert.alert(t('common.error'), t('routes.startFailed'));
+      })
+      .finally(() => {
+        // Consume the param so the same route can be started again later.
+        if (!cancelled) navigation.setParams({ preselectedRouteId: undefined });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    route.params?.preselectedRouteId,
+    isIdle,
+    sportsLoading,
+    sportTypes,
+    myPlannedRoutes,
+    user,
+    selectedEvent,
+    handleRouteSelect,
+    setSelectedSport,
+    navigation,
+    t,
+  ]);
 
   // Error handling
   useEffect(() => {

@@ -243,6 +243,37 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
   };
 
   /**
+   * Take a logged day back to "planned": the session goes, and with it the
+   * strength activity it produced (sets, volume, points) — hence the warning.
+   * The row then offers Start / Skip again, as if nothing had happened.
+   */
+  const markUndone = (session: WorkoutSession) => {
+    Alert.alert(
+      t('strengthPlans.schedule.markUndone'),
+      t(
+        session.activity_id
+          ? 'strengthPlans.schedule.confirmMarkUndone'
+          : 'strengthPlans.schedule.confirmMarkUndoneNoActivity',
+      ),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('strengthPlans.schedule.markUndone'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.deleteWorkoutSession(session.id);
+              emitRefresh('workouts');
+            } catch (error) {
+              Alert.alert('', getErrorMessage(error) || t('common.error'));
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  /**
    * Dragging a row is not the only way in: it is unreachable with a screen
    * reader and awkward when the target day is off screen. Long-pressing a row
    * offers the same operations, and both paths end in the same call.
@@ -266,6 +297,21 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
         title: t('strengthPlans.schedule.resumeSkipped'),
         onPress: () =>
           setResumeFor({ session: session as WorkoutSession, name: day.workout?.name ?? '' }),
+      });
+      options.push({
+        id: 'undo-skip',
+        icon: 'arrow-undo-outline',
+        title: t('strengthPlans.schedule.backToPlanned'),
+        onPress: () => void undoSkip(session.id),
+      });
+    }
+    if (session?.status === 'completed') {
+      options.push({
+        id: 'mark-undone',
+        icon: 'arrow-undo-outline',
+        title: t('strengthPlans.schedule.markUndone'),
+        color: colors.error,
+        onPress: () => markUndone(session as WorkoutSession),
       });
     }
     if (day.workout && !session) {
@@ -436,16 +482,30 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
               )}
             </View>
           )}
-          {status === 'completed' && session?.activity_id && (
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('ActivityDetail', { activityId: session.activity_id as number })
-              }
-            >
-              <Text style={[styles.link, { color: colors.primary }]}>
-                {t('strengthPlans.schedule.openActivity')} ›
-              </Text>
-            </TouchableOpacity>
+          {status === 'completed' && session && (
+            <View style={styles.skippedActions}>
+              {session.activity_id ? (
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate('ActivityDetail', {
+                      activityId: session.activity_id as number,
+                    })
+                  }
+                  hitSlop={8}
+                >
+                  <Text style={[styles.link, { color: colors.primary }]}>
+                    {t('strengthPlans.schedule.openActivity')} ›
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+              {/* A day logged by mistake, or whose activity was deleted, can go
+                  back to planned — Start / Skip return with it. */}
+              <TouchableOpacity onPress={() => markUndone(session as WorkoutSession)} hitSlop={8}>
+                <Text style={[styles.link, { color: colors.textMuted }]}>
+                  {t('strengthPlans.schedule.markUndone')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {item.workout && (!session || status === 'in_progress') && (

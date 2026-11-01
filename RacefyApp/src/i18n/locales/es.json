@@ -3034,7 +3034,9 @@
     "deleteConfirm": "¿Seguro que quieres eliminar esta ruta?",
     "deleted": "Ruta eliminada",
     "deleteFailed": "No se ha podido eliminar la ruta",
-    "duplicated": "Ruta copiada a la biblioteca"
+    "duplicated": "Ruta copiada a la biblioteca",
+    "startActivity": "Iniciar actividad",
+    "startFailed": "No se pudo cargar esta ruta. Inténtalo de nuevo."
   },
   "unsynced": {
     "screenTitle": "Actividades no sincronizadas",
@@ -3583,7 +3585,11 @@
       "moveTo": "Mover a otro día",
       "movedFrom": "movido del {{date}}",
       "resumeSkipped": "Reanudar",
-      "alreadyOnDay": "Este entrenamiento ya está el {{date}}."
+      "alreadyOnDay": "Este entrenamiento ya está el {{date}}.",
+      "markUndone": "Marcar como no realizado",
+      "confirmMarkUndone": "Esto elimina la sesión registrada y su actividad de fuerza (series, volumen, puntos). El día vuelve a planificado.",
+      "confirmMarkUndoneNoActivity": "Esto elimina la sesión registrada. El día vuelve a planificado.",
+      "backToPlanned": "Volver a planificado"
     },
     "session": {
       "progress": "{{done}}/{{total}} series",
