@@ -17,6 +17,8 @@ import {
   setActiveActivityId,
   startBackgroundLocationTracking,
   stopBackgroundLocationTracking,
+  initAudioCoachState,
+  clearAudioCoachState,
 } from '../services/backgroundLocation';
 import { drainPoints, resetUploaderBackoff, toGpsPoints } from '../services/pointsUploader';
 import { enqueueUnsyncedActivity, removeUnsyncedActivity } from '../services/unsyncedActivities';
@@ -1529,6 +1531,9 @@ function useLiveActivityInternal() {
         pausedDuration.current = 0;
         trackingStartTime.current = null;
         paceTracker.reset();
+        // The coach's "last announced km" starts at zero with the activity —
+        // not with the location task, which restarts on every resume.
+        await initAudioCoachState().catch(() => {});
 
         setState((prev) => ({
           ...prev,
@@ -1590,6 +1595,11 @@ function useLiveActivityInternal() {
 
     const at = new Date().toISOString();
     commitLedger(recordPause(ensureLedger(current), at));
+
+    // The smoothed pace must not carry a pre-pause sample into the first
+    // window after resume (a short pause would read as a crawl).
+    paceTracker.reset();
+    localStatsRef.current.currentPace = null;
 
     // From here on the athlete IS paused. Telling the server happens in the
     // background: on a connected-but-dead network the point upload alone can take
@@ -1711,6 +1721,7 @@ function useLiveActivityInternal() {
     clientActivityIdRef.current = null;
     lastFinishAttemptRef.current = null;
     paceTracker.reset();
+    void clearAudioCoachState().catch(() => {});
 
     setState({
       activity: null,
@@ -2034,6 +2045,7 @@ function useLiveActivityInternal() {
       trackingStartTime.current = null;
       activityLocationRef.current = null;
       paceTracker.reset();
+      void clearAudioCoachState().catch(() => {});
 
       setState({
         activity: null,

@@ -10,6 +10,7 @@ import {
 } from '../services/audioCoach/templates';
 import { speakText, stopSpeaking } from '../services/audioCoach/tts';
 import { isSplitSuppressed } from '../services/workout/audioArbiter';
+import { getSplitPaceMinPerKm } from '../services/audioCoach/splitPace';
 import type { AudioCoachSettings } from '../types/audioCoach';
 
 /** Shared AsyncStorage keys — same as in backgroundLocation.ts */
@@ -19,10 +20,17 @@ const BG_AUDIO_TIER_KEY = '@racefy:audioCoach:tier';
 interface UseAudioCoachParams {
   settings: AudioCoachSettings;
   totalDistanceKm: number;
+  /** Fallback only — the announced pace is the finished split (see splitPace.ts). */
   currentPaceMinPerKm: number;
   heartRate?: number;
   previousKmPace?: number;
   userTier?: 'free' | 'plus' | 'pro';
+  /**
+   * The recording whose point log holds the splits (server id, or the
+   * provisional id of an offline start). Null = no split, fall back to
+   * `currentPaceMinPerKm`.
+   */
+  activityId?: number | null;
 }
 
 /**
@@ -37,6 +45,7 @@ export function useAudioCoach({
   heartRate,
   previousKmPace,
   userTier = 'free',
+  activityId = null,
 }: UseAudioCoachParams): void {
   const lastAnnouncedThreshold = useRef(0);
   const prevDistanceRef = useRef(0);
@@ -99,13 +108,21 @@ export function useAudioCoach({
     if (!settings.enabled) return;
     if (settings.intervalKm <= 0) return;
     if (totalDistanceKm <= 0) return;
-    if (currentPaceMinPerKm <= 0) return;
 
     const currentThreshold =
       Math.floor(totalDistanceKm / settings.intervalKm) * settings.intervalKm;
 
     if (currentThreshold <= 0) return;
     if (currentThreshold <= lastAnnouncedThreshold.current) return;
+
+    // The split of the kilometre just finished, in moving time, from the
+    // point log; the smoothed live pace only when there is no log (web).
+    const splitPace = activityId
+      ? getSplitPaceMinPerKm(activityId, currentThreshold - settings.intervalKm, currentThreshold)
+      : null;
+    const pace = splitPace ?? currentPaceMinPerKm;
+    // Nothing to say yet (first fix after a resume): try again on the next tick.
+    if (pace <= 0) return;
 
     // New threshold crossed
     lastAnnouncedThreshold.current = currentThreshold;
@@ -122,7 +139,8 @@ export function useAudioCoach({
 
     logger.info('audioCoach', 'Threshold crossed, announcing', {
       km: currentThreshold,
-      pace: currentPaceMinPerKm,
+      pace,
+      source: splitPace != null ? 'split' : 'current',
       heartRate,
       tier: userTier,
     });
@@ -131,18 +149,31 @@ export function useAudioCoach({
     const includeHeartRate = userTier === 'pro' && settings.announceHeartRate;
     const includeSplitDelta = userTier === 'pro' && settings.announceSplitDelta;
 
-    // Calculate split delta if we have previous km pace
+    // Split delta against the previous interval — from the log when it has
+    // one, else from whatever the caller passed.
     let splitDelta: number | undefined;
-    if (includeSplitDelta && previousKmPace !== undefined && previousKmPace > 0) {
-      // Delta in seconds: positive = slower, negative = faster
-      splitDelta = Math.round((currentPaceMinPerKm - previousKmPace) * 60);
+    if (includeSplitDelta) {
+      const previous =
+        (activityId && splitPace != null
+          ? getSplitPaceMinPerKm(
+              activityId,
+              currentThreshold - 2 * settings.intervalKm,
+              currentThreshold - settings.intervalKm,
+            )
+          : null) ??
+        previousKmPace ??
+        0;
+      if (previous > 0) {
+        // Delta in seconds: positive = slower, negative = faster
+        splitDelta = Math.round((pace - previous) * 60);
+      }
     }
 
     const text = buildAnnouncementText({
       language: settings.language,
       style: settings.style,
       km: currentThreshold,
-      pace: currentPaceMinPerKm,
+      pace,
       heartRate: includeHeartRate ? heartRate : undefined,
       splitDelta,
     });
@@ -157,7 +188,15 @@ export function useAudioCoach({
         speakText(milestoneText, settings, userTier, isOnlineRef.current);
       }, 4000);
     }
-  }, [settings, totalDistanceKm, currentPaceMinPerKm, heartRate, previousKmPace, userTier]);
+  }, [
+    settings,
+    totalDistanceKm,
+    currentPaceMinPerKm,
+    heartRate,
+    previousKmPace,
+    userTier,
+    activityId,
+  ]);
 }
 
 /**

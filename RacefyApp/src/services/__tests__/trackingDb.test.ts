@@ -152,3 +152,23 @@ describe('trackingDb', () => {
     expect(trackingDb.resolveRecordingSession(321)?.clientActivityId).toBe(UUID);
   });
 });
+
+describe('trackingDb.getPointsInDistanceRange', () => {
+  beforeEach(() => {
+    trackingDb.__resetForTests();
+    trackingDb.startSession(UUID, 'running');
+  });
+
+  it('returns the points of the range plus the one just before it', () => {
+    // cumDist 0, 100, …, 900
+    trackingDb.insertPoints(UUID, makePoints(10), 'fg');
+
+    const inRange = trackingDb.getPointsInDistanceRange(UUID, 300, 600);
+    expect(inRange.map((p) => p.cumDist)).toEqual([200, 300, 400, 500, 600]);
+
+    // From the very start there is nothing to anchor on.
+    expect(trackingDb.getPointsInDistanceRange(UUID, 0, 200).map((p) => p.cumDist)).toEqual([
+      0, 100, 200,
+    ]);
+  });
+});

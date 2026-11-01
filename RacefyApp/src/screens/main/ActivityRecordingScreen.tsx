@@ -334,6 +334,8 @@ export function ActivityRecordingScreen() {
     heartRate: currentStats.avg_heart_rate,
     previousKmPace: undefined,
     userTier: tier as any,
+    // Splits come from this recording's point log (dev sim has none).
+    activityId: __DEV__ && devSim.running ? null : (activity?.id ?? null),
   });
 
   // Preview location for map view (before tracking starts)
