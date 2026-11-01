@@ -3188,6 +3188,26 @@
       "unavailable": "Esta emisión ya no está disponible.",
       "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo."
     },
+    "voice": {
+      "label": "Mensaje de voz",
+      "expired": "La grabación ha caducado",
+      "play": "Reproducir mensaje de voz",
+      "stop": "Detener",
+      "record": "Grabar un ánimo de voz",
+      "recording": "Grabando…",
+      "stopRecording": "Detener la grabación",
+      "discard": "Descartar la grabación",
+      "send": "Enviar la grabación",
+      "disabled": "Este atleta no acepta mensajes de voz.",
+      "tooLong": "La grabación es demasiado larga.",
+      "rejected": "La grabación no pasó la moderación y no se envió.",
+      "unreadable": "No se pudo leer la grabación. Grábala de nuevo.",
+      "sendFailed": "No se pudo enviar la grabación. Inténtalo de nuevo.",
+      "permissionTitle": "Acceso al micrófono",
+      "permissionMessage": "Racefy necesita el micrófono para grabar un ánimo de voz para este atleta. Solo lo oirá esa persona (y los demás espectadores, si lo marcas como público).",
+      "permissionContinue": "Continuar",
+      "permissionDenied": "Sin acceso al micrófono: aún puedes enviar un mensaje de texto."
+    },
     "archive": {
       "title": "Ánimos de tu directo",
       "count": "{{count}} mensaje durante tu directo",
@@ -3211,7 +3231,9 @@
       "commentsLabel": "Permitir que los espectadores te escriban",
       "commentsDescription": "Quienes te vean podrán enviarte un mensaje. Los privados solo llegan a ti; los públicos también los ven los demás espectadores.",
       "ttsLabel": "Leer los mensajes en voz alta mientras me muevo",
-      "ttsDescription": "Los mensajes entrantes se leen por tus auriculares, bajando el volumen de la música en vez de detenerla. Requiere un plan de pago."
+      "ttsDescription": "Los mensajes entrantes se leen por tus auriculares, bajando el volumen de la música en vez de detenerla. Requiere un plan de pago.",
+      "voiceLabel": "Reproducir ánimos de voz mientras me muevo",
+      "voiceDescription": "Los espectadores pueden grabarte un mensaje de voz breve. Lo oirás por los auriculares tras un aviso corto; la música baja un momento."
     }
   },
   "tabs": {

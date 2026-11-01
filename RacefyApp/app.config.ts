@@ -111,7 +111,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       NSMotionUsageDescription: 'Racefy uses motion data to improve activity tracking accuracy.',
       NSCameraUsageDescription:
         'Racefy needs camera access to take photos and videos for your activities and posts.',
-      NSMicrophoneUsageDescription: 'Racefy needs microphone access to record audio with videos.',
+      NSMicrophoneUsageDescription:
+        'Racefy needs microphone access to record voice cheers for athletes you watch live and audio for your videos.',
       NSPhotoLibraryUsageDescription:
         'Racefy needs photo library access to select photos and videos from your gallery.',
       NSPhotoLibraryAddUsageDescription:
@@ -151,6 +152,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'FOREGROUND_SERVICE',
       'FOREGROUND_SERVICE_LOCATION',
       'CAMERA',
+      // Voice cheers recorded by spectators of a live broadcast
+      'RECORD_AUDIO',
       'READ_EXTERNAL_STORAGE',
       'WRITE_EXTERNAL_STORAGE',
       'VIBRATE',

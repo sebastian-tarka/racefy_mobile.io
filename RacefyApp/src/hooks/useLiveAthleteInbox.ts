@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../services/api';
 import { logger } from '../services/logger';
-import { type LiveTtsFailure, playLiveMessageTts } from '../services/liveTts';
+import { type LiveCheerFailure, playLiveCheer } from '../services/liveCheer/playback';
+import { isVoiceMessage } from '../services/liveCheer/message';
 import { useAppConfig } from '../contexts/AppConfigContext';
 import type { LiveMessage } from '../types/api';
 import { getErrorStatus } from '../utils/errors';
@@ -10,20 +11,23 @@ import { getErrorStatus } from '../utils/errors';
 interface Options {
   /** Only poll while actually broadcasting. */
   enabled: boolean;
-  /** From the athlete's `live.tts_incoming` preference. */
+  /** From the athlete's `live.tts_incoming` preference — typed cheers read aloud. */
   autoPlayTts: boolean;
+  /** From the athlete's `live.voice_incoming` preference — recorded cheers played back. */
+  autoPlayVoice: boolean;
 }
 
-interface Result {
+export interface LiveAthleteInboxState {
   messages: LiveMessage[];
   /** Most recent message, for a lightweight toast on the recording screen. */
   latest: LiveMessage | null;
   unreadCount: number;
   markAllSeen: () => void;
-  /** Set when TTS failed in a way the athlete should know about. */
-  ttsFailure: LiveTtsFailure | null;
-  clearTtsFailure: () => void;
-  speak: (message: LiveMessage) => Promise<void>;
+  /** Set when playback failed in a way the athlete should know about. */
+  playbackFailure: LiveCheerFailure | null;
+  clearPlaybackFailure: () => void;
+  /** Replay a message on demand (long-press); ignores the auto-play preferences. */
+  replay: (message: LiveMessage) => Promise<void>;
 }
 
 const DEFAULT_POLL_MS = 5000;
@@ -33,43 +37,54 @@ const DEFAULT_POLL_MS = 5000;
  *
  * The athlete receives ALL messages (private and public) from the same endpoint
  * spectators use — the scoping happens server-side.
+ *
+ * Mount this where it lives for the WHOLE recording, not inside a view that
+ * comes and goes (the in-app screen lock, pause): a cheer that arrives while
+ * the screen is locked is exactly the one the athlete most needs to hear.
  */
 export function useLiveAthleteInbox(
   activityId: number | null,
-  { enabled, autoPlayTts }: Options,
-): Result {
+  { enabled, autoPlayTts, autoPlayVoice }: Options,
+): LiveAthleteInboxState {
   const { config } = useAppConfig();
   const pollMs = config?.realtime?.poll_interval_ms ?? DEFAULT_POLL_MS;
 
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [ttsFailure, setTtsFailure] = useState<LiveTtsFailure | null>(null);
+  const [playbackFailure, setPlaybackFailure] = useState<LiveCheerFailure | null>(null);
 
   const lastIdRef = useRef(0);
   /**
-   * Ids already spoken on this device. `audio_played_at` is the server's record
+   * Ids already played on this device. `audio_played_at` is the server's record
    * and is authoritative across devices, but it does not update until the
    * server sees the playback — without a local guard the same message would be
-   * read again on the very next poll.
+   * played again on the very next poll.
    */
-  const spokenRef = useRef<Set<number>>(new Set());
-  /** Latched once TTS is unavailable for the whole session (tier or quota). */
+  const playedRef = useRef<Set<number>>(new Set());
+  /**
+   * Latched once TTS is unavailable for the whole session (tier or quota).
+   * Voice clips are plain files and are never gated, so they keep playing.
+   */
   const ttsBlockedRef = useRef(false);
 
-  const speak = useCallback(async (message: LiveMessage) => {
-    if (spokenRef.current.has(message.id)) return;
-    spokenRef.current.add(message.id);
-
-    const result = await playLiveMessageTts(message.id);
-    if (!result.ok) {
-      setTtsFailure(result.reason);
-      // A tier or quota failure will fail identically for every later message,
-      // so stop trying rather than burning a request on each new one.
-      if (result.reason === 'upgrade_required' || result.reason === 'limit_reached') {
-        ttsBlockedRef.current = true;
-      }
+  const play = useCallback(async (message: LiveMessage) => {
+    const result = await playLiveCheer(message);
+    if (result.ok) return;
+    setPlaybackFailure(result.reason);
+    // A tier or quota failure will fail identically for every later message,
+    // so stop trying rather than burning a request on each new one.
+    if (result.reason === 'upgrade_required' || result.reason === 'limit_reached') {
+      ttsBlockedRef.current = true;
     }
   }, []);
+
+  const replay = useCallback(
+    async (message: LiveMessage) => {
+      playedRef.current.add(message.id);
+      await play(message);
+    },
+    [play],
+  );
 
   useEffect(() => {
     if (!activityId || !enabled) return;
@@ -87,15 +102,18 @@ export function useLiveAthleteInbox(
         });
         setUnreadCount((c) => c + incoming.length);
 
-        if (!autoPlayTts || ttsBlockedRef.current) return;
+        // Never play a message twice: skip anything the server already recorded
+        // as played, anything this device has played, and whatever kind the
+        // athlete switched off.
+        const toPlay = incoming.filter((m) => {
+          if (m.audio_played_at || playedRef.current.has(m.id)) return false;
+          return isVoiceMessage(m) ? autoPlayVoice : autoPlayTts && !ttsBlockedRef.current;
+        });
 
-        // Never read a message twice: skip anything the server already recorded
-        // as played, and anything this device has spoken.
-        const toSpeak = incoming.filter((m) => !m.audio_played_at && !spokenRef.current.has(m.id));
-
-        for (const message of toSpeak) {
+        for (const message of toPlay) {
           if (cancelled) break;
-          await speak(message);
+          playedRef.current.add(message.id);
+          await play(message);
         }
       } catch (error) {
         logger.warn('live', 'Athlete inbox poll failed', {
@@ -111,18 +129,18 @@ export function useLiveAthleteInbox(
       cancelled = true;
       clearInterval(timer);
     };
-  }, [activityId, enabled, autoPlayTts, pollMs, speak]);
+  }, [activityId, enabled, autoPlayTts, autoPlayVoice, pollMs, play]);
 
   const markAllSeen = useCallback(() => setUnreadCount(0), []);
-  const clearTtsFailure = useCallback(() => setTtsFailure(null), []);
+  const clearPlaybackFailure = useCallback(() => setPlaybackFailure(null), []);
 
   return {
     messages,
     latest: messages.length > 0 ? messages[messages.length - 1] : null,
     unreadCount,
     markAllSeen,
-    ttsFailure,
-    clearTtsFailure,
-    speak,
+    playbackFailure,
+    clearPlaybackFailure,
+    replay,
   };
 }

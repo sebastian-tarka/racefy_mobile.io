@@ -11,9 +11,10 @@ const DEFAULT_POLL_INTERVAL_MS = 5000;
 /**
  * Picks the transport from the server-supplied realtime config.
  *
- * `reverb` is not implemented yet, so it degrades to polling rather than
- * leaving the screen blank — the driver is flipped server-side and can reach a
- * build that predates Echo support.
+ * `reverb` runs over Laravel Echo (`echoTransport.ts`); a `reverb` driver with
+ * no connection block degrades to polling rather than leaving the screen blank
+ * — the driver is flipped server-side and can reach a client before the
+ * config does.
  */
 export function createLiveTransport(
   realtime: RealtimeConfig | undefined,

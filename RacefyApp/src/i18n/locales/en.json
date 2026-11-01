@@ -3236,6 +3236,26 @@
       "unavailable": "This broadcast is no longer available.",
       "sendFailed": "Could not send the message. Try again."
     },
+    "voice": {
+      "label": "Voice message",
+      "expired": "Recording expired",
+      "play": "Play voice message",
+      "stop": "Stop",
+      "record": "Record a voice cheer",
+      "recording": "Recording…",
+      "stopRecording": "Stop recording",
+      "discard": "Discard recording",
+      "send": "Send recording",
+      "disabled": "This athlete does not take voice messages.",
+      "tooLong": "The recording is too long.",
+      "rejected": "The recording did not pass moderation and was not sent.",
+      "unreadable": "The recording could not be read. Record it again.",
+      "sendFailed": "Could not send the recording. Try again.",
+      "permissionTitle": "Microphone access",
+      "permissionMessage": "Racefy needs the microphone to record a voice cheer for this athlete. Only they will hear it (and other viewers, if you mark it public).",
+      "permissionContinue": "Continue",
+      "permissionDenied": "No microphone access — you can still send a text message."
+    },
     "archive": {
       "title": "Cheers from your broadcast",
       "count": "{{count}} message while you were live",
@@ -3259,7 +3279,9 @@
       "commentsLabel": "Let viewers send you messages",
       "commentsDescription": "People watching can send you a message. Private messages only reach you; public ones are visible to other viewers too.",
       "ttsLabel": "Read messages aloud while I move",
-      "ttsDescription": "Incoming messages are spoken through your headphones, ducking your music instead of stopping it. Requires a paid plan."
+      "ttsDescription": "Incoming messages are spoken through your headphones, ducking your music instead of stopping it. Requires a paid plan.",
+      "voiceLabel": "Play voice cheers while I move",
+      "voiceDescription": "Viewers can record you a short voice message. You hear it in your headphones after a short chime; your music ducks for a moment."
     }
   },
   "strengthPlans": {

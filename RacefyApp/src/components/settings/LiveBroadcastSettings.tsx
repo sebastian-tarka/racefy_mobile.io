@@ -83,7 +83,7 @@ export function LiveBroadcastSettings() {
         />
       </View>
 
-      <View style={styles.row}>
+      <View style={[styles.row, { borderBottomColor: colors.border }]}>
         <Ionicons name="volume-high-outline" size={22} color={colors.textSecondary} />
         <View style={styles.rowBody}>
           <Text style={[styles.label, { color: colors.textPrimary }]}>
@@ -101,6 +101,28 @@ export function LiveBroadcastSettings() {
           trackColor={{ false: colors.border, true: colors.primaryLight }}
           thumbColor={preferences.tts_incoming ? colors.primary : colors.white}
           // Reading messages aloud is pointless if nobody may send any.
+          disabled={disabled || !preferences.allow_live_comments}
+        />
+      </View>
+
+      <View style={styles.row}>
+        <Ionicons name="mic-outline" size={22} color={colors.textSecondary} />
+        <View style={styles.rowBody}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            {t('live.settings.voiceLabel')}
+          </Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            {t('live.settings.voiceDescription')}
+          </Text>
+        </View>
+        <Switch
+          value={preferences.voice_incoming}
+          onValueChange={(value) => {
+            update({ voice_incoming: value });
+          }}
+          trackColor={{ false: colors.border, true: colors.primaryLight }}
+          thumbColor={preferences.voice_incoming ? colors.primary : colors.white}
+          // Off here also hides the spectators' mic button — a consent, like the one above.
           disabled={disabled || !preferences.allow_live_comments}
         />
       </View>
