@@ -21,7 +21,8 @@ Otwarcie odznaki (BadgeSheet: profil, Nagrody) woła `POST /user/badges/{id}/vie
 gasi „nowa” na wszystkich ekranach. Endpoint w API na branchu `feature/badge-viewed`
 (2f37e1c6, testy zielone) — merge mobile dopiero po wdrożeniu API na prod. API dokłada też
 `viewed_at` i `metadata` w `/user/rewards` (szczegóły odznaki pokażą „z wydarzenia”).
-- [ ] API: `feature/badge-viewed` zmergowany i wdrożony na prod
+- [x] API: `feature/badge-viewed` zmergowany do `main` 2026-11-01 (29de88d8, pełne testy zielone, wypchnięty)
+- [ ] API: wdrożony na prod (`scripts/deploy.sh`; prod stoi na v1.3.17 bez tej zmiany)
 - [ ] profil: odznaka z „nowa” → otwarcie → znaczek znika w gablocie i licznik „X nowych” spada
 - [ ] Nagrody i Home (karta „nowa odznaka”): po otwarciu na profilu też już nie „nowa”
 - [ ] restart aplikacji / inne urządzenie: dalej nie „nowa” (stan z serwera)
