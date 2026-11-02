@@ -9,13 +9,25 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-01**
+Stan na: **2026-11-02**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Generowanie planu i wskazówek bez „wiszącego" ekranu (`feature/plan-generation-status`, od 2026-11-02)
+
+Wymaga API z branchu `feature/plan-generation-async` (racefy_api.io): `ai_status` na programie,
+`hint_status`/`hint_language` na tygodniu, `GET/POST /training/programs/{id}/generation[/retry]`.
+Diagnoza w `.notes/ANALIZA_GENEROWANIE_PLANU.md`. Ekran „Tworzenie planu…" trwa teraz sekundy
+(AI poszło do kolejki), lista tygodni polluje status co 5 s na wierzchu i pokazuje stan wskazówki.
+- [ ] utworzenie planu (pl): ekran „Tworzenie…" znika po kilku sekundach, lista tygodni od razu; pod nagłówkiem tygodnia 1 „Trener przygotowuje wskazówkę…", po chwili żarówka i wskazówka
+- [ ] wskazówka po angielsku z dopiskiem „tłumaczenie w przygotowaniu", po następnym odświeżeniu po polsku
+- [ ] zabić worker kolejki na stage i utworzyć plan: po 15 min status „nie udało się" + „Spróbuj ponownie" działa (worker z powrotem)
+- [ ] Pro: „Generuj wskazówki" → postęp (n/N) z serwera; zamknąć i otworzyć apkę w trakcie — postęp dalej widoczny; na końcu alert (również wariant „X z N nie powstało")
+- [ ] apka w tle w trakcie generowania: brak requestów (logi), po powrocie natychmiastowe odświeżenie
+- [ ] timeout 60 s przy tworzeniu planu (np. zasymulować wolną sieć): komunikat po polsku, a jeśli plan jednak powstał — przejście do listy
+- [ ] szczegóły tygodnia: te same stany (w przygotowaniu / nie udało się / tłumaczenie w drodze)
 
 ## Na `main`, ale niezweryfikowane runtime
 
