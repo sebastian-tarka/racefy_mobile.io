@@ -15,9 +15,16 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Strefa czasowa użytkownika — faza 1 planu stref (`feature/timezones-f1`, od 2026-11-02)
+_(nic)_
 
-Wymaga API z branchu `feature/timezones-f1` (racefy_api.io; plan `docs/plans/2026-11-02-timezones.md`).
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Strefa czasowa użytkownika — faza 1 planu stref (zmergowane 2026-11-02, `feature/timezones-f1`, tag `pre-timezones-f1` = main sprzed merge)
+
+Wymaga API z `feature/timezones-f1` (racefy_api.io, zmergowane do main 2026-11-02, deploy na prod w toku; plan `docs/plans/2026-11-02-timezones.md`).
 Apka wysyła nagłówek `X-Timezone` ze strefą urządzenia w każdym requeście (serwer zapisuje ją w
 `preferences.timezone`, gdy `timezone_auto`), `timezone` w body logowania, a w Ustawieniach → Preferencje
 jest wiersz „Strefa czasowa”: przełącznik „Automatycznie” + lista stref do wyboru ręcznego.
@@ -27,11 +34,7 @@ jest wiersz „Strefa czasowa”: przełącznik „Automatycznie” + lista stre
 - [ ] włączyć automat z powrotem: serwer wraca do strefy urządzenia
 - [ ] zmiana strefy w ustawieniach telefonu i powrót do apki (automat): następny request niesie nową strefę
 - [ ] stare API bez obsługi nagłówka: apka działa jak dotąd (nagłówek ignorowany)
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-02).
 
 ### Dołączanie do trwającego wydarzenia (zmergowane 2026-11-02, `fix/event-join-ongoing`, tag `pre-event-join-ongoing` = main sprzed merge)
 
