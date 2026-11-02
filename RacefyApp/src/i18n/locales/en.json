@@ -699,6 +699,7 @@
     "yesCancel": "Yes, Cancel",
     "eventFull": "This event is full",
     "registrationClosed": "Registration has closed",
+    "joinOngoing": "This event is in progress — you can still join",
     "registrationNotAvailable": "Registration not available",
     "registrationSuccess": "You have been registered for this event!",
     "registrationFailed": "Failed to register for event",

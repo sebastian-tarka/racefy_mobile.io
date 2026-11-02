@@ -70,6 +70,16 @@ export function EventActionSection(props: EventActionSectionProps) {
   // One dominant CTA, never two: while "Start activity" is showing, the live
   // standings tile demotes to a quiet row.
   const startShowing = !!props.startCta && isRegistered && stage === 'during';
+  // Whether one can still join is the API's call (`registration_eligibility`),
+  // not the status's: an event in progress with open registration takes
+  // entries (the web does), and a guest is offered sign-in there too. Picking
+  // the branch from the stage alone showed "Registration closed" on prod
+  // events/41 while the API said can_register = true.
+  const eligibleNow =
+    props.canRegister ||
+    (!props.isAuthenticated &&
+      (event.registration_eligibility?.can_register ?? event.is_registration_open ?? false));
+  const registrationOpen = stage === 'before' || (stage === 'during' && eligibleNow);
 
   return (
     <View style={styles.wrap}>
@@ -84,8 +94,8 @@ export function EventActionSection(props: EventActionSectionProps) {
         </>
       ) : isRegistered ? (
         <RegisteredCard {...props} stage={stage} />
-      ) : stage === 'before' ? (
-        <RegistrationActions {...props} />
+      ) : registrationOpen ? (
+        <RegistrationActions {...props} stage={stage} />
       ) : (
         <RegistrationClosedBox message={props.registrationClosedMessage} />
       )}
@@ -114,10 +124,10 @@ export function EventActionSection(props: EventActionSectionProps) {
 // ---------------------------------------------------------------------------
 // Observer / Watcher — Register + Watch
 // ---------------------------------------------------------------------------
-function RegistrationActions(props: EventActionSectionProps) {
+function RegistrationActions(props: EventActionSectionProps & { stage: Stage }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const { event, canRegister, isRegistering, onRegister, isAuthenticated } = props;
+  const { event, stage, canRegister, isRegistering, onRegister, isAuthenticated } = props;
 
   const feeLabel =
     event.entry_fee == null || event.entry_fee === 0
@@ -129,6 +139,14 @@ function RegistrationActions(props: EventActionSectionProps) {
 
   return (
     <View>
+      {stage === 'during' && (
+        <View style={styles.joinOngoingRow}>
+          <LivePulse color={colors.error} size={7} />
+          <Text style={[styles.joinOngoingText, { color: colors.textSecondary }]}>
+            {t('eventDetail.joinOngoing', 'This event is in progress — you can still join')}
+          </Text>
+        </View>
+      )}
       <View style={styles.registerRow}>
         <TouchableOpacity
           style={[
@@ -548,6 +566,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   // Register
+  joinOngoingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  joinOngoingText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
   registerRow: {
     flexDirection: 'row',
     gap: spacing.sm,
