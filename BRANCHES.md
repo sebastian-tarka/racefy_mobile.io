@@ -15,9 +15,16 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Strefa czasowa wydarzenia — faza 2 planu stref (`feature/timezones-f2`, od 2026-11-02)
+_(nic)_
 
-Wymaga API z branchu `feature/timezones-f2` (racefy_api.io): każde wydarzenie ma `timezone`, POST/PUT przyjmują
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Strefa czasowa wydarzenia — faza 2 planu stref (zmergowane 2026-11-02, `feature/timezones-f2`, tag `pre-timezones-f2` = main sprzed merge)
+
+Wymaga API z `feature/timezones-f2` (racefy_api.io, zmergowane do main 2026-11-02, deploy na prod w toku): każde wydarzenie ma `timezone`, POST/PUT przyjmują
 `timezone`. Formularz ma wybór „Strefa czasowa wydarzenia” (domyślnie strefa telefonu, przy edycji strefa
 wydarzenia); pickery dat to czas ścienny w tej strefie, apka przelicza go na instant `Z` i wysyła razem ze strefą.
 Szczegóły wydarzenia: główny czas dalej w strefie telefonu, a gdy czas ścienny w strefie wydarzenia jest inny,
@@ -28,11 +35,7 @@ dodatkowa linia „Czas lokalny wydarzenia: … (miasto)”.
 - [ ] szczegóły tego wydarzenia na telefonie w Polsce: główna data 16:00, pod spodem „Czas lokalny wydarzenia: … 10:00 (New York)”
 - [ ] wydarzenie w strefie telefonu: linii „Czas lokalny” nie ma
 - [ ] seria (powtarzanie) tworzona ze strefą inną niż telefon: reguła w strefie wydarzenia (dzień tygodnia zgodny)
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-02).
 
 ### Strefa czasowa użytkownika — faza 1 planu stref (zmergowane 2026-11-02, `feature/timezones-f1`, tag `pre-timezones-f1` = main sprzed merge)
 
