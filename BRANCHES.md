@@ -15,9 +15,16 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Generowanie planu i wskazówek bez „wiszącego" ekranu (`feature/plan-generation-status`, od 2026-11-02)
+_(nic)_
 
-Wymaga API z branchu `feature/plan-generation-async` (racefy_api.io): `ai_status` na programie,
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Generowanie planu i wskazówek bez „wiszącego" ekranu (zmergowane 2026-11-02, `feature/plan-generation-status`, tag `pre-plan-generation-status` = main sprzed merge)
+
+Wymaga API z `feature/plan-generation-async` (racefy_api.io, zmergowane do main 2026-11-02, deploy na prod w toku): `ai_status` na programie,
 `hint_status`/`hint_language` na tygodniu, `GET/POST /training/programs/{id}/generation[/retry]`.
 Diagnoza w `.notes/ANALIZA_GENEROWANIE_PLANU.md`. Ekran „Tworzenie planu…" trwa teraz sekundy
 (AI poszło do kolejki), lista tygodni polluje status co 5 s na wierzchu i pokazuje stan wskazówki.
@@ -28,11 +35,7 @@ Diagnoza w `.notes/ANALIZA_GENEROWANIE_PLANU.md`. Ekran „Tworzenie planu…" t
 - [ ] apka w tle w trakcie generowania: brak requestów (logi), po powrocie natychmiastowe odświeżenie
 - [ ] timeout 60 s przy tworzeniu planu (np. zasymulować wolną sieć): komunikat po polsku, a jeśli plan jednak powstał — przejście do listy
 - [ ] szczegóły tygodnia: te same stany (w przygotowaniu / nie udało się / tłumaczenie w drodze)
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-02). Czysty JS — wystarczy dev server, ale **API na prod musi już mieć `/generation`**.
 
 ### Tokeny palety pod motywy sezonowe — Faza 0 (zmergowane 2026-11-02, `feature/theme-tokens-hardening`, tag `pre-theme-tokens-hardening` = main sprzed merge)
 
