@@ -15,7 +15,15 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Dołączanie do trwającego wydarzenia (`fix/event-join-ongoing`, od 2026-11-02)
+
+Zgłoszenie: prod `events/41` (status `ongoing`, rejestracja otwarta wg API) pokazywał „Rejestracja
+zamknięta". `EventActionSection` wybierał gałąź po samym statusie; teraz ufa `registration_eligibility`
+jak web. Dla trwającego wydarzenia dopisek „Wydarzenie trwa — możesz jeszcze dołączyć".
+- [ ] trwające wydarzenie z otwartą rejestracją: przycisk „Zarejestruj się", po dołączeniu karta „Jesteś zarejestrowany" ze „Startuj aktywność"
+- [ ] trwające wydarzenie z zamkniętą rejestracją (`registration_closes_at` w przeszłości lub limit): dalej „Rejestracja zamknięta" z powodem
+- [ ] niezalogowany na trwającym wydarzeniu z otwartą rejestracją: „Zaloguj się, aby się zarejestrować"
+- [ ] zakończone wydarzenie: bez zmian („Rejestracja zamknięta" + wyniki)
 
 ## Na `main`, ale niezweryfikowane runtime
 
