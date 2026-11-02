@@ -626,6 +626,10 @@
     }
   },
   "events": {
+    "timezone": {
+      "label": "Strefa czasowa wydarzenia",
+      "hint": "Daty powyżej to czas lokalny w tej strefie (tam, gdzie odbywa się wydarzenie; online — Twoja). Uczestnicy zobaczą je przeliczone na swój czas."
+    },
     "pointsBudget": {
       "title": "Pula punktów",
       "sponsored": "Sponsorowane",
@@ -3222,6 +3226,7 @@
     "firstFinish": "Pierwszy na mecie"
   },
   "eventInfo": {
+    "localTime": "Czas lokalny wydarzenia: {{time}} ({{city}})",
     "date": "Data",
     "start": "Start",
     "distance": "Dystans",

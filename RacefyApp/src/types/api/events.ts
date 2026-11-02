@@ -55,6 +55,8 @@ export interface Event {
   coordinates?: [number, number] | null;
   starts_at: string;
   ends_at: string;
+  /** IANA zone the event happens in; the times above are still UTC instants (time zone plan F2). */
+  timezone: string;
   registration_opens_at: string | null;
   registration_closes_at: string | null;
   max_participants: number | null;
@@ -198,6 +200,8 @@ export interface CreateEventRequest {
   ends_at?: string;
   registration_opens_at?: string;
   registration_closes_at?: string;
+  /** The event's IANA zone; `Z` instants are kept, naive times are read in it. */
+  timezone?: string;
   // Optional settings
   max_participants?: number;
   difficulty?: 'beginner' | 'intermediate' | 'advanced' | 'all_levels';
@@ -255,6 +259,7 @@ export interface UpdateEventRequest {
   longitude?: number | null;
   starts_at?: string;
   ends_at?: string;
+  timezone?: string;
   registration_opens_at?: string | null;
   registration_closes_at?: string | null;
   max_participants?: number | null;
