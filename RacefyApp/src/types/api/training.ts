@@ -96,6 +96,8 @@ export interface TrainingProgram {
   allowed_sport_types: number[] | null;
   paused_at: string | null;
   pause_reason: string | null;
+  /** The queued AI parts (first-week hint, coach note). Poll `getPlanGeneration` while 'pending'. */
+  ai_status?: ProgramAiStatus;
   template?: {
     id: number;
     name: string;
@@ -169,6 +171,10 @@ export interface TrainingWeek {
   activities?: TrainingActivity[];
   suggested_activities?: SuggestedActivity[];
   coaching_hint?: CoachingHint | null;
+  /** Language `coaching_hint` is in: 'en' while the translation is still being written. null without a hint. */
+  hint_language?: string | null;
+  /** 'none' = never asked for (not an error). */
+  hint_status?: HintStatus;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -186,6 +192,24 @@ export interface SessionHint {
 export interface CoachingHint {
   week_overview: string;
   session_hints: SessionHint[];
+}
+
+/** The post-initialisation job: coaching hint for the live week + coach note. */
+export type ProgramAiStatus = 'pending' | 'ready' | 'failed';
+
+export type HintStatus = 'none' | 'pending' | 'ready' | 'failed';
+
+/** GET /training/programs/{id}/generation */
+export interface PlanGenerationStatus {
+  ai_status: ProgramAiStatus;
+  coach_note_ready: boolean;
+  hints: { total: number; pending: number; ready: number; failed: number; none: number };
+  weeks: {
+    id: number;
+    week_number: number;
+    hint_status: HintStatus;
+    hint_language: string | null;
+  }[];
 }
 
 export interface GenerateHintsResponse {

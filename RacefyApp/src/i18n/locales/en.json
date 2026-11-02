@@ -2163,6 +2163,12 @@
     "createPlan": "Create new plan",
     "createPlanDesc": "AI builds it around your goal & schedule",
     "creatingProgram": "Creating your personalized training program...",
+    "generation": {
+      "preparingHint": "Your coach is preparing this week's hint…",
+      "hintFailed": "The coach couldn't write this week's hint.",
+      "retry": "Try again",
+      "translationPending": "Shown in English for now — the translation is on its way."
+    },
     "calibration": {
       "title": "Training Calibration",
       "trainingGoal": "Training Goal",
@@ -2309,6 +2315,7 @@
       "completeFailed": "Failed to complete week",
       "skipFailed": "Failed to skip week",
       "checkProgramFailed": "Failed to check for existing program. Please try again.",
+      "initTimedOut": "The server took too long to answer. Your plan may still have been created — check the training list in a moment.",
       "linkFailed": "Failed to link activity",
       "unlinkFailed": "Failed to unlink activity"
     },
@@ -2324,7 +2331,9 @@
       "generationComplete": "All coaching hints generated!",
       "generationFailed": "Failed to generate coaching hints",
       "noHints": "No coaching hints available for this week yet.",
-      "allGenerated": "All weeks already have coaching hints."
+      "allGenerated": "All weeks already have coaching hints.",
+      "generationPartlyFailed": "{{failed}} of {{total}} weeks didn't get a hint. Try again in a while.",
+      "generationTakingLonger": "This is taking longer than usual. The hints will appear on their own — you don't need to wait here."
     },
     "tips": {
       "sectionTitle": "Tip for You",

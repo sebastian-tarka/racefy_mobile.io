@@ -291,8 +291,29 @@ export function TrainingMixin<TBase extends Constructable<ApiBase>>(Base: TBase)
     // ============ COACHING HINTS ============
 
     /**
-     * Generate coaching hints for all weeks in a program
-     * Returns processing status - poll getWeeks() to track progress
+     * What the AI is still preparing for a plan. Poll (usePlanGeneration) while
+     * `ai_status` or any hint is `pending`; the server turns a stale pending
+     * into `failed` after 15 min.
+     */
+    async getPlanGeneration(programId: number): Promise<Types.PlanGenerationStatus> {
+      const response = await this.request<Types.ApiResponse<Types.PlanGenerationStatus>>(
+        `/training/programs/${programId}/generation`,
+      );
+      return response.data;
+    }
+
+    /** Ask again for a failed first-week hint / coach note. Same payload as getPlanGeneration. */
+    async retryPlanAi(programId: number): Promise<Types.PlanGenerationStatus> {
+      const response = await this.request<Types.ApiResponse<Types.PlanGenerationStatus>>(
+        `/training/programs/${programId}/generation/retry`,
+        { method: 'POST' },
+      );
+      return response.data;
+    }
+
+    /**
+     * Generate coaching hints for all weeks in a program (Pro).
+     * 202 `processing`: the weeks are `pending`; follow getPlanGeneration().
      */
     async generateAllHints(programId: number): Promise<Types.GenerateHintsResponse> {
       return this.request<Types.GenerateHintsResponse>(

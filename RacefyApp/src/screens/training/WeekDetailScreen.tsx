@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { usePlanGeneration } from '../../hooks/usePlanGeneration';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
@@ -21,6 +22,7 @@ import {
   ScreenContainer,
 } from '../../components';
 import { CoachingHintPanel } from '../../components/Training/CoachingHintPanel';
+import { HintStatusRow } from './components/HintStatusRow';
 import type { RootStackParamList } from '../../navigation/types';
 import type { TrainingWeek, Activity } from '../../types/api';
 import { getErrorMessage } from '../../utils/errors';
@@ -38,7 +40,7 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 
 export function WeekDetailScreen({ navigation, route }: Props) {
   const { weekId } = route.params;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const { formatDistanceShort, getPaceUnit } = useUnits();
   const { user } = useAuth();
@@ -65,6 +67,16 @@ export function WeekDetailScreen({ navigation, route }: Props) {
   useEffect(() => {
     loadWeekData();
   }, [loadWeekData]);
+
+  // While the hint (or its translation) is still being written, follow the
+  // plan's generation status and re-read the week when it lands.
+  const hintInFlight =
+    !!week &&
+    (week.hint_status === 'pending' ||
+      (!!week.coaching_hint &&
+        !!week.hint_language &&
+        week.hint_language !== (i18n.language || 'en').slice(0, 2)));
+  usePlanGeneration(hintInFlight ? (week?.program_id ?? null) : null, { onChanged: loadWeekData });
 
   const handleCompleteWeek = async () => {
     Alert.alert(
@@ -324,7 +336,14 @@ export function WeekDetailScreen({ navigation, route }: Props) {
 
         {/* Coaching Hints */}
         {week.coaching_hint ? (
-          <CoachingHintPanel coachingHint={week.coaching_hint} />
+          <>
+            <CoachingHintPanel coachingHint={week.coaching_hint} />
+            <HintStatusRow week={week} />
+          </>
+        ) : week.hint_status === 'pending' || week.hint_status === 'failed' ? (
+          <View style={styles.hintStatusContainer}>
+            <HintStatusRow week={week} />
+          </View>
         ) : (
           <View style={styles.noHintsContainer}>
             <Ionicons name="bulb-outline" size={24} color={colors.textMuted} />
@@ -924,5 +943,9 @@ const styles = StyleSheet.create({
   },
   noHintsText: {
     fontSize: fontSize.sm,
+  },
+  hintStatusContainer: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
   },
 });

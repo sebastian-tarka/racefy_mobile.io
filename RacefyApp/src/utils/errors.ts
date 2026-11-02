@@ -26,6 +26,16 @@ export function getErrorMessage(error: unknown, fallback = ''): string {
   return fallback;
 }
 
+/**
+ * The API client's own 60 s timeout (`AbortController`) — fetch rejects with an
+ * AbortError whose message is the untranslatable "Aborted". Screens translate it.
+ */
+export function isTimeoutError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const { name, message } = error as { name?: unknown; message?: unknown };
+  return name === 'AbortError' || message === 'Aborted';
+}
+
 export function getErrorStatus(error: unknown): number | undefined {
   return isApiError(error) ? error.status : undefined;
 }
