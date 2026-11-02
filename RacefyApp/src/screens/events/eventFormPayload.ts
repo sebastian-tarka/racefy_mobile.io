@@ -6,6 +6,7 @@ import type {
   UpdateEventRequest,
 } from '../../types/api';
 import type { CommentarySettingsData, FormData as EventFormData } from './EventFormScreen.utils';
+import { fromLocalWallClock, isValidTimeZone, toLocalWallClock } from '../../utils/timezone';
 
 interface PayloadOptions {
   /** `event_entry_fee` feature flag — without it the fee is never sent. */
@@ -13,6 +14,10 @@ interface PayloadOptions {
 }
 
 const toInt = (value: string): number | undefined => (value ? parseInt(value, 10) : undefined);
+
+/** Form Dates are the event's wall clock in `timezone`; the API gets the real instant plus the zone. */
+const toInstant = (wall: Date, timezone: string): string =>
+  fromLocalWallClock(wall, timezone).toISOString();
 
 /** Fields sent the same way on create and update; optional ones are `undefined` when empty. */
 function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: PayloadOptions) {
@@ -30,10 +35,15 @@ function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: Payload
     location_name: formData.location_name,
     latitude: formData.latitude ?? undefined,
     longitude: formData.longitude ?? undefined,
-    starts_at: formData.starts_at.toISOString(),
-    ends_at: formData.ends_at.toISOString(),
-    registration_opens_at: formData.registration_opens_at?.toISOString(),
-    registration_closes_at: formData.registration_closes_at?.toISOString(),
+    timezone: formData.timezone,
+    starts_at: toInstant(formData.starts_at, formData.timezone),
+    ends_at: toInstant(formData.ends_at, formData.timezone),
+    registration_opens_at: formData.registration_opens_at
+      ? toInstant(formData.registration_opens_at, formData.timezone)
+      : undefined,
+    registration_closes_at: formData.registration_closes_at
+      ? toInstant(formData.registration_closes_at, formData.timezone)
+      : undefined,
     max_participants: toInt(formData.max_participants),
     difficulty: formData.difficulty,
     // Convert from km (form) to meters (API) — backend auto-mirrors distance → target_distance
@@ -100,6 +110,12 @@ export function buildUpdateEventPayload(
 export function eventToFormData(event: Event): EventFormData {
   // Use sport_type_id if available, otherwise fallback to sport_type.id
   const sportTypeId = event.sport_type_id ?? event.sport_type?.id ?? null;
+  // Pickers show the event's wall clock in its own zone, not the phone's
+  const zone =
+    event.timezone && isValidTimeZone(event.timezone)
+      ? event.timezone
+      : Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const wall = (iso: string) => toLocalWallClock(new Date(iso), zone);
   return {
     title: event.post?.title || '',
     content: event.post?.content || '',
@@ -109,13 +125,12 @@ export function eventToFormData(event: Event): EventFormData {
     // The API sends [lng, lat], or null for a location-less event
     latitude: event.coordinates?.[1] ?? null,
     longitude: event.coordinates?.[0] ?? null,
-    starts_at: new Date(event.starts_at),
-    ends_at: new Date(event.ends_at),
-    registration_opens_at: event.registration_opens_at
-      ? new Date(event.registration_opens_at)
-      : null,
+    timezone: zone,
+    starts_at: wall(event.starts_at),
+    ends_at: wall(event.ends_at),
+    registration_opens_at: event.registration_opens_at ? wall(event.registration_opens_at) : null,
     registration_closes_at: event.registration_closes_at
-      ? new Date(event.registration_closes_at)
+      ? wall(event.registration_closes_at)
       : null,
     max_participants: event.max_participants?.toString() || '',
     difficulty: event.difficulty,

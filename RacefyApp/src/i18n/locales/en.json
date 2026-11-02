@@ -598,6 +598,10 @@
     }
   },
   "events": {
+    "timezone": {
+      "label": "Event time zone",
+      "hint": "The dates above are local time in this zone (where the event takes place; online — yours). Participants will see them in their own time."
+    },
     "pointsBudget": {
       "title": "Points budget",
       "sponsored": "Sponsored",
@@ -3168,6 +3172,7 @@
     "firstFinish": "First finish"
   },
   "eventInfo": {
+    "localTime": "Event local time: {{time}} ({{city}})",
     "date": "Date",
     "start": "Start",
     "distance": "Distance",

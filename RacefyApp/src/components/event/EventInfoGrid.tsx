@@ -8,7 +8,8 @@ import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { fontSize, spacing } from '../../theme';
 import { formatCutoff, rankingModeLabel } from './eventFormat';
 import type { Event } from '../../types/api';
-import { formatDate } from '../../utils/dateFormat';
+import { formatDate, getAppLocale } from '../../utils/dateFormat';
+import { eventLocalTimeLine, getDeviceTimeZone } from '../../utils/timezone';
 
 interface InfoCell {
   label: string;
@@ -65,6 +66,18 @@ export function EventInfoGrid({ event }: { event: Event }) {
     return list;
   }, [event, t, formatDistanceShort, formatElevation, entryFeeEnabled]);
 
+  // The grid shows the device's time; when the event's own clock reads differently, say so
+  const localTime = useMemo(
+    () =>
+      eventLocalTimeLine(
+        new Date(event.starts_at),
+        event.timezone,
+        getDeviceTimeZone(),
+        getAppLocale(),
+      ),
+    [event.starts_at, event.timezone],
+  );
+
   return (
     <Card style={styles.card} noPadding>
       <View style={styles.grid}>
@@ -91,6 +104,14 @@ export function EventInfoGrid({ event }: { event: Event }) {
           );
         })}
       </View>
+      {localTime && (
+        <Text
+          style={[styles.localTime, { color: colors.textSecondary, borderTopColor: colors.border }]}
+          testID="event-local-time"
+        >
+          {t('eventInfo.localTime', { time: localTime.time, city: localTime.city })}
+        </Text>
+      )}
     </Card>
   );
 }
@@ -117,5 +138,11 @@ const styles = StyleSheet.create({
   value: {
     fontSize: fontSize.lg,
     fontWeight: '700',
+  },
+  localTime: {
+    fontSize: fontSize.sm,
+    paddingVertical: spacing.sm + 4,
+    paddingHorizontal: spacing.lg,
+    borderTopWidth: 1,
   },
 });

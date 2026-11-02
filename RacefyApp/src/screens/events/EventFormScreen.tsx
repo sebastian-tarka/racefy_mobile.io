@@ -28,6 +28,7 @@ import {
   ScreenContainer,
   ScreenHeader,
   SportTypeSelector,
+  TimeZonePickerModal,
 } from '../../components';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -75,6 +76,7 @@ import {
   RecurrenceForm,
   validateRecurrence,
 } from '../../utils/recurrence';
+import { formatTimeZone } from '../../utils/timezone';
 import { EventRankingModeSelector } from '../../components/EventRankingModeSelector';
 import { formatDate } from '../../utils/dateFormat';
 
@@ -187,6 +189,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       'longitude',
       'starts_at',
       'ends_at',
+      'timezone',
       'cover_image',
       'slug',
       'slug_expires_at',
@@ -419,12 +422,9 @@ export function EventFormScreen({ navigation, route }: Props) {
       } else {
         const createdEvent = await api.createEvent({
           ...buildCreateEventPayload(formData, { entryFeeEnabled }),
-          // The organizer's zone keeps every edition at the same local time across DST
-          recurrence: buildRecurrenceInput(
-            recurrence,
-            formData.starts_at,
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-          ),
+          // The event's zone keeps every edition at the same local time across DST;
+          // starts_at is that zone's wall clock, so its weekday/day are the rule's.
+          recurrence: buildRecurrenceInput(recurrence, formData.starts_at, formData.timezone),
         });
         savedEventId = createdEvent.id;
       }
@@ -491,6 +491,7 @@ export function EventFormScreen({ navigation, route }: Props) {
   };
 
   const openDatePicker = (field: DatePickerField) => setDatePickerField(field);
+  const [isTimeZonePickerOpen, setIsTimeZonePickerOpen] = useState(false);
 
   const formatDateTime = (date: Date | null): string => {
     if (!date) return t('eventForm.selectDate');
@@ -1052,6 +1053,37 @@ export function EventFormScreen({ navigation, route }: Props) {
                 )}
               </View>
 
+              {/* Event time zone — the dates above are its wall clock */}
+              <View style={[styles.inputContainer, isLimitedEdit && { opacity: 0.6 }]}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>
+                  {t('events.timezone.label')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.dateButton,
+                    { backgroundColor: colors.cardBackground, borderColor: colors.border },
+                    errors.timezone && { borderColor: colors.error },
+                  ]}
+                  onPress={() => setIsTimeZonePickerOpen(true)}
+                  disabled={isLimitedEdit}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('events.timezone.label')}
+                >
+                  <Ionicons name="globe-outline" size={20} color={colors.textSecondary} />
+                  <Text style={[styles.dateText, { color: colors.textPrimary }]}>
+                    {formatTimeZone(formData.timezone)}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                  {t('events.timezone.hint')}
+                </Text>
+                {errors.timezone && (
+                  <Text style={[styles.errorText, { color: colors.error }]}>
+                    {getFieldError(errors, 'timezone')}
+                  </Text>
+                )}
+              </View>
+
               {/* Repeat — a series can only be started when creating (Plus/Pro) */}
               {!isEditMode && (
                 <Card style={styles.optionalCard}>
@@ -1400,6 +1432,14 @@ export function EventFormScreen({ navigation, route }: Props) {
             }}
           />
         ) : null}
+
+        <TimeZonePickerModal
+          visible={isTimeZonePickerOpen}
+          title={t('events.timezone.label')}
+          selected={formData.timezone}
+          onSelect={(zone) => updateField('timezone', zone)}
+          onClose={() => setIsTimeZonePickerOpen(false)}
+        />
 
         {/* Date + time: one spinner on iOS, date then time dialogs on Android. */}
         <DatePickerSheet

@@ -11,6 +11,9 @@ import {
 /** What actually reaches the API: createEvent/updateEvent send JSON.stringify(payload). */
 const wire = (payload: unknown) => JSON.parse(JSON.stringify(payload));
 
+/** Jest runs in the machine's zone; the fixtures below use it as the event zone so instants are unchanged. */
+const DEVICE_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 const STARTS = '2026-11-01T09:00:00.000Z';
 const ENDS = '2026-11-01T13:00:00.000Z';
 
@@ -22,6 +25,7 @@ const minimalForm: FormData = {
   location_name: 'Park',
   latitude: 52.1,
   longitude: 21.0,
+  timezone: DEVICE_ZONE,
   starts_at: new Date(STARTS),
   ends_at: new Date(ENDS),
   registration_opens_at: null,
@@ -78,6 +82,7 @@ const common = {
   content: '',
   sport_type_id: 1,
   ranking_mode: 'fastest_time',
+  timezone: DEVICE_ZONE,
   location_name: 'Park',
   latitude: 52.1,
   longitude: 21.0,
@@ -223,6 +228,7 @@ describe('eventToFormData', () => {
       ranking_mode: 'fastest_time',
       latitude: 52.1,
       longitude: 21.0,
+      timezone: DEVICE_ZONE,
       starts_at: new Date(STARTS),
       ends_at: new Date(ENDS),
       registration_opens_at: null,
@@ -277,6 +283,60 @@ it('rounds the distance to whole metres', () => {
     { entryFeeEnabled: true },
   );
   expect(payload.distance).toBe(1005);
+});
+
+describe('event time zone (F2)', () => {
+  // 10:00 in New York on 15 Oct 2026 (EDT, UTC-4) is 14:00Z
+  const NY_START = '2026-10-15T14:00:00.000Z';
+  const nyEvent = {
+    post: { title: 'NYC run' },
+    sport_type_id: 1,
+    location_name: 'Central Park',
+    coordinates: null,
+    starts_at: NY_START,
+    ends_at: '2026-10-15T16:00:00.000Z',
+    timezone: 'America/New_York',
+    registration_opens_at: null,
+    registration_closes_at: '2026-10-14T03:59:00.000Z', // 23:59 on 13 Oct, New York
+  } as unknown as Event;
+
+  it("pre-fills the pickers with the event's wall clock in its own zone, not the device's", () => {
+    const form = eventToFormData(nyEvent);
+    expect(form.timezone).toBe('America/New_York');
+    expect([form.starts_at.getHours(), form.starts_at.getMinutes()]).toEqual([10, 0]);
+    expect(form.starts_at.getDate()).toBe(15);
+    expect(form.ends_at.getHours()).toBe(12);
+    expect(form.registration_closes_at?.getDate()).toBe(13);
+    expect(form.registration_closes_at?.getHours()).toBe(23);
+  });
+
+  it('sends the zone and converts the wall clock back to the same instants (round trip)', () => {
+    const payload = wire(
+      buildUpdateEventPayload(eventToFormData(nyEvent), { entryFeeEnabled: true }),
+    );
+    expect(payload).toMatchObject({
+      timezone: 'America/New_York',
+      starts_at: NY_START,
+      ends_at: '2026-10-15T16:00:00.000Z',
+      registration_closes_at: '2026-10-14T03:59:00.000Z',
+    });
+  });
+
+  it('keeps the wall clock when the organiser switches the zone: 10:00 Warsaw ≠ 10:00 New York', () => {
+    const form = eventToFormData(nyEvent);
+    const warsaw = wire(
+      buildCreateEventPayload({ ...form, timezone: 'Europe/Warsaw' }, { entryFeeEnabled: true }),
+    );
+    // 10:00 CEST on 15 Oct 2026 = 08:00Z
+    expect(warsaw.starts_at).toBe('2026-10-15T08:00:00.000Z');
+    expect(warsaw.timezone).toBe('Europe/Warsaw');
+  });
+
+  it('falls back to the device zone for an event without one (older API)', () => {
+    const form = eventToFormData({ ...nyEvent, timezone: undefined } as unknown as Event);
+    expect(form.timezone).toBe(DEVICE_ZONE);
+    expect(form.starts_at).toEqual(new Date(NY_START));
+  });
 });
 
 describe('coordinates', () => {

@@ -6,6 +6,7 @@ import {
   EventVisibility,
 } from '../../types/api';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { getDeviceTimeZone } from '../../utils/timezone';
 import type { RootStackParamList } from '../../navigation';
 import { StyleSheet } from 'react-native';
 import { borderRadius, fontSize, spacing } from '../../theme';
@@ -59,6 +60,12 @@ export interface FormData {
   /** null until picked on the map, from a suggestion or from the route start. */
   latitude: number | null;
   longitude: number | null;
+  /**
+   * The event's IANA zone. Every Date below is the event's *wall clock* in
+   * that zone, held in a device-local Date so the native pickers can edit it
+   * (see utils/timezone toLocalWallClock / fromLocalWallClock).
+   */
+  timezone: string;
   starts_at: Date;
   ends_at: Date;
   registration_opens_at: Date | null;
@@ -103,6 +110,7 @@ export const initialFormData: FormData = {
   location_name: '',
   latitude: null,
   longitude: null,
+  timezone: getDeviceTimeZone() ?? 'Europe/Warsaw',
   starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
   ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // +2 hours
   registration_opens_at: null,
@@ -142,6 +150,11 @@ export type DatePickerField =
   | 'registration_opens_at'
   | 'registration_closes_at';
 export const styles = StyleSheet.create({
+  hint: {
+    fontSize: fontSize.xs,
+    lineHeight: 17,
+    marginTop: 6,
+  },
   aiBadge: {
     position: 'absolute',
     top: spacing.sm,
