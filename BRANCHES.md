@@ -15,7 +15,21 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Tokeny palety pod motywy sezonowe — Faza 0 (`feature/theme-tokens-hardening`)
+
+Plan motywów z serwera w `.notes/ANALIZA_MOTYWY_ZDALNE.md`. Ta faza nie zmienia wyglądu: ~110
+literałów akcentu w 86 plikach poszło przez tokeny (`colors.primary/error/warning/…`), biały na
+przyciskach/chipach/FAB-ie → `colors.onPrimary`, nowe `routeAccent`, `rank.*`, `withAlpha()`.
+ESLint odrzuca odtąd literały akcentu. Ryzyko: kolor zdjęty ze statycznego `StyleSheet` i nałożony
+inline — jeśli gdzieś zapomniano, element będzie czarny/domyślny zamiast biały.
+- [ ] Home: FAB (play / barbell / stop przy aktywnej aktywności — bursztyn), badge licznika na tabie, karta „NA ŻYWO” (czerwona, biały tekst), karta nadchodzącego eventu (CTA), baner aktywnej aktywności
+- [ ] Nagrywanie: chipy sportu, przycisk Start (spinner + ikona + tekst), przyciski mapy (recenter/stats), pasek nawigacji po trasie (niebieski imminent → biały tekst), NavPreview
+- [ ] Feed: karta eventu (badge „nowe”, „Zobacz szczegóły”), karta wyzwania (Dołącz), osiągnięcie (rzadkość), sponsorowana (CTA), blok taggowanego eventu (challenge/digest/milestone)
+- [ ] Treningi siłowe: baner wznowienia sesji, arkusz wznowienia, konflikt sesji, wiersz serii (✓ na primary), przycisk Start w kalendarzu, stopka Zakończ
+- [ ] Eventy: formularz (zakładki, Switche, checkbox), akcje eventu (Zapisz się / zapisany / Startuj / trofeum), wyniki live (badge LIVE), medale w sekcji wyników i rankingu drużyn (złoto/srebro/brąz)
+- [ ] Komentarze: wysyłanie (spinner/ikona), edycja (zamień/kosz/zapisz), wzmianki (fiolet), licznik
+- [ ] Dark theme: to samo na próbę — szczególnie `rank.*`, `routeAccent`, glow w `ScreenContainer`
+- [ ] Ekran błędu (`ErrorBoundary`) i splash animowany wyglądają jak wcześniej
 
 ## Na `main`, ale niezweryfikowane runtime
 
