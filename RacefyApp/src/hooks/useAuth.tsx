@@ -219,7 +219,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
-    const response = await api.login({ ...data, timezone: getDeviceTimeZone() });
+    const timezone = getDeviceTimeZone();
+    const response = await api.login({ ...data, ...(timezone && { timezone }) });
     // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
     const status = await getConsentStatus();
     // Set both atomically - React 18 batches these (no await between them)

@@ -159,12 +159,14 @@ export class ApiBase {
       });
     }
 
+    const deviceTimeZone = getDeviceTimeZone();
     const headers: HeadersInit = {
       Accept: 'application/json',
       'Accept-Language': getCurrentLanguage(),
       // The phone's IANA zone, read per request: the server keeps it as the
       // user's zone while `timezone_auto` is on (time zone plan, phase 1).
-      'X-Timezone': getDeviceTimeZone(),
+      // Omitted when unknown — a 'UTC' would overwrite a zone the server knows.
+      ...(deviceTimeZone && { 'X-Timezone': deviceTimeZone }),
       ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...options.headers,
     };

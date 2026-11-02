@@ -31,15 +31,25 @@ describe('ApiBase.request', () => {
     (global as any).fetch = fetchMock;
   });
 
-  it('sends the device time zone on every request, read at request time', async () => {
+  it('sends the device time zone on every request, and no header when the runtime cannot say', async () => {
     fetchMock.mockResolvedValue(respond(200, '{"data":[]}'));
     const api = new ApiBase();
+    const spy = jest.spyOn(Intl, 'DateTimeFormat');
 
+    spy.mockImplementation((() => ({
+      resolvedOptions: () => ({ timeZone: 'Europe/Warsaw' }),
+    })) as any);
     await api.request('/feed');
-
-    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
-    expect(headers['X-Timezone']).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    let headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    expect(headers['X-Timezone']).toBe('Europe/Warsaw');
     expect(headers['Accept-Language']).toBe('en');
+
+    // 'UTC' from the runtime means "unknown": a header would overwrite a zone the server knows.
+    spy.mockImplementation((() => ({ resolvedOptions: () => ({ timeZone: 'UTC' }) })) as any);
+    await api.request('/feed');
+    headers = fetchMock.mock.calls[1][1].headers as Record<string, string>;
+    expect('X-Timezone' in headers).toBe(false);
+    spy.mockRestore();
   });
 
   it('turns a non-JSON 503 (proxy HTML page) into an ApiError with the status', async () => {

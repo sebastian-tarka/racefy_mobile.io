@@ -368,8 +368,10 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.timezone.title')}
             value={
               preferences.timezone_auto
-                ? `${t('settings.timezone.auto')} · ${getDeviceTimeZone()}`
-                : preferences.timezone || getDeviceTimeZone()
+                ? [t('settings.timezone.auto'), getDeviceTimeZone() ?? preferences.timezone]
+                    .filter(Boolean)
+                    .join(' · ')
+                : preferences.timezone || t('settings.timezone.auto')
             }
             onPress={() => setShowTimeZoneModal(true)}
           />

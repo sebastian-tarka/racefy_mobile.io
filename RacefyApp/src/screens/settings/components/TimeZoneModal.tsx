@@ -50,7 +50,7 @@ export function TimeZoneModal({
   const deviceZone = getDeviceTimeZone();
   const zones = useMemo(() => (visible ? listTimeZones() : []), [visible]);
   const shown = useMemo(() => filterTimeZones(zones, query), [zones, query]);
-  const selected = timezoneAuto ? deviceZone : timezone || deviceZone;
+  const selected = timezoneAuto ? (deviceZone ?? timezone) : timezone || deviceZone || 'UTC';
 
   return (
     <Modal
@@ -80,7 +80,9 @@ export function TimeZoneModal({
               {t('settings.timezone.auto')}
             </Text>
             <Text style={[styles.autoDetected, { color: colors.textSecondary }]}>
-              {t('settings.timezone.detected', { zone: deviceZone })}
+              {t('settings.timezone.detected', {
+                zone: deviceZone ?? t('settings.timezone.unknown'),
+              })}
             </Text>
           </View>
           <Switch

@@ -5,18 +5,22 @@
  * the server keeps it in `preferences.timezone` while `timezone_auto` is on,
  * so app start, focus, travel and a changed phone setting all take effect with
  * no extra call. Read per request, never cached at startup, for the same reason.
+ *
+ * Unknown zone = no header and no login field, never 'UTC': the server writes
+ * only on a change, and a 'UTC' would overwrite a zone it already knows.
  */
 
 export type TimeZoneChoice = { auto: true } | { auto: false; zone: string };
 
-export function getDeviceTimeZone(): string {
+/** The phone's IANA zone, or null when the runtime cannot say. */
+export function getDeviceTimeZone(): string | null {
   try {
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (zone && isValidTimeZone(zone)) return zone;
+    if (zone && zone !== 'UTC' && isValidTimeZone(zone)) return zone;
   } catch {
     // Hermes without Intl data, or a zone the runtime cannot name.
   }
-  return 'UTC';
+  return null;
 }
 
 export function isValidTimeZone(zone: string): boolean {
@@ -50,7 +54,7 @@ export function listTimeZones(): string[] {
   }
   if (zones.length === 0) zones = [...FALLBACK_ZONES];
   const device = getDeviceTimeZone();
-  if (!zones.includes(device)) zones.push(device);
+  if (device && !zones.includes(device)) zones.push(device);
   return Array.from(new Set(zones)).sort((a, b) => a.localeCompare(b));
 }
 

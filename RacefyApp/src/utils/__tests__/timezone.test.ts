@@ -8,10 +8,25 @@ import {
 } from '../timezone';
 
 describe('timezone', () => {
-  it('reports the runtime zone and never an empty string', () => {
+  it('reports the runtime zone, or null (never "UTC") when it cannot say', () => {
     const zone = getDeviceTimeZone();
-    expect(zone.length).toBeGreaterThan(0);
-    expect(isValidTimeZone(zone)).toBe(true);
+    if (zone === null) {
+      expect(Intl.DateTimeFormat().resolvedOptions().timeZone === 'UTC').toBe(true);
+    } else {
+      expect(zone).not.toBe('UTC');
+      expect(isValidTimeZone(zone)).toBe(true);
+    }
+  });
+
+  it('is null when the runtime reports UTC or throws', () => {
+    const spy = jest.spyOn(Intl, 'DateTimeFormat');
+    spy.mockImplementation((() => ({ resolvedOptions: () => ({ timeZone: 'UTC' }) })) as any);
+    expect(getDeviceTimeZone()).toBeNull();
+    spy.mockImplementation((() => {
+      throw new RangeError('no Intl');
+    }) as any);
+    expect(getDeviceTimeZone()).toBeNull();
+    spy.mockRestore();
   });
 
   it('accepts IANA names and rejects junk', () => {
@@ -32,7 +47,8 @@ describe('timezone', () => {
 
   it('lists sorted unique zones including the device zone and Warsaw', () => {
     const zones = listTimeZones();
-    expect(zones).toContain(getDeviceTimeZone());
+    const device = getDeviceTimeZone();
+    if (device) expect(zones).toContain(device);
     expect(zones).toContain('Europe/Warsaw');
     expect(new Set(zones).size).toBe(zones.length);
     expect([...zones].sort((a, b) => a.localeCompare(b))).toEqual(zones);

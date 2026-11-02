@@ -137,7 +137,7 @@ export function useUserPreferences() {
       await apply(
         (prev) =>
           choice.auto
-            ? { ...prev, timezone_auto: true, timezone: deviceZone }
+            ? { ...prev, timezone_auto: true, timezone: deviceZone ?? prev.timezone }
             : { ...prev, timezone_auto: false, timezone: choice.zone },
         timeZonePayload(choice),
         'Failed to update time zone',

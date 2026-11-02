@@ -1612,6 +1612,7 @@
       "description": "Według niej liczymy przypomnienia, e-maile i to, co jest „dzisiaj” w statystykach i celach.",
       "auto": "Automatycznie",
       "detected": "Strefa tego urządzenia: {{zone}}",
+      "unknown": "nieznana",
       "manual": "Wybierz strefę",
       "search": "Szukaj strefy (miasto lub region)"
     },
