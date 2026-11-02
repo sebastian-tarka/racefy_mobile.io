@@ -74,9 +74,9 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
 
   const getRankStyle = useCallback(
     (rank: number) => {
-      if (rank === 1) return { color: '#f59e0b', icon: 'trophy' as const };
-      if (rank === 2) return { color: '#9ca3af', icon: 'medal' as const };
-      if (rank === 3) return { color: '#b45309', icon: 'medal-outline' as const };
+      if (rank === 1) return { color: colors.rank.gold, icon: 'trophy' as const };
+      if (rank === 2) return { color: colors.rank.silver, icon: 'medal' as const };
+      if (rank === 3) return { color: colors.rank.bronze, icon: 'medal-outline' as const };
       return { color: colors.textMuted, icon: null };
     },
     [colors],

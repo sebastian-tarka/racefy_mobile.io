@@ -20,6 +20,7 @@ import { api } from '../../services/api';
 import { collectDeviceInfo } from '../../services/api/feedback';
 import { logger } from '../../services/logger';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import type { ThemeColors } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { FeedbackType, FeedbackPriority } from '../../types/api';
@@ -28,10 +29,10 @@ import { getErrorMessage, getErrorStatus, isApiError } from '../../utils/errors'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackForm'>;
 
-const FEEDBACK_TYPES: { type: FeedbackType; icon: string; color: string }[] = [
-  { type: 'bug', icon: 'bug-outline', color: '#EF4444' },
-  { type: 'feature_request', icon: 'bulb-outline', color: '#A855F7' },
-  { type: 'feedback', icon: 'chatbubble-outline', color: '#3B82F6' },
+const FEEDBACK_TYPES: { type: FeedbackType; icon: string; colorKey: keyof ThemeColors }[] = [
+  { type: 'bug', icon: 'bug-outline', colorKey: 'error' },
+  { type: 'feature_request', icon: 'bulb-outline', colorKey: 'ai' },
+  { type: 'feedback', icon: 'chatbubble-outline', colorKey: 'info' },
 ];
 
 const PRIORITIES: FeedbackPriority[] = ['low', 'medium', 'high', 'critical'];
@@ -149,8 +150,9 @@ export function FeedbackFormScreen({ navigation }: Props) {
             {t('feedback.form.type')}
           </Text>
           <View style={styles.typeSelector}>
-            {FEEDBACK_TYPES.map(({ type, icon, color }) => {
+            {FEEDBACK_TYPES.map(({ type, icon, colorKey }) => {
               const isActive = feedbackType === type;
+              const color = colors[colorKey] as string;
               return (
                 <TouchableOpacity
                   key={type}
@@ -268,7 +270,7 @@ export function FeedbackFormScreen({ navigation }: Props) {
                   style={styles.removeButton}
                   onPress={() => handleRemoveAttachment(index)}
                 >
-                  <Ionicons name="close-circle" size={20} color="#EF4444" />
+                  <Ionicons name="close-circle" size={20} color={colors.error} />
                 </TouchableOpacity>
               </View>
             ))}

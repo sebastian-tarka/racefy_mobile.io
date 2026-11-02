@@ -66,7 +66,9 @@ export function UpgradePromptModal() {
             style={[styles.upgradeButton, { backgroundColor: colors.primary }]}
             onPress={handleUpgrade}
           >
-            <Text style={styles.upgradeButtonText}>{t('subscription.viewPlans')}</Text>
+            <Text style={[styles.upgradeButtonText, { color: colors.onPrimary }]}>
+              {t('subscription.viewPlans')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleDismiss}>
@@ -122,7 +124,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   upgradeButtonText: {
-    color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '700',
   },

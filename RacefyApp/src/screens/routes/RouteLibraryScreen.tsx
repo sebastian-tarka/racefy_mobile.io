@@ -188,7 +188,7 @@ export function RouteLibraryScreen({ navigation, route: navRoute }: Props) {
             <Text
               style={[
                 styles.filterText,
-                { color: activeFilter === f.value ? '#fff' : colors.textSecondary },
+                { color: activeFilter === f.value ? colors.onPrimary : colors.textSecondary },
               ]}
             >
               {f.label}

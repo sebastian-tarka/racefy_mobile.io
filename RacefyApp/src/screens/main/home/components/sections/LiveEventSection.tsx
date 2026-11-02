@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { spacing, fontSize, borderRadius } from '../../../../../theme';
+import { useTheme } from '../../../../../hooks/useTheme';
+import { spacing, fontSize, borderRadius, withAlpha } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
 interface LiveEventSectionProps {
@@ -15,7 +16,9 @@ interface LiveEventSectionProps {
  * Shows a single live event that is currently happening.
  */
 export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSectionProps) {
+  const { colors } = useTheme();
   const event = section.event;
+  const onLive = colors.onPrimary;
 
   if (!event) {
     return null;
@@ -33,23 +36,25 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
     <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       <ImageBackground
         source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
-        style={styles.imageBackground}
+        style={[styles.imageBackground, { backgroundColor: colors.error }]}
         imageStyle={styles.image}
       >
-        <View style={[styles.overlay, { backgroundColor: 'rgba(220,38,38,0.85)' }]}>
+        <View style={[styles.overlay, { backgroundColor: withAlpha(colors.error, 0.85) }]}>
           <View style={styles.liveIndicator}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>NA ŻYWO</Text>
+            <View style={[styles.liveDot, { backgroundColor: onLive }]} />
+            <Text style={[styles.liveText, { color: onLive }]}>NA ŻYWO</Text>
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.eventTitle} numberOfLines={2}>
+            <Text style={[styles.sectionTitle, { color: withAlpha(onLive, 0.8) }]}>
+              {section.title}
+            </Text>
+            <Text style={[styles.eventTitle, { color: onLive }]} numberOfLines={2}>
               {event.title}
             </Text>
 
             {section.message && (
-              <Text style={styles.message} numberOfLines={2}>
+              <Text style={[styles.message, { color: withAlpha(onLive, 0.9) }]} numberOfLines={2}>
                 {section.message}
               </Text>
             )}
@@ -57,14 +62,19 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
             <View style={styles.meta}>
               {event.participants_count !== undefined && (
                 <View style={styles.metaItem}>
-                  <Ionicons name="people" size={14} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.metaText}>{event.participants_count} uczestników</Text>
+                  <Ionicons name="people" size={14} color={withAlpha(onLive, 0.9)} />
+                  <Text style={[styles.metaText, { color: withAlpha(onLive, 0.9) }]}>
+                    {event.participants_count} uczestników
+                  </Text>
                 </View>
               )}
               {event.location && (
                 <View style={styles.metaItem}>
-                  <Ionicons name="location" size={14} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.metaText} numberOfLines={1}>
+                  <Ionicons name="location" size={14} color={withAlpha(onLive, 0.9)} />
+                  <Text
+                    style={[styles.metaText, { color: withAlpha(onLive, 0.9) }]}
+                    numberOfLines={1}
+                  >
                     {event.location}
                   </Text>
                 </View>
@@ -73,9 +83,9 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
           </View>
 
           {section.cta && (
-            <View style={styles.ctaButton}>
-              <Text style={styles.ctaText}>{section.cta}</Text>
-              <Ionicons name="arrow-forward" size={16} color="#dc2626" />
+            <View style={[styles.ctaButton, { backgroundColor: onLive }]}>
+              <Text style={[styles.ctaText, { color: colors.error }]}>{section.cta}</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.error} />
             </View>
           )}
         </View>
@@ -93,7 +103,6 @@ const styles = StyleSheet.create({
   },
   imageBackground: {
     flex: 1,
-    backgroundColor: '#dc2626',
   },
   image: {
     borderRadius: borderRadius.lg,
@@ -113,10 +122,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#ffffff',
   },
   liveText: {
-    color: '#ffffff',
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 1,
@@ -126,18 +133,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionTitle: {
-    color: 'rgba(255,255,255,0.8)',
     fontSize: fontSize.xs,
     fontWeight: '500',
   },
   eventTitle: {
-    color: '#ffffff',
     fontSize: fontSize.lg,
     fontWeight: '700',
     marginTop: spacing.xs,
   },
   message: {
-    color: 'rgba(255,255,255,0.9)',
     fontSize: fontSize.sm,
     marginTop: spacing.xs,
   },
@@ -152,7 +156,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   metaText: {
-    color: 'rgba(255,255,255,0.9)',
     fontSize: fontSize.xs,
     fontWeight: '500',
   },
@@ -160,14 +163,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: '#ffffff',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
     gap: spacing.xs,
   },
   ctaText: {
-    color: '#dc2626',
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

@@ -254,11 +254,27 @@ const { colors } = useTheme();
 
 **Key colors:**
 - `colors.primary` - Emerald (#10b981)
+- `colors.onPrimary` - text/icons sitting ON a `primary` fill (buttons, active chips, FAB)
 - `colors.background` - Screen background
 - `colors.cardBackground` - Card/header background
 - `colors.textPrimary` - Main text
 - `colors.textSecondary` - Secondary/muted text
 - `colors.border` - Border color
+- `colors.routeAccent` - planned route (blue), `colors.rank.gold/silver/bronze` - leaderboard places
+- `colors.shadow`, `colors.overlay`, `colors.overlayStrong` - elevation and scrims
+
+**No accent literals.** The palette is designed to be swapped at runtime (seasonal themes
+delivered by the server, see `.notes/ANALIZA_MOTYWY_ZDALNE.md`), so a hardcoded `'#10b981'`
+or `'#fff'` on a primary button stays emerald/white while the rest of the app changes. ESLint
+(`no-restricted-syntax`, "Theme accent as a literal") rejects the accent hex values and
+`rgba(16,185,129,…)`; use the token, and `withAlpha(colors.primary, 0.25)` from `theme/color.ts`
+for translucent variants. White/black on photos, video and the hero recording surface are
+not accents and stay literals. Palettes that are deliberately fixed (sport colours, weather
+gradients, map paint, notification channel colours) are listed as exemptions in
+`eslint.config.js` — each with the reason.
+
+A literal inside a module-level `StyleSheet.create` cannot read the theme: drop the colour
+from the static style and apply it inline, `style={[styles.label, { color: colors.onPrimary }]}`.
 
 ## Internationalization
 

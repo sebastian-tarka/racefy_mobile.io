@@ -5,6 +5,7 @@ import type {
   WorkoutExerciseInput,
   WorkoutTargetType,
 } from '../types/workouts';
+import { sportColor } from './sportColor';
 
 type PrescriptionLike = Pick<
   WorkoutExercise | WorkoutExerciseInput,
@@ -75,5 +76,9 @@ export function estimateWorkoutMinutes(
   return Math.round(seconds / 60);
 }
 
-/** Brand accent for strength: the design paints every dumbbell tile in it. */
-export const STRENGTH_ACCENT = '#EF4444';
+/**
+ * Accent for strength: the design paints every dumbbell tile in the sport's
+ * colour. Deliberately the fixed sport palette, not a theme token — a strength
+ * tile stays red under a seasonal theme, like every other sport's chart bar.
+ */
+export const STRENGTH_ACCENT = sportColor({ slug: 'strength' });

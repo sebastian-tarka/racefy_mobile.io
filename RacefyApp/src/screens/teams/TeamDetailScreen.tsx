@@ -203,7 +203,7 @@ export function TeamDetailScreen({ route, navigation }: Props) {
               <Avatar uri={team.avatar} name={team.name} size="xl" />
               {isCaptain && (
                 <View style={[styles.avatarBadge, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="camera" size={14} color="#fff" />
+                  <Ionicons name="camera" size={14} color={colors.onPrimary} />
                 </View>
               )}
               {uploadingAvatar && (
@@ -371,7 +371,7 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                     </Text>
                   </View>
                   {member.role === 'captain' && (
-                    <Ionicons name="star" size={18} color={colors.warning || '#f59e0b'} />
+                    <Ionicons name="star" size={18} color={colors.warning} />
                   )}
                   {isCaptain && member.role !== 'captain' && (
                     <View style={styles.memberActions}>
@@ -438,13 +438,13 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                         style={[styles.requestBtn, { backgroundColor: colors.primary }]}
                         onPress={() => handleAcceptJoinRequest(req.id)}
                       >
-                        <Ionicons name="checkmark" size={18} color="#fff" />
+                        <Ionicons name="checkmark" size={18} color={colors.onPrimary} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.requestBtn, { backgroundColor: colors.error }]}
                         onPress={() => handleDeclineJoinRequest(req.id)}
                       >
-                        <Ionicons name="close" size={18} color="#fff" />
+                        <Ionicons name="close" size={18} color={colors.onPrimary} />
                       </TouchableOpacity>
                     </View>
                   </View>

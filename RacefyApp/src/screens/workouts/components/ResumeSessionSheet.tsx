@@ -174,9 +174,11 @@ export function ResumeSessionSheet({
           activeOpacity={0.85}
         >
           {isBusy ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text style={styles.confirmText}>{t('strengthPlans.resumeSheet.confirm')}</Text>
+            <Text style={[styles.confirmText, { color: colors.onPrimary }]}>
+              {t('strengthPlans.resumeSheet.confirm')}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -243,7 +245,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   confirmText: {
-    color: '#ffffff',
     fontSize: fontSize.md,
     fontWeight: '700',
   },

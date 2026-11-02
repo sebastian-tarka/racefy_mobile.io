@@ -383,13 +383,13 @@ export function ActivityFormScreen({ navigation, route }: Props) {
                   <Ionicons
                     name={option.icon as any}
                     size={18}
-                    color={visibility === option.value ? '#fff' : colors.textSecondary}
+                    color={visibility === option.value ? colors.onPrimary : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.visibilityLabel,
                       {
-                        color: visibility === option.value ? '#fff' : colors.textPrimary,
+                        color: visibility === option.value ? colors.onPrimary : colors.textPrimary,
                       },
                     ]}
                   >
@@ -423,7 +423,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
                 value={showStartFinishPoints}
                 onValueChange={handleGpsPrivacyToggle}
                 trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={colors.white}
+                thumbColor={colors.onPrimary}
               />
             </View>
           )}
@@ -455,7 +455,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
                     style={[styles.deleteButton, { backgroundColor: colors.error }]}
                     onPress={() => handleDeleteExistingVideo(video)}
                   >
-                    <Ionicons name="close" size={16} color="#fff" />
+                    <Ionicons name="close" size={16} color={colors.onPrimary} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -471,7 +471,7 @@ export function ActivityFormScreen({ navigation, route }: Props) {
                     style={[styles.deleteButton, { backgroundColor: colors.error }]}
                     onPress={() => handleDeleteExistingPhoto(photo)}
                   >
-                    <Ionicons name="close" size={16} color="#fff" />
+                    <Ionicons name="close" size={16} color={colors.onPrimary} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -481,13 +481,15 @@ export function ActivityFormScreen({ navigation, route }: Props) {
                 <View key={`new-${index}`} style={styles.photoItem}>
                   <Image source={{ uri: photo.uri }} style={styles.photoImage} />
                   <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.newBadgeText}>{t('activityForm.new')}</Text>
+                    <Text style={[styles.newBadgeText, { color: colors.onPrimary }]}>
+                      {t('activityForm.new')}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.deleteButton, { backgroundColor: colors.error }]}
                     onPress={() => handleRemoveNewPhoto(index)}
                   >
-                    <Ionicons name="close" size={16} color="#fff" />
+                    <Ionicons name="close" size={16} color={colors.onPrimary} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -664,7 +666,6 @@ const styles = StyleSheet.create({
   newBadgeText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#fff',
   },
   addPhotoButton: {
     width: 100,

@@ -346,7 +346,7 @@ function UserListModalComponent({
                 pendingRequestsCount != null &&
                 pendingRequestsCount > 0 && (
                   <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.tabBadgeText}>
+                    <Text style={[styles.tabBadgeText, { color: colors.onPrimary }]}>
                       {pendingRequestsCount > 99 ? '99+' : pendingRequestsCount}
                     </Text>
                   </View>
@@ -411,7 +411,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

@@ -3,6 +3,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../hooks/useTheme';
+import { withAlpha } from '../theme';
 
 interface ScreenContainerProps {
   children: React.ReactNode;
@@ -33,8 +34,8 @@ export function ScreenContainer({
           <LinearGradient
             colors={
               isDark
-                ? ['rgba(16, 185, 129, 0.12)', 'transparent']
-                : ['rgba(16, 185, 129, 0.08)', 'transparent']
+                ? [withAlpha(colors.primary, 0.12), 'transparent']
+                : [withAlpha(colors.primary, 0.08), 'transparent']
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 0.7, y: 0.5 }}
@@ -44,8 +45,8 @@ export function ScreenContainer({
           <LinearGradient
             colors={
               isDark
-                ? ['transparent', 'rgba(59, 130, 246, 0.08)']
-                : ['transparent', 'rgba(59, 130, 246, 0.06)']
+                ? ['transparent', withAlpha(colors.info, 0.08)]
+                : ['transparent', withAlpha(colors.info, 0.06)]
             }
             start={{ x: 0.3, y: 0.5 }}
             end={{ x: 1, y: 1 }}

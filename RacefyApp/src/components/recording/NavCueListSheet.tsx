@@ -9,9 +9,6 @@ import { turnIcon, turnLabelKey } from '../../utils/navigationCues';
 import { borderRadius, fontSize, msFont, spacing } from '../../theme';
 import type { RouteTurnInstruction } from '../../types/api';
 
-/** The route layer's blue — same one the map draws planned routes in. */
-const ROUTE_BLUE = '#2563EB';
-
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -38,6 +35,8 @@ export function NavCueListSheet({ visible, onClose, title, turns, distanceAlong 
   const { t } = useTranslation();
   const { formatDistance } = useUnits();
   const insets = useSafeAreaInsets();
+  // The route layer's blue — same one the map draws planned routes in.
+  const routeBlue = colors.routeAccent;
 
   const nextIndex = turns.findIndex((turn) => turn.distance_along > distanceAlong);
   const total = turns.length ? formatDistance(turns[turns.length - 1].distance_along) : null;
@@ -92,15 +91,15 @@ export function NavCueListSheet({ visible, onClose, title, turns, distanceAlong 
                     style={[
                       styles.railIcon,
                       {
-                        backgroundColor: isNext ? ROUTE_BLUE : colors.cardBackground,
-                        borderColor: isNext ? ROUTE_BLUE : colors.border,
+                        backgroundColor: isNext ? routeBlue : colors.cardBackground,
+                        borderColor: isNext ? routeBlue : colors.border,
                       },
                     ]}
                   >
                     <Ionicons
                       name={turnIcon(turn.maneuver)}
                       size={17}
-                      color={isNext ? '#ffffff' : ROUTE_BLUE}
+                      color={isNext ? colors.onPrimary : routeBlue}
                     />
                   </View>
                   {!last && <View style={[styles.railLine, { backgroundColor: colors.border }]} />}
@@ -115,8 +114,10 @@ export function NavCueListSheet({ visible, onClose, title, turns, distanceAlong 
                       {formatDistance(turn.distance_along)}
                     </Text>
                     {isNext && (
-                      <View style={[styles.badge, { backgroundColor: ROUTE_BLUE }]}>
-                        <Text style={styles.badgeText}>{t('navigation.next')}</Text>
+                      <View style={[styles.badge, { backgroundColor: routeBlue }]}>
+                        <Text style={[styles.badgeText, { color: colors.onPrimary }]}>
+                          {t('navigation.next')}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -228,7 +229,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   badgeText: {
-    color: '#ffffff',
     fontSize: msFont(9),
     fontWeight: '700',
     letterSpacing: 0.8,

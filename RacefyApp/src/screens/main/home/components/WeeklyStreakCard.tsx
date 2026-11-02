@@ -51,7 +51,7 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.dayBox}
           >
-            <Ionicons name="checkmark" size={18} color="#fff" />
+            <Ionicons name="checkmark" size={18} color={colors.onPrimary} />
           </LinearGradient>
         ) : (
           <View
@@ -124,7 +124,7 @@ export const WeeklyStreakCard: React.FC<WeeklyStreakCardProps> = ({
     <View style={[styles.container, { backgroundColor: colors.cardBackground }]}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Ionicons name="flame" size={20} color="#f59e0b" />
+          <Ionicons name="flame" size={20} color={colors.warning} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('home.weeklyStreak.title')}
           </Text>

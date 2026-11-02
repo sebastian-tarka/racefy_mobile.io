@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../hooks/useTheme';
 import { useCurrentWorkoutSession } from '../../../hooks/useCurrentWorkoutSession';
 import type { RootStackParamList } from '../../../navigation/types';
-import { borderRadius, fontSize, spacing } from '../../../theme';
+import { borderRadius, fontSize, spacing, withAlpha } from '../../../theme';
 
 /**
  * "Session in progress — Resume" strip. Renders nothing when there is no
@@ -34,16 +34,23 @@ export function ResumeSessionBanner() {
       onPress={() => navigation.navigate('WorkoutSession', { sessionId: current.id })}
       activeOpacity={0.85}
     >
-      <View style={styles.pulse}>
+      <View style={[styles.pulse, { backgroundColor: colors.onPrimary }]}>
         <Ionicons name="play" size={16} color={colors.primary} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{t('strengthPlans.resume.title')}</Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.onPrimary }]}>
+          {t('strengthPlans.resume.title')}
+        </Text>
+        <Text
+          style={[styles.subtitle, { color: withAlpha(colors.onPrimary, 0.85) }]}
+          numberOfLines={1}
+        >
           {t('strengthPlans.resume.subtitle', { name: current.workout_name, time: startedAt })}
         </Text>
       </View>
-      <Text style={styles.cta}>{t('strengthPlans.resume.cta')} ›</Text>
+      <Text style={[styles.cta, { color: colors.onPrimary }]}>
+        {t('strengthPlans.resume.cta')} ›
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -61,22 +68,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: '#ffffff',
     fontSize: fontSize.md,
     fontWeight: '700',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
     fontSize: fontSize.xs,
     marginTop: 2,
   },
   cta: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

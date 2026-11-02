@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { logger } from '../services/logger';
 import { fontSize, msFont } from '../theme';
+// Class component — no useTheme(); the error screen is a fixed dark surface, so the static palette is fine.
+import { lightColors } from '../theme/colors';
 import i18n from '../i18n';
 
 interface Props {
@@ -77,19 +79,19 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: fontSize.md,
-    color: '#9ca3af',
+    color: lightColors.textMuted,
     textAlign: 'center',
     marginBottom: 24,
   },
   button: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#10b981',
+    backgroundColor: lightColors.primary,
     borderRadius: 8,
   },
   buttonText: {
     fontSize: msFont(15),
     fontWeight: '600',
-    color: '#ffffff',
+    color: lightColors.onPrimary,
   },
 });

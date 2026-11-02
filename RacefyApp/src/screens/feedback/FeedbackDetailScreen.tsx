@@ -20,7 +20,7 @@ import {
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, withAlpha } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Feedback, FeedbackReply, FeedbackAttachment } from '../../types/api';
@@ -125,7 +125,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
 
   const renderReply = (reply: FeedbackReply) => {
     const isAdmin = reply.is_admin_reply;
-    const borderColor = isAdmin ? '#10B981' : colors.border;
+    const borderColor = isAdmin ? colors.primary : colors.border;
     const label = isAdmin ? t('feedback.detail.adminReply') : t('feedback.detail.you');
 
     return (
@@ -138,8 +138,10 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
       >
         <View style={styles.replyHeader}>
           {isAdmin && (
-            <View style={[styles.teamBadge, { backgroundColor: '#10B98120' }]}>
-              <Text style={styles.teamBadgeText}>{t('feedback.detail.adminReply')}</Text>
+            <View style={[styles.teamBadge, { backgroundColor: withAlpha(colors.primary, 0.125) }]}>
+              <Text style={[styles.teamBadgeText, { color: colors.primary }]}>
+                {t('feedback.detail.adminReply')}
+              </Text>
             </View>
           )}
           <Text style={[styles.replyAuthor, { color: colors.textPrimary }]}>{label}</Text>
@@ -413,7 +415,6 @@ const styles = StyleSheet.create({
   teamBadgeText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#10B981',
   },
   replyAuthor: {
     fontSize: fontSize.sm,

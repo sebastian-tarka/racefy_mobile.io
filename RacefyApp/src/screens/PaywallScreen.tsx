@@ -397,7 +397,9 @@ export function PaywallScreen() {
                   {/* Popular badge */}
                   {isPopular && (
                     <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
-                      <Text style={styles.popularBadgeText}>{t('subscription.mostPopular')}</Text>
+                      <Text style={[styles.popularBadgeText, { color: colors.onPrimary }]}>
+                        {t('subscription.mostPopular')}
+                      </Text>
                     </View>
                   )}
 
@@ -653,7 +655,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   popularBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

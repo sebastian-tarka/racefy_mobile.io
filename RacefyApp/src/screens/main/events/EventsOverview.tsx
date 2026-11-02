@@ -76,7 +76,7 @@ export function EventsStatsRow({
           },
           {
             icon: 'people',
-            color: colors.info || '#3b82f6',
+            color: colors.info,
             value: o?.ongoing.total_participants ?? 0,
             label: t('events.stats.participants'),
           },
@@ -97,7 +97,7 @@ export function EventsStatsRow({
           },
           {
             icon: 'people',
-            color: colors.info || '#3b82f6',
+            color: colors.info,
             value: o?.upcoming.total_participants ?? 0,
             label: t('events.stats.participants'),
           },

@@ -28,9 +28,9 @@ export function NavigationOverlay({ navigation: nav }: NavigationOverlayProps) {
     <View style={styles.container} pointerEvents="box-none">
       {/* Off-route warning */}
       {nav.isOffRoute && (
-        <View style={[styles.offRouteBanner, { backgroundColor: '#ef4444' }]}>
-          <Ionicons name="warning" size={18} color="#fff" />
-          <Text style={styles.offRouteText}>
+        <View style={[styles.offRouteBanner, { backgroundColor: colors.error }]}>
+          <Ionicons name="warning" size={18} color={colors.onPrimary} />
+          <Text style={[styles.offRouteText, { color: colors.onPrimary }]}>
             {t('navigation.offRoute', 'Off route')} — {nav.distanceFromRoute}m
           </Text>
         </View>
@@ -40,7 +40,11 @@ export function NavigationOverlay({ navigation: nav }: NavigationOverlayProps) {
       {nav.nextTurn && nav.distanceToTurn !== null && (
         <View style={[styles.turnCard, { backgroundColor: colors.cardBackground }]}>
           <View style={[styles.turnIconBox, { backgroundColor: colors.primary }]}>
-            <Ionicons name={getTurnIconName(nav.nextTurn.maneuver)} size={24} color="#fff" />
+            <Ionicons
+              name={getTurnIconName(nav.nextTurn.maneuver)}
+              size={24}
+              color={colors.onPrimary}
+            />
           </View>
           <View style={styles.turnInfo}>
             <Text style={[styles.turnDistance, { color: colors.textPrimary }]}>
@@ -116,7 +120,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   offRouteText: {
-    color: '#fff',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

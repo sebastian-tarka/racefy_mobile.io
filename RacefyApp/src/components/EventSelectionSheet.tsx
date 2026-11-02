@@ -17,8 +17,6 @@ import type { SportTypeWithIcon } from '../hooks/useSportTypes';
 import type { Event } from '../types/api';
 import { formatIntlTime } from '../utils/dateFormat';
 
-const ROUTE_BLUE = '#2563EB';
-
 interface EventSelectionSheetProps {
   visible: boolean;
   onClose: () => void;
@@ -186,7 +184,7 @@ export function EventSelectionSheet({
                       <Ionicons
                         name={sport?.icon ?? 'fitness-outline'}
                         size={19}
-                        color={active ? '#ffffff' : colors.primary}
+                        color={active ? colors.onPrimary : colors.primary}
                       />
                     </View>
                     <View style={styles.rowBody}>
@@ -205,8 +203,12 @@ export function EventSelectionSheet({
                         </View>
                         {event.route?.geometry && (
                           <View style={styles.metaItem}>
-                            <Ionicons name="git-branch-outline" size={12} color={ROUTE_BLUE} />
-                            <Text style={[styles.metaText, { color: ROUTE_BLUE }]}>
+                            <Ionicons
+                              name="git-branch-outline"
+                              size={12}
+                              color={colors.routeAccent}
+                            />
+                            <Text style={[styles.metaText, { color: colors.routeAccent }]}>
                               {t('eventPin.hasRoute')}
                             </Text>
                           </View>
@@ -220,7 +222,7 @@ export function EventSelectionSheet({
                     </View>
                     {active && (
                       <View style={[styles.check, { backgroundColor: colors.event }]}>
-                        <Ionicons name="checkmark" size={15} color="#ffffff" />
+                        <Ionicons name="checkmark" size={15} color={colors.onPrimary} />
                       </View>
                     )}
                   </TouchableOpacity>

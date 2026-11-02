@@ -94,8 +94,8 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
             previewHeight={200}
           />
         ) : (
-          <View style={[chStyles.placeholderCover, { backgroundColor: '#F59E0B' + '20' }]}>
-            <Ionicons name="flame" size={48} color="#F59E0B" />
+          <View style={[chStyles.placeholderCover, { backgroundColor: colors.warning + '20' }]}>
+            <Ionicons name="flame" size={48} color={colors.warning} />
           </View>
         )}
 
@@ -139,7 +139,9 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
           onPress={onEventPress}
           activeOpacity={0.8}
         >
-          <Text style={chStyles.joinButtonText}>{t('feed.joinChallenge', 'JOIN CHALLENGE')}</Text>
+          <Text style={[chStyles.joinButtonText, { color: colors.onPrimary }]}>
+            {t('feed.joinChallenge', 'JOIN CHALLENGE')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -243,7 +245,6 @@ const chStyles = StyleSheet.create({
     alignItems: 'center',
   },
   joinButtonText: {
-    color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '700',
     letterSpacing: 0.5,

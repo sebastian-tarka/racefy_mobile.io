@@ -92,8 +92,10 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
           />
           {/* "NEW EVENT" badge */}
           {isNew && (
-            <View style={evStyles.newBadge}>
-              <Text style={evStyles.newBadgeText}>{t('feed.newEvent', 'NEW EVENT')}</Text>
+            <View style={[evStyles.newBadge, { backgroundColor: colors.info }]}>
+              <Text style={[evStyles.newBadgeText, { color: colors.onPrimary }]}>
+                {t('feed.newEvent', 'NEW EVENT')}
+              </Text>
             </View>
           )}
           {/* Title on gradient */}
@@ -169,8 +171,10 @@ export function EventBody({ post, onEventPress }: { post: Post; onEventPress?: (
             onPress={onEventPress}
             style={[evStyles.viewDetailsBtn, { backgroundColor: colors.info }]}
           >
-            <Text style={evStyles.viewDetailsBtnText}>{t('feed.viewDetails')}</Text>
-            <Ionicons name="chevron-forward" size={14} color="#fff" />
+            <Text style={[evStyles.viewDetailsBtnText, { color: colors.onPrimary }]}>
+              {t('feed.viewDetails')}
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.onPrimary} />
           </TouchableOpacity>
         )}
       </View>
@@ -248,14 +252,12 @@ const evStyles = StyleSheet.create({
     position: 'absolute',
     top: spacing.md,
     left: spacing.md,
-    backgroundColor: '#3b82f6',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: borderRadius.sm,
     zIndex: 2,
   },
   newBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.8,
@@ -320,7 +322,6 @@ const evStyles = StyleSheet.create({
     gap: 4,
   },
   viewDetailsBtnText: {
-    color: '#fff',
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

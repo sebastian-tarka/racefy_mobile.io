@@ -247,7 +247,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
               </Text>
               {pendingFollowCount > 0 && (
                 <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.statBadgeText}>
+                  <Text style={[styles.statBadgeText, { color: colors.onPrimary }]}>
                     {pendingFollowCount > 99 ? '99+' : pendingFollowCount}
                   </Text>
                 </View>
@@ -382,7 +382,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

@@ -403,7 +403,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
         {rest && restRemaining != null && restRemaining > 0 && (
           <View style={[styles.restBar, { backgroundColor: colors.warningLight }]}>
             <View style={[styles.restIcon, { backgroundColor: colors.warning }]}>
-              <Ionicons name="hourglass-outline" size={17} color="#ffffff" />
+              <Ionicons name="hourglass-outline" size={17} color={colors.onPrimary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.restTitle, { color: colors.warning }]}>
@@ -547,7 +547,9 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
               onPress={() => setCompleteOpen(true)}
               activeOpacity={0.85}
             >
-              <Text style={styles.footerPrimaryText}>{t('strengthPlans.session.finish')}</Text>
+              <Text style={[styles.footerPrimaryText, { color: colors.onPrimary }]}>
+                {t('strengthPlans.session.finish')}
+              </Text>
             </TouchableOpacity>
           )}
 
@@ -756,7 +758,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   footerPrimaryText: {
-    color: '#ffffff',
     fontSize: fontSize.md,
     fontWeight: '700',
     flexShrink: 1,

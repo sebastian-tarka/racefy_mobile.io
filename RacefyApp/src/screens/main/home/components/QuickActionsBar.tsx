@@ -30,19 +30,19 @@ export function QuickActionsBar({
     {
       icon: 'add-circle',
       labelKey: 'home.quickActions.createPost',
-      color: '#3b82f6',
+      color: colors.info,
       onPress: onCreatePost,
     },
     {
       icon: 'play-circle',
       labelKey: 'home.quickActions.startActivity',
-      color: '#10b981',
+      color: colors.primary,
       onPress: onStartActivity,
     },
     {
       icon: 'calendar',
       labelKey: 'events.createEvent',
-      color: '#f59e0b',
+      color: colors.warning,
       onPress: onFindEvents,
     },
   ];

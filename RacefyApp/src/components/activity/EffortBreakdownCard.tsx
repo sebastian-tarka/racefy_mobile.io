@@ -163,8 +163,8 @@ export function EffortBreakdownCard({ analysis, isPending, style }: EffortBreakd
           <Svg width={width} height={CHART_HEIGHT}>
             <Defs>
               <SvgGradient id="effortFill" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#10b981" stopOpacity={0.28} />
-                <Stop offset="1" stopColor="#10b981" stopOpacity={0} />
+                <Stop offset="0" stopColor={colors.primary} stopOpacity={0.28} />
+                <Stop offset="1" stopColor={colors.primary} stopOpacity={0} />
               </SvgGradient>
             </Defs>
 
@@ -198,7 +198,7 @@ export function EffortBreakdownCard({ analysis, isPending, style }: EffortBreakd
                 key={`line-${index}`}
                 points={segment.line}
                 fill="none"
-                stroke="#10b981"
+                stroke={colors.primary}
                 strokeWidth={2.5}
                 strokeLinejoin="round"
                 strokeLinecap="round"

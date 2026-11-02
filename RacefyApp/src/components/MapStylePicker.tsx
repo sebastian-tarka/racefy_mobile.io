@@ -90,7 +90,7 @@ function StyleTile({
         )}
         {selected && (
           <View style={[styles.checkBadge, { backgroundColor: colors.primary }]}>
-            <Ionicons name="checkmark" size={14} color="#ffffff" />
+            <Ionicons name="checkmark" size={14} color={colors.onPrimary} />
           </View>
         )}
       </View>

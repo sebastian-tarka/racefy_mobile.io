@@ -270,7 +270,9 @@ export function CommentSection({
         </Text>
         {localCommentsCount > 0 && (
           <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>
-            <Text style={styles.countText}>{localCommentsCount}</Text>
+            <Text style={[styles.countText, { color: colors.onPrimary }]}>
+              {localCommentsCount}
+            </Text>
           </View>
         )}
       </View>
@@ -363,7 +365,6 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
-    color: '#fff',
   },
   listContent: {
     paddingVertical: spacing.sm,

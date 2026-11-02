@@ -320,8 +320,10 @@ export function PostFormScreen({ navigation, route }: Props) {
                       navigation.navigate('ActivityForm', { activityId: post.activity!.id })
                     }
                   >
-                    <Ionicons name="pencil" size={14} color="#fff" />
-                    <Text style={styles.editActivityButtonText}>{t('postForm.editActivity')}</Text>
+                    <Ionicons name="pencil" size={14} color={colors.onPrimary} />
+                    <Text style={[styles.editActivityButtonText, { color: colors.onPrimary }]}>
+                      {t('postForm.editActivity')}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -406,13 +408,13 @@ export function PostFormScreen({ navigation, route }: Props) {
                   <Ionicons
                     name={option.icon as any}
                     size={18}
-                    color={visibility === option.value ? '#fff' : colors.textSecondary}
+                    color={visibility === option.value ? colors.onPrimary : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.visibilityLabel,
                       {
-                        color: visibility === option.value ? '#fff' : colors.textPrimary,
+                        color: visibility === option.value ? colors.onPrimary : colors.textPrimary,
                       },
                     ]}
                   >
@@ -450,7 +452,7 @@ export function PostFormScreen({ navigation, route }: Props) {
                         style={[styles.removeButton, { backgroundColor: colors.error }]}
                         onPress={() => handleRemoveExistingMedia(media)}
                       >
-                        <Ionicons name="close" size={16} color="#fff" />
+                        <Ionicons name="close" size={16} color={colors.onPrimary} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -619,7 +621,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   editActivityButtonText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '600',
   },

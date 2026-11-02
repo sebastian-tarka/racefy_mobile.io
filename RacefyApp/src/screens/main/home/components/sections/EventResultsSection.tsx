@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
+import type { ThemeColors } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
 
 interface EventResultsSectionProps {
@@ -16,16 +17,16 @@ interface EventResultsSectionProps {
 /**
  * Get medal color based on position
  */
-function getMedalColor(position: number): string {
+function getMedalColor(position: number, colors: ThemeColors): string {
   switch (position) {
     case 1:
-      return '#FFD700'; // Gold
+      return colors.rank.gold;
     case 2:
-      return '#C0C0C0'; // Silver
+      return colors.rank.silver;
     case 3:
-      return '#CD7F32'; // Bronze
+      return colors.rank.bronze;
     default:
-      return '#9ca3af';
+      return colors.textMuted;
   }
 }
 
@@ -77,10 +78,15 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
               <View
                 style={[
                   styles.positionBadge,
-                  { backgroundColor: getMedalColor(participant.position) + '30' },
+                  { backgroundColor: getMedalColor(participant.position, colors) + '30' },
                 ]}
               >
-                <Text style={[styles.positionText, { color: getMedalColor(participant.position) }]}>
+                <Text
+                  style={[
+                    styles.positionText,
+                    { color: getMedalColor(participant.position, colors) },
+                  ]}
+                >
                   {participant.position}
                 </Text>
               </View>

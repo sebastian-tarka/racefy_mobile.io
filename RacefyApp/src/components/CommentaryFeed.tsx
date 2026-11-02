@@ -116,13 +116,13 @@ export function CommentaryFeed({
         style={[
           styles.fallbackBanner,
           {
-            backgroundColor: colors.warningLight ?? '#fffbeb',
-            borderColor: colors.warning ?? '#f59e0b',
+            backgroundColor: colors.warningLight,
+            borderColor: colors.warning,
           },
         ]}
       >
-        <Ionicons name="information-circle-outline" size={16} color={colors.warning ?? '#f59e0b'} />
-        <Text style={[styles.fallbackBannerText, { color: colors.warning ?? '#92400e' }]}>
+        <Ionicons name="information-circle-outline" size={16} color={colors.warning} />
+        <Text style={[styles.fallbackBannerText, { color: colors.warning }]}>
           {t(
             'commentary.fallbackNotice',
             'Commentary not available in your language. Showing in: {{language}}',

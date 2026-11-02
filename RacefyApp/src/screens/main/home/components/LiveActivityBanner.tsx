@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useUnits } from '../../../../hooks/useUnits';
-import { spacing, fontSize, borderRadius } from '../../../../theme';
+import { spacing, fontSize, borderRadius, withAlpha } from '../../../../theme';
 import { formatDuration } from '../../../../utils/formatDuration';
 import { useLiveActivityContext } from '../../../../hooks/useLiveActivity';
 
@@ -54,31 +54,43 @@ export const LiveActivityBanner = React.memo(function LiveActivityBanner({
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: isPaused ? colors.warning : '#ef4444' }]}
+      style={[styles.container, { backgroundColor: isPaused ? colors.warning : colors.error }]}
       onPress={onPress}
       activeOpacity={0.9}
     >
       <View style={styles.leftSection}>
         <Animated.View
-          style={[styles.recordingDot, { transform: [{ scale: isPaused ? 1 : pulseAnim }] }]}
+          style={[
+            styles.recordingDot,
+            { backgroundColor: withAlpha(colors.onPrimary, 0.3) },
+            { transform: [{ scale: isPaused ? 1 : pulseAnim }] },
+          ]}
         >
-          <View style={[styles.dot, isPaused && styles.pausedDot]} />
+          <View
+            style={[
+              styles.dot,
+              { backgroundColor: colors.onPrimary },
+              isPaused && styles.pausedDot,
+            ]}
+          />
         </Animated.View>
         <View style={styles.textContainer}>
-          <Text style={styles.statusText}>
+          <Text style={[styles.statusText, { color: colors.onPrimary }]}>
             {isPaused
               ? t('home.liveActivity.paused', 'Activity Paused')
               : t('home.liveActivity.recording', 'Recording Activity')}
           </Text>
-          <Text style={styles.statsText}>
+          <Text style={[styles.statsText, { color: withAlpha(colors.onPrimary, 0.9) }]}>
             {formatDuration(duration)} • {formatDistance(distance)}
           </Text>
         </View>
       </View>
 
       <View style={styles.rightSection}>
-        <Text style={styles.tapText}>{t('home.liveActivity.tap', 'Tap to view')}</Text>
-        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.8)" />
+        <Text style={[styles.tapText, { color: withAlpha(colors.onPrimary, 0.8) }]}>
+          {t('home.liveActivity.tap', 'Tap to view')}
+        </Text>
+        <Ionicons name="chevron-forward" size={18} color={withAlpha(colors.onPrimary, 0.8)} />
       </View>
     </TouchableOpacity>
   );
@@ -102,7 +114,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -111,7 +122,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#fff',
   },
   pausedDot: {
     width: 8,
@@ -124,11 +134,9 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#fff',
   },
   statsText: {
     fontSize: fontSize.xs,
-    color: 'rgba(255,255,255,0.9)',
     marginTop: 2,
   },
   rightSection: {
@@ -137,7 +145,6 @@ const styles = StyleSheet.create({
   },
   tapText: {
     fontSize: fontSize.xs,
-    color: 'rgba(255,255,255,0.8)',
     marginRight: spacing.xs,
   },
 });

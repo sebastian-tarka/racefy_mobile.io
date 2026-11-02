@@ -38,7 +38,9 @@ export function AuthPromptSection({ section, onSignIn, onSignUp }: AuthPromptSec
             onPress={onSignUp}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>{t('common.signUp')}</Text>
+            <Text style={[styles.primaryButtonText, { color: colors.onPrimary }]}>
+              {t('common.signUp')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.secondaryButton, { borderColor: colors.border }]}
@@ -98,7 +100,6 @@ const styles = StyleSheet.create({
     // backgroundColor set dynamically
   },
   primaryButtonText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

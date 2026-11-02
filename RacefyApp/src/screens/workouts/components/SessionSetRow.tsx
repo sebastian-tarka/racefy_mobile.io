@@ -139,7 +139,7 @@ export const SessionSetRow = React.memo(function SessionSetRow({
           onLongPress={() => inProgress && onRemove(set.id)}
           accessibilityLabel={t('strengthPlans.session.undo')}
         >
-          <Ionicons name="checkmark" size={18} color="#ffffff" />
+          <Ionicons name="checkmark" size={18} color={colors.onPrimary} />
         </TouchableOpacity>
       ) : started ? (
         <TouchableOpacity
@@ -153,7 +153,9 @@ export const SessionSetRow = React.memo(function SessionSetRow({
           }
           disabled={!inProgress}
         >
-          <Text style={styles.stateText}>{t('strengthPlans.session.done')}</Text>
+          <Text style={[styles.stateText, { color: colors.onPrimary }]}>
+            {t('strengthPlans.session.done')}
+          </Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity
@@ -247,7 +249,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stateText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

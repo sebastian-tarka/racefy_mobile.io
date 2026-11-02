@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { triggerHaptic } from '../../hooks/useHaptics';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, type ThemeColors } from '../../theme';
 import type { ActivityMatch, MatchStatus } from '../../types/api';
 
 interface Props {
@@ -16,11 +16,14 @@ interface Props {
 
 const STATUS_CONFIG: Record<
   MatchStatus,
-  { color: string; icon: 'checkmark-circle' | 'alert-circle' | 'close-circle' }
+  {
+    tone: keyof Pick<ThemeColors, 'success' | 'warning' | 'error'>;
+    icon: 'checkmark-circle' | 'alert-circle' | 'close-circle';
+  }
 > = {
-  completed: { color: '#10b981', icon: 'checkmark-circle' },
-  partial: { color: '#f59e0b', icon: 'alert-circle' },
-  missed: { color: '#ef4444', icon: 'close-circle' },
+  completed: { tone: 'success', icon: 'checkmark-circle' },
+  partial: { tone: 'warning', icon: 'alert-circle' },
+  missed: { tone: 'error', icon: 'close-circle' },
 };
 
 export function ActivityMatchCard({ match, onPress }: Props) {
@@ -28,6 +31,7 @@ export function ActivityMatchCard({ match, onPress }: Props) {
   const { colors } = useTheme();
   const { formatDistanceShort, formatDistanceFromKm, getPaceUnit } = useUnits();
   const config = STATUS_CONFIG[match.status];
+  const statusColor = colors[config.tone];
   const isTappable = match.matched_activity_id != null && onPress != null;
 
   const formatMatchDistance = (meters: number | null) => {
@@ -69,9 +73,9 @@ export function ActivityMatchCard({ match, onPress }: Props) {
         <Text style={[styles.activityType, { color: colors.textPrimary }]}>
           {match.suggested.activity_type}
         </Text>
-        <View style={[styles.statusBadge, { backgroundColor: config.color + '15' }]}>
-          <Ionicons name={config.icon} size={14} color={config.color} />
-          <Text style={[styles.statusText, { color: config.color }]}>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+          <Ionicons name={config.icon} size={14} color={statusColor} />
+          <Text style={[styles.statusText, { color: statusColor }]}>
             {t(`training.feedback.activityMatching.${match.status}`)}
           </Text>
         </View>

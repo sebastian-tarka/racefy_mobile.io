@@ -4,6 +4,11 @@ export const lightColors = {
   primary: '#10b981',
   primaryDark: '#059669',
   primaryLight: '#34d399',
+  /**
+   * Text and icons sitting ON a `primary` fill (buttons, active chips, FAB).
+   * Never hardcode white there: a seasonal palette may make `primary` light.
+   */
+  onPrimary: '#ffffff',
 
   // Background colors
   background: '#f8fafb',
@@ -52,6 +57,19 @@ export const lightColors = {
   /** Text on a primary / warning / series fill. */
   onAccent: '#04352a',
 
+  /** Planned route on maps, nav banner, route cards — blue so it never reads as a goal. */
+  routeAccent: '#2563eb',
+  /** Leaderboard places 1–3. */
+  rank: {
+    gold: '#f59e0b',
+    silver: '#9ca3af',
+    bronze: '#b45309',
+  },
+  /** `shadowColor` for elevated cards. */
+  shadow: '#000000',
+  /** Scrim behind sheets / viewers that must hide the content underneath. */
+  overlayStrong: 'rgba(0, 0, 0, 0.75)',
+
   // Event status badges
   upcoming: {
     bg: '#ecfdf5',
@@ -84,6 +102,7 @@ export const darkColors = {
   primary: '#10b981',
   primaryDark: '#059669',
   primaryLight: '#34d399',
+  onPrimary: '#ffffff',
 
   // Background colors — deep navy tones
   background: '#0f1729',
@@ -125,6 +144,15 @@ export const darkColors = {
   // Chart series (see lightColors)
   series: ['#10d193', '#60a5fa', '#a78bfa', '#f0b429', '#f2564c'],
   onAccent: '#04241c',
+
+  routeAccent: '#60a5fa',
+  rank: {
+    gold: '#fbbf24',
+    silver: '#cbd5e1',
+    bronze: '#d97706',
+  },
+  shadow: '#000000',
+  overlayStrong: 'rgba(0, 0, 0, 0.85)',
 
   // Event status badges
   upcoming: {

@@ -23,6 +23,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { spacing, fontSize, borderRadius } from '../../theme';
+import type { ThemeColors } from '../../theme';
 import { formatMetricValue, paceStatusColor } from '../../utils/goalHelpers';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -284,11 +285,11 @@ function Stat({ label, value, colors }: { label: string; value: string; colors: 
   );
 }
 
-const STATUS_COLORS: Record<GoalPeriodStatus, string> = {
-  success: '#10b981',
-  partial: '#f59e0b',
-  missed: '#9ca3af',
-};
+const statusColors = (colors: ThemeColors): Record<GoalPeriodStatus, string> => ({
+  success: colors.success,
+  partial: colors.warning,
+  missed: colors.textMuted,
+});
 
 function HistoryRow({
   row,
@@ -296,10 +297,10 @@ function HistoryRow({
   t,
 }: {
   row: UserGoalPeriodResult;
-  colors: any;
+  colors: ThemeColors;
   t: (key: string) => string;
 }) {
-  const statusColor = STATUS_COLORS[row.status];
+  const statusColor = statusColors(colors)[row.status];
   return (
     <View
       style={[

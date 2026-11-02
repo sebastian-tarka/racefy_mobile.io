@@ -104,7 +104,7 @@ export function SessionConflictDialog({
               onPress={() => onOpenSession(session.id)}
               activeOpacity={0.85}
             >
-              <Text style={styles.primaryText}>
+              <Text style={[styles.primaryText, { color: colors.onPrimary }]}>
                 {t(inProgress ? 'strengthPlans.conflict.open' : 'strengthPlans.conflict.view')}
               </Text>
             </TouchableOpacity>
@@ -172,7 +172,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

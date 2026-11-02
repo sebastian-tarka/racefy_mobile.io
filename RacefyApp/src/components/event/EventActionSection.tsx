@@ -140,9 +140,9 @@ function RegistrationActions(props: EventActionSectionProps) {
           activeOpacity={0.85}
         >
           {isRegistering ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text style={styles.registerText}>{registerLabel}</Text>
+            <Text style={[styles.registerText, { color: colors.onPrimary }]}>{registerLabel}</Text>
           )}
         </TouchableOpacity>
         <WatchButton {...props} />
@@ -222,7 +222,7 @@ function RegisteredCard(props: EventActionSectionProps & { stage: Stage }) {
     >
       <View style={styles.registeredMain}>
         <View style={[styles.registeredCheck, { backgroundColor: colors.primary }]}>
-          <Ionicons name="checkmark" size={22} color="#fff" />
+          <Ionicons name="checkmark" size={22} color={colors.onPrimary} />
         </View>
         <View style={styles.registeredInfo}>
           <Text style={[styles.registeredTitle, { color: colors.primary }]}>{title}</Text>
@@ -350,8 +350,10 @@ function EventStartCta({
         accessibilityRole="button"
         accessibilityLabel={t('eventPin.startActivity')}
       >
-        <Ionicons name="play" size={19} color="#ffffff" />
-        <Text style={styles.startText}>{t('eventPin.startActivity')}</Text>
+        <Ionicons name="play" size={19} color={colors.onPrimary} />
+        <Text style={[styles.startText, { color: colors.onPrimary }]}>
+          {t('eventPin.startActivity')}
+        </Text>
       </TouchableOpacity>
       <Text style={[styles.startSub, { color: colors.textSecondary }]}>
         {t('eventPin.startSub')}
@@ -432,13 +434,13 @@ function OwnerActionsCard({ actions }: { actions: OwnerAction[] }) {
             {action.loading ? (
               <ActivityIndicator
                 size="small"
-                color={action.highlighted ? '#fff' : colors.textPrimary}
+                color={action.highlighted ? colors.onPrimary : colors.textPrimary}
               />
             ) : (
               <Text
                 style={[
                   styles.ownerButtonText,
-                  { color: action.highlighted ? '#fff' : colors.textPrimary },
+                  { color: action.highlighted ? colors.onPrimary : colors.textPrimary },
                 ]}
               >
                 {action.label}
@@ -518,7 +520,7 @@ function StageCtaCard({
     >
       {!isLive && (
         <View style={[styles.ctaTrophy, { backgroundColor: colors.warning }]}>
-          <Ionicons name="trophy" size={20} color="#fff" />
+          <Ionicons name="trophy" size={20} color={colors.onPrimary} />
         </View>
       )}
       <View style={styles.ctaBody}>
@@ -558,7 +560,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   registerText: {
-    color: '#fff',
     fontSize: fontSize.lg,
     fontWeight: '700',
   },
@@ -653,7 +654,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   startText: {
-    color: '#ffffff',
     fontSize: msFont(16),
     fontWeight: '700',
   },

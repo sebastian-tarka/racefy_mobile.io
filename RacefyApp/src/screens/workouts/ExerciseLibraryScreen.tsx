@@ -181,7 +181,10 @@ export function ExerciseLibraryScreen({ navigation }: Props) {
             onPress={() => setScope(s)}
           >
             <Text
-              style={[styles.chipText, { color: scope === s ? '#ffffff' : colors.textPrimary }]}
+              style={[
+                styles.chipText,
+                { color: scope === s ? colors.onPrimary : colors.textPrimary },
+              ]}
             >
               {t(`strengthPlans.libraryScreen.${s}`)}
             </Text>

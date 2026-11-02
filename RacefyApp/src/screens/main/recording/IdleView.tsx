@@ -28,7 +28,6 @@ import { EventBar, LivePulse, MapboxLiveMap, NavPreview } from '../../../compone
 import type { MapStyleType } from '../../../components/MapboxLiveMap';
 
 /** The route layer paints planned routes in blue — the design's own accent. */
-const ROUTE_BLUE = '#2563EB';
 
 interface IdleViewProps {
   selectedSport: SportTypeWithIcon | null;
@@ -428,7 +427,7 @@ export function IdleView({
                       <Ionicons
                         name={sport.icon}
                         size={20}
-                        color={active ? '#ffffff' : colors.primary}
+                        color={active ? colors.onPrimary : colors.primary}
                       />
                     )}
                   </View>
@@ -484,7 +483,7 @@ export function IdleView({
             label={isEventRoute ? t('eventPin.eventRoute') : t('recording.shadowTrack')}
             value={selectedRouteTitle ?? t('recording.selectRoute')}
             active={!!selectedRouteTitle}
-            tone={isEventRoute ? colors.event : ROUTE_BLUE}
+            tone={isEventRoute ? colors.event : colors.routeAccent}
             disabled={!gpsEnabled}
             onPress={() => {
               onRouteLayerChange(true);
@@ -536,11 +535,11 @@ export function IdleView({
           accessibilityLabel={t('recording.start')}
         >
           {isLoading ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
             <>
-              <Ionicons name="play" size={21} color="#ffffff" />
-              <Text style={styles.startText} numberOfLines={1}>
+              <Ionicons name="play" size={21} color={colors.onPrimary} />
+              <Text style={[styles.startText, { color: colors.onPrimary }]} numberOfLines={1}>
                 {selectedSport
                   ? t('recording.startSport', { sport: selectedSport.name })
                   : t('recording.start')}
@@ -591,7 +590,7 @@ function ToolButton({
       activeOpacity={0.8}
       accessibilityLabel={label}
     >
-      <Ionicons name={icon} size={19} color={active ? '#ffffff' : colors.textPrimary} />
+      <Ionicons name={icon} size={19} color={active ? colors.onPrimary : colors.textPrimary} />
     </TouchableOpacity>
   );
 }
@@ -883,7 +882,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   startText: {
-    color: '#ffffff',
     fontSize: fontSize.xl,
     fontWeight: '700',
   },

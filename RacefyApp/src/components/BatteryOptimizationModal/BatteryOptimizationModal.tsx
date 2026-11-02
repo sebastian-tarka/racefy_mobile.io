@@ -104,8 +104,15 @@ export function BatteryOptimizationModal() {
             onPress={openSettings}
             activeOpacity={0.8}
           >
-            <Ionicons name="settings-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
-            <Text style={styles.primaryBtnText}>{t('batteryOptimization.openSettings')}</Text>
+            <Ionicons
+              name="settings-outline"
+              size={18}
+              color={colors.onPrimary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
+              {t('batteryOptimization.openSettings')}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.secondaryBtn} onPress={dismiss} activeOpacity={0.7}>
@@ -199,7 +206,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   primaryBtnText: {
-    color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '600',
   },
