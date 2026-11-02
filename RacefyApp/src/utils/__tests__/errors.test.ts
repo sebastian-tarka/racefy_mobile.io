@@ -1,7 +1,17 @@
-import { getErrorMessage, getErrorStatus, isApiError } from '../errors';
+import { getErrorMessage, getErrorStatus, isApiError, isTimeoutError } from '../errors';
 
 describe('errors', () => {
   const apiError = { message: 'Forbidden', status: 403, feature: 'goals' };
+
+  it("recognises the API client's own timeout (fetch abort) and nothing else", () => {
+    const abort = new Error('Aborted');
+    abort.name = 'AbortError';
+    expect(isTimeoutError(abort)).toBe(true);
+    expect(isTimeoutError({ message: 'Aborted' })).toBe(true);
+    expect(isTimeoutError(new Error('Network request failed'))).toBe(false);
+    expect(isTimeoutError(apiError)).toBe(false);
+    expect(isTimeoutError(null)).toBe(false);
+  });
 
   it('recognises an API error body by its numeric status', () => {
     expect(isApiError(apiError)).toBe(true);

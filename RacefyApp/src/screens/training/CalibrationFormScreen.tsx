@@ -39,7 +39,7 @@ import type {
   RecoveryProfile,
   TrainingGoal,
 } from '../../types/api';
-import { getErrorMessage, getErrorStatus } from '../../utils/errors';
+import { getErrorMessage, getErrorStatus, isTimeoutError } from '../../utils/errors';
 import { formatIntlDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -253,8 +253,9 @@ export function CalibrationFormScreen({ navigation }: Props) {
 
       logger.info('training', 'Calibration created', { calibrationId: calibration.id });
 
-      // Initialize program with activity linking settings.
-      // Synchronous: the finished plan comes back here, so there is nothing to poll.
+      // Initialize program with activity linking settings. The weeks come back
+      // here in seconds; the AI parts (first hint, coach note) are queued and the
+      // weeks list follows them (usePlanGeneration).
       const { program, warnings } = await api.initProgram({
         auto_link_activities: autoLinkActivities,
         ...(autoLinkActivities && allowedSportTypes.length > 0
@@ -278,6 +279,22 @@ export function CalibrationFormScreen({ navigation }: Props) {
       navigation.replace('TrainingWeeksList', warnings.length > 0 ? { warnings } : undefined);
     } catch (error) {
       logger.error('training', 'Failed to create calibration', { error });
+
+      // The client gave up after 60 s. The server usually finished anyway and
+      // the plan is already there — show it rather than an error nobody can act on.
+      if (isTimeoutError(error)) {
+        const existing = await api.getCurrentPrograms().catch(() => []);
+        if (existing.length > 0) {
+          logger.warn('training', 'Init timed out but the plan exists; opening it', {
+            programId: existing[0].id,
+          });
+          navigation.replace('TrainingWeeksList');
+          return;
+        }
+        setErrors({ submit: t('training.errors.initTimedOut') });
+        return;
+      }
+
       // Handle 403 feature-gating for active_training_programs limit
       const msg = getErrorMessage(error).toLowerCase();
       if (

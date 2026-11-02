@@ -36,7 +36,9 @@ import { TrainingPlansSheet } from '../../components/Training/TrainingPlansSheet
 import { PlanWarningsBanner } from '../../components/Training/PlanWarningsBanner';
 import { ProgramSettingsModal } from './components/ProgramSettingsModal';
 import { SessionRow, WeekTile } from './components/WeekListItems';
+import { HintStatusRow } from './components/HintStatusRow';
 import { useCoachingHints } from '../../hooks/useCoachingHints';
+import { usePlanGeneration } from '../../hooks/usePlanGeneration';
 import {
   defaultWeek,
   programAdherence,
@@ -278,11 +280,25 @@ export function WeeksListScreen({ navigation, route }: Props) {
   };
 
   const reload = useCallback(() => loadData(true), [loadData]);
+  // Follows the queued AI parts of the plan; re-reads the weeks when one lands.
+  const generation = usePlanGeneration(program?.id ?? null, { onChanged: reload });
   const {
     generating: generatingHints,
     progress: hintsProgress,
     generate: handleGenerateHints,
-  } = useCoachingHints({ program, weeks, setWeeks, reload, tier });
+  } = useCoachingHints({ program, weeks, reload, tier, generation });
+  const [retryingHint, setRetryingHint] = useState(false);
+  const handleRetryHint = useCallback(async () => {
+    setRetryingHint(true);
+    try {
+      await generation.retry();
+    } catch (err) {
+      logger.error('training', 'Retrying the plan AI failed', { error: err });
+      Alert.alert(t('training.errors.title'), getErrorMessage(err));
+    } finally {
+      setRetryingHint(false);
+    }
+  }, [generation, t]);
 
   if (loading) {
     return <Loading fullScreen message={t('common.loading')} />;
@@ -355,6 +371,15 @@ export function WeeksListScreen({ navigation, route }: Props) {
 
   const selectedStats = selectedWeek ? weekStats(selectedWeek, fmtDist) : null;
   const selectedIsCurrent = selectedWeek?.status === 'current' || selectedWeek?.status === 'active';
+  // The live week's hint is what initialize() promised: its retry is free. Any
+  // other week only gets a hint through the Pro bulk generation.
+  const selectedHintRetry = !selectedWeek
+    ? undefined
+    : selectedIsCurrent || selectedWeek.week_number === 1
+      ? handleRetryHint
+      : canUse('coaching_hints_bulk')
+        ? handleGenerateHints
+        : undefined;
 
   // ---- Grouped options below the week card ----
   const needsHints = weeks.some((w) => !w.coaching_hint);
@@ -633,6 +658,12 @@ export function WeeksListScreen({ navigation, route }: Props) {
                 )}
               </View>
             </View>
+
+            <HintStatusRow
+              week={selectedWeek}
+              onRetry={selectedHintRetry}
+              retrying={retryingHint || generatingHints}
+            />
 
             <View style={styles.weekMetaRow}>
               <View style={styles.weekMetaItem}>

@@ -2201,6 +2201,12 @@
     "createPlan": "Utwórz nowy plan",
     "createPlanDesc": "AI zbuduje go pod Twój cel i harmonogram",
     "creatingProgram": "Tworzenie spersonalizowanego planu treningowego...",
+    "generation": {
+      "preparingHint": "Trener przygotowuje wskazówkę do tego tygodnia…",
+      "hintFailed": "Nie udało się przygotować wskazówki do tego tygodnia.",
+      "retry": "Spróbuj ponownie",
+      "translationPending": "Na razie po angielsku — tłumaczenie jest w przygotowaniu."
+    },
     "calibration": {
       "title": "Kalibracja Treningowa",
       "trainingGoal": "Cel Treningowy",
@@ -2347,6 +2353,7 @@
       "completeFailed": "Nie udało się ukończyć tygodnia",
       "skipFailed": "Nie udało się pominąć tygodnia",
       "checkProgramFailed": "Nie udało się sprawdzić istniejącego programu. Spróbuj ponownie.",
+      "initTimedOut": "Serwer odpowiadał zbyt długo. Plan mógł mimo to powstać — sprawdź listę treningów za chwilę.",
       "linkFailed": "Nie udało się powiązać aktywności",
       "unlinkFailed": "Nie udało się odłączyć aktywności"
     },
@@ -2362,7 +2369,9 @@
       "generationComplete": "Wszystkie wskazówki treningowe wygenerowane!",
       "generationFailed": "Nie udało się wygenerować wskazówek treningowych",
       "noHints": "Brak wskazówek treningowych dla tego tygodnia.",
-      "allGenerated": "Wszystkie tygodnie mają już wskazówki treningowe."
+      "allGenerated": "Wszystkie tygodnie mają już wskazówki treningowe.",
+      "generationPartlyFailed": "{{failed}} z {{total}} tygodni nie dostało wskazówki. Spróbuj ponownie za chwilę.",
+      "generationTakingLonger": "To trwa dłużej niż zwykle. Wskazówki pojawią się same — nie musisz tu czekać."
     },
     "tips": {
       "sectionTitle": "Wskazówka dla Ciebie",

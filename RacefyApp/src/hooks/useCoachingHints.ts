@@ -7,46 +7,65 @@ import { upgradePromptEmitter } from '../services/upgradePromptEmitter';
 import type { SubscriptionTier, TrainingProgram, TrainingWeek } from '../types/api';
 import { isApiError } from '../utils/errors';
 import { triggerHaptic } from './useHaptics';
-
-const POLL_INTERVAL_MS = 5000;
+import type { PlanGeneration } from './usePlanGeneration';
 
 interface Options {
   program: TrainingProgram | null;
   weeks: TrainingWeek[];
-  /** Fresh weeks from the progress poll. */
-  setWeeks: (weeks: TrainingWeek[]) => void;
-  /** Full reload once everything was generated in one go. */
+  /** Full reload once the server answered `completed` on the spot. */
   reload: () => Promise<void>;
   tier: SubscriptionTier;
+  /** The plan's generation status — the single source of progress. */
+  generation: PlanGeneration;
 }
 
 /**
- * "Generate coaching hints" for every week of a programme. The server either
- * answers at once (`completed`) or starts a job; then the weeks are polled
- * every 5 s until each one has its hint. The poll stops on unmount.
+ * "Generate coaching hints" for every week of a programme (Pro).
+ *
+ * The server answers at once (`completed`) or marks the weeks `pending` and
+ * fans out one job per week. Progress then comes from `usePlanGeneration`
+ * (server counts, survives an app restart, stops on failure or the cap) —
+ * not from counting `coaching_hint` on the weeks list, which polled forever
+ * when a job died halfway.
  */
-export function useCoachingHints({ program, weeks, setWeeks, reload, tier }: Options) {
+export function useCoachingHints({ program, weeks, reload, tier, generation }: Options) {
   const { t } = useTranslation();
-  const [generating, setGenerating] = useState(false);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [starting, setStarting] = useState(false);
+  // The batch this screen started: only it gets the closing alert.
+  const batchRef = useRef(false);
+  const { status, timedOut, refresh } = generation;
 
-  const stopPolling = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
+  const hintsPending = status?.hints.pending ?? 0;
+  const total = status?.hints.total ?? weeks.length;
+  const progress = { done: Math.max(0, total - hintsPending), total };
+  const generating = starting || hintsPending > 0;
+
+  useEffect(() => {
+    if (!batchRef.current || !status) return;
+
+    if (timedOut) {
+      batchRef.current = false;
+      Alert.alert(
+        t('training.coachingHints.sectionTitle'),
+        t('training.coachingHints.generationTakingLonger'),
+      );
+      return;
     }
-  }, []);
 
-  useEffect(() => stopPolling, [stopPolling]);
-
-  const announceDone = useCallback(() => {
-    triggerHaptic();
-    Alert.alert(
-      t('training.coachingHints.sectionTitle'),
-      t('training.coachingHints.generationComplete'),
-    );
-  }, [t]);
+    if (status.hints.pending === 0) {
+      batchRef.current = false;
+      triggerHaptic();
+      Alert.alert(
+        t('training.coachingHints.sectionTitle'),
+        status.hints.failed > 0
+          ? t('training.coachingHints.generationPartlyFailed', {
+              failed: status.hints.failed,
+              total: status.hints.total,
+            })
+          : t('training.coachingHints.generationComplete'),
+      );
+    }
+  }, [status, timedOut, t]);
 
   const generate = useCallback(async () => {
     if (!program) return;
@@ -59,41 +78,23 @@ export function useCoachingHints({ program, weeks, setWeeks, reload, tier }: Opt
       return;
     }
 
-    setGenerating(true);
+    setStarting(true);
     try {
       const response = await api.generateAllHints(program.id);
 
       if (response.status === 'completed') {
         await reload();
-        setGenerating(false);
-        announceDone();
+        triggerHaptic();
+        Alert.alert(
+          t('training.coachingHints.sectionTitle'),
+          t('training.coachingHints.generationComplete'),
+        );
         return;
       }
 
-      const totalWeeks = response.total_weeks || program.total_weeks;
-      const weeksPending = response.weeks_pending || 0;
-      setProgress({ done: totalWeeks - weeksPending, total: totalWeeks });
-
-      stopPolling();
-      pollRef.current = setInterval(async () => {
-        try {
-          const updatedWeeks = await api.getWeeks();
-          setWeeks(updatedWeeks);
-
-          const remaining = updatedWeeks.filter((w) => !w.coaching_hint).length;
-          setProgress({ done: totalWeeks - remaining, total: totalWeeks });
-
-          if (remaining === 0) {
-            stopPolling();
-            setGenerating(false);
-            announceDone();
-          }
-        } catch (pollErr) {
-          logger.error('training', 'Polling hints progress failed', { error: pollErr });
-        }
-      }, POLL_INTERVAL_MS);
+      batchRef.current = true;
+      await refresh();
     } catch (err) {
-      setGenerating(false);
       logger.error('training', 'Failed to generate coaching hints', { error: err });
       if (
         isApiError(err) &&
@@ -104,8 +105,10 @@ export function useCoachingHints({ program, weeks, setWeeks, reload, tier }: Opt
         return;
       }
       Alert.alert(t('common.error'), t('training.coachingHints.generationFailed'));
+    } finally {
+      setStarting(false);
     }
-  }, [program, weeks, setWeeks, reload, tier, t, stopPolling, announceDone]);
+  }, [program, weeks, reload, refresh, tier, t]);
 
   return { generating, progress, generate };
 }
