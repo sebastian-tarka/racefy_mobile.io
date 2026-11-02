@@ -15,7 +15,19 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Strefa czasowa wydarzenia — faza 2 planu stref (`feature/timezones-f2`, od 2026-11-02)
+
+Wymaga API z branchu `feature/timezones-f2` (racefy_api.io): każde wydarzenie ma `timezone`, POST/PUT przyjmują
+`timezone`. Formularz ma wybór „Strefa czasowa wydarzenia” (domyślnie strefa telefonu, przy edycji strefa
+wydarzenia); pickery dat to czas ścienny w tej strefie, apka przelicza go na instant `Z` i wysyła razem ze strefą.
+Szczegóły wydarzenia: główny czas dalej w strefie telefonu, a gdy czas ścienny w strefie wydarzenia jest inny,
+dodatkowa linia „Czas lokalny wydarzenia: … (miasto)”.
+- [ ] nowe wydarzenie bez zmiany strefy: zapis jak dotąd (w panelu admina/webie ten sam czas)
+- [ ] nowe wydarzenie, strefa `America/New_York`, start 10:00: web/admin pokazuje 10:00 czasu Nowego Jorku (16:00 w Polsce zimą)
+- [ ] edycja tego wydarzenia na telefonie w Polsce: picker pokazuje 10:00 (czas ścienny w strefie wydarzenia), nie 16:00; zapis bez zmian nie przesuwa czasu
+- [ ] szczegóły tego wydarzenia na telefonie w Polsce: główna data 16:00, pod spodem „Czas lokalny wydarzenia: … 10:00 (New York)”
+- [ ] wydarzenie w strefie telefonu: linii „Czas lokalny” nie ma
+- [ ] seria (powtarzanie) tworzona ze strefą inną niż telefon: reguła w strefie wydarzenia (dzień tygodnia zgodny)
 
 ## Na `main`, ale niezweryfikowane runtime
 
