@@ -731,6 +731,7 @@
     "yesCancel": "Tak, anuluj",
     "eventFull": "To wydarzenie jest pełne",
     "registrationClosed": "Rejestracja została zamknięta",
+    "joinOngoing": "Wydarzenie trwa — możesz jeszcze dołączyć",
     "registrationNotAvailable": "Rejestracja niedostępna",
     "registrationSuccess": "Zostałeś zarejestrowany na to wydarzenie!",
     "registrationFailed": "Nie udało się zarejestrować na wydarzenie",
