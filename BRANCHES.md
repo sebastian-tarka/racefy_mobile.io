@@ -15,7 +15,18 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Strefa czasowa użytkownika — faza 1 planu stref (`feature/timezones-f1`, od 2026-11-02)
+
+Wymaga API z branchu `feature/timezones-f1` (racefy_api.io; plan `docs/plans/2026-11-02-timezones.md`).
+Apka wysyła nagłówek `X-Timezone` ze strefą urządzenia w każdym requeście (serwer zapisuje ją w
+`preferences.timezone`, gdy `timezone_auto`), `timezone` w body logowania, a w Ustawieniach → Preferencje
+jest wiersz „Strefa czasowa”: przełącznik „Automatycznie” + lista stref do wyboru ręcznego.
+- [ ] po zalogowaniu `preferences.timezone` na serwerze = strefa telefonu (panel admina / GET /profile/preferences)
+- [ ] Ustawienia → Strefa czasowa: pokazuje „Automatycznie” i strefę urządzenia
+- [ ] wyłączyć automat, wyszukać i wybrać np. `America/New_York`: zapis, wiersz pokazuje wybraną strefę, po restarcie apki nadal ręczna
+- [ ] włączyć automat z powrotem: serwer wraca do strefy urządzenia
+- [ ] zmiana strefy w ustawieniach telefonu i powrót do apki (automat): następny request niesie nową strefę
+- [ ] stare API bez obsługi nagłówka: apka działa jak dotąd (nagłówek ignorowany)
 
 ## Na `main`, ale niezweryfikowane runtime
 
