@@ -42,7 +42,7 @@ export function BadgeSheet({ reward, onClose }: Props) {
   }, [reward]);
 
   const badge = reward?.badge;
-  const tint = badge ? rarityColor(badge) : colors.primary;
+  const tint = badge ? rarityColor(badge, colors) : colors.primary;
 
   return (
     <Modal visible={!!reward} animationType="slide" transparent onRequestClose={onClose}>

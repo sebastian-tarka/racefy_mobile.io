@@ -121,8 +121,8 @@ function ActivitySuggestionItem({
   const { colors } = useTheme();
   return (
     <TouchableOpacity style={styles.suggestionItem} onPress={onPress} activeOpacity={0.7}>
-      <View style={[styles.triggerIcon, { backgroundColor: (colors.ai || '#A855F7') + '18' }]}>
-        <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>!</Text>
+      <View style={[styles.triggerIcon, { backgroundColor: colors.ai + '18' }]}>
+        <Text style={[styles.triggerIconText, { color: colors.ai }]}>!</Text>
       </View>
       <View style={styles.suggestionText}>
         <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -185,7 +185,7 @@ export function MentionInput({
       },
       activity: {
         trigger: '!',
-        textStyle: { fontWeight: '600', color: colors.ai || '#A855F7' },
+        textStyle: { fontWeight: '600', color: colors.ai },
         isInsertSpaceAfterMention: true,
       },
     },

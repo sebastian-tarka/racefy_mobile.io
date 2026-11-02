@@ -9,15 +9,17 @@ import { SharedPostBlock } from './SharedPostBlock';
 import { SharedPostDeletedBlock } from './SharedPostDeletedBlock';
 import { YouTubeEmbed } from './YouTubeEmbed';
 import { buildMediaItems, styles } from './FeedCard.utils';
-import { borderRadius, fontSize, spacing, msFont } from '../theme';
+import { borderRadius, fontSize, spacing, msFont, withAlpha } from '../theme';
+import type { ThemeColors } from '../theme/colors';
 import type { Post, TaggedEvent } from '../types/api';
 import { getAppLocale } from '../utils/dateFormat';
 
-const TAG_EVENT_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
-  challenge: { accent: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
-  digest: { accent: '#10B981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
-  milestone: { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
-};
+/** Accent of the tagged-event block per post type; the tint and border follow it. */
+function tagEventColors(postType: string, colors: ThemeColors) {
+  const accent =
+    postType === 'digest' ? colors.primary : postType === 'milestone' ? colors.ai : colors.warning;
+  return { accent, bg: withAlpha(accent, 0.08), border: withAlpha(accent, 0.25) };
+}
 
 function TaggedEventBlock({
   taggedEvent,
@@ -30,7 +32,7 @@ function TaggedEventBlock({
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const tc = TAG_EVENT_COLORS[postType] || TAG_EVENT_COLORS.challenge;
+  const tc = tagEventColors(postType, colors);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);

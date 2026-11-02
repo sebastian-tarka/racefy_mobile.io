@@ -130,8 +130,10 @@ export function EventLiveScreen({ route, navigation }: Props) {
           {t('eventDetail.liveStandings', 'Live standings')}
         </Text>
         <View style={[styles.liveBadge, { backgroundColor: colors.error }]}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveBadgeText}>{t('home.live', 'LIVE')}</Text>
+          <View style={[styles.liveDot, { backgroundColor: colors.onPrimary }]} />
+          <Text style={[styles.liveBadgeText, { color: colors.onPrimary }]}>
+            {t('home.live', 'LIVE')}
+          </Text>
         </View>
       </View>
 
@@ -171,7 +173,7 @@ export function EventLiveScreen({ route, navigation }: Props) {
 
         <TouchableOpacity activeOpacity={0.85} onPress={goToCommentary}>
           <Card style={styles.commentaryLink}>
-            <Ionicons name="sparkles" size={18} color="#8b5cf6" />
+            <Ionicons name="sparkles" size={18} color={colors.ai} />
             <Text style={[styles.commentaryText, { color: colors.textSecondary }]}>
               {t('eventDetail.autoRefresh', 'Updating live · auto-refresh 30s')}
             </Text>
@@ -218,10 +220,8 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#fff',
   },
   liveBadgeText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '800',
   },

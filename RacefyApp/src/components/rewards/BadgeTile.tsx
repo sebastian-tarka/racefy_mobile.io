@@ -4,19 +4,23 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
-import { msFont } from '../../theme';
+import { lightColors, msFont, type ThemeColors } from '../../theme';
 import type { BadgeReward } from '../../types/api';
 
 /** Fallback tints for the four tiers, used when the server sends no colour. */
-const RARITY_FALLBACK: Record<BadgeReward['badge']['rarity'], string> = {
+const rarityFallback = (colors: ThemeColors): Record<BadgeReward['badge']['rarity'], string> => ({
   common: '#64748b',
-  rare: '#2563eb',
+  rare: colors.info,
   epic: '#7c3aed',
   legendary: '#e0a106',
-};
+});
 
-export function rarityColor(badge: BadgeReward['badge']): string {
-  return badge.rarity_color || RARITY_FALLBACK[badge.rarity] || RARITY_FALLBACK.common;
+export function rarityColor(
+  badge: BadgeReward['badge'],
+  colors: ThemeColors = lightColors,
+): string {
+  const fallback = rarityFallback(colors);
+  return badge.rarity_color || fallback[badge.rarity] || fallback.common;
 }
 
 interface Props {
@@ -38,7 +42,7 @@ export function BadgeTile({ reward, size = 'md', onPress }: Props) {
   const { t } = useTranslation();
 
   const badge = reward.badge;
-  const tint = rarityColor(badge);
+  const tint = rarityColor(badge, colors);
   const legendary = badge.rarity === 'legendary';
   const epic = badge.rarity === 'epic';
   const d = size === 'sm' ? 54 : 64;
@@ -104,7 +108,9 @@ export function BadgeTile({ reward, size = 'md', onPress }: Props) {
               { backgroundColor: colors.error, borderColor: colors.background },
             ]}
           >
-            <Text style={styles.newBadgeText}>{t('rewards.new')}</Text>
+            <Text style={[styles.newBadgeText, { color: colors.onPrimary }]}>
+              {t('rewards.new')}
+            </Text>
           </View>
         )}
       </View>
@@ -145,7 +151,6 @@ const styles = StyleSheet.create({
     fontSize: msFont(8.5),
     fontWeight: '800',
     letterSpacing: 0.7,
-    color: '#ffffff',
   },
   caption: {
     width: '100%',

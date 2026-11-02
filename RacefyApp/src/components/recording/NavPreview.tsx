@@ -5,11 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { turnIcon } from '../../utils/navigationCues';
-import { borderRadius, fontSize, msFont, spacing } from '../../theme';
+import { borderRadius, fontSize, msFont, spacing, withAlpha } from '../../theme';
 import type { RouteTurnInstruction } from '../../types/api';
-
-/** The route layer's blue — same one the map draws planned routes in. */
-const ROUTE_BLUE = '#2563EB';
 
 /** How many turns fit on the strip before "all N" earns its place. */
 const PREVIEW_TURNS = 3;
@@ -33,6 +30,8 @@ export function NavPreview({ turns, voiceEnabled, onToggleVoice, onOpenAll }: Pr
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { formatDistance } = useUnits();
+  // The route layer's blue — same one the map draws planned routes in.
+  const routeBlue = colors.routeAccent;
 
   if (turns.length === 0) return null;
 
@@ -43,8 +42,8 @@ export function NavPreview({ turns, voiceEnabled, onToggleVoice, onOpenAll }: Pr
       style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
     >
       <View style={styles.header}>
-        <View style={[styles.icon, { backgroundColor: ROUTE_BLUE + '1A' }]}>
-          <Ionicons name="navigate" size={16} color={ROUTE_BLUE} />
+        <View style={[styles.icon, { backgroundColor: withAlpha(routeBlue, 0.1) }]}>
+          <Ionicons name="navigate" size={16} color={routeBlue} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -74,7 +73,7 @@ export function NavPreview({ turns, voiceEnabled, onToggleVoice, onOpenAll }: Pr
             key={`${turn.distance_along}-${index}`}
             style={[styles.chip, { backgroundColor: colors.background }]}
           >
-            <Ionicons name={turnIcon(turn.maneuver)} size={14} color={ROUTE_BLUE} />
+            <Ionicons name={turnIcon(turn.maneuver)} size={14} color={routeBlue} />
             <Text style={[styles.chipAt, { color: colors.textMuted }]}>
               {formatDistance(turn.distance_along)}
             </Text>

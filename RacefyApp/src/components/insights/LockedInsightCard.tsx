@@ -50,7 +50,9 @@ export function LockedInsightCard({ title, icon, requiredTier }: LockedInsightCa
           style={[styles.upgradeButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate('Paywall', { feature: 'insights' })}
         >
-          <Text style={styles.upgradeButtonText}>{t('insights.locked.upgrade')}</Text>
+          <Text style={[styles.upgradeButtonText, { color: colors.onPrimary }]}>
+            {t('insights.locked.upgrade')}
+          </Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -96,7 +98,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   upgradeButtonText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
   },

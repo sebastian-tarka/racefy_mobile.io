@@ -54,9 +54,9 @@ export function CommentaryItem({
       case 'warmup':
         return '#F97316'; // Orange
       case 'live':
-        return '#3B82F6'; // Blue
+        return colors.info; // Blue
       case 'milestone':
-        return '#F59E0B'; // Amber
+        return colors.warning; // Amber
       case 'summary':
         return colors.primary; // Emerald
       default:
@@ -69,9 +69,9 @@ export function CommentaryItem({
       case 'warmup':
         return '#FFF7ED'; // Orange light
       case 'live':
-        return '#EFF6FF'; // Blue light
+        return colors.infoLight; // Blue light
       case 'milestone':
-        return '#FFFBEB'; // Amber light
+        return colors.warningLight; // Amber light
       case 'summary':
         return colors.successLight; // Emerald light
       default:

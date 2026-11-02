@@ -43,7 +43,7 @@ export function PremiumTeaser({
   }
 
   const badgeTier = requiredTier ?? 'plus';
-  const badgeColor = badgeTier === 'pro' ? '#A855F7' : colors.primary;
+  const badgeColor = badgeTier === 'pro' ? colors.ai : colors.primary;
 
   const handlePress = () => {
     upgradePromptEmitter.emit('show', { feature, currentTier: tier });

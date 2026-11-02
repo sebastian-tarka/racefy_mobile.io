@@ -3,16 +3,21 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, fontSize, borderRadius, msFont } from '../theme';
+import { spacing, fontSize, borderRadius, msFont, withAlpha } from '../theme';
+import type { ThemeColors } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import type { Post } from '../types/api';
 
-const RARITY_CONFIG: Record<string, { border: string; background: string }> = {
-  legendary: { border: '#F97316', background: 'rgba(249,115,22,0.1)' },
-  epic: { border: '#9333EA', background: 'rgba(147,51,234,0.1)' },
-  rare: { border: '#3B82F6', background: 'rgba(59,130,246,0.1)' },
-  common: { border: '#6B7280', background: 'rgba(107,114,128,0.1)' },
-};
+function getRarityConfig(
+  colors: ThemeColors,
+): Record<string, { border: string; background: string }> {
+  return {
+    legendary: { border: '#F97316', background: 'rgba(249,115,22,0.1)' },
+    epic: { border: '#9333EA', background: 'rgba(147,51,234,0.1)' },
+    rare: { border: colors.info, background: withAlpha(colors.info, 0.1) },
+    common: { border: colors.textSecondary, background: withAlpha(colors.textSecondary, 0.1) },
+  };
+}
 
 interface AchievementBodyProps {
   post: Post;
@@ -26,7 +31,8 @@ export function AchievementBody({ post }: AchievementBodyProps) {
   if (!achievement) return null;
 
   const badge = achievement.badge;
-  const rarityConfig = RARITY_CONFIG[badge.rarity] || RARITY_CONFIG.common;
+  const rarity = getRarityConfig(colors);
+  const rarityConfig = rarity[badge.rarity] || rarity.common;
   const iconUrl = badge.icon_url ? fixStorageUrl(badge.icon_url) : null;
 
   return (

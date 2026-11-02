@@ -337,7 +337,7 @@ export function WorkoutConfigModal({
                       <Ionicons
                         name={tile.icon}
                         size={17}
-                        color={active ? '#ffffff' : PRIMARY_DEEP}
+                        color={active ? colors.onPrimary : PRIMARY_DEEP}
                       />
                     </View>
                     <Text
@@ -499,7 +499,7 @@ export function WorkoutConfigModal({
                       value={cuePrefs[row.key]}
                       onValueChange={(v) => onCuePrefsChange({ [row.key]: v })}
                       trackColor={{ false: colors.border, true: colors.primary }}
-                      thumbColor="#ffffff"
+                      thumbColor={colors.onPrimary}
                     />
                   </View>
                 ))}
@@ -510,7 +510,7 @@ export function WorkoutConfigModal({
           {inProgress && (goal || intervalPlan) && (
             <View style={[styles.liveNote, { backgroundColor: colors.aiLight }]}>
               <View style={[styles.liveNoteIcon, { backgroundColor: colors.ai }]}>
-                <Ionicons name="sparkles" size={13} color="#ffffff" />
+                <Ionicons name="sparkles" size={13} color={colors.onPrimary} />
               </View>
               <Text style={[styles.liveNoteText, { color: colors.textPrimary }]}>
                 {t(
@@ -545,20 +545,28 @@ export function WorkoutConfigModal({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.primaryButton, { backgroundColor: colors.primary, flex: 1.5 }]}
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: colors.primary, shadowColor: colors.primary, flex: 1.5 },
+                ]}
                 onPress={apply}
                 activeOpacity={0.85}
               >
-                <Text style={styles.primaryText}>{t('recording.workout.applyNow')}</Text>
+                <Text style={[styles.primaryText, { color: colors.onPrimary }]}>
+                  {t('recording.workout.applyNow')}
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
             <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+              style={[
+                styles.primaryButton,
+                { backgroundColor: colors.primary, shadowColor: colors.primary },
+              ]}
               onPress={apply}
               activeOpacity={0.85}
             >
-              <Text style={styles.primaryText} numberOfLines={1}>
+              <Text style={[styles.primaryText, { color: colors.onPrimary }]} numberOfLines={1}>
                 {goalLabel
                   ? t('recording.workout.saveGoal', { goal: goalLabel })
                   : t('recording.workout.typeOpen')}
@@ -758,14 +766,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
-    shadowColor: '#10b981',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 6,
   },
   primaryText: {
-    color: '#ffffff',
     fontSize: fontSize.md,
     fontWeight: '700',
   },

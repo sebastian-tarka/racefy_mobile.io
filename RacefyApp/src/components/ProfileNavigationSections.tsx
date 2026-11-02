@@ -265,7 +265,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
           />
           <ProfileToolRow
             icon="barbell"
-            tone="#EF4444"
+            tone={colors.error}
             title={t('strengthPlans.title')}
             status={strengthStatus}
             badge={navBadges?.workout_session_active ? 'LIVE' : undefined}
@@ -327,7 +327,7 @@ export function ProfileNavigationSections({ navigation, tier }: ProfileNavigatio
           />
           <ProfileToolRow
             icon="map"
-            tone="#2563EB"
+            tone={colors.routeAccent}
             title={t('routes.title')}
             status={routesStatus}
             onPress={() => navigation.navigate('RouteLibrary')}

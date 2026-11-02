@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, borderRadius } from '../../theme';
+import { spacing, fontSize, borderRadius, type ThemeColors } from '../../theme';
 import { Card } from '../../components';
 import type { OverallRating } from '../../types/api';
 
@@ -15,11 +15,14 @@ interface Props {
   programGoal: string | null;
 }
 
-const RATING_COLORS: Record<OverallRating, string> = {
-  excellent: '#10b981',
-  good: '#3b82f6',
-  needs_improvement: '#f59e0b',
-  poor: '#ef4444',
+const RATING_TONES: Record<
+  OverallRating,
+  keyof Pick<ThemeColors, 'success' | 'info' | 'warning' | 'error'>
+> = {
+  excellent: 'success',
+  good: 'info',
+  needs_improvement: 'warning',
+  poor: 'error',
 };
 
 export function FeedbackSummaryHeader({
@@ -30,7 +33,7 @@ export function FeedbackSummaryHeader({
 }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const ratingColor = RATING_COLORS[overallRating];
+  const ratingColor = colors[RATING_TONES[overallRating]];
 
   return (
     <Card style={styles.card}>

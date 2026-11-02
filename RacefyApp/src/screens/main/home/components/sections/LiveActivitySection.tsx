@@ -30,7 +30,7 @@ export function LiveActivitySection({ section, onPress }: LiveActivitySectionPro
       <View style={styles.content}>
         <View style={[styles.pulseContainer, { backgroundColor: colors.error + '30' }]}>
           <View style={[styles.pulseInner, { backgroundColor: colors.error }]}>
-            <Ionicons name="pulse" size={20} color="#ffffff" />
+            <Ionicons name="pulse" size={20} color={colors.onPrimary} />
           </View>
         </View>
         <View style={styles.textContainer}>
@@ -38,7 +38,7 @@ export function LiveActivitySection({ section, onPress }: LiveActivitySectionPro
             <Text style={[styles.title, { color: colors.error }]}>{section.title}</Text>
             {activeCount && (
               <View style={[styles.badge, { backgroundColor: colors.error }]}>
-                <Text style={styles.badgeText}>{activeCount}</Text>
+                <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{activeCount}</Text>
               </View>
             )}
           </View>
@@ -95,7 +95,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   badgeText: {
-    color: '#ffffff',
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

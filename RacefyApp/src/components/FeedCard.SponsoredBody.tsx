@@ -16,7 +16,7 @@ export function SponsoredBody({ post }: { post: Post }) {
   const ctaText = sponsoredData?.cta_text;
   const ctaUrl = sponsoredData?.promoted_link || sponsoredData?.cta_url;
 
-  const accentColor = sponsoredData?.accent_color || post.accent_color || '#f59e0b';
+  const accentColor = sponsoredData?.accent_color || post.accent_color || colors.warning;
 
   return (
     <>
@@ -45,7 +45,7 @@ export function SponsoredBody({ post }: { post: Post }) {
             activeOpacity={0.8}
             onPress={() => void Linking.openURL(ctaUrl)}
           >
-            <Text style={spStyles.ctaText}>{ctaText}</Text>
+            <Text style={[spStyles.ctaText, { color: colors.onPrimary }]}>{ctaText}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -66,13 +66,11 @@ const spStyles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   ctaButton: {
-    backgroundColor: '#f59e0b',
     paddingVertical: 14,
     borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   ctaText: {
-    color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '800',
     letterSpacing: 0.5,

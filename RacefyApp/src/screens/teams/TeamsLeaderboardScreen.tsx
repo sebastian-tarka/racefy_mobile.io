@@ -121,7 +121,12 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
             {item.rank === 1 ? (
               <Text style={styles.rankEmoji}>{'\uD83C\uDFC6'}</Text>
             ) : isTop3 ? (
-              <Text style={[styles.rankBold, { color: item.rank === 2 ? '#9ca3af' : '#b45309' }]}>
+              <Text
+                style={[
+                  styles.rankBold,
+                  { color: item.rank === 2 ? colors.rank.silver : colors.rank.bronze },
+                ]}
+              >
                 #{item.rank}
               </Text>
             ) : (

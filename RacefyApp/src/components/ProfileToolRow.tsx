@@ -70,12 +70,14 @@ export function ProfileToolRow({
 
       {!!badge && (
         <View style={[styles.badge, { backgroundColor: badgeColor ?? colors.ai }]}>
-          <Text style={styles.badgeText}>{badge}</Text>
+          <Text style={[styles.badgeText, { color: colors.onPrimary }]}>{badge}</Text>
         </View>
       )}
       {!!newCount && newCount > 0 && (
         <View style={[styles.count, { backgroundColor: colors.primary }]}>
-          <Text style={styles.badgeText}>{newCount > 99 ? '99+' : newCount}</Text>
+          <Text style={[styles.badgeText, { color: colors.onPrimary }]}>
+            {newCount > 99 ? '99+' : newCount}
+          </Text>
         </View>
       )}
       <Ionicons name="chevron-forward" size={17} color={colors.textMuted} />
@@ -120,7 +122,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: {
-    color: '#ffffff',
     fontSize: msFont(10),
     fontWeight: '700',
     letterSpacing: 0.6,

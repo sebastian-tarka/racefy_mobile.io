@@ -266,7 +266,7 @@ export function FinishView({
             <Ionicons
               name={selectedEvent ? 'calendar' : 'calendar-outline'}
               size={18}
-              color={selectedEvent ? '#ffffff' : colors.textMuted}
+              color={selectedEvent ? colors.onPrimary : colors.textMuted}
             />
           </View>
           <View style={{ flex: 1 }}>
@@ -346,9 +346,9 @@ export function FinishView({
           activeOpacity={0.85}
         >
           {isLoading ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={colors.onPrimary} />
           ) : (
-            <Text style={styles.primaryText}>
+            <Text style={[styles.primaryText, { color: colors.onPrimary }]}>
               {isAuthenticated ? t('recording.finish.saveAndShare') : t('recording.saveActivity')}
             </Text>
           )}
@@ -511,7 +511,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   primaryText: {
-    color: '#ffffff',
     fontSize: fontSize.md,
     fontWeight: '700',
   },

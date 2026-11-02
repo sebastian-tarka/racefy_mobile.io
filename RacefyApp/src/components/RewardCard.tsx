@@ -48,7 +48,7 @@ const getBadgeRarityColor = (rarity: string, colors: any): string => {
     case 'legendary':
       return colors.warning; // Gold/Orange from theme
     case 'epic':
-      return '#a855f7'; // Purple - works in both modes
+      return colors.ai;
     case 'rare':
       return colors.info; // Blue from theme
     case 'common':
@@ -232,7 +232,9 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
               </Text>
               {isNew && (
                 <View style={[styles.newBadge, { backgroundColor: colors.error }]}>
-                  <Text style={styles.newText}>{t('rewards.new')}</Text>
+                  <Text style={[styles.newText, { color: colors.onPrimary }]}>
+                    {t('rewards.new')}
+                  </Text>
                 </View>
               )}
             </View>
@@ -244,7 +246,13 @@ function RewardCardBase({ reward, onPress }: RewardCardProps) {
                 <Ionicons
                   name="trophy"
                   size={14}
-                  color={place === 1 ? colors.warning : place === 2 ? colors.textMuted : '#CD7F32'}
+                  color={
+                    place === 1
+                      ? colors.rank.gold
+                      : place === 2
+                        ? colors.rank.silver
+                        : colors.rank.bronze
+                  }
                 />
                 <Text style={[styles.positionText, { color: colors.textSecondary }]}>
                   {t(`rewards.position.${place}`)}
@@ -304,7 +312,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   newText: {
-    color: '#FFFFFF',
     fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',

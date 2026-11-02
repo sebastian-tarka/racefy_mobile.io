@@ -519,11 +519,11 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
                 activeOpacity={0.85}
               >
                 {busyWorkoutId === item.workout.id ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                  <ActivityIndicator color={colors.onPrimary} size="small" />
                 ) : (
                   <>
-                    <Ionicons name="play" size={14} color="#ffffff" />
-                    <Text style={styles.startText}>
+                    <Ionicons name="play" size={14} color={colors.onPrimary} />
+                    <Text style={[styles.startText, { color: colors.onPrimary }]}>
                       {t(
                         status === 'in_progress'
                           ? 'strengthPlans.schedule.resume'
@@ -737,7 +737,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   startText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

@@ -570,7 +570,7 @@ export function EventFormScreen({ navigation, route }: Props) {
               >
                 <Text
                   style={{
-                    color: isActive ? '#fff' : colors.textPrimary,
+                    color: isActive ? colors.onPrimary : colors.textPrimary,
                     fontWeight: '600',
                     fontSize: fontSize.md,
                   }}
@@ -589,7 +589,9 @@ export function EventFormScreen({ navigation, route }: Props) {
                       justifyContent: 'center',
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: msFont(11), fontWeight: '700' }}>
+                    <Text
+                      style={{ color: colors.onPrimary, fontSize: msFont(11), fontWeight: '700' }}
+                    >
                       {errCount}
                     </Text>
                   </View>
@@ -631,8 +633,8 @@ export function EventFormScreen({ navigation, route }: Props) {
                   />
                   {coverAiGenerated && !!coverImage && (
                     <View style={[styles.aiBadge, { backgroundColor: colors.primary }]}>
-                      <Ionicons name="sparkles" size={12} color={colors.white} />
-                      <Text style={[styles.aiBadgeText, { color: colors.white }]}>
+                      <Ionicons name="sparkles" size={12} color={colors.onPrimary} />
+                      <Text style={[styles.aiBadgeText, { color: colors.onPrimary }]}>
                         {t('eventForm.aiCover.badge')}
                       </Text>
                     </View>
@@ -795,7 +797,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                       onValueChange={(value) => updateField('allow_multiple_activities', value)}
                       disabled={isLimitedEdit}
                       trackColor={{ true: colors.primary, false: colors.border }}
-                      thumbColor="#fff"
+                      thumbColor={colors.onPrimary}
                     />
                   </View>
                 </View>
@@ -826,7 +828,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                       onValueChange={(value) => updateField('auto_finalize_results', value)}
                       disabled={isLimitedEdit}
                       trackColor={{ true: colors.primary, false: colors.border }}
-                      thumbColor="#fff"
+                      thumbColor={colors.onPrimary}
                     />
                   </View>
                 </View>
@@ -913,7 +915,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                       onValueChange={(value) => updateField('is_team_event', value)}
                       disabled={isLimitedEdit}
                       trackColor={{ true: colors.primary, false: colors.border }}
-                      thumbColor="#fff"
+                      thumbColor={colors.onPrimary}
                     />
                   </View>
                   {formData.is_team_event && (
@@ -1196,7 +1198,7 @@ export function EventFormScreen({ navigation, route }: Props) {
                       activeOpacity={0.7}
                     >
                       {formData.show_start_finish_points && (
-                        <Ionicons name="checkmark" size={18} color="#fff" />
+                        <Ionicons name="checkmark" size={18} color={colors.onPrimary} />
                       )}
                     </TouchableOpacity>
                     <View style={styles.checkboxTextContainer}>

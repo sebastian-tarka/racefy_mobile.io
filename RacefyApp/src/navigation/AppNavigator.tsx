@@ -26,7 +26,7 @@ import { useMaintenance } from '../hooks/useMaintenance';
 import { useAppVersion } from '../hooks/useAppVersion';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { triggerHaptic } from '../hooks/useHaptics';
-import { msFont } from '../theme';
+import { msFont, withAlpha } from '../theme';
 import {
   BatteryOptimizationModal,
   BottomSheet,
@@ -217,8 +217,10 @@ function RecordTabButton({
   /** Replaces the tab's label while the button means "back to the session". */
   strengthLabel: string;
 }) {
+  const { colors } = useTheme();
   const busy = activity || strengthSession;
-  const background = busy ? ACTIVITY_AMBER : primaryColor;
+  // An activity is open — the design's one "something is running" colour.
+  const background = busy ? colors.warning : primaryColor;
 
   return (
     <View style={fabStyles.slot} pointerEvents="box-none">
@@ -230,7 +232,7 @@ function RecordTabButton({
         onPress={strengthSession ? onResumeStrength : onPress}
         onLongPress={onLongPress}
         delayLongPress={350}
-        android_ripple={{ color: 'rgba(16,185,129,0.25)', borderless: true, radius: 34 }}
+        android_ripple={{ color: withAlpha(colors.primary, 0.25), borderless: true, radius: 34 }}
         style={fabStyles.pressable}
       >
         <View
@@ -240,20 +242,17 @@ function RecordTabButton({
           ]}
         >
           {activity && isTracking ? (
-            <View style={fabStyles.stopGlyph} />
+            <View style={[fabStyles.stopGlyph, { backgroundColor: colors.onPrimary }]} />
           ) : strengthSession ? (
-            <Ionicons name="barbell" size={24} color="#fff" />
+            <Ionicons name="barbell" size={24} color={colors.onPrimary} />
           ) : (
-            <Ionicons name="play" size={24} color="#fff" style={fabStyles.playOffset} />
+            <Ionicons name="play" size={24} color={colors.onPrimary} style={fabStyles.playOffset} />
           )}
         </View>
       </Pressable>
     </View>
   );
 }
-
-/** An activity is open — the design's one "something is running" colour. */
-const ACTIVITY_AMBER = '#F59E0B';
 
 const fabStyles = StyleSheet.create({
   slot: {
@@ -285,7 +284,6 @@ const fabStyles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 4,
-    backgroundColor: '#ffffff',
   },
 });
 
@@ -383,7 +381,7 @@ function MainTabNavigator() {
           tabBarLabelStyle: styles.tabLabel,
           tabBarBadgeStyle: {
             backgroundColor: colors.primary,
-            color: '#ffffff',
+            color: colors.onPrimary,
             fontSize: msFont(10),
             fontWeight: '700',
           },

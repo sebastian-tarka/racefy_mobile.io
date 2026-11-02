@@ -2,13 +2,11 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { turnIcon, turnLabelKey, type NavBannerState } from '../../utils/navigationCues';
-import { borderRadius, fontSize, heroColors, msFont, spacing } from '../../theme';
+import { borderRadius, fontSize, heroColors, msFont, spacing, withAlpha } from '../../theme';
 
-/** The route layer's blue — same one the map draws planned routes in. */
-const ROUTE_BLUE = '#2563EB';
-const IMMINENT_BG = 'rgba(37,99,235,0.92)';
 const IMMINENT_BORDER = 'rgba(147,197,253,0.7)';
 
 interface Props {
@@ -32,22 +30,27 @@ interface Props {
  */
 export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const { formatDistance } = useUnits();
   const { current, after, distanceToTurn, legProgress, remaining, done, imminent, offRoute } =
     state;
 
+  // The route layer's blue — same one the map draws planned routes in.
+  const routeBlue = colors.routeAccent;
+  const imminentBg = withAlpha(colors.routeAccent, 0.92);
+
   const icon = current ? turnIcon(current.maneuver) : 'flag';
   const label = current ? t(turnLabelKey(current.maneuver)) : t('navigation.routeComplete');
 
-  const ink = imminent ? '#ffffff' : heroColors.ink;
-  const inkSoft = imminent ? 'rgba(255,255,255,0.8)' : heroColors.inkSoft;
+  const ink = imminent ? colors.onPrimary : heroColors.ink;
+  const inkSoft = imminent ? withAlpha(colors.onPrimary, 0.8) : heroColors.inkSoft;
 
   return (
     <View
       style={[
         styles.card,
         {
-          backgroundColor: imminent ? IMMINENT_BG : heroColors.surface,
+          backgroundColor: imminent ? imminentBg : heroColors.surface,
           borderColor: imminent ? IMMINENT_BORDER : heroColors.line,
         },
       ]}
@@ -71,10 +74,10 @@ export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }:
         <View
           style={[
             styles.iconBox,
-            { backgroundColor: imminent ? '#ffffff' : heroColors.surfaceStrong },
+            { backgroundColor: imminent ? colors.onPrimary : heroColors.surfaceStrong },
           ]}
         >
-          <Ionicons name={icon} size={28} color={imminent ? ROUTE_BLUE : heroColors.ink} />
+          <Ionicons name={icon} size={28} color={imminent ? routeBlue : heroColors.ink} />
         </View>
 
         <View style={styles.body}>
@@ -101,12 +104,12 @@ export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }:
                 voiceEnabled
                   ? {
                       backgroundColor: imminent
-                        ? 'rgba(255,255,255,0.22)'
+                        ? withAlpha(colors.onPrimary, 0.22)
                         : heroColors.surfaceStrong,
                     }
                   : {
                       borderWidth: 1,
-                      borderColor: imminent ? 'rgba(255,255,255,0.4)' : heroColors.line,
+                      borderColor: imminent ? withAlpha(colors.onPrimary, 0.4) : heroColors.line,
                     },
               ]}
               onPress={onToggleVoice}
@@ -125,7 +128,7 @@ export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }:
                 styles.actionButton,
                 {
                   borderWidth: 1,
-                  borderColor: imminent ? 'rgba(255,255,255,0.4)' : heroColors.line,
+                  borderColor: imminent ? withAlpha(colors.onPrimary, 0.4) : heroColors.line,
                 },
               ]}
               onPress={onOpenCueList}
@@ -141,7 +144,7 @@ export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }:
         <View
           style={[
             styles.track,
-            { backgroundColor: imminent ? 'rgba(255,255,255,0.3)' : heroColors.track },
+            { backgroundColor: imminent ? withAlpha(colors.onPrimary, 0.3) : heroColors.track },
           ]}
         >
           <View
@@ -149,7 +152,7 @@ export function NavBanner({ state, voiceEnabled, onToggleVoice, onOpenCueList }:
               styles.fill,
               {
                 width: `${Math.round(legProgress * 100)}%`,
-                backgroundColor: imminent ? '#ffffff' : '#60A5FA',
+                backgroundColor: imminent ? colors.onPrimary : routeBlue,
               },
             ]}
           />

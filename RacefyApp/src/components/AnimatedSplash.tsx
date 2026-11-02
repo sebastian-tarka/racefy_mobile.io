@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { fontSize } from '../theme';
+import { fontSize, lightColors } from '../theme';
 import Animated, {
   Easing,
   runOnJS,
@@ -15,8 +15,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 // Brand color — must match `splash.backgroundColor` in app.config.ts and the
-// native splashscreen_background so the native→JS handoff is seamless.
-const BRAND_GREEN = '#10b981';
+// native splashscreen_background so the native→JS handoff is seamless. Read from
+// the static light palette on purpose: this overlay mounts outside ThemeProvider
+// and the native splash cannot follow a seasonal palette anyway.
+const BRAND_GREEN = lightColors.primary;
 
 interface AnimatedSplashProps {
   /** Called once the exit animation has finished so the host can unmount this overlay. */
@@ -136,7 +138,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     marginTop: 20,
-    color: '#ffffff',
+    color: lightColors.onPrimary,
     fontSize: fontSize.title,
     fontWeight: '700',
     letterSpacing: 1,

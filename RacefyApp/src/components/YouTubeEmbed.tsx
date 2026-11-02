@@ -58,7 +58,9 @@ export function YouTubeEmbed({ embedId }: YouTubeEmbedProps) {
                 onPress={watchAgain}
                 activeOpacity={0.8}
               >
-                <Text style={styles.watchAgainText}>{t('feed.watchAgain')}</Text>
+                <Text style={[styles.watchAgainText, { color: colors.onPrimary }]}>
+                  {t('feed.watchAgain')}
+                </Text>
               </TouchableOpacity>
             </View>
           )}
@@ -81,7 +83,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   watchAgainText: {
-    color: '#fff',
     fontSize: fontSize.md,
     fontWeight: '600',
   },

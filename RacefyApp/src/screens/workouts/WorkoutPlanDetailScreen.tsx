@@ -196,8 +196,10 @@ export function WorkoutPlanDetailScreen({ navigation, route }: Props) {
             onPress={() => navigation.navigate('WorkoutSchedule', { planId })}
             activeOpacity={0.85}
           >
-            <Ionicons name="calendar-outline" size={18} color="#ffffff" />
-            <Text style={styles.ctaText}>{t('strengthPlans.schedule.openSchedule')}</Text>
+            <Ionicons name="calendar-outline" size={18} color={colors.onPrimary} />
+            <Text style={[styles.ctaText, { color: colors.onPrimary }]}>
+              {t('strengthPlans.schedule.openSchedule')}
+            </Text>
           </TouchableOpacity>
 
           {/* Header card */}
@@ -359,7 +361,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   ctaText: {
-    color: '#ffffff',
     fontSize: fontSize.lg,
     fontWeight: '700',
   },

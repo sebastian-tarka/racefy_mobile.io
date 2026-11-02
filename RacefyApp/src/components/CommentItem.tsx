@@ -244,14 +244,14 @@ export function CommentItem({
                       onPress={handlePickMedia}
                       disabled={isSubmittingEdit}
                     >
-                      <Ionicons name="swap-horizontal" size={16} color="#fff" />
+                      <Ionicons name="swap-horizontal" size={16} color={colors.onPrimary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.editMediaButton, { backgroundColor: colors.error }]}
                       onPress={handleRemoveMedia}
                       disabled={isSubmittingEdit}
                     >
-                      <Ionicons name="trash" size={16} color="#fff" />
+                      <Ionicons name="trash" size={16} color={colors.onPrimary} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -288,9 +288,11 @@ export function CommentItem({
                 disabled={!editContent.trim() || isSubmittingEdit}
               >
                 {isSubmittingEdit ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.onPrimary} />
                 ) : (
-                  <Text style={[styles.editButtonText, { color: '#fff' }]}>{t('common.save')}</Text>
+                  <Text style={[styles.editButtonText, { color: colors.onPrimary }]}>
+                    {t('common.save')}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

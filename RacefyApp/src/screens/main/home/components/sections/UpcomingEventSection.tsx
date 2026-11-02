@@ -97,7 +97,7 @@ export function UpcomingEventSection({
 
           {section.cta && (
             <View style={[styles.ctaButton, { backgroundColor: colors.primary }]}>
-              <Text style={styles.ctaText}>{section.cta}</Text>
+              <Text style={[styles.ctaText, { color: colors.onPrimary }]}>{section.cta}</Text>
             </View>
           )}
         </View>
@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   ctaText: {
-    color: '#ffffff',
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

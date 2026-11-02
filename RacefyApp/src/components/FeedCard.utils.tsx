@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
+import type { ThemeColors } from '../theme';
 import { fixStorageUrl } from '../config/api';
 import type { Post } from '../types/api';
 
@@ -76,7 +77,7 @@ export function getEffectiveType(post: Post): FeedPostType {
   return 'general';
 }
 
-export function getTypeColors(type: FeedPostType, colors: any) {
+export function getTypeColors(type: FeedPostType, colors: ThemeColors) {
   const colorMap: Record<FeedPostType, string> = {
     general: colors.primary,
     activity: colors.primary,
@@ -84,8 +85,8 @@ export function getTypeColors(type: FeedPostType, colors: any) {
     sponsored: colors.warning,
     reshare: '#06b6d4',
     achievement: '#EAB308',
-    challenge: '#F59E0B', // amber-500
-    digest: '#10B981', // emerald-500
+    challenge: colors.warning, // amber
+    digest: colors.primary, // emerald
     milestone: '#8B5CF6', // violet-500
   };
   return {

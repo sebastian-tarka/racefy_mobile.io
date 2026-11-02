@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { InsightCard } from './InsightCard';
 import { useTheme } from '../../hooks/useTheme';
-import { spacing, fontSize, fontWeight, borderRadius } from '../../theme';
+import { spacing, fontSize, fontWeight, borderRadius, withAlpha } from '../../theme';
 import type { MilestoneProgress } from '../../types/insights';
 
 interface MilestonesCardProps {
@@ -70,7 +70,7 @@ export function MilestonesCard({ data }: MilestonesCardProps) {
                 key={idx}
                 style={[
                   styles.chip,
-                  { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' },
+                  { backgroundColor: withAlpha(colors.primary, isDark ? 0.15 : 0.1) },
                 ]}
               >
                 <Ionicons name="checkmark-circle" size={14} color={colors.success} />

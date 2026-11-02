@@ -75,7 +75,7 @@ export function CommentInput({
       },
       activity: {
         trigger: '!',
-        textStyle: { fontWeight: '600', color: colors.ai || '#A855F7' },
+        textStyle: { fontWeight: '600', color: colors.ai },
         isInsertSpaceAfterMention: true,
       },
     },
@@ -297,15 +297,8 @@ export function CommentInput({
                     setActivityResults([]);
                   }}
                 >
-                  <View
-                    style={[
-                      styles.triggerIcon,
-                      { backgroundColor: (colors.ai || '#A855F7') + '18' },
-                    ]}
-                  >
-                    <Text style={[styles.triggerIconText, { color: colors.ai || '#A855F7' }]}>
-                      !
-                    </Text>
+                  <View style={[styles.triggerIcon, { backgroundColor: colors.ai + '18' }]}>
+                    <Text style={[styles.triggerIconText, { color: colors.ai }]}>!</Text>
                   </View>
                   <View style={styles.suggestionText}>
                     <Text
@@ -348,7 +341,7 @@ export function CommentInput({
             style={[styles.removePhoto, { backgroundColor: colors.error }]}
             onPress={handleRemovePhoto}
           >
-            <Ionicons name="close" size={14} color="#fff" />
+            <Ionicons name="close" size={14} color={colors.onPrimary} />
           </TouchableOpacity>
         </View>
       )}
@@ -397,9 +390,13 @@ export function CommentInput({
           disabled={!canSubmit}
         >
           {isSubmitting ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={colors.onPrimary} />
           ) : (
-            <Ionicons name="send" size={18} color={canSubmit ? '#fff' : colors.textMuted} />
+            <Ionicons
+              name="send"
+              size={18}
+              color={canSubmit ? colors.onPrimary : colors.textMuted}
+            />
           )}
         </TouchableOpacity>
       </View>

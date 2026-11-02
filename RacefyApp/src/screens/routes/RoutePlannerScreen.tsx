@@ -165,12 +165,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
               <Ionicons
                 name="walk-outline"
                 size={18}
-                color={profile === 'walking' ? '#fff' : colors.textSecondary}
+                color={profile === 'walking' ? colors.onPrimary : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.profileText,
-                  { color: profile === 'walking' ? '#fff' : colors.textSecondary },
+                  { color: profile === 'walking' ? colors.onPrimary : colors.textSecondary },
                 ]}
               >
                 {t('routes.walking')}
@@ -187,12 +187,12 @@ export function RoutePlannerScreen({ navigation }: Props) {
               <Ionicons
                 name="bicycle-outline"
                 size={18}
-                color={profile === 'cycling' ? '#fff' : colors.textSecondary}
+                color={profile === 'cycling' ? colors.onPrimary : colors.textSecondary}
               />
               <Text
                 style={[
                   styles.profileText,
-                  { color: profile === 'cycling' ? '#fff' : colors.textSecondary },
+                  { color: profile === 'cycling' ? colors.onPrimary : colors.textSecondary },
                 ]}
               >
                 {t('routes.cycling')}
@@ -297,10 +297,10 @@ export function RoutePlannerScreen({ navigation }: Props) {
                           {
                             backgroundColor:
                               idx === 0
-                                ? '#22c55e'
+                                ? colors.success
                                 : idx === waypoints.length - 1
-                                  ? '#ef4444'
-                                  : '#3b82f6',
+                                  ? colors.error
+                                  : colors.info,
                           },
                         ]}
                       />

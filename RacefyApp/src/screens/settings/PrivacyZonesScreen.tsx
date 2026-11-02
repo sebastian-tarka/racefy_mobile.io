@@ -310,8 +310,10 @@ export function PrivacyZonesScreen() {
           style={[styles.addSuggestionButton, { backgroundColor: colors.primary }]}
           onPress={() => handleAcceptSuggestion(suggestion)}
         >
-          <Ionicons name="add" size={18} color={colors.white} />
-          <Text style={styles.addSuggestionText}>{t('settings.privacyZones.addSuggestion')}</Text>
+          <Ionicons name="add" size={18} color={colors.onPrimary} />
+          <Text style={[styles.addSuggestionText, { color: colors.onPrimary }]}>
+            {t('settings.privacyZones.addSuggestion')}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -590,7 +592,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   addSuggestionText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '600',
   },

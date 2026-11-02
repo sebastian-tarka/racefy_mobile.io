@@ -30,10 +30,10 @@ function TrendRow({
 
   if (direction === 'improving') {
     icon = 'arrow-up';
-    color = '#10b981';
+    color = colors.success;
   } else if (direction === 'declining') {
     icon = 'arrow-down';
-    color = '#ef4444';
+    color = colors.error;
   }
 
   return (
@@ -65,10 +65,10 @@ export function TrendIndicator({ trends }: Props) {
   let directionColor = colors.textMuted;
   let directionKey = 'maintaining';
   if (trends.vs_previous_week === 'improving') {
-    directionColor = '#10b981';
+    directionColor = colors.success;
     directionKey = 'improving';
   } else if (trends.vs_previous_week === 'declining') {
-    directionColor = '#ef4444';
+    directionColor = colors.error;
     directionKey = 'declining';
   }
 

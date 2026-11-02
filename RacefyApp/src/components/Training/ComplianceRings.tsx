@@ -5,7 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
-import { spacing, fontSize } from '../../theme';
+import { spacing, fontSize, type ThemeColors } from '../../theme';
 import { Card } from '../../components';
 import type { ComplianceData } from '../../types/api';
 
@@ -13,11 +13,11 @@ interface Props {
   compliance: ComplianceData;
 }
 
-function getRingColor(percentage: number): string {
-  if (percentage >= 90) return '#10b981';
-  if (percentage >= 70) return '#3b82f6';
-  if (percentage >= 40) return '#f59e0b';
-  return '#ef4444';
+function getRingColor(percentage: number, colors: ThemeColors): string {
+  if (percentage >= 90) return colors.success;
+  if (percentage >= 70) return colors.info;
+  if (percentage >= 40) return colors.warning;
+  return colors.error;
 }
 
 function ComplianceRing({
@@ -33,7 +33,7 @@ function ComplianceRing({
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const ringColor = getRingColor(percentage);
+  const ringColor = getRingColor(percentage, colors);
 
   const size = 80;
   const strokeWidth = 6;

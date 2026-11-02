@@ -32,7 +32,7 @@ function TeamCardBase({ team, standing, onPress }: TeamCardProps) {
             {team.name}
           </Text>
           <View style={styles.metaRow}>
-            <Ionicons name="star" size={14} color={colors.warning || '#f59e0b'} />
+            <Ionicons name="star" size={14} color={colors.warning} />
             <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
               {team.captain.name}
             </Text>

@@ -1,4 +1,5 @@
 import type { MentionEntity, MentionMap } from '../types/api';
+import type { ThemeColors } from '../theme/colors';
 import { replaceTriggerValues } from 'react-native-controlled-mentions';
 
 // API token patterns: <@ID>, <#ID>, <!ID>
@@ -123,7 +124,7 @@ export function parseMentionTokens(text: string, mentions?: MentionMap): Mention
  */
 export function getMentionColor(
   type: MentionEntity['type'],
-  colors: any,
+  colors: ThemeColors,
 ): { text: string; bg: string } {
   switch (type) {
     case 'user':
@@ -131,7 +132,7 @@ export function getMentionColor(
     case 'event':
       return { text: colors.info, bg: colors.info + '18' };
     case 'activity':
-      return { text: colors.ai || '#A855F7', bg: (colors.ai || '#A855F7') + '18' };
+      return { text: colors.ai, bg: colors.ai + '18' };
   }
 }
 

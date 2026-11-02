@@ -65,7 +65,7 @@ export const MapControlsOverlay = React.memo(function MapControlsOverlay({
             <Ionicons
               name="navigate"
               size={26}
-              color={followUser ? colors.textSecondary : '#ffffff'}
+              color={followUser ? colors.textSecondary : colors.onPrimary}
             />
           </TouchableOpacity>
 
@@ -75,7 +75,7 @@ export const MapControlsOverlay = React.memo(function MapControlsOverlay({
             activeOpacity={0.7}
             accessibilityLabel={t('recording.viewStats')}
           >
-            <Ionicons name="list-outline" size={26} color="#ffffff" />
+            <Ionicons name="list-outline" size={26} color={colors.onPrimary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -104,7 +104,7 @@ export const MapControlsOverlay = React.memo(function MapControlsOverlay({
           <TouchableOpacity
             style={[
               styles.button,
-              { backgroundColor: devSimRunning ? '#ef4444' : colors.cardBackground },
+              { backgroundColor: devSimRunning ? colors.error : colors.cardBackground },
             ]}
             onPress={onToggleDevSim}
             onLongPress={onDevSimInfo}
@@ -113,11 +113,11 @@ export const MapControlsOverlay = React.memo(function MapControlsOverlay({
             <Ionicons
               name={devSimRunning ? 'stop' : 'walk'}
               size={28}
-              color={devSimRunning ? '#fff' : colors.textSecondary}
+              color={devSimRunning ? colors.onPrimary : colors.textSecondary}
             />
           </TouchableOpacity>
           <Text
-            style={[styles.devSimLabel, { color: devSimRunning ? '#ef4444' : colors.textMuted }]}
+            style={[styles.devSimLabel, { color: devSimRunning ? colors.error : colors.textMuted }]}
           >
             {devSimRunning ? `${devSimDistanceKm.toFixed(1)}km` : 'SimRun'}
           </Text>

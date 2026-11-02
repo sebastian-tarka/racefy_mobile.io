@@ -52,7 +52,7 @@ export function RecordingMapControls({
   workoutLine,
 }: RecordingMapControlsProps) {
   const { t } = useTranslation();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   // Fall back to measured tab bar height if parent didn't provide offset.
   // useBottomTabBarHeight() throws when this screen is not inside a bottom-tab
   // navigator. The hook itself is still called unconditionally (the underlying
@@ -68,7 +68,7 @@ export function RecordingMapControls({
   const effectiveBottom = bottomOffset ?? measuredTabBarHeight;
 
   // Shadow track blue color (same as map)
-  const shadowTrackColor = isDark ? '#60A5FA' : '#3B82F6';
+  const shadowTrackColor = colors.info;
 
   return (
     <View
@@ -162,7 +162,7 @@ export function RecordingMapControls({
             onPress={onResume}
             disabled={isLoading}
           >
-            <Ionicons name="play" size={32} color="#fff" />
+            <Ionicons name="play" size={32} color={colors.onPrimary} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -170,7 +170,7 @@ export function RecordingMapControls({
             onPress={onPause}
             disabled={isLoading}
           >
-            <Ionicons name="pause" size={32} color="#fff" />
+            <Ionicons name="pause" size={32} color={colors.onPrimary} />
           </TouchableOpacity>
         )}
 
@@ -179,7 +179,7 @@ export function RecordingMapControls({
           onPress={onStop}
           disabled={isLoading}
         >
-          <Ionicons name="stop" size={32} color="#fff" />
+          <Ionicons name="stop" size={32} color={colors.onPrimary} />
         </TouchableOpacity>
       </View>
     </View>

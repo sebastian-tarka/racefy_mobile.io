@@ -67,7 +67,7 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
           />
           <View style={styles.badges}>
             <View style={[styles.featuredBadge, { backgroundColor: colors.warning }]}>
-              <Text style={styles.featuredText}>
+              <Text style={[styles.featuredText, { color: colors.onPrimary }]}>
                 {t('events.featured', 'Featured').toUpperCase()}
               </Text>
             </View>
@@ -103,7 +103,12 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
           onPress={canRegister ? (onRegister ?? onPress) : onPress}
           activeOpacity={0.85}
         >
-          <Text style={[styles.registerText, { color: canRegister ? '#fff' : colors.textPrimary }]}>
+          <Text
+            style={[
+              styles.registerText,
+              { color: canRegister ? colors.onPrimary : colors.textPrimary },
+            ]}
+          >
             {event.is_registered
               ? t('eventDetail.registered', 'Registered')
               : canRegister
@@ -113,7 +118,7 @@ function FeaturedEventCardBase({ event, onPress, onRegister }: FeaturedEventCard
           <Ionicons
             name="arrow-forward"
             size={16}
-            color={canRegister ? '#fff' : colors.textPrimary}
+            color={canRegister ? colors.onPrimary : colors.textPrimary}
           />
         </TouchableOpacity>
       </View>
@@ -154,7 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   featuredText: {
-    color: '#fff',
     fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.3,
