@@ -15,7 +15,14 @@ Stan na: **2026-11-01**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Tokeny palety pod motywy sezonowe — Faza 0 (`feature/theme-tokens-hardening`)
+_(nic)_
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Tokeny palety pod motywy sezonowe — Faza 0 (zmergowane 2026-11-02, `feature/theme-tokens-hardening`, tag `pre-theme-tokens-hardening` = main sprzed merge)
 
 Plan motywów z serwera w `.notes/ANALIZA_MOTYWY_ZDALNE.md`. Ta faza nie zmienia wyglądu: ~110
 literałów akcentu w 86 plikach poszło przez tokeny (`colors.primary/error/warning/…`), biały na
@@ -30,11 +37,7 @@ inline — jeśli gdzieś zapomniano, element będzie czarny/domyślny zamiast b
 - [ ] Komentarze: wysyłanie (spinner/ikona), edycja (zamień/kosz/zapisz), wzmianki (fiolet), licznik
 - [ ] Dark theme: to samo na próbę — szczególnie `rank.*`, `routeAccent`, glow w `ScreenContainer`
 - [ ] Ekran błędu (`ErrorBoundary`) i splash animowany wyglądają jak wcześniej
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-02). Czysty JS — wystarczy dev server.
 
 ### Trener audio: tempo w komunikatach km i pauzy (zmergowane 2026-11-01, `fix/audio-coach-split-pace`, tag `pre-audio-coach-split-pace` = main sprzed merge)
 
