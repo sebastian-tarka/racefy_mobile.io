@@ -1607,6 +1607,14 @@
     "language": "Język",
     "english": "English",
     "polish": "Polski",
+    "timezone": {
+      "title": "Strefa czasowa",
+      "description": "Według niej liczymy przypomnienia, e-maile i to, co jest „dzisiaj” w statystykach i celach.",
+      "auto": "Automatycznie",
+      "detected": "Strefa tego urządzenia: {{zone}}",
+      "manual": "Wybierz strefę",
+      "search": "Szukaj strefy (miasto lub region)"
+    },
     "theme": "Motyw",
     "theme_system": "Systemowy",
     "theme_light": "Jasny",

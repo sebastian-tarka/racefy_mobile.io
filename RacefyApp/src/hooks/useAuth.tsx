@@ -7,6 +7,7 @@ import { changeLanguage } from '../i18n';
 import { syncUnitsPreference } from './useUnits';
 import { syncMapStylePreference } from './useMapStyle';
 import { logger } from '../services/logger';
+import { getDeviceTimeZone } from '../utils/timezone';
 import {
   configureGoogleSignIn,
   signInWithGoogle,
@@ -218,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (data: LoginRequest) => {
     logger.auth('Login attempt', { email: data.email });
-    const response = await api.login(data);
+    const response = await api.login({ ...data, timezone: getDeviceTimeZone() });
     // Check consent BEFORE setUser to avoid briefly showing main app to users who haven't consented
     const status = await getConsentStatus();
     // Set both atomically - React 18 batches these (no await between them)

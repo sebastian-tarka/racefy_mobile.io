@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
+import { type TimeZoneChoice, getDeviceTimeZone, timeZonePayload } from '../utils/timezone';
 import { changeLanguage } from '../i18n';
 import type { NotificationChannelSettings, UserPreferences } from '../types/api';
 import { triggerHaptic } from './useHaptics';
@@ -18,6 +19,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   units: 'metric',
   language: 'en',
   theme: 'system',
+  timezone: '',
+  timezone_auto: true,
   map_style: null,
   notifications: {
     likes: { ...DEFAULT_CHANNEL_SETTINGS },
@@ -124,6 +127,23 @@ export function useUserPreferences() {
       }
     },
     [t],
+  );
+
+  /** Time zone: automatic (phone's zone) or picked by hand — one PUT either way. */
+  const updateTimeZone = useCallback(
+    async (choice: TimeZoneChoice) => {
+      triggerHaptic();
+      const deviceZone = getDeviceTimeZone();
+      await apply(
+        (prev) =>
+          choice.auto
+            ? { ...prev, timezone_auto: true, timezone: deviceZone }
+            : { ...prev, timezone_auto: false, timezone: choice.zone },
+        timeZonePayload(choice),
+        'Failed to update time zone',
+      );
+    },
+    [apply],
   );
 
   const updatePreference = useCallback(
@@ -249,6 +269,7 @@ export function useUserPreferences() {
     isLoading,
     isUpdatingAiPosts,
     updatePreference,
+    updateTimeZone,
     updateNestedPreference,
     updateNotificationChannel,
     updateLiveNotification,

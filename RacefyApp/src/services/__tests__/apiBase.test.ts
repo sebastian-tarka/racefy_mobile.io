@@ -31,6 +31,17 @@ describe('ApiBase.request', () => {
     (global as any).fetch = fetchMock;
   });
 
+  it('sends the device time zone on every request, read at request time', async () => {
+    fetchMock.mockResolvedValue(respond(200, '{"data":[]}'));
+    const api = new ApiBase();
+
+    await api.request('/feed');
+
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    expect(headers['X-Timezone']).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    expect(headers['Accept-Language']).toBe('en');
+  });
+
   it('turns a non-JSON 503 (proxy HTML page) into an ApiError with the status', async () => {
     fetchMock.mockResolvedValue(respond(503, '<html>Service Unavailable</html>'));
     const api = new ApiBase();

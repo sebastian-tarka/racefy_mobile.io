@@ -145,6 +145,8 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+  /** The device's IANA zone; the X-Timezone header carries it too. */
+  timezone?: string;
 }
 
 export interface ForgotPasswordRequest {

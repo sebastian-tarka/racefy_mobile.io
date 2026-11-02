@@ -1,5 +1,6 @@
 import { API_BASE_URL, XDEBUG_ENABLED } from '../../config/api';
 import { getCurrentLanguage } from '../../i18n';
+import { getDeviceTimeZone } from '../../utils/timezone';
 import { logger } from '../logger';
 import { secureStorage } from '../secureStorage';
 import type * as Types from '../../types/api';
@@ -93,7 +94,7 @@ export class ApiBase {
   /**
    * Universal API request method. Handles both JSON and FormData requests.
    * - Auto-detects FormData and skips Content-Type (browser sets it with boundary)
-   * - Adds Authorization, Accept, Accept-Language headers
+   * - Adds Authorization, Accept, Accept-Language, X-Timezone headers
    * - Appends Xdebug trigger when enabled
    * - Parses JSON response and throws on error
    * - Deduplicates concurrent GET requests (same endpoint → shared Promise)
@@ -161,6 +162,9 @@ export class ApiBase {
     const headers: HeadersInit = {
       Accept: 'application/json',
       'Accept-Language': getCurrentLanguage(),
+      // The phone's IANA zone, read per request: the server keeps it as the
+      // user's zone while `timezone_auto` is on (time zone plan, phase 1).
+      'X-Timezone': getDeviceTimeZone(),
       ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
