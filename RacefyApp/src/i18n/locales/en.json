@@ -1571,6 +1571,15 @@
     "language": "Language",
     "english": "English",
     "polish": "Polski",
+    "timezone": {
+      "title": "Time zone",
+      "description": "Reminders, e-mails and what counts as “today” in stats and goals follow it.",
+      "auto": "Automatic",
+      "detected": "This device's zone: {{zone}}",
+      "unknown": "unknown",
+      "manual": "Pick a zone",
+      "search": "Search zones (city or region)"
+    },
     "theme": "Theme",
     "theme_system": "System",
     "theme_light": "Light",

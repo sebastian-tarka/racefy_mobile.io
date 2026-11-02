@@ -27,6 +27,7 @@ import { ChangePasswordForm } from './components/ChangePasswordForm';
 import { DeleteAccountForm } from './components/DeleteAccountForm';
 import { DevToolsSection } from './components/DevToolsSection';
 import { FavoriteSportModal } from './components/FavoriteSportModal';
+import { TimeZoneModal } from './components/TimeZoneModal';
 import { NotificationSettings } from './components/NotificationSettings';
 import { SettingsRow } from './components/SettingsRows';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,6 +43,7 @@ import { logger } from '../../services/logger';
 import { pushNotificationService } from '../../services/pushNotifications';
 import { buildInfo } from '../../config/buildInfo';
 import { changeLanguage, supportedLanguages } from '../../i18n';
+import { getDeviceTimeZone } from '../../utils/timezone';
 import { fontSize, spacing } from '../../theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
@@ -66,6 +68,7 @@ export function SettingsScreen({ navigation }: Props) {
     isLoading,
     isUpdatingAiPosts,
     updatePreference,
+    updateTimeZone,
     updateNestedPreference,
     updateNotificationChannel,
     updateLiveNotification,
@@ -88,6 +91,7 @@ export function SettingsScreen({ navigation }: Props) {
   // Sport types and favorite sport modal
   const { sportTypes, isLoading: sportsLoading } = useSportTypes();
   const [showSportModal, setShowSportModal] = useState(false);
+  const [showTimeZoneModal, setShowTimeZoneModal] = useState(false);
 
   // Section collapse state - account and app open by default
   const [expandedSections, setExpandedSections] = useState({
@@ -358,6 +362,18 @@ export function SettingsScreen({ navigation }: Props) {
               changeLanguage(newLang);
               updatePreference('language', newLang);
             }}
+          />
+          <SettingsRow
+            icon="globe-outline"
+            label={t('settings.timezone.title')}
+            value={
+              preferences.timezone_auto
+                ? [t('settings.timezone.auto'), getDeviceTimeZone() ?? preferences.timezone]
+                    .filter(Boolean)
+                    .join(' · ')
+                : preferences.timezone || t('settings.timezone.auto')
+            }
+            onPress={() => setShowTimeZoneModal(true)}
           />
           <SettingsRow
             icon="color-palette-outline"
@@ -766,6 +782,17 @@ export function SettingsScreen({ navigation }: Props) {
         )}
       </ScrollView>
 
+      <TimeZoneModal
+        visible={showTimeZoneModal}
+        timezone={preferences.timezone}
+        timezoneAuto={preferences.timezone_auto}
+        disabled={isLoading}
+        onChoose={(choice) => {
+          void updateTimeZone(choice);
+          if (choice.auto) setShowTimeZoneModal(false);
+        }}
+        onClose={() => setShowTimeZoneModal(false)}
+      />
       <FavoriteSportModal
         visible={showSportModal}
         sportTypes={sportTypes}

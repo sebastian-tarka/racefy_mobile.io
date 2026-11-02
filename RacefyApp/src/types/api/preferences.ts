@@ -35,6 +35,13 @@ export interface UserPreferences {
   language: 'en' | 'pl' | 'es';
   theme: 'light' | 'dark' | 'system';
   /**
+   * IANA zone reminders, e-mails and "today" in stats and goals follow. '' or
+   * 'UTC' = none yet (the server treats those as Europe/Warsaw).
+   */
+  timezone: string;
+  /** true = the phone's zone (X-Timezone header) is taken on every request; false = picked by hand. */
+  timezone_auto: boolean;
+  /**
    * Per-user Mapbox style for route maps. A full style id from the backend's
    * ALLOWED_STYLES (e.g. "mapbox/satellite-v9"), or null to use the
    * admin-configured system default. See GET /config/map-style.
