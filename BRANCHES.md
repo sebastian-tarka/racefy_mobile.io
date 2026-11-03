@@ -15,7 +15,18 @@ Stan na: **2026-11-03**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Czat: oznaczanie jako przeczytane podczas pollingu (`fix/chat-mark-read`, od 2026-11-03)
+
+`useMessages.pollForNewMessages` aktualizował ref ostatniej wiadomości **przed** sprawdzeniem „nowe od innych”, więc
+warunek był zawsze fałszywy: otwarty czat oznaczał rozmowę jako przeczytaną tylko przy wejściu, a wiadomości, które
+przyszły w trakcie, zostawały „nieprzeczytane” (badge) do ponownego otwarcia. Teraz każdy poll, który przyniósł nową
+wiadomość od kogoś innego, woła `POST /conversations/{id}/read` (raz na taką porcję) i odświeża badge — ale tylko gdy
+apka jest na wierzchu i ekran czatu ma fokus; po powrocie na wierzch / do ekranu dzieje się to od razu.
+- [ ] (dwa konta) otwarty czat A↔B na telefonie, B pisze z weba: wiadomość pojawia się po ≤5 s, a licznik nieprzeczytanych (lista konwersacji, badge na Home) po wyjściu z czatu = 0
+- [ ] własna wiadomość wysłana z telefonu: brak dodatkowego requestu `read` (sprawdzić w logach API / Debug Logs)
+- [ ] czat otwarty, apka w tle, B pisze: po powrocie na wierzch wiadomość widać i licznik = 0
+- [ ] z czatu wejść w profil B (czat pod spodem), B pisze, wrócić do czatu: wiadomość widać, licznik = 0; w trakcie pobytu na profilu `read` nie poleciał
+- [ ] stary scenariusz bez zmian: wejście do czatu z nieprzeczytanymi zeruje licznik
 
 ## Na `main`, ale niezweryfikowane runtime
 
