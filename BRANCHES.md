@@ -15,7 +15,19 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Lokalne daty kalendarzowe — faza 4 planu stref (`feature/timezones-f4`, od 2026-11-03)
+
+Serwer (API faza 3) czyta każdy dzień kalendarzowy (tygodnie planu, okresy celów, `from`/`to`, `week`) jako
+lokalny dzień użytkownika. Apka przestaje liczyć dzień z `toISOString()` (dzień UTC) i parsować `YYYY-MM-DD`
+jako północ UTC: helpery `localDateString`/`parseLocalDate` w `utils/dateFormat.ts`, a formatery
+`formatDate`/`formatIntlDate` traktują gołą datę jako lokalny dzień. Dotknięte: zakresy statystyk profilu,
+cele (formularz, payload), kalibracja planu (`target_date`), harmonogram siłowy, arkusz wznowienia sesji,
+historia ćwiczenia, zakres dni tygodnia planu.
+- [ ] (telefon ze strefą ustawioną na Auckland, godzina 00:30–11:59) Profil → Statystyki → „tydzień”: zakres `to` to dzisiejsza data lokalna, nie wczorajsza
+- [ ] (ta sama strefa) nowy cel ze startem „dzisiaj”: w szczegółach celu data startu = dzisiaj
+- [ ] (strefa Los Angeles, wieczór) harmonogram siłowy: dzisiejszy dzień podświetlony jako „dzisiaj”, daty dni bez przesunięcia o jeden
+- [ ] (strefa Los Angeles) lista tygodni planu: zakres „1–7 lis” zgadza się z webem
+- [ ] (Polska, normalna strefa) nic się nie zmieniło w wyświetlanych datach celów, tygodni i harmonogramu
 
 ## Na `main`, ale niezweryfikowane runtime
 
