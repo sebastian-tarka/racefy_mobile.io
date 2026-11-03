@@ -1380,7 +1380,11 @@
     "rename": "Zmień nazwę",
     "renamePlaceholder": "Nazwa czatu",
     "renameSuccess": "Nazwa zmieniona",
-    "renameFailed": "Nie udało się zmienić nazwy"
+    "renameFailed": "Nie udało się zmienić nazwy",
+    "unsupportedMessage": "Ta wersja aplikacji nie obsługuje tej wiadomości",
+    "attachment": "📎 Załącznik",
+    "photo": "Zdjęcie",
+    "openFileFailed": "Nie udało się otworzyć pliku"
   },
   "eventForm": {
     "tabs": {

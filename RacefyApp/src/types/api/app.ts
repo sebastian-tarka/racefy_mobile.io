@@ -92,6 +92,8 @@ export interface AppUpdateConfig {
 
 export interface AppConfigFeatures {
   event_entry_fee: boolean;
+  /** Sending files in chat (receiving works regardless). Default false. */
+  chat_attachments: boolean;
 }
 
 export interface AppConfigResponse {

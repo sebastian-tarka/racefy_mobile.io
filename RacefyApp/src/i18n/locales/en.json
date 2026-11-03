@@ -1348,7 +1348,11 @@
     "rename": "Rename",
     "renamePlaceholder": "Chat name",
     "renameSuccess": "Chat renamed",
-    "renameFailed": "Couldn't rename chat"
+    "renameFailed": "Couldn't rename chat",
+    "unsupportedMessage": "This version of the app can't show this message",
+    "attachment": "📎 Attachment",
+    "photo": "Photo",
+    "openFileFailed": "Couldn't open the file"
   },
   "eventForm": {
     "tabs": {

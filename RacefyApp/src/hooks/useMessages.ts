@@ -12,7 +12,8 @@ export function useMessages(conversationId: number) {
   const [error, setError] = useState<string | null>(null);
   const lastMessageIdRef = useRef<number | null>(null);
 
-  // Fetch messages (API returns oldest first for chat display)
+  // Fetch messages. Page 1 is the NEWEST 50 messages, ordered oldest → newest for chat
+  // display; page 2 would be the 50 before them (prepend it if "load older" is ever added).
   const fetchMessages = useCallback(async () => {
     try {
       setError(null);

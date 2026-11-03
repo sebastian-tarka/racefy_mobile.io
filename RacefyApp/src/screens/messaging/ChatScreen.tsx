@@ -30,6 +30,8 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation, ConversationParticipant, Message } from '../../types/api';
 import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 import { formatDate, formatIntlDate } from '../../utils/dateFormat';
+import { MessageAttachments } from './components/MessageAttachments';
+import { messageBodyText } from './messageText';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -175,6 +177,9 @@ export function ChatScreen({ navigation, route }: Props) {
     const showAvatar =
       !isOwn && (showSender || !prevMessage || messages[index - 1]?.is_own !== item.is_own);
 
+    const attachments = item.attachments ?? [];
+    const body = messageBodyText(item, t);
+
     return (
       <>
         {showDateSeparator && (
@@ -222,9 +227,21 @@ export function ChatScreen({ navigation, route }: Props) {
             {showSender && (
               <Text style={[styles.senderName, { color: colors.primary }]}>{item.sender.name}</Text>
             )}
-            <Text style={[themedStyles.messageText, isOwn && themedStyles.ownMessageText]}>
-              {item.content}
-            </Text>
+            {attachments.length > 0 && (
+              <MessageAttachments attachments={attachments} isOwn={isOwn} />
+            )}
+            {body && (
+              <Text
+                style={[
+                  themedStyles.messageText,
+                  isOwn && themedStyles.ownMessageText,
+                  body.muted && themedStyles.mutedMessageText,
+                  attachments.length > 0 && styles.caption,
+                ]}
+              >
+                {body.text}
+              </Text>
+            )}
             <Text style={[themedStyles.messageTime, isOwn && themedStyles.ownMessageTime]}>
               {time}
             </Text>
@@ -491,6 +508,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 2,
   },
+  caption: {
+    marginTop: spacing.xs,
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -566,6 +586,10 @@ const createThemedStyles = (colors: ThemeColors) =>
     },
     ownMessageText: {
       color: colors.white,
+    },
+    mutedMessageText: {
+      fontStyle: 'italic',
+      opacity: 0.75,
     },
     messageTime: {
       fontSize: fontSize.xs,
