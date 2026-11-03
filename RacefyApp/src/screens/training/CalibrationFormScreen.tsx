@@ -40,7 +40,7 @@ import type {
   TrainingGoal,
 } from '../../types/api';
 import { getErrorMessage, getErrorStatus, isTimeoutError } from '../../utils/errors';
-import { formatIntlDate } from '../../utils/dateFormat';
+import { formatIntlDate, localDateString } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -247,7 +247,7 @@ export function CalibrationFormScreen({ navigation }: Props) {
             : undefined,
         target_date:
           selectedGoal!.requires_target_date && targetDate
-            ? targetDate.toISOString().split('T')[0]
+            ? localDateString(targetDate)
             : undefined,
       });
 

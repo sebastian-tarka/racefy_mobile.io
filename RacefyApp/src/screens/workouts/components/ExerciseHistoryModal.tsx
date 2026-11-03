@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { parseLocalDate } from '../../../utils/dateFormat';
 import {
   ActivityIndicator,
   Modal,
@@ -84,7 +85,7 @@ export function ExerciseHistoryModal({ exerciseId, exerciseName, onClose }: Prop
             >
               <View style={styles.cardHeader}>
                 <Text style={[styles.date, { color: colors.textPrimary }]}>
-                  {new Date(e.date).toLocaleDateString(i18n.language, {
+                  {parseLocalDate(e.date).toLocaleDateString(i18n.language, {
                     day: 'numeric',
                     month: 'short',
                   })}
