@@ -15,7 +15,14 @@ Stan na: **2026-11-03**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Załączniki w czacie — faza A (odbiór) (`feature/chat-attachments`, od 2026-11-03)
+_(nic)_
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Załączniki w czacie — faza A (odbiór) (zmergowane 2026-11-03, `feature/chat-attachments`, tag `pre-chat-attachments` = main sprzed merge)
 
 API (racefy_api.io, branch `feature/chat-attachments`, doc `docs/features/messaging/chat-attachments.md`) dodaje wiadomości
 typu `attachment`: `content` to opcjonalny podpis, `attachments[]` = zdjęcia (`thumb_url`/`large_url`) i pliki PDF/GPX
@@ -30,11 +37,7 @@ apka pokazuje taką wiadomość jako pusty dymek. Przy okazji: API `fix/chat-mes
 - [ ] wiadomość nieznanego typu (bez treści i załączników) → szary dopisek „Ta wersja aplikacji nie obsługuje tej wiadomości”, nie pusty dymek ani crash
 - [ ] stare API (bez `attachments`/`preview`): czat tekstowy i lista konwersacji bez zmian
 - [ ] długi czat (>50 wiadomości) po wdrożeniu `fix/chat-message-order`: po otwarciu widać najnowsze wiadomości, przewinięte na dół
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-03). API na prodzie (v1.3.39), flaga `chat_attachments` WŁĄCZONA — wydana apka 1.30.0 dostaje już wiadomości typu `attachment`, więc ta zmiana powinna trafić do najbliższego wydania.
 
 ### Lokalne daty kalendarzowe — faza 4 planu stref (zmergowane 2026-11-03, `feature/timezones-f4`, tag `pre-timezones-f4` = main sprzed merge)
 
