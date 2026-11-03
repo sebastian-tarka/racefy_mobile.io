@@ -15,7 +15,16 @@ Stan na: **2026-11-03**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Załączniki w czacie — faza B (wysyłanie) (`feature/chat-attachments-send`, od 2026-11-03)
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Załączniki w czacie — faza B (wysyłanie) (zmergowane 2026-11-03, `feature/chat-attachments-send`, tag `pre-chat-attachments-send` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-03). **Nowa zależność natywna `expo-image-manipulator`** — wymaga świeżego buildu natywnego (APK/dev client sprzed 1.32.0 jej nie mają; na starym binarce zmniejszanie zdjęcia rzuca wyjątek, łapany → leci oryginał, limit 10 MB nadal działa).
 
 Odbiór (faza A) jest w 1.31.0. Faza B dodaje wysyłanie z telefonu: spinacz w composerze czatu (tylko gdy
 `GET /config/app → features.chat_attachments` = true; na prod flaga jest włączona), wybór zdjęć z galerii / aparatu
@@ -31,11 +40,6 @@ Odbiór (faza A) jest w 1.31.0. Faza B dodaje wysyłanie z telefonu: spinacz w c
 - [ ] odpowiedź 422 (np. flaga wyłączona w trakcie) → komunikat z treścią błędu API, dymek do ponowienia/odrzucenia
 - [ ] lista konwersacji po wysłaniu: podgląd „📷 Zdjęcie”/„📎 nazwa.pdf”
 _Brak._
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Czat: oznaczanie jako przeczytane podczas pollingu (zmergowane 2026-11-03, `fix/chat-mark-read`, tag `pre-chat-mark-read` = main sprzed merge)
 
