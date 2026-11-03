@@ -1348,7 +1348,26 @@
     "rename": "Cambiar nombre",
     "renamePlaceholder": "Nombre del chat",
     "renameSuccess": "Nombre actualizado",
-    "renameFailed": "No se pudo cambiar el nombre"
+    "renameFailed": "No se pudo cambiar el nombre",
+    "unsupportedMessage": "Esta versión de la app no puede mostrar este mensaje",
+    "attachment": "📎 Archivo adjunto",
+    "photo": "Foto",
+    "openFileFailed": "No se pudo abrir el archivo",
+    "attachments": {
+      "attach": "Adjuntar un archivo",
+      "pickPhotos": "Elegir fotos",
+      "takePhoto": "Hacer una foto",
+      "pickDocument": "Elegir un documento (PDF, GPX)",
+      "unsupportedType": "Solo se pueden enviar fotos JPG, PNG, WebP y archivos PDF o GPX.",
+      "tooLarge": "Se omitieron los archivos de más de {{max}} MB.",
+      "tooMany": "Puedes adjuntar hasta {{max}} archivos por mensaje.",
+      "pickFailed": "No se pudo elegir el archivo",
+      "sending": "Enviando…",
+      "sendFailed": "No se pudieron enviar los archivos",
+      "retry": "Reintentar",
+      "discard": "Descartar",
+      "remove": "Quitar"
+    }
   },
   "eventForm": {
     "tabs": {

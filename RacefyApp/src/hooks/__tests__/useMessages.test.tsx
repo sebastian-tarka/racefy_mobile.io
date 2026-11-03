@@ -10,18 +10,21 @@ jest.mock('../../services/api', () => ({
     getMessages: jest.fn(),
     markConversationAsRead: jest.fn(),
     sendMessage: jest.fn(),
+    sendMessageWithAttachments: jest.fn(),
   },
 }));
 jest.mock('../../services/logger', () => ({
   logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
 }));
 jest.mock('../../services/refreshEvents', () => ({ emitRefresh: jest.fn() }));
+jest.mock('../../i18n', () => ({ __esModule: true, default: { t: (key: string) => key } }));
 
 const mockFocus = { focused: true };
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => mockFocus.focused }));
 
 const getMessages = api.getMessages as jest.Mock;
 const markRead = api.markConversationAsRead as jest.Mock;
+const sendWithAttachments = api.sendMessageWithAttachments as jest.Mock;
 
 type Listener = (state: string) => void;
 let appStateListener: Listener | null;
@@ -60,6 +63,7 @@ beforeEach(() => {
   }) as any);
   getMessages.mockReset();
   markRead.mockReset().mockResolvedValue(undefined);
+  sendWithAttachments.mockReset();
   (emitRefresh as jest.Mock).mockReset();
 });
 afterEach(() => {
@@ -149,5 +153,86 @@ describe('useMessages read marking during polling', () => {
     mockFocus.focused = true;
     rerender({});
     await waitFor(() => expect(markRead).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe('useMessages attachments upload', () => {
+  const photo = {
+    localId: 'local-1',
+    kind: 'image' as const,
+    uri: 'file:///tmp/1.jpg',
+    name: '1.jpg',
+    mimeType: 'image/jpeg',
+    size: 1000,
+  };
+
+  it('shows an uploading bubble with progress, then the confirmed message', async () => {
+    const { result } = await openChat([msg(1, false)]);
+    let resolveUpload!: (value: unknown) => void;
+    let onProgress: ((fraction: number) => void) | undefined;
+    sendWithAttachments.mockImplementation((_id: number, _body: FormData, options) => {
+      onProgress = options.onProgress;
+      return new Promise((r) => (resolveUpload = r));
+    });
+
+    act(() => {
+      result.current.sendAttachments(' podpis ', [photo]);
+    });
+    expect(result.current.pending).toHaveLength(1);
+    expect(result.current.pending[0]).toMatchObject({
+      content: 'podpis',
+      status: 'uploading',
+      progress: 0,
+    });
+    expect(sendWithAttachments).toHaveBeenCalledTimes(1);
+
+    act(() => onProgress?.(0.5));
+    expect(result.current.pending[0].progress).toBe(0.5);
+
+    const sent = { ...msg(2, true), type: 'attachment' as const, content: 'podpis' };
+    await act(async () => {
+      resolveUpload({ data: sent });
+      await Promise.resolve();
+    });
+    expect(result.current.pending).toEqual([]);
+    expect(result.current.messages.map((m) => m.id)).toEqual([1, 2]);
+    expect(emitRefresh).toHaveBeenCalledWith('messages');
+  });
+
+  it("keeps a failed upload as a bubble with the server's reason, retries and discards", async () => {
+    const { result } = await openChat([msg(1, false)]);
+    sendWithAttachments.mockRejectedValueOnce({
+      status: 422,
+      message: 'The given data was invalid.',
+      errors: { attachments: ['Załączniki są wyłączone.'] },
+    });
+
+    await act(async () => {
+      result.current.sendAttachments('', [photo]);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.pending[0].status).toBe('failed'));
+    expect(result.current.pending[0].error).toBe('Załączniki są wyłączone.');
+    expect(result.current.messages).toHaveLength(1);
+
+    // Retry succeeds.
+    sendWithAttachments.mockResolvedValueOnce({ data: { ...msg(3, true), type: 'attachment' } });
+    await act(async () => {
+      result.current.retryPending(result.current.pending[0].localId);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.pending).toEqual([]));
+    expect(result.current.messages.map((m) => m.id)).toEqual([1, 3]);
+
+    // A failed one can be discarded.
+    sendWithAttachments.mockRejectedValueOnce(new Error('Network request failed'));
+    await act(async () => {
+      result.current.sendAttachments('', [photo]);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.pending[0].status).toBe('failed'));
+    expect(result.current.pending[0].error).toBe('messaging.attachments.sendFailed');
+    act(() => result.current.discardPending(result.current.pending[0].localId));
+    expect(result.current.pending).toEqual([]);
   });
 });

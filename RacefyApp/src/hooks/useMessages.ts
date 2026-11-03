@@ -1,11 +1,33 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+import i18n from '../i18n';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { emitRefresh } from '../services/refreshEvents';
 import type { Message } from '../types/api';
+import {
+  buildMessageFormData,
+  uploadErrorMessage,
+  type LocalAttachment,
+} from '../utils/chatAttachments';
 import { useForegroundInterval } from './useForegroundInterval';
+
+/**
+ * An own message with files that the server has not confirmed yet: uploading with
+ * progress, or failed with the reason and the option to retry or discard.
+ */
+export interface PendingMessage {
+  localId: string;
+  content: string;
+  attachments: LocalAttachment[];
+  /** 0–1 upload progress. */
+  progress: number;
+  status: 'uploading' | 'failed';
+  error?: string;
+}
+
+let nextPendingId = 1;
 
 /**
  * Messages of one conversation with 5 s foreground polling.
@@ -20,6 +42,7 @@ export function useMessages(conversationId: number) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [pending, setPending] = useState<PendingMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const lastMessageIdRef = useRef<number | null>(null);
   /** Id of the newest message at the time of the last successful read marking. */
@@ -102,6 +125,69 @@ export function useMessages(conversationId: number) {
     [conversationId],
   );
 
+  const updatePending = useCallback(
+    (localId: string, patch: Partial<PendingMessage>) =>
+      setPending((prev) => prev.map((p) => (p.localId === localId ? { ...p, ...patch } : p))),
+    [],
+  );
+
+  // Uploads one pending message; on success it becomes a regular message.
+  const uploadPending = useCallback(
+    async (item: PendingMessage) => {
+      updatePending(item.localId, { status: 'uploading', progress: 0, error: undefined });
+      try {
+        const response = await api.sendMessageWithAttachments(
+          conversationId,
+          buildMessageFormData(item.content, item.attachments),
+          { onProgress: (progress) => updatePending(item.localId, { progress }) },
+        );
+        setMessages((prev) =>
+          prev.some((m) => m.id === response.data.id) ? prev : [...prev, response.data],
+        );
+        lastMessageIdRef.current = response.data.id;
+        setPending((prev) => prev.filter((p) => p.localId !== item.localId));
+        // The conversation list shows the new preview ("📷 Zdjęcie").
+        emitRefresh('messages');
+      } catch (err) {
+        logger.error('api', 'Failed to send message with attachments', { error: err });
+        updatePending(item.localId, {
+          status: 'failed',
+          error: uploadErrorMessage(err, i18n.t),
+        });
+      }
+    },
+    [conversationId, updatePending],
+  );
+
+  /** Queues a message with files; it shows up at once as an uploading bubble. */
+  const sendAttachments = useCallback(
+    (content: string, attachments: LocalAttachment[]) => {
+      if (attachments.length === 0) return;
+      const item: PendingMessage = {
+        localId: `pending-${nextPendingId++}`,
+        content: content.trim(),
+        attachments,
+        progress: 0,
+        status: 'uploading',
+      };
+      setPending((prev) => [...prev, item]);
+      void uploadPending(item);
+    },
+    [uploadPending],
+  );
+
+  const retryPending = useCallback(
+    (localId: string) => {
+      const item = pending.find((p) => p.localId === localId);
+      if (item && item.status === 'failed') void uploadPending(item);
+    },
+    [pending, uploadPending],
+  );
+
+  const discardPending = useCallback((localId: string) => {
+    setPending((prev) => prev.filter((p) => p.localId !== localId));
+  }, []);
+
   // Poll for new messages
   const pollForNewMessages = useCallback(async () => {
     try {
@@ -146,6 +232,10 @@ export function useMessages(conversationId: number) {
     isSending,
     error,
     sendMessage,
+    pending,
+    sendAttachments,
+    retryPending,
+    discardPending,
     refresh: fetchMessages,
   };
 }

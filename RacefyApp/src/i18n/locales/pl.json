@@ -1384,7 +1384,22 @@
     "unsupportedMessage": "Ta wersja aplikacji nie obsługuje tej wiadomości",
     "attachment": "📎 Załącznik",
     "photo": "Zdjęcie",
-    "openFileFailed": "Nie udało się otworzyć pliku"
+    "openFileFailed": "Nie udało się otworzyć pliku",
+    "attachments": {
+      "attach": "Dołącz plik",
+      "pickPhotos": "Wybierz zdjęcia",
+      "takePhoto": "Zrób zdjęcie",
+      "pickDocument": "Wybierz dokument (PDF, GPX)",
+      "unsupportedType": "Można wysyłać tylko zdjęcia JPG, PNG, WebP oraz pliki PDF lub GPX.",
+      "tooLarge": "Pominięto pliki większe niż {{max}} MB.",
+      "tooMany": "Do jednej wiadomości można dołączyć najwyżej {{max}} plików.",
+      "pickFailed": "Nie udało się wybrać pliku",
+      "sending": "Wysyłanie…",
+      "sendFailed": "Nie udało się wysłać plików",
+      "retry": "Ponów",
+      "discard": "Odrzuć",
+      "remove": "Usuń"
+    }
   },
   "eventForm": {
     "tabs": {

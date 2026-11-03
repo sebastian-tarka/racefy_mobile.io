@@ -19,6 +19,8 @@ import { isToday } from 'date-fns/isToday';
 import { isYesterday } from 'date-fns/isYesterday';
 import { isThisYear } from 'date-fns/isThisYear';
 import { Avatar, Loading, ParticipantsSheet, ScreenContainer } from '../../components';
+import { SheetModal } from '../../components/SheetModal';
+import { useFeatureFlags } from '../../hooks/useFeatureFlags';
 import { useMessages } from '../../hooks/useMessages';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
@@ -31,7 +33,16 @@ import type { Conversation, ConversationParticipant, Message } from '../../types
 import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 import { formatDate, formatIntlDate } from '../../utils/dateFormat';
 import { MessageAttachments } from './components/MessageAttachments';
+import { AttachmentPreviewStrip } from './components/AttachmentPreviewStrip';
+import { PendingMessageBubble } from './components/PendingMessageBubble';
 import { messageBodyText } from './messageText';
+import { pickChatDocument, pickChatImages } from './pickChatAttachments';
+import {
+  MAX_ATTACHMENTS,
+  rejectionMessage,
+  validateAttachments,
+  type LocalAttachment,
+} from '../../utils/chatAttachments';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
@@ -49,8 +60,16 @@ export function ChatScreen({ navigation, route }: Props) {
     isLoading: isLoadingMessages,
     isSending,
     sendMessage,
+    pending,
+    sendAttachments,
+    retryPending,
+    discardPending,
   } = useMessages(conversationId);
+  const { chat_attachments: canAttach } = useFeatureFlags();
   const [inputText, setInputText] = useState('');
+  const [draftAttachments, setDraftAttachments] = useState<LocalAttachment[]>([]);
+  const [isAttachSheetVisible, setIsAttachSheetVisible] = useState(false);
+  const [isPicking, setIsPicking] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const [conversation, setConversation] = useState<Conversation | null>(routeConversation ?? null);
@@ -90,14 +109,14 @@ export function ChatScreen({ navigation, route }: Props) {
     }
   }, [conversation, fetchConversation]);
 
-  // Scroll to bottom when new messages arrive
+  // Scroll to bottom when new messages arrive (or an upload bubble is added)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 || pending.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages.length]);
+  }, [messages.length, pending.length]);
 
   const isTeam = conversation?.type === 'team';
   const isCaptain = conversation?.is_captain === true;
@@ -112,11 +131,52 @@ export function ChatScreen({ navigation, route }: Props) {
     return formatDate(date, 'PPP');
   };
 
+  const canSend = (inputText.trim().length > 0 || draftAttachments.length > 0) && !isSending;
+
   const handleSend = async () => {
-    if (!inputText.trim() || isSending) return;
+    if (!canSend) return;
     const text = inputText.trim();
     setInputText('');
+    if (draftAttachments.length > 0) {
+      const files = draftAttachments;
+      setDraftAttachments([]);
+      sendAttachments(text, files);
+      return;
+    }
     await sendMessage(text);
+  };
+
+  const addAttachments = (picked: LocalAttachment[]) => {
+    if (picked.length === 0) return;
+    const { accepted, rejected } = validateAttachments(draftAttachments, picked);
+    if (accepted.length > 0) setDraftAttachments((prev) => [...prev, ...accepted]);
+    const warning = rejectionMessage(rejected, t);
+    if (warning) Alert.alert('', warning);
+  };
+
+  const handlePick = async (source: 'library' | 'camera' | 'document') => {
+    setIsAttachSheetVisible(false);
+    if (isPicking) return;
+    setIsPicking(true);
+    try {
+      const room = MAX_ATTACHMENTS - draftAttachments.length;
+      const picked =
+        source === 'document' ? await pickChatDocument() : await pickChatImages(source, room);
+      addAttachments(picked);
+    } catch (error) {
+      logger.error('general', 'Chat attachment picker failed', { source, error });
+      Alert.alert(t('common.error'), t('messaging.attachments.pickFailed'));
+    } finally {
+      setIsPicking(false);
+    }
+  };
+
+  const handleAttachPress = () => {
+    if (draftAttachments.length >= MAX_ATTACHMENTS) {
+      Alert.alert('', t('messaging.attachments.tooMany', { max: MAX_ATTACHMENTS }));
+      return;
+    }
+    setIsAttachSheetVisible(true);
   };
 
   const handleHeaderPress = () => {
@@ -368,6 +428,27 @@ export function ChatScreen({ navigation, route }: Props) {
           renderItem={renderMessage}
           contentContainerStyle={styles.messagesContent}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+          ListFooterComponent={
+            pending.length > 0 ? (
+              <>
+                {pending.map((item) => (
+                  <PendingMessageBubble
+                    key={item.localId}
+                    message={item}
+                    onRetry={retryPending}
+                    onDiscard={discardPending}
+                  />
+                ))}
+              </>
+            ) : null
+          }
+        />
+
+        <AttachmentPreviewStrip
+          attachments={draftAttachments}
+          onRemove={(localId) =>
+            setDraftAttachments((prev) => prev.filter((f) => f.localId !== localId))
+          }
         />
 
         <View
@@ -377,6 +458,22 @@ export function ChatScreen({ navigation, route }: Props) {
             { paddingBottom: spacing.md + insets.bottom },
           ]}
         >
+          {canAttach && (
+            <TouchableOpacity
+              style={styles.attachButton}
+              onPress={handleAttachPress}
+              disabled={isPicking}
+              accessibilityRole="button"
+              accessibilityLabel={t('messaging.attachments.attach')}
+              testID="chat-attach-button"
+            >
+              {isPicking ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons name="attach" size={26} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+          )}
           <TextInput
             style={[styles.input, themedStyles.input]}
             placeholder={t('messaging.placeholder')}
@@ -390,10 +487,10 @@ export function ChatScreen({ navigation, route }: Props) {
             style={[
               styles.sendButton,
               themedStyles.sendButton,
-              (!inputText.trim() || isSending) && themedStyles.sendButtonDisabled,
+              !canSend && themedStyles.sendButtonDisabled,
             ]}
             onPress={handleSend}
-            disabled={!inputText.trim() || isSending}
+            disabled={!canSend}
           >
             {isSending ? (
               <ActivityIndicator size="small" color={colors.white} />
@@ -403,6 +500,27 @@ export function ChatScreen({ navigation, route }: Props) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <SheetModal visible={isAttachSheetVisible} onClose={() => setIsAttachSheetVisible(false)}>
+        {(
+          [
+            ['library', 'images-outline', 'messaging.attachments.pickPhotos'],
+            ['camera', 'camera-outline', 'messaging.attachments.takePhoto'],
+            ['document', 'document-attach-outline', 'messaging.attachments.pickDocument'],
+          ] as const
+        ).map(([source, icon, label]) => (
+          <TouchableOpacity
+            key={source}
+            style={styles.attachOption}
+            onPress={() => void handlePick(source)}
+            accessibilityRole="button"
+            testID={`chat-attach-${source}`}
+          >
+            <Ionicons name={icon} size={24} color={colors.textPrimary} />
+            <Text style={[styles.attachOptionText, { color: colors.textPrimary }]}>{t(label)}</Text>
+          </TouchableOpacity>
+        ))}
+      </SheetModal>
 
       <ParticipantsSheet
         visible={isParticipantsSheetVisible}
@@ -534,6 +652,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: spacing.sm,
+  },
+  attachButton: {
+    width: 40,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
+  attachOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  attachOptionText: {
+    fontSize: fontSize.md,
   },
   dateSeparator: {
     flexDirection: 'row',

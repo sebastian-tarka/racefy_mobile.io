@@ -1352,7 +1352,22 @@
     "unsupportedMessage": "This version of the app can't show this message",
     "attachment": "📎 Attachment",
     "photo": "Photo",
-    "openFileFailed": "Couldn't open the file"
+    "openFileFailed": "Couldn't open the file",
+    "attachments": {
+      "attach": "Attach a file",
+      "pickPhotos": "Choose photos",
+      "takePhoto": "Take a photo",
+      "pickDocument": "Choose a document (PDF, GPX)",
+      "unsupportedType": "Only JPG, PNG, WebP photos and PDF or GPX files can be sent.",
+      "tooLarge": "Files over {{max}} MB were skipped.",
+      "tooMany": "You can attach up to {{max}} files per message.",
+      "pickFailed": "Couldn't pick the file",
+      "sending": "Sending…",
+      "sendFailed": "Couldn't send the files",
+      "retry": "Retry",
+      "discard": "Discard",
+      "remove": "Remove"
+    }
   },
   "eventForm": {
     "tabs": {
