@@ -9,13 +9,27 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-02**
+Stan na: **2026-11-03**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_(nic)_
+### Załączniki w czacie — faza A (odbiór) (`feature/chat-attachments`, od 2026-11-03)
+
+API (racefy_api.io, branch `feature/chat-attachments`, doc `docs/features/messaging/chat-attachments.md`) dodaje wiadomości
+typu `attachment`: `content` to opcjonalny podpis, `attachments[]` = zdjęcia (`thumb_url`/`large_url`) i pliki PDF/GPX
+(`url`, tymczasowe podpisane linki, bez Bearera). Lista konwersacji dostaje `last_message.preview`. Wysyłanie jest za flagą
+`features.chat_attachments` i wchodzi dopiero w fazie B — faza A musi być w sklepie **zanim** admin włączy flagę, bo stara
+apka pokazuje taką wiadomość jako pusty dymek. Przy okazji: API `fix/chat-message-order` zmienia stronę 1 listy wiadomości na
+50 **najnowszych** (nadal rosnąco) — `useMessages` nie wymaga zmian, tylko komentarz.
+- [ ] (API z flagą, wiadomość ze zdjęciem wysłana z weba) czat pokazuje miniaturę w dymku, podpis pod nią, godzinę; tap → pełny ekran (zoom), zamknięcie wraca do czatu
+- [ ] wiadomość z 2–5 zdjęciami: siatka miniatur, każda otwiera swój podgląd
+- [ ] wiadomość z PDF/GPX: kafelek z ikoną, nazwą i rozmiarem; tap otwiera link w przeglądarce/systemie (pobranie pliku)
+- [ ] lista konwersacji: podgląd „📷 Zdjęcie” / „📎 plik.pdf” zamiast pustego wiersza; dla tekstu bez zmian
+- [ ] wiadomość nieznanego typu (bez treści i załączników) → szary dopisek „Ta wersja aplikacji nie obsługuje tej wiadomości”, nie pusty dymek ani crash
+- [ ] stare API (bez `attachments`/`preview`): czat tekstowy i lista konwersacji bez zmian
+- [ ] długi czat (>50 wiadomości) po wdrożeniu `fix/chat-message-order`: po otwarciu widać najnowsze wiadomości, przewinięte na dół
 
 ## Na `main`, ale niezweryfikowane runtime
 
