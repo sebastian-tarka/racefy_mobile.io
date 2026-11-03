@@ -15,7 +15,16 @@ Stan na: **2026-11-03**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Czat: oznaczanie jako przeczytane podczas pollingu (`fix/chat-mark-read`, od 2026-11-03)
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Czat: oznaczanie jako przeczytane podczas pollingu (zmergowane 2026-11-03, `fix/chat-mark-read`, tag `pre-chat-mark-read` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-03).
 
 `useMessages.pollForNewMessages` aktualizował ref ostatniej wiadomości **przed** sprawdzeniem „nowe od innych”, więc
 warunek był zawsze fałszywy: otwarty czat oznaczał rozmowę jako przeczytaną tylko przy wejściu, a wiadomości, które
@@ -27,11 +36,6 @@ apka jest na wierzchu i ekran czatu ma fokus; po powrocie na wierzch / do ekranu
 - [ ] czat otwarty, apka w tle, B pisze: po powrocie na wierzch wiadomość widać i licznik = 0
 - [ ] z czatu wejść w profil B (czat pod spodem), B pisze, wrócić do czatu: wiadomość widać, licznik = 0; w trakcie pobytu na profilu `read` nie poleciał
 - [ ] stary scenariusz bez zmian: wejście do czatu z nieprzeczytanymi zeruje licznik
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Załączniki w czacie — faza A (odbiór) (zmergowane 2026-11-03, `feature/chat-attachments`, tag `pre-chat-attachments` = main sprzed merge)
 
