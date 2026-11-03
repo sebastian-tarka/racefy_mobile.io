@@ -33,6 +33,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { GoalMetric, GoalPeriod, UserGoal } from '../../types/goals';
 import { getErrorMessage, isApiError } from '../../utils/errors';
+import { localDateString, parseLocalDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GoalForm'>;
 
@@ -75,8 +76,8 @@ export function GoalFormScreen({ navigation, route }: Props) {
         setMetric(goal.metric);
         setPeriod(goal.period);
         setTarget(String(siToInput(goal.target_value, goal.metric, units).toFixed(1)));
-        setStartDate(new Date(goal.start_date));
-        setEndDate(goal.end_date ? new Date(goal.end_date) : null);
+        setStartDate(parseLocalDate(goal.start_date));
+        setEndDate(goal.end_date ? parseLocalDate(goal.end_date) : null);
         setIsRepeating(goal.is_repeating);
       })
       .catch((error: any) => {
@@ -156,7 +157,7 @@ export function GoalFormScreen({ navigation, route }: Props) {
       if (isEdit && existingGoal) {
         await api.updateGoal(existingGoal.id, {
           target_value: inputToSi(value, metric, units),
-          end_date: endDate ? endDate.toISOString().slice(0, 10) : null,
+          end_date: endDate ? localDateString(endDate) : null,
           is_repeating: isRepeating,
         });
       } else {
@@ -165,8 +166,8 @@ export function GoalFormScreen({ navigation, route }: Props) {
           period,
           metric,
           target_value: inputToSi(value, metric, units),
-          start_date: startDate.toISOString().slice(0, 10),
-          end_date: endDate ? endDate.toISOString().slice(0, 10) : null,
+          start_date: localDateString(startDate),
+          end_date: endDate ? localDateString(endDate) : null,
           is_repeating: isRepeating,
         });
       }
@@ -349,7 +350,7 @@ export function GoalFormScreen({ navigation, route }: Props) {
                 onPress={() => setDatePickerField('start')}
               >
                 <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-                  {startDate.toISOString().slice(0, 10)}
+                  {localDateString(startDate)}
                 </Text>
                 <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
               </TouchableOpacity>
@@ -368,7 +369,7 @@ export function GoalFormScreen({ navigation, route }: Props) {
               onPress={() => setDatePickerField('end')}
             >
               <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-                {endDate ? endDate.toISOString().slice(0, 10) : t('common.optional')}
+                {endDate ? localDateString(endDate) : t('common.optional')}
               </Text>
               <View style={styles.endDateActions}>
                 {endDate && (

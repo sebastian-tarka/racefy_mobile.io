@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { localDateString } from '../../../utils/dateFormat';
 import {
   ActivityIndicator,
   Modal,
@@ -30,9 +31,8 @@ interface Props {
   formatDate: (iso: string) => string;
 }
 
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+/** The LOCAL calendar day (the UTC day would be yesterday after midnight west of Greenwich… and vice versa). */
+const isoDate = localDateString;
 
 /**
  * Which day a resumed session should count towards (design: ResumeSessionModal

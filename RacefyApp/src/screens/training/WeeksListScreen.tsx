@@ -48,7 +48,7 @@ import {
 import type { RootStackParamList } from '../../navigation/types';
 import type { PausedReason, PlanWarning, TrainingProgram, TrainingWeek } from '../../types/api';
 import { getErrorMessage } from '../../utils/errors';
-import { formatIntlDate } from '../../utils/dateFormat';
+import { formatIntlDate, parseLocalDate } from '../../utils/dateFormat';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RoutePropType = RouteProp<RootStackParamList, 'TrainingWeeksList'>;
@@ -669,7 +669,8 @@ export function WeeksListScreen({ navigation, route }: Props) {
               <View style={styles.weekMetaItem}>
                 <Ionicons name="location-outline" size={14} color={colors.textMuted} />
                 <Text style={[styles.weekMetaText, { color: colors.textSecondary }]}>
-                  {new Date(selectedWeek.start_date).getDate()}–{fmtDay(selectedWeek.end_date)}
+                  {parseLocalDate(selectedWeek.start_date).getDate()}–
+                  {fmtDay(selectedWeek.end_date)}
                 </Text>
               </View>
               {selectedStats.plannedMinutes > 0 && (

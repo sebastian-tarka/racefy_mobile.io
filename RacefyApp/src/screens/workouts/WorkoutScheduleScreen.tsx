@@ -29,6 +29,7 @@ import { ResumeSessionBanner } from './components/ResumeSessionBanner';
 import { ResumeSessionSheet } from './components/ResumeSessionSheet';
 import { SessionConflictDialog, type SessionConflict } from './components/SessionConflictDialog';
 import { getErrorMessage } from '../../utils/errors';
+import { localDateString, parseLocalDate } from '../../utils/dateFormat';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSchedule'>;
 
@@ -36,12 +37,11 @@ type Props = NativeStackScreenProps<RootStackParamList, 'WorkoutSchedule'>;
 const RANGE_BACK_DAYS = 7;
 const RANGE_AHEAD_DAYS = 13;
 
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+/** The LOCAL calendar day — the server reads schedule days as the user's local days. */
+const isoDate = localDateString;
 
 function shiftDays(iso: string, days: number): string {
-  const d = new Date(iso);
+  const d = parseLocalDate(iso);
   d.setDate(d.getDate() + days);
   return isoDate(d);
 }
@@ -134,7 +134,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
 
   const formatDay = useCallback(
     (iso: string) =>
-      new Date(iso).toLocaleDateString(i18n.language, {
+      parseLocalDate(iso).toLocaleDateString(i18n.language, {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
@@ -350,7 +350,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
 
   const renderDay = ({ item }: { item: PlannedSession }) => {
     const isToday = item.date === today;
-    const date = new Date(item.date);
+    const date = parseLocalDate(item.date);
     const dateLabel = date.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' });
     const session = item.session;
     const status = session?.status;
@@ -593,7 +593,7 @@ export function WorkoutScheduleScreen({ navigation, route }: Props) {
 
       <DatePickerSheet
         visible={movingDay != null}
-        value={movingDay ? new Date(movingDay.date) : new Date()}
+        value={movingDay ? parseLocalDate(movingDay.date) : new Date()}
         onConfirm={handleMoveDate}
         onCancel={() => setMovingDay(null)}
       />

@@ -1,6 +1,8 @@
 // Jest configuration using the Expo preset (handles RN/Expo transforms).
 module.exports = {
   preset: 'jest-expo',
+  // The preset's environment + a per-file `@time-zone` docblock (see the file).
+  testEnvironment: '<rootDir>/jest.tzEnvironment.js',
   // RNTL v12.4+ registers its jest matchers automatically — no extend-expect setup needed.
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   // Fails fast with a clear message when better-sqlite3 was built for another Node.

@@ -1,4 +1,5 @@
 import { logger } from '../services/logger';
+import { localDateString, parseLocalDate } from './dateFormat';
 
 export type TimeRange = 'week' | 'month' | 'year' | 'all_time';
 
@@ -14,11 +15,11 @@ interface DateRange {
 
 /**
  * Calculate date range based on time range selection
- * Returns dates in YYYY-MM-DD format
+ * Returns local calendar days in YYYY-MM-DD format (the server reads them as the user's local days)
  */
 export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null {
   const today = new Date();
-  const to = today.toISOString().split('T')[0];
+  const to = localDateString(today);
 
   let result: DateRange | null = null;
 
@@ -27,7 +28,7 @@ export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null
       const weekAgo = new Date(today);
       weekAgo.setDate(today.getDate() - 7);
       result = {
-        from: weekAgo.toISOString().split('T')[0],
+        from: localDateString(weekAgo),
         to,
       };
       break;
@@ -37,7 +38,7 @@ export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null
       const monthAgo = new Date(today);
       monthAgo.setMonth(today.getMonth() - 1);
       result = {
-        from: monthAgo.toISOString().split('T')[0],
+        from: localDateString(monthAgo),
         to,
       };
       break;
@@ -47,7 +48,7 @@ export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null
       const yearAgo = new Date(today);
       yearAgo.setFullYear(today.getFullYear() - 1);
       result = {
-        from: yearAgo.toISOString().split('T')[0],
+        from: localDateString(yearAgo),
         to,
       };
       break;
@@ -75,15 +76,15 @@ export function getDateRangeForTimeRange(timeRange: TimeRange): DateRange | null
  */
 export function getPreviousDateRange(range: DateRange | null): DateRange | null {
   if (!range) return null;
-  const from = new Date(range.from);
-  const to = new Date(range.to);
+  const from = parseLocalDate(range.from);
+  const to = parseLocalDate(range.to);
   const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
   const prevTo = new Date(from);
   prevTo.setDate(prevTo.getDate() - 1);
   const prevFrom = new Date(prevTo);
   prevFrom.setDate(prevFrom.getDate() - days);
   return {
-    from: prevFrom.toISOString().split('T')[0],
-    to: prevTo.toISOString().split('T')[0],
+    from: localDateString(prevFrom),
+    to: localDateString(prevTo),
   };
 }
