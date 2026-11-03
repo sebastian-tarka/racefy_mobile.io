@@ -15,6 +15,21 @@ Stan na: **2026-11-03**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
+### Załączniki w czacie — faza B (wysyłanie) (`feature/chat-attachments-send`, od 2026-11-03)
+
+Odbiór (faza A) jest w 1.31.0. Faza B dodaje wysyłanie z telefonu: spinacz w composerze czatu (tylko gdy
+`GET /config/app → features.chat_attachments` = true; na prod flaga jest włączona), wybór zdjęć z galerii / aparatu
+(zmniejszane do ~2048 px) i dokumentów PDF/GPX, podglądy wybranych plików nad polem tekstu z usuwaniem, limity
+5 plików / 10 MB sprawdzane w apce, wysyłka `multipart/form-data` z paskiem postępu jako wiadomość optymistyczna
+(„wysyłanie…”, przy błędzie „Ponów” / „Odrzuć”), tekst jako podpis, komunikat z `errors.attachments*` przy 422.
+- [ ] flaga wyłączona na API (stage) → spinacza nie ma; włączona → jest
+- [ ] galeria: wybrać 3 zdjęcia → 3 miniatury nad polem, X usuwa jedno; wysłać z podpisem → dymek „wysyłanie…” z paskiem, potem normalny dymek z miniaturami i podpisem; web pokazuje to samo
+- [ ] aparat: zdjęcie → miniatura → wysyłka OK (plik po zmniejszeniu < 10 MB, sprawdzić `size` w odpowiedzi/webie)
+- [ ] dokument: PDF i GPX (Android: GPX z pamięci, często mime `application/octet-stream`) → kafelek z nazwą i rozmiarem, wysyłka OK; plik .txt → komunikat o niedozwolonym typie, nic nie dodane
+- [ ] 6 plików → komunikat o limicie 5, dodane tylko 5; plik > 10 MB → komunikat, nie dodany
+- [ ] wysyłka w trybie samolotowym → dymek z błędem, „Ponów” po włączeniu sieci wysyła, „Odrzuć” usuwa
+- [ ] odpowiedź 422 (np. flaga wyłączona w trakcie) → komunikat z treścią błędu API, dymek do ponowienia/odrzucenia
+- [ ] lista konwersacji po wysłaniu: podgląd „📷 Zdjęcie”/„📎 nazwa.pdf”
 _Brak._
 
 ## Na `main`, ale niezweryfikowane runtime
