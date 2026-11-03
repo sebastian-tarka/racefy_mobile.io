@@ -34,6 +34,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
 import type { Conversation, MentionSearchUser } from '../../types/api';
 import { formatDate, formatIntlDate } from '../../utils/dateFormat';
+import { lastMessagePreview } from './messageText';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ConversationsList'>;
 
@@ -164,11 +165,7 @@ export function ConversationsListScreen({ navigation }: Props) {
   const renderConversation = ({ item }: { item: Conversation }) => {
     const timeAgo = item.last_message_at ? formatConversationTime(item.last_message_at) : '';
 
-    const lastMessagePreview = item.last_message
-      ? item.last_message.type === 'activity'
-        ? t('messaging.sharedActivity')
-        : item.last_message.content
-      : '';
+    const preview = lastMessagePreview(item.last_message, t);
 
     const isTeam = item.type === 'team';
     const title = isTeam ? item.name || item.team?.name || '' : item.participant?.name || '';
@@ -221,11 +218,11 @@ export function ConversationsListScreen({ navigation }: Props) {
               {subtitle}
             </Text>
           ) : null}
-          {lastMessagePreview && (
+          {preview ? (
             <Text style={[styles.lastMessage, { color: colors.textMuted }]} numberOfLines={1}>
-              {lastMessagePreview}
+              {preview}
             </Text>
-          )}
+          ) : null}
         </View>
         {item.unread_count > 0 && (
           <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>

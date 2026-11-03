@@ -3,6 +3,7 @@ import type { AppConfigFeatures } from '../types/api';
 
 const DEFAULTS: AppConfigFeatures = {
   event_entry_fee: false,
+  chat_attachments: false,
 };
 
 /**
