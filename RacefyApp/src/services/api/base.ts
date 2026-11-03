@@ -286,6 +286,91 @@ export class ApiBase {
     }
   }
 
+  /**
+   * Multipart upload with progress. `fetch` cannot report upload progress, so this one
+   * endpoint-agnostic method uses XMLHttpRequest with the same headers and error shape
+   * as `request()` (the thrown error is the parsed body with `status` attached). No
+   * timeout — an upload on a slow uplink legitimately takes long; `signal` aborts it.
+   * Only for uploads that show a progress bar (chat attachments); everything else goes
+   * through `request()`.
+   */
+  async upload<T>(
+    endpoint: string,
+    body: FormData,
+    options: { onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
+  ): Promise<T> {
+    const deviceTimeZone = getDeviceTimeZone();
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'Accept-Language': getCurrentLanguage(),
+      ...(deviceTimeZone && { 'X-Timezone': deviceTimeZone }),
+      ...(this.token && { Authorization: `Bearer ${this.token}` }),
+    };
+    logger.api(`POST ${endpoint}`, { hasBody: true, isFormData: true, upload: true });
+    const startTime = Date.now();
+
+    return new Promise<T>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', this.buildUrl(endpoint));
+      for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
+
+      const onAbort = () => xhr.abort();
+      options.signal?.addEventListener('abort', onAbort);
+
+      if (xhr.upload && options.onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && event.total > 0) {
+            options.onProgress?.(Math.min(1, event.loaded / event.total));
+          }
+        };
+      }
+      xhr.onload = () => {
+        options.signal?.removeEventListener('abort', onAbort);
+        let data: any = null;
+        if (xhr.responseText) {
+          try {
+            data = JSON.parse(xhr.responseText);
+          } catch {
+            data = null;
+          }
+        }
+        const duration = Date.now() - startTime;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          logger.debug('api', `POST ${endpoint} completed`, { status: xhr.status, duration });
+          resolve(data as T);
+          return;
+        }
+        logger.error('api', `POST ${endpoint} failed`, {
+          status: xhr.status,
+          duration,
+          error: (data as Types.ApiError | null)?.message,
+        });
+        if (xhr.status === 401) {
+          void this.clearToken();
+          this.onUnauthorizedCallback?.();
+        }
+        const error: Types.ApiError = data ?? { message: `HTTP ${xhr.status}` };
+        error.status = xhr.status;
+        reject(error);
+      };
+      xhr.onerror = () => {
+        options.signal?.removeEventListener('abort', onAbort);
+        logger.error('api', `POST ${endpoint} network error`, {
+          duration: Date.now() - startTime,
+          url: this.buildUrl(endpoint),
+        });
+        reject(new Error('Network request failed'));
+      };
+      xhr.onabort = () => {
+        options.signal?.removeEventListener('abort', onAbort);
+        const error = new Error('Aborted');
+        error.name = 'AbortError';
+        reject(error);
+      };
+      xhr.send(body);
+    });
+  }
+
   async setToken(token: string) {
     this.token = token;
     await secureStorage.setToken(token);

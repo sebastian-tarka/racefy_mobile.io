@@ -47,6 +47,20 @@ export function MessagingMixin<TBase extends Constructable<ApiBase>>(Base: TBase
       });
     }
 
+    /**
+     * Send a message with files (docs/features/messaging/chat-attachments.md): multipart
+     * `attachments[]` (1–5, ≤ 10 MB, JPG/PNG/WebP/PDF/GPX checked by content) plus an
+     * optional caption. 422 while `features.chat_attachments` is off. Built by
+     * `buildMessageFormData`; reports upload progress for the pending bubble.
+     */
+    async sendMessageWithAttachments(
+      conversationId: number,
+      body: FormData,
+      options: { onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
+    ): Promise<Types.ApiResponse<Types.Message>> {
+      return this.upload(`/conversations/${conversationId}/messages`, body, options);
+    }
+
     async markConversationAsRead(conversationId: number): Promise<void> {
       await this.request(`/conversations/${conversationId}/read`, {
         method: 'POST',
