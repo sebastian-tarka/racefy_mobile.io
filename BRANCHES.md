@@ -15,7 +15,14 @@ Stan na: **2026-11-02**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### Lokalne daty kalendarzowe — faza 4 planu stref (`feature/timezones-f4`, od 2026-11-03)
+_(nic)_
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### Lokalne daty kalendarzowe — faza 4 planu stref (zmergowane 2026-11-03, `feature/timezones-f4`, tag `pre-timezones-f4` = main sprzed merge)
 
 Serwer (API faza 3) czyta każdy dzień kalendarzowy (tygodnie planu, okresy celów, `from`/`to`, `week`) jako
 lokalny dzień użytkownika. Apka przestaje liczyć dzień z `toISOString()` (dzień UTC) i parsować `YYYY-MM-DD`
@@ -28,11 +35,7 @@ historia ćwiczenia, zakres dni tygodnia planu.
 - [ ] (strefa Los Angeles, wieczór) harmonogram siłowy: dzisiejszy dzień podświetlony jako „dzisiaj”, daty dni bez przesunięcia o jeden
 - [ ] (strefa Los Angeles) lista tygodni planu: zakres „1–7 lis” zgadza się z webem
 - [ ] (Polska, normalna strefa) nic się nie zmieniło w wyświetlanych datach celów, tygodni i harmonogramu
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-03).
 
 ### Strefa czasowa wydarzenia — faza 2 planu stref (zmergowane 2026-11-02, `feature/timezones-f2`, tag `pre-timezones-f2` = main sprzed merge)
 
