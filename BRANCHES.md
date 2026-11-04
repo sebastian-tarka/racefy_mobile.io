@@ -15,7 +15,16 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/image-variants` — warianty obrazów zamiast oryginałów (P4 planu wariantów zdjęć)
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `feature/image-variants` — warianty obrazów zamiast oryginałów (P4 planu wariantów zdjęć) (zmergowane 2026-11-04, tag `pre-image-variants` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-04). Tylko JS — działa na binarce 1.32.0.
 
 Apka ładuje wszędzie **oryginały** zdjęć (często 1–6 MB) tam, gdzie API (prod v1.3.44) od P0–P3 daje
 zmniejszone kopie WebP: `avatar_variants` (`thumb` 50 / `small` 100 / `medium` 200) na każdym obiekcie
@@ -38,11 +47,6 @@ grafika, mniejszy plik; sprawdzać przede wszystkim ostrość i brak regresji.
 - [ ] zdjęcie wgrane przed chwilą (warianty jeszcze się generują → `variants: null`) → pokazuje oryginał, po odświeżeniu wariant
 - [ ] tryb samolotowy po obejrzeniu feedu: obrazy wracają z cache (expo-image), nie znikają
 - [ ] zużycie danych: feed 20 postów ze zdjęciami przed/po (ustawienia systemowe → dane apki albo proxy) — wyraźnie mniej
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### Załączniki w czacie — faza B (wysyłanie) (zmergowane 2026-11-03, `feature/chat-attachments-send`, tag `pre-chat-attachments-send` = main sprzed merge)
 
