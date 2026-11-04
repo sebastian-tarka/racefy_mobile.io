@@ -9,13 +9,35 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-03**
+Stan na: **2026-11-04**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Brak._
+### `feature/image-variants` — warianty obrazów zamiast oryginałów (P4 planu wariantów zdjęć)
+
+Apka ładuje wszędzie **oryginały** zdjęć (często 1–6 MB) tam, gdzie API (prod v1.3.44) od P0–P3 daje
+zmniejszone kopie WebP: `avatar_variants` (`thumb` 50 / `small` 100 / `medium` 200) na każdym obiekcie
+użytkownika, `variants` zdjęć (`thumb` 150 / `small` 320 / `medium` 640 / `large` 1024 / `xlarge` 2048),
+`cover_variants` eventu, `background_variants` tła profilu, `thumbnail_variants` wideo,
+`route_map_variants` map, warianty awatara i okładki zespołu, `actor_avatar_variants` w powiadomieniach,
+`team_avatar_variants` w rankingu zespołów. Mapa może być `null` lub bez klucza → zawsze fallback na
+oryginał (jeden helper `pickVariant` / `pickVariantForWidth` w `utils/imageVariants.ts`). Przy okazji
+pozostałe miejsca z `Image`/`ImageBackground` z React Native (bez cache na dysku) przechodzą na
+`expo-image` z `cachePolicy="memory-disk"`, a pełnoekranowa galeria zdjęć aktywności renderuje
+strony leniwie (FlatList) zamiast wszystkich oryginałów naraz. Zero zmian w wyglądzie — ta sama
+grafika, mniejszy plik; sprawdzać przede wszystkim ostrość i brak regresji.
+- [ ] feed (Android + iOS): awatary, zdjęcia postów (1 zdjęcie, 2–4 w siatce, slider), okładki eventów/wyzwań — wyglądają jak dotąd, ostre na ekranie 3x; w Debug Logs / proxy widać URL-e `.../variants/...webp`, nie oryginały
+- [ ] tap na zdjęcie w feedzie → pełny ekran ładuje `xlarge`/`large` (zoom nadal ostry), galeria wielu zdjęć przewija się płynnie
+- [ ] szczegóły aktywności: miniatury zdjęć (120 pt) ostre, pełny ekran otwiera się na klikniętym zdjęciu, przewijanie między zdjęciami działa, licznik „n / m” poprawny; mapa trasy z `route_map_variants`
+- [ ] profil własny i cudzy: tło profilu i awatar XXL ostre; stare konto bez wygenerowanych wariantów (`*_variants: null`) → nadal pokazuje oryginał
+- [ ] Home: sekcje eventów (nadchodzące, live, w pobliżu, znajomych), karta live, aktywności znajomych, wyniki eventu — okładki/awatary bez regresji
+- [ ] czat: awatary w nagłówku, liście konwersacji i przy wiadomościach; powiadomienia: awatar aktora; rankingi, zespoły (awatar + okładka zespołu), uczestnicy eventu, wzmianki `@` w composerze
+- [ ] użytkownik zanonimizowany / bez awatara (`avatar_variants: null`, `avatar: null`) → placeholder z inicjałem, nie pusty kwadrat
+- [ ] zdjęcie wgrane przed chwilą (warianty jeszcze się generują → `variants: null`) → pokazuje oryginał, po odświeżeniu wariant
+- [ ] tryb samolotowy po obejrzeniu feedu: obrazy wracają z cache (expo-image), nie znikają
+- [ ] zużycie danych: feed 20 postów ze zdjęciami przed/po (ustawienia systemowe → dane apki albo proxy) — wyraźnie mniej
 
 ## Na `main`, ale niezweryfikowane runtime
 
@@ -39,7 +61,6 @@ Odbiór (faza A) jest w 1.31.0. Faza B dodaje wysyłanie z telefonu: spinacz w c
 - [ ] wysyłka w trybie samolotowym → dymek z błędem, „Ponów” po włączeniu sieci wysyła, „Odrzuć” usuwa
 - [ ] odpowiedź 422 (np. flaga wyłączona w trakcie) → komunikat z treścią błędu API, dymek do ponowienia/odrzucenia
 - [ ] lista konwersacji po wysłaniu: podgląd „📷 Zdjęcie”/„📎 nazwa.pdf”
-_Brak._
 
 ### Czat: oznaczanie jako przeczytane podczas pollingu (zmergowane 2026-11-03, `fix/chat-mark-read`, tag `pre-chat-mark-read` = main sprzed merge)
 
