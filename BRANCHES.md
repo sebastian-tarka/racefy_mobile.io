@@ -15,7 +15,16 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/team-activity-board` — zakładka „Aktywności” drużyny (tablica aktywności członków)
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `feature/team-activity-board` — zakładka „Aktywności” drużyny (tablica aktywności członków) (zmergowane 2026-11-04, tag `pre-team-activity-board` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-04).
 
 API na prod (v1.3.54): `GET /teams/{slug}/activities?sport_type_id=&per_page=&page=` — ukończone aktywności
 aktywnych członków, od najnowszych, każda wg własnej widoczności (członkostwo nic nie odblokowuje; klient
@@ -32,11 +41,6 @@ SPA ma to w `components/teams/TeamActivityBoard.jsx`; opis w `docs/api/mobile/AP
 - [ ] chip sportu filtruje listę (ponowne pobranie), „Wszystkie” wraca do pełnej listy; przewinięcie do końca doładowuje kolejną stronę; pull-to-refresh odświeża tydzień i listę
 - [ ] drużyna bez widocznych aktywności: „Brak aktywności do pokazania” + nota; „najaktywniej” znika, gdy nikt nie ma dystansu w tym tygodniu
 - [ ] ciemny motyw, EN i PL bez brakujących kluczy; Android + iOS
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `feature/live-event-screens` — wydarzenie na żywo, po zakończeniu i udostępnianie wyniku (L6 planu „live event screens”; zmergowane 2026-11-04, tag `pre-live-event-screens` = main sprzed merge)
 
