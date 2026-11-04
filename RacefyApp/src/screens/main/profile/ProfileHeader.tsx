@@ -1,5 +1,6 @@
 import React from 'react';
-import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,7 @@ import type {
   UserStats,
 } from '../../../types/api';
 import { formatDurationCompact } from '../../../utils/formatDuration';
+import { pickBackgroundUrl } from '../../../utils/imageVariants';
 
 export type ProfileScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, 'Profile'>,
@@ -115,9 +117,10 @@ export const ProfileHeader = React.memo(function ProfileHeader({
     if (user?.background_image_url) {
       return (
         <ImageBackground
-          source={{ uri: fixStorageUrl(user.background_image_url) || undefined }}
+          source={{ uri: fixStorageUrl(pickBackgroundUrl(user)) || undefined }}
           style={coverStyle}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
         >
           {gradientOverlay}
           {renderSettingsButton()}
@@ -164,6 +167,7 @@ export const ProfileHeader = React.memo(function ProfileHeader({
             >
               <Avatar
                 uri={user?.avatar}
+                variants={user?.avatar_variants}
                 name={user?.name}
                 size="xxl"
                 showTierBadge={tier !== 'free'}

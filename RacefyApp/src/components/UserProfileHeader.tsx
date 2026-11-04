@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
+import { pickBackgroundUrl } from '../utils/imageVariants';
 import { Avatar } from './Avatar';
 import { ProfileStats } from './ProfileStats';
 import { ProfileActions } from './ProfileActions';
@@ -79,9 +81,10 @@ export function UserProfileHeader({
 
       {profile.background_image_url ? (
         <ImageBackground
-          source={{ uri: fixStorageUrl(profile.background_image_url) || undefined }}
+          source={{ uri: fixStorageUrl(pickBackgroundUrl(profile)) || undefined }}
           style={[styles.coverImage, { backgroundColor: colors.primary }]}
-          resizeMode="cover"
+          contentFit="cover"
+          cachePolicy="memory-disk"
         />
       ) : (
         <View style={[styles.coverImage, { backgroundColor: colors.primary }]} />
@@ -96,6 +99,7 @@ export function UserProfileHeader({
         <View style={[styles.avatarContainer, { borderColor: colors.cardBackground }]}>
           <Avatar
             uri={profile.avatar}
+            variants={profile.avatar_variants}
             name={profile.name}
             size="xxl"
             showTierBadge={!!profile.subscription?.tier && profile.subscription.tier !== 'free'}

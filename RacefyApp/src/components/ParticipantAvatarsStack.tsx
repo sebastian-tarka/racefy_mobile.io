@@ -40,7 +40,12 @@ export function ParticipantAvatarsStack({
           disabled={!onParticipantPress}
           activeOpacity={onParticipantPress ? 0.7 : 1}
         >
-          <Avatar uri={registration.user?.avatar} name={registration.user?.name || '?'} size="md" />
+          <Avatar
+            uri={registration.user?.avatar}
+            variants={registration.user?.avatar_variants}
+            name={registration.user?.name || '?'}
+            size="md"
+          />
         </TouchableOpacity>
       ))}
 

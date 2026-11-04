@@ -1,5 +1,5 @@
 import type { ActivityAnalysisSummary } from './effortAnalysis';
-import type { Photo, Video } from './media';
+import type { ImageVariants, Photo, Video } from './media';
 import type { RouteTurnInstruction } from './routes';
 import type { MentionMap } from './social';
 import type { GpsProfileApiResponse, SportType } from './sports';
@@ -79,6 +79,8 @@ export interface Activity {
   has_gps_track: boolean;
   route_svg?: string | null;
   route_map_url?: string | null;
+  /** `thumb` / `small` / `medium` / `large` WebP copies of `route_map_url`; null until generated. */
+  route_map_variants?: ImageVariants | null;
   route_preview_url?: string | null; // PNG, transparent bg, route + km markers
   sport_type?: SportType;
   gps_track?: GpsTrack;
@@ -267,6 +269,7 @@ export interface NearbyRoute {
     name: string;
     username: string; // @username
     avatar: string; // Backend uses 'avatar' not 'avatar_url'
+    avatar_variants?: ImageVariants | null;
   };
   stats: {
     likes_count: number;
@@ -397,6 +400,8 @@ export interface GpsTrack {
   simplified_track: GeoJSONLineString; // Privacy-aware: trimmed if viewer is not owner
   route_svg: string | null;
   route_map_url: string | null;
+  /** `thumb` / `small` / `medium` / `large` WebP copies of `route_map_url`; null until generated. */
+  route_map_variants?: ImageVariants | null;
   route_preview_url: string | null; // PNG, transparent bg, route + km markers
   svg_generated_at: string | null;
   map_generated_at: string | null;

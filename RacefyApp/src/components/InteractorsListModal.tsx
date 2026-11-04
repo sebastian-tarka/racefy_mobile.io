@@ -71,6 +71,7 @@ export function InteractorsListModal({
     >
       <Avatar
         uri={item.avatar}
+        variants={item.avatar_variants}
         name={item.name || '?'}
         size="sm"
         showTierBadge={!!item.subscription?.tier && item.subscription.tier !== 'free'}

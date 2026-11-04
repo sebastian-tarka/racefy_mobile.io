@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../hooks/useTheme';
 import { spacing, fontSize, msFont } from '../../../../theme';
-import { fixStorageUrl } from '../../../../config/api';
+import { pickEventCoverUrl } from '../../../../components/event/eventFormat';
 import type { EventWithLatestCommentary } from '../../../../types/api';
 
 interface LiveEventsCardProps {
@@ -90,7 +90,10 @@ export const LiveEventsCard: React.FC<LiveEventsCardProps> = ({ events, onPress 
   const participantsCount = selectedEvent.active_participants_count || 0;
 
   // Check if event has cover image (use fixStorageUrl like in other components)
-  const coverImageUrl = fixStorageUrl(selectedEvent.cover_image_url);
+  const coverImageUrl = pickEventCoverUrl({
+    cover_variants: selectedEvent.cover_variants,
+    cover_image_url: selectedEvent.cover_image_url,
+  });
 
   return (
     <TouchableOpacity

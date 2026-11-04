@@ -9,6 +9,7 @@ import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
 import { borderRadius, componentSize, fontSize, spacing } from '../theme';
 import { formatDurationCompact } from '../utils/formatDuration';
+import { pickRouteMapUrl, pickVariant } from '../utils/imageVariants';
 import { getSportTheme } from '../utils/sportTheme';
 import type { Activity } from '../types/api';
 import { useTranslation } from 'react-i18next';
@@ -37,8 +38,12 @@ export function ActivitySliderCard({
 
   // Get background image: prioritize first photo, then route map
   // Use fixStorageUrl to handle relative URLs and localhost issues
+  const firstPhoto = activity.photos?.[0];
   const rawBackgroundImage =
-    activity.photos?.[0]?.url || activity.route_map_url || activity.route_preview_url || null;
+    (firstPhoto && pickVariant(firstPhoto.variants, ['large', 'medium'], firstPhoto.url)) ||
+    pickRouteMapUrl(activity) ||
+    activity.route_preview_url ||
+    null;
   const backgroundImage = fixStorageUrl(rawBackgroundImage);
   const hasBackgroundImage = !!backgroundImage;
 
@@ -57,7 +62,12 @@ export function ActivitySliderCard({
 
         {activity.user && (
           <View style={styles.userBadge}>
-            <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
+            <Avatar
+              uri={activity.user.avatar}
+              variants={activity.user.avatar_variants}
+              name={activity.user.name}
+              size="sm"
+            />
           </View>
         )}
       </View>

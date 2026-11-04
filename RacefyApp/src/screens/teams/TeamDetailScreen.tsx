@@ -200,7 +200,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
               disabled={!isCaptain || uploadingAvatar}
               activeOpacity={0.7}
             >
-              <Avatar uri={team.avatar} name={team.name} size="xl" />
+              <Avatar
+                uri={team.avatar}
+                variants={team.avatar_variants}
+                name={team.name}
+                size="xl"
+              />
               {isCaptain && (
                 <View style={[styles.avatarBadge, { backgroundColor: colors.primary }]}>
                   <Ionicons name="camera" size={14} color={colors.onPrimary} />
@@ -361,7 +366,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                   style={[styles.memberRow, { borderBottomColor: colors.border }]}
                   onPress={() => handleUserPress(member.user.username)}
                 >
-                  <Avatar uri={member.user.avatar} name={member.user.name} size="md" />
+                  <Avatar
+                    uri={member.user.avatar}
+                    variants={member.user.avatar_variants}
+                    name={member.user.name}
+                    size="md"
+                  />
                   <View style={styles.memberInfo}>
                     <Text style={[styles.memberName, { color: colors.textPrimary }]}>
                       {member.user.name}
@@ -402,7 +412,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                     key={`inv-${inv.id}-${index}`}
                     style={[styles.memberRow, { borderBottomColor: colors.border }]}
                   >
-                    <Avatar uri={inv.user.avatar} name={inv.user.name} size="md" />
+                    <Avatar
+                      uri={inv.user.avatar}
+                      variants={inv.user.avatar_variants}
+                      name={inv.user.name}
+                      size="md"
+                    />
                     <View style={styles.memberInfo}>
                       <Text style={[styles.memberName, { color: colors.textPrimary }]}>
                         {inv.user.name}
@@ -427,7 +442,12 @@ export function TeamDetailScreen({ route, navigation }: Props) {
                     key={`req-${req.id}-${index}`}
                     style={[styles.memberRow, { borderBottomColor: colors.border }]}
                   >
-                    <Avatar uri={req.user.avatar} name={req.user.name} size="md" />
+                    <Avatar
+                      uri={req.user.avatar}
+                      variants={req.user.avatar_variants}
+                      name={req.user.name}
+                      size="md"
+                    />
                     <View style={styles.memberInfo}>
                       <Text style={[styles.memberName, { color: colors.textPrimary }]}>
                         {req.user.name}

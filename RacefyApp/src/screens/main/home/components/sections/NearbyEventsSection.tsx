@@ -1,16 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ImageBackground,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
 import type { HomeSection, HomeSectionEvent } from '../../../../../types/api';
+import { pickEventCoverUrl } from '../../../../../components/event/eventFormat';
 import { formatShortDate } from '../../../../../utils/formatters';
 
 interface NearbyEventsSectionProps {
@@ -37,9 +32,11 @@ function EventCard({
   return (
     <TouchableOpacity style={styles.eventCard} onPress={onPress} activeOpacity={0.9}>
       <ImageBackground
-        source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
+        source={{ uri: pickEventCoverUrl(event) ?? undefined }}
         style={styles.eventImage}
         imageStyle={styles.eventImageStyle}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       >
         <View style={styles.eventOverlay}>
           {event.start_date && (

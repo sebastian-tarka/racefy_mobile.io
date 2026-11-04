@@ -8,6 +8,7 @@ import { ImageViewer } from './ImageViewer';
 import { ImageGallery } from './ImageGallery';
 import { useTheme } from '../hooks/useTheme';
 import { fixStorageUrl } from '../config/api';
+import { pickEventCoverUrl } from './event/eventFormat';
 import { useImageGallery } from './FeedCard.utils';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { Post } from '../types/api';
@@ -52,7 +53,12 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
   const event = post.event;
 
   const { coverUrl, imageUrls } = useMemo(() => {
-    const cover = event?.cover_image_url ? fixStorageUrl(event.cover_image_url) : null;
+    const cover = event
+      ? pickEventCoverUrl({
+          cover_variants: event.cover_variants,
+          cover_image_url: event.cover_image_url,
+        })
+      : null;
     const urls: string[] = [];
     if (cover) urls.push(cover);
     (post.photos || []).forEach((p) => {
@@ -60,7 +66,7 @@ export function ChallengeBody({ post, onEventPress }: { post: Post; onEventPress
       if (url) urls.push(url);
     });
     return { coverUrl: cover, imageUrls: urls };
-  }, [event?.cover_image_url, post.photos]);
+  }, [event, post.photos]);
 
   // Hooks above must run unconditionally; guard the missing-event case after them.
   if (!event) return null;

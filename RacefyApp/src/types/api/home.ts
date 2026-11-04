@@ -1,6 +1,7 @@
 import type { Activity } from './activities';
 import type { CommentaryLanguage, EventCommentary } from './commentary';
 import type { Event } from './events';
+import type { ImageVariants } from './media';
 
 // ============ HOME FEED ============
 
@@ -186,6 +187,7 @@ export interface HomeSectionEvent {
   sport_type?: string;
   participants_count?: number;
   cover_image_url?: string;
+  cover_variants?: ImageVariants | null;
   status?: 'upcoming' | 'ongoing' | 'completed';
 }
 
@@ -194,6 +196,7 @@ export interface HomeSectionFriend {
   name: string;
   username: string;
   avatar_url?: string;
+  avatar_variants?: ImageVariants | null;
 }
 
 export interface HomeSectionActivity {
@@ -295,7 +298,13 @@ export interface HomeConfigResponse {
 export interface FriendTodayActivity {
   activity_id: number;
   title: string;
-  user: { id: number; name: string; username: string; avatar_url: string | null };
+  user: {
+    id: number;
+    name: string;
+    username: string;
+    avatar_url: string | null;
+    avatar_variants?: ImageVariants | null;
+  };
   sport_type: { id: number; slug: string; name: string; icon: string | null };
   started_at: string;
   /** Seconds. */

@@ -127,7 +127,12 @@ export function ActivityLiveMessages({
             >
               {/* `avatar`, like CommentItem: `avatar_url` is the field the feed
                   endpoints use, and comments carry the plain one. */}
-              <Avatar uri={author?.avatar} name={author?.name || '?'} size="sm" />
+              <Avatar
+                uri={author?.avatar}
+                variants={author?.avatar_variants}
+                name={author?.name || '?'}
+                size="sm"
+              />
             </TouchableOpacity>
 
             <View style={styles.messageBody}>

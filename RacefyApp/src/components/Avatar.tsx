@@ -4,10 +4,17 @@ import { Image } from 'expo-image';
 import { useTheme } from '../hooks/useTheme';
 import { avatarSizes } from '../theme';
 import { TierBadge } from './TierBadge';
-import type { SubscriptionTier } from '../types/api';
+import type { ImageVariants, SubscriptionTier } from '../types/api';
+import { AVATAR_LADDER, pickVariantForWidth } from '../utils/imageVariants';
 
 interface AvatarProps {
+  /** Original avatar URL — the fallback when no variant fits. */
   uri?: string | null;
+  /**
+   * `avatar_variants` from the API (`thumb` 50 / `small` 100 / `medium` 200 crops). The
+   * smallest copy covering the rendered size on this screen is loaded instead of the original.
+   */
+  variants?: ImageVariants | null;
   name?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   /** Show subscription tier badge (plus/pro) on the avatar */
@@ -16,10 +23,11 @@ interface AvatarProps {
   tier?: SubscriptionTier;
 }
 
-export function Avatar({ uri, name, size = 'md', showTierBadge, tier }: AvatarProps) {
+export function Avatar({ uri, variants, name, size = 'md', showTierBadge, tier }: AvatarProps) {
   const { colors } = useTheme();
   const dimension = avatarSizes[size];
   const fontSizeValue = dimension * 0.4;
+  const source = pickVariantForWidth(variants, dimension, AVATAR_LADDER, uri);
 
   const badgeSize = size === 'sm' ? 'sm' : 'md';
   const badge = showTierBadge && tier ? <TierBadge tier={tier} size={badgeSize} /> : null;
@@ -29,12 +37,12 @@ export function Avatar({ uri, name, size = 'md', showTierBadge, tier }: AvatarPr
     return name.charAt(0).toUpperCase();
   };
 
-  if (uri) {
+  if (source) {
     return (
       <View style={{ position: 'relative' }}>
         <Image
-          source={{ uri }}
-          recyclingKey={uri}
+          source={{ uri: source }}
+          recyclingKey={source}
           cachePolicy="memory-disk"
           style={[
             styles.image,

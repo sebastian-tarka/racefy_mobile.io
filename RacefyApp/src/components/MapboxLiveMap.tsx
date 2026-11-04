@@ -13,7 +13,7 @@ import { View, StyleSheet, ActivityIndicator, Animated, Text } from 'react-nativ
 import * as Location from 'expo-location';
 import { logger } from '../services/logger';
 import { useTheme } from '../hooks/useTheme';
-import type { GpsPoint, GeoJSONLineString } from '../types/api';
+import type { GpsPoint, GeoJSONLineString, ImageVariants } from '../types/api';
 import { fontSize } from '../theme';
 import { Avatar } from './Avatar';
 
@@ -92,7 +92,11 @@ interface MapboxLiveMapProps {
    * Spectator view: draw the athlete as their avatar instead of the position
    * dot. The recording screen leaves this unset — you know who you are.
    */
-  athlete?: { avatar?: string | null; name?: string } | null;
+  athlete?: {
+    avatar?: string | null;
+    avatar_variants?: ImageVariants | null;
+    name?: string;
+  } | null;
 }
 
 /**
@@ -540,7 +544,12 @@ function MapboxLiveMapBase({
               accessible
               accessibilityLabel={athlete.name}
             >
-              <Avatar uri={athlete.avatar} name={athlete.name || '?'} size="sm" />
+              <Avatar
+                uri={athlete.avatar}
+                variants={athlete.avatar_variants}
+                name={athlete.name || '?'}
+                size="sm"
+              />
             </View>
           </MapboxGL.MarkerView>
         ) : (

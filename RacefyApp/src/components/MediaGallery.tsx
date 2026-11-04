@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Image,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
@@ -10,13 +9,14 @@ import {
   NativeScrollEvent,
   Modal,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/useTheme';
 import { VideoPlayer } from './VideoPlayer';
 import { fixStorageUrl } from '../config/api';
-import { logger } from '../services/logger';
 import { spacing } from '../theme';
 import type { Media, Photo, Video } from '../types/api';
+import { pickFullSizeUrl, pickVariant } from '../utils/imageVariants';
 
 interface MediaGalleryProps {
   media?: Media[];
@@ -38,6 +38,83 @@ const DEFAULT_WIDTH = screenWidth - spacing.lg * 4;
  */
 const MEDIA_ASPECT_RATIO = 1.55;
 
+interface GalleryItem {
+  id: number;
+  type: 'image' | 'video';
+  /** The original: video file, or full-size photo (fallback). */
+  url: string;
+  /** What the card shows: `large`/`medium` photo variant or the video poster. */
+  previewUrl: string | null;
+  /** What the full-screen view loads: `xlarge`/`large` photo variant. */
+  fullUrl: string | null;
+}
+
+// Helper to detect media type from URL or mime_type
+function detectMediaType(item: {
+  url?: string;
+  mime_type?: string;
+  type?: string;
+}): 'image' | 'video' {
+  // If type is already set, use it
+  if (item.type === 'video' || item.type === 'image') {
+    return item.type;
+  }
+  // Check mime_type
+  if (item.mime_type?.startsWith('video/')) {
+    return 'video';
+  }
+  // Check URL for video extensions
+  const url = item.url?.toLowerCase() || '';
+  if (url.includes('/videos/') || url.match(/\.(mp4|mov|avi|webm|mkv)(\?|$)/)) {
+    return 'video';
+  }
+  return 'image';
+}
+
+function mediaItem(m: Media): GalleryItem {
+  const type = detectMediaType(m);
+  if (type === 'video') {
+    return {
+      id: m.id,
+      type,
+      url: fixStorageUrl(m.url) || '',
+      previewUrl: fixStorageUrl(
+        pickVariant(m.thumbnail_variants, ['medium', 'small'], m.thumbnail_url),
+      ),
+      fullUrl: null,
+    };
+  }
+  return {
+    id: m.id,
+    type,
+    url: fixStorageUrl(m.url) || '',
+    previewUrl: fixStorageUrl(pickVariant(m.variants, ['large', 'medium'], m.thumbnail_url)),
+    fullUrl: fixStorageUrl(pickFullSizeUrl(m.variants, null)),
+  };
+}
+
+function photoItem(p: Photo): GalleryItem {
+  return {
+    id: p.id,
+    type: 'image',
+    url: fixStorageUrl(p.url) || '',
+    previewUrl: fixStorageUrl(pickVariant(p.variants, ['large', 'medium'], null)),
+    fullUrl: fixStorageUrl(pickFullSizeUrl(p.variants, null)),
+  };
+}
+
+function videoItem(v: Video): GalleryItem {
+  return {
+    id: v.id,
+    type: 'video',
+    url: fixStorageUrl(v.url) || '',
+    previewUrl: fixStorageUrl(
+      pickVariant(v.thumbnail_variants, ['medium', 'small'], v.thumbnail_url),
+    ),
+    fullUrl: null,
+  };
+}
+
 export function MediaGallery({
   media = [],
   photos = [],
@@ -53,84 +130,12 @@ export function MediaGallery({
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
 
-  // Debug: Log incoming props
-  logger.debug('general', 'MediaGallery props received', {
-    mediaCount: media.length,
-    photosCount: photos.length,
-    videosCount: videos.length,
-    videos: videos,
-  });
-
-  // Helper to detect media type from URL or mime_type
-  const detectMediaType = (item: {
-    url?: string;
-    mime_type?: string;
-    type?: string;
-  }): 'image' | 'video' => {
-    // If type is already set, use it
-    if (item.type === 'video' || item.type === 'image') {
-      return item.type;
-    }
-    // Check mime_type
-    if (item.mime_type?.startsWith('video/')) {
-      return 'video';
-    }
-    // Check URL for video extensions
-    const url = item.url?.toLowerCase() || '';
-    if (url.includes('/videos/') || url.match(/\.(mp4|mov|avi|webm|mkv)(\?|$)/)) {
-      return 'video';
-    }
-    return 'image';
-  };
-
   // Combine media, photos, and videos into a unified list
-  const items: {
-    id: number;
-    type: 'image' | 'video';
-    url: string;
-    thumbnailUrl?: string | null;
-  }[] = [
-    ...media.map((m) => {
-      const detectedType = detectMediaType(m);
-      logger.debug('general', 'MediaGallery media item type detection', {
-        id: m.id,
-        originalType: m.type,
-        mimeType: m.mime_type,
-        url: m.url,
-        detectedType,
-      });
-      return {
-        id: m.id,
-        type: detectedType,
-        url: fixStorageUrl(m.url) || '',
-        thumbnailUrl: m.thumbnail_url ? fixStorageUrl(m.thumbnail_url) : null,
-      };
-    }),
-    ...photos.map((p) => ({
-      id: p.id,
-      type: 'image' as const,
-      url: fixStorageUrl(p.url) || '',
-      thumbnailUrl: null,
-    })),
-    ...videos.map((v) => {
-      const fixedUrl = fixStorageUrl(v.url);
-      const fixedThumbnail = v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null;
-      logger.debug('general', 'MediaGallery video URL transform', {
-        original: v.url,
-        fixed: fixedUrl,
-        thumbnailOriginal: v.thumbnail_url,
-        thumbnailFixed: fixedThumbnail,
-      });
-      return {
-        id: v.id,
-        type: 'video' as const,
-        url: fixedUrl || '',
-        thumbnailUrl: fixedThumbnail,
-      };
-    }),
+  const items: GalleryItem[] = [
+    ...media.map(mediaItem),
+    ...photos.map(photoItem),
+    ...videos.map(videoItem),
   ];
-
-  logger.debug('general', 'MediaGallery final items', { items });
 
   if (items.length === 0) return null;
 
@@ -140,16 +145,65 @@ export function MediaGallery({
     setCurrentIndex(index);
   };
 
-  const handleItemPress = (item: (typeof items)[0]) => {
+  const handleItemPress = (item: GalleryItem) => {
     if (item.type === 'video') {
       setSelectedVideoUri(item.url);
-      setSelectedVideoThumbnail(item.thumbnailUrl || null);
+      setSelectedVideoThumbnail(item.previewUrl);
       setVideoPlayerVisible(true);
     } else {
-      setSelectedImageUri(item.url);
+      setSelectedImageUri(item.fullUrl || item.url);
       setImageViewerVisible(true);
     }
   };
+
+  const renderPreview = (item: GalleryItem, style: object) => (
+    <Image
+      source={{ uri: item.previewUrl || item.url }}
+      style={style}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      recyclingKey={item.previewUrl || item.url}
+    />
+  );
+
+  const modals = (
+    <>
+      {videoPlayerVisible && selectedVideoUri && (
+        <VideoPlayer
+          uri={selectedVideoUri}
+          visible={videoPlayerVisible}
+          onClose={() => {
+            setVideoPlayerVisible(false);
+            setSelectedVideoUri(null);
+            setSelectedVideoThumbnail(null);
+          }}
+          thumbnailUrl={selectedVideoThumbnail}
+        />
+      )}
+
+      {imageViewerVisible && selectedImageUri && (
+        <Modal visible={imageViewerVisible} transparent animationType="fade">
+          <View style={styles.imageViewerContainer}>
+            <TouchableOpacity
+              style={styles.imageViewerClose}
+              onPress={() => {
+                setImageViewerVisible(false);
+                setSelectedImageUri(null);
+              }}
+            >
+              <Ionicons name="close" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: selectedImageUri }}
+              style={styles.fullImage}
+              contentFit="contain"
+              cachePolicy="memory-disk"
+            />
+          </View>
+        </Modal>
+      )}
+    </>
+  );
 
   // Single item layout
   if (items.length === 1) {
@@ -161,11 +215,7 @@ export function MediaGallery({
           onPress={() => handleItemPress(item)}
           activeOpacity={0.9}
         >
-          <Image
-            source={{ uri: item.thumbnailUrl || item.url }}
-            style={styles.singleImage}
-            resizeMode="cover"
-          />
+          {renderPreview(item, styles.singleImage)}
           {item.type === 'video' && (
             <View style={styles.playIconOverlay}>
               <View style={styles.playIconContainer}>
@@ -174,40 +224,7 @@ export function MediaGallery({
             </View>
           )}
         </TouchableOpacity>
-
-        {videoPlayerVisible && selectedVideoUri && (
-          <VideoPlayer
-            uri={selectedVideoUri}
-            visible={videoPlayerVisible}
-            onClose={() => {
-              setVideoPlayerVisible(false);
-              setSelectedVideoUri(null);
-              setSelectedVideoThumbnail(null);
-            }}
-            thumbnailUrl={selectedVideoThumbnail}
-          />
-        )}
-
-        {imageViewerVisible && selectedImageUri && (
-          <Modal visible={imageViewerVisible} transparent animationType="fade">
-            <View style={styles.imageViewerContainer}>
-              <TouchableOpacity
-                style={styles.imageViewerClose}
-                onPress={() => {
-                  setImageViewerVisible(false);
-                  setSelectedImageUri(null);
-                }}
-              >
-                <Ionicons name="close" size={28} color="#FFFFFF" />
-              </TouchableOpacity>
-              <Image
-                source={{ uri: selectedImageUri }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
-            </View>
-          </Modal>
-        )}
+        {modals}
       </>
     );
   }
@@ -232,11 +249,7 @@ export function MediaGallery({
               onPress={() => handleItemPress(item)}
               activeOpacity={0.9}
             >
-              <Image
-                source={{ uri: item.thumbnailUrl || item.url }}
-                style={styles.image}
-                resizeMode="cover"
-              />
+              {renderPreview(item, styles.image)}
               {item.type === 'video' && (
                 <View style={styles.playIconOverlay}>
                   <View style={styles.playIconContainer}>
@@ -266,40 +279,7 @@ export function MediaGallery({
           </View>
         )}
       </View>
-
-      {videoPlayerVisible && selectedVideoUri && (
-        <VideoPlayer
-          uri={selectedVideoUri}
-          visible={videoPlayerVisible}
-          onClose={() => {
-            setVideoPlayerVisible(false);
-            setSelectedVideoUri(null);
-            setSelectedVideoThumbnail(null);
-          }}
-          thumbnailUrl={selectedVideoThumbnail}
-        />
-      )}
-
-      {imageViewerVisible && selectedImageUri && (
-        <Modal visible={imageViewerVisible} transparent animationType="fade">
-          <View style={styles.imageViewerContainer}>
-            <TouchableOpacity
-              style={styles.imageViewerClose}
-              onPress={() => {
-                setImageViewerVisible(false);
-                setSelectedImageUri(null);
-              }}
-            >
-              <Ionicons name="close" size={28} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Image
-              source={{ uri: selectedImageUri }}
-              style={styles.fullImage}
-              resizeMode="contain"
-            />
-          </View>
-        </Modal>
-      )}
+      {modals}
     </>
   );
 }

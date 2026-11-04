@@ -53,7 +53,7 @@ export function BlockedUsersScreen() {
         },
       ]}
     >
-      <Avatar uri={item.avatar} name={item.name} size="md" />
+      <Avatar uri={item.avatar} variants={item.avatar_variants} name={item.name} size="md" />
       <View style={styles.userInfo}>
         <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
         <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>

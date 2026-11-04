@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { RoutePreview } from '../../../components';
 import { fixStorageUrl } from '../../../config/api';
+import { pickRouteMapUrl } from '../../../utils/imageVariants';
 import { useTheme } from '../../../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 import type { Activity, GpsTrack } from '../../../types/api';
@@ -58,7 +59,7 @@ export function ActivityDetailMap({
     <Animated.View style={{ height: mapHeightAnim }}>
       <RoutePreview
         routePreviewUrl={fixStorageUrl(gpsTrack.route_preview_url)}
-        routeMapUrl={fixStorageUrl(gpsTrack.route_map_url)}
+        routeMapUrl={fixStorageUrl(pickRouteMapUrl(gpsTrack))}
         routeSvg={gpsTrack.route_svg}
         trackData={gpsTrack?.simplified_track}
         activityId={activity.id}

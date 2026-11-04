@@ -1,4 +1,5 @@
 import type { Event } from './events';
+import type { ImageVariants } from './media';
 import type { Post } from './posts';
 import type { User } from './user';
 
@@ -43,6 +44,7 @@ export interface BlockedUser {
   name: string;
   username: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
   blocked_at: string; // ISO datetime
 }
 
@@ -96,6 +98,7 @@ export interface MentionEntity {
   name: string;
   username?: string;
   avatar?: string;
+  avatar_variants?: ImageVariants | null;
   url: string;
 }
 
@@ -106,6 +109,7 @@ export interface MentionSearchUser {
   name: string;
   username: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
 }
 
 export interface MentionSearchEvent {

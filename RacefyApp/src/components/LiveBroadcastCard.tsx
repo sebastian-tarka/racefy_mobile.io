@@ -36,7 +36,7 @@ export function LiveBroadcastCard({ broadcast, onPress }: Props) {
       activeOpacity={0.8}
       style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
     >
-      <Avatar uri={user?.avatar} name={user?.name} size="md" />
+      <Avatar uri={user?.avatar} variants={user?.avatar_variants} name={user?.name} size="md" />
 
       <View style={styles.body}>
         <View style={styles.titleRow}>

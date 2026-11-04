@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, Modal, Image, StatusBar, Dimensions } from 'react-native';
+import { StyleSheet, TouchableOpacity, Modal, StatusBar, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme';
@@ -90,7 +91,12 @@ export function ImageViewer({ uri, visible, onClose }: ImageViewerProps) {
         <GestureDetector gesture={composed}>
           <Animated.View style={styles.imageContainer}>
             <Animated.View style={animatedStyle}>
-              <Image source={{ uri }} style={styles.image} resizeMode="contain" />
+              <Image
+                source={{ uri }}
+                style={styles.image}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
             </Animated.View>
           </Animated.View>
         </GestureDetector>

@@ -183,6 +183,38 @@ Helpers (labels "55×8", volume shares, rhythm, deltas) live in `strengthSession
 - Series colours: `colors.series` (stable order, light/dark). Mono figures: `fontFamily.mono`.
 - `muscle_group` is mostly `"other"` — nothing is built on it.
 
+### Remote images (`expo-image` + variants)
+
+Every remote image goes through `expo-image` with `cachePolicy="memory-disk"` — never React
+Native's `Image`/`ImageBackground` (no disk cache, decodes at full size). The API ships a map
+of downscaled WebP copies next to each original (`avatar_variants`, photo `variants`,
+`cover_variants`, `background_variants`, `thumbnail_variants`, `route_map_variants`; see
+`docs/api/mobile/API_ENDPOINTS.md` "Image variants"). Never load the original where a
+variant exists; pick with `utils/imageVariants`:
+
+```tsx
+// Avatars: pass both — the component picks thumb/small/medium for its size
+<Avatar uri={user.avatar} variants={user.avatar_variants} name={user.name} size="md" />
+
+// A fixed-size thumbnail (points → device pixels via PixelRatio)
+pickVariantForWidth(photo.variants, 120, PHOTO_LADDER, photo.url);
+
+// Explicit preference, e.g. the full-screen viewer
+pickFullSizeUrl(photo.variants, photo.url); // xlarge → large → original
+pickVariant(video.thumbnail_variants, ['medium', 'small'], video.thumbnail_url);
+
+// Window-wide images
+pickRouteMapUrl(activity); // or a GpsTrack
+pickBackgroundUrl(user);
+pickEventCoverUrl(event); // components/event/eventFormat — mobile → medium → large → cover → post photo
+```
+
+Feed media go through `photoMediaItem` / `videoMediaItem` / `buildMediaItems` in
+`FeedCard.utils`, which fill `thumbnailUrl` (grid cells), `previewUrl` (full-width card) and
+`fullUrl` (viewer); render with `previewUrlOf(item)` and open with `fullUrlOf(item)`. A
+variants map is `null` until the server has generated it and may miss keys — every helper
+falls back to the original, so no call site needs its own `??`.
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:

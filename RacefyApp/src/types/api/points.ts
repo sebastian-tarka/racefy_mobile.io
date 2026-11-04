@@ -1,3 +1,5 @@
+import type { ImageVariants } from './media';
+
 // ============ POINTS & LEADERBOARD ============
 
 export interface UserPointStats {
@@ -19,6 +21,7 @@ export interface LeaderboardUser {
   name: string;
   username: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
 }
 
 export interface LeaderboardEntry {

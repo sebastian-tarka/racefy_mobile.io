@@ -14,6 +14,7 @@ import type {
   EventResult,
   EventStandingEntry,
   EventStandingUser,
+  ImageVariants,
   User,
 } from '../../types/api';
 
@@ -28,6 +29,7 @@ export interface StandingRowModel {
   userId?: number;
   name: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
   subtitle?: string;
   primary: string;
   finished: boolean;
@@ -39,6 +41,10 @@ function avatarOf(user: EventStandingUser | User | undefined): string | null {
   if (!user) return null;
   const raw = (user as EventStandingUser).avatar_url ?? (user as EventStandingUser).avatar ?? null;
   return fixStorageUrl(raw);
+}
+
+function avatarVariantsOf(user: EventStandingUser | User | undefined): ImageVariants | null {
+  return user?.avatar_variants ?? null;
 }
 
 export function standingToRow(
@@ -64,6 +70,7 @@ export function standingToRow(
     userId: entry.user?.id,
     name: entry.user?.name ?? '—',
     avatar: avatarOf(entry.user),
+    avatar_variants: avatarVariantsOf(entry.user),
     subtitle: entry.is_finished ? t('eventDetail.finished', 'Finished') : undefined,
     primary,
     finished: entry.is_finished,
@@ -95,6 +102,7 @@ export function resultToRow(
     userId: result.user?.id,
     name: result.user?.name ?? result.team?.name ?? '—',
     avatar: avatarOf(result.user),
+    avatar_variants: avatarVariantsOf(result.user),
     subtitle: result.place_label,
     primary,
     finished: true,
@@ -153,7 +161,12 @@ export function PodiumTop3({ rows }: { rows: StandingRowModel[] }) {
       {columns.map((row) => (
         <View key={row.place} style={styles.podiumCol}>
           <View style={styles.podiumAvatarWrap}>
-            <Avatar uri={row.avatar} name={row.name} size={row.place === 1 ? 'lg' : 'md'} />
+            <Avatar
+              uri={row.avatar}
+              variants={row.avatar_variants}
+              name={row.name}
+              size={row.place === 1 ? 'lg' : 'md'}
+            />
             <View style={[styles.podiumMedal, { backgroundColor: MEDAL_COLORS[row.place - 1] }]}>
               <Text style={styles.podiumMedalText}>{row.place}</Text>
             </View>
@@ -208,7 +221,7 @@ export function StandingRow({
       ]}
     >
       <Text style={[styles.rowRank, { color: medal ?? colors.textMuted }]}>{row.place}</Text>
-      <Avatar uri={row.avatar} name={row.name} size="sm" />
+      <Avatar uri={row.avatar} variants={row.avatar_variants} name={row.name} size="sm" />
       <View style={styles.rowInfo}>
         <Text style={[styles.rowName, { color: colors.textPrimary }]} numberOfLines={1}>
           {row.name}

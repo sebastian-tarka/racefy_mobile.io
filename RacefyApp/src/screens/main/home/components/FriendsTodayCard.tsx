@@ -72,7 +72,12 @@ export function FriendsTodayCard({ rows, friendsCount, onOpenActivity, onOpenFee
             activeOpacity={0.7}
             accessibilityRole="button"
           >
-            <Avatar uri={row.user.avatar_url} name={row.user.name} size="md" />
+            <Avatar
+              uri={row.user.avatar_url}
+              variants={row.user.avatar_variants}
+              name={row.user.name}
+              size="md"
+            />
             <View style={styles.rowBody}>
               <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
                 {row.user.name}

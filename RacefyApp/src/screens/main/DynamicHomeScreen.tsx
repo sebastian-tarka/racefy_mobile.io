@@ -445,6 +445,7 @@ export function DynamicHomeScreen({ navigation }: Props) {
           <HomeHeader
             userName={user?.name}
             userAvatar={user?.avatar}
+            userAvatarVariants={user?.avatar_variants}
             greeting={getGreeting()}
             isAuthenticated={isAuthenticated}
             unreadCount={unreadCount}

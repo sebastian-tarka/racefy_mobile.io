@@ -32,6 +32,7 @@ import { api } from '../../services/api';
 import { logger } from '../../services/logger';
 import { emitRefresh, useRefreshOn } from '../../services/refreshEvents';
 import { fixStorageUrl } from '../../config/api';
+import { pickRouteMapUrl } from '../../utils/imageVariants';
 import { useTheme } from '../../hooks/useTheme';
 import { useUnits } from '../../hooks/useUnits';
 import { useAuth } from '../../hooks/useAuth';
@@ -183,7 +184,9 @@ export function PostDetailScreen({ route, navigation }: Props) {
 
     // Check if we have route data from the fetched GPS track or embedded in activity
     const routePreviewUrl = gpsTrack?.route_preview_url || activity.route_preview_url;
-    const routeMapUrl = gpsTrack?.route_map_url || activity.route_map_url;
+    const routeMapUrl = gpsTrack?.route_map_url
+      ? pickRouteMapUrl(gpsTrack)
+      : pickRouteMapUrl(activity);
     const routeSvg = gpsTrack?.route_svg || activity.route_svg;
     const hasRouteMap = routePreviewUrl || routeMapUrl || routeSvg;
 
@@ -390,7 +393,12 @@ export function PostDetailScreen({ route, navigation }: Props) {
                 onPress={() => post.user && handleUserPress(post.user)}
                 disabled={!post.user}
               >
-                <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+                <Avatar
+                  uri={post.user?.avatar}
+                  variants={post.user?.avatar_variants}
+                  name={post.user?.name}
+                  size="md"
+                />
                 <View style={styles.userText}>
                   <Text style={[styles.userName, { color: colors.textPrimary }]}>
                     {post.user?.name}

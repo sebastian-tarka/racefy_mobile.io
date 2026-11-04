@@ -252,7 +252,12 @@ export function TeamStatsTab({ slug, onUserPress }: TeamStatsTabProps) {
                     </Text>
                   )}
                 </View>
-                <Avatar uri={member.user.avatar} name={member.user.name} size="sm" />
+                <Avatar
+                  uri={member.user.avatar}
+                  variants={member.user.avatar_variants}
+                  name={member.user.name}
+                  size="sm"
+                />
                 <View style={styles.rankInfo}>
                   <Text style={[styles.rankName, { color: colors.textPrimary }]} numberOfLines={1}>
                     {member.user.name}

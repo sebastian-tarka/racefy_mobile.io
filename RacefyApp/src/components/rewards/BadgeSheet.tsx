@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import {
-  Image,
   Modal,
   StyleSheet,
   Text,
@@ -8,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -71,7 +71,11 @@ export function BadgeSheet({ reward, onClose }: Props) {
                     style={[styles.face, { borderColor: tint }]}
                   >
                     {badge.icon_url ? (
-                      <Image source={{ uri: badge.icon_url }} style={styles.faceImage} />
+                      <Image
+                        source={{ uri: badge.icon_url }}
+                        style={styles.faceImage}
+                        cachePolicy="memory-disk"
+                      />
                     ) : (
                       <Text style={styles.faceEmoji}>{badge.icon_emoji || badge.icon || '🏅'}</Text>
                     )}

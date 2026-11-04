@@ -197,6 +197,7 @@ export function CommentItem({
       <TouchableOpacity onPress={handleUserPress} disabled={!onUserPress}>
         <Avatar
           uri={comment.user?.avatar}
+          variants={comment.user?.avatar_variants}
           name={comment.user?.name || '?'}
           size={isReply ? 'sm' : 'md'}
           showTierBadge={

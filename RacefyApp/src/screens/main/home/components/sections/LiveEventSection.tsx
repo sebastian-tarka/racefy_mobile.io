@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, withAlpha } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
+import { pickEventCoverUrl } from '../../../../../components/event/eventFormat';
 
 interface LiveEventSectionProps {
   section: HomeSection;
@@ -35,9 +37,11 @@ export function LiveEventSection({ section, onPress, onEventPress }: LiveEventSe
   return (
     <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       <ImageBackground
-        source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
+        source={{ uri: pickEventCoverUrl(event) ?? undefined }}
         style={[styles.imageBackground, { backgroundColor: colors.error }]}
         imageStyle={styles.image}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       >
         <View style={[styles.overlay, { backgroundColor: withAlpha(colors.error, 0.85) }]}>
           <View style={styles.liveIndicator}>

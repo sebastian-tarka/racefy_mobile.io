@@ -1,16 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  ImageBackground,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius, componentSize } from '../../../../../theme';
 import type { HomeSection, HomeSectionEvent } from '../../../../../types/api';
+import { pickEventCoverUrl } from '../../../../../components/event/eventFormat';
 import { formatShortDate } from '../../../../../utils/formatters';
 
 interface FriendEventsSectionProps {
@@ -42,9 +37,11 @@ function EventCard({
     >
       {event.cover_image_url ? (
         <ImageBackground
-          source={{ uri: event.cover_image_url }}
+          source={{ uri: pickEventCoverUrl(event) ?? undefined }}
           style={styles.eventImage}
           imageStyle={styles.eventImageStyle}
+          contentFit="cover"
+          cachePolicy="memory-disk"
         >
           <View style={styles.imageOverlay} />
         </ImageBackground>

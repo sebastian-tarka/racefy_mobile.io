@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   ViewToken,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, fontSize } from '../theme';
@@ -85,11 +86,14 @@ function GalleryImage({ uri }: { uri: string }) {
   return (
     <GestureDetector gesture={composed}>
       <Animated.View style={[styles.imageContainer, { width: screenWidth, height: screenHeight }]}>
-        <Animated.Image
-          source={{ uri }}
-          style={[{ width: screenWidth, height: screenHeight }, animatedStyle]}
-          resizeMode="contain"
-        />
+        <Animated.View style={[{ width: screenWidth, height: screenHeight }, animatedStyle]}>
+          <Image
+            source={{ uri }}
+            style={StyleSheet.absoluteFill}
+            contentFit="contain"
+            cachePolicy="memory-disk"
+          />
+        </Animated.View>
       </Animated.View>
     </GestureDetector>
   );

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
@@ -148,7 +149,9 @@ function PrizeRow({ prize }: { prize: EventPrize }) {
         <Ionicons name="gift" size={16} color={colors.warning} />
         <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>{prize.name}</Text>
       </View>
-      {!!prize.image_url && <Image source={{ uri: prize.image_url }} style={styles.image} />}
+      {!!prize.image_url && (
+        <Image source={{ uri: prize.image_url }} style={styles.image} cachePolicy="memory-disk" />
+      )}
       {!!prize.description && (
         <Text style={[styles.itemText, { color: colors.textSecondary }]}>{prize.description}</Text>
       )}

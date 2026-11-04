@@ -413,7 +413,12 @@ export function ActivityDetailScreen({ route, navigation }: Props) {
                     navigation.navigate('UserProfile', { username: activity.user!.username })
                   }
                 >
-                  <Avatar uri={activity.user.avatar} name={activity.user.name} size="md" />
+                  <Avatar
+                    uri={activity.user.avatar}
+                    variants={activity.user.avatar_variants}
+                    name={activity.user.name}
+                    size="md"
+                  />
                   <View style={styles.userInfo}>
                     <Text style={[styles.userName, { color: colors.textPrimary }]}>
                       {activity.user.name}
