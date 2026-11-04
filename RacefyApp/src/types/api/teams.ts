@@ -1,5 +1,6 @@
 import type { EventRegistration } from './events';
 import type { ImageVariants } from './media';
+import type { SportType } from './sports';
 import type { User } from './user';
 
 // ============ STANDALONE TEAMS ============
@@ -165,6 +166,52 @@ export interface TeamTrendsResponse {
   team_name: string;
   granularity: TrendGranularity;
   trends: TrendDataPoint[];
+}
+
+// ============ TEAM ACTIVITY BOARD ============
+
+/**
+ * One row of `GET /teams/{slug}/activities` (`PublicActivityResource`): a finished
+ * activity of an active member that the viewer may see. No start/finish
+ * coordinates, no health data; the route only as a picture.
+ */
+export interface TeamBoardActivity {
+  id: number;
+  title: string | null;
+  description?: string | null;
+  sport_type?: SportType;
+  started_at: string;
+  ended_at?: string | null;
+  /** seconds */
+  duration: number;
+  /** Duration without standing still (seconds); null without a GPS track. */
+  moving_time?: number | null;
+  /** meters */
+  distance: number;
+  /** meters */
+  elevation_gain: number | null;
+  avg_speed?: number | null;
+  max_speed?: number | null;
+  /** Server-side formatted values (always metric); `pace.value` is null when pace does not apply. */
+  formatted?: {
+    duration?: string | null;
+    pace?: { value: string | null; unit: string } | null;
+  };
+  likes_count: number;
+  comments_count: number;
+  user?: User;
+  has_gps_track?: boolean;
+  route_svg?: string | null;
+  route_map_url?: string | null;
+  route_preview_url?: string | null;
+  created_at?: string;
+}
+
+export interface TeamActivitiesParams {
+  sport_type_id?: number | null;
+  /** 1–50, default 15 */
+  per_page?: number;
+  page?: number;
 }
 
 export type LeaderboardSortBy = 'distance' | 'duration' | 'elevation' | 'activities' | 'members';

@@ -3922,5 +3922,16 @@
       "noLink": "No public link — the event or your profile is private. The image can still be shared.",
       "generating": "Drawing your card…",
       "error": "Could not create the result card."
+    },
+    "teamBoard": {
+      "thisWeek": "This week",
+      "mostActive": "most active: {{name}} · {{distance}}",
+      "activeMembers": "Active members",
+      "allSports": "All",
+      "emptyTitle": "No activities to show",
+      "emptyDesc": "Members' finished workouts appear here — the ones their privacy settings let you see.",
+      "loadMore": "Show more",
+      "reactions": "{{likes}} likes · {{comments}} comments",
+      "openActivity": "Open activity"
     }
 }

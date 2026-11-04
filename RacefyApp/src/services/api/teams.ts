@@ -171,6 +171,23 @@ export function TeamsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       );
     }
 
+    /**
+     * Team activity board: members' finished activities the viewer may see, newest
+     * first. Optional auth; 403 when the team is private and the viewer is not a member.
+     */
+    async getTeamActivities(
+      slug: string,
+      params?: Types.TeamActivitiesParams,
+    ): Promise<Types.PaginatedResponse<Types.TeamBoardActivity>> {
+      return this.request(
+        withQuery(`/teams/${slug}/activities`, {
+          sport_type_id: params?.sport_type_id,
+          per_page: params?.per_page,
+          page: params?.page,
+        }),
+      );
+    }
+
     async getTeamsLeaderboard(params?: {
       sort_by?: Types.LeaderboardSortBy;
       period?: Types.StatsPeriod;
