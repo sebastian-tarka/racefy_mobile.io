@@ -15,15 +15,26 @@ import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../navigation/types';
-import { useTeamDetail, useAuth, useTheme, useSubscription } from '../../hooks';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import {
+  useTeamDetail,
+  useAuth,
+  useTheme,
+  useSubscription,
+  useTeamActivityBoard,
+} from '../../hooks';
 import { ScreenContainer, ScreenHeader, Card, Avatar, Button } from '../../components';
 import { TeamStatsTab } from './TeamStatsTab';
+import { TeamActivityBoardTab } from './TeamActivityBoardTab';
 import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
 import { getErrorMessage, getErrorStatus } from '../../utils/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TeamDetail'>;
-type TabType = 'members' | 'stats' | 'events';
+type TabType = 'members' | 'stats' | 'events' | 'activities';
+
+/** How close to the bottom (px) the activities tab starts loading the next page. */
+const LOAD_MORE_OFFSET = 320;
 
 export function TeamDetailScreen({ route, navigation }: Props) {
   const { slug, initialTab } = route.params;
@@ -60,6 +71,30 @@ export function TeamDetailScreen({ route, navigation }: Props) {
     handleDeclineJoinRequest,
     handleDelete,
   } = useTeamDetail({ slug, isAuthenticated, userId: user?.id, navigateBack });
+
+  // The board hook lives here so the screen's pull-to-refresh and scroll-to-end can drive it.
+  const board = useTeamActivityBoard(slug, { enabled: activeTab === 'activities' && !!team });
+  const { refresh: refreshBoard, loadMore: loadMoreBoard } = board;
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([onRefresh(), activeTab === 'activities' ? refreshBoard() : null]);
+  }, [onRefresh, activeTab, refreshBoard]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (activeTab !== 'activities') return;
+      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+      if (layoutMeasurement.height + contentOffset.y >= contentSize.height - LOAD_MORE_OFFSET) {
+        loadMoreBoard();
+      }
+    },
+    [activeTab, loadMoreBoard],
+  );
+
+  const handleActivityPress = useCallback(
+    (activityId: number) => navigation.navigate('ActivityDetail', { activityId }),
+    [navigation],
+  );
 
   const membersMax = features.team_members_max;
   const isMembersFull = membersMax !== -1 && (team?.members_count ?? 0) >= membersMax;
@@ -168,6 +203,7 @@ export function TeamDetailScreen({ route, navigation }: Props) {
   const tabs: { value: TabType; label: string }[] = [
     { value: 'members', label: t('teams.members') },
     { value: 'stats', label: t('teams.stats') },
+    { value: 'activities', label: t('teams.activities') },
   ];
 
   return (
@@ -190,7 +226,9 @@ export function TeamDetailScreen({ route, navigation }: Props) {
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />}
+        onScroll={handleScroll}
+        scrollEventThrottle={100}
       >
         {/* Header */}
         <Card style={styles.section}>
@@ -475,6 +513,10 @@ export function TeamDetailScreen({ route, navigation }: Props) {
         )}
 
         {activeTab === 'stats' && <TeamStatsTab slug={slug} onUserPress={handleUserPress} />}
+
+        {activeTab === 'activities' && (
+          <TeamActivityBoardTab board={board} onActivityPress={handleActivityPress} />
+        )}
 
         <View style={{ height: 60 + bottomInset }} />
       </ScrollView>

@@ -190,6 +190,27 @@ web app's `utils/standings.js`): `gapToNeighbour`, `eventTarget`, `progressToTar
   Actions: Share… (`shareImageFile` → system sheet, Instagram included), Copy link only
   with `share_url`. No "save to gallery" (would need `expo-media-library`).
 
+### Team activity board (`TeamDetailScreen` → `TeamActivityBoardTab`, `TeamActivityRow`)
+
+The team's "Activities" tab: `GET /teams/{slug}/activities` (members' finished
+activities the viewer may see — membership unlocks nothing, the server already
+applied each activity's visibility, so the client shows what came back). The hook
+`useTeamActivityBoard(slug, { enabled })` lives in the **screen**, not the tab, so the
+screen's pull-to-refresh and scroll-to-end (`onScroll` near the bottom) can drive
+`refresh()` / `loadMore()`; the tab is presentation only.
+
+- **This week strip** (`Card`): distance · activities · active members from
+  `/stats?period=this_week`, with "most active: name · distance" from
+  `/stats/ranking?period=this_week&sort_by=distance` (only when `total_distance > 0`).
+- **Sport chips** (`FilterChip` row): from the sports on the first unfiltered page, shown
+  when there are 2+; a chip refetches with `sport_type_id`, "All" clears it.
+- **`TeamActivityRow`**: avatar, name, "sport · time ago", title, distance / time / pace /
+  ↗ climb, heart + bubble counts, 64 px route thumbnail (`route_preview_url` first, else
+  `route_map_url`) → `ActivityDetail`. Pace follows the user's units; the API's metric
+  `formatted.pace.value === null` only says pace does not apply.
+- **States**: 403 → the same "private team" `EmptyState` as the stats tab; empty →
+  "No activities to show" + the privacy note; more pages → footer spinner / "Show more".
+
 ### Strength activities (`components/strength/`)
 
 Activities logged from a strength session carry `activity.strength_session`

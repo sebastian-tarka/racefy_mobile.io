@@ -58,6 +58,7 @@ export * from './useTeamDetail';
 export * from './useTeamStats';
 export * from './useTeamRanking';
 export * from './useTeamTrends';
+export * from './useTeamActivityBoard';
 export * from './useTeamsLeaderboard';
 export * from './useMyPlannedRoutes';
 export * from './useRouteTurnInstructions';

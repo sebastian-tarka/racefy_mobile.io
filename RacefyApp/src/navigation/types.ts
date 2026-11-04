@@ -89,7 +89,7 @@ export type RootStackParamList = {
   TrainingReminders: undefined;
   // Teams
   TeamsList: undefined;
-  TeamDetail: { slug: string; initialTab?: 'members' | 'stats' | 'events' };
+  TeamDetail: { slug: string; initialTab?: 'members' | 'stats' | 'events' | 'activities' };
   /** `slug` = edit that team; none = create. */
   TeamForm: { slug?: string };
   InviteMember: { teamId: number };

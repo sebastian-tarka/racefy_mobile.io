@@ -4005,5 +4005,16 @@
       "noLink": "Brak publicznego linku — wydarzenie lub Twój profil są prywatne. Obraz nadal można udostępnić.",
       "generating": "Rysujemy Twoją kartę…",
       "error": "Nie udało się utworzyć karty wyniku."
+    },
+    "teamBoard": {
+      "thisWeek": "W tym tygodniu",
+      "mostActive": "najaktywniej: {{name}} · {{distance}}",
+      "activeMembers": "Aktywni członkowie",
+      "allSports": "Wszystkie",
+      "emptyTitle": "Brak aktywności do pokazania",
+      "emptyDesc": "Pojawią się tu ukończone treningi członków drużyny — te, które możesz zobaczyć według ich ustawień prywatności.",
+      "loadMore": "Pokaż więcej",
+      "reactions": "{{likes}} polubień · {{comments}} komentarzy",
+      "openActivity": "Otwórz aktywność"
     }
 }

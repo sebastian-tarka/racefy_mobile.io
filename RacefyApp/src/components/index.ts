@@ -36,6 +36,7 @@ export * from './DraftsReminderModal';
 export * from './EmptyState';
 export * from './ErrorState';
 export * from './FilterChip';
+export * from './TeamActivityRow';
 export * from './EventCard';
 export * from './EventLocationPicker';
 export * from './FeaturedEventCard';
