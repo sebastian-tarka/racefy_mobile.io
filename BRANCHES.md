@@ -15,7 +15,16 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `fix/event-cards-1.33` — pusta okładka w „Trwają teraz” i rozjechana karta „Jesteś zapisany”
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `fix/event-cards-1.33` — pusta okładka w „Trwają teraz” i rozjechana karta „Jesteś zapisany” (zmergowane 2026-11-04, tag `pre-event-cards-1.33` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-04). Okładki z `/home` naprawia też API v1.3.47 (`*_variants` jako URL-e).
 
 Dwa bugi z testu 1.33.0 na Androidzie (Xiaomi), ekran wydarzeń:
 
@@ -37,11 +46,6 @@ Dwa bugi z testu 1.33.0 na Androidzie (Xiaomi), ekran wydarzeń:
 - [ ] Home (`dynamic`): sekcja live / nadchodzące / w pobliżu / znajomych — okładki widoczne; Home `legacy`: karta live i aktywności z awatarami bez pustych kwadratów
 - [ ] EventDetail eventu 41 jako zapisany: jedna karta, delikatnie zielony nagłówek z kafelkiem ✓ w środku, „Status · …” i „NR 1” w całości widoczne, biała stopka „Startuj aktywność”, bez szarego pasa (światło + ciemny motyw)
 - [ ] EventDetail eventu nadchodzącego jako zapisany: ten sam nagłówek + „Anuluj zapis” na zielonym tle + stopka „Start o …”
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `feature/image-variants` — warianty obrazów zamiast oryginałów (P4 planu wariantów zdjęć) (zmergowane 2026-11-04, tag `pre-image-variants` = main sprzed merge)
 
