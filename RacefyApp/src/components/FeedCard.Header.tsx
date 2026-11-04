@@ -230,6 +230,7 @@ export function FeedCardHeader({
         >
           <Avatar
             uri={post.user?.avatar}
+            variants={post.user?.avatar_variants}
             name={post.user?.name}
             size="md"
             showTierBadge={

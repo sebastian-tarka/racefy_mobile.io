@@ -1,3 +1,5 @@
+import type { ImageVariants } from './media';
+
 // ============ NOTIFICATIONS ============
 
 export type NotificationType =
@@ -31,6 +33,7 @@ export interface NotificationData {
   actor_name: string;
   actor_username: string;
   actor_avatar: string | null;
+  actor_avatar_variants?: ImageVariants | null;
   timestamp: string;
   url: string | null;
   // Type-specific fields (may not be present in all notifications)

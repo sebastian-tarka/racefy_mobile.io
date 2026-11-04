@@ -66,7 +66,12 @@ export function LeaderboardRow({ entry, isMe, gap, docked, onPress }: Props) {
         {entry.rank.toLocaleString()}
       </Text>
 
-      <Avatar uri={entry.user.avatar} name={entry.user.name} size="sm" />
+      <Avatar
+        uri={entry.user.avatar}
+        variants={entry.user.avatar_variants}
+        name={entry.user.name}
+        size="sm"
+      />
 
       <View style={styles.body}>
         <Text

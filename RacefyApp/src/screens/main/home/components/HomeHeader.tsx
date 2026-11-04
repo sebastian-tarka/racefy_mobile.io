@@ -6,11 +6,12 @@ import { Avatar, NotificationBadge } from '../../../../components';
 import { useTheme } from '../../../../hooks/useTheme';
 import { spacing, borderRadius, fontSize, fontWeight } from '../../../../theme';
 
-import type { SubscriptionTier } from '../../../../types/api';
+import type { ImageVariants, SubscriptionTier } from '../../../../types/api';
 
 interface HomeHeaderProps {
   userName?: string;
   userAvatar?: string | null;
+  userAvatarVariants?: ImageVariants | null;
   greeting?: string;
   isAuthenticated: boolean;
   unreadCount?: number;
@@ -22,6 +23,7 @@ interface HomeHeaderProps {
 export function HomeHeader({
   userName,
   userAvatar,
+  userAvatarVariants,
   greeting,
   isAuthenticated,
   unreadCount = 0,
@@ -45,6 +47,7 @@ export function HomeHeader({
               >
                 <Avatar
                   uri={userAvatar}
+                  variants={userAvatarVariants}
                   name={userName}
                   size="lg"
                   showTierBadge={!!userTier && userTier !== 'free'}

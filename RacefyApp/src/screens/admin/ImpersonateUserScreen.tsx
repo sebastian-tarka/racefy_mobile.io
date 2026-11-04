@@ -157,7 +157,12 @@ export function ImpersonateUserScreen({ navigation }: Props) {
               onPress={() => handleImpersonate(item)}
               disabled={impersonating}
             >
-              <Avatar uri={item.avatar_url} name={item.name} size="lg" />
+              <Avatar
+                uri={item.avatar_url}
+                variants={item.avatar_variants}
+                name={item.name}
+                size="lg"
+              />
               <View style={styles.userInfo}>
                 <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
                 <Text style={[styles.userUsername, { color: colors.textSecondary }]}>

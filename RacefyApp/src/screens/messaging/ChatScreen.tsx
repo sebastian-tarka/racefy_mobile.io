@@ -272,7 +272,12 @@ export function ChatScreen({ navigation, route }: Props) {
           {!isOwn && (
             <View style={styles.avatarContainer}>
               {showAvatar ? (
-                <Avatar uri={item.sender.avatar} name={item.sender.name} size="sm" />
+                <Avatar
+                  uri={item.sender.avatar}
+                  variants={item.sender.avatar_variants}
+                  name={item.sender.name}
+                  size="sm"
+                />
               ) : (
                 <View style={styles.avatarPlaceholder} />
               )}
@@ -355,9 +360,19 @@ export function ChatScreen({ navigation, route }: Props) {
         <>
           <TouchableOpacity style={styles.headerUserInfo} onPress={handleHeaderPress}>
             {isTeam && conversation?.team ? (
-              <Avatar uri={conversation.team.avatar} name={conversation.team.name} size="sm" />
+              <Avatar
+                uri={conversation.team.avatar}
+                variants={conversation.team.avatar_variants}
+                name={conversation.team.name}
+                size="sm"
+              />
             ) : headerParticipant ? (
-              <Avatar uri={headerParticipant.avatar} name={headerParticipant.name} size="sm" />
+              <Avatar
+                uri={headerParticipant.avatar}
+                variants={headerParticipant.avatar_variants}
+                name={headerParticipant.name}
+                size="sm"
+              />
             ) : null}
             <View style={styles.headerTextContainer}>
               <Text style={[styles.headerName, themedStyles.headerName]} numberOfLines={1}>

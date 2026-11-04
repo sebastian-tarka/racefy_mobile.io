@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import type { ThemeColors } from '../theme';
 import { fixStorageUrl } from '../config/api';
-import type { Post } from '../types/api';
+import type { Media, Photo, Post, Video } from '../types/api';
+import { pickFullSizeUrl, pickVariant } from '../utils/imageVariants';
 
 // Re-export from canonical locations for backwards compatibility
 export { formatDuration } from '../utils/formatDuration';
@@ -26,9 +27,75 @@ export type FeedPostType =
 export interface PostMediaItem {
   id: number;
   type: 'image' | 'video';
+  /** The original file: the video itself, or the full-size photo — the fallback everywhere. */
   url: string;
+  /** Grid cells: the `medium` photo variant, or the video poster. */
   thumbnailUrl?: string | null;
+  /** Full-width card preview: `large` photo variant, then `medium`, else nothing (→ original). */
+  previewUrl?: string | null;
+  /** Full-screen viewer: `xlarge` → `large` photo variant, else nothing (→ original). */
+  fullUrl?: string | null;
   aspectRatio?: number; // width/height from API
+}
+
+/** URL a full-width card shows for an item: sized preview, else poster, else the original. */
+export const previewUrlOf = (item: PostMediaItem): string =>
+  item.previewUrl || item.thumbnailUrl || item.url;
+
+/** URL the full-screen viewer opens for an item. */
+export const fullUrlOf = (item: PostMediaItem): string => item.fullUrl || item.url;
+
+export function photoMediaItem(photo: Photo): PostMediaItem {
+  return {
+    id: photo.id,
+    type: 'image',
+    url: fixStorageUrl(photo.url) || '',
+    thumbnailUrl: fixStorageUrl(pickVariant(photo.variants, ['medium', 'small'], null)),
+    previewUrl: fixStorageUrl(pickVariant(photo.variants, ['large', 'medium'], null)),
+    fullUrl: fixStorageUrl(pickFullSizeUrl(photo.variants, null)),
+  };
+}
+
+export function videoMediaItem(video: Video): PostMediaItem {
+  return {
+    id: video.id,
+    type: 'video',
+    url: fixStorageUrl(video.url) || '',
+    thumbnailUrl: fixStorageUrl(
+      pickVariant(video.thumbnail_variants, ['medium', 'small'], video.thumbnail_url),
+    ),
+    aspectRatio: video.width && video.height ? video.width / video.height : undefined,
+  };
+}
+
+function mediaMediaItem(media: Media): PostMediaItem {
+  const isVideo =
+    media.type === 'video' ||
+    media.mime_type?.startsWith('video/') ||
+    /\.(mp4|mov|webm)(\?|$)/.test(media.url?.toLowerCase() ?? '');
+  const aspectRatio = media.width && media.height ? media.width / media.height : undefined;
+  if (isVideo) {
+    return {
+      id: media.id,
+      type: 'video',
+      url: fixStorageUrl(media.url) || '',
+      thumbnailUrl: fixStorageUrl(
+        pickVariant(media.thumbnail_variants, ['medium', 'small'], media.thumbnail_url),
+      ),
+      aspectRatio,
+    };
+  }
+  return {
+    id: media.id,
+    type: 'image',
+    url: fixStorageUrl(media.url) || '',
+    thumbnailUrl: fixStorageUrl(
+      pickVariant(media.variants, ['medium', 'small'], media.thumbnail_url),
+    ),
+    previewUrl: fixStorageUrl(pickVariant(media.variants, ['large', 'medium'], null)),
+    fullUrl: fixStorageUrl(pickFullSizeUrl(media.variants, null)),
+    aspectRatio,
+  };
 }
 
 export interface FeedCardProps {
@@ -127,34 +194,11 @@ export function truncateText(
 }
 
 export function buildMediaItems(post: Post): PostMediaItem[] {
-  const videos: PostMediaItem[] = (post.videos || []).map((v) => ({
-    id: v.id,
-    type: 'video' as const,
-    url: fixStorageUrl(v.url) || '',
-    thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
-    aspectRatio: v.width && v.height ? v.width / v.height : undefined,
-  }));
-
-  const photos: PostMediaItem[] = (post.photos || []).map((p) => ({
-    id: p.id,
-    type: 'image' as const,
-    url: fixStorageUrl(p.url) || '',
-  }));
-
-  const media: PostMediaItem[] = (post.media || []).map((m) => {
-    const isVideo =
-      m.mime_type?.startsWith('video/') || m.url?.toLowerCase().match(/\.(mp4|mov|webm)(\?|$)/);
-    return {
-      id: m.id,
-      type: (isVideo ? 'video' : 'image') as 'video' | 'image',
-      url: fixStorageUrl(m.url) || '',
-      thumbnailUrl: m.thumbnail_url ? fixStorageUrl(m.thumbnail_url) : null,
-      aspectRatio:
-        (m as any).width && (m as any).height ? (m as any).width / (m as any).height : undefined,
-    };
-  });
-
-  return [...videos, ...photos, ...media];
+  return [
+    ...(post.videos || []).map(videoMediaItem),
+    ...(post.photos || []).map(photoMediaItem),
+    ...(post.media || []).map(mediaMediaItem),
+  ];
 }
 
 export function getEffortLevel(

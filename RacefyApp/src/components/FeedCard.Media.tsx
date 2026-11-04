@@ -17,6 +17,8 @@ import {
   truncateText,
   getTypeColors,
   buildMediaItems,
+  fullUrlOf,
+  previewUrlOf,
   useImageGallery,
   styles,
 } from './FeedCard.utils';
@@ -103,7 +105,7 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
   const items = buildMediaItems(post);
   if (items.length === 0) return null;
 
-  const imageUrls = items.filter((item) => item.type === 'image').map((item) => item.url);
+  const imageUrls = items.filter((item) => item.type === 'image').map(fullUrlOf);
 
   // Use slider for multiple media items
   if (items.length > 1) {
@@ -118,7 +120,7 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
               if (imageUrls.length > 1) {
                 openGallery(imageIndex);
               } else {
-                setExpandedImage(items[index].url);
+                setExpandedImage(fullUrlOf(items[index]));
               }
             }
           }}
@@ -164,8 +166,8 @@ export function PostMedia({ post, heroMode = true }: { post: Post; heroMode?: bo
     <>
       <View style={heroMode ? styles.heroMediaContainer : styles.supplementaryMediaContainer}>
         <AutoDisplayImage
-          imageUrl={item.thumbnailUrl || item.url}
-          onExpand={() => setExpandedImage(item.thumbnailUrl || item.url)}
+          imageUrl={previewUrlOf(item)}
+          onExpand={() => setExpandedImage(fullUrlOf(item))}
           previewHeight={300}
         />
       </View>

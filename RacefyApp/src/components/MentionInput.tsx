@@ -77,7 +77,7 @@ function UserSuggestionItem({ item, onPress }: { item: MentionSearchUser; onPres
   const { colors } = useTheme();
   return (
     <TouchableOpacity style={styles.suggestionItem} onPress={onPress} activeOpacity={0.7}>
-      <Avatar uri={item.avatar} name={item.name} size="sm" />
+      <Avatar uri={item.avatar} variants={item.avatar_variants} name={item.name} size="sm" />
       <View style={styles.suggestionText}>
         <Text style={[styles.suggestionName, { color: colors.textPrimary }]} numberOfLines={1}>
           {item.name}

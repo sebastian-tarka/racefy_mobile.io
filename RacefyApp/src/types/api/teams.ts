@@ -1,4 +1,5 @@
 import type { EventRegistration } from './events';
+import type { ImageVariants } from './media';
 import type { User } from './user';
 
 // ============ STANDALONE TEAMS ============
@@ -9,6 +10,8 @@ export interface Team {
   slug: string;
   description: string | null;
   avatar: string | null;
+  /** `thumb` 50 / `small` 100 / `medium` 200 square crops; null until generated. */
+  avatar_variants?: ImageVariants | null;
   visibility: 'public' | 'private';
   captain: User;
   members_count: number;
@@ -112,6 +115,7 @@ export interface TeamMemberRank {
     name: string;
     username: string;
     avatar: string | null;
+    avatar_variants?: ImageVariants | null;
   };
   activities_count: number;
   total_distance: number;
@@ -171,6 +175,7 @@ export interface TeamLeaderboardEntry {
   team_name: string;
   team_slug: string;
   team_avatar: string | null;
+  team_avatar_variants?: ImageVariants | null;
   members_count: number;
   active_members: number;
   activities_count: number;

@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
+import { AVATAR_LADDER, pickVariantForWidth } from '../../../../../utils/imageVariants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { ThemeColors } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
+
+const AVATAR_SIZE = 40;
 
 interface EventResultsSectionProps {
   section: HomeSection;
@@ -92,7 +95,15 @@ export function EventResultsSection({ section, onPress, onEventPress }: EventRes
               </View>
               {participant.user.avatar_url ? (
                 <Image
-                  source={{ uri: participant.user.avatar_url }}
+                  source={{
+                    uri:
+                      pickVariantForWidth(
+                        participant.user.avatar_variants,
+                        AVATAR_SIZE,
+                        AVATAR_LADDER,
+                        participant.user.avatar_url,
+                      ) ?? undefined,
+                  }}
                   style={styles.avatar}
                   cachePolicy="memory-disk"
                 />
@@ -177,9 +188,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     marginBottom: spacing.xs,
   },
   avatarPlaceholder: {

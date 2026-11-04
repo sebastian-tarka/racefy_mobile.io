@@ -1,11 +1,17 @@
 import type { TFunction } from 'i18next';
 import { fixStorageUrl } from '../../config/api';
-import type { Event, EventRankingMode } from '../../types/api';
+import type { Event, EventRankingMode, ImageVariants } from '../../types/api';
 
-/** Best cover image URL for mobile: prefer a variant, then the full cover, then first post photo. */
-export function pickEventCoverUrl(
-  event: Pick<Event, 'cover_variants' | 'cover_image_url' | 'post'>,
-): string | null {
+/**
+ * Best cover image URL for mobile: prefer a variant (`mobile` 640×960 exists only on AI
+ * covers, otherwise `medium` 640 → `large` 1024), then the full cover, then the first post
+ * photo. Works for the full `Event` as well as the slim home-section event shape.
+ */
+export function pickEventCoverUrl(event: {
+  cover_variants?: ImageVariants | null;
+  cover_image_url?: string | null;
+  post?: Event['post'];
+}): string | null {
   const variants = event.cover_variants;
   if (variants) {
     const preferred =

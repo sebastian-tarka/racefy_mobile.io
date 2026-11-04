@@ -12,6 +12,9 @@ import { mergeActivityPhotos } from '../utils/activityMedia';
 import type { SharedPost } from '../types/api';
 import { formatVolume, hasStrengthSession, isAutoStrengthText, weightUnit } from './strength';
 import { useUnits } from '../hooks/useUnits';
+import { PHOTO_LADDER, pickVariantForWidth } from '../utils/imageVariants';
+
+const PHOTO_THUMB = 60;
 
 interface SharedPostBlockProps {
   sharedPost: SharedPost;
@@ -71,7 +74,12 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
           onPress={handleUserPress}
           disabled={!onUserPress}
         >
-          <Avatar uri={sharedPost.user.avatar} name={sharedPost.user.name} size="sm" />
+          <Avatar
+            uri={sharedPost.user.avatar}
+            variants={sharedPost.user.avatar_variants}
+            name={sharedPost.user.name}
+            size="sm"
+          />
           <Text style={[styles.authorName, { color: colors.textPrimary }]} numberOfLines={1}>
             {sharedPost.user.name}
           </Text>
@@ -125,7 +133,12 @@ export function SharedPostBlock({ sharedPost, onPress, onUserPress }: SharedPost
           {photos.slice(0, 2).map((photo) => (
             <Image
               key={photo.id}
-              source={{ uri: fixStorageUrl(photo.url) || '' }}
+              source={{
+                uri:
+                  fixStorageUrl(
+                    pickVariantForWidth(photo.variants, PHOTO_THUMB, PHOTO_LADDER, photo.url),
+                  ) || '',
+              }}
               style={styles.photoThumb}
               cachePolicy="memory-disk"
             />
@@ -194,8 +207,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   photoThumb: {
-    width: 60,
-    height: 60,
+    width: PHOTO_THUMB,
+    height: PHOTO_THUMB,
     borderRadius: borderRadius.sm,
   },
   morePhotos: {

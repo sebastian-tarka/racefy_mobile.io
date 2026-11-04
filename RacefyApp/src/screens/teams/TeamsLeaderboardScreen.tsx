@@ -133,7 +133,12 @@ export function TeamsLeaderboardScreen({ navigation }: Props) {
               <Text style={[styles.rankNum, { color: colors.textMuted }]}>#{item.rank}</Text>
             )}
           </View>
-          <Avatar uri={item.team_avatar} name={item.team_name} size="md" />
+          <Avatar
+            uri={item.team_avatar}
+            variants={item.team_avatar_variants}
+            name={item.team_name}
+            size="md"
+          />
           <View style={styles.teamInfo}>
             <Text style={[styles.teamName, { color: colors.textPrimary }]} numberOfLines={1}>
               {item.team_name}

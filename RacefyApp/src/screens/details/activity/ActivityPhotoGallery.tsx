@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  Image,
+  FlatList,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,6 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../../components';
@@ -16,11 +19,17 @@ import { fixStorageUrl } from '../../../config/api';
 import { useTheme } from '../../../hooks/useTheme';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 import type { Activity } from '../../../types/api';
+import { PHOTO_LADDER, pickFullSizeUrl, pickVariantForWidth } from '../../../utils/imageVariants';
 
 type Photo = NonNullable<Activity['photos']>[number];
 
+const THUMB_SIZE = 120;
+
 /**
  * Thumbnails in a row, and a full-screen pager opened on the tapped one.
+ *
+ * Thumbnails load the `small` variant, the pager `xlarge`/`large` — and only the pages
+ * next to the visible one, so opening a 20-photo activity no longer decodes 20 originals.
  */
 export function ActivityPhotoGallery({ photos }: { photos: Photo[] }) {
   // Read live: a frozen module-level width would desync the pager's index from
@@ -29,6 +38,12 @@ export function ActivityPhotoGallery({ photos }: { photos: Photo[] }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const pagerRef = useRef<FlatList<Photo>>(null);
+
+  const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
+    if (newIndex !== selectedPhotoIndex) setSelectedPhotoIndex(newIndex);
+  };
 
   return (
     <>
@@ -48,10 +63,18 @@ export function ActivityPhotoGallery({ photos }: { photos: Photo[] }) {
                 key={photo.id}
                 onPress={() => setSelectedPhotoIndex(index)}
                 activeOpacity={0.8}
+                testID={`activity-photo-${photo.id}`}
               >
                 <Image
-                  source={{ uri: fixStorageUrl(photo.url) || '' }}
-                  style={styles.photoThumbnail}
+                  source={{
+                    uri:
+                      fixStorageUrl(
+                        pickVariantForWidth(photo.variants, THUMB_SIZE, PHOTO_LADDER, photo.url),
+                      ) || '',
+                  }}
+                  style={[styles.photoThumbnail, { backgroundColor: colors.border }]}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
                 />
               </TouchableOpacity>
             ))}
@@ -76,26 +99,36 @@ export function ActivityPhotoGallery({ photos }: { photos: Photo[] }) {
 
           {selectedPhotoIndex !== null && (
             <>
-              <ScrollView
+              <FlatList
+                ref={pagerRef}
+                data={photos}
+                keyExtractor={(photo) => String(photo.id)}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                contentOffset={{ x: selectedPhotoIndex * windowWidth, y: 0 }}
-                onMomentumScrollEnd={(e) => {
-                  const newIndex = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
-                  setSelectedPhotoIndex(newIndex);
-                }}
-              >
-                {photos.map((photo) => (
-                  <View key={photo.id} style={[styles.modalImageContainer, { width: windowWidth }]}>
+                initialScrollIndex={selectedPhotoIndex}
+                getItemLayout={(_, index) => ({
+                  length: windowWidth,
+                  offset: windowWidth * index,
+                  index,
+                })}
+                initialNumToRender={1}
+                maxToRenderPerBatch={2}
+                windowSize={3}
+                onMomentumScrollEnd={onPagerScrollEnd}
+                renderItem={({ item: photo }) => (
+                  <View style={[styles.modalImageContainer, { width: windowWidth }]}>
                     <Image
-                      source={{ uri: fixStorageUrl(photo.url) || '' }}
+                      source={{
+                        uri: fixStorageUrl(pickFullSizeUrl(photo.variants, photo.url)) || '',
+                      }}
                       style={{ width: windowWidth, height: windowWidth }}
-                      resizeMode="contain"
+                      contentFit="contain"
+                      cachePolicy="memory-disk"
                     />
                   </View>
-                ))}
-              </ScrollView>
+                )}
+              />
 
               {/* Photo counter */}
               <View style={styles.photoCounter}>
@@ -128,6 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalImageContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -150,8 +184,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   photoThumbnail: {
-    width: 120,
-    height: 120,
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
     borderRadius: borderRadius.md,
   },
   section: {

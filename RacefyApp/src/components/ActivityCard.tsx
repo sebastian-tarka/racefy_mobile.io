@@ -12,6 +12,7 @@ import { useSportTypes } from '../hooks/useSportTypes';
 import { fixStorageUrl } from '../config/api';
 import { borderRadius, fontSize, spacing } from '../theme';
 import { formatDuration } from '../utils/formatDuration';
+import { pickRouteMapUrl } from '../utils/imageVariants';
 import { getActivityVerdict, VERDICT_COLORS } from '../utils/activityVerdict';
 import type { Activity } from '../types/api';
 import { formatDate } from '../utils/dateFormat';
@@ -120,7 +121,12 @@ function ActivityCardBase({
       <Card style={styles.card}>
         {showUser && activity.user && (
           <View style={[styles.userHeader, { borderBottomColor: colors.borderLight }]}>
-            <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
+            <Avatar
+              uri={activity.user.avatar}
+              variants={activity.user.avatar_variants}
+              name={activity.user.name}
+              size="sm"
+            />
             <View style={styles.userInfo}>
               <Text style={[styles.userName, { color: colors.textPrimary }]}>
                 {activity.user.name}
@@ -188,7 +194,8 @@ function ActivityCardBase({
             <Image
               source={{
                 uri:
-                  fixStorageUrl(activity.route_map_url || activity.route_preview_url) ?? undefined,
+                  fixStorageUrl(pickRouteMapUrl(activity) || activity.route_preview_url) ??
+                  undefined,
               }}
               style={styles.mapImage}
               contentFit={activity.route_map_url ? 'cover' : 'contain'}

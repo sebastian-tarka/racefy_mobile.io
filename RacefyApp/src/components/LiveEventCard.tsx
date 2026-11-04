@@ -7,7 +7,7 @@ import { Card } from './Card';
 import { InteractionButton } from './InteractionButton';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
-import { fixStorageUrl } from '../config/api';
+import { pickEventCoverUrl } from './event/eventFormat';
 import { getSportIcon } from '../utils/sportIcon';
 import type { EventWithLatestCommentary } from '../types/api';
 import { SHORT_DATE_TIME, formatDate, formatIntlDateTime } from '../utils/dateFormat';
@@ -23,7 +23,7 @@ function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardPro
   const { t } = useTranslation();
   const formattedDate = formatIntlDateTime(event.starts_at, SHORT_DATE_TIME);
 
-  const imageUrl = fixStorageUrl(event.cover_image_url || event.post?.photos?.[0]?.url);
+  const imageUrl = pickEventCoverUrl(event);
 
   const activeParticipantsText =
     event.active_participants_count !== undefined

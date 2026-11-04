@@ -1,3 +1,4 @@
+import type { ImageVariants } from './media';
 import type { SubscriptionStatus } from './subscriptions';
 
 // ============ USER & AUTH ============
@@ -10,8 +11,12 @@ export interface User {
   email_verified_at: string | null;
   avatar: string | null;
   avatar_url: string | null;
+  /** `thumb` 50 / `small` 100 / `medium` 200 square crops; null until generated or anonymised. */
+  avatar_variants?: ImageVariants | null;
   background_image: string | null;
   background_image_url: string | null;
+  /** `small` 640 / `medium` 1280 / `large` 1920. */
+  background_variants?: ImageVariants | null;
   bio: string | null;
   role: 'user' | 'moderator' | 'admin';
   created_at: string;

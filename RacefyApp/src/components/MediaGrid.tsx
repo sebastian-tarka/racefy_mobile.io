@@ -8,7 +8,7 @@ import { ImageGallery } from './ImageGallery';
 import { VideoPlayer } from './VideoPlayer';
 import { VideoPlayerManager } from '../services/VideoPlayerManager';
 import type { PostMediaItem } from './FeedCard.utils';
-import { useImageGallery } from './FeedCard.utils';
+import { fullUrlOf, previewUrlOf, useImageGallery } from './FeedCard.utils';
 import { fontSize } from '../theme';
 
 const GRID_GAP = 2;
@@ -49,7 +49,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
     setExpandedVideoRaw(url);
   };
 
-  const imageUrls = items.filter((i) => i.type === 'image').map((i) => i.url);
+  const imageUrls = items.filter((i) => i.type === 'image').map(fullUrlOf);
   const count = items.length;
 
   const handleItemPress = (index: number) => {
@@ -61,7 +61,7 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
         const imageIndex = items.slice(0, index + 1).filter((i) => i.type === 'image').length - 1;
         openGallery(imageIndex);
       } else {
-        setExpandedImage(item.url);
+        setExpandedImage(fullUrlOf(item));
       }
     }
   };
@@ -157,8 +157,8 @@ export function MediaGrid({ items, maxVisible = 4 }: MediaGridProps) {
       }
       return (
         <AutoDisplayImage
-          imageUrl={item.thumbnailUrl || item.url}
-          onExpand={() => setExpandedImage(item.url)}
+          imageUrl={previewUrlOf(item)}
+          onExpand={() => setExpandedImage(fullUrlOf(item))}
           previewHeight={300}
         />
       );

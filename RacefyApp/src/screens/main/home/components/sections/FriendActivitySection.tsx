@@ -1,11 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
+import { AVATAR_LADDER, pickVariantForWidth } from '../../../../../utils/imageVariants';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { useUnits } from '../../../../../hooks/useUnits';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
+
+const AVATAR_SIZE = 36;
 
 interface FriendActivitySectionProps {
   section: HomeSection;
@@ -72,7 +75,15 @@ export function FriendActivitySection({
             >
               {activity.user?.avatar_url ? (
                 <Image
-                  source={{ uri: activity.user.avatar_url }}
+                  source={{
+                    uri:
+                      pickVariantForWidth(
+                        activity.user.avatar_variants,
+                        AVATAR_SIZE,
+                        AVATAR_LADDER,
+                        activity.user.avatar_url,
+                      ) ?? undefined,
+                  }}
                   style={styles.avatar}
                   cachePolicy="memory-disk"
                 />
@@ -154,9 +165,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
     marginRight: spacing.md,
   },
   avatarPlaceholder: {

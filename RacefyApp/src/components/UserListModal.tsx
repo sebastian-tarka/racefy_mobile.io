@@ -158,7 +158,7 @@ function UserListModalComponent({
       onPress={() => handleUserPress(item)}
       activeOpacity={0.7}
     >
-      <Avatar uri={item.avatar} name={item.name} size="sm" />
+      <Avatar uri={item.avatar} variants={item.avatar_variants} name={item.name} size="sm" />
       <View style={styles.userInfo}>
         <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
         <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
@@ -174,7 +174,12 @@ function UserListModalComponent({
         onPress={() => handleUserPress(item.follower)}
         activeOpacity={0.7}
       >
-        <Avatar uri={item.follower.avatar} name={item.follower.name} size="sm" />
+        <Avatar
+          uri={item.follower.avatar}
+          variants={item.follower.avatar_variants}
+          name={item.follower.name}
+          size="sm"
+        />
         <View style={styles.userInfo}>
           <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.follower.name}</Text>
           <Text style={[styles.userUsername, { color: colors.textSecondary }]}>

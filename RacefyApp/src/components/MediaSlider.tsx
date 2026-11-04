@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, FlatList, LayoutChangeEvent, StyleSheet, ViewToken } from 'react-native';
 import { FeedVideo } from './FeedVideo';
 import { AutoDisplayImage } from './AutoDisplayImage';
-import type { PostMediaItem } from './FeedCard.utils';
+import { previewUrlOf, type PostMediaItem } from './FeedCard.utils';
 
 interface MediaSliderProps {
   items: PostMediaItem[];
@@ -55,7 +55,7 @@ export function MediaSlider({
     return (
       <View style={{ width: containerWidth }}>
         <AutoDisplayImage
-          imageUrl={item.url}
+          imageUrl={previewUrlOf(item)}
           onExpand={() => onImagePress?.(index)}
           previewHeight={previewHeight}
         />

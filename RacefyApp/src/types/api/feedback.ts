@@ -1,3 +1,5 @@
+import type { ImageVariants } from './media';
+
 // ============ FEEDBACK ============
 
 export type FeedbackType = 'bug' | 'feature_request' | 'feedback';
@@ -18,6 +20,7 @@ export interface FeedbackUser {
   name: string;
   username?: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
 }
 
 export interface FeedbackReply {

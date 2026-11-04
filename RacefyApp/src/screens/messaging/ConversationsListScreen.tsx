@@ -178,8 +178,10 @@ export function ConversationsListScreen({ navigation }: Props) {
       : item.participant
         ? `@${item.participant.username}`
         : '';
-    const avatarUri = isTeam ? (item.team?.avatar ?? null) : (item.participant?.avatar ?? null);
-    const avatarName = isTeam ? (item.team?.name ?? '') : (item.participant?.name ?? '');
+    const avatarOwner = isTeam ? item.team : item.participant;
+    const avatarUri = avatarOwner?.avatar ?? null;
+    const avatarVariants = avatarOwner?.avatar_variants;
+    const avatarName = avatarOwner?.name ?? '';
 
     return (
       <TouchableOpacity
@@ -192,7 +194,7 @@ export function ConversationsListScreen({ navigation }: Props) {
         activeOpacity={0.7}
       >
         <View>
-          <Avatar uri={avatarUri} name={avatarName} size="lg" />
+          <Avatar uri={avatarUri} variants={avatarVariants} name={avatarName} size="lg" />
           {isTeam && (
             <View
               style={[
@@ -290,7 +292,12 @@ export function ConversationsListScreen({ navigation }: Props) {
               disabled={isStartingChat}
               activeOpacity={0.7}
             >
-              <Avatar uri={item.avatar} name={item.name} size="md" />
+              <Avatar
+                uri={item.avatar}
+                variants={item.avatar_variants}
+                name={item.name}
+                size="md"
+              />
               <View style={styles.searchUserInfo}>
                 <Text style={[styles.participantName, { color: colors.textPrimary }]}>
                   {item.name}

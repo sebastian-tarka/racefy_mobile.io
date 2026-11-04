@@ -1,3 +1,5 @@
+import type { ImageVariants } from './media';
+
 // ============ MESSAGING ============
 
 export type ConversationType = 'direct' | 'team';
@@ -7,6 +9,7 @@ export interface ConversationParticipant {
   name: string;
   username: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
   is_captain?: boolean;
   joined_at?: string;
 }
@@ -35,6 +38,7 @@ export interface ConversationTeam {
   name: string;
   slug: string;
   avatar: string | null;
+  avatar_variants?: ImageVariants | null;
   captain_user_id: number;
 }
 

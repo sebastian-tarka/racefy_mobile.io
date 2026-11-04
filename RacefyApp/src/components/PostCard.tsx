@@ -10,6 +10,7 @@ import { InteractionButton } from './InteractionButton';
 import { useTheme } from '../hooks/useTheme';
 import { useUnits } from '../hooks/useUnits';
 import { fixStorageUrl } from '../config/api';
+import { pickRouteMapUrl } from '../utils/imageVariants';
 import { borderRadius, fontSize, spacing } from '../theme';
 import { logger } from '../services/logger';
 import { formatDuration } from '../utils/formatDuration';
@@ -128,7 +129,7 @@ function PostCardBase({
           <View style={styles.activityMapContainer}>
             <RoutePreview
               routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
-              routeMapUrl={fixStorageUrl(activity.route_map_url)}
+              routeMapUrl={fixStorageUrl(pickRouteMapUrl(activity))}
               routeSvg={activity.route_svg}
               trackData={activity.gps_track?.simplified_track}
               activityId={activity.id}
@@ -319,7 +320,12 @@ function PostCardBase({
       <TouchableOpacity onPress={onPress} activeOpacity={0.9} disabled={!onPress}>
         <View style={styles.header}>
           <TouchableOpacity onPress={onUserPress} style={styles.userInfo} disabled={!onUserPress}>
-            <Avatar uri={post.user?.avatar} name={post.user?.name} size="md" />
+            <Avatar
+              uri={post.user?.avatar}
+              variants={post.user?.avatar_variants}
+              name={post.user?.name}
+              size="md"
+            />
             <View style={styles.userText}>
               <View style={styles.userNameRow}>
                 <Text style={[styles.userName, { color: colors.textPrimary }]}>

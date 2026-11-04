@@ -1,5 +1,5 @@
 import type { CommentaryLanguage, CommentaryStyle } from './commentary';
-import type { Photo, Video } from './media';
+import type { ImageVariants, Photo, Video } from './media';
 import type { Post } from './posts';
 import type { PlannedRoute } from './routes';
 import type { SportType } from './sports';
@@ -122,7 +122,8 @@ export interface Event {
   coupons?: EventCoupon[];
   sponsor?: EventSponsor | null;
   // Visual / content
-  cover_variants?: EventCoverVariants | null;
+  /** `thumb` 150 / `small` 320 / `medium` 640 / `large` 1024; AI covers also `mobile` 640×960. */
+  cover_variants?: ImageVariants | null;
   /** Cover came from AI generation — show an "AI" badge. */
   cover_ai_generated?: boolean;
   has_custom_page?: boolean;
@@ -142,9 +143,6 @@ export interface Event {
   created_at?: string;
   updated_at?: string;
 }
-
-/** Map of cover image variant name (e.g. `mobile`, `desktop`) to its URL. */
-export type EventCoverVariants = Record<string, string>;
 
 export interface EventPrize {
   id: number;
@@ -180,7 +178,10 @@ export interface EventSponsor {
 export interface EventTaggedPost {
   id: number;
   content: string | null;
-  user: Pick<User, 'id' | 'name' | 'username'> & { avatar: string | null };
+  user: Pick<User, 'id' | 'name' | 'username'> & {
+    avatar: string | null;
+    avatar_variants?: ImageVariants | null;
+  };
   photos: Photo[];
   videos: Video[];
   created_at: string;
@@ -324,6 +325,7 @@ export interface EventStandingUser {
   username: string;
   avatar?: string | null;
   avatar_url?: string | null;
+  avatar_variants?: ImageVariants | null;
 }
 
 /**

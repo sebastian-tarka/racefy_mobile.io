@@ -1,4 +1,5 @@
 import type { GeoJSONLineString } from './activities';
+import type { ImageVariants } from './media';
 import type { SportType } from './sports';
 
 // ============ PLANNED ROUTES ============
@@ -51,6 +52,7 @@ export interface PlannedRoute {
     name: string;
     username: string;
     avatar: string;
+    avatar_variants?: ImageVariants | null;
   };
   sport_type?: SportType;
 }

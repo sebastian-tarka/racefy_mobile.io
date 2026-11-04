@@ -71,7 +71,12 @@ function ActivityCompactCardBase({
       {/* User avatar */}
       {activity.user && (
         <View style={styles.avatarContainer}>
-          <Avatar uri={activity.user.avatar} name={activity.user.name} size="sm" />
+          <Avatar
+            uri={activity.user.avatar}
+            variants={activity.user.avatar_variants}
+            name={activity.user.name}
+            size="sm"
+          />
         </View>
       )}
 

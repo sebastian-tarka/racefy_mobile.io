@@ -41,7 +41,12 @@ export function NotificationItem({ notification, onPress }: NotificationItemProp
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
-        <Avatar uri={avatarUrl} name={data.actor_name} size="md" />
+        <Avatar
+          uri={avatarUrl}
+          variants={data.actor_avatar_variants}
+          name={data.actor_name}
+          size="md"
+        />
         <View style={[styles.iconBadge, { backgroundColor: iconColor }]}>
           <Ionicons name={iconName as any} size={14} color={colors.background} />
         </View>

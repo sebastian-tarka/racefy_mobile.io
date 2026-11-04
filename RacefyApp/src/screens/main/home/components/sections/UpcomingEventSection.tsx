@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ImageBackground } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../../../../../theme';
 import type { HomeSection } from '../../../../../types/api';
+import { pickEventCoverUrl } from '../../../../../components/event/eventFormat';
 import { getAppLocale } from '../../../../../utils/dateFormat';
 
 interface UpcomingEventSectionProps {
@@ -55,9 +57,11 @@ export function UpcomingEventSection({
   return (
     <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       <ImageBackground
-        source={event.cover_image_url ? { uri: event.cover_image_url } : undefined}
+        source={{ uri: pickEventCoverUrl(event) ?? undefined }}
         style={styles.imageBackground}
         imageStyle={styles.image}
+        contentFit="cover"
+        cachePolicy="memory-disk"
       >
         <View style={[styles.overlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <View style={styles.badge}>

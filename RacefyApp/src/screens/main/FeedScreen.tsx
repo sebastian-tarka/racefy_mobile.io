@@ -357,7 +357,12 @@ export function FeedScreen({ navigation }: Props) {
                   navigation.navigate('UserProfile', { username: searchUser.username });
                 }}
               >
-                <Avatar uri={searchUser.avatar_url} name={searchUser.name} size="sm" />
+                <Avatar
+                  uri={searchUser.avatar_url}
+                  variants={searchUser.avatar_variants}
+                  name={searchUser.name}
+                  size="sm"
+                />
                 <View style={styles.searchResultInfo}>
                   <Text style={[styles.searchResultName, { color: colors.textPrimary }]}>
                     {searchUser.name}
@@ -421,7 +426,12 @@ export function FeedScreen({ navigation }: Props) {
                   navigation.navigate('PostDetail', { postId: post.id });
                 }}
               >
-                <Avatar uri={post.user?.avatar_url} name={post.user?.name} size="sm" />
+                <Avatar
+                  uri={post.user?.avatar_url}
+                  variants={post.user?.avatar_variants}
+                  name={post.user?.name}
+                  size="sm"
+                />
                 <View style={styles.searchResultInfo}>
                   <Text
                     style={[styles.searchResultName, { color: colors.textPrimary }]}

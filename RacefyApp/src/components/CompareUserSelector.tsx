@@ -48,7 +48,7 @@ function CompareUserSelectorComponent({
       ]}
       onPress={() => handleSelectUser(item)}
     >
-      <Avatar uri={item.avatar} name={item.name} size="sm" />
+      <Avatar uri={item.avatar} variants={item.avatar_variants} name={item.name} size="sm" />
       <View style={styles.userInfo}>
         <Text style={[styles.userName, { color: colors.textPrimary }]}>{item.name}</Text>
         <Text style={[styles.userUsername, { color: colors.textSecondary }]}>@{item.username}</Text>
@@ -80,7 +80,12 @@ function CompareUserSelectorComponent({
             <ActivityIndicator size="small" color={colors.primary} />
           ) : selectedUser ? (
             <View style={styles.selectedUser}>
-              <Avatar uri={selectedUser.avatar} name={selectedUser.name} size="sm" />
+              <Avatar
+                uri={selectedUser.avatar}
+                variants={selectedUser.avatar_variants}
+                name={selectedUser.name}
+                size="sm"
+              />
               <Text style={[styles.selectedName, { color: colors.textPrimary }]}>
                 {selectedUser.name}
               </Text>

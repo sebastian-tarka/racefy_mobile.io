@@ -28,13 +28,18 @@ import { fixStorageUrl } from '../config/api';
 import type { Activity, Post } from '../types/api';
 import {
   formatDuration,
+  fullUrlOf,
   getEffortLevel,
   getSportIcon,
+  photoMediaItem,
   type PostMediaItem,
+  previewUrlOf,
   styles,
   truncateDescription,
   useImageGallery,
+  videoMediaItem,
 } from './FeedCard.utils';
+import { pickRouteMapUrl } from '../utils/imageVariants';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
 import {
   hasStrengthSession,
@@ -129,7 +134,7 @@ function HeroRouteMap({
     >
       <RoutePreview
         routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
-        routeMapUrl={fixStorageUrl(activity.route_map_url)}
+        routeMapUrl={fixStorageUrl(pickRouteMapUrl(activity))}
         routeSvg={activity.route_svg}
         trackData={undefined}
         activityId={activity.id}
@@ -234,7 +239,7 @@ function ActivityMediaSlider({
           >
             <RoutePreview
               routePreviewUrl={fixStorageUrl(activity.route_preview_url)}
-              routeMapUrl={fixStorageUrl(activity.route_map_url)}
+              routeMapUrl={fixStorageUrl(pickRouteMapUrl(activity))}
               routeSvg={activity.route_svg}
               trackData={undefined}
               activityId={activity.id}
@@ -286,9 +291,9 @@ function ActivityMediaSlider({
     return (
       <View style={slideStyle}>
         <AutoDisplayImage
-          imageUrl={mediaItem.url}
+          imageUrl={previewUrlOf(mediaItem)}
           onExpand={() =>
-            imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(mediaItem.url)
+            imageUrls.length > 1 ? openGallery(imageIndex) : setExpandedImage(fullUrlOf(mediaItem))
           }
           previewHeight={280}
         />
@@ -355,26 +360,11 @@ export function ActivityBody({
   const { imageUrls, mediaItems } = useMemo(() => {
     // Both sides: the backend keeps activity media on the activity now, but a
     // post can still own it — see mergeActivityPhotos.
-    const postVideos = mergeActivityVideos(post);
-    const postPhotos = mergeActivityPhotos(post);
-    const urls = postPhotos.map((p) => fixStorageUrl(p.url) || '');
-    const items: PostMediaItem[] = [];
-    postVideos.forEach((v) =>
-      items.push({
-        id: v.id,
-        type: 'video',
-        url: fixStorageUrl(v.url) || '',
-        thumbnailUrl: v.thumbnail_url ? fixStorageUrl(v.thumbnail_url) : null,
-        aspectRatio: v.width && v.height ? v.width / v.height : undefined,
-      }),
-    );
-    postPhotos.forEach((p) =>
-      items.push({
-        id: p.id,
-        type: 'image',
-        url: fixStorageUrl(p.url) || '',
-      }),
-    );
+    const items: PostMediaItem[] = [
+      ...mergeActivityVideos(post).map(videoMediaItem),
+      ...mergeActivityPhotos(post).map(photoMediaItem),
+    ];
+    const urls = items.filter((item) => item.type === 'image').map(fullUrlOf);
     return { imageUrls: urls, mediaItems: items };
   }, [post]);
 
@@ -522,8 +512,8 @@ export function ActivityBody({
           <View style={actStyles.paddedMedia}>
             <View style={actStyles.mediaRounded}>
               <AutoDisplayImage
-                imageUrl={mediaItems[0].url}
-                onExpand={() => setExpandedImage(mediaItems[0].url)}
+                imageUrl={previewUrlOf(mediaItems[0])}
+                onExpand={() => setExpandedImage(fullUrlOf(mediaItems[0]))}
                 previewHeight={280}
               />
             </View>

@@ -26,7 +26,7 @@ function TeamCardBase({ team, standing, onPress }: TeamCardProps) {
   return (
     <Card style={styles.card}>
       <TouchableOpacity style={styles.content} onPress={onPress} activeOpacity={0.7}>
-        <Avatar uri={team.avatar} name={team.name} size="lg" />
+        <Avatar uri={team.avatar} variants={team.avatar_variants} name={team.name} size="lg" />
         <View style={styles.info}>
           <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
             {team.name}
