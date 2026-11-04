@@ -1,23 +1,26 @@
 import type { TFunction } from 'i18next';
 import { fixStorageUrl } from '../../config/api';
 import type { Event, EventRankingMode, ImageVariants } from '../../types/api';
+import { pickVariant } from '../../utils/imageVariants';
 
 /**
  * Best cover image URL for mobile: prefer a variant (`mobile` 640×960 exists only on AI
- * covers, otherwise `medium` 640 → `large` 1024), then the full cover, then the first post
- * photo. Works for the full `Event` as well as the slim home-section event shape.
+ * covers, otherwise `medium` 640 → `large` 1024, then whatever size is there), then the
+ * full cover, then the first post photo. Works for the full `Event` as well as the slim
+ * home-section event shape. A variants map holding storage paths instead of URLs (what
+ * `/home` sends) is skipped by `pickVariant`, so the cover still shows — as the original.
  */
 export function pickEventCoverUrl(event: {
   cover_variants?: ImageVariants | null;
   cover_image_url?: string | null;
   post?: Event['post'];
 }): string | null {
-  const variants = event.cover_variants;
-  if (variants) {
-    const preferred =
-      variants.mobile ?? variants.medium ?? variants.large ?? Object.values(variants)[0];
-    if (preferred) return fixStorageUrl(preferred);
-  }
+  const variant = pickVariant(
+    event.cover_variants,
+    ['mobile', 'medium', 'large', 'xlarge', 'small', 'thumb'],
+    null,
+  );
+  if (variant) return fixStorageUrl(variant);
   if (event.cover_image_url) return fixStorageUrl(event.cover_image_url);
   const photo = event.post?.photos?.[0]?.url;
   return photo ? fixStorageUrl(photo) : null;

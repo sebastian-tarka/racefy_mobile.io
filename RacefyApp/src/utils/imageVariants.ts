@@ -42,6 +42,19 @@ const BACKGROUND_LADDER: VariantLadder = [
 ];
 
 /**
+ * The variant's URL, or `null` when the key is missing or its value is not something an
+ * image component can load. Some endpoints serialise the raw model (`/home` does), so a
+ * variants map there holds storage paths (`events/41/variants/x-medium.webp`) instead of
+ * URLs — such a value must be skipped, or the image silently renders nothing. Absolute URLs
+ * and root-relative paths (`/storage/…`, which `fixStorageUrl` resolves) pass.
+ */
+function variantUrl(variants: ImageVariants, key: VariantKey): string | null {
+  const value = variants[key];
+  if (!value) return null;
+  return /^(https?:)?\/\//i.test(value) || value.startsWith('/') ? value : null;
+}
+
+/**
  * First variant present in `preferred` order, else `fallback` (the original URL).
  * The map is `null` until the background job has run, and a key may be missing when the
  * original was smaller than that size — both fall through to the original.
@@ -53,7 +66,7 @@ export function pickVariant(
 ): string | null {
   if (variants) {
     for (const key of preferred) {
-      const url = variants[key];
+      const url = variantUrl(variants, key);
       if (url) return url;
     }
   }
@@ -74,7 +87,7 @@ export function pickVariantForWidth(
   const neededPx = widthPt * PixelRatio.get();
   let largest: string | null = null;
   for (const [key, px] of ladder) {
-    const url = variants[key];
+    const url = variantUrl(variants, key);
     if (!url) continue;
     if (px >= neededPx) return url;
     largest = url;
