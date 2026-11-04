@@ -15,7 +15,16 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feature/live-event-screens` — wydarzenie na żywo, po zakończeniu i udostępnianie wyniku (L6 planu „live event screens”)
+_Brak._
+
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `feature/live-event-screens` — wydarzenie na żywo, po zakończeniu i udostępnianie wyniku (L6 planu „live event screens”; zmergowane 2026-11-04, tag `pre-live-event-screens` = main sprzed merge)
+
+Zmergowane bez weryfikacji na urządzeniu (decyzja z 2026-11-04).
 
 API na prod (v1.3.52): `/standings` daje `is_recording` i `live.activity_id`, `/results` daje `viewer_result`
 („Twój wynik”) i `did_not_finish`, `POST /events/{id}/result-share` rysuje kartę wyniku. Makiety: Claude Design
@@ -44,11 +53,6 @@ API na prod (v1.3.52): `/standings` daje `is_recording` i `live.activity_id`, `/
 - [ ] kibic po zakończeniu: karta zwycięzcy (ukończyło n z N, DNF), „Zobacz profil zwycięzcy”
 - [ ] „Udostępnij wynik”: podgląd zmienia się po zmianie formatu/tła/przełączników, „Moje zdjęcie” pokazuje miniatury zdjęć aktywności, Instagram Stories dostaje plik, „Udostępnij…” otwiera arkusz systemowy, „Kopiuj link” tylko gdy link publiczny (inaczej nota)
 - [ ] ciemny motyw na obu ekranach i w arkuszu; EN i PL bez brakujących kluczy; Android + iOS
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `fix/event-cards-1.33` — pusta okładka w „Trwają teraz” i rozjechana karta „Jesteś zapisany” (zmergowane 2026-11-04, tag `pre-event-cards-1.33` = main sprzed merge)
 
