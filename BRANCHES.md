@@ -15,7 +15,28 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Brak._
+### `fix/event-cards-1.33` — pusta okładka w „Trwają teraz” i rozjechana karta „Jesteś zapisany”
+
+Dwa bugi z testu 1.33.0 na Androidzie (Xiaomi), ekran wydarzeń:
+
+1. **EventsOverview → „Trwają teraz” (widok szczegółowy) → `LiveEventCard`: obszar okładki pusty i biały**, bez
+   placeholdera. Przyczyna po stronie API: karta bierze eventy z `/home` (`live_events`), a tam
+   `HomeFeedService` zwraca `$events->toArray()` — surowy model, więc `cover_variants` to **ścieżki storage**
+   (`events/41/variants/…-medium.webp`), nie URL-e; `/events?status=ongoing` daje pełne URL-e. Po P4
+   `pickEventCoverUrl` brał ten wariant, `fixStorageUrl` go nie rozpoznaje (brak `/` na początku), expo-image
+   nic nie pokazuje. Poprawka mobilna: helpery wariantów (`pickVariant`, `pickVariantForWidth`,
+   `pickEventCoverUrl`) ignorują wartości, które nie są URL-ami (ani `http(s)://`, ani `/…`) i spadają na
+   oryginał — dotyczy też `avatar_variants` użytkowników i `route_map_variants` z `/home`. API do poprawy
+   osobno (sesja API): `/home` ma mapować `*_variants` na URL-e jak `EventResource`.
+2. **EventDetail → `EventActionSection`, karta „Jesteś zapisany / Status / NR”: szary pas, kafelek wystaje,
+   numer ucięty.** Karta miała **półprzezroczyste** tło (`primaryLight + '14'`) na `Card` z `elevation` —
+   Android rysuje cień elevation pod widokiem i przez przezroczyste tło widać go jako szary. Poprawka: `Card`
+   zostaje kryjąca (`cardBackground`), zielony odcień idzie na wewnętrzny wrapper (nagłówek + „Anuluj zapis”),
+   stopka „Startuj aktywność” bez zmian.
+- [ ] Wydarzenia → „Wszystkie” → „Trwają teraz” → przełącznik widoku szczegółowego: karta eventu 41 ma okładkę (do czasu poprawki API — oryginał JPG; po niej wariant WebP), badge LIVE w prawym górnym rogu
+- [ ] Home (`dynamic`): sekcja live / nadchodzące / w pobliżu / znajomych — okładki widoczne; Home `legacy`: karta live i aktywności z awatarami bez pustych kwadratów
+- [ ] EventDetail eventu 41 jako zapisany: jedna karta, delikatnie zielony nagłówek z kafelkiem ✓ w środku, „Status · …” i „NR 1” w całości widoczne, biała stopka „Startuj aktywność”, bez szarego pasa (światło + ciemny motyw)
+- [ ] EventDetail eventu nadchodzącego jako zapisany: ten sam nagłówek + „Anuluj zapis” na zielonym tle + stopka „Start o …”
 
 ## Na `main`, ale niezweryfikowane runtime
 
