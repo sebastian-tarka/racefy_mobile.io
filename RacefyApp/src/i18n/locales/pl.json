@@ -3841,5 +3841,169 @@
     "newCount_few": "{{count}} nowe",
     "newCount_many": "{{count}} nowych",
     "newCount_other": "{{count}} nowych"
-  }
+  },
+    "eventLive": {
+      "title": "Na żywo",
+      "you": "Ty",
+      "onCourse": "Na trasie",
+      "finished": "Na mecie",
+      "dayOf": "Dzień {{day}} z {{total}}",
+      "podiumNow": "Podium teraz",
+      "membersCount_one": "{{count}} osoba",
+      "membersCount_few": "{{count}} osoby",
+      "membersCount_many": "{{count}} osób",
+      "membersCount_other": "{{count}} osoby",
+      "membersFinished": "{{finished}}/{{total}} na mecie",
+      "teamOnCourse": "na trasie: {{count}}",
+      "activitiesCount_one": "{{count}} aktywność",
+      "activitiesCount_few": "{{count}} aktywności",
+      "activitiesCount_many": "{{count}} aktywności",
+      "activitiesCount_other": "{{count}} aktywności",
+      "metric": {
+        "distance": "Dystans",
+        "elevation": "Przewyższenie",
+        "time": "Czas"
+      },
+      "groups": {
+        "finished": "Na mecie · {{n}} z {{total}}",
+        "onCourse": "Na trasie · {{n}}"
+      },
+      "stats": {
+        "registered": "Zapisanych",
+        "ofMax": "z {{max}} miejsc",
+        "onCourse": "Na trasie teraz",
+        "finished": "Na mecie",
+        "ofTotal": "{{pct}}% śledzonych",
+        "leader": "Prowadzi",
+        "ofParticipants": "z {{total}} uczestników",
+        "winner": "Zwycięzca",
+        "average": "Średnio",
+        "totalElevation": "Razem w górę"
+      },
+      "me": {
+        "bib": "NR",
+        "notStarted": "Twoje miejsce",
+        "notStartedMain": "Nie masz jeszcze aktywności",
+        "recordInApp": "Nagraj aktywność dla tego wydarzenia — wynik pojawi się tutaj.",
+        "onCourse": "Jesteś na trasie",
+        "finished": "Na mecie",
+        "yourPlace": "Twoje miejsce",
+        "position": "{{n}}. miejsce · {{metric}}",
+        "leadTime": "Prowadzisz · {{time}} przewagi",
+        "behindTime": "+{{time}} do {{place}}. miejsca",
+        "leadMetric": "Prowadzisz · {{amount}} przewagi",
+        "behindMetric": "Brakuje {{amount}} do {{place}}. miejsca",
+        "yourTeam": "Twoja drużyna · {{name}}",
+        "goal": "Postęp do celu",
+        "goalOf": "z {{goal}}"
+      },
+      "spectator": {
+        "label": "Kibicujesz",
+        "canJoin": "Możesz jeszcze dołączyć",
+        "canJoinNote": "Zapisy trwają przez cały czas wyzwania — dołącz i nagraj pierwszą aktywność.",
+        "canJoinTeamNote": "Zapisy trwają — wybierz lub załóż drużynę na stronie wydarzenia.",
+        "closed": "Zapisy zamknięte",
+        "closedNote": "Śledź wyniki na żywo i dopinguj zawodników na trasie.",
+        "join": "Dołącz do wyzwania",
+        "watch": "Obserwuj wydarzenie",
+        "watching": "Obserwujesz"
+      },
+      "cheer": {
+        "title": "Dopinguj na trasie",
+        "subtitle": "tekst lub głos",
+        "position": "{{n}}. miejsce · {{distance}}",
+        "action": "Dopinguj",
+        "more_one": "+{{count}} osoba na trasie bez transmisji",
+        "more_few": "+{{count}} osoby na trasie bez transmisji",
+        "more_many": "+{{count}} osób na trasie bez transmisji",
+        "more_other": "+{{count}} osoby na trasie bez transmisji",
+        "noBroadcast_one": "{{count}} osoba na trasie — bez transmisji do oglądania",
+        "noBroadcast_few": "{{count}} osoby na trasie — bez transmisji do oglądania",
+        "noBroadcast_many": "{{count}} osób na trasie — bez transmisji do oglądania",
+        "noBroadcast_other": "{{count}} osoby na trasie — bez transmisji do oglądania"
+      },
+      "viz": {
+        "team": "Drużyna {{name}}",
+        "goal": "Cel wydarzenia · {{goal}}",
+        "together": "Wszyscy razem",
+        "everest": "{{n}}× Everest",
+        "reached": "Osiągnęło cel",
+        "reachedCount": "{{n}} z {{total}}",
+        "course": "Trasa · {{distance}}",
+        "courseNote": "{{racing}} na trasie · {{finished}} na mecie",
+        "finish": "META"
+      }
+    },
+    "eventResult": {
+      "labelProvisional": "Twój wynik · wstępny",
+      "labelFinished": "Twój wynik · ukończone",
+      "placeOf": "{{place}}. miejsce z {{total}}",
+      "labelDnf": "Twój wynik",
+      "dnf": "Nie ukończono",
+      "reason": {
+        "target_distance": "poniżej wymaganego dystansu",
+        "target_elevation": "poniżej wymaganego przewyższenia",
+        "time_limit": "poza limitem czasu"
+      },
+      "reasonShort": {
+        "target_distance": "poniżej dystansu",
+        "target_elevation": "poniżej przewyższenia",
+        "time_limit": "poza limitem"
+      },
+      "labelOpen": "Twój wynik",
+      "open": "Aktywność jeszcze trwa",
+      "openNote": "Zakończ i zapisz ją — wtedy zostanie policzona.",
+      "labelNotStarted": "Twój wynik",
+      "notStarted": "Brak nagranej aktywności",
+      "team": "Drużyna {{name}} · {{place}}. miejsce",
+      "time": "Czas",
+      "distance": "Dystans",
+      "elevation": "Podbiegi",
+      "pace": "Tempo",
+      "personalRecord": "Rekord życiowy",
+      "points": "+{{n}} pkt",
+      "pointsLater": "Punkty po zatwierdzeniu",
+      "viewActivity": "Zobacz aktywność",
+      "winner": "Zwycięzca",
+      "finishedOf": "{{finished}} z {{total}} ukończyło",
+      "dnfCount_one": "{{count}} DNF",
+      "dnfCount_few": "{{count}} DNF",
+      "dnfCount_many": "{{count}} DNF",
+      "dnfCount_other": "{{count}} DNF",
+      "congratulate": "Zobacz zwycięzcę",
+      "official": "Wyniki oficjalne",
+      "provisional": "Wyniki wstępne",
+      "provisionalNote": "Wyniki wstępne. Organizator jeszcze je zatwierdza — miejsca mogą się zmienić. Punkty trafią na konto po zatwierdzeniu.",
+      "dnfShort": "DNF",
+      "finishedLabel": "Ukończone"
+    },
+    "resultShare": {
+      "open": "Udostępnij wynik",
+      "title": "Udostępnij swój wynik",
+      "format": "Format",
+      "formats": {
+        "story": "Story 9:16",
+        "square": "Post 1:1",
+        "social": "Link 1,91:1"
+      },
+      "background": "Tło",
+      "backgrounds": {
+        "route": "Trasa",
+        "photo": "Moje zdjęcie",
+        "plain": "Jasne"
+      },
+      "show": "Pokaż",
+      "fields": {
+        "place": "Miejsce",
+        "pace": "Tempo",
+        "badges": "Rekord, punkty i odznaki",
+        "bib": "Nr startowy"
+      },
+      "provisional": "Wynik wstępny — karta może się zmienić po zatwierdzeniu wyników przez organizatora.",
+      "shareNative": "Udostępnij…",
+      "copyLink": "Kopiuj link",
+      "noLink": "Brak publicznego linku — wydarzenie lub Twój profil są prywatne. Obraz nadal można udostępnić.",
+      "generating": "Rysujemy Twoją kartę…",
+      "error": "Nie udało się utworzyć karty wyniku."
+    }
 }

@@ -11,51 +11,87 @@ export interface ScoreboardTile {
   label: string;
   value: string;
   unit?: string;
+  note?: string;
   color?: string;
+  live?: boolean;
+}
+
+export interface ScoreboardGroup {
+  key: string;
+  /** "Finished · 3 of 48", "On course · 45" */
+  title: string;
+  rows: StandingRowModel[];
 }
 
 interface EventScoreboardProps {
   tiles: ScoreboardTile[];
   individualRows: StandingRowModel[];
+  /**
+   * Optional split of the individual list into titled groups (live time modes:
+   * finished first, then on course). The flat `individualRows` still feed the podium.
+   */
+  individualGroups?: ScoreboardGroup[];
   teamRows?: StandingRowModel[];
-  currentUserId?: number;
+  currentUserId?: number | null;
   /** Section title above the standings list, e.g. "Live standings" / "Final standings". */
   listTitle: string;
   emptyText: string;
+  /** Podium above the list (default true). */
+  showPodium?: boolean;
+  podiumLabel?: string;
+  /** Row tap → the activity (only rows with an activity id are tappable). */
+  onRowPress?: (row: StandingRowModel) => void;
 }
 
 /** Tiles (2-up grid) + podium + Individual/Teams tabs + standings list. */
 export function EventScoreboard({
   tiles,
   individualRows,
+  individualGroups,
   teamRows = [],
   currentUserId,
   listTitle,
   emptyText,
+  showPodium = true,
+  podiumLabel,
+  onRowPress,
 }: EventScoreboardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const [tab, setTab] = useState<'individual' | 'teams'>('individual');
   const hasTeams = teamRows.length > 0;
-  const rows = tab === 'teams' && hasTeams ? teamRows : individualRows;
+  const showingTeams = tab === 'teams' && hasTeams;
+  const podiumRows = showingTeams ? teamRows : individualRows;
+
+  const groups: ScoreboardGroup[] = showingTeams
+    ? [{ key: 'teams', title: '', rows: teamRows }]
+    : individualGroups && individualGroups.length > 0
+      ? individualGroups
+      : [{ key: 'individual', title: '', rows: individualRows }];
+  const isEmpty = groups.every((g) => g.rows.length === 0);
+
+  const youLabel = t('eventLive.you', 'You');
+  const onCourseLabel = t('eventLive.onCourse', 'On course');
+  const finishedLabel = t('eventLive.finished', 'Finished');
 
   return (
     <View style={styles.container}>
-      {/* Stat tiles — 2 per row */}
-      <View style={styles.tiles}>
-        {tiles.map((tile) => (
-          <View key={tile.label} style={styles.tileWrap}>
-            <StatTile {...tile} />
-          </View>
-        ))}
-      </View>
+      {tiles.length > 0 && (
+        <View style={styles.tiles}>
+          {tiles.map((tile) => (
+            <View key={tile.label} style={styles.tileWrap}>
+              <StatTile {...tile} />
+            </View>
+          ))}
+        </View>
+      )}
 
-      {individualRows.length > 0 && (
+      {showPodium && podiumRows.some((r) => r.place === 1) && (
         <>
           <Text style={[styles.podiumLabel, { color: colors.textMuted }]}>
-            {t('eventDetail.podium', 'Podium').toUpperCase()}
+            {(podiumLabel ?? t('eventDetail.podium', 'Podium')).toUpperCase()}
           </Text>
-          <PodiumTop3 rows={individualRows.slice(0, 3)} />
+          <PodiumTop3 rows={podiumRows.slice(0, 3)} />
         </>
       )}
 
@@ -70,6 +106,7 @@ export function EventScoreboard({
                 key={value}
                 style={[styles.tab, tab === value && { backgroundColor: colors.cardBackground }]}
                 onPress={() => setTab(value)}
+                testID={`scoreboard-tab-${value}`}
               >
                 <Text
                   style={[
@@ -87,16 +124,31 @@ export function EventScoreboard({
         )}
       </View>
 
-      {rows.length === 0 ? (
+      {isEmpty ? (
         <Text style={[styles.empty, { color: colors.textMuted }]}>{emptyText}</Text>
       ) : (
         <View>
-          {rows.map((row) => (
-            <StandingRow
-              key={`${tab}-${row.place}-${row.userId ?? row.name}`}
-              row={row}
-              isCurrentUser={currentUserId != null && row.userId === currentUserId}
-            />
+          {groups.map((group) => (
+            <View key={group.key}>
+              {group.title ? (
+                <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>
+                  {group.title}
+                </Text>
+              ) : null}
+              {group.rows.map((row) => (
+                <StandingRow
+                  key={row.key}
+                  row={row}
+                  isCurrentUser={
+                    currentUserId != null && row.userId != null && row.userId === currentUserId
+                  }
+                  youLabel={youLabel}
+                  onCourseLabel={onCourseLabel}
+                  finishedLabel={finishedLabel}
+                  onPress={onRowPress}
+                />
+              ))}
+            </View>
           ))}
         </View>
       )}
@@ -132,6 +184,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  groupTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   tabs: {
     flexDirection: 'row',

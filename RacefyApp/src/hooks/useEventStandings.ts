@@ -1,30 +1,26 @@
 import { useMemo } from 'react';
 import { api } from '../services/api';
 import { useFetch } from './useFetch';
-import type { EventStandingEntry, EventStandingsResponse } from '../types/api';
+import type { EventStandingsResponse } from '../types/api';
 import { useForegroundInterval } from './useForegroundInterval';
-
-/** Read a metric uniformly across single-activity and aggregated standings rows. */
-export function normalizeStanding(entry: EventStandingEntry): {
-  distance: number;
-  duration: number;
-  elevationGain: number;
-  isFinished: boolean;
-} {
-  return {
-    distance: entry.total_distance ?? entry.activity?.distance ?? 0,
-    duration: entry.total_duration ?? entry.activity?.duration ?? 0,
-    elevationGain: entry.total_elevation_gain ?? entry.activity?.elevation_gain ?? 0,
-    isFinished: entry.is_finished,
-  };
-}
+import {
+  type RankedRow,
+  normalizeIndividualStanding,
+  normalizeTeamStanding,
+  sumBy,
+} from '../utils/eventStandings';
 
 interface EventStandingsAggregates {
+  /** Everyone with an event activity (the rows). */
+  trackedCount: number;
+  /** On course right now (`is_recording`). */
   racingCount: number;
   finishedCount: number;
   finishedPct: number;
   totalDistance: number;
   totalElevation: number;
+  /** The first row, or null while the list is empty. */
+  leader: RankedRow | null;
 }
 
 interface UseEventStandingsOptions {
@@ -34,8 +30,9 @@ interface UseEventStandingsOptions {
 }
 
 /**
- * Live standings for an event. Auto-refreshes every 30s while `enabled` (use only
- * for ongoing events). Exposes derived aggregates for the summary cards.
+ * Live standings for an event, flattened to `RankedRow`s. Auto-refreshes every 30s
+ * while `enabled` (use only for ongoing events). Exposes derived aggregates for the
+ * pulse tiles.
  */
 export function useEventStandings(eventId: number, options: UseEventStandingsOptions = {}) {
   const { enabled = true, pollMs = 30000 } = options;
@@ -53,33 +50,31 @@ export function useEventStandings(eventId: number, options: UseEventStandingsOpt
   // Polling, foreground only; refreshes at once when the app comes back.
   useForegroundInterval(refetch, enabled && pollMs > 0 ? pollMs : null);
 
-  const individual = useMemo(() => data?.individual_standings ?? [], [data]);
+  const rows = useMemo(
+    () => (data?.individual_standings ?? []).map(normalizeIndividualStanding),
+    [data],
+  );
+  const teamRows = useMemo(() => (data?.team_standings ?? []).map(normalizeTeamStanding), [data]);
 
   const aggregates = useMemo<EventStandingsAggregates>(() => {
-    const racingCount = individual.length;
-    const finishedCount = individual.filter((s) => s.is_finished).length;
-    const totals = individual.reduce(
-      (acc, entry) => {
-        const n = normalizeStanding(entry);
-        acc.distance += n.distance;
-        acc.elevation += n.elevationGain;
-        return acc;
-      },
-      { distance: 0, elevation: 0 },
-    );
+    const trackedCount = rows.length;
+    const finishedCount = rows.filter((r) => r.isFinished).length;
     return {
-      racingCount,
+      trackedCount,
+      racingCount: rows.filter((r) => r.isRecording).length,
       finishedCount,
-      finishedPct: racingCount > 0 ? Math.round((finishedCount / racingCount) * 100) : 0,
-      totalDistance: totals.distance,
-      totalElevation: totals.elevation,
+      finishedPct: trackedCount > 0 ? Math.round((finishedCount / trackedCount) * 100) : 0,
+      totalDistance: sumBy(rows, 'distance'),
+      totalElevation: sumBy(rows, 'elevation'),
+      leader: rows[0] ?? null,
     };
-  }, [individual]);
+  }, [rows]);
 
   return {
     standings: data ?? null,
-    individualStandings: individual,
-    teamStandings: data?.team_standings ?? [],
+    rows,
+    teamRows,
+    isTeamEvent: data?.is_team_event ?? false,
     rankingMode: data?.ranking_mode,
     aggregates,
     isLoading,

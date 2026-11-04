@@ -318,14 +318,19 @@ export interface EventRegistration {
 
 // ============ EVENT STANDINGS (live) & RESULTS (finalized) ============
 
-/** Minimal user shape returned inside standings/results rows. */
+/**
+ * Minimal user shape returned inside public event data (standings, DNF list).
+ * A participant whose profile the viewer may not see is anonymised: `id`, `username`
+ * and avatar are null and `is_anonymous` is true — never link to a profile then.
+ */
 export interface EventStandingUser {
-  id: number;
+  id: number | null;
   name: string;
-  username: string;
+  username: string | null;
   avatar?: string | null;
   avatar_url?: string | null;
   avatar_variants?: ImageVariants | null;
+  is_anonymous?: true;
 }
 
 /**
@@ -337,13 +342,22 @@ export interface EventStandingEntry {
   position: number;
   user: EventStandingUser;
   activity: {
-    id: number;
+    /** null for anonymised rows and non-public activities */
+    id: number | null;
     distance: number | null;
     duration: number | null;
     elevation_gain: number | null;
+    ended_at?: string | null;
     status?: string;
   } | null;
   is_finished: boolean;
+  /** On course right now (an event activity in_progress / paused). */
+  is_recording?: boolean;
+  /**
+   * The broadcast the viewer may watch (→ LiveSpectator) — only for a signed-in viewer
+   * allowed by the athlete's live visibility; null for guests and anonymised rows.
+   */
+  live?: { activity_id: number } | null;
   // aggregated mode
   activities_count?: number;
   total_distance?: number | null;
@@ -353,12 +367,14 @@ export interface EventStandingEntry {
 
 export interface EventTeamStandingEntry {
   position: number;
-  team: EventTeam;
+  team: { id: number; name: string };
   members: EventStandingEntry[];
   total_distance: number | null;
   total_duration: number | null;
   total_elevation: number | null;
   finished_count: number;
+  /** Members on course right now. */
+  recording_count?: number;
 }
 
 export interface EventStandingsResponse {
@@ -388,12 +404,87 @@ export interface EventResult {
   created_at: string | null;
 }
 
+export type EventDnfReason = 'target_distance' | 'target_elevation' | 'time_limit';
+
+/** A participant who completed the event activity but missed a target (GET /results). */
+export interface EventDidNotFinishEntry {
+  user: EventStandingUser;
+  distance: number;
+  duration: number;
+  elevation_gain: number;
+  activities_count: number;
+  reason: EventDnfReason;
+}
+
+export interface EventViewerResultBadge {
+  id: number;
+  name: string;
+  translation_key: string | null;
+  icon: string | null;
+  icon_url: string | null;
+  rarity: string | null;
+}
+
+/**
+ * The signed-in participant's own outcome ("Twój wynik"). `provisional` until the
+ * results are finalized: the place comes from the live standings, `points_awarded`
+ * is null and `badges` empty.
+ */
+export interface EventViewerResult {
+  state: 'finished' | 'recording' | 'in_progress' | 'dnf' | 'not_started';
+  provisional: boolean;
+  place: number | null;
+  participants_ranked: number | null;
+  registration_number: number | null;
+  team: { id: number; name: string; place: number | null } | null;
+  metrics: {
+    distance: number;
+    duration: number;
+    elevation_gain: number;
+    activities_count: number;
+  } | null;
+  activity_id: number | null;
+  /** Only for `dnf`. */
+  reason: EventDnfReason | null;
+  /** null while provisional */
+  points_awarded: number | null;
+  badges: EventViewerResultBadge[];
+  is_personal_record: boolean;
+}
+
 export interface EventResultsResponse {
   results_finalized: boolean;
   ranking_mode?: EventRankingMode;
   is_team_event: boolean;
   individual_results: EventResult[];
   team_results: EventResult[];
+  /** Empty while the event is still running. */
+  did_not_finish?: EventDidNotFinishEntry[];
+  /** null for guests and non-participants. */
+  viewer_result?: EventViewerResult | null;
+}
+
+// ============ RESULT SHARE CARD (POST /events/{id}/result-share) ============
+
+export type EventResultShareFormat = 'story' | 'square' | 'social';
+export type EventResultShareBackground = 'route' | 'photo' | 'plain';
+
+export interface EventResultShareRequest {
+  format?: EventResultShareFormat;
+  background?: EventResultShareBackground;
+  /** Required with background = 'photo': one of the user's own photos. */
+  photo_id?: number;
+  show?: { place?: boolean; pace?: boolean; badges?: boolean; bib?: boolean };
+}
+
+export interface EventResultShare {
+  /** JPEG URL */
+  image: string;
+  format: EventResultShareFormat;
+  /** null when the event or the profile is not public — only the image then. */
+  share_url: string | null;
+  title: string;
+  description: string;
 }
 
 export interface EventWatchStatus {

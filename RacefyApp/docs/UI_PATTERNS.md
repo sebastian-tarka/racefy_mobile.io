@@ -157,6 +157,39 @@ only way out is unpinning; while recording, unpinning is refused outright.
 <EventBar event={pinned} count={ongoing.length} onOpen={openSheet} onClear={unpin} />
 ```
 
+### Event live & results (`components/event/Live*`, `EventResultCard`, `EventResultShareSheet`)
+
+The ongoing-event screen (`EventLiveScreen`) and the after-event screen
+(`EventResultsScreen`) — Claude Design "Racefy — wydarzenie na żywo", rounds 1–5.
+Every list and card works on `RankedRow` from `utils/eventStandings.ts`, the one
+flattening of `/standings` rows, `/results` rows and the DNF list (same maths as the
+web app's `utils/standings.js`): `gapToNeighbour`, `eventTarget`, `progressToTarget`.
+
+- **Pulse tiles** (`StatTile` with `note` / `live`): registered · on course now
+  (`is_recording`, pulse dot) · finished · leading. After the event: finished of N,
+  winner, average (time modes) or total distance, total climb.
+- **`LiveMyPlaceCard`** — the registered viewer: `BibBox` (NR), "#n · metric", the gap to
+  the person ahead or the lead, goal bar when the event has a target, then the one
+  action: Start (→ pre-start with the event pinned) or Back to recording (+ "Start →"
+  opening `EventPinDialog`). Hidden once the single allowed activity is finished.
+- **`LiveSpectatorCard`** — not registered: Join (only `is_registration_open && !is_full`;
+  team events go to the event page) and Watch (`useEventWatch`).
+- **`LiveCheerCard`** — rows with `live.activity_id` → `LiveSpectator`; at most 5, the
+  rest counted in the footer. Signed-in viewers only (guests get no `live`).
+- **`LiveVariantPanel`** — one picture per rule set: team stacked bar, goal challenge
+  "everyone together", course race markers on a 0…distance line. Nothing otherwise.
+- **`StandingRow`** — pulse dot + "ON COURSE" / "FINISHED", goal bar while unfinished,
+  DNF rows without a place and with the short reason; time modes split the list into
+  "Finished · n of N" / "On course · n" via `EventScoreboard.individualGroups`.
+- **`EventResultCard`** (`viewer_result`) / **`EventWinnerCard`** (spectator) — place of N,
+  three stats, chips (record / points or "after approval" / badges), Share + activity.
+  Provisional state: amber pill + notice; rows then come from `/standings` (no polling).
+- **`EventResultShareSheet`** — `SheetModal`; the server draws the card
+  (`POST /events/{id}/result-share`), regenerated on every option change (last request
+  wins). Format / background (`photo` only when the activity has photos) / Switch toggles.
+  Actions: Share… (`shareImageFile` → system sheet, Instagram included), Copy link only
+  with `share_url`. No "save to gallery" (would need `expo-media-library`).
+
 ### Strength activities (`components/strength/`)
 
 Activities logged from a strength session carry `activity.strength_session`

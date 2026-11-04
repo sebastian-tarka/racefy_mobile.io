@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 import { api } from '../services/api';
 import { useFetch } from './useFetch';
-import type { EventResult, EventResultsResponse } from '../types/api';
+import type { EventResultsResponse } from '../types/api';
+import { type RankedRow, normalizeDnf, normalizeResult, sumBy } from '../utils/eventStandings';
 
 interface UseEventResultsOptions {
   enabled?: boolean;
 }
 
 /**
- * Finalized results for a completed event. Exposes the top-3 podium and derived
- * finisher aggregates for the results summary cards.
+ * GET /events/{id}/results for a completed event: the finalized rows (empty until the
+ * organizer finalizes — the live standings are the provisional ranking until then), the
+ * DNF list and the signed-in participant's own outcome (`viewer_result`).
  */
 export function useEventResults(eventId: number, options: UseEventResultsOptions = {}) {
   const { enabled = true } = options;
@@ -24,23 +26,29 @@ export function useEventResults(eventId: number, options: UseEventResultsOptions
     },
   );
 
-  const individual = useMemo(() => data?.individual_results ?? [], [data]);
+  const rows = useMemo(() => (data?.individual_results ?? []).map(normalizeResult), [data]);
+  const teamRows = useMemo(() => (data?.team_results ?? []).map(normalizeResult), [data]);
+  const dnfRows = useMemo<RankedRow[]>(
+    () => (data?.did_not_finish ?? []).map(normalizeDnf),
+    [data],
+  );
 
   const aggregates = useMemo(() => {
-    const finishers = individual.length;
-    const totalDistance = individual.reduce((sum, r) => sum + (r.distance ?? 0), 0);
-    const totalElevation = individual.reduce((sum, r) => sum + (r.elevation_gain ?? 0), 0);
-    const podium: EventResult[] = individual
-      .filter((r) => r.place >= 1 && r.place <= 3)
-      .sort((a, b) => a.place - b.place);
-    return { finishers, totalDistance, totalElevation, podium };
-  }, [individual]);
+    return {
+      finishers: rows.length,
+      totalDistance: sumBy(rows, 'distance'),
+      totalElevation: sumBy(rows, 'elevation'),
+    };
+  }, [rows]);
 
   return {
     results: data ?? null,
     isFinalized: data?.results_finalized ?? false,
-    individualResults: individual,
-    teamResults: data?.team_results ?? [],
+    rows,
+    teamRows,
+    dnfRows,
+    viewerResult: data?.viewer_result ?? null,
+    isTeamEvent: data?.is_team_event ?? false,
     rankingMode: data?.ranking_mode,
     aggregates,
     isLoading,
