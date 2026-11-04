@@ -3768,5 +3768,159 @@
   "navBadges": {
     "newCount_one": "{{count}} new",
     "newCount_other": "{{count}} new"
-  }
+  },
+    "eventLive": {
+      "title": "Live",
+      "you": "You",
+      "onCourse": "On course",
+      "finished": "Finished",
+      "dayOf": "Day {{day}} of {{total}}",
+      "podiumNow": "Podium now",
+      "membersCount_one": "{{count}} member",
+      "membersCount_other": "{{count}} members",
+      "membersFinished": "{{finished}}/{{total}} finished",
+      "teamOnCourse": "{{count}} on course",
+      "activitiesCount_one": "{{count}} activity",
+      "activitiesCount_other": "{{count}} activities",
+      "metric": {
+        "distance": "Distance",
+        "elevation": "Elevation",
+        "time": "Time"
+      },
+      "groups": {
+        "finished": "Finished · {{n}} of {{total}}",
+        "onCourse": "On course · {{n}}"
+      },
+      "stats": {
+        "registered": "Registered",
+        "ofMax": "of {{max}} spots",
+        "onCourse": "On course now",
+        "finished": "Finished",
+        "ofTotal": "{{pct}}% of those tracked",
+        "leader": "Leading",
+        "ofParticipants": "of {{total}} participants",
+        "winner": "Winner",
+        "average": "Average",
+        "totalElevation": "Total climb"
+      },
+      "me": {
+        "bib": "BIB",
+        "notStarted": "Your place",
+        "notStartedMain": "No activity yet",
+        "recordInApp": "Record for this event and your result shows up here.",
+        "onCourse": "You're on course",
+        "finished": "Finished",
+        "yourPlace": "Your place",
+        "position": "#{{n}} · {{metric}}",
+        "leadTime": "Leading · {{time}} ahead",
+        "behindTime": "+{{time}} to #{{place}}",
+        "leadMetric": "Leading · {{amount}} ahead",
+        "behindMetric": "{{amount}} short of #{{place}}",
+        "yourTeam": "Your team · {{name}}",
+        "goal": "Progress to the goal",
+        "goalOf": "of {{goal}}"
+      },
+      "spectator": {
+        "label": "Spectating",
+        "canJoin": "You can still join",
+        "canJoinNote": "Registration is open while the challenge runs — join and record your first activity.",
+        "canJoinTeamNote": "Registration is open — pick or create a team on the event page.",
+        "closed": "Registration closed",
+        "closedNote": "Follow the standings live and cheer athletes on the course.",
+        "join": "Join the challenge",
+        "watch": "Watch event",
+        "watching": "Watching"
+      },
+      "cheer": {
+        "title": "Cheer on course",
+        "subtitle": "text or voice",
+        "position": "#{{n}} · {{distance}}",
+        "action": "Cheer",
+        "more_one": "+{{count}} more on course without a broadcast",
+        "more_other": "+{{count}} more on course without a broadcast",
+        "noBroadcast_one": "{{count}} on course — no broadcast to watch",
+        "noBroadcast_other": "{{count}} on course — no broadcast to watch"
+      },
+      "viz": {
+        "team": "Team {{name}}",
+        "goal": "Event goal · {{goal}}",
+        "together": "Everyone together",
+        "everest": "{{n}}× Everest",
+        "reached": "Reached the goal",
+        "reachedCount": "{{n}} of {{total}}",
+        "course": "Course · {{distance}}",
+        "courseNote": "{{racing}} on course · {{finished}} finished",
+        "finish": "FINISH"
+      }
+    },
+    "eventResult": {
+      "labelProvisional": "Your result · provisional",
+      "labelFinished": "Your result · finished",
+      "placeOf": "#{{place}} of {{total}}",
+      "labelDnf": "Your result",
+      "dnf": "Did not finish",
+      "reason": {
+        "target_distance": "below the distance target",
+        "target_elevation": "below the elevation target",
+        "time_limit": "over the time limit"
+      },
+      "reasonShort": {
+        "target_distance": "under distance",
+        "target_elevation": "under elevation",
+        "time_limit": "over limit"
+      },
+      "labelOpen": "Your result",
+      "open": "Activity still open",
+      "openNote": "Finish and save it — then it counts.",
+      "labelNotStarted": "Your result",
+      "notStarted": "No activity recorded",
+      "team": "Team {{name}} · #{{place}}",
+      "time": "Time",
+      "distance": "Distance",
+      "elevation": "Climb",
+      "pace": "Pace",
+      "personalRecord": "Personal record",
+      "points": "+{{n}} pts",
+      "pointsLater": "Points after approval",
+      "viewActivity": "View activity",
+      "winner": "Winner",
+      "finishedOf": "{{finished}} of {{total}} finished",
+      "dnfCount_one": "{{count}} DNF",
+      "dnfCount_other": "{{count}} DNF",
+      "congratulate": "See the winner",
+      "official": "Official results",
+      "provisional": "Provisional results",
+      "provisionalNote": "Provisional results. The organizer is still approving them — places may change. Points land on your account after approval.",
+      "dnfShort": "DNF",
+      "finishedLabel": "Finished"
+    },
+    "resultShare": {
+      "open": "Share result",
+      "title": "Share your result",
+      "format": "Format",
+      "formats": {
+        "story": "Story 9:16",
+        "square": "Post 1:1",
+        "social": "Link 1.91:1"
+      },
+      "background": "Background",
+      "backgrounds": {
+        "route": "Route",
+        "photo": "My photo",
+        "plain": "Plain"
+      },
+      "show": "Show",
+      "fields": {
+        "place": "Place",
+        "pace": "Pace",
+        "badges": "Record, points and badges",
+        "bib": "Bib number"
+      },
+      "provisional": "Provisional result — the card may change after the organizer approves the results.",
+      "shareNative": "Share…",
+      "copyLink": "Copy link",
+      "noLink": "No public link — the event or your profile is private. The image can still be shared.",
+      "generating": "Drawing your card…",
+      "error": "Could not create the result card."
+    }
 }

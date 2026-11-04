@@ -222,6 +222,21 @@ export function EventsMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
     }
 
     /**
+     * The signed-in participant's finished result as a share image (+ public link when
+     * the event and the profile are public). 422 `result_not_shareable` otherwise.
+     */
+    async createEventResultShare(
+      eventId: number,
+      body: Types.EventResultShareRequest,
+    ): Promise<Types.EventResultShare> {
+      const response = await this.request<Types.ApiResponse<Types.EventResultShare>>(
+        `/events/${eventId}/result-share`,
+        { method: 'POST', body: JSON.stringify(body) },
+      );
+      return response.data;
+    }
+
+    /**
      * Calculate and finalize event results (organizer only).
      */
     async finalizeEventResults(eventId: number): Promise<Types.EventResultsResponse> {

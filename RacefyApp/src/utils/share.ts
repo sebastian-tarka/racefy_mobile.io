@@ -348,3 +348,61 @@ export async function shareToApp(
     }
   }
 }
+
+interface ShareImageFileOptions {
+  imageUrl: string;
+  title: string;
+  /** Text behind the image where the target app takes one (plain Share fallback). */
+  message?: string;
+}
+
+/**
+ * Share a server-rendered image (event result card…) as a file: downloads it, then
+ * expo-sharing with the native sheet as fallback. Returns false when the image could
+ * not be fetched (the caller shows what to do); a cancelled sheet is not an error.
+ */
+export async function shareImageFile({
+  imageUrl,
+  title,
+  message,
+}: ShareImageFileOptions): Promise<boolean> {
+  const fixedImageUrl = fixStorageUrl(imageUrl);
+  if (!fixedImageUrl) return false;
+
+  const localUri = await downloadImageForSharing(fixedImageUrl);
+  if (!localUri) return false;
+
+  const mimeType =
+    localUri.toLowerCase().endsWith('.jpg') || localUri.toLowerCase().endsWith('.jpeg')
+      ? 'image/jpeg'
+      : 'image/webp';
+
+  try {
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(localUri, { mimeType, dialogTitle: title, UTI: 'public.image' });
+    } else {
+      let shareUri = localUri;
+      if (Platform.OS === 'android') {
+        shareUri = await FileSystem.getContentUriAsync(localUri).catch(() => localUri);
+      }
+      await Share.share({ title, message: message ?? title, url: shareUri });
+    }
+    logger.info('general', 'Image file shared');
+  } catch (error) {
+    const isCancelled =
+      getErrorMessage(error) === 'User did not share' ||
+      getErrorCode(error) === 'ERR_SHARING_CANCELLED' ||
+      getErrorMessage(error).includes('cancel');
+    if (!isCancelled) {
+      logger.error('general', 'Image file share failed', { error });
+      throw error;
+    }
+  } finally {
+    setTimeout(() => {
+      FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
+        logger.warn('general', 'Failed to clean up shared image', { error: err }),
+      );
+    }, 10000);
+  }
+  return true;
+}

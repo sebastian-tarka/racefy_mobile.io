@@ -7,13 +7,15 @@ interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
   noPadding?: boolean;
+  testID?: string;
 }
 
-export function Card({ children, style, noPadding = false }: CardProps) {
+export function Card({ children, style, noPadding = false, testID }: CardProps) {
   const { colors, isDark } = useTheme();
 
   return (
     <View
+      testID={testID}
       style={[
         styles.card,
         isDark
