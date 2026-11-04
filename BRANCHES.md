@@ -15,7 +15,35 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Brak._
+### `feature/live-event-screens` — wydarzenie na żywo, po zakończeniu i udostępnianie wyniku (L6 planu „live event screens”)
+
+API na prod (v1.3.52): `/standings` daje `is_recording` i `live.activity_id`, `/results` daje `viewer_result`
+(„Twój wynik”) i `did_not_finish`, `POST /events/{id}/result-share` rysuje kartę wyniku. Makiety: Claude Design
+„Racefy — wydarzenie na żywo” (rundy 1–5, mobile 1a/1b, 2b–2e, 3a–3d, 4a–4d, 5e). Logika liczona jak w SPA
+(`utils/standings.js` → `utils/eventStandings.ts`). Oba motywy, tokeny palety, PL/EN.
+- **Na żywo** (`EventLiveScreen`): puls (zapisani · na trasie teraz · na mecie · prowadzi), pasek upływu czasu,
+  „Twoje miejsce” (NR, pozycja, strata do osoby wyżej / przewaga, postęp do celu, „Startuj aktywność” /
+  „Wróć do nagrywania”) albo karta kibica (Dołącz + Obserwuj gdy zapisy otwarte, inaczej Obserwuj),
+  „Dopinguj na trasie” (wiersze z `live.activity_id` → ekran dopingu), wizualizacja wariantu (drużyna: pasek wkładu;
+  wyzwanie z celem: razem vs cel; bieg: zawodnicy na linii 0…dystans), ranking z kropką „na trasie”, paskiem do
+  celu i podziałem „Na mecie / Na trasie” w trybach na czas, nagrody.
+- **Po zakończeniu** (`EventResultsScreen`): chip wstępne/oficjalne + nota, karta „Twój wynik” (miejsce z N,
+  czas/tempo/przewyższenie, rekord, punkty lub „po zatwierdzeniu”, odznaki, „Udostępnij wynik”, „Zobacz
+  aktywność”) albo karta zwycięzcy dla kibica, puls końcowy, podium, wyniki z DNF na końcu; przed finalizacją wiersze
+  z `/standings`, po — z `/results`.
+- **Udostępnij wynik** (arkusz jak 5e): podgląd karty z serwera, format Story/Post/Link, tło Trasa/Moje zdjęcie/
+  Jasne, przełączniki Miejsce/Tempo/Odznaki/Nr startowy, Instagram Stories (plik), Udostępnij… (arkusz systemowy),
+  Kopiuj link (gdy `share_url`). Bez „Zapisz obraz” (wymagałoby natywnego `expo-media-library`) i bez „Post w Racefy”.
+- [ ] event 41 (trwa) jako zapisany bez aktywności: karta „Twoje miejsce” z NR i „Nie masz jeszcze aktywności”, przycisk „Startuj aktywność” → pre-start z przypiętym eventem; w trakcie nagrywania „Wróć do nagrywania”
+- [ ] event 41 jako zapisany z aktywnością: pozycja i metryka, „Brakuje … do N. miejsca” / „Prowadzisz · … przewagi”, własny wiersz podświetlony, odświeżanie co 30 s
+- [ ] event trwający jako niezapisany (drugie konto): karta „Kibicujesz” — „Dołącz” zapisuje (zapisy otwarte) albo tylko „Obserwuj”; wiersze z transmisją mają „Dopinguj” → ekran dopingu; gość widzi listę bez „Dopinguj”
+- [ ] puls: liczby zgadzają się z rankingiem (na trasie = `is_recording`), pasek upływu czasu rośnie; tryb na czas → sekcje „Na mecie” / „Na trasie”; tryb z celem → paski do celu i panel „Cel wydarzenia”
+- [ ] wydarzenie drużynowe: zakładka Drużyny, „na trasie: k”, panel wkładu własnej drużyny
+- [ ] event zakończony niefinalizowany: chip „Wyniki wstępne” + nota, „Twój wynik · wstępny”, „Punkty po zatwierdzeniu”; po finalizacji: „Wyniki oficjalne”, punkty, odznaki, rekord życiowy (gdy jest)
+- [ ] DNF: wiersze „DNF · poza limitem / poniżej dystansu” na końcu listy; własny DNF → „Nie ukończono” z powodem, bez „Udostępnij wynik”
+- [ ] kibic po zakończeniu: karta zwycięzcy (ukończyło n z N, DNF), „Zobacz profil zwycięzcy”
+- [ ] „Udostępnij wynik”: podgląd zmienia się po zmianie formatu/tła/przełączników, „Moje zdjęcie” pokazuje miniatury zdjęć aktywności, Instagram Stories dostaje plik, „Udostępnij…” otwiera arkusz systemowy, „Kopiuj link” tylko gdy link publiczny (inaczej nota)
+- [ ] ciemny motyw na obu ekranach i w arkuszu; EN i PL bez brakujących kluczy; Android + iOS
 
 ## Na `main`, ale niezweryfikowane runtime
 
