@@ -81,9 +81,9 @@ describe('photoMediaItem', () => {
   });
 
   it('steps down when the original was too small for the bigger variants', () => {
-    const item = photoMediaItem(photo(4, { variants: { thumb: 'T', small: 'S', medium: 'M' } }));
-    expect(item.thumbnailUrl).toBe('fixed:M');
-    expect(item.previewUrl).toBe('fixed:M');
+    const item = photoMediaItem(photo(4, { variants: { thumb: '/T', small: '/S', medium: '/M' } }));
+    expect(item.thumbnailUrl).toBe('fixed:/M');
+    expect(item.previewUrl).toBe('fixed:/M');
     expect(item.fullUrl).toBeNull();
     expect(fullUrlOf(item)).toBe('fixed:https://s/photos/4.jpg');
   });

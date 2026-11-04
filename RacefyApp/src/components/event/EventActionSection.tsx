@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '../Card';
 import { LivePulse } from '../recording/LivePulse';
 import { useTheme } from '../../hooks/useTheme';
-import { borderRadius, fontSize, msFont, spacing } from '../../theme';
+import { borderRadius, fontSize, msFont, spacing, withAlpha } from '../../theme';
 import type { Event } from '../../types/api';
 import { formatIntlDateTime } from '../../utils/dateFormat';
 
@@ -233,47 +233,49 @@ function RegisteredCard(props: EventActionSectionProps & { stage: Stage }) {
       ? t('eventDetail.youRaced', 'You raced this event')
       : t('eventDetail.youreRegistered', "You're registered");
 
+  // The tint sits on an inner view, not on the Card: the Card casts an Android
+  // elevation shadow, and through a translucent background that shadow shows as a
+  // grey wash over the whole card (seen on 1.33.0 as a grey band and clipped row).
   return (
-    <Card
-      style={[styles.registeredCard, { backgroundColor: colors.primaryLight + '14' }]}
-      noPadding
-    >
-      <View style={styles.registeredMain}>
-        <View style={[styles.registeredCheck, { backgroundColor: colors.primary }]}>
-          <Ionicons name="checkmark" size={22} color={colors.onPrimary} />
-        </View>
-        <View style={styles.registeredInfo}>
-          <Text style={[styles.registeredTitle, { color: colors.primary }]}>{title}</Text>
-          <Text style={[styles.registeredStatus, { color: colors.textSecondary }]}>
-            {t('eventDetail.statusLabel', 'Status')} ·{' '}
-            {t(`eventRegistrationStatus.${status}`, status)}
-          </Text>
-        </View>
-        {bib != null && (
-          <View style={styles.bibBox}>
-            <Text style={[styles.bibLabel, { color: colors.textMuted }]}>
-              {t('eventDetail.bib', 'BIB')}
-            </Text>
-            <Text style={[styles.bibNumber, { color: colors.textPrimary }]}>{bib}</Text>
+    <Card style={styles.registeredCard} noPadding>
+      <View style={{ backgroundColor: withAlpha(colors.primaryLight, 0.08) }}>
+        <View style={styles.registeredMain}>
+          <View style={[styles.registeredCheck, { backgroundColor: colors.primary }]}>
+            <Ionicons name="checkmark" size={22} color={colors.onPrimary} />
           </View>
+          <View style={styles.registeredInfo}>
+            <Text style={[styles.registeredTitle, { color: colors.primary }]}>{title}</Text>
+            <Text style={[styles.registeredStatus, { color: colors.textSecondary }]}>
+              {t('eventDetail.statusLabel', 'Status')} ·{' '}
+              {t(`eventRegistrationStatus.${status}`, status)}
+            </Text>
+          </View>
+          {bib != null && (
+            <View style={styles.bibBox}>
+              <Text style={[styles.bibLabel, { color: colors.textMuted }]}>
+                {t('eventDetail.bib', 'BIB')}
+              </Text>
+              <Text style={[styles.bibNumber, { color: colors.textPrimary }]}>{bib}</Text>
+            </View>
+          )}
+        </View>
+        {stage === 'before' && canCancel && (
+          <TouchableOpacity
+            style={[styles.cancelButton, { borderTopColor: colors.border }]}
+            onPress={onCancelRegistration}
+            disabled={isRegistering}
+            activeOpacity={0.7}
+          >
+            {isRegistering ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
+                {t('eventDetail.cancelRegistration', 'Cancel registration')}
+              </Text>
+            )}
+          </TouchableOpacity>
         )}
       </View>
-      {stage === 'before' && canCancel && (
-        <TouchableOpacity
-          style={[styles.cancelButton, { borderTopColor: colors.border }]}
-          onPress={onCancelRegistration}
-          disabled={isRegistering}
-          activeOpacity={0.7}
-        >
-          {isRegistering ? (
-            <ActivityIndicator size="small" color={colors.textSecondary} />
-          ) : (
-            <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
-              {t('eventDetail.cancelRegistration', 'Cancel registration')}
-            </Text>
-          )}
-        </TouchableOpacity>
-      )}
       {props.startCta && stage !== 'after' && (
         <EventStartCta event={event} stage={stage} cta={props.startCta} />
       )}
