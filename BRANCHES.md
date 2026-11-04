@@ -15,7 +15,23 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Brak._
+### `feature/team-activity-board` — zakładka „Aktywności” drużyny (tablica aktywności członków)
+
+API na prod (v1.3.54): `GET /teams/{slug}/activities?sport_type_id=&per_page=&page=` — ukończone aktywności
+aktywnych członków, od najnowszych, każda wg własnej widoczności (członkostwo nic nie odblokowuje; klient
+pokazuje to, co przyszło). Dostęp jak do statystyk: drużyna publiczna albo członek, 403 → stan „prywatna”.
+SPA ma to w `components/teams/TeamActivityBoard.jsx`; opis w `docs/api/mobile/API_ENDPOINTS.md` („Team activity board”).
+- **Zakładka „Aktywności”** w `TeamDetailScreen` (+ `initialTab: 'activities'`): pasek „W tym tygodniu” (dystans,
+  aktywności, aktywni członkowie z `/stats?period=this_week`, „najaktywniej: imię · dystans” z
+  `/stats/ranking?period=this_week&sort_by=distance`), chipy sportów (z pierwszej strony, gdy ≥ 2), lista
+  (avatar, imię, sport · czas temu, tytuł, dystans / czas / tempo / przewyższenie, polubienia i komentarze,
+  miniatura trasy) → ekran aktywności, doładowanie przy końcu listy, pull-to-refresh, pusty stan z notą o prywatności.
+- [ ] drużyna publiczna jako gość: zakładka „Aktywności” pokazuje listę, pasek tygodnia i chipy (gdy ≥ 2 sporty); kliknięcie wiersza otwiera aktywność
+- [ ] drużyna prywatna jako nie-członek: stan „prywatna drużyna” (jak w Statystykach), bez listy
+- [ ] jako członek: aktywności „tylko obserwujący” innych członków widoczne tylko gdy ich obserwuję; prywatne nigdy (poza własnymi)
+- [ ] chip sportu filtruje listę (ponowne pobranie), „Wszystkie” wraca do pełnej listy; przewinięcie do końca doładowuje kolejną stronę; pull-to-refresh odświeża tydzień i listę
+- [ ] drużyna bez widocznych aktywności: „Brak aktywności do pokazania” + nota; „najaktywniej” znika, gdy nikt nie ma dystansu w tym tygodniu
+- [ ] ciemny motyw, EN i PL bez brakujących kluczy; Android + iOS
 
 ## Na `main`, ale niezweryfikowane runtime
 
