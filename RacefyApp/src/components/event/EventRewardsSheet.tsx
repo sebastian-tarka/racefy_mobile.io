@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
+import { openExternalUrl } from '../../utils/externalLinks';
 import { SheetModal } from '../SheetModal';
 import { useTheme } from '../../hooks/useTheme';
 import { borderRadius, fontSize, msFont, spacing } from '../../theme';
@@ -165,7 +166,7 @@ function PrizeRow({ prize }: { prize: EventPrize }) {
 function Link({ label, url }: { label: string; url: string }) {
   const { colors } = useTheme();
   return (
-    <TouchableOpacity style={styles.link} onPress={() => void Linking.openURL(url)} hitSlop={8}>
+    <TouchableOpacity style={styles.link} onPress={() => void openExternalUrl(url)} hitSlop={8}>
       <Text style={[styles.linkText, { color: colors.primaryDark }]}>{label}</Text>
       <Ionicons name="open-outline" size={14} color={colors.primaryDark} />
     </TouchableOpacity>

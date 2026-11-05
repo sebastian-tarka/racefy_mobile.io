@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { openExternalUrl } from '../../utils/externalLinks';
 import { BottomSheet, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
@@ -114,7 +114,7 @@ export function ExerciseLibraryScreen({ navigation }: Props) {
             id: 'video',
             icon: 'logo-youtube' as const,
             title: t('strengthPlans.actions.openVideo'),
-            onPress: () => void Linking.openURL(exercise.video_url as string),
+            onPress: () => void openExternalUrl(exercise.video_url),
           },
         ]
       : []),

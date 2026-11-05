@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { openExternalUrl } from '../../utils/externalLinks';
 import { BottomSheet, ScreenContainer, ScreenHeader } from '../../components';
 import type { BottomSheetOption } from '../../components';
 import { useStartWorkoutSession } from '../../hooks/useStartWorkoutSession';
@@ -73,7 +73,9 @@ export function WorkoutDetailScreen({ navigation, route }: Props) {
   };
 
   const openVideo = (url: string) => {
-    Linking.openURL(url).catch(() => Alert.alert('', t('common.error')));
+    void openExternalUrl(url).then((opened) => {
+      if (!opened) Alert.alert('', t('common.error'));
+    });
   };
 
   const rowOptions = (row: WorkoutExercise): BottomSheetOption[] => {

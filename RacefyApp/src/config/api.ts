@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { logger } from '../services/logger';
+import { assertSecureApiUrl } from '../utils/transportSecurity';
 
 // Get config from app.config.ts extra field (loaded from .env)
 const extra = Constants.expoConfig?.extra ?? {};
@@ -49,8 +50,9 @@ const getBaseUrl = (): string => {
     // iOS Simulator can use localhost directly
     return `http://localhost:${LOCAL_PORT}/api`;
   }
-  // Production / Staging (based on APP_ENV)
-  return API_URL;
+  // Production / Staging (based on APP_ENV). Never over cleartext: a release
+  // build with a wrong URL stops here instead of sending tokens in the open.
+  return assertSecureApiUrl(API_URL);
 };
 
 export const API_BASE_URL = getBaseUrl();

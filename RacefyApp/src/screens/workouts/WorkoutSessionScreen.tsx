@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { openExternalUrl } from '../../utils/externalLinks';
 import { ScreenContainer, ScreenHeader } from '../../components';
 import { useTheme } from '../../hooks/useTheme';
 import { useWorkoutSession } from '../../hooks/useWorkoutSession';
@@ -149,7 +149,7 @@ export function WorkoutSessionScreen({ navigation, route }: Props) {
     [],
   );
 
-  const openVideo = (url: string) => Linking.openURL(url).catch(() => {});
+  const openVideo = (url: string) => void openExternalUrl(url);
 
   // The clock already leaves idle breaks out; still over 4h means something
   // odd (a set left started overnight), so the sheet asks for the real duration.

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { openExternalUrl } from '../utils/externalLinks';
 import { useTheme } from '../hooks/useTheme';
 import { ExpandableContent, PostMedia } from './FeedCard.Media';
 import { styles } from './FeedCard.utils';
@@ -43,7 +44,7 @@ export function SponsoredBody({ post }: { post: Post }) {
           <TouchableOpacity
             style={[spStyles.ctaButton, { backgroundColor: accentColor }]}
             activeOpacity={0.8}
-            onPress={() => void Linking.openURL(ctaUrl)}
+            onPress={() => void openExternalUrl(ctaUrl)}
           >
             <Text style={[spStyles.ctaText, { color: colors.onPrimary }]}>{ctaText}</Text>
           </TouchableOpacity>

@@ -44,9 +44,28 @@ import {
   type LocalAttachment,
 } from '../../utils/chatAttachments';
 
+import { linkId } from '../../navigation/linkingGuards';
+
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
-export function ChatScreen({ navigation, route }: Props) {
+/**
+ * The id ends up in API paths (`/conversations/{id}/…`), so nothing but a
+ * positive integer may get past this point — whatever the source of the
+ * navigation was. Links are already cleaned in navigation/linkingGuards; this is
+ * the second lock, in front of every request the screen makes.
+ */
+export function ChatScreen(props: Props) {
+  const { navigation, route } = props;
+  const isValid = linkId(route.params?.conversationId) !== undefined;
+
+  useEffect(() => {
+    if (!isValid) navigation.replace('ConversationsList');
+  }, [isValid, navigation]);
+
+  return isValid ? <ChatScreenContent {...props} /> : null;
+}
+
+function ChatScreenContent({ navigation, route }: Props) {
   const {
     conversationId,
     participant: routeParticipant,

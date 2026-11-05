@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +16,7 @@ import {
   Loading,
   KeyboardAwareScreenLayout,
 } from '../../components';
+import { openExternalUrl } from '../../utils/externalLinks';
 import { useTheme } from '../../hooks/useTheme';
 import { api } from '../../services/api';
 import { logger } from '../../services/logger';
@@ -97,7 +97,7 @@ export function FeedbackDetailScreen({ navigation, route }: Props) {
   };
 
   const handleOpenAttachment = (attachment: FeedbackAttachment) => {
-    Linking.openURL(attachment.url);
+    void openExternalUrl(attachment.url);
   };
 
   const renderAttachments = (attachments: FeedbackAttachment[]) => {
