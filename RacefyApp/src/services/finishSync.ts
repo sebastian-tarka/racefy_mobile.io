@@ -33,6 +33,7 @@ import { logger } from './logger';
 import * as trackingDb from './trackingDb';
 import type { PendingFinish } from './trackingDb';
 import { drainPoints, toGpsPoints } from './pointsUploader';
+import { isOwnedBy } from './queueOwnership';
 import type { Activity, FinishActivityRequest, FinishActivityResponse } from '../types/api';
 import { getErrorMessage, getErrorStatus, isApiError } from '../utils/errors';
 
@@ -123,6 +124,13 @@ interface SyncOptions {
   force?: boolean;
   /** Only this entry. */
   only?: string;
+  /**
+   * The signed-in athlete pressed "send" on this very entry (`only`) in the queue
+   * screen: an entry with no recorded owner may then go out under their account.
+   * Not `force` — sign-in and a regained network force a run too, and those must
+   * never hand an ownerless recording to whoever happens to be signed in.
+   */
+  adoptOwnerless?: boolean;
 }
 
 export function syncPendingFinishes(
@@ -143,7 +151,12 @@ async function runSync(opts: SyncOptions): Promise<Record<string, FinishOutcome>
     .filter((e) => !opts.only || e.clientActivityId === opts.only);
 
   for (const entry of entries) {
-    const outcome = await processEntry(d, entry, !!opts.force);
+    const outcome = await processEntry(
+      d,
+      entry,
+      !!opts.force,
+      !!opts.adoptOwnerless && !!opts.only,
+    );
     outcomes[entry.clientActivityId] = outcome;
     if (outcome.status !== 'skipped') d.emit(FINISH_QUEUE_CHANGED_EVENT);
     // Without a valid token every further request fails the same way.
@@ -157,9 +170,16 @@ async function processEntry(
   d: FinishSyncDeps,
   entry: PendingFinish,
   force: boolean,
+  adoptOwnerless: boolean,
 ): Promise<FinishOutcome> {
+  // Never send one account's activity from another, and never send anything while
+  // the signed-in account is unknown. An entry whose owner was not recorded
+  // (queued before owners existed, or while nobody was signed in) waits for an
+  // explicit "send" from the queue screen: one started offline has no server
+  // activity yet, so sending it would create it under whoever is signed in.
   const userId = d.currentUserId();
-  if (entry.userId != null && userId != null && entry.userId !== userId) {
+  const adopted = adoptOwnerless && entry.userId == null && userId != null;
+  if (!isOwnedBy(entry.userId, userId) && !adopted) {
     return { status: 'skipped', reason: 'other_user' };
   }
   if (!force && entry.state === 'needs_attention') return { status: 'skipped', reason: 'parked' };

@@ -17,6 +17,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { logger } from './logger';
+import { isOwnedBy } from './queueOwnership';
 import type { ActivityLocation, GpsPoint } from '../types/api';
 
 const INDEX_KEY = '@racefy:unsynced:index';
@@ -31,6 +32,8 @@ function emitQueueChanged(): void {
 
 export interface UnsyncedActivityMeta {
   activityId: number;
+  /** Account that recorded it; absent on entries from before owners were recorded. */
+  userId?: number | null;
   sportTypeId: number;
   sportTypeName?: string;
   title?: string;
@@ -102,11 +105,6 @@ export async function listUnsyncedActivities(): Promise<UnsyncedActivityMeta[]> 
   return [...index].sort((a, b) => new Date(b.failedAt).getTime() - new Date(a.failedAt).getTime());
 }
 
-export async function countUnsyncedActivities(): Promise<number> {
-  const index = await readIndex();
-  return index.length;
-}
-
 export async function getUnsyncedActivity(activityId: number): Promise<UnsyncedActivity | null> {
   const index = await readIndex();
   const meta = index.find((e) => e.activityId === activityId);
@@ -173,20 +171,13 @@ export async function removeUnsyncedActivity(activityId: number): Promise<void> 
   emitQueueChanged();
 }
 
-export async function clearAllUnsyncedActivities(): Promise<void> {
-  const index = await readIndex();
-  await AsyncStorage.multiRemove([INDEX_KEY, ...index.map((e) => pointsKey(e.activityId))]);
-  logger.activity('Cleared unsynced activity queue', {
-    cleared: index.length,
-  });
-  emitQueueChanged();
-}
-
 /**
  * One-off bridge from this (legacy, AsyncStorage) queue to the SQLite finish
  * outbox, which retries by itself. An entry can move only while its recording
- * session — and therefore its track — is still in the tracking DB; the rest stay
- * here with the manual retry they always had.
+ * session — and therefore its track — is still in the tracking DB, and only when
+ * it belongs to the account signing in: the outbox entry is stamped with that
+ * account and sent with its token, so an entry of unknown or different ownership
+ * stays here with the manual retry it always had.
  */
 export async function migrateLegacyUnsyncedQueue(userId: number | null): Promise<number> {
   // Lazy: keeps this module importable where the tracking DB is not (web).
@@ -195,6 +186,7 @@ export async function migrateLegacyUnsyncedQueue(userId: number | null): Promise
   let moved = 0;
 
   for (const entry of index) {
+    if (!isOwnedBy(entry.userId, userId)) continue;
     const session = trackingDb.getSessionByServerActivityId(entry.activityId);
     if (!session || session.status === 'finished') continue;
 

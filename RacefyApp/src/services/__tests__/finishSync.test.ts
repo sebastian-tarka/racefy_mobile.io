@@ -324,6 +324,51 @@ describe('guards', () => {
     expect(deps.finish).not.toHaveBeenCalled();
   });
 
+  it('an entry without a recorded owner waits for an explicit send, even on a forced run', async () => {
+    queue(A, 101, null);
+    const { deps } = makeDeps();
+    const skipped = { status: 'skipped', reason: 'other_user' };
+
+    // Sign-in and a regained network force a run too: neither may adopt the entry.
+    expect((await syncPendingFinishes())[A]).toEqual(skipped);
+    expect((await syncPendingFinishes({ force: true }))[A]).toEqual(skipped);
+    // Adopting is per entry — a sweep of the whole queue cannot ask for it.
+    expect((await syncPendingFinishes({ force: true, adoptOwnerless: true }))[A]).toEqual(skipped);
+    expect(deps.finish).not.toHaveBeenCalled();
+
+    // "Send" on that very entry in the queue screen.
+    const outcomes = await syncPendingFinishes({ force: true, only: A, adoptOwnerless: true });
+    expect(outcomes[A].status).toBe('delivered');
+    expect(deps.finish).toHaveBeenCalledTimes(1);
+  });
+
+  it("an explicit send never adopts another account's entry", async () => {
+    queue(A, 101, 7);
+    const { deps } = makeDeps({ currentUserId: () => 99 });
+
+    expect((await syncPendingFinishes({ force: true, only: A, adoptOwnerless: true }))[A]).toEqual({
+      status: 'skipped',
+      reason: 'other_user',
+    });
+    expect(deps.finish).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing while the signed-in account is unknown', async () => {
+    queue(A, 101, 7);
+    queue(B, 102, null);
+    const { deps } = makeDeps({ currentUserId: () => null });
+    const skipped = { status: 'skipped', reason: 'other_user' };
+
+    const outcomes = await syncPendingFinishes({ force: true });
+    expect(outcomes[A]).toEqual(skipped);
+    expect(outcomes[B]).toEqual(skipped);
+    expect((await syncPendingFinishes({ force: true, only: B, adoptOwnerless: true }))[B]).toEqual(
+      skipped,
+    );
+    expect(deps.finish).not.toHaveBeenCalled();
+    expect(deps.start).not.toHaveBeenCalled();
+  });
+
   it('runs overlapping triggers one after another, not twice at once', async () => {
     queue(A, 101);
     const { deps } = makeDeps();

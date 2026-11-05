@@ -110,6 +110,67 @@ describe('ApiBase.request', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  describe('401', () => {
+    const unauthenticated = () => respond(401, '{"message":"Unauthenticated."}');
+
+    function signedIn() {
+      const api = new ApiBase();
+      const onUnauthorized = jest.fn();
+      api.setOnUnauthorized(onUnauthorized);
+      return { api, onUnauthorized };
+    }
+
+    it('ends the session when the token in use is rejected', async () => {
+      fetchMock.mockResolvedValue(unauthenticated());
+      const { api, onUnauthorized } = signedIn();
+      await api.setToken('dead');
+
+      await expect(api.request('/user')).rejects.toMatchObject({ status: 401 });
+
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+      expect(api.getToken()).toBeNull();
+    });
+
+    it('is not a session end for a guest: no token was sent', async () => {
+      fetchMock.mockResolvedValue(unauthenticated());
+      const { api, onUnauthorized } = signedIn();
+
+      await expect(api.request('/login', { method: 'POST' })).rejects.toMatchObject({
+        status: 401,
+      });
+
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+
+    it('ends the session once when several requests are rejected together', async () => {
+      fetchMock.mockResolvedValue(unauthenticated());
+      const { api, onUnauthorized } = signedIn();
+      await api.setToken('dead');
+
+      await Promise.allSettled([api.request('/home'), api.request('/feed'), api.request('/user')]);
+
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the current token alone when a replaced one is rejected late', async () => {
+      let answer!: (response: unknown) => void;
+      fetchMock.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+      const { api, onUnauthorized } = signedIn();
+      await api.setToken('impersonation');
+
+      const stale = api.request('/feed');
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      // The impersonation expired and the admin token took its place meanwhile.
+      await api.setToken('admin');
+      answer(unauthenticated());
+
+      await expect(stale).rejects.toMatchObject({ status: 401 });
+      expect(onUnauthorized).not.toHaveBeenCalled();
+      expect(api.getToken()).toBe('admin');
+    });
+  });
+
   describe('default timeout', () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());

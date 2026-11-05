@@ -46,11 +46,18 @@ export const KV_AUTH_USER_ID = 'auth:userId';
 /** Minutes. The platforms floor this at 15 anyway; asking for less changes nothing. */
 const MINIMUM_INTERVAL_MIN = 15;
 
-function headlessUserId(): number | null {
+/**
+ * Id of the signed-in account as the tracking DB remembers it (written by
+ * useFinishSyncRunner). The headless task has no auth context, and a recording
+ * may need an owner before the React auth state has caught up.
+ */
+export function storedAuthUserId(): number | null {
   const raw = trackingDb.getKv(KV_AUTH_USER_ID);
   const id = raw ? parseInt(raw, 10) : NaN;
   return Number.isFinite(id) ? id : null;
 }
+
+const headlessUserId = storedAuthUserId;
 
 /**
  * Wire the engine without React. Only used when nothing else has: if the app's

@@ -162,8 +162,19 @@ it('headless: refuses to send when another account is signed in', async () => {
   expect(trackingDb.countPendingFinishes()).toBe(1);
 });
 
+it('headless: sends nothing when no account is known to be signed in', async () => {
+  queue(7);
+  // No KV_AUTH_USER_ID: signed out since the entry was queued.
+
+  await runBackgroundFinishSync();
+
+  expect(finishActivityHeadless).not.toHaveBeenCalled();
+  expect(trackingDb.countPendingFinishes()).toBe(1);
+});
+
 it('stays registered while something is still waiting', async () => {
   queue();
+  trackingDb.setKv(KV_AUTH_USER_ID, '7');
   mockRegistered.value = true;
   (finishActivityHeadless as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
 
@@ -175,6 +186,7 @@ it('stays registered while something is still waiting', async () => {
 
 it('does not hammer a refused activity every 15 minutes', async () => {
   queue();
+  trackingDb.setKv(KV_AUTH_USER_ID, '7');
   (finishActivityHeadless as jest.Mock).mockRejectedValue(
     Object.assign(new Error('The selected event is closed.'), { status: 422 }),
   );

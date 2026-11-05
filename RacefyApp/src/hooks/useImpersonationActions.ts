@@ -2,13 +2,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback } from 'react';
 import { api } from '../services/api';
 import { secureStorage } from '../services/secureStorage';
+import { clearUserScopedStorage } from '../services/sessionTeardown';
 import { logger } from '../services/logger';
 import type { User, ImpersonationSession } from '../types/api';
 
 export const IMPERSONATION_SESSION_KEY = '@racefy_impersonation_session';
 
-// Cache keys that need clearing when switching user context
-const USER_CACHE_KEYS = ['@racefy_home_data', '@racefy_home_config'];
+/**
+ * What is persisted about an impersonation session, in plain AsyncStorage. Only
+ * identifiers: the tokens live in SecureStore, and the impersonated user is
+ * fetched again from the API on start-up. Never store `StartImpersonationResponse`
+ * itself here — it carries the bearer token and the user's e-mail.
+ */
+interface StoredImpersonationSession {
+  session_id: number;
+  expires_at: string;
+  impersonated_user_id: number;
+}
 
 interface ImpersonationState {
   user: User | null;
@@ -49,6 +59,9 @@ export function useImpersonationActions(state: ImpersonationState, setters: Impe
 
   const restoreAdminToken = useCallback(
     async (adminToken: string) => {
+      // Reached when the impersonation ended without "stop" (expired, revoked):
+      // the impersonated user's cached data must not greet the admin either.
+      await clearUserScopedStorage();
       await api.setToken(adminToken);
       const adminData = await api.getUser();
       setUser(adminData);
@@ -68,12 +81,17 @@ export function useImpersonationActions(state: ImpersonationState, setters: Impe
 
         await secureStorage.setAdminToken(adminToken);
         await secureStorage.setImpersonationToken(response.impersonation_token);
-        await AsyncStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(response));
+        const stored: StoredImpersonationSession = {
+          session_id: response.session_id,
+          expires_at: response.expires_at,
+          impersonated_user_id: response.impersonated_user.id,
+        };
+        await AsyncStorage.setItem(IMPERSONATION_SESSION_KEY, JSON.stringify(stored));
 
         await api.setToken(response.impersonation_token);
 
-        // Clear cached data so screens fetch fresh data for the impersonated user
-        await AsyncStorage.multiRemove(USER_CACHE_KEYS);
+        // The account context changes: drop the admin's cached data and session state.
+        await clearUserScopedStorage();
 
         // Fetch full user data (with subscription/plan) using the impersonation token
         const fullUserData = await api.getUser();
@@ -118,8 +136,8 @@ export function useImpersonationActions(state: ImpersonationState, setters: Impe
     try {
       await api.stopImpersonation();
 
-      // Clear cached data so screens fetch fresh data for the admin user
-      await AsyncStorage.multiRemove(USER_CACHE_KEYS);
+      // Back to the admin's context: drop the impersonated user's cached data.
+      await clearUserScopedStorage();
 
       if (originalAdminToken) {
         await api.setToken(originalAdminToken);
@@ -136,7 +154,7 @@ export function useImpersonationActions(state: ImpersonationState, setters: Impe
     } catch (error) {
       logger.error('auth', 'Failed to stop impersonation', { error });
       // Clear cached data even on error
-      await AsyncStorage.multiRemove(USER_CACHE_KEYS).catch(() => {});
+      await clearUserScopedStorage();
       if (originalAdminToken) {
         await api.setToken(originalAdminToken);
         const adminData = await api.getUser();

@@ -3,8 +3,6 @@ import { AppState, AppStateStatus, DeviceEventEmitter } from 'react-native';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import {
-  clearAllUnsyncedActivities,
-  countUnsyncedActivities,
   getUnsyncedActivity,
   listUnsyncedActivities,
   removeUnsyncedActivity,
@@ -20,8 +18,23 @@ import {
   type FinishOutcome,
 } from '../services/finishSync';
 import { getErrorMessage, getErrorStatus } from '../utils/errors';
+import { isVisibleTo } from '../services/queueOwnership';
+import { useAuth } from './useAuth';
 
 type RetryOutcome = { ok: true } | { ok: false; error: string };
+
+/**
+ * Entries the signed-in account may see: its own, plus ones whose owner was never
+ * recorded. Another account's undelivered activities stay out of the list, the
+ * count, the GPX export and "discard" until that account signs in.
+ */
+function visibleOutbox(userId: number | null): PendingFinish[] {
+  return trackingDb.listPendingFinishes().filter((e) => isVisibleTo(e.userId, userId));
+}
+
+async function visibleLegacy(userId: number | null): Promise<UnsyncedActivityMeta[]> {
+  return (await listUnsyncedActivities()).filter((e) => isVisibleTo(e.userId, userId));
+}
 
 /**
  * One row of the "not sent yet" screen. Two sources feed it:
@@ -87,6 +100,8 @@ function outcomeToRetry(outcome: FinishOutcome | undefined): RetryOutcome {
 }
 
 export function useUnsyncedActivities() {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [items, setItems] = useState<UnsyncedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [retryingKey, setRetryingKey] = useState<string | null>(null);
@@ -94,8 +109,8 @@ export function useUnsyncedActivities() {
 
   const refresh = useCallback(async () => {
     try {
-      const legacy = await listUnsyncedActivities();
-      const outbox = trackingDb.listPendingFinishes().map(outboxToItem);
+      const legacy = await visibleLegacy(userId);
+      const outbox = visibleOutbox(userId).map(outboxToItem);
       const list: UnsyncedItem[] = [
         ...outbox,
         ...legacy.map((e) => ({ ...e, key: `legacy:${e.activityId}`, source: 'legacy' as const })),
@@ -107,7 +122,7 @@ export function useUnsyncedActivities() {
     } finally {
       if (isMounted.current) setIsLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -125,12 +140,20 @@ export function useUnsyncedActivities() {
     };
   }, [refresh]);
 
-  /** Send one outbox entry now, ignoring backoff and `needs_attention` parking. */
+  /**
+   * Send one outbox entry now, ignoring backoff and `needs_attention` parking.
+   * The athlete chose this entry on the queue screen, so one without a recorded
+   * owner may go out under their account — the only place that is allowed.
+   */
   const sendOutboxEntry = useCallback(
     async (clientActivityId: string): Promise<RetryOutcome> => {
       setRetryingKey(`outbox:${clientActivityId}`);
       try {
-        const outcomes = await syncPendingFinishes({ force: true, only: clientActivityId });
+        const outcomes = await syncPendingFinishes({
+          force: true,
+          only: clientActivityId,
+          adoptOwnerless: true,
+        });
         await refresh();
         return outcomeToRetry(outcomes[clientActivityId]);
       } finally {
@@ -279,13 +302,16 @@ export function useUnsyncedActivities() {
     [refresh],
   );
 
+  /** Drop everything the signed-in account may see; other accounts' entries stay. */
   const clearAll = useCallback(async () => {
-    for (const entry of trackingDb.listPendingFinishes()) {
+    for (const entry of visibleOutbox(userId)) {
       trackingDb.discardPendingFinish(entry.clientActivityId);
     }
-    await clearAllUnsyncedActivities();
+    for (const entry of await visibleLegacy(userId)) {
+      await removeUnsyncedActivity(entry.activityId);
+    }
     await refresh();
-  }, [refresh]);
+  }, [refresh, userId]);
 
   return {
     items,
@@ -302,12 +328,15 @@ export function useUnsyncedActivities() {
 
 // Lightweight count-only hook for the home banner.
 export function useUnsyncedActivitiesCount(): { count: number; refresh: () => void } {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [count, setCount] = useState(0);
   const refresh = useCallback(() => {
-    countUnsyncedActivities()
-      .then((legacy) => setCount(legacy + trackingDb.countPendingFinishes()))
-      .catch(() => setCount(trackingDb.countPendingFinishes()));
-  }, []);
+    const outbox = visibleOutbox(userId).length;
+    visibleLegacy(userId)
+      .then((legacy) => setCount(legacy.length + outbox))
+      .catch(() => setCount(outbox));
+  }, [userId]);
 
   useEffect(() => {
     refresh();
