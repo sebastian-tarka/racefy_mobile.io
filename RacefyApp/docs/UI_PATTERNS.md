@@ -269,6 +269,29 @@ Feed media go through `photoMediaItem` / `videoMediaItem` / `buildMediaItems` in
 variants map is `null` until the server has generated it and may miss keys — every helper
 falls back to the original, so no call site needs its own `??`.
 
+### External links (`utils/externalLinks`)
+
+Never pass a URL from the API or from a user to `Linking.openURL` directly — the OS follows
+`tel:`, `sms:`, `intent:` and other apps' schemes (ours included) just as readily as a web link.
+
+```tsx
+import { openExternalUrl, openUpdateUrl } from '../utils/externalLinks';
+
+// Web links only (http is upgraded to https in release builds). Resolves to false
+// when the link was refused or could not be opened — never throws.
+if (!(await openExternalUrl(post.cta_url))) Alert.alert('', t('common.error'));
+
+// A scheme beyond the web is named by the call site that needs it.
+await openExternalUrl(contactUrl, ['mailto:']);
+
+// The update target from /config/app: a store, TestFlight, an APK or a build page.
+await openUpdateUrl(update.update_url);
+```
+
+Do not gate on `Linking.canOpenURL`: it says "no" for anything the manifest does not declare,
+even when opening works. Constants written in the app (`app-settings:`, the support `mailto:`)
+may still use `Linking` directly.
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:

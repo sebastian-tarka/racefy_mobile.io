@@ -1,44 +1,61 @@
-import React from 'react';
-import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppVersion } from '../../hooks/useAppVersion';
+import { useAppConfig } from '../../contexts/AppConfigContext';
 import { BrandLogo, Button } from '../../components';
-import { logger } from '../../services/logger';
+import { openUpdateUrl } from '../../utils/externalLinks';
 import { borderRadius, fontSize, spacing } from '../../theme';
 
 /**
  * Full-screen blocker shown when the running native app version is below
- * the server-provided `minimum_version`. The user has no way out except
- * tapping "Update", which opens the store URL.
+ * the server-provided `minimum_version`. The only way out is the new version.
  *
- * Backend-provided `title` / `message` are already localized via the
- * `Accept-Language` header — they take precedence over local i18n keys
- * which only act as a fallback.
+ * Where that version comes from is the server's `update_url` (Admin → App
+ * version) and nothing else: a store page once the app is listed, until then a
+ * TestFlight invitation, an APK or a build page. The screen opens whatever it is
+ * given and never assumes a store. Because it blocks the whole app it must not
+ * become a dead end either:
+ *  - the link is shown and can be copied, for the phone that fails to open it;
+ *  - without a link the button asks the server again instead of failing.
+ *
+ * The backend-provided message is already localized via `Accept-Language` and
+ * takes precedence over the local i18n text, which is only a fallback.
  */
 export function ForceUpdateScreen() {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { update, currentAppVersion } = useAppVersion();
+  const { refresh } = useAppConfig();
+  const [copied, setCopied] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const updateUrl = update?.update_url?.trim() || null;
 
   const handleUpdate = async () => {
-    if (!update?.update_url) {
-      Alert.alert(t('common.error'), t('update.openStoreFailed'));
-      return;
+    if (!(await openUpdateUrl(updateUrl))) {
+      Alert.alert(t('common.error'), t('update.openFailed'));
     }
+  };
+
+  const handleCopy = async () => {
+    if (!updateUrl) return;
+    await Clipboard.setStringAsync(updateUrl);
+    setCopied(true);
+  };
+
+  // The admin may have added the link, or lowered the minimum, in the meantime.
+  const handleCheckAgain = async () => {
+    setIsChecking(true);
     try {
-      const supported = await Linking.canOpenURL(update.update_url);
-      if (!supported) {
-        Alert.alert(t('common.error'), t('update.openStoreFailed'));
-        return;
-      }
-      await Linking.openURL(update.update_url);
-    } catch (error) {
-      logger.error('general', 'Failed to open update URL', { error, url: update.update_url });
-      Alert.alert(t('common.error'), t('update.openStoreFailed'));
+      await refresh();
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -87,9 +104,38 @@ export function ForceUpdateScreen() {
           </View>
         )}
 
-        <View style={styles.buttonContainer}>
-          <Button title={t('update.updateNow')} onPress={handleUpdate} fullWidth />
-        </View>
+        {updateUrl ? (
+          <View style={styles.buttonContainer}>
+            <Button title={t('update.updateNow')} onPress={handleUpdate} fullWidth />
+            <Text style={[styles.linkHint, { color: colors.textMuted }]}>
+              {t('update.linkHint')}
+            </Text>
+            <Text
+              style={[styles.link, { color: colors.textSecondary }]}
+              numberOfLines={3}
+              selectable
+            >
+              {updateUrl}
+            </Text>
+            <Button
+              title={copied ? t('update.linkCopied') : t('update.copyLink')}
+              onPress={handleCopy}
+              variant="ghost"
+              fullWidth
+            />
+          </View>
+        ) : (
+          <View style={styles.buttonContainer}>
+            <Text style={[styles.linkHint, { color: colors.textMuted }]}>{t('update.noLink')}</Text>
+            <Button
+              title={t('update.checkAgain')}
+              onPress={handleCheckAgain}
+              loading={isChecking}
+              variant="outline"
+              fullWidth
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -156,5 +202,16 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     maxWidth: 320,
+    gap: spacing.sm,
+  },
+  linkHint: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
+  link: {
+    fontSize: fontSize.xs,
+    textAlign: 'center',
   },
 });
