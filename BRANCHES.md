@@ -97,6 +97,32 @@ Niezależna od pozostałych gałęzi audytu. Raport: `.notes/AUDYT_BEZPIECZENSTW
 - [ ] admin w trakcie impersonacji: „Kup”, „Przywróć zakupy” i natywny paywall pokazują komunikat o blokadzie, nic się nie otwiera
 - [ ] PL/EN/ES: nowe komunikaty (zdjęcie nieprzygotowane, blokada zakupów, niepotwierdzone konto)
 
+### `fix/security-phase-4` — higiena: zależności, logi, tokeny, pliki tymczasowe, uprawnienia, CI (Faza 4 audytu bezpieczeństwa 2026-11-05)
+
+Niezależna od pozostałych gałęzi audytu; próbne scalenie wszystkich pięciu (`phase-1`, `update-link`, `phase-2`, `phase-3`,
+`phase-4`) przechodzi bez konfliktów i z zielonymi kontrolami. **Wymaga builda natywnego** (zmiana manifestu Androida,
+`expo` 54.0.38). Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (L4–L6, L8, L9, L12, zależności). Zakres:
+- **Zależności:** `npm audit fix` bez `--force` (92 paczki, m.in. `@react-navigation/core` 7.14 → 7.24); produkcyjne
+  1 critical / 15 high → 0 / 3. Reszta czeka na nowszy Expo SDK.
+- **Logi:** `services/logSanitizer` — tokeny Sanctum, e-maile i sekrety z URL-i wycinane z treści; współrzędne w buildach
+  release zaokrąglane do ~1 km (w dev dokładne); konsola dostaje wpis po redakcji.
+- **Tokeny:** odczyt tylko z SecureStore, gdy działa; migracja starych kluczy nie kasuje tokena po nieudanym zapisie.
+- **Pliki tymczasowe:** GPX, obraz do udostępnienia i nakładka na zdjęcie usuwane także po błędzie/anulowaniu
+  (`utils/shareFiles`, minutę po zamknięciu arkusza) + sprzątanie resztek przy starcie.
+- **Android:** `SYSTEM_ALERT_WINDOW` usunięte z builda release. **CI:** akcje przypięte do commitów, `contents: read`.
+  **deploy.sh** nie wypisuje wartości sekretów.
+- [ ] nawigacja po podbiciu `@react-navigation`: zakładki, powrót gestem, modal logowania, deep link `racefy://` do eventu / aktywności / profilu, link z powiadomienia push
+- [ ] logowanie → zabicie aplikacji → start: sesja zostaje (odczyt tokena tylko z SecureStore); to samo na iOS
+- [ ] aktywność nagrywana w tle z zablokowanym ekranem: punkty nadal synchronizują się z serwerem (klient zadań w tle czyta token)
+- [ ] aktualizacja ze starszego builda (zainstalowanie tej wersji na wierzch): użytkownik pozostaje zalogowany
+- [ ] eksport GPX do Dysku Google / Gmaila / Stravy: plik dociera cały (kasowanie po 60 s nie jest za wczesne)
+- [ ] udostępnienie aktywności z obrazem i karty wyniku eventu do WhatsApp / Messengera: obraz dociera; nakładka na zdjęcie — „Zapisz” i „Udostępnij”
+- [ ] wysłanie logów z Ustawień w buildzie staging: w panelu nie ma e-maili ani tokenów, współrzędne mają 2 miejsca po przecinku
+- [ ] Android, build release: w „Informacje o aplikacji → Uprawnienia” brak „Wyświetlanie nad innymi aplikacjami”; build deweloperski (dev client) uruchamia się i pokazuje menu deweloperskie
+- [ ] Android 12 lub starszy: wybór zdjęcia z galerii nadal działa (uprawnienia do pamięci zostały celowo)
+- [ ] odtwarzacz YouTube w ćwiczeniu / poście działa (`react-native-webview` został celowo)
+- [ ] pierwszy przebieg CI na GitHubie po wypchnięciu jest zielony (przypięte akcje, `permissions`)
+
 ### `fix/account-credentials` — zmiana e-maila z aktualnym hasłem, konto Google ustawia hasło przez link (API A5, 2026-11-05)
 
 Odpowiednik zmiany w API (`racefy_api.io`, gałąź `fix/p1-part2-access`, audyt bezpieczeństwa API 2026-11-04, A5):
