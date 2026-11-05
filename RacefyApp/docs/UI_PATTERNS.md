@@ -269,6 +269,25 @@ Feed media go through `photoMediaItem` / `videoMediaItem` / `buildMediaItems` in
 variants map is `null` until the server has generated it and may miss keys — every helper
 falls back to the original, so no call site needs its own `??`.
 
+### Picking images for upload (`utils/pickImages`, `utils/imageMetadata`)
+
+A photo file carries EXIF: where and when it was taken, on what device. The picker's `exif: false`
+only hides that from JavaScript — the file still has it. Every image the app uploads must therefore
+be a re-encoded copy:
+
+```tsx
+import { pickImages } from '../utils/pickImages';
+
+// Permission, picker, and a copy without metadata — in one call. Empty when cancelled or denied.
+const [avatar] = await pickImages({ allowsEditing: true, aspect: [1, 1] });
+const photos = await pickImages({ multiple: true, selectionLimit: 5, maxSide: 2048 });
+```
+
+A screen that has to open `expo-image-picker` itself (mixed photos and videos — `MediaPicker`) runs
+each image through `stripImageMetadata()` / `stripImagesMetadata()` before using its `uri`, and calls
+`alertImagesLeftOut()` when one comes back `null`. Never fall back to the picked file. Videos cannot be
+cleaned on the phone; the server strips them.
+
 ### List Content Styling
 
 For FlatList with cards, use this pattern:
