@@ -26,6 +26,9 @@ import type { RootStackParamList } from '../../navigation/types';
 import type { FeedbackType, FeedbackPriority } from '../../types/api';
 import { FEEDBACK_PRIORITY_COLORS } from './feedbackColors';
 import { getErrorMessage, getErrorStatus, isApiError } from '../../utils/errors';
+import { stripImagesMetadata } from '../../utils/imageMetadata';
+import { getFilename, getImageMimeType } from '../../utils/mime';
+import { alertImagesLeftOut } from '../../utils/pickImages';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FeedbackForm'>;
 
@@ -86,10 +89,14 @@ export function FeedbackFormScreen({ navigation }: Props) {
     });
 
     if (!result.canceled && result.assets) {
-      const newAttachments: Attachment[] = result.assets.map((asset) => ({
-        uri: asset.uri,
-        name: asset.fileName || `photo_${Date.now()}.jpg`,
-        type: asset.mimeType || 'image/jpeg',
+      // Re-encoded without EXIF, like every other image (utils/imageMetadata) —
+      // a screenshot of a bug should not come with where it was taken.
+      const { images, failed } = await stripImagesMetadata(result.assets);
+      if (failed > 0) alertImagesLeftOut();
+      const newAttachments: Attachment[] = images.map((image) => ({
+        uri: image.uri,
+        name: getFilename(image.uri, `photo_${Date.now()}.jpg`),
+        type: getImageMimeType(image.uri),
       }));
       setAttachments((prev) => [...prev, ...newAttachments].slice(0, 5));
     }

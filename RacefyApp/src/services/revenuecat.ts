@@ -36,7 +36,42 @@ const REVENUECAT_PROD_KEY = Platform.select({
 
 const REVENUECAT_TEST_KEY = 'test_imuKPattskGISWCnJMolGWUNmzI';
 
-const REVENUECAT_API_KEY = REVENUECAT_PROD_KEY || REVENUECAT_TEST_KEY;
+/**
+ * The key the SDK may be configured with, or `null` when purchases must stay off.
+ *
+ * A `test_` key runs RevenueCat's Test Store: purchases complete without anyone
+ * being charged. In a build that talks to the production API that would hand
+ * out paid plans for free, so there the key has to be the store's own
+ * (`appl_…` on iOS, `goog_…` on Android) — any other value, not only our own
+ * test key, switches purchases off.
+ *
+ *  - development: whatever is configured, else the bundled test key;
+ *  - release for the staging API: a store key or a `test_` key (the staging
+ *    backend grants nothing of value);
+ *  - release for production: a store key for this platform, nothing else.
+ */
+export function resolveRevenueCatKey(input: {
+  platform: string;
+  configuredKey: string;
+  appEnv: string;
+  isDev: boolean;
+}): string | null {
+  const key = input.configuredKey.trim();
+  if (input.isDev) return key || REVENUECAT_TEST_KEY;
+
+  const storePrefix =
+    input.platform === 'ios' ? 'appl_' : input.platform === 'android' ? 'goog_' : null;
+  if (storePrefix && key.startsWith(storePrefix)) return key;
+  if (input.appEnv === 'staging' && key.startsWith('test_')) return key;
+  return null;
+}
+
+const REVENUECAT_API_KEY = resolveRevenueCatKey({
+  platform: Platform.OS,
+  configuredKey: REVENUECAT_PROD_KEY,
+  appEnv: APP_ENV,
+  isDev: __DEV__,
+});
 
 let isConfigured = false;
 
@@ -46,8 +81,10 @@ let isConfigured = false;
 export async function configureRevenueCat(): Promise<void> {
   if (isConfigured || !Purchases) return;
 
-  if (!REVENUECAT_API_KEY || (REVENUECAT_API_KEY === REVENUECAT_TEST_KEY && !__DEV__)) {
-    logger.info('general', 'RevenueCat skipped — no API key configured', { env: APP_ENV });
+  if (!REVENUECAT_API_KEY) {
+    logger.info('general', 'RevenueCat skipped — no usable API key for this build', {
+      env: APP_ENV,
+    });
     return;
   }
 
@@ -86,6 +123,31 @@ export async function revenueCatLogIn(userId: number): Promise<any | null> {
 }
 
 /**
+ * Make sure the SDK is acting for `userId` before money moves.
+ *
+ * `revenueCatLogIn` runs in the background after sign-in and its failure is only
+ * logged, so the SDK can still be on an anonymous id — or on another account's —
+ * when the paywall opens. A purchase made then is charged to the store account
+ * and credited to the wrong RevenueCat customer. This checks the id, signs in
+ * once more if it is off, and answers `false` when it still does not match.
+ *
+ * `true` also when the SDK is not there (Expo Go) or was not configured: then
+ * nothing can be bought at all.
+ */
+export async function ensureRevenueCatIdentity(userId: number): Promise<boolean> {
+  if (!Purchases || !isConfigured) return true;
+  const expected = userId.toString();
+  try {
+    if ((await Purchases.getAppUserID()) === expected) return true;
+    await Purchases.logIn(expected);
+    return (await Purchases.getAppUserID()) === expected;
+  } catch (error) {
+    logger.warn('general', 'Could not confirm the RevenueCat identity', { error, userId });
+    return false;
+  }
+}
+
+/**
  * Log out from RevenueCat (creates anonymous user).
  */
 export async function revenueCatLogOut(): Promise<void> {
@@ -113,10 +175,18 @@ export async function getOfferings(): Promise<any | null> {
 }
 
 /**
- * Purchase a package. Returns updated customer info on success.
+ * Purchase a package for `userId`. Returns updated customer info on success.
+ * Refuses when the SDK is not acting for that user (see ensureRevenueCatIdentity).
  */
-export async function purchasePackage(pkg: any): Promise<{ customerInfo: any; success: boolean }> {
+export async function purchasePackage(
+  pkg: any,
+  userId: number,
+): Promise<{ customerInfo: any; success: boolean }> {
   if (!Purchases) return { customerInfo: null, success: false };
+  if (!(await ensureRevenueCatIdentity(userId))) {
+    logger.error('general', 'Purchase refused — RevenueCat is not on the signed-in account');
+    return { customerInfo: null, success: false };
+  }
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     logger.info('general', 'Purchase completed', {
@@ -135,10 +205,16 @@ export async function purchasePackage(pkg: any): Promise<{ customerInfo: any; su
 }
 
 /**
- * Restore previous purchases.
+ * Restore previous purchases onto `userId`. Refuses when the SDK is not acting
+ * for that user — a restore moves the store account's purchases to whoever the
+ * SDK is signed in as.
  */
-export async function restorePurchases(): Promise<any | null> {
+export async function restorePurchases(userId: number): Promise<any | null> {
   if (!Purchases) return null;
+  if (!(await ensureRevenueCatIdentity(userId))) {
+    logger.error('general', 'Restore refused — RevenueCat is not on the signed-in account');
+    return null;
+  }
   try {
     const customerInfo = await Purchases.restorePurchases();
     logger.info('general', 'Purchases restored', {

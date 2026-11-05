@@ -1,5 +1,6 @@
 {
   "common": {
+    "imagePrepareFailed": "Nie udało się przygotować zdjęcia do wysłania. Wybierz inne.",
     "loading": "Ładowanie...",
     "loadingMore": "Ładowanie więcej...",
     "error": "Błąd",
@@ -2642,6 +2643,8 @@
     "purchaseSuccess": "Witaj w Premium!",
     "purchaseSuccessDesc": "Twoja subskrypcja jest aktywna. Korzystaj ze wszystkich funkcji premium!",
     "purchaseFailed": "Zakup nie mógł zostać ukończony. Spróbuj ponownie.",
+    "impersonationBlocked": "Zakupy są wyłączone podczas podglądu konta użytkownika.",
+    "identityMismatch": "Nie udało się potwierdzić konta, na które ma trafić zakup. Zaloguj się ponownie i spróbuj jeszcze raz.",
     "restoreSuccess": "Zakupy Przywrócone",
     "restoreSuccessDesc": "Twoje poprzednie zakupy zostały przywrócone.",
     "restoreEmpty": "Brak Zakupów",

@@ -1,5 +1,6 @@
 {
   "common": {
+    "imagePrepareFailed": "Could not prepare the photo for upload. Try a different one.",
     "rateLimited": "Too many requests, please try again in a moment",
     "loading": "Loading...",
     "loadingMore": "Loading more...",
@@ -2604,6 +2605,8 @@
     "purchaseSuccess": "Welcome to Premium!",
     "purchaseSuccessDesc": "Your subscription is now active. Enjoy all premium features!",
     "purchaseFailed": "Purchase could not be completed. Please try again.",
+    "impersonationBlocked": "Purchases are disabled while you are viewing a user's account.",
+    "identityMismatch": "Could not confirm which account the purchase is for. Sign in again and try once more.",
     "restoreSuccess": "Purchases Restored",
     "restoreSuccessDesc": "Your previous purchases have been restored successfully.",
     "restoreEmpty": "No Purchases Found",

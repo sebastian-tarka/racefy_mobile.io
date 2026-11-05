@@ -10,10 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useTranslation } from 'react-i18next';
+import { getFilename, getImageMimeType } from '../utils/mime';
+import { pickImages } from '../utils/pickImages';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { api } from '../services/api';
@@ -86,28 +87,14 @@ export function PhotoOverlaySelector({
 
   const handlePickPhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(t('common.error'), t('permissions.mediaLibrary'));
-        return;
-      }
+      // pickImages returns a re-encoded copy without EXIF (utils/imageMetadata).
+      const [asset] = await pickImages({ deniedMessage: t('permissions.mediaLibrary') });
+      if (!asset) return;
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.8,
-        exif: false,
-      });
-
-      if (result.canceled || !result.assets?.[0]) return;
-
-      const asset = result.assets[0];
-      const uriParts = asset.uri.split('.');
-      const ext = uriParts[uriParts.length - 1]?.toLowerCase() || 'jpg';
-      const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
       const file = {
         uri: asset.uri,
-        type: mimeType,
-        name: asset.fileName || `photo.${ext}`,
+        type: getImageMimeType(asset.uri),
+        name: getFilename(asset.uri, 'photo.jpg'),
       };
 
       setSelectedPhotoId(null);

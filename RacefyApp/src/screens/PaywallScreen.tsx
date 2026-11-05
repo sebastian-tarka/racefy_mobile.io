@@ -17,7 +17,12 @@ import { ScreenContainer, ScreenHeader } from '../components';
 import { useSubscription } from '../hooks/useSubscription';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
-import { getOfferings, purchasePackage, restorePurchases } from '../services/revenuecat';
+import {
+  ensureRevenueCatIdentity,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+} from '../services/revenuecat';
 import { api } from '../services/api';
 import { logger } from '../services/logger';
 import { formatPrice } from '../utils/formatters';
@@ -112,7 +117,7 @@ export function PaywallScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'Paywall'>>();
   const { tier, isTrial, remainingDays } = useSubscription();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user, isImpersonating } = useAuth();
 
   const [packages, setPackages] = useState<any[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -164,11 +169,32 @@ export function PaywallScreen() {
     [packages],
   );
 
+  /**
+   * May money move for the signed-in account right now? Says why not when it may not.
+   *  - While an admin views a user's account the store account is still the
+   *    admin's: a purchase would charge the admin and credit someone else.
+   *  - The purchase SDK must be acting for the signed-in user (it signs in in the
+   *    background and can still be on an anonymous id).
+   */
+  const canTransact = useCallback(async (): Promise<number | null> => {
+    if (isImpersonating) {
+      Alert.alert(t('common.error'), t('subscription.impersonationBlocked'));
+      return null;
+    }
+    if (!user || !(await ensureRevenueCatIdentity(user.id))) {
+      Alert.alert(t('common.error'), t('subscription.identityMismatch'));
+      return null;
+    }
+    return user.id;
+  }, [isImpersonating, user, t]);
+
   const handlePurchase = useCallback(
     async (pkg: any) => {
+      const userId = await canTransact();
+      if (userId == null) return;
       setPurchasing(true);
       try {
-        const { success } = await purchasePackage(pkg);
+        const { success } = await purchasePackage(pkg, userId);
         if (success) {
           await refreshUser();
           Alert.alert(t('subscription.purchaseSuccess'), t('subscription.purchaseSuccessDesc'), [
@@ -181,7 +207,7 @@ export function PaywallScreen() {
         setPurchasing(false);
       }
     },
-    [refreshUser, navigation, t],
+    [canTransact, refreshUser, navigation, t],
   );
 
   const handleSelectPlan = useCallback(
@@ -202,9 +228,11 @@ export function PaywallScreen() {
   );
 
   const handleRestore = useCallback(async () => {
+    const userId = await canTransact();
+    if (userId == null) return;
     setRestoring(true);
     try {
-      const customerInfo = await restorePurchases();
+      const customerInfo = await restorePurchases(userId);
       if (customerInfo) {
         await refreshUser();
         const hasActive = Object.keys(customerInfo.entitlements.active).length > 0;
@@ -221,12 +249,14 @@ export function PaywallScreen() {
     } finally {
       setRestoring(false);
     }
-  }, [refreshUser, navigation, t]);
+  }, [canTransact, refreshUser, navigation, t]);
 
   const nativePaywallAvailable = !!RevenueCatUI;
 
   const handlePresentPaywall = useCallback(async () => {
     if (!RevenueCatUI) return;
+    // The native paywall buys through the same SDK identity.
+    if ((await canTransact()) == null) return;
     try {
       const result = await RevenueCatUI.presentPaywallIfNeeded({
         requiredEntitlementIdentifier: 'Racefy Plus',
@@ -239,7 +269,7 @@ export function PaywallScreen() {
     } catch (error) {
       logger.error('general', 'RevenueCat paywall failed, using fallback', { error });
     }
-  }, [refreshUser, navigation]);
+  }, [canTransact, refreshUser, navigation]);
 
   const renderFeatureValue = (value: boolean | number, featureKey: string) => {
     if (typeof value === 'boolean') {

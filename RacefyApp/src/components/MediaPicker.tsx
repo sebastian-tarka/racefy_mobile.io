@@ -17,6 +17,8 @@ import { useTheme } from '../hooks/useTheme';
 import { MediaThumbnail } from './MediaThumbnail';
 import { spacing, fontSize, borderRadius } from '../theme';
 import { logger } from '../services/logger';
+import { stripImageMetadata } from '../utils/imageMetadata';
+import { alertImagesLeftOut } from '../utils/pickImages';
 import type { MediaItem } from '../types/api';
 
 interface MediaPickerProps {
@@ -101,9 +103,21 @@ export function MediaPicker({
       if (!result.canceled && result.assets.length > 0) {
         logger.info('media', 'Media selected', { count: result.assets.length });
 
-        // Filter out files that are too large
+        // Images are re-encoded without EXIF (location, device) before anything
+        // else sees them; one that cannot be is left out. Videos pass as they are —
+        // the server strips their metadata.
         const validAssets: typeof result.assets = [];
-        for (const asset of result.assets) {
+        let leftOut = 0;
+        for (const picked of result.assets) {
+          let asset = picked;
+          if (picked.type !== 'video') {
+            const clean = await stripImageMetadata(picked);
+            if (!clean) {
+              leftOut += 1;
+              continue;
+            }
+            asset = { ...picked, ...clean };
+          }
           const assetType = asset.type === 'video' ? 'video' : 'image';
           const isValid = await checkFileSize(asset.uri, assetType);
 
@@ -111,6 +125,7 @@ export function MediaPicker({
             validAssets.push(asset);
           }
         }
+        if (leftOut > 0) alertImagesLeftOut();
 
         if (validAssets.length === 0) {
           logger.warn('media', 'No valid assets after size check');
@@ -161,7 +176,12 @@ export function MediaPicker({
       });
 
       if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
+        // Re-encoded without EXIF, like every other image (utils/imageMetadata).
+        const asset = await stripImageMetadata(result.assets[0]);
+        if (!asset) {
+          alertImagesLeftOut();
+          return;
+        }
         const isValid = await checkFileSize(asset.uri, 'image');
 
         if (!isValid) {
