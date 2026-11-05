@@ -60,7 +60,7 @@ describe('useFetch', () => {
   it('refetches when a dep changes', async () => {
     const fetcher = jest.fn((id: number) => Promise.resolve(`v${id}`));
     const { result, rerender } = renderHook(
-      ({ id }) => useFetch(() => fetcher(id), { deps: [id] }),
+      ({ id }: { id: number }) => useFetch(() => fetcher(id), { deps: [id] }),
       {
         initialProps: { id: 1 },
       },
@@ -80,7 +80,7 @@ describe('useFetch', () => {
       .mockImplementationOnce(() => Promise.resolve('second')); // id=2 resolves
 
     const { result, rerender } = renderHook(
-      ({ id }) => useFetch(() => fetcher(id), { deps: [id] }),
+      ({ id }: { id: number }) => useFetch(() => fetcher(id), { deps: [id] }),
       { initialProps: { id: 1 } },
     );
 
