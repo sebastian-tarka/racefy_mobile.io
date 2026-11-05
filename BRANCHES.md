@@ -73,6 +73,30 @@ w sklepach — TestFlight, APK albo strona builda. Ekran zakładał sklep i potr
 - [ ] ekran na żywo: pozycja i wiadomości przychodzą przez WebSocket (staging i produkcja), bez przejścia na polling
 - [ ] build staging i produkcyjny startują normalnie (strażnik `https://` nie blokuje poprawnej konfiguracji)
 
+### `fix/security-phase-3` — media i płatności: EXIF ze zdjęć, klucz RevenueCat, tożsamość zakupu (Faza 3 audytu bezpieczeństwa 2026-11-05)
+
+Niezależna od pozostałych gałęzi audytu. Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M6, M7, L10); część serwerowa
+(sandbox w webhooku, `billing_id` zamiast `users.id` — M8, EXIF w oryginałach, metadane wideo) w
+`.notes/PROMPT_API_BEZPIECZENSTWO_FAZA_3.md`. Zakres:
+- **Zdjęcia bez EXIF (M6):** `utils/imageMetadata` — każdy obraz wybrany do wysłania jest kodowany od nowa (pozycja,
+  urządzenie i data znikają). `pickImages` zwraca wyłącznie takie kopie (komentarze, avatar/okładka, zdjęcia aktywności,
+  czat); to samo w `MediaPicker` (posty — galeria i aparat), avatarze drużyny, załącznikach zgłoszeń, nakładce na zdjęcie.
+  Obraz, którego nie da się przekodować, jest pomijany z komunikatem. PNG zostaje PNG. **Wideo idzie bez zmian.**
+- **Klucz RevenueCat (M7):** build release dla produkcji konfiguruje SDK tylko kluczem `appl_…` / `goog_…` swojej platformy;
+  inny klucz wyłącza zakupy. Staging może używać Test Store (`test_…`).
+- **Tożsamość zakupu (L10):** przed zakupem, przywróceniem i natywnym paywallem SDK musi być zalogowane jako bieżący
+  użytkownik (ponawia `logIn`, inaczej odmawia); zakupy zablokowane podczas impersonacji.
+- [ ] zdjęcie z galerii zrobione z włączoną lokalizacją → post / zdjęcie aktywności / komentarz / avatar: pobrany z serwera plik nie ma tagów GPS (`exiftool`), obraz nie jest obrócony
+- [ ] zdjęcie pionowe i poziome z aparatu w poście: właściwa orientacja; jakość nie odbiega wyraźnie od poprzedniej
+- [ ] avatar drużyny z przezroczystym PNG: tło nie robi się czarne
+- [ ] czat: zdjęcie nadal zmniejszane do 2048 px i wysyłane; 5 zdjęć naraz nie wywraca aplikacji (pamięć)
+- [ ] zgłoszenie (feedback) z 3 zrzutami ekranu wysyła się; nakładka na własne zdjęcie w udostępnianiu aktywności działa
+- [ ] post z wideo + zdjęciami: wideo przechodzi bez zmian, zdjęcia bez EXIF
+- [ ] Paywall na buildzie produkcyjnym: oferta się ładuje (klucz sklepu przyjęty), zakup w sandboxie przechodzi na właściwe konto
+- [ ] Paywall zaraz po zalogowaniu (zanim RevenueCat skończy logowanie w tle): zakup trafia na zalogowanego użytkownika, nie na anonimowe id
+- [ ] admin w trakcie impersonacji: „Kup”, „Przywróć zakupy” i natywny paywall pokazują komunikat o blokadzie, nic się nie otwiera
+- [ ] PL/EN/ES: nowe komunikaty (zdjęcie nieprzygotowane, blokada zakupów, niepotwierdzone konto)
+
 ## Na `main`, ale niezweryfikowane runtime
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
