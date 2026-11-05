@@ -15,114 +15,6 @@ Stan na: **2026-11-05**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `fix/security-phase-1` — sesja i konta na jednym urządzeniu (Faza 1 audytu bezpieczeństwa 2026-11-05)
-
-Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (H1–H3, M2–M5, M9, L4, L7). Zakres:
-- **Jeden `teardownSession()`** dla wylogowania i 401: czyści token admina i impersonacji (dotąd po wylogowaniu w trakcie
-  impersonacji następny start przywracał admina), wszystkie tokeny SecureStore, cache i stan użytkownika w AsyncStorage
-  (home, workout, trener audio, bufory GPS, zapisane logi), zatrzymuje GPS w tle; serwerowy `/logout` w `try/catch`,
-  więc wylogowanie offline dochodzi do końca. 401 podczas impersonacji → powrót do admina, a gdy się nie uda → pełny teardown.
-- **Klucz sesji impersonacji** w AsyncStorage bez tokena i bez obiektu użytkownika (tylko `session_id`, `expires_at`, id).
-- **Kolejka offline tylko własna**: lista „Niewysłane”, licznik, eksport GPX i „Odrzuć” pokazują wpisy zalogowanego
-  użytkownika (plus stare wpisy bez właściciela); auto-sync pomija wpisy bez właściciela (dotąd `null` przepuszczał),
-  ręczne „Wyślij” nadal możliwe; migracja starej kolejki przenosi tylko wpisy z pasującym właścicielem.
-- **`android.allowBackup: false`** — baza GPS/HR i AsyncStorage nie trafiają już do backupu Google (wymaga builda natywnego).
-- [ ] admin: impersonacja → wyloguj → zabij aplikację → start: ekran logowania, nie admin; ponowne logowanie admina działa
-- [ ] admin: impersonacja → serwerowe wygaśnięcie/401 (np. `stop` z SPA) → aplikacja wraca do konta admina bez wylogowania
-- [ ] wylogowanie w trybie samolotowym kończy się ekranem logowania; po włączeniu sieci logowanie innym kontem nie pokazuje cache poprzedniego (Home, odznaki rang, sesja siłowa)
-- [ ] dwa konta na jednym telefonie: aktywność zapisana offline przez A nie jest widoczna w „Niewysłane” u B (lista, baner, eksport, odrzuć); po zalogowaniu A wysyła się sama
-- [ ] nagranie offline → wylogowanie → logowanie tym samym kontem: wpis dalej w kolejce i dostarczony
-- [ ] Android: `adb shell dumpsys backup` / `bmgr` — aplikacja nie bierze udziału w backupie (`allowBackup=false` w manifeście)
-- [ ] Settings → Developer → logi: po wylogowaniu lista pusta; EN/PL bez zmian (brak nowych kluczy)
-- [ ] wygaśnięcie impersonacji przy otwartym Home (wiele równoległych zapytań) → powrót do admina, bez wylogowania (401 liczy się tylko dla tokena nadal będącego w użyciu)
-- [ ] błędne hasło na ekranie logowania nie czyści logów ani cache Home gościa
-- [ ] wpis bez właściciela w „Niewysłane”: nie wysyła się sam po zalogowaniu ani po powrocie sieci; „Wyślij” na tym wpisie działa
-- [ ] 401 w trakcie nagrywania (np. unieważnienie tokena z SPA) → ekran logowania, GPS w tle zatrzymany — **nagranie jest kasowane** (sesja nie ma właściciela; decyzja do potwierdzenia, zob. raport → „Stan wdrożenia”)
-
-### `fix/update-link` — ekran wymuszonej aktualizacji otwiera link z serwera (2026-11-05)
-
-Cel aktualizacji to `update_url` z `/config/app` (Admin → Wersja aplikacji): sklep, a dopóki aplikacji nie ma
-w sklepach — TestFlight, APK albo strona builda. Ekran zakładał sklep i potrafił odmówić otwarcia linku. Zakres:
-- **Bez bramki `Linking.canOpenURL`** na ekranie wymuszonej aktualizacji (odpowiada „nie” na wszystko, czego nie deklaruje
-  manifest — m.in. `itms-services://` dla instalacji ad hoc na iOS — choć samo otwarcie działa).
-- **Link widoczny i do skopiowania** na ekranie; bez linku: komunikat + „Sprawdź ponownie” (ponowne pobranie konfiguracji).
-- Komunikaty bez słowa „sklep” (PL/EN/ES). Nowy `utils/externalLinks` (`openUpdateUrl`, `openExternalUrl`), opis w `UI_PATTERNS.md`.
-- **Nie naprawia już zainstalowanych buildów** — te mają stary ekran; dla nich liczy się tylko to, jaki link ustawi admin.
-- [ ] Android, build poniżej `minimum_version`: „Aktualizuj” otwiera link z panelu (strona builda / APK) w przeglądarce i da się pobrać oraz zainstalować nową wersję
-- [ ] iOS: „Aktualizuj” otwiera TestFlight (`https://testflight.apple.com/join/…`); link `.ipa` z panelu nie nadaje się do instalacji — zmienić w panelu
-- [ ] „Kopiuj link” kopiuje adres, przycisk zmienia się na „Link skopiowany”; link na ekranie mieści się na małym telefonie
-- [ ] pusty link w panelu: komunikat o braku linku, „Sprawdź ponownie” po uzupełnieniu linku pokazuje „Aktualizuj”; po obniżeniu minimum ekran znika
-- [ ] baner miękkiej aktualizacji: „Aktualizuj” otwiera ten sam link
-- [ ] PL/EN/ES: teksty ekranu bez obcięć
-
-### `fix/security-phase-2` — wejście z zewnątrz: deep linki, linki zewnętrzne, TLS (Faza 2 audytu bezpieczeństwa 2026-11-05)
-
-**Bazuje na `fix/update-link`** (wspólny `utils/externalLinks`) — mergować po nim. Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M1, L1, L2, L3). Zakres:
-- **Deep linki (M1):** `navigation/linkingGuards` czyści stan zbudowany z linku — `Chat` dostaje tylko `conversationId` będące
-  dodatnią liczbą całkowitą, parametry z query stringa są odrzucane, link bez poprawnego id otwiera listę rozmów
-  (dotąd `racefy://messages/..%2F..%2Fprofile` szło do API jako `/conversations/../../profile` z tokenem użytkownika);
-  `ChatScreen` sprawdza id drugi raz przed zapytaniami.
-- **Linki zewnętrzne (L1):** CTA sponsora, link afiliacyjny nagrody, załączniki czatu i zgłoszeń, wideo ćwiczeń idą przez
-  `openExternalUrl` — tylko www (`http` podnoszone do `https` w release), bez `tel:`, `sms:`, `intent:`, cudzych schematów.
-- **Transport (L2, L3):** Reverb w release zawsze po `wss`; build release nie startuje z bazowym URL API innym niż `https://`.
-- [ ] `adb shell am start -a android.intent.action.VIEW -d "racefy://messages/..%2F..%2Fprofile"` (zalogowany) → lista rozmów, w logach API brak zapytania spoza `/conversations`
-- [ ] `racefy://messages/<id>` i `https://racefy.io/messages/<id>` nadal otwierają rozmowę; push o nowej wiadomości też
-- [ ] link resetu hasła z e-maila nadal otwiera ekran resetu z tokenem
-- [ ] wideo ćwiczenia (YouTube) otwiera się z biblioteki ćwiczeń, szczegółów treningu i sesji; link wpisany jako `http://` też
-- [ ] załącznik (PDF) w czacie i w zgłoszeniu otwiera się; CTA posta sponsorowanego i „Zobacz nagrodę” w evencie otwierają stronę
-- [ ] ekran na żywo: pozycja i wiadomości przychodzą przez WebSocket (staging i produkcja), bez przejścia na polling
-- [ ] build staging i produkcyjny startują normalnie (strażnik `https://` nie blokuje poprawnej konfiguracji)
-
-### `fix/security-phase-3` — media i płatności: EXIF ze zdjęć, klucz RevenueCat, tożsamość zakupu (Faza 3 audytu bezpieczeństwa 2026-11-05)
-
-Niezależna od pozostałych gałęzi audytu. Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M6, M7, L10); część serwerowa
-(sandbox w webhooku, `billing_id` zamiast `users.id` — M8, EXIF w oryginałach, metadane wideo) w
-`.notes/PROMPT_API_BEZPIECZENSTWO_FAZA_3.md`. Zakres:
-- **Zdjęcia bez EXIF (M6):** `utils/imageMetadata` — każdy obraz wybrany do wysłania jest kodowany od nowa (pozycja,
-  urządzenie i data znikają). `pickImages` zwraca wyłącznie takie kopie (komentarze, avatar/okładka, zdjęcia aktywności,
-  czat); to samo w `MediaPicker` (posty — galeria i aparat), avatarze drużyny, załącznikach zgłoszeń, nakładce na zdjęcie.
-  Obraz, którego nie da się przekodować, jest pomijany z komunikatem. PNG zostaje PNG. **Wideo idzie bez zmian.**
-- **Klucz RevenueCat (M7):** build release dla produkcji konfiguruje SDK tylko kluczem `appl_…` / `goog_…` swojej platformy;
-  inny klucz wyłącza zakupy. Staging może używać Test Store (`test_…`).
-- **Tożsamość zakupu (L10):** przed zakupem, przywróceniem i natywnym paywallem SDK musi być zalogowane jako bieżący
-  użytkownik (ponawia `logIn`, inaczej odmawia); zakupy zablokowane podczas impersonacji.
-- [ ] zdjęcie z galerii zrobione z włączoną lokalizacją → post / zdjęcie aktywności / komentarz / avatar: pobrany z serwera plik nie ma tagów GPS (`exiftool`), obraz nie jest obrócony
-- [ ] zdjęcie pionowe i poziome z aparatu w poście: właściwa orientacja; jakość nie odbiega wyraźnie od poprzedniej
-- [ ] avatar drużyny z przezroczystym PNG: tło nie robi się czarne
-- [ ] czat: zdjęcie nadal zmniejszane do 2048 px i wysyłane; 5 zdjęć naraz nie wywraca aplikacji (pamięć)
-- [ ] zgłoszenie (feedback) z 3 zrzutami ekranu wysyła się; nakładka na własne zdjęcie w udostępnianiu aktywności działa
-- [ ] post z wideo + zdjęciami: wideo przechodzi bez zmian, zdjęcia bez EXIF
-- [ ] Paywall na buildzie produkcyjnym: oferta się ładuje (klucz sklepu przyjęty), zakup w sandboxie przechodzi na właściwe konto
-- [ ] Paywall zaraz po zalogowaniu (zanim RevenueCat skończy logowanie w tle): zakup trafia na zalogowanego użytkownika, nie na anonimowe id
-- [ ] admin w trakcie impersonacji: „Kup”, „Przywróć zakupy” i natywny paywall pokazują komunikat o blokadzie, nic się nie otwiera
-- [ ] PL/EN/ES: nowe komunikaty (zdjęcie nieprzygotowane, blokada zakupów, niepotwierdzone konto)
-
-### `fix/security-phase-4` — higiena: zależności, logi, tokeny, pliki tymczasowe, uprawnienia, CI (Faza 4 audytu bezpieczeństwa 2026-11-05)
-
-Niezależna od pozostałych gałęzi audytu; próbne scalenie wszystkich pięciu (`phase-1`, `update-link`, `phase-2`, `phase-3`,
-`phase-4`) przechodzi bez konfliktów i z zielonymi kontrolami. **Wymaga builda natywnego** (zmiana manifestu Androida,
-`expo` 54.0.38). Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (L4–L6, L8, L9, L12, zależności). Zakres:
-- **Zależności:** `npm audit fix` bez `--force` (92 paczki, m.in. `@react-navigation/core` 7.14 → 7.24); produkcyjne
-  1 critical / 15 high → 0 / 3. Reszta czeka na nowszy Expo SDK.
-- **Logi:** `services/logSanitizer` — tokeny Sanctum, e-maile i sekrety z URL-i wycinane z treści; współrzędne w buildach
-  release zaokrąglane do ~1 km (w dev dokładne); konsola dostaje wpis po redakcji.
-- **Tokeny:** odczyt tylko z SecureStore, gdy działa; migracja starych kluczy nie kasuje tokena po nieudanym zapisie.
-- **Pliki tymczasowe:** GPX, obraz do udostępnienia i nakładka na zdjęcie usuwane także po błędzie/anulowaniu
-  (`utils/shareFiles`, minutę po zamknięciu arkusza) + sprzątanie resztek przy starcie.
-- **Android:** `SYSTEM_ALERT_WINDOW` usunięte z builda release. **CI:** akcje przypięte do commitów, `contents: read`.
-  **deploy.sh** nie wypisuje wartości sekretów.
-- [ ] nawigacja po podbiciu `@react-navigation`: zakładki, powrót gestem, modal logowania, deep link `racefy://` do eventu / aktywności / profilu, link z powiadomienia push
-- [ ] logowanie → zabicie aplikacji → start: sesja zostaje (odczyt tokena tylko z SecureStore); to samo na iOS
-- [ ] aktywność nagrywana w tle z zablokowanym ekranem: punkty nadal synchronizują się z serwerem (klient zadań w tle czyta token)
-- [ ] aktualizacja ze starszego builda (zainstalowanie tej wersji na wierzch): użytkownik pozostaje zalogowany
-- [ ] eksport GPX do Dysku Google / Gmaila / Stravy: plik dociera cały (kasowanie po 60 s nie jest za wczesne)
-- [ ] udostępnienie aktywności z obrazem i karty wyniku eventu do WhatsApp / Messengera: obraz dociera; nakładka na zdjęcie — „Zapisz” i „Udostępnij”
-- [ ] wysłanie logów z Ustawień w buildzie staging: w panelu nie ma e-maili ani tokenów, współrzędne mają 2 miejsca po przecinku
-- [ ] Android, build release: w „Informacje o aplikacji → Uprawnienia” brak „Wyświetlanie nad innymi aplikacjami”; build deweloperski (dev client) uruchamia się i pokazuje menu deweloperskie
-- [ ] Android 12 lub starszy: wybór zdjęcia z galerii nadal działa (uprawnienia do pamięci zostały celowo)
-- [ ] odtwarzacz YouTube w ćwiczeniu / poście działa (`react-native-webview` został celowo)
-- [ ] pierwszy przebieg CI na GitHubie po wypchnięciu jest zielony (przypięte akcje, `permissions`)
-
 ### `fix/account-credentials` — zmiana e-maila z aktualnym hasłem, konto Google ustawia hasło przez link (API A5, 2026-11-05)
 
 Odpowiednik zmiany w API (`racefy_api.io`, gałąź `fix/p1-part2-access`, audyt bezpieczeństwa API 2026-11-04, A5):
@@ -146,6 +38,113 @@ starsza aplikacja na nowym API dostaje przy zmianie e-maila 422 z błędem pola,
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### `fix/security-phase-1` — sesja i konta na jednym urządzeniu (Faza 1 audytu bezpieczeństwa 2026-11-05; zmergowane 2026-11-05, tag `pre-security-phase-1` = main sprzed merge)
+
+Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (H1–H3, M2–M5, M9, L4, L7). Zakres:
+- **Jeden `teardownSession()`** dla wylogowania i 401: czyści token admina i impersonacji (dotąd po wylogowaniu w trakcie
+  impersonacji następny start przywracał admina), wszystkie tokeny SecureStore, cache i stan użytkownika w AsyncStorage
+  (home, workout, trener audio, bufory GPS, zapisane logi), zatrzymuje GPS w tle; serwerowy `/logout` w `try/catch`,
+  więc wylogowanie offline dochodzi do końca. 401 podczas impersonacji → powrót do admina, a gdy się nie uda → pełny teardown.
+- **Klucz sesji impersonacji** w AsyncStorage bez tokena i bez obiektu użytkownika (tylko `session_id`, `expires_at`, id).
+- **Kolejka offline tylko własna**: lista „Niewysłane”, licznik, eksport GPX i „Odrzuć” pokazują wpisy zalogowanego
+  użytkownika (plus stare wpisy bez właściciela); auto-sync pomija wpisy bez właściciela (dotąd `null` przepuszczał),
+  ręczne „Wyślij” nadal możliwe; migracja starej kolejki przenosi tylko wpisy z pasującym właścicielem.
+- **`android.allowBackup: false`** — baza GPS/HR i AsyncStorage nie trafiają już do backupu Google (wymaga builda natywnego).
+- [ ] admin: impersonacja → wyloguj → zabij aplikację → start: ekran logowania, nie admin; ponowne logowanie admina działa
+- [ ] admin: impersonacja → serwerowe wygaśnięcie/401 (np. `stop` z SPA) → aplikacja wraca do konta admina bez wylogowania
+- [ ] wylogowanie w trybie samolotowym kończy się ekranem logowania; po włączeniu sieci logowanie innym kontem nie pokazuje cache poprzedniego (Home, odznaki rang, sesja siłowa)
+- [ ] dwa konta na jednym telefonie: aktywność zapisana offline przez A nie jest widoczna w „Niewysłane” u B (lista, baner, eksport, odrzuć); po zalogowaniu A wysyła się sama
+- [ ] nagranie offline → wylogowanie → logowanie tym samym kontem: wpis dalej w kolejce i dostarczony
+- [ ] Android: `adb shell dumpsys backup` / `bmgr` — aplikacja nie bierze udziału w backupie (`allowBackup=false` w manifeście)
+- [ ] Settings → Developer → logi: po wylogowaniu lista pusta; EN/PL bez zmian (brak nowych kluczy)
+- [ ] wygaśnięcie impersonacji przy otwartym Home (wiele równoległych zapytań) → powrót do admina, bez wylogowania (401 liczy się tylko dla tokena nadal będącego w użyciu)
+- [ ] błędne hasło na ekranie logowania nie czyści logów ani cache Home gościa
+- [ ] wpis bez właściciela w „Niewysłane”: nie wysyła się sam po zalogowaniu ani po powrocie sieci; „Wyślij” na tym wpisie działa
+- [ ] 401 w trakcie nagrywania (np. unieważnienie tokena z SPA) → ekran logowania, GPS w tle zatrzymany — **nagranie jest kasowane** (sesja nie ma właściciela; decyzja do potwierdzenia, zob. raport → „Stan wdrożenia”)
+
+### `fix/update-link` — ekran wymuszonej aktualizacji otwiera link z serwera (zmergowane 2026-11-05, tag `pre-update-link` = main sprzed merge)
+
+Cel aktualizacji to `update_url` z `/config/app` (Admin → Wersja aplikacji): sklep, a dopóki aplikacji nie ma
+w sklepach — TestFlight, APK albo strona builda. Ekran zakładał sklep i potrafił odmówić otwarcia linku. Zakres:
+- **Bez bramki `Linking.canOpenURL`** na ekranie wymuszonej aktualizacji (odpowiada „nie” na wszystko, czego nie deklaruje
+  manifest — m.in. `itms-services://` dla instalacji ad hoc na iOS — choć samo otwarcie działa).
+- **Link widoczny i do skopiowania** na ekranie; bez linku: komunikat + „Sprawdź ponownie” (ponowne pobranie konfiguracji).
+- Komunikaty bez słowa „sklep” (PL/EN/ES). Nowy `utils/externalLinks` (`openUpdateUrl`, `openExternalUrl`), opis w `UI_PATTERNS.md`.
+- **Nie naprawia już zainstalowanych buildów** — te mają stary ekran; dla nich liczy się tylko to, jaki link ustawi admin.
+- [ ] Android, build poniżej `minimum_version`: „Aktualizuj” otwiera link z panelu (strona builda / APK) w przeglądarce i da się pobrać oraz zainstalować nową wersję
+- [ ] iOS: „Aktualizuj” otwiera TestFlight (`https://testflight.apple.com/join/…`); link `.ipa` z panelu nie nadaje się do instalacji — zmienić w panelu
+- [ ] „Kopiuj link” kopiuje adres, przycisk zmienia się na „Link skopiowany”; link na ekranie mieści się na małym telefonie
+- [ ] pusty link w panelu: komunikat o braku linku, „Sprawdź ponownie” po uzupełnieniu linku pokazuje „Aktualizuj”; po obniżeniu minimum ekran znika
+- [ ] baner miękkiej aktualizacji: „Aktualizuj” otwiera ten sam link
+- [ ] PL/EN/ES: teksty ekranu bez obcięć
+
+### `fix/security-phase-2` — wejście z zewnątrz: deep linki, linki zewnętrzne, TLS (Faza 2 audytu bezpieczeństwa 2026-11-05; zmergowane 2026-11-05, tag `pre-security-phase-2` = main sprzed merge)
+
+Zmergowane po `fix/update-link` (wspólny `utils/externalLinks`). Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M1, L1, L2, L3). Zakres:
+- **Deep linki (M1):** `navigation/linkingGuards` czyści stan zbudowany z linku — `Chat` dostaje tylko `conversationId` będące
+  dodatnią liczbą całkowitą, parametry z query stringa są odrzucane, link bez poprawnego id otwiera listę rozmów
+  (dotąd `racefy://messages/..%2F..%2Fprofile` szło do API jako `/conversations/../../profile` z tokenem użytkownika);
+  `ChatScreen` sprawdza id drugi raz przed zapytaniami.
+- **Linki zewnętrzne (L1):** CTA sponsora, link afiliacyjny nagrody, załączniki czatu i zgłoszeń, wideo ćwiczeń idą przez
+  `openExternalUrl` — tylko www (`http` podnoszone do `https` w release), bez `tel:`, `sms:`, `intent:`, cudzych schematów.
+- **Transport (L2, L3):** Reverb w release zawsze po `wss`; build release nie startuje z bazowym URL API innym niż `https://`.
+- [ ] `adb shell am start -a android.intent.action.VIEW -d "racefy://messages/..%2F..%2Fprofile"` (zalogowany) → lista rozmów, w logach API brak zapytania spoza `/conversations`
+- [ ] `racefy://messages/<id>` i `https://racefy.io/messages/<id>` nadal otwierają rozmowę; push o nowej wiadomości też
+- [ ] link resetu hasła z e-maila nadal otwiera ekran resetu z tokenem
+- [ ] wideo ćwiczenia (YouTube) otwiera się z biblioteki ćwiczeń, szczegółów treningu i sesji; link wpisany jako `http://` też
+- [ ] załącznik (PDF) w czacie i w zgłoszeniu otwiera się; CTA posta sponsorowanego i „Zobacz nagrodę” w evencie otwierają stronę
+- [ ] ekran na żywo: pozycja i wiadomości przychodzą przez WebSocket (staging i produkcja), bez przejścia na polling
+- [ ] build staging i produkcyjny startują normalnie (strażnik `https://` nie blokuje poprawnej konfiguracji)
+
+### `fix/security-phase-3` — media i płatności: EXIF ze zdjęć, klucz RevenueCat, tożsamość zakupu (Faza 3 audytu bezpieczeństwa 2026-11-05; zmergowane 2026-11-05, tag `pre-security-phase-3` = main sprzed merge)
+
+Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M6, M7, L10); część serwerowa
+(sandbox w webhooku, `billing_id` zamiast `users.id` — M8, EXIF w oryginałach, metadane wideo) w
+`.notes/PROMPT_API_BEZPIECZENSTWO_FAZA_3.md`. Zakres:
+- **Zdjęcia bez EXIF (M6):** `utils/imageMetadata` — każdy obraz wybrany do wysłania jest kodowany od nowa (pozycja,
+  urządzenie i data znikają). `pickImages` zwraca wyłącznie takie kopie (komentarze, avatar/okładka, zdjęcia aktywności,
+  czat); to samo w `MediaPicker` (posty — galeria i aparat), avatarze drużyny, załącznikach zgłoszeń, nakładce na zdjęcie.
+  Obraz, którego nie da się przekodować, jest pomijany z komunikatem. PNG zostaje PNG. **Wideo idzie bez zmian.**
+- **Klucz RevenueCat (M7):** build release dla produkcji konfiguruje SDK tylko kluczem `appl_…` / `goog_…` swojej platformy;
+  inny klucz wyłącza zakupy. Staging może używać Test Store (`test_…`).
+- **Tożsamość zakupu (L10):** przed zakupem, przywróceniem i natywnym paywallem SDK musi być zalogowane jako bieżący
+  użytkownik (ponawia `logIn`, inaczej odmawia); zakupy zablokowane podczas impersonacji.
+- [ ] zdjęcie z galerii zrobione z włączoną lokalizacją → post / zdjęcie aktywności / komentarz / avatar: pobrany z serwera plik nie ma tagów GPS (`exiftool`), obraz nie jest obrócony
+- [ ] zdjęcie pionowe i poziome z aparatu w poście: właściwa orientacja; jakość nie odbiega wyraźnie od poprzedniej
+- [ ] avatar drużyny z przezroczystym PNG: tło nie robi się czarne
+- [ ] czat: zdjęcie nadal zmniejszane do 2048 px i wysyłane; 5 zdjęć naraz nie wywraca aplikacji (pamięć)
+- [ ] zgłoszenie (feedback) z 3 zrzutami ekranu wysyła się; nakładka na własne zdjęcie w udostępnianiu aktywności działa
+- [ ] post z wideo + zdjęciami: wideo przechodzi bez zmian, zdjęcia bez EXIF
+- [ ] Paywall na buildzie produkcyjnym: oferta się ładuje (klucz sklepu przyjęty), zakup w sandboxie przechodzi na właściwe konto
+- [ ] Paywall zaraz po zalogowaniu (zanim RevenueCat skończy logowanie w tle): zakup trafia na zalogowanego użytkownika, nie na anonimowe id
+- [ ] admin w trakcie impersonacji: „Kup”, „Przywróć zakupy” i natywny paywall pokazują komunikat o blokadzie, nic się nie otwiera
+- [ ] PL/EN/ES: nowe komunikaty (zdjęcie nieprzygotowane, blokada zakupów, niepotwierdzone konto)
+
+### `fix/security-phase-4` — higiena: zależności, logi, tokeny, pliki tymczasowe, uprawnienia, CI (Faza 4 audytu bezpieczeństwa 2026-11-05; zmergowane 2026-11-05, tag `pre-security-phase-4` = main sprzed merge) — **wymaga builda natywnego**
+
+**Wymaga builda natywnego** (zmiana manifestu Androida, `expo` 54.0.38). Po scaleniu wszystkich pięciu gałęzi audytu
+tsc / eslint / knip / jest zielone (108 zestawów, 939 testów). Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (L4–L6, L8, L9, L12, zależności). Zakres:
+- **Zależności:** `npm audit fix` bez `--force` (92 paczki, m.in. `@react-navigation/core` 7.14 → 7.24); produkcyjne
+  1 critical / 15 high → 0 / 3. Reszta czeka na nowszy Expo SDK.
+- **Logi:** `services/logSanitizer` — tokeny Sanctum, e-maile i sekrety z URL-i wycinane z treści; współrzędne w buildach
+  release zaokrąglane do ~1 km (w dev dokładne); konsola dostaje wpis po redakcji.
+- **Tokeny:** odczyt tylko z SecureStore, gdy działa; migracja starych kluczy nie kasuje tokena po nieudanym zapisie.
+- **Pliki tymczasowe:** GPX, obraz do udostępnienia i nakładka na zdjęcie usuwane także po błędzie/anulowaniu
+  (`utils/shareFiles`, minutę po zamknięciu arkusza) + sprzątanie resztek przy starcie.
+- **Android:** `SYSTEM_ALERT_WINDOW` usunięte z builda release. **CI:** akcje przypięte do commitów, `contents: read`.
+  **deploy.sh** nie wypisuje wartości sekretów.
+- [ ] nawigacja po podbiciu `@react-navigation`: zakładki, powrót gestem, modal logowania, deep link `racefy://` do eventu / aktywności / profilu, link z powiadomienia push
+- [ ] logowanie → zabicie aplikacji → start: sesja zostaje (odczyt tokena tylko z SecureStore); to samo na iOS
+- [ ] aktywność nagrywana w tle z zablokowanym ekranem: punkty nadal synchronizują się z serwerem (klient zadań w tle czyta token)
+- [ ] aktualizacja ze starszego builda (zainstalowanie tej wersji na wierzch): użytkownik pozostaje zalogowany
+- [ ] eksport GPX do Dysku Google / Gmaila / Stravy: plik dociera cały (kasowanie po 60 s nie jest za wczesne)
+- [ ] udostępnienie aktywności z obrazem i karty wyniku eventu do WhatsApp / Messengera: obraz dociera; nakładka na zdjęcie — „Zapisz” i „Udostępnij”
+- [ ] wysłanie logów z Ustawień w buildzie staging: w panelu nie ma e-maili ani tokenów, współrzędne mają 2 miejsca po przecinku
+- [ ] Android, build release: w „Informacje o aplikacji → Uprawnienia” brak „Wyświetlanie nad innymi aplikacjami”; build deweloperski (dev client) uruchamia się i pokazuje menu deweloperskie
+- [ ] Android 12 lub starszy: wybór zdjęcia z galerii nadal działa (uprawnienia do pamięci zostały celowo)
+- [ ] odtwarzacz YouTube w ćwiczeniu / poście działa (`react-native-webview` został celowo)
+- [ ] pierwszy przebieg CI na GitHubie po wypchnięciu jest zielony (przypięte akcje, `permissions`)
 
 ### `feature/team-activity-board` — zakładka „Aktywności” drużyny (tablica aktywności członków) (zmergowane 2026-11-04, tag `pre-team-activity-board` = main sprzed merge)
 
