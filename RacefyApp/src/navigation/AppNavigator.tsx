@@ -3,6 +3,7 @@ import {
   createNavigationContainerRef,
   DarkTheme,
   DefaultTheme,
+  getStateFromPath,
   LinkingOptions,
   NavigationContainer,
   Theme,
@@ -54,6 +55,7 @@ import { ActivityDetailScreen } from '../screens/details/ActivityDetailScreen';
 import { ActivityShareScreen } from '../screens/details/ActivityShareScreen';
 import { PostDetailScreen } from '../screens/details/PostDetailScreen';
 import { ChatScreen, ConversationsListScreen } from '../screens/messaging';
+import { sanitizeLinkState } from './linkingGuards';
 import {
   EventCommentaryScreen,
   EventCommentarySettingsScreen,
@@ -134,6 +136,9 @@ const linkScheme = (Array.isArray(rawScheme) ? rawScheme[0] : rawScheme) ?? 'rac
 const linkHost = (Constants.expoConfig?.extra?.linkHost as string | undefined) ?? 'racefy.io';
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [`${linkScheme}://`, `https://${linkHost}`],
+  // A link is untrusted input: ids are checked and stray params dropped before
+  // any screen sees them (see navigation/linkingGuards).
+  getStateFromPath: (path, options) => sanitizeLinkState(getStateFromPath(path, options)),
   config: {
     screens: {
       Auth: {

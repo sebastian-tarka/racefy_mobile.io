@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { openExternalUrl } from '../../../utils/externalLinks';
 import { ImageViewer } from '../../../components/ImageViewer';
 import { useTheme } from '../../../hooks/useTheme';
-import { logger } from '../../../services/logger';
 import { borderRadius, fontSize, spacing } from '../../../theme';
 import type { MessageAttachment } from '../../../types/api';
 import { formatFileSize } from '../../../utils/fileSize';
@@ -37,10 +37,7 @@ export function MessageAttachments({ attachments, isOwn }: Props) {
   const files = attachments.filter((a) => a.kind !== 'image');
 
   const openFile = async (file: MessageAttachment) => {
-    try {
-      await Linking.openURL(file.url);
-    } catch (error) {
-      logger.warn('general', 'Failed to open chat attachment', { id: file.id, error });
+    if (!(await openExternalUrl(file.url))) {
       Alert.alert('', t('messaging.openFileFailed'));
     }
   };

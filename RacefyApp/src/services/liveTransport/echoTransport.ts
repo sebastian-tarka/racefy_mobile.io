@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../../config/api';
 import type { LiveTransport, LiveTransportOptions } from './types';
 import type { LiveBroadcastStats, LiveMessage, RealtimeConfig } from '../../types/api';
 import { getErrorMessage } from '../../utils/errors';
+import { reverbUsesTls } from '../../utils/transportSecurity';
 
 // Echo looks for Pusher on the global object. React Native has no `window`,
 // so this is attached to globalThis, which exists in both environments.
@@ -93,6 +94,8 @@ export function createEchoTransport(
 
     loadInitialSnapshot();
 
+    // TLS is not the server's to switch off: see utils/transportSecurity.
+    const tls = reverbUsesTls(config.scheme);
     try {
       echo = new Echo({
         broadcaster: 'pusher',
@@ -100,8 +103,8 @@ export function createEchoTransport(
         wsHost: config.host,
         wsPort: config.port,
         wssPort: config.port,
-        forceTLS: config.scheme === 'https',
-        enabledTransports: config.scheme === 'https' ? ['wss'] : ['ws'],
+        forceTLS: tls,
+        enabledTransports: tls ? ['wss'] : ['ws'],
         disableStats: true,
         // Private channels are authorized by the API, using the same bearer
         // token as every other request.
