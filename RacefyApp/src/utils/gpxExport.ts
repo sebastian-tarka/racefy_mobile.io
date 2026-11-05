@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { logger } from '../services/logger';
 import type { GpsPoint } from '../types/api';
+import { discardShareFileLater } from './shareFiles';
 
 interface GpxExportInput {
   /** Activity id used in filename and `<trk><name>`. */
@@ -110,8 +111,10 @@ export async function exportGpxAndShare(input: GpxExportInput): Promise<boolean>
     return false;
   }
 
+  // The file is the whole GPS track; it is removed once the share is over, however it ends.
+  let uri: string | null = null;
   try {
-    const uri = await writeGpxToCache(input);
+    uri = await writeGpxToCache(input);
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
@@ -139,5 +142,7 @@ export async function exportGpxAndShare(input: GpxExportInput): Promise<boolean>
       error: err,
     });
     return false;
+  } finally {
+    if (uri) discardShareFileLater(uri);
   }
 }

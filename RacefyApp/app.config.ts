@@ -163,6 +163,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       // (allowed by Play policy for fitness trackers — declare in Play Console)
       'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
     ],
+    // "Display over other apps" comes with the prebuild template for React Native's
+    // development overlay; nothing in the app draws over other apps. Removed from
+    // release builds — the debug manifest declares it on its own, so development
+    // builds keep it.
+    // READ/WRITE_EXTERNAL_STORAGE stay on purpose: expo-image-picker asks for them
+    // on Android 12 and older (gallery) and 9 and older (camera); without them the
+    // request comes back denied and nothing can be picked. On newer systems they do
+    // nothing — READ is merged with maxSdkVersion 32, WRITE is ignored from Android 11.
+    blockedPermissions: ['android.permission.SYSTEM_ALERT_WINDOW'],
     intentFilters: [
       {
         action: 'VIEW',

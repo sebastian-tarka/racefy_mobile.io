@@ -233,6 +233,12 @@ logger.nav('Navigated to screen', { screen: 'Home' });
 
 **Where to find logs**: Settings → Developer → Debug Logs (when LOG_ENABLED=true)
 
+**What a log may contain** (`services/logSanitizer.ts`, applied to everything stored, printed and sent):
+secrets are removed by field name and by shape (Sanctum tokens, JWTs, `?token=` in URLs), e-mail / phone /
+address fields are replaced by their length, and coordinates (`lat`, `lng`, `latitude`, `coordinates`…) are
+rounded to ~1 km in release builds (exact in `__DEV__`). The rules go by field name, so never pass a person's
+name or free text (bio, message, comment) as log context.
+
 ## UI Conventions
 
 For detailed UI patterns, see `RacefyApp/docs/UI_PATTERNS.md`.

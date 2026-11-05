@@ -6,6 +6,7 @@ import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import i18n from '../i18n';
 import { getErrorCode, getErrorMessage } from './errors';
+import { discardShareFileLater } from './shareFiles';
 
 interface ShareActivityWithImageOptions {
   activityId: number;
@@ -22,6 +23,8 @@ export async function shareActivityWithImage({
   imageUrl,
   shareData,
 }: ShareActivityWithImageOptions): Promise<void> {
+  // Removed in `finally`, so also when sharing fails or is cancelled.
+  let downloadedUri: string | null = null;
   try {
     // Prepare text content
     const message = `${shareData.title}\n\n${shareData.description}\n\n${shareData.url}`;
@@ -53,6 +56,7 @@ export async function shareActivityWithImage({
     // Download the image first for best compatibility
     logger.info('general', 'Downloading image for sharing', { imageUrl: fixedImageUrl });
     const localUri = await downloadImageForSharing(fixedImageUrl);
+    downloadedUri = localUri;
 
     if (!localUri) {
       // Fallback to text-only if download fails
@@ -175,13 +179,6 @@ export async function shareActivityWithImage({
         throw nativeShareError;
       }
     }
-
-    // Clean up downloaded file after sharing
-    setTimeout(() => {
-      FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
-        logger.warn('general', 'Failed to clean up downloaded share image', { error: err }),
-      );
-    }, 10000);
   } catch (error) {
     // expo-sharing throws different error messages
     const isCancelled =
@@ -193,78 +190,56 @@ export async function shareActivityWithImage({
       logger.error('general', 'Share failed', { error, errorCode: getErrorCode(error) });
       throw error;
     }
+  } finally {
+    if (downloadedUri) discardShareFileLater(downloadedUri);
   }
 }
 
 /**
- * Download image to cache directory for sharing
- * Returns local file URI or null if download fails
+ * Download image to cache directory for sharing.
+ * Returns local file URI or null if download fails — and then leaves nothing
+ * behind: what a failed download wrote (an error page, half a file) is removed.
+ * The caller removes a successful download with `discardShareFileLater`.
  */
 async function downloadImageForSharing(imageUrl: string): Promise<string | null> {
+  if (!FileSystem.cacheDirectory) {
+    logger.error('general', 'Cache directory not available');
+    return null;
+  }
+
+  // Determine file extension from URL or default to webp
+  const urlExt =
+    imageUrl.toLowerCase().includes('.jpg') || imageUrl.toLowerCase().includes('.jpeg')
+      ? 'jpg'
+      : 'webp';
+  // The prefix is what purgeStaleShareFiles() looks for.
+  const localUri = `${FileSystem.cacheDirectory}share-image-${Date.now()}.${urlExt}`;
+
   try {
-    logger.debug('general', 'Starting image download', { imageUrl });
-
-    // Ensure cache directory exists
-    if (!FileSystem.cacheDirectory) {
-      logger.error('general', 'Cache directory not available');
-      return null;
-    }
-
-    // Determine file extension from URL or default to webp
-    const urlExt =
-      imageUrl.toLowerCase().includes('.jpg') || imageUrl.toLowerCase().includes('.jpeg')
-        ? 'jpg'
-        : 'webp';
-    const filename = `share-image-${Date.now()}.${urlExt}`;
-    const localUri = `${FileSystem.cacheDirectory}${filename}`;
-
-    logger.debug('general', 'Downloading to', { localUri, extension: urlExt });
-
     const downloadResult = await FileSystem.downloadAsync(imageUrl, localUri);
 
-    logger.debug('general', 'Download completed', {
-      status: downloadResult.status,
-      uri: downloadResult.uri,
-      headers: downloadResult.headers,
-    });
-
     if (downloadResult.status === 200) {
-      // Verify file exists
       const fileInfo = await FileSystem.getInfoAsync(downloadResult.uri);
-      logger.debug('general', 'File info', { fileInfo });
-
-      if (fileInfo.exists) {
-        if ('size' in fileInfo && fileInfo.size > 0) {
-          logger.info('general', 'Image downloaded successfully', {
-            imageUrl,
-            localUri: downloadResult.uri,
-            size: fileInfo.size,
-          });
-          return downloadResult.uri;
-        } else {
-          logger.error('general', 'Downloaded file is empty', { fileInfo });
-          return null;
-        }
-      } else {
-        logger.error('general', 'Downloaded file does not exist', { fileInfo });
-        return null;
+      if (fileInfo.exists && fileInfo.size > 0) {
+        logger.info('general', 'Image downloaded successfully', { size: fileInfo.size });
+        return downloadResult.uri;
       }
+      logger.error('general', 'Downloaded share image is missing or empty', {
+        exists: fileInfo.exists,
+      });
+    } else {
+      logger.warn('general', 'Image download returned non-200 status', {
+        status: downloadResult.status,
+      });
     }
-
-    logger.warn('general', 'Image download returned non-200 status', {
-      status: downloadResult.status,
-      statusText: downloadResult.headers,
-      imageUrl,
-    });
-    return null;
   } catch (error) {
     logger.error('general', 'Failed to download image for sharing', {
       error: getErrorMessage(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      imageUrl,
     });
-    return null;
   }
+
+  discardShareFileLater(localUri, 0);
+  return null;
 }
 
 /**
@@ -278,6 +253,7 @@ export async function shareToApp(
   imageUrl: string | null,
   shareData: ShareLinkResponse,
 ): Promise<void> {
+  let downloadedUri: string | null = null;
   try {
     const message = `${shareData.title}\n\n${shareData.description}\n\n${shareData.url}`;
     const fixedImageUrl = imageUrl ? fixStorageUrl(imageUrl) : null;
@@ -295,6 +271,7 @@ export async function shareToApp(
     // Download image
     logger.info('general', `Downloading image for ${appId}`, { imageUrl: fixedImageUrl });
     const localUri = await downloadImageForSharing(fixedImageUrl);
+    downloadedUri = localUri;
 
     if (!localUri) {
       logger.warn('general', 'Image download failed, sharing text only');
@@ -329,13 +306,6 @@ export async function shareToApp(
         message: message,
       });
     }
-
-    // Clean up downloaded file
-    setTimeout(() => {
-      FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
-        logger.warn('general', 'Failed to clean up app share image', { error: err }),
-      );
-    }, 10000);
   } catch (error) {
     const isCancelled =
       getErrorMessage(error) === 'User did not share' ||
@@ -346,6 +316,8 @@ export async function shareToApp(
       logger.error('general', `Failed to share to ${appId}`, { error });
       throw error;
     }
+  } finally {
+    if (downloadedUri) discardShareFileLater(downloadedUri);
   }
 }
 
@@ -398,11 +370,7 @@ export async function shareImageFile({
       throw error;
     }
   } finally {
-    setTimeout(() => {
-      FileSystem.deleteAsync(localUri, { idempotent: true }).catch((err) =>
-        logger.warn('general', 'Failed to clean up shared image', { error: err }),
-      );
-    }, 10000);
+    discardShareFileLater(localUri);
   }
   return true;
 }

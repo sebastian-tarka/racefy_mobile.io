@@ -307,6 +307,27 @@ tabSpacer: {
 },
 ```
 
+### Temporary files for the share sheet (`utils/shareFiles`)
+
+A file written to the cache only to be shared (GPX track, downloaded share image, photo overlay) must not
+stay there — it holds where the user has been. Name it with one of the prefixes in `SHARE_FILE_PREFIXES`
+(add a new one there) and remove it in `finally`, so it also goes when the share fails or is cancelled:
+
+```tsx
+import { discardShareFileLater } from '../utils/shareFiles';
+
+const localUri = `${FileSystem.cacheDirectory}racefy-overlay-${Date.now()}.jpg`;
+try {
+  await FileSystem.downloadAsync(url, localUri);
+  await Sharing.shareAsync(localUri);
+} finally {
+  discardShareFileLater(localUri); // a minute later — the receiving app may still be reading it
+}
+```
+
+Do not delete right after `shareAsync` returns. Files left behind when the app is closed first are swept by
+`purgeStaleShareFiles()` on the next start (`App.tsx`).
+
 ## Spacing
 
 Use theme spacing tokens consistently:

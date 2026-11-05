@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
-    logger.auth('Registration attempt', { email: data.email, name: data.name });
+    logger.auth('Registration attempt', { email: data.email });
     const response = await api.register(data);
     setUser(response.user);
     logger.auth('Registration successful', { userId: response.user.id });
