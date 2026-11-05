@@ -15,7 +15,25 @@ Stan na: **2026-11-04**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Brak._
+### `fix/security-phase-1` — sesja i konta na jednym urządzeniu (Faza 1 audytu bezpieczeństwa 2026-11-05)
+
+Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (H1–H3, M2–M5, M9, L4, L7). Zakres:
+- **Jeden `teardownSession()`** dla wylogowania i 401: czyści token admina i impersonacji (dotąd po wylogowaniu w trakcie
+  impersonacji następny start przywracał admina), wszystkie tokeny SecureStore, cache i stan użytkownika w AsyncStorage
+  (home, workout, trener audio, bufory GPS, zapisane logi), zatrzymuje GPS w tle; serwerowy `/logout` w `try/catch`,
+  więc wylogowanie offline dochodzi do końca. 401 podczas impersonacji → powrót do admina, a gdy się nie uda → pełny teardown.
+- **Klucz sesji impersonacji** w AsyncStorage bez tokena i bez obiektu użytkownika (tylko `session_id`, `expires_at`, id).
+- **Kolejka offline tylko własna**: lista „Niewysłane”, licznik, eksport GPX i „Odrzuć” pokazują wpisy zalogowanego
+  użytkownika (plus stare wpisy bez właściciela); auto-sync pomija wpisy bez właściciela (dotąd `null` przepuszczał),
+  ręczne „Wyślij” nadal możliwe; migracja starej kolejki przenosi tylko wpisy z pasującym właścicielem.
+- **`android.allowBackup: false`** — baza GPS/HR i AsyncStorage nie trafiają już do backupu Google (wymaga builda natywnego).
+- [ ] admin: impersonacja → wyloguj → zabij aplikację → start: ekran logowania, nie admin; ponowne logowanie admina działa
+- [ ] admin: impersonacja → serwerowe wygaśnięcie/401 (np. `stop` z SPA) → aplikacja wraca do konta admina bez wylogowania
+- [ ] wylogowanie w trybie samolotowym kończy się ekranem logowania; po włączeniu sieci logowanie innym kontem nie pokazuje cache poprzedniego (Home, odznaki rang, sesja siłowa)
+- [ ] dwa konta na jednym telefonie: aktywność zapisana offline przez A nie jest widoczna w „Niewysłane” u B (lista, baner, eksport, odrzuć); po zalogowaniu A wysyła się sama
+- [ ] nagranie offline → wylogowanie → logowanie tym samym kontem: wpis dalej w kolejce i dostarczony
+- [ ] Android: `adb shell dumpsys backup` / `bmgr` — aplikacja nie bierze udziału w backupie (`allowBackup=false` w manifeście)
+- [ ] Settings → Developer → logi: po wylogowaniu lista pusta; EN/PL bez zmian (brak nowych kluczy)
 
 ## Na `main`, ale niezweryfikowane runtime
 
