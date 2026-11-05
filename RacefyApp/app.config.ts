@@ -144,6 +144,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: VARIANT.iconBackground,
     },
     edgeToEdgeEnabled: true,
+    // Keep the app out of Google's cloud backup. The expo-secure-store rules only
+    // exclude the Keystore-backed prefs; the SQLite tracking DB (GPS tracks, heart
+    // rate) and AsyncStorage (caches, logs) would otherwise go to Google Drive.
+    // The server is the source of truth, so nothing worth restoring is lost.
+    // Not covered: on Android 12+ some manufacturers still copy app data in a direct
+    // device-to-device transfer despite this flag — closing that needs our own
+    // `dataExtractionRules` (a config plugin replacing the secure-store one).
+    allowBackup: false,
     package: VARIANT.appId,
     ...(androidGoogleServicesFile ? { googleServicesFile: androidGoogleServicesFile } : {}),
     permissions: [

@@ -32,7 +32,10 @@ import {
 } from '../services/finishSync';
 import { suppressDeliveredNotification, useFinishSyncRunner } from './useFinishSyncRunner';
 import { useStrengthOutboxRunner } from './useStrengthOutboxRunner';
-import { ensureFinishSyncTaskRegistered } from '../services/finishSyncBackgroundTask';
+import {
+  ensureFinishSyncTaskRegistered,
+  storedAuthUserId,
+} from '../services/finishSyncBackgroundTask';
 import * as trackingDb from '../services/trackingDb';
 
 import {
@@ -1688,17 +1691,21 @@ function useLiveActivityInternal() {
         ? toGpsPoints(trackingDb.getUnsyncedPoints(clientActivityIdRef.current, 100000))
         : [];
       await enqueueUnsyncedActivity(
-        buildUnsyncedSnapshot({
-          activity: state.activity,
-          attempt: lastFinishAttemptRef.current,
-          ledger: ledgerRef.current,
-          clientActivityId: clientActivityIdRef.current,
-          lastFixAt: gpsTracker.lastPosition?.timestamp,
-          stats: localStatsRef.current,
-          location: activityLocationRef.current,
-          pointsCount: points.length,
-          errorMessage,
-        }),
+        {
+          ...buildUnsyncedSnapshot({
+            activity: state.activity,
+            attempt: lastFinishAttemptRef.current,
+            ledger: ledgerRef.current,
+            clientActivityId: clientActivityIdRef.current,
+            lastFixAt: gpsTracker.lastPosition?.timestamp,
+            stats: localStatsRef.current,
+            location: activityLocationRef.current,
+            pointsCount: points.length,
+            errorMessage,
+          }),
+          // Owner, so the queue screen and the migration can tell accounts apart.
+          userId: user?.id ?? storedAuthUserId(),
+        },
         points,
       );
     } catch (err) {
@@ -1865,7 +1872,9 @@ function useLiveActivityInternal() {
           clientActivityId: clientId,
           serverActivityId,
           startPayload: serverActivityId == null ? (session?.startPayload ?? null) : null,
-          userId: user?.id ?? null,
+          // The owner decides who may ever send this entry (services/queueOwnership);
+          // the tracking DB remembers the signed-in id when React state does not.
+          userId: user?.id ?? storedAuthUserId(),
           payload: payload as Record<string, unknown>,
           meta: {
             title: data?.title ?? current.title,

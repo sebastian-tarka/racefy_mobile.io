@@ -1,6 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { api } from '../services/api';
 import { secureStorage } from '../services/secureStorage';
+import { clearUserScopedStorage } from '../services/sessionTeardown';
 import { pushNotificationService } from '../services/pushNotifications';
 import { getConsentStatus } from '../services/legal';
 import { changeLanguage } from '../i18n';
@@ -102,15 +111,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Handle 401 unauthorized responses by clearing user state
-  const handleUnauthorized = useCallback(() => {
-    logger.auth('Session expired, logging out user');
+  /**
+   * End the session on this device, whatever started it: explicit logout or a 401.
+   * One routine, so neither path forgets a step. Every step is best effort and
+   * independent — a phone without network or a failing SDK must still end up on
+   * the login screen with nothing of the previous account left behind:
+   *  - the GPS session in progress and its background task;
+   *  - every token (auth, impersonation, admin) — logging out while impersonating
+   *    used to leave the admin token behind, and the next launch restored the admin;
+   *  - user-scoped AsyncStorage (caches, gym session, buffers) and persisted logs;
+   *  - the Google and RevenueCat identities and the push service state.
+   * Undelivered activities in the SQLite outbox stay, tagged with their owner.
+   */
+  const teardownLocalSession = useCallback(async () => {
+    try {
+      const session = trackingDb.getActiveSession();
+      if (session) {
+        const pending = trackingDb.countUnsynced(session.clientActivityId);
+        if (pending > 0) {
+          logger.warn(
+            'gps',
+            'Session ended with unsynced GPS points — discarding tracked session',
+            {
+              pendingPoints: pending,
+            },
+          );
+        }
+        // Drop the session so a future login (possibly another user) can't
+        // upload these points to a stale activity.
+        trackingDb.discardSession(session.clientActivityId);
+      }
+      await stopBackgroundLocationTracking();
+      await setActiveActivityId(null);
+    } catch (error) {
+      logger.warn('gps', 'Failed to tear down background tracking', { error });
+    }
+
+    try {
+      await api.clearToken();
+      await clearImpersonationState();
+      await secureStorage.clearAllTokens();
+    } catch (error) {
+      logger.error('auth', 'Failed to clear tokens', { error });
+    }
+
+    await clearUserScopedStorage();
+    await logger.clearLogs();
+
+    await signOutFromGoogle().catch((error) =>
+      logger.warn('auth', 'Google sign-out failed', { error }),
+    );
+    await revenueCatLogOut().catch((error) =>
+      logger.warn('auth', 'RevenueCat log-out failed', { error }),
+    );
+    pushNotificationService.reset();
+
     setUser(null);
-    setIsImpersonating(false);
-    setImpersonatedUser(null);
-    setImpersonationSession(null);
-    setOriginalAdminToken(null);
     setRequiresConsent(false);
+  }, [clearImpersonationState]);
+
+  // The 401 callback is registered once (see the effect below) and must stay stable,
+  // so it reads the current impersonation state through refs.
+  const impersonationRef = useRef({ isImpersonating, originalAdminToken });
+  impersonationRef.current = { isImpersonating, originalAdminToken };
+  const teardownRef = useRef(teardownLocalSession);
+  teardownRef.current = teardownLocalSession;
+  const restoreAdminRef = useRef(restoreAdminToken);
+  restoreAdminRef.current = restoreAdminToken;
+  const unauthorizedInFlight = useRef(false);
+
+  /**
+   * 401: the token in use is dead. While impersonating that is usually the
+   * impersonation token expiring — go back to the admin (same as "stop
+   * impersonation"). Otherwise, or when the admin token is dead too, end the
+   * session completely. Concurrent 401s (several requests in flight) run this once.
+   */
+  const handleUnauthorized = useCallback(() => {
+    if (unauthorizedInFlight.current) return;
+    unauthorizedInFlight.current = true;
+    void (async () => {
+      try {
+        const { isImpersonating: impersonating, originalAdminToken: adminToken } =
+          impersonationRef.current;
+        if (impersonating && adminToken) {
+          logger.auth('Impersonation token rejected, returning to the admin account');
+          try {
+            await restoreAdminRef.current(adminToken);
+            return;
+          } catch (error) {
+            logger.warn('auth', 'Could not return to the admin account, ending session', {
+              error,
+            });
+          }
+        }
+        logger.auth('Session expired, logging out user');
+        await teardownRef.current();
+      } finally {
+        unauthorizedInFlight.current = false;
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -279,45 +378,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     logger.auth('Logout');
-    // Unregister from push notifications before logout (non-blocking, but wait)
+    // Unregister from push notifications while the token is still valid.
     try {
       await pushNotificationService.unregisterFromBackend();
     } catch (error) {
       logger.warn('auth', 'Failed to unregister from push notifications during logout', { error });
     }
 
-    // Tear down any background location tracking still attached to the previous session.
-    // Without this, an OS-registered location task survives logout, the active activity
-    // id stays in AsyncStorage, and the background sync timer keeps firing — once the
-    // token is gone it spams "Background sync: FAILED - No auth token" for hours.
+    // Revoke the token server-side. Offline or on a server error this fails — the
+    // local teardown below must still run to the end, so the failure is only logged.
     try {
-      const session = trackingDb.getActiveSession();
-      if (session) {
-        const pending = trackingDb.countUnsynced(session.clientActivityId);
-        if (pending > 0) {
-          logger.warn('gps', 'Logout with unsynced GPS points — discarding tracked session', {
-            pendingPoints: pending,
-          });
-        }
-        // Drop the session so a future login (possibly another user) can't
-        // upload these points to a stale activity.
-        trackingDb.discardSession(session.clientActivityId);
-      }
-      await stopBackgroundLocationTracking();
-      await setActiveActivityId(null);
+      await api.logout();
     } catch (error) {
-      logger.warn('gps', 'Failed to tear down background tracking during logout', { error });
+      logger.warn('auth', 'Server logout failed, ending the session locally', { error });
     }
 
-    await api.logout();
-    await signOutFromGoogle();
-    await revenueCatLogOut();
-    // Reset push notification service state
-    pushNotificationService.reset();
-    setUser(null);
-    setRequiresConsent(false);
+    await teardownLocalSession();
     logger.auth('User logged out');
-  }, []);
+  }, [teardownLocalSession]);
 
   const refreshUser = useCallback(async () => {
     try {

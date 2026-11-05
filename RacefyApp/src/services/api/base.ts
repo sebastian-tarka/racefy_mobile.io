@@ -171,8 +171,11 @@ export class ApiBase {
       ...options.headers,
     };
 
-    if (this.token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+    // Remembered for the 401 branch below: only a rejection of the token still in
+    // use may end the session.
+    const sentToken = this.token;
+    if (sentToken) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${sentToken}`;
     }
 
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -221,7 +224,7 @@ export class ApiBase {
         }
 
         // Handle 401 Unauthorized - token expired or invalid
-        if (response.status === 401) {
+        if (response.status === 401 && this.rejectsCurrentToken(sentToken)) {
           logger.warn('auth', 'Received 401 Unauthorized, clearing token', { endpoint });
           await this.clearToken();
           if (this.onUnauthorizedCallback) {
@@ -306,6 +309,7 @@ export class ApiBase {
       ...(deviceTimeZone && { 'X-Timezone': deviceTimeZone }),
       ...(this.token && { Authorization: `Bearer ${this.token}` }),
     };
+    const sentToken = this.token;
     logger.api(`POST ${endpoint}`, { hasBody: true, isFormData: true, upload: true });
     const startTime = Date.now();
 
@@ -345,7 +349,7 @@ export class ApiBase {
           duration,
           error: (data as Types.ApiError | null)?.message,
         });
-        if (xhr.status === 401) {
+        if (xhr.status === 401 && this.rejectsCurrentToken(sentToken)) {
           void this.clearToken();
           this.onUnauthorizedCallback?.();
         }
@@ -379,6 +383,18 @@ export class ApiBase {
   async clearToken() {
     this.token = null;
     await secureStorage.clearToken();
+  }
+
+  /**
+   * Does a 401 for a request sent with `sentToken` say that the session is over?
+   * Only when it rejects the token still in use. Not when nothing was sent (a
+   * guest, a wrong password), and not when the token has been replaced since —
+   * several requests are usually in flight, and the late 401s of a token that was
+   * already dropped must not wipe the one that took its place (a new login, the
+   * admin token restored after an impersonation expired).
+   */
+  private rejectsCurrentToken(sentToken: string | null): boolean {
+    return sentToken !== null && sentToken === this.token;
   }
 
   isAuthenticated(): boolean {
