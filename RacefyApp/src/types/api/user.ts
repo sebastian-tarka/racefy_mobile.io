@@ -18,6 +18,11 @@ export interface User {
   /** `small` 640 / `medium` 1280 / `large` 1920. */
   background_variants?: ImageVariants | null;
   bio: string | null;
+  /**
+   * Own profile only. `false` for an account that signs in with Google and has no password:
+   * it cannot change its email or password until it sets one through the emailed reset link.
+   */
+  has_password?: boolean;
   role: 'user' | 'moderator' | 'admin';
   created_at: string;
   updated_at: string;

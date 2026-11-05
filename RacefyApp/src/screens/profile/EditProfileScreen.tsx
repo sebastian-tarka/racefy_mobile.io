@@ -53,6 +53,11 @@ export function EditProfileScreen({ navigation }: Props) {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
+  // The API moves the email only with the current password (and signs other devices out).
+  // A Google-only account has none: it sets one first, Settings → Change password.
+  const [currentPassword, setCurrentPassword] = useState('');
+  const hasPassword = user?.has_password !== false;
+  const emailChanged = formData.email.trim() !== (user?.email || '');
 
   useEffect(() => {
     if (user) {
@@ -93,6 +98,10 @@ export function EditProfileScreen({ navigation }: Props) {
       newErrors.email = t('editProfile.validation.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t('editProfile.validation.emailInvalid');
+    } else if (emailChanged && !hasPassword) {
+      newErrors.email = t('editProfile.emailNeedsPassword');
+    } else if (emailChanged && !currentPassword) {
+      newErrors.current_password = t('settings.currentPasswordRequired');
     }
 
     setErrors(newErrors);
@@ -195,6 +204,7 @@ export function EditProfileScreen({ navigation }: Props) {
         username: formData.username,
         email: formData.email,
         bio: formData.bio || undefined,
+        ...(emailChanged ? { current_password: currentPassword } : {}),
       });
 
       // Refresh user data in context
@@ -336,6 +346,33 @@ export function EditProfileScreen({ navigation }: Props) {
               autoCorrect={false}
             />
 
+            {emailChanged && hasPassword && (
+              <>
+                <Input
+                  label={t('settings.currentPassword')}
+                  placeholder={t('settings.currentPasswordPlaceholder')}
+                  value={currentPassword}
+                  onChangeText={(text) => {
+                    setCurrentPassword(text);
+                    setErrors(({ current_password: _cleared, ...rest }) => rest);
+                  }}
+                  error={errors.current_password}
+                  leftIcon="lock-closed-outline"
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                  {t('editProfile.emailChangePasswordHint')}
+                </Text>
+              </>
+            )}
+            {emailChanged && !hasPassword && (
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                {t('editProfile.emailNeedsPassword')}
+              </Text>
+            )}
+
             <View style={styles.bioContainer}>
               <Text style={[styles.label, { color: colors.textPrimary }]}>
                 {t('editProfile.bio')}
@@ -457,6 +494,10 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '500',
     marginBottom: spacing.sm,
+  },
+  hint: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
   },
   bioInput: {
     minHeight: 100,
