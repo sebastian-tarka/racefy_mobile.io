@@ -213,6 +213,22 @@ export function SettingsScreen({ navigation }: Props) {
     return order[(currentIndex + 1) % order.length];
   };
 
+  type HeartRateVisibility = 'only_me' | 'followers' | 'everyone';
+
+  const getHeartRateLabel = (value: HeartRateVisibility) => {
+    const labels = {
+      only_me: t('settings.heartRateOnlyMe'),
+      followers: t('settings.followersOnly'),
+      everyone: t('settings.heartRateEveryone'),
+    };
+    return labels[value];
+  };
+
+  const cycleHeartRate = (current: HeartRateVisibility): HeartRateVisibility => {
+    const order: HeartRateVisibility[] = ['only_me', 'followers', 'everyone'];
+    return order[(order.indexOf(current) + 1) % order.length];
+  };
+
   const cycleMessages = (current: 'everyone' | 'followers' | 'none') => {
     const order: ('everyone' | 'followers' | 'none')[] = ['everyone', 'followers', 'none'];
     const currentIndex = order.indexOf(current);
@@ -629,15 +645,43 @@ export function SettingsScreen({ navigation }: Props) {
             label={t('settings.showStartFinish')}
             rightElement={
               <Switch
-                value={preferences.privacy.show_start_finish_points ?? true}
+                value={preferences.privacy.show_start_finish_points ?? false}
                 onValueChange={(value) =>
                   updateNestedPreference('privacy', 'show_start_finish_points', value)
                 }
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
                 thumbColor={
-                  (preferences.privacy.show_start_finish_points ?? true)
+                  (preferences.privacy.show_start_finish_points ?? false)
                     ? colors.primary
                     : colors.white
+                }
+              />
+            }
+          />
+          <SettingsRow
+            icon="heart-outline"
+            label={t('settings.heartRateVisibility')}
+            value={getHeartRateLabel(preferences.privacy.heart_rate_visibility ?? 'only_me')}
+            onPress={() =>
+              updateNestedPreference(
+                'privacy',
+                'heart_rate_visibility',
+                cycleHeartRate(preferences.privacy.heart_rate_visibility ?? 'only_me'),
+              )
+            }
+          />
+          <SettingsRow
+            icon="megaphone-outline"
+            label={t('settings.milestonePosts')}
+            rightElement={
+              <Switch
+                value={preferences.privacy.milestone_posts ?? false}
+                onValueChange={(value) =>
+                  updateNestedPreference('privacy', 'milestone_posts', value)
+                }
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={
+                  (preferences.privacy.milestone_posts ?? false) ? colors.primary : colors.white
                 }
               />
             }

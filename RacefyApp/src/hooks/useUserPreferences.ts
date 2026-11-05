@@ -43,7 +43,9 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     show_stats: true,
     allow_messages: 'everyone',
     share_achievements: true,
-    show_start_finish_points: true,
+    show_start_finish_points: false,
+    heart_rate_visibility: 'only_me',
+    milestone_posts: false,
   },
   activity_defaults: {
     visibility: 'public',
