@@ -97,6 +97,25 @@ Niezależna od pozostałych gałęzi audytu. Raport: `.notes/AUDYT_BEZPIECZENSTW
 - [ ] admin w trakcie impersonacji: „Kup”, „Przywróć zakupy” i natywny paywall pokazują komunikat o blokadzie, nic się nie otwiera
 - [ ] PL/EN/ES: nowe komunikaty (zdjęcie nieprzygotowane, blokada zakupów, niepotwierdzone konto)
 
+### `fix/account-credentials` — zmiana e-maila z aktualnym hasłem, konto Google ustawia hasło przez link (API A5, 2026-11-05)
+
+Odpowiednik zmiany w API (`racefy_api.io`, gałąź `fix/p1-part2-access`, audyt bezpieczeństwa API 2026-11-04, A5):
+`PUT /profile` ze zmienionym adresem wymaga `current_password`, `PUT /profile/password` nie ustawi hasła kontu bez hasła,
+obie zmiany wylogowują pozostałe urządzenia. **Mergować nie wcześniej, niż API z A5 trafi na serwer, z którym gada build** —
+starsza aplikacja na nowym API dostaje przy zmianie e-maila 422 z błędem pola, którego nie ma na ekranie
+(alert się nie pokaże, zapis po cichu nie przejdzie). Zakres:
+- **Edycja profilu:** po zmianie adresu pojawia się pole „Aktualne hasło” z podpowiedzią; błąd serwera ląduje pod tym polem.
+- **Konto tylko-Google** (`user.has_password === false`): zmiana e-maila zatrzymana z podpowiedzią; w „Zmień hasło” zamiast
+  formularza przycisk „Wyślij mi link” (`POST /forgot-password` na adres konta).
+- `tsc`: zielony poza dwoma testami hooków, które na `main` nie zgadzają się z bieżącym `node_modules` (niezwiązane);
+  eslint (zmienione pliki), knip i test kluczy tłumaczeń zielone. **Nie uruchamiane na urządzeniu.**
+- [ ] konto z hasłem: zmiana samego imienia/nazwy zapisuje się bez pytania o hasło
+- [ ] konto z hasłem: zmiana e-maila → pole hasła; złe hasło → błąd pod polem, adres bez zmian; dobre hasło → zapis, mail weryfikacyjny na nowy adres, powiadomienie na stary
+- [ ] drugie urządzenie zalogowane na to samo konto: po zmianie e-maila lub hasła ląduje na ekranie logowania przy następnym zapytaniu; urządzenie, które zmieniało, zostaje zalogowane
+- [ ] konto tylko-Google: w „Zmień hasło” przycisk „Wyślij mi link”, mail dochodzi, po ustawieniu hasła (i odświeżeniu profilu) formularz hasła i zmiana e-maila działają
+- [ ] konto tylko-Google: próba zmiany e-maila pokazuje podpowiedź i nie wysyła zapytania
+- [ ] PL/EN/ES: nowe teksty bez obcięć na małym telefonie
+
 ## Na `main`, ale niezweryfikowane runtime
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
