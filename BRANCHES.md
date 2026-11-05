@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-04**
+Stan na: **2026-11-05**
 
 ---
 
@@ -34,6 +34,44 @@ Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (H1–H3, M2–M5, M9, L4, L
 - [ ] nagranie offline → wylogowanie → logowanie tym samym kontem: wpis dalej w kolejce i dostarczony
 - [ ] Android: `adb shell dumpsys backup` / `bmgr` — aplikacja nie bierze udziału w backupie (`allowBackup=false` w manifeście)
 - [ ] Settings → Developer → logi: po wylogowaniu lista pusta; EN/PL bez zmian (brak nowych kluczy)
+- [ ] wygaśnięcie impersonacji przy otwartym Home (wiele równoległych zapytań) → powrót do admina, bez wylogowania (401 liczy się tylko dla tokena nadal będącego w użyciu)
+- [ ] błędne hasło na ekranie logowania nie czyści logów ani cache Home gościa
+- [ ] wpis bez właściciela w „Niewysłane”: nie wysyła się sam po zalogowaniu ani po powrocie sieci; „Wyślij” na tym wpisie działa
+- [ ] 401 w trakcie nagrywania (np. unieważnienie tokena z SPA) → ekran logowania, GPS w tle zatrzymany — **nagranie jest kasowane** (sesja nie ma właściciela; decyzja do potwierdzenia, zob. raport → „Stan wdrożenia”)
+
+### `fix/update-link` — ekran wymuszonej aktualizacji otwiera link z serwera (2026-11-05)
+
+Cel aktualizacji to `update_url` z `/config/app` (Admin → Wersja aplikacji): sklep, a dopóki aplikacji nie ma
+w sklepach — TestFlight, APK albo strona builda. Ekran zakładał sklep i potrafił odmówić otwarcia linku. Zakres:
+- **Bez bramki `Linking.canOpenURL`** na ekranie wymuszonej aktualizacji (odpowiada „nie” na wszystko, czego nie deklaruje
+  manifest — m.in. `itms-services://` dla instalacji ad hoc na iOS — choć samo otwarcie działa).
+- **Link widoczny i do skopiowania** na ekranie; bez linku: komunikat + „Sprawdź ponownie” (ponowne pobranie konfiguracji).
+- Komunikaty bez słowa „sklep” (PL/EN/ES). Nowy `utils/externalLinks` (`openUpdateUrl`, `openExternalUrl`), opis w `UI_PATTERNS.md`.
+- **Nie naprawia już zainstalowanych buildów** — te mają stary ekran; dla nich liczy się tylko to, jaki link ustawi admin.
+- [ ] Android, build poniżej `minimum_version`: „Aktualizuj” otwiera link z panelu (strona builda / APK) w przeglądarce i da się pobrać oraz zainstalować nową wersję
+- [ ] iOS: „Aktualizuj” otwiera TestFlight (`https://testflight.apple.com/join/…`); link `.ipa` z panelu nie nadaje się do instalacji — zmienić w panelu
+- [ ] „Kopiuj link” kopiuje adres, przycisk zmienia się na „Link skopiowany”; link na ekranie mieści się na małym telefonie
+- [ ] pusty link w panelu: komunikat o braku linku, „Sprawdź ponownie” po uzupełnieniu linku pokazuje „Aktualizuj”; po obniżeniu minimum ekran znika
+- [ ] baner miękkiej aktualizacji: „Aktualizuj” otwiera ten sam link
+- [ ] PL/EN/ES: teksty ekranu bez obcięć
+
+### `fix/security-phase-2` — wejście z zewnątrz: deep linki, linki zewnętrzne, TLS (Faza 2 audytu bezpieczeństwa 2026-11-05)
+
+**Bazuje na `fix/update-link`** (wspólny `utils/externalLinks`) — mergować po nim. Raport: `.notes/AUDYT_BEZPIECZENSTWA_2026-11-05.md` (M1, L1, L2, L3). Zakres:
+- **Deep linki (M1):** `navigation/linkingGuards` czyści stan zbudowany z linku — `Chat` dostaje tylko `conversationId` będące
+  dodatnią liczbą całkowitą, parametry z query stringa są odrzucane, link bez poprawnego id otwiera listę rozmów
+  (dotąd `racefy://messages/..%2F..%2Fprofile` szło do API jako `/conversations/../../profile` z tokenem użytkownika);
+  `ChatScreen` sprawdza id drugi raz przed zapytaniami.
+- **Linki zewnętrzne (L1):** CTA sponsora, link afiliacyjny nagrody, załączniki czatu i zgłoszeń, wideo ćwiczeń idą przez
+  `openExternalUrl` — tylko www (`http` podnoszone do `https` w release), bez `tel:`, `sms:`, `intent:`, cudzych schematów.
+- **Transport (L2, L3):** Reverb w release zawsze po `wss`; build release nie startuje z bazowym URL API innym niż `https://`.
+- [ ] `adb shell am start -a android.intent.action.VIEW -d "racefy://messages/..%2F..%2Fprofile"` (zalogowany) → lista rozmów, w logach API brak zapytania spoza `/conversations`
+- [ ] `racefy://messages/<id>` i `https://racefy.io/messages/<id>` nadal otwierają rozmowę; push o nowej wiadomości też
+- [ ] link resetu hasła z e-maila nadal otwiera ekran resetu z tokenem
+- [ ] wideo ćwiczenia (YouTube) otwiera się z biblioteki ćwiczeń, szczegółów treningu i sesji; link wpisany jako `http://` też
+- [ ] załącznik (PDF) w czacie i w zgłoszeniu otwiera się; CTA posta sponsorowanego i „Zobacz nagrodę” w evencie otwierają stronę
+- [ ] ekran na żywo: pozycja i wiadomości przychodzą przez WebSocket (staging i produkcja), bez przejścia na polling
+- [ ] build staging i produkcyjny startują normalnie (strażnik `https://` nie blokuje poprawnej konfiguracji)
 
 ## Na `main`, ale niezweryfikowane runtime
 
