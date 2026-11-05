@@ -2567,7 +2567,12 @@
     "later": "Later",
     "installedVersion": "Installed",
     "latestVersion": "Latest",
-    "openStoreFailed": "Could not open the app store"
+    "openFailed": "Could not open the download page. Copy the link and open it in your browser.",
+    "linkHint": "If nothing opens, copy the link and paste it into your browser.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "noLink": "The download link for the new version is not available yet. Try again in a moment.",
+    "checkAgain": "Check again"
   },
   "subscription": {
     "choosePlan": "Choose Your Plan",

@@ -77,7 +77,11 @@ export interface AppUpdateConfig {
   current_version: string;
   /** Below this version the app is blocked. */
   minimum_version: string;
-  /** Store URL the user is sent to when tapping "Update". May be empty. */
+  /**
+   * Where "Update" leads — whatever the admin set for this platform: a store
+   * page, a TestFlight invitation, an APK or a build page. Not necessarily a
+   * store, and may be empty. Open it with `openUpdateUrl()`.
+   */
   update_url: string;
   /** Soft-update banner message (already localized by backend via Accept-Language). */
   update_message?: string;

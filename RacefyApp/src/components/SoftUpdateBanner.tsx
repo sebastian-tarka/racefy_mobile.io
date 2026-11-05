@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../hooks/useTheme';
 import { useAppVersion } from '../hooks/useAppVersion';
 import { logger } from '../services/logger';
+import { openUpdateUrl } from '../utils/externalLinks';
 import { borderRadius, fontSize, spacing } from '../theme';
 
 /**
@@ -56,15 +57,8 @@ export function SoftUpdateBanner() {
   }, [update]);
 
   const handleUpdate = useCallback(async () => {
-    if (!update?.update_url) {
-      Alert.alert(t('common.error'), t('update.openStoreFailed'));
-      return;
-    }
-    try {
-      await Linking.openURL(update.update_url);
-    } catch (error) {
-      logger.error('general', 'Failed to open store URL', { error });
-      Alert.alert(t('common.error'), t('update.openStoreFailed'));
+    if (!(await openUpdateUrl(update?.update_url))) {
+      Alert.alert(t('common.error'), t('update.openFailed'));
     }
   }, [update, t]);
 

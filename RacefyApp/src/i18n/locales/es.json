@@ -2549,7 +2549,12 @@
     "later": "Más tarde",
     "installedVersion": "Instalada",
     "latestVersion": "Más reciente",
-    "openStoreFailed": "No se pudo abrir la tienda de aplicaciones"
+    "openFailed": "No se pudo abrir la página de descarga. Copia el enlace y ábrelo en tu navegador.",
+    "linkHint": "Si no se abre nada, copia el enlace y pégalo en tu navegador.",
+    "copyLink": "Copiar enlace",
+    "linkCopied": "Enlace copiado",
+    "noLink": "El enlace de descarga de la nueva versión aún no está disponible. Inténtalo de nuevo en un momento.",
+    "checkAgain": "Comprobar de nuevo"
   },
   "subscription": {
     "choosePlan": "Elige tu plan",

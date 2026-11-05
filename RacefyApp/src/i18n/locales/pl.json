@@ -2605,7 +2605,12 @@
     "later": "Później",
     "installedVersion": "Zainstalowana",
     "latestVersion": "Najnowsza",
-    "openStoreFailed": "Nie udało się otworzyć sklepu z aplikacjami"
+    "openFailed": "Nie udało się otworzyć strony pobierania. Skopiuj link i otwórz go w przeglądarce.",
+    "linkHint": "Jeśli nic się nie otworzy, skopiuj link i wklej go w przeglądarce.",
+    "copyLink": "Kopiuj link",
+    "linkCopied": "Link skopiowany",
+    "noLink": "Link do pobrania nowej wersji nie jest jeszcze dostępny. Spróbuj ponownie za chwilę.",
+    "checkAgain": "Sprawdź ponownie"
   },
   "subscription": {
     "choosePlan": "Wybierz Plan",
