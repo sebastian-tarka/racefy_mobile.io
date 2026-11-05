@@ -74,9 +74,12 @@ describe('useForegroundInterval', () => {
   it('always calls the latest callback', () => {
     const first = jest.fn();
     const second = jest.fn();
-    const { rerender } = renderHook(({ cb }) => useForegroundInterval(cb, 1000), {
-      initialProps: { cb: first },
-    });
+    const { rerender } = renderHook(
+      ({ cb }: { cb: () => void }) => useForegroundInterval(cb, 1000),
+      {
+        initialProps: { cb: first },
+      },
+    );
     rerender({ cb: second });
     jest.advanceTimersByTime(1000);
     expect(first).not.toHaveBeenCalled();

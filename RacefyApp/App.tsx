@@ -12,6 +12,7 @@ import { AppConfigProvider } from './src/contexts/AppConfigContext';
 import { loadGlobalHapticsPreference } from './src/hooks/useHaptics';
 import { configureRevenueCat } from './src/services/revenuecat';
 import { purgeFinishedSessions } from './src/services/trackingDb';
+import { purgeStaleShareFiles } from './src/utils/shareFiles';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AppNavigator } from './src/navigation';
 
@@ -29,6 +30,8 @@ function AppContent() {
     configureRevenueCat();
     // Trim finished tracking sessions past the retention window (7 days)
     purgeFinishedSessions();
+    // GPX tracks and share images an earlier run did not get to delete
+    purgeStaleShareFiles();
   }, []);
 
   return (

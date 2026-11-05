@@ -8,7 +8,7 @@
  * - Works in background task context (separate JS environment)
  * - Cannot use React hooks or React context
  * - Reads the auth token directly from SecureStore (iOS Keychain / Android Keystore),
- *   with AsyncStorage fallbacks for emulators and legacy installs
+ *   from AsyncStorage only where SecureStore does not exist (some emulators)
  * - Simpler error handling (no UI callbacks)
  */
 
@@ -22,38 +22,24 @@ import type { Activity, FinishActivityRequest, FinishActivityResponse } from '..
 // Must match secureStorage.ts TOKEN_KEY and its '@secure_' AsyncStorage fallback prefix.
 const SECURE_TOKEN_KEY = 'racefy_auth_token';
 const SECURE_TOKEN_FALLBACK_KEY = '@secure_racefy_auth_token';
-const LEGACY_TOKEN_KEY = '@racefy_token';
 
 /**
- * Get auth token from storage.
- * Order: SecureStore (Keychain/Keystore) → AsyncStorage fallback → legacy AsyncStorage.
+ * Get auth token from storage — the same rule as secureStorage.ts: SecureStore
+ * (Keychain / Keystore) where it works, the AsyncStorage copy only where it does
+ * not exist. Tokens still under a pre-SecureStore key are moved by
+ * `secureStorage.migrateLegacyTokens()` when the app starts.
  *
  * On iOS the foreground app stores the token in Keychain via expo-secure-store,
- * so background sync MUST check SecureStore first — otherwise it gets stuck
+ * so background sync MUST read SecureStore — otherwise it gets stuck
  * logging "No auth token" forever (see logs from user 19, May 2026).
  */
 export async function getAuthToken(): Promise<string | null> {
   try {
     if (await SecureStore.isAvailableAsync()) {
-      const secureToken = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
-      if (secureToken) {
-        return secureToken;
-      }
+      return await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
     }
-
-    // SecureStore unavailable (emulator) — check the AsyncStorage fallback.
-    const fallbackToken = await AsyncStorage.getItem(SECURE_TOKEN_FALLBACK_KEY);
-    if (fallbackToken) {
-      return fallbackToken;
-    }
-
-    // Legacy AsyncStorage key, kept for backward compatibility with pre-SecureStore installs.
-    const legacyToken = await AsyncStorage.getItem(LEGACY_TOKEN_KEY);
-    if (legacyToken) {
-      return legacyToken;
-    }
-
-    return null;
+    // SecureStore does not exist here (some emulators) — the AsyncStorage copy is the token.
+    return await AsyncStorage.getItem(SECURE_TOKEN_FALLBACK_KEY);
   } catch (error) {
     logger.error('api', 'Failed to retrieve auth token', { error });
     return null;

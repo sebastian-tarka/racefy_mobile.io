@@ -22,6 +22,7 @@ import { logger } from '../services/logger';
 import { fixStorageUrl } from '../config/api';
 import type { Photo, PhotoOverlayFormat } from '../types/api';
 import { getErrorMessage } from '../utils/errors';
+import { discardShareFileLater } from '../utils/shareFiles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_GAP = 2;
@@ -144,9 +145,9 @@ export function PhotoOverlaySelector({
   const handleSaveToGallery = async () => {
     if (!overlayImageUrl) return;
 
+    const filename = `racefy-overlay-${Date.now()}.jpg`;
+    const localUri = `${FileSystem.cacheDirectory}${filename}`;
     try {
-      const filename = `racefy-overlay-${Date.now()}.jpg`;
-      const localUri = `${FileSystem.cacheDirectory}${filename}`;
       const download = await FileSystem.downloadAsync(overlayImageUrl, localUri);
 
       if (download.status === 200) {
@@ -166,18 +167,20 @@ export function PhotoOverlaySelector({
         logger.error('general', 'Save to gallery failed', { error: err });
         Alert.alert(t('common.error'), t('share.saveFailed'));
       }
+    } finally {
+      // The user's photo with their stats on it — not kept in the cache (utils/shareFiles).
+      discardShareFileLater(localUri);
     }
   };
 
   const handleShare = async () => {
     if (!overlayImageUrl) return;
 
-    try {
-      const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) return;
+    if (!(await Sharing.isAvailableAsync())) return;
 
-      const filename = `racefy-overlay-${Date.now()}.jpg`;
-      const localUri = `${FileSystem.cacheDirectory}${filename}`;
+    const filename = `racefy-overlay-${Date.now()}.jpg`;
+    const localUri = `${FileSystem.cacheDirectory}${filename}`;
+    try {
       const download = await FileSystem.downloadAsync(overlayImageUrl, localUri);
 
       if (download.status === 200) {
@@ -185,15 +188,13 @@ export function PhotoOverlaySelector({
           mimeType: 'image/jpeg',
           UTI: 'public.jpeg',
         });
-
-        setTimeout(() => {
-          FileSystem.deleteAsync(download.uri, { idempotent: true }).catch(() => {});
-        }, 10000);
       }
     } catch (err) {
       if (getErrorMessage(err) !== 'User did not share') {
         logger.error('general', 'Photo overlay share failed', { error: err });
       }
+    } finally {
+      discardShareFileLater(localUri);
     }
   };
 

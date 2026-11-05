@@ -347,10 +347,13 @@ show_env_vars() {
 
     echo ""
     case "$choice" in
-        1) eas env:list preview --include-sensitive ;;
-        2) eas env:list production --include-sensitive ;;
-        3) eas env:list development --include-sensitive ;;
+        1) eas env:list preview ;;
+        2) eas env:list production ;;
+        3) eas env:list development ;;
     esac
+    # Values of secrets are deliberately not printed: the terminal keeps them in its
+    # scrollback and in recordings. When one is really needed, ask for it explicitly:
+    # eas env:list <environment> --include-sensitive
 }
 
 # ── Release ──────────────────────────────────────────────────

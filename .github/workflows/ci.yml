@@ -9,6 +9,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The checks only read the code. Without this the job token gets the repository's
+# default permissions, which may include write.
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: tsc · lint · knip · jest
@@ -18,10 +23,14 @@ jobs:
       run:
         working-directory: RacefyApp
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned to a commit: a tag can be moved to different code, a commit cannot.
+      # To update, take the commit of the new release tag and keep the version in the comment.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       # Same Node as EAS builds; the SQLite test suites need better-sqlite3 built for it.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: RacefyApp/.nvmrc
           cache: npm
