@@ -209,6 +209,7 @@ export function EventFormScreen({ navigation, route }: Props) {
       'show_start_finish_points',
       'start_finish_note',
       'allow_multiple_activities',
+      'allow_manual_activities',
       'auto_finalize_results',
     ],
     rewards: [
@@ -796,6 +797,31 @@ export function EventFormScreen({ navigation, route }: Props) {
                     <Switch
                       value={formData.allow_multiple_activities}
                       onValueChange={(value) => updateField('allow_multiple_activities', value)}
+                      disabled={isLimitedEdit}
+                      trackColor={{ true: colors.primary, false: colors.border }}
+                      thumbColor={colors.onPrimary}
+                    />
+                  </View>
+                  {/* Count activities without a GPS track (off: only GPS activities enter the results) */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: spacing.md,
+                    }}
+                  >
+                    <View style={{ flex: 1, paddingRight: spacing.md }}>
+                      <Text style={[styles.checkboxLabel, { color: colors.textPrimary }]}>
+                        {t('eventForm.allowManualActivitiesToggle')}
+                      </Text>
+                      <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+                        {t('eventForm.allowManualActivitiesDescription')}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={formData.allow_manual_activities}
+                      onValueChange={(value) => updateField('allow_manual_activities', value)}
                       disabled={isLimitedEdit}
                       trackColor={{ true: colors.primary, false: colors.border }}
                       thumbColor={colors.onPrimary}

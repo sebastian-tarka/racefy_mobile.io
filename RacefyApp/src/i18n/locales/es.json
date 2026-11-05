@@ -1439,6 +1439,8 @@
     "allowMultipleActivities": "Agregación de actividades",
     "allowMultipleActivitiesDescription": "Permitir que los participantes envíen múltiples actividades que se agregarán para este evento",
     "allowMultipleActivitiesToggle": "Permitir múltiples actividades",
+    "allowManualActivitiesToggle": "Contar actividades sin ruta GPS",
+    "allowManualActivitiesDescription": "Desactivado: solo entran en los resultados las actividades grabadas con GPS o importadas de un archivo GPS. Actívalo para retos en cinta o en interior.",
     "autoFinalizeResults": "Finalización automática de resultados",
     "autoFinalizeResultsDescription": "Calcular resultados y otorgar puntos automáticamente al finalizar el evento. Si está desactivado, el organizador debe finalizar manualmente.",
     "visibility": "Visibilidad",

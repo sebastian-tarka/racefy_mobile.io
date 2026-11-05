@@ -68,8 +68,15 @@ export function EventResultCard({
     case 'recording':
     case 'in_progress':
       label = t('eventResult.labelOpen', 'Your result');
-      main = t('eventResult.open', 'Activity still open');
-      sub = t('eventResult.openNote', 'Finish and save it — the result will be counted.');
+      if (result.reason) {
+        // Saved, but the event does not count it (no GPS track, outside the event's dates,
+        // impossible speed) — said while there is still time to record another one.
+        main = t('eventResult.notCounted', 'Activity not counted');
+        sub = t(`eventResult.reason.${result.reason}`);
+      } else {
+        main = t('eventResult.open', 'Activity still open');
+        sub = t('eventResult.openNote', 'Finish and save it — the result will be counted.');
+      }
       break;
     default:
       label = t('eventResult.labelNotStarted', 'Your result');

@@ -102,6 +102,8 @@ export interface Event {
   start_finish_note?: string | null; // Explanation why markers are shown
   // Activity aggregation
   allow_multiple_activities?: boolean; // Allow multiple activities to be aggregated
+  // false (default): only activities with a GPS track enter the results
+  allow_manual_activities?: boolean;
   // Point rewards
   point_rewards?: EventPointRewards;
   // Route planning
@@ -238,6 +240,8 @@ export interface CreateEventRequest {
   start_finish_note?: string; // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Count activities without a GPS track (treadmill, typed in); default false
+  allow_manual_activities?: boolean;
   // Auto-finalize results
   auto_finalize_results?: boolean;
   // Point rewards
@@ -296,6 +300,8 @@ export interface UpdateEventRequest {
   start_finish_note?: string; // Explanation why markers are shown (e.g., "Race starts at City Hall")
   // Activity aggregation
   allow_multiple_activities?: boolean;
+  // Count activities without a GPS track (treadmill, typed in); default false
+  allow_manual_activities?: boolean;
   // Auto-finalize results
   auto_finalize_results?: boolean;
   // Point rewards
@@ -404,7 +410,18 @@ export interface EventResult {
   created_at: string | null;
 }
 
-export type EventDnfReason = 'target_distance' | 'target_elevation' | 'time_limit';
+/**
+ * Why a participant has no place. The first three: a target missed (event over). The last three
+ * (API 2026-11-05): the event does not count their activities at all — started outside the
+ * event's dates, no GPS track (event with allow_manual_activities off), impossible distance/time.
+ */
+export type EventDnfReason =
+  | 'target_distance'
+  | 'target_elevation'
+  | 'time_limit'
+  | 'outside_window'
+  | 'no_gps'
+  | 'implausible';
 
 /** A participant who completed the event activity but missed a target (GET /results). */
 export interface EventDidNotFinishEntry {
