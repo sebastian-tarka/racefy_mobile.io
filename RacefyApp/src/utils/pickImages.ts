@@ -1,12 +1,7 @@
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import i18n from '../i18n';
-
-interface PickedImage {
-  uri: string;
-  width: number;
-  height: number;
-}
+import { stripImagesMetadata, type LocalImage } from './imageMetadata';
 
 interface PickImagesOptions {
   /** Default 'library'. */
@@ -19,14 +14,22 @@ interface PickImagesOptions {
   aspect?: [number, number];
   /** Shown when permission is denied; defaults to the generic gallery/camera message. */
   deniedMessage?: string;
+  /** Downscale so the longer side is at most this many pixels. */
+  maxSide?: number;
+  /** JPEG quality of the copy that is returned (see utils/imageMetadata). */
+  quality?: number;
 }
 
 /**
  * Ask for the permission, open the gallery or the camera, return what was picked
  * (empty when cancelled or denied). A denied permission always tells the user why
  * nothing happened.
+ *
+ * What comes back is never the file the picker produced but a re-encoded copy
+ * without EXIF (location, device, date) — see utils/imageMetadata. An image that
+ * cannot be re-encoded is left out, and the user is told.
  */
-export async function pickImages(options: PickImagesOptions = {}): Promise<PickedImage[]> {
+export async function pickImages(options: PickImagesOptions = {}): Promise<LocalImage[]> {
   const camera = options.source === 'camera';
 
   const { status } = camera
@@ -55,5 +58,15 @@ export async function pickImages(options: PickImagesOptions = {}): Promise<Picke
       });
 
   if (result.canceled) return [];
-  return result.assets.map((a) => ({ uri: a.uri, width: a.width, height: a.height }));
+  const { images, failed } = await stripImagesMetadata(
+    result.assets.map((a) => ({ uri: a.uri, width: a.width, height: a.height })),
+    { maxSide: options.maxSide, quality: options.quality },
+  );
+  if (failed > 0) alertImagesLeftOut();
+  return images;
+}
+
+/** For callers that open the picker themselves and strip with utils/imageMetadata. */
+export function alertImagesLeftOut(): void {
+  Alert.alert(i18n.t('common.error'), i18n.t('common.imagePrepareFailed'));
 }

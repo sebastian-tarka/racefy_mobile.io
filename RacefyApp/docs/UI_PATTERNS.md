@@ -237,6 +237,25 @@ Helpers (labels "55×8", volume shares, rhythm, deltas) live in `strengthSession
 - Series colours: `colors.series` (stable order, light/dark). Mono figures: `fontFamily.mono`.
 - `muscle_group` is mostly `"other"` — nothing is built on it.
 
+### Picking images for upload (`utils/pickImages`, `utils/imageMetadata`)
+
+A photo file carries EXIF: where and when it was taken, on what device. The picker's `exif: false`
+only hides that from JavaScript — the file still has it. Every image the app uploads must therefore
+be a re-encoded copy:
+
+```tsx
+import { pickImages } from '../utils/pickImages';
+
+// Permission, picker, and a copy without metadata — in one call. Empty when cancelled or denied.
+const [avatar] = await pickImages({ allowsEditing: true, aspect: [1, 1] });
+const photos = await pickImages({ multiple: true, selectionLimit: 5, maxSide: 2048 });
+```
+
+A screen that has to open `expo-image-picker` itself (mixed photos and videos — `MediaPicker`) runs
+each image through `stripImageMetadata()` / `stripImagesMetadata()` before using its `uri`, and calls
+`alertImagesLeftOut()` when one comes back `null`. Never fall back to the picked file. Videos cannot be
+cleaned on the phone; the server strips them.
+
 ### Remote images (`expo-image` + variants)
 
 Every remote image goes through `expo-image` with `cachePolicy="memory-disk"` — never React

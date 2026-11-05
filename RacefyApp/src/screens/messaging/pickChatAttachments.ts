@@ -1,7 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
-import { logger } from '../../services/logger';
 import { getFilename, getImageMimeType } from '../../utils/mime';
 import { pickImages } from '../../utils/pickImages';
 import {
@@ -26,33 +24,13 @@ async function fileSize(uri: string): Promise<number | null> {
   }
 }
 
-/**
- * Downscales a picked photo to at most 2048 px on its longer side and re-encodes it as
- * JPEG. Falls back to the original when the manipulator fails (the size check and the
- * server still guard the limit).
- */
-async function prepareImage(picked: {
+/** A picked photo (already downscaled and stripped of metadata by `pickImages`) as an attachment. */
+async function toAttachment(picked: {
   uri: string;
   width: number;
   height: number;
 }): Promise<LocalAttachment> {
-  let { uri, width, height } = picked;
-  const longest = Math.max(width, height);
-  try {
-    const context = ImageManipulator.manipulate(uri);
-    if (longest > MAX_IMAGE_SIDE) {
-      const scale = MAX_IMAGE_SIDE / longest;
-      context.resize({ width: Math.round(width * scale), height: Math.round(height * scale) });
-    }
-    const rendered = await context.renderAsync();
-    const saved = await rendered.saveAsync({ compress: JPEG_QUALITY, format: SaveFormat.JPEG });
-    uri = saved.uri;
-    width = saved.width;
-    height = saved.height;
-    rendered.release();
-  } catch (error) {
-    logger.warn('general', 'Chat photo downscale failed, sending the original', { error });
-  }
+  const { uri, width, height } = picked;
   const name = getFilename(uri, 'photo.jpg');
   return {
     localId: localId(),
@@ -66,7 +44,10 @@ async function prepareImage(picked: {
   };
 }
 
-/** Gallery (several) or camera (one) photos, downscaled. Empty when cancelled or denied. */
+/**
+ * Gallery (several) or camera (one) photos, downscaled to at most 2048 px on the
+ * longer side and re-encoded. Empty when cancelled or denied.
+ */
 export async function pickChatImages(
   source: 'library' | 'camera',
   room: number = MAX_ATTACHMENTS,
@@ -75,9 +56,11 @@ export async function pickChatImages(
     source,
     multiple: source === 'library',
     selectionLimit: Math.max(1, room),
+    maxSide: MAX_IMAGE_SIDE,
+    quality: JPEG_QUALITY,
   });
   const prepared: LocalAttachment[] = [];
-  for (const image of picked) prepared.push(await prepareImage(image));
+  for (const image of picked) prepared.push(await toAttachment(image));
   return prepared;
 }
 

@@ -1,5 +1,6 @@
 {
   "common": {
+    "imagePrepareFailed": "No se pudo preparar la foto para enviarla. Prueba con otra.",
     "rateLimited": "Demasiadas solicitudes, inténtalo de nuevo en un momento",
     "loading": "Cargando...",
     "loadingMore": "Cargando más...",
@@ -2580,6 +2581,8 @@
     "purchaseSuccess": "¡Bienvenido a Premium!",
     "purchaseSuccessDesc": "Tu suscripción ya está activa. ¡Disfruta de todas las funciones premium!",
     "purchaseFailed": "No se pudo completar la compra. Por favor intenta de nuevo.",
+    "impersonationBlocked": "Las compras están desactivadas mientras ves la cuenta de un usuario.",
+    "identityMismatch": "No se pudo confirmar la cuenta a la que corresponde la compra. Vuelve a iniciar sesión e inténtalo de nuevo.",
     "restoreSuccess": "Compras restauradas",
     "restoreSuccessDesc": "Tus compras anteriores han sido restauradas exitosamente.",
     "restoreEmpty": "No se encontraron compras",

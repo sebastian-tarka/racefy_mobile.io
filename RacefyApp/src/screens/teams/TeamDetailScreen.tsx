@@ -29,6 +29,8 @@ import { TeamActivityBoardTab } from './TeamActivityBoardTab';
 import { spacing, fontSize } from '../../theme';
 import { api } from '../../services/api';
 import { getErrorMessage, getErrorStatus } from '../../utils/errors';
+import { stripImageMetadata } from '../../utils/imageMetadata';
+import { alertImagesLeftOut } from '../../utils/pickImages';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TeamDetail'>;
 type TabType = 'members' | 'stats' | 'events' | 'activities';
@@ -109,9 +111,16 @@ export function TeamDetailScreen({ route, navigation }: Props) {
     });
     if (result.canceled || !result.assets[0]) return;
 
+    // Re-encoded without EXIF, like every other image (utils/imageMetadata).
+    const avatar = await stripImageMetadata(result.assets[0]);
+    if (!avatar) {
+      alertImagesLeftOut();
+      return;
+    }
+
     setUploadingAvatar(true);
     try {
-      await api.uploadTeamAvatar(team.id, result.assets[0].uri);
+      await api.uploadTeamAvatar(team.id, avatar.uri);
       fetchTeam();
     } catch {
       Alert.alert(t('common.error'), t('common.tryAgain'));
