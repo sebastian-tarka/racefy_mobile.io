@@ -74,6 +74,10 @@ export interface UserPreferences {
     allow_messages: 'everyone' | 'followers' | 'none';
     share_achievements?: boolean;
     show_start_finish_points?: boolean;
+    /** Who else sees my heart rate (health data). API default 'only_me'; guests never. */
+    heart_rate_visibility?: 'only_me' | 'followers' | 'everyone';
+    /** Consent for Racefy's public "milestone" posts about me. API default false. */
+    milestone_posts?: boolean;
   };
   activity_defaults: {
     visibility: 'public' | 'followers' | 'private';
