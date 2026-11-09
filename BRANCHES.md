@@ -9,7 +9,7 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-05**
+Stan na: **2026-11-09**
 
 ---
 
@@ -33,6 +33,18 @@ starsza aplikacja na nowym API dostaje przy zmianie e-maila 422 z błędem pola,
 - [ ] konto tylko-Google: w „Zmień hasło” przycisk „Wyślij mi link”, mail dochodzi, po ustawieniu hasła (i odświeżeniu profilu) formularz hasła i zmiana e-maila działają
 - [ ] konto tylko-Google: próba zmiany e-maila pokazuje podpowiedź i nie wysyła zapytania
 - [ ] PL/EN/ES: nowe teksty bez obcięć na małym telefonie
+
+### `fix/comment-count-thread` — licznik komentarzy po usunięciu komentarza z odpowiedziami (API 2026-11-09)
+
+Odpowiednik zmiany w API (`racefy_api.io`, v1.3.78, commit b5b87757): `DELETE /comments/{id}` usuwa komentarz razem
+z odpowiedziami i zmniejsza `comments_count` o cały wątek, a nie o 1. `CommentSection` zmniejszał lokalny licznik o 1,
+więc po usunięciu komentarza z odpowiedziami licznik pod postem był zawyżony do odświeżenia. Teraz spada o
+1 + liczbę widocznych odpowiedzi (głębsze zagnieżdżenia app nie pokazuje). API już jest na produkcji — merge nie
+zależy od wydania backendu.
+- `tsc` i eslint (zmieniony plik) zielone; testów komponentu brak. **Nie uruchamiane na urządzeniu.**
+- [ ] usunięcie komentarza bez odpowiedzi: licznik spada o 1
+- [ ] usunięcie komentarza z 2 odpowiedziami: licznik spada o 3 i zgadza się z licznikiem po odświeżeniu posta
+- [ ] usunięcie samej odpowiedzi: licznik spada o 1
 
 ## Na `main`, ale niezweryfikowane runtime
 
