@@ -79,6 +79,7 @@ export interface FormData {
   start_finish_note: string;
   // Activity aggregation
   allow_multiple_activities: boolean;
+  allow_manual_activities: boolean;
   // Auto-finalize results
   auto_finalize_results: boolean;
   // Visibility
@@ -124,6 +125,7 @@ export const initialFormData: FormData = {
   start_finish_note: '',
   // Activity aggregation
   allow_multiple_activities: false,
+  allow_manual_activities: false,
   // Auto-finalize results
   auto_finalize_results: true,
   // Visibility

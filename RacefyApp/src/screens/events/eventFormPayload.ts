@@ -53,6 +53,7 @@ function buildSharedFields(formData: EventFormData, { entryFeeEnabled }: Payload
     show_start_finish_points: formData.show_start_finish_points,
     start_finish_note: formData.start_finish_note || undefined,
     allow_multiple_activities: formData.allow_multiple_activities,
+    allow_manual_activities: formData.allow_manual_activities,
     visibility: formData.visibility,
     // Minutes in the form, seconds in the API
     time_limit: formData.time_limit ? parseInt(formData.time_limit, 10) * 60 : undefined,
@@ -148,6 +149,7 @@ export function eventToFormData(event: Event): EventFormData {
     start_finish_note: event.start_finish_note || '',
     // Activity aggregation
     allow_multiple_activities: event.allow_multiple_activities ?? false,
+    allow_manual_activities: event.allow_manual_activities ?? false,
     auto_finalize_results: event.auto_finalize_results !== false,
     // Visibility
     visibility: event.visibility || 'public',

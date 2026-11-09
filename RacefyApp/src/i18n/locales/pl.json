@@ -1471,6 +1471,8 @@
     "allowMultipleActivities": "Agregacja aktywności",
     "allowMultipleActivitiesDescription": "Pozwól uczestnikom na przesyłanie wielu aktywności, które zostaną zagregowane dla tego wydarzenia",
     "allowMultipleActivitiesToggle": "Zezwól na wiele aktywności",
+    "allowManualActivitiesToggle": "Licz aktywności bez śladu GPS",
+    "allowManualActivitiesDescription": "Wyłączone: do wyników wchodzą tylko aktywności nagrane z GPS lub zaimportowane z pliku GPS. Włącz dla wyzwań na bieżni i pod dachem.",
     "autoFinalizeResults": "Automatyczna finalizacja wyników",
     "autoFinalizeResultsDescription": "Automatycznie oblicz wyniki i przyznaj punkty po zakończeniu wydarzenia. Jeśli wyłączone, organizator musi sfinalizować ręcznie.",
     "visibility": "Widoczność",
@@ -1570,6 +1572,7 @@
     },
     "aiCover": {
       "open": "Wygeneruj okładkę AI",
+      "notCounted": "Aktywność się nie liczy",
       "title": "Okładka AI",
       "intro": "Wygeneruj propozycje okładki na podstawie sportu, miejsca i pory roku wydarzenia. Każda generacja daje {{count}} podglądy; użycie dowolnego podglądu — tu albo w aplikacji mobilnej — jest bezpłatne.",
       "hintLabel": "Co ma przedstawiać? (opcjonalnie)",
@@ -3957,12 +3960,18 @@
       "reason": {
         "target_distance": "poniżej wymaganego dystansu",
         "target_elevation": "poniżej wymaganego przewyższenia",
-        "time_limit": "poza limitem czasu"
+        "time_limit": "poza limitem czasu",
+        "outside_window": "rozpoczęta poza terminem wydarzenia",
+        "no_gps": "to wydarzenie liczy tylko aktywności z GPS",
+        "implausible": "niemożliwy dystans i czas"
       },
       "reasonShort": {
         "target_distance": "poniżej dystansu",
         "target_elevation": "poniżej przewyższenia",
-        "time_limit": "poza limitem"
+        "time_limit": "poza limitem",
+        "outside_window": "poza terminem",
+        "no_gps": "brak śladu GPS",
+        "implausible": "nie liczy się"
       },
       "labelOpen": "Twój wynik",
       "open": "Aktywność jeszcze trwa",

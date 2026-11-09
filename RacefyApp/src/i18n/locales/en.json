@@ -1439,6 +1439,8 @@
     "allowMultipleActivities": "Activity Aggregation",
     "allowMultipleActivitiesDescription": "Allow participants to submit multiple activities that will be aggregated for this event",
     "allowMultipleActivitiesToggle": "Allow multiple activities",
+    "allowManualActivitiesToggle": "Count activities without a GPS track",
+    "allowManualActivitiesDescription": "Off: only activities recorded with GPS or imported from a GPS file enter the results. Turn on for treadmill and indoor challenges.",
     "autoFinalizeResults": "Auto-finalize Results",
     "autoFinalizeResultsDescription": "Automatically calculate results and award points when the event ends. If disabled, the organizer must finalize manually.",
     "visibility": "Visibility",
@@ -1534,6 +1536,7 @@
     },
     "aiCover": {
       "open": "Generate cover with AI",
+      "notCounted": "Activity not counted",
       "title": "AI cover",
       "intro": "Generate cover ideas from your event's sport, place and season. Each generation gives {{count}} previews; using any preview — here or in the mobile app — is free.",
       "hintLabel": "What should it show? (optional)",
@@ -3876,12 +3879,18 @@
       "reason": {
         "target_distance": "below the distance target",
         "target_elevation": "below the elevation target",
-        "time_limit": "over the time limit"
+        "time_limit": "over the time limit",
+        "outside_window": "started outside the event dates",
+        "no_gps": "this event counts only GPS activities",
+        "implausible": "distance and time not possible"
       },
       "reasonShort": {
         "target_distance": "under distance",
         "target_elevation": "under elevation",
-        "time_limit": "over limit"
+        "time_limit": "over limit",
+        "outside_window": "outside dates",
+        "no_gps": "no GPS track",
+        "implausible": "not counted"
       },
       "labelOpen": "Your result",
       "open": "Activity still open",
