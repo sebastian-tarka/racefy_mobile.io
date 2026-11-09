@@ -136,6 +136,10 @@ export function CommentSection({
 
   const handleDeleteComment = useCallback(async (commentId: number) => {
     await api.deleteComment(commentId);
+    // The API removes a top-level comment together with its replies and takes all of them out of
+    // comments_count (API 2026-11-09), so the local count drops by the whole thread.
+    const deletedTopLevel = comments.find((c) => c.id === commentId);
+    const removed = 1 + (deletedTopLevel?.replies?.length ?? 0);
     setComments((prev) => {
       // Remove from top-level
       const filtered = prev.filter((c) => c.id !== commentId);
@@ -145,9 +149,9 @@ export function CommentSection({
         return { ...c, replies: c.replies!.filter((r) => r.id !== commentId) };
       });
     });
-    setLocalCommentsCount((prev) => prev - 1);
+    setLocalCommentsCount((prev) => Math.max(0, prev - removed));
     emitRefresh('feed');
-  }, []);
+  }, [comments]);
 
   const handleEditComment = useCallback(
     async (
