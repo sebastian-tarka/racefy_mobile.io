@@ -312,6 +312,8 @@ export function UsersMixin<TBase extends Constructable<ApiBase>>(Base: TBase) {
       username?: string;
       email?: string;
       bio?: string;
+      /** Required by the API when `email` differs from the current one (422 `current_password_required`). */
+      current_password?: string;
     }): Promise<Types.User> {
       const response = await this.request<Types.ApiResponse<Types.User>>('/profile', {
         method: 'PUT',

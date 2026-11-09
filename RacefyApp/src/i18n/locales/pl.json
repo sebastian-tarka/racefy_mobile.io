@@ -616,6 +616,8 @@
     "updateFailed": "Nie udało się zaktualizować profilu. Spróbuj ponownie.",
     "avatarUploadFailed": "Nie udało się przesłać zdjęcia profilowego. Spróbuj ponownie.",
     "backgroundUploadFailed": "Nie udało się przesłać zdjęcia w tle. Spróbuj ponownie.",
+    "emailChangePasswordHint": "Zmiana adresu e-mail wymaga aktualnego hasła. Pozostałe urządzenia zostaną wylogowane.",
+    "emailNeedsPassword": "To konto loguje się przez Google i nie ma jeszcze hasła. Ustaw je w Ustawienia → Zmień hasło, a potem zmień adres e-mail.",
     "permissionDenied": "Wymagane jest pozwolenie na dostęp do zdjęć.",
     "cameraPermissionDenied": "Wymagane jest pozwolenie na dostęp do aparatu.",
     "validation": {
@@ -1627,6 +1629,9 @@
     "passwordChanged": "Hasło zostało zmienione",
     "passwordChangeFailed": "Nie udało się zmienić hasła",
     "incorrectPassword": "Nieprawidłowe hasło",
+    "setPasswordInfo": "To konto loguje się przez Google i nie ma hasła. Wyślemy na {{email}} link do jego ustawienia.",
+    "sendSetPasswordLink": "Wyślij mi link",
+    "setPasswordLinkSent": "Link wysłany na {{email}}. Sprawdź skrzynkę.",
     "preferences": "Preferencje",
     "units": "Jednostki",
     "metric": "Metryczne (km)",

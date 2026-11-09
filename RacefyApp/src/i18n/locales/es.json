@@ -592,6 +592,8 @@
     "updateFailed": "Error al actualizar el perfil. Por favor intenta de nuevo.",
     "avatarUploadFailed": "Error al subir la foto de perfil. Por favor intenta de nuevo.",
     "backgroundUploadFailed": "Error al subir la foto de portada. Por favor intenta de nuevo.",
+    "emailChangePasswordHint": "Cambiar el correo requiere tu contraseña actual. Se cerrará la sesión en los demás dispositivos.",
+    "emailNeedsPassword": "Esta cuenta inicia sesión con Google y aún no tiene contraseña. Establécela en Ajustes → Cambiar contraseña y luego cambia el correo.",
     "permissionDenied": "Se requiere permiso para acceder a las fotos y seleccionar una imagen.",
     "cameraPermissionDenied": "Se requiere permiso para acceder a la cámara y tomar una foto.",
     "validation": {
@@ -1590,6 +1592,9 @@
     "passwordChanged": "Contraseña cambiada exitosamente",
     "passwordChangeFailed": "Error al cambiar la contraseña",
     "incorrectPassword": "Contraseña incorrecta",
+    "setPasswordInfo": "Esta cuenta inicia sesión con Google y no tiene contraseña. Enviaremos a {{email}} un enlace para establecerla.",
+    "sendSetPasswordLink": "Enviarme el enlace",
+    "setPasswordLinkSent": "Enlace enviado a {{email}}. Revisa tu bandeja de entrada.",
     "preferences": "Preferencias",
     "units": "Unidades",
     "metric": "Métrico (km)",

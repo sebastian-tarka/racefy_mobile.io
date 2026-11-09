@@ -588,6 +588,8 @@
     "updateFailed": "Failed to update profile. Please try again.",
     "avatarUploadFailed": "Failed to upload profile photo. Please try again.",
     "backgroundUploadFailed": "Failed to upload cover photo. Please try again.",
+    "emailChangePasswordHint": "Changing the email needs your current password. Other devices will be signed out.",
+    "emailNeedsPassword": "This account signs in with Google and has no password yet. Set one in Settings → Change password, then change the email.",
     "permissionDenied": "Permission to access photos is required to select an image.",
     "cameraPermissionDenied": "Permission to access camera is required to take a photo.",
     "validation": {
@@ -1591,6 +1593,9 @@
     "passwordChanged": "Password changed successfully",
     "passwordChangeFailed": "Failed to change password",
     "incorrectPassword": "Incorrect password",
+    "setPasswordInfo": "This account signs in with Google and has no password. We will send a link to {{email}} to set one.",
+    "sendSetPasswordLink": "Send me the link",
+    "setPasswordLinkSent": "Link sent to {{email}}. Check your inbox.",
     "preferences": "Preferences",
     "units": "Units",
     "metric": "Metric (km)",
