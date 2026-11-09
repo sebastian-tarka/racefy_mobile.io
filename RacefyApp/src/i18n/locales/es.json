@@ -675,7 +675,11 @@
       "seePrize": "Ver premio",
       "validUntil": "Válido hasta {{date}}"
     },
-    "create": "Crear"
+    "create": "Crear",
+    "timezone": {
+      "label": "Zona horaria del evento",
+      "hint": "Las fechas de arriba son la hora local de esta zona (donde se celebra el evento; si es en línea, la tuya). Los participantes las verán en su propia hora."
+    }
   },
   "eventDetail": {
     "title": "Detalles del evento",
@@ -799,7 +803,8 @@
       "title": "Reto por periodo",
       "registered": "Cada actividad de {{sport}} que empieces entre el {{from}} y el {{to}} cuenta automáticamente; no hace falta elegir el evento al empezar.",
       "notRegistered": "Cuando te inscribas, cada actividad de {{sport}} que empieces entre el {{from}} y el {{to}} contará automáticamente."
-    }
+    },
+    "joinOngoing": "Este evento está en curso — todavía puedes unirte"
   },
   "activityDetail": {
     "title": "Detalles de la actividad",
@@ -1569,7 +1574,8 @@
       "afterCreate": "Podrás generar una portada con IA después de crear el evento.",
       "library": "Tus portadas anteriores",
       "libraryHint": "Generadas para tus otros eventos. Usarlas es gratis y no consume tu límite.",
-      "libraryFrom": "De: {{title}}"
+      "libraryFrom": "De: {{title}}",
+      "notCounted": "Actividad no contabilizada"
     }
   },
   "permissions": {
@@ -1840,7 +1846,16 @@
     "notif_activity_started": "Sesión iniciada",
     "notif_activity_started_desc": "Alguien a quien sigues acaba de empezar una sesión.",
     "notif_activity_live_started": "Retransmisión en directo",
-    "notif_activity_live_started_desc": "Alguien a quien sigues está retransmitiendo y puedes unirte."
+    "notif_activity_live_started_desc": "Alguien a quien sigues está retransmitiendo y puedes unirte.",
+    "timezone": {
+      "title": "Zona horaria",
+      "description": "Los recordatorios, los correos y lo que cuenta como «hoy» en estadísticas y objetivos siguen esta zona.",
+      "auto": "Automática",
+      "detected": "Zona de este dispositivo: {{zone}}",
+      "unknown": "desconocida",
+      "manual": "Elige una zona",
+      "search": "Buscar zonas (ciudad o región)"
+    }
   },
   "comments": {
     "title": "Comentarios",
@@ -2341,7 +2356,8 @@
       "skipFailed": "Error al omitir la semana",
       "checkProgramFailed": "Error al verificar el programa existente. Por favor intenta de nuevo.",
       "linkFailed": "Error al vincular la actividad",
-      "unlinkFailed": "Error al desvincular la actividad"
+      "unlinkFailed": "Error al desvincular la actividad",
+      "initTimedOut": "El servidor ha tardado demasiado en responder. Puede que tu plan se haya creado igualmente — revisa la lista de entrenamientos en un momento."
     },
     "coachingHints": {
       "sectionTitle": "Consejos del entrenador",
@@ -2355,7 +2371,9 @@
       "generationComplete": "¡Todos los consejos del entrenador generados!",
       "generationFailed": "Error al generar consejos del entrenador",
       "noHints": "No hay consejos del entrenador disponibles para esta semana aún.",
-      "allGenerated": "Todas las semanas ya tienen consejos del entrenador."
+      "allGenerated": "Todas las semanas ya tienen consejos del entrenador.",
+      "generationPartlyFailed": "{{failed}} de {{total}} semanas no han recibido consejo. Inténtalo de nuevo más tarde.",
+      "generationTakingLonger": "Esto está tardando más de lo habitual. Los consejos aparecerán solos — no hace falta que esperes aquí."
     },
     "tips": {
       "sectionTitle": "Consejo para ti",
@@ -2458,7 +2476,13 @@
     "holdToSwitch": "mantén pulsado para cambiar",
     "yourPlans": "Tus planes de entrenamiento · {{count}}",
     "createPlan": "Crear un plan nuevo",
-    "createPlanDesc": "La IA lo construye según tu objetivo y tu horario"
+    "createPlanDesc": "La IA lo construye según tu objetivo y tu horario",
+    "generation": {
+      "preparingHint": "Tu entrenador está preparando el consejo de esta semana…",
+      "hintFailed": "El entrenador no ha podido escribir el consejo de esta semana.",
+      "retry": "Reintentar",
+      "translationPending": "Por ahora se muestra en inglés — la traducción está en camino."
+    }
   },
   "rewards": {
     "title": "Recompensas",
@@ -3148,7 +3172,8 @@
     "entry": "Inscripción",
     "level": "Nivel",
     "cutoff": "Tiempo límite",
-    "ranking": "Clasificación"
+    "ranking": "Clasificación",
+    "localTime": "Hora local del evento: {{time}} ({{city}})"
   },
   "eventRegistrationStatus": {
     "registered": "Inscrito",
@@ -3774,5 +3799,176 @@
     "newCount_one": "{{count}} nueva",
     "newCount_many": "{{count}} nuevas",
     "newCount_other": "{{count}} nuevas"
+  },
+  "eventLive": {
+    "title": "En directo",
+    "you": "Tú",
+    "onCourse": "En carrera",
+    "finished": "Terminado",
+    "dayOf": "Día {{day}} de {{total}}",
+    "podiumNow": "Podio ahora",
+    "membersCount_one": "{{count}} miembro",
+    "membersCount_other": "{{count}} miembros",
+    "membersFinished": "{{finished}}/{{total}} han terminado",
+    "teamOnCourse": "{{count}} en carrera",
+    "activitiesCount_one": "{{count}} actividad",
+    "activitiesCount_other": "{{count}} actividades",
+    "metric": {
+      "distance": "Distancia",
+      "elevation": "Desnivel",
+      "time": "Tiempo"
+    },
+    "groups": {
+      "finished": "Terminados · {{n}} de {{total}}",
+      "onCourse": "En carrera · {{n}}"
+    },
+    "stats": {
+      "registered": "Inscritos",
+      "ofMax": "de {{max}} plazas",
+      "onCourse": "En carrera ahora",
+      "finished": "Terminados",
+      "ofTotal": "{{pct}}% de los registrados",
+      "leader": "En cabeza",
+      "ofParticipants": "de {{total}} participantes",
+      "winner": "Ganador",
+      "average": "Media",
+      "totalElevation": "Desnivel total"
+    },
+    "me": {
+      "bib": "DORSAL",
+      "notStarted": "Tu posición",
+      "notStartedMain": "Aún sin actividad",
+      "recordInApp": "Graba una actividad para este evento y tu resultado aparecerá aquí.",
+      "onCourse": "Estás en carrera",
+      "finished": "Terminado",
+      "yourPlace": "Tu posición",
+      "position": "#{{n}} · {{metric}}",
+      "leadTime": "En cabeza · {{time}} de ventaja",
+      "behindTime": "+{{time}} respecto al #{{place}}",
+      "leadMetric": "En cabeza · {{amount}} de ventaja",
+      "behindMetric": "{{amount}} menos que el #{{place}}",
+      "yourTeam": "Tu equipo · {{name}}",
+      "goal": "Progreso hacia el objetivo",
+      "goalOf": "de {{goal}}"
+    },
+    "spectator": {
+      "label": "Como espectador",
+      "canJoin": "Todavía puedes unirte",
+      "canJoinNote": "La inscripción está abierta mientras dura el reto — únete y graba tu primera actividad.",
+      "canJoinTeamNote": "La inscripción está abierta — elige o crea un equipo en la página del evento.",
+      "closed": "Inscripción cerrada",
+      "closedNote": "Sigue la clasificación en directo y anima a los deportistas en carrera.",
+      "join": "Unirse al reto",
+      "watch": "Seguir evento",
+      "watching": "Siguiendo"
+    },
+    "cheer": {
+      "title": "Ánimos en carrera",
+      "subtitle": "texto o voz",
+      "position": "#{{n}} · {{distance}}",
+      "action": "Animar",
+      "more_one": "+{{count}} más en carrera sin retransmisión",
+      "more_other": "+{{count}} más en carrera sin retransmisión",
+      "noBroadcast_one": "{{count}} en carrera — sin retransmisión para ver",
+      "noBroadcast_other": "{{count}} en carrera — sin retransmisión para ver"
+    },
+    "viz": {
+      "team": "Equipo {{name}}",
+      "goal": "Objetivo del evento · {{goal}}",
+      "together": "Todos juntos",
+      "everest": "{{n}}× Everest",
+      "reached": "Han alcanzado el objetivo",
+      "reachedCount": "{{n}} de {{total}}",
+      "course": "Recorrido · {{distance}}",
+      "courseNote": "{{racing}} en carrera · {{finished}} han terminado",
+      "finish": "META"
+    }
+  },
+  "eventResult": {
+    "labelProvisional": "Tu resultado · provisional",
+    "labelFinished": "Tu resultado · terminado",
+    "placeOf": "#{{place}} de {{total}}",
+    "labelDnf": "Tu resultado",
+    "dnf": "No terminado",
+    "reason": {
+      "target_distance": "por debajo de la distancia objetivo",
+      "target_elevation": "por debajo del desnivel objetivo",
+      "time_limit": "fuera del tiempo límite",
+      "outside_window": "iniciada fuera de las fechas del evento",
+      "no_gps": "este evento solo cuenta actividades con GPS",
+      "implausible": "distancia y tiempo no posibles"
+    },
+    "reasonShort": {
+      "target_distance": "distancia insuficiente",
+      "target_elevation": "desnivel insuficiente",
+      "time_limit": "fuera de límite",
+      "outside_window": "fuera de fechas",
+      "no_gps": "sin ruta GPS",
+      "implausible": "no cuenta"
+    },
+    "labelOpen": "Tu resultado",
+    "open": "Actividad aún abierta",
+    "openNote": "Termínala y guárdala — entonces contará.",
+    "labelNotStarted": "Tu resultado",
+    "notStarted": "Sin actividad registrada",
+    "team": "Equipo {{name}} · #{{place}}",
+    "time": "Tiempo",
+    "distance": "Distancia",
+    "elevation": "Desnivel",
+    "pace": "Ritmo",
+    "personalRecord": "Récord personal",
+    "points": "+{{n}} pts",
+    "pointsLater": "Puntos tras la aprobación",
+    "viewActivity": "Ver actividad",
+    "winner": "Ganador",
+    "finishedOf": "{{finished}} de {{total}} han terminado",
+    "dnfCount_one": "{{count}} DNF",
+    "dnfCount_other": "{{count}} DNF",
+    "congratulate": "Ver al ganador",
+    "official": "Resultados oficiales",
+    "provisional": "Resultados provisionales",
+    "provisionalNote": "Resultados provisionales. El organizador todavía los está aprobando — las posiciones pueden cambiar. Los puntos llegan a tu cuenta tras la aprobación.",
+    "dnfShort": "DNF",
+    "finishedLabel": "Terminado"
+  },
+  "resultShare": {
+    "open": "Compartir resultado",
+    "title": "Comparte tu resultado",
+    "format": "Formato",
+    "formats": {
+      "story": "Historia 9:16",
+      "square": "Publicación 1:1",
+      "social": "Enlace 1.91:1"
+    },
+    "background": "Fondo",
+    "backgrounds": {
+      "route": "Ruta",
+      "photo": "Mi foto",
+      "plain": "Liso"
+    },
+    "show": "Mostrar",
+    "fields": {
+      "place": "Posición",
+      "pace": "Ritmo",
+      "badges": "Récord, puntos e insignias",
+      "bib": "Dorsal"
+    },
+    "provisional": "Resultado provisional — la tarjeta puede cambiar cuando el organizador apruebe los resultados.",
+    "shareNative": "Compartir…",
+    "copyLink": "Copiar enlace",
+    "noLink": "Sin enlace público — el evento o tu perfil son privados. La imagen se puede compartir igualmente.",
+    "generating": "Dibujando tu tarjeta…",
+    "error": "No se ha podido crear la tarjeta del resultado."
+  },
+  "teamBoard": {
+    "thisWeek": "Esta semana",
+    "mostActive": "más activo: {{name}} · {{distance}}",
+    "activeMembers": "Miembros activos",
+    "allSports": "Todos",
+    "emptyTitle": "No hay actividades que mostrar",
+    "emptyDesc": "Aquí aparecen los entrenamientos terminados de los miembros — los que su configuración de privacidad te permite ver.",
+    "loadMore": "Mostrar más",
+    "reactions": "{{likes}} me gusta · {{comments}} comentarios",
+    "openActivity": "Abrir actividad"
   }
 }

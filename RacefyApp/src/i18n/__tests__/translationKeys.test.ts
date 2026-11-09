@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import en from '../locales/en.json';
 import pl from '../locales/pl.json';
+import es from '../locales/es.json';
 
 type Tree = Record<string, unknown>;
 
@@ -71,6 +72,13 @@ describe('translation keys', () => {
 
   it('every key used without a fallback exists in Polish', () => {
     const missing = [...keys].filter(([key]) => resolve(pl as Tree, key) === undefined);
+    expect(missing.map(([key, file]) => `${key} (${file})`)).toEqual([]);
+  });
+
+  // Spanish fell 158 keys behind (live event, results, share card, team board) because only
+  // English and Polish were checked — Spanish users saw English there (fallbackLng). 2026-11-09.
+  it('every key used without a fallback exists in Spanish', () => {
+    const missing = [...keys].filter(([key]) => resolve(es as Tree, key) === undefined);
     expect(missing.map(([key, file]) => `${key} (${file})`)).toEqual([]);
   });
 
