@@ -22,6 +22,16 @@ _Pusto (2026-11-09: cztery gałęzie zmergowane — niżej, w „Na `main`, ale 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
 
+### `fix/i18n-es-gaps` — 158 brakujących tłumaczeń hiszpańskich (zmergowane 2026-11-09, tag `pre-i18n-es-gaps` = main sprzed merge)
+
+`es.json` nie miał kluczy ekranów wydarzenia na żywo (`eventLive`), wyniku (`eventResult`, w tym powody niezaliczenia),
+karty wyniku (`resultShare`), tablicy drużyny (`teamBoard`), strefy czasowej i części treningu — po hiszpańsku
+pokazywał się angielski (fallback). Test kluczy sprawdzał tylko en i pl; teraz także es. `tsc` i jest zielone.
+**Nie oglądane na urządzeniu.**
+- [ ] ES: ekran wydarzenia na żywo i karta „Twoje miejsce” — teksty bez obcięć na małym telefonie
+- [ ] ES: karta wyniku i arkusz „Compartir resultado”
+- [ ] ES: ustawienia → strefa czasowa
+
 ### `fix/comment-count-thread` — licznik komentarzy po usunięciu komentarza z odpowiedziami (API 2026-11-09; zmergowane 2026-11-09, tag `pre-comment-count-thread` = main sprzed merge)
 
 Odpowiednik zmiany w API (`racefy_api.io`, v1.3.78, commit b5b87757): `DELETE /comments/{id}` usuwa komentarz razem
