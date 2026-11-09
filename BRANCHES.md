@@ -15,9 +15,51 @@ Stan na: **2026-11-09**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `fix/account-credentials` — zmiana e-maila z aktualnym hasłem, konto Google ustawia hasło przez link (API A5, 2026-11-05)
+_Pusto (2026-11-09: cztery gałęzie zmergowane — niżej, w „Na `main`, ale niezweryfikowane runtime”)._
 
-_Wypchnięta na origin 2026-11-09. API A5 jest na produkcji od v1.3.56 — warunek „najpierw API na serwer” spełniony._
+## Na `main`, ale niezweryfikowane runtime
+
+Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
+i nigdy nie zostały obejrzane na urządzeniu.
+
+### `fix/comment-count-thread` — licznik komentarzy po usunięciu komentarza z odpowiedziami (API 2026-11-09; zmergowane 2026-11-09, tag `pre-comment-count-thread` = main sprzed merge)
+
+Odpowiednik zmiany w API (`racefy_api.io`, v1.3.78, commit b5b87757): `DELETE /comments/{id}` usuwa komentarz razem
+z odpowiedziami i zmniejsza `comments_count` o cały wątek, a nie o 1. `CommentSection` zmniejszał lokalny licznik o 1,
+więc po usunięciu komentarza z odpowiedziami licznik pod postem był zawyżony do odświeżenia. Teraz spada o
+1 + liczbę widocznych odpowiedzi (głębsze zagnieżdżenia app nie pokazuje). API już jest na produkcji — merge nie
+zależy od wydania backendu.
+- `tsc` i eslint (zmieniony plik) zielone; testów komponentu brak. **Nie uruchamiane na urządzeniu.**
+- [ ] usunięcie komentarza bez odpowiedzi: licznik spada o 1
+- [ ] usunięcie komentarza z 2 odpowiedziami: licznik spada o 3 i zgadza się z licznikiem po odświeżeniu posta
+- [ ] usunięcie samej odpowiedzi: licznik spada o 1
+
+### `feat/privacy-settings` — widoczność tętna i zgoda na publiczne posty o kamieniach milowych (API D6/D4, 2026-11-05; zmergowane 2026-11-09, tag `pre-privacy-settings` = main sprzed merge)
+
+Odpowiednik zmian w API (audyt bezpieczeństwa 2026-11-04, D6 i D4; na produkcji od v1.3.58): `privacy.heart_rate_visibility`
+(`only_me` domyślnie / `followers` / `everyone`, goście nigdy) i `privacy.milestone_posts` (domyślnie wyłączone).
+Zakres: dwa ustawienia w „Prywatność i bezpieczeństwo”, typy preferencji, domyślne `show_start_finish_points: false`
+zgodne z API, tłumaczenia en/pl/es. API już jest na produkcji — merge od niego nie zależy.
+Wypchnięta na origin 2026-11-09 (wcześniej tylko lokalnie). **Nie uruchamiane na urządzeniu.**
+- [ ] zmiana widoczności tętna zapisuje się i wraca po ponownym otwarciu ustawień
+- [ ] inny użytkownik (obserwujący / nie) widzi albo nie widzi tętna zgodnie z ustawieniem
+- [ ] przełącznik postów o kamieniach milowych zapisuje się
+
+### `feat/event-manual-activities` — przełącznik „licz aktywności bez śladu GPS” i powody niezaliczenia (API I2, 2026-11-05; zmergowane 2026-11-09, tag `pre-event-manual-activities` = main sprzed merge)
+
+Odpowiednik zmian w API (audyt I2, `events.allow_manual_activities`, `EventResultEligibility`; na produkcji od v1.3.59).
+Zakres: przełącznik w formularzu wydarzenia (domyślnie wyłączony), karta wyniku mówi, czemu aktywność się nie liczy
+(`outside_window`, `no_gps`, `implausible`) zamiast „aktywność wciąż otwarta”, typy `EventDnfReason`, test payloadu formularza.
+Tłumaczenia: en/pl pełne; **es** ma tylko teksty przełącznika — sekcji z powodami niezaliczenia nie ma w `es.json`
+także na `main` (już przed tą gałęzią), więc po hiszpańsku pokazuje się angielski (fallback). Wypchnięta na origin 2026-11-09.
+**Nie uruchamiane na urządzeniu.**
+- [ ] nowe wydarzenie: przełącznik domyślnie wyłączony, zapisuje się i wraca przy edycji
+- [ ] aktywność bez GPS w wydarzeniu bez przełącznika: karta wyniku pokazuje „brak śladu GPS”
+- [ ] aktywność rozpoczęta poza terminem: „poza terminem”
+
+### `fix/account-credentials` — zmiana e-maila z aktualnym hasłem, konto Google ustawia hasło przez link (API A5, 2026-11-05; zmergowane 2026-11-09, tag `pre-account-credentials` = main sprzed merge)
+
+_API A5 jest na produkcji od v1.3.56 — warunek „najpierw API na serwer” spełniony._
 
 Odpowiednik zmiany w API (`racefy_api.io`, gałąź `fix/p1-part2-access`, audyt bezpieczeństwa API 2026-11-04, A5):
 `PUT /profile` ze zmienionym adresem wymaga `current_password`, `PUT /profile/password` nie ustawi hasła kontu bez hasła,
@@ -35,46 +77,6 @@ starsza aplikacja na nowym API dostaje przy zmianie e-maila 422 z błędem pola,
 - [ ] konto tylko-Google: w „Zmień hasło” przycisk „Wyślij mi link”, mail dochodzi, po ustawieniu hasła (i odświeżeniu profilu) formularz hasła i zmiana e-maila działają
 - [ ] konto tylko-Google: próba zmiany e-maila pokazuje podpowiedź i nie wysyła zapytania
 - [ ] PL/EN/ES: nowe teksty bez obcięć na małym telefonie
-
-### `fix/comment-count-thread` — licznik komentarzy po usunięciu komentarza z odpowiedziami (API 2026-11-09)
-
-Odpowiednik zmiany w API (`racefy_api.io`, v1.3.78, commit b5b87757): `DELETE /comments/{id}` usuwa komentarz razem
-z odpowiedziami i zmniejsza `comments_count` o cały wątek, a nie o 1. `CommentSection` zmniejszał lokalny licznik o 1,
-więc po usunięciu komentarza z odpowiedziami licznik pod postem był zawyżony do odświeżenia. Teraz spada o
-1 + liczbę widocznych odpowiedzi (głębsze zagnieżdżenia app nie pokazuje). API już jest na produkcji — merge nie
-zależy od wydania backendu.
-- `tsc` i eslint (zmieniony plik) zielone; testów komponentu brak. **Nie uruchamiane na urządzeniu.**
-- [ ] usunięcie komentarza bez odpowiedzi: licznik spada o 1
-- [ ] usunięcie komentarza z 2 odpowiedziami: licznik spada o 3 i zgadza się z licznikiem po odświeżeniu posta
-- [ ] usunięcie samej odpowiedzi: licznik spada o 1
-
-### `feat/privacy-settings` — widoczność tętna i zgoda na publiczne posty o kamieniach milowych (API D6/D4, 2026-11-05)
-
-Odpowiednik zmian w API (audyt bezpieczeństwa 2026-11-04, D6 i D4; na produkcji od v1.3.58): `privacy.heart_rate_visibility`
-(`only_me` domyślnie / `followers` / `everyone`, goście nigdy) i `privacy.milestone_posts` (domyślnie wyłączone).
-Zakres: dwa ustawienia w „Prywatność i bezpieczeństwo”, typy preferencji, domyślne `show_start_finish_points: false`
-zgodne z API, tłumaczenia en/pl/es. API już jest na produkcji — merge od niego nie zależy.
-Wypchnięta na origin 2026-11-09 (wcześniej tylko lokalnie). **Nie uruchamiane na urządzeniu.**
-- [ ] zmiana widoczności tętna zapisuje się i wraca po ponownym otwarciu ustawień
-- [ ] inny użytkownik (obserwujący / nie) widzi albo nie widzi tętna zgodnie z ustawieniem
-- [ ] przełącznik postów o kamieniach milowych zapisuje się
-
-### `feat/event-manual-activities` — przełącznik „licz aktywności bez śladu GPS” i powody niezaliczenia (API I2, 2026-11-05)
-
-Odpowiednik zmian w API (audyt I2, `events.allow_manual_activities`, `EventResultEligibility`; na produkcji od v1.3.59).
-Zakres: przełącznik w formularzu wydarzenia (domyślnie wyłączony), karta wyniku mówi, czemu aktywność się nie liczy
-(`outside_window`, `no_gps`, `implausible`) zamiast „aktywność wciąż otwarta”, typy `EventDnfReason`, test payloadu formularza.
-Tłumaczenia: en/pl pełne; **es** ma tylko teksty przełącznika — sekcji z powodami niezaliczenia nie ma w `es.json`
-także na `main` (już przed tą gałęzią), więc po hiszpańsku pokazuje się angielski (fallback). Wypchnięta na origin 2026-11-09.
-**Nie uruchamiane na urządzeniu.**
-- [ ] nowe wydarzenie: przełącznik domyślnie wyłączony, zapisuje się i wraca przy edycji
-- [ ] aktywność bez GPS w wydarzeniu bez przełącznika: karta wyniku pokazuje „brak śladu GPS”
-- [ ] aktywność rozpoczęta poza terminem: „poza terminem”
-
-## Na `main`, ale niezweryfikowane runtime
-
-Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
-i nigdy nie zostały obejrzane na urządzeniu.
 
 ### `fix/security-phase-1` — sesja i konta na jednym urządzeniu (Faza 1 audytu bezpieczeństwa 2026-11-05; zmergowane 2026-11-05, tag `pre-security-phase-1` = main sprzed merge)
 
