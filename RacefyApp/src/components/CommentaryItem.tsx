@@ -8,6 +8,7 @@ import { logger } from '../services/logger';
 import { InteractionButton } from './InteractionButton';
 import type { CommentaryType, EventCommentary } from '../types/api';
 import { formatTimeAgo } from '../utils/dateFormat';
+import { CommentaryMentionText } from './CommentaryMentionText';
 
 interface CommentaryItemProps {
   commentary: EventCommentary;
@@ -113,11 +114,15 @@ export function CommentaryItem({
 
       {/* Title (if present) */}
       {commentary.title && (
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{commentary.title}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          <CommentaryMentionText text={commentary.title} mentions={commentary.mentions} />
+        </Text>
       )}
 
       {/* Content */}
-      <Text style={[styles.content, { color: colors.textSecondary }]}>{commentary.content}</Text>
+      <Text style={[styles.content, { color: colors.textSecondary }]}>
+        <CommentaryMentionText text={commentary.content} mentions={commentary.mentions} />
+      </Text>
 
       {/* Status indicator for pending/processing/failed */}
       {commentary.status !== 'published' && (

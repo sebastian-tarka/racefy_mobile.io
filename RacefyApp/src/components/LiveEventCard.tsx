@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from './Card';
+import { CommentaryMentionText } from './CommentaryMentionText';
 import { InteractionButton } from './InteractionButton';
 import { useTheme } from '../hooks/useTheme';
 import { borderRadius, fontSize, spacing, msFont } from '../theme';
@@ -113,7 +114,10 @@ function LiveEventCardBase({ event, onPress, onBoostComplete }: LiveEventCardPro
                 style={[styles.commentaryContent, { color: colors.textPrimary }]}
                 numberOfLines={3}
               >
-                {event.latest_commentary.content}
+                <CommentaryMentionText
+                  text={event.latest_commentary.content}
+                  mentions={event.latest_commentary.mentions}
+                />
               </Text>
               <View style={styles.commentaryFooter}>
                 <Text style={[styles.commentaryTime, { color: colors.textSecondary }]}>
