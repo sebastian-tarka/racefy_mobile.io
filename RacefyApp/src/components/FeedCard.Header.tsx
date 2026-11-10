@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from './Avatar';
 import { useTheme } from '../hooks/useTheme';
+import { VisibilityBadge } from './VisibilityBadge';
 import { spacing, fontSize, borderRadius } from '../theme';
 import type { Post } from '../types/api';
 import { type FeedPostType, getTypeColors, getTypeIcon, styles } from './FeedCard.utils';
@@ -171,13 +172,6 @@ export function FeedCardHeader({
   const isSponsored = type === 'sponsored';
   const timeAgo = formatTimeAgo(post.created_at, { addSuffix: false });
 
-  const visibilityConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> =
-    {
-      public: { icon: 'eye-outline', label: t('feed.visibility.public') },
-      followers: { icon: 'people-outline', label: t('feed.visibility.followers') },
-      private: { icon: 'lock-closed-outline', label: t('feed.visibility.private') },
-    };
-
   const typeIcon = getTypeIcon(type);
   const campaignName = isSponsored
     ? (post as any).sponsored_data?.campaign_name || t('feed.postTypes.sponsored')
@@ -256,20 +250,7 @@ export function FeedCardHeader({
               )}
 
               <Text style={[styles.headerTime, { color: colors.textMuted }]}>{timeAgo}</Text>
-              {isOwner && post.visibility && visibilityConfig[post.visibility] && (
-                <>
-                  <View style={styles.visibilityPill}>
-                    <Ionicons
-                      name={visibilityConfig[post.visibility].icon}
-                      size={10}
-                      color={colors.textMuted}
-                    />
-                    <Text style={[styles.visibilityPillText, { color: colors.textMuted }]}>
-                      {visibilityConfig[post.visibility].label}
-                    </Text>
-                  </View>
-                </>
-              )}
+              {isOwner && post.visibility && <VisibilityBadge visibility={post.visibility} />}
             </View>
           </View>
         </TouchableOpacity>

@@ -3970,5 +3970,10 @@
     "loadMore": "Mostrar más",
     "reactions": "{{likes}} me gusta · {{comments}} comentarios",
     "openActivity": "Abrir actividad"
+  },
+  "visibility": {
+    "public": "Todos",
+    "followers": "Seguidores",
+    "private": "Solo yo"
   }
 }
