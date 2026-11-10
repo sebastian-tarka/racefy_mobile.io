@@ -15,20 +15,23 @@ Stan na: **2026-11-10**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-### `feat/commentary-mentions` — @nick uczestnika w komentarzu AI otwiera profil (od 2026-11-10)
-
-API v1.3.88 (na produkcji) zwraca przy komentarzu wydarzenia `mentions: [{id, username, name}]` — uczestników
-tego wydarzenia wspomnianych przez `@handle`. `CommentaryItem` zamienia dokładnie te `@nick` (bez względu na
-wielkość liter) w klikalny tekst → `UserProfile`; inne `@słowa` zostają tekstem. Karta wydarzenia na żywo na
-ekranie głównym (`LiveEventCard`) bez zmian — `latest_commentary` z `/home` nie niesie `mentions`.
-`tsc`, eslint i jest (942) zielone. Worktree: `../racefy_mobile.io-commentary-mentions`.
-- [ ] Komentarze wydarzenia: `@nick` w treści wyróżniony kolorem, tap → profil uczestnika
-- [ ] Komentarz bez wzmianek wygląda jak wcześniej (tytuł, treść, zawijanie)
+_Pusto (2026-11-10: `feat/commentary-mentions` zmergowane — niżej)._
 
 ## Na `main`, ale niezweryfikowane runtime
 
 Nie blokuje mergów, ale blokuje **release**. Te rzeczy przeszły tsc/eslint/jest
 i nigdy nie zostały obejrzane na urządzeniu.
+
+### `feat/commentary-mentions` — @nick uczestnika w komentarzu AI otwiera profil (zmergowane 2026-11-10, tag `pre-commentary-mentions` = main sprzed merge)
+
+API v1.3.88 (na produkcji) zwraca przy komentarzu wydarzenia `mentions: [{id, username, name}]` — uczestników
+tego wydarzenia wspomnianych przez `@handle`. `CommentaryMentionText` zamienia dokładnie te `@nick` (bez względu na
+wielkość liter) w klikalny tekst → `UserProfile`; inne `@słowa` zostają tekstem. Używany w `CommentaryItem`
+(lista komentarzy) i w `LiveEventCard` (karta na ekranie głównym — `mentions` w `/home` od API main 507adb4,
+**jeszcze nie na produkcji**; bez nich karta pokazuje zwykły tekst jak dotąd). `tsc`, eslint i jest (942) zielone.
+- [ ] Komentarze wydarzenia: `@nick` w treści wyróżniony kolorem, tap → profil uczestnika
+- [ ] Komentarz bez wzmianek wygląda jak wcześniej (tytuł, treść, zawijanie)
+- [ ] Ekran główny: karta wydarzenia na żywo — tap w `@nick` → profil, tap w resztę karty → wydarzenie (po wdrożeniu API)
 
 ### `fix/i18n-es-gaps` — 158 brakujących tłumaczeń hiszpańskich (zmergowane 2026-11-09, tag `pre-i18n-es-gaps` = main sprzed merge)
 
