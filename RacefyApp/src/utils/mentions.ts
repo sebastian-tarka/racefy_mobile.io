@@ -154,3 +154,34 @@ export function navigateToMention(navigation: any, entity: MentionEntity) {
       break;
   }
 }
+
+/** A participant named by "@handle" in an AI commentary (API `mentions`, since 2026-11-10). */
+export interface CommentaryMention {
+  id: number;
+  username: string;
+  name: string;
+}
+
+export type CommentarySegment = { text: string; username?: string };
+
+/**
+ * Split commentary text into plain parts and "@handle" parts of the participants the API lists in
+ * `mentions`. Any other "@word" stays plain text. Matching ignores case — the model sometimes capitalises.
+ */
+export function splitCommentaryMentions(
+  text: string | null | undefined,
+  mentions?: CommentaryMention[] | null,
+): CommentarySegment[] {
+  if (!text) return [];
+  if (!mentions?.length) return [{ text }];
+
+  const byHandle = new Map(mentions.map((m) => [m.username.toLowerCase(), m.username]));
+
+  return text
+    .split(/(@[A-Za-z0-9_]+)/g)
+    .filter((part) => part !== '')
+    .map((part) => {
+      const username = part.startsWith('@') ? byHandle.get(part.slice(1).toLowerCase()) : undefined;
+      return username ? { text: part, username } : { text: part };
+    });
+}

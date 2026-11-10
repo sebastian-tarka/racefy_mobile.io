@@ -50,6 +50,8 @@ export interface EventCommentary {
   language: CommentaryLanguage;
   title: string | null;
   content: string;
+  /** Participants named by "@handle" in title/content — link those handles (API since 2026-11-10). */
+  mentions?: { id: number; username: string; name: string }[];
   status: CommentaryStatus;
   tokens_used: number;
   standings_snapshot?: StandingsSnapshot[];
