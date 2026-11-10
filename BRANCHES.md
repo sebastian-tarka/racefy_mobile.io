@@ -15,7 +15,18 @@ Stan na: **2026-11-10**
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Pusto (2026-11-10: `feat/commentary-mentions` zmergowane — niżej)._
+### `feat/visibility-badge` — znacznik widoczności aktywności i postów (od 2026-11-10)
+
+Odpowiednik `VisibilityBadge` z SPA (API v1.3.95): wszyscy = globus (zielony), obserwujący = ludzie (niebieski),
+tylko ja = kłódka (bursztynowy). Widzi go tylko autor. `ActivityCard` (lista na profilu) miała dwustanową ikonę
+z `is_private` — aktywność „dla obserwujących” dostawała globus jak publiczna; teraz `visibility` i tylko dla
+`is_owner`. Też nagłówek szczegółów aktywności (obok dyscypliny) i nagłówek posta w feedzie (zamiast szarej
+pigułki). Nowe klucze `visibility.*` (en/pl/es). `tsc`, eslint, jest (942) zielone. Worktree:
+`../racefy_mobile.io-visibility-badge`.
+- [ ] Profil → aktywności: ikona przy własnych aktywnościach, trzy kolory czytelne w jasnym i ciemnym motywie
+- [ ] Cudzy profil: brak ikony
+- [ ] Szczegóły własnej aktywności: znacznik z etykietą obok dyscypliny, nie łamie wiersza
+- [ ] Feed: znacznik przy własnym poście
 
 ## Na `main`, ale niezweryfikowane runtime
 
