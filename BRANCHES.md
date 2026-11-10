@@ -9,13 +9,21 @@ zielonym `tsc`.
 Rzeczy prywatne/robocze (surowe analizy, prompty do backendu) zostają w `.notes/`,
 które jest w `.gitignore`. Tu trafia tylko to, co ma widzieć każdy, kto klonuje repo.
 
-Stan na: **2026-11-09**
+Stan na: **2026-11-10**
 
 ---
 
 ## W toku — NIE mergować, dopóki nie odhaczone
 
-_Pusto (2026-11-09: cztery gałęzie zmergowane — niżej, w „Na `main`, ale niezweryfikowane runtime”)._
+### `feat/commentary-mentions` — @nick uczestnika w komentarzu AI otwiera profil (od 2026-11-10)
+
+API v1.3.88 (na produkcji) zwraca przy komentarzu wydarzenia `mentions: [{id, username, name}]` — uczestników
+tego wydarzenia wspomnianych przez `@handle`. `CommentaryItem` zamienia dokładnie te `@nick` (bez względu na
+wielkość liter) w klikalny tekst → `UserProfile`; inne `@słowa` zostają tekstem. Karta wydarzenia na żywo na
+ekranie głównym (`LiveEventCard`) bez zmian — `latest_commentary` z `/home` nie niesie `mentions`.
+`tsc`, eslint i jest (942) zielone. Worktree: `../racefy_mobile.io-commentary-mentions`.
+- [ ] Komentarze wydarzenia: `@nick` w treści wyróżniony kolorem, tap → profil uczestnika
+- [ ] Komentarz bez wzmianek wygląda jak wcześniej (tytuł, treść, zawijanie)
 
 ## Na `main`, ale niezweryfikowane runtime
 
